@@ -1,0 +1,1 @@
+// Bounded frontend domain: knowledge\nexport const knowledgeFeatures = ['documents', 'rag', 'memory'];\n

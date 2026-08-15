@@ -1,0 +1,49 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+sqlalchemy[asyncio]>=2.0.36
+asyncpg>=0.30.0
+alembic>=1.14.0
+pydantic>=2.10.0
+pydantic-settings>=2.6.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0,<4.1
+python-multipart>=0.0.17
+celery[redis]>=5.4.0
+redis>=5.2.0
+httpx>=0.28.0
+openai>=2.44.0
+email-validator>=2.2.0
+jsonschema>=4.23.0
+pytest>=8.3.0
+pytest-asyncio>=0.24.0
+ruff>=0.8.0
+psycopg2-binary>=2.9.9
+pypdf>=5.0.0
+python-docx>=1.1.2
+
+# Phase 2 — Report Employee (dataset analysis, charts, PDF/Excel reports)
+pandas>=2.2.0
+numpy>=1.26.0
+matplotlib>=3.9.0
+openpyxl>=3.1.0
+reportlab>=4.2.0
+
+prometheus-client>=0.21.0
+opentelemetry-api>=1.29.0
+opentelemetry-sdk>=1.29.0
+
+opentelemetry-instrumentation-fastapi>=0.50b0
+opentelemetry-instrumentation-sqlalchemy>=0.50b0
+opentelemetry-exporter-otlp-proto-http>=1.29.0
+
+# Phase 6 — real payment-provider adapter (Stripe), closing the Phase 4
+# commercial exit gate. See app/services/stripe_service.py.
+stripe>=11.0.0
+
+# Phase 5 — Document Employee (OCR, PDF/image/DOCX text extraction)
+# Requires the tesseract-ocr system package (+ tesseract-ocr-fas for
+# Persian) and poppler-utils (for pdf2image); see DEV_SETUP.md.
+pytesseract>=0.3.13
+pdf2image>=1.17.0
+pillow>=10.4.0

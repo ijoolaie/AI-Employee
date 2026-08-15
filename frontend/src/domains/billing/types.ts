@@ -1,0 +1,1 @@
+// Stable UI contracts for billing. Extend without coupling components to transport details.\nexport type BillingDomainId = string;\n

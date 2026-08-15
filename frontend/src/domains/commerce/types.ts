@@ -1,0 +1,1 @@
+// Stable UI contracts for commerce. Extend without coupling components to transport details.\nexport type CommerceDomainId = string;\n

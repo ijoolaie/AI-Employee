@@ -1,0 +1,16 @@
+from __future__ import annotations
+from typing import Any, Protocol
+from .models import KnowledgeDocument, KnowledgeChunk
+
+class DocumentRepository(Protocol):
+    async def save_document(self, document: KnowledgeDocument) -> KnowledgeDocument: ...
+    async def get_document(self, document_id: str) -> KnowledgeDocument | None: ...
+
+class ChunkRepository(Protocol):
+    async def save_chunks(self, chunks: list[KnowledgeChunk]) -> list[KnowledgeChunk]: ...
+
+class DocumentParser(Protocol):
+    async def parse(self, source: str) -> list[dict[str, Any]]: ...
+
+class EmbeddingProvider(Protocol):
+    async def embed(self, texts: list[str]) -> list[list[float]]: ...

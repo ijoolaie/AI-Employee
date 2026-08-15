@@ -1,0 +1,6 @@
+from typing import Protocol
+from .models import EmployeeTask
+class EmployeeTaskRepository(Protocol):
+    async def save(self, task: EmployeeTask) -> EmployeeTask: ...
+class EmployeeRunner(Protocol):
+    async def run(self, employee_id: str, action: str): ...

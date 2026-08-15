@@ -1,0 +1,1 @@
+// Bounded frontend domain: employees\nexport const employeesFeatures = ['report', 'document', 'invoice', 'order', 'sales'];\n

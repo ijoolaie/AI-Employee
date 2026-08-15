@@ -1,0 +1,24 @@
+name: Architecture Guard
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  architecture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check modular architecture
+        run: python scripts/check_architecture.py
+
+          - name: Run modular architecture tests
+            run: |
+              python -m pytest backend/tests/test_m3_infrastructure_boundaries.py backend/tests/test_m4_event_boundaries.py backend/tests/test_m7_real_migration.py
+
+      - name: Final architecture audit
+        run: python scripts/final_architecture_audit.py
+
+      - name: Production completeness baseline
+        run: python scripts/production_completeness_audit.py

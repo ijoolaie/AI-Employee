@@ -1,0 +1,1 @@
+// Stable UI contracts for crm. Extend without coupling components to transport details.\nexport type CrmDomainId = string;\n

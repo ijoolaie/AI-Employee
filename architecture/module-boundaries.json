@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "backend_contexts": [
+    "workflow",
+    "knowledge",
+    "crm",
+    "commerce",
+    "billing"
+  ],
+  "employee_contexts": [
+    "report",
+    "document",
+    "invoice",
+    "order",
+    "sales"
+  ],
+  "forbidden_backend_prefixes": [
+    "app.api.",
+    "app.frontend.",
+    "app.modules."
+  ],
+  "notes": "Cross-context imports are allowed only through app.modules.contracts and app.shared contracts."
+}

@@ -1,0 +1,1 @@
+// Bounded frontend domain: commerce\nexport const commerceFeatures = ['orders', 'products', 'shopify'];\n

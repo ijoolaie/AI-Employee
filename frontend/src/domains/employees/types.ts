@@ -1,0 +1,1 @@
+// Stable UI contracts for employees. Extend without coupling components to transport details.\nexport type EmployeesDomainId = string;\n

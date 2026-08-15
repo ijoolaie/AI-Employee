@@ -1,0 +1,7 @@
+"use client";
+import { useState } from "react";
+import { Header } from "@/components/layout/header";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { exportCustomerData, deleteCustomerData } from "@/lib/api";
+export default function PrivacyPage(){const [id,setId]=useState("");const [data,setData]=useState<unknown>(null);const [msg,setMsg]=useState("");return <><Header title="Privacy & GDPR" description="Export or delete customer data within your tenant."/><div className="max-w-2xl space-y-6 p-6"><Card><CardHeader><CardTitle>Customer data request</CardTitle></CardHeader><CardContent className="space-y-3"><input value={id} onChange={e=>setId(e.target.value)} placeholder="Customer ID" className="w-full rounded-lg border px-3 py-2 text-sm"/><div className="flex gap-2"><Button onClick={async()=>setData(await exportCustomerData(id))}>Export data</Button><Button variant="secondary" onClick={async()=>{if(confirm("Delete and anonymize this customer's personal data?")){await deleteCustomerData(id);setMsg("Customer data anonymized and deletion recorded.")}}}>Delete/anonymize</Button></div>{msg&&<p className="text-sm text-green-700">{msg}</p>}{data !== null && <pre className="max-h-96 overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-white">{JSON.stringify(data,null,2)}</pre>}</CardContent></Card></div></>}

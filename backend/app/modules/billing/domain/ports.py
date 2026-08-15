@@ -1,0 +1,9 @@
+from typing import Protocol
+from .models import Invoice
+
+class InvoiceRepository(Protocol):
+    async def save(self, invoice: Invoice) -> Invoice: ...
+    async def get(self, invoice_id: str) -> Invoice | None: ...
+
+class PaymentGateway(Protocol):
+    async def charge(self, customer_id: str, amount: float) -> str: ...

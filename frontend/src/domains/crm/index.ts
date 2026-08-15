@@ -1,0 +1,1 @@
+// Bounded frontend domain: crm\nexport const crmFeatures = ['customers', 'conversations', 'inbox'];\n

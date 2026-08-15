@@ -1,0 +1,1 @@
+// Bounded frontend domain: workflow\nexport const workflowFeatures = ['automation', 'runs', 'approvals'];\n

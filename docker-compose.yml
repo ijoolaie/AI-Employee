@@ -1,0 +1,157 @@
+services:
+  # Initialize the shared storage volume before any non-root app service starts.
+  # The API/worker/beat containers run as appuser (UID/GID 10001), so a fresh
+  # named volume must be owned by that account or file uploads will fail with
+  # PermissionError. This init service is intentionally root-only and exits
+  # after preparing the volume.
+  storage-init:
+    image: alpine:3.20
+    user: "0:0"
+    volumes:
+      - app_storage:/storage
+    command: ["sh", "-c", "mkdir -p /storage && chown -R 10001:10001 /storage && chmod 755 /storage"]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: aiep
+      POSTGRES_PASSWORD: aiep
+      POSTGRES_DB: aiep
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiep -d aiep"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aiep:aiep@postgres:5432/aiep
+      DATABASE_URL_SYNC: postgresql://aiep:aiep@postgres:5432/aiep
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      APP_ENV: e2e
+      DEBUG: "false"
+      SECRET_KEY: "e2e-only-change-me"
+      CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
+      LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+    volumes:
+      - app_storage:/app/var/storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health/dependencies', timeout=3)\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aiep:aiep@postgres:5432/aiep
+      DATABASE_URL_SYNC: postgresql://aiep:aiep@postgres:5432/aiep
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      APP_ENV: e2e
+      DEBUG: "false"
+      SECRET_KEY: "e2e-only-change-me"
+      CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
+      LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+    volumes:
+      - app_storage:/app/var/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+
+  beat:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://aiep:aiep@postgres:5432/aiep
+      DATABASE_URL_SYNC: postgresql://aiep:aiep@postgres:5432/aiep
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+      APP_ENV: e2e
+      DEBUG: "false"
+      SECRET_KEY: "e2e-only-change-me"
+      CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
+      LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+    volumes:
+      - app_storage:/app/var/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    command: ["celery", "-A", "app.workers.celery_app", "beat", "--loglevel=info"]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        API_INTERNAL_URL: http://api:8000
+    environment:
+      # Browser-visible API origin; keep localhost because the browser runs on Windows.
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      # Server-side Next.js proxy target; inside Docker this must use the Compose service name.
+      API_INTERNAL_URL: http://api:8000
+      # Explicitly bind Next.js standalone to all container interfaces.
+      # This makes the healthcheck deterministic on Docker Desktop/Windows.
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      # Probe loopback after explicitly binding Next.js to 0.0.0.0.
+      # Use Node's built-in fetch so the check does not depend on wget or
+      # container hostname/DNS behavior.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      start_period: 10s
+      retries: 20
+
+
+volumes:
+  postgres_data:
+  app_storage:

@@ -1,0 +1,1 @@
+// Stable UI contracts for workflow. Extend without coupling components to transport details.\nexport type WorkflowDomainId = string;\n

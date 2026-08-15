@@ -1,0 +1,1 @@
+// Stable UI contracts for knowledge. Extend without coupling components to transport details.\nexport type KnowledgeDomainId = string;\n

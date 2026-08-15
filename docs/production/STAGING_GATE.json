@@ -1,0 +1,8 @@
+{
+  "version": "1.0",
+  "date": "2026-08-15",
+  "phase": "pre-final-verification",
+  "testing_policy": "testing_is_last_phase",
+  "status": "READY_FOR_STAGING_SETUP",
+  "release_rule": "NO-GO until final verification passes"
+}

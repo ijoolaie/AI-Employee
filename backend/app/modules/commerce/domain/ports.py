@@ -1,0 +1,9 @@
+from typing import Protocol
+from .models import Order
+
+class OrderRepository(Protocol):
+    async def save(self, order: Order) -> Order: ...
+    async def get(self, order_id: str) -> Order | None: ...
+
+class OrderCalculator(Protocol):
+    async def calculate(self, items: list[dict]) -> float: ...

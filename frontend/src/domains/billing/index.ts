@@ -1,0 +1,1 @@
+// Bounded frontend domain: billing\nexport const billingFeatures = ['plans', 'subscriptions', 'usage'];\n
