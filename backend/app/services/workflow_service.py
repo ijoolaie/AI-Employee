@@ -216,23 +216,103 @@ async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflo
 
 
 async def replay_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id: uuid.UUID, source_run_id: uuid.UUID, created_by: uuid.UUID, idempotency_key: str | None = None) -> WorkflowRun:
+    """Create a replay using the exact immutable contract of the source run.
+
+    Older RC8 runs may not have copied the contract into ``context`` even
+    though their WorkflowVersion already contains the immutable execution
+    contract. In that case we recover the contract from that exact version
+    instead of resolving the workflow's current version. If neither location
+    contains a non-legacy contract, replay is rejected because doing anything
+    else could execute different Employee versions.
+    """
     source = await get_workflow_run(db, workflow_run_id=source_run_id, tenant_id=tenant_id)
     if source.workflow_id != workflow_id:
         raise NotFoundError("Workflow run not found")
-    source_contract = dict((source.context or {}).get("_workflow", {}).get("execution_contract") or {})
+
+    # IMPORTANT: never use the workflow's current version for replay.
+    # Replay must remain pinned to the version that produced the source run.
+    version_result = await db.execute(
+        select(WorkflowVersion).where(
+            WorkflowVersion.id == source.workflow_version_id,
+            WorkflowVersion.workflow_id == workflow_id,
+        )
+    )
+    source_version = version_result.scalar_one_or_none()
+    if source_version is None:
+        raise NotFoundError("Source workflow version not found")
+
+    source_context = dict(source.context or {})
+    source_workflow_state = dict(source_context.get("_workflow") or {})
+
+    # Prefer the run-local snapshot. This is the strongest guarantee because
+    # it is the exact contract captured when the run was created.
+    source_contract = dict(source_workflow_state.get("execution_contract") or {})
+
+    # Backward-compatible recovery for runs created before the run-local
+    # contract was persisted. The WorkflowVersion itself is immutable and is
+    # therefore safe to use as the replay source.
     if not source_contract:
-        raise ValidationAppError("Source run has no immutable execution contract and cannot be replayed safely")
-    # Replay always resolves to the exact WorkflowVersion used by the source run.
-    run = await create_workflow_run(db, tenant_id=tenant_id, workflow_id=workflow_id, workflow_version_id=source.workflow_version_id, input_data=dict((source.context or {}).get("input") or {}), created_by=created_by, idempotency_key=idempotency_key)
+        source_contract = dict(source_version.execution_contract or {})
+
+    if not source_contract:
+        raise ValidationAppError(
+            "Source run has no immutable execution contract and cannot be replayed safely"
+        )
+
+    # A legacy contract explicitly means that the version does not contain
+    # immutable EmployeeVersion references. Do not silently re-snapshot it
+    # during replay because that would change execution semantics.
+    if source_contract.get("legacy"):
+        raise ValidationAppError(
+            "Source workflow version has a legacy execution contract and cannot be replayed safely"
+        )
+
+    contract_steps = source_contract.get("steps")
+    if not isinstance(contract_steps, list) or not contract_steps:
+        raise ValidationAppError(
+            "Source workflow version has an invalid immutable execution contract"
+        )
+
+    # Replay is pinned to the exact WorkflowVersion used by the source run.
+    # create_workflow_run normally copies that version's contract; we then
+    # overwrite the run-local snapshot with the source contract to guarantee
+    # that replay uses the same contract even for repaired/older runs.
+    run = await create_workflow_run(
+        db,
+        tenant_id=tenant_id,
+        workflow_id=workflow_id,
+        workflow_version_id=source.workflow_version_id,
+        input_data=dict(source_context.get("input") or {}),
+        created_by=created_by,
+        idempotency_key=idempotency_key,
+    )
+
     state = dict(run.context or {})
     wf = dict(state.get("_workflow") or {})
     wf["replay_of_run_id"] = str(source.id)
     wf["replay_source_version_id"] = str(source.workflow_version_id)
+    wf["workflow_version_number"] = source_version.version_number
+    wf["workflow_content_hash"] = source_version.content_hash
     wf["execution_contract"] = source_contract
     state["_workflow"] = wf
     run.context = state
     flag_modified(run, "context")
-    await audit_service.record(db, action="workflow.run.replayed", actor_id=created_by, tenant_id=tenant_id, resource_type="workflow_run", resource_id=run.id, request_id=request_id_var.get(), metadata={"source_run_id": str(source.id), "workflow_version_id": str(source.workflow_version_id), "workflow_version": wf.get("workflow_version_number"), "content_hash": wf.get("workflow_content_hash")})
+
+    await audit_service.record(
+        db,
+        action="workflow.run.replayed",
+        actor_id=created_by,
+        tenant_id=tenant_id,
+        resource_type="workflow_run",
+        resource_id=run.id,
+        request_id=request_id_var.get(),
+        metadata={
+            "source_run_id": str(source.id),
+            "workflow_version_id": str(source.workflow_version_id),
+            "workflow_version": source_version.version_number,
+            "content_hash": source_version.content_hash,
+        },
+    )
     return run
 
 
