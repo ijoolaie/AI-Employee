@@ -3,7 +3,13 @@ import ast
 
 
 def test_compose_defines_real_worker_and_beat():
-    compose = Path(__file__).parents[2] / "docker-compose.yml"
+    candidates = [
+        Path(__file__).parents[2] / "docker-compose.yml",
+        Path(__file__).parents[1] / "docker-compose.yml",
+    ]
+    compose = next((path for path in candidates if path.exists()), None)
+
+    assert compose is not None, "docker-compose.yml was not found"
     text = compose.read_text()
     assert "worker:" in text
     assert "beat:" in text

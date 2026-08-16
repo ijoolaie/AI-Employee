@@ -1,8 +1,13 @@
 """Async SQLAlchemy engine/session management.
 
-The API uses a normal pooled async engine. Celery Run workers on Windows use a
-separate per-event-loop engine with ``NullPool`` so asyncpg connections are never
-reused across the event loops created by ``asyncio.run()``.
+Uses NullPool because the application is also exercised from Windows
+asyncio/Proactor event loops where pooled asyncpg connections can otherwise
+be reused by a different event loop and cause:
+
+    AttributeError: 'NoneType' object has no attribute 'send'
+
+NullPool guarantees that connections are not retained across sessions/event
+loops. This is especially important for pytest and Celery on Windows.
 """
 
 from collections.abc import AsyncGenerator
@@ -14,18 +19,26 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from app.core.config import get_settings
 
+
 settings = get_settings()
 
+
+# IMPORTANT:
+# Do not use SQLAlchemy's default QueuePool here.
+# On Windows/Proactor, asyncpg connections retained by QueuePool can belong
+# to a previous event loop and later fail with:
+#     AttributeError: 'NoneType' object has no attribute 'send'
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
-    pool_pre_ping=True,
+    poolclass=NullPool,
 )
+
 
 AsyncSessionLocal = async_sessionmaker(
     engine,
@@ -40,6 +53,7 @@ class Base(DeclarativeBase):
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Yield an API database session with transaction handling."""
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -53,18 +67,15 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def worker_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Yield a Celery-worker DB session isolated from other event loops.
 
-    ``asyncio.run()`` creates and closes an event loop for each Celery task.
-    SQLAlchemy's normal QueuePool may retain asyncpg connections that belong to
-    a previous loop. On Windows/Proactor this can surface as
-    ``_proactor.send`` / ``NoneType.send`` errors. A worker-local ``NullPool``
-    ensures every task gets a fresh connection and no connection is retained
-    after the session/engine is disposed.
+    Celery tasks on Windows may create a fresh event loop with asyncio.run().
+    NullPool prevents asyncpg connections from surviving across those loops.
     """
     worker_engine: AsyncEngine = create_async_engine(
         settings.database_url,
         echo=settings.debug,
         poolclass=NullPool,
     )
+
     worker_session_factory = async_sessionmaker(
         worker_engine,
         class_=AsyncSession,

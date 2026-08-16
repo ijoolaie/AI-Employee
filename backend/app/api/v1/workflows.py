@@ -23,6 +23,29 @@ async def create_workflow(payload: WorkflowCreate, ctx: WorkflowWriteContext, db
 async def list_workflows(ctx: WorkflowReadContext, db: DbSession):
     workflows = await workflow_service.list_workflows(db, tenant_id=ctx.tenant_id)
     return APIResponse(success=True, data=[WorkflowResponse.model_validate(w) for w in workflows])
+@router.get("/{workflow_id}", response_model=APIResponse[WorkflowResponse])
+async def get_workflow(
+    workflow_id: UUID,
+    ctx: WorkflowReadContext,
+    db: DbSession,
+):
+    workflow = await workflow_service.get_workflow(
+        db,
+        workflow_id=workflow_id,
+        tenant_id=ctx.tenant_id,
+    )
+
+    version = await workflow_service.get_current_version(
+        db,
+        workflow_id=workflow.id,
+    )
+
+    return APIResponse(
+        success=True,
+        data=WorkflowResponse.model_validate(workflow).model_copy(
+            update={"current_version_id": version.id if version else None}
+        ),
+    )
 
 
 
@@ -74,7 +97,7 @@ async def list_workflow_runs(workflow_id: UUID, ctx: WorkflowReadContext, db: Db
             WorkflowRun.workflow_id == workflow.id,
             WorkflowRun.tenant_id == ctx.tenant_id,
         )
-        .order_by(workflow_service.WorkflowRun.created_at.desc())
+        .order_by(WorkflowRun.created_at.desc())
         .limit(100)
     )
     return APIResponse(success=True, data=[WorkflowRunResponse.model_validate(r) for r in result.scalars().all()])
