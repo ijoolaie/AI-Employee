@@ -13,6 +13,7 @@ from app.core.logging import request_id_var
 from app.models.workflow import Workflow, WorkflowRun
 from app.models.workflow_event import WorkflowEventTrigger, WorkflowEventDelivery
 from app.services import audit_service, workflow_service
+from app.services.workflow_conditions import evaluate_condition
 from app.core.security import encrypt_secret, decrypt_secret
 from app.core.config import get_settings
 
