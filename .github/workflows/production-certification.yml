@@ -9,6 +9,37 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aiep
+          POSTGRES_PASSWORD: aiep
+          POSTGRES_DB: aiep
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aiep -d aiep"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql+asyncpg://aiep:aiep@localhost:5432/aiep
+      DATABASE_URL_SYNC: postgresql://aiep:aiep@localhost:5432/aiep
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+      SECRET_KEY: ci-certification-secret
+      APP_ENV: test
     defaults:
       run:
         working-directory: backend
@@ -23,10 +54,16 @@ jobs:
         run: pip install -e '.[dev]'
       - name: Pin certification tooling
         run: pip install 'ruff==0.9.2'
+      - name: Install OCR runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-fas
       - name: Compile
         run: python -m compileall -q app
       - name: Ruff
         run: ruff check app tests
+      - name: Prepare test database
+        run: alembic upgrade head
       - name: Tests
         run: pytest -q
 
