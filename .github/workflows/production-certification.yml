@@ -119,6 +119,8 @@ jobs:
         run: docker compose exec -T api python scripts/e2e_stack_verify.py
       - name: Run Auth P0 real-stack certification
         run: docker compose exec -T api python scripts/e2e_auth_verify.py
+      - name: Run Tenant Isolation + RBAC P0 real-stack certification
+        run: docker compose exec -T api python scripts/e2e_tenant_rbac_verify.py
       - name: Run frontend Playwright E2E against running stack
         working-directory: frontend
         env:
