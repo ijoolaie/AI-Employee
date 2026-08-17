@@ -6,18 +6,16 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.logging import request_id_var
-from app.models.workflow import Workflow, WorkflowVersion, WorkflowRun
+from app.models.workflow import Workflow, WorkflowRun
 from app.models.workflow_event import WorkflowEventTrigger, WorkflowEventDelivery
-from app.services import audit_service
+from app.services import audit_service, workflow_service
 from app.core.security import encrypt_secret, decrypt_secret
 from app.core.config import get_settings
 
-
-from app.services.workflow_conditions import evaluate_condition
 
 def _parse_field(field: str, minimum: int, maximum: int) -> set[int]:
     values: set[int] = set()
@@ -147,7 +145,6 @@ async def dispatch_event(db: AsyncSession, *, delivery_id: uuid.UUID) -> Workflo
 async def create_schedule(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id: uuid.UUID, cron_expression: str, timezone_name: str, created_by: uuid.UUID):
     from zoneinfo import ZoneInfo
     from app.models.workflow_schedule import WorkflowSchedule
-    from app.services.workflow_trigger_service import next_cron_time
     try: ZoneInfo(timezone_name)
     except Exception as exc: raise ValidationAppError(f"Invalid timezone: {timezone_name}") from exc
     now = datetime.now(ZoneInfo(timezone_name))
