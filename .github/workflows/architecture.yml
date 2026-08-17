@@ -10,12 +10,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: pip install -e '.[dev]'
+
       - name: Check modular architecture
         run: python scripts/check_architecture.py
 
-          - name: Run modular architecture tests
-            run: |
-              python -m pytest backend/tests/test_m3_infrastructure_boundaries.py backend/tests/test_m4_event_boundaries.py backend/tests/test_m7_real_migration.py
+      - name: Run modular architecture tests
+        run: python -m pytest backend/tests/test_m3_infrastructure_boundaries.py backend/tests/test_m4_event_boundaries.py backend/tests/test_m7_real_migration.py
 
       - name: Final architecture audit
         run: python scripts/final_architecture_audit.py
