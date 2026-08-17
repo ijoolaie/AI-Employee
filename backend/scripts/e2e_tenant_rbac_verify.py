@@ -25,6 +25,7 @@ from app.models.user import User
 
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
+CERT_EMAIL_BASE = "i.joolaie@gmail.com"
 
 
 def request(
@@ -59,7 +60,7 @@ def assert_status(actual: int, expected: int, label: str, body: dict) -> None:
 
 def register(suffix: str, label: str) -> tuple[str, str, str]:
     tenant_slug = f"cert-{label}-{suffix}"
-    email = f"p0-{label}-{suffix}@example.invalid"
+    email = f"i.joolaie+gate2-{label}-{suffix}@gmail.com"
     password = "CertTenantRbac-P0-2026!"
     status, response = request(
         "POST",
@@ -111,7 +112,7 @@ async def create_restricted_member(tenant_slug: str, suffix: str) -> tuple[str, 
             .on_conflict_do_nothing()
         )
 
-        email = f"readonly-{suffix}@example.invalid"
+        email = f"i.joolaie+gate2-readonly-{suffix}@gmail.com"
         password = "CertTenantRbac-ReadOnly-2026!"
         member = User(
             tenant_id=tenant.id,
