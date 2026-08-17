@@ -41,7 +41,7 @@ def request(method: str, path: str, payload: dict | None = None, token: str | No
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     tenant_slug = f"cert-auth-{suffix}"
-    email = f"cert-auth-{suffix}@example.com"
+    email = "i.joolaie@gmail.com"
     password = "CertAuth-P0-2026!"
 
     status, registered = request(
