@@ -110,6 +110,7 @@ async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UU
         raise
 
     await audit_service.record(db, action="knowledge.indexed", actor_type="user", actor_id=actor_id, tenant_id=tenant_id, resource_type="knowledge_document", resource_id=document.id, request_id=request_id_var.get(), metadata={"file_id": str(file_id), "chunk_count": len(chunks), "embedding_model": settings.ai_embedding_model})
+    await db.refresh(document)
     return document
 
 
