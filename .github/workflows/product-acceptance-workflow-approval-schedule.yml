@@ -48,9 +48,6 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: pip install -e '.[dev]'
-      - name: Prepare database
-        working-directory: backend
-        run: alembic upgrade head
       - name: Start application stack
         run: docker compose up -d --build
       - name: Wait for API readiness
