@@ -60,11 +60,12 @@ async def create_memory(
 
     embedding = (await embed_texts([content]))[0]
     next_version = (previous.version + 1) if previous else 1
+    now = datetime.now(timezone.utc)
     memory = EmployeeMemory(
         tenant_id=tenant_id, employee_id=employee_id, source_run_id=source_run_id,
         supersedes_id=previous.id if previous else None, memory_type=memory_type,
         content=content, embedding=embedding, importance=importance, version=next_version,
-        status="active", metadata_=metadata, expires_at=expires_at, created_by=actor_id,
+        status="active", metadata_=metadata, effective_at=now, expires_at=expires_at, created_by=actor_id,
     )
     db.add(memory)
     await db.flush()
