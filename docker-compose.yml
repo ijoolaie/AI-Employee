@@ -1,9 +1,4 @@
 services:
-  # Initialize the shared storage volume before any non-root app service starts.
-  # The API/worker/beat containers run as appuser (UID/GID 10001), so a fresh
-  # named volume must be owned by that account or file uploads will fail with
-  # PermissionError. This init service is intentionally root-only and exits
-  # after preparing the volume.
   storage-init:
     image: alpine:3.20
     user: "0:0"
@@ -52,6 +47,7 @@ services:
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
       AI_DEFAULT_PROVIDER: deterministic
+      E2E_DETERMINISTIC_EMBEDDINGS: "true"
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
     volumes:
       - app_storage:/app/var/storage
@@ -86,6 +82,7 @@ services:
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
       AI_DEFAULT_PROVIDER: deterministic
+      E2E_DETERMINISTIC_EMBEDDINGS: "true"
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
     volumes:
       - app_storage:/app/var/storage
@@ -113,6 +110,7 @@ services:
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
       AI_DEFAULT_PROVIDER: deterministic
+      E2E_DETERMINISTIC_EMBEDDINGS: "true"
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
     volumes:
       - app_storage:/app/var/storage
@@ -132,12 +130,8 @@ services:
       args:
         API_INTERNAL_URL: http://api:8000
     environment:
-      # Browser-visible API origin; keep localhost because the browser runs on Windows.
       NEXT_PUBLIC_API_URL: http://localhost:8000
-      # Server-side Next.js proxy target; inside Docker this must use the Compose service name.
       API_INTERNAL_URL: http://api:8000
-      # Explicitly bind Next.js standalone to all container interfaces.
-      # This makes the healthcheck deterministic on Docker Desktop/Windows.
       HOSTNAME: 0.0.0.0
     ports:
       - "3000:3000"
@@ -145,15 +139,16 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      # Probe loopback after explicitly binding Next.js to 0.0.0.0.
-      # Use Node's built-in fetch so the check does not depend on wget or
-      # container hostname/DNS behavior.
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch('http://127.0.0.1:3000/login').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))
       interval: 5s
       timeout: 5s
       start_period: 10s
       retries: 20
-
 
 volumes:
   postgres_data:

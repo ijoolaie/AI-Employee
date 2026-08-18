@@ -182,7 +182,7 @@ class WorkflowApprovalResponse(BaseModel):
     requested_by: UUID | None
     decided_by: UUID | None
     decision_reason: str | None
-    metadata: dict[str, Any]
+    metadata: dict[str, Any] = Field(default_factory=dict, validation_alias="metadata_", serialization_alias="metadata")
     expires_at: datetime | None
     decided_at: datetime | None
     created_at: datetime
