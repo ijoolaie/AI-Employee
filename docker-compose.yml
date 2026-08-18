@@ -51,6 +51,7 @@ services:
       DEBUG: "false"
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
+      AI_DEFAULT_PROVIDER: deterministic
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
     volumes:
       - app_storage:/app/var/storage
@@ -84,6 +85,7 @@ services:
       DEBUG: "false"
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
+      AI_DEFAULT_PROVIDER: deterministic
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
     volumes:
       - app_storage:/app/var/storage
@@ -110,6 +112,7 @@ services:
       DEBUG: "false"
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
+      AI_DEFAULT_PROVIDER: deterministic
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
     volumes:
       - app_storage:/app/var/storage
