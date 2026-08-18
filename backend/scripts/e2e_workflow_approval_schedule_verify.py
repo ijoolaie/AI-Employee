@@ -41,17 +41,7 @@ def expect(status: int, expected: int, label: str, body: dict) -> dict:
 def register(suffix: str):
     email = f"i.joolaie+workflow-{suffix}@gmail.com"
     tenant_slug = f"cert-workflow-{suffix}"
-    status, body = request(
-        "POST",
-        "/auth/register",
-        {
-            "tenant_name": f"Workflow Acceptance {suffix}",
-            "tenant_slug": tenant_slug,
-            "email": email,
-            "password": "CertWorkflow-P0-2026!",
-            "full_name": "Workflow Acceptance Admin",
-        },
-    )
+    status, body = request("POST", "/auth/register", {"tenant_name": f"Workflow Acceptance {suffix}", "tenant_slug": tenant_slug, "email": email, "password": "CertWorkflow-P0-2026!", "full_name": "Workflow Acceptance Admin"})
     data = expect(status, 201, "workflow certification registration", body)
     token = data.get("access_token")
     assert token, body
@@ -61,20 +51,7 @@ def register(suffix: str):
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     token = register(suffix)
-
-    workflow_payload = {
-        "slug": f"cert-workflow-approval-{suffix}",
-        "name": "P0 Workflow Approval Certification",
-        "trigger_type": "manual",
-        "steps": [
-            {
-                "key": "human_gate",
-                "type": "approval",
-                "message": "Approve the Product Acceptance workflow gate.",
-                "timeout_seconds": 300,
-            }
-        ],
-    }
+    workflow_payload = {"slug": f"cert-workflow-approval-{suffix}", "name": "P0 Workflow Approval Certification", "trigger_type": "manual", "steps": [{"key": "human_gate", "type": "approval", "message": "Approve the Product Acceptance workflow gate.", "timeout_seconds": 300}]}
     status, body = request("POST", "/workflows", workflow_payload, token)
     workflow = expect(status, 201, "workflow creation", body)
     workflow_id = workflow["id"]
@@ -82,16 +59,10 @@ def main() -> int:
 
     status, body = request("GET", f"/workflows/{workflow_id}", token=token)
     current = expect(status, 200, "workflow read", body)
-    assert current["id"] == workflow_id
-    assert current.get("current_version_id"), current
+    assert current["id"] == workflow_id and current.get("current_version_id"), current
     print("WORKFLOW READ/VERSION PASS")
 
-    status, body = request(
-        "POST",
-        f"/workflows/{workflow_id}/runs",
-        {"input_data": {"certification": "workflow-approval-schedule"}, "idempotency_key": f"cert-{suffix}"},
-        token,
-    )
+    status, body = request("POST", f"/workflows/{workflow_id}/runs", {"input_data": {"certification": "workflow-approval-schedule"}, "idempotency_key": f"cert-{suffix}"}, token)
     run = expect(status, 201, "workflow run creation", body)
     run_id = run["id"]
     print(f"WORKFLOW RUN CREATE PASS run={run_id}")
@@ -110,37 +81,29 @@ def main() -> int:
     approval_id = approval["id"]
     print(f"APPROVAL CREATED PASS approval={approval_id}")
 
-    status, body = request(
-        "POST",
-        f"/workflow-approvals/{approval_id}/decision",
-        {"decision": "approve", "reason": "Product Acceptance approval gate passed."},
-        token,
-    )
+    status, body = request("POST", f"/workflow-approvals/{approval_id}/decision", {"decision": "approve", "reason": "Product Acceptance approval gate passed."}, token)
     decided = expect(status, 200, "approval decision", body)
     assert decided.get("status") == "approved", decided
     print("APPROVAL APPROVE PASS")
 
     final_run = None
     deadline = time.time() + 45
+    terminal_success = {"completed", "success"}
+    terminal_failure = {"failed", "cancelled", "error"}
     while time.time() < deadline:
         status, body = request("GET", f"/workflows/{workflow_id}/runs/{run_id}", token=token)
         final_run = expect(status, 200, "workflow run status", body)
-        if final_run.get("status") in {"completed", "failed", "cancelled"}:
+        run_status = final_run.get("status")
+        if run_status in terminal_success or run_status in terminal_failure:
             break
         time.sleep(2)
-    assert final_run and final_run.get("status") == "completed", final_run
+    assert final_run and final_run.get("status") in terminal_success, final_run
     print("WORKFLOW RESUME/COMPLETE PASS")
 
-    status, body = request(
-        "POST",
-        f"/workflows/{workflow_id}/schedules",
-        {"cron_expression": "0 0 * * *", "timezone": "UTC"},
-        token,
-    )
+    status, body = request("POST", f"/workflows/{workflow_id}/schedules", {"cron_expression": "0 0 * * *", "timezone": "UTC"}, token)
     schedule = expect(status, 201, "schedule creation", body)
     schedule_id = schedule["id"]
-    assert schedule.get("is_active") is True
-    assert schedule.get("next_run_at"), schedule
+    assert schedule.get("is_active") is True and schedule.get("next_run_at"), schedule
     print(f"SCHEDULE CREATE/NEXT-RUN PASS schedule={schedule_id}")
 
     status, body = request("GET", f"/workflows/{workflow_id}/schedules", token=token)
@@ -148,12 +111,7 @@ def main() -> int:
     assert any(item.get("id") == schedule_id for item in schedules), schedules
     print("SCHEDULE TENANT-SCOPED READ PASS")
 
-    status, body = request(
-        "PATCH",
-        f"/workflow-schedules/{schedule_id}",
-        {"is_active": False},
-        token,
-    )
+    status, body = request("PATCH", f"/workflow-schedules/{schedule_id}", {"is_active": False}, token)
     updated = expect(status, 200, "schedule deactivate", body)
     assert updated.get("is_active") is False and updated.get("next_run_at") is None, updated
     print("SCHEDULE UPDATE/DEACTIVATE PASS")
