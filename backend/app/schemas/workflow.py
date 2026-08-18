@@ -172,8 +172,9 @@ class WorkflowApprovalDecision(BaseModel):
     decision: Literal["approve", "reject"]
     reason: str | None = Field(default=None, max_length=2000)
 
+
 class WorkflowApprovalResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
     id: UUID
     workflow_run_id: UUID
     workflow_step_run_id: UUID
@@ -182,7 +183,15 @@ class WorkflowApprovalResponse(BaseModel):
     requested_by: UUID | None
     decided_by: UUID | None
     decision_reason: str | None
-    metadata: dict[str, Any]
+    # SQLAlchemy reserves the attribute name `metadata` on declarative models;
+    # the mapped ORM attribute is therefore exposed as `metadata_`. Keep the
+    # public API contract as `metadata` while telling Pydantic which attribute
+    # to read when validating from ORM objects.
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        validation_alias="metadata_",
+        serialization_alias="metadata",
+    )
     expires_at: datetime | None
     decided_at: datetime | None
     created_at: datetime
