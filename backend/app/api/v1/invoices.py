@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status
 
 from app.core.deps import CurrentContext, DbSession
 from app.schemas.common import APIResponse
@@ -44,7 +44,11 @@ async def get_invoice(invoice_id: UUID, ctx: CurrentContext, db: DbSession):
     return APIResponse(success=True, data=BusinessInvoiceResponse.model_validate(inv))
 
 
-@router.post("", response_model=APIResponse[BusinessInvoiceResponse])
+@router.post(
+    "",
+    response_model=APIResponse[BusinessInvoiceResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_invoice(payload: BusinessInvoiceCreate, ctx: CurrentContext, db: DbSession):
     inv = await invoice_service.create_invoice(
         db,
