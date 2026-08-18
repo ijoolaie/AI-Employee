@@ -98,4 +98,5 @@ async def update_stage(
         stage=payload.stage,
         probability=payload.probability,
     )
+    await db.refresh(deal)
     return APIResponse(success=True, data=BusinessDealResponse.model_validate(deal))
