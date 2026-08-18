@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status
 
 from app.core.deps import CurrentContext, DbSession
 from app.schemas.common import APIResponse
@@ -57,7 +57,11 @@ async def get_deal(deal_id: UUID, ctx: CurrentContext, db: DbSession):
     return APIResponse(success=True, data=BusinessDealResponse.model_validate(deal))
 
 
-@router.post("/deals", response_model=APIResponse[BusinessDealResponse])
+@router.post(
+    "/deals",
+    response_model=APIResponse[BusinessDealResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_deal(payload: BusinessDealCreate, ctx: CurrentContext, db: DbSession):
     deal = await sales_service.create_deal(
         db,
