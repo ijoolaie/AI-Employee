@@ -83,6 +83,7 @@ async def update_status(
         order_id=str(order_id),
         status=payload.status,
     )
+    await db.refresh(order)
     return APIResponse(success=True, data=BusinessOrderResponse.model_validate(order))
 
 
