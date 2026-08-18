@@ -82,6 +82,9 @@ async def update_status(
         invoice_id=str(invoice_id),
         status=payload.status,
     )
+    # The async service may leave ORM attributes expired after audit/flush.
+    # Refresh before Pydantic serialization to avoid implicit async IO.
+    await db.refresh(inv)
     return APIResponse(success=True, data=BusinessInvoiceResponse.model_validate(inv))
 
 
