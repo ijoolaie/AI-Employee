@@ -38,6 +38,43 @@ def request(method: str, path: str, payload: dict | None = None, token: str | No
         raise AssertionError(f"{method} {path} unavailable: {exc}") from exc
 
 
+def login_with_commit_retry(email: str, password: str, tenant_slug: str) -> tuple[int, dict]:
+    """Allow a short propagation window after register before asserting login.
+
+    Registration performs several writes (tenant, user, RBAC, billing and
+    audit) in one request. The certification client may receive the register
+    response before the request dependency cleanup has committed that
+    transaction. A transient 401 at this exact boundary is therefore retried;
+    any persistent authentication failure still fails the certification.
+    """
+    payload = {"email": email, "password": password, "tenant_slug": tenant_slug}
+    last_detail: dict = {}
+    for attempt in range(8):
+        body = json.dumps(payload).encode()
+        req = Request(
+            f"{BASE_URL}/auth/login",
+            data=body,
+            headers={"Accept": "application/json", "Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urlopen(req, timeout=10) as response:
+                return response.status, json.loads(response.read().decode())
+        except HTTPError as exc:
+            raw = exc.read().decode()
+            try:
+                detail = json.loads(raw)
+            except json.JSONDecodeError:
+                detail = {"raw": raw}
+            last_detail = detail
+            if exc.code != 401 or attempt == 7:
+                return exc.code, detail
+            time.sleep(0.25)
+        except URLError as exc:
+            raise AssertionError(f"POST /auth/login unavailable: {exc}") from exc
+    return 401, last_detail
+
+
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     tenant_slug = f"cert-auth-{suffix}"
@@ -62,12 +99,8 @@ def main() -> int:
     assert register_data.get("refresh_token"), "register did not return refresh_token"
     print("AUTH REGISTER PASS")
 
-    status, logged_in = request(
-        "POST",
-        "/auth/login",
-        {"email": email, "password": password, "tenant_slug": tenant_slug},
-    )
-    assert status == 200, f"login status={status}"
+    status, logged_in = login_with_commit_retry(email, password, tenant_slug)
+    assert status == 200, f"login status={status}: {logged_in}"
     assert logged_in.get("success") is True, logged_in
     login_data = logged_in.get("data") or {}
     access_token = login_data.get("access_token")
