@@ -26,6 +26,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 )
 async def register(payload: RegisterRequest, db: DbSession):
     tenant, user = await auth_service.register_tenant_and_user(db, payload)
+    # The DB dependency commits during generator teardown, which can happen
+    # after the HTTP response has already been sent. Product acceptance gates
+    # may immediately reuse this token on a separate request/connection.
+    # Commit the registration before returning the token so the user and
+    # tenant are guaranteed visible to the next authenticated request.
+    await db.commit()
     tokens = auth_service.issue_tokens(user)
     return APIResponse(success=True, data=tokens)
 
