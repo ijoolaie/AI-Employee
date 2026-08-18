@@ -1,11 +1,13 @@
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 class KnowledgeIndexRequest(BaseModel):
     file_id: UUID
 
 class KnowledgeDocumentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     file_id: UUID
     status: str
