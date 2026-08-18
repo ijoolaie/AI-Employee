@@ -123,6 +123,10 @@ jobs:
         run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_tenant_rbac_verify.py'
       - name: Run Employee -> Run -> AI -> Result Product Acceptance certification
         run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_employee_run_verify.py'
+      - name: Run Workflow -> Approval -> Schedule Product Acceptance certification
+        run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_workflow_approval_schedule_verify.py'
+      - name: Run Orders -> Sales -> Invoice -> Billing Product Acceptance certification
+        run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_commerce_billing_verify.py'
       - name: Run frontend Playwright E2E against running stack
         working-directory: frontend
         env:
