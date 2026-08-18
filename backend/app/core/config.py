@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 from typing import Any, List
+from urllib.parse import urlparse
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -45,8 +46,8 @@ class Settings(BaseSettings):
         """Fail fast on unsafe production configuration.
 
         Development/e2e environments keep their existing defaults. A real
-        production deployment must opt into explicit secrets, HTTPS-oriented
-        controls, and fail-closed rate limiting.
+        production deployment must opt into explicit secrets, HTTPS endpoints,
+        and fail-closed rate limiting instead of inheriting local defaults.
         """
         if self.app_env.lower() in {"production", "prod"}:
             if self.debug:
@@ -59,6 +60,22 @@ class Settings(BaseSettings):
                 raise ValueError("RATE_LIMIT_FAIL_CLOSED must be true in production")
             if not self.cors_origins:
                 raise ValueError("CORS_ORIGINS must explicitly allow trusted origins in production")
+            if any(urlparse(origin).scheme != "https" for origin in self.cors_origins):
+                raise ValueError("CORS_ORIGINS must use HTTPS in production")
+            if urlparse(self.frontend_base_url).scheme != "https":
+                raise ValueError("FRONTEND_BASE_URL must use HTTPS in production")
+            if urlparse(self.frontend_app_url).scheme != "https":
+                raise ValueError("FRONTEND_APP_URL must use HTTPS in production")
+            for name, value in {
+                "DATABASE_URL": self.database_url,
+                "DATABASE_URL_SYNC": self.database_url_sync,
+                "REDIS_URL": self.redis_url,
+                "CELERY_BROKER_URL": self.celery_broker_url,
+                "CELERY_RESULT_BACKEND": self.celery_result_backend,
+            }.items():
+                host = (urlparse(value).hostname or "").lower()
+                if host in {"localhost", "127.0.0.1", "::1"}:
+                    raise ValueError(f"{name} must not point to localhost in production")
         return self
 
     @field_validator("cors_origins", mode="before")
@@ -93,13 +110,9 @@ class Settings(BaseSettings):
     lm_studio_base_url: str = "http://127.0.0.1:1234/v1"
     lm_studio_api_key: str | None = None
 
-    # Controlled Tool execution boundary. A Run may perform only this many
-    # model -> tool -> model iterations before failing closed.
     ai_max_tool_iterations: int = 4
-    # Autonomous planner limits. Planning is still opt-in per EmployeeVersion rules.
     ai_autonomy_max_steps: int = 6
 
-    # External email Tool integration. Real credentials remain in .env only.
     smtp_host: str | None = None
     smtp_port: int = 587
     smtp_username: str | None = None
@@ -110,10 +123,8 @@ class Settings(BaseSettings):
     password_reset_token_expire_minutes: int = 30
     password_reset_rate_limit: int = 5
     password_reset_rate_window_minutes: int = 15
-    # Fail closed when the recipient-domain allowlist is empty.
     smtp_allowed_recipient_domains: List[str] = []
 
-    # Security hardening
     rate_limit_enabled: bool = True
     rate_limit_requests: int = 120
     rate_limit_window_seconds: int = 60
@@ -123,33 +134,22 @@ class Settings(BaseSettings):
     webhook_max_payload_bytes: int = 262144
     webhook_replay_window_seconds: int = 300
 
-    # Reliability / observability
     outbox_max_attempts: int = 8
     otel_enabled: bool = True
     otel_service_name: str = "ai-employee-platform"
     otel_exporter_endpoint: str | None = None
 
-    # Billing webhook authentication. Fail closed when unset.
     billing_webhook_secret: str | None = None
 
-    # Phase 6 — real payment-provider adapter (Stripe). Provider-neutral
-    # billing_service.py / Subscription/BillingEvent models are unchanged;
-    # this only supplies the Stripe-specific glue (Checkout, Billing
-    # Portal, webhook signature verification). Unset by default — fails
-    # closed (checkout/portal endpoints return a clear error, the webhook
-    # route rejects all requests) until real keys are configured.
     stripe_secret_key: str | None = None
     stripe_publishable_key: str | None = None
     stripe_webhook_secret: str | None = None
-    # plan_code -> Stripe Price ID, e.g. {"business": "price_123", "professional": "price_456"}.
-    # Parsed from a JSON env var (STRIPE_PRICE_MAP='{"business":"price_123"}').
     stripe_price_map: dict[str, str] = {}
     stripe_checkout_success_url: str = "http://localhost:3000/billing?checkout=success"
     stripe_checkout_cancel_url: str = "http://localhost:3000/billing?checkout=cancelled"
     stripe_portal_return_url: str = "http://localhost:3000/billing"
     stripe_trial_days: int = 14
 
-    # Shopify public-app OAuth / GraphQL connector.
     shopify_client_id: str | None = None
     shopify_client_secret: str | None = None
     shopify_redirect_uri: str = "http://localhost:8000/api/v1/commerce-integrations/shopify/callback"
