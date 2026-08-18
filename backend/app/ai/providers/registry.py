@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from app.ai.providers.base import AIProvider
 from app.ai.providers.anthropic_provider import AnthropicProvider
+from app.ai.providers.deterministic_provider import DeterministicProvider
 from app.ai.providers.lm_studio_provider import LMStudioProvider
 from app.core.config import get_settings
 
@@ -20,4 +21,6 @@ def get_default_provider() -> AIProvider:
         )
     if provider == "anthropic":
         return AnthropicProvider()
+    if provider == "deterministic":
+        return DeterministicProvider()
     raise RuntimeError(f"Unsupported AI provider: {provider}")
