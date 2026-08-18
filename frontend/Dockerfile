@@ -1,7 +1,8 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY frontend/package.json ./package.json
-RUN npm install --no-audit --no-fund
+COPY frontend/package-lock.json ./package-lock.json
+RUN npm ci --no-audit --no-fund
 
 FROM node:22-alpine AS builder
 WORKDIR /app
