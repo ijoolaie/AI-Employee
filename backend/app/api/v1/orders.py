@@ -2,7 +2,7 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, status
 
 from app.core.deps import CurrentContext, DbSession
 from app.schemas.common import APIResponse
@@ -44,7 +44,11 @@ async def get_order(order_id: UUID, ctx: CurrentContext, db: DbSession):
     return APIResponse(success=True, data=BusinessOrderResponse.model_validate(order))
 
 
-@router.post("", response_model=APIResponse[BusinessOrderResponse])
+@router.post(
+    "",
+    response_model=APIResponse[BusinessOrderResponse],
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_order(payload: BusinessOrderCreate, ctx: CurrentContext, db: DbSession):
     order = await order_service.create_order(
         db,
