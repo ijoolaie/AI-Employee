@@ -1,24 +1,19 @@
 """Tenant-scoped document indexing and vector retrieval for RAG v0.2.23."""
 from __future__ import annotations
-
+import hashlib
 import math
 import re
 import uuid
 from pathlib import Path
-
 import httpx
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.config import get_settings
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.logging import request_id_var
-
+from app.rag.text import chunk_text
 
 settings = get_settings()
-
-
-from app.rag.text import chunk_text
 
 
 def extract_text(file_obj) -> str:
@@ -49,9 +44,24 @@ def extract_text(file_obj) -> str:
     raise ValidationAppError(f"Unsupported knowledge file type: {file_obj.filename}")
 
 
+def _deterministic_embedding(text: str, dimensions: int = 64) -> list[float]:
+    """Stable lightweight embedding for Compose certification only."""
+    values = [0.0] * dimensions
+    tokens = re.findall(r"[a-z0-9]+", text.lower())
+    for token in tokens:
+        digest = hashlib.sha256(token.encode()).digest()
+        index = int.from_bytes(digest[:2], "big") % dimensions
+        sign = 1.0 if digest[2] & 1 else -1.0
+        values[index] += sign
+    norm = math.sqrt(sum(value * value for value in values))
+    return [value / norm for value in values] if norm else [0.0] * dimensions
+
+
 async def embed_texts(texts: list[str]) -> list[list[float]]:
     if not texts:
         return []
+    if settings.e2e_deterministic_embeddings:
+        return [_deterministic_embedding(text) for text in texts]
     url = f"{settings.lm_studio_base_url.rstrip('/')}/embeddings"
     headers = {"content-type": "application/json"}
     if settings.lm_studio_api_key:
@@ -80,7 +90,6 @@ async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UU
     chunks = chunk_text(text)
     if not chunks:
         raise ValidationAppError("File contains no extractable text")
-
     doc_result = await db.execute(select(KnowledgeDocument).where(KnowledgeDocument.tenant_id == tenant_id, KnowledgeDocument.file_id == file_id))
     document = doc_result.scalar_one_or_none()
     if document is None:
@@ -91,7 +100,6 @@ async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UU
         await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.document_id == document.id))
         document.status = "pending"
         document.error_message = None
-
     try:
         embeddings: list[list[float]] = []
         batch_size = 32
@@ -101,15 +109,14 @@ async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UU
             db.add(KnowledgeChunk(tenant_id=tenant_id, document_id=document.id, chunk_index=index, content=content, embedding=embedding))
         document.status = "indexed"
         document.chunk_count = len(chunks)
-        document.embedding_model = settings.ai_embedding_model
+        document.embedding_model = "deterministic-certification" if settings.e2e_deterministic_embeddings else settings.ai_embedding_model
         await db.flush()
     except Exception as exc:
         document.status = "failed"
         document.error_message = str(exc)[:2000]
         await db.flush()
         raise
-
-    await audit_service.record(db, action="knowledge.indexed", actor_type="user", actor_id=actor_id, tenant_id=tenant_id, resource_type="knowledge_document", resource_id=document.id, request_id=request_id_var.get(), metadata={"file_id": str(file_id), "chunk_count": len(chunks), "embedding_model": settings.ai_embedding_model})
+    await audit_service.record(db, action="knowledge.indexed", actor_type="user", actor_id=actor_id, tenant_id=tenant_id, resource_type="knowledge_document", resource_id=document.id, request_id=request_id_var.get(), metadata={"file_id": str(file_id), "chunk_count": len(chunks), "embedding_model": document.embedding_model})
     return document
 
 
@@ -118,7 +125,7 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
         return 0.0
     dot = sum(x * y for x, y in zip(a, b))
     na = math.sqrt(sum(x * x for x in a))
-    nb = math.sqrt(sum(y * y for y in b))
+    nb = math.sqrt(sum(x * x for x in b))
     return dot / (na * nb) if na and nb else 0.0
 
 
@@ -129,29 +136,7 @@ async def search(db: AsyncSession, *, tenant_id: uuid.UUID, query: str, top_k: i
         raise ValidationAppError("Query must not be empty")
     top_k = min(max(top_k, 1), 20)
     query_embedding = (await embed_texts([query]))[0]
-    result = await db.execute(
-        select(KnowledgeChunk, KnowledgeDocument, FileObject)
-        .join(KnowledgeDocument, KnowledgeDocument.id == KnowledgeChunk.document_id)
-        .join(FileObject, FileObject.id == KnowledgeDocument.file_id)
-        .where(
-            KnowledgeChunk.tenant_id == tenant_id,
-            KnowledgeDocument.tenant_id == tenant_id,
-            KnowledgeDocument.status == "indexed",
-            FileObject.tenant_id == tenant_id,
-            FileObject.status == "active",
-        )
-    )
+    result = await db.execute(select(KnowledgeChunk, KnowledgeDocument, FileObject).join(KnowledgeDocument, KnowledgeDocument.id == KnowledgeChunk.document_id).join(FileObject, FileObject.id == KnowledgeDocument.file_id).where(KnowledgeChunk.tenant_id == tenant_id, KnowledgeDocument.tenant_id == tenant_id, KnowledgeDocument.status == "indexed", FileObject.tenant_id == tenant_id, FileObject.status == "active"))
     scored = [(cosine_similarity(query_embedding, chunk.embedding), chunk, document, file_obj) for chunk, document, file_obj in result.all()]
     scored.sort(key=lambda item: item[0], reverse=True)
-    return [
-        {
-            "chunk_id": str(chunk.id),
-            "document_id": str(chunk.document_id),
-            "file_id": str(file_obj.id),
-            "filename": file_obj.filename,
-            "chunk_index": chunk.chunk_index,
-            "score": round(score, 6),
-            "content": chunk.content,
-        }
-        for score, chunk, document, file_obj in scored[:top_k]
-    ]
+    return [{"chunk_id": str(chunk.id), "document_id": str(chunk.document_id), "file_id": str(file_obj.id), "filename": file_obj.filename, "chunk_index": chunk.chunk_index, "score": round(score, 6), "content": chunk.content} for score, chunk, document, file_obj in scored[:top_k]]
