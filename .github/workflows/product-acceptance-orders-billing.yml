@@ -1,0 +1,40 @@
+name: Product Acceptance - Orders Sales Invoice Billing
+
+on:
+  push:
+    branches: [cert/product-acceptance-orders-billing]
+  workflow_dispatch:
+
+jobs:
+  stack-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install certification dependencies
+        run: pip install requests
+      - name: Start stack
+        run: docker compose up -d --build
+      - name: Wait for API
+        run: |
+          for i in {1..60}; do curl -fsS http://localhost:8000/health && exit 0; sleep 2; done
+          docker compose ps
+          docker compose logs --tail=200
+          exit 1
+      - name: Prepare database
+        run: docker compose exec -T api alembic upgrade head
+      - name: Orders Sales Invoice Billing real-stack certification
+        env:
+          API_BASE_URL: http://localhost:8000
+          CERT_TOKEN: ${{ secrets.CERT_TOKEN }}
+          CERT_TENANT_ID: ${{ secrets.CERT_TENANT_ID }}
+        run: python backend/scripts/e2e_orders_sales_invoice_billing_verify.py
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose logs --tail=300
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v
