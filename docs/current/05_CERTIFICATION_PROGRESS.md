@@ -2,14 +2,14 @@
 
 ## Status as of 2026-08-19
 
-**Current state: GREEN — full certification stack-smoke gate passed.**
+**Current state: GREEN — full certification stack-smoke gate passed; production-readiness hardening is in progress.**
 
-Latest verified run:
+Latest verified runtime run:
 - GitHub Actions Run: `32189879292`
 - Repository: `ijoolaie/AI-Employee`
 - Result: **SUCCESS**
 
-This document records the implementation/debugging path and the certification evidence accumulated through the first fully green end-to-end gate. It is intended to prevent repeating already-solved work and to provide the baseline for the next roadmap phase.
+This document records the implementation/debugging path and certification evidence accumulated through the first fully green end-to-end gate. It is also the working checkpoint for the next production-readiness phase.
 
 ## Certification path completed
 
@@ -88,6 +88,7 @@ The key fixes applied during this certification cycle were:
 - `78a6aa15e3fc58e487a148640bf187b27912e9c2` — return HTTP 201 for Sales Deal creation.
 - `02a127a39b0d0815e78de0f2057b866caac8ae39` — refresh Sales Deal after stage update.
 - `e08b95ff6d3ead0f8e4bf11cfd144dd4d0c697e1` — commit user/tenant registration before issuing auth tokens.
+- `5dc922a9b5f7b256968f6984f6bdf7cab227ab58` — fail closed on unsafe production URLs/configuration.
 
 ## Gate history
 
@@ -99,34 +100,48 @@ The key fixes applied during this certification cycle were:
 | `32189037208` | Failed | Workflow Create returned 401 due to registration/auth transaction timing |
 | `32189879292` | **PASS** | Full certification stack-smoke green |
 
+## Production-readiness audit checkpoint
+
+The first audit pass was performed after the green runtime checkpoint. One concrete hardening gap was found in application configuration: the production validator already rejected debug mode, weak secrets, disabled rate limiting, and empty CORS, but it did not reject local HTTP origins or localhost service URLs. Those local defaults are appropriate for development/E2E, but unsafe to inherit into a real production environment.
+
+### Hardening applied
+
+Commit `5dc922a9b5f7b256968f6984f6bdf7cab227ab58` strengthens the production configuration guard so that production startup now fails closed when:
+
+- any `CORS_ORIGINS` entry is not HTTPS;
+- `FRONTEND_BASE_URL` is not HTTPS;
+- `FRONTEND_APP_URL` is not HTTPS;
+- database, Redis, Celery broker, or Celery result-backend URLs point to localhost/loopback.
+
+This does not change development or E2E defaults. It makes an accidental production deployment with local/dev endpoints fail at startup instead of silently accepting them.
+
+### Remaining production deployment checks
+
+The repository-level audit is not a production deployment certification. Before a real production release, the deployment environment still needs explicit verification of:
+
+1. HTTPS/reverse proxy and trusted-origin configuration.
+2. Production secrets supplied through the deployment secret manager, not repository defaults.
+3. Database/Redis/Celery endpoints and network exposure.
+4. Worker and beat operation, restart policy, and queue health.
+5. Monitoring/logging/OTel exporter configuration and alerting.
+6. Storage persistence, backup/restore, and migration/rollback procedure.
+7. Production payment/webhook secrets and signature verification where those integrations are enabled.
+8. Deployment-specific security review and least-privilege infrastructure configuration.
+
 ## Current checkpoint
 
-The repository now has a verified green end-to-end certification checkpoint. The following areas have fresh runtime evidence from the successful run:
-
-- backend + frontend integration;
-- OCR runtime availability;
-- lint/compile checks;
-- database migration and backend tests;
-- authentication;
-- tenant isolation and RBAC;
-- Employee -> Run -> AI -> Result;
-- Workflow -> Approval -> Schedule;
-- Orders -> Sales -> Invoice -> Billing;
-- frontend Playwright E2E.
-
-## What this does NOT mean
-
-This checkpoint is **not by itself a production deployment certification**. The existing release audit explicitly distinguishes staging/runtime gate success from production certification. Production still requires deployment-specific verification such as HTTPS/reverse proxy, production secrets/environment, monitoring/logging, worker/beat operation, and deployment security review.
+The repository has a verified green end-to-end certification checkpoint plus an initial production configuration hardening commit. The green runtime evidence covers backend/frontend integration, OCR, lint/compile, migrations/tests, authentication, tenant/RBAC, Employee -> Run -> AI -> Result, Workflow -> Approval -> Schedule, Orders -> Sales -> Invoice -> Billing, and frontend Playwright E2E.
 
 ## Next roadmap phase
 
-Do not reopen the already-passed gates unless a later change affects them. The next work should move forward from this green checkpoint:
+Do not reopen the already-passed gates unless a later change affects them. Continue from this checkpoint with deployment-specific production readiness rather than adding unrelated features.
 
-1. Preserve this run as the baseline certification checkpoint.
-2. Continue with the next roadmap/product-acceptance gate.
-3. For any failure, diagnose from the first failing gate and fix the underlying contract/runtime issue rather than weakening the certification assertion.
-4. Re-run the full certification after each relevant fix.
-5. Keep this document updated with new run IDs, root causes, fixes, and the next green checkpoint.
+1. Run the certification workflow on commit `5dc922a9b5f7b256968f6984f6bdf7cab227ab58`.
+2. Verify the production configuration guard with representative production-safe and unsafe settings.
+3. Audit deployment manifests/reverse proxy, secrets, worker/beat, observability, storage, and backup/rollback controls.
+4. For any failure, diagnose from the first failing gate and fix the underlying contract/runtime issue rather than weakening the certification assertion.
+5. Re-run the full certification after each relevant fix.
+6. Keep this document updated with new run IDs, root causes, fixes, and the next green checkpoint.
 
 ## Operating rule
 
