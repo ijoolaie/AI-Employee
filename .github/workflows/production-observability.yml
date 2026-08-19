@@ -1,0 +1,56 @@
+name: Production Observability
+
+on:
+  pull_request:
+    paths:
+      - 'docker-compose.production.yml'
+      - 'backend/app/**'
+      - '.github/workflows/production-observability.yml'
+  workflow_dispatch:
+
+jobs:
+  observability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate production compose
+        run: docker compose -f docker-compose.production.yml config --quiet
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password_not_default
+          POSTGRES_DB: ci_db
+          REDIS_PASSWORD: ci_redis_password
+          SECRET_KEY: ci-production-secret-that-is-long-enough-123456
+          DATABASE_URL: postgresql+asyncpg://ci_user:ci_password_not_default@postgres:5432/ci_db
+          DATABASE_URL_SYNC: postgresql://ci_user:ci_password_not_default@postgres:5432/ci_db
+          REDIS_URL: redis://:ci_redis_password@redis:6379/0
+          CELERY_BROKER_URL: redis://:ci_redis_password@redis:6379/1
+          CELERY_RESULT_BACKEND: redis://:ci_redis_password@redis:6379/2
+          CORS_ORIGINS: '["https://app.example.com"]'
+          FRONTEND_BASE_URL: https://app.example.com
+          FRONTEND_APP_URL: https://app.example.com
+          NEXT_PUBLIC_API_URL: https://api.example.com
+          APP_ENV: production
+          DEBUG: 'false'
+          RATE_LIMIT_ENABLED: 'true'
+          RATE_LIMIT_FAIL_CLOSED: 'true'
+          LM_STUDIO_BASE_URL: https://ai.example.com/v1
+      - name: Assert health/readiness endpoints exist
+        run: |
+          grep -R -Eq '(/health/dependencies|health/dependencies)' backend/app
+      - name: Assert OpenTelemetry configuration exists
+        run: |
+          grep -q 'otel_enabled' backend/app/core/config.py
+          grep -q 'otel_exporter_endpoint' backend/app/core/config.py
+      - name: Assert production has explicit logging/health configuration
+        run: |
+          grep -Eq '(healthcheck|health)' docker-compose.production.yml
+          grep -Eq '(restart:|logging:)' docker-compose.production.yml
+      - name: Assert no debug mode is enabled by production compose
+        run: |
+          ! grep -Eq 'DEBUG: *"?true' docker-compose.production.yml
+      - name: Assert production observability variables are documented by config
+        run: |
+          grep -q 'OTEL_ENABLED' backend/app/core/config.py || grep -q 'otel_enabled' backend/app/core/config.py
+          grep -q 'OTEL_EXPORTER_ENDPOINT' backend/app/core/config.py || grep -q 'otel_exporter_endpoint' backend/app/core/config.py
