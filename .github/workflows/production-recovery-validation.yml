@@ -12,10 +12,15 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: production-recovery-validation-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backup-restore:
-    name: Backup and restore smoke
+    name: Backup and restore recovery
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     services:
       postgres:
         image: postgres:16-alpine
@@ -37,17 +42,40 @@ jobs:
       PGUSER: recovery_ci
       PGPASSWORD: recovery_ci_password
       PGDATABASE: recovery_ci
+      PGIMAGE: postgres:16-alpine
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run backup/restore smoke
+      - name: Run deterministic backup/restore smoke
+        timeout-minutes: 1
         run: sh scripts/production_backup_restore_smoke.sh
 
-      - name: Seed real PostgreSQL recovery fixture
+      - name: Pull PostgreSQL client image once
+        timeout-minutes: 2
+        run: docker pull "$PGIMAGE"
+
+      - name: Wait for PostgreSQL readiness
+        timeout-minutes: 1
         run: |
-          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" postgres:16-alpine \
+          set -euo pipefail
+          for i in {1..20}; do
+            if docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" "$PGIMAGE" \
+              pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE"; then
+              echo 'POSTGRES READY'
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'POSTGRES READINESS TIMEOUT' >&2
+          exit 1
+
+      - name: Seed real PostgreSQL recovery fixture
+        timeout-minutes: 1
+        run: |
+          set -euo pipefail
+          timeout 30s docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" "$PGIMAGE" \
             psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -v ON_ERROR_STOP=1 <<'SQL'
           CREATE TABLE IF NOT EXISTS recovery_fixture (
             id integer PRIMARY KEY,
@@ -58,34 +86,59 @@ jobs:
           SQL
 
       - name: Create real PostgreSQL backup
+        timeout-minutes: 1
         run: |
+          set -euo pipefail
           mkdir -p .recovery
-          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" \
-            -v "$PWD/.recovery:/backup" postgres:16-alpine \
+          timeout 30s docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" \
+            -v "$PWD/.recovery:/backup" "$PGIMAGE" \
             pg_dump -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -Fc -f /backup/recovery.dump
           test -s .recovery/recovery.dump
+          echo 'POSTGRES BACKUP PASS'
 
       - name: Destroy recovery database contents
+        timeout-minutes: 1
         run: |
-          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" postgres:16-alpine \
+          set -euo pipefail
+          timeout 30s docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" "$PGIMAGE" \
             psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -v ON_ERROR_STOP=1 <<'SQL'
           DROP TABLE IF EXISTS recovery_fixture;
           SQL
 
-      - name: Restore PostgreSQL backup
+      - name: Verify fixture is destroyed
+        timeout-minutes: 1
         run: |
-          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" \
-            -v "$PWD/.recovery:/backup" postgres:16-alpine \
-            pg_restore -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" --clean --if-exists --exit-on-error /backup/recovery.dump
+          set -euo pipefail
+          if timeout 30s docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" "$PGIMAGE" \
+            psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -tAc \
+            "SELECT to_regclass('public.recovery_fixture')" | grep -q recovery_fixture; then
+            echo 'fixture was not destroyed' >&2
+            exit 1
+          fi
+          echo 'DESTRUCTION PASS'
+
+      - name: Restore PostgreSQL backup
+        timeout-minutes: 2
+        run: |
+          set -euo pipefail
+          timeout 60s docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" \
+            -v "$PWD/.recovery:/backup" "$PGIMAGE" \
+            pg_restore -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" \
+            --clean --if-exists --no-owner --no-acl --exit-on-error /backup/recovery.dump
+          echo 'POSTGRES RESTORE PASS'
 
       - name: Verify restored PostgreSQL data
+        timeout-minutes: 1
         run: |
-          marker="$(docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" postgres:16-alpine \
+          set -euo pipefail
+          marker="$(timeout 30s docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" "$PGIMAGE" \
             psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -tAc \
             "SELECT marker FROM recovery_fixture WHERE id=1")"
           test "$marker" = 'RECOVERY_CERTIFIED_2026'
+          echo 'POSTGRES RECOVERY DATA VERIFICATION PASS'
 
       - name: Validate production volumes are declared
+        timeout-minutes: 1
         run: |
           grep -F 'postgres_data:' docker-compose.production.yml
           grep -F 'redis_data:' docker-compose.production.yml
