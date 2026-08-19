@@ -30,6 +30,10 @@ jobs:
       FRONTEND_APP_URL: 'https://ci.example.test'
       NEXT_PUBLIC_API_URL: 'https://ci.example.test/api/v1'
       LM_STUDIO_BASE_URL: 'https://ai.example.test/v1'
+      APP_ENV: production
+      DEBUG: 'false'
+      RATE_LIMIT_ENABLED: 'true'
+      RATE_LIMIT_FAIL_CLOSED: 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,7 +56,23 @@ jobs:
             exit 1
           fi
 
-      - name: Validate production config fails closed for unsafe defaults
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      - name: Install backend settings dependencies
+        working-directory: backend
+        run: pip install -e .
+
+      - name: Validate safe production application settings
+        working-directory: backend
+        run: python -c "from app.core.config import Settings; Settings()"
+
+      - name: Validate production settings fail closed
+        working-directory: backend
         run: |
           set +e
           DEBUG=true \
@@ -67,14 +87,13 @@ jobs:
           LM_STUDIO_BASE_URL='http://ai.example.test/v1' \
           SECRET_KEY='ci-only-secret-key-012345678901234567890123456789' \
           APP_ENV=production \
-          docker compose -f docker-compose.production.yml config --quiet
+          RATE_LIMIT_ENABLED=true \
+          RATE_LIMIT_FAIL_CLOSED=true \
+          python -c "from app.core.config import Settings; Settings()"
           status=$?
           set -e
           if [ "$status" -eq 0 ]; then
-            echo 'Unsafe production configuration unexpectedly passed compose validation.'
+            echo 'Unsafe production configuration unexpectedly passed application validation.'
             exit 1
           fi
           echo 'Unsafe production configuration is rejected as expected.'
-
-      - name: Validate production config accepts safe CI topology
-        run: docker compose -f docker-compose.production.yml config --quiet
