@@ -2,146 +2,83 @@
 
 ## Status as of 2026-08-19
 
-**Current state: GREEN — full certification stack-smoke gate passed; production-readiness hardening is in progress.**
+**Current state: GREEN — full certification stack-smoke and product acceptance gates passed. Production deployment hardening remains.**
 
-Latest verified runtime run:
-- GitHub Actions Run: `32189879292`
-- Repository: `ijoolaie/AI-Employee`
-- Result: **SUCCESS**
+Latest verified runtime checkpoint:
+- GitHub Actions Production Certification run: `32276463633` (run #100)
+- Architecture Guard: `32276462650` — SUCCESS
+- Production Compose Validation: `32276462622` — SUCCESS
+- Production Certification: `32276463633` — SUCCESS
 
-This document records the implementation/debugging path and certification evidence accumulated through the first fully green end-to-end gate. It is also the working checkpoint for the next production-readiness phase.
+## Current certification path — COMPLETE
 
-## Certification path completed
+The current workflow passed, in one run:
 
-The current Production Certification workflow successfully passed the following sequence:
+1. Python/npm dependency setup with CI caches
+2. Playwright Chromium installation without host `apt` dependency installation
+3. Python compilation and Ruff
+4. Compose-managed PostgreSQL and Redis readiness
+5. Alembic migration
+6. Backend tests excluding the container-only OCR marker
+7. Frontend contract tests, unit tests and production build
+8. Production-like Docker stack startup/readiness
+9. OCR runtime and Farsi language verification inside the API container
+10. OCR extraction test inside the API container
+11. Backend dependency E2E
+12. Auth P0
+13. Tenant isolation + RBAC P0
+14. Employee -> Run -> AI -> Result
+15. Files -> Knowledge -> Memory
+16. Admin / Developer API Keys
+17. Workflow -> Approval -> Schedule
+18. Orders -> Sales -> Invoice -> Billing
+19. Frontend Playwright E2E
+20. Stack cleanup
 
-1. Frontend installation and contract/unit/build checks
-2. Backend dependency installation
-3. OCR runtime installation and language verification
-4. Python compilation
-5. Ruff lint
-6. PostgreSQL/Redis service readiness
-7. Alembic database migration
-8. Backend tests
-9. Authentication P0 certification
-10. Tenant isolation + RBAC P0 certification
-11. Employee -> Run -> AI -> Result product acceptance certification
-12. Workflow -> Approval -> Schedule product acceptance certification
-13. Orders -> Sales -> Invoice -> Billing product acceptance certification
-14. Frontend Playwright E2E against the running stack
-15. Stack smoke completion and cleanup
+**All of the above passed in Run `32276463633`.**
 
-**All of the above passed in Run `32189879292`.**
+## Certification debugging lessons captured
 
-## Problems found and resolved
+The certification cycle found and fixed infrastructure/application issues rather than weakening assertions:
 
-### 1. OCR installation hung
+- Playwright system-dependency installation was removed from CI; Chromium is installed without `--with-deps`.
+- PostgreSQL/Redis GitHub service containers were removed so Docker Compose is the single certification stack and cannot conflict on ports.
+- OCR is verified in the production-like API container instead of requiring Tesseract on the host runner.
+- OCR-dependent pytest coverage is marked `requires_ocr` and executed inside the API container.
+- Memory creation now supplies an explicit `effective_at` timestamp.
+- Sales deal creation/transaction behavior was corrected so the subsequent stage operation sees committed state.
+- `requires_ocr` is registered in pytest configuration.
 
-Run `32159918638` remained in `Install OCR runtime` for approximately one hour and was cancelled.
+## Important current evidence
 
-Resolution:
-- Added an 8-minute timeout to OCR installation.
-- Added bounded APT retries and network timeouts.
-- Added explicit `tesseract --version` and Farsi language verification.
-- Added job-level timeouts for backend/frontend/stack smoke.
-- Added workflow concurrency with `cancel-in-progress` to avoid overlapping certification runs.
+The latest green run demonstrates fresh real-stack evidence for Files / Knowledge / Memory and Admin / Developer API Keys. These areas must no longer be described as merely historical or unverified for this certification branch.
 
-Result: later runs passed OCR installation normally.
+## Production hardening checkpoint
 
-### 2. Sales deal creation returned the wrong HTTP status
-
-The Orders/Sales/Billing certification initially received:
-
-`expected HTTP 201, got 200`
-
-The response payload itself was valid.
-
-Resolution:
-- `POST /api/v1/sales/deals` was changed to return `201 Created`.
-
-Result: Sales Deal Create/Link Order passed in subsequent certification.
-
-### 3. Sales stage update raised SQLAlchemy `MissingGreenlet`
-
-After stage update, Pydantic serialization attempted to access `updated_at` while the SQLAlchemy object still required a database load.
-
-Resolution:
-- Added `await db.refresh(deal)` before `BusinessDealResponse.model_validate(deal)` in the stage-update endpoint.
-
-Result: Sales Stage passed in subsequent certification.
-
-### 4. Workflow creation returned `401 User not found or inactive`
-
-Registration returned an access token, but the immediately-following authenticated workflow request could race with the transaction commit.
-
-Resolution:
-- Added an explicit `await db.commit()` before issuing authentication tokens during registration.
-- The token is now issued only after the user/tenant transaction is committed.
-
-Result: Workflow -> Approval -> Schedule certification passed in Run `32189879292`.
-
-## Important commits
-
-The key fixes applied during this certification cycle were:
-
-- `0c36fbaea2a234495ac2c960986369dfc3075918` — bound OCR runtime installation and certification job execution time.
-- `78a6aa15e3fc58e487a148640bf187b27912e9c2` — return HTTP 201 for Sales Deal creation.
-- `02a127a39b0d0815e78de0f2057b866caac8ae39` — refresh Sales Deal after stage update.
-- `e08b95ff6d3ead0f8e4bf11cfd144dd4d0c697e1` — commit user/tenant registration before issuing auth tokens.
-- `5dc922a9b5f7b256968f6984f6bdf7cab227ab58` — fail closed on unsafe production URLs/configuration.
-
-## Gate history
-
-| Gate / run | Outcome | Main finding |
-|---|---|---|
-| `32159918638` | Cancelled | OCR runtime hung for ~1 hour |
-| `32171699931` | Failed | Sales Deal Create returned 200 instead of 201 |
-| `32188253198` | Failed | Sales Stage raised `MissingGreenlet` |
-| `32189037208` | Failed | Workflow Create returned 401 due to registration/auth transaction timing |
-| `32189879292` | **PASS** | Full certification stack-smoke green |
-
-## Production-readiness audit checkpoint
-
-The first audit pass was performed after the green runtime checkpoint. One concrete hardening gap was found in application configuration: the production validator already rejected debug mode, weak secrets, disabled rate limiting, and empty CORS, but it did not reject local HTTP origins or localhost service URLs. Those local defaults are appropriate for development/E2E, but unsafe to inherit into a real production environment.
-
-### Hardening applied
-
-Commit `5dc922a9b5f7b256968f6984f6bdf7cab227ab58` strengthens the production configuration guard so that production startup now fails closed when:
-
-- any `CORS_ORIGINS` entry is not HTTPS;
-- `FRONTEND_BASE_URL` is not HTTPS;
-- `FRONTEND_APP_URL` is not HTTPS;
-- database, Redis, Celery broker, or Celery result-backend URLs point to localhost/loopback.
-
-This does not change development or E2E defaults. It makes an accidental production deployment with local/dev endpoints fail at startup instead of silently accepting them.
-
-### Remaining production deployment checks
-
-The repository-level audit is not a production deployment certification. Before a real production release, the deployment environment still needs explicit verification of:
+The repository-level certification is **not the same as production deployment certification**. The following still require deployment-specific evidence:
 
 1. HTTPS/reverse proxy and trusted-origin configuration.
-2. Production secrets supplied through the deployment secret manager, not repository defaults.
-3. Database/Redis/Celery endpoints and network exposure.
-4. Worker and beat operation, restart policy, and queue health.
-5. Monitoring/logging/OTel exporter configuration and alerting.
-6. Storage persistence, backup/restore, and migration/rollback procedure.
-7. Production payment/webhook secrets and signature verification where those integrations are enabled.
+2. Production secrets supplied through the deployment secret manager.
+3. Production PostgreSQL/Redis/Celery endpoints and network exposure.
+4. Worker and beat operation, restart policy and queue health.
+5. Monitoring, centralized logging, OTel exporter configuration and alerting.
+6. Persistent storage, backup/restore and recovery verification.
+7. Production payment/webhook secrets and signature verification where enabled.
 8. Deployment-specific security review and least-privilege infrastructure configuration.
-
-## Current checkpoint
-
-The repository has a verified green end-to-end certification checkpoint plus an initial production configuration hardening commit. The green runtime evidence covers backend/frontend integration, OCR, lint/compile, migrations/tests, authentication, tenant/RBAC, Employee -> Run -> AI -> Result, Workflow -> Approval -> Schedule, Orders -> Sales -> Invoice -> Billing, and frontend Playwright E2E.
+9. Clean production migration/rollback rehearsal.
+10. External integrations such as SMTP/object storage/live provider credentials where enabled.
 
 ## Next roadmap phase
 
-Do not reopen the already-passed gates unless a later change affects them. Continue from this checkpoint with deployment-specific production readiness rather than adding unrelated features.
+Do not reopen already-passed certification gates unless a later code/configuration change affects them. Continue with production hardening and deployment evidence.
 
-1. Run the certification workflow on commit `5dc922a9b5f7b256968f6984f6bdf7cab227ab58`.
-2. Verify the production configuration guard with representative production-safe and unsafe settings.
-3. Audit deployment manifests/reverse proxy, secrets, worker/beat, observability, storage, and backup/rollback controls.
-4. For any failure, diagnose from the first failing gate and fix the underlying contract/runtime issue rather than weakening the certification assertion.
-5. Re-run the full certification after each relevant fix.
-6. Keep this document updated with new run IDs, root causes, fixes, and the next green checkpoint.
+1. Verify the production configuration guard with safe and unsafe representative settings.
+2. Audit deployment manifests/reverse proxy and secret injection.
+3. Verify worker/beat, observability, storage and backup/restore controls.
+4. Verify external integration configuration where enabled.
+5. Perform deployment/rollback rehearsal.
+6. Run the final certification after relevant production-hardening changes.
+7. Keep this document updated with the new run ID and evidence.
 
 ## Operating rule
 
