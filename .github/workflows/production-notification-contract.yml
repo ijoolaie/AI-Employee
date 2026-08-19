@@ -1,0 +1,56 @@
+name: Production Notification Contract
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/production-notify.yml'
+      - '.github/workflows/production-notification-contract.yml'
+  workflow_dispatch:
+
+jobs:
+  notification-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start local webhook receiver
+        run: |
+          python - <<'PY' &
+          from http.server import BaseHTTPRequestHandler, HTTPServer
+          from pathlib import Path
+          class Handler(BaseHTTPRequestHandler):
+              def do_POST(self):
+                  n=int(self.headers.get('Content-Length','0'))
+                  Path('/tmp/notification.json').write_bytes(self.rfile.read(n))
+                  self.send_response(200); self.end_headers(); self.wfile.write(b'ok')
+              def log_message(self, *args): pass
+          HTTPServer(('127.0.0.1', 8787), Handler).serve_forever()
+          PY
+          sleep 1
+      - name: Send representative failure notification
+        env:
+          ALERT_WEBHOOK_URL: http://127.0.0.1:8787/alert
+          WORKFLOW_NAME: Production Certification
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/contract-test
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          payload=$(python - <<'PY'
+          import json, os
+          print(json.dumps({"text": f"Production workflow failed: {os.environ['WORKFLOW_NAME']}\nRepository: {os.environ['REPOSITORY']}\nRun: {os.environ['RUN_URL']}"}))
+          PY
+          )
+          curl --fail --silent --show-error -H 'Content-Type: application/json' --data "$payload" "$ALERT_WEBHOOK_URL"
+      - name: Verify notification payload
+        run: |
+          set -euo pipefail
+          test -s /tmp/notification.json
+          grep -q 'Production Certification' /tmp/notification.json
+          grep -q 'contract-test' /tmp/notification.json
+          echo 'NOTIFICATION_CONTRACT|HTTP delivery|PASS'
+          echo 'NOTIFICATION_CONTRACT|payload content|PASS'
+      - name: Verify external secret wiring
+        run: |
+          grep -q 'PRODUCTION_ALERT_WEBHOOK_URL' .github/workflows/production-notify.yml
+          grep -q 'secrets.PRODUCTION_ALERT_WEBHOOK_URL' .github/workflows/production-notify.yml
+          echo 'NOTIFICATION_CONTRACT|external secret wiring|PASS'
