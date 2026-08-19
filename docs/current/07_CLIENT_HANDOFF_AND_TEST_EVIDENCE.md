@@ -1,197 +1,105 @@
-# Client Handoff & Test Evidence — 1.0.0-rc.8
+# Client Handoff & Test Evidence — Current RC
 
-**Reference archive:** `AI_Employee_Platform_RC8_STAGING_READY_2026-08-15.zip`  
-**Audit date:** 2026-08-15  
-**Purpose:** deployment handoff and explicit test evidence.
+**Status date:** 2026-08-19  
+**Repository:** `ijoolaie/AI-Employee`  
+**Purpose:** current handoff, certification evidence and remaining deployment gates.
 
-## Current RC8 verification status
+> Historical RC8 archive details remain useful as history, but they are superseded as the primary certification checkpoint by the fresh CI evidence below.
 
-The 2026-08-15 RC8 fix pass corrected the API router registration, extended the migration graph to the single head `rc8p0p4pwd`, removed Python bytecode/build artifacts, regenerated `PROJECT_MANIFEST_CURRENT.json`, and re-ran the frontend contract suite.
+## 1. Current certification checkpoint
 
-Current evidence: Python compilation **PASS**; frontend contract suite **141 passed, 0 failed**; migration graph **29 files / one head `rc8p0p4pwd`**. Full backend tests, frontend build/lint/unit tests, browser E2E, Docker E2E and external-provider certification require their respective runtime environments.
+The authoritative current evidence is GitHub Actions Production Certification run `32276463633` (#100), with these related checks also green:
 
-## 1. What the client is receiving
+- Architecture Guard `32276462650` — SUCCESS
+- Production Compose Validation `32276462622` — SUCCESS
+- Production Certification `32276463633` — SUCCESS
 
-The archive contains:
-- FastAPI backend;
-- PostgreSQL/SQLAlchemy/Alembic database layer;
-- Redis + Celery background execution;
-- AI provider gateway;
-- Employees / Runs / Traces;
-- Files / Knowledge / Memory;
-- Workflows / Approvals / Schedules / Events;
-- Billing / Invoices / Orders / Sales;
-- Developer/Admin operations;
-- Next.js frontend;
-- migrations, tests and implementation documentation.
+The complete certification job reached and passed every step through cleanup.
 
-No real `.env` secrets should be included in the deployment package.
+## 2. Fresh runtime/product evidence
 
-## 2. Test evidence
+The current run passed:
 
-### A. Static/source checks
+- backend compile and Ruff;
+- Compose-managed PostgreSQL and Redis readiness;
+- Alembic migration;
+- backend host-safe test suite;
+- frontend contract tests, unit tests and production build;
+- production-like API/worker/frontend stack readiness;
+- OCR runtime and Farsi language verification inside the API container;
+- OCR extraction test inside the API container;
+- backend dependency E2E;
+- Auth P0;
+- Tenant Isolation + RBAC P0;
+- Employee -> Run -> AI -> Result;
+- **Files -> Knowledge -> Memory**;
+- **Admin / Developer API Keys**;
+- Workflow -> Approval -> Schedule;
+- Orders -> Sales -> Invoice -> Billing;
+- frontend Playwright E2E;
+- stack cleanup.
 
-**Python compilation — PASS**
+These are fresh real-stack certification results, not historical claims.
 
-Command:
+## 3. CI architecture
 
-```powershell
-python -m compileall backend/app backend/scripts
-```
+The certification workflow intentionally uses one Compose-managed runtime stack for PostgreSQL, Redis and application services. GitHub service containers are not duplicated alongside Compose, avoiding host-port conflicts.
 
-Result: exit code `0`.
+Dependency setup is cached and performed once per certification job. Playwright installs Chromium without `--with-deps`, avoiding long-running host `apt` installation. OCR is validated in the API container where the production-like image provides Tesseract and Farsi language data.
 
-**Frontend contract suite — PASS**
+## 4. Product workspace coverage
 
-Command:
+The current product surfaces are documented separately as:
 
-```powershell
-node frontend/scripts/test-frontend-contract.mjs
-```
+- Platform Admin: `/admin`
+- Business Dashboard: `/dashboard`
+- AI Workspace: `/workspace`
+- AI Employees: `/employees`
+- Customer Channels: `/channels`
+- Conversations: `/conversations`
+- Public Customer Experience: `/chat/[publicKey]`
+- Website widget loader: `/widget.js?channel=<publicKey>`
 
-Result:
+The public customer experience is not a tenant dashboard and must remain isolated from SaaS administration.
 
-```text
-Result: 141 passed, 0 failed
-```
+## 5. Deployment-specific gates — NOT YET CERTIFIED
 
-**Alembic graph — PASS**
-
-The archive contains 29 migration files and static dependency analysis reports exactly one head:
-
-```text
-rc8p0p4pwd
-```
-
-### B. Real runtime tests performed by the user
-
-**Redis/Celery connection — PASS**
-
-The worker connected to `redis://localhost:6379/1` and reached `celery@... ready.`
-
-**Celery task registration — PASS**
-
-Registered tasks include `run.execute`, workflow execution/scheduling/approval tasks, `email.send`, and `outbox.dispatch`.
-
-**Real Run execution — PASS**
-
-A real `run.execute` completed successfully in 13.61s, ending with `run_finished` and database `COMMIT`.
-
-**RBAC/authorization data loading — PASS observed**
-
-The real run successfully loaded the user, tenant-constrained roles and permissions.
-
-### C. Windows Celery issue discovered and documented
-
-The first Windows worker invocation using the default prefork pool produced `PermissionError: [WinError 5] Access is denied`. The worker was subsequently restarted with the supported Windows configuration and reached `ready`; the real `run.execute` flow passed.
-
-For Windows development use:
-
-```powershell
-python -m celery -A app.workers.celery_app worker -l info --pool=solo
-```
-
-For production, use Linux where possible and deploy Celery using the server's normal production process model.
-
-## 3. Fresh backend pytest limitation
-
-A fresh review-environment execution of the backend pytest suite could not complete collection because the review environment did not have `asyncpg` installed. This is recorded as **NOT VERIFIED**, not as an application test failure. The project's complete dependency set must be installed before judging the suite.
-
-## 4. Current certification matrix
-
-The authoritative CI workflow is `.github/workflows/production-certification.yml`. It currently runs, in sequence:
-
-1. backend compile/lint/migration/tests;
-2. frontend contract/unit/build;
-3. real Docker stack startup and readiness;
-4. Auth P0;
-5. Tenant Isolation + RBAC P0;
-6. Employee → Run → AI → Result Product Acceptance;
-7. Workflow → Approval → Schedule Product Acceptance;
-8. Orders → Sales → Invoice → Billing Product Acceptance;
-9. frontend Playwright E2E.
-
-The following areas remain separate release gates and must not be inferred as certified merely because the main stack-smoke passes:
+Passing the repository-level certification does **not** certify a real production deployment. The following remain open:
 
 | Gate | Status |
 |---|---|
-| Files / Knowledge / Memory fresh live smoke | NOT VERIFIED |
-| Developer / Admin / API-key operations fresh live smoke | NOT VERIFIED |
-| Observability / traces / telemetry fresh live smoke | NOT VERIFIED |
-| Full frontend Playwright E2E | PENDING fresh successful certification run |
-| Clean production database migration | NOT VERIFIED on client environment |
-| HTTPS / reverse proxy | NOT VERIFIED |
+| HTTPS / reverse proxy / trusted origins | NOT VERIFIED |
 | Production secrets/configuration | NOT VERIFIED |
-| Email / SMTP | NOT VERIFIED |
-| Object storage | NOT VERIFIED |
-| Monitoring / alerting | NOT VERIFIED |
+| Production PostgreSQL/Redis/Celery endpoints | NOT VERIFIED |
+| Worker/Beat restart and queue health | NOT VERIFIED |
+| Monitoring / centralized logging / OTel / alerting | NOT VERIFIED |
+| Persistent storage | NOT VERIFIED |
 | Backup / restore / recovery | NOT VERIFIED |
-| Live payment provider | NOT VERIFIED |
+| SMTP/email | NOT VERIFIED |
+| Object storage | NOT VERIFIED |
+| Live payment/webhook provider | NOT VERIFIED |
 | Production security certification | NOT CLAIMED |
+| Production deployment / rollback rehearsal | NOT VERIFIED |
 
-Historical tests for these areas are retained as historical evidence only; they are not silently reclassified as fresh production certification.
+## 6. Production deployment checklist
 
-## 5. Deployment sequence
+Before a production release:
 
-### Backend
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-```
-
-Configure production secrets and service URLs, then:
-
-```bash
-alembic upgrade head
-alembic current
-alembic heads
-alembic check
-```
-
-Expected current RC8 head:
-
-```text
-rc8p0p4pwd (head)
-```
-
-Start API and verify `/health` and `/health/dependencies`, then start Redis-connected Celery Worker and Beat where schedules are enabled.
-
-### Frontend
-
-```bash
-cd frontend
-npm ci
-npm run test
-npm run test:unit
-npm run build
-npm run start
-```
-
-Put the frontend behind the client's HTTPS reverse proxy.
-
-## 6. Production secrets
-
-The client must provide/configure:
-- strong `SECRET_KEY`;
-- PostgreSQL URL;
-- Redis URL;
-- CORS origins;
-- AI provider settings;
-- SMTP/email settings if enabled;
-- object storage settings if used;
-- Stripe/payment settings only if billing is enabled;
-- monitoring/telemetry settings.
-
-Never send real secrets inside the ZIP.
+1. Supply real secrets through the deployment secret manager; never package repository defaults as production secrets.
+2. Configure HTTPS and trusted origins/reverse proxy.
+3. Configure and verify PostgreSQL, Redis and Celery endpoints with appropriate network restrictions.
+4. Start API, worker and Beat as applicable; verify restart policy and queue health.
+5. Configure telemetry, centralized logs and alerting.
+6. Verify persistent storage and perform backup/restore/recovery rehearsal.
+7. Configure external providers only where enabled and verify webhook/signature handling.
+8. Run clean migration, deployment and rollback rehearsal.
+9. Run the final certification against the deployment candidate.
 
 ## 7. Release classification
 
 **CLIENT HANDOFF:** YES  
 **DEPLOYMENT CANDIDATE:** YES  
+**REPOSITORY-LEVEL CERTIFICATION:** YES  
 **PRODUCTION CERTIFIED:** NO
 
-Production certification must be granted only after the remaining live/runtime and deployment-specific gates pass with fresh evidence.
+Production certification must be granted only after the deployment-specific gates above pass with fresh evidence.
