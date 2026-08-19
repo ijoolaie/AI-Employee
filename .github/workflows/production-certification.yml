@@ -76,9 +76,9 @@ jobs:
       - name: Prepare host test database
         working-directory: backend
         run: alembic upgrade head
-      - name: Backend tests
+      - name: Backend tests (host-safe)
         working-directory: backend
-        run: pytest -q
+        run: pytest -q -m 'not requires_ocr'
       - name: Frontend contract tests
         working-directory: frontend
         run: npm test
@@ -103,6 +103,8 @@ jobs:
         run: docker compose exec -T api alembic upgrade head
       - name: Verify OCR runtime in production-like API container
         run: docker compose exec -T api sh -lc 'command -v tesseract && tesseract --version && tesseract --list-langs | grep -qx fas'
+      - name: OCR extraction test in production-like API container
+        run: docker compose exec -T api pytest -q tests/test_document_service.py -m requires_ocr
       - name: Backend dependency E2E check
         run: docker compose exec -T api python scripts/e2e_stack_verify.py
       - name: Product gates
