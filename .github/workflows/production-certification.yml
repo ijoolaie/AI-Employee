@@ -67,7 +67,6 @@ jobs:
       - name: Install Playwright Chromium
         working-directory: frontend
         run: npx playwright install --with-deps chromium
-
       - name: Backend compile
         working-directory: backend
         run: python -m compileall -q app
@@ -89,7 +88,6 @@ jobs:
       - name: Frontend production build
         working-directory: frontend
         run: npm run build
-
       - name: Start stack
         run: docker compose up -d --build
       - name: Wait for readiness
@@ -104,12 +102,9 @@ jobs:
       - name: Prepare stack database
         run: docker compose exec -T api alembic upgrade head
       - name: Verify OCR runtime in production-like API container
-        run: |
-          set -euo pipefail
-          docker compose exec -T api sh -lc 'command -v tesseract && tesseract --version && tesseract --list-langs | grep -qx fas'
+        run: docker compose exec -T api sh -lc 'command -v tesseract && tesseract --version && tesseract --list-langs | grep -qx fas'
       - name: Backend dependency E2E check
         run: docker compose exec -T api python scripts/e2e_stack_verify.py
-
       - name: Product gates
         id: product_gates
         shell: bash
@@ -132,9 +127,8 @@ jobs:
           echo "========== PRODUCT GATE SUMMARY =========="
           echo "Failed gates: ${failures}"
           [ "$failures" -eq 0 ]
-
       - name: Frontend Playwright E2E
-        if: ${{ always() && !cancelled() }}
+        if: ${{ success() }}
         working-directory: frontend
         env:
           BASE_URL: http://127.0.0.1:3000
