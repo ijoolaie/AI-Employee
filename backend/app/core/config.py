@@ -33,7 +33,6 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://localhost:6379/1"
     celery_result_backend: str = "redis://localhost:6379/2"
 
-    # Dev-friendly defaults include common localhost + Docker Desktop bridge origins.
     cors_origins: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -43,12 +42,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_safety(self):
-        """Fail fast on unsafe production configuration.
-
-        Development/e2e environments keep their existing defaults. A real
-        production deployment must opt into explicit secrets, HTTPS endpoints,
-        and fail-closed rate limiting instead of inheriting local defaults.
-        """
+        """Fail fast on unsafe production configuration."""
         if self.app_env.lower() in {"production", "prod"}:
             if self.debug:
                 raise ValueError("DEBUG must be false in production")
@@ -76,6 +70,24 @@ class Settings(BaseSettings):
                 host = (urlparse(value).hostname or "").lower()
                 if host in {"localhost", "127.0.0.1", "::1"}:
                     raise ValueError(f"{name} must not point to localhost in production")
+
+            # AI must not silently fall back to a local HTTP endpoint in production.
+            if urlparse(self.lm_studio_base_url).scheme != "https":
+                raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
+
+            # External integrations must not redirect users or callbacks over plaintext HTTP.
+            if self.stripe_secret_key or self.stripe_webhook_secret:
+                for name, value in {
+                    "STRIPE_CHECKOUT_SUCCESS_URL": self.stripe_checkout_success_url,
+                    "STRIPE_CHECKOUT_CANCEL_URL": self.stripe_checkout_cancel_url,
+                    "STRIPE_PORTAL_RETURN_URL": self.stripe_portal_return_url,
+                }.items():
+                    if urlparse(value).scheme != "https":
+                        raise ValueError(f"{name} must use HTTPS in production")
+
+            if self.shopify_client_id or self.shopify_client_secret:
+                if urlparse(self.shopify_redirect_uri).scheme != "https":
+                    raise ValueError("SHOPIFY_REDIRECT_URI must use HTTPS in production")
         return self
 
     @field_validator("cors_origins", mode="before")
@@ -93,26 +105,20 @@ class Settings(BaseSettings):
             if not s:
                 return defaults
             if s.startswith("["):
-                return v  # let pydantic parse JSON
+                return v
             return [part.strip() for part in s.split(",") if part.strip()]
         return v
-    # Explicit allowlist for platform-admin bootstrap tooling. Never inferred from tenant-admin status.
+
     platform_admin_emails: List[str] = []
-
     storage_dir: str = "./var/storage"
-
-    # AI Gateway — provider-agnostic by design. Provider selection is handled
-    # by app.ai.providers.registry; LM Studio is the development default.
     ai_default_provider: str = "lm_studio"
     ai_default_model: str = "google/gemma-4-e4b"
     ai_embedding_model: str = "text-embedding-nomic-embed-text-v1.5"
     anthropic_api_key: str | None = None
     lm_studio_base_url: str = "http://127.0.0.1:1234/v1"
     lm_studio_api_key: str | None = None
-
     ai_max_tool_iterations: int = 4
     ai_autonomy_max_steps: int = 6
-
     smtp_host: str | None = None
     smtp_port: int = 587
     smtp_username: str | None = None
@@ -124,7 +130,6 @@ class Settings(BaseSettings):
     password_reset_rate_limit: int = 5
     password_reset_rate_window_minutes: int = 15
     smtp_allowed_recipient_domains: List[str] = []
-
     rate_limit_enabled: bool = True
     rate_limit_requests: int = 120
     rate_limit_window_seconds: int = 60
@@ -133,14 +138,11 @@ class Settings(BaseSettings):
     webhook_rate_limit_window_seconds: int = 60
     webhook_max_payload_bytes: int = 262144
     webhook_replay_window_seconds: int = 300
-
     outbox_max_attempts: int = 8
     otel_enabled: bool = True
     otel_service_name: str = "ai-employee-platform"
     otel_exporter_endpoint: str | None = None
-
     billing_webhook_secret: str | None = None
-
     stripe_secret_key: str | None = None
     stripe_publishable_key: str | None = None
     stripe_webhook_secret: str | None = None
@@ -149,7 +151,6 @@ class Settings(BaseSettings):
     stripe_checkout_cancel_url: str = "http://localhost:3000/billing?checkout=cancelled"
     stripe_portal_return_url: str = "http://localhost:3000/billing"
     stripe_trial_days: int = 14
-
     shopify_client_id: str | None = None
     shopify_client_secret: str | None = None
     shopify_redirect_uri: str = "http://localhost:8000/api/v1/commerce-integrations/shopify/callback"
