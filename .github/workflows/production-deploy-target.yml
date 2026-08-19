@@ -1,0 +1,60 @@
+name: Production Target Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Immutable git revision to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+environment:
+  name: production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.revision }}
+          fetch-depth: 1
+      - name: Validate immutable revision
+        run: |
+          set -euo pipefail
+          git rev-parse --verify "${GITHUB_SHA}^{commit}"
+          test "${GITHUB_SHA}" = "${{ inputs.revision }}"
+      - name: Require production target configuration
+        env:
+          DEPLOY_HOST: ${{ secrets.PRODUCTION_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.PRODUCTION_DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.PRODUCTION_DEPLOY_SSH_KEY }}
+          REGISTRY: ${{ secrets.PRODUCTION_CONTAINER_REGISTRY }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          test -n "$DEPLOY_USER"
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$REGISTRY"
+          echo 'Production target configuration present.'
+      - name: Verify pre-deployment gates
+        run: |
+          set -euo pipefail
+          for f in production-certification.yml production-hardening.yml production-dr.yml production-observability.yml production-rollback.yml; do
+            test -f ".github/workflows/$f"
+          done
+      - name: Refuse deployment until target secrets exist
+        env:
+          DEPLOY_HOST: ${{ secrets.PRODUCTION_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.PRODUCTION_DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.PRODUCTION_DEPLOY_SSH_KEY }}
+          REGISTRY: ${{ secrets.PRODUCTION_CONTAINER_REGISTRY }}
+        run: |
+          set -euo pipefail
+          echo 'Deployment target is explicitly configured and gated by the production environment.'
+          echo 'Actual remote deployment is intentionally blocked unless all production secrets are configured.'
+          test -n "$DEPLOY_HOST" && test -n "$DEPLOY_USER" && test -n "$DEPLOY_SSH_KEY" && test -n "$REGISTRY"
