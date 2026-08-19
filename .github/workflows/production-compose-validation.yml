@@ -38,6 +38,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Keep this gate independently executable on every production-config change.
       - name: Validate production compose syntax and required interpolation
         run: docker compose -f docker-compose.production.yml config --quiet
 
