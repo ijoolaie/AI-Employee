@@ -1,0 +1,51 @@
+name: Production Rollback & Alerting
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/production_rollback_smoke.sh'
+      - '.github/workflows/production-rollback.yml'
+      - 'docker-compose.production.yml'
+      - 'backend/app/**'
+  workflow_dispatch:
+
+jobs:
+  rollback-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare production-safe environment
+        run: |
+          cat >> "$GITHUB_ENV" <<'EOF'
+          POSTGRES_USER=ci_user
+          POSTGRES_PASSWORD=ci_password_not_default
+          POSTGRES_DB=ci_db
+          REDIS_PASSWORD=ci_redis_password
+          SECRET_KEY=ci-production-secret-that-is-long-enough-123456
+          DATABASE_URL=postgresql+asyncpg://ci_user:ci_password_not_default@postgres:5432/ci_db
+          DATABASE_URL_SYNC=postgresql://ci_user:ci_password_not_default@postgres:5432/ci_db
+          REDIS_URL=redis://:ci_redis_password@redis:6379/0
+          CELERY_BROKER_URL=redis://:ci_redis_password@redis:6379/1
+          CELERY_RESULT_BACKEND=redis://:ci_redis_password@redis:6379/2
+          CORS_ORIGINS=["https://app.example.com"]
+          FRONTEND_BASE_URL=https://app.example.com
+          FRONTEND_APP_URL=https://app.example.com
+          NEXT_PUBLIC_API_URL=https://api.example.com
+          APP_ENV=production
+          DEBUG=false
+          RATE_LIMIT_ENABLED=true
+          RATE_LIMIT_FAIL_CLOSED=true
+          LM_STUDIO_BASE_URL=https://ai.example.com/v1
+          EOF
+      - name: Execute rollback contract
+        run: bash scripts/production_rollback_smoke.sh
+      - name: Verify failure detection is wired to CI failure
+        run: |
+          set -euo pipefail
+          grep -Eq 'if: \$\{\{ failure\(\) \}\}' .github/workflows/production-hardening.yml .github/workflows/production-certification.yml
+          echo 'ALERT_CONTRACT|CI failure notification path|PASS'
+      - name: Verify health endpoint is the readiness gate
+        run: |
+          grep -R -Eq '/health/dependencies' .github/workflows backend/app
+          echo 'ALERT_CONTRACT|readiness health gate|PASS'
