@@ -25,7 +25,7 @@ jobs:
       REDIS_URL: 'redis://:ci-only-redis-password@redis:6379/0'
       CELERY_BROKER_URL: 'redis://:ci-only-redis-password@redis:6379/1'
       CELERY_RESULT_BACKEND: 'redis://:ci-only-redis-password@redis:6379/2'
-      CORS_ORIGINS: 'https://ci.example.test'
+      CORS_ORIGINS: '["https://ci.example.test"]'
       FRONTEND_BASE_URL: 'https://ci.example.test'
       FRONTEND_APP_URL: 'https://ci.example.test'
       NEXT_PUBLIC_API_URL: 'https://ci.example.test/api/v1'
@@ -76,7 +76,7 @@ jobs:
         run: |
           set +e
           DEBUG=true \
-          CORS_ORIGINS='http://localhost:3000' \
+          CORS_ORIGINS='["http://localhost:3000"]' \
           FRONTEND_BASE_URL='http://localhost:3000' \
           FRONTEND_APP_URL='http://localhost:3000' \
           DATABASE_URL='postgresql+asyncpg://aiep:aiep@remote.example.test:5432/aiep' \
