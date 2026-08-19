@@ -60,16 +60,29 @@ class Settings(BaseSettings):
                 raise ValueError("FRONTEND_BASE_URL must use HTTPS in production")
             if urlparse(self.frontend_app_url).scheme != "https":
                 raise ValueError("FRONTEND_APP_URL must use HTTPS in production")
-            for name, value in {
+
+            database_urls = {
                 "DATABASE_URL": self.database_url,
                 "DATABASE_URL_SYNC": self.database_url_sync,
+            }
+            for name, value in {
+                **database_urls,
                 "REDIS_URL": self.redis_url,
                 "CELERY_BROKER_URL": self.celery_broker_url,
                 "CELERY_RESULT_BACKEND": self.celery_result_backend,
             }.items():
-                host = (urlparse(value).hostname or "").lower()
+                parsed = urlparse(value)
+                host = (parsed.hostname or "").lower()
                 if host in {"localhost", "127.0.0.1", "::1"}:
                     raise ValueError(f"{name} must not point to localhost in production")
+
+            # The repository's E2E defaults intentionally use a known demo
+            # database credential. Never allow that credential to cross into
+            # production, even when the database host itself is remote.
+            for name, value in database_urls.items():
+                parsed = urlparse(value)
+                if parsed.username == "aiep" and parsed.password == "aiep":
+                    raise ValueError(f"{name} must not use the default E2E database credentials in production")
 
             # AI must not silently fall back to a local HTTP endpoint in production.
             if urlparse(self.lm_studio_base_url).scheme != "https":
