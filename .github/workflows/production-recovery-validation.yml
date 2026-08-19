@@ -92,8 +92,12 @@ jobs:
           mkdir -p .recovery
           timeout 30s docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" \
             -v "$PWD/.recovery:/backup" "$PGIMAGE" \
-            pg_dump -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -Fc -f /backup/recovery.dump
+            pg_dump -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" \
+            --format=custom --table=public.recovery_fixture -f /backup/recovery.dump
           test -s .recovery/recovery.dump
+          timeout 30s docker run --rm --network host \
+            -v "$PWD/.recovery:/backup" "$PGIMAGE" \
+            pg_restore --list /backup/recovery.dump | grep -F 'TABLE public recovery_fixture'
           echo 'POSTGRES BACKUP PASS'
 
       - name: Destroy recovery database contents
@@ -124,7 +128,8 @@ jobs:
           timeout 60s docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" \
             -v "$PWD/.recovery:/backup" "$PGIMAGE" \
             pg_restore -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" \
-            --clean --if-exists --no-owner --no-acl --exit-on-error /backup/recovery.dump
+            --clean --if-exists --no-owner --no-acl --exit-on-error \
+            --table=public.recovery_fixture /backup/recovery.dump
           echo 'POSTGRES RESTORE PASS'
 
       - name: Verify restored PostgreSQL data
@@ -133,7 +138,7 @@ jobs:
           set -euo pipefail
           marker="$(timeout 30s docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" "$PGIMAGE" \
             psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -tAc \
-            "SELECT marker FROM recovery_fixture WHERE id=1")"
+            "SELECT marker FROM public.recovery_fixture WHERE id=1")"
           test "$marker" = 'RECOVERY_CERTIFIED_2026'
           echo 'POSTGRES RECOVERY DATA VERIFICATION PASS'
 
