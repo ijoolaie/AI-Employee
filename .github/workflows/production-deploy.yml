@@ -1,6 +1,16 @@
 name: Production Deployment Readiness
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/production-deploy.yml'
+      - '.github/workflows/production-certification.yml'
+      - '.github/workflows/production-hardening.yml'
+      - '.github/workflows/production-dr.yml'
+      - '.github/workflows/production-observability.yml'
+      - '.github/workflows/production-rollback.yml'
+      - 'docker-compose.production.yml'
+      - 'scripts/production_rollback_smoke.sh'
   workflow_dispatch:
 
 jobs:
