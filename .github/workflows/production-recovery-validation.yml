@@ -16,6 +16,28 @@ jobs:
   backup-restore:
     name: Backup and restore smoke
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: recovery_ci
+          POSTGRES_PASSWORD: recovery_ci_password
+          POSTGRES_DB: recovery_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U recovery_ci -d recovery_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGUSER: recovery_ci
+      PGPASSWORD: recovery_ci_password
+      PGDATABASE: recovery_ci
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,8 +45,52 @@ jobs:
       - name: Run backup/restore smoke
         run: sh scripts/production_backup_restore_smoke.sh
 
+      - name: Seed real PostgreSQL recovery fixture
+        run: |
+          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" postgres:16-alpine \
+            psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE IF NOT EXISTS recovery_fixture (
+            id integer PRIMARY KEY,
+            marker text NOT NULL
+          );
+          TRUNCATE recovery_fixture;
+          INSERT INTO recovery_fixture (id, marker) VALUES (1, 'RECOVERY_CERTIFIED_2026');
+          SQL
+
+      - name: Create real PostgreSQL backup
+        run: |
+          mkdir -p .recovery
+          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" \
+            -v "$PWD/.recovery:/backup" postgres:16-alpine \
+            pg_dump -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -Fc -f /backup/recovery.dump
+          test -s .recovery/recovery.dump
+
+      - name: Destroy recovery database contents
+        run: |
+          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" postgres:16-alpine \
+            psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -v ON_ERROR_STOP=1 <<'SQL'
+          DROP TABLE IF EXISTS recovery_fixture;
+          SQL
+
+      - name: Restore PostgreSQL backup
+        run: |
+          docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" \
+            -v "$PWD/.recovery:/backup" postgres:16-alpine \
+            pg_restore -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" --clean --if-exists --exit-on-error /backup/recovery.dump
+
+      - name: Verify restored PostgreSQL data
+        run: |
+          marker="$(docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" postgres:16-alpine \
+            psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -tAc \
+            "SELECT marker FROM recovery_fixture WHERE id=1")"
+          test "$marker" = 'RECOVERY_CERTIFIED_2026'
+
       - name: Validate production volumes are declared
         run: |
           grep -F 'postgres_data:' docker-compose.production.yml
           grep -F 'redis_data:' docker-compose.production.yml
           grep -F 'app_storage:' docker-compose.production.yml
+
+      - name: Remove recovery artifacts
+        if: always()
+        run: rm -rf .recovery
