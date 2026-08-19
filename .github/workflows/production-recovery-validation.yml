@@ -1,0 +1,30 @@
+name: Production Recovery Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/production_backup_restore_smoke.sh'
+      - '.github/workflows/production-recovery-validation.yml'
+      - 'docker-compose.production.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup-restore:
+    name: Backup and restore smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run backup/restore smoke
+        run: sh scripts/production_backup_restore_smoke.sh
+
+      - name: Validate production volumes are declared
+        run: |
+          grep -F 'postgres_data:' docker-compose.production.yml
+          grep -F 'redis_data:' docker-compose.production.yml
+          grep -F 'app_storage:' docker-compose.production.yml
