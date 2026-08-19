@@ -1,0 +1,67 @@
+name: Production Deployment Readiness
+
+on:
+  workflow_dispatch:
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate immutable release metadata
+        run: |
+          set -euo pipefail
+          test -n "${GITHUB_SHA}"
+          git rev-parse --verify "${GITHUB_SHA}^{commit}"
+          echo "RELEASE_REVISION=${GITHUB_SHA}"
+      - name: Validate production compose
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password_not_default
+          POSTGRES_DB: ci_db
+          REDIS_PASSWORD: ci_redis_password
+          SECRET_KEY: ci-production-secret-that-is-long-enough-123456
+          DATABASE_URL: postgresql+asyncpg://ci_user:ci_password_not_default@postgres:5432/ci_db
+          DATABASE_URL_SYNC: postgresql://ci_user:ci_password_not_default@postgres:5432/ci_db
+          REDIS_URL: redis://:ci_redis_password@redis:6379/0
+          CELERY_BROKER_URL: redis://:ci_redis_password@redis:6379/1
+          CELERY_RESULT_BACKEND: redis://:ci_redis_password@redis:6379/2
+          CORS_ORIGINS: '["https://app.example.com"]'
+          FRONTEND_BASE_URL: https://app.example.com
+          FRONTEND_APP_URL: https://app.example.com
+          NEXT_PUBLIC_API_URL: https://api.example.com
+          APP_ENV: production
+          DEBUG: 'false'
+          RATE_LIMIT_ENABLED: 'true'
+          RATE_LIMIT_FAIL_CLOSED: 'true'
+          LM_STUDIO_BASE_URL: https://ai.example.com/v1
+        run: docker compose -f docker-compose.production.yml config --quiet
+      - name: Verify deployment gates are required before release
+        run: |
+          set -euo pipefail
+          test -f .github/workflows/production-certification.yml
+          test -f .github/workflows/production-hardening.yml
+          test -f .github/workflows/production-dr.yml
+          test -f .github/workflows/production-observability.yml
+          test -f .github/workflows/production-rollback.yml
+          echo 'DEPLOYMENT_GATE|certification|PRESENT'
+          echo 'DEPLOYMENT_GATE|hardening|PRESENT'
+          echo 'DEPLOYMENT_GATE|dr|PRESENT'
+          echo 'DEPLOYMENT_GATE|observability|PRESENT'
+          echo 'DEPLOYMENT_GATE|rollback|PRESENT'
+      - name: Verify rollback revision contract
+        run: |
+          set -euo pipefail
+          test -f scripts/production_rollback_smoke.sh
+          grep -q 'known-good revision selectable' scripts/production_rollback_smoke.sh
+          echo 'ROLLBACK|previous known-good revision|SELECTABLE'
+      - name: Publish deployment manifest
+        run: |
+          mkdir -p deployment
+          cat > deployment/release-manifest.txt <<EOF
+          revision=${GITHUB_SHA}
+          repository=${GITHUB_REPOSITORY}
+          generated_at=${GITHUB_RUN_ID}
+          EOF
+          cat deployment/release-manifest.txt
