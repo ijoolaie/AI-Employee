@@ -53,6 +53,9 @@ dev = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+markers = [
+    "requires_ocr: test requires the OCR runtime available in the production-like API container",
+]
 
 [tool.ruff]
 line-length = 100
