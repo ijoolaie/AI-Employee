@@ -61,14 +61,28 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: pip
-          cache-dependency-path: backend/pyproject.toml
 
-      - name: Install backend settings dependencies
+      - name: Cache backend virtualenv
+        id: backend-cache
+        uses: actions/cache@v4
+        with:
+          path: backend/.venv
+          key: ${{ runner.os }}-python312-compose-validation-${{ hashFiles('backend/pyproject.toml', 'backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-python312-compose-validation-
+
+      - name: Install backend settings dependencies (cache miss only)
+        if: steps.backend-cache.outputs.cache-hit != 'true'
         working-directory: backend
-        run: pip install -e .
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -e .
 
-      - name: Validate safe production application settings
+      - name: Add backend virtualenv to PATH
+        run: echo "$GITHUB_WORKSPACE/backend/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Validate cached backend environment
         working-directory: backend
         run: python -c "from app.core.config import Settings; Settings()"
 
