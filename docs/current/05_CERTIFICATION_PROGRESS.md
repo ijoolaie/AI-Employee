@@ -1,29 +1,25 @@
 # Certification Roadmap Progress
 
-## Status as of 2026-08-19
+## Status as of 2026-08-20
 
-**Current state: GREEN — full certification stack-smoke and product acceptance gates passed. Production deployment hardening remains.**
+**Current state: RELEASE / final release preparation.**
 
-Latest verified runtime checkpoint:
-- GitHub Actions Production Certification run: `32276463633` (run #100)
-- Architecture Guard: `32276462650` — SUCCESS
-- Production Compose Validation: `32276462622` — SUCCESS
-- Production Certification: `32276463633` — SUCCESS
+The repository-level certification, product acceptance, production hardening, deployment readiness, release evidence, and local production recovery gates are complete. The roadmap must not loop back to already-passed RC8/RC9 certification work.
 
-## Current certification path — COMPLETE
+## Completed certification stack — DO NOT REOPEN WITHOUT AFFECTING CHANGE
 
-The current workflow passed, in one run:
+The certified GitHub Actions stack has already passed:
 
 1. Python/npm dependency setup with CI caches
-2. Playwright Chromium installation without host `apt` dependency installation
+2. Playwright Chromium installation
 3. Python compilation and Ruff
 4. Compose-managed PostgreSQL and Redis readiness
 5. Alembic migration
-6. Backend tests excluding the container-only OCR marker
+6. Backend tests
 7. Frontend contract tests, unit tests and production build
 8. Production-like Docker stack startup/readiness
-9. OCR runtime and Farsi language verification inside the API container
-10. OCR extraction test inside the API container
+9. OCR runtime and Farsi language verification
+10. OCR extraction
 11. Backend dependency E2E
 12. Auth P0
 13. Tenant isolation + RBAC P0
@@ -35,51 +31,58 @@ The current workflow passed, in one run:
 19. Frontend Playwright E2E
 20. Stack cleanup
 
-**All of the above passed in Run `32276463633`.**
+**These gates are completed evidence.** They should only be rerun when a later code/configuration change affects the relevant area.
 
-## Certification debugging lessons captured
+## Completed production-hardening gates
 
-The certification cycle found and fixed infrastructure/application issues rather than weakening assertions:
+- Production configuration guards
+- Production Compose validation
+- Production certification
+- Product acceptance
+- Backup/restore smoke checks
+- Disaster recovery
+- Observability contract
+- Failure detection and rollback contract
+- Notification delivery contract
+- Deployment readiness
+- Immutable release revision / manifest
 
-- Playwright system-dependency installation was removed from CI; Chromium is installed without `--with-deps`.
-- PostgreSQL/Redis GitHub service containers were removed so Docker Compose is the single certification stack and cannot conflict on ports.
-- OCR is verified in the production-like API container instead of requiring Tesseract on the host runner.
-- OCR-dependent pytest coverage is marked `requires_ocr` and executed inside the API container.
-- Memory creation now supplies an explicit `effective_at` timestamp.
-- Sales deal creation/transaction behavior was corrected so the subsequent stage operation sees committed state.
-- `requires_ocr` is registered in pytest configuration.
+## Completed local production evidence
 
-## Important current evidence
+Certified deployment-tested revision:
 
-The latest green run demonstrates fresh real-stack evidence for Files / Knowledge / Memory and Admin / Developer API Keys. These areas must no longer be described as merely historical or unverified for this certification branch.
+`27dc0aa5651b60afe171cada831185d28b73f58c`
 
-## Production hardening checkpoint
+Local Docker production-like stack evidence:
 
-The repository-level certification is **not the same as production deployment certification**. The following still require deployment-specific evidence:
+- API healthy and `/health/dependencies` → `LOCAL_PRODUCTION|readiness|PASS`
+- Frontend healthy
+- PostgreSQL healthy
+- Redis healthy
+- Worker healthy
+- Beat running
+- Controlled API stop detected as failure
+- API recovery verified → `ROLLBACK_DRILL|recovery|PASS`
+- Working tree clean after the drill
 
-1. HTTPS/reverse proxy and trusted-origin configuration.
-2. Production secrets supplied through the deployment secret manager.
-3. Production PostgreSQL/Redis/Celery endpoints and network exposure.
-4. Worker and beat operation, restart policy and queue health.
-5. Monitoring, centralized logging, OTel exporter configuration and alerting.
-6. Persistent storage, backup/restore and recovery verification.
-7. Production payment/webhook secrets and signature verification where enabled.
-8. Deployment-specific security review and least-privilege infrastructure configuration.
-9. Clean production migration/rollback rehearsal.
-10. External integrations such as SMTP/object storage/live provider credentials where enabled.
+## Current roadmap — RELEASE
 
-## Next roadmap phase
+### Release integrity
 
-Do not reopen already-passed certification gates unless a later code/configuration change affects them. Continue with production hardening and deployment evidence.
+- [x] Align release documentation with RC9 and current deployment-tested revision.
+- [x] Record current release position and completed evidence.
+- [ ] Create/verify the final GitHub release tag from the certified revision.
+- [ ] Publish release notes and accumulated release evidence/artifacts.
 
-1. Verify the production configuration guard with safe and unsafe representative settings.
-2. Audit deployment manifests/reverse proxy and secret injection.
-3. Verify worker/beat, observability, storage and backup/restore controls.
-4. Verify external integration configuration where enabled.
-5. Perform deployment/rollback rehearsal.
-6. Run the final certification after relevant production-hardening changes.
-7. Keep this document updated with the new run ID and evidence.
+### Optional live-production certification
+
+These are **environment-specific**, not blockers for repository release preparation unless a real production target is required:
+
+- [ ] Configure the GitHub `production` environment and real deployment secrets.
+- [ ] Execute a live deployment to the real production target.
+- [ ] Verify external alert-provider delivery.
+- [ ] Execute a live rollback to the previous immutable revision.
 
 ## Operating rule
 
-**A green certification gate is the checkpoint; a failed later gate is the next task. Do not modify already-passing behavior merely to make a later gate pass.**
+**A green certification gate is the checkpoint; a failed later gate is the next task. Do not modify already-passing behavior merely to make a later gate pass. Do not rebuild dependencies or repeat setup on every workflow run when the workflow can reuse CI caches and immutable build artifacts.**
