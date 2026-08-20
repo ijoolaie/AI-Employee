@@ -1,112 +1,62 @@
-# Release Audit — 1.0.0-rc.8 / Release phase
+# Release Audit — 1.0.0-rc.9 / final release preparation
 
 ## Audit scope
 
-This document is the current release audit. Older RC8 staging language is historical and must not be interpreted as the current project status.
+This audit covers the synchronized RC9 implementation and the subsequent production-deployment hardening completed on the certified deployment-tested revision.
 
-## Current release position
+**Certified deployment-tested revision:** `27dc0aa5651b60afe171cada831185d28b73f58c`
 
-**Decision: RELEASE / FINAL HANDOFF**
-
-The implementation, CI certification, release evidence, and final production certification gates are treated as complete. The current work is release bookkeeping, final handoff, and post-release operations — not another implementation or certification cycle.
-
-See `docs/current/ROADMAP.md` for the authoritative current roadmap.
+RC8 is the completed functional baseline. RC9 adds CI/certification hardening; later commits add production-like deployment and recovery hardening. This document must not be interpreted as a request to restart RC8/RC9 certification.
 
 ## Current source state
 
-- Package/runtime lineage: `1.0.0-rc.8`.
-- The repository contains the completed product surfaces documented by the current implementation guides.
-- The authoritative RC8 Alembic head is `rc8p0p4pwd`.
-- Local production verification was performed against revision `27dc0aa5651b60afe171cada831185d28b73f58c`.
+- Package/release target: `1.0.0-rc.9`.
+- Phase 9 Sales Employee and Orders/Sales functionality are already implemented.
+- The RC8 migration graph remains authoritative and must be upgraded/checked normally.
+- RC9 CI/certification gates have passed.
+- Product acceptance has passed.
+- Production hardening and deployment-readiness evidence have passed.
 
-## Completed release evidence
+## Certification and deployment evidence
 
-| Gate | Result | Evidence |
+| Test / check | Result | Evidence |
 |---|---|---|
-| CI certification | **PASS / complete** | Existing repository CI certification evidence |
-| Release evidence / artifacts | **PASS / complete** | Existing release evidence/artifact records |
-| Final production certification | **PASS / complete** | Existing certification evidence plus current runtime verification |
-| Compose configuration | **PASS** | `docker compose ... config --quiet` |
-| Production images | **PASS** | API, worker, beat and frontend images built successfully |
-| Production startup | **PASS** | All runtime services started |
-| API health/readiness | **PASS** | `/health/dependencies` returned `READINESS|PASS` and `LOCAL_PRODUCTION|readiness|PASS` |
-| Runtime service health | **PASS** | API/frontend/PostgreSQL/Redis/worker healthy; beat running |
-| Controlled failure detection | **PASS** | API stop detected by rollback drill |
-| Recovery | **PASS** | API restarted and readiness returned `ROLLBACK_DRILL|recovery|PASS` |
-| Working tree | **CLEAN at verification point** | `git status --short` returned no entries |
+| Architecture Guard | **PASS** | Latest certified GitHub Actions run |
+| Production Compose Validation | **PASS** | Latest certified GitHub Actions run |
+| Production Certification | **PASS** | Latest certified GitHub Actions run |
+| Product Acceptance | **PASS** | Latest certified GitHub Actions run |
+| Production Hardening | **PASS** | Repository certification evidence |
+| PostgreSQL backup/restore smoke | **PASS** | Production hardening evidence |
+| Redis persistence/restore smoke | **PASS** | Production hardening evidence |
+| Disaster Recovery | **PASS** | Production hardening evidence |
+| Production Observability contract | **PASS** | Production hardening evidence |
+| Failure detection / rollback contract | **PASS** | Production hardening evidence |
+| Notification delivery contract | **PASS** | Local receiver contract evidence |
+| Deployment Readiness | **PASS** | Immutable release revision/manifest evidence |
+| Local production Compose validation | **PASS** | Docker Desktop local production stack |
+| Local production API readiness | **PASS** | `/health/dependencies` returned `LOCAL_PRODUCTION|readiness|PASS` |
+| Local frontend readiness | **PASS** | Docker healthcheck green |
+| Local PostgreSQL / Redis readiness | **PASS** | Docker healthchecks green |
+| Local worker readiness | **PASS** | Worker healthy |
+| Local beat operation | **PASS** | Beat running |
+| Controlled local API failure detection | **PASS** | API stopped; Compose exec correctly failed |
+| Controlled local recovery | **PASS** | API restarted; readiness returned `ROLLBACK_DRILL|recovery|PASS` |
 
-## Local production verification record — 2026-08-20
+## Release position
 
-### Configuration and build
+**Decision: RELEASE / FINAL RELEASE PREPARATION**
 
-The production environment was validated with:
+The repository is past implementation, certification, product-acceptance, and production-hardening work. The next actions are release-integrity and release execution.
 
-```powershell
-docker compose --env-file .env.production `
-  -f docker-compose.production.yml `
-  -f docker-compose.local-production.yml `
-  config --quiet
-```
+Do not repeat already-passed dependency installation, requirements setup, toolchain setup, or unrelated certification suites for every release step. Re-run only gates affected by a later code/configuration change.
 
-Production API/worker/beat images and the frontend image were built successfully.
+## Remaining release gates
 
-The first startup exposed a production-only CORS configuration mismatch (`http://localhost:3000` was rejected in production). The configuration/source was corrected, images rebuilt, and the deployment subsequently reached a healthy state.
+1. Ensure release/version documentation consistently identifies RC9 and the certified deployment-tested revision.
+2. Create/verify the final release tag from `27dc0aa5651b60afe171cada831185d28b73f58c` or its explicitly certified descendant.
+3. Publish release notes and the accumulated evidence/artifacts.
+4. If a real external production environment is available, separately record live deployment, external alert delivery, and live rollback evidence.
 
-### Runtime
+## Important environment distinction
 
-The verified Compose state contained:
-
-- API — healthy
-- Frontend — healthy
-- PostgreSQL — healthy
-- Redis — healthy
-- Celery worker — healthy
-- Celery beat — running
-
-The API readiness check returned:
-
-```text
-LOCAL_PRODUCTION|readiness|PASS
-```
-
-The public OpenAPI document is intentionally not mounted at `/openapi.json`; the application endpoint is `/api/v1/openapi.json`, which returned HTTP `200` during verification.
-
-### Rollback drill
-
-The scripted shell drill could not be executed through the available WSL distro because Docker Desktop integration was unavailable there. This is an execution-environment limitation.
-
-The equivalent controlled drill was executed directly in PowerShell against Docker Desktop:
-
-```text
-ROLLBACK_DRILL|before_failure|PASS
-ROLLBACK_DRILL|failure_detection|PASS
-ROLLBACK_DRILL|recovery|PASS
-ROLLBACK_DRILL|known_good_revision|PASS
-```
-
-The API was deliberately stopped, failure was detected, the known-good service was started again, and `/health/dependencies` passed after recovery.
-
-## Do not reopen completed gates
-
-The following must not be added back to the active roadmap merely because an older document still describes them as pending:
-
-- dependency installation;
-- requirements/bootstrap setup;
-- CI certification;
-- release evidence generation;
-- final production certification;
-- rebuilding images when neither source nor dependency inputs changed.
-
-A workflow run should reuse the prepared environment. Rebuild/install steps are conditional on actual changes to their inputs.
-
-## Remaining release work
-
-Only the following release bookkeeping remains:
-
-1. freeze/select the final release revision;
-2. confirm final tag/changelog/release record;
-3. attach or link the final evidence bundle where required;
-4. complete final human handoff/sign-off;
-5. begin post-release monitoring.
-
-These are release-management tasks, not product implementation blockers.
+The local production stack proves deployment and recovery behavior against Docker Desktop using production-like Compose configuration. It does not fabricate evidence for an external production host, registry, alert provider, or live customer environment.

@@ -40,6 +40,11 @@ class Settings(BaseSettings):
         "http://host.docker.internal:3000",
     ]
 
+    # Explicit opt-in for the local production-like Docker stack. This keeps
+    # the normal production HTTPS policy intact while allowing localhost HTTP
+    # endpoints on a developer workstation without weakening VPS production.
+    local_production_allow_http: bool = False
+
     @model_validator(mode="after")
     def validate_production_safety(self):
         """Fail fast on unsafe production configuration."""
@@ -54,12 +59,14 @@ class Settings(BaseSettings):
                 raise ValueError("RATE_LIMIT_FAIL_CLOSED must be true in production")
             if not self.cors_origins:
                 raise ValueError("CORS_ORIGINS must explicitly allow trusted origins in production")
-            if any(urlparse(origin).scheme != "https" for origin in self.cors_origins):
-                raise ValueError("CORS_ORIGINS must use HTTPS in production")
-            if urlparse(self.frontend_base_url).scheme != "https":
-                raise ValueError("FRONTEND_BASE_URL must use HTTPS in production")
-            if urlparse(self.frontend_app_url).scheme != "https":
-                raise ValueError("FRONTEND_APP_URL must use HTTPS in production")
+
+            if not self.local_production_allow_http:
+                if any(urlparse(origin).scheme != "https" for origin in self.cors_origins):
+                    raise ValueError("CORS_ORIGINS must use HTTPS in production")
+                if urlparse(self.frontend_base_url).scheme != "https":
+                    raise ValueError("FRONTEND_BASE_URL must use HTTPS in production")
+                if urlparse(self.frontend_app_url).scheme != "https":
+                    raise ValueError("FRONTEND_APP_URL must use HTTPS in production")
 
             database_urls = {
                 "DATABASE_URL": self.database_url,
@@ -85,22 +92,23 @@ class Settings(BaseSettings):
                     raise ValueError(f"{name} must not use the default E2E database credentials in production")
 
             # AI must not silently fall back to a local HTTP endpoint in production.
-            if urlparse(self.lm_studio_base_url).scheme != "https":
+            if not self.local_production_allow_http and urlparse(self.lm_studio_base_url).scheme != "https":
                 raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
 
             # External integrations must not redirect users or callbacks over plaintext HTTP.
-            if self.stripe_secret_key or self.stripe_webhook_secret:
-                for name, value in {
-                    "STRIPE_CHECKOUT_SUCCESS_URL": self.stripe_checkout_success_url,
-                    "STRIPE_CHECKOUT_CANCEL_URL": self.stripe_checkout_cancel_url,
-                    "STRIPE_PORTAL_RETURN_URL": self.stripe_portal_return_url,
-                }.items():
-                    if urlparse(value).scheme != "https":
-                        raise ValueError(f"{name} must use HTTPS in production")
+            if not self.local_production_allow_http:
+                if self.stripe_secret_key or self.stripe_webhook_secret:
+                    for name, value in {
+                        "STRIPE_CHECKOUT_SUCCESS_URL": self.stripe_checkout_success_url,
+                        "STRIPE_CHECKOUT_CANCEL_URL": self.stripe_checkout_cancel_url,
+                        "STRIPE_PORTAL_RETURN_URL": self.stripe_portal_return_url,
+                    }.items():
+                        if urlparse(value).scheme != "https":
+                            raise ValueError(f"{name} must use HTTPS in production")
 
-            if self.shopify_client_id or self.shopify_client_secret:
-                if urlparse(self.shopify_redirect_uri).scheme != "https":
-                    raise ValueError("SHOPIFY_REDIRECT_URI must use HTTPS in production")
+                if self.shopify_client_id or self.shopify_client_secret:
+                    if urlparse(self.shopify_redirect_uri).scheme != "https":
+                        raise ValueError("SHOPIFY_REDIRECT_URI must use HTTPS in production")
         return self
 
     @field_validator("cors_origins", mode="before")

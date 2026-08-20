@@ -1,59 +1,61 @@
 # RC9.1 / Production Readiness Status
 
-**Status date:** 2026-08-18  
+**Status date:** 2026-08-19  
 **Repository:** `ijoolaie/AI-Employee`
 
 ## Current position
 
-RC9.1 certification and CI gates are complete. The project is now moving into **Product Acceptance**. The project must **not** be labeled `1.0.0 Production` yet.
+RC9.1 certification and the current Product Acceptance stack are complete. The project is now in **Production Hardening / Deployment Readiness**. The project must **not** be labeled `1.0.0 Production` yet.
 
-## RC9.1 gates — COMPLETE
+## RC9.1 / CI gates — COMPLETE
 
 - [x] Release integrity
 - [x] CI hardening
-- [x] Dependency security fix
-- [x] Certification
+- [x] Dependency/security baseline
 - [x] Architecture Guard
-- [x] Stack smoke / readiness certification
-- [x] Auth P0 real-stack certification
-- [x] Tenant Isolation + RBAC P0 real-stack certification
+- [x] Compose stack readiness
+- [x] Authentication P0
+- [x] Tenant Isolation + RBAC P0
+- [x] Employee -> Run -> AI -> Result
+- [x] Files -> Knowledge -> Memory
+- [x] Admin / Developer / API Keys
+- [x] Workflow -> Approval -> Schedule
+- [x] Orders -> Sales -> Invoice -> Billing
+- [x] Frontend Playwright E2E
 
-### Certification evidence
+## Fresh certification evidence
 
-The Gate 2 certification workflow (`cert: Gate 2 tenant isolation + RBAC real-stack evidence`) passed on the certification/main line after the tenant/RBAC certification script was corrected to execute from `/app` with `PYTHONPATH=/app`, and the registration test data was changed to use a valid email address rather than the rejected `.invalid` domain.
+Latest complete Production Certification run:
 
-A later production certification run on `main` was also confirmed green. The repository is therefore considered to have completed the RC9.1 certification stage.
+- Run: `32276463633` (Production Certification #100)
+- Architecture Guard: `32276462650` — SUCCESS
+- Production Compose Validation: `32276462622` — SUCCESS
+- Production Certification: `32276463633` — SUCCESS
 
-## Product Acceptance — NEXT / IN PROGRESS
+The complete product acceptance sequence passed against the running Compose stack, including Files / Knowledge / Memory and Admin / Developer API Keys.
 
-The following acceptance areas remain to be verified as real product behavior:
+## Production Hardening — REMAINING
 
-1. [ ] Auth / RBAC / Tenant — certification is complete; broader product acceptance still needs to be recorded.
-2. [ ] Employee → Run → AI → Result
-3. [ ] Files / Knowledge / Memory
-4. [ ] Workflow / Approval / Schedule
-5. [ ] Orders / Sales / Invoice / Billing
-6. [ ] Admin / Developer / Observability
-
-Each item should be marked complete only after its relevant real-stack/product acceptance evidence is available.
-
-## Production Hardening — NOT STARTED / REMAINING
-
-- [ ] HTTPS / reverse proxy
+- [ ] HTTPS / reverse proxy / trusted origins
 - [ ] Production secrets and environment configuration
 - [ ] External service configuration and verification
-- [ ] Monitoring and centralized logging
-- [ ] Backup / restore and recovery verification
-- [ ] Production deployment procedure and deployment verification
+- [ ] Worker and Beat operation, restart policy and queue health
+- [ ] Monitoring / centralized logging / OTel / alerting
+- [ ] Persistent storage
+- [ ] Backup / restore / recovery
+- [ ] Production payment/webhook configuration where enabled
+- [ ] Deployment security / least privilege
+- [ ] Clean migration / rollback rehearsal
+- [ ] Final deployment verification
 
 ## Release rule
 
-`1.0.0 Production` is **blocked** until all Product Acceptance and Production Hardening items above are complete and evidenced.
+`1.0.0 Production` remains **blocked** until the remaining Production Hardening items above are complete and evidenced.
 
 The intended sequence is:
 
-`RC9.1 Certification ✅` → `Product Acceptance` → `Production Hardening` → `1.0.0 Production`
+`RC9.1 Certification ✅` → `Product Acceptance ✅` → `Production Hardening` → `1.0.0 Production`
 
-## Historical documentation note
+## Documentation rule
 
-`docs/current/04_RELEASE_AUDIT.md` describes the older RC8 staging baseline and should be read as historical audit evidence. This document is the current status checkpoint for the RC9.1 → Product Acceptance → Production Hardening path.
+Older RC8 handoff/audit documents are historical evidence unless explicitly updated with a newer run. Fresh certification evidence is anchored to Production Certification run `32276463633`.

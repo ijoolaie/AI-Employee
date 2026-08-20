@@ -1,0 +1,44 @@
+name: Production Failure Notification
+
+on:
+  workflow_run:
+    workflows: ["Production Certification", "Production Hardening", "Production DR", "Production Observability", "Production Rollback & Alerting"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  notify:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require notification endpoint for automated failures
+        if: ${{ github.event_name == 'workflow_run' }}
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.PRODUCTION_ALERT_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$ALERT_WEBHOOK_URL" || { echo 'PRODUCTION_ALERT_WEBHOOK_URL is required for automated production failure notifications' >&2; exit 1; }
+      - name: Send failure notification
+        if: ${{ github.event_name == 'workflow_run' }}
+        env:
+          ALERT_WEBHOOK_URL: ${{ secrets.PRODUCTION_ALERT_WEBHOOK_URL }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          payload=$(python - <<'PY'
+          import json, os
+          print(json.dumps({
+              "text": f"Production workflow failed: {os.environ['WORKFLOW_NAME']}\nRepository: {os.environ['REPOSITORY']}\nRun: {os.environ['RUN_URL']}"
+          }))
+          PY
+          )
+          curl --fail-with-body --silent --show-error --retry 3 \
+            -H 'Content-Type: application/json' \
+            --data "$payload" \
+            "$ALERT_WEBHOOK_URL"
+      - name: Manual dry-run contract
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: echo 'Notification contract is configured through PRODUCTION_ALERT_WEBHOOK_URL; manual dispatch does not send an alert.'

@@ -80,6 +80,9 @@ async def create_deal(payload: BusinessDealCreate, ctx: CurrentContext, db: DbSe
         source=payload.source,
         order_id=str(payload.order_id) if payload.order_id else None,
     )
+    # Commit before the response is sent so a client can immediately use the
+    # returned deal id in a follow-up request without racing dependency cleanup.
+    await db.commit()
     return APIResponse(success=True, data=BusinessDealResponse.model_validate(deal))
 
 

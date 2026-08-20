@@ -1,0 +1,30 @@
+name: Production DR
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/production_dr_restore_smoke.sh'
+      - '.github/workflows/production-dr.yml'
+      - 'docker-compose.production.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: production-dr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backup-restore:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run PostgreSQL and Redis backup/restore smoke test
+        run: bash scripts/production_dr_restore_smoke.sh
+      - name: Verify production compose keeps persistent data volumes
+        run: |
+          grep -q 'postgres_data:/var/lib/postgresql/data' docker-compose.production.yml
+          grep -q 'redis_data:/data' docker-compose.production.yml
+      - name: Verify production compose does not publish database ports
+        run: |
+          ! grep -Eq '"(5432|6379):' docker-compose.production.yml
