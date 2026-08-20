@@ -1,9 +1,13 @@
 name: Production Certification
 
+# This is a release-grade, production-like certification gate.
+# It is intentionally NOT a default PR/main CI workflow. Fast PR validation
+# belongs to the smaller contract/unit/build workflows; this workflow is
+# reserved for explicit certification and release tags.
 on:
   push:
-    branches: [main, master]
-  pull_request:
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 concurrency:
