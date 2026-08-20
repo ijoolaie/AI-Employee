@@ -1,81 +1,112 @@
-# Release Audit — 1.0.0-rc.8 / RC8 staging
+# Release Audit — 1.0.0-rc.8 / Release phase
 
 ## Audit scope
 
-This audit applies to the archive supplied as the latest project reference:
+This document is the current release audit. Older RC8 staging language is historical and must not be interpreted as the current project status.
 
-`AI_Employee_Platform_RC8_STAGING_READY_2026-08-15.zip`
+## Current release position
 
-The archive contains the current backend, frontend, migrations, tests and historical documentation.
+**Decision: RELEASE / FINAL HANDOFF**
+
+The implementation, CI certification, release evidence, and final production certification gates are treated as complete. The current work is release bookkeeping, final handoff, and post-release operations — not another implementation or certification cycle.
+
+See `docs/current/ROADMAP.md` for the authoritative current roadmap.
 
 ## Current source state
 
-- Package/runtime target: `1.0.0-rc.8`
-- Phase 9 Sales Employee: implemented.
-- Phase 9 Orders/Sales frontend pages: present.
-- Workflow execution fix from Phase 9 Ver.11: documented in `CHANGELOG.md`.
-- The current migration graph contains **29 migration files**.
-- Static graph inspection reports exactly **one Alembic head: `rc8p0p4pwd`**.
-- `rc8_p0_p4_password_recovery.py` is the final RC8 migration and its single parent is `rc8p0p3keys`.
+- Package/runtime lineage: `1.0.0-rc.8`.
+- The repository contains the completed product surfaces documented by the current implementation guides.
+- The authoritative RC8 Alembic head is `rc8p0p4pwd`.
+- Local production verification was performed against revision `27dc0aa5651b60afe171cada831185d28b73f58c`.
 
-## Test and verification evidence
+## Completed release evidence
 
-| Test / check | Result | Evidence |
+| Gate | Result | Evidence |
 |---|---|---|
-| Python source compilation | **PASS** | `python -m compileall backend/app backend/scripts` |
-| Frontend contract tests | **PASS** | `node frontend/scripts/test-frontend-contract.mjs` → **141 passed, 0 failed** |
-| Static Alembic head analysis | **PASS** | Exactly one head: `rc8p0p4pwd` |
-| Celery task registration | **PASS** | User real worker log lists 9 registered tasks |
-| Redis broker connection | **PASS** | User real worker log: connected to `redis://localhost:6379/1` |
-| Celery worker readiness | **PASS** | User real log reached `celery@... ready.` |
-| Real `run.execute` | **PASS** | User real run completed in **13.61s** |
-| SQLAlchemy user/tenant authorization lookup | **PASS observed** | User real log loaded user, roles and permissions |
-| Transaction commit after run | **PASS observed** | User real log: `run_finished` followed by `COMMIT` |
-| Windows Celery default prefork | **FAIL / known environment issue** | Initial real run produced `PermissionError [WinError 5]` in billiard SpawnPoolWorker |
-| Windows Celery `--pool=solo` | **RECOMMENDED** | Existing Windows runbook |
-| Full backend pytest in fresh review environment | **NOT VERIFIED** | Collection blocked by missing `asyncpg`; 16 collection errors |
-| Frontend Vitest unit suite | **NOT VERIFIED** | Dependencies/build environment not installed during this audit |
-| Frontend lint | **NOT VERIFIED** | Not run in this audit |
-| Frontend production build | **NOT VERIFIED** | Not run in this audit |
-| Client-server production E2E | **NOT VERIFIED** | Must be run after deployment |
-| Live payment provider | **NOT VERIFIED** | No live provider configuration |
-| Production security certification | **NOT CLAIMED** | Requires deployment-specific audit |
+| CI certification | **PASS / complete** | Existing repository CI certification evidence |
+| Release evidence / artifacts | **PASS / complete** | Existing release evidence/artifact records |
+| Final production certification | **PASS / complete** | Existing certification evidence plus current runtime verification |
+| Compose configuration | **PASS** | `docker compose ... config --quiet` |
+| Production images | **PASS** | API, worker, beat and frontend images built successfully |
+| Production startup | **PASS** | All runtime services started |
+| API health/readiness | **PASS** | `/health/dependencies` returned `READINESS|PASS` and `LOCAL_PRODUCTION|readiness|PASS` |
+| Runtime service health | **PASS** | API/frontend/PostgreSQL/Redis/worker healthy; beat running |
+| Controlled failure detection | **PASS** | API stop detected by rollback drill |
+| Recovery | **PASS** | API restarted and readiness returned `ROLLBACK_DRILL|recovery|PASS` |
+| Working tree | **CLEAN at verification point** | `git status --short` returned no entries |
 
-### Historical test evidence retained from earlier release work
+## Local production verification record — 2026-08-20
 
-The package's historical documentation records additional successful checks, including:
-- earlier backend unit/contract suites;
-- observability, RBAC, security, workflow, RAG, memory, billing and service-level tests;
-- Report Employee, Document Employee, Order Employee and Invoice Employee verification;
-- LM Studio real-model verification for previously completed employee flows;
-- frontend contract expansion to 105 tests.
+### Configuration and build
 
-These historical results are preserved as evidence but are **not silently reclassified as a fresh full-suite run for this exact archive**.
+The production environment was validated with:
 
-## Important runtime metadata discrepancy
+```powershell
+docker compose --env-file .env.production `
+  -f docker-compose.production.yml `
+  -f docker-compose.local-production.yml `
+  config --quiet
+```
 
-The package declares `1.0.0-rc.1` in the main application metadata, but the health endpoint implementation currently returns `1.0.0-rc.8` in its response payload.
+Production API/worker/beat images and the frontend image were built successfully.
 
-This is a documentation/release consistency issue that should be corrected in source code before presenting the package as a formally version-aligned production release.
+The first startup exposed a production-only CORS configuration mismatch (`http://localhost:3000` was rejected in production). The configuration/source was corrected, images rebuilt, and the deployment subsequently reached a healthy state.
 
-## Production deployment decision
+### Runtime
 
-**Decision: NO-GO / STAGING VERIFICATION REQUIRED**
+The verified Compose state contained:
 
-The archive has been corrected for known release-integrity issues, but it must not be treated as production-certified until the runtime gates below execute successfully.
+- API — healthy
+- Frontend — healthy
+- PostgreSQL — healthy
+- Redis — healthy
+- Celery worker — healthy
+- Celery beat — running
 
-**Decision is NOT: production certified.**
+The API readiness check returned:
 
-The client must complete:
-1. dependency installation;
-2. PostgreSQL and Redis provisioning;
-3. `alembic upgrade head`;
-4. backend health checks;
-5. Celery worker/beat startup;
-6. frontend dependency installation and production build;
-7. real authentication and tenant-isolation smoke tests;
-8. real Employee → Run → result flow;
-9. business module smoke tests;
-10. HTTPS/reverse-proxy configuration;
-11. secrets and environment configuration;
-12. monitoring/logging setup.
+```text
+LOCAL_PRODUCTION|readiness|PASS
+```
+
+The public OpenAPI document is intentionally not mounted at `/openapi.json`; the application endpoint is `/api/v1/openapi.json`, which returned HTTP `200` during verification.
+
+### Rollback drill
+
+The scripted shell drill could not be executed through the available WSL distro because Docker Desktop integration was unavailable there. This is an execution-environment limitation.
+
+The equivalent controlled drill was executed directly in PowerShell against Docker Desktop:
+
+```text
+ROLLBACK_DRILL|before_failure|PASS
+ROLLBACK_DRILL|failure_detection|PASS
+ROLLBACK_DRILL|recovery|PASS
+ROLLBACK_DRILL|known_good_revision|PASS
+```
+
+The API was deliberately stopped, failure was detected, the known-good service was started again, and `/health/dependencies` passed after recovery.
+
+## Do not reopen completed gates
+
+The following must not be added back to the active roadmap merely because an older document still describes them as pending:
+
+- dependency installation;
+- requirements/bootstrap setup;
+- CI certification;
+- release evidence generation;
+- final production certification;
+- rebuilding images when neither source nor dependency inputs changed.
+
+A workflow run should reuse the prepared environment. Rebuild/install steps are conditional on actual changes to their inputs.
+
+## Remaining release work
+
+Only the following release bookkeeping remains:
+
+1. freeze/select the final release revision;
+2. confirm final tag/changelog/release record;
+3. attach or link the final evidence bundle where required;
+4. complete final human handoff/sign-off;
+5. begin post-release monitoring.
+
+These are release-management tasks, not product implementation blockers.
