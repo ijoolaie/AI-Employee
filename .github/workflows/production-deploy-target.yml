@@ -11,11 +11,10 @@ on:
 permissions:
   contents: read
 
-environment:
-  name: production
-
 jobs:
   deploy:
+    environment:
+      name: production
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
