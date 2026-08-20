@@ -1,13 +1,31 @@
 # Gap Backlog v1.0 — Remaining Before Final Verification
 
+## Current checkpoint — 2026-08-20
+
+Local-production readiness has been verified, so the backlog below is now explicitly the **remaining release work** rather than generic setup work.
+
+Verified locally:
+
+- production Compose config: PASS
+- PostgreSQL/Redis: HEALTHY
+- API readiness: PASS
+- frontend: HEALTHY
+- worker: HEALTHY
+- beat: RUNNING
+- controlled API failure detection: PASS
+- API recovery drill: PASS
+- working tree: clean
+
+The local recovery drill does **not** close the staging/production rehearsal requirements below.
+
 ## P0 — Must be closed before Phase 7
 - Provision network-enabled CI/staging environment.
-- Install backend/frontend locked dependencies.
-- Configure PostgreSQL, Redis and Celery.
+- Install backend/frontend locked dependencies in CI/staging.
+- Configure real staging PostgreSQL, Redis and Celery.
 - Configure real provider credentials in the secret manager.
 - Configure HTTPS/TLS.
-- Execute migration and rollback rehearsal.
-- Confirm backup storage and restore target.
+- Execute migration and rollback rehearsal in staging.
+- Confirm backup storage and a verified restore target.
 
 ## P1 — Final environment configuration
 - Complete Stripe certification configuration.
