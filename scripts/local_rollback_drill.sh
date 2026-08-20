@@ -2,32 +2,47 @@
 set -euo pipefail
 
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}"
+LOCAL_OVERRIDE="${LOCAL_OVERRIDE:-docker-compose.local-production.yml}"
 PROJECT_NAME="${COMPOSE_PROJECT_NAME:-ai-employee-production}"
 ENV_FILE="${ENV_FILE:-.env.production}"
 
 [[ -f "$ENV_FILE" ]] || { echo "Missing $ENV_FILE" >&2; exit 1; }
+[[ -f "$LOCAL_OVERRIDE" ]] || { echo "Missing $LOCAL_OVERRIDE." >&2; exit 1; }
 
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$PROJECT_NAME" config --quiet
+compose() {
+  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$PROJECT_NAME" "$@"
+}
 
+compose config --quiet
 good_revision="$(git rev-parse HEAD)"
-echo "ROLLBACK_DRILL|known_good_revision|$good_revision"
+echo "RECOVERY_DRILL|known_good_revision|$good_revision"
 
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$PROJECT_NAME" ps
+compose ps
+compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('RECOVERY_DRILL|before_failure|PASS')"
 
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$PROJECT_NAME" exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('ROLLBACK_DRILL|before_failure|PASS')"
-
+# This is deliberately a recovery drill, not a Git rollback: stop the running API
+# and verify that the same known-good container can be brought back healthy.
 echo "Controlled failure step: stop API."
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$PROJECT_NAME" stop api
+compose stop api
 
-if docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$PROJECT_NAME" exec -T api true 2>/dev/null; then
-  echo 'ROLLBACK_DRILL|failure_detection|FAIL' >&2
+if compose exec -T api true 2>/dev/null; then
+  echo 'RECOVERY_DRILL|failure_detection|FAIL' >&2
   exit 1
 fi
-echo "ROLLBACK_DRILL|failure_detection|PASS"
+echo "RECOVERY_DRILL|failure_detection|PASS"
 
-echo "Recovering known-good revision: $good_revision"
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$PROJECT_NAME" start api
-sleep 5
-docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -p "$PROJECT_NAME" exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('ROLLBACK_DRILL|recovery|PASS')"
+echo "Recovering known-good deployment revision: $good_revision"
+compose start api
 
-echo "ROLLBACK_DRILL|known_good_revision|PASS"
+for i in $(seq 1 24); do
+  if compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=3)" >/dev/null 2>&1; then
+    echo "RECOVERY_DRILL|recovery|PASS"
+    echo "RECOVERY_DRILL|known_good_revision|PASS"
+    exit 0
+  fi
+  sleep 5
+done
+
+compose ps
+echo "RECOVERY_DRILL|recovery|FAIL" >&2
+exit 1
