@@ -1,6 +1,6 @@
 # Production Readiness Status
 
-**Status date:** 2026-08-19
+**Status date:** 2026-08-20
 
 ## Certified in repository
 
@@ -19,41 +19,61 @@
 - Production Compose validation: PASS
 - Architecture Guard: PASS
 
-The latest deployment-readiness evidence is associated with commit `dcd153d609e5013d30894a638903ea0e63225f53`; the related PR-triggered run set is green.
+## Local production deployment evidence
 
-## Not certified yet
+The current deployment-tested revision is:
+
+`27dc0aa5651b60afe171cada831185d28b73f58c`
+
+The Docker Desktop production-like stack was successfully deployed and verified with:
+
+- API healthy
+- Frontend healthy
+- PostgreSQL healthy
+- Redis healthy
+- Worker healthy
+- Beat running
+- API dependency readiness: PASS
+- Controlled API failure detection: PASS
+- API recovery after controlled stop: PASS
+
+This is valid local production-like deployment/recovery evidence. It is not evidence of an external customer-facing production host.
+
+## Not yet certified: external live environment
 
 ### 1. Live production deployment
 
-Not executed because the repository does not contain a real production target or production credentials. Do not fabricate these values.
+Not executed because the repository does not contain a real external production target or production credentials. Do not fabricate these values.
 
-Required GitHub Environment (`production`) inputs:
+If live deployment is required, configure a GitHub `production` Environment with secrets such as:
 
 - `PRODUCTION_DEPLOY_HOST`
 - `PRODUCTION_DEPLOY_USER`
 - `PRODUCTION_DEPLOY_SSH_KEY`
 - `PRODUCTION_CONTAINER_REGISTRY`
 
-These must be configured as environment secrets outside the repository.
+These must remain outside Git history.
 
 ### 2. External alert provider delivery
 
-The notification contract is tested against a local receiver. External provider delivery (Slack, PagerDuty, or an internal alert gateway) is not certified until `PRODUCTION_ALERT_WEBHOOK_URL` is configured and a real failure produces a successful delivery.
+The notification contract is tested against a local receiver. External provider delivery requires a real configured endpoint and a successful real failure notification.
 
 ### 3. Live rollback
 
-Rollback is contract-tested but has not been executed against a live production deployment. A live rollback evidence record requires a real deployment target and a successful recovery to the previous immutable revision.
+The local controlled rollback/recovery drill is PASS. Live rollback against an external production deployment remains environment-specific and is not claimed without a real deployment target.
 
-## Recommended final sequence
+## Recommended release sequence
 
-1. Configure the `production` GitHub Environment and its deployment secrets.
-2. Configure `PRODUCTION_ALERT_WEBHOOK_URL`.
-3. Run Deployment Readiness against the production environment.
-4. Deploy one immutable revision.
-5. Verify health/readiness and record deployment evidence.
-6. Trigger a controlled rollback drill.
-7. Verify recovery and external alert delivery.
-8. Mark Live Production and Live Rollback as certified.
+1. Create/verify the final release tag from the certified deployment-tested revision.
+2. Publish release notes and accumulated release evidence/artifacts.
+3. If an external production target exists, configure the `production` GitHub Environment.
+4. Run the live deployment and deployment-specific readiness checks.
+5. Verify external alert delivery.
+6. Execute and record live rollback.
+
+## Roadmap rule
+
+Do not reopen completed repository certification gates unless a later code/configuration change affects them. Release preparation should reuse existing dependency caches, immutable images, and recorded evidence rather than rebuilding or reinstalling everything for every run.
 
 ## Security rule
 
