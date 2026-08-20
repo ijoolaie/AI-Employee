@@ -52,7 +52,7 @@ def upgrade() -> None:
         sa.Column("subject", sa.String(length=255), nullable=False),
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column("status", sa.String(length=30), nullable=False, server_default="open"),
-        sa.Column("metadata", postgresql.JSONB(), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("extra_data", postgresql.JSONB(), nullable=False, server_default=sa.text("'{}'::jsonb")),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
