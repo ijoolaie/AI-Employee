@@ -1,8 +1,8 @@
 schema_version: 1
 edition: vendor
-release_id: v1.0.1
-vendor_release_tag: v1.0.1
-vendor_commit_sha: 2d23a01098f432145ecaea14b2500fe520ad0bf7
+release_id: v1.1.0
+vendor_release_tag: v1.1.0
+vendor_commit_sha: ab477b84a3f9f2441d2029a732a21d534fd217b9
 configuration_revision: vendor-default-1
 entitlements:
   profile: full-product
@@ -24,4 +24,4 @@ artifacts:
   source: github-release
   immutable: true
 rollback:
-  previous_manifest: null
+  previous_manifest: v1.0.1

@@ -1,9 +1,9 @@
 schema_version: 1
 edition: end-customer
-release_id: v1.0.1-customer.1
-vendor_release_tag: v1.0.1
-vendor_commit_sha: 2d23a01098f432145ecaea14b2500fe520ad0bf7
-reseller_delivery_id: v1.0.1-reseller.1
+release_id: v1.1.0-customer.1
+vendor_release_tag: v1.1.0
+vendor_commit_sha: ab477b84a3f9f2441d2029a732a21d534fd217b9
+reseller_delivery_id: v1.1.0-reseller.1
 customer:
   id: CUSTOMER-EXAMPLE-001
   configuration_revision: customer-default-1
@@ -28,4 +28,4 @@ artifacts:
   source: reseller-delivery
   immutable: true
 rollback:
-  previous_manifest: null
+  previous_manifest: v1.0.1-customer.1

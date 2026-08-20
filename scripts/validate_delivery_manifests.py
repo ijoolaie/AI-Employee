@@ -2,22 +2,22 @@ from pathlib import Path
 import re
 import subprocess
 
-VENDOR_TAG = "v1.0.1"
-VENDOR_SHA = "2d23a01098f432145ecaea14b2500fe520ad0bf7"
+VENDOR_TAG = "v1.1.0"
+VENDOR_SHA = "ab477b84a3f9f2441d2029a732a21d534fd217b9"
 ROOT = Path("delivery/manifests")
 
 EXPECTED = {
-    "vendor/v1.0.1.yaml": {
+    "vendor/v1.1.0.yaml": {
         "edition": "vendor",
-        "release_id": "v1.0.1",
+        "release_id": "v1.1.0",
     },
-    "reseller/v1.0.1-reseller.1.yaml": {
+    "reseller/v1.1.0-reseller.1.yaml": {
         "edition": "reseller",
-        "release_id": "v1.0.1-reseller.1",
+        "release_id": "v1.1.0-reseller.1",
     },
-    "customer/v1.0.1-customer.1.yaml": {
+    "customer/v1.1.0-customer.1.yaml": {
         "edition": "end-customer",
-        "release_id": "v1.0.1-customer.1",
+        "release_id": "v1.1.0-customer.1",
     },
 }
 
@@ -53,16 +53,8 @@ def main() -> None:
         if "CUSTOMER-EXAMPLE-001" not in text and expected["edition"] == "end-customer":
             raise SystemExit(f"{path}: expected customer identity placeholder")
 
-    vendor = (ROOT / "vendor/v1.0.1.yaml").read_text(encoding="utf-8")
-    reseller = (ROOT / "reseller/v1.0.1-reseller.1.yaml").read_text(encoding="utf-8")
-    customer = (ROOT / "customer/v1.0.1-customer.1.yaml").read_text(encoding="utf-8")
-
-    require(customer, "reseller_delivery_id", "v1.0.1-reseller.1", ROOT / "customer/v1.0.1-customer.1.yaml")
-
-    if scalar(vendor, "edition") != "vendor":
-        raise SystemExit("vendor manifest is not the canonical vendor edition")
-    if scalar(reseller, "artifacts") is not None:
-        pass
+    customer = (ROOT / "customer/v1.1.0-customer.1.yaml").read_text(encoding="utf-8")
+    require(customer, "reseller_delivery_id", "v1.1.0-reseller.1", ROOT / "customer/v1.1.0-customer.1.yaml")
 
     tag_sha = subprocess.check_output(
         ["git", "rev-list", "-n", "1", VENDOR_TAG], text=True
