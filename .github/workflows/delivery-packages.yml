@@ -1,0 +1,41 @@
+name: Delivery Manifest Bundle
+
+on:
+  push:
+    branches:
+      - main
+      - release/edition-model-v2
+    tags:
+      - 'v1.0.1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate delivery manifests and vendor identity
+        run: python scripts/validate_delivery_manifests.py
+
+      - name: Build manifest bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist
+          tar -czf dist/ai-employee-v1.0.1-delivery-manifest-bundle.tar.gz delivery/
+          sha256sum dist/ai-employee-v1.0.1-delivery-manifest-bundle.tar.gz > dist/SHA256SUMS
+
+      - name: Upload delivery manifest bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-employee-v1.0.1-delivery-manifest-bundle
+          path: dist/
+          if-no-files-found: error
