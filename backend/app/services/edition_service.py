@@ -190,7 +190,7 @@ async def create_support_escalation(
     target = (await db.execute(select(Tenant).where(Tenant.id == from_tenant.parent_tenant_id))).scalar_one_or_none()
     if target is None:
         raise HTTPException(status_code=409, detail="Parent support tenant unavailable")
-    row = SupportEscalation(from_tenant_id=from_tenant.id, to_tenant_id=target.id, opened_by=opened_by, subject=subject, description=description, metadata={})
+    row = SupportEscalation(from_tenant_id=from_tenant.id, to_tenant_id=target.id, opened_by=opened_by, subject=subject, description=description, extra_data={})
     db.add(row)
     await db.commit()
     await db.refresh(row)
