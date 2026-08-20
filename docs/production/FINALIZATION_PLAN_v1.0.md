@@ -4,17 +4,59 @@
 
 این سند پروژه را از وضعیت RC8/feature-heavy به یک Release Candidate قابل‌اعتماد و سپس v1.0 هدایت می‌کند. اصل حاکم این است که «Implemented» با «Verified» یکی نیست؛ هر قابلیت فقط وقتی Done است که acceptance criteria، تست، integration، documentation و evidence انتشار را داشته باشد.
 
-## وضعیت فعلی
+## وضعیت فعلی — 2026-08-20
 
-- Core backend/frontend: گسترده و عمدتاً implemented
-- Documentation: چند نسل و نیازمند یک source of truth
-- Tenant administration: users/status/roles UI implemented; invitation workflow remains a post-v1.0 enhancement unless provider mail is configured
-- Platform administration: read-only provider readiness surface implemented; credential mutation remains secret-manager controlled
-- Invoice UI: list/detail/status/PDF surface implemented
-- WhatsApp: inbound/provider-neutral foundation؛ outbound provider certification باقی است
-- Stripe/Shopify: implementation موجود، certification تولیدی باقی است
-- i18n/RTL: locale foundation, English/Persian switch and document direction implemented; full string translation coverage is post-v1.0
-- Full E2E / production certification: هنوز gate نهایی نیست
+**Current checkpoint: Local Production Readiness verified; release certification هنوز NO-GO است.**
+
+Evidence ثبت‌شده روی branch `agent/product-acceptance-files-km-current`:
+
+- local production Compose config: PASS
+- production API image + worker + beat: built successfully
+- PostgreSQL: healthy
+- Redis: healthy
+- API: healthy + `/health/dependencies`: PASS
+- Frontend: healthy
+- Worker: healthy
+- Beat: running
+- controlled API failure detection: PASS
+- API recovery drill: PASS
+- known-good revision: `27dc0aa5651b60afe171cada831185d28b73f58c`
+- working tree after drill: clean
+
+Important distinction: this is **local-production evidence**. It does not satisfy the separate staging/CI, TLS, real-provider, backup/restore-target, or final Phase 7 certification gates.
+
+### Remaining release blockers
+
+**P0 — before Phase 7**
+
+- network-enabled CI/staging environment
+- locked backend/frontend dependency installation in CI/staging
+- real staging PostgreSQL/Redis/Celery configuration
+- real provider credentials in secret manager
+- HTTPS/TLS configuration
+- migration + rollback rehearsal in staging
+- backup storage + verified restore target
+
+**P1 — final environment configuration**
+
+- Stripe certification configuration
+- Shopify OAuth/webhook configuration
+- WhatsApp outbound provider configuration and certification
+- production monitoring/alerting
+- support/incident ownership
+
+**Phase 7 — final verification**
+
+- backend unit/integration
+- frontend build/lint/unit/contract
+- API contract
+- browser E2E
+- Docker E2E
+- Stripe / Shopify / WhatsApp certification
+- human handoff
+- GDPR export/delete
+- backup/restore verification
+- security regression
 
 ## فازها و خروجی‌های اجباری
 
@@ -63,6 +105,8 @@
 - backup/restore scripts and procedure (`ops/production/backup.sh`, `restore.sh`)
 - rollback and incident runbooks (`ops/production/release-runbook.md`)
 - support documentation
+- local-production deployment and controlled recovery drill verified on 2026-08-20
+- staging/real-environment execution remains required
 
 ### Phase 6 — Release Documentation
 
@@ -71,6 +115,7 @@
 - release notes
 - migration/runbook documentation
 - explicit PASS / BLOCKED / NOT EXECUTED evidence ledger
+- current evidence must distinguish local-production verification from staging/production certification
 
 ### Phase 7 — Final Verification (LAST)
 
