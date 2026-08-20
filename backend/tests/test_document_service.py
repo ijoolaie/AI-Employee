@@ -9,11 +9,8 @@ exercised here and remains environment-dependent — see
 documents/63_PHASE_5_DOCUMENT_EMPLOYEE_AS_BUILT_v0.5.0.md verification
 boundary.
 
-Requires the tesseract-ocr system binary (+ tesseract-ocr-fas) and
-poppler-utils to be installed — see DEV_SETUP.md. If they are missing,
-the OCR-path tests will fail with a clear "tesseract is not installed"
-error rather than a confusing one; that is expected in an environment
-without those system packages.
+The OCR-path test is marked ``requires_ocr`` because the production-like
+OCR runtime lives in the API container, not on the GitHub host runner.
 """
 
 import io
@@ -53,6 +50,7 @@ def test_extract_text_from_native_pdf_uses_native_source():
     assert "Contract" in pages[0]["text"]
 
 
+@pytest.mark.requires_ocr
 def test_extract_text_from_image_uses_ocr_source():
     raw = _make_ocr_image("Dear customer contact test@example.com dated 2026/05/01")
     pages = document_service._extract_text_from_image(raw)

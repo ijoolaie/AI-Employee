@@ -1,0 +1,47 @@
+name: Production Hardening
+
+on:
+  pull_request:
+    paths:
+      - 'docker-compose.production.yml'
+      - 'backend/app/core/config.py'
+      - 'backend/Dockerfile'
+      - '.github/workflows/production-hardening.yml'
+  workflow_dispatch:
+
+jobs:
+  production-config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate production compose syntax
+        run: docker compose -f docker-compose.production.yml config --quiet
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_password_not_default
+          POSTGRES_DB: ci_db
+          REDIS_PASSWORD: ci_redis_password
+          SECRET_KEY: ci-production-secret-that-is-long-enough-123456
+          DATABASE_URL: postgresql+asyncpg://ci_user:ci_password_not_default@postgres:5432/ci_db
+          DATABASE_URL_SYNC: postgresql://ci_user:ci_password_not_default@postgres:5432/ci_db
+          REDIS_URL: redis://:ci_redis_password@redis:6379/0
+          CELERY_BROKER_URL: redis://:ci_redis_password@redis:6379/1
+          CELERY_RESULT_BACKEND: redis://:ci_redis_password@redis:6379/2
+          CORS_ORIGINS: '["https://app.example.com"]'
+          FRONTEND_BASE_URL: https://app.example.com
+          FRONTEND_APP_URL: https://app.example.com
+          NEXT_PUBLIC_API_URL: https://api.example.com
+      - name: Assert no host database exposure
+        run: |
+          ! grep -Eq '"(5432|6379):' docker-compose.production.yml
+      - name: Assert production secrets are environment-driven
+        run: |
+          ! grep -Eq 'SECRET_KEY: *"?(change-me|e2e-only|ci-certification)' docker-compose.production.yml
+          ! grep -Eq 'POSTGRES_PASSWORD: *"?(aiep|password)' docker-compose.production.yml
+      - name: Assert production safety guards exist
+        run: |
+          grep -q 'DEBUG must be false in production' backend/app/core/config.py
+          grep -q 'SECRET_KEY must be a strong production secret' backend/app/core/config.py
+          grep -q 'RATE_LIMIT_FAIL_CLOSED must be true in production' backend/app/core/config.py
+          grep -q 'CORS_ORIGINS must use HTTPS in production' backend/app/core/config.py
