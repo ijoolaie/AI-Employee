@@ -25,7 +25,7 @@ jobs:
         run: python scripts/check_architecture.py
 
       - name: Run modular architecture tests
-        run: python -m pytest backend/tests/test_m3_infrastructure_boundaries.py backend/tests/test_m4_event_boundaries.py backend/tests/test_m7_real_migration.py
+        run: python -m pytest backend/tests/test_m3_infrastructure_boundaries.py backend/tests/test_m4_event_boundaries.py backend/tests/test_m7_real_migration.py backend/tests/test_edition_boundaries.py
 
       - name: Final architecture audit
         run: python scripts/final_architecture_audit.py
