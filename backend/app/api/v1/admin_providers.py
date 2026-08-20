@@ -1,22 +1,22 @@
-"""Platform provider health/read-only management surface.
+"""Vendor-only platform provider health/read-only management surface."""
+from typing import Annotated
 
-This endpoint deliberately exposes configuration state, not secrets. Mutating
-provider credentials remains an infrastructure/secret-management operation.
-"""
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+
 from app.core.config import get_settings
 from app.core.deps import TenantContext, get_current_context
-from fastapi import Depends
-from typing import Annotated
 
 router = APIRouter(prefix="/admin/providers", tags=["admin-providers"])
 
+
 async def require_platform_admin(ctx: TenantContext = Depends(get_current_context)) -> TenantContext:
-    if not ctx.user.is_platform_admin:
-        raise HTTPException(status_code=403, detail="Platform administrator access required")
+    if not ctx.user.is_platform_admin or ctx.tenant.tenant_kind != "vendor":
+        raise HTTPException(status_code=403, detail="Vendor platform administrator access required")
     return ctx
 
+
 PlatformAdminContext = Annotated[TenantContext, Depends(require_platform_admin)]
+
 
 @router.get("")
 async def provider_status(ctx: PlatformAdminContext):
