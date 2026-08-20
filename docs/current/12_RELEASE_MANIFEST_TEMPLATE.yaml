@@ -1,0 +1,45 @@
+schema_version: 1
+
+# Commercial delivery identity.
+package_id: replace-me
+edition: vendor # vendor | reseller | customer
+
+vendor:
+  product: AI-Employee
+  release_tag: v1.0.1
+  commit_sha: 2d23a01098f432145ecaea14b2500fe520ad0bf7
+
+# Required for reseller/customer deliveries; set to null for a vendor package.
+reseller:
+  id: null
+  delivery_revision: null
+
+# Required for customer deliveries; set to null for vendor/reseller packages.
+customer:
+  id: null
+  deployment_revision: null
+
+deployment:
+  environment: replace-me
+  region: replace-me
+  image_registry: replace-me
+
+configuration:
+  schema_version: 1
+  revision: replace-me
+
+entitlements:
+  plan: replace-me
+  features: []
+
+artifacts:
+  backend_image: replace-me@sha256:replace-me
+  frontend_image: replace-me@sha256:replace-me
+  worker_image: replace-me@sha256:replace-me
+
+verification:
+  certification_status: pass
+  deployment_status: pending
+  rollback_status: pending
+
+# Never place credentials, API keys, passwords, private tokens, or customer data here.
