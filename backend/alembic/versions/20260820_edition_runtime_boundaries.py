@@ -19,8 +19,8 @@ def upgrade() -> None:
     op.add_column("tenants", sa.Column("vendor_release_tag", sa.String(length=80), nullable=True))
     op.add_column("tenants", sa.Column("delivery_revision", sa.String(length=120), nullable=True))
 
-    # Preserve the existing platform-control-plane tenant as the vendor root.
-    op.execute(sa.text("UPDATE tenants SET tenant_kind = 'vendor' WHERE id IN (SELECT DISTINCT tenant_id FROM users WHERE is_platform_admin = true)"))
+    # Preserve the current platform-control-plane tenant as the vendor root.
+    op.execute(sa.text("UPDATE tenants SET tenant_kind = 'vendor', vendor_release_tag = 'v1.0.1', delivery_revision = 'v1.0.1' WHERE id IN (SELECT DISTINCT tenant_id FROM users WHERE is_platform_admin = true)"))
 
     op.create_foreign_key("fk_tenants_parent_tenant", "tenants", "tenants", ["parent_tenant_id"], ["id"], ondelete="RESTRICT")
     op.create_index("ix_tenants_parent_tenant_id", "tenants", ["parent_tenant_id"])
