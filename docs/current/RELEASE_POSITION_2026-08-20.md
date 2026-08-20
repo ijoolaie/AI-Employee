@@ -2,9 +2,15 @@
 
 ## Current state
 
-**RELEASE / final release preparation**
+**Published release: `v1.0.1`**
 
-The repository has completed the major implementation, certification, product-acceptance, production-hardening, deployment-readiness, and release-evidence gates. The current task is release-integrity and release execution, not restarting earlier certification phases.
+The repository has completed the major implementation, certification, product-acceptance, production-hardening, deployment-readiness, and release-evidence gates for the current release line. The next work is release integrity and commercial productization, not restarting earlier certification phases.
+
+## Published release baseline
+
+- Published version: `v1.0.1`
+- Published release commit: `2d23a01098f432145ecaea14b2500fe520ad0bf7`
+- `main` contains post-release CI/release-topology work and must be intentionally versioned before those changes are claimed as part of a release.
 
 ## Certified checkpoints
 
@@ -18,25 +24,24 @@ The repository has completed the major implementation, certification, product-ac
 - Backup/restore and disaster-recovery smoke checks: PASS.
 - Observability, failure-detection, rollback, and notification contracts: PASS.
 - Deployment Readiness and immutable release revision/manifest: PASS.
-- Local production Docker deployment: PASS.
-- Local production API, frontend, worker, beat, PostgreSQL, and Redis readiness: PASS.
+- Local production Docker deployment and readiness: PASS.
 - Controlled local API failure detection and recovery drill: PASS.
 
-## Certified deployment-tested revision
+## Productization sequence
 
-`27dc0aa5651b60afe171cada831185d28b73f58c2`
+1. **Release Integrity** — synchronize published release, current `main`, and certified delivery baselines.
+2. **Vendor Edition** — primary seller control plane, licensing, entitlements, global administration, and release authority.
+3. **Reseller Edition** — delegated administration and customer provisioning inside a bounded reseller scope.
+4. **Customer Edition** — isolated customer operations, configuration, data, recovery, and upgrade surface.
+5. **Delivery Package** — reproducible artifact, manifest, installation, migration, backup/restore, rollback, and acceptance procedures.
+6. **Commercial Production** — supported versions, update policy, support/escalation, and production evidence.
+
+See `docs/current/PRODUCTIZATION_ROADMAP.md` for detailed gates and exit criteria.
 
 ## Do not reopen completed gates
 
-Earlier RC8/RC9 certification work is retained as evidence. A later release step does not require rebuilding dependencies, reinstalling toolchains, or rerunning unrelated certification gates unless the relevant code/configuration changed.
-
-## Remaining release sequence
-
-1. Keep version/release documentation aligned with RC9 and the deployment-tested revision.
-2. Create/verify the final release tag from the certified revision.
-3. Publish the release evidence/artifacts and release notes.
-4. If an external production target is available, perform the separate live-production deployment, alert-delivery, and live-rollback evidence.
+Earlier RC8/RC9 certification work is retained as evidence. A later release/productization step requires new validation only where the relevant code or configuration changed.
 
 ## Important distinction
 
-Local production deployment and rollback evidence prove the repository's deployment/recovery behavior on the local Docker production-like stack. They do not fabricate evidence for an external production host, registry, alert provider, or live customer environment.
+Local production deployment and rollback evidence proves deployment/recovery behavior on the local Docker production-like stack. It does not fabricate evidence for an external production host, registry, alert provider, or live customer environment.
