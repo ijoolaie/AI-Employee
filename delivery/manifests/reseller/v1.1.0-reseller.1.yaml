@@ -1,0 +1,30 @@
+schema_version: 1
+edition: reseller
+release_id: v1.1.0-reseller.1
+vendor_release_tag: v1.1.0
+vendor_commit_sha: ab477b84a3f9f2441d2029a732a21d534fd217b9
+reseller:
+  id: RESELLER-EXAMPLE-001
+  configuration_revision: reseller-default-1
+  contract_reference: external
+entitlements:
+  profile: reseller-contract
+  features: []
+branding:
+  mode: reseller
+  name: Reseller Brand
+secrets:
+  policy: external-secret-store
+  included: false
+tenancy:
+  model: isolated-per-deployment
+  tenant_id: reseller-tenant-placeholder
+deployment:
+  target: reseller
+  environment: production
+  image_policy: immutable-digest
+artifacts:
+  source: vendor-release
+  immutable: true
+rollback:
+  previous_manifest: v1.0.1-reseller.1
