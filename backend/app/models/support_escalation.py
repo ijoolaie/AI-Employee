@@ -20,6 +20,6 @@ class SupportEscalation(Base):
     subject: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(30), default="open", nullable=False, index=True)
-    metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    extra_data: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
