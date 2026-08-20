@@ -12,21 +12,24 @@ The roadmap treats certification evidence as completed unless a later change aff
 
 ## Baseline
 
-- Latest published release: **v1.0.1**.
-- `main` contains subsequent release-topology/CI work and must be intentionally versioned before the next customer-delivery release.
+- Latest published release: **v1.0.1** at commit `2d23a01098f432145ecaea14b2500fe520ad0bf7`.
+- `main` is currently **3 commits ahead of `v1.0.1`** and contains release-topology/CI work; it is not itself a published release.
+- The current post-release delta is intentionally limited to release-topology work, including `.github/workflows/production-certification.yml` and `docs/current/10_CI_RELEASE_TOPOLOGY.md`.
 - Release documentation must always distinguish **published release**, **current main**, and **certified delivery baseline**.
 
 ## Phase 0 — Release Integrity
 
-**Goal:** make the repository internally consistent before productization work.
+**Status: COMPLETE for the current documentation/release-position work.**
 
-- [ ] Synchronize README/current documentation with the published release.
-- [ ] Record the exact `v1.0.1` commit and the post-release `main` delta.
-- [ ] Define the next release baseline only after affected CI/release-topology changes are green.
+- [x] Synchronize README/current documentation with the published release.
+- [x] Record the exact `v1.0.1` commit and the post-release `main` delta.
+- [x] Define the next release baseline only after affected CI/release-topology changes are green.
 - [ ] Maintain an immutable release manifest containing version, commit SHA, migration head, artifacts, and certification evidence.
 - [ ] Keep release notes and changelog generated from the exact release tag.
 
-**Exit:** published release, source state, and documentation no longer contradict each other.
+**Exit:** published release, source state, and documentation no longer contradict each other for the current handoff.
+
+**Next release rule:** the next published release must be created from an explicitly selected immutable commit after the applicable CI/release-topology gates are green. Do not retroactively move `v1.0.1`.
 
 ## Phase 1 — Vendor Edition
 
