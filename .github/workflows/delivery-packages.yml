@@ -1,0 +1,70 @@
+name: Delivery Packages
+
+on:
+  push:
+    branches:
+      - main
+      - release/edition-model
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate delivery manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+
+          root = Path('delivery/manifests')
+          expected = {
+              'vendor/v1.0.1.yaml': ('vendor', 'v1.0.1'),
+              'reseller/v1.0.1-reseller.1.yaml': ('reseller', 'v1.0.1-reseller.1'),
+              'customer/v1.0.1-customer.1.yaml': ('end-customer', 'v1.0.1-customer.1'),
+          }
+
+          for relative, (edition, release_id) in expected.items():
+              path = root / relative
+              if not path.exists():
+                  raise SystemExit(f'missing manifest: {path}')
+              text = path.read_text()
+              for key, value in {
+                  'edition': edition,
+                  'release_id': release_id,
+                  'vendor_release_tag': 'v1.0.1',
+                  'vendor_commit_sha': '2d23a01098f432145ecaea14b2500fe520ad0bf7',
+              }.items():
+                  if not re.search(rf'(?m)^{re.escape(key)}:\s*{re.escape(value)}\s*$', text):
+                      raise SystemExit(f'{path}: invalid {key}')
+              if 'included: true' in text:
+                  raise SystemExit(f'{path}: live secrets must never be included')
+
+          print('all delivery manifests valid')
+          PY
+
+      - name: Package delivery manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          tar -czf dist/ai-employee-v1.0.1-delivery-manifests.tar.gz delivery/manifests
+          sha256sum dist/ai-employee-v1.0.1-delivery-manifests.tar.gz > dist/SHA256SUMS
+
+      - name: Upload delivery package
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-employee-v1.0.1-delivery-manifests
+          path: dist/
+          if-no-files-found: error
