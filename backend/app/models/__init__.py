@@ -24,52 +24,21 @@ from app.models.commerce_integration import CommerceIntegration
 from app.models.onboarding import OnboardingProgress
 from app.models.customer import Customer
 from app.models.api_key import APIKey
-
-__all__ = [
-    "Tenant",
-    "User",
-    "Role",
-    "Permission",
-    "user_roles",
-    "role_permissions",
-    "AuditLog",
-    "FileObject",
-    "Employee",
-    "EmployeeVersion",
-    "Run",
-    "AIProviderCall",
-    "ToolApprovalRequest",
-    "KnowledgeDocument",
-    "KnowledgeChunk",
-    "EmployeeMemory",
-    "Workflow",
-    "WorkflowVersion",
-    "WorkflowRun",
-    "WorkflowStepRun",
-    "WorkflowParallelBranchRun",
-    "WorkflowEventTrigger",
-    "WorkflowEventDelivery",
-    "WorkflowSchedule",
-    "WorkflowApproval",
-    "OutboxMessage",
-    "Feedback",
-    "BillingPlan",
-    "Subscription",
-    "BillingEvent",
-    "BusinessInvoice",
-    "CustomerChannel",
-    "CustomerConversation",
-    "CustomerMessage",
-    "Product",
-    "CommerceIntegration",
-    "OnboardingProgress",
-    "Customer",
-    "APIKey",
-    "BusinessOrder",
-    "BusinessDeal",
-]
 from app.models.business_order import BusinessOrder
 from app.models.business_deal import BusinessDeal
-
 from app.models.shopify_webhook_event import ShopifyWebhookEvent
 from app.models.password_reset_token import PasswordResetToken
+from app.models.tenant_entitlement import TenantEntitlement
+from app.models.support_escalation import SupportEscalation
+
+__all__ = [
+    "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
+    "FileObject", "Employee", "EmployeeVersion", "Run", "AIProviderCall", "ToolApprovalRequest",
+    "KnowledgeDocument", "KnowledgeChunk", "EmployeeMemory", "Workflow", "WorkflowVersion",
+    "WorkflowRun", "WorkflowStepRun", "WorkflowParallelBranchRun", "WorkflowEventTrigger",
+    "WorkflowEventDelivery", "WorkflowSchedule", "WorkflowApproval", "OutboxMessage", "Feedback",
+    "BillingPlan", "Subscription", "BillingEvent", "BusinessInvoice", "CustomerChannel",
+    "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "OnboardingProgress",
+    "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "PasswordResetToken",
+    "TenantEntitlement", "SupportEscalation",
+]
