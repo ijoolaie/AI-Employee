@@ -1,60 +1,66 @@
 # AI Employee Platform
 
-**Latest published release:** `v1.0.1`
+**Current vendor release:** `v1.0.1`
 
-This repository contains the AI Employee Platform implementation, certification evidence, release infrastructure, and productization roadmap.
+**Vendor release commit:** `2d23a01098f432145ecaea14b2500fe520ad0bf7`
 
-## Current source/release position
+This repository is the vendor source of truth for the AI Employee Platform. Published vendor releases are immutable snapshots. Reseller and end-customer deliveries reference a vendor release plus their own configuration, entitlement, and deployment revisions; they are not permanent source forks.
 
-- **Published release:** `v1.0.1` at commit `2d23a01098f432145ecaea14b2500fe520ad0bf7`.
-- **Current `main`:** contains post-release CI/release-topology work and is not automatically the same as the published release.
-- **Productization roadmap:** `docs/current/PRODUCTIZATION_ROADMAP.md`.
-- **Release topology:** vendor → reseller → customer editions are explicitly separated and must not share higher-level control-plane access.
+## Current release position
 
-Certification and production-hardening evidence completed for the release line remains valid unless a later code/configuration change affects the relevant behavior. Do not restart completed RC8/RC9 certification work merely because productization or release-integrity work is pending.
+**Phase: RELEASE / delivery separation and handoff preparation**
 
-## Evidence already completed
+`v1.0.1` is the current published vendor release and Latest release. Subsequent delivery work must not rewrite that release. Any product change requires a new vendor release; reseller/customer changes are represented by delivery revisions.
 
-- GitHub Actions Architecture Guard — PASS
-- Production Compose Validation — PASS
-- Production Certification — PASS
-- Product Acceptance — PASS
-- Production Hardening — PASS
-- PostgreSQL backup/restore smoke — PASS
-- Redis persistence/restore smoke — PASS
-- Disaster Recovery — PASS
-- Production Observability contract — PASS
-- Failure detection / rollback contract — PASS
-- Deployment Readiness — PASS
-- Immutable release revision / manifest — PASS
-- Local production Docker deployment — PASS
-- Local production API/frontend/worker/beat/PostgreSQL/Redis readiness — PASS
-- Local controlled API failure detection and recovery drill — PASS
+## Delivery model
 
-## Productization sequence
+The product is separated into three commercial layers:
 
-1. Release Integrity
-2. Vendor Edition
-3. Reseller Edition
-4. Customer Edition
-5. Repeatable Delivery Package
-6. Commercial Production
+```text
+Vendor Core Release
+        |
+        +--> Reseller Edition / Contract Configuration
+        |          |
+        |          +--> Reseller deployment
+        |
+        +--> End Customer Deployment Package
+```
 
-See `docs/current/PRODUCTIZATION_ROADMAP.md` for the detailed phase gates and definition of commercially deliverable.
+Read:
 
-## Start here
+1. `docs/current/10_RELEASE_CHANNELS_AND_EDITION_MODEL.md`
+2. `docs/current/11_DELIVERY_PACKAGE_SPEC.md`
+3. `docs/current/12_RELEASE_MANIFEST_TEMPLATE.yaml`
 
-1. `docs/current/00_MASTER_IMPLEMENTATION_GUIDE.md`
-2. `docs/current/04_RELEASE_AUDIT.md`
-3. `docs/current/05_CERTIFICATION_PROGRESS.md`
-4. `docs/current/09_PRODUCTION_READINESS_STATUS.md`
-5. `docs/current/PRODUCTIZATION_ROADMAP.md`
-6. `docs/current/02_WINDOWS_RUNBOOK.md`
+## Release identity
+
+- **Vendor:** `vMAJOR.MINOR.PATCH` — example `v1.0.1`
+- **Reseller delivery:** `v1.0.1-reseller.<revision>` — example `v1.0.1-reseller.1`
+- **Customer delivery:** `v1.0.1-customer.<revision>` — example `v1.0.1-customer.3`
+
+Reseller/customer identifiers are delivery identities, not replacements for the vendor product version.
+
+## Release and delivery rules
+
+- Keep `main` as the vendor source of truth.
+- Never mutate a published release to satisfy one reseller or customer.
+- Do not maintain long-lived customer-specific forks.
+- Keep secrets and tenant data outside source and release manifests.
+- Every handoff must include an immutable manifest linking commercial identity to the exact vendor release SHA.
+- Rollback must restore both the previous product revision and the compatible delivery/configuration revision.
+
+## Existing certification evidence
+
+The repository already contains product-level certification and production-readiness evidence. These remain attached to the vendor release and are reused by delivery packages where applicable.
+
+See:
+
+- `docs/current/04_RELEASE_AUDIT.md`
+- `docs/current/05_CERTIFICATION_PROGRESS.md`
+- `docs/current/09_PRODUCTION_READINESS_STATUS.md`
+- `docs/current/RELEASE_POSITION_2026-08-20.md`
+- `docs/current/07_CLIENT_HANDOFF_AND_TEST_EVIDENCE.md`
 
 ## Migration note
 
 The current Alembic graph must remain authoritative. Run `alembic upgrade head` and `alembic check`; do not stamp the database to conceal a mismatch.
-
-## Release policy
-
-A green certification gate is a completed checkpoint. Re-run only gates affected by later code/configuration changes. Every published release must point to an immutable commit and its documentation, manifest, evidence, and artifacts must match that exact release.
