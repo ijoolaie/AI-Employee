@@ -67,6 +67,13 @@ jobs:
       - name: Ruff
         working-directory: backend
         run: ruff check app tests
+      - name: Diagnose Alembic heads
+        working-directory: backend
+        run: |
+          echo '=== ALEMBIC HEADS ==='
+          alembic heads --verbose
+          echo '=== ALEMBIC CURRENT ==='
+          alembic current
       - name: Alembic upgrade
         working-directory: backend
         run: alembic upgrade head
