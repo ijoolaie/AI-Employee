@@ -1,7 +1,7 @@
 [project]
 name = "ai-employee-platform-backend"
-version = "1.0.0rc8"
-description = "AI Employee Platform — Backend (Phase 6: closing the Phase 4 commercial exit gate with a real Stripe adapter)"
+version = "1.1.1"
+description = "AI Employee Platform — Backend"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115.0",
@@ -62,9 +62,6 @@ line-length = 100
 target-version = "py311"
 
 [tool.ruff.lint]
-# RC8 contains intentional compact one-line statements and local imports in
-# legacy/compatibility paths. Keep Ruff focused on correctness failures that
-# can change runtime behavior rather than forcing a broad formatting rewrite.
 ignore = [
     "E401",
     "E402",
