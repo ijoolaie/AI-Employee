@@ -1,5 +1,7 @@
 """Phase 4 Monetization contracts: plans, idempotent billing events and quotas."""
+
 from decimal import Decimal
+
 from app.schemas.billing import BillingEventRequest, PlanResponse, SubscribeRequest
 from app.services.billing_service import PLAN_SEEDS
 
@@ -23,5 +25,9 @@ def test_subscription_change_contract():
 
 
 def test_billing_event_requires_idempotency_identity():
-    event = BillingEventRequest(provider="test", provider_event_id="evt-1", event_type="subscription.updated")
+    event = BillingEventRequest(
+        provider="test",
+        provider_event_id="evt-1",
+        event_type="subscription.updated",
+    )
     assert event.provider_event_id == "evt-1"
