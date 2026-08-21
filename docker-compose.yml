@@ -51,8 +51,9 @@ services:
       DEBUG: "false"
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
-      AI_DEFAULT_PROVIDER: deterministic
+      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-deterministic}
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+      AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
     volumes:
       - app_storage:/app/var/storage
     ports:
@@ -85,8 +86,9 @@ services:
       DEBUG: "false"
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
-      AI_DEFAULT_PROVIDER: deterministic
+      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-deterministic}
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+      AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
     volumes:
       - app_storage:/app/var/storage
     depends_on:
@@ -112,8 +114,9 @@ services:
       DEBUG: "false"
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
-      AI_DEFAULT_PROVIDER: deterministic
+      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-deterministic}
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+      AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
     volumes:
       - app_storage:/app/var/storage
     depends_on:
@@ -153,7 +156,6 @@ services:
       timeout: 5s
       start_period: 10s
       retries: 20
-
 
 volumes:
   postgres_data:
