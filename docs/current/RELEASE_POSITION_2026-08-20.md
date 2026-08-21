@@ -2,15 +2,16 @@
 
 ## Current state
 
-**Published release: `v1.0.1`**
+**Current release target: `v1.1.1`**
 
-The repository has completed the major implementation, certification, product-acceptance, production-hardening, deployment-readiness, and release-evidence gates for the current release line. The next work is release integrity and commercial productization, not restarting earlier certification phases.
+The repository has completed the major implementation, certification, product-acceptance, production-hardening, deployment-readiness, and release-evidence gates for the prior release line. The current `v1.1.1` line records delivery, migration, CI, and documentation hardening after the immutable `v1.1.0` vendor release.
 
-## Published release baseline
+## Release baseline
 
-- Published version: `v1.0.1`
-- Published release commit: `2d23a01098f432145ecaea14b2500fe520ad0bf7`
-- `main` contains post-release CI/release-topology work and must be intentionally versioned before those changes are claimed as part of a release.
+- Current release target: `v1.1.1`
+- Base immutable vendor release: `v1.1.0`
+- Historical rollback reference: `v1.0.1`
+- Current `main` is the vendor source-of-truth revision for the v1.1.1 validation line.
 
 ## Certified checkpoints
 
@@ -26,10 +27,24 @@ The repository has completed the major implementation, certification, product-ac
 - Deployment Readiness and immutable release revision/manifest: PASS.
 - Local production Docker deployment and readiness: PASS.
 - Controlled local API failure detection and recovery drill: PASS.
+- Alembic migration-head merge: completed in the v1.1.1 hardening line.
+- Backend and frontend package versions: aligned to `1.1.1`.
+
+## v1.1.1 release hardening
+
+The v1.1.1 line includes:
+
+1. Release-integrity alignment between `main` and the delivery-hardening baseline.
+2. Backend package version alignment to `1.1.1`.
+3. Frontend package version alignment to `1.1.1`.
+4. Alembic migration-head merge so the migration graph has a single upgrade target.
+5. Delivery manifest and packaging identity hardening.
+6. Production deployment workflow environment scoping correction.
+7. Documentation alignment with the v1.1 delivery architecture.
 
 ## Productization sequence
 
-1. **Release Integrity** — synchronize published release, current `main`, and certified delivery baselines.
+1. **Release Integrity** — synchronize current `main`, release metadata, and certified delivery baselines.
 2. **Vendor Edition** — primary seller control plane, licensing, entitlements, global administration, and release authority.
 3. **Reseller Edition** — delegated administration and customer provisioning inside a bounded reseller scope.
 4. **Customer Edition** — isolated customer operations, configuration, data, recovery, and upgrade surface.
@@ -45,3 +60,9 @@ Earlier RC8/RC9 certification work is retained as evidence. A later release/prod
 ## Important distinction
 
 Local production deployment and rollback evidence proves deployment/recovery behavior on the local Docker production-like stack. It does not fabricate evidence for an external production host, registry, alert provider, or live customer environment.
+
+## Production deployment gate
+
+**Status: DEFERRED**
+
+Live production deployment is not claimed complete until the production target secrets and environment are provisioned and the target deployment workflow is executed successfully.
