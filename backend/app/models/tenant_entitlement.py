@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Index, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,12 +12,15 @@ from app.core.database import Base
 
 class TenantEntitlement(Base):
     __tablename__ = "tenant_entitlements"
-    __table_args__ = (UniqueConstraint("tenant_id", "feature_code", name="uq_tenant_entitlement_feature"),)
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "feature_code", name="uq_tenant_entitlement_feature"),
+        Index("ix_tenant_entitlements_delegated_from", "delegated_from_tenant_id"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
     delegated_from_tenant_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=True, index=True
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=True
     )
     feature_code: Mapped[str] = mapped_column(String(120), nullable=False)
     quota_limit: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
