@@ -74,6 +74,12 @@ jobs:
       - name: Prepare host test database
         working-directory: backend
         run: alembic upgrade head
+      - name: Verify host migration graph is current
+        working-directory: backend
+        run: alembic check
+      - name: Verify host migration head is singular
+        working-directory: backend
+        run: test "$(alembic heads | grep -c '^v111releaseidentity')" -eq 1
       - name: Backend tests (host-safe)
         working-directory: backend
         run: pytest -q -m 'not requires_ocr'
@@ -99,6 +105,10 @@ jobs:
           exit 1
       - name: Prepare stack database
         run: docker compose exec -T api alembic upgrade head
+      - name: Verify stack migration graph is current
+        run: docker compose exec -T api alembic check
+      - name: Verify stack migration head is singular
+        run: test "$(docker compose exec -T api alembic heads | grep -c '^v111releaseidentity')" -eq 1
       - name: Verify OCR runtime in production-like API container
         run: docker compose exec -T api sh -lc 'command -v tesseract && tesseract --version && tesseract --list-langs | grep -qx fas'
       - name: OCR extraction test in production-like API container
