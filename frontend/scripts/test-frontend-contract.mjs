@@ -172,7 +172,6 @@ test("sales emptystate icon", () => {
   if (!src.includes("icon={TrendingUp}")) throw new Error("missing icon");
 });
 
-// ── v0.9.5 Enterprise pages coverage ──────────────────────────────
 const enterprisePages = [
   "app/(customer)/dashboard/page.tsx",
   "app/(customer)/chat/page.tsx",
@@ -203,7 +202,6 @@ for (const rel of enterprisePages) {
   test("exists " + rel, () => { read(rel); });
 }
 
-// Core API surface for AI Employees / Runs / Chat / Studio
 for (const name of [
   "listEmployees", "getEmployee", "createEmployee", "listAvailableTools",
   "listRuns", "getRun", "createRun", "getRunTrace",
@@ -308,7 +306,7 @@ test("api base and auth interceptor", () => {
   if (!api.includes("refresh") || !api.includes("Authorization")) throw new Error("no auth interceptor");
 });
 
-// ── RC7/RC8 production-readiness coverage ──────────────────────────
+// RC7 production-readiness coverage retained as historical feature coverage.
 for (const rel of [
   "app/(customer)/analytics/page.tsx",
   "app/(customer)/templates/page.tsx",
@@ -327,13 +325,13 @@ test("RC7 sidebar covers sales-critical workspaces", () => {
   }
 });
 
-test("RC8 release metadata", () => {
+// Release metadata is now validated against the current vendor release.
+test("release metadata", () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-  if (pkg.version !== "1.0.0-rc.8") throw new Error("frontend version is not rc.8");
+  if (pkg.version !== "1.1.1") throw new Error("frontend version is not 1.1.1");
 });
 
-
-// ── RC8 GDPR / customer-channel coverage ───────────────────────────
+// RC8 GDPR / customer-channel coverage retained as feature coverage.
 for (const rel of [
   "app/(customer)/privacy/page.tsx",
   "app/(customer)/customers/page.tsx",
@@ -365,7 +363,6 @@ test("RC8 public chat page uses public message api", () => {
   if (!src.includes("sendPublicMessage")) throw new Error("public chat not wired to message api");
 });
 
-// RC8 P0-P4 password recovery contract checks
 const recoveryChecks = [
   ["exists app/(auth)/forgot-password/page.tsx", "app/(auth)/forgot-password/page.tsx"],
   ["exists app/(auth)/reset-password/page.tsx", "app/(auth)/reset-password/page.tsx"],

@@ -1,5 +1,5 @@
-from pathlib import Path
 import ast
+from pathlib import Path
 
 
 def test_compose_defines_real_worker_and_beat():
@@ -38,14 +38,18 @@ def test_migration_merge_has_single_revision():
                     if isinstance(target, ast.Name) and target.id == "revision" and isinstance(node.value, ast.Constant):
                         rev = node.value.value
                     if isinstance(target, ast.Name) and target.id == "down_revision":
-                        if isinstance(node.value, ast.Constant): down = node.value.value
-                        elif isinstance(node.value, ast.Tuple): down = tuple(x.value for x in node.value.elts)
+                        if isinstance(node.value, ast.Constant):
+                            down = node.value.value
+                        elif isinstance(node.value, ast.Tuple):
+                            down = tuple(x.value for x in node.value.elts)
         if rev:
             revisions[rev] = down
     referenced = set()
     for down in revisions.values():
-        if isinstance(down, tuple): referenced.update(down)
-        elif down: referenced.add(down)
+        if isinstance(down, tuple):
+            referenced.update(down)
+        elif down:
+            referenced.add(down)
     heads = sorted(set(revisions) - referenced)
     # Phase 4 added 0a1b2c3d4e5f (billing) on top of b3c4d5e6f713 —
     # see documents/62_PHASE4_MONETIZATION_AS_BUILT_v0.4.2.md. Phase 5 adds

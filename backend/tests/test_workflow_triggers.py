@@ -1,6 +1,6 @@
 import hashlib
 import hmac
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.services.workflow_trigger_service import evaluate_condition, next_cron_time, verify_signature
 
@@ -13,7 +13,7 @@ def test_condition_operators():
 
 
 def test_cron_next_time():
-    start = datetime(2026, 8, 7, 10, 24, 30, tzinfo=timezone.utc)
+    start = datetime(2026, 8, 7, 10, 24, 30, tzinfo=UTC)
     assert next_cron_time("*/5 * * * *", start).minute == 25
 
 

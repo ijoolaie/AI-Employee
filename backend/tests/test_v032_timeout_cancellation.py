@@ -1,5 +1,6 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from app.models.workflow import WorkflowRun
 
@@ -11,6 +12,6 @@ def test_workflow_run_model_has_timeout_and_cancellation_fields():
 
 
 def test_timeout_deadline_is_in_future():
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     deadline = now + timedelta(seconds=60)
     assert deadline > now

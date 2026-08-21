@@ -1,5 +1,6 @@
-from pathlib import Path
 import ast
+from pathlib import Path
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -13,10 +14,10 @@ def test_workflow_version_model_has_immutable_contract_fields():
 def test_workflow_api_exposes_version_and_replay_contract():
     source = (ROOT / "app/api/v1/workflows.py").read_text()
     for route in [
-        '/{workflow_id}/versions',
-        '/{workflow_id}/versions/{version_id}',
-        '/{workflow_id}/versions/{version_id}/activate',
-        '/{workflow_id}/runs/{run_id}/replay',
+        "/{workflow_id}/versions",
+        "/{workflow_id}/versions/{version_id}",
+        "/{workflow_id}/versions/{version_id}/activate",
+        "/{workflow_id}/runs/{run_id}/replay",
     ]:
         assert route in source
 
