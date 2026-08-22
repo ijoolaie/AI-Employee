@@ -1,10 +1,12 @@
 # Certification Roadmap Progress
 
-## Status as of 2026-08-20
+## Certification baseline as of 2026-08-20
 
-**Current state: RELEASE / final release preparation.**
+**Current certification state: RELEASE / final release preparation.**
 
 The repository-level certification, product acceptance, production hardening, deployment readiness, release evidence, and local production recovery gates are complete. The roadmap must not loop back to already-passed RC8/RC9 certification work.
+
+> **Post-release documentation boundary — 2026-08-22:** Password Security UX/API work and Vendor → Reseller → Customer tenant lifecycle controls were added after this certification baseline. Their implementation and automated/productization evidence is tracked in `docs/current/08_POST_RELEASE_PRODUCTIZATION_TEST_EVIDENCE_2026-08-22.md`, `docs/current/06_A_F_TEST_TRACKER.md`, and `docs/current/07_CLIENT_HANDOFF_AND_TEST_EVIDENCE.md`. These changes are not being represented as a new production-certification pass.
 
 ## Completed certification stack — DO NOT REOPEN WITHOUT AFFECTING CHANGE
 
