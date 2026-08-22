@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuthStore } from "@/lib/auth-store";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Sparkles } from "lucide-react";
 
@@ -11,13 +11,17 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
-    if (isAuthenticated()) {
+    const isPasswordRecoveryPage =
+      pathname === "/forgot-password" || pathname === "/reset-password";
+
+    if (isAuthenticated() && !isPasswordRecoveryPage) {
       router.replace("/dashboard");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, pathname, router]);
 
   return (
     <div className="flex min-h-screen">
