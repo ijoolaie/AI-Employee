@@ -53,16 +53,29 @@ class MeResponse(BaseModel):
     user: UserResponse
     tenant: TenantResponse
 
+
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
     tenant_slug: str = Field(min_length=1, max_length=120)
 
+
 class ForgotPasswordResponse(BaseModel):
     message: str
+
 
 class ResetPasswordRequest(BaseModel):
     token: str = Field(min_length=32, max_length=256)
     password: str = Field(min_length=8, max_length=128)
 
+
 class ResetPasswordResponse(BaseModel):
+    message: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class ChangePasswordResponse(BaseModel):
     message: str
