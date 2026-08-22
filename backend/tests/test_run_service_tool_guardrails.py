@@ -114,6 +114,7 @@ def _make_run_and_version(allowed_tools):
         status="pending",
         input_data={"request": "test"},
         request_id="guardrail-test",
+        total_cost_usd=0,
     )
     version = SimpleNamespace(
         id=version_id,
