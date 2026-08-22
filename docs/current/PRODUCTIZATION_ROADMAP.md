@@ -16,6 +16,7 @@ Certification evidence is treated as completed unless a later change affects the
 - `main` contains post-release productization/release-topology work and is not itself a published release.
 - Productization work must never rewrite `v1.0.1`; the next vendor product change requires a new immutable vendor release.
 - Reseller/customer changes are delivery revisions referencing an immutable vendor release.
+- Post-release productization/security evidence for 2026-08-22 is recorded in `docs/current/08_POST_RELEASE_PRODUCTIZATION_TEST_EVIDENCE_2026-08-22.md`.
 
 ## Phase 0 — Release Integrity
 
@@ -52,7 +53,7 @@ Certification evidence is treated as completed unless a later change affects the
 
 ## Phase 2 — Reseller Edition
 
-**Status: RUNTIME CONTROL-PLANE FOUNDATION IMPLEMENTED; commercial lifecycle remains pending.**
+**Status: RUNTIME CONTROL-PLANE + TENANT LIFECYCLE FOUNDATION IMPLEMENTED; commercial lifecycle remains pending.**
 
 - [x] Reseller delivery identity and revision format.
 - [x] Reseller manifest referencing immutable vendor release.
@@ -65,14 +66,16 @@ Certification evidence is treated as completed unless a later change affects the
 - [x] Reseller audit trail for provisioning and entitlement delegation.
 - [x] Support escalation from reseller to vendor.
 - [x] Explicit prohibition of vendor-only operations enforced by the application.
-- [ ] Full customer lifecycle, suspension and deprovisioning workflow.
+- [x] Customer lifecycle controls: suspend, resume and non-destructive deprovision.
+- [x] Deprovisioning is blocked while child tenants remain active.
+- [x] Deprovisioning disables tenant users while retaining tenant data.
 - [ ] Commercial entitlement/license reconciliation.
 
 **Exit:** reseller can manage its customers independently while remaining isolated from vendor data and controls.
 
 ## Phase 3 — Customer Edition
 
-**Status: RUNTIME TENANT/RBAC FOUNDATION IMPLEMENTED; operational recovery and packaging remain pending.**
+**Status: RUNTIME TENANT/RBAC + LIFECYCLE FOUNDATION IMPLEMENTED; operational recovery, retention and packaging remain pending.**
 
 - [x] Customer delivery identity and revision format.
 - [x] Customer manifest referencing vendor release and reseller delivery.
@@ -83,11 +86,12 @@ Certification evidence is treated as completed unless a later change affects the
 - [x] Data and configuration access remains tenant-scoped.
 - [x] No access to reseller/vendor control planes.
 - [x] Customer support escalation is upward-only to the direct reseller.
+- [x] Customer suspend/resume/deprovision controls are implemented through the bounded lifecycle service.
 - [ ] Customer backup/restore procedure.
 - [ ] Upgrade and rollback procedure.
 - [ ] Customer health/readiness diagnostics.
 - [ ] Customer audit/export capabilities.
-- [ ] Full customer deprovisioning and data-retention workflow.
+- [ ] Data-retention and restore workflow following deprovisioning.
 
 **Exit:** customer receives a self-contained, supportable product surface with clear boundaries and recovery procedures.
 
@@ -146,6 +150,8 @@ Every phase must preserve:
 
 The runtime follow-up is implemented in `docs/current/13_RUNTIME_EDITION_BOUNDARIES.md` and `backend/app/services/edition_service.py`.
 
+The lifecycle follow-up is implemented in `backend/app/services/edition_lifecycle_service.py` and exposed through the bounded edition-control API.
+
 The required hierarchy is:
 
 ```text
@@ -154,7 +160,7 @@ Vendor
         └── Customer
 ```
 
-No downstream edition may gain implicit access to the control plane of the edition above it. Provisioning and entitlement delegation require a direct parent/child relationship and the expected edition type.
+No downstream edition may gain implicit access to the control plane of the edition above it. Provisioning and entitlement delegation require a direct parent/child relationship and the expected edition type. Lifecycle operations preserve the same boundary.
 
 ## Release topology
 
