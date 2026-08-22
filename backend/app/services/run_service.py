@@ -90,67 +90,535 @@ async def create_run(
     tenant_id: uuid.UUID,
     employee_id: uuid.UUID,
     input_data: dict[str, Any],
-    created_by: uuid.UUID | None = None,
-    conversation_id: uuid.UUID | None = None,
-    request_id: str | None = None,
+    created_by: uuid.UUID | None,
+    employee_version_id: uuid.UUID | None = None,
 ) -> Run:
-    """Create a Run locked to the Employee's current version."""
-    employee = await employee_service.get_employee(
-        db, employee_id=employee_id, tenant_id=tenant_id
-    )
-    version = employee.current_version
-    if version is None:
-        raise ValidationAppError("Employee has no current version")
+    employee = await employee_service.get_employee(db, employee_id=employee_id, tenant_id=tenant_id)
+    if employee_version_id is not None:
+        version_result = await db.execute(select(EmployeeVersion).where(EmployeeVersion.id == employee_version_id, EmployeeVersion.employee_id == employee.id))
+        version = version_result.scalar_one_or_none()
+        if version is None:
+            raise NotFoundError("Employee version not found for employee")
+    else:
+        version = await employee_service.get_current_version(db, employee_id=employee.id)
 
-    _validate_input(input_data, version.input_schema or {})
+    _validate_input(input_data, version.input_schema)
     await billing_service.enforce_run_quota(db, tenant_id=tenant_id)
 
     run = Run(
         tenant_id=tenant_id,
-        employee_id=employee_id,
+        employee_id=employee.id,
         employee_version_id=version.id,
         created_by=created_by,
-        conversation_id=conversation_id,
         status="pending",
         input_data=input_data,
-        request_id=request_id or request_id_var.get(),
+        request_id=request_id_var.get(),
     )
     db.add(run)
     await db.flush()
+    await db.refresh(run)
+
+    await audit_service.record(
+        db,
+        action="run.created",
+        actor_type="user" if created_by else "system",
+        actor_id=created_by,
+        tenant_id=tenant_id,
+        resource_type="run",
+        resource_id=run.id,
+        request_id=request_id_var.get(),
+        metadata={"employee_id": str(employee.id), "employee_version": version.version_number},
+    )
     return run
 
 
 async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
-    """Execute a Run through the AI Core and persist its result."""
-    result = await db.execute(
-        select(Run)
-        .where(Run.id == run_id)
-        .options(selectinload(Run.employee), selectinload(Run.employee_version))
-    )
-    run = result.scalar_one_or_none()
+    """Runs the Employee synchronously in-process. In production this body is
+    what the Celery worker task (app.workers.run_worker) calls — kept as a
+    plain function so it's callable directly (tests, sync fallback) or via
+    the queue without duplicating logic."""
+    run_result = await db.execute(select(Run).where(Run.id == run_id))
+    run = run_result.scalar_one_or_none()
     if run is None:
         raise NotFoundError("Run not found")
 
-    result = await db.execute(select(EmployeeVersion).where(EmployeeVersion.id == run.employee_version_id))
-    version = result.scalar_one_or_none()
-    if version is None:
-        raise NotFoundError("Employee version not found")
+    # Idempotency guard: a Celery redelivery, duplicate enqueue, or explicit
+    # re-invocation must never execute a terminal Run (and therefore must not
+    # call the AI provider or side-effecting tools a second time). A Run that
+    # is already running is likewise left alone; recovery/retry of an actually
+    # lost worker is a separate lifecycle concern and must not be implemented
+    # by blindly replaying an in-flight AI execution.
+    if run.status in {"success", "failed", "cancelled", "running"}:
+        logger.info(
+            "run_execution_skipped_idempotent",
+            extra={"run_id": str(run.id), "status": run.status},
+        )
+        return run
 
-    # Employee guardrail: tools exposed/executed by the model must remain inside
-    # the immutable allowlist captured by the EmployeeVersion.
-    employee_allowed_tools = set(version.allowed_tools or [])
+    version_result = await db.execute(
+        select(EmployeeVersion).where(EmployeeVersion.id == run.employee_version_id)
+    )
+    version = version_result.scalar_one_or_none()
+    if version is None:
+        raise NotFoundError("Employee version not found for this run")
+
+    # A waiting Run is resumable only through an explicit approval decision.
+    approval_result = await db.execute(
+        select(ToolApprovalRequest)
+        .where(ToolApprovalRequest.run_id == run.id, ToolApprovalRequest.tenant_id == run.tenant_id)
+        .order_by(ToolApprovalRequest.created_at.desc())
+    )
+    latest_approval = approval_result.scalars().first()
+    if run.status == "waiting":
+        if latest_approval is None or latest_approval.status == "pending":
+            return run
+        if latest_approval.status == "rejected":
+            return run
 
     run.status = "running"
-    run.started_at = datetime.now(timezone.utc)
+    if run.started_at is None:
+        run.started_at = datetime.now(timezone.utc)
     await db.flush()
 
+    # Re-authorize tool execution inside the worker. Endpoint RBAC alone is not
+    # sufficient because Celery is a separate execution boundary.
+    tool_permissions: set[str] = set()
+    if run.created_by is not None:
+        user_result = await db.execute(
+            select(User)
+            .options(selectinload(User.roles).selectinload(Role.permissions))
+            .where(User.id == run.created_by, User.tenant_id == run.tenant_id)
+        )
+        run_user = user_result.scalar_one_or_none()
+        if run_user is not None:
+            if run_user.is_superuser:
+                tool_permissions = {"*"}
+            else:
+                tool_permissions = {
+                    permission.code
+                    for role in run_user.roles
+                    if role.tenant_id == run.tenant_id
+                    for permission in role.permissions
+                }
+
+    gateway = AIGateway()
     paused_for_approval = False
     try:
-        # The full implementation below remains unchanged; this block is kept
-        # in sync with the repository's execution path.
-        # NOTE: repository update intentionally targets only the cost handling
-        # in the finally block below.
-        raise RuntimeError("placeholder")
+        rules = version.rules or {}
+        rag_config = rag_settings(rules)
+        retrieved_context: list[dict[str, Any]] = []
+        if rag_config["enabled"]:
+            rag_query = build_rag_query(run.input_data, rag_config["query_fields"])
+            retrieved_context = await rag_service.search(
+                db, tenant_id=run.tenant_id, query=rag_query, top_k=rag_config["top_k"]
+            )
+            await audit_service.record(
+                db, action="knowledge.retrieved", actor_type="system", tenant_id=run.tenant_id,
+                resource_type="run", resource_id=run.id, status="success", request_id=run.request_id,
+                metadata={"top_k": rag_config["top_k"], "result_count": len(retrieved_context), "query_fields": rag_config["query_fields"]},
+            )
+
+        memory_config = memory_settings(rules)
+        memory_context: list[dict[str, Any]] = []
+        if memory_config["enabled"]:
+            memory_query = build_memory_query(run.input_data, memory_config["query_fields"])
+            memory_context = await memory_service.search_memory(
+                db, tenant_id=run.tenant_id, employee_id=run.employee_id, query=memory_query,
+                top_k=memory_config["top_k"], min_score=memory_config["min_score"]
+            )
+            await audit_service.record(
+                db, action="memory.retrieved", actor_type="system", tenant_id=run.tenant_id,
+                resource_type="run", resource_id=run.id, status="success", request_id=run.request_id,
+                metadata={"top_k": memory_config["top_k"], "result_count": len(memory_context), "query_fields": memory_config["query_fields"], "min_score": memory_config["min_score"]},
+            )
+
+        autonomy_config = autonomy_settings(rules)
+        autonomous_plan = None
+        if autonomy_config["enabled"]:
+            try:
+                plan = await create_plan(
+                    gateway,
+                    db,
+                    tenant_id=run.tenant_id,
+                    run_id=run.id,
+                    model=settings.ai_default_model,
+                    input_data=run.input_data,
+                    prompt_template=version.prompt_template,
+                    allowed_tools=version.allowed_tools or [],
+                    max_steps=autonomy_config["max_steps"],
+                )
+                autonomous_plan = plan.as_context()
+                await audit_service.record(
+                    db,
+                    action="run.autonomous_plan.created",
+                    actor_type="system",
+                    tenant_id=run.tenant_id,
+                    resource_type="run",
+                    resource_id=run.id,
+                    status="success",
+                    request_id=run.request_id,
+                    metadata={
+                        "plan_version": plan.version,
+                        "goal": plan.goal,
+                        "step_count": len(plan.steps),
+                        "steps": [step.id for step in plan.steps],
+                    },
+                )
+            except Exception as plan_exc:
+                await audit_service.record(
+                    db,
+                    action="run.autonomous_plan.failed",
+                    actor_type="system",
+                    tenant_id=run.tenant_id,
+                    resource_type="run",
+                    resource_id=run.id,
+                    status="failure",
+                    request_id=run.request_id,
+                    metadata={"error": str(plan_exc)[:1000]},
+                )
+                if autonomy_config["require_plan"]:
+                    raise
+                logger.warning("autonomous_plan_failed_continuing", extra={"run_id": str(run.id)})
+
+        execution_context = ExecutionContext(
+            input_data=run.input_data,
+            rules=rules,
+            retrieved_context=retrieved_context,
+            memory=memory_context,
+            autonomous_plan=autonomous_plan,
+        )
+        prompt_version = str(version.version_number)
+        assembly = assemble_employee_prompt(
+            prompt_template=version.prompt_template,
+            prompt_version=prompt_version,
+            context=execution_context,
+            allowed_tools=version.allowed_tools or [],
+        )
+        messages = list(assembly.messages)
+        employee_allowed_tools = set(version.allowed_tools or [])
+        resume_approval = latest_approval if latest_approval is not None and latest_approval.status == "approved" else None
+        if resume_approval is not None:
+            messages = [_message_from_json(item) for item in resume_approval.continuation_messages]
+        total_prompt_tokens = 0
+        total_completion_tokens = 0
+        total_cost_usd = 0.0
+        tool_iterations = 0
+        # Best-effort carry-through of the last executed Tool result so that
+        # a structured artifact a Tool produces (e.g. Phase 2 Report Employee
+        # `report_artifacts` file IDs from analyze_dataset) can be surfaced on
+        # Run.output_data without changing the model-facing message protocol.
+        # Only whitelisted keys are ever merged (see output_data assembly
+        # below) — this never widens what an arbitrary Tool can inject.
+        last_tool_result: dict[str, Any] | None = None
+
+        while True:
+            # Resume an approved gated tool call before asking the model for another turn.
+            if resume_approval is not None:
+                tool_call_name = resume_approval.tool_name
+                tool_call_id = resume_approval.tool_call_id
+                tool_status = "failure"
+                tool_error = None
+                tool_result: dict[str, Any] = {"error": "Tool execution failed"}
+                started = datetime.now(timezone.utc)
+                try:
+                    tool = registry.get(tool_call_name)
+
+                    if tool_call_name not in employee_allowed_tools:
+                        raise ValidationAppError(
+                            f"Tool is not allowed by Employee guardrails: {tool_call_name}",
+                            details={
+                                "tool": tool_call_name,
+                                "allowed_tools": sorted(employee_allowed_tools),
+                            },
+                        )
+
+                    effective_permissions = set(tool_permissions)
+                    if "*" in effective_permissions:
+                        effective_permissions.add(tool.required_permission)
+                    tool_result = await registry.execute(
+                        tool_call_name,
+                        resume_approval.arguments,
+                        permissions=effective_permissions,
+                        approval_granted=True,
+                        allowed_tools=employee_allowed_tools,
+                        db=db,
+                        tenant_id=run.tenant_id,
+                        actor_id=run.created_by,
+                    )
+                    tool_status = "success"
+                    resume_approval.status = "consumed"
+                    if isinstance(tool_result, dict):
+                        last_tool_result = tool_result
+                    await db.flush()
+                except Exception as exc:  # noqa: BLE001
+                    tool_error = str(exc)[:1000]
+                    tool_result = {"error": tool_error}
+                    raise
+                finally:
+                    elapsed_ms = max(0, int((datetime.now(timezone.utc) - started).total_seconds() * 1000))
+                    await audit_service.record(
+                        db,
+                        action="tool.call",
+                        actor_type="system",
+                        tenant_id=run.tenant_id,
+                        resource_type="run",
+                        resource_id=run.id,
+                        status=tool_status,
+                        request_id=run.request_id,
+                        metadata={
+                            "tool": tool_call_name,
+                            "tool_call_id": tool_call_id,
+                            "latency_ms": elapsed_ms,
+                            "approval_id": str(resume_approval.id),
+                            "approved": True,
+                            "error": tool_error,
+                        },
+                    )
+                messages.append(ChatMessage(role="tool", content=json.dumps(tool_result, ensure_ascii=False, default=str), tool_call_id=tool_call_id))
+                resume_approval = None
+                continue
+
+            request = ChatRequest(
+                messages=messages,
+                model=settings.ai_default_model,
+                tools=assembly.tools,
+            )
+            result = await gateway.chat(
+                db,
+                request,
+                tenant_id=run.tenant_id,
+                run_id=run.id,
+                prompt_version=prompt_version,
+                call_metadata={
+                    **assembly.metadata,
+                    "tool_iteration": tool_iterations,
+                    "rag_enabled": rag_config["enabled"],
+                    "rag_result_count": len(retrieved_context),
+                },
+            )
+            total_prompt_tokens += result.prompt_tokens
+            total_completion_tokens += result.completion_tokens
+            total_cost_usd += result.cost_usd
+
+            if not result.tool_calls:
+                break
+
+            tool_iterations += 1
+            if tool_iterations > settings.ai_max_tool_iterations:
+                raise ValidationAppError(
+                    "Tool-call iteration limit exceeded",
+                    details={"max_iterations": settings.ai_max_tool_iterations},
+                )
+
+            messages.append(
+                ChatMessage(
+                    role="assistant",
+                    content=result.content,
+                    tool_calls=result.tool_calls,
+                )
+            )
+
+            for tool_call in result.tool_calls:
+                started = datetime.now(timezone.utc)
+                tool_status = "failure"
+                tool_error = None
+                tool_result: dict[str, Any] = {"error": "Tool execution failed"}
+                try:
+                    registry.get(tool_call.name)
+                    tool = registry.get(tool_call.name)
+
+                    if tool_call.name not in employee_allowed_tools:
+                        raise ValidationAppError(
+                            f"Tool is not allowed by Employee guardrails: {tool_call.name}",
+                            details={
+                                "tool": tool_call.name,
+                                "allowed_tools": sorted(employee_allowed_tools),
+                            },
+                        )
+
+                    if tool.requires_approval:
+                        approval = await approval_service.create_request(
+                            db,
+                            tenant_id=run.tenant_id,
+                            run=run,
+                            tool_name=tool_call.name,
+                            tool_call_id=tool_call.id,
+                            arguments=tool_call.arguments,
+                            continuation_messages=[_message_to_json(message) for message in messages],
+                            iteration=tool_iterations,
+                            requested_by=run.created_by,
+                        )
+                        tool_status = "waiting_approval"
+                        await audit_service.record(
+                            db,
+                            action="tool.call",
+                            actor_type="system",
+                            tenant_id=run.tenant_id,
+                            resource_type="run",
+                            resource_id=run.id,
+                            status=tool_status,
+                            request_id=run.request_id,
+                            metadata={"tool": tool_call.name, "tool_call_id": tool_call.id, "approval_id": str(approval.id), "approval_required": True},
+                        )
+                        paused_for_approval = True
+                        await db.flush()
+                        return run
+                    effective_permissions = set(tool_permissions)
+                    if "*" in effective_permissions:
+                        effective_permissions.add(tool.required_permission)
+                    tool_result = await registry.execute(
+                        tool_call.name,
+                        tool_call.arguments,
+                        permissions=effective_permissions,
+                        approval_granted=False,
+                        allowed_tools=employee_allowed_tools,
+                        db=db,
+                        tenant_id=run.tenant_id,
+                        actor_id=run.created_by,
+                    )
+                    tool_status = "success"
+                    if isinstance(tool_result, dict):
+                        last_tool_result = tool_result
+                except Exception as exc:  # noqa: BLE001 — audit then fail the Run
+                    tool_result = {"error": str(exc)[:1000]}
+                    tool_error = str(exc)[:1000]
+                    raise
+                finally:
+                    elapsed_ms = max(0, int((datetime.now(timezone.utc) - started).total_seconds() * 1000))
+                    await audit_service.record(
+                        db,
+                        action="tool.call",
+                        actor_type="system",
+                        tenant_id=run.tenant_id,
+                        resource_type="run",
+                        resource_id=run.id,
+                        status=tool_status,
+                        request_id=run.request_id,
+                        metadata={
+                            "tool": tool_call.name,
+                            "tool_call_id": tool_call.id,
+                            "latency_ms": elapsed_ms,
+                            "iteration": tool_iterations,
+                            "error": tool_error,
+                            "required_permission": registry.get(tool_call.name).required_permission,
+                            "approval_required": registry.get(tool_call.name).requires_approval,
+                        },
+                    )
+                messages.append(
+                    ChatMessage(
+                        role="tool",
+                        content=json.dumps(tool_result, ensure_ascii=False, default=str),
+                        tool_call_id=tool_call.id,
+                    )
+                )
+
+        # Preserve aggregate provider usage/cost even if output validation fails.
+        run.total_tokens = total_prompt_tokens + total_completion_tokens
+        run.total_cost_usd = total_cost_usd
+
+        output_data: dict[str, Any] = {"text": result.content}
+        # Whitelisted structured-artifact carry-through (see last_tool_result
+        # above). Only known artifact shapes are recognized here — Phase 2
+        # Report Employee `report_artifacts` and Phase 5 Document Employee
+        # `document_artifacts` — any other Tool's dict result is ignored.
+        if isinstance(last_tool_result, dict):
+            if isinstance(last_tool_result.get("report_artifacts"), dict):
+                output_data["report_artifacts"] = last_tool_result["report_artifacts"]
+            if isinstance(last_tool_result.get("document_artifacts"), dict):
+                output_data["document_artifacts"] = last_tool_result["document_artifacts"]
+        validate_json_data(output_data, version.output_schema, field_name="output_data")
+
+        run.output_data = output_data
+
+        # Automatic memory extraction is explicitly opt-in and best-effort.
+        # A memory extractor failure must never turn a successful Employee Run
+        # into a failed Run.
+        try:
+            auto_config = auto_memory_settings(rules)
+            if auto_config["enabled"]:
+                memory_stats = await extract_and_consolidate_run_memory(
+                    db,
+                    tenant_id=run.tenant_id,
+                    employee_id=run.employee_id,
+                    run_id=run.id,
+                    input_data=run.input_data,
+                    output_text=result.content,
+                    rules=rules,
+                )
+                logger.info(
+                    "memory_auto_extraction",
+                    extra={"run_id": str(run.id), **memory_stats},
+                )
+        except Exception as memory_exc:  # noqa: BLE001 — memory is best-effort
+            await audit_service.record(
+                db,
+                action="memory.auto_extract_failed",
+                actor_type="system",
+                tenant_id=run.tenant_id,
+                resource_type="run",
+                resource_id=run.id,
+                status="failure",
+                request_id=run.request_id,
+                metadata={"error": str(memory_exc)[:1000]},
+            )
+            logger.exception(
+                "memory_auto_extraction_failed",
+                extra={"run_id": str(run.id)},
+            )
+
+        run.status = "success"
+        if run.conversation_id is not None and result.content:
+            assistant_message = CustomerMessage(
+                tenant_id=run.tenant_id,
+                conversation_id=run.conversation_id,
+                run_id=run.id,
+                role="assistant",
+                content=result.content,
+            )
+            db.add(assistant_message)
+            await db.flush()
+
+            # External channel delivery is an explicit side effect. A successful
+            # AI Run must not be reported as provider-delivered unless the
+            # configured adapter accepts the message.
+            conversation = (await db.execute(
+                select(__import__("app.models.conversation", fromlist=["CustomerConversation"]).CustomerConversation)
+                .where(__import__("app.models.conversation", fromlist=["CustomerConversation"]).CustomerConversation.id == run.conversation_id,
+                       __import__("app.models.conversation", fromlist=["CustomerConversation"]).CustomerConversation.tenant_id == run.tenant_id)
+            )).scalar_one_or_none()
+            if conversation is not None and conversation.channel_id is not None:
+                from app.models.customer_channel import CustomerChannel
+                from app.services.channel_delivery import deliver_text, ChannelDeliveryError
+                channel = (await db.execute(
+                    select(CustomerChannel).where(
+                        CustomerChannel.id == conversation.channel_id,
+                        CustomerChannel.tenant_id == run.tenant_id,
+                    )
+                )).scalar_one_or_none()
+                if channel is not None and channel.channel_type == "whatsapp":
+                    try:
+                        delivery = await deliver_text(
+                            channel_type=channel.channel_type,
+                            channel_config=channel.config or {},
+                            recipient=conversation.customer_phone or "",
+                            text=result.content,
+                        )
+                        await audit_service.record(
+                            db, action="channel.delivery", actor_type="system",
+                            tenant_id=run.tenant_id, resource_type="conversation",
+                            resource_id=conversation.id, status="success",
+                            request_id=run.request_id,
+                            metadata={"channel": "whatsapp", "provider_message_id": delivery.provider_message_id, "delivery_status": delivery.status},
+                        )
+                    except ChannelDeliveryError as delivery_exc:
+                        await audit_service.record(
+                            db, action="channel.delivery", actor_type="system",
+                            tenant_id=run.tenant_id, resource_type="conversation",
+                            resource_id=conversation.id, status="failure",
+                            request_id=run.request_id,
+                            metadata={"channel": "whatsapp", "error": str(delivery_exc)[:1000]},
+                        )
+                        logger.warning("channel_delivery_failed", extra={"run_id": str(run.id), "error": str(delivery_exc)})
     except Exception as exc:  # noqa: BLE001 — recorded on the Run, then re-raised
         run.status = "failed"
         run.error = {"message": str(exc)[:2000]}
@@ -168,11 +636,11 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
             resource_id=run.id,
             status=("success" if run.status == "success" else ("waiting" if paused_for_approval else "failure")),
             request_id=run.request_id,
-            metadata={"status": run.status, "total_cost_usd": float(run.total_cost_usd or 0)},
+            metadata={"status": run.status, "total_cost_usd": float(run.total_cost_usd)},
         )
         logger.info(
             "run_finished",
-            extra={"run_id": str(run.id), "status": run.status, "cost_usd": float(run.total_cost_usd or 0)},
+            extra={"run_id": str(run.id), "status": run.status, "cost_usd": float(run.total_cost_usd)},
         )
 
     return run
@@ -184,3 +652,16 @@ async def get_run(db: AsyncSession, *, run_id: uuid.UUID, tenant_id: uuid.UUID) 
     if run is None:
         raise NotFoundError("Run not found")
     return run
+
+
+async def list_runs(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    employee_id: uuid.UUID | None = None,
+) -> list[Run]:
+    stmt = select(Run).where(Run.tenant_id == tenant_id)
+    if employee_id is not None:
+        stmt = stmt.where(Run.employee_id == employee_id)
+    result = await db.execute(stmt.order_by(Run.created_at.desc()))
+    return list(result.scalars().all())
