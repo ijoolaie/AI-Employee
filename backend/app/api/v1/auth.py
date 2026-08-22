@@ -4,7 +4,12 @@ from fastapi import APIRouter, status
 
 from app.core.deps import CurrentContext, DbSession
 from app.schemas.auth import (
-    ForgotPasswordRequest, ForgotPasswordResponse, ResetPasswordRequest, ResetPasswordResponse,
+    ChangePasswordRequest,
+    ChangePasswordResponse,
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
+    ResetPasswordRequest,
+    ResetPasswordResponse,
     LoginRequest,
     MeResponse,
     RefreshRequest,
@@ -14,7 +19,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.schemas.common import APIResponse
-from app.services import auth_service, password_reset_service
+from app.services import auth_service, password_change_service, password_reset_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -26,11 +31,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 )
 async def register(payload: RegisterRequest, db: DbSession):
     tenant, user = await auth_service.register_tenant_and_user(db, payload)
-    # The DB dependency commits during generator teardown, which can happen
-    # after the HTTP response has already been sent. Product acceptance gates
-    # may immediately reuse this token on a separate request/connection.
-    # Commit the registration before returning the token so the user and
-    # tenant are guaranteed visible to the next authenticated request.
     await db.commit()
     tokens = auth_service.issue_tokens(user)
     return APIResponse(success=True, data=tokens)
@@ -56,6 +56,23 @@ async def me(ctx: CurrentContext):
         tenant=TenantResponse.model_validate(ctx.tenant),
     )
     return APIResponse(success=True, data=data)
+
+
+@router.post("/change-password", response_model=APIResponse[ChangePasswordResponse])
+async def change_password(payload: ChangePasswordRequest, ctx: CurrentContext, db: DbSession):
+    await password_change_service.change_password(
+        db,
+        user=ctx.user,
+        current_password=payload.current_password,
+        new_password=payload.new_password,
+    )
+    await db.commit()
+    return APIResponse(
+        success=True,
+        data=ChangePasswordResponse(
+            message="Password changed successfully. Please sign in again."
+        ),
+    )
 
 
 @router.post("/forgot-password", response_model=APIResponse[ForgotPasswordResponse])
