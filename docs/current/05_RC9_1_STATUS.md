@@ -1,8 +1,8 @@
 # v1.1.x / Production Readiness Status
 
-**Status date:** 2026-08-20  
+**Status date:** 2026-08-22  
 **Repository:** `ijoolaie/AI-Employee`  
-**Current main:** `c5e795d6226df67348490c0fab308dd795378a13`
+**Current main:** `ec1c42a5a289137b8388f6f5fae5485d61974d6e`
 
 ## Current position
 
@@ -31,6 +31,7 @@ The repository is currently in **Production Hardening / Delivery Readiness**. Th
 - [x] Immutable vendor identity verification before packaging
 - [x] Edition delivery acceptance checklist
 - [x] Alembic multiple-head merge fix
+- [x] Production Certification migration-head assertion corrected to verify a single Alembic head dynamically
 
 ## Validation status
 
@@ -40,15 +41,19 @@ The repository is currently in **Production Hardening / Delivery Readiness**. Th
 - [x] Production Target Deployment workflow syntax corrected
 - [x] Production Target Deployment reaches its configuration gate
 - [ ] Production Target Deployment: blocked by missing production environment secrets
+- [x] Local backend full suite: 194 passed
+- [x] Local workflow foundation/approval/triggers: 7 passed
+- [x] Local execution hardening + workflow versioning: 8 passed
+- [ ] Production Certification workflow execution on the current main
 
-The latest deployment-target attempt failed at the configuration gate because these production secrets are not yet configured:
+The production-target deployment gate remains blocked because these production secrets are not yet configured:
 
 - `PRODUCTION_DEPLOY_HOST`
 - `PRODUCTION_DEPLOY_USER`
 - `PRODUCTION_DEPLOY_SSH_KEY`
 - `PRODUCTION_CONTAINER_REGISTRY`
 
-No application failure is implied by this blocked gate.
+No application failure is implied by that blocked gate.
 
 ## Delivery model
 
@@ -74,13 +79,13 @@ Reseller and customer deliveries reference the immutable vendor release and carr
 
 ## Release rule
 
-Do **not** create `v1.1.1` merely to represent the missing production secrets. The Alembic fix is already merged into `main`; a patch release should be created only when the release contents and validation evidence justify it.
+Do **not** create `v1.1.1` merely to represent the missing production secrets. The Alembic fix and certification assertion fix are merged into `main`; a patch release should be created only when the release contents and validation evidence justify it.
 
 `v1.1.0` remains immutable and is not replaced or rewritten.
 
 ## Next sequence
 
-`v1.1.0 Vendor Core ✅` → `Migration fix merged ✅` → `Delivery hardening` → `Production target configuration` → `Final deployment verification` → `v1.1.1 patch release if required`
+`v1.1.0 Vendor Core ✅` → `Migration fix merged ✅` → `Certification assertion fix ✅` → `A–F runtime testing` → `Production target configuration` → `Final deployment verification` → `v1.1.1 patch release if required`
 
 ## Documentation rule
 
