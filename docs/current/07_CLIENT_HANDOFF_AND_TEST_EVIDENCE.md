@@ -1,53 +1,77 @@
 # Client Handoff & Test Evidence — Current RC
 
-**Status date:** 2026-08-19  
+**Status date:** 2026-08-22  
 **Repository:** `ijoolaie/AI-Employee`  
-**Purpose:** current handoff, certification evidence and remaining deployment gates.
+**Purpose:** current handoff, certification evidence, post-release productization evidence and remaining deployment gates.
 
-> Historical RC8 archive details remain useful as history, but they are superseded as the primary certification checkpoint by the fresh CI evidence below.
+> Historical RC8 archive details remain useful as history, but they are superseded as the primary certification checkpoint by the fresh CI evidence below. Post-release productization work is tracked separately and does not retroactively modify the published release baseline.
 
 ## 1. Current certification checkpoint
 
-The authoritative current evidence is GitHub Actions Production Certification run `32276463633` (#100), with these related checks also green:
+The authoritative repository-level certification evidence remains the previously completed GitHub Actions Production Certification checkpoint documented in `docs/current/05_CERTIFICATION_PROGRESS.md`.
 
-- Architecture Guard `32276462650` — SUCCESS
-- Production Compose Validation `32276462622` — SUCCESS
-- Production Certification `32276463633` — SUCCESS
-
-The complete certification job reached and passed every step through cleanup.
+The 2026-08-22 productization work is **post-release verification**, not a request to reopen RC8/RC9 certification unless a later change affects a certified behavior.
 
 ## 2. Fresh runtime/product evidence
 
-The current run passed:
+The current documented test session includes:
 
-- backend compile and Ruff;
-- Compose-managed PostgreSQL and Redis readiness;
-- Alembic migration;
-- backend host-safe test suite;
-- frontend contract tests, unit tests and production build;
-- production-like API/worker/frontend stack readiness;
-- OCR runtime and Farsi language verification inside the API container;
-- OCR extraction test inside the API container;
-- backend dependency E2E;
-- Auth P0;
-- Tenant Isolation + RBAC P0;
-- Employee -> Run -> AI -> Result;
-- **Files -> Knowledge -> Memory**;
-- **Admin / Developer API Keys**;
-- Workflow -> Approval -> Schedule;
-- Orders -> Sales -> Invoice -> Billing;
-- frontend Playwright E2E;
-- stack cleanup.
+- backend full suite: **194 passed, 1 warning**;
+- focused workflow foundation/approval/trigger tests: **7 passed, 1 warning**;
+- execution hardening/workflow-versioning tests: **8 passed**;
+- production-like Docker stack observed healthy;
+- API healthy;
+- frontend healthy;
+- PostgreSQL healthy;
+- Redis healthy;
+- Worker running;
+- Beat running;
+- recurring Outbox and workflow scheduler/timeout/approval-expiry tasks completing successfully.
 
-These are fresh real-stack certification results, not historical claims.
+The only full-suite warning is the Python `crypt` deprecation emitted through Passlib; it is not a test failure.
 
-## 3. CI architecture
+## 3. Post-release productization / account-security evidence
+
+Detailed evidence is recorded in `docs/current/08_POST_RELEASE_PRODUCTIZATION_TEST_EVIDENCE_2026-08-22.md`.
+
+### Account security
+
+- Authenticated password-change API/service is implemented.
+- Settings exposes **Security / Password**.
+- `/settings/security` provides the password-change UX.
+- Password length is validated between 8 and 128 characters.
+- Confirmation mismatch is rejected client-side before submission.
+- Successful password changes require the user to sign in again.
+- Password reset was manually verified successfully by the project owner.
+
+### Tenant lifecycle
+
+- Vendor can suspend/resume/deprovision direct reseller tenants.
+- Reseller can suspend/resume/deprovision direct customer tenants.
+- Direct-parent and edition-kind checks remain enforced.
+- Invalid lifecycle transitions are rejected.
+- Deprovisioning is blocked while child tenants remain active.
+- Deprovisioning disables tenant users and retains tenant data; it does not perform destructive deletion.
+- Lifecycle transitions are recorded through the existing audit path.
+- Automated lifecycle transition and child-dependency guard tests were added.
+
+## 4. CI / PR sequence
+
+Relevant post-release productization PRs:
+
+- **PR #29** — expose Security / Password in Settings and correct the unrelated guardrail-test fixture regression.
+- **PR #30** — polish the Security / Password UX while preserving the authenticated backend contract.
+- **PR #31** — add bounded Vendor → Reseller → Customer tenant lifecycle controls and lifecycle tests.
+
+The current `main` lineage contains all three changes.
+
+## 5. CI architecture
 
 The certification workflow intentionally uses one Compose-managed runtime stack for PostgreSQL, Redis and application services. GitHub service containers are not duplicated alongside Compose, avoiding host-port conflicts.
 
 Dependency setup is cached and performed once per certification job. Playwright installs Chromium without `--with-deps`, avoiding long-running host `apt` installation. OCR is validated in the API container where the production-like image provides Tesseract and Farsi language data.
 
-## 4. Product workspace coverage
+## 6. Product workspace coverage
 
 The current product surfaces are documented separately as:
 
@@ -59,12 +83,13 @@ The current product surfaces are documented separately as:
 - Conversations: `/conversations`
 - Public Customer Experience: `/chat/[publicKey]`
 - Website widget loader: `/widget.js?channel=<publicKey>`
+- Customer Settings → Security / Password: `/settings/security`
 
 The public customer experience is not a tenant dashboard and must remain isolated from SaaS administration.
 
-## 5. Deployment-specific gates — NOT YET CERTIFIED
+## 7. Deployment-specific gates — NOT YET CERTIFIED
 
-Passing the repository-level certification does **not** certify a real production deployment. The following remain open:
+Passing repository-level certification or post-release productization tests does **not** certify a real production deployment. The following remain open:
 
 | Gate | Status |
 |---|---|
@@ -81,7 +106,7 @@ Passing the repository-level certification does **not** certify a real productio
 | Production security certification | NOT CLAIMED |
 | Production deployment / rollback rehearsal | NOT VERIFIED |
 
-## 6. Production deployment checklist
+## 8. Production deployment checklist
 
 Before a production release:
 
@@ -95,11 +120,12 @@ Before a production release:
 8. Run clean migration, deployment and rollback rehearsal.
 9. Run the final certification against the deployment candidate.
 
-## 7. Release classification
+## 9. Release classification
 
 **CLIENT HANDOFF:** YES  
 **DEPLOYMENT CANDIDATE:** YES  
 **REPOSITORY-LEVEL CERTIFICATION:** YES  
+**POST-RELEASE PRODUCTIZATION VERIFICATION:** YES  
 **PRODUCTION CERTIFIED:** NO
 
 Production certification must be granted only after the deployment-specific gates above pass with fresh evidence.
