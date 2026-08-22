@@ -1,18 +1,36 @@
-# Client Handoff & Test Evidence — Current RC
+# Client Handoff & Test Evidence — Current Project Position
 
 **Status date:** 2026-08-22  
 **Repository:** `ijoolaie/AI-Employee`  
-**Purpose:** current handoff, certification evidence, post-release productization evidence and remaining deployment gates.
+**Purpose:** current certification boundary, productization evidence, handoff state and remaining deployment/commercial gates.
 
-> Historical RC8 archive details remain useful as history, but they are superseded as the primary certification checkpoint by the fresh CI evidence below. Post-release productization work is tracked separately and does not retroactively modify the published release baseline.
+> Historical RC8/RC9 documents remain audit history. The current productization truth is controlled by the current evidence documents and `docs/current/PRODUCTIZATION_ROADMAP.md`.
 
-## 1. Current certification checkpoint
+## 1. Current project classification
+
+The project is now classified as:
+
+- **CORE PLATFORM:** COMPLETE / TESTED
+- **REPOSITORY-LEVEL CERTIFICATION:** YES
+- **POST-RELEASE PRODUCTIZATION FOUNDATION:** YES
+- **TENANT LIFECYCLE FOUNDATION:** YES
+- **DELIVERY PACKAGE FOUNDATION:** YES
+- **COMMERCIAL PRODUCTION:** NO
+- **EXTERNAL PRODUCTION CERTIFICATION:** NO
+
+The next implementation frontier is **Phase 4 — Delivery Package**. Remaining Phase 2/3 operational items are dependencies, not missing core-platform construction.
+
+## 2. Current certification checkpoint
 
 The authoritative repository-level certification evidence remains the previously completed GitHub Actions Production Certification checkpoint documented in `docs/current/05_CERTIFICATION_PROGRESS.md`.
 
 The 2026-08-22 productization work is **post-release verification**, not a request to reopen RC8/RC9 certification unless a later change affects a certified behavior.
 
-## 2. Fresh runtime/product evidence
+Published baseline:
+
+`v1.0.1` → `2d23a01098f432145ecaea14b2500fe520ad0bf7`
+
+## 3. Fresh runtime/product evidence
 
 The current documented test session includes:
 
@@ -30,11 +48,11 @@ The current documented test session includes:
 
 The only full-suite warning is the Python `crypt` deprecation emitted through Passlib; it is not a test failure.
 
-## 3. Post-release productization / account-security evidence
+## 4. Post-release productization / account-security evidence
 
 Detailed evidence is recorded in `docs/current/08_POST_RELEASE_PRODUCTIZATION_TEST_EVIDENCE_2026-08-22.md`.
 
-### Account security
+### Account security — DONE / TESTED
 
 - Authenticated password-change API/service is implemented.
 - Settings exposes **Security / Password**.
@@ -44,7 +62,7 @@ Detailed evidence is recorded in `docs/current/08_POST_RELEASE_PRODUCTIZATION_TE
 - Successful password changes require the user to sign in again.
 - Password reset was manually verified successfully by the project owner.
 
-### Tenant lifecycle
+### Tenant lifecycle — DONE / TESTED
 
 - Vendor can suspend/resume/deprovision direct reseller tenants.
 - Reseller can suspend/resume/deprovision direct customer tenants.
@@ -55,25 +73,25 @@ Detailed evidence is recorded in `docs/current/08_POST_RELEASE_PRODUCTIZATION_TE
 - Lifecycle transitions are recorded through the existing audit path.
 - Automated lifecycle transition and child-dependency guard tests were added.
 
-## 4. CI / PR sequence
+## 5. CI interpretation
 
-Relevant post-release productization PRs:
+The current handoff records **current state**, not every historical GitHub Actions run.
 
-- **PR #29** — expose Security / Password in Settings and correct the unrelated guardrail-test fixture regression.
-- **PR #30** — polish the Security / Password UX while preserving the authenticated backend contract.
-- **PR #31** — add bounded Vendor → Reseller → Customer tenant lifecycle controls and lifecycle tests.
+A historical red/cancelled run does not make the current feature red when a later synchronized commit fixes/replaces the failing behavior and the relevant current gates/evidence are green.
 
-The current `main` lineage contains all three changes.
+Historical failures remain valuable for audit/debug history but do not regress the roadmap status.
 
-## 5. CI architecture
+## 6. Relevant productization PRs
 
-The certification workflow intentionally uses one Compose-managed runtime stack for PostgreSQL, Redis and application services. GitHub service containers are not duplicated alongside Compose, avoiding host-port conflicts.
+- **PR #29** — exposed Security / Password in Settings and corrected the guardrail-test fixture regression.
+- **PR #30** — polished the Security / Password UX while preserving the authenticated backend contract.
+- **PR #31** — added bounded Vendor → Reseller → Customer tenant lifecycle controls and lifecycle tests.
 
-Dependency setup is cached and performed once per certification job. Playwright installs Chromium without `--with-deps`, avoiding long-running host `apt` installation. OCR is validated in the API container where the production-like image provides Tesseract and Farsi language data.
+The current `main` lineage contains these changes.
 
-## 6. Product workspace coverage
+## 7. Product workspace coverage
 
-The current product surfaces are documented separately as:
+Current product surfaces include:
 
 - Platform Admin: `/admin`
 - Business Dashboard: `/dashboard`
@@ -85,11 +103,31 @@ The current product surfaces are documented separately as:
 - Website widget loader: `/widget.js?channel=<publicKey>`
 - Customer Settings → Security / Password: `/settings/security`
 
-The public customer experience is not a tenant dashboard and must remain isolated from SaaS administration.
+The public customer experience is not a tenant dashboard and remains isolated from SaaS administration.
 
-## 7. Deployment-specific gates — NOT YET CERTIFIED
+## 8. Current operational/commercial gaps
 
-Passing repository-level certification or post-release productization tests does **not** certify a real production deployment. The following remain open:
+These are the remaining items that must be completed before the platform can be treated as commercially deliverable:
+
+- Immutable release manifest/release-publication automation.
+- Product/package entitlement authority.
+- License issuance/revocation and commercial entitlement reconciliation.
+- Backup/restore procedure and recovery rehearsal.
+- Upgrade/rollback procedure.
+- Customer health/readiness diagnostics.
+- Customer audit/export where required.
+- Retention/restore workflow after deprovisioning.
+- Complete versioned distributable delivery package.
+- Installation/migration/backup/rollback runbooks.
+- Acceptance, security/secrets and compatibility checklists.
+- Vendor → reseller → customer handoff package.
+- Execution-boundary license/entitlement enforcement.
+- Supported upgrade channel/version policy.
+- Production-target deployment, monitoring, rollback and security evidence.
+
+## 9. Deployment-specific gates — NOT YET CERTIFIED
+
+Passing repository-level certification or post-release productization tests does **not** certify a real production deployment.
 
 | Gate | Status |
 |---|---|
@@ -106,7 +144,7 @@ Passing repository-level certification or post-release productization tests does
 | Production security certification | NOT CLAIMED |
 | Production deployment / rollback rehearsal | NOT VERIFIED |
 
-## 8. Production deployment checklist
+## 10. Production deployment checklist
 
 Before a production release:
 
@@ -120,7 +158,7 @@ Before a production release:
 8. Run clean migration, deployment and rollback rehearsal.
 9. Run the final certification against the deployment candidate.
 
-## 9. Release classification
+## 11. Release classification
 
 **CLIENT HANDOFF:** YES  
 **DEPLOYMENT CANDIDATE:** YES  
@@ -129,3 +167,9 @@ Before a production release:
 **PRODUCTION CERTIFIED:** NO
 
 Production certification must be granted only after the deployment-specific gates above pass with fresh evidence.
+
+## 12. Next implementation direction
+
+The next implementation work should begin with **Phase 4 — Delivery Package** and should consume the remaining Phase 2/3 operational gaps as explicit dependencies.
+
+Do not restart completed core-platform phases unless new evidence demonstrates a regression.
