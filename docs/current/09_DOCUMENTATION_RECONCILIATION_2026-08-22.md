@@ -2,97 +2,180 @@
 
 ## Purpose
 
-This document reconciles the current documentation set after the 2026-08-22 test/productization work. It separates historical certification documents from the current post-release productization truth.
+This document is the reconciliation record for the 2026-08-22 implementation/test review. It separates historical certification material from the current productization truth and records what is genuinely complete versus what remains operational/commercial.
 
 ## Authoritative document order
 
 1. `docs/current/05_CERTIFICATION_PROGRESS.md` — certification baseline and production-certification boundary.
 2. `docs/current/06_A_F_TEST_TRACKER.md` — living A–F test sequence and current test evidence.
 3. `docs/current/07_CLIENT_HANDOFF_AND_TEST_EVIDENCE.md` — current handoff/deployment boundary.
-4. `docs/current/08_POST_RELEASE_PRODUCTIZATION_TEST_EVIDENCE_2026-08-22.md` — dated evidence for today's post-release changes.
-5. `docs/current/PRODUCTIZATION_ROADMAP.md` — current Vendor → Reseller → Customer productization roadmap.
-6. `documents/23_AS_BUILT_CURRENT_STATE_v0.6.1.md` and older RC/Phase documents — historical release/as-built evidence; they must not be interpreted as the current productization state when they conflict with the documents above.
-7. `docs/production/RC8_IMPLEMENTATION_MATRIX.md` — historical RC8 scope/gap analysis. It remains useful as audit history but is not the current productization roadmap.
+4. `docs/current/08_POST_RELEASE_PRODUCTIZATION_TEST_EVIDENCE_2026-08-22.md` — dated evidence for post-release changes.
+5. `docs/current/PRODUCTIZATION_ROADMAP.md` — authoritative Vendor → Reseller → Customer productization roadmap.
+6. `documents/23_AS_BUILT_CURRENT_STATE_v0.6.1.md` and older RC/Phase documents — historical evidence only.
+7. `docs/production/RC8_IMPLEMENTATION_MATRIX.md` — historical RC8 scope/gap analysis only.
 
 ## Reconciled facts
 
-### Certification
+### 1. Core platform status
 
-The RC8/RC9 repository-level certification baseline remains valid. The 2026-08-22 work is post-release productization/security work and is deliberately not represented as a new production-certification pass.
+The project has passed the point where the main work is construction of the core SaaS/AI platform. The current repository lineage contains the previously built authentication, tenant/RBAC, employee/run, files/knowledge/memory, commerce and production-like runtime foundations. Older phase documents may therefore show gaps that are historical rather than current.
 
-### Current automated evidence
+### 2. Certification status
+
+The RC8/RC9 repository-level certification baseline remains valid. The 2026-08-22 work is post-release productization/security verification and is not represented as a new production-certification pass.
+
+Published baseline:
+
+`v1.0.1` → `2d23a01098f432145ecaea14b2500fe520ad0bf7`
+
+`main` is the post-release productization line.
+
+### 3. Current automated evidence
 
 - Backend full suite: **194 passed, 1 warning**.
 - Workflow foundation/approval/trigger subset: **7 passed, 1 warning**.
 - Execution hardening/workflow-versioning subset: **8 passed**.
 - Docker API/frontend/PostgreSQL/Redis/Worker/Beat local runtime observed healthy.
+- Recurring Outbox/workflow scheduler/timeout/approval-expiry tasks were observed completing.
 - The only full-suite warning is Passlib's Python `crypt` deprecation.
 
-### Account security
+A historical red/cancelled CI run is not treated as a current roadmap blocker when a later synchronized change fixes/replaces the behavior and the current evidence is green.
 
-The customer Settings surface now exposes **Security / Password**, backed by the authenticated password-change API. The password-change UX validates the 8–128 character range, confirmation matching and successful re-authentication flow. Password reset was also manually verified successfully by the project owner.
+### 4. Account security
 
-### Productization lifecycle
+The customer Settings surface exposes **Security / Password** backed by the authenticated password-change API.
 
-The Vendor → Reseller → Customer runtime hierarchy now includes bounded lifecycle operations:
+Verified behavior includes:
+
+- 8–128 character validation;
+- confirmation matching;
+- successful password-change state;
+- sign-in-again/session reauthentication flow;
+- password reset manually verified successfully by the project owner.
+
+PR #29 corrected the guardrail-test fixture regression while exposing the Security / Password entry. PR #30 polished the Security / Password UX without changing the authenticated backend contract.
+
+**Current classification: DONE / TESTED.**
+
+### 5. Productization runtime hierarchy
+
+The runtime hierarchy is:
+
+```text
+Vendor
+  └── Reseller
+        └── Customer
+```
+
+The application enforces direct parent/child and edition-kind constraints for provisioning, entitlement delegation and lifecycle operations.
+
+### 6. Tenant lifecycle
+
+PR #31 implemented and tested bounded lifecycle operations:
 
 - active → suspended;
 - active → deprovisioned;
 - suspended → active;
 - suspended → deprovisioned;
 - deprovisioned cannot be reactivated;
-- deprovisioning is blocked while child tenants remain active;
+- deprovisioning is blocked while active child tenants remain;
 - tenant users are disabled on deprovisioning;
 - tenant data is retained rather than destructively deleted;
-- lifecycle operations remain direct-parent/edition constrained and auditable.
+- lifecycle operations remain direct-parent/edition constrained;
+- privileged lifecycle operations use the existing audit path.
+
+**Current classification: DONE / TESTED.**
+
+### 7. Delivery topology
+
+Vendor/reseller/customer delivery identities, manifests, package structure, validation and checksum-protected packaging are implemented as the foundation of the delivery model.
+
+**Current classification: DONE / IMPLEMENTED + TESTED foundation.**
+
+The remaining work is the complete repeatable handoff package, not the basic delivery topology.
 
 ## Documentation conflicts resolved
 
 ### Conflict 1 — Phase 2 lifecycle status
 
-The productization roadmap previously marked full customer lifecycle/suspension/deprovisioning as pending. PR #31 implemented the runtime lifecycle controls and transition/child-dependency tests.
+Older documentation treated customer lifecycle controls as pending.
 
-**Resolution:** Roadmap now marks the runtime lifecycle controls complete and leaves only commercial entitlement/license reconciliation pending for Phase 2.
+**Resolution:** runtime suspend/resume/deprovision, dependency guards, user disabling and data retention are complete and tested. Phase 2 now retains only commercial entitlement/license lifecycle work.
 
 ### Conflict 2 — Phase 3 deprovisioning status
 
-The roadmap previously marked the whole customer deprovisioning/data-retention item pending. Runtime deprovisioning now exists, but backup/restore and retention/restore procedures do not.
+Older documentation grouped runtime deprovisioning together with operational retention/recovery.
 
-**Resolution:** Runtime suspend/resume/deprovision is marked complete; data-retention/restore remains pending as an operational procedure.
+**Resolution:** runtime lifecycle is complete. Backup/restore and retention/restore procedures remain operational gaps.
 
-### Conflict 3 — Certification versus post-release changes
+### Conflict 3 — Security / Password status
 
-The certification progress document was based on 2026-08-20 and could be misread as covering later changes.
+The Settings password capability was initially absent from the product surface and was then implemented through PR #29/#30.
 
-**Resolution:** It now explicitly states that 2026-08-22 password-security and lifecycle work is post-release verification and does not constitute a new production-certification claim.
+**Resolution:** Security / Password is now treated as implemented/tested, not pending.
 
-### Conflict 4 — Historical as-built documents
+### Conflict 4 — Historical CI failures
 
-`documents/23_AS_BUILT_CURRENT_STATE_v0.6.1.md` describes an older Employee/Stripe/Invoice sequence and predates the current v1.0.1 productization model.
+Several historical CI runs were red or cancelled during implementation/debugging.
 
-**Resolution:** It remains historical. The current productization truth is controlled by `docs/current/PRODUCTIZATION_ROADMAP.md` and the current evidence documents; the historical document is not rewritten to manufacture a false historical state.
+**Resolution:** roadmap status follows the current synchronized implementation and required green evidence, while historical failures remain useful only as debugging history.
 
-### Conflict 5 — Historical RC8 implementation matrix
+### Conflict 5 — Historical as-built documents
 
-`docs/production/RC8_IMPLEMENTATION_MATRIX.md` contains an older Phase 0–7 gap analysis and explicitly records the state of the project during the RC8 architecture audit.
+`documents/23_AS_BUILT_CURRENT_STATE_v0.6.1.md` predates the current v1.0.1/post-release productization model.
 
-**Resolution:** It remains an audit/history document. Its old phase numbering and gaps must not override the current productization roadmap.
+**Resolution:** it remains historical and is not rewritten to manufacture a new historical state.
 
-## Current project position after reconciliation
+### Conflict 6 — Historical RC8 matrix
 
-The project is no longer at the old "RC certification only" position. The published release remains `v1.0.1`, while `main` is the post-release productization line.
+`docs/production/RC8_IMPLEMENTATION_MATRIX.md` contains an older Phase 0–7 audit model.
 
-The current productization state is:
+**Resolution:** it remains audit/history material and does not override the current productization roadmap.
 
-- **Phase 0:** release-integrity baseline established; final immutable release-manifest/release-publication tasks remain.
-- **Phase 1:** Vendor runtime foundation implemented; product/license authority and vendor operations remain.
-- **Phase 2:** Reseller runtime foundation and tenant lifecycle controls implemented; commercial entitlement/license reconciliation remains.
-- **Phase 3:** Customer tenant/RBAC and lifecycle runtime foundation implemented; backup/restore, upgrade/rollback, diagnostics, audit/export and retention/restore remain.
-- **Phase 4:** Delivery-package foundation implemented; repeatable distributable package and operational handoff runbooks remain.
-- **Phase 5:** Commercial production is not yet complete.
+## Current project position
+
+The project should now be described as:
+
+> **Certified software core + implemented productization runtime foundation + active operationalization/delivery-package work.**
+
+### Phase status
+
+- **Phase 0:** 🟢 baseline reconciled; immutable release-manifest/release-publication automation remains.
+- **Phase 1:** 🟢 vendor runtime foundation implemented; product/license authority and vendor operations remain.
+- **Phase 2:** 🟢 reseller runtime foundation and lifecycle controls implemented; commercial entitlement/license lifecycle remains.
+- **Phase 3:** 🟢 customer tenant/RBAC/lifecycle runtime foundation implemented; backup/restore, upgrade/rollback, diagnostics, audit/export and retention/restore remain.
+- **Phase 4:** 🟡 current implementation frontier; delivery-package foundation exists, repeatable distributable package and runbooks remain.
+- **Phase 5:** 🟡 commercial production not complete.
+
+## Remaining work — authoritative list
+
+The following items are the actual remaining productization frontier identified by the reconciliation:
+
+1. Immutable release manifest/release-publication automation.
+2. Vendor product/package entitlement authority.
+3. License issuance/revocation and commercial entitlement reconciliation.
+4. Vendor operational observability/support tooling.
+5. Customer backup/restore and recovery rehearsal.
+6. Upgrade/rollback procedures and evidence.
+7. Customer health/readiness diagnostics.
+8. Customer audit/export capability where required.
+9. Retention/restore workflow after deprovisioning.
+10. Complete versioned distributable delivery package.
+11. Complete installation/migration/backup/rollback runbooks.
+12. Acceptance/security/secrets/compatibility checklists.
+13. Vendor → reseller → customer handoff package.
+14. Execution-boundary license/entitlement enforcement.
+15. Supported upgrade channel/version policy.
+16. Production-target deployment, monitoring, rollback and security evidence.
+
+These are **not** a request to rebuild the core platform.
 
 ## Next authoritative planning point
 
-The next implementation decision should be made from the reconciled `PRODUCTIZATION_ROADMAP.md`, not from historical RC8 matrices or old v0.x as-built documents.
+Implementation should proceed from `docs/current/PRODUCTIZATION_ROADMAP.md`.
 
-The immediate productization frontier is **Phase 4 — Delivery Package**, while the remaining Phase 2/3 operational gaps should be treated as dependencies to schedule explicitly rather than silently assumed complete.
+The immediate implementation frontier is:
+
+**Phase 4 — Delivery Package**
+
+with the Phase 2/3 operational gaps scheduled explicitly as dependencies.
