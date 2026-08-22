@@ -54,6 +54,13 @@ services:
       AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-deterministic}
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
       AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_USE_STARTTLS: ${SMTP_USE_STARTTLS:-true}
+      SMTP_ALLOWED_RECIPIENT_DOMAINS: ${SMTP_ALLOWED_RECIPIENT_DOMAINS:-}
     volumes:
       - app_storage:/app/var/storage
     ports:
@@ -89,6 +96,15 @@ services:
       AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-deterministic}
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
       AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
+      # SMTP is consumed by email_worker.py. Pass the host environment values
+      # into the worker instead of relying on backend/.env being mounted.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_USE_STARTTLS: ${SMTP_USE_STARTTLS:-true}
+      SMTP_ALLOWED_RECIPIENT_DOMAINS: ${SMTP_ALLOWED_RECIPIENT_DOMAINS:-}
     volumes:
       - app_storage:/app/var/storage
     depends_on:
@@ -117,6 +133,13 @@ services:
       AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-deterministic}
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
       AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_USE_STARTTLS: ${SMTP_USE_STARTTLS:-true}
+      SMTP_ALLOWED_RECIPIENT_DOMAINS: ${SMTP_ALLOWED_RECIPIENT_DOMAINS:-}
     volumes:
       - app_storage:/app/var/storage
     depends_on:
