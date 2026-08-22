@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/auth-store";
-import { changePassword } from "@/lib/api";
+import { changePassword } from "@/lib/password-api";
 import { getErrorMessage } from "@/lib/errors";
 
 export default function SecuritySettingsPage() {
