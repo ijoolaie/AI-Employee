@@ -10,8 +10,11 @@ test.describe("critical platform flows", () => {
     await page.goto("/forgot-password");
     await expect(page.getByRole("heading", { name: "Forgot your password?" })).toBeVisible();
 
-    await page.goto("/reset-password");
+    await page.goto("/reset-password?token=test-reset-token-123456789012345678901234567890");
     await expect(page.getByRole("heading", { name: "Set a new password" })).toBeVisible();
+    await expect(page.getByLabel("New password")).toBeVisible();
+    await expect(page.getByLabel("Confirm new password")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reset password" })).toBeEnabled();
   });
 
   test("customer workspace unauthenticated redirect", async ({ page }) => {
