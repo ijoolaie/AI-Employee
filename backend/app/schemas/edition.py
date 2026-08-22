@@ -19,6 +19,7 @@ class TenantSummary(BaseModel):
     id: UUID
     name: str
     slug: str
+    status: str
     tenant_kind: str
     parent_tenant_id: UUID | None
     vendor_release_tag: str | None

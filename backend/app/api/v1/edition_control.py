@@ -5,7 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
 
-from app.core.database import get_db
 from app.core.deps import DbSession
 from app.core.edition_deps import CustomerAdminContext, ResellerAdminContext, VendorAdminContext
 from app.models.tenant import Tenant
@@ -19,7 +18,7 @@ from app.schemas.edition import (
     SupportEscalationResponse,
     TenantSummary,
 )
-from app.services import edition_service
+from app.services import edition_lifecycle_service, edition_service
 
 router = APIRouter(prefix="/edition", tags=["edition-control"])
 
@@ -47,6 +46,45 @@ async def create_reseller(payload: ChildTenantProvisionRequest, ctx: VendorAdmin
     return APIResponse(success=True, data=tenant)
 
 
+@router.post("/vendor/resellers/{reseller_id}/suspend", response_model=APIResponse[TenantSummary])
+async def suspend_reseller(reseller_id: UUID, ctx: VendorAdminContext, db: DbSession):
+    tenant = await edition_lifecycle_service.set_child_tenant_status(
+        db,
+        parent=ctx.tenant,
+        child_id=reseller_id,
+        expected_kind=edition_service.EDITION_RESELLER,
+        target_status=edition_lifecycle_service.STATUS_SUSPENDED,
+        actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=tenant)
+
+
+@router.post("/vendor/resellers/{reseller_id}/resume", response_model=APIResponse[TenantSummary])
+async def resume_reseller(reseller_id: UUID, ctx: VendorAdminContext, db: DbSession):
+    tenant = await edition_lifecycle_service.set_child_tenant_status(
+        db,
+        parent=ctx.tenant,
+        child_id=reseller_id,
+        expected_kind=edition_service.EDITION_RESELLER,
+        target_status=edition_lifecycle_service.STATUS_ACTIVE,
+        actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=tenant)
+
+
+@router.post("/vendor/resellers/{reseller_id}/deprovision", response_model=APIResponse[TenantSummary])
+async def deprovision_reseller(reseller_id: UUID, ctx: VendorAdminContext, db: DbSession):
+    tenant = await edition_lifecycle_service.set_child_tenant_status(
+        db,
+        parent=ctx.tenant,
+        child_id=reseller_id,
+        expected_kind=edition_service.EDITION_RESELLER,
+        target_status=edition_lifecycle_service.STATUS_DEPROVISIONED,
+        actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=tenant)
+
+
 @router.get("/reseller/customers", response_model=APIResponse[list[TenantSummary]])
 async def list_customers(ctx: ResellerAdminContext, db: DbSession):
     rows = (await db.execute(select(Tenant).where(Tenant.parent_tenant_id == ctx.tenant_id, Tenant.tenant_kind == edition_service.EDITION_CUSTOMER).order_by(Tenant.created_at))).scalars().all()
@@ -66,6 +104,45 @@ async def create_customer(payload: ChildTenantProvisionRequest, ctx: ResellerAdm
         kind=edition_service.EDITION_CUSTOMER,
         vendor_release_tag=payload.vendor_release_tag,
         delivery_revision=payload.delivery_revision,
+    )
+    return APIResponse(success=True, data=tenant)
+
+
+@router.post("/reseller/customers/{customer_id}/suspend", response_model=APIResponse[TenantSummary])
+async def suspend_customer(customer_id: UUID, ctx: ResellerAdminContext, db: DbSession):
+    tenant = await edition_lifecycle_service.set_child_tenant_status(
+        db,
+        parent=ctx.tenant,
+        child_id=customer_id,
+        expected_kind=edition_service.EDITION_CUSTOMER,
+        target_status=edition_lifecycle_service.STATUS_SUSPENDED,
+        actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=tenant)
+
+
+@router.post("/reseller/customers/{customer_id}/resume", response_model=APIResponse[TenantSummary])
+async def resume_customer(customer_id: UUID, ctx: ResellerAdminContext, db: DbSession):
+    tenant = await edition_lifecycle_service.set_child_tenant_status(
+        db,
+        parent=ctx.tenant,
+        child_id=customer_id,
+        expected_kind=edition_service.EDITION_CUSTOMER,
+        target_status=edition_lifecycle_service.STATUS_ACTIVE,
+        actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=tenant)
+
+
+@router.post("/reseller/customers/{customer_id}/deprovision", response_model=APIResponse[TenantSummary])
+async def deprovision_customer(customer_id: UUID, ctx: ResellerAdminContext, db: DbSession):
+    tenant = await edition_lifecycle_service.set_child_tenant_status(
+        db,
+        parent=ctx.tenant,
+        child_id=customer_id,
+        expected_kind=edition_service.EDITION_CUSTOMER,
+        target_status=edition_lifecycle_service.STATUS_DEPROVISIONED,
+        actor_id=ctx.user_id,
     )
     return APIResponse(success=True, data=tenant)
 
