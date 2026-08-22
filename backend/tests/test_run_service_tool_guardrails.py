@@ -97,6 +97,10 @@ class _FakeGateway:
         )
 
 
+def _fake_assembly(**_kwargs):
+    return SimpleNamespace(messages=[], tools=[], metadata={})
+
+
 def _make_run_and_version(allowed_tools):
     tenant_id = uuid.uuid4()
     employee_id = uuid.uuid4()
@@ -123,6 +127,13 @@ def _make_run_and_version(allowed_tools):
     return run, version
 
 
+def _patch_execution_dependencies(monkeypatch, registry, gateway):
+    monkeypatch.setattr(run_service, "registry", registry)
+    monkeypatch.setattr(run_service, "AIGateway", lambda: gateway)
+    monkeypatch.setattr(run_service, "assemble_employee_prompt", _fake_assembly)
+    monkeypatch.setattr(run_service.audit_service, "record", _noop_audit)
+
+
 @pytest.mark.asyncio
 async def test_execute_run_blocks_model_requested_tool_outside_employee_allowlist(monkeypatch):
     run, version = _make_run_and_version(["allowed_tool"])
@@ -132,9 +143,7 @@ async def test_execute_run_blocks_model_requested_tool_outside_employee_allowlis
         ToolCall(id="call-blocked", name="blocked_tool", arguments={})
     )
 
-    monkeypatch.setattr(run_service, "registry", registry)
-    monkeypatch.setattr(run_service, "AIGateway", lambda: gateway)
-    monkeypatch.setattr(run_service.audit_service, "record", _noop_audit)
+    _patch_execution_dependencies(monkeypatch, registry, gateway)
 
     with pytest.raises(ValidationAppError, match="Tool is not allowed by Employee guardrails"):
         await run_service.execute_run(db, run_id=run.id)
@@ -153,9 +162,7 @@ async def test_execute_run_passes_employee_allowlist_to_registry_execution(monke
         ToolCall(id="call-allowed", name="allowed_tool", arguments={"x": 1})
     )
 
-    monkeypatch.setattr(run_service, "registry", registry)
-    monkeypatch.setattr(run_service, "AIGateway", lambda: gateway)
-    monkeypatch.setattr(run_service.audit_service, "record", _noop_audit)
+    _patch_execution_dependencies(monkeypatch, registry, gateway)
 
     result = await run_service.execute_run(db, run_id=run.id)
 
@@ -181,10 +188,8 @@ async def test_execute_run_blocks_disallowed_tool_before_approval(monkeypatch):
         approval_calls.append((args, kwargs))
         return SimpleNamespace(id=uuid.uuid4())
 
-    monkeypatch.setattr(run_service, "registry", registry)
-    monkeypatch.setattr(run_service, "AIGateway", lambda: gateway)
+    _patch_execution_dependencies(monkeypatch, registry, gateway)
     monkeypatch.setattr(run_service.approval_service, "create_request", fake_create_request)
-    monkeypatch.setattr(run_service.audit_service, "record", _noop_audit)
 
     with pytest.raises(ValidationAppError, match="Tool is not allowed by Employee guardrails"):
         await run_service.execute_run(db, run_id=run.id)
@@ -208,10 +213,8 @@ async def test_execute_run_allowed_approval_tool_pauses_without_execution(monkey
         approval_calls.append((args, kwargs))
         return SimpleNamespace(id=uuid.uuid4())
 
-    monkeypatch.setattr(run_service, "registry", registry)
-    monkeypatch.setattr(run_service, "AIGateway", lambda: gateway)
+    _patch_execution_dependencies(monkeypatch, registry, gateway)
     monkeypatch.setattr(run_service.approval_service, "create_request", fake_create_request)
-    monkeypatch.setattr(run_service.audit_service, "record", _noop_audit)
 
     result = await run_service.execute_run(db, run_id=run.id)
 
