@@ -78,11 +78,26 @@ class ToolRegistry:
         *,
         permissions: set[str] | None = None,
         approval_granted: bool = False,
+        allowed_tools: set[str] | list[str] | None = None,
         db=None,
         tenant_id=None,
         actor_id=None,
     ) -> Any:
         tool = self.get(name)
+
+        # Employee guardrail is a separate, fail-closed capability boundary.
+        # A tool must be both declared by the EmployeeVersion and permitted
+        # for the executing principal. Tool visibility in the prompt is not
+        # sufficient because provider output is untrusted.
+        if allowed_tools is not None and name not in set(allowed_tools):
+            raise ValidationAppError(
+                f"Tool is not allowed by Employee guardrails: {name}",
+                details={
+                    "tool": name,
+                    "allowed_tools": sorted(set(allowed_tools)),
+                },
+            )
+
         permissions = permissions or set()
         if tool.required_permission not in permissions:
             raise ValidationAppError(

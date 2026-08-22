@@ -295,6 +295,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
             allowed_tools=version.allowed_tools or [],
         )
         messages = list(assembly.messages)
+        employee_allowed_tools = set(version.allowed_tools or [])
         resume_approval = latest_approval if latest_approval is not None and latest_approval.status == "approved" else None
         if resume_approval is not None:
             messages = [_message_from_json(item) for item in resume_approval.continuation_messages]
@@ -321,6 +322,16 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 started = datetime.now(timezone.utc)
                 try:
                     tool = registry.get(tool_call_name)
+
+                    if tool_call_name not in employee_allowed_tools:
+                        raise ValidationAppError(
+                            f"Tool is not allowed by Employee guardrails: {tool_call_name}",
+                            details={
+                                "tool": tool_call_name,
+                                "allowed_tools": sorted(employee_allowed_tools),
+                            },
+                        )
+
                     effective_permissions = set(tool_permissions)
                     if "*" in effective_permissions:
                         effective_permissions.add(tool.required_permission)
@@ -329,6 +340,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         resume_approval.arguments,
                         permissions=effective_permissions,
                         approval_granted=True,
+                        allowed_tools=employee_allowed_tools,
                         db=db,
                         tenant_id=run.tenant_id,
                         actor_id=run.created_by,
@@ -414,6 +426,16 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 try:
                     registry.get(tool_call.name)
                     tool = registry.get(tool_call.name)
+
+                    if tool_call.name not in employee_allowed_tools:
+                        raise ValidationAppError(
+                            f"Tool is not allowed by Employee guardrails: {tool_call.name}",
+                            details={
+                                "tool": tool_call.name,
+                                "allowed_tools": sorted(employee_allowed_tools),
+                            },
+                        )
+
                     if tool.requires_approval:
                         approval = await approval_service.create_request(
                             db,
@@ -449,6 +471,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         tool_call.arguments,
                         permissions=effective_permissions,
                         approval_granted=False,
+                        allowed_tools=employee_allowed_tools,
                         db=db,
                         tenant_id=run.tenant_id,
                         actor_id=run.created_by,
