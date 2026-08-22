@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
-import { LayoutDashboard, LogOut, Settings, BarChart3, CreditCard, Sparkles, GitBranch, CalendarClock, Webhook, ShieldCheck, Code2, BookOpen, Brain, ShoppingCart, TrendingUp, Activity, MessageCircle, Bot, Play, FileText, Radio, Package, PlugZap, ListChecks, UserRound, Terminal } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, BarChart3, CreditCard, Sparkles, GitBranch, CalendarClock, Webhook, ShieldCheck, Code2, BookOpen, Brain, ShoppingCart, TrendingUp, Activity, MessageCircle, Bot, Play, FileText, Radio, Package, PlugZap, ListChecks, UserRound, Terminal, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
@@ -50,6 +50,7 @@ const groups = [
     { href: "/webhooks", label: "Webhooks", icon: Webhook },
     { href: "/privacy", label: "Privacy & GDPR", icon: ShieldCheck },
     { href: "/settings", label: "Settings", icon: Settings },
+    { href: "/settings/security", label: "Security / Password", icon: KeyRound },
     { href: "/team", label: "Team & Roles", icon: UserRound },
   ]},
 ];
