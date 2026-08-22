@@ -50,7 +50,8 @@ async def set_child_tenant_status(
         raise HTTPException(status_code=404, detail="Tenant not found")
 
     assert_direct_child(parent, child, expected_kind)
-    validate_transition(child.status, target_status)
+    previous_status = child.status
+    validate_transition(previous_status, target_status)
 
     if target_status == STATUS_DEPROVISIONED:
         children = list((await db.execute(select(Tenant).where(Tenant.parent_tenant_id == child.id))).scalars().all())
@@ -73,7 +74,7 @@ async def set_child_tenant_status(
         metadata={
             "child_tenant_id": str(child.id),
             "child_kind": child.tenant_kind,
-            "previous_status": child.status if False else None,
+            "previous_status": previous_status,
             "target_status": target_status,
         },
     )
