@@ -212,6 +212,7 @@ async def test_execute_run_allowed_approval_tool_pauses_without_execution(monkey
 
     async def fake_create_request(*args, **kwargs):
         approval_calls.append((args, kwargs))
+        run.status = "waiting"
         return SimpleNamespace(id=uuid.uuid4())
 
     _patch_execution_dependencies(monkeypatch, registry, gateway)
