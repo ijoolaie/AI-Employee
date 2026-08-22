@@ -94,6 +94,22 @@ The certification workflow has therefore been corrected to assert **exactly one 
 
 The same dynamic assertion is used for the production-like Docker API container.
 
+### Post-release productization evidence — 2026-08-22
+
+Detailed evidence is recorded in `docs/current/08_POST_RELEASE_PRODUCTIZATION_TEST_EVIDENCE_2026-08-22.md`.
+
+- [x] Authenticated password-change implementation and Settings → Security / Password surface completed.
+- [x] Password reset flow manually verified successfully by the project owner.
+- [x] Password Security UX validation and re-authentication flow added.
+- [x] Tenant lifecycle transition tests added for active/suspended/deprovisioned states.
+- [x] Tenant deprovisioning child-dependency guard added and tested.
+- [x] Tenant deprovisioning preserves data and disables tenant users rather than deleting tenant data.
+- [x] Vendor → Reseller → Customer direct-parent and edition boundaries preserved by lifecycle operations.
+- [x] Lifecycle actions remain auditable.
+- [x] PR #29, PR #30 and PR #31 changes are included in the current `main` lineage.
+
+These are **post-release productization/security evidence**, not a new production-certification claim.
+
 ## What can be tested from GitHub
 
 - Repository structure and source/test presence
