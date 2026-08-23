@@ -6,7 +6,7 @@ This is the current authoritative productization roadmap. The platform core is c
 
 ## Current project position — 2026-08-23
 
-**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED → PHASE 5 COMMERCIAL IMPLEMENTATION IN PROGRESS.**
+**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE; EXTERNAL PRODUCTION GATES REMAIN.**
 
 Evidence states remain explicit: implementation is not the same as executed local or external-production evidence.
 
@@ -28,21 +28,21 @@ Evidence states remain explicit: implementation is not the same as executed loca
 
 ## Phase 1 — Vendor Edition
 
-**Status: 🟢 RUNTIME FOUNDATION IMPLEMENTED; commercial authority/operations remain.**
+**Status: 🟢 RUNTIME + COMMERCIAL FOUNDATION IMPLEMENTED; remaining work is operational authority/tooling.**
 
-Implemented runtime boundaries, vendor provisioning, audit path and provider/global administration boundaries remain complete. Remaining commercial work includes product/feature entitlement authority, license issuance/revocation, release management UI/API, provider/global configuration management and vendor support tooling.
+Implemented vendor runtime boundaries, provisioning, license authority, entitlement authority and audit path. Remaining work includes release-management UI/API, broader provider/global configuration management and vendor support tooling.
 
 ## Phase 2 — Reseller Edition
 
-**Status: 🟢 RUNTIME CONTROL-PLANE + TENANT LIFECYCLE FOUNDATION COMPLETE; commercial entitlement lifecycle remains.**
+**Status: 🟢 RUNTIME CONTROL-PLANE + TENANT LIFECYCLE + COMMERCIAL ENTITLEMENT FOUNDATION COMPLETE.**
 
-Runtime reseller identity, isolation, provisioning/deprovisioning, quota delegation, audit and support escalation are implemented. Remaining: commercial entitlement/license reconciliation and subscription/plan lifecycle.
+Runtime reseller identity, isolation, provisioning/deprovisioning, quota delegation, license control, audit and support escalation are implemented. Subscription/plan state is enforced through the billing service; commercial operations still require real production evidence.
 
 ## Phase 3 — Customer Edition
 
-**Status: 🟢 RUNTIME TENANT/RBAC + LIFECYCLE FOUNDATION COMPLETE; operational execution evidence remains.**
+**Status: 🟢 RUNTIME TENANT/RBAC + LIFECYCLE FOUNDATION COMPLETE; production operational evidence remains.**
 
-Customer isolation, RBAC, lifecycle, auditability and support boundaries are implemented. Operational recovery, diagnostics, audit/export and retention workflows remain execution/evidence dependencies where applicable.
+Customer isolation, RBAC, lifecycle, auditability and support boundaries are implemented. Backup/restore, upgrade/rollback and recovery behavior now have local exercised evidence; external customer-environment evidence remains separate.
 
 ## Phase 4 — Delivery Package
 
@@ -94,7 +94,7 @@ Primary document: `docs/current/17_UPGRADE_MIGRATION_RUNBOOK.md`.
 - [x] Backup policy and pre-upgrade backup procedure documented.
 - [x] Database and application-storage restore procedure documented.
 - [x] Restore acceptance criteria documented.
-- [ ] Execute restore rehearsal locally.
+- [x] Local PostgreSQL/Redis restore smoke rehearsal executed successfully on 2026-08-23.
 
 Primary document: `docs/current/18_BACKUP_RESTORE_RUNBOOK.md`.
 
@@ -104,7 +104,7 @@ Primary document: `docs/current/18_BACKUP_RESTORE_RUNBOOK.md`.
 - [x] Known-good artifact/checksum procedure documented.
 - [x] Migration-safe rollback guardrails documented.
 - [x] Recovery acceptance criteria documented.
-- [ ] Execute rollback rehearsal locally.
+- [x] Local controlled recovery/rollback drill executed successfully on 2026-08-23.
 
 Primary document: `docs/current/19_ROLLBACK_RUNBOOK.md`.
 
@@ -150,8 +150,8 @@ Primary document: `docs/current/23_HANDOFF_RUNBOOK.md`.
 
 - [x] All implementation/documentation slices exist.
 - [x] Execute complete local production-like delivery flow.
-- [x] Execute backup/restore rehearsal — local validation contract is documented; full rehearsal remains an operational production gate.
-- [x] Execute rollback rehearsal — local validation contract is documented; full rehearsal remains an operational production gate.
+- [x] Execute backup/restore rehearsal — local PostgreSQL/Redis smoke path passed on 2026-08-23; external-target rehearsal remains environment-specific.
+- [x] Execute rollback rehearsal — controlled local recovery drill passed on 2026-08-23; external-target rollback remains environment-specific.
 - [x] Execute final acceptance checklist.
 - [ ] Execute release artifact workflow when Actions quota is available.
 
@@ -161,33 +161,37 @@ Primary gate: `docs/current/24_PHASE4_DELIVERY_ACCEPTANCE.md`.
 
 ## Phase 5 — Commercial Production
 
-**Status: 🟡 IMPLEMENTATION IN PROGRESS; production evidence and complete commercial lifecycle remain.**
+**Status: 🟡 IMPLEMENTATION SUBSTANTIALLY COMPLETE; external production evidence and final commercial handoff remain.**
 
-### Implemented on this branch; integration validation pending
+### Implemented / locally exercised
 
 - [x] Commercial license identity with issuer/tenant/edition binding.
 - [x] License issuance/revocation service with audit trail.
 - [x] Vendor → reseller and reseller → customer license control APIs.
 - [x] Fail-closed license check at the run admission boundary.
+- [x] Feature entitlement enforcement at the Tool Registry execution boundary.
 - [x] Parent-authorized reseller entitlement delegation and quota ceiling.
 - [x] Alembic migration for commercial license authority, including explicit grandfathering of existing tenants.
-- [x] Database-free Phase 5 contract tests.
+- [x] Subscription lifecycle semantics for trial expiry, cancellation-at-period-end, canceled state and active period renewal.
+- [x] Supported-version/release-channel policy and tenant upgrade admission checks for vendor/reseller/customer channels.
+- [x] Local full backend suite: **238 passed** on 2026-08-23.
+- [x] Local production-like readiness: API, PostgreSQL, Redis and frontend exercised successfully on conflict-safe Windows validation ports.
+- [x] Local backup/restore smoke: PostgreSQL logical restore + Redis AOF restore verified.
+- [x] Local recovery drill: failure detection and recovery verified against a known-good revision.
 
 ### Remaining
 
-- [ ] Full integration/runtime test suite after GitHub Actions capacity resets.
-- [ ] Entitlement revocation propagation at every feature-specific execution boundary.
-- [ ] Complete subscription/plan lifecycle semantics, including unpaid/canceled transitions.
-- [ ] Upgrade channel and supported-version policy.
-- [ ] Security/update policy.
-- [ ] Customer support and escalation model.
-- [ ] Release channel policy for vendor/reseller/customer editions.
-- [ ] Production deployment evidence per real environment.
+- [ ] GitHub Actions validation when Actions capacity is available.
+- [ ] Real payment/subscriber/revenue evidence for the commercial exit criterion.
+- [ ] External production deployment evidence per real environment.
 - [ ] External monitoring/alerting evidence.
-- [ ] Production rollback/recovery rehearsal.
+- [ ] Production-target rollback/recovery rehearsal.
 - [ ] Final production security certification.
+- [ ] Final commercial support/update-policy handoff for real customer environments.
 
-**Exit:** the platform can be sold, provisioned, upgraded, supported and recovered as a product.
+Primary evidence: `docs/current/27_PHASE5_COMMERCIAL_PRODUCTION_EVIDENCE_2026-08-23.md`.
+
+**Exit:** the platform can be sold, provisioned, upgraded, supported and recovered as a product, with remaining external gates separately evidenced for each real production target.
 
 ## Cross-cutting acceptance gates
 
@@ -219,4 +223,4 @@ A release is commercially deliverable only when the exact release identity is im
 
 ## Immediate next phase
 
-**Continue Phase 5 — Commercial Production. Start with integration validation when Actions capacity resets, then complete supported-version/release-channel policy and production evidence gates.**
+**Continue Phase 5 — Commercial Production. The implementation frontier is substantially complete; next work is evidence closure: GitHub Actions validation when capacity resets, commercial revenue proof, external deployment/monitoring/recovery evidence, final security certification, and commercial support/update-policy handoff.**
