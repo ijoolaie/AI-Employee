@@ -1,6 +1,6 @@
 # Client Handoff & Test Evidence — Current Project Position
 
-**Status date:** 2026-08-22  
+**Status date:** 2026-08-23  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** current certification boundary, productization evidence, handoff state and remaining deployment/commercial gates.
 
@@ -24,7 +24,7 @@ The next implementation frontier is **Phase 4 — Delivery Package**. Remaining 
 
 The authoritative repository-level certification evidence remains the previously completed GitHub Actions Production Certification checkpoint documented in `docs/current/05_CERTIFICATION_PROGRESS.md`.
 
-The 2026-08-22 productization work is **post-release verification**, not a request to reopen RC8/RC9 certification unless a later change affects a certified behavior.
+The 2026-08-22 and 2026-08-23 productization/test work is **post-release verification**, not a request to reopen RC8/RC9 certification unless a later change affects a certified behavior.
 
 Published baseline:
 
@@ -32,7 +32,7 @@ Published baseline:
 
 ## 3. Fresh runtime/product evidence
 
-The current documented test session includes:
+### Previously documented 2026-08-22 evidence
 
 - backend full suite: **194 passed, 1 warning**;
 - focused workflow foundation/approval/trigger tests: **7 passed, 1 warning**;
@@ -47,6 +47,21 @@ The current documented test session includes:
 - recurring Outbox and workflow scheduler/timeout/approval-expiry tasks completing successfully.
 
 The only full-suite warning is the Python `crypt` deprecation emitted through Passlib; it is not a test failure.
+
+### New 2026-08-23 local backend evidence
+
+The project owner ran the current local working tree from `D:\Work\Saas\AI-Employee`:
+
+- `python -m pytest .\backend\tests\test_employee_api.py -q` → **5 passed**;
+- `python -m pytest .\backend\tests -q` → **206 passed** before the final Employee Versioning fixes;
+- focused Employee suite (`test_employee_service.py`, `test_employee_versioning.py`, `test_employee_api.py`) → **13 passed in 2.00s** after the fixes;
+- full backend suite → **212 passed in 7.89s**;
+- `python -m py_compile .\backend\app\services\employee_service.py` → **PASS**;
+- `python -m py_compile .\backend\app\api\v1\employees.py` → **PASS**.
+
+The Employee Versioning fixes covered initial/current version creation, async-compatible mocked `db.add()` behavior, sequential publication, current-version switching, and audit resource/metadata expectations.
+
+**Evidence boundary:** the 212-test result is local working-tree evidence from 2026-08-23. The exact local commit SHA was not captured in the test transcript. It is therefore not a GitHub Actions result and does not create a new repository-level production-certification checkpoint.
 
 ## 4. Post-release productization / account-security evidence
 
