@@ -17,6 +17,7 @@ from app.models.ai_provider_call import AIProviderCall
 from app.models.employee import Employee
 from app.models.run import Run
 from app.models.workflow import Workflow
+from app.services import license_service
 
 PLAN_SEEDS = (
     {"code": "starter", "name": "Starter", "monthly_price_usd": Decimal("0.00"), "monthly_runs": 100, "monthly_tokens": 100_000, "max_employees": 3, "max_workflows": 3, "features": {"priority": "standard"}},
@@ -122,6 +123,8 @@ async def monthly_usage(db: AsyncSession, *, tenant_id: uuid.UUID, now: datetime
     return {"calls": int(calls or 0), "tokens": int(tokens or 0), "runs": int(runs or 0), "employees": int(employees or 0), "workflows": int(workflows or 0)}
 
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
+    # Commercial authorization is checked before any run is admitted.
+    await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
     if sub.status not in {"active", "trialing"}:
         raise ConflictError("Subscription is not active")
