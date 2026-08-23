@@ -6,7 +6,6 @@ from sqlalchemy import select
 
 from app.core.deps import DbSession
 from app.core.edition_deps import ResellerAdminContext, VendorAdminContext
-from app.models.license import CommercialLicense
 from app.models.tenant import Tenant
 from app.schemas.common import APIResponse
 from app.schemas.edition import LicenseIssueRequest, LicenseResponse, LicenseRevokeRequest
@@ -21,12 +20,7 @@ async def issue_reseller_license(reseller_id: UUID, payload: LicenseIssueRequest
     if tenant is None:
         raise HTTPException(status_code=404, detail="Reseller tenant not found")
     edition_service.assert_direct_child(ctx.tenant, tenant, edition_service.EDITION_RESELLER)
-    row = await license_service.issue_license(
-        db, issuer=ctx.tenant, tenant=tenant,
-        expires_in_days=payload.expires_in_days,
-        feature_codes=payload.feature_codes,
-        metadata=payload.metadata,
-    )
+    row = await license_service.issue_license(db, issuer=ctx.tenant, tenant=tenant, expires_in_days=payload.expires_in_days, feature_codes=payload.feature_codes, metadata=payload.metadata)
     return APIResponse(success=True, data=row)
 
 
@@ -36,16 +30,17 @@ async def issue_customer_license(customer_id: UUID, payload: LicenseIssueRequest
     if tenant is None:
         raise HTTPException(status_code=404, detail="Customer tenant not found")
     edition_service.assert_direct_child(ctx.tenant, tenant, edition_service.EDITION_CUSTOMER)
-    row = await license_service.issue_license(
-        db, issuer=ctx.tenant, tenant=tenant,
-        expires_in_days=payload.expires_in_days,
-        feature_codes=payload.feature_codes,
-        metadata=payload.metadata,
-    )
+    row = await license_service.issue_license(db, issuer=ctx.tenant, tenant=tenant, expires_in_days=payload.expires_in_days, feature_codes=payload.feature_codes, metadata=payload.metadata)
     return APIResponse(success=True, data=row)
 
 
-@router.post("/{license_id}/revoke", response_model=APIResponse[LicenseResponse])
-async def revoke_license(license_id: UUID, payload: LicenseRevokeRequest, ctx: VendorAdminContext, db: DbSession):
+@router.post("/vendor/{license_id}/revoke", response_model=APIResponse[LicenseResponse])
+async def revoke_vendor_license(license_id: UUID, payload: LicenseRevokeRequest, ctx: VendorAdminContext, db: DbSession):
+    row = await license_service.revoke_license(db, issuer=ctx.tenant, license_id=license_id, reason=payload.reason)
+    return APIResponse(success=True, data=row)
+
+
+@router.post("/reseller/{license_id}/revoke", response_model=APIResponse[LicenseResponse])
+async def revoke_reseller_license(license_id: UUID, payload: LicenseRevokeRequest, ctx: ResellerAdminContext, db: DbSession):
     row = await license_service.revoke_license(db, issuer=ctx.tenant, license_id=license_id, reason=payload.reason)
     return APIResponse(success=True, data=row)
