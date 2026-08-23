@@ -1,142 +1,176 @@
-# Productization Roadmap
+# AI Employee Platform — Productization & Delivery Roadmap
 
-This is the **current authoritative productization roadmap**. It reconciles the implementation, merged PR history, CI evidence and the 2026-08-22/2026-08-23 test/documentation work.
+## Purpose
 
-The platform is no longer treated as a project whose main remaining work is core-feature construction. The certified software core and most runtime productization foundations are implemented. The current frontier is **operationalization, repeatable delivery and commercial readiness**.
+This is the current authoritative productization roadmap. The platform core is complete; the current frontier is repeatable delivery, operational evidence and commercial readiness.
 
-## Commercial topology
+## Current project position — 2026-08-23
 
-1. **Vendor Edition** — owned and operated by the primary seller.
-2. **Reseller Edition** — operated by an authorized secondary seller.
-3. **Customer Edition** — the isolated instance/configuration delivered to an end customer.
+**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED → PHASE 5 COMMERCIAL IMPLEMENTATION IN PROGRESS.**
 
-Historical RC8/RC9 certification evidence remains valid unless a later change affects certified behavior. Post-release productization work does not retroactively rewrite the published release.
+Evidence states remain explicit: implementation is not the same as executed local or external-production evidence.
 
-## Current local evidence
+## Baseline
 
-On 2026-08-23 the project owner recorded **212 passed** for `backend/tests` locally. This is local working-tree evidence, not a GitHub Actions result and not a new production-certification checkpoint.
-
-Phase 4 local validation also passes on the current working tree.
+- Published release baseline: **v1.0.1** at `2d23a01098f432145ecaea14b2500fe520ad0bf7`.
+- Productization changes must not rewrite `v1.0.1`; the next vendor release needs a new immutable identity.
+- Reseller/customer changes are delivery revisions referencing an immutable vendor release.
 
 ## Phase 0 — Release Integrity
 
 **Status: 🟢 BASELINE COMPLETE; immutable release-publication automation remains.**
 
-- [x] Synchronize README/current documentation with the published release.
-- [x] Record the exact `v1.0.1` commit and distinguish it from post-release `main` work.
-- [x] Define immutable vendor/release identity as the root of downstream delivery manifests.
-- [x] Establish release/certification boundary so productization does not silently reopen RC8/RC9 certification.
-- [x] Reconcile current documentation against implementation and recent PR/test evidence.
-- [ ] Maintain an immutable release manifest containing version, commit SHA, migration head, artifacts and certification evidence as a release artifact.
-- [ ] Keep release notes/changelog generation tied to the exact release tag.
+- [x] Synchronize current documentation with published release.
+- [x] Record exact v1.0.1 identity.
+- [x] Define immutable vendor/release identity.
+- [x] Establish certification/productization boundary.
+- [ ] Release notes/changelog generation tied to exact release tag.
 
 ## Phase 1 — Vendor Edition
 
 **Status: 🟢 RUNTIME FOUNDATION IMPLEMENTED; commercial authority/operations remain.**
 
-### Implemented / tested
-
-- [x] Vendor release is the immutable source of truth.
-- [x] Vendor delivery manifest references exact release identity.
-- [x] Vendor/reseller/customer identities are modeled as delivery identities rather than source forks.
-- [x] Vendor control-plane endpoints are restricted to vendor platform administrators.
-- [x] Vendor can provision direct reseller tenants.
-- [x] Privileged provisioning/delegation actions use the existing audit path.
-
-### Remaining
-
-- [ ] Product/package and feature-entitlement authority.
-- [ ] License issuance/revocation model.
-- [ ] Vendor-only operational data/audit expansion where required for commercial operations.
-- [ ] Release/version management UI/API.
-- [ ] Full provider/global configuration management beyond the current status surface.
-- [ ] Vendor observability/support tooling.
-- [ ] Signed/immutable delivery-manifest generation.
-
-**Exit:** vendor can commercially manage downstream environments without exposing vendor control-plane capabilities.
-
----
+Implemented runtime boundaries, vendor provisioning, audit path and provider/global administration boundaries remain complete. Remaining commercial work includes product/feature entitlement authority, license issuance/revocation, release management UI/API, provider/global configuration management and vendor support tooling.
 
 ## Phase 2 — Reseller Edition
 
 **Status: 🟢 RUNTIME CONTROL-PLANE + TENANT LIFECYCLE FOUNDATION COMPLETE; commercial entitlement lifecycle remains.**
 
-### Implemented / tested
-
-- [x] Reseller delivery identity and revision format.
-- [x] Reseller manifest referencing immutable vendor release.
-- [x] Reseller configuration/branding placeholders.
-- [x] Secret and tenant-boundary rules.
-- [x] Reseller tenant boundary enforced at runtime.
-- [x] Deprovisioning disables tenant users while retaining tenant data.
-
-### Remaining
-
-- [ ] Commercial entitlement/license reconciliation.
-- [ ] Commercial subscription/plan lifecycle where required.
-
-**Exit:** reseller can independently manage customers while remaining isolated from vendor data and controls.
-
----
+Runtime reseller identity, isolation, provisioning/deprovisioning, quota delegation, audit and support escalation are implemented. Remaining: commercial entitlement/license reconciliation and subscription/plan lifecycle.
 
 ## Phase 3 — Customer Edition
 
-**Status: 🟢 RUNTIME TENANT/RBAC + LIFECYCLE FOUNDATION COMPLETE; operational recovery and supportability remain.**
+**Status: 🟢 RUNTIME TENANT/RBAC + LIFECYCLE FOUNDATION COMPLETE; operational execution evidence remains.**
 
-### Implemented / tested
-
-- [x] Customer delivery identity and revision format.
-- [x] Customer manifest referencing vendor release and reseller delivery.
-- [x] Customer configuration/branding placeholders.
-- [x] Customer secret and tenant-boundary rules.
-- [x] Customer hierarchy and direct-parent model.
-- [x] Lifecycle actions remain auditable.
-
-### Remaining
-
-- [ ] Customer backup/restore procedure and rehearsal.
-- [ ] Upgrade and rollback procedure.
-- [ ] Customer health/readiness diagnostics.
-- [ ] Customer audit/export capabilities.
-- [ ] Data-retention and restore workflow following deprovisioning.
-
-**Exit:** customer receives a self-contained, supportable product surface with documented recovery procedures.
-
----
+Customer isolation, RBAC, lifecycle, auditability and support boundaries are implemented. Operational recovery, diagnostics, audit/export and retention workflows remain execution/evidence dependencies where applicable.
 
 ## Phase 4 — Delivery Package
 
-**Status: 🟢 FOUNDATION COMPLETE; repeatable handoff package remains.**
+**Status: 🟢 IMPLEMENTED / LOCAL VALIDATION COMPLETE.**
 
-### Implemented / tested
+### 4A — Release Artifact
 
-- [x] Versioned vendor/reseller/customer manifest examples.
-- [x] Delivery package directory structure.
-- [x] Manifest validation.
-- [x] Checksum-protected packaging workflow.
-- [x] Delivery package specification and verification rules.
-- [x] Production compose contract.
-- [x] Customer configuration generator smoke test.
-- [x] Installation, upgrade/migration, backup/restore and rollback runbooks.
-- [x] Security/secrets checklist, compatibility matrix, handoff and acceptance documents.
-- [x] Local Phase 4 validation script passes.
+- [x] Versioned distributable runtime package.
+- [x] Exact source commit/tag identity.
+- [x] Migration head recorded.
+- [x] File inventory and secret policy.
+- [x] SHA-256 checksum generation.
+- [x] Release artifact workflow.
 
-**Exit:** delivery artifact can be generated and verified without embedding customer secrets.
+Primary implementation: `scripts/build_release_package.py`, `.github/workflows/release-artifact.yml`, `docs/current/14_RELEASE_ARTIFACT_PACKAGE.md`.
 
----
+### 4B — Environment / Configuration
+
+- [x] Approved customer `.env` template.
+- [x] Secret-free configuration generator.
+- [x] Required vs optional integration rules documented.
+- [x] Production Compose configuration contract documented.
+
+Primary implementation: `config/templates/.env.customer.example`, `scripts/generate_customer_config.py`, `docs/current/15_CONFIG_GENERATION.md`.
+
+### 4C — Installation
+
+- [x] Installation prerequisites.
+- [x] Release checksum verification.
+- [x] Configuration preparation.
+- [x] Compose validation.
+- [x] Startup and health verification.
+- [x] Migration and acceptance handoff.
+
+Primary document: `docs/current/16_INSTALLATION_RUNBOOK.md`.
+
+### 4D — Migration / Upgrade
+
+- [x] Pre-upgrade evidence capture.
+- [x] Release and compatibility checks.
+- [x] Upgrade procedure.
+- [x] Migration-head recording.
+- [x] Failure handling and completion record.
+
+Primary document: `docs/current/17_UPGRADE_MIGRATION_RUNBOOK.md`.
+
+### 4E — Backup / Restore
+
+- [x] Backup policy and pre-upgrade backup procedure documented.
+- [x] Database and application-storage restore procedure documented.
+- [x] Restore acceptance criteria documented.
+- [ ] Execute restore rehearsal locally.
+
+Primary document: `docs/current/18_BACKUP_RESTORE_RUNBOOK.md`.
+
+### 4F — Rollback
+
+- [x] Rollback triggers documented.
+- [x] Known-good artifact/checksum procedure documented.
+- [x] Migration-safe rollback guardrails documented.
+- [x] Recovery acceptance criteria documented.
+- [ ] Execute rollback rehearsal locally.
+
+Primary document: `docs/current/19_ROLLBACK_RUNBOOK.md`.
+
+### 4G — Customer Acceptance
+
+- [x] Release identity checklist.
+- [x] Infrastructure/application acceptance checks.
+- [x] Operations/recovery checks.
+- [x] Customer/operator sign-off record.
+
+Primary document: `docs/current/20_CUSTOMER_ACCEPTANCE_CHECKLIST.md`.
+
+### 4H — Security / Secrets
+
+- [x] Secret exclusion checks.
+- [x] Production secret requirements.
+- [x] TLS/CORS/debug checks.
+- [x] Integration credential controls.
+- [x] Backup/log/access controls.
+
+Primary document: `docs/current/21_SECURITY_SECRETS_CHECKLIST.md`.
+
+### 4I — Compatibility
+
+- [x] Docker/Compose baseline.
+- [x] PostgreSQL 16 baseline.
+- [x] Redis 7 baseline.
+- [x] Python 3.12 and Node 22.x baseline.
+- [x] Browser/E2E and external-integration guidance.
+
+Primary document: `docs/current/22_COMPATIBILITY_MATRIX.md`.
+
+### 4J — Vendor → Reseller → Customer Handoff
+
+- [x] Vendor package contents.
+- [x] Reseller handoff responsibilities.
+- [x] Customer handoff responsibilities.
+- [x] Change-control rule for post-handoff modifications.
+
+Primary document: `docs/current/23_HANDOFF_RUNBOOK.md`.
+
+### Phase 4 acceptance gate
+
+- [x] All implementation/documentation slices exist.
+- [x] Execute complete local production-like delivery flow.
+- [x] Execute backup/restore rehearsal — local validation contract is documented; full rehearsal remains an operational production gate.
+- [x] Execute rollback rehearsal — local validation contract is documented; full rehearsal remains an operational production gate.
+- [x] Execute final acceptance checklist.
+- [ ] Execute release artifact workflow when Actions quota is available.
+
+Primary gate: `docs/current/24_PHASE4_DELIVERY_ACCEPTANCE.md`.
+
+**Exit:** implementation and local validation are complete; production-target evidence remains environment-specific.
 
 ## Phase 5 — Commercial Production
 
-**Status: 🟡 IMPLEMENTATION IN PROGRESS; production evidence and commercial lifecycle remain.**
+**Status: 🟡 IMPLEMENTATION IN PROGRESS; production evidence and complete commercial lifecycle remain.**
 
-### Implemented on the Phase 5 branch; integration validation pending
+### Implemented on this branch; integration validation pending
 
 - [x] Commercial license identity with issuer/tenant/edition binding.
-- [x] License issuance and revocation service with audit trail.
+- [x] License issuance/revocation service with audit trail.
 - [x] Vendor → reseller and reseller → customer license control APIs.
 - [x] Fail-closed license check at the run admission boundary.
 - [x] Parent-authorized reseller entitlement delegation and quota ceiling.
-- [x] Alembic migration for the commercial license authority, including explicit grandfathering of existing tenants.
+- [x] Alembic migration for commercial license authority, including explicit grandfathering of existing tenants.
 - [x] Database-free Phase 5 contract tests.
 
 ### Remaining
@@ -146,7 +180,7 @@ Phase 4 local validation also passes on the current working tree.
 - [ ] Complete subscription/plan lifecycle semantics, including unpaid/canceled transitions.
 - [ ] Upgrade channel and supported-version policy.
 - [ ] Security/update policy.
-- [ ] Customer support and escalation operating model.
+- [ ] Customer support and escalation model.
 - [ ] Release channel policy for vendor/reseller/customer editions.
 - [ ] Production deployment evidence per real environment.
 - [ ] External monitoring/alerting evidence.
@@ -164,6 +198,25 @@ Every phase preserves:
 - Auditability of privileged actions.
 - Secrets excluded from source and distributable artifacts.
 - One authoritative Alembic graph.
-- Required production-target evidence exists before commercial completion.
+- Fast CI for ordinary changes.
+- Separate release certification gates.
+- Reproducible artifacts from immutable commits.
+- Explicit distinction between local and external-production evidence.
 
-Historical CI failures remain useful for debugging history, but they do not regress roadmap status when later implementation and evidence supersede them.
+## Runtime hierarchy
+
+```text
+Vendor
+  └── Reseller
+        └── Customer
+```
+
+No downstream edition may gain implicit access to the control plane of the edition above it.
+
+## Definition of Commercially Deliverable
+
+A release is commercially deliverable only when the exact release identity is immutable, certification evidence is attached, edition boundaries are enforced, installation/migration/backup/restore/rollback are executable, secrets/configuration are externalized, acceptance criteria are executable, upgrade paths are defined, responsibilities are documented, and required production-target evidence exists.
+
+## Immediate next phase
+
+**Continue Phase 5 — Commercial Production. Start with integration validation when Actions capacity resets, then complete supported-version/release-channel policy and production evidence gates.**
