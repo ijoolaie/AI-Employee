@@ -3,14 +3,26 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'scripts/**'
+      - '.github/workflows/ci.yml'
+      - 'docker-compose*.yml'
   push:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'scripts/**'
+      - '.github/workflows/ci.yml'
+      - 'docker-compose*.yml'
 
-# Do not cancel an in-flight validation run for the same ref. A cancelled
-# validation run provides no evidence about the commit being certified.
+# A newer commit supersedes older validation for the same branch/ref.
+# Cancelling stale runs prevents wasting Actions minutes on obsolete commits.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
