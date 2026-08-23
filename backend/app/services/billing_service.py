@@ -39,14 +39,61 @@ def _period_end(start: datetime) -> datetime:
     last = calendar.monthrange(start.year, start.month)[1]
     return start.replace(day=last, hour=23, minute=59, second=59, microsecond=999999)
 
+async def process_subscription_lifecycle(
+    db: AsyncSession,
+    *,
+    subscription: Subscription,
+    now: datetime | None = None,
+) -> Subscription:
+    """Resolve deterministic subscription lifecycle transitions.
+
+    - expired trials move to past_due;
+    - active subscriptions renew into the current calendar period;
+    - cancel-at-period-end subscriptions become canceled at period end.
+    """
+    now = now or datetime.now(timezone.utc)
+    changed = False
+
+    if (
+        subscription.status == "trialing"
+        and subscription.trial_ends_at is not None
+        and subscription.trial_ends_at <= now
+    ):
+        subscription.status = "past_due"
+        changed = True
+
+    if (
+        subscription.cancel_at_period_end
+        and subscription.current_period_end <= now
+    ):
+        subscription.status = "canceled"
+        subscription.cancel_at_period_end = False
+        subscription.canceled_at = now
+        changed = True
+    elif (
+        subscription.status == "active"
+        and subscription.current_period_end <= now
+    ):
+        start = _period_start(now)
+        subscription.current_period_start = start
+        subscription.current_period_end = _period_end(start)
+        subscription.canceled_at = None
+        changed = True
+
+    if changed:
+        await db.flush()
+
+    return subscription
+
+
 async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subscription:
     result = await db.execute(select(Subscription).where(Subscription.tenant_id == tenant_id))
     sub = result.scalar_one_or_none()
     if sub:
-        if sub.status == "trialing" and sub.trial_ends_at and sub.trial_ends_at <= datetime.now(timezone.utc):
-            sub.status = "past_due"
-            await db.flush()
-        return sub
+        return await process_subscription_lifecycle(
+            db,
+            subscription=sub,
+        )
     await ensure_plans(db)
     plan = (await db.execute(select(BillingPlan).where(BillingPlan.code == "starter"))).scalar_one()
     now = datetime.now(timezone.utc)
@@ -79,6 +126,12 @@ async def change_plan(db: AsyncSession, *, tenant_id: uuid.UUID, plan_code: str,
     sub.status = "active"
     sub.cancel_at_period_end = False
     sub.canceled_at = None
+
+    now = datetime.now(timezone.utc)
+    if sub.current_period_end <= now:
+        sub.current_period_start = _period_start(now)
+        sub.current_period_end = _period_end(sub.current_period_start)
+
     await db.flush()
     return sub
 
@@ -86,8 +139,10 @@ async def cancel_subscription(db: AsyncSession, *, tenant_id: uuid.UUID, at_peri
     sub = await ensure_subscription(db, tenant_id=tenant_id)
     if at_period_end:
         sub.cancel_at_period_end = True
+        sub.canceled_at = None
     else:
         sub.status = "canceled"
+        sub.cancel_at_period_end = False
         sub.canceled_at = datetime.now(timezone.utc)
     await db.flush()
     return sub
