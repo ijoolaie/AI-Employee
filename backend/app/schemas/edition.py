@@ -45,6 +45,32 @@ class EntitlementResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class LicenseIssueRequest(BaseModel):
+    expires_in_days: int | None = Field(default=None, ge=1, le=3650)
+    feature_codes: list[str] = Field(default_factory=list, max_length=100)
+    metadata: dict = Field(default_factory=dict)
+
+
+class LicenseRevokeRequest(BaseModel):
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+class LicenseResponse(BaseModel):
+    id: UUID
+    license_key: str
+    issuer_tenant_id: UUID
+    tenant_id: UUID
+    edition: str
+    status: str
+    issued_at: object
+    expires_at: object | None
+    revoked_at: object | None
+    revocation_reason: str | None
+    feature_codes: list[str]
+
+    model_config = {"from_attributes": True}
+
+
 class SupportEscalationRequest(BaseModel):
     subject: str = Field(min_length=3, max_length=255)
     description: str = Field(min_length=5, max_length=10000)
