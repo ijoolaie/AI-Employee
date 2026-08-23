@@ -1,15 +1,17 @@
 services:
+  # Use alternate host ports so the local production-like stack can run
+  # alongside the normal development compose stack without port collisions.
   postgres:
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:15432:5432"
 
   redis:
     ports:
-      - "127.0.0.1:6379:6379"
+      - "127.0.0.1:16379:6379"
 
   api:
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:18000:8000"
     environment:
       LOCAL_PRODUCTION_ALLOW_HTTP: "true"
 
@@ -23,4 +25,4 @@ services:
 
   frontend:
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:13000:3000"
