@@ -36,6 +36,18 @@ class RegisteredTool:
     requires_approval: bool = False
 
     @property
+    def entitlement_code(self) -> str | None:
+        """Commercial entitlement code for tenant-scoped business tools.
+
+        Local utility tools remain free of commercial entitlement gating.
+        Business tools use a stable name-derived code so licenses can restrict
+        capabilities without coupling the registry to a plan implementation.
+        """
+        if self.name in {"calculator", "current_time"}:
+            return None
+        return f"tool:{self.name}"
+
+    @property
     def definition(self) -> ToolDefinition:
         return ToolDefinition(
             name=self.name,
@@ -84,6 +96,17 @@ class ToolRegistry:
         actor_id=None,
     ) -> Any:
         tool = self.get(name)
+
+        # Commercial entitlement is enforced at the real execution boundary
+        # when a tenant Run supplies transactional DB and tenant context.
+        if tool.entitlement_code is not None and db is not None and tenant_id is not None:
+            from app.services import license_service
+
+            await license_service.assert_feature_entitlement(
+                db,
+                tenant_id=tenant_id,
+                feature_code=tool.entitlement_code,
+            )
 
         # Employee guardrail is a separate, fail-closed capability boundary.
         # A tool must be both declared by the EmployeeVersion and permitted

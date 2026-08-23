@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictError, NotFoundError
 from app.models.license import CommercialLicense
 from app.models.tenant import Tenant
+from app.models.tenant_entitlement import TenantEntitlement
 from app.services import edition_service
 
 
@@ -99,6 +100,42 @@ async def get_active_license(db: AsyncSession, *, tenant_id: uuid.UUID) -> Comme
         await db.flush()
         return None
     return row
+
+
+async def assert_feature_entitlement(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    feature_code: str,
+) -> CommercialLicense:
+    """Authorize one commercial feature at execution time.
+
+    The commercial license is the upper authorization boundary. An existing
+    TenantEntitlement may further narrow access by disabling the feature, but
+    it cannot grant a feature absent from a restricted license.
+    """
+    license_row = await assert_execution_license(db, tenant_id=tenant_id)
+
+    licensed_features = set(license_row.feature_codes or [])
+    if licensed_features and feature_code not in licensed_features:
+        raise ConflictError(
+            f"Commercial license does not include feature: {feature_code}"
+        )
+
+    result = await db.execute(
+        select(TenantEntitlement).where(
+            TenantEntitlement.tenant_id == tenant_id,
+            TenantEntitlement.feature_code == feature_code,
+        )
+    )
+    entitlement = result.scalar_one_or_none()
+
+    if entitlement is not None and not entitlement.is_enabled:
+        raise ConflictError(
+            f"Tenant entitlement is disabled for feature: {feature_code}"
+        )
+
+    return license_row
 
 
 async def assert_execution_license(db: AsyncSession, *, tenant_id: uuid.UUID) -> CommercialLicense:
