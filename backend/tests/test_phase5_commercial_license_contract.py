@@ -28,7 +28,7 @@ def test_license_model_has_immutable_identity_fields():
         status="active",
         issued_at=datetime.now(timezone.utc),
         feature_codes=["advanced_workflows"],
-        metadata={"contract": "test"},
+        license_metadata={"contract": "test"},
     )
     assert row.license_key.startswith("LIC-")
     assert row.issuer_tenant_id == issuer_id
