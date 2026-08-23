@@ -1,5 +1,6 @@
 """Schemas for runtime vendor/reseller/customer control-plane operations."""
 
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -62,9 +63,9 @@ class LicenseResponse(BaseModel):
     tenant_id: UUID
     edition: str
     status: str
-    issued_at: object
-    expires_at: object | None
-    revoked_at: object | None
+    issued_at: datetime
+    expires_at: datetime | None
+    revoked_at: datetime | None
     revocation_reason: str | None
     feature_codes: list[str]
 
@@ -84,4 +85,4 @@ class SupportEscalationResponse(BaseModel):
     subject: str
     description: str
 
-    model_config = {"from_attributes": True}
+    model_config = {"from_attributes": True
