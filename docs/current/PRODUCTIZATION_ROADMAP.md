@@ -171,11 +171,14 @@ A historical failed/cancelled GitHub Actions run is not a current blocker when a
 - [x] Delivery package specification and verification rules.
 - [x] Delivery topology documentation.
 - [x] Current handoff/test evidence is documented separately.
+- [x] Phase 4A runtime artifact builder with exact commit identity and file inventory.
+- [x] Phase 4A release manifest records migration head, certification evidence and secret policy.
+- [x] Phase 4A deterministic runtime archive and SHA-256 verification workflow.
 
 ### Next implementation slice
 
-- [ ] Versioned distributable artifact/package containing approved runtime artifacts.
-- [ ] Release manifest and checksums for the complete package.
+- [x] Versioned distributable artifact/package containing approved runtime artifacts.
+- [x] Release manifest and checksums for the complete package.
 - [ ] Environment/configuration template generation from approved inputs.
 - [ ] Installation runbook.
 - [ ] Migration/upgrade runbook.
@@ -222,6 +225,7 @@ A historical failed/cancelled GitHub Actions run is not a current blocker when a
 | Tenant lifecycle | 🟢 Implemented/tested | `backend/app/services/edition_lifecycle_service.py`, lifecycle tests, PR #31 |
 | Account password security | 🟢 Implemented/tested | Settings Security / Password, authenticated password-change API, PR #29/#30 |
 | Delivery topology | 🟢 Foundation | delivery manifests/package validation and related productization PRs |
+| Phase 4A release artifact | 🟢 IMPLEMENTED / PENDING FIRST CI EXECUTION | `scripts/build_release_package.py`, `.github/workflows/release-artifact.yml`, `docs/current/14_RELEASE_ARTIFACT_PACKAGE.md` |
 | Backup/restore | 🟡 Pending operational evidence | Phase 3/4 remaining work |
 | Commercial license lifecycle | 🟡 Pending | Phase 1/2/5 remaining work |
 | External production deployment | 🟡 Environment-specific | current handoff deployment gates |
@@ -294,6 +298,6 @@ A release is commercially deliverable only when:
 
 ## Immediate next phase
 
-**Start with Phase 4 — Delivery Package.**
+**Continue with Phase 4B — Environment/Configuration Template Generation.**
 
-Phase 2/3 remaining operational items (commercial entitlement, backup/restore, upgrade/rollback, diagnostics, audit/export and retention/restore) should be scheduled as explicit dependencies rather than treated as missing core-platform features.
+Phase 2/3 remaining operational items (commercial entitlement, backup/restore, upgrade/rollback, diagnostics, audit/export and retention/restore) remain explicit dependencies rather than missing core-platform features.
