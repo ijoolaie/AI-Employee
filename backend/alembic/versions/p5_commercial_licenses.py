@@ -36,6 +36,26 @@ def upgrade() -> None:
     op.create_index("ix_commercial_license_tenant_status", "commercial_licenses", ["tenant_id", "status"])
     op.create_index("ix_commercial_license_issuer", "commercial_licenses", ["issuer_tenant_id"])
 
+    # Existing deployments are grandfathered with explicit, perpetual licenses so
+    # enabling the execution gate does not unexpectedly disable existing tenants.
+    op.execute(sa.text("""
+        INSERT INTO commercial_licenses
+            (id, license_key, issuer_tenant_id, tenant_id, edition, status, feature_codes, metadata)
+        SELECT
+            gen_random_uuid(),
+            'LEGACY-' || replace(t.id::text, '-', ''),
+            COALESCE(t.parent_tenant_id, t.id),
+            t.id,
+            t.tenant_kind,
+            'active',
+            '[]'::jsonb,
+            '{\"source\": \"phase5-migration\", \"grandfathered\": true}'::jsonb
+        FROM tenants t
+        WHERE NOT EXISTS (
+            SELECT 1 FROM commercial_licenses cl WHERE cl.tenant_id = t.id AND cl.status = 'active'
+        )
+    """))
+
 
 def downgrade() -> None:
     op.drop_index("ix_commercial_license_issuer", table_name="commercial_licenses")
