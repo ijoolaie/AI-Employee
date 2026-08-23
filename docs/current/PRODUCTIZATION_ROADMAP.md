@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is the **current authoritative productization roadmap**. It reconciles the implementation, merged PR history, CI evidence and the 2026-08-22 test/documentation work.
+This is the **current authoritative productization roadmap**. It reconciles the implementation, merged PR history, CI evidence and the 2026-08-22/2026-08-23 test/documentation work.
 
 The platform is no longer treated as a project whose main remaining work is core-feature construction. The certified software core and most runtime productization foundations are implemented. The current frontier is **operationalization, repeatable delivery and commercial readiness**.
 
@@ -14,7 +14,7 @@ The commercial topology remains:
 
 Historical RC8/RC9 certification evidence remains valid unless a later change affects the certified behavior. Post-release productization work does not retroactively rewrite the published release.
 
-## Current project position — 2026-08-22
+## Current project position — 2026-08-23
 
 **Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → OPERATIONALIZATION / DELIVERY PACKAGE IN PROGRESS.**
 
@@ -27,6 +27,12 @@ The repository history shows that a substantial amount of work previously repres
 - genuinely remaining commercial/operational work.
 
 Do **not** reopen completed phases merely because an older RC/Phase document lists their historical gaps.
+
+### Latest local test evidence
+
+On 2026-08-23 the project owner ran the current local working tree and reached **212 passed** for `backend/tests` after Employee Versioning compatibility/audit fixes. The focused Employee suite (`test_employee_service.py`, `test_employee_versioning.py`, `test_employee_api.py`) reached **13 passed**. This is **local working-tree automated evidence**, not a GitHub Actions result and not a new production-certification checkpoint; the exact local commit SHA was not captured in the test transcript.
+
+The latest local result is therefore stronger/newer than the older 194-test evidence for test-count purposes, but it does **not** change the productization phase or certification boundary.
 
 ## Baseline
 
@@ -214,10 +220,10 @@ A historical failed/cancelled GitHub Actions run is not a current blocker when a
 | Area | Current truth | Primary evidence |
 |---|---|---|
 | Core certification baseline | 🟢 Complete | `docs/current/05_CERTIFICATION_PROGRESS.md` |
-| A–F test sequence | 🟢 Living/current | `docs/current/06_A_F_TEST_TRACKER.md` |
-| Current handoff | 🟢 Updated | `docs/current/07_CLIENT_HANDOFF_AND_TEST_EVIDENCE.md` |
-| Post-release security/productization | 🟢 Verified | `docs/current/08_POST_RELEASE_PRODUCTIZATION_TEST_EVIDENCE_2026-08-22.md` |
-| Documentation reconciliation | 🟢 Reconciled | `docs/current/09_DOCUMENTATION_RECONCILIATION_2026-08-22.md` |
+| A–F test sequence | 🟢 Living/current; latest local backend evidence: **212 passed** on 2026-08-23 | `docs/current/06_A_F_TEST_TRACKER.md` |
+| Current handoff | 🟢 Updated with 2026-08-23 local test evidence | `docs/current/07_CLIENT_HANDOFF_AND_TEST_EVIDENCE.md` |
+| Post-release security/productization | 🟢 Verified; addendum records 2026-08-23 Employee/EmployeeVersion evidence | `docs/current/08_POST_RELEASE_PRODUCTIZATION_TEST_EVIDENCE_2026-08-22.md` |
+| Documentation reconciliation | 🟢 Reconciled through 2026-08-23 evidence | `docs/current/09_DOCUMENTATION_RECONCILIATION_2026-08-22.md` |
 | Vendor/reseller/customer runtime boundaries | 🟢 Implemented | `docs/current/13_RUNTIME_EDITION_BOUNDARIES.md`, `backend/app/services/edition_service.py` |
 | Tenant lifecycle | 🟢 Implemented/tested | `backend/app/services/edition_lifecycle_service.py`, lifecycle tests, PR #31 |
 | Account password security | 🟢 Implemented/tested | Settings Security / Password, authenticated password-change API, PR #29/#30 |
