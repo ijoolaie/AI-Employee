@@ -40,3 +40,5 @@ frontend/build/
 # Playwright
 frontend/playwright-report/
 frontend/test-results/
+
+dist/

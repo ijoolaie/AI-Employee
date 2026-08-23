@@ -27,6 +27,7 @@ The package builder records:
 - approved runtime allowlist;
 - packaged file inventory.
 
+The RELEASE-MANIFEST.json contract includes the canonical release identity field source_commit_sha. This field MUST equal the exact Git HEAD commit from which the release artifact was built. It MUST be the 40-character Git commit SHA and MUST NOT be inferred from the release version.
 ## Artifact outputs
 
 ```text

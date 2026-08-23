@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import re
@@ -62,10 +63,19 @@ def git_tag_for_head() -> str | None:
 def migration_head() -> str:
     try:
         output = run("alembic", "-c", "backend/alembic.ini", "heads")
-    except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-        raise SystemExit(
-            "Unable to resolve Alembic head. Run from an environment with Alembic installed."
-        ) from exc
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        try:
+            output = run("python", "-m", "alembic", "-c", "backend/alembic.ini", "heads")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            try:
+                output = run(
+                    "docker", "compose", "exec", "-T", "api",
+                    "alembic", "-c", "/app/alembic.ini", "heads"
+                )
+            except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+                raise SystemExit(
+                    "Unable to resolve Alembic head. Install Alembic or start the API container."
+                ) from exc
 
     heads: list[str] = []
     for line in output.splitlines():
@@ -191,9 +201,30 @@ def main() -> None:
     archive = DIST_ROOT / f"ai-employee-{args.version}-runtime.tar.gz"
     if archive.exists():
         archive.unlink()
-    with tarfile.open(archive, "w:gz", compresslevel=9) as tar:
+    tar_buffer = archive.with_suffix("")
+    if tar_buffer.exists():
+        tar_buffer.unlink()
+
+    with tarfile.open(tar_buffer, "w") as tar:
         for path in sorted(work.rglob("*")):
-            tar.add(path, arcname=f"ai-employee-{args.version}/{path.relative_to(work)}", recursive=False, filter=tar_filter)
+            tar.add(
+                path,
+                arcname=f"ai-employee-{args.version}/{path.relative_to(work)}",
+                recursive=False,
+                filter=tar_filter,
+            )
+
+    with tar_buffer.open("rb") as source, archive.open("wb") as destination:
+        with gzip.GzipFile(
+            filename="",
+            mode="wb",
+            fileobj=destination,
+            compresslevel=9,
+            mtime=0,
+        ) as gz:
+            shutil.copyfileobj(source, gz)
+
+    tar_buffer.unlink()
 
     checksum = sha256(archive)
     (DIST_ROOT / "SHA256SUMS").write_text(
