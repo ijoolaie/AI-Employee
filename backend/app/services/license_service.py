@@ -13,8 +13,6 @@ from app.models.license import CommercialLicense
 from app.models.tenant import Tenant
 from app.services import edition_service
 
-ACTIVE_STATUSES = {"active"}
-
 
 def _license_key() -> str:
     return "LIC-" + secrets.token_urlsafe(36).replace("-", "_")[:64]
@@ -46,7 +44,7 @@ async def issue_license(
         issued_at=now,
         expires_at=expires_at,
         feature_codes=sorted(set(feature_codes or [])),
-        metadata=metadata or {},
+        license_metadata=metadata or {},
     )
     db.add(license_row)
     await db.flush()
