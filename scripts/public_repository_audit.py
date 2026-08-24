@@ -46,24 +46,37 @@ REVIEW_BRANCH_PATTERNS = (
 )
 
 
-def run(*args: str) -> str:
+def run(*args: str, allow_failure: bool = False) -> bytes:
+    """Run git commands without relying on the Windows console encoding."""
     result = subprocess.run(
         args,
         cwd=ROOT,
-        text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        check=True,
+        check=not allow_failure,
     )
     return result.stdout
 
 
+def decode(data: bytes) -> str:
+    return data.decode("utf-8", errors="replace")
+
+
 def tracked_files() -> list[str]:
-    return [p for p in run("git", "ls-files").splitlines() if p]
+    return [p for p in decode(run("git", "ls-files")).splitlines() if p]
 
 
-def tracked_content(path: str) -> str:
-    return run("git", "show", f"HEAD:{path}")
+def tracked_content(path: str) -> str | None:
+    result = subprocess.run(
+        ("git", "show", f"HEAD:{path}"),
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+    return decode(result.stdout)
 
 
 def current_tree_findings() -> list[str]:
@@ -74,14 +87,9 @@ def current_tree_findings() -> list[str]:
             findings.append(f"tracked environment file: {path}")
         if Path(path).suffix.lower() in {".pem", ".key", ".p12", ".pfx"}:
             findings.append(f"tracked private-key/certificate style file: {path}")
-        try:
-            content = tracked_content(path)
-        except subprocess.CalledProcessError:
+        content = tracked_content(path)
+        if content is None:
             continue
-        if "SECRET_KEY=" in content and any(marker not in content for marker in PLACEHOLDER_MARKERS):
-            # Do not fail merely because a file contains the variable name. The
-            # actual secret regexes below are the hard-fail check.
-            pass
         for pattern in SECRET_PATTERNS:
             if pattern.search(content):
                 findings.append(f"secret-like token in tracked file: {path} ({pattern.pattern})")
@@ -92,19 +100,19 @@ def history_findings() -> list[str]:
     findings: list[str] = []
     # Inspect every reachable blob. This catches deleted secrets that are no
     # longer present in the current tree.
-    object_lines = run("git", "rev-list", "--objects", "--all").splitlines()
+    object_lines = decode(run("git", "rev-list", "--objects", "--all")).splitlines()
     for line in object_lines:
         parts = line.split(" ", 1)
         sha = parts[0]
         path = parts[1] if len(parts) == 2 else "<no-path>"
         try:
-            kind = run("git", "cat-file", "-t", sha).strip()
+            kind = decode(run("git", "cat-file", "-t", sha)).strip()
             if kind != "blob":
                 continue
-            size = int(run("git", "cat-file", "-s", sha).strip())
+            size = int(decode(run("git", "cat-file", "-s", sha)).strip())
             if size > 2_000_000:
                 continue
-            content = run("git", "cat-file", "blob", sha)
+            content = decode(run("git", "cat-file", "blob", sha))
         except (subprocess.CalledProcessError, ValueError):
             continue
         for pattern in SECRET_PATTERNS:
@@ -119,9 +127,11 @@ def workflow_findings() -> list[str]:
         if not path.startswith(".github/workflows/") or Path(path).suffix not in {".yml", ".yaml"}:
             continue
         content = tracked_content(path)
+        if content is None:
+            continue
         if re.search(r"(?m)^\s*permissions:\s*write-all\s*$", content):
             findings.append(f"workflow grants write-all permissions: {path}")
-        if "pull_request_target" in content and re.search(r"actions/checkout@.*\n.*ref:.*github\.event\.pull_request\.head" , content, re.S):
+        if "pull_request_target" in content and re.search(r"actions/checkout@.*\n.*ref:.*github\.event\.pull_request\.head", content, re.S):
             findings.append(f"workflow checks out untrusted PR code under pull_request_target: {path}")
         if re.search(r"(?m)^\s*run:.*(printenv|env\s*$|cat\s+\.env)", content):
             findings.append(f"workflow may dump environment values: {path}")
@@ -131,7 +141,9 @@ def workflow_findings() -> list[str]:
 def branch_reviews() -> list[str]:
     reviews: list[str] = []
     try:
-        refs = run("git", "for-each-ref", "refs/remotes/origin", "--format=%(refname:short)").splitlines()
+        refs = decode(
+            run("git", "for-each-ref", "refs/remotes/origin", "--format=%(refname:short)")
+        ).splitlines()
     except subprocess.CalledProcessError:
         return reviews
     for ref in refs:
@@ -152,7 +164,7 @@ def main() -> int:
     for item in reviews:
         print(f"PUBLIC_AUDIT|REVIEW|{item}")
 
-    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
+    gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8", errors="replace")
     if ".env.*" not in gitignore or "!.env.example" not in gitignore:
         failures.append(".gitignore does not clearly exclude environment files while retaining .env.example")
 
