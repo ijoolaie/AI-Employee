@@ -55,7 +55,13 @@ def run(*args: str) -> str:
         if existing_pythonpath
         else backend_path
     )
-    return subprocess.check_output(args, cwd=ROOT, env=env, text=True).strip()
+    return subprocess.check_output(
+        args,
+        cwd=ROOT,
+        env=env,
+        text=True,
+        stderr=subprocess.STDOUT,
+    ).strip()
 
 
 def git_sha() -> str:
@@ -72,22 +78,42 @@ def git_tag_for_head() -> str | None:
     return tags[0] if tags else None
 
 
+def _raise_command_error(label: str, exc: subprocess.CalledProcessError) -> None:
+    output = (exc.output or "").strip()
+    detail = output if output else f"command exited with status {exc.returncode}"
+    raise SystemExit(f"{label} failed:\n{detail}") from exc
+
+
 def migration_head() -> str:
-    try:
-        output = run("python", "-m", "alembic", "-c", "backend/alembic.ini", "heads")
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    commands = (
+        (
+            "python -m alembic",
+            ("python", "-m", "alembic", "-c", "backend/alembic.ini", "heads"),
+        ),
+        (
+            "alembic executable",
+            ("alembic", "-c", "backend/alembic.ini", "heads"),
+        ),
+    )
+
+    last_error: subprocess.CalledProcessError | FileNotFoundError | None = None
+    for label, command in commands:
         try:
-            output = run("alembic", "-c", "backend/alembic.ini", "heads")
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            try:
-                output = run(
-                    "docker", "compose", "exec", "-T", "api",
-                    "alembic", "-c", "/app/alembic.ini", "heads"
-                )
-            except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-                raise SystemExit(
-                    "Unable to resolve Alembic head. Install Alembic or start the API container."
-                ) from exc
+            output = run(*command)
+            break
+        except subprocess.CalledProcessError as exc:
+            last_error = exc
+            _raise_command_error(label, exc)
+        except FileNotFoundError as exc:
+            last_error = exc
+            continue
+    else:
+        if isinstance(last_error, FileNotFoundError):
+            raise SystemExit(
+                "Alembic is unavailable in the release build environment. "
+                "Install backend/requirements.txt before building the release."
+            ) from last_error
+        raise SystemExit("Unable to resolve Alembic head.") from last_error
 
     heads: list[str] = []
     for line in output.splitlines():
