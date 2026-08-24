@@ -34,7 +34,7 @@ jobs:
           sha256sum dist/ai-employee-v1.1.0-delivery-manifest-bundle.tar.gz > dist/SHA256SUMS
 
       - name: Upload delivery manifest bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ai-employee-v1.1.0-delivery-manifest-bundle
           path: dist/
