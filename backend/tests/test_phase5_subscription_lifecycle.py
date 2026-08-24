@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -14,6 +14,7 @@ from app.services.billing_service import (
 def _subscription(
     *,
     status="active",
+    provider="manual",
     current_period_start=None,
     current_period_end=None,
     cancel_at_period_end=False,
@@ -26,6 +27,7 @@ def _subscription(
 
     return SimpleNamespace(
         status=status,
+        provider=provider,
         current_period_start=start,
         current_period_end=end,
         cancel_at_period_end=cancel_at_period_end,
@@ -72,13 +74,14 @@ async def test_cancel_at_period_end_becomes_canceled_after_period_end():
 
 
 @pytest.mark.asyncio
-async def test_active_subscription_renews_into_current_calendar_period():
+async def test_manual_active_subscription_renews_into_current_calendar_period():
     db = AsyncMock()
     now = datetime(2026, 8, 23, tzinfo=timezone.utc)
     old_start = datetime(2026, 7, 1, tzinfo=timezone.utc)
     old_end = datetime(2026, 7, 31, 23, 59, 59, 999999, tzinfo=timezone.utc)
 
     sub = _subscription(
+        provider="manual",
         status="active",
         current_period_start=old_start,
         current_period_end=old_end,
@@ -93,13 +96,36 @@ async def test_active_subscription_renews_into_current_calendar_period():
 
 
 @pytest.mark.asyncio
-async def test_active_subscription_does_not_renew_before_period_end():
+async def test_external_subscription_does_not_auto_renew_after_period_end():
+    db = AsyncMock()
+    now = datetime(2026, 8, 23, tzinfo=timezone.utc)
+    old_start = datetime(2026, 7, 1, tzinfo=timezone.utc)
+    old_end = datetime(2026, 7, 31, 23, 59, 59, 999999, tzinfo=timezone.utc)
+
+    sub = _subscription(
+        provider="stripe",
+        status="active",
+        current_period_start=old_start,
+        current_period_end=old_end,
+    )
+
+    result = await process_subscription_lifecycle(db, subscription=sub, now=now)
+
+    assert result.status == "active"
+    assert result.current_period_start == old_start
+    assert result.current_period_end == old_end
+    db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_active_manual_subscription_does_not_renew_before_period_end():
     db = AsyncMock()
     now = datetime(2026, 8, 23, tzinfo=timezone.utc)
     start = _period_start(now)
     end = _period_end(start)
 
     sub = _subscription(
+        provider="manual",
         status="active",
         current_period_start=start,
         current_period_end=end,
