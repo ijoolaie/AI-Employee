@@ -41,7 +41,7 @@ jobs:
       RATE_LIMIT_FAIL_CLOSED: 'true'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Validate production compose syntax and required interpolation
         run: docker compose -f docker-compose.production.yml config --quiet
       - name: Inspect rendered production topology

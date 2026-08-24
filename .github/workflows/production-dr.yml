@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Run PostgreSQL and Redis backup/restore smoke test
         run: bash scripts/production_dr_restore_smoke.sh
       - name: Verify production compose keeps persistent data volumes
