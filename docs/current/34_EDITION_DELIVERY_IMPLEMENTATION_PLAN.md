@@ -46,7 +46,7 @@ Local evidence is recorded in `docs/current/35_PHASE6_LOCAL_BUILD_EVIDENCE_2026-
 
 ## Phase 6D — Release-system integration
 
-Status: **WORKFLOW READY — EXTERNAL ACTIONS EXECUTION EVIDENCE PENDING**
+Status: **COMPLETE — GITHUB ACTIONS VERIFIED 2026-08-24**
 
 - [x] add profile package generation to release workflow;
 - [x] manual release dispatch requires both a release version and an exact release ref;
@@ -54,22 +54,70 @@ Status: **WORKFLOW READY — EXTERNAL ACTIONS EXECUTION EVIDENCE PENDING**
 - [x] the checked-out commit SHA is passed to the three-edition builder;
 - [x] release workflow validates the base checksum and all three edition packages;
 - [x] runtime and edition packages are uploaded as workflow artifacts;
-- [ ] attach Vendor, Reseller and Customer artifacts to the same immutable vendor release in a successful GitHub Actions run;
-- [ ] publish per-edition checksums and combined edition release manifest from a successful Actions run;
-- [ ] verify artifact generation on the first successful post-reset Actions run.
+- [x] successful GitHub Actions Release Artifact run completed and inspected;
+- [x] Vendor, Reseller and Customer artifacts confirmed from that Actions run;
+- [x] per-edition checksums and combined edition release manifest confirmed from that Actions run;
+- [x] base runtime manifest, source identity, migration head, checksum and secret-exclusion policy inspected;
+- [x] uploaded artifact archives passed ZIP/TAR integrity inspection.
 
-The workflow correction was committed to `main` as `4391875222a6c8f1ddf8a3f3448b8e6d51b6454b`.
+### Verified execution
 
-The corrected manual dispatch contract is:
+Release Artifact workflow run:
 
 ```text
-version = vX.Y.Z
-ref     = exact branch, tag, or commit SHA
+run_id       = 32738347495
+job_id       = 97466534302
+release      = v1.2.0
+source_sha   = c329929f1c7e972f626b7ee749c8a2f05a85eace
 ```
 
-The workflow then checks out that exact ref, records the actual `git rev-parse HEAD`, and uses that SHA for Vendor/Reseller/Customer package generation. Tag pushes continue to derive both version and release ref from the pushed tag.
+The run completed successfully through runtime packaging, release-note generation, Vendor/Reseller/Customer packaging, checksum verification and artifact upload.
 
-**Execution boundary:** this document does not claim a successful GitHub Actions run until a real workflow-dispatch or tag-triggered run exists and its jobs/artifacts have been inspected.
+### Verified uploaded artifacts
+
+Runtime artifact:
+
+```text
+name   = ai-employee-v1.2.0-runtime
+sha256 = a5e3b43f64f5145c2294b38e650ada0fede664bcbed8c1976dd7a20ffb343d85
+```
+
+Edition bundle:
+
+```text
+name   = ai-employee-v1.2.0-editions
+sha256 = bae9941eeb65922d81a6d86141d10dc07cd868c3b924925cbdeeee66721262e0
+```
+
+Combined edition manifest:
+
+```text
+vendor   = ai-employee-v1.2.0-vendor.1.tar.gz
+sha256   = 106e06b8faf430bf96bececdd5c652e81102f349b094628bcfd82c0ae0e55026
+
+reseller = ai-employee-v1.2.0-reseller.1.tar.gz
+sha256   = c8140f83d7d6c1c2e9547a9173349036b0c58ec6b229235142bc3a46dabcd484
+
+customer = ai-employee-v1.2.0-customer.1.tar.gz
+sha256   = 12cf516d08997bd6b26d727729fefdce15463daaa933a278a67f37a84a4ff62e
+```
+
+The runtime `RELEASE-MANIFEST.json` was inspected from the uploaded archive and records:
+
+```text
+release_version = v1.2.0
+source_commit_sha = c329929f1c7e972f626b7ee749c8a2f05a85eace
+source_tag = v1.2.0
+migration_head = p5license02
+file_count = 511
+secrets_included = false
+```
+
+The uploaded runtime archive contained 680 TAR entries, passed archive integrity validation, and contained no production `.env` secret file; only `frontend/.env.example` was present. The edition bundle manifest records the same immutable source SHA for all three editions and its listed per-edition SHA-256 values were independently recomputed from the downloaded archives.
+
+### Execution boundary
+
+The Phase 6D execution boundary is now closed: the successful Actions run exists, the exact release identity was checked, all three edition artifacts were uploaded, and their manifest/checksum evidence was inspected. Phase 6E remains an external production-delivery gate and is not implied by this workflow evidence.
 
 ## Phase 6E — Production delivery
 
@@ -92,4 +140,6 @@ Phase 6 does not:
 
 ## Definition of done
 
-Phase 6 is complete when the same immutable vendor commit deterministically produces three validated artifacts, each with a distinct edition profile and revision identity, and the release evidence records all three artifacts.
+Phase 6D is complete when the same immutable vendor commit deterministically produces the runtime package plus three validated edition artifacts in GitHub Actions, each with a distinct edition profile and revision identity, and the release evidence records all artifact identities and checksums.
+
+Phase 6 as a whole remains open until Phase 6E production delivery evidence exists.
