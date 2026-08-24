@@ -1,13 +1,15 @@
 schema_version: 1
 
 # Commercial delivery identity.
+# Example/template for the current v1.2.0 release line.
 package_id: replace-me
 edition: vendor # vendor | reseller | customer
 
 vendor:
   product: AI-Employee
-  release_tag: v1.0.1
-  commit_sha: 2d23a01098f432145ecaea14b2500fe520ad0bf7
+  release_tag: v1.2.0
+  # Always replace this placeholder with the exact immutable commit SHA recorded by the release workflow.
+  commit_sha: replace-with-exact-v1.2.0-release-sha
 
 # Required for reseller/customer deliveries; set to null for a vendor package.
 reseller:
