@@ -1,5 +1,8 @@
 # Release Channels and Edition Model
 
+**Current vendor release:** `v1.2.0`  
+**Status date:** 2026-08-24
+
 ## Purpose
 
 AI Employee is maintained as one product core, but it is delivered to three distinct commercial roles:
@@ -14,7 +17,7 @@ These roles must be separated without creating permanent code forks.
 
 `main` is the vendor source of truth. A published vendor release is immutable and is identified by a Git tag and commit SHA.
 
-The current vendor release is `v1.0.1` at commit `2d23a01098f432145ecaea14b2500fe520ad0bf7`.
+The certified vendor release covered by the current release evidence is `v1.2.0`. The exact release commit used by a delivery must always be taken from the immutable release tag/workflow evidence, not inferred from a documentation file.
 
 Do not mutate a published release to satisfy a reseller or end-customer requirement. Create a new release instead.
 
@@ -39,7 +42,7 @@ The codebase remains shared. Separation is enforced through immutable release re
 ### Vendor
 
 - Tag: `vMAJOR.MINOR.PATCH`
-- Example: `v1.0.1`
+- Current certified release: `v1.2.0`
 - Meaning: canonical product release owned by the vendor.
 - Contains: complete certified product core and vendor release evidence.
 
@@ -49,9 +52,7 @@ Reseller deliveries are **not** new product versions. They reference a vendor re
 
 Recommended identifier:
 
-`v1.0.1-reseller.<revision>`
-
-Example: `v1.0.1-reseller.1`
+`v1.2.0-reseller.<revision>`
 
 The identifier must resolve to:
 
@@ -67,9 +68,7 @@ Customer deliveries reference the reseller delivery and add a customer deploymen
 
 Recommended identifier:
 
-`v1.0.1-customer.<revision>`
-
-Example: `v1.0.1-customer.3`
+`v1.2.0-customer.<revision>`
 
 The identifier must resolve to:
 
@@ -111,9 +110,13 @@ An upgrade is represented as a new delivery revision, not an in-place rewrite of
 
 Example:
 
-`v1.0.1-customer.3` -> `v1.0.2-customer.1`
+`v1.2.0-customer.1` -> `v1.2.1-customer.1`
 
 The customer package must retain the previous manifest so rollback can identify the exact prior immutable vendor release and configuration revision.
+
+## Current v1.2.0 evidence
+
+The v1.2.0 release artifact workflow was executed in GitHub Actions under run `32738347495`. The release certification is recorded in `docs/current/38_V1.2.0_RELEASE_CERTIFICATION_2026-08-24.md`.
 
 ## Non-goals
 
