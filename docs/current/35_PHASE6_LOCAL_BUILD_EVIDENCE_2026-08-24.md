@@ -1,12 +1,12 @@
-# Phase 6 — Local Edition Package Verification Evidence — 2026-08-24
+# Phase 6 — Edition Package Verification Evidence — 2026-08-24
 
 ## Scope
 
-This document records the local verification evidence for Phase 6A–6C on the `phase6-edition-delivery-separation` branch.
+This document records the local verification evidence for Phase 6A–6C and the release-system readiness work for Phase 6D.
 
-This is local evidence only. It does not claim GitHub Actions execution or production delivery.
+Local evidence does not claim GitHub Actions execution or production delivery. Phase 6D is only considered externally verified after a real Actions run has completed and its jobs/artifacts have been inspected.
 
-## Source identity
+## Source identity — local Phase 6A–6C evidence
 
 - Branch: `phase6-edition-delivery-separation`
 - Source commit used for package generation: `4ed4646b5c820a22bdfb51c92e5ca176243dc895`
@@ -73,10 +73,50 @@ vendor_commit_sha=4ed4646b5c820a22bdfb51c92e5ca176243dc895
 artifacts=vendor,reseller,customer
 ```
 
+## Phase 6D — Release-system integration readiness
+
+### Workflow
+
+`.github/workflows/release-artifact.yml` was corrected on `main` in commit:
+
+`4391875222a6c8f1ddf8a3f3448b8e6d51b6454b`
+
+The manual dispatch contract now requires:
+
+```text
+version = vX.Y.Z
+ref     = exact branch, tag, or commit SHA
+```
+
+The workflow then:
+
+1. derives the version and exact release ref;
+2. checks out that exact ref;
+3. records `git rev-parse HEAD` as the actual release commit;
+4. validates edition profiles and contract tests;
+5. builds the immutable runtime package;
+6. builds Vendor, Reseller and Customer packages using the actual checked-out commit SHA;
+7. verifies runtime and edition package checksums/metadata;
+8. uploads runtime and edition artifacts to the workflow run.
+
+### Execution evidence
+
+A successful GitHub Actions run has **not yet been recorded in repository evidence**. The available GitHub integration in this session exposes workflow-run inspection and artifact retrieval, but does not expose a workflow-dispatch/tag-creation write operation. Therefore no Actions run is being fabricated or marked as successful.
+
+### Required Phase 6D completion evidence
+
+- [x] Release workflow contains three-edition package generation.
+- [x] Manual dispatch is bound to an explicit exact release ref.
+- [x] Builder receives the actual checked-out commit SHA.
+- [x] Runtime checksum verification exists.
+- [x] Three-edition package validation exists.
+- [x] Runtime and edition artifacts are uploaded.
+- [ ] Successful GitHub Actions execution recorded.
+- [ ] Vendor, Reseller and Customer artifacts inspected from that run.
+- [ ] Per-edition checksums and combined manifest confirmed from that run.
+
 ## Evidence conclusion
 
-Phase 6A, 6B and 6C have local execution evidence.
-
-Phase 6D remains blocked only by external GitHub Actions capacity and Phase 6E remains an external production-delivery gate.
+Phase 6A, 6B and 6C have local execution evidence. Phase 6D has implementation and workflow-readiness evidence, but **external Actions execution evidence remains pending**. Phase 6E remains an external production-delivery gate.
 
 No production certification is claimed by this document.
