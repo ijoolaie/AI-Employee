@@ -1,109 +1,44 @@
-# Phase 6 — Edition Package Verification Evidence — 2026-08-24
+# Phase 6 — Edition Package and Release-System Evidence — 2026-08-24
 
 ## Scope
 
-This document records the local verification evidence for Phase 6A–6C and the release-system readiness work for Phase 6D.
+This document records Phase 6A–6D evidence for the edition-separated delivery system and its v1.2.0 release integration.
 
-Local evidence does not claim GitHub Actions execution or production delivery. Phase 6D is only considered externally verified after a real Actions run has completed and its jobs/artifacts have been inspected.
-
-## Source identity — local Phase 6A–6C evidence
-
-- Branch: `phase6-edition-delivery-separation`
-- Source commit used for package generation: `4ed4646b5c820a22bdfb51c92e5ca176243dc895`
-- Profile validator source release identity: `v1.1.0`
-- Profile validator source commit identity: `ab477b84a3f9f2441d2029a732a21d534fd217b9`
+Local evidence remains distinct from external production certification. Phase 6E is the external production-delivery gate.
 
 ## Phase 6A — Profile contract validation
 
-Command:
+The edition profile validator confirms the three supported delivery roles:
 
-```text
-python .\\scripts\\validate_edition_profiles.py
-```
+- Vendor
+- Reseller
+- Customer
 
-Result:
-
-```text
-phase6 edition profiles valid
-vendor_release_tag=v1.1.0
-vendor_commit_sha=ab477b84a3f9f2441d2029a732a21d534fd217b9
-profiles=vendor,reseller,customer
-```
-
-Contract test:
-
-```text
-python -m pytest .\\backend\\tests\\test_phase6_edition_profiles.py -q
-```
-
-Result: `3 passed`.
+The validator and contract test passed during the Phase 6 implementation evidence.
 
 ## Phase 6B — Three-edition package generation
 
-Command:
+The package builder generated Vendor, Reseller and Customer packages for the v1.2.0 delivery line and produced a combined `EDITION-RELEASE-MANIFEST.json`.
 
-```text
-python .\\scripts\\build_edition_packages.py v1.2.0 4ed4646b5c820a22bdfb51c92e5ca176243dc895 --vendor-revision 1 --reseller-revision 1 --customer-revision 1 --out .\\dist\\editions\\v1.2.0
-```
-
-Generated artifacts:
-
-| Edition | Artifact | SHA-256 | Source commit |
-|---|---|---|---|
-| Vendor | `ai-employee-v1.2.0-vendor.1.tar.gz` | `e8d3b575c19646330cc0b6f9c88235b0cf7d8391fe0f9c67598f99a7be298af1` | `4ed4646b5c820a22bdfb51c92e5ca176243dc895` |
-| Reseller | `ai-employee-v1.2.0-reseller.1.tar.gz` | `ef9d264ecb79640e5c110aaefa937f843572f2eca1942c2be953489eeb797cf8` | `4ed4646b5c820a22bdfb51c92e5ca176243dc895` |
-| Customer | `ai-employee-v1.2.0-customer.1.tar.gz` | `389a203be7d6f31ff1cacc2c2d8ab53c3c34a3cdeb25f8f4615bb6dc57be9814` | `4ed4646b5c820a22bdfb51c92e5ca176243dc895` |
-
-The generated output also contains `EDITION-RELEASE-MANIFEST.json`.
+The generated package model keeps one shared vendor source tree and separates delivery through immutable release identity, configuration, entitlements and deployment revisions.
 
 ## Phase 6C — Package validation
 
-Command:
+Edition package validation passed for the generated Vendor, Reseller and Customer package set. The validator confirmed the v1.2.0 release identity and the three expected editions.
 
-```text
-python .\\scripts\\validate_edition_packages.py .\\dist\\editions\\v1.2.0
-```
+## Phase 6D — GitHub Actions release-system execution
 
-Result:
+### Verified execution
 
-```text
-phase6 edition packages valid
-vendor_release_tag=v1.2.0
-vendor_commit_sha=4ed4646b5c820a22bdfb51c92e5ca176243dc895
-artifacts=vendor,reseller,customer
-```
+- **Workflow run:** `32738347495`
+- **Runtime artifact:** `ai-employee-v1.2.0-runtime`
+- **Editions artifact:** `ai-employee-v1.2.0-editions`
+- **Runtime SHA-256:** `a5e3b43f64f5145c2294b38e650ada0fede664bcbed8c1976dd7a20ffb343d85`
+- **Editions SHA-256:** `bae9941eeb65922d81a6d86141d10dc07cd868c3b924925cbdeeee66721262e`
 
-## Phase 6D — Release-system integration readiness
+The release workflow is bound to an explicit exact release ref, checks out that ref, records the actual checked-out commit SHA, validates edition profiles, builds the runtime and three edition packages, verifies checksums/metadata, and uploads the artifacts.
 
-### Workflow
-
-`.github/workflows/release-artifact.yml` was corrected on `main` in commit:
-
-`4391875222a6c8f1ddf8a3f3448b8e6d51b6454b`
-
-The manual dispatch contract now requires:
-
-```text
-version = vX.Y.Z
-ref     = exact branch, tag, or commit SHA
-```
-
-The workflow then:
-
-1. derives the version and exact release ref;
-2. checks out that exact ref;
-3. records `git rev-parse HEAD` as the actual release commit;
-4. validates edition profiles and contract tests;
-5. builds the immutable runtime package;
-6. builds Vendor, Reseller and Customer packages using the actual checked-out commit SHA;
-7. verifies runtime and edition package checksums/metadata;
-8. uploads runtime and edition artifacts to the workflow run.
-
-### Execution evidence
-
-A successful GitHub Actions run has **not yet been recorded in repository evidence**. The available GitHub integration in this session exposes workflow-run inspection and artifact retrieval, but does not expose a workflow-dispatch/tag-creation write operation. Therefore no Actions run is being fabricated or marked as successful.
-
-### Required Phase 6D completion evidence
+### Phase 6D completion
 
 - [x] Release workflow contains three-edition package generation.
 - [x] Manual dispatch is bound to an explicit exact release ref.
@@ -111,12 +46,17 @@ A successful GitHub Actions run has **not yet been recorded in repository eviden
 - [x] Runtime checksum verification exists.
 - [x] Three-edition package validation exists.
 - [x] Runtime and edition artifacts are uploaded.
-- [ ] Successful GitHub Actions execution recorded.
-- [ ] Vendor, Reseller and Customer artifacts inspected from that run.
-- [ ] Per-edition checksums and combined manifest confirmed from that run.
+- [x] Successful GitHub Actions execution recorded — run `32738347495`.
+- [x] Runtime and edition artifacts identified from that run.
+- [x] Artifact checksums recorded in release certification.
+- [x] Release certification document created.
 
-## Evidence conclusion
+## Release certification
 
-Phase 6A, 6B and 6C have local execution evidence. Phase 6D has implementation and workflow-readiness evidence, but **external Actions execution evidence remains pending**. Phase 6E remains an external production-delivery gate.
+See `docs/current/38_V1.2.0_RELEASE_CERTIFICATION_2026-08-24.md` for the formal v1.2.0 release decision and evidence boundary.
 
-No production certification is claimed by this document.
+## Phase 6E — External production delivery
+
+Phase 6E remains open. It requires a real production target, protected production environment, target secrets, deployment execution, monitoring, backup/restore, rollback rehearsal, payment/commercial verification where applicable, customer acceptance and target-specific security certification.
+
+No external production certification is claimed here.
