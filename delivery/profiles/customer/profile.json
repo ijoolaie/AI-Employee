@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "edition": "customer",
+  "release_channel": "customer",
+  "authority": "consumed",
+  "parent_edition": "reseller-or-vendor",
+  "required_identities": ["vendor_release_tag", "vendor_commit_sha", "customer_id", "deployment_revision"],
+  "forbidden_authorities": ["vendor-global", "reseller-provisioning", "sibling-customer"],
+  "secret_policy": "customer-secret-store",
+  "artifact_role": "isolated-customer-deployment"
+}
