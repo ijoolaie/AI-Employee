@@ -6,7 +6,7 @@ This is the current authoritative productization roadmap. The platform core is c
 
 ## Current project position — 2026-08-24
 
-**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE; EXTERNAL PRODUCTION GATES REMAIN.**
+**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE; EXTERNAL PRODUCTION GATES REMAIN.**
 
 Evidence states remain explicit: implementation is not the same as executed local or external-production evidence.
 
@@ -26,7 +26,7 @@ Evidence states remain explicit: implementation is not the same as executed loca
 - [x] Establish certification/productization boundary.
 - [x] Release notes/changelog generation tied to the exact release ref.
 
-Implementation: `scripts/generate_release_notes.py` and `.github/workflows/release-artifact.yml` now generate `dist/release/RELEASE_NOTES.md` from the exact checked-out release ref and attach it to the release artifact.
+Implementation: `scripts/generate_release_notes.py` and `.github/workflows/release-artifact.yml` generate `dist/release/RELEASE_NOTES.md` from the exact checked-out release ref and attach it to the release artifact.
 
 ## Phase 1 — Vendor Edition
 
@@ -116,7 +116,7 @@ Primary document: `docs/current/19_ROLLBACK_RUNBOOK.md`.
 - [x] Release identity checklist.
 - [x] Infrastructure/application acceptance checks.
 - [x] Operations/recovery checks.
-- [x] Customer/operator sign-off record.
+- [x] Customer/operator sign-off record structure.
 
 Primary document: `docs/current/20_CUSTOMER_ACCEPTANCE_CHECKLIST.md`.
 
@@ -181,6 +181,8 @@ Primary gate: `docs/current/24_PHASE4_DELIVERY_ACCEPTANCE.md`.
 - [x] Local production-like readiness: API, PostgreSQL, Redis and frontend exercised successfully on conflict-safe Windows validation ports.
 - [x] Local backup/restore smoke: PostgreSQL logical restore + Redis AOF restore verified.
 - [x] Local recovery drill: failure detection and recovery verified against a known-good revision.
+- [x] Production environment preparation contract documented.
+- [x] Commercial support/update policy and escalation/change-control contract documented.
 
 ### Remaining
 
@@ -190,7 +192,14 @@ Primary gate: `docs/current/24_PHASE4_DELIVERY_ACCEPTANCE.md`.
 - [ ] External monitoring/alerting evidence.
 - [ ] Production-target rollback/recovery rehearsal.
 - [ ] Final production security certification.
-- [ ] Final commercial support/update-policy handoff for real customer environments.
+- [ ] Real customer support/update-policy contacts and environment-specific handoff evidence.
+
+### Preparation contracts
+
+- `docs/current/28_PRODUCTION_ENVIRONMENT_PREPARATION.md`
+- `docs/current/29_COMMERCIAL_SUPPORT_UPDATE_POLICY.md`
+
+These documents prepare the external gate but do not claim that an external production target or real commercial deployment exists.
 
 Primary evidence: `docs/current/27_PHASE5_COMMERCIAL_PRODUCTION_EVIDENCE_2026-08-23.md`.
 
@@ -226,4 +235,4 @@ A release is commercially deliverable only when the exact release identity is im
 
 ## Immediate next phase
 
-**Continue Phase 5 — Commercial Production. The implementation frontier is substantially complete; next work is evidence closure: GitHub Actions validation when capacity resets, commercial revenue proof, external deployment/monitoring/recovery evidence, final security certification, and commercial support/update-policy handoff.**
+**Continue Phase 5 — Commercial Production. The implementation frontier is substantially complete; next work is external evidence closure: GitHub Actions validation when capacity resets, commercial revenue proof, external deployment/monitoring/recovery evidence, final security certification, and environment-specific commercial handoff.**
