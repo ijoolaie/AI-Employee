@@ -7,6 +7,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -43,7 +44,18 @@ SECRET_PATTERNS = (
 
 
 def run(*args: str) -> str:
-    return subprocess.check_output(args, cwd=ROOT, text=True).strip()
+    env = os.environ.copy()
+    # Alembic's env.py imports the backend package (app.*). Make that
+    # import path explicit so release packaging does not depend on a
+    # running Docker API container.
+    backend_path = str(ROOT / "backend")
+    existing_pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = (
+        f"{backend_path}{os.pathsep}{existing_pythonpath}"
+        if existing_pythonpath
+        else backend_path
+    )
+    return subprocess.check_output(args, cwd=ROOT, env=env, text=True).strip()
 
 
 def git_sha() -> str:
@@ -62,10 +74,10 @@ def git_tag_for_head() -> str | None:
 
 def migration_head() -> str:
     try:
-        output = run("alembic", "-c", "backend/alembic.ini", "heads")
+        output = run("python", "-m", "alembic", "-c", "backend/alembic.ini", "heads")
     except (subprocess.CalledProcessError, FileNotFoundError):
         try:
-            output = run("python", "-m", "alembic", "-c", "backend/alembic.ini", "heads")
+            output = run("alembic", "-c", "backend/alembic.ini", "heads")
         except (subprocess.CalledProcessError, FileNotFoundError):
             try:
                 output = run(
@@ -137,7 +149,6 @@ def sha256(path: Path) -> str:
 
 
 def tar_filter(info: tarfile.TarInfo) -> tarfile.TarInfo:
-    # Normalize metadata so the same commit produces the same archive bytes.
     info.uid = 0
     info.gid = 0
     info.uname = ""
