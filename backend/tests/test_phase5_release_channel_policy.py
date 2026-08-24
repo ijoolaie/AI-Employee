@@ -32,7 +32,11 @@ def test_upgrade_rejects_unsupported_target():
         assert_upgrade_allowed("v1.2.0", "v1.3.0", policy)
 
 
-def test_upgrade_rejects_downgrade():
-    policy = default_policies()["customer"]
+def test_upgrade_rejects_downgrade_when_target_is_supported():
+    policy = ReleaseChannelPolicy(
+        channel="customer",
+        minimum_supported_version="v1.1.0",
+        supported_versions=("v1.1.0", "v1.2.0"),
+    )
     with pytest.raises(ValueError, match="Downgrade"):
-        assert_upgrade_allowed("v1.2.0", "v1.1.2", policy)
+        assert_upgrade_allowed("v1.2.0", "v1.1.0", policy)
