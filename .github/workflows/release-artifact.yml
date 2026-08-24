@@ -21,7 +21,7 @@ concurrency:
 jobs:
   build-release:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout exact release commit
         uses: actions/checkout@v4
@@ -50,17 +50,53 @@ jobs:
           [[ "$version" == v* ]] || { echo "Release version must start with v"; exit 1; }
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
+      - name: Validate edition profile contracts
+        run: python scripts/validate_edition_profiles.py
+
+      - name: Run edition contract tests
+        run: python -m pytest backend/tests/test_phase6_edition_profiles.py -q
+
       - name: Build immutable runtime package
         run: python scripts/build_release_package.py "${{ steps.release.outputs.version }}"
 
       - name: Generate release notes from exact release ref
         run: python scripts/generate_release_notes.py "${{ steps.release.outputs.version }}"
 
-      - name: Verify package checksum
+      - name: Build Vendor, Reseller and Customer packages
+        run: |
+          python scripts/build_edition_packages.py \
+            "${{ steps.release.outputs.version }}" \
+            "${GITHUB_SHA}" \
+            --out "dist/editions/${{ steps.release.outputs.version }}"
+
+      - name: Verify base package checksum
         working-directory: dist/release
         run: sha256sum -c SHA256SUMS
 
-      - name: Upload release package
+      - name: Verify all edition package checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          root = Path('dist/editions')
+          manifests = list(root.rglob('EDITION-RELEASE-MANIFEST.json'))
+          if len(manifests) != 1:
+              raise SystemExit(f'expected one edition release manifest, found {manifests}')
+          data = json.loads(manifests[0].read_text())
+          for item in data['artifacts']:
+              path = manifests[0].parent / item['edition'] / item['artifact']
+              if not path.exists():
+                  raise SystemExit(f'missing edition artifact: {path}')
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              if digest != item['sha256']:
+                  raise SystemExit(f'checksum mismatch: {path}')
+          print('edition package checksums verified')
+          PY
+
+      - name: Upload base runtime package
         uses: actions/upload-artifact@v4
         with:
           name: ai-employee-${{ steps.release.outputs.version }}-runtime
@@ -68,5 +104,13 @@ jobs:
             dist/release/*.tar.gz
             dist/release/SHA256SUMS
             dist/release/RELEASE_NOTES.md
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload three edition packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-employee-${{ steps.release.outputs.version }}-editions
+          path: dist/editions/${{ steps.release.outputs.version }}/
           if-no-files-found: error
           retention-days: 90
