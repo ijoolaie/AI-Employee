@@ -46,12 +46,30 @@ Local evidence is recorded in `docs/current/35_PHASE6_LOCAL_BUILD_EVIDENCE_2026-
 
 ## Phase 6D — Release-system integration
 
-Status: **BLOCKED ONLY BY EXTERNAL CI CAPACITY**
+Status: **WORKFLOW READY — EXTERNAL ACTIONS EXECUTION EVIDENCE PENDING**
 
-- add profile package generation to release workflow;
-- attach all three artifacts to the same immutable vendor release;
-- publish checksums and profile evidence;
-- exercise on GitHub Actions when capacity is available.
+- [x] add profile package generation to release workflow;
+- [x] manual release dispatch requires both a release version and an exact release ref;
+- [x] checkout is explicitly pinned to the requested release ref;
+- [x] the checked-out commit SHA is passed to the three-edition builder;
+- [x] release workflow validates the base checksum and all three edition packages;
+- [x] runtime and edition packages are uploaded as workflow artifacts;
+- [ ] attach Vendor, Reseller and Customer artifacts to the same immutable vendor release in a successful GitHub Actions run;
+- [ ] publish per-edition checksums and combined edition release manifest from a successful Actions run;
+- [ ] verify artifact generation on the first successful post-reset Actions run.
+
+The workflow correction was committed to `main` as `4391875222a6c8f1ddf8a3f3448b8e6d51b6454b`.
+
+The corrected manual dispatch contract is:
+
+```text
+version = vX.Y.Z
+ref     = exact branch, tag, or commit SHA
+```
+
+The workflow then checks out that exact ref, records the actual `git rev-parse HEAD`, and uses that SHA for Vendor/Reseller/Customer package generation. Tag pushes continue to derive both version and release ref from the pushed tag.
+
+**Execution boundary:** this document does not claim a successful GitHub Actions run until a real workflow-dispatch or tag-triggered run exists and its jobs/artifacts have been inspected.
 
 ## Phase 6E — Production delivery
 
