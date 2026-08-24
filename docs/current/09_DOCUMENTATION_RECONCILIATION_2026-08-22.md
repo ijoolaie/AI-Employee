@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document is the reconciliation record for the 2026-08-22 implementation/test review. It separates historical certification material from the current productization truth and records what is genuinely complete versus what remains operational/commercial.
+This document is the reconciliation record for the 2026-08-22 implementation/test review, with a 2026-08-23 evidence addendum. It separates historical certification material from the current productization truth and records what is genuinely complete versus what remains operational/commercial.
 
 ## Authoritative document order
 
@@ -22,7 +22,7 @@ The project has passed the point where the main work is construction of the core
 
 ### 2. Certification status
 
-The RC8/RC9 repository-level certification baseline remains valid. The 2026-08-22 work is post-release productization/security verification and is not represented as a new production-certification pass.
+The RC8/RC9 repository-level certification baseline remains valid. The 2026-08-22 productization/security work and the 2026-08-23 local Employee/EmployeeVersion test work are post-release verification/evidence updates and are not represented as a new production-certification pass.
 
 Published baseline:
 
@@ -32,12 +32,27 @@ Published baseline:
 
 ### 3. Current automated evidence
 
+Previously documented evidence:
+
 - Backend full suite: **194 passed, 1 warning**.
 - Workflow foundation/approval/trigger subset: **7 passed, 1 warning**.
 - Execution hardening/workflow-versioning subset: **8 passed**.
 - Docker API/frontend/PostgreSQL/Redis/Worker/Beat local runtime observed healthy.
 - Recurring Outbox/workflow scheduler/timeout/approval-expiry tasks were observed completing.
 - The only full-suite warning is Passlib's Python `crypt` deprecation.
+
+**New 2026-08-23 local evidence:**
+
+- `python -m pytest .\backend\tests\test_employee_api.py -q` → **5 passed**.
+- `python -m pytest .\backend\tests -q` → **206 passed** before the final Employee Versioning fixes.
+- focused Employee suite (`test_employee_service.py`, `test_employee_versioning.py`, `test_employee_api.py`) → **13 passed in 2.00s** after the fixes.
+- full backend suite → **212 passed in 7.89s**.
+- `python -m py_compile .\backend\app\services\employee_service.py` → **PASS**.
+- `python -m py_compile .\backend\app\api\v1\employees.py` → **PASS**.
+
+The 212-test result is local working-tree evidence from the project owner's 2026-08-23 session. The exact local commit SHA was not captured in the test transcript. It is therefore not a GitHub Actions result and does not create a new repository-level certification checkpoint.
+
+The Employee Versioning work exercised/fixed initial/current version creation, async-compatible mocked `db.add()` handling, sequential publication, current-version switching, and audit resource/metadata expectations. The focused Employee suite and full backend suite are green after those fixes.
 
 A historical red/cancelled CI run is not treated as a current roadmap blocker when a later synchronized change fixes/replaces the behavior and the current evidence is green.
 
@@ -132,11 +147,17 @@ Several historical CI runs were red or cancelled during implementation/debugging
 
 **Resolution:** it remains audit/history material and does not override the current productization roadmap.
 
+### Conflict 7 — Backend test-count drift after the 2026-08-23 local session
+
+The prior current evidence recorded **194 passed** for the full backend suite, while the project owner's later local working-tree session reached **212 passed** after Employee Versioning compatibility/audit fixes.
+
+**Resolution:** 212 is recorded as the latest local automated evidence, but it is explicitly classified as local working-tree evidence because no exact local commit SHA or GitHub Actions run was captured. The older 194 result remains historical evidence for the 2026-08-22 session and is not rewritten as though it were the 2026-08-23 result.
+
 ## Current project position
 
 The project should now be described as:
 
-> **Certified software core + implemented productization runtime foundation + active operationalization/delivery-package work.**
+> **Certified software core + implemented productization runtime foundation + active operationalization/delivery-package work, with a newer local backend test baseline of 212 passed.**
 
 ### Phase status
 

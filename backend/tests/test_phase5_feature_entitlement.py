@@ -1,4 +1,4 @@
-﻿from types import SimpleNamespace
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
@@ -146,4 +146,3 @@ async def test_registry_keeps_legacy_local_execution_without_db_context():
         permissions={"run.execute"},
     )
     assert result["result"] == 4
-

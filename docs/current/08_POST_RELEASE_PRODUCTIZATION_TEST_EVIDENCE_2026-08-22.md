@@ -105,3 +105,34 @@ Still-open production-specific areas include real production deployment, real pr
 ## 7. Next documentation-controlled step
 
 The next authoritative roadmap update must treat the tenant lifecycle implementation as completed runtime foundation work and then reconcile the remaining Reseller/Customer/Delivery Package gaps against the latest project documentation before selecting the next implementation slice.
+
+---
+
+# Addendum — 2026-08-23 local Employee / EmployeeVersion test evidence
+
+This addendum records a new local test session performed by the project owner after the 2026-08-22 documentation baseline. It updates test evidence only; it does **not** redefine the repository-level certification baseline or claim a new production certification.
+
+## 8. Employee Versioning implementation/test result
+
+The local working tree was exercised through Employee API, Employee service and Employee Versioning tests. During the session, compatibility and audit-contract issues were found and fixed around:
+
+- initial `EmployeeVersion` creation/current-version state;
+- async-compatible mocked `db.add()` handling;
+- sequential version publication and current-version switching;
+- audit `resource_id` targeting the Employee resource;
+- audit metadata containing the published version number.
+
+After the fixes:
+
+- focused Employee suite (`test_employee_service.py`, `test_employee_versioning.py`, `test_employee_api.py`) → **13 passed in 2.00s**;
+- full backend suite (`backend/tests`) → **212 passed in 7.89s**;
+- `python -m py_compile backend/app/services/employee_service.py` → **PASS**;
+- `python -m py_compile backend/app/api/v1/employees.py` → **PASS**.
+
+Earlier checkpoints in the same session were **5 passed** for `test_employee_api.py` and **206 passed** for the full backend suite before the Employee Versioning compatibility fixes.
+
+## 9. Evidence classification
+
+The **212 passed** result is **local working-tree automated evidence** from 2026-08-23. The exact local commit SHA was not captured in the test transcript, so this result must not be represented as a GitHub Actions result or as a new repository-level certification checkpoint.
+
+The result does establish that the current local Employee/EmployeeVersion changes are green against the backend automated suite. The A–F tracker records the detailed commands and retains the distinction between automated local evidence and certification/runtime gates.
