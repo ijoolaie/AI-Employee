@@ -6,7 +6,7 @@ This is the current authoritative productization roadmap. The platform core is c
 
 ## Current project position — 2026-08-24
 
-**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE → PHASE 6 EDITION-SEPARATED DELIVERY IMPLEMENTATION IN PROGRESS; EXTERNAL PRODUCTION GATES REMAIN.**
+**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE → PHASE 6 EDITION-SEPARATED DELIVERY 6A–6C LOCALLY VERIFIED; 6D/6E AND OTHER EXTERNAL PRODUCTION GATES REMAIN.**
 
 Evidence states remain explicit: implementation is not the same as executed local or external-production evidence.
 
@@ -207,7 +207,7 @@ Primary evidence: `docs/current/27_PHASE5_COMMERCIAL_PRODUCTION_EVIDENCE_2026-08
 
 ## Phase 6 — Edition-Separated Delivery
 
-**Status: 🟡 IN PROGRESS — profile contracts complete; packaging and local verification being implemented.**
+**Status: 🟢 6A–6C LOCALLY VERIFIED; 6D/6E EXTERNAL GATES REMAIN.**
 
 Phase 6 separates the delivery surface into three independently named artifacts while preserving one authoritative codebase and one immutable Vendor source release. It does not create permanent source forks.
 
@@ -224,12 +224,15 @@ Phase 6 separates the delivery surface into three independently named artifacts 
 - [x] Vendor, Reseller and Customer artifacts use the same vendor commit SHA.
 - [x] Secrets are excluded from generated runtime content.
 - [x] Edition-specific profile manifests are embedded in each artifact.
+- [x] Local three-edition package generation completed on 2026-08-24.
 
 ### Phase 6C — Local verification
 
 - [x] Edition profile contract tests added: `backend/tests/test_phase6_edition_profiles.py`.
 - [x] Machine-readable profile validator added: `scripts/validate_edition_profiles.py`.
-- [ ] Execute the builder and archive a local three-edition verification result.
+- [x] Builder executed locally for Vendor, Reseller and Customer from source commit `4ed4646b5c820a22bdfb51c92e5ca176243dc895`.
+- [x] Local package validator passed for all three artifacts.
+- [x] Three-artifact SHA-256 evidence recorded in `docs/current/35_PHASE6_LOCAL_BUILD_EVIDENCE_2026-08-24.md`.
 
 ### Phase 6D — Release-system integration
 
@@ -251,6 +254,7 @@ Primary documentation:
 - `docs/current/32_RESELLER_RELEASE_PROFILE.md`
 - `docs/current/33_CUSTOMER_RELEASE_PROFILE.md`
 - `docs/current/34_EDITION_DELIVERY_IMPLEMENTATION_PLAN.md`
+- `docs/current/35_PHASE6_LOCAL_BUILD_EVIDENCE_2026-08-24.md`
 
 ## Cross-cutting acceptance gates
 
@@ -282,4 +286,4 @@ A release is commercially deliverable only when the exact release identity is im
 
 ## Immediate next phase
 
-**Continue Phase 6 — Edition-Separated Delivery in parallel with the remaining Phase 5 external gates. First complete local three-edition package generation/verification; after Actions capacity resets, integrate the three artifacts into the release workflow. Real production deployment, revenue proof, external monitoring/recovery and final security certification remain environment-specific gates.**
+**Continue Phase 6 in parallel with the remaining Phase 5 external gates. Phase 6A–6C now have local execution evidence. After Actions capacity resets, exercise 6D in GitHub Actions and then pursue real production delivery/evidence for 6E. Real production deployment, revenue proof, external monitoring/recovery and final security certification remain environment-specific gates.**
