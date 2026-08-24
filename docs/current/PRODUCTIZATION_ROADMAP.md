@@ -4,7 +4,7 @@
 
 This is the current authoritative productization roadmap. The platform core is complete; the current frontier is repeatable delivery, operational evidence and commercial readiness.
 
-## Current project position — 2026-08-23
+## Current project position — 2026-08-24
 
 **Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE; EXTERNAL PRODUCTION GATES REMAIN.**
 
@@ -18,13 +18,15 @@ Evidence states remain explicit: implementation is not the same as executed loca
 
 ## Phase 0 — Release Integrity
 
-**Status: 🟢 BASELINE COMPLETE; immutable release-publication automation remains.**
+**Status: 🟢 BASELINE COMPLETE.**
 
 - [x] Synchronize current documentation with published release.
 - [x] Record exact v1.0.1 identity.
 - [x] Define immutable vendor/release identity.
 - [x] Establish certification/productization boundary.
-- [ ] Release notes/changelog generation tied to exact release tag.
+- [x] Release notes/changelog generation tied to the exact release ref.
+
+Implementation: `scripts/generate_release_notes.py` and `.github/workflows/release-artifact.yml` now generate `dist/release/RELEASE_NOTES.md` from the exact checked-out release ref and attach it to the release artifact.
 
 ## Phase 1 — Vendor Edition
 
@@ -56,8 +58,9 @@ Customer isolation, RBAC, lifecycle, auditability and support boundaries are imp
 - [x] File inventory and secret policy.
 - [x] SHA-256 checksum generation.
 - [x] Release artifact workflow.
+- [x] Release notes/changelog generated from the exact release ref.
 
-Primary implementation: `scripts/build_release_package.py`, `.github/workflows/release-artifact.yml`, `docs/current/14_RELEASE_ARTIFACT_PACKAGE.md`.
+Primary implementation: `scripts/build_release_package.py`, `.github/workflows/release-artifact.yml`, `scripts/generate_release_notes.py`, `docs/current/14_RELEASE_ARTIFACT_PACKAGE.md`.
 
 ### 4B — Environment / Configuration
 
@@ -149,11 +152,11 @@ Primary document: `docs/current/23_HANDOFF_RUNBOOK.md`.
 ### Phase 4 acceptance gate
 
 - [x] All implementation/documentation slices exist.
-- [x] Execute complete local production-like delivery flow.
-- [x] Execute backup/restore rehearsal — local PostgreSQL/Redis smoke path passed on 2026-08-23; external-target rehearsal remains environment-specific.
-- [x] Execute rollback rehearsal — controlled local recovery drill passed on 2026-08-23; external-target rollback remains environment-specific.
-- [x] Execute final acceptance checklist.
-- [ ] Execute release artifact workflow when Actions quota is available.
+- [x] Complete local production-like delivery flow exercised.
+- [x] Backup/restore rehearsal executed locally — PostgreSQL/Redis smoke path passed on 2026-08-23.
+- [x] Rollback/recovery rehearsal executed locally — controlled recovery drill passed on 2026-08-23.
+- [x] Final acceptance checklist documented and evidence boundary recorded.
+- [ ] Execute release artifact workflow in GitHub Actions when Actions capacity is available.
 
 Primary gate: `docs/current/24_PHASE4_DELIVERY_ACCEPTANCE.md`.
 
