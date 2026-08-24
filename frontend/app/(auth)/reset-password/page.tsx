@@ -29,7 +29,7 @@ function ResetForm() {
     <p className="mt-1 text-sm text-gray-500">Choose a new password for your account.</p>
     <form onSubmit={submit} className="mt-8 space-y-4">
       <Input label="New password" type="password" value={password} onChange={e=>setPassword(e.target.value)} minLength={8} maxLength={128} required />
-      <Input label="Confirm password" type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} minLength={8} maxLength={128} required />
+      <Input label="Confirm new password" type="password" value={confirm} onChange={e=>setConfirm(e.target.value)} minLength={8} maxLength={128} required />
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
       {message && <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{message} <Link href="/login" className="font-semibold underline">Sign in</Link></div>}
       {!message && <Button type="submit" className="w-full" loading={loading}>Reset password</Button>}
