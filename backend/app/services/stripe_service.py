@@ -32,7 +32,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
-from app.models.billing import BillingPlan, Subscription
+from app.models.billing import BillingEvent, BillingPlan, Subscription
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.services import billing_service
@@ -166,10 +166,30 @@ def verify_and_parse_webhook(raw_body: bytes, sig_header: str | None):
 
 
 async def apply_webhook_event(db: AsyncSession, event) -> dict:
-    """Translates a verified Stripe Event into the provider-neutral
-    billing_service calls. Idempotent: billing_service.record_event
-    de-duplicates on (provider, provider_event_id), so Stripe's
-    at-least-once delivery is safe to replay."""
+    """Translates a verified Stripe Event into provider-neutral billing calls.
+
+    The provider event ID is checked before any subscription mutation. This
+    makes Stripe's at-least-once delivery semantics genuinely idempotent:
+    replaying an already-processed event cannot re-run business state
+    transitions before the duplicate is detected.
+    """
+    provider_event_id = event["id"]
+    existing = (
+        await db.execute(
+            select(BillingEvent).where(
+                BillingEvent.provider == "stripe",
+                BillingEvent.provider_event_id == provider_event_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        return {
+            "event_id": str(existing.id),
+            "stripe_event_id": provider_event_id,
+            "event_type": existing.event_type,
+            "duplicate": True,
+        }
+
     event_type = event["type"]
     data = event["data"]["object"]
 
@@ -256,10 +276,10 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
         db,
         tenant_id=tenant_id,
         provider="stripe",
-        provider_event_id=event["id"],
+        provider_event_id=provider_event_id,
         event_type=event_type,
         payload={"id": data.get("id"), "object": data.get("object")},
         plan_code=plan_code,
         status=status,
     )
-    return {"event_id": str(billing_event.id), "stripe_event_id": event["id"], "event_type": event_type}
+    return {"event_id": str(billing_event.id), "stripe_event_id": provider_event_id, "event_type": event_type, "duplicate": False}

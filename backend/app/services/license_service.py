@@ -28,14 +28,29 @@ async def issue_license(
     feature_codes: list[str] | None = None,
     metadata: dict | None = None,
 ) -> CommercialLicense:
-    expected_kind = edition_service.EDITION_RESELLER if issuer.tenant_kind == edition_service.EDITION_VENDOR else edition_service.EDITION_CUSTOMER
+    expected_kind = (
+        edition_service.EDITION_RESELLER
+        if issuer.tenant_kind == edition_service.EDITION_VENDOR
+        else edition_service.EDITION_CUSTOMER
+    )
     edition_service.assert_direct_child(issuer, tenant, expected_kind)
-    existing = (await db.execute(select(CommercialLicense).where(CommercialLicense.tenant_id == tenant.id, CommercialLicense.status == "active"))).scalar_one_or_none()
+    existing = (
+        await db.execute(
+            select(CommercialLicense).where(
+                CommercialLicense.tenant_id == tenant.id,
+                CommercialLicense.status == "active",
+            )
+        )
+    ).scalar_one_or_none()
     if existing:
         raise ConflictError("An active commercial license already exists")
 
     now = datetime.now(timezone.utc)
     expires_at = now + timedelta(days=expires_in_days) if expires_in_days else None
+    normalized_features = sorted(set(feature_codes or []))
+    if not normalized_features:
+        raise ConflictError("Commercial licenses must declare at least one feature code")
+
     license_row = CommercialLicense(
         license_key=_license_key(),
         issuer_tenant_id=issuer.id,
@@ -44,7 +59,7 @@ async def issue_license(
         status="active",
         issued_at=now,
         expires_at=expires_at,
-        feature_codes=sorted(set(feature_codes or [])),
+        feature_codes=normalized_features,
         license_metadata=metadata or {},
     )
     db.add(license_row)
@@ -56,14 +71,27 @@ async def issue_license(
         action="license.issued",
         resource_type="commercial_license",
         resource_id=str(license_row.id),
-        metadata={"tenant_id": str(tenant.id), "edition": tenant.tenant_kind, "expires_at": expires_at.isoformat() if expires_at else None},
+        metadata={
+            "tenant_id": str(tenant.id),
+            "edition": tenant.tenant_kind,
+            "expires_at": expires_at.isoformat() if expires_at else None,
+            "feature_count": len(normalized_features),
+        },
     )
     await db.refresh(license_row)
     return license_row
 
 
-async def revoke_license(db: AsyncSession, *, issuer: Tenant, license_id: uuid.UUID, reason: str) -> CommercialLicense:
-    license_row = (await db.execute(select(CommercialLicense).where(CommercialLicense.id == license_id))).scalar_one_or_none()
+async def revoke_license(
+    db: AsyncSession,
+    *,
+    issuer: Tenant,
+    license_id: uuid.UUID,
+    reason: str,
+) -> CommercialLicense:
+    license_row = (
+        await db.execute(select(CommercialLicense).where(CommercialLicense.id == license_id))
+    ).scalar_one_or_none()
     if license_row is None:
         raise NotFoundError("Commercial license not found")
     if license_row.issuer_tenant_id != issuer.id:
@@ -87,11 +115,16 @@ async def revoke_license(db: AsyncSession, *, issuer: Tenant, license_id: uuid.U
     return license_row
 
 
-async def get_active_license(db: AsyncSession, *, tenant_id: uuid.UUID) -> CommercialLicense | None:
+async def get_active_license(
+    db: AsyncSession, *, tenant_id: uuid.UUID
+) -> CommercialLicense | None:
     now = datetime.now(timezone.utc)
     result = await db.execute(
         select(CommercialLicense)
-        .where(CommercialLicense.tenant_id == tenant_id, CommercialLicense.status == "active")
+        .where(
+            CommercialLicense.tenant_id == tenant_id,
+            CommercialLicense.status == "active",
+        )
         .order_by(CommercialLicense.issued_at.desc())
     )
     row = result.scalars().first()
@@ -110,17 +143,18 @@ async def assert_feature_entitlement(
 ) -> CommercialLicense:
     """Authorize one commercial feature at execution time.
 
-    The commercial license is the upper authorization boundary. An existing
-    TenantEntitlement may further narrow access by disabling the feature, but
-    it cannot grant a feature absent from a restricted license.
+    Explicit feature codes are mandatory for newly issued licenses. Only the
+    migration-created ``grandfathered`` legacy licenses may use an empty list,
+    preserving existing tenants without making an accidentally empty new
+    license equivalent to unlimited access.
     """
     license_row = await assert_execution_license(db, tenant_id=tenant_id)
-
     licensed_features = set(license_row.feature_codes or [])
+    grandfathered = bool((license_row.license_metadata or {}).get("grandfathered"))
+    if not licensed_features and not grandfathered:
+        raise ConflictError("Commercial license has no authorized features")
     if licensed_features and feature_code not in licensed_features:
-        raise ConflictError(
-            f"Commercial license does not include feature: {feature_code}"
-        )
+        raise ConflictError(f"Commercial license does not include feature: {feature_code}")
 
     result = await db.execute(
         select(TenantEntitlement).where(
@@ -129,16 +163,14 @@ async def assert_feature_entitlement(
         )
     )
     entitlement = result.scalar_one_or_none()
-
     if entitlement is not None and not entitlement.is_enabled:
-        raise ConflictError(
-            f"Tenant entitlement is disabled for feature: {feature_code}"
-        )
-
+        raise ConflictError(f"Tenant entitlement is disabled for feature: {feature_code}")
     return license_row
 
 
-async def assert_execution_license(db: AsyncSession, *, tenant_id: uuid.UUID) -> CommercialLicense:
+async def assert_execution_license(
+    db: AsyncSession, *, tenant_id: uuid.UUID
+) -> CommercialLicense:
     license_row = await get_active_license(db, tenant_id=tenant_id)
     if license_row is None:
         raise ConflictError("Commercial license is missing, expired, or revoked")

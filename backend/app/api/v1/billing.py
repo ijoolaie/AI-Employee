@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Header, HTTPException
-from app.core.config import get_settings
+from fastapi import APIRouter
 from app.core.deps import CurrentContext, DbSession
 from app.schemas.common import APIResponse
-from app.schemas.billing import PlanResponse, SubscriptionResponse, SubscribeRequest, CancelRequest, BillingEventRequest, CheckoutSessionRequest, CheckoutSessionResponse, PortalSessionResponse
+from app.schemas.billing import PlanResponse, SubscriptionResponse, SubscribeRequest, CancelRequest, CheckoutSessionRequest, CheckoutSessionResponse, PortalSessionResponse
 from app.services import billing_service, stripe_service
 
 router = APIRouter(prefix="/billing", tags=["billing"])
@@ -36,21 +35,12 @@ async def cancel(payload: CancelRequest, ctx: CurrentContext, db: DbSession):
     await db.commit(); await db.refresh(sub, ["plan"])
     return APIResponse(success=True, data=_sub_response(sub))
 
-@router.post("/events", response_model=APIResponse[dict])
-async def billing_event(payload: BillingEventRequest, db: DbSession, x_billing_webhook_secret: str | None = Header(default=None)):
-    secret = get_settings().billing_webhook_secret
-    if not secret or x_billing_webhook_secret != secret:
-        raise HTTPException(status_code=403, detail="Billing webhook authentication failed")
-    tenant_id = __import__("uuid").UUID(payload.tenant_id) if payload.tenant_id else None
-    event = await billing_service.record_event(db, tenant_id=tenant_id, provider=payload.provider, provider_event_id=payload.provider_event_id, event_type=payload.event_type, payload=payload.payload, plan_code=payload.plan_code, status=payload.status)
-    await db.commit()
-    return APIResponse(success=True, data={"event_id": str(event.id), "status": event.status})
-
 
 # ── Phase 6: real Stripe checkout / self-serve portal ──────────────────
-# Closes the Phase 4 commercial exit gate's implementation half; see
-# documents/64_PHASE_6_STRIPE_INTEGRATION_AS_BUILT_v0.6.0.md for what is
-# and is not proven by this code alone.
+# The public Stripe webhook receiver lives in billing_webhooks.py. Keeping
+# provider webhook ingestion out of this authenticated router prevents a
+# second, weaker event-ingestion path from bypassing Stripe signature
+# verification.
 
 @router.post("/checkout", response_model=APIResponse[CheckoutSessionResponse])
 async def create_checkout(payload: CheckoutSessionRequest, ctx: CurrentContext, db: DbSession):
@@ -62,7 +52,6 @@ async def create_checkout(payload: CheckoutSessionRequest, ctx: CurrentContext, 
     )
     await db.commit()
     return APIResponse(success=True, data=CheckoutSessionResponse(checkout_url=url))
-
 
 @router.post("/portal", response_model=APIResponse[PortalSessionResponse])
 async def create_portal(ctx: CurrentContext, db: DbSession):
