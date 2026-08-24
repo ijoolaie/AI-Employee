@@ -4,6 +4,8 @@ import re
 
 _VERSION_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
 
+CURRENT_RELEASE_VERSION = "v1.2.0"
+
 
 @dataclass(frozen=True)
 class ReleaseChannelPolicy:
@@ -39,27 +41,25 @@ def assert_upgrade_allowed(
             f"Target version {target_version} is not supported on channel {policy.channel}"
         )
     if is_older_than(target_version, current_version):
-        raise ValueError(
-            "Downgrade is not an upgrade; use the rollback workflow"
-        )
+        raise ValueError("Downgrade is not an upgrade; use the rollback workflow")
 
 
 def default_policies() -> dict[str, ReleaseChannelPolicy]:
     return {
         "vendor": ReleaseChannelPolicy(
             channel="vendor",
-            minimum_supported_version="v1.1.0",
-            supported_versions=("v1.1.0", "v1.1.1", "v1.1.2"),
+            minimum_supported_version=CURRENT_RELEASE_VERSION,
+            supported_versions=(CURRENT_RELEASE_VERSION,),
         ),
         "reseller": ReleaseChannelPolicy(
             channel="reseller",
-            minimum_supported_version="v1.1.1",
-            supported_versions=("v1.1.1", "v1.1.2"),
+            minimum_supported_version=CURRENT_RELEASE_VERSION,
+            supported_versions=(CURRENT_RELEASE_VERSION,),
         ),
         "customer": ReleaseChannelPolicy(
             channel="customer",
-            minimum_supported_version="v1.1.1",
-            supported_versions=("v1.1.1", "v1.1.2"),
+            minimum_supported_version=CURRENT_RELEASE_VERSION,
+            supported_versions=(CURRENT_RELEASE_VERSION,),
         ),
     }
 
@@ -72,13 +72,12 @@ def assert_tenant_upgrade_allowed(
 ) -> None:
     """Validate a tenant release transition against its edition channel.
 
-    ``vendor_release_tag`` is the tenant's current immutable vendor baseline.
-    A missing current version is treated as an initial assignment and only the
-    target channel policy is checked.
+    v1.2.0 is the only certified release currently admitted to all commercial
+    channels. Older releases remain valid historical/rollback references but
+    are not accepted as new commercial delivery targets.
     """
     policies = policies or default_policies()
     channel = tenant.tenant_kind
-
     try:
         policy = policies[channel]
     except KeyError as exc:
@@ -108,28 +107,17 @@ async def upgrade_tenant_release(
     actor_id=None,
     policies: dict[str, ReleaseChannelPolicy] | None = None,
 ):
-    """Apply a validated vendor release upgrade to a tenant.
-
-    The actual release artifact must already be certified/available. This
-    function only owns admission and persistence of the supported release tag.
-    """
     assert_tenant_upgrade_allowed(
         tenant=tenant,
         target_version=target_version,
         policies=policies,
     )
-
     current_version = tenant.vendor_release_tag
-
     if current_version == target_version:
         return tenant
-
     tenant.vendor_release_tag = target_version
-
     from app.services import edition_service
-
     await db.flush()
-
     await edition_service.record_audit(
         db,
         tenant_id=tenant.id,
@@ -143,5 +131,4 @@ async def upgrade_tenant_release(
             "channel": tenant.tenant_kind,
         },
     )
-
     return tenant
