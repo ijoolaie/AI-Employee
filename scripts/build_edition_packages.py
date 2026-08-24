@@ -134,9 +134,8 @@ def main() -> None:
     for edition in PROFILES:
         profile_root = out / edition
         profile_root.mkdir(parents=True)
-        files: list[str] = []
         for relative in INCLUDE_PATHS:
-            files.extend(_copy_tree(relative, profile_root))
+            _copy_tree(relative, profile_root)
 
         (profile_root / "delivery" / "profile").mkdir(parents=True, exist_ok=True)
         profile = json.loads((ROOT / "delivery" / "profiles" / edition / "profile.json").read_text(encoding="utf-8"))
@@ -154,17 +153,22 @@ def main() -> None:
         (profile_root / "delivery" / "profile" / "EDITION-MANIFEST.json").write_text(
             json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
         )
-        archive = out / f"ai-employee-{args.release_tag}-{edition}.{revisions[edition]}.tar.gz"
+
+        archive = profile_root / f"ai-employee-{args.release_tag}-{edition}.{revisions[edition]}.tar.gz"
         with tarfile.open(archive, "w:gz") as tar:
             for path in sorted(profile_root.rglob("*")):
-                if path.is_file():
-                    tar.add(path, arcname=f"ai-employee-{args.release_tag}-{edition}.{revisions[edition]}/{path.relative_to(profile_root)}")
+                if path.is_file() and path != archive:
+                    tar.add(
+                        path,
+                        arcname=f"ai-employee-{args.release_tag}-{edition}.{revisions[edition]}/{path.relative_to(profile_root)}",
+                    )
         artifacts.append({
             "edition": edition,
             "revision": revisions[edition],
             "artifact": archive.name,
             "sha256": _sha256(archive),
             "source_commit_sha": args.commit_sha,
+            "path": f"{edition}/{archive.name}",
         })
 
     (out / "EDITION-RELEASE-MANIFEST.json").write_text(
