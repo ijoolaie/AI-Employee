@@ -33,20 +33,28 @@ The audit scans reachable Git blobs as well as the current tracked tree for comm
 
 Publicizing a repository also exposes its branch and pull-request history. Temporary/experimental branches were reviewed and stale/versioned branches with no unique commits ahead of the Phase 6 line were removed. `release/edition-model` is intentionally retained because it contains unique historical release-design commits.
 
-Closed pull requests were reviewed at the metadata/diff level for representative older certification work; the reviewed PRs contain source/test/documentation changes and no identified production secrets or customer data. This is evidence for the current repository history review, not a guarantee against every possible future historical finding.
+Current PR disposition before publicization:
+
+- **PR #34** — OPEN/DRAFT — active Phase 5 commercial production foundation; retained until Phase 5 is explicitly merged or retired.
+- **PR #39** — OPEN — active Phase 6 edition-separated delivery; retained as the authoritative edition-delivery PR.
+- **PR #28** — OPEN — genuine password-reset accessibility fix; retained because the fix is not present on `main` and closing it would leave the known bug unresolved.
+- **PR #32** — CLOSED — superseded by the current Phase 5/Phase 6 lineage; its optional paid-integration/CI hardening is no longer the authoritative delivery path.
+- **PR #35–#38 and #40** — CLOSED — duplicate/stale Phase 5 preparation PRs or duplicate PR #40; their branches were reviewed/removed where applicable.
+- Older merged PRs were reviewed at metadata/diff level for representative historical certification and productization work; no identified production secrets or customer data were found in the reviewed history.
 
 ## Manual gates before Public visibility
 
 - [x] `python scripts/public_repository_audit.py` passes with zero hard findings; the reported review items were addressed or intentionally retained.
 - [x] No real credentials or customer data were reported by the current full-history public repository audit.
 - [x] Temporary/experimental branches have been reviewed; flagged stale/versioned branches were deleted. `release/edition-model` remains as historical reference.
-- [x] Closed PR history was reviewed for sensitive material; no identified production secrets or customer data were found in the reviewed historical PRs.
+- [x] Pull request history was reviewed; stale duplicate PR #32 was closed, while #34, #39 and #28 are intentionally retained because they represent active or unresolved work.
 - [x] An explicit `SECURITY.md` exists and the intended vulnerability-reporting path is known.
 - [x] License decision is made: **Apache License 2.0** is present at repository root.
 - [x] README describes the product and current evidence boundary without claiming external production certification.
 - [x] Repository-side dependency/security automation is present: Dependabot configuration plus CodeQL workflow.
 - [ ] GitHub repository security settings still require owner-side review/enabling where available: secret scanning, push protection and dependency/security alerts.
 - [ ] Repository settings still require owner-side review: branch protection/rulesets, tag protection, issue permissions and default branch.
+- [ ] Final publicization review must confirm that no open PR retained for technical reasons contains secrets or customer data; current retained PRs #28, #34 and #39 have been reviewed at metadata/diff level for the current public-readiness decision.
 
 ## Evidence boundary
 
