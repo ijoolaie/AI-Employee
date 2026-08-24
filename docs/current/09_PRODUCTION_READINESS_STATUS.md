@@ -2,9 +2,13 @@
 
 **Status date:** 2026-08-24
 
-## Repository and local production-like status
+## Current release boundary
+
+The current vendor release is **v1.2.0**. Release artifact certification is recorded in `docs/current/38_V1.2.0_RELEASE_CERTIFICATION_2026-08-24.md`.
 
 The repository-level certification and productization implementation remain distinct from external production certification.
+
+## Local production-like evidence
 
 Current local evidence includes:
 
@@ -19,28 +23,17 @@ Current local evidence includes:
 - Controlled API recovery drill: PASS.
 - Release artifact workflow includes exact-release checkout, package build, checksum verification and release notes generation from the exact release ref.
 
-The latest local recovery drill recorded known-good revision:
-
-`fc214360715d194c5057de2da341f0768298751d`
-
 This is valid local production-like evidence only. It is not evidence of an external customer-facing production host.
 
-## Production environment preparation
+## Release artifact evidence
 
-The repository now contains:
-
-- `docs/current/28_PRODUCTION_ENVIRONMENT_PREPARATION.md` — required target inputs, release admission, deployment sequence and recovery preparation.
-- `docs/current/29_COMMERCIAL_SUPPORT_UPDATE_POLICY.md` — commercial support responsibilities, escalation and update/change-control policy.
-
-These contracts make the external deployment path executable once a real target exists without placing secrets or infrastructure credentials in Git history.
+The v1.2.0 release workflow was successfully executed in GitHub Actions under run `32738347495`, producing the runtime and edition artifacts recorded in the release certification document.
 
 ## External live environment — NOT YET CERTIFIED
 
 ### 1. Live production deployment
 
 Not executed because a real external production target and production credentials are not part of the repository. Do not fabricate these values.
-
-When a real target exists, configure a protected GitHub `production` Environment and provide deployment credentials through the platform secret manager. Expected secret names are deployment-specific; do not commit them to Git.
 
 ### 2. External monitoring and alert delivery
 
@@ -61,7 +54,7 @@ Security configuration and secret controls are implemented and locally validated
 ## Required production sequence
 
 1. Create/verify the immutable release tag and release artifact.
-2. Run the release artifact workflow in GitHub Actions when Actions capacity is available.
+2. Run the release artifact workflow in GitHub Actions.
 3. Provision target secrets through the approved secret manager.
 4. Configure HTTPS, trusted origins and target infrastructure endpoints.
 5. Deploy API, worker, Beat and frontend as applicable.
