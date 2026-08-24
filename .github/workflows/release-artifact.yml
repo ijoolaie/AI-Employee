@@ -73,28 +73,8 @@ jobs:
         working-directory: dist/release
         run: sha256sum -c SHA256SUMS
 
-      - name: Verify all edition package checksums
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import hashlib
-          import json
-          from pathlib import Path
-          root = Path('dist/editions')
-          manifests = list(root.rglob('EDITION-RELEASE-MANIFEST.json'))
-          if len(manifests) != 1:
-              raise SystemExit(f'expected one edition release manifest, found {manifests}')
-          data = json.loads(manifests[0].read_text())
-          for item in data['artifacts']:
-              path = manifests[0].parent / item['edition'] / item['artifact']
-              if not path.exists():
-                  raise SystemExit(f'missing edition artifact: {path}')
-              digest = hashlib.sha256(path.read_bytes()).hexdigest()
-              if digest != item['sha256']:
-                  raise SystemExit(f'checksum mismatch: {path}')
-          print('edition package checksums verified')
-          PY
+      - name: Verify Vendor, Reseller and Customer packages
+        run: python scripts/validate_edition_packages.py "dist/editions/${{ steps.release.outputs.version }}"
 
       - name: Upload base runtime package
         uses: actions/upload-artifact@v4
