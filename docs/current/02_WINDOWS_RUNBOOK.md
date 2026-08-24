@@ -6,33 +6,33 @@ Use these terminals:
 
 **T1 — infrastructure**
 ```powershell
-cd <project>ackend
+cd <project>\backend
 docker compose up -d postgres redis
 ```
 
 **T2 — API**
 ```powershell
-cd <project>ackend
+cd <project>\backend
 .\.venv\Scripts\Activate.ps1
 uvicorn app.main:app --reload --port 8000
 ```
 
 **T3 — worker**
 ```powershell
-cd <project>ackend
+cd <project>\backend
 .\.venv\Scripts\Activate.ps1
 python -m celery -A app.workers.celery_app worker -l info --pool=solo
 ```
 
 **T4 — frontend**
 ```powershell
-cd <project>rontend
+cd <project>\frontend
 npm run dev
 ```
 
 **Optional T5 — beat**
 ```powershell
-cd <project>ackend
+cd <project>\backend
 .\.venv\Scripts\Activate.ps1
 python -m celery -A app.workers.celery_app beat -l info
 ```
@@ -45,6 +45,30 @@ Invoke-RestMethod http://localhost:8000/health/dependencies
 ```
 
 Expected: HTTP 200. The dependency endpoint should report PostgreSQL/Redis as reachable.
+
+## Local production-like validation stack
+
+The repository's `docker-compose.local-production.yml` is intended for a production-like validation stack that can run beside the normal development stack on Windows. It deliberately binds alternate host ports to avoid collisions with the default local compose services:
+
+| Service | Host port | Container port |
+|---|---:|---:|
+| PostgreSQL | `15432` | `5432` |
+| Redis | `16379` | `6379` |
+| API | `18000` | `8000` |
+| Frontend | `13000` | `3000` |
+
+The validation environment keeps these bindings local-only (`127.0.0.1`). The application still uses the internal Compose service names (`postgres`, `redis`) for container-to-container connectivity.
+
+Example Windows validation commands:
+
+```powershell
+docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production up -d
+Invoke-RestMethod http://127.0.0.1:18000/health
+Invoke-RestMethod http://127.0.0.1:18000/health/dependencies
+Invoke-WebRequest http://127.0.0.1:13000/login -UseBasicParsing
+```
+
+The local production environment file is intentionally operator-managed and ignored by Git. Do not commit production secrets.
 
 ## Stop
 

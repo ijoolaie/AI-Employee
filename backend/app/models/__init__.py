@@ -30,6 +30,7 @@ from app.models.shopify_webhook_event import ShopifyWebhookEvent
 from app.models.password_reset_token import PasswordResetToken
 from app.models.tenant_entitlement import TenantEntitlement
 from app.models.support_escalation import SupportEscalation
+from app.models.license import CommercialLicense
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -40,5 +41,5 @@ __all__ = [
     "BillingPlan", "Subscription", "BillingEvent", "BusinessInvoice", "CustomerChannel",
     "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "PasswordResetToken",
-    "TenantEntitlement", "SupportEscalation",
+    "TenantEntitlement", "SupportEscalation", "CommercialLicense",
 ]

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "edition": "reseller",
+  "release_channel": "reseller",
+  "authority": "delegated",
+  "parent_edition": "vendor",
+  "required_identities": ["vendor_release_tag", "vendor_commit_sha", "reseller_id", "delivery_revision"],
+  "forbidden_authorities": ["vendor-global", "sibling-reseller", "unrelated-customer"],
+  "secret_policy": "external-secret-store",
+  "artifact_role": "delegated-commercial-delivery"
+}

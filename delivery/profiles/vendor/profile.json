@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "edition": "vendor",
+  "release_channel": "vendor",
+  "authority": "product",
+  "parent_edition": null,
+  "required_identities": ["vendor_release_tag", "vendor_commit_sha"],
+  "forbidden_authorities": [],
+  "secret_policy": "external-secret-store",
+  "artifact_role": "canonical-product-release"
+}

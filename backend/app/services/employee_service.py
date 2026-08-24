@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import inspect
 import uuid
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.ai.tool_registry import registry
 
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.logging import request_id_var
@@ -29,22 +32,49 @@ async def create_employee(
     rules: dict[str, Any],
     actor_id: uuid.UUID | None,
 ) -> Employee:
+    # Fail closed: validate tools before any quota/database work.
+    unknown_tools = sorted(
+        set(allowed_tools) - {tool.name for tool in registry.list()}
+    )
+    if unknown_tools:
+        raise ValidationAppError(
+            "Employee references unregistered tools",
+            details={"unknown_tools": unknown_tools},
+        )
+
     if tenant_id is not None:
         await billing_service.enforce_employee_quota(db, tenant_id=tenant_id)
+
     validate_schema_definition(input_schema, field_name="input_schema")
     validate_schema_definition(output_schema, field_name="output_schema")
 
     existing = await db.execute(
-        select(Employee).where(Employee.tenant_id == tenant_id, Employee.slug == slug)
+        select(Employee).where(
+            Employee.tenant_id == tenant_id,
+            Employee.slug == slug,
+        )
     )
     if existing.scalar_one_or_none():
-        raise ValidationAppError(f"Employee with slug '{slug}' already exists for this tenant")
+        raise ValidationAppError(
+            f"Employee with slug '{slug}' already exists for this tenant"
+        )
 
-    employee = Employee(tenant_id=tenant_id, slug=slug, name=name, kind=kind, is_active=True)
-    db.add(employee)
+    employee = Employee(
+        id=uuid.uuid4(),
+        tenant_id=tenant_id,
+        slug=slug,
+        name=name,
+        kind=kind,
+        is_active=True,
+    )
+    add_result = db.add(employee)
+    if inspect.isawaitable(add_result):
+        await add_result
+
     await db.flush()
 
     version = EmployeeVersion(
+        id=uuid.uuid4(),
         employee_id=employee.id,
         version_number=1,
         is_current=True,
@@ -54,7 +84,10 @@ async def create_employee(
         allowed_tools=allowed_tools,
         rules=rules,
     )
-    db.add(version)
+    add_result = db.add(version)
+    if inspect.isawaitable(add_result):
+        await add_result
+
     await db.flush()
     await db.refresh(employee)
 
@@ -69,6 +102,7 @@ async def create_employee(
         request_id=request_id_var.get(),
         metadata={"slug": slug, "version_number": 1},
     )
+
     return employee
 
 
@@ -85,11 +119,25 @@ async def publish_new_version(
     actor_id: uuid.UUID | None,
 ) -> EmployeeVersion:
     """Every meaningful change to Prompt/Tools/Schema is a new version;
-    old versions are kept for history and Replay (11_Employee_Framework §4)."""
+    old versions are kept for history and Replay (11_Employee_Framework §4).
+    """
     validate_schema_definition(input_schema, field_name="input_schema")
     validate_schema_definition(output_schema, field_name="output_schema")
 
-    employee = await get_employee(db, employee_id=employee_id, tenant_id=tenant_id)
+    unknown_tools = sorted(
+        set(allowed_tools) - {tool.name for tool in registry.list()}
+    )
+    if unknown_tools:
+        raise ValidationAppError(
+            "Employee references unregistered tools",
+            details={"unknown_tools": unknown_tools},
+        )
+
+    employee = await get_employee(
+        db,
+        employee_id=employee_id,
+        tenant_id=tenant_id,
+    )
 
     last_version_result = await db.execute(
         select(EmployeeVersion)
@@ -104,6 +152,7 @@ async def publish_new_version(
         last_version.is_current = False
 
     new_version = EmployeeVersion(
+        id=uuid.uuid4(),
         employee_id=employee.id,
         version_number=next_number,
         is_current=True,
@@ -113,7 +162,10 @@ async def publish_new_version(
         allowed_tools=allowed_tools,
         rules=rules,
     )
-    db.add(new_version)
+    add_result = db.add(new_version)
+    if inspect.isawaitable(add_result):
+        await add_result
+
     await db.flush()
     await db.refresh(new_version)
 
@@ -122,17 +174,21 @@ async def publish_new_version(
         action="employee.version_published",
         actor_type="user" if actor_id else "system",
         actor_id=actor_id,
-        tenant_id=tenant_id,
+        tenant_id=employee.tenant_id,
         resource_type="employee",
         resource_id=employee.id,
         request_id=request_id_var.get(),
         metadata={"version_number": next_number},
     )
+
     return new_version
 
 
 async def get_employee(
-    db: AsyncSession, *, employee_id: uuid.UUID, tenant_id: uuid.UUID | None
+    db: AsyncSession,
+    *,
+    employee_id: uuid.UUID,
+    tenant_id: uuid.UUID | None,
 ) -> Employee:
     result = await db.execute(
         select(Employee).where(
@@ -141,8 +197,10 @@ async def get_employee(
         )
     )
     employee = result.scalar_one_or_none()
+
     if employee is None:
         raise NotFoundError("Employee not found")
+
     return employee
 
 
@@ -151,7 +209,8 @@ async def get_current_version(
 ) -> EmployeeVersion:
     result = await db.execute(
         select(EmployeeVersion).where(
-            EmployeeVersion.employee_id == employee_id, EmployeeVersion.is_current.is_(True)
+            EmployeeVersion.employee_id == employee_id,
+            EmployeeVersion.is_current.is_(True),
         )
     )
     version = result.scalar_one_or_none()
@@ -160,9 +219,13 @@ async def get_current_version(
     return version
 
 
-async def list_employees(db: AsyncSession, *, tenant_id: uuid.UUID | None) -> list[Employee]:
+async def list_employees(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID | None,
+) -> list[Employee]:
     """System Employees (tenant_id NULL) + this tenant's Custom Employees
-    (11_Employee_Framework §6)."""
+    (11_Employee_Framework ?6)."""
     result = await db.execute(
         select(Employee)
         .where(

@@ -2,8 +2,25 @@ name: Architecture Guard
 
 on:
   pull_request:
+    paths:
+      - 'backend/**'
+      - 'scripts/check_architecture.py'
+      - 'scripts/final_architecture_audit.py'
+      - 'scripts/production_completeness_audit.py'
+      - 'scripts/**'
+      - '.github/workflows/architecture.yml'
+      - 'docker-compose*.yml'
   push:
     branches: [main, master]
+    paths:
+      - 'backend/**'
+      - 'scripts/**'
+      - '.github/workflows/architecture.yml'
+      - 'docker-compose*.yml'
+
+concurrency:
+  group: architecture-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   architecture:

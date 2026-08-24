@@ -143,6 +143,24 @@ async def provision_child_tenant(
     return tenant, user
 
 
+async def _authorized_parent_entitlement(
+    db: AsyncSession, *, parent: Tenant, feature_code: str, requested_quota: int | None
+) -> int | None:
+    """Return the quota a reseller is allowed to delegate from its own parent."""
+    if parent.tenant_kind == EDITION_VENDOR:
+        return requested_quota
+    row = (await db.execute(select(TenantEntitlement).where(
+        TenantEntitlement.tenant_id == parent.id,
+        TenantEntitlement.feature_code == feature_code,
+        TenantEntitlement.is_enabled.is_(True),
+    ))).scalar_one_or_none()
+    if row is None:
+        raise HTTPException(status_code=403, detail="Feature entitlement is not authorized by the parent edition")
+    if row.quota_limit is not None and requested_quota is not None and requested_quota > row.quota_limit:
+        raise HTTPException(status_code=403, detail="Delegated quota exceeds the parent-authorized limit")
+    return row.quota_limit if requested_quota is None else requested_quota
+
+
 async def delegate_entitlement(
     db: AsyncSession,
     *,
@@ -153,6 +171,9 @@ async def delegate_entitlement(
 ) -> TenantEntitlement:
     expected_kind = EDITION_RESELLER if parent.tenant_kind == EDITION_VENDOR else EDITION_CUSTOMER
     assert_direct_child(parent, child, expected_kind)
+    effective_quota = await _authorized_parent_entitlement(
+        db, parent=parent, feature_code=feature_code, requested_quota=quota_limit
+    )
     row = (await db.execute(select(TenantEntitlement).where(
         TenantEntitlement.tenant_id == child.id,
         TenantEntitlement.feature_code == feature_code,
@@ -162,18 +183,18 @@ async def delegate_entitlement(
             tenant_id=child.id,
             delegated_from_tenant_id=parent.id,
             feature_code=feature_code,
-            quota_limit=quota_limit,
+            quota_limit=effective_quota,
             quota_used=0,
             is_enabled=True,
         )
         db.add(row)
     else:
-        row.quota_limit = quota_limit
+        row.quota_limit = effective_quota
         row.is_enabled = True
         row.delegated_from_tenant_id = parent.id
     await db.commit()
     await db.refresh(row)
-    await record_audit(db, tenant_id=parent.id, actor_id=None, action="entitlement.delegated", resource_type="tenant_entitlement", resource_id=str(row.id), metadata={"child_tenant_id": str(child.id), "feature_code": feature_code, "quota_limit": quota_limit})
+    await record_audit(db, tenant_id=parent.id, actor_id=None, action="entitlement.delegated", resource_type="tenant_entitlement", resource_id=str(row.id), metadata={"child_tenant_id": str(child.id), "feature_code": feature_code, "quota_limit": effective_quota})
     return row
 
 

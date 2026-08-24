@@ -1,7 +1,7 @@
 # AI-Employee — A–F Test Tracker
 
-**Status date:** 2026-08-23  
-**Repository:** `ijoolaie/AI-Employee`  
+**Status date:** 2026-08-23
+**Repository:** `ijoolaie/AI-Employee`
 **Purpose:** Single living tracker for the current test sequence. Update this document as evidence is completed; do not restart already-passed smoke/contract tests unless a regression requires it.
 
 ## PHASE A — Core

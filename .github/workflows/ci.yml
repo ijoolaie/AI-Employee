@@ -3,14 +3,26 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'scripts/**'
+      - '.github/workflows/ci.yml'
+      - 'docker-compose*.yml'
   push:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'scripts/**'
+      - '.github/workflows/ci.yml'
+      - 'docker-compose*.yml'
 
-# Do not cancel an in-flight validation run for the same ref. A cancelled
-# validation run provides no evidence about the commit being certified.
+# A newer commit supersedes older validation for the same branch/ref.
+# Cancelling stale runs prevents wasting Actions minutes on obsolete commits.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -51,6 +63,16 @@ jobs:
       SECRET_KEY: ci-only-secret
       APP_ENV: test
       CI: true
+      # Paid/external providers are intentionally absent in CI. Tests must use
+      # in-memory adapters, mocks, or contract tests and never require billing.
+      STRIPE_SECRET_KEY: ''
+      STRIPE_PUBLISHABLE_KEY: ''
+      STRIPE_WEBHOOK_SECRET: ''
+      SHOPIFY_CLIENT_ID: ''
+      SHOPIFY_CLIENT_SECRET: ''
+      ANTHROPIC_API_KEY: ''
+      LM_STUDIO_API_KEY: ''
+      SMTP_PASSWORD: ''
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -89,6 +111,9 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # Frontend CI also remains independent of paid vendor accounts.
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ''
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
