@@ -6,7 +6,7 @@ This is the current authoritative productization roadmap. The platform core is c
 
 ## Current project position — 2026-08-24
 
-**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE → PHASE 6 EDITION-SEPARATED DELIVERY 6A–6C LOCALLY VERIFIED; 6D/6E AND OTHER EXTERNAL PRODUCTION GATES REMAIN.**
+**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE → PHASE 6 EDITION-SEPARATED DELIVERY 6A–6C LOCALLY VERIFIED → PHASE 6D WORKFLOW READY WITH EXTERNAL ACTIONS EXECUTION PENDING → PHASE 6E AND OTHER EXTERNAL PRODUCTION GATES REMAIN.**
 
 Evidence states remain explicit: implementation is not the same as executed local or external-production evidence.
 
@@ -207,7 +207,7 @@ Primary evidence: `docs/current/27_PHASE5_COMMERCIAL_PRODUCTION_EVIDENCE_2026-08
 
 ## Phase 6 — Edition-Separated Delivery
 
-**Status: 🟢 6A–6C LOCALLY VERIFIED; 6D/6E EXTERNAL GATES REMAIN.**
+**Status: 🟢 6A–6C LOCALLY VERIFIED; 6D WORKFLOW READY / ACTIONS EXECUTION PENDING; 6E EXTERNAL GATE.**
 
 Phase 6 separates the delivery surface into three independently named artifacts while preserving one authoritative codebase and one immutable Vendor source release. It does not create permanent source forks.
 
@@ -236,9 +236,16 @@ Phase 6 separates the delivery surface into three independently named artifacts 
 
 ### Phase 6D — Release-system integration
 
-- [ ] Attach Vendor, Reseller and Customer artifacts to the same immutable vendor release in GitHub Actions.
-- [ ] Publish per-edition checksums and combined edition release manifest.
-- [ ] Verify artifact generation on the first post-reset Actions run.
+- [x] Profile package generation is wired into `.github/workflows/release-artifact.yml`.
+- [x] Manual release dispatch requires an explicit version and exact release ref.
+- [x] Workflow checkout is pinned to that exact release ref and records the actual commit SHA.
+- [x] Vendor, Reseller and Customer builders receive the actual checked-out commit SHA.
+- [x] Runtime and edition package validation/upload steps are present.
+- [ ] Successful GitHub Actions execution recorded and inspected.
+- [ ] Vendor, Reseller and Customer artifacts confirmed from that Actions run.
+- [ ] Per-edition checksums and combined manifest confirmed from that Actions run.
+
+Primary Phase 6D evidence: `docs/current/34_EDITION_DELIVERY_IMPLEMENTATION_PLAN.md` and `docs/current/35_PHASE6_LOCAL_BUILD_EVIDENCE_2026-08-24.md`.
 
 ### Phase 6E — Production delivery
 
@@ -286,4 +293,4 @@ A release is commercially deliverable only when the exact release identity is im
 
 ## Immediate next phase
 
-**Continue Phase 6 in parallel with the remaining Phase 5 external gates. Phase 6A–6C now have local execution evidence. After Actions capacity resets, exercise 6D in GitHub Actions and then pursue real production delivery/evidence for 6E. Real production deployment, revenue proof, external monitoring/recovery and final security certification remain environment-specific gates.**
+**Phase 6D workflow implementation is complete and documented. The remaining Phase 6D gate is an actual GitHub Actions execution with artifact inspection. After that, pursue real production delivery/evidence for 6E. Real production deployment, revenue proof, external monitoring/recovery and final security certification remain environment-specific gates.**
