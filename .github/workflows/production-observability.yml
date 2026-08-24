@@ -5,6 +5,7 @@ on:
     paths:
       - 'docker-compose.production.yml'
       - 'backend/app/**'
+      - 'docs/releases/**'
       - '.github/workflows/production-observability.yml'
   workflow_dispatch:
 

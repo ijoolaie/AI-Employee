@@ -7,6 +7,7 @@ on:
       - 'backend/**'
       - 'frontend/**'
       - 'scripts/**'
+      - 'docs/releases/**'
       - '.github/workflows/ci.yml'
       - 'docker-compose*.yml'
   push:
@@ -15,11 +16,10 @@ on:
       - 'backend/**'
       - 'frontend/**'
       - 'scripts/**'
+      - 'docs/releases/**'
       - '.github/workflows/ci.yml'
       - 'docker-compose*.yml'
 
-# A newer commit supersedes older validation for the same branch/ref.
-# Cancelling stale runs prevents wasting Actions minutes on obsolete commits.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -63,8 +63,6 @@ jobs:
       SECRET_KEY: ci-only-secret
       APP_ENV: test
       CI: true
-      # Paid/external providers are intentionally absent in CI. Tests must use
-      # in-memory adapters, mocks, or contract tests and never require billing.
       STRIPE_SECRET_KEY: ''
       STRIPE_PUBLISHABLE_KEY: ''
       STRIPE_WEBHOOK_SECRET: ''
@@ -112,7 +110,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      # Frontend CI also remains independent of paid vendor accounts.
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ''
     steps:
       - uses: actions/checkout@v4

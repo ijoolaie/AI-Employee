@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'scripts/production_rollback_smoke.sh'
+      - 'docs/releases/**'
       - '.github/workflows/production-rollback.yml'
       - 'docker-compose.production.yml'
       - 'backend/app/**'
