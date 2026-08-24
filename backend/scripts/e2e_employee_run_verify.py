@@ -1,12 +1,20 @@
 """Real-stack Product Acceptance certification for Employee -> Run -> AI -> Result."""
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import sys
 import time
+import uuid
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+from sqlalchemy import select
+
+from app.core.database import AsyncSessionLocal
+from app.models.tenant import Tenant
+from app.services import edition_service, license_service
 
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
@@ -32,6 +40,49 @@ def request(method: str, path: str, payload: dict | None = None, token: str | No
         raise AssertionError(f"{method} {path} unavailable: {exc}") from exc
 
 
+async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> None:
+    """Create a real, feature-scoped commercial license for this ephemeral gate tenant.
+
+    Registration creates a customer tenant without a commercial issuer by design.
+    The certification fixture therefore creates an isolated vendor parent, attaches
+    the freshly-created customer to it, and issues a normal license through the
+    production license service. This keeps the production execution gate intact;
+    the test does not bypass or disable license enforcement.
+    """
+    async with AsyncSessionLocal() as db:
+        customer = (
+            await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+        ).scalar_one_or_none()
+        if customer is None:
+            raise AssertionError(f"Certification tenant not found: {tenant_id}")
+
+        vendor = Tenant(
+            name=f"Certification Vendor {suffix}",
+            slug=f"cert-vendor-{suffix}",
+            status="active",
+            tenant_kind=edition_service.EDITION_VENDOR,
+            settings={"certification_fixture": True},
+        )
+        db.add(vendor)
+        await db.flush()
+
+        customer.parent_tenant_id = vendor.id
+        customer.vendor_release_tag = "v1.2.1"
+        customer.delivery_revision = "production-certification"
+        await db.flush()
+
+        license_row = await license_service.issue_license(
+            db,
+            issuer=vendor,
+            tenant=customer,
+            feature_codes=["employee.run"],
+            metadata={"certification_fixture": True, "purpose": "production-certification"},
+        )
+        assert license_row.status == "active", license_row
+        assert "employee.run" in (license_row.feature_codes or []), license_row
+        await db.commit()
+
+
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     tenant_slug = f"cert-product-{suffix}"
@@ -53,6 +104,14 @@ def main() -> int:
     access_token = (registered.get("data") or {}).get("access_token")
     assert access_token, f"registration did not return access token: {registered}"
     print("PRODUCT ACCEPTANCE AUTH PASS")
+
+    status, me = request("GET", "/auth/me", token=access_token)
+    assert status == 200, f"auth me expected 200, got {status}: {me}"
+    tenant_id_raw = ((me.get("data") or {}).get("tenant") or {}).get("id")
+    assert tenant_id_raw, f"auth me missing tenant id: {me}"
+    tenant_id = uuid.UUID(str(tenant_id_raw))
+    asyncio.run(provision_certification_license(tenant_id, suffix))
+    print("PRODUCT ACCEPTANCE COMMERCIAL LICENSE FIXTURE PASS")
 
     employee_payload = {
         "slug": f"cert-employee-{suffix}",
