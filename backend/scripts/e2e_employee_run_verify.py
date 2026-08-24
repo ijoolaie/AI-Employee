@@ -56,6 +56,11 @@ async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> 
         if customer is None:
             raise AssertionError(f"Certification tenant not found: {tenant_id}")
 
+        # Make the fixture's edition boundary explicit rather than relying on the
+        # ORM's column default. This is important because the production license
+        # service intentionally requires issuer -> direct-child edition alignment.
+        customer.tenant_kind = edition_service.EDITION_CUSTOMER
+
         vendor = Tenant(
             name=f"Certification Vendor {suffix}",
             slug=f"cert-vendor-{suffix}",
@@ -70,6 +75,15 @@ async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> 
         customer.vendor_release_tag = "v1.2.1"
         customer.delivery_revision = "production-certification"
         await db.flush()
+        await db.refresh(customer)
+        await db.refresh(vendor)
+
+        if customer.parent_tenant_id != vendor.id or customer.tenant_kind != edition_service.EDITION_CUSTOMER:
+            raise AssertionError(
+                "Certification edition fixture is invalid: "
+                f"parent={customer.parent_tenant_id}, vendor={vendor.id}, "
+                f"kind={customer.tenant_kind!r}"
+            )
 
         license_row = await license_service.issue_license(
             db,
