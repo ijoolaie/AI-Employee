@@ -8,10 +8,11 @@ from app.core.exceptions import ConflictError
 from app.services import license_service
 
 
-def _license(*, feature_codes):
+def _license(*, feature_codes, license_metadata=None):
     return SimpleNamespace(
         id="license-1",
         feature_codes=feature_codes,
+        license_metadata=license_metadata or {},
     )
 
 
@@ -66,13 +67,53 @@ async def test_feature_entitlement_rejects_feature_missing_from_restricted_licen
 
 
 @pytest.mark.asyncio
+async def test_feature_entitlement_rejects_empty_new_license(monkeypatch):
+    db = _DB()
+    license_row = _license(feature_codes=[])
+
+    monkeypatch.setattr(
+        license_service,
+        "assert_execution_license",
+        AsyncMock(return_value=license_row),
+    )
+
+    with pytest.raises(ConflictError, match="no authorized features"):
+        await license_service.assert_feature_entitlement(
+            db,
+            tenant_id="tenant-1",
+            feature_code="tool:send_email",
+        )
+
+
+@pytest.mark.asyncio
+async def test_feature_entitlement_allows_grandfathered_empty_license(monkeypatch):
+    db = _DB()
+    license_row = _license(
+        feature_codes=[],
+        license_metadata={"grandfathered": True},
+    )
+
+    monkeypatch.setattr(
+        license_service,
+        "assert_execution_license",
+        AsyncMock(return_value=license_row),
+    )
+
+    await license_service.assert_feature_entitlement(
+        db,
+        tenant_id="tenant-1",
+        feature_code="tool:send_email",
+    )
+
+
+@pytest.mark.asyncio
 async def test_feature_entitlement_rejects_disabled_tenant_entitlement(monkeypatch):
     db = _DB(
         entitlement=SimpleNamespace(
             is_enabled=False,
         )
     )
-    license_row = _license(feature_codes=[])
+    license_row = _license(feature_codes=["tool:send_email"])
 
     monkeypatch.setattr(
         license_service,
