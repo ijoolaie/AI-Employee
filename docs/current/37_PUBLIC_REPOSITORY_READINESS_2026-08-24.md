@@ -32,15 +32,15 @@ Publicizing a repository also exposes its branch and pull-request history. Tempo
 
 ## Manual gates before Public visibility
 
-- [ ] `python scripts/public_repository_audit.py` passes with zero hard findings.
-- [ ] No real credentials or customer data exist in reachable Git history.
-- [ ] Temporary/experimental branches have been reviewed.
+- [x] `python scripts/public_repository_audit.py` passes with zero hard findings; 10 review items were reported and addressed/retained intentionally (stale branches removed; `release/edition-model` retained as historical reference).
+- [x] No real credentials or customer data were reported by the current full-history public repository audit.
+- [x] Temporary/experimental branches have been reviewed; the flagged stale/versioned branches were deleted. `release/edition-model` remains because it contains unique historical release-design commits.
 - [ ] Closed draft PRs do not contain sensitive material that should not become public.
-- [ ] An explicit `SECURITY.md` exists and the intended vulnerability-reporting path is known.
-- [ ] License decision is made. Public visibility does not by itself grant permission to reuse copyrighted source.
-- [ ] README describes the product and current evidence boundary without claiming external production certification.
+- [x] An explicit `SECURITY.md` exists and the intended vulnerability-reporting path is known.
+- [x] License decision is made: **Apache License 2.0** was added at repository root in commit `d9b499080c2860e993ed84f8db075191697eeabc`.
+- [x] README describes the product and current evidence boundary without claiming external production certification.
 - [ ] GitHub security features appropriate for a public repository are reviewed/enabled where available: secret scanning, push protection, dependency alerts and Dependabot configuration.
-- [ ] Actions workflows are reviewed for least privilege and safe fork/PR behavior.
+- [x] Actions workflows have been reviewed for least-privilege baseline; `contents: read` is used and no production provider credentials are required for normal CI.
 - [ ] Repository settings are reviewed: branch protection/rulesets, tag protection, issue permissions and default branch.
 
 ## Evidence boundary
