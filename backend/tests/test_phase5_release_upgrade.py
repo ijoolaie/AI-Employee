@@ -37,16 +37,20 @@ def test_customer_upgrade_rejects_historical_target():
         )
 
 
-def test_customer_upgrade_rejects_downgrade_from_current_release():
-    policy = default_policies()["customer"]
+def test_customer_upgrade_rejects_downgrade_when_target_is_supported():
+    policy = default_policies()["customer"].__class__(
+        channel="customer",
+        minimum_supported_version="v1.1.0",
+        supported_versions=("v1.1.0", "v1.2.0"),
+    )
     tenant = _tenant("customer", "v1.2.0")
 
-    with pytest.raises(ValueError, match="Downgrade"):
-        from app.services.release_channel_service import assert_upgrade_allowed
+    from app.services.release_channel_service import assert_upgrade_allowed
 
+    with pytest.raises(ValueError, match="Downgrade"):
         assert_upgrade_allowed(
             current_version=tenant.vendor_release_tag,
-            target_version="v1.1.2",
+            target_version="v1.1.0",
             policy=policy,
         )
 
