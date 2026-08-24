@@ -1,80 +1,78 @@
 # Production Readiness Status
 
-**Status date:** 2026-08-20
+**Status date:** 2026-08-24
 
-## Certified in repository
+## Repository and local production-like status
 
-- Production Certification: PASS
-- Product Acceptance: PASS
-- Production Hardening: PASS
-- PostgreSQL backup/restore smoke: PASS
-- Redis persistence/restore smoke: PASS
-- Disaster Recovery: PASS
-- Production Observability contract: PASS
-- Failure detection: PASS
-- Rollback contract: PASS
-- Notification delivery contract: PASS
-- Deployment Readiness: PASS
-- Immutable release revision / manifest: PASS
-- Production Compose validation: PASS
-- Architecture Guard: PASS
+The repository-level certification and productization implementation remain distinct from external production certification.
 
-## Local production deployment evidence
+Current local evidence includes:
 
-The current deployment-tested revision is:
+- Backend suite: **238 passed** on 2026-08-23.
+- Production-like Docker API: healthy.
+- Production-like frontend: healthy.
+- PostgreSQL: healthy.
+- Redis: healthy.
+- API dependency readiness: PASS.
+- Frontend `/login`: PASS.
+- PostgreSQL logical restore + Redis AOF restore smoke: PASS.
+- Controlled API recovery drill: PASS.
+- Release artifact workflow includes exact-release checkout, package build, checksum verification and release notes generation from the exact release ref.
 
-`27dc0aa5651b60afe171cada831185d28b73f58c`
+The latest local recovery drill recorded known-good revision:
 
-The Docker Desktop production-like stack was successfully deployed and verified with:
+`fc214360715d194c5057de2da341f0768298751d`
 
-- API healthy
-- Frontend healthy
-- PostgreSQL healthy
-- Redis healthy
-- Worker healthy
-- Beat running
-- API dependency readiness: PASS
-- Controlled API failure detection: PASS
-- API recovery after controlled stop: PASS
+This is valid local production-like evidence only. It is not evidence of an external customer-facing production host.
 
-This is valid local production-like deployment/recovery evidence. It is not evidence of an external customer-facing production host.
+## Production environment preparation
 
-## Not yet certified: external live environment
+The repository now contains:
+
+- `docs/current/28_PRODUCTION_ENVIRONMENT_PREPARATION.md` — required target inputs, release admission, deployment sequence and recovery preparation.
+- `docs/current/29_COMMERCIAL_SUPPORT_UPDATE_POLICY.md` — commercial support responsibilities, escalation and update/change-control policy.
+
+These contracts make the external deployment path executable once a real target exists without placing secrets or infrastructure credentials in Git history.
+
+## External live environment — NOT YET CERTIFIED
 
 ### 1. Live production deployment
 
-Not executed because the repository does not contain a real external production target or production credentials. Do not fabricate these values.
+Not executed because a real external production target and production credentials are not part of the repository. Do not fabricate these values.
 
-If live deployment is required, configure a GitHub `production` Environment with secrets such as:
+When a real target exists, configure a protected GitHub `production` Environment and provide deployment credentials through the platform secret manager. Expected secret names are deployment-specific; do not commit them to Git.
 
-- `PRODUCTION_DEPLOY_HOST`
-- `PRODUCTION_DEPLOY_USER`
-- `PRODUCTION_DEPLOY_SSH_KEY`
-- `PRODUCTION_CONTAINER_REGISTRY`
+### 2. External monitoring and alert delivery
 
-These must remain outside Git history.
+Repository/local observability contracts are implemented. External monitoring and alert delivery require a real configured provider and successful real failure notification evidence.
 
-### 2. External alert provider delivery
+### 3. External backup/restore and rollback
 
-The notification contract is tested against a local receiver. External provider delivery requires a real configured endpoint and a successful real failure notification.
+Local backup/restore and recovery are PASS. Target-environment rehearsal remains required for production certification.
 
-### 3. Live rollback
+### 4. Commercial payment and revenue
 
-The local controlled rollback/recovery drill is PASS. Live rollback against an external production deployment remains environment-specific and is not claimed without a real deployment target.
+Live payment/webhook processing and real subscriber/revenue evidence remain open commercial exit gates.
 
-## Recommended release sequence
+### 5. Final production security certification
 
-1. Create/verify the final release tag from the certified deployment-tested revision.
-2. Publish release notes and accumulated release evidence/artifacts.
-3. If an external production target exists, configure the `production` GitHub Environment.
-4. Run the live deployment and deployment-specific readiness checks.
-5. Verify external alert delivery.
-6. Execute and record live rollback.
+Security configuration and secret controls are implemented and locally validated where applicable. Final certification remains target-specific and must be performed against the actual deployment.
 
-## Roadmap rule
+## Required production sequence
 
-Do not reopen completed repository certification gates unless a later code/configuration change affects them. Release preparation should reuse existing dependency caches, immutable images, and recorded evidence rather than rebuilding or reinstalling everything for every run.
+1. Create/verify the immutable release tag and release artifact.
+2. Run the release artifact workflow in GitHub Actions when Actions capacity is available.
+3. Provision target secrets through the approved secret manager.
+4. Configure HTTPS, trusted origins and target infrastructure endpoints.
+5. Deploy API, worker, Beat and frontend as applicable.
+6. Verify liveness/readiness, queue health and persistent storage.
+7. Verify external monitoring/alerting.
+8. Verify enabled external integrations and payment/webhook signatures.
+9. Execute target backup/restore and rollback/recovery rehearsal.
+10. Execute real commercial payment/subscriber verification.
+11. Run final customer acceptance and security certification.
+12. Record the production evidence and release classification.
 
 ## Security rule
 
-No production host, private key, registry credential, webhook secret, or other sensitive infrastructure value belongs in Git history. The repository should remain fail-closed when required production inputs are missing.
+No production host, private key, registry credential, webhook secret, payment secret, customer data or environment-specific access token belongs in Git history. Missing required production inputs must fail closed.
