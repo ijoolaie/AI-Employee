@@ -73,6 +73,24 @@ See:
 - `docs/current/07_CLIENT_HANDOFF_AND_TEST_EVIDENCE.md`
 - `docs/releases/v1.1.1.md`
 
+## Public repository preparation
+
+Before repository visibility is changed to public, run:
+
+```bash
+python scripts/public_repository_audit.py
+```
+
+The audit checks the current tracked tree, reachable Git history and GitHub Actions workflow files for common secret/token exposure patterns and flags temporary branches for manual review.
+
+See `docs/current/37_PUBLIC_REPOSITORY_READINESS_2026-08-24.md` for the publication gate. Public visibility is intentionally separate from production certification and does not imply that external production evidence exists.
+
+Security reporting guidance is in `SECURITY.md`.
+
+## License
+
+No explicit open-source license is declared yet. Public visibility alone does not grant reuse rights. Choose and publish the intended license before treating the repository as an open-source project.
+
 ## Migration note
 
 The current Alembic graph must remain authoritative. Run `alembic upgrade head` and `alembic check`; do not stamp the database to conceal a mismatch. The v1.1.1 hardening work includes the migration-head merge required to provide a single upgrade target.
