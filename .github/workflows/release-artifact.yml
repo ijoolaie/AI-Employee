@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version to package, e.g. v1.1.1'
+        description: 'Release version to package, e.g. v1.2.0'
         required: true
         type: string
       ref:
@@ -21,6 +21,9 @@ permissions:
 concurrency:
   group: release-artifact-${{ github.ref }}
   cancel-in-progress: false
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/backend
 
 jobs:
   build-release:
