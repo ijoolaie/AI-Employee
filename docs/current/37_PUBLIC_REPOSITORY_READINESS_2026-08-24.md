@@ -22,26 +22,31 @@ python scripts/public_repository_audit.py
 
 The audit scans reachable Git blobs as well as the current tracked tree for common private-key and credential/token patterns.
 
-### GitHub Actions
+### GitHub Actions and dependency security
 
-The existing CI and release workflows use `permissions: contents: read` and do not require paid provider credentials in normal CI. The publicization gate still requires a manual review of every workflow for untrusted `pull_request_target` usage, secret exposure in logs, and unnecessary write permissions.
+- Existing CI/release workflows use least-privilege `contents: read` permissions for normal repository operations.
+- A Dependabot configuration now covers pip, npm, GitHub Actions and Docker dependencies.
+- A CodeQL workflow now covers Python and JavaScript/TypeScript analysis with only the required `security-events: write` permission.
+- The publicization gate still requires GitHub-owner review of untrusted `pull_request_target` usage, secret exposure in logs, unnecessary write permissions, and whether GitHub's repository-level secret scanning/push protection/dependency-alert settings are enabled.
 
-### Branch exposure
+### Branch and PR exposure
 
-Publicizing a repository also exposes its branch and pull-request history. Temporary/experimental branches should be reviewed and removed or archived before the visibility change. The local audit flags branch names matching common temporary/versioned patterns for manual review.
+Publicizing a repository also exposes its branch and pull-request history. Temporary/experimental branches were reviewed and stale/versioned branches with no unique commits ahead of the Phase 6 line were removed. `release/edition-model` is intentionally retained because it contains unique historical release-design commits.
+
+Closed pull requests were reviewed at the metadata/diff level for representative older certification work; the reviewed PRs contain source/test/documentation changes and no identified production secrets or customer data. This is evidence for the current repository history review, not a guarantee against every possible future historical finding.
 
 ## Manual gates before Public visibility
 
-- [x] `python scripts/public_repository_audit.py` passes with zero hard findings; 10 review items were reported and addressed/retained intentionally (stale branches removed; `release/edition-model` retained as historical reference).
+- [x] `python scripts/public_repository_audit.py` passes with zero hard findings; the reported review items were addressed or intentionally retained.
 - [x] No real credentials or customer data were reported by the current full-history public repository audit.
-- [x] Temporary/experimental branches have been reviewed; the flagged stale/versioned branches were deleted. `release/edition-model` remains because it contains unique historical release-design commits.
-- [ ] Closed draft PRs do not contain sensitive material that should not become public.
+- [x] Temporary/experimental branches have been reviewed; flagged stale/versioned branches were deleted. `release/edition-model` remains as historical reference.
+- [x] Closed PR history was reviewed for sensitive material; no identified production secrets or customer data were found in the reviewed historical PRs.
 - [x] An explicit `SECURITY.md` exists and the intended vulnerability-reporting path is known.
-- [x] License decision is made: **Apache License 2.0** was added at repository root in commit `d9b499080c2860e993ed84f8db075191697eeabc`.
+- [x] License decision is made: **Apache License 2.0** is present at repository root.
 - [x] README describes the product and current evidence boundary without claiming external production certification.
-- [ ] GitHub security features appropriate for a public repository are reviewed/enabled where available: secret scanning, push protection, dependency alerts and Dependabot configuration.
-- [x] Actions workflows have been reviewed for least-privilege baseline; `contents: read` is used and no production provider credentials are required for normal CI.
-- [ ] Repository settings are reviewed: branch protection/rulesets, tag protection, issue permissions and default branch.
+- [x] Repository-side dependency/security automation is present: Dependabot configuration plus CodeQL workflow.
+- [ ] GitHub repository security settings still require owner-side review/enabling where available: secret scanning, push protection and dependency/security alerts.
+- [ ] Repository settings still require owner-side review: branch protection/rulesets, tag protection, issue permissions and default branch.
 
 ## Evidence boundary
 
@@ -49,4 +54,4 @@ Local tests, local Docker production-like validation, local backup/restore and l
 
 ## Decision
 
-Do not change repository visibility until every manual gate above is either PASS or intentionally accepted by the repository owner.
+Do not change repository visibility until the remaining GitHub-owner settings are either PASS or intentionally accepted by the repository owner.
