@@ -43,11 +43,11 @@ def request(method: str, path: str, payload: dict | None = None, token: str | No
 async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> None:
     """Create a real, feature-scoped commercial license for this ephemeral gate tenant.
 
-    Registration creates a customer tenant without a commercial issuer by design.
-    The certification fixture therefore creates an isolated vendor parent, attaches
-    the freshly-created customer to it, and issues a normal license through the
-    production license service. This keeps the production execution gate intact;
-    the test does not bypass or disable license enforcement.
+    The production edition hierarchy is Vendor -> Reseller -> Customer.  The
+    certification fixture must exercise that same boundary: the registered
+    customer becomes a direct child of a certification reseller, while that
+    reseller is a direct child of a certification vendor.  The reseller then
+    issues the customer license through the normal production service.
     """
     async with AsyncSessionLocal() as db:
         customer = (
@@ -56,9 +56,6 @@ async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> 
         if customer is None:
             raise AssertionError(f"Certification tenant not found: {tenant_id}")
 
-        # Make the fixture's edition boundary explicit rather than relying on the
-        # ORM's column default. This is important because the production license
-        # service intentionally requires issuer -> direct-child edition alignment.
         customer.tenant_kind = edition_service.EDITION_CUSTOMER
 
         vendor = Tenant(
@@ -71,26 +68,50 @@ async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> 
         db.add(vendor)
         await db.flush()
 
-        customer.parent_tenant_id = vendor.id
+        reseller = Tenant(
+            name=f"Certification Reseller {suffix}",
+            slug=f"cert-reseller-{suffix}",
+            status="active",
+            tenant_kind=edition_service.EDITION_RESELLER,
+            parent_tenant_id=vendor.id,
+            settings={"certification_fixture": True},
+        )
+        db.add(reseller)
+        await db.flush()
+
+        customer.parent_tenant_id = reseller.id
         customer.vendor_release_tag = "v1.2.1"
         customer.delivery_revision = "production-certification"
         await db.flush()
         await db.refresh(customer)
+        await db.refresh(reseller)
         await db.refresh(vendor)
 
-        if customer.parent_tenant_id != vendor.id or customer.tenant_kind != edition_service.EDITION_CUSTOMER:
+        if (
+            reseller.parent_tenant_id != vendor.id
+            or reseller.tenant_kind != edition_service.EDITION_RESELLER
+            or customer.parent_tenant_id != reseller.id
+            or customer.tenant_kind != edition_service.EDITION_CUSTOMER
+        ):
             raise AssertionError(
                 "Certification edition fixture is invalid: "
-                f"parent={customer.parent_tenant_id}, vendor={vendor.id}, "
-                f"kind={customer.tenant_kind!r}"
+                f"vendor={vendor.id}, reseller={reseller.id}, customer={customer.id}, "
+                f"reseller_parent={reseller.parent_tenant_id}, "
+                f"customer_parent={customer.parent_tenant_id}, "
+                f"reseller_kind={reseller.tenant_kind!r}, "
+                f"customer_kind={customer.tenant_kind!r}"
             )
 
         license_row = await license_service.issue_license(
             db,
-            issuer=vendor,
+            issuer=reseller,
             tenant=customer,
             feature_codes=["employee.run"],
-            metadata={"certification_fixture": True, "purpose": "production-certification"},
+            metadata={
+                "certification_fixture": True,
+                "purpose": "production-certification",
+                "vendor_tenant_id": str(vendor.id),
+            },
         )
         assert license_row.status == "active", license_row
         assert "employee.run" in (license_row.feature_codes or []), license_row
