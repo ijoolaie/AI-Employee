@@ -6,7 +6,7 @@ This is the current authoritative productization roadmap. The platform core is c
 
 ## Current project position — 2026-08-24
 
-**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE; EXTERNAL PRODUCTION GATES REMAIN.**
+**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE → PHASE 6 EDITION-SEPARATED DELIVERY IMPLEMENTATION IN PROGRESS; EXTERNAL PRODUCTION GATES REMAIN.**
 
 Evidence states remain explicit: implementation is not the same as executed local or external-production evidence.
 
@@ -205,6 +205,53 @@ Primary evidence: `docs/current/27_PHASE5_COMMERCIAL_PRODUCTION_EVIDENCE_2026-08
 
 **Exit:** the platform can be sold, provisioned, upgraded, supported and recovered as a product, with remaining external gates separately evidenced for each real production target.
 
+## Phase 6 — Edition-Separated Delivery
+
+**Status: 🟡 IN PROGRESS — profile contracts complete; packaging and local verification being implemented.**
+
+Phase 6 separates the delivery surface into three independently named artifacts while preserving one authoritative codebase and one immutable Vendor source release. It does not create permanent source forks.
+
+### Phase 6A — Contract and nomenclature
+
+- [x] Vendor, Reseller and Customer profile contracts documented.
+- [x] Edition release matrix documented.
+- [x] Profile-specific authority and rollback rules documented.
+- [x] Machine-readable profile contracts added under `delivery/profiles/`.
+
+### Phase 6B — Profile packaging
+
+- [x] Shared-source three-edition builder added: `scripts/build_edition_packages.py`.
+- [x] Vendor, Reseller and Customer artifacts use the same vendor commit SHA.
+- [x] Secrets are excluded from generated runtime content.
+- [x] Edition-specific profile manifests are embedded in each artifact.
+
+### Phase 6C — Local verification
+
+- [x] Edition profile contract tests added: `backend/tests/test_phase6_edition_profiles.py`.
+- [x] Machine-readable profile validator added: `scripts/validate_edition_profiles.py`.
+- [ ] Execute the builder and archive a local three-edition verification result.
+
+### Phase 6D — Release-system integration
+
+- [ ] Attach Vendor, Reseller and Customer artifacts to the same immutable vendor release in GitHub Actions.
+- [ ] Publish per-edition checksums and combined edition release manifest.
+- [ ] Verify artifact generation on the first post-reset Actions run.
+
+### Phase 6E — Production delivery
+
+- [ ] Deliver a real Vendor environment.
+- [ ] Deliver a real Reseller environment.
+- [ ] Deliver a real Customer environment.
+- [ ] Capture environment-specific monitoring, recovery, security and handoff evidence.
+
+Primary documentation:
+
+- `docs/current/30_EDITION_RELEASE_MATRIX.md`
+- `docs/current/31_VENDOR_RELEASE_PROFILE.md`
+- `docs/current/32_RESELLER_RELEASE_PROFILE.md`
+- `docs/current/33_CUSTOMER_RELEASE_PROFILE.md`
+- `docs/current/34_EDITION_DELIVERY_IMPLEMENTATION_PLAN.md`
+
 ## Cross-cutting acceptance gates
 
 Every phase preserves:
@@ -235,4 +282,4 @@ A release is commercially deliverable only when the exact release identity is im
 
 ## Immediate next phase
 
-**Continue Phase 5 — Commercial Production. The implementation frontier is substantially complete; next work is external evidence closure: GitHub Actions validation when capacity resets, commercial revenue proof, external deployment/monitoring/recovery evidence, final security certification, and environment-specific commercial handoff.**
+**Continue Phase 6 — Edition-Separated Delivery in parallel with the remaining Phase 5 external gates. First complete local three-edition package generation/verification; after Actions capacity resets, integrate the three artifacts into the release workflow. Real production deployment, revenue proof, external monitoring/recovery and final security certification remain environment-specific gates.**
