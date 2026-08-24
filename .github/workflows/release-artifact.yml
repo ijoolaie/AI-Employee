@@ -10,6 +10,10 @@ on:
         description: 'Release version to package, e.g. v1.1.1'
         required: true
         type: string
+      ref:
+        description: 'Exact branch, tag, or commit SHA to package'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -23,11 +27,39 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout exact release commit
+      - name: Determine release version and exact release ref
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            version="${GITHUB_REF_NAME}"
+            release_ref="${GITHUB_REF}"
+          else
+            version="${{ inputs.version }}"
+            release_ref="${{ inputs.ref }}"
+          fi
+          [[ "$version" == v* ]] || { echo "Release version must start with v"; exit 1; }
+          [[ -n "$release_ref" ]] || { echo "Release ref must not be empty"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "release_ref=$release_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout exact release ref
         uses: actions/checkout@v4
         with:
+          ref: ${{ steps.release.outputs.release_ref }}
           fetch-depth: 0
           fetch-tags: true
+
+      - name: Verify checked-out commit identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          checked_out_sha="$(git rev-parse HEAD)"
+          echo "Release version: ${{ steps.release.outputs.version }}"
+          echo "Release ref: ${{ steps.release.outputs.release_ref }}"
+          echo "Release commit: $checked_out_sha"
+          echo "release_commit=$checked_out_sha" >> "$GITHUB_ENV"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,19 +68,6 @@ jobs:
 
       - name: Install backend dependencies for migration verification
         run: python -m pip install --disable-pip-version-check -r backend/requirements.txt
-
-      - name: Determine release version
-        id: release
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            version="${GITHUB_REF_NAME}"
-          else
-            version="${{ inputs.version }}"
-          fi
-          [[ "$version" == v* ]] || { echo "Release version must start with v"; exit 1; }
-          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Validate edition profile contracts
         run: python scripts/validate_edition_profiles.py
@@ -66,7 +85,7 @@ jobs:
         run: |
           python scripts/build_edition_packages.py \
             "${{ steps.release.outputs.version }}" \
-            "${GITHUB_SHA}" \
+            "$release_commit" \
             --out "dist/editions/${{ steps.release.outputs.version }}"
 
       - name: Verify base package checksum
