@@ -44,10 +44,11 @@ SECRET_PATTERNS = (
 
 
 def run(*args: str) -> str:
+    return run_at(ROOT, *args)
+
+
+def run_at(cwd: Path, *args: str) -> str:
     env = os.environ.copy()
-    # Alembic's env.py imports the backend package (app.*). Make that
-    # import path explicit so release packaging does not depend on a
-    # running Docker API container.
     backend_path = str(ROOT / "backend")
     existing_pythonpath = env.get("PYTHONPATH")
     env["PYTHONPATH"] = (
@@ -57,7 +58,7 @@ def run(*args: str) -> str:
     )
     return subprocess.check_output(
         args,
-        cwd=ROOT,
+        cwd=cwd,
         env=env,
         text=True,
         stderr=subprocess.STDOUT,
@@ -88,18 +89,18 @@ def migration_head() -> str:
     commands = (
         (
             "python -m alembic",
-            ("python", "-m", "alembic", "-c", "backend/alembic.ini", "heads"),
+            ("python", "-m", "alembic", "-c", "alembic.ini", "heads"),
         ),
         (
             "alembic executable",
-            ("alembic", "-c", "backend/alembic.ini", "heads"),
+            ("alembic", "-c", "alembic.ini", "heads"),
         ),
     )
 
     last_error: subprocess.CalledProcessError | FileNotFoundError | None = None
     for label, command in commands:
         try:
-            output = run(*command)
+            output = run_at(ROOT / "backend", *command)
             break
         except subprocess.CalledProcessError as exc:
             last_error = exc
