@@ -53,6 +53,9 @@ jobs:
       - name: Build immutable runtime package
         run: python scripts/build_release_package.py "${{ steps.release.outputs.version }}"
 
+      - name: Generate release notes from exact release ref
+        run: python scripts/generate_release_notes.py "${{ steps.release.outputs.version }}"
+
       - name: Verify package checksum
         working-directory: dist/release
         run: sha256sum -c SHA256SUMS
@@ -64,5 +67,6 @@ jobs:
           path: |
             dist/release/*.tar.gz
             dist/release/SHA256SUMS
+            dist/release/RELEASE_NOTES.md
           if-no-files-found: error
           retention-days: 90
