@@ -12,8 +12,8 @@ test.describe("critical platform flows", () => {
 
     await page.goto("/reset-password?token=test-reset-token-123456789012345678901234567890");
     await expect(page.getByRole("heading", { name: "Set a new password" })).toBeVisible();
-    await expect(page.getByLabel("New password")).toBeVisible();
-    await expect(page.getByLabel("Confirm new password")).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "New password", exact: true })).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Confirm new password", exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Reset password" })).toBeEnabled();
   });
 
