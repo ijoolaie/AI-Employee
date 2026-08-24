@@ -22,7 +22,7 @@ Status: **COMPLETE**
 
 ## Phase 6B — Profile packaging
 
-Status: **IN PROGRESS**
+Status: **COMPLETE — LOCAL VERIFIED**
 
 - add machine-readable profile metadata;
 - add one local builder for all three profiles;
@@ -32,14 +32,17 @@ Status: **IN PROGRESS**
 
 ## Phase 6C — Local verification
 
-Status: **PLANNED**
+Status: **COMPLETE — LOCAL VERIFIED 2026-08-24**
 
 - validate all three profiles;
 - verify immutable vendor identity;
 - verify reseller/customer ancestry references;
 - verify no profile claims unsupported authority;
 - verify package naming and revision rules;
-- verify rollback metadata.
+- verify rollback metadata;
+- generate and validate the Vendor, Reseller and Customer archives from one source commit.
+
+Local evidence is recorded in `docs/current/35_PHASE6_LOCAL_BUILD_EVIDENCE_2026-08-24.md`.
 
 ## Phase 6D — Release-system integration
 
