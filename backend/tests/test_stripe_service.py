@@ -102,6 +102,14 @@ def test_verify_webhook_rejects_missing_signature_header():
         stripe_service.verify_and_parse_webhook(payload, None)
 
 
+def test_verify_webhook_rejects_stale_timestamp():
+    payload = _event_payload()
+    stale_timestamp = int(time.time()) - 3600
+    header = _sign(payload, WEBHOOK_SECRET, timestamp=stale_timestamp)
+    with pytest.raises(ValidationAppError):
+        stripe_service.verify_and_parse_webhook(payload, header)
+
+
 def test_plan_code_for_price_id_maps_known_price():
     assert stripe_service._plan_code_for_price_id("price_business_123") == "business"
     assert stripe_service._plan_code_for_price_id("price_pro_456") == "professional"
