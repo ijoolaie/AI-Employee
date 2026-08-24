@@ -51,16 +51,18 @@ All three profiles MUST remain compatible with the same source release and migra
 
 ## Completion criteria
 
-Phase 6 is implementation-complete when:
+Phase 6A–6C local implementation and verification are complete:
 
-- [ ] all three profile contracts are documented;
-- [ ] profile manifests validate locally;
-- [ ] one build command can produce all three artifacts from one immutable source commit;
-- [ ] generated profiles contain no secrets;
-- [ ] each profile records its upstream vendor release identity;
-- [ ] reseller/customer profiles record delivery/deployment revision independently;
-- [ ] rollback metadata preserves both source release and profile revision;
-- [ ] profile packaging does not weaken runtime authorization;
-- [ ] release evidence records exactly which profile artifacts were produced.
+- [x] all three profile contracts are documented;
+- [x] profile manifests validate locally;
+- [x] one build command produces all three artifacts from one immutable source commit;
+- [x] generated profiles contain no secrets;
+- [x] each profile records its upstream vendor release identity;
+- [x] reseller/customer profiles record delivery/deployment revision independently;
+- [x] rollback metadata preserves both source release and profile revision;
+- [x] profile packaging does not weaken runtime authorization;
+- [x] release evidence records exactly which profile artifacts were produced.
+
+Local execution evidence: `docs/current/35_PHASE6_LOCAL_BUILD_EVIDENCE_2026-08-24.md`.
 
 GitHub Actions execution and real production deployment remain separate external gates.
