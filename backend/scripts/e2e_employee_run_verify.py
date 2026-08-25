@@ -87,6 +87,7 @@ async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> 
 
 
 def _parse_deterministic_result(text: str) -> dict:
+    """Parse a JSON acceptance object even when the provider adds prose around it."""
     normalized = text.strip()
     if normalized.startswith("```"):
         lines = normalized.splitlines()
@@ -95,10 +96,27 @@ def _parse_deterministic_result(text: str) -> dict:
         if lines and lines[-1].strip() == "```":
             lines = lines[:-1]
         normalized = "\n".join(lines).strip()
+
     try:
         value = json.loads(normalized)
-    except json.JSONDecodeError as exc:
-        raise AssertionError(f"deterministic acceptance output is not valid JSON: {text!r}") from exc
+    except json.JSONDecodeError:
+        decoder = json.JSONDecoder()
+        value = None
+        parse_error = None
+        for index, char in enumerate(normalized):
+            if char != "{":
+                continue
+            try:
+                candidate, _ = decoder.raw_decode(normalized[index:])
+            except json.JSONDecodeError as exc:
+                parse_error = exc
+                continue
+            if isinstance(candidate, dict):
+                value = candidate
+                break
+        if value is None:
+            raise AssertionError(f"deterministic acceptance output is not valid JSON: {text!r}") from parse_error
+
     if not isinstance(value, dict):
         raise AssertionError(f"deterministic acceptance output must be a JSON object: {value!r}")
     return value
