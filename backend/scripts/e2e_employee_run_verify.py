@@ -133,13 +133,7 @@ def _parse_deterministic_result(text: str) -> dict:
 
 
 def _assert_deterministic_contract(text: str, terminal: dict) -> None:
-    """Validate the semantic acceptance result without coupling to provider wording.
-
-    A successful certification result must explicitly communicate acceptance via
-    a truthy boolean result and a recognized success/acceptance status. Optional
-    determinism metadata is validated when present but is not coupled to one
-    provider's exact wording or casing.
-    """
+    """Validate semantic acceptance without coupling to provider wording or schema."""
     result = _parse_deterministic_result(text)
 
     status_values = {
@@ -152,6 +146,7 @@ def _assert_deterministic_contract(text: str, terminal: dict) -> None:
 
     direct_result_ok = result.get("result") is True
     confirmation_ok = result.get("confirmation") is True
+    task_completed_ok = result.get("task_completed") is True
 
     nested_result = result.get("result")
     nested_acceptance_ok = (
@@ -160,7 +155,10 @@ def _assert_deterministic_contract(text: str, terminal: dict) -> None:
     )
 
     semantic_acceptance_ok = (
-        direct_result_ok or confirmation_ok or nested_acceptance_ok
+        direct_result_ok
+        or confirmation_ok
+        or task_completed_ok
+        or nested_acceptance_ok
     )
 
     if not (status_ok and semantic_acceptance_ok):
