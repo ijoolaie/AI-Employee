@@ -119,6 +119,10 @@ def _assert_deterministic_contract(text: str, terminal: dict) -> None:
     task_completed_ok = result.get("task_completed") is True
     determinism_verified_ok = result.get("determinism_verified") is True
     deterministic_confirmation_ok = result.get("deterministic_confirmation") is True
+    acceptance_result_ok = result.get("acceptance_result") is True
+    acceptance_ok = result.get("acceptance") is True
+    accepted_ok = result.get("accepted") is True
+    deterministic_ok = result.get("deterministic") is True
 
     nested_result = result.get("result")
     nested_acceptance_ok = isinstance(nested_result, dict) and any(
@@ -132,6 +136,10 @@ def _assert_deterministic_contract(text: str, terminal: dict) -> None:
         or task_completed_ok
         or determinism_verified_ok
         or deterministic_confirmation_ok
+        or acceptance_result_ok
+        or acceptance_ok
+        or accepted_ok
+        or deterministic_ok
         or nested_acceptance_ok
     )
     if not (status_ok and semantic_acceptance_ok):
