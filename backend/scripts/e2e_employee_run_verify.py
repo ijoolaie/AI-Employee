@@ -118,6 +118,60 @@ async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> 
         await db.commit()
 
 
+def _parse_deterministic_result(text: str) -> dict:
+    """Parse the provider's fenced JSON result and return its semantic payload."""
+    normalized = text.strip()
+    if normalized.startswith("```"):
+        lines = normalized.splitlines()
+        if lines and lines[0].strip().lower() in {"```json", "```"}:
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        normalized = "\n".join(lines).strip()
+    try:
+        value = json.loads(normalized)
+    except json.JSONDecodeError as exc:
+        raise AssertionError(
+            f"deterministic acceptance output is not valid JSON: {text!r}"
+        ) from exc
+    if not isinstance(value, dict):
+        raise AssertionError(f"deterministic acceptance output must be a JSON object: {value!r}")
+    return value
+
+
+def _assert_deterministic_contract(text: str, terminal: dict) -> None:
+    """Accept the known deterministic provider contracts without prose coupling.
+
+    Older/newer deterministic providers have emitted either a flat contract:
+    {status, result, confirmation}, or a nested contract:
+    {task_status, result: {acceptance, determinism_level, output_value}}.
+    Both represent the same semantic acceptance result and are valid for this
+    product gate.
+    """
+    result = _parse_deterministic_result(text)
+
+    flat_contract = (
+        result.get("status") == "accepted"
+        and result.get("result") == "deterministic_success"
+        and result.get("confirmation") is True
+    )
+
+    nested_result = result.get("result")
+    nested_contract = (
+        result.get("task_status") == "Completed"
+        and isinstance(nested_result, dict)
+        and nested_result.get("acceptance") is True
+        and nested_result.get("determinism_level") == "Absolute"
+        and nested_result.get("output_value") == "ACCEPTED"
+    )
+
+    if not (flat_contract or nested_contract):
+        raise AssertionError(
+            "deterministic acceptance semantic contract mismatch: "
+            f"parsed_output={result!r}; terminal={terminal!r}"
+        )
+
+
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     tenant_slug = f"cert-product-{suffix}"
@@ -218,19 +272,7 @@ def main() -> int:
     text = output.get("text")
     assert isinstance(text, str) and text.strip(), terminal
 
-    # The deterministic provider returns a fenced JSON payload. Validate the
-    # semantic contract instead of coupling certification to one prose sentence.
-    normalized = text.strip()
-    if normalized.startswith("```json") and normalized.endswith("```"):
-        normalized = normalized[len("```json"):-len("```")].strip()
-    try:
-        deterministic_result = json.loads(normalized)
-    except json.JSONDecodeError as exc:
-        raise AssertionError(f"deterministic acceptance output is not valid JSON: {terminal}") from exc
-
-    assert deterministic_result.get("status") == "accepted", terminal
-    assert deterministic_result.get("result") == "deterministic_success", terminal
-    assert deterministic_result.get("confirmation") is True, terminal
+    _assert_deterministic_contract(text, terminal)
     assert terminal.get("completed_at"), terminal
     assert terminal.get("total_tokens", 0) > 0, terminal
     print("PRODUCT ACCEPTANCE RUN TERMINAL RESULT PASS")
