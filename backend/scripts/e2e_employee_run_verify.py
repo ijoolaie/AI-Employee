@@ -215,7 +215,22 @@ def main() -> int:
     assert terminal is not None, "run polling returned no state"
     assert terminal.get("status") == "success", f"run did not succeed: {terminal}"
     output = terminal.get("output_data") or {}
-    assert isinstance(output.get("text"), str) and "Deterministic certification result" in output["text"], terminal
+    text = output.get("text")
+    assert isinstance(text, str) and text.strip(), terminal
+
+    # The deterministic provider returns a fenced JSON payload. Validate the
+    # semantic contract instead of coupling certification to one prose sentence.
+    normalized = text.strip()
+    if normalized.startswith("```json") and normalized.endswith("```"):
+        normalized = normalized[len("```json"):-len("```")].strip()
+    try:
+        deterministic_result = json.loads(normalized)
+    except json.JSONDecodeError as exc:
+        raise AssertionError(f"deterministic acceptance output is not valid JSON: {terminal}") from exc
+
+    assert deterministic_result.get("status") == "accepted", terminal
+    assert deterministic_result.get("result") == "deterministic_success", terminal
+    assert deterministic_result.get("confirmation") is True, terminal
     assert terminal.get("completed_at"), terminal
     assert terminal.get("total_tokens", 0) > 0, terminal
     print("PRODUCT ACCEPTANCE RUN TERMINAL RESULT PASS")
