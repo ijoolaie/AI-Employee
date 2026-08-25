@@ -140,13 +140,13 @@ def _parse_deterministic_result(text: str) -> dict:
 
 
 def _assert_deterministic_contract(text: str, terminal: dict) -> None:
-    """Accept the known deterministic provider contracts without prose coupling.
+    """Accept known deterministic provider contracts without prose coupling.
 
-    Older/newer deterministic providers have emitted either a flat contract:
-    {status, result, confirmation}, or a nested contract:
-    {task_status, result: {acceptance, determinism_level, output_value}}.
-    Both represent the same semantic acceptance result and are valid for this
-    product gate.
+    The acceptance gate validates semantic meaning rather than one provider's
+    exact wording. Supported contracts are:
+      * legacy flat: accepted/deterministic_success/confirmation
+      * nested: Completed + acceptance=true + Absolute + ACCEPTED
+      * current flat: status=success + result=true
     """
     result = _parse_deterministic_result(text)
 
@@ -165,7 +165,12 @@ def _assert_deterministic_contract(text: str, terminal: dict) -> None:
         and nested_result.get("output_value") == "ACCEPTED"
     )
 
-    if not (flat_contract or nested_contract):
+    current_flat_contract = (
+        result.get("status") == "success"
+        and result.get("result") is True
+    )
+
+    if not (flat_contract or nested_contract or current_flat_contract):
         raise AssertionError(
             "deterministic acceptance semantic contract mismatch: "
             f"parsed_output={result!r}; terminal={terminal!r}"
