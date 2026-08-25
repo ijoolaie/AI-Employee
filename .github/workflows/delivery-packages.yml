@@ -6,7 +6,7 @@ on:
       - main
       - release/edition-model-v2
     tags:
-      - 'v1.1.0'
+      - 'v1.2.1-final'
   workflow_dispatch:
 
 permissions:
@@ -30,12 +30,12 @@ jobs:
           set -euo pipefail
           rm -rf dist
           mkdir -p dist
-          tar -czf dist/ai-employee-v1.1.0-delivery-manifest-bundle.tar.gz delivery/
-          sha256sum dist/ai-employee-v1.1.0-delivery-manifest-bundle.tar.gz > dist/SHA256SUMS
+          tar -czf dist/ai-employee-v1.2.1-final-delivery-manifest-bundle.tar.gz delivery/
+          sha256sum dist/ai-employee-v1.2.1-final-delivery-manifest-bundle.tar.gz > dist/SHA256SUMS
 
       - name: Upload delivery manifest bundle
         uses: actions/upload-artifact@v4
         with:
-          name: ai-employee-v1.1.0-delivery-manifest-bundle
+          name: ai-employee-v1.2.1-final-delivery-manifest-bundle
           path: dist/
           if-no-files-found: error
