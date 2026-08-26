@@ -22,7 +22,12 @@ async def test_scoped_api_key_cannot_exceed_key_scopes():
     permission = SimpleNamespace(code="run.read")
     role = SimpleNamespace(tenant_id=tenant_id, permissions=[permission])
     user = SimpleNamespace(is_superuser=False, roles=[role])
-    ctx = SimpleNamespace(user=user, tenant=SimpleNamespace(id=tenant_id), api_key_scopes=["run.read"])
+    ctx = SimpleNamespace(
+        user=user,
+        tenant_id=tenant_id,
+        tenant=SimpleNamespace(id=tenant_id),
+        api_key_scopes=["run.read"],
+    )
 
     assert await has_permission(ctx, "run.read") is True
     assert await has_permission(ctx, "run.execute") is False
@@ -34,6 +39,11 @@ async def test_scoped_api_key_cannot_grant_permission_owner_does_not_have():
     permission = SimpleNamespace(code="run.read")
     role = SimpleNamespace(tenant_id=tenant_id, permissions=[permission])
     user = SimpleNamespace(is_superuser=False, roles=[role])
-    ctx = SimpleNamespace(user=user, tenant=SimpleNamespace(id=tenant_id), api_key_scopes=["run.execute"])
+    ctx = SimpleNamespace(
+        user=user,
+        tenant_id=tenant_id,
+        tenant=SimpleNamespace(id=tenant_id),
+        api_key_scopes=["run.execute"],
+    )
 
     assert await has_permission(ctx, "run.execute") is False
