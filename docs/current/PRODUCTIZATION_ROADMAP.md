@@ -10,6 +10,19 @@ This is the authoritative productization and delivery roadmap. It distinguishes 
 
 The V1.4 blueprint is frozen. Implementation is no longer only planned: the dependency-ordered gap-closure sequence has begun and PRs #69–#73 have been completed, with #73 merged after its CI/test correction. This does **not** change the separate production-evidence boundary: no external production claim is made without target-specific evidence.
 
+## GitHub execution-ledger reconciliation — 2026-08-26
+
+The older open PR queue has now been reconciled against the frozen V1.4 baseline and the completed #69–#73 implementation wave:
+
+- **#73** — merged; idempotent usage event ledger gap closed and verified.
+- **#72, #71, #70, #69** — completed implementation wave preceding #73.
+- **#68** — closed without merge as a superseded documentation/baseline work item; its audit conclusions are represented by the current documentation baseline.
+- **#67** — closed without merge as a superseded planning work item; the execution plan is represented by the current frozen V1.4 baseline and roadmap.
+- **#64** — closed without merge; the draft v1.3.1 SaaS Foundation branch is no longer the active execution frontier.
+- **#57** — closed without merge; Shopify external-certification preparation is retained as a future/target-specific activity rather than an active blocking PR.
+
+These closures are bookkeeping/governance decisions. They do not constitute production certification or imply that the corresponding external gates have been completed.
+
 ## Baseline
 
 - Published productization baseline: **v1.0.1** at `2d23a01098f432145ecaea14b2500fe520ad0bf7`.
@@ -141,8 +154,9 @@ These changes establish that V1.4 is an active implementation track, not merely 
 - [x] Blueprint frozen.
 - [x] Initial dependency-ordered gap closure executed.
 - [x] PR #73 merged with verification.
-- [ ] Reconcile and determine disposition of older/open planning PRs before treating the GitHub PR queue as the authoritative execution ledger.
-- [ ] Continue next dependency-ordered V1.4 slice only after documentation/PR reconciliation checkpoint.
+- [x] Older/open planning PRs reconciled and closed where superseded (#67, #68).
+- [x] Older draft execution branches reconciled and closed where no longer the active frontier (#64, #57).
+- [ ] Continue the next dependency-ordered V1.4 slice after this documentation reconciliation checkpoint.
 
 ## Cross-cutting acceptance gates
 
@@ -174,4 +188,4 @@ A release is commercially deliverable only when the exact release identity is im
 
 ## Immediate next action
 
-**Documentation/PR reconciliation is the current checkpoint. After that checkpoint, continue V1.4 gap closure in dependency order and execute Phase 6E against real infrastructure in the order Vendor → Reseller → Customer. Do not mark 6E complete or claim commercial go-live until environment-specific production evidence is attached for all required gates.**
+**Documentation/PR reconciliation is complete. The next action is to continue V1.4 gap closure in dependency order and separately execute Phase 6E against real infrastructure in the order Vendor → Reseller → Customer. Do not mark 6E complete or claim commercial go-live until environment-specific production evidence is attached for all required gates.**
