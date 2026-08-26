@@ -78,6 +78,7 @@ async def test_lm_studio_provider_maps_openai_compatible_response(monkeypatch):
     assert result.completion_tokens == 7
     assert result.stop_reason == "stop"
 
+
 @pytest.mark.asyncio
 async def test_gateway_records_live_latency_and_gateway_cost(monkeypatch):
     import asyncio
@@ -106,6 +107,13 @@ async def test_gateway_records_live_latency_and_gateway_cost(monkeypatch):
 
         def add(self, item):
             self.items.append(item)
+
+        async def execute(self, statement):
+            class EmptyResult:
+                def scalar_one_or_none(self):
+                    return None
+
+            return EmptyResult()
 
         async def flush(self):
             return None
