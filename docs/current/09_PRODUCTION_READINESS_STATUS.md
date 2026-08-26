@@ -8,6 +8,8 @@ The current certified controlled-deployment vendor release is **v1.2.0**. Releas
 
 The V1.4 architecture baseline is frozen, and dependency-ordered V1.4 gap closure is now in progress. PRs #69–#73 completed the first implementation wave; PR #73 was merged after its CI/test correction.
 
+Phase 7 Invoice Employee is already implemented in the repository as v0.7.0 with the v0.7.1 tax-rate amendment and a local real-model E2E verification record. This is repository/local evidence, not external production certification.
+
 Repository implementation and CI/release verification remain distinct from external production certification.
 
 ## Current evidence layers
@@ -22,6 +24,14 @@ The first V1.4 gap-closure wave is complete through PR #73:
 - Scoped API keys: complete.
 - Idempotent usage event ledger: merged in PR #73.
 
+Phase 7 evidence:
+
+- Invoice Employee v0.7.0 implementation: present.
+- v0.7.1 tax-rate normalization amendment: present.
+- Unit/service verification: present in repository.
+- Local real-model E2E verification record: present.
+- External production acceptance: not recorded.
+
 ### Local production-like evidence
 
 Current local evidence includes:
@@ -35,6 +45,7 @@ Current local evidence includes:
 - Frontend `/login`: PASS.
 - PostgreSQL logical restore + Redis AOF restore smoke: PASS.
 - Controlled API recovery drill: PASS.
+- Phase 7 real-model E2E: recorded as local verification in `docs/current/RELEASE_VERIFICATION_v0.7.1.md`.
 
 This is valid local production-like evidence only. It is not evidence of an external customer-facing production host.
 
@@ -56,6 +67,14 @@ The older open PR queue has been reconciled against the frozen V1.4 baseline and
 - **#57:** closed without merge; Shopify external-certification preparation retained as a target-specific/future activity rather than an active blocking PR.
 
 Closing these PRs is repository governance/bookkeeping. It does not certify any external environment and does not mark the associated external gates complete.
+
+## Phase 7 — Invoice Employee
+
+**Status: 🟢 IMPLEMENTED / LOCAL VERIFIED; EXTERNAL PRODUCTION ACCEPTANCE OPEN.**
+
+The locked scope in `documents/66_PHASE_7_INVOICE_EMPLOYEE_SCOPE_LOCK_v0.7.0.md` is implemented. The repository contains invoice creation, line items/tax/currency/due date, ingest/analysis, status tracking, tenant-scoped outstanding/collected summaries, PDF export, and the v0.7.1 tax-rate normalization amendment.
+
+`docs/current/RELEASE_VERIFICATION_v0.7.1.md` records local real-model E2E verification. It must not be interpreted as external production evidence. No duplicate Phase 7 implementation PR should be created unless a new, demonstrated gap is found.
 
 ## External live environment — NOT YET CERTIFIED
 
@@ -110,13 +129,13 @@ The current `docs/evidence/phase6e/` Vendor, Reseller and Customer records are e
 
 ## Documentation / governance checkpoint
 
-**2026-08-26 reconciliation checkpoint: COMPLETE.** The roadmap and production-readiness status now reflect the current GitHub PR state: #69–#73 form the completed first V1.4 implementation wave, #73 is merged, and stale/superseded PRs #57, #64, #67 and #68 are closed without merge. The next implementation work must be represented by a new, dependency-ordered V1.4 change rather than reopening obsolete planning branches.
+**2026-08-26 reconciliation checkpoint: UPDATED.** The roadmap and production-readiness status now reflect the current repository evidence: #69–#73 form the completed first V1.4 implementation wave, #73 is merged, stale/superseded PRs #57, #64, #67 and #68 are closed without merge, and Phase 7 Invoice Employee is already implemented and locally verified through v0.7.1.
 
 ## Next execution frontier
 
-Two tracks are now explicit and may proceed independently while preserving their evidence boundaries:
+Two tracks are explicit and may proceed independently while preserving their evidence boundaries:
 
-1. **V1.4 gap closure:** continue the next dependency-ordered implementation slice from the frozen Blueprint. Each slice requires its own tests/CI and documentation update.
+1. **V1.4 gap closure:** continue the next dependency-ordered implementation slice from the frozen Blueprint. Each slice requires its own tests/CI and documentation update. Do not reimplement existing Billing/Payment or Phase 7 capabilities without a demonstrated gap.
 2. **Phase 6E external delivery:** execute Vendor → Reseller → Customer against real infrastructure and populate the Phase 6E evidence records. 6E remains incomplete until its required environment-specific evidence and acceptance gates are satisfied.
 
 ## Security rule
