@@ -14,7 +14,7 @@ from app.core.logging import Timer, request_id_var
 from app.core.metrics import AI_CALLS, AI_COST, AI_LATENCY, AI_TOKENS
 from app.core.telemetry import span
 from app.models.ai_provider_call import AIProviderCall
-from app.services import audit_service
+from app.services import audit_service, usage_service
 
 logger = logging.getLogger("app.ai.gateway")
 
@@ -80,6 +80,21 @@ class AIGateway:
                     )
                     db.add(call_log)
                     await db.flush()
+
+                    usage_key = f"ai.provider_call:{req_id}" if req_id else f"ai.provider_call:{call_log.id}"
+                    await usage_service.record_event(
+                        db,
+                        tenant_id=tenant_id,
+                        event_key=usage_key,
+                        category="ai_call",
+                        quantity=1,
+                        prompt_tokens=prompt_tokens,
+                        completion_tokens=completion_tokens,
+                        cost_usd=cost,
+                        source_type="ai_provider_call",
+                        source_id=str(call_log.id),
+                        metadata={"provider": self.provider.name, "model": request.model, "status": status},
+                    )
 
                     logger.info("ai_provider_call", extra={
                         "provider": self.provider.name, "model": request.model,
