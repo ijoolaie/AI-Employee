@@ -50,7 +50,7 @@ async def record_event(
         cost_usd=cost_usd,
         source_type=source_type,
         source_id=source_id,
-        metadata=metadata or {},
+        event_metadata=metadata or {},
     )
     db.add(event)
     await db.flush()
