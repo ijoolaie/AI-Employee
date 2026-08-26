@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class APIKeyCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     expires_at: datetime | None = None
+    scopes: list[str] | None = Field(default=None, max_length=100)
 
 
 class APIKeyResponse(BaseModel):
@@ -16,6 +17,7 @@ class APIKeyResponse(BaseModel):
     last_used_at: datetime | None = None
     expires_at: datetime | None = None
     revoked_at: datetime | None = None
+    scopes: list[str] | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
