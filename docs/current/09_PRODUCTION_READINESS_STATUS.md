@@ -44,6 +44,19 @@ The v1.2.0 release workflow was successfully executed in GitHub Actions under ru
 
 PR #73 also completed its required verification workflow after the test import correction and was merged. CI/CodeQL/architecture/observability/rollback verification must continue to be treated as repository evidence, not production deployment evidence.
 
+## GitHub PR governance reconciliation — 2026-08-26
+
+The older open PR queue has been reconciled against the frozen V1.4 baseline and the completed #69–#73 implementation wave:
+
+- **#73:** merged and verified; usage-event idempotency gap closed.
+- **#69–#72:** completed first V1.4 implementation wave.
+- **#67:** closed without merge; superseded planning document. Its execution-plan content is represented by the current V1.4 baseline/roadmap.
+- **#68:** closed without merge; superseded baseline-audit document. Its conclusions are represented by the current documentation baseline.
+- **#64:** closed without merge; stale draft v1.3.1 foundation branch and no longer the active execution frontier.
+- **#57:** closed without merge; Shopify external-certification preparation retained as a target-specific/future activity rather than an active blocking PR.
+
+Closing these PRs is repository governance/bookkeeping. It does not certify any external environment and does not mark the associated external gates complete.
+
 ## External live environment — NOT YET CERTIFIED
 
 ### 1. Live production deployment
@@ -97,7 +110,14 @@ The current `docs/evidence/phase6e/` Vendor, Reseller and Customer records are e
 
 ## Documentation / governance checkpoint
 
-The 2026-08-26 documentation snapshot is the reconciliation point before the next implementation wave. Older/open planning PRs must be reconciled against the frozen V1.4 baseline and the already-completed #69–#73 execution chain before they are treated as authoritative work items.
+**2026-08-26 reconciliation checkpoint: COMPLETE.** The roadmap and production-readiness status now reflect the current GitHub PR state: #69–#73 form the completed first V1.4 implementation wave, #73 is merged, and stale/superseded PRs #57, #64, #67 and #68 are closed without merge. The next implementation work must be represented by a new, dependency-ordered V1.4 change rather than reopening obsolete planning branches.
+
+## Next execution frontier
+
+Two tracks are now explicit and may proceed independently while preserving their evidence boundaries:
+
+1. **V1.4 gap closure:** continue the next dependency-ordered implementation slice from the frozen Blueprint. Each slice requires its own tests/CI and documentation update.
+2. **Phase 6E external delivery:** execute Vendor → Reseller → Customer against real infrastructure and populate the Phase 6E evidence records. 6E remains incomplete until its required environment-specific evidence and acceptance gates are satisfied.
 
 ## Security rule
 
