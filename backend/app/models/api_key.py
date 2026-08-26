@@ -6,7 +6,7 @@ on creation; only a SHA-256 digest and a short display prefix are stored.
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -26,4 +26,6 @@ class APIKey(Base):
     last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # NULL is reserved for pre-scope legacy keys; new keys always carry an explicit scope list.
+    scopes: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
