@@ -4,7 +4,7 @@ import secrets
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.api_key import APIKey
@@ -20,7 +20,15 @@ def _new_secret() -> str:
     return KEY_PREFIX + secrets.token_urlsafe(32)
 
 
-async def create_key(db: AsyncSession, *, tenant_id: UUID, user_id: UUID, name: str, expires_at):
+async def create_key(
+    db: AsyncSession,
+    *,
+    tenant_id: UUID,
+    user_id: UUID,
+    name: str,
+    expires_at,
+    scopes: list[str],
+):
     secret = _new_secret()
     row = APIKey(
         tenant_id=tenant_id,
@@ -29,6 +37,7 @@ async def create_key(db: AsyncSession, *, tenant_id: UUID, user_id: UUID, name: 
         key_prefix=secret[:20],
         key_hash=_digest(secret),
         expires_at=expires_at,
+        scopes=sorted(set(scopes)),
     )
     db.add(row)
     await db.flush()
