@@ -16,6 +16,7 @@ from app.models.workflow_approval import WorkflowApproval
 from app.models.outbox import OutboxMessage
 from app.models.feedback import Feedback
 from app.models.billing import BillingPlan, Subscription, BillingEvent
+from app.models.usage import UsageEvent
 from app.models.business_invoice import BusinessInvoice
 from app.models.customer_channel import CustomerChannel
 from app.models.conversation import CustomerConversation, CustomerMessage
@@ -38,7 +39,7 @@ __all__ = [
     "KnowledgeDocument", "KnowledgeChunk", "EmployeeMemory", "Workflow", "WorkflowVersion",
     "WorkflowRun", "WorkflowStepRun", "WorkflowParallelBranchRun", "WorkflowEventTrigger",
     "WorkflowEventDelivery", "WorkflowSchedule", "WorkflowApproval", "OutboxMessage", "Feedback",
-    "BillingPlan", "Subscription", "BillingEvent", "BusinessInvoice", "CustomerChannel",
+    "BillingPlan", "Subscription", "BillingEvent", "UsageEvent", "BusinessInvoice", "CustomerChannel",
     "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "PasswordResetToken",
     "TenantEntitlement", "SupportEscalation", "CommercialLicense",
