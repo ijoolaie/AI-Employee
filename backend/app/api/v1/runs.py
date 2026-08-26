@@ -49,7 +49,7 @@ async def create_run(payload: RunCreate, ctx: RunExecuteContext, db: DbSession):
     try:
         from app.workers.run_worker import execute_run_task
 
-        execute_run_task.delay(str(run.id))
+        execute_run_task.delay(str(run.id), str(ctx.tenant_id))
     except Exception:  # noqa: BLE001
         logger.warning("run_enqueue_failed", extra={"run_id": str(run.id)}, exc_info=True)
 
