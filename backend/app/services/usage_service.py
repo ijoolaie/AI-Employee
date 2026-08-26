@@ -1,20 +1,60 @@
-"""Tenant-scoped usage and cost aggregation.
-
-This is a read-only reporting layer over the durable AI Provider Call records.
-It intentionally introduces no new storage or billing semantics: provider
-calls remain the source of truth for model usage, latency and provider cost.
-"""
+"""Tenant-scoped usage reporting and idempotent usage ledger operations."""
 
 from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.ai_provider_call import AIProviderCall
+from app.models.usage import UsageEvent
+
+
+async def record_event(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    event_key: str,
+    category: str,
+    quantity: int = 1,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    cost_usd: float | Decimal = 0,
+    source_type: str,
+    source_id: str | None = None,
+    metadata: dict | None = None,
+) -> UsageEvent:
+    """Record a usage event exactly once per tenant/event key."""
+    existing = (
+        await db.execute(
+            select(UsageEvent).where(
+                UsageEvent.tenant_id == tenant_id,
+                UsageEvent.event_key == event_key,
+            )
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        return existing
+
+    event = UsageEvent(
+        tenant_id=tenant_id,
+        event_key=event_key,
+        category=category,
+        quantity=quantity,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        cost_usd=cost_usd,
+        source_type=source_type,
+        source_id=source_id,
+        metadata=metadata or {},
+    )
+    db.add(event)
+    await db.flush()
+    return event
 
 
 async def get_usage_summary(
@@ -88,7 +128,6 @@ async def get_usage_summary(
             }
         )
 
-    # Keep the aggregate query above as the authoritative call count.
     total_calls = total_calls or int(calls or 0)
     failed_calls = total_calls - successful_calls
 
