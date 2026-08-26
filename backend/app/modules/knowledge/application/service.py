@@ -32,9 +32,12 @@ class KnowledgeApplicationService:
         *,
         source: str,
         title: str,
-        tenant_id: uuid.UUID | None = None,
+        tenant_id: uuid.UUID,
         metadata: dict[str, Any] | None = None,
     ) -> KnowledgeDocument:
+        if tenant_id is None:
+            raise ValueError("tenant_id is required for knowledge ingestion")
+
         document = KnowledgeDocument(
             id=uuid.uuid4(),
             tenant_id=tenant_id,
