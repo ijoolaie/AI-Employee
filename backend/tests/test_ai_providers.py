@@ -87,7 +87,7 @@ async def test_gateway_records_live_latency_and_gateway_cost(monkeypatch):
     from app.ai.gateway import AIGateway
     from app.ai.schemas import ChatResult
     from app.models.ai_provider_call import AIProviderCall
-    from app.models.usage_event import UsageEvent
+    from app.models.usage import UsageEvent
 
     class FakeProvider:
         name = "fake"
