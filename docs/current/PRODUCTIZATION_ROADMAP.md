@@ -2,13 +2,13 @@
 
 ## Purpose
 
-This is the authoritative productization and delivery roadmap. It distinguishes implementation, CI/release verification, and external-production evidence. The repository has progressed beyond the original 2026-08-24 roadmap snapshot through the V1.4 gap-closure sequence merged after the V1.4 blueprint freeze.
+This is the authoritative productization and delivery roadmap. It distinguishes implementation, CI/release verification, local evidence, and external-production evidence. The repository has progressed beyond the original 2026-08-24 roadmap snapshot through the V1.4 gap-closure sequence and the existing Phase 7 Invoice Employee implementation.
 
 ## Current project position — 2026-08-26
 
-**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE → PHASE 6A–6D VERIFIED → PHASE 6E READY FOR EXTERNAL PRODUCTION EXECUTION → V1.4 GAP-CLOSURE IMPLEMENTATION IN PROGRESS.**
+**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE → PHASE 6A–6D VERIFIED → PHASE 6E READY FOR EXTERNAL PRODUCTION EXECUTION → V1.4 GAP-CLOSURE IMPLEMENTATION IN PROGRESS → PHASE 7 INVOICE EMPLOYEE IMPLEMENTED / LOCALLY VERIFIED.**
 
-The V1.4 blueprint is frozen. Implementation is no longer only planned: the dependency-ordered gap-closure sequence has begun and PRs #69–#73 have been completed, with #73 merged after its CI/test correction. This does **not** change the separate production-evidence boundary: no external production claim is made without target-specific evidence.
+The V1.4 blueprint is frozen. Implementation is no longer only planned: the dependency-ordered gap-closure sequence has begun and PRs #69–#73 have been completed, with #73 merged after its CI/test correction. Phase 7 is also already implemented in the repository as v0.7.0 with the v0.7.1 tax-rate amendment and release verification record. This does **not** change the separate production-evidence boundary: no external production claim is made without target-specific evidence.
 
 ## GitHub execution-ledger reconciliation — 2026-08-26
 
@@ -133,6 +133,16 @@ Open Phase 6E gates:
 
 **Evidence boundary:** GitHub Actions proves reproducible release packaging and verification; it does not prove deployment to a real production target.
 
+## Phase 7 — Invoice Employee
+
+**Status: 🟢 IMPLEMENTED / LOCAL VERIFIED; EXTERNAL PRODUCTION ACCEPTANCE REMAINS OPEN.**
+
+The Phase 7 scope lock is `documents/66_PHASE_7_INVOICE_EMPLOYEE_SCOPE_LOCK_v0.7.0.md`. The repository already contains the v0.7.0 implementation plus the v0.7.1 amendment. The implementation covers invoice creation with line items/tax/currency/due date, ingest/analysis, status tracking (`draft` / `sent` / `paid` / `overdue`), tenant-scoped outstanding/collected summaries, and PDF export using the existing ReportLab pipeline.
+
+The v0.7.1 amendment records the tax-rate normalization fix and corresponding test coverage. `docs/current/RELEASE_VERIFICATION_v0.7.1.md` records the local real-model E2E verification boundary. These records establish repository/local evidence; they do not constitute external production certification.
+
+Phase 7 must not duplicate or alter the existing Stripe subscription/billing path. Any future work must be driven by an evidenced gap rather than the original scope lock alone.
+
 ## V1.4 — Architecture and Gap Closure
 
 **Status: 🟡 BLUEPRINT FROZEN; DEPENDENCY-ORDERED IMPLEMENTATION IN PROGRESS.**
@@ -156,6 +166,7 @@ These changes establish that V1.4 is an active implementation track, not merely 
 - [x] PR #73 merged with verification.
 - [x] Older/open planning PRs reconciled and closed where superseded (#67, #68).
 - [x] Older draft execution branches reconciled and closed where no longer the active frontier (#64, #57).
+- [x] Phase 7 existing implementation audited; no duplicate implementation PR required.
 - [ ] Continue the next dependency-ordered V1.4 slice after this documentation reconciliation checkpoint.
 
 ## Cross-cutting acceptance gates
@@ -188,4 +199,4 @@ A release is commercially deliverable only when the exact release identity is im
 
 ## Immediate next action
 
-**Documentation/PR reconciliation is complete. The next action is to continue V1.4 gap closure in dependency order and separately execute Phase 6E against real infrastructure in the order Vendor → Reseller → Customer. Do not mark 6E complete or claim commercial go-live until environment-specific production evidence is attached for all required gates.**
+**Phase 7 implementation is already present and should not be duplicated. The next action is to continue V1.4 gap closure in dependency order while separately executing Phase 6E against real infrastructure in the order Vendor → Reseller → Customer. Any future Phase 7 change must be driven by a demonstrated gap. Do not mark 6E complete or claim commercial go-live until environment-specific production evidence is attached for all required gates.**
