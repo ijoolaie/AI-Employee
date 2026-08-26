@@ -26,9 +26,11 @@ api_key_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
 class TenantContext:
     """Request-scoped tenant + user context. Never trust client-sent tenant_id."""
 
-    def __init__(self, user: User, tenant: Tenant):
+    def __init__(self, user: User, tenant: Tenant, *, api_key_id: UUID | None = None, api_key_scopes: list[str] | None = None):
         self.user = user
         self.tenant = tenant
+        self.api_key_id = api_key_id
+        self.api_key_scopes = api_key_scopes
 
     @property
     def tenant_id(self) -> UUID:
@@ -46,9 +48,8 @@ async def get_current_context(
     api_key: Annotated[str | None, Depends(api_key_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TenantContext:
-    # Long-lived tenant API keys are accepted alongside normal JWT bearer auth.
-    # API keys resolve to their creator's user/tenant and never expose the key
-    # material after issuance.
+    # API keys resolve to their creator's tenant/user and may narrow that user's
+    # RBAC permissions through an explicit scope set. NULL scopes are legacy keys.
     if api_key:
         key_row = await verify_key(db, api_key)
         if key_row is None:
@@ -65,7 +66,7 @@ async def get_current_context(
         if tenant is None or tenant.status != "active":
             raise HTTPException(status_code=403, detail="Tenant not available")
         RequestContextMiddleware.bind_identity(str(tenant.id), str(user.id))
-        return TenantContext(user=user, tenant=tenant)
+        return TenantContext(user=user, tenant=tenant, api_key_id=key_row.id, api_key_scopes=key_row.scopes)
 
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
@@ -92,7 +93,6 @@ async def get_current_context(
     if payload.get("auth_token_version") is not None and payload.get("auth_token_version") != user.auth_token_version:
         raise HTTPException(status_code=401, detail="Session invalidated; please sign in again")
 
-    # Enforce tenant match from token (isolation)
     if str(user.tenant_id) != str(tenant_id):
         raise HTTPException(status_code=403, detail="Tenant mismatch")
 
@@ -101,19 +101,18 @@ async def get_current_context(
     if tenant is None or tenant.status != "active":
         raise HTTPException(status_code=403, detail="Tenant not available")
 
-    # From here on, every log line in this request carries tenant/user (telemetry baseline).
     RequestContextMiddleware.bind_identity(str(tenant.id), str(user.id))
-
     return TenantContext(user=user, tenant=tenant)
 
 
 async def has_permission(ctx: TenantContext, permission_code: str) -> bool:
-    """Return whether the current tenant user has a permission.
+    """Return whether the request has a tenant permission.
 
-    System-level permissions are represented by global Permission rows. A role
-    is usable for the current request only when it belongs to the current
-    tenant, except for the explicit tenant-admin superuser compatibility path.
+    Explicit API-key scopes are an upper bound on the owner's RBAC permissions.
+    Legacy pre-scope keys have NULL scopes and retain their historical behavior.
     """
+    if ctx.api_key_scopes is not None and permission_code not in set(ctx.api_key_scopes):
+        return False
     if ctx.user.is_superuser:
         return True
     return any(
@@ -136,12 +135,9 @@ def require_permission(permission_code: str):
     return checker
 
 
-# Type aliases for cleaner route signatures
 DbSession = Annotated[AsyncSession, Depends(get_db)]
 CurrentContext = Annotated[TenantContext, Depends(get_current_context)]
 
-# Common endpoint authorization aliases. They intentionally remain tenant-scoped
-# through get_current_context and never accept a client-supplied tenant_id.
 EmployeeReadContext = Annotated[TenantContext, Depends(require_permission("employee.read"))]
 EmployeeWriteContext = Annotated[TenantContext, Depends(require_permission("employee.write"))]
 RunReadContext = Annotated[TenantContext, Depends(require_permission("run.read"))]
@@ -149,24 +145,18 @@ RunExecuteContext = Annotated[TenantContext, Depends(require_permission("run.exe
 FileReadContext = Annotated[TenantContext, Depends(require_permission("file.read"))]
 FileWriteContext = Annotated[TenantContext, Depends(require_permission("file.write"))]
 AuditReadContext = Annotated[TenantContext, Depends(require_permission("audit.read"))]
-
 FeedbackCreateContext = Annotated[TenantContext, Depends(require_permission("feedback.create"))]
 FeedbackReadContext = Annotated[TenantContext, Depends(require_permission("feedback.read"))]
-
 ApprovalReadContext = Annotated[TenantContext, Depends(require_permission("approval.read"))]
 ApprovalDecideContext = Annotated[TenantContext, Depends(require_permission("approval.decide"))]
-
 MemoryReadContext = Annotated[TenantContext, Depends(require_permission("memory.read"))]
 MemoryWriteContext = Annotated[TenantContext, Depends(require_permission("memory.write"))]
 MemoryDeleteContext = Annotated[TenantContext, Depends(require_permission("memory.delete"))]
-
-
 WorkflowReadContext = Annotated[TenantContext, Depends(require_permission("workflow.read"))]
 WorkflowWriteContext = Annotated[TenantContext, Depends(require_permission("workflow.write"))]
 WorkflowExecuteContext = Annotated[TenantContext, Depends(require_permission("workflow.execute"))]
 WorkflowCancelContext = Annotated[TenantContext, Depends(require_permission("workflow.cancel"))]
 WorkflowApprovalReadContext = Annotated[TenantContext, Depends(require_permission("workflow.approval.read"))]
 WorkflowApprovalDecideContext = Annotated[TenantContext, Depends(require_permission("workflow.approval.decide"))]
-
 WorkflowEventReadContext = Annotated[TenantContext, Depends(require_permission("workflow.event.read"))]
 WorkflowEventWriteContext = Annotated[TenantContext, Depends(require_permission("workflow.event.write"))]
