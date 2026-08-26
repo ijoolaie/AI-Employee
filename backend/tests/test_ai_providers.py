@@ -86,6 +86,8 @@ async def test_gateway_records_live_latency_and_gateway_cost(monkeypatch):
 
     from app.ai.gateway import AIGateway
     from app.ai.schemas import ChatResult
+    from app.models.ai_provider_call import AIProviderCall
+    from app.models.usage_event import UsageEvent
 
     class FakeProvider:
         name = "fake"
@@ -137,9 +139,14 @@ async def test_gateway_records_live_latency_and_gateway_cost(monkeypatch):
         run_id=uuid.uuid4(),
     )
 
+    provider_calls = [item for item in db.items if isinstance(item, AIProviderCall)]
+    usage_events = [item for item in db.items if isinstance(item, UsageEvent)]
+
     assert result.cost_usd == 0.123456
     assert result.latency_ms >= 15
-    assert len(db.items) == 1
-    assert db.items[0].cost_usd == 0.123456
-    assert db.items[0].latency_ms >= 15
+    assert len(provider_calls) == 1
+    assert provider_calls[0].cost_usd == 0.123456
+    assert provider_calls[0].latency_ms >= 15
+    assert len(usage_events) == 1
+    assert usage_events[0].cost_usd == 0.123456
     assert audit_calls[0]["metadata"]["latency_ms"] >= 15
