@@ -1,13 +1,12 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 import uuid
 
 @dataclass(frozen=True)
 class KnowledgeDocument:
     id: uuid.UUID
-    tenant_id: uuid.UUID | None
+    tenant_id: uuid.UUID
     title: str
     source: str
     status: str

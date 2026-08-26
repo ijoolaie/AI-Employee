@@ -9,8 +9,11 @@ class InMemoryDocumentRepository:
         self.documents[str(document.id)] = document
         return document
 
-    async def get_document(self, document_id):
-        return self.documents.get(document_id)
+    async def get_document(self, document_id, tenant_id):
+        document = self.documents.get(document_id)
+        if document is None or document.tenant_id != tenant_id:
+            return None
+        return document
 
 class InMemoryChunkRepository:
     def __init__(self):
