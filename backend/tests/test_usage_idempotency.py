@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -27,6 +28,10 @@ class FakeDB:
 
     async def flush(self):
         return None
+
+    @asynccontextmanager
+    async def begin_nested(self):
+        yield
 
 
 @pytest.mark.asyncio
