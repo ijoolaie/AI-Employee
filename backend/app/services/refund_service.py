@@ -6,7 +6,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
+from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.refund import PaymentRefund
 from app.services import stripe_service
 
@@ -37,10 +37,10 @@ async def request_refund(
             )
         )
     ).scalar_one_or_none()
-    if existing is not None:
+    if existing is not None and existing.status != "failed":
         return existing
 
-    row = PaymentRefund(
+    row = existing or PaymentRefund(
         tenant_id=tenant_id,
         operation=operation,
         provider="stripe",
@@ -51,7 +51,10 @@ async def request_refund(
         reason=reason,
         idempotency_key=idempotency_key,
     )
-    db.add(row)
+    row.status = "pending"
+    row.failure_reason = None
+    if existing is None:
+        db.add(row)
     await db.flush()
 
     try:
@@ -73,13 +76,13 @@ async def request_refund(
                 payment_intent_id=payment_intent_id,
                 idempotency_key=idempotency_key,
             )
-            row.status = result.get("status") or "succeeded"
+            row.status = "succeeded" if result.get("status") == "canceled" else (result.get("status") or "pending")
             row.metadata = {"provider_operation": "payment_intent_cancel", "provider_status": result.get("status")}
     except Exception as exc:
         row.status = "failed"
         row.failure_reason = str(exc)[:1000]
         await db.flush()
-        raise
+        return row
 
     await db.flush()
     return row
