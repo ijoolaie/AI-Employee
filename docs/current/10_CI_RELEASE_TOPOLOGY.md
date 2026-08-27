@@ -1,13 +1,15 @@
 # CI / Release Topology
 
-**Status date:** 2026-08-20
-**Baseline:** `main` / release line `1.0.x`
+**Status date:** 2026-08-27
+**Current certified vendor release:** `v1.2.0`
+**Current implementation baseline:** `V1.4`
+**Current external-production gate:** `Phase 6E — pending real target execution`
+
+> Release truth is defined by `docs/current/39_RELEASE_TRUTH_V1.2.0.md`. Historical release documents must not be treated as the current release state.
 
 ## Purpose
 
-This document is the authoritative boundary between normal development CI, production-like certification, deployment/recovery evidence, and release execution.
-
-The rule is simple:
+This document defines the boundary between normal development CI, production-like certification, deployment/recovery evidence, and release execution.
 
 > Fast CI proves that a change is safe to merge. Production Certification proves that a release candidate works on the production-like stack. Release execution publishes only a revision that has already passed the applicable gates.
 
@@ -15,21 +17,19 @@ The rule is simple:
 
 | Layer | Primary responsibility | When it should run | Release decision |
 |---|---|---|---|
-| PR / fast CI | lint, unit, contract, build, architecture | pull requests and normal development | required for merge where configured |
-| Integration / Compose validation | real PostgreSQL/Redis/Compose compatibility | change-triggered or explicit validation | required when infrastructure/runtime changes |
-| Product Acceptance | executable real-stack product flows | explicit acceptance/certification runs | required for a new product capability |
-| Production Hardening | security, recovery, persistence, operational contracts | explicit hardening runs | required before production certification |
-| Production Certification | complete production-like stack + product gates + Playwright | release tag or manual dispatch | release gate |
-| Deployment / DR / Rollback | deployment and recovery behavior | deployment/recovery exercises | release evidence; not duplicate PR CI |
+| PR / fast CI | lint, unit, contract, build, architecture | pull requests and normal development | merge safety |
+| Integration / Compose validation | PostgreSQL/Redis/Compose compatibility | change-triggered or explicit validation | runtime compatibility |
+| Product Acceptance | executable real-stack product flows | explicit acceptance/certification runs | capability evidence |
+| Production Hardening | security, recovery, persistence, operational contracts | explicit hardening runs | certification evidence |
+| Production Certification | complete production-like stack + product gates | release tag or manual dispatch | release gate |
+| Deployment / DR / Rollback | deployment and recovery behavior | deployment/recovery exercises | operational evidence |
 | Release | tag, notes, artifacts, customer handoff | after applicable gates pass | publishable artifact |
 
 ## 2. Workflow ownership
 
-The repository currently has these workflow responsibilities:
-
 - `architecture.yml` — architecture boundaries and completeness audit.
 - `production-compose-validation.yml` — production-like Compose validation.
-- `production-certification.yml` — final production-like certification. **This workflow is intentionally release/manual only.**
+- `production-certification.yml` — release/manual production-like certification.
 - `production-hardening.yml` — hardening/security/operational checks.
 - `production-recovery-validation.yml` — backup/restore and recovery evidence.
 - `production-dr.yml` — disaster-recovery evidence.
@@ -39,123 +39,91 @@ The repository currently has these workflow responsibilities:
 - `production-deploy.yml` — deployment orchestration.
 - `production-deploy-target.yml` — target-specific deployment execution.
 - `production-rollback.yml` — rollback execution.
+- `release-artifact.yml` / delivery packaging workflows — immutable artifact generation.
 
-## 3. Important anti-overlap rule
-
-`production-certification.yml` is deliberately not a default `pull_request` or `main`-push workflow anymore.
-
-It runs only for:
-
-- `workflow_dispatch`
-- version tags matching `v*`
-
-This prevents the largest production-like test suite from becoming a second general-purpose PR CI pipeline. Its job still contains the complete certification sequence because it is the release-grade evidence source.
-
-Do not copy those certification steps into other workflows unless a gate has a materially different purpose.
-
-## 4. Trigger policy
+## 3. Trigger policy
 
 ### Normal PR
 
-Run only the smallest set of workflows needed to answer:
+Run the smallest set needed to answer:
 
 - does the code compile?
-- do unit/contract tests pass?
+- do tests and contracts pass?
 - does architecture remain valid?
 - does the frontend build?
-- does the changed infrastructure contract remain valid?
+- does changed infrastructure remain compatible?
 
-A PR should not automatically launch the entire production certification stack.
+A PR must not automatically launch the entire release-grade certification stack.
 
 ### Release tag
 
 For `v*` tags:
 
-1. verify the tag points at the intended immutable revision;
-2. run Production Certification;
-3. retain the resulting Actions run as release evidence;
-4. publish release notes/assets only after the applicable release gate is green.
+1. verify immutable tag/revision identity;
+2. run applicable production certification;
+3. retain Actions evidence;
+4. publish artifacts only after required gates pass.
 
 ### Manual certification
 
-Use `workflow_dispatch` when a release-grade certification run is needed without creating a new tag, for example after infrastructure-only changes or before a release candidate is frozen.
+Use `workflow_dispatch` when release-grade evidence is needed without creating a new tag.
 
-## 5. Failure triage rule
+## 4. Failure triage rule
 
-When several workflows are red, do not treat each red workflow as an independent product defect.
+Triage red workflows in this order:
 
-Triage in this order:
+1. dependency/setup failure;
+2. infrastructure failure;
+3. shared application failure;
+4. gate-specific failure;
+5. release-only failure.
 
-1. **Dependency/setup failure** — Python/Node/Docker/tooling/version mismatch.
-2. **Infrastructure failure** — PostgreSQL/Redis/Compose readiness.
-3. **Shared application failure** — backend/frontend/API contract failure.
-4. **Gate-specific failure** — only the affected product/operational gate.
-5. **Release-only failure** — tag, artifact, manifest, or publication issue.
+A lower-level failure must not be duplicated as an independent defect in downstream workflows.
 
-A lower-level failure should not be duplicated as a new fix in every downstream workflow.
-
-## 6. Three-level delivery topology
-
-The product delivery model is:
+## 5. Delivery topology
 
 ```text
 Vendor / Primary Seller
-        │
-        ├── owns platform source + release authority
-        │
-        ▼
+        ↓
 Reseller / Secondary Seller
-        │
-        ├── receives a controlled distributable package
-        ├── has tenant-scoped administration
-        └── cannot become the platform release authority
-        │
-        ▼
+        ↓
 Customer / End Customer
-        │
-        ├── receives customer-scoped deployment/package
-        ├── cannot see vendor/reseller control-plane data
-        └── operates only within assigned tenant/workspace boundaries
 ```
 
-Release artifacts must eventually encode this distinction explicitly. A customer package is not the same artifact as the vendor source/release package.
+Vendor owns platform release authority. Resellers and customers receive controlled, scoped delivery artifacts and administration boundaries.
 
-## 7. Required release evidence
+## 6. Required release evidence
 
-For each production release, retain:
+For a production release retain:
 
 - immutable Git tag;
-- commit SHA;
+- exact commit SHA;
 - release notes;
-- Production Certification run URL/ID;
+- Production Certification evidence;
 - applicable Product Acceptance evidence;
 - applicable Hardening/DR/Recovery evidence;
 - deployment-tested revision;
 - rollback evidence when performed;
-- customer/reseller handoff manifest.
+- reseller/customer handoff manifest.
 
-Never place credentials, private keys, production endpoints, or provider secrets in the release artifact.
+Never include credentials, private keys, production endpoints, or provider secrets in release artifacts.
 
-## 8. Current roadmap alignment
+## 7. Current roadmap alignment
 
-The current project is in **Release / Final Handoff**, not in implementation or early product acceptance. Existing certification evidence should be reused unless a later code/configuration change invalidates the relevant gate.
+The repository has three distinct truths:
 
-The next implementation phases should therefore focus on:
+1. **Product release truth:** `v1.2.0` is the latest certified controlled vendor release.
+2. **Implementation truth:** `V1.4` is the active architecture/implementation baseline.
+3. **External-production truth:** Phase 6E remains pending until a real target is available and the target-specific evidence exists.
 
-1. CI/release topology stabilization;
-2. required-check policy and failure observability;
-3. vendor/reseller/customer artifact separation;
-4. controlled customer handoff package;
-5. external-production deployment evidence when a real target exists.
+Therefore new implementation work must not silently relabel V1.4 as a released external-production version.
 
-## 9. Definition of done for this topology
+## 8. Definition of done
 
-This topology is considered implemented when:
-
-- production certification is not part of default PR CI;
 - every workflow has one primary responsibility;
-- release tags invoke release-grade certification;
-- downstream workflows do not duplicate upstream gate logic without justification;
-- failures can be classified by layer;
-- release evidence is traceable to one immutable revision;
-- vendor/reseller/customer delivery boundaries are represented in the release model.
+- release-grade certification is not duplicated as default PR CI;
+- release tags invoke the required release-grade gates;
+- failures are classified by layer;
+- release evidence maps to one immutable revision;
+- Vendor/Reseller/Customer boundaries are represented;
+- release truth and implementation baseline remain explicitly separated.

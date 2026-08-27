@@ -1,12 +1,22 @@
-# AI Employee Production Handoff v1.3.0
+# HISTORICAL / SUPERSEDED — AI Employee Production Handoff v1.3.0
 
-## Release
+> **Do not treat this document as current release truth.**
+>
+> Current certified vendor release truth is **v1.2.0** and is defined by `docs/current/39_RELEASE_TRUTH_V1.2.0.md`.
+>
+> Version reconciliation is defined by `docs/current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md`.
+>
+> This file is retained as historical evidence of prior release claims and has not been promoted to current release truth.
+
+---
+
+## Historical record
 
 Version: v1.3.0
 
-Status: Production Released
+Historical status claim: Production Released
 
-## Verification
+## Historical verification claim
 
 - Release tag validated
 - Production certification workflow passed
@@ -14,7 +24,7 @@ Status: Production Released
 - Edition artifacts generated
 - SHA256 verification completed
 
-## Artifacts
+## Historical artifacts
 
 Runtime:
 
@@ -26,24 +36,12 @@ Editions:
 - Reseller Edition
 - Vendor Edition
 
-## Deployment Requirements
-
-- PostgreSQL
-- Redis
-- Docker Compose
-- Environment configuration
-
-## Operational Checklist
-
-PASS:
-
-- API health
-- Tenant isolation
-- RBAC
-- Employee execution flow
-- Knowledge pipeline
-- Release artifact integrity
-
-## Next Step
+## Historical next step
 
 Proceed with v1.3.1 SaaS Foundation implementation.
+
+---
+
+## Current interpretation rule
+
+This historical record must not override the current release truth. Any operational or release decision must use the current release-truth and reconciliation documents.
