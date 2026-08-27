@@ -45,6 +45,7 @@ class TenantResponse(BaseModel):
     name: str
     slug: str
     status: str
+    tenant_kind: str
 
     model_config = {"from_attributes": True}
 
