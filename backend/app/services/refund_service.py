@@ -6,9 +6,36 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError, ValidationAppError
+from app.core.config import get_settings
+from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
+from app.models.billing import Subscription
 from app.models.refund import PaymentRefund
 from app.services import stripe_service
+
+
+async def _assert_payment_intent_belongs_to_tenant(
+    db: AsyncSession, *, tenant_id: uuid.UUID, payment_intent_id: str
+) -> dict:
+    sub = (
+        await db.execute(select(Subscription).where(Subscription.tenant_id == tenant_id))
+    ).scalar_one_or_none()
+    if sub is None or sub.provider != "stripe" or not sub.provider_customer_id:
+        raise ConflictError("Tenant has no Stripe customer eligible for payment reversal")
+
+    settings = get_settings()
+    if not settings.stripe_enabled:
+        raise ValidationAppError("Stripe is not configured on this deployment")
+    import stripe
+
+    stripe.api_key = settings.stripe_secret_key
+    payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+    customer_id = payment_intent.get("customer")
+    if customer_id != sub.provider_customer_id:
+        raise ConflictError("Payment does not belong to the current tenant")
+    return {
+        "currency": (payment_intent.get("currency") or "usd").lower(),
+        "status": payment_intent.get("status"),
+    }
 
 
 async def request_refund(
@@ -39,6 +66,12 @@ async def request_refund(
     ).scalar_one_or_none()
     if existing is not None and existing.status != "failed":
         return existing
+
+    payment = await _assert_payment_intent_belongs_to_tenant(
+        db, tenant_id=tenant_id, payment_intent_id=payment_intent_id
+    )
+    if payment["currency"] != currency.lower():
+        raise ValidationAppError("Refund currency does not match the PaymentIntent currency")
 
     row = existing or PaymentRefund(
         tenant_id=tenant_id,
