@@ -49,8 +49,9 @@ const groups = [
     { href: "/integrations", label: "Commerce Integrations", icon: PlugZap },
     { href: "/webhooks", label: "Webhooks", icon: Webhook },
     { href: "/privacy", label: "Privacy & GDPR", icon: ShieldCheck },
-    { href: "/settings", label: "Settings", icon: Settings },
-    { href: "/settings/security", label: "Security / Password", icon: KeyRound },
+    { href: "/settings", label: "Settings", icon: Settings, children: [
+      { href: "/settings/security", label: "Security / Password", icon: KeyRound },
+    ] },
     { href: "/team", label: "Team & Roles", icon: UserRound },
   ]},
 ];
@@ -72,7 +73,15 @@ export function Sidebar() {
         <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{group.label}</p>
         <div className="space-y-0.5">{group.items.map(item => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          return <Link key={item.href} href={item.href} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors", active ? "bg-brand-50 text-brand-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900")}><item.icon className="h-4 w-4 shrink-0" />{item.label}</Link>;
+          return <div key={item.href}>
+            <Link href={item.href} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors", active ? "bg-brand-50 text-brand-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900")}><item.icon className="h-4 w-4 shrink-0" />{item.label}</Link>
+            {item.children && active && <div className="ml-7 mt-0.5 space-y-0.5 border-l border-gray-200 pl-2">
+              {item.children.map(child => {
+                const childActive = pathname === child.href || pathname.startsWith(child.href + "/");
+                return <Link key={child.href} href={child.href} className={cn("flex items-center gap-2 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors", childActive ? "bg-brand-50 text-brand-700" : "text-gray-500 hover:bg-gray-50 hover:text-gray-900")}><child.icon className="h-3.5 w-3.5 shrink-0" />{child.label}</Link>;
+              })}
+            </div>}
+          </div>;
         })}</div>
       </div>)}
     </nav>
