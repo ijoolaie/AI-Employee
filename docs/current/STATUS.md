@@ -18,7 +18,7 @@ AI-Employee has substantial real implementation across core SaaS, AI, tenant, bi
 
 ## Current verification baseline
 
-Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant Isolation boundary checks, Knowledge/RAG isolation certification, scoped API-key certification, Employee → Run → AI → Result certification, and the latest full Production Certification are evidenced on main.
+Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant Isolation boundary checks, Knowledge/RAG isolation certification, scoped API-key certification, Employee → Run → AI → Result certification, Conversation tenant/public-boundary isolation certification, and the latest full Production Certification are evidenced on main.
 
 - `PaymentRefund` uses a safe Python ORM attribute instead of the reserved `metadata` attribute while preserving the intended database column contract.
 - The reversal execution path uses `refund_metadata`.
@@ -29,9 +29,11 @@ Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant I
 - Real-stack Knowledge checks cover cross-tenant indexing rejection and cross-tenant search leakage prevention.
 - Scoped API-key certification passes for create, secret redaction, and revoke behavior.
 - Production Certification run `33050378154` passed all Product Gates with `Failed gates: 0` on merge commit `e84967a122106750563c501857c017c12e83758c`.
+- Production Certification run `33056813888` passed all Product Gates with `Failed gates: 0` on commit `11f305ddf733b856c31a07e147ade6ccd7268bf5`.
+- The `Conversation Tenant Isolation P0` gate passed in run `33056813888`, including same-conversation public read, cross-tenant authenticated list isolation, wrong-token rejection, cross-tenant public read rejection, and cross-tenant handoff rejection.
 - The same real-stack certification passed the Employee → Run → AI → Result chain and the Files → Knowledge → Memory flow.
 
-**Evidence:** PR #96 merged as `5f278f0e9cae763399b6c7125131527ff0346afd`; PR #97 merged as `64b64fab65725ab5ccf59b3a6f3f0b587f5db219`; PR #98 merged as `a25bba8ce3c39df7c46c9037a0fde18b1f3336a6`; PR #99 merged as `38b4df9f3cf41a3ebb395004f0d1ad19df25dedb`; PR #100 merged as `e84967a122106750563c501857c017c12e83758c`; Production Certification run `33050378154` passed with `Failed gates: 0`.
+**Evidence:** PR #96 merged as `5f278f0e9cae763399b6c7125131527ff0346afd`; PR #97 merged as `64b64fab65725ab5ccf59b3a6f3f0b587f5db219`; PR #98 merged as `a25bba8ce3c39df7c46c9037a0fde18b1f3336a6`; PR #99 merged as `38b4df9f3cf41a3ebb395004f0d1ad19df25dedb`; PR #100 merged as `e84967a122106750563c501857c017c12e83758c`; Production Certification run `33050378154` passed with `Failed gates: 0`; Production Certification run `33056813888` passed with `Failed gates: 0` on `11f305ddf733b856c31a07e147ade6ccd7268bf5`.
 
 This is verified automated and real-stack certification evidence for the reviewed slices. It does not establish live provider or production customer evidence.
 
@@ -48,7 +50,7 @@ This is verified automated and real-stack certification evidence for the reviewe
 | Runs / Chat / AI Employees | VERIFIED | Employee → Run → AI → Result real-stack gate passes. |
 | Files | VERIFIED | Real-stack cross-tenant read/download/delete negative checks pass. |
 | Knowledge / Memory | VERIFIED | Knowledge cross-tenant index/search isolation and Files → Knowledge → Memory certification pass. |
-| Conversations | AS-BUILT | Authenticated inbox paths enforce tenant scope; public conversation reads resolve by customer token, but dedicated cross-tenant/public-boundary certification is not yet recorded. |
+| Conversations | VERIFIED | Real-stack `Conversation Tenant Isolation P0` passed on `11f305dd` in Production Certification run `33056813888`, covering customer-token/public access and cross-tenant authenticated/public/handoff negative paths. |
 | Workflows / schedules / approvals | AS-BUILT | Production flow passes; dedicated cross-tenant certification remains pending. |
 | Reports / analytics | AS-BUILT | Application and UI paths exist; dedicated cross-tenant certification remains pending. |
 | Billing domain | AS-BUILT | Billing models/services/APIs exist; dedicated cross-tenant certification remains pending. |
@@ -79,17 +81,18 @@ This is verified automated and real-stack certification evidence for the reviewe
 
 - Core product capabilities have substantial real implementation.
 - The reviewed V1.4 baseline passes current automated backend/frontend/architecture/security gates.
-- The latest real-stack Production Certification run `33050378154` passes all Product Gates with `Failed gates: 0`.
+- Production Certification run `33056813888` passes all Product Gates with `Failed gates: 0` on `11f305ddf733b856c31a07e147ade6ccd7268bf5`.
+- Conversation tenant/public-boundary isolation is verified by the dedicated real-stack P0 gate in that run.
 - Refund and reversal implementation, Usage Ledger tenant-scoped idempotency, Employee/File tenant isolation, Knowledge/RAG isolation, RBAC, and scoped API-key behavior have reviewed evidence.
 - The Employee → Run → AI → Result and Files → Knowledge → Memory product paths pass real-stack certification.
-- Tenant isolation is verified for the currently covered Employee, File, and Knowledge boundaries, but is **not** yet certified across every domain.
+- Tenant isolation is verified for the currently covered Employee, File, Knowledge, and Conversation boundaries, but is **not** yet certified across every domain.
 
 Do not claim commercial go-live, live Stripe/payment behavior, live WhatsApp provider behavior, customer acceptance, or complete cross-domain tenant isolation.
 
 ## Next execution order
 
-1. Add dedicated real-stack tenant-isolation and public-boundary tests for Conversations, with emphasis on customer-token access and related Employee/Message resolution.
-2. Extend tenant-isolation negative tests to Billing and other high-risk resource domains.
+1. Extend tenant-isolation negative tests to Billing and other high-risk resource domains.
+2. Add dedicated real-stack tenant-isolation certification for Workflows / schedules / approvals and Reports / analytics.
 3. Execute refund lifecycle against the real payment-provider boundary where applicable.
 4. Audit Billing/Stripe end-to-end: source → tests → runtime → external evidence.
 5. Collect production evidence for deployment, secrets/HTTPS, backup/restore, monitoring, rollback/recovery and customer acceptance.
