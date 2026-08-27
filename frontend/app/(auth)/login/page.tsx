@@ -49,7 +49,10 @@ function LoginForm() {
       setTokens(tokens.access_token, tokens.refresh_token);
       const me = await fetchMe();
       setSession(me.user, me.tenant);
-      router.push("/dashboard");
+      const tenantKind = (me.tenant as typeof me.tenant & { tenant_kind?: string }).tenant_kind;
+      if (me.user.is_platform_admin) router.push("/admin");
+      else if (tenantKind === "reseller") router.push("/reseller/dashboard");
+      else router.push("/dashboard");
     } catch (err) {
       setError(getErrorMessage(err));
     }
