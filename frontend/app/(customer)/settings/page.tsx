@@ -32,23 +32,6 @@ export default function SettingsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Security</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <p className="text-gray-600">
-              Change your account password and manage password security.
-            </p>
-            <Link
-              href="/settings/security"
-              className="inline-flex rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
-            >
-              Security / Password
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
             <CardTitle>Organization</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
@@ -65,9 +48,14 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p className="text-gray-600">
-              Billing and usage are managed on their own pages:
+              Account security, billing and usage are managed on their own pages:
             </p>
             <ul className="list-inside list-disc space-y-1 text-brand-700">
+              <li>
+                <Link href="/settings/security" className="hover:underline">
+                  Security &amp; password
+                </Link>
+              </li>
               <li>
                 <Link href="/billing" className="hover:underline">
                   Billing &amp; plans
