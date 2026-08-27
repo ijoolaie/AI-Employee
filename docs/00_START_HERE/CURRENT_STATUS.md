@@ -7,11 +7,17 @@
 
 | Dimension | Current truth |
 |---|---|
-| Certified product release | v1.2.0 |
+| Latest published GitHub release | v1.3.0 |
+| Latest production-certified baseline | v1.2.1-final (certification inherited by v1.2.2 release record) |
+| Latest release tag | v1.3.0 → `73ae16ca51f4cced83e3f03cb5dc0e6239287471` |
 | Architecture baseline | V1.4 (frozen) |
 | Current architecture extension | V1.5 Agentic Operating Model |
-| Active repository frontier | Workspace separation + unified Human/Agent execution planning |
-| External production evidence | Pending for Vendor → Reseller → Customer |
+| Active repository frontier | Documentation truth reconciliation + unified Human/Agent execution planning |
+| External Vendor → Reseller → Client acceptance | Pending |
+
+## Git truth
+
+The repository currently has published tags through `v1.3.0`. `v1.3.0` is a published development/product-expansion release and is not itself production certification. Its release record explicitly says certification is pending and inherits production certification from the previous baseline. The `v1.3.0` tag points to commit `73ae16ca51f4cced83e3f03cb5dc0e6239287471`; `main` is currently 113 commits ahead of that tag.
 
 ## Done / evidenced
 
@@ -20,27 +26,36 @@
 - Vendor/Reseller/Customer delivery model exists.
 - Productization roadmap is established.
 - Agent-first, Human + Agent execution model is documented.
+- Documentation Start Here, governance, source-of-truth map and release/tag policy are established.
+- Legacy V1.3/V1.3.1 planning documents are classified as historical/superseded records.
 
 ## In progress / next
 
-1. Documentation and repository standardization.
-2. Full documentation classification and reconciliation.
-3. Unified WorkItem/Agent execution foundation.
-4. Platform workspace.
-5. Reseller workspace.
-6. Client workspace.
-7. Role-aware Test Center.
+1. Complete documentation normalization and code/documentation traceability.
+2. Reconcile Git tags, releases, CI and certification into the release truth ledger.
+3. Canonicalize Platform / Reseller / Client vocabulary.
+4. Build Unified WorkItem + Agent/Human execution foundation.
+5. Build role-aware Platform, Reseller and Client workspaces.
+6. Build the shared Test Center across all workspaces.
 
 ## Important boundaries
 
 - CI/internal verification is not external production certification.
-- V1.4 is not automatically v1.4.0.
+- A Git tag or GitHub release does not by itself prove deployment or production acceptance.
+- V1.4 is an architecture/execution baseline, not automatically a semantic product release.
+- V1.5 is an architecture extension, not a released product version.
 - Historical documents cannot override this status file.
 - Existing Employee functionality must migrate incrementally through compatibility paths.
 
 ## Canonical documents
 
-- Product roadmap: ../current/PRODUCTIZATION_ROADMAP.md
-- Version truth: ../current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md
-- Current execution status: ../current/V1.4_EXECUTION_STATUS_2026-08-26.md
-- Documentation map: HOW_TO_NAVIGATE.md
+- Documentation entry point: `docs/00_START_HERE/README.md`
+- Product overview: `docs/00_START_HERE/PROJECT_OVERVIEW.md`
+- Current priorities: `docs/00_START_HERE/CURRENT_PRIORITIES.md`
+- Documentation map: `docs/DOCUMENTATION_INDEX.md`
+- Implementation truth: `docs/current/STATUS.md`
+- Roadmap: `docs/current/PRODUCTIZATION_ROADMAP.md`
+- Version/release truth: `docs/current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md`
+- Git release policy: `docs/releases/GIT_TAG_AND_RELEASE_POLICY.md`
+- V1.4 architecture: `docs/blueprint/V1.4_MASTER_BLUEPRINT.md`
+- V1.5 Agentic model: `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md`
