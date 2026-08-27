@@ -33,6 +33,9 @@ from app.models.password_reset_token import PasswordResetToken
 from app.models.tenant_entitlement import TenantEntitlement
 from app.models.support_escalation import SupportEscalation
 from app.models.license import CommercialLicense
+from app.models.work_item import WorkItem, WorkItemStatus, ExecutorType
+from app.models.agent_definition import AgentDefinition
+from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -43,5 +46,6 @@ __all__ = [
     "BillingPlan", "Subscription", "BillingEvent", "PaymentRefund", "UsageEvent", "BusinessInvoice", "CustomerChannel",
     "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "PasswordResetToken",
-    "TenantEntitlement", "SupportEscalation", "CommercialLicense",
+    "TenantEntitlement", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
+    "AgentDefinition", "AgentInstance", "AgentInstanceStatus",
 ]
