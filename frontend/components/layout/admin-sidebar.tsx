@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
-import { LayoutDashboard, LogOut, ShieldCheck, Users, ArrowLeft, ClipboardCheck, Activity, ScrollText, PlugZap, Bot, LifeBuoy, Settings } from "lucide-react";
+import { LayoutDashboard, LogOut, ShieldCheck, Users, ArrowLeft, ClipboardCheck, Activity, ScrollText, PlugZap, Bot } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -15,12 +15,10 @@ const groups = [
   ]},
   { label: "Internal Workforce", items: [
     { href: "/admin/ai-employees", label: "Internal AI Employees", icon: Bot },
-    { href: "/admin/support", label: "Support Center", icon: LifeBuoy },
   ]},
   { label: "Engineering", items: [
     { href: "/admin/validation", label: "Validation", icon: ClipboardCheck },
     { href: "/admin/providers", label: "AI Providers", icon: PlugZap },
-    { href: "/admin/settings", label: "Platform Settings", icon: Settings },
   ]},
 ];
 
