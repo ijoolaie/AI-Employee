@@ -53,13 +53,16 @@ def main() -> int:
     print("ADMIN NON-PLATFORM DENY PASS")
 
     key_name = f"cert-key-{suffix}"
-    status, created = request("POST", "/api-keys", {"name": key_name}, token=token)
+    # Superusers must provide an explicit scope snapshot; omitting scopes is
+    # intentionally rejected by the API to avoid ambiguous privilege grants.
+    status, created = request("POST", "/api-keys", {"name": key_name, "scopes": ["employee.read"]}, token=token)
     assert status == 201, created
     created_data = created.get("data") or {}
     secret = created_data.get("key")
     key_id = created_data.get("id")
     assert secret and key_id, created
     assert secret.startswith("aiep_"), created
+    assert created_data.get("scopes") == ["employee.read"], created
     print("DEVELOPER API KEY CREATE PASS")
 
     status, listed = request("GET", "/api-keys", token=token)
@@ -68,6 +71,7 @@ def main() -> int:
     row = next((item for item in keys if item.get("id") == key_id), None)
     assert row is not None, listed
     assert "key" not in row and "secret" not in row, listed
+    assert row.get("scopes") == ["employee.read"], listed
     print("DEVELOPER API KEY SECRET REDACTION PASS")
 
     status, revoked = request("POST", f"/api-keys/{key_id}/revoke", token=token)
