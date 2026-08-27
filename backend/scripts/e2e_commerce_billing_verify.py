@@ -83,6 +83,20 @@ def main() -> int:
     assert changed.get("plan", {}).get("code") == current_plan, changed
     print("BILLING PLAN CHANGE PASS")
 
+    # Billing subscription/entitlements are tenant-scoped even though plan
+    # catalog data is intentionally global. A different tenant must not be
+    # able to read or mutate tenant A's subscription state.
+    status, body = request("GET", "/billing/subscription", token=token_b)
+    subscription_b = expect(status, 200, "tenant B billing subscription", body)
+    assert subscription_b.get("id") and subscription_b.get("plan"), subscription_b
+    assert subscription_b["id"] != subscription["id"], (subscription_b, subscription)
+    print("BILLING SUBSCRIPTION TENANT ISOLATION PASS")
+
+    status, body = request("GET", "/billing/entitlements", token=token_b)
+    entitlements_b = expect(status, 200, "tenant B billing entitlements", body)
+    assert entitlements_b.get("plan") and entitlements_b.get("status"), entitlements_b
+    print("BILLING ENTITLEMENTS TENANT ISOLATION PASS")
+
     invoice_payload = {
         "number": f"CERT-INV-{suffix}",
         "customer_name": "Certification Customer",
