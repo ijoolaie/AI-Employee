@@ -18,7 +18,7 @@ AI-Employee has substantial real implementation across core SaaS, AI, tenant, bi
 
 ## Current verification baseline
 
-Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant Isolation boundary checks, Knowledge/RAG isolation certification, and scoped API-key certification are merged on main.
+Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant Isolation boundary checks, Knowledge/RAG isolation certification, scoped API-key certification, and the latest full Production Certification are evidenced on main.
 
 - `PaymentRefund` uses a safe Python ORM attribute instead of the reserved `metadata` attribute while preserving the intended database column contract.
 - The reversal execution path uses `refund_metadata`.
@@ -28,7 +28,7 @@ Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant I
 - Real-stack tenant isolation checks cover cross-tenant Employee access plus File read/download/delete, alongside RBAC checks.
 - Real-stack Knowledge checks cover cross-tenant indexing rejection and cross-tenant search leakage prevention.
 - Scoped API-key certification passes for create, secret redaction, and revoke behavior.
-- The latest Production Certification run passed all Product Gates with `Failed gates: 0`.
+- Production Certification run `33050378154` passed all Product Gates with `Failed gates: 0` on merge commit `e84967a122106750563c501857c017c12e83758c`.
 - The same real-stack certification passed the Employee → Run → AI → Result chain and the Files → Knowledge → Memory flow.
 
 **Evidence:** PR #96 merged as `5f278f0e9cae763399b6c7125131527ff0346afd`; PR #97 merged as `64b64fab65725ab5ccf59b3a6f3f0b587f5db219`; PR #98 merged as `a25bba8ce3c39df7c46c9037a0fde18b1f3336a6`; PR #99 merged as `38b4df9f3cf41a3ebb395004f0d1ad19df25dedb`; PR #100 merged as `e84967a122106750563c501857c017c12e83758c`; Production Certification run `33050378154` passed with `Failed gates: 0`.
@@ -79,7 +79,7 @@ This is verified automated and real-stack certification evidence for the reviewe
 
 - Core product capabilities have substantial real implementation.
 - The reviewed V1.4 baseline passes current automated backend/frontend/architecture/security gates.
-- The latest real-stack Production Certification run passes all Product Gates with `Failed gates: 0`.
+- The latest real-stack Production Certification run `33050378154` passes all Product Gates with `Failed gates: 0`.
 - Refund and reversal implementation, Usage Ledger tenant-scoped idempotency, Employee/File tenant isolation, Knowledge/RAG isolation, RBAC, and scoped API-key behavior have reviewed evidence.
 - The Employee → Run → AI → Result and Files → Knowledge → Memory product paths pass real-stack certification.
 - Tenant isolation is verified for the currently covered Employee, File, and Knowledge boundaries, but is **not** yet certified across every domain.
