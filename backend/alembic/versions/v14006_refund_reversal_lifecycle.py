@@ -1,7 +1,7 @@
 """Add provider-neutral refund/reversal lifecycle state.
 
 Revision ID: v14006refund
-Revises: rc9merge04
+Revises: v14006merge
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "v14006refund"
-down_revision = "rc9merge04"
+down_revision = "v14006merge"
 branch_labels = None
 depends_on = None
 
