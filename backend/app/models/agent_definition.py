@@ -20,7 +20,7 @@ class AgentDefinition(Base):
     slug: Mapped[str] = mapped_column(String(120), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1, insert_default=1)
     capabilities: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     allowed_tools: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     model_policy: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
