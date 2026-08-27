@@ -11,7 +11,7 @@ def test_work_item_defaults_and_executor_types() -> None:
         title="Process customer request",
         idempotency_key="test-1",
     )
-    assert item.status is WorkItemStatus.DRAFT
+    assert WorkItem.status.property.columns[0].default.arg is WorkItemStatus.DRAFT
     assert item.executor_type is None
     assert ExecutorType.HUMAN.value == "human"
     assert ExecutorType.AGENT.value == "agent"
@@ -23,7 +23,7 @@ def test_agent_definition_contains_policy_boundaries() -> None:
         slug="support-triage",
         name="Support Triage",
     )
-    assert agent.version == 1
+    assert AgentDefinition.version.property.columns[0].default.arg == 1
     assert agent.capabilities == []
     assert agent.allowed_tools == []
     assert agent.policy_requirements == {}
@@ -35,5 +35,5 @@ def test_agent_instance_is_tenant_scoped_and_lifecycle_aware() -> None:
         agent_definition_id=uuid4(),
         name="Support Triage Production",
     )
-    assert instance.status is AgentInstanceStatus.ENABLED
+    assert AgentInstance.status.property.columns[0].default.arg is AgentInstanceStatus.ENABLED
     assert instance.max_concurrency == 1
