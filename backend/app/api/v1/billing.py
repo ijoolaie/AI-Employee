@@ -1,13 +1,24 @@
 from fastapi import APIRouter
 from app.core.deps import CurrentContext, DbSession
 from app.schemas.common import APIResponse
-from app.schemas.billing import PlanResponse, SubscriptionResponse, SubscribeRequest, CancelRequest, CheckoutSessionRequest, CheckoutSessionResponse, PortalSessionResponse
-from app.services import billing_service, stripe_service
+from app.schemas.billing import PlanResponse, SubscriptionResponse, SubscribeRequest, CancelRequest, CheckoutSessionRequest, CheckoutSessionResponse, PortalSessionResponse, RefundRequest, RefundResponse
+from app.services import billing_service, stripe_service, refund_service
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
 def _sub_response(sub):
     return SubscriptionResponse(id=str(sub.id), plan=PlanResponse.model_validate(sub.plan, from_attributes=True), status=sub.status, provider=sub.provider, current_period_start=sub.current_period_start, current_period_end=sub.current_period_end, cancel_at_period_end=sub.cancel_at_period_end, canceled_at=sub.canceled_at, trial_ends_at=sub.trial_ends_at)
+
+def _refund_response(row):
+    return RefundResponse(
+        id=str(row.id), operation=row.operation, provider=row.provider,
+        provider_refund_id=row.provider_refund_id,
+        provider_payment_intent_id=row.provider_payment_intent_id,
+        provider_charge_id=row.provider_charge_id,
+        amount_cents=row.amount_cents, currency=row.currency, status=row.status,
+        reason=row.reason, failure_reason=row.failure_reason,
+        created_at=row.created_at, updated_at=row.updated_at,
+    )
 
 @router.get("/plans", response_model=APIResponse[list[PlanResponse]])
 async def plans(db: DbSession):
@@ -35,18 +46,8 @@ async def cancel(payload: CancelRequest, ctx: CurrentContext, db: DbSession):
     await db.commit(); await db.refresh(sub, ["plan"])
     return APIResponse(success=True, data=_sub_response(sub))
 
-
-# ── Phase 6: real Stripe checkout / self-serve portal ──────────────────
-# The public Stripe webhook receiver lives in billing_webhooks.py. Keeping
-# provider webhook ingestion out of this authenticated router prevents a
-# second, weaker event-ingestion path from bypassing Stripe signature
-# verification.
-
 @router.post("/checkout", response_model=APIResponse[CheckoutSessionResponse])
 async def create_checkout(payload: CheckoutSessionRequest, ctx: CurrentContext, db: DbSession):
-    """Returns a real Stripe Checkout Session URL for the given paid plan.
-    The frontend redirects the browser to this URL; Stripe hosts the actual
-    payment form — card data never touches this backend."""
     url = await stripe_service.create_checkout_session(
         db, tenant_id=ctx.tenant_id, user_id=ctx.user_id, plan_code=payload.plan_code
     )
@@ -55,9 +56,27 @@ async def create_checkout(payload: CheckoutSessionRequest, ctx: CurrentContext, 
 
 @router.post("/portal", response_model=APIResponse[PortalSessionResponse])
 async def create_portal(ctx: CurrentContext, db: DbSession):
-    """Returns a real Stripe Billing Portal URL so the tenant can manage
-    their own subscription (upgrade/downgrade/cancel/payment method) —
-    the "clear upgrade path" the Roadmap calls for."""
     url = await stripe_service.create_portal_session(db, tenant_id=ctx.tenant_id)
     await db.commit()
     return APIResponse(success=True, data=PortalSessionResponse(portal_url=url))
+
+@router.post("/refunds", response_model=APIResponse[RefundResponse])
+async def create_refund(payload: RefundRequest, ctx: CurrentContext, db: DbSession):
+    row = await refund_service.request_refund(
+        db,
+        tenant_id=ctx.tenant_id,
+        operation=payload.operation,
+        payment_intent_id=payload.payment_intent_id,
+        amount_cents=payload.amount_cents,
+        currency=payload.currency,
+        reason=payload.reason,
+        idempotency_key=payload.idempotency_key,
+    )
+    await db.commit()
+    return APIResponse(success=True, data=_refund_response(row))
+
+@router.get("/refunds/{refund_id}", response_model=APIResponse[RefundResponse])
+async def get_refund(refund_id: str, ctx: CurrentContext, db: DbSession):
+    import uuid
+    row = await refund_service.get_refund(db, tenant_id=ctx.tenant_id, refund_id=uuid.UUID(refund_id))
+    return APIResponse(success=True, data=_refund_response(row))

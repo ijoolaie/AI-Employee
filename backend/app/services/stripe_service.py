@@ -5,20 +5,6 @@ module docstring): quota enforcement, MRR reporting, and the Subscription/
 BillingEvent models know nothing about Stripe. This module is the adapter
 that connects real Stripe Checkout/Billing-Portal/webhooks to that
 provider-neutral core, without changing any of it.
-
-Everything here fails closed when Stripe is not configured
-(`settings.stripe_enabled` — both a secret key and a webhook secret must be
-set) rather than silently no-op'ing, so a misconfigured deployment cannot
-accidentally look like it has working payments.
-
-IMPORTANT — what this module does NOT prove by itself: this code was
-written and unit-tested (signature verification, event-type dispatch, plan
-mapping) against the Stripe SDK's own request/response shapes, but this
-delivery environment's network egress does not include api.stripe.com —
-see documents/64_PHASE_6... for the exact verification boundary. A real
-Checkout Session must be completed with real (or Stripe test-mode) keys,
-in an environment that can actually reach Stripe, before the Phase 4
-commercial exit gate can be considered closed.
 """
 
 from __future__ import annotations
@@ -86,14 +72,8 @@ async def _get_or_create_stripe_customer(
 async def create_checkout_session(
     db: AsyncSession, *, tenant_id: uuid.UUID, user_id: uuid.UUID, plan_code: str
 ) -> str:
-    """Creates a real Stripe Checkout Session (subscription mode) for the
-    given plan and returns the URL the frontend should redirect the user
-    to. Raises StripeNotConfiguredError if Stripe isn't set up, and
-    ValidationAppError if the plan has no mapped Stripe Price ID (e.g. the
-    free `starter` plan, which is not expected to go through Checkout)."""
     stripe = _client()
     settings = get_settings()
-
     price_id = settings.stripe_price_map.get(plan_code)
     if not price_id:
         raise ValidationAppError(
@@ -105,13 +85,11 @@ async def create_checkout_session(
     ).scalar_one_or_none()
     if plan is None:
         raise NotFoundError("Billing plan not found")
-
     sub = await billing_service.ensure_subscription(db, tenant_id=tenant_id)
     user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
     customer_id = await _get_or_create_stripe_customer(
         db, stripe, tenant_id=tenant_id, sub=sub, user_email=user.email if user else None
     )
-
     trial_days = 0
     if sub.status == "trialing" and sub.trial_ends_at:
         remaining_seconds = (sub.trial_ends_at - datetime.now(timezone.utc)).total_seconds()
@@ -130,19 +108,13 @@ async def create_checkout_session(
 
 
 async def create_portal_session(db: AsyncSession, *, tenant_id: uuid.UUID) -> str:
-    """Creates a real Stripe Billing Portal session so the tenant can
-    self-serve upgrade/downgrade/cancel/update payment method — this is
-    what makes the "clear upgrade path" requirement (03_Roadmap_v1.1 §9)
-    real rather than an internal-only API call."""
     stripe = _client()
     settings = get_settings()
-
     sub = await billing_service.ensure_subscription(db, tenant_id=tenant_id)
     if not sub.provider_customer_id:
         raise ConflictError(
             "No Stripe customer on file for this tenant yet — complete a Checkout session first."
         )
-
     portal = stripe.billing_portal.Session.create(
         customer=sub.provider_customer_id,
         return_url=settings.stripe_portal_return_url,
@@ -151,12 +123,6 @@ async def create_portal_session(db: AsyncSession, *, tenant_id: uuid.UUID) -> st
 
 
 def verify_and_parse_webhook(raw_body: bytes, sig_header: str | None):
-    """Verifies the Stripe-Signature header against STRIPE_WEBHOOK_SECRET
-    using Stripe's own SDK (HMAC-SHA256 + timestamp tolerance — Stripe's
-    verification, not a reimplementation of it), and returns the parsed
-    Event object. Raises on any signature/timestamp failure — this is the
-    only path by which billing_service state can be changed by an
-    unauthenticated caller, so it fails closed."""
     stripe = _client()
     settings = get_settings()
     try:
@@ -165,14 +131,43 @@ def verify_and_parse_webhook(raw_body: bytes, sig_header: str | None):
         raise ValidationAppError("Invalid Stripe webhook signature or payload") from exc
 
 
-async def apply_webhook_event(db: AsyncSession, event) -> dict:
-    """Translates a verified Stripe Event into provider-neutral billing calls.
+async def create_refund(
+    *,
+    payment_intent_id: str,
+    amount_cents: int | None,
+    reason: str | None,
+    idempotency_key: str,
+) -> dict:
+    """Create a Stripe refund against a captured PaymentIntent.
 
-    The provider event ID is checked before any subscription mutation. This
-    makes Stripe's at-least-once delivery semantics genuinely idempotent:
-    replaying an already-processed event cannot re-run business state
-    transitions before the duplicate is detected.
+    Stripe's idempotency key makes retries safe even if the worker or HTTP
+    client times out after Stripe has accepted the refund request.
     """
+    stripe = _client()
+    params = {"payment_intent": payment_intent_id, "metadata": {"refund_idempotency_key": idempotency_key}}
+    if amount_cents is not None:
+        params["amount"] = amount_cents
+    if reason in {"duplicate", "fraudulent", "requested_by_customer"}:
+        params["reason"] = reason
+    refund = stripe.Refund.create(**params, idempotency_key=idempotency_key)
+    return {
+        "id": refund.id,
+        "status": refund.status,
+        "amount": refund.amount,
+        "currency": refund.currency,
+        "charge": refund.charge,
+    }
+
+
+async def create_reversal(*, payment_intent_id: str, idempotency_key: str) -> dict:
+    """Cancel an uncaptured PaymentIntent as the provider-side reversal path."""
+    stripe = _client()
+    payment_intent = stripe.PaymentIntent.cancel(payment_intent_id, idempotency_key=idempotency_key)
+    return {"id": payment_intent.id, "status": payment_intent.status}
+
+
+async def apply_webhook_event(db: AsyncSession, event) -> dict:
+    """Translate verified Stripe events into provider-neutral billing state."""
     provider_event_id = event["id"]
     existing = (
         await db.execute(
@@ -228,13 +223,11 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
         status = {"active": "active", "trialing": "trialing", "past_due": "past_due", "canceled": "canceled", "unpaid": "past_due"}.get(
             stripe_status, None
         )
-
         items = (data.get("items") or {}).get("data") or []
         if items:
             price_id = (items[0].get("price") or {}).get("id")
             if price_id:
                 plan_code = _plan_code_for_price_id(price_id)
-
         if tenant_id is not None:
             sub = await billing_service.ensure_subscription(db, tenant_id=tenant_id)
             sub.provider = "stripe"
@@ -268,6 +261,12 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
         if existing is not None:
             tenant_id = existing.tenant_id
             status = "past_due"
+
+    elif event_type in {"refund.created", "refund.updated", "charge.refunded"}:
+        from app.services.refund_service import reconcile_stripe_refund_event
+        row = await reconcile_stripe_refund_event(db, event=event)
+        tenant_id = row.tenant_id if row is not None else None
+        status = row.status if row is not None else None
 
     else:
         logger.info("stripe_webhook_ignored_event_type", extra={"event_type": event_type})
