@@ -1,8 +1,9 @@
 from fastapi import APIRouter
-from app.core.deps import CurrentContext, DbSession
+from app.core.deps import BillingRefundContext, CurrentContext, DbSession
+from app.core.logging import request_id_var
 from app.schemas.common import APIResponse
 from app.schemas.billing import PlanResponse, SubscriptionResponse, SubscribeRequest, CancelRequest, CheckoutSessionRequest, CheckoutSessionResponse, PortalSessionResponse, RefundRequest, RefundResponse
-from app.services import billing_service, stripe_service, refund_service
+from app.services import audit_service, billing_service, stripe_service, refund_service
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
@@ -61,7 +62,7 @@ async def create_portal(ctx: CurrentContext, db: DbSession):
     return APIResponse(success=True, data=PortalSessionResponse(portal_url=url))
 
 @router.post("/refunds", response_model=APIResponse[RefundResponse])
-async def create_refund(payload: RefundRequest, ctx: CurrentContext, db: DbSession):
+async def create_refund(payload: RefundRequest, ctx: BillingRefundContext, db: DbSession):
     row = await refund_service.request_refund(
         db,
         tenant_id=ctx.tenant_id,
@@ -71,6 +72,25 @@ async def create_refund(payload: RefundRequest, ctx: CurrentContext, db: DbSessi
         currency=payload.currency,
         reason=payload.reason,
         idempotency_key=payload.idempotency_key,
+    )
+    await audit_service.record(
+        db,
+        action=f"billing.{payload.operation}.requested",
+        actor_type="user",
+        actor_id=ctx.user_id,
+        tenant_id=ctx.tenant_id,
+        resource_type="payment_refund",
+        resource_id=str(row.id),
+        status="success" if row.status != "failed" else "failed",
+        request_id=request_id_var.get(),
+        metadata={
+            "operation": row.operation,
+            "payment_intent_id": row.provider_payment_intent_id,
+            "provider_refund_id": row.provider_refund_id,
+            "amount_cents": row.amount_cents,
+            "currency": row.currency,
+            "idempotency_key": row.idempotency_key,
+        },
     )
     await db.commit()
     return APIResponse(success=True, data=_refund_response(row))
