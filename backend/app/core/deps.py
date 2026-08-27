@@ -160,3 +160,4 @@ WorkflowApprovalReadContext = Annotated[TenantContext, Depends(require_permissio
 WorkflowApprovalDecideContext = Annotated[TenantContext, Depends(require_permission("workflow.approval.decide"))]
 WorkflowEventReadContext = Annotated[TenantContext, Depends(require_permission("workflow.event.read"))]
 WorkflowEventWriteContext = Annotated[TenantContext, Depends(require_permission("workflow.event.write"))]
+BillingRefundContext = Annotated[TenantContext, Depends(require_permission("billing.refund"))]
