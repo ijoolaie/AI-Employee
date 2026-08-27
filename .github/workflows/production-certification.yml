@@ -129,6 +129,7 @@ jobs:
           }
           run_gate "Auth P0" docker compose exec -T api python scripts/e2e_auth_verify.py
           run_gate "Tenant Isolation + RBAC P0" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_tenant_rbac_verify.py'
+          run_gate "Conversation Tenant Isolation P0" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_conversation_tenant_verify.py'
           run_gate "Employee -> Run -> AI -> Result" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_employee_run_verify.py'
           run_gate "Files -> Knowledge -> Memory" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_files_knowledge_memory_verify.py'
           run_gate "Admin / Developer API Keys" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_admin_developer_verify.py'
