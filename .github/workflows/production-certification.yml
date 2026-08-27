@@ -135,6 +135,7 @@ jobs:
           run_gate "Admin / Developer API Keys" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_admin_developer_verify.py'
           run_gate "Workflow -> Approval -> Schedule" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_workflow_approval_schedule_verify.py'
           run_gate "Orders -> Sales -> Invoice -> Billing" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_commerce_billing_verify.py'
+          run_gate "Reports / Analytics Tenant Isolation" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_reports_analytics_verify.py'
           echo "========== PRODUCT GATE SUMMARY =========="
           echo "Failed gates: ${failures}"
           [ "$failures" -eq 0 ]
