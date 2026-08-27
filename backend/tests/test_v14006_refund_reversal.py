@@ -110,3 +110,36 @@ async def test_successful_refund_records_billing_lifecycle_event(monkeypatch):
 
     assert row.status == "succeeded"
     assert any(getattr(item, "event_type", None) == "payment.refund.requested" for item in db.added)
+
+
+@pytest.mark.asyncio
+async def test_successful_reversal_records_provider_metadata(monkeypatch):
+    tenant_id = uuid4()
+    db = _DB([None, None])
+
+    async def fake_assert_payment(*_args, **_kwargs):
+        return {"currency": "usd", "status": "requires_capture"}
+
+    async def fake_reversal(**_kwargs):
+        return {"id": "pi_test", "status": "canceled"}
+
+    monkeypatch.setattr(refund_service, "_assert_payment_intent_belongs_to_tenant", fake_assert_payment)
+    monkeypatch.setattr(refund_service.stripe_service, "create_reversal", fake_reversal)
+
+    row = await refund_service.request_refund(
+        db,
+        tenant_id=tenant_id,
+        operation="reversal",
+        payment_intent_id="pi_test",
+        amount_cents=None,
+        currency="usd",
+        reason=None,
+        idempotency_key="reversal-2",
+    )
+
+    assert row.status == "succeeded"
+    assert row.refund_metadata == {
+        "provider_operation": "payment_intent_cancel",
+        "provider_status": "canceled",
+    }
+    assert any(getattr(item, "event_type", None) == "payment.reversal.requested" for item in db.added)
