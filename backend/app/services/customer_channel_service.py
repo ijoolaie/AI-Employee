@@ -27,7 +27,7 @@ async def list_channels(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: 
     return list((await db.execute(stmt)).scalars().all())
 
 async def get_public_channel(db: AsyncSession, *, public_key: str) -> tuple[CustomerChannel, Employee]:
-    result = await db.execute(select(CustomerChannel, Employee).join(Employee, Employee.id == CustomerChannel.employee_id).where(CustomerChannel.public_key == public_key, CustomerChannel.is_active.is_(True), Employee.is_active.is_(True)))
+    result = await db.execute(select(CustomerChannel, Employee).join(Employee, Employee.id == CustomerChannel.employee_id).where(CustomerChannel.public_key == public_key, CustomerChannel.is_active.is_(True), Employee.is_active.is_(True), Employee.tenant_id == CustomerChannel.tenant_id))
     row = result.first()
     if not row: raise NotFoundError("Public channel not found")
     return row
@@ -48,7 +48,7 @@ async def _get_conversation(db: AsyncSession, *, conversation_id: uuid.UUID, tok
 
 async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: str, content: str):
     conversation = await _get_conversation(db, conversation_id=conversation_id, token=token)
-    active = (await db.execute(select(func.count()).select_from(Run).where(Run.conversation_id == conversation.id, Run.status.in_(["pending", "running"])))).scalar_one()
+    active = (await db.execute(select(func.count()).select_from(Run).where(Run.conversation_id == conversation.id, Run.tenant_id == conversation.tenant_id, Run.status.in_(["pending", "running"])))).scalar_one()
     if active:
         raise ConflictError("Please wait for the current assistant response before sending another message")
     message = CustomerMessage(tenant_id=conversation.tenant_id, conversation_id=conversation.id, role="user", content=content)
@@ -66,8 +66,10 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
 
 async def get_public_conversation(db: AsyncSession, *, conversation_id: uuid.UUID, token: str) -> tuple[CustomerConversation, Employee, list[CustomerMessage]]:
     conversation = await _get_conversation(db, conversation_id=conversation_id, token=token)
-    employee = (await db.execute(select(Employee).where(Employee.id == conversation.employee_id))).scalar_one()
-    messages = list((await db.execute(select(CustomerMessage).where(CustomerMessage.conversation_id == conversation.id).order_by(CustomerMessage.created_at.asc()))).scalars().all())
+    employee = (await db.execute(select(Employee).where(Employee.id == conversation.employee_id, Employee.tenant_id == conversation.tenant_id))).scalar_one_or_none()
+    if not employee:
+        raise NotFoundError("Employee not found")
+    messages = list((await db.execute(select(CustomerMessage).where(CustomerMessage.conversation_id == conversation.id, CustomerMessage.tenant_id == conversation.tenant_id).order_by(CustomerMessage.created_at.asc()))).scalars().all())
     return conversation, employee, messages
 
 async def list_conversations(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID | None = None) -> list[dict]:
@@ -76,8 +78,8 @@ async def list_conversations(db: AsyncSession, *, tenant_id: uuid.UUID, employee
     conversations = list((await db.execute(stmt)).scalars().all())
     out=[]
     for c in conversations:
-        messages=list((await db.execute(select(CustomerMessage).where(CustomerMessage.conversation_id==c.id).order_by(CustomerMessage.created_at.desc()).limit(1))).scalars().all())
-        count=(await db.execute(select(func.count(CustomerMessage.id)).where(CustomerMessage.conversation_id==c.id))).scalar_one()
+        messages=list((await db.execute(select(CustomerMessage).where(CustomerMessage.conversation_id==c.id, CustomerMessage.tenant_id == c.tenant_id).order_by(CustomerMessage.created_at.desc()).limit(1))).scalars().all())
+        count=(await db.execute(select(func.count(CustomerMessage.id)).where(CustomerMessage.conversation_id==c.id, CustomerMessage.tenant_id == c.tenant_id))).scalar_one()
         out.append({"id":c.id,"employee_id":c.employee_id,"channel_id":c.channel_id,"status":c.status,"customer_name":c.customer_name,"customer_email":c.customer_email,"customer_phone":c.customer_phone,"message_count":count,"last_message":messages[0].content if messages else None,"updated_at":c.updated_at})
     return out
 
