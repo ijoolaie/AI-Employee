@@ -24,7 +24,7 @@ def test_agent_definition_contains_policy_boundaries() -> None:
         name="Support Triage",
     )
     assert AgentDefinition.version.property.columns[0].default.arg == 1
-    assert AgentDefinition.capabilities.property.columns[0].default.arg() == []
+    assert AgentDefinition.capabilities.property.columns[0].default.arg is list
     assert agent.allowed_tools == []
     assert agent.policy_requirements == {}
 
