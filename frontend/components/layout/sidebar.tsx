@@ -2,12 +2,24 @@
 
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
-import { LayoutDashboard, LogOut, Settings, BarChart3, CreditCard, Sparkles, GitBranch, CalendarClock, Webhook, ShieldCheck, Code2, BookOpen, Brain, ShoppingCart, TrendingUp, Activity, MessageCircle, Bot, Play, FileText, Radio, Package, PlugZap, ListChecks, UserRound, Terminal, KeyRound } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, BarChart3, CreditCard, Sparkles, GitBranch, CalendarClock, Webhook, ShieldCheck, Code2, BookOpen, Brain, ShoppingCart, TrendingUp, Activity, MessageCircle, Bot, Play, FileText, Radio, Package, PlugZap, ListChecks, UserRound, Terminal, KeyRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
 
-const groups = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  children?: NavItem[];
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+const groups: NavGroup[] = [
   { label: "Business", items: [
     { href: "/dashboard", label: "Business Dashboard", icon: LayoutDashboard },
     { href: "/orders", label: "Orders", icon: ShoppingCart },
