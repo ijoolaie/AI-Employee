@@ -3,7 +3,7 @@
 **Status:** ACTIVE
 **Baseline:** 2026-08-27
 
-## 8.1 Contract foundation — current
+## 8.1 Contract foundation — COMPLETE
 
 - WorkItem domain contract
 - AgentDefinition / AgentInstance contracts
@@ -11,13 +11,20 @@
 - HumanExecutor compatibility model
 - lifecycle/state machine
 - security and audit contract
+- API contract
 
-## 8.2 Persistence
+## 8.2 Persistence — IN IMPLEMENTATION
 
-- database models and migrations
-- indexes and tenant isolation
-- optimistic/idempotent execution fields
-- compatibility mapping to Employee/Run
+- [x] WorkItem persistence model
+- [x] AgentDefinition persistence model
+- [x] AgentInstance persistence model
+- [x] Alembic migration
+- [x] tenant-scoped indexes / idempotency constraint
+- [x] model registration
+- [x] unit contract tests
+- [ ] execute migration against CI database
+- [ ] compatibility mapping to Employee/Run
+- [ ] database isolation integration tests
 
 ## 8.3 Execution service
 
