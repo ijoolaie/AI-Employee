@@ -6,7 +6,7 @@
 
 ## Executive status
 
-AI-Employee has substantial real implementation across core SaaS, AI, tenant, billing, integrations, frontend, and delivery layers. It is not yet fully production-certified or commercially proven.
+AI-Employee has substantial real implementation across core SaaS, AI, tenant, billing, integrations, frontend, and delivery layers. The current V1.4 baseline has passed the reviewed real-stack production certification gates, but it is not yet commercially proven or externally deployed.
 
 ### Evidence levels
 
@@ -18,39 +18,42 @@ AI-Employee has substantial real implementation across core SaaS, AI, tenant, bi
 
 ## Current verification baseline
 
-Refund/reversal hardening, Usage Ledger concurrency hardening, and the first expanded Tenant Isolation boundary checks are merged on main.
+Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant Isolation boundary checks, Knowledge/RAG isolation certification, and scoped API-key certification are merged on main.
 
 - `PaymentRefund` uses a safe Python ORM attribute instead of the reserved `metadata` attribute while preserving the intended database column contract.
 - The reversal execution path uses `refund_metadata`.
 - `RefundResponse.provider_refund_id` is optional with a default of `None`.
 - Refund/reversal regression coverage passed the reviewed CI gates.
 - Usage Ledger idempotency is tenant-scoped by `(tenant_id, event_key)` and handles concurrent duplicate insertion safely using a savepoint.
-- Real-stack tenant isolation checks now cover cross-tenant Employee access plus File read/download/delete, alongside existing RBAC checks.
-- CI and Architecture Guard passed for the Tenant Isolation expansion.
+- Real-stack tenant isolation checks cover cross-tenant Employee access plus File read/download/delete, alongside RBAC checks.
+- Real-stack Knowledge checks cover cross-tenant indexing rejection and cross-tenant search leakage prevention.
+- Scoped API-key certification passes for create, secret redaction, and revoke behavior.
+- The latest Production Certification run passed all Product Gates with `Failed gates: 0`.
+- The same real-stack certification passed the Employee → Run → AI → Result chain and the Files → Knowledge → Memory flow.
 
-**Evidence:** PR #96 merged as `5f278f0e9cae763399b6c7125131527ff0346afd`; PR #97 merged as `64b64fab65725ab5ccf59b3a6f3f0b587f5db219`; PR #98 merged as `a25bba8ce3c39df7c46c9037a0fde18b1f3336a6`.
+**Evidence:** PR #96 merged as `5f278f0e9cae763399b6c7125131527ff0346afd`; PR #97 merged as `64b64fab65725ab5ccf59b3a6f3f0b587f5db219`; PR #98 merged as `a25bba8ce3c39df7c46c9037a0fde18b1f3336a6`; PR #99 merged as `38b4df9f3cf41a3ebb395004f0d1ad19df25dedb`; PR #100 merged as `e84967a122106750563c501857c017c12e83758c`; Production Certification run `33050378154` passed with `Failed gates: 0`.
 
-This is verified automated evidence for the reviewed slices. It does not establish live provider or production certification.
+This is verified automated and real-stack certification evidence for the reviewed slices. It does not establish live provider or production customer evidence.
 
 ## Implementation and verification matrix
 
 | Area | Status | Note |
 |---|---|---|
-| Authentication / JWT | AS-BUILT | Real auth/dependency implementation exists. |
-| Tenant context / isolation foundation | VERIFIED | Identity-to-tenant binding plus real-stack cross-tenant negative checks for Employee and File boundaries pass the reviewed CI gates. |
-| RBAC / permissions | AS-BUILT | Permission dependencies/checks exist; reviewed tenant test covers allowed read and denied write. |
-| API keys / scoped keys | AS-BUILT | Lifecycle, authentication and scopes exist. |
-| AI Gateway / providers | AS-BUILT | Provider execution, metering and audit are wired. |
+| Authentication / JWT | VERIFIED | Real auth/dependency implementation passes Production Certification. |
+| Tenant context / isolation foundation | VERIFIED | Identity-to-tenant binding plus real-stack cross-tenant negative checks for Employee and File boundaries pass. |
+| RBAC / permissions | VERIFIED | Real-stack certification covers allowed read and denied write. |
+| API keys / scoped keys | VERIFIED | Real-stack certification covers create, secret redaction, and revoke; scoped superuser contract is exercised. |
+| AI Gateway / providers | VERIFIED | Production Certification passes the Employee → Run → AI → Result path. |
 | AI usage / audit / idempotent ledger | VERIFIED | Usage Ledger idempotency is tenant-scoped and concurrency-hardened; reviewed CI passes. |
-| Runs / Chat / AI Employees | AS-BUILT | Application and UI flows exist. |
+| Runs / Chat / AI Employees | VERIFIED | Employee → Run → AI → Result real-stack gate passes. |
 | Files | VERIFIED | Real-stack cross-tenant read/download/delete negative checks pass. |
-| Knowledge / Memory | AS-BUILT | Backend and UI paths exist; cross-tenant certification remains pending. |
-| Conversations | AS-BUILT | Application paths exist; cross-tenant certification remains pending. |
-| Workflows / schedules / approvals | AS-BUILT | Implementation exists; cross-tenant certification remains pending. |
-| Reports / analytics | AS-BUILT | Application and UI paths exist; cross-tenant certification remains pending. |
-| Billing domain | AS-BUILT | Billing models/services/APIs exist; cross-tenant certification remains pending. |
+| Knowledge / Memory | VERIFIED | Knowledge cross-tenant index/search isolation and Files → Knowledge → Memory certification pass. |
+| Conversations | AS-BUILT | Application paths exist; dedicated cross-tenant certification remains pending. |
+| Workflows / schedules / approvals | AS-BUILT | Production flow passes; dedicated cross-tenant certification remains pending. |
+| Reports / analytics | AS-BUILT | Application and UI paths exist; dedicated cross-tenant certification remains pending. |
+| Billing domain | AS-BUILT | Billing models/services/APIs exist; dedicated cross-tenant certification remains pending. |
 | Stripe integration | AS-BUILT | Integration exists; live-provider evidence remains pending. |
-| Invoices | AS-BUILT | Implementation exists. |
+| Invoices | AS-BUILT | Implementation exists; live-provider evidence remains pending. |
 | Refunds / reversals | VERIFIED | Model, response contract and reversal metadata/lifecycle regression coverage pass reviewed gates. |
 | Sales | AS-BUILT | Application/API implementation exists. |
 | Shopify | AS-BUILT | Integration and hardening work exists. |
@@ -59,7 +62,7 @@ This is verified automated evidence for the reviewed slices. It does not establi
 | Customer dashboard / Developer Console | AS-BUILT | UI and API paths exist. |
 | Audit/log/trace tooling | AS-BUILT | Operational views and trace/debug paths exist. |
 | Dead-letter recovery | AS-BUILT | Recovery implementation exists. |
-| Docker/production compose | AS-BUILT | Production topology and validation workflows exist. |
+| Docker/production compose | VERIFIED | Production Certification successfully builds and exercises the Docker stack. |
 | Backend CI | VERIFIED | Reviewed backend gate passes. |
 | Frontend CI | VERIFIED | Reviewed frontend gate passes. |
 | Architecture Guard | VERIFIED | Reviewed architecture audit and tests pass. |
@@ -76,15 +79,16 @@ This is verified automated evidence for the reviewed slices. It does not establi
 
 - Core product capabilities have substantial real implementation.
 - The reviewed V1.4 baseline passes current automated backend/frontend/architecture/security gates.
-- Refund and reversal implementation, including the previously missed reversal metadata path, are verified by regression and CI evidence.
-- Usage Ledger tenant-scoped idempotency is verified against the reviewed concurrency-safe implementation and CI baseline.
-- Tenant isolation has verified real-stack coverage for Employee and File boundaries, but is **not** yet certified across every domain.
+- The latest real-stack Production Certification run passes all Product Gates with `Failed gates: 0`.
+- Refund and reversal implementation, Usage Ledger tenant-scoped idempotency, Employee/File tenant isolation, Knowledge/RAG isolation, RBAC, and scoped API-key behavior have reviewed evidence.
+- The Employee → Run → AI → Result and Files → Knowledge → Memory product paths pass real-stack certification.
+- Tenant isolation is verified for the currently covered Employee, File, and Knowledge boundaries, but is **not** yet certified across every domain.
 
-Do not claim full production certification, commercial go-live, live Stripe behavior, live payments, or complete cross-domain tenant isolation.
+Do not claim commercial go-live, live Stripe/payment behavior, live WhatsApp provider behavior, customer acceptance, or complete cross-domain tenant isolation.
 
 ## Next execution order
 
-1. Extend tenant-isolation negative tests to Knowledge, Conversations, Billing and other high-risk resource domains.
+1. Extend tenant-isolation negative tests to Conversations, Billing and other high-risk resource domains.
 2. Execute refund lifecycle against the real payment-provider boundary where applicable.
 3. Audit Billing/Stripe end-to-end: source → tests → runtime → external evidence.
 4. Collect production evidence for deployment, secrets/HTTPS, backup/restore, monitoring, rollback/recovery and customer acceptance.
