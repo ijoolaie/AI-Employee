@@ -5,7 +5,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -34,6 +34,7 @@ class WorkItem(Base):
     __table_args__ = (
         Index("ix_work_items_tenant_status", "tenant_id", "status"),
         Index("ix_work_items_tenant_executor", "tenant_id", "executor_type", "executor_id"),
+        UniqueConstraint("tenant_id", "idempotency_key", name="uq_work_items_tenant_idempotency"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
