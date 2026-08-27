@@ -8,6 +8,7 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import case, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.ai_provider_call import AIProviderCall
@@ -28,7 +29,12 @@ async def record_event(
     source_id: str | None = None,
     metadata: dict | None = None,
 ) -> UsageEvent:
-    """Record a usage event exactly once per tenant/event key."""
+    """Record a usage event exactly once per tenant/event key.
+
+    The database unique constraint is the final concurrency guard. A savepoint
+    lets a concurrent duplicate insert fail without invalidating the caller's
+    outer transaction; the winner's row is then returned.
+    """
     existing = (
         await db.execute(
             select(UsageEvent).where(
@@ -52,8 +58,24 @@ async def record_event(
         source_id=source_id,
         event_metadata=metadata or {},
     )
-    db.add(event)
-    await db.flush()
+
+    try:
+        async with db.begin_nested():
+            db.add(event)
+            await db.flush()
+    except IntegrityError:
+        existing = (
+            await db.execute(
+                select(UsageEvent).where(
+                    UsageEvent.tenant_id == tenant_id,
+                    UsageEvent.event_key == event_key,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing is not None:
+            return existing
+        raise
+
     return event
 
 
