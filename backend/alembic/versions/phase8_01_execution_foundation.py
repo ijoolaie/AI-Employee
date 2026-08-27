@@ -14,14 +14,14 @@ depends_on = None
 
 
 def upgrade() -> None:
-    executor_type = sa.Enum("human", "agent", name="executortype", create_type=False)
-    work_status = sa.Enum(
+    executor_type = postgresql.ENUM("human", "agent", name="executortype", create_type=False)
+    work_status = postgresql.ENUM(
         "draft", "ready", "assigned", "running", "succeeded", "failed",
         "blocked", "cancelled", "waiting_approval",
         name="workitemstatus",
         create_type=False,
     )
-    agent_status = sa.Enum(
+    agent_status = postgresql.ENUM(
         "enabled", "disabled", "draining",
         name="agentinstancestatus",
         create_type=False,
