@@ -23,6 +23,15 @@ The older open PR queue has now been reconciled against the frozen V1.4 baseline
 
 These closures are bookkeeping/governance decisions. They do not constitute production certification or imply that the corresponding external gates have been completed.
 
+## Version namespace note — 2026-08-27
+
+The authoritative version reconciliation is `docs/current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md`.
+
+- **v1.2.0** is the current certified controlled-deployment product release.
+- **v1.3.0** remains a historical/unreconciled release claim and does not override current release truth.
+- **V1.4** is the frozen architecture baseline and active implementation track, not yet a `v1.4.0` certified product release.
+- Documentation-package version labels are a separate namespace from product releases.
+
 ## Baseline
 
 - Published productization baseline: **v1.0.1** at `2d23a01098f432145ecaea14b2500fe520ad0bf7`.
