@@ -18,7 +18,7 @@ AI-Employee has substantial real implementation across core SaaS, AI, tenant, bi
 
 ## Current verification baseline
 
-Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant Isolation boundary checks, Knowledge/RAG isolation certification, scoped API-key certification, and the latest full Production Certification are evidenced on main.
+Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant Isolation boundary checks, Knowledge/RAG isolation certification, scoped API-key certification, Employee → Run → AI → Result certification, and the latest full Production Certification are evidenced on main.
 
 - `PaymentRefund` uses a safe Python ORM attribute instead of the reserved `metadata` attribute while preserving the intended database column contract.
 - The reversal execution path uses `refund_metadata`.
@@ -48,7 +48,7 @@ This is verified automated and real-stack certification evidence for the reviewe
 | Runs / Chat / AI Employees | VERIFIED | Employee → Run → AI → Result real-stack gate passes. |
 | Files | VERIFIED | Real-stack cross-tenant read/download/delete negative checks pass. |
 | Knowledge / Memory | VERIFIED | Knowledge cross-tenant index/search isolation and Files → Knowledge → Memory certification pass. |
-| Conversations | AS-BUILT | Application paths exist; dedicated cross-tenant certification remains pending. |
+| Conversations | AS-BUILT | Authenticated inbox paths enforce tenant scope; public conversation reads resolve by customer token, but dedicated cross-tenant/public-boundary certification is not yet recorded. |
 | Workflows / schedules / approvals | AS-BUILT | Production flow passes; dedicated cross-tenant certification remains pending. |
 | Reports / analytics | AS-BUILT | Application and UI paths exist; dedicated cross-tenant certification remains pending. |
 | Billing domain | AS-BUILT | Billing models/services/APIs exist; dedicated cross-tenant certification remains pending. |
@@ -88,10 +88,11 @@ Do not claim commercial go-live, live Stripe/payment behavior, live WhatsApp pro
 
 ## Next execution order
 
-1. Extend tenant-isolation negative tests to Conversations, Billing and other high-risk resource domains.
-2. Execute refund lifecycle against the real payment-provider boundary where applicable.
-3. Audit Billing/Stripe end-to-end: source → tests → runtime → external evidence.
-4. Collect production evidence for deployment, secrets/HTTPS, backup/restore, monitoring, rollback/recovery and customer acceptance.
+1. Add dedicated real-stack tenant-isolation and public-boundary tests for Conversations, with emphasis on customer-token access and related Employee/Message resolution.
+2. Extend tenant-isolation negative tests to Billing and other high-risk resource domains.
+3. Execute refund lifecycle against the real payment-provider boundary where applicable.
+4. Audit Billing/Stripe end-to-end: source → tests → runtime → external evidence.
+5. Collect production evidence for deployment, secrets/HTTPS, backup/restore, monitoring, rollback/recovery and customer acceptance.
 
 ## Documentation policy
 
