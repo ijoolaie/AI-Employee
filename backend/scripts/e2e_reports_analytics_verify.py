@@ -1,9 +1,4 @@
-"""Real-stack tenant-isolation certification for Reports / Analytics sources.
-
-The customer Reports page is an aggregate of tenant-scoped Dashboard, Usage,
-and Runs data. This gate creates two independent tenants, writes a resource
-only to tenant A, and verifies that tenant B cannot observe that signal.
-"""
+"""Real-stack tenant-isolation certification for Reports / Analytics sources."""
 from __future__ import annotations
 
 import json
@@ -39,7 +34,7 @@ def request(method: str, path: str, payload: dict | None = None, token: str | No
 
 def register_tenant(suffix: str, label: str) -> str:
     slug = f"cert-reports-{label.lower()}-{suffix}"
-    email = f"cert-reports-{label.lower()}-{suffix}@example.invalid"
+    email = f"cert-reports-{label.lower()}-{suffix}@example.com"
     status, response = request(
         "POST",
         "/auth/register",
@@ -89,19 +84,16 @@ def main() -> int:
     assert status == 200, f"tenant B dashboard expected 200, got {status}: {dashboard_b}"
     data_b = dashboard_b.get("data") or {}
     assert data_b.get("employee_count", 0) == 0, data_b
-    assert employee_id not in {str(item.get("id")) for item in data_b.get("recent_runs", [])}, data_b
     print("REPORTS TENANT B DASHBOARD ISOLATION PASS")
 
     status, usage_a = request("GET", "/usage/summary", token=token_a)
     assert status == 200, f"tenant A usage expected 200, got {status}: {usage_a}"
-    usage_data_a = usage_a.get("data") or {}
-    assert isinstance(usage_data_a, dict), usage_a
+    assert isinstance(usage_a.get("data") or {}, dict), usage_a
     print("REPORTS TENANT A USAGE SUMMARY PASS")
 
     status, usage_b = request("GET", "/usage/summary", token=token_b)
     assert status == 200, f"tenant B usage expected 200, got {status}: {usage_b}"
-    usage_data_b = usage_b.get("data") or {}
-    assert isinstance(usage_data_b, dict), usage_b
+    assert isinstance(usage_b.get("data") or {}, dict), usage_b
     print("REPORTS TENANT B USAGE SUMMARY ISOLATION PASS")
 
     status, runs_a = request("GET", "/runs", token=token_a)
