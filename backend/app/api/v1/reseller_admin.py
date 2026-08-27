@@ -1,5 +1,6 @@
 """Reseller control-plane APIs for managing direct child client tenants."""
 
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
@@ -19,7 +20,7 @@ class ClientTenantSummary(BaseModel):
     slug: str
     status: str
     tenant_kind: str
-    created_at: str
+    created_at: datetime
 
 
 async def require_reseller_admin(ctx: CurrentContext) -> None:
@@ -50,15 +51,14 @@ async def list_clients(ctx: CurrentContext, db: DbSession):
                 slug=t.slug,
                 status=t.status,
                 tenant_kind=t.tenant_kind,
-                created_at=t.created_at.isoformat(),
+                created_at=t.created_at,
             )
             for t in clients
         ],
     )
 
 
-@router.post("/clients/{client_id}/suspend", response_model=APIResponse[ClientTenantSummary])
-async def suspend_client(client_id: UUID, ctx: CurrentContext, db: DbSession):
+async def _get_client(client_id: UUID, ctx: CurrentContext, db: DbSession) -> Tenant:
     await require_reseller_admin(ctx)
     result = await db.execute(
         select(Tenant).where(
@@ -70,44 +70,20 @@ async def suspend_client(client_id: UUID, ctx: CurrentContext, db: DbSession):
     client = result.scalar_one_or_none()
     if client is None:
         raise HTTPException(status_code=404, detail="Client tenant not found")
+    return client
+
+
+@router.post("/clients/{client_id}/suspend", response_model=APIResponse[ClientTenantSummary])
+async def suspend_client(client_id: UUID, ctx: CurrentContext, db: DbSession):
+    client = await _get_client(client_id, ctx, db)
     client.status = "suspended"
     await db.commit()
-    return APIResponse(
-        success=True,
-        data=ClientTenantSummary(
-            id=client.id,
-            name=client.name,
-            slug=client.slug,
-            status=client.status,
-            tenant_kind=client.tenant_kind,
-            created_at=client.created_at.isoformat(),
-        ),
-    )
+    return APIResponse(success=True, data=ClientTenantSummary.model_validate(client))
 
 
 @router.post("/clients/{client_id}/activate", response_model=APIResponse[ClientTenantSummary])
 async def activate_client(client_id: UUID, ctx: CurrentContext, db: DbSession):
-    await require_reseller_admin(ctx)
-    result = await db.execute(
-        select(Tenant).where(
-            Tenant.id == client_id,
-            Tenant.parent_tenant_id == ctx.tenant_id,
-            Tenant.tenant_kind == "customer",
-        )
-    )
-    client = result.scalar_one_or_none()
-    if client is None:
-        raise HTTPException(status_code=404, detail="Client tenant not found")
+    client = await _get_client(client_id, ctx, db)
     client.status = "active"
     await db.commit()
-    return APIResponse(
-        success=True,
-        data=ClientTenantSummary(
-            id=client.id,
-            name=client.name,
-            slug=client.slug,
-            status=client.status,
-            tenant_kind=client.tenant_kind,
-            created_at=client.created_at.isoformat(),
-        ),
-    )
+    return APIResponse(success=True, data=ClientTenantSummary.model_validate(client))
