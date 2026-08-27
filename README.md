@@ -4,9 +4,25 @@
 
 **Next architecture extension:** `V1.5 AGENTIC OPERATING MODEL`
 
-**Latest certified vendor release:** `v1.2.0`
+**Latest published release:** `v1.3.0`
+
+**Current certified controlled-deployment line:** `v1.2.0`
+
+**Explicit production-certified baseline:** `v1.2.1-final`
 
 This repository is the vendor source of truth for the AI Employee Platform. The platform is **Agent-first, not Employee-first**: every supported business capability in Platform, Reseller and Client is designed to be executable by a Human, a specialized Agent, or both through the same WorkItem, authorization, tool, approval and audit contracts.
+
+## Start Here
+
+For the fastest and safest project orientation, read:
+
+1. `docs/00_START_HERE/PROJECT_OVERVIEW.md`
+2. `docs/00_START_HERE/CURRENT_STATUS.md`
+3. `docs/00_START_HERE/CURRENT_PRIORITIES.md`
+4. `docs/DOCUMENTATION_INDEX.md`
+5. `docs/current/PRODUCTIZATION_ROADMAP.md`
+
+Do not infer current truth from historical versioned filenames. Git tags, release records and certification evidence are reconciled in `docs/releases/RELEASE_TRUTH_LEDGER.md`.
 
 ## Three workspaces
 
@@ -42,17 +58,6 @@ Agents are specialized workers, not merely renamed Employees. Existing Employee 
 
 **Platform, Reseller and Client all expose a first-class Test Center from the main dashboard.** It provides role-aware health, security, Agent, tool, workflow, handoff, approval, RAG, memory, integration, webhook, usage, billing/sandbox, worker, model and E2E tests with safe-mode controls and persisted evidence.
 
-## Documentation
-
-Read in this order:
-
-1. `docs/blueprint/V1.4_MASTER_BLUEPRINT.md` — frozen V1.4 foundation.
-2. `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md` — Human + Agent operating model.
-3. `docs/current/PRODUCTIZATION_ROADMAP.md` — authoritative phase roadmap.
-4. `docs/current/10_RELEASE_CHANNELS_AND_EDITION_MODEL.md`
-5. `docs/current/11_DELIVERY_PACKAGE_SPEC.md`
-6. `docs/current/40_GITHUB_MAIN_VERIFICATION_2026-08-26.md`
-
 ## V1.5 execution sequence
 
 ```text
@@ -80,13 +85,15 @@ Phase 14 Scale / Governance / Production
 - Every privileged action is auditable.
 - CI/repository evidence is not production evidence.
 - Maintain one authoritative Alembic graph.
+- Reconcile every release tag to its underlying commit.
 
-## Current release truth
+## Current position
 
-- Current implementation baseline: `V1.4`
-- Next architecture extension: `V1.5 Agentic Operating Model`
-- Latest certified vendor release: `v1.2.0`
-- V1.4 remains a frozen architecture baseline, not a certified `v1.4.0` product release.
+- Latest published release: `v1.3.0` (development/product-expansion release; certification pending in its release record).
+- Current certified controlled-deployment line: `v1.2.0`.
+- Explicit production-certified baseline: `v1.2.1-final`.
+- Current implementation baseline: `V1.4`.
+- Next architecture extension: `V1.5 Agentic Operating Model`.
 
 ## Migration note
 
@@ -94,4 +101,4 @@ Do not destructively rename the existing Employee model. New execution capabilit
 
 ## License
 
-No explicit open-source license is declared yet. Public visibility alone does not grant reuse rights.
+The repository includes an Apache-2.0 `LICENSE` file. See `LICENSE` for the governing terms.
