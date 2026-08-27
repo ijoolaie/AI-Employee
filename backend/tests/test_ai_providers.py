@@ -1,5 +1,6 @@
 """Provider abstraction tests for the local-first AI Gateway path."""
 
+from contextlib import asynccontextmanager
 from types import SimpleNamespace
 
 import pytest
@@ -119,6 +120,10 @@ async def test_gateway_records_live_latency_and_gateway_cost(monkeypatch):
 
         async def flush(self):
             return None
+
+        @asynccontextmanager
+        async def begin_nested(self):
+            yield
 
     audit_calls = []
 
