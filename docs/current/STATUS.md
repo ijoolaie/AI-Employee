@@ -18,7 +18,7 @@ AI-Employee has substantial real implementation across core SaaS, AI, tenant, bi
 
 ## Current verification baseline
 
-Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant Isolation boundary checks, Knowledge/RAG isolation certification, scoped API-key certification, Employee → Run → AI → Result certification, Conversation tenant/public-boundary isolation certification, Billing tenant isolation certification, Workflow/Approval/Schedule real-stack acceptance, and the latest full Production Certification are evidenced on main.
+Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant Isolation boundary checks, Knowledge/RAG isolation certification, scoped API-key certification, Employee → Run → AI → Result certification, Conversation tenant/public-boundary isolation certification, Billing tenant isolation certification, Workflow/Approval/Schedule real-stack acceptance, Reports/Analytics tenant isolation certification, and the latest full Production Certification are evidenced on main.
 
 - `PaymentRefund` uses a safe Python ORM attribute instead of the reserved `metadata` attribute while preserving the intended database column contract.
 - The reversal execution path uses `refund_metadata`.
@@ -31,12 +31,15 @@ Refund/reversal hardening, Usage Ledger concurrency hardening, expanded Tenant I
 - Production Certification run `33050378154` passed all Product Gates with `Failed gates: 0` on merge commit `e84967a122106750563c501857c017c12e83758c`.
 - Production Certification run `33056813888` passed all Product Gates with `Failed gates: 0` on commit `11f305ddf733b856c31a07e147ade6ccd7268bf5`.
 - Production Certification run `33058364994` passed all Product Gates with `Failed gates: 0` on commit `fef1f891651713082e42e30f4a01ac844637ed30`.
+- Production Certification run `33071617281` passed the reviewed Production Certification job with `Failed gates: 0` and verified the Reports/Analytics tenant-isolation gate.
+- Production Certification run `33073984795` passed the reviewed Production Certification job on commit `a7d20f70`, with backend/frontend/product-gate/Playwright checks passing and `Failed gates: 0`.
 - The `Conversation Tenant Isolation P0` gate passed in run `33056813888`, including same-conversation public read, cross-tenant authenticated list isolation, wrong-token rejection, cross-tenant public read rejection, and cross-tenant handoff rejection.
 - The Billing/Commerce gate in run `33058364994` passed Plans, Subscription, Entitlements, Plan Change, Subscription Tenant Isolation, Entitlements Tenant Isolation, Order, Invoice, Sales, and Commerce Tenant Isolation checks.
 - The Workflow/Approval/Schedule product acceptance gate in run `33058364994` passed.
+- The Reports/Analytics gate in run `33073984795` passed Tenant A/B registration, dashboard ownership/isolation, usage summary access, and run-list tenant isolation.
 - The same real-stack certifications passed the Employee → Run → AI → Result chain and the Files → Knowledge → Memory flow.
 
-**Evidence:** PR #96 merged as `5f278f0e9cae763399b6c7125131527ff0346afd`; PR #97 merged as `64b64fab65725ab5ccf59b3a6f3f0b587f5db219`; PR #98 merged as `a25bba8ce3c39df7c46c9037a0fde18b1f3336a6`; PR #99 merged as `38b4df9f3cf41a3ebb395004f0d1ad19df25dedb`; PR #100 merged as `e84967a122106750563c501857c017c12e83758c`; Production Certification runs `33050378154`, `33056813888`, and `33058364994` passed with `Failed gates: 0`; the latest run passed on `fef1f891651713082e42e30f4a01ac844637ed30`.
+**Evidence:** PR #96 merged as `5f278f0e9cae763399b6c7125131527ff0346afd`; PR #97 merged as `64b64fab65725ab5ccf59b3a6f3f0b587f5db219`; PR #98 merged as `a25bba8ce3c39df7c46c9037a0fde18b1f3336a6`; PR #99 merged as `38b4df9f3cf41a3ebb395004f0d1ad19df25dedb`; PR #100 merged as `e84967a122106750563c501857c017c12e83758c`; Production Certification runs `33050378154`, `33056813888`, `33058364994`, `33071617281`, and `33073984795` passed their reviewed gates; the latest reviewed run passed on `a7d20f70`.
 
 This is verified automated and real-stack certification evidence for the reviewed slices. It does not establish live provider or production customer evidence.
 
@@ -55,8 +58,8 @@ This is verified automated and real-stack certification evidence for the reviewe
 | Knowledge / Memory | VERIFIED | Knowledge cross-tenant index/search isolation and Files → Knowledge → Memory certification pass. |
 | Conversations | VERIFIED | Real-stack `Conversation Tenant Isolation P0` passed on `11f305dd` in run `33056813888`, covering customer-token/public access and cross-tenant authenticated/public/handoff negative paths. |
 | Workflows / schedules / approvals | VERIFIED | Production real-stack acceptance gate passed in run `33058364994`. Dedicated cross-tenant isolation is not separately certified beyond the covered acceptance scope. |
-| Reports / analytics | AS-BUILT | Application and UI paths exist; dedicated cross-tenant certification remains pending. |
-| Billing domain | VERIFIED | Real-stack certification passed Plans, Subscription, Entitlements, Plan Change, and tenant-isolation checks in run `33058364994`. |
+| Reports / analytics | VERIFIED | Dedicated real-stack tenant-isolation gate passed in run `33073984795` on `a7d20f70`. |
+| Billing domain | VERIFIED | Real-stack certification passed Plans, Subscription, Entitlements, Plan Change, and covered tenant-isolation checks in run `33058364994`. |
 | Stripe integration | AS-BUILT | Integration exists; live-provider evidence remains pending. |
 | Invoices | VERIFIED | Real-stack commerce/billing certification passes invoice flow. |
 | Refunds / reversals | VERIFIED | Model, response contract and reversal metadata/lifecycle regression coverage pass reviewed gates. |
@@ -84,21 +87,22 @@ This is verified automated and real-stack certification evidence for the reviewe
 
 - Core product capabilities have substantial real implementation.
 - The reviewed V1.4 baseline passes current automated backend/frontend/architecture/security gates.
-- Production Certification run `33058364994` passes all Product Gates with `Failed gates: 0` on `fef1f891651713082e42e30f4a01ac844637ed30`.
+- Production Certification run `33073984795` passes the reviewed Production Certification job on `a7d20f70` with `Failed gates: 0`.
+- Reports / Analytics tenant isolation is verified by a dedicated real-stack gate.
 - Conversation tenant/public-boundary isolation is verified by the dedicated real-stack P0 gate.
 - Billing Plans, Subscription, Entitlements and their covered tenant-isolation boundaries are verified by real-stack certification.
 - Workflow / Approval / Schedule product acceptance is verified by the real-stack certification gate.
 - Refund and reversal implementation, Usage Ledger tenant-scoped idempotency, Employee/File tenant isolation, Knowledge/RAG isolation, RBAC, and scoped API-key behavior have reviewed evidence.
 - The Employee → Run → AI → Result and Files → Knowledge → Memory product paths pass real-stack certification.
-- Tenant isolation is verified for the currently covered Employee, File, Knowledge, Conversation, Subscription, and Entitlements boundaries, but is **not** yet certified across every domain.
+- Tenant isolation is verified for the currently covered Employee, File, Knowledge, Conversation, Reports/Analytics, Subscription, and Entitlements boundaries, but is **not** yet certified across every domain.
 
 Do not claim commercial go-live, live Stripe/payment behavior, live WhatsApp provider behavior, customer acceptance, or complete cross-domain tenant isolation.
 
 ## Next execution order
 
-1. Add dedicated real-stack tenant-isolation certification for Reports / analytics and other remaining high-risk resource domains.
-2. Audit Billing/Stripe end-to-end: source → tests → runtime → external evidence.
-3. Execute refund lifecycle against the real payment-provider boundary where applicable.
+1. Audit Billing/Stripe end-to-end: source → tests → runtime → external evidence.
+2. Execute refund lifecycle against the real payment-provider boundary where applicable.
+3. Harden and certify WhatsApp provider/runtime behavior; external delivery remains credential-dependent.
 4. Collect production evidence for deployment, secrets/HTTPS, backup/restore, monitoring, rollback/recovery and customer acceptance.
 
 ## Documentation policy
