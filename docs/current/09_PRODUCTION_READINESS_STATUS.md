@@ -138,6 +138,15 @@ Two tracks are explicit and may proceed independently while preserving their evi
 1. **V1.4 gap closure:** continue the next dependency-ordered implementation slice from the frozen Blueprint. Each slice requires its own tests/CI and documentation update. Do not reimplement existing Billing/Payment or Phase 7 capabilities without a demonstrated gap.
 2. **Phase 6E external delivery:** execute Vendor → Reseller → Customer against real infrastructure and populate the Phase 6E evidence records. 6E remains incomplete until its required environment-specific evidence and acceptance gates are satisfied.
 
+## Version and release namespace reconciliation — 2026-08-27
+
+The repository distinguishes product releases, architecture baselines, execution waves and documentation-package revisions. The authoritative reconciliation is recorded in `docs/current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md`.
+
+- **v1.2.0:** current certified controlled-deployment product release.
+- **v1.3.0:** historical/unreconciled release claim; it does not override current v1.2.0 release truth without immutable release evidence reconciliation.
+- **V1.4:** frozen architecture baseline with active implementation; it is not currently equivalent to a released `v1.4.0` product version.
+
+
 ## Security rule
 
 No production host, private key, registry credential, webhook secret, payment secret, customer data or environment-specific access token belongs in Git history. Missing required production inputs must fail closed.
