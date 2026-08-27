@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
-from app.models.billing import Subscription
+from app.models.billing import BillingEvent, Subscription
 from app.models.refund import PaymentRefund
 from app.services import stripe_service
 
@@ -38,6 +38,48 @@ async def _assert_payment_intent_belongs_to_tenant(
     }
 
 
+async def _record_lifecycle_event(
+    db: AsyncSession,
+    *,
+    row: PaymentRefund,
+    status: str,
+) -> None:
+    provider_event_id = f"refund-request:{row.tenant_id}:{row.idempotency_key}"
+    event = (
+        await db.execute(
+            select(BillingEvent).where(
+                BillingEvent.provider == "stripe",
+                BillingEvent.provider_event_id == provider_event_id,
+            )
+        )
+    ).scalar_one_or_none()
+    payload = {
+        "refund_id": str(row.id),
+        "operation": row.operation,
+        "payment_intent_id": row.provider_payment_intent_id,
+        "provider_refund_id": row.provider_refund_id,
+        "amount_cents": row.amount_cents,
+        "currency": row.currency,
+        "reason": row.reason,
+        "failure_reason": row.failure_reason,
+    }
+    if event is None:
+        event = BillingEvent(
+            tenant_id=row.tenant_id,
+            provider="stripe",
+            provider_event_id=provider_event_id,
+            event_type=f"payment.{row.operation}.requested",
+            payload=payload,
+            status=status,
+        )
+        db.add(event)
+    else:
+        event.tenant_id = row.tenant_id
+        event.payload = payload
+        event.status = status
+    await db.flush()
+
+
 async def request_refund(
     db: AsyncSession,
     *,
@@ -64,8 +106,17 @@ async def request_refund(
             )
         )
     ).scalar_one_or_none()
-    if existing is not None and existing.status != "failed":
-        return existing
+    if existing is not None:
+        same_request = (
+            existing.operation == operation
+            and existing.provider_payment_intent_id == payment_intent_id
+            and existing.amount_cents == amount_cents
+            and existing.currency.lower() == currency.lower()
+        )
+        if not same_request:
+            raise ConflictError("Idempotency key already belongs to a different refund request")
+        if existing.status != "failed":
+            return existing
 
     payment = await _assert_payment_intent_belongs_to_tenant(
         db, tenant_id=tenant_id, payment_intent_id=payment_intent_id
@@ -105,19 +156,26 @@ async def request_refund(
             if result.get("amount") is not None:
                 row.amount_cents = int(result["amount"])
         else:
+            if payment["status"] not in {"requires_capture", "requires_confirmation", "requires_action"}:
+                raise ConflictError("PaymentIntent is not eligible for reversal")
             result = await stripe_service.create_reversal(
                 payment_intent_id=payment_intent_id,
                 idempotency_key=idempotency_key,
             )
             row.status = "succeeded" if result.get("status") == "canceled" else (result.get("status") or "pending")
-            row.metadata = {"provider_operation": "payment_intent_cancel", "provider_status": result.get("status")}
+            row.metadata = {
+                "provider_operation": "payment_intent_cancel",
+                "provider_status": result.get("status"),
+            }
     except Exception as exc:
         row.status = "failed"
         row.failure_reason = str(exc)[:1000]
         await db.flush()
+        await _record_lifecycle_event(db, row=row, status="failed")
         return row
 
     await db.flush()
+    await _record_lifecycle_event(db, row=row, status="processed")
     return row
 
 
