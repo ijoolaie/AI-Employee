@@ -22,6 +22,8 @@ class ClientTenantSummary(BaseModel):
     tenant_kind: str
     created_at: datetime
 
+    model_config = {"from_attributes": True}
+
 
 async def require_reseller_admin(ctx: CurrentContext) -> None:
     if ctx.tenant.tenant_kind != "reseller":
@@ -42,20 +44,7 @@ async def list_clients(ctx: CurrentContext, db: DbSession):
         .order_by(Tenant.created_at.desc())
     )
     clients = result.scalars().all()
-    return APIResponse(
-        success=True,
-        data=[
-            ClientTenantSummary(
-                id=t.id,
-                name=t.name,
-                slug=t.slug,
-                status=t.status,
-                tenant_kind=t.tenant_kind,
-                created_at=t.created_at,
-            )
-            for t in clients
-        ],
-    )
+    return APIResponse(success=True, data=[ClientTenantSummary.model_validate(t) for t in clients])
 
 
 async def _get_client(client_id: UUID, ctx: CurrentContext, db: DbSession) -> Tenant:
