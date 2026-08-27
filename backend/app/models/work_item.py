@@ -41,7 +41,7 @@ class WorkItem(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[WorkItemStatus] = mapped_column(Enum(WorkItemStatus), nullable=False, default=WorkItemStatus.DRAFT)
+    status: Mapped[WorkItemStatus] = mapped_column(Enum(WorkItemStatus), nullable=False, default=WorkItemStatus.DRAFT, insert_default=WorkItemStatus.DRAFT)
     priority: Mapped[int] = mapped_column(nullable=False, default=0)
     requester_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
     executor_type: Mapped[ExecutorType | None] = mapped_column(Enum(ExecutorType))
