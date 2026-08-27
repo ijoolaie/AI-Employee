@@ -163,7 +163,7 @@ async def request_refund(
                 idempotency_key=idempotency_key,
             )
             row.status = "succeeded" if result.get("status") == "canceled" else (result.get("status") or "pending")
-            row.metadata = {
+            row.refund_metadata = {
                 "provider_operation": "payment_intent_cancel",
                 "provider_status": result.get("status"),
             }
