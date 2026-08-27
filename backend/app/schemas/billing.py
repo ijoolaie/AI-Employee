@@ -1,6 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 from pydantic import BaseModel, Field
 
 class PlanResponse(BaseModel):
@@ -47,3 +48,26 @@ class CheckoutSessionResponse(BaseModel):
 
 class PortalSessionResponse(BaseModel):
     portal_url: str
+
+class RefundRequest(BaseModel):
+    operation: Literal["refund", "reversal"] = "refund"
+    payment_intent_id: str = Field(min_length=1, max_length=255)
+    amount_cents: int | None = Field(default=None, gt=0)
+    currency: str = Field(default="usd", min_length=3, max_length=3)
+    reason: str | None = Field(default=None, max_length=255)
+    idempotency_key: str = Field(min_length=1, max_length=255)
+
+class RefundResponse(BaseModel):
+    id: str
+    operation: str
+    provider: str
+    provider_refund_id: str | None
+    provider_payment_intent_id: str | None
+    provider_charge_id: str | None
+    amount_cents: int | None
+    currency: str
+    status: str
+    reason: str | None
+    failure_reason: str | None
+    created_at: datetime
+    updated_at: datetime
