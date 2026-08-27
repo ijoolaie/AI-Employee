@@ -18,17 +18,18 @@ AI-Employee has substantial real implementation across core SaaS, AI, tenant, bi
 
 ## Current verification baseline
 
-The refund/reversal hardening from PR #96 is merged on main.
+Refund/reversal hardening and Usage Ledger concurrency hardening are merged on main.
 
-- PaymentRefund now uses a safe Python ORM attribute instead of the reserved metadata attribute while preserving the intended database column contract.
-- The reversal execution path uses refund_metadata.
-- RefundResponse.provider_refund_id is optional with a default of None.
-- Regression coverage includes successful reversal metadata and lifecycle-event behavior.
-- CI, Architecture Guard, CodeQL, Production Observability, and Production Rollback & Alerting all passed for PR #96 before merge.
+- `PaymentRefund` uses a safe Python ORM attribute instead of the reserved `metadata` attribute while preserving the intended database column contract.
+- The reversal execution path uses `refund_metadata`.
+- `RefundResponse.provider_refund_id` is optional with a default of `None`.
+- Refund/reversal regression coverage passed the reviewed CI gates.
+- Usage Ledger idempotency is tenant-scoped by `(tenant_id, event_key)` and now handles concurrent duplicate insertion safely using a savepoint.
+- CI, Architecture Guard, CodeQL, Production Observability, and Production Rollback & Alerting passed for the reviewed Usage Ledger change.
 
-**Evidence:** PR #96 head `a0165b5922b2fc1af607da3e2780eb8e98f41b0d`, merged as `5f278f0e9cae763399b6c7125131527ff0346afd`.
+**Evidence:** PR #96 merged as `5f278f0e9cae763399b6c7125131527ff0346afd`; PR #97 merged as `64b64fab65725ab5ccf59b3a6f3f0b587f5db219`.
 
-This is a verified automated baseline for the reviewed refund/reversal slice. It does not establish live Stripe/provider certification.
+This is a verified automated baseline for the reviewed refund/reversal and Usage Ledger slices. It does not establish live provider or production certification.
 
 ## Implementation and verification matrix
 
@@ -39,7 +40,7 @@ This is a verified automated baseline for the reviewed refund/reversal slice. It
 | RBAC / permissions | AS-BUILT | Permission dependencies/checks exist. |
 | API keys / scoped keys | AS-BUILT | Lifecycle, authentication and scopes exist. |
 | AI Gateway / providers | AS-BUILT | Provider execution, metering and audit are wired. |
-| AI usage / audit / idempotent ledger | AS-BUILT | Core accounting and audit implementation exists. |
+| AI usage / audit / idempotent ledger | VERIFIED | Usage Ledger idempotency is tenant-scoped and concurrency-hardened; reviewed CI passes. |
 | Runs / Chat / AI Employees | AS-BUILT | Application and UI flows exist. |
 | Files / Knowledge / Memory | AS-BUILT | Backend and UI paths exist. |
 | Workflows / schedules / approvals | AS-BUILT | Implementation exists. |
@@ -73,6 +74,7 @@ This is a verified automated baseline for the reviewed refund/reversal slice. It
 - Core product capabilities have substantial real implementation.
 - The reviewed V1.4 baseline passes current automated backend/frontend/architecture/security gates.
 - Refund and reversal implementation, including the previously missed reversal metadata path, are verified by regression and CI evidence.
+- Usage Ledger tenant-scoped idempotency is verified against the reviewed concurrency-safe implementation and CI baseline.
 
 Do not claim full production certification, commercial go-live, live Stripe behavior, live payments, or customer acceptance.
 
@@ -80,9 +82,8 @@ Do not claim full production certification, commercial go-live, live Stripe beha
 
 1. Audit Billing/Stripe end-to-end: source → tests → runtime → external evidence.
 2. Execute refund lifecycle against the real payment-provider boundary where applicable.
-3. Verify usage ledger/idempotency under duplicate delivery scenarios.
-4. Verify tenant isolation across Knowledge, Conversations, Billing and usage data.
-5. Collect production evidence for deployment, secrets/HTTPS, backup/restore, monitoring, rollback/recovery and customer acceptance.
+3. Verify tenant isolation across Knowledge, Conversations, Billing and usage data.
+4. Collect production evidence for deployment, secrets/HTTPS, backup/restore, monitoring, rollback/recovery and customer acceptance.
 
 ## Documentation policy
 
