@@ -2,210 +2,168 @@
 
 ## Purpose
 
-This is the authoritative productization and delivery roadmap. It distinguishes implementation, CI/release verification, local evidence, and external-production evidence. The repository has progressed beyond the original 2026-08-24 roadmap snapshot through the V1.4 gap-closure sequence and the existing Phase 7 Invoice Employee implementation.
+Authoritative delivery roadmap. V1.4 remains the frozen architecture foundation; V1.5 adds the Human + Agent operating model.
 
-## Current project position — 2026-08-26
+## Current position — 2026-08-27
 
-**Overall position: CORE PLATFORM COMPLETE → PRODUCTIZATION FOUNDATION COMPLETE → PHASE 4 DELIVERY PACKAGE IMPLEMENTED / LOCAL VALIDATION COMPLETE → PHASE 5 COMMERCIAL IMPLEMENTATION SUBSTANTIALLY COMPLETE → PHASE 6A–6D VERIFIED → PHASE 6E READY FOR EXTERNAL PRODUCTION EXECUTION → V1.4 GAP-CLOSURE IMPLEMENTATION IN PROGRESS → PHASE 7 INVOICE EMPLOYEE IMPLEMENTED / LOCALLY VERIFIED.**
+**V1.4 frozen foundation + three-workspace separation + V1.5 Agentic Operating Model documented; implementation frontier is the unified Human/Agent execution layer.**
 
-The V1.4 blueprint is frozen. Implementation is no longer only planned: the dependency-ordered gap-closure sequence has begun and PRs #69–#73 have been completed, with #73 merged after its CI/test correction. Phase 7 is also already implemented in the repository as v0.7.0 with the v0.7.1 tax-rate amendment and release verification record. This does **not** change the separate production-evidence boundary: no external production claim is made without target-specific evidence.
+The product is **Agent-first, not Employee-first**. Every capability in Platform, Reseller and Client must be executable by a Human, a specialized Agent, or both. The same WorkItem, authorization, tools, approvals, audit and output contracts apply to either executor. Existing Employee code remains a compatibility layer during migration.
 
-## GitHub execution-ledger reconciliation — 2026-08-26
-
-The older open PR queue has now been reconciled against the frozen V1.4 baseline and the completed #69–#73 implementation wave:
-
-- **#73** — merged; idempotent usage event ledger gap closed and verified.
-- **#72, #71, #70, #69** — completed implementation wave preceding #73.
-- **#68** — closed without merge as a superseded documentation/baseline work item; its audit conclusions are represented by the current documentation baseline.
-- **#67** — closed without merge as a superseded planning work item; the execution plan is represented by the current frozen V1.4 baseline and roadmap.
-- **#64** — closed without merge; the draft v1.3.1 SaaS Foundation branch is no longer the active execution frontier.
-- **#57** — closed without merge; Shopify external-certification preparation is retained as a future/target-specific activity rather than an active blocking PR.
-
-These closures are bookkeeping/governance decisions. They do not constitute production certification or imply that the corresponding external gates have been completed.
-
-## Version namespace note — 2026-08-27
-
-The authoritative version reconciliation is `docs/current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md`.
-
-- **v1.2.0** is the current certified controlled-deployment product release.
-- **v1.3.0** remains a historical/unreconciled release claim and does not override current release truth.
-- **V1.4** is the frozen architecture baseline and active implementation track, not yet a `v1.4.0` certified product release.
-- Documentation-package version labels are a separate namespace from product releases.
-
-## Baseline
-
-- Published productization baseline: **v1.0.1** at `2d23a01098f432145ecaea14b2500fe520ad0bf7`.
-- Certified controlled-deployment release: **v1.2.0**; release artifact evidence is recorded in the release certification documents.
-- Productization changes do not rewrite immutable vendor releases.
-- Reseller/customer changes remain delivery revisions referencing an immutable vendor release.
+Authoritative V1.5 architecture: `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md`.
 
 ## Phase 0 — Release Integrity
 
-**Status: 🟢 BASELINE COMPLETE.**
-
-Release identity, certification boundary, immutable vendor identity and release-linked documentation are established.
+**🟢 COMPLETE.** Immutable release identity, certification boundaries and release evidence are established.
 
 ## Phase 1 — Vendor Edition
 
-**Status: 🟢 RUNTIME + COMMERCIAL FOUNDATION IMPLEMENTED; remaining work is operational authority/tooling.**
-
-Vendor runtime boundaries, provisioning, license authority, entitlement authority and audit path are implemented. Remaining work includes release-management UI/API, broader provider/global configuration management and vendor support tooling.
+**🟢 FOUNDATION IMPLEMENTED.** Vendor runtime, provisioning, entitlement, licensing and audit boundaries exist; operational authority/tooling continues.
 
 ## Phase 2 — Reseller Edition
 
-**Status: 🟢 RUNTIME CONTROL-PLANE + TENANT LIFECYCLE + COMMERCIAL ENTITLEMENT FOUNDATION COMPLETE.**
+**🟢 FOUNDATION IMPLEMENTED.** Reseller identity, isolation, lifecycle, quota delegation, licensing, audit and support boundaries exist. V1.5 adds agentic portfolio/revenue operations.
 
-Runtime reseller identity, isolation, provisioning/deprovisioning, quota delegation, license control, audit and support escalation are implemented. Commercial operations still require real production evidence.
+## Phase 3 — Client Edition
 
-## Phase 3 — Customer Edition
-
-**Status: 🟢 RUNTIME TENANT/RBAC + LIFECYCLE FOUNDATION COMPLETE; external production evidence remains.**
-
-Customer isolation, RBAC, lifecycle, auditability and support boundaries are implemented. Local backup/restore, upgrade/rollback and recovery evidence exists; external customer-environment evidence remains separate.
+**🟢 FOUNDATION IMPLEMENTED.** Client isolation, RBAC, lifecycle and audit boundaries exist. V1.5 adds business-outcome-oriented Human/Agent execution.
 
 ## Phase 4 — Delivery Package
 
-**Status: 🟢 IMPLEMENTED / LOCAL VALIDATION COMPLETE.**
-
-The delivery package covers release artifacts, configuration, installation, migration/upgrade, backup/restore, rollback, acceptance, security/secrets, compatibility and Vendor → Reseller → Customer handoff.
+**🟢 IMPLEMENTED / LOCAL VALIDATION COMPLETE.** Release, configuration, installation, migration, recovery, security and handoff artifacts exist.
 
 ## Phase 5 — Commercial Production
 
-**Status: 🟡 IMPLEMENTATION SUBSTANTIALLY COMPLETE; external production evidence and final commercial handoff remain.**
-
-Remaining gates are real payment/subscriber/revenue evidence, external deployment, monitoring/alerting, production rollback/recovery, final security certification and environment-specific support/handoff evidence.
+**🟡 SUBSTANTIALLY IMPLEMENTED.** External payment, deployment, monitoring, rollback/recovery and environment-specific certification remain open.
 
 ## Phase 6 — Edition-Separated Delivery
 
-**Status: 🟢 6A–6D COMPLETE; 6E READY FOR EXTERNAL EXECUTION.**
+**🟢 6A–6D COMPLETE; 6E OPEN FOR EXTERNAL EXECUTION.** Vendor → Reseller → Client delivery remains one authoritative source with environment-specific evidence required.
 
-Phase 6 provides three independently named delivery artifacts while preserving one authoritative codebase and one immutable Vendor source release. It does not create permanent source forks.
+## Phase 7 — Existing Invoice Capability
 
-### Phase 6A — Contract and nomenclature
+**🟢 IMPLEMENTED / LOCAL VERIFIED.** Existing invoice functionality remains supported and must migrate toward the unified WorkItem/Agent model when changed. Do not duplicate the Stripe billing path.
 
-**Status: 🟢 COMPLETE.**
+# V1.4 — Architecture & Gap Closure
 
-Vendor, Reseller and Customer profile contracts, release matrix, authority/rollback rules and machine-readable profile contracts are documented.
+**🟡 FROZEN BASELINE / IMPLEMENTATION TRACK.** Tenant/worker context, knowledge isolation, conversation isolation, scoped API keys and idempotent usage work were established in the first dependency-ordered wave. V1.4 security, tenant, RBAC, billing and migration invariants remain mandatory for V1.5.
 
-### Phase 6B — Profile packaging
+# V1.5 — Agentic Productization Roadmap
 
-**Status: 🟢 COMPLETE — LOCAL VERIFIED.**
+## Phase 8 — Unified Execution Foundation
 
-Shared-source three-edition builder, common Vendor source SHA, secret exclusion, profile manifests and local package generation are complete.
+**🟡 DOCUMENTATION COMPLETE; NEXT IMPLEMENTATION PHASE.**
 
-### Phase 6C — Local verification
+Build the common substrate before adding many new agent screens.
 
-**Status: 🟢 COMPLETE — LOCAL VERIFIED 2026-08-24.**
+- WorkItem model and lifecycle
+- AgentDefinition
+- AgentInstance
+- HumanExecutor
+- unified execution service
+- Human ↔ Agent delegation/fallback
+- Agent ↔ Agent handoff
+- policy-driven approvals
+- scoped tools/credentials
+- execution/audit timeline
+- usage/cost attribution
+- compatibility adapters for Employee APIs
 
-Profile contract tests, machine-readable validation, three-artifact generation, package validation and SHA-256 evidence are complete.
+**Gate:** the same WorkItem can be completed by Human or Agent with the same authorization and audit boundary.
 
-### Phase 6D — Release-system integration
+## Phase 9 — Platform Command Center
 
-**Status: 🟢 COMPLETE — GITHUB ACTIONS VERIFIED 2026-08-24.**
+**⚪ PLANNED.**
 
-Verified release artifact run:
+Role-specific experiences for Executive, Operations, Finance, HR, Sales, Marketing, Customer Success, Support, Security/Compliance, Engineering/QA and Analytics/BI.
 
-```text
-run_id       = 32738347495
-job_id       = 97466534302
-release      = v1.2.0
-source_sha   = c329929f1c7e972f626b7ee749c8a2f05a85eace
-migration_head = p5license02
-```
+Core surfaces: Command Center, Tenants, Agents, Agent Teams, Workflows, Tasks, Approvals, Knowledge, Memory, Tools/Integrations, Usage/Cost, Billing, Audit, Developer and **Test Center**.
 
-Verified artifacts and edition checksums remain recorded in the release certification evidence.
+Each business function must support Human, Agent and collaborative execution.
 
-### Phase 6E — Production delivery
+## Phase 10 — Reseller Operations Workspace
 
-**Status: 🟡 READY FOR EXTERNAL EXECUTION — NO PRODUCTION CLAIM YET.**
+**⚪ PLANNED.**
 
-The execution contract is documented in `docs/current/36_PHASE6E_PRODUCTION_DELIVERY_RUNBOOK.md`.
+Portfolio, Sales, Support, Operations, Billing and Customer Success optimized for reseller roles.
 
-Mandatory delivery order:
+Specialized agents: Portfolio Health, Account Management, Sales, Support/Triage, Customer Success, Usage/Cost, Billing, Reporting and Operations.
 
-1. Vendor environment.
-2. Reseller environment.
-3. Customer environment.
+Every task can be performed manually, delegated to an Agent, or collaboratively executed.
 
-For each real environment, evidence must cover installation/health, migration state, security posture, monitoring/alerting, backup/recovery, edition-specific authority boundaries, and operator handoff/acceptance.
+## Phase 11 — Client Business Workspace
 
-Open Phase 6E gates:
+**⚪ PLANNED.**
 
-- [ ] Deliver a real Vendor environment.
-- [ ] Capture Vendor production evidence.
-- [ ] Deliver a real Reseller environment through the authorized Vendor path.
-- [ ] Capture Reseller production evidence.
-- [ ] Deliver a real Customer environment through the authorized upstream path.
-- [ ] Capture Customer production evidence.
-- [ ] Complete production-target recovery/rollback rehearsal.
-- [ ] Complete environment-specific security certification.
+Outcome-first UI: Home, Customers, Orders, Products, Sales, Marketing, Support, Finance, Tasks, AI & Automation, Reports, Integrations and **Test Center**.
 
-**Evidence boundary:** GitHub Actions proves reproducible release packaging and verification; it does not prove deployment to a real production target.
+Specialized agents include Lead Research, Qualification, Outreach, Follow-up, Proposal, CRM, Marketing Content, SEO, Support, Order, Invoice/Finance, Document, Analytics and Reporting.
 
-## Phase 7 — Invoice Employee
+## Phase 12 — Test Center & Evidence Platform
 
-**Status: 🟢 IMPLEMENTED / LOCAL VERIFIED; EXTERNAL PRODUCTION ACCEPTANCE REMAINS OPEN.**
+**⚪ PLANNED.**
 
-The Phase 7 scope lock is `documents/66_PHASE_7_INVOICE_EMPLOYEE_SCOPE_LOCK_v0.7.0.md`. The repository already contains the v0.7.0 implementation plus the v0.7.1 amendment. The implementation covers invoice creation with line items/tax/currency/due date, ingest/analysis, status tracking (`draft` / `sent` / `paid` / `overdue`), tenant-scoped outstanding/collected summaries, and PDF export using the existing ReportLab pipeline.
+Test Center is a first-class dashboard tool in **Platform, Reseller and Client**, with role-aware visibility.
 
-The v0.7.1 amendment records the tax-rate normalization fix and corresponding test coverage. `docs/current/RELEASE_VERIFICATION_v0.7.1.md` records the local real-model E2E verification boundary. These records establish repository/local evidence; they do not constitute external production certification.
+Required test families:
 
-Phase 7 must not duplicate or alter the existing Stripe subscription/billing path. Any future work must be driven by an evidenced gap rather than the original scope lock alone.
+- API health
+- authentication/session
+- tenant isolation
+- RBAC/permissions
+- Agent smoke tests
+- tool calls
+- workflows
+- Human ↔ Agent handoff
+- approvals
+- Knowledge/RAG
+- memory
+- integrations
+- webhooks/idempotency
+- usage metering
+- billing/sandbox
+- channels/notifications
+- workers/queues
+- model/provider
+- full E2E business scenarios
 
-## V1.4 — Architecture and Gap Closure
+Required UX: environment selector, dry-run/safe mode, production mutation guard, isolated test data, run history, logs, artifacts, pass/fail evidence and exportable verification records.
 
-**Status: 🟡 BLUEPRINT FROZEN; DEPENDENCY-ORDERED IMPLEMENTATION IN PROGRESS.**
+## Phase 13 — Agent Teams & Marketplace
 
-The V1.4 Master Blueprint and Freeze Record define the architectural baseline. The first implementation wave has been executed as a dependency-ordered PR chain:
+**⚪ PLANNED.** Reusable Agent Teams, templates, agent versioning, evaluation suites, tenant-installed agents, marketplace boundary, long-running workflows, budgets, rate limits and SLA-aware orchestration.
 
-```text
-#69  Tenant / Worker Context              ✅ complete
-#70  Knowledge Tenant Isolation           ✅ complete
-#71  Conversation Tenant Isolation        ✅ complete
-#72  Scoped API Keys                      ✅ complete
-#73  Idempotent Usage Event Ledger        ✅ MERGED
-```
+Marketplace remains downstream of tenant isolation, RBAC, permission grants, usage and billing.
 
-These changes establish that V1.4 is an active implementation track, not merely a future plan. Subsequent slices must continue to follow the frozen dependency graph and preserve the distinction between planned, implemented, verified and externally evidenced states.
+## Phase 14 — Scale, Governance & Production
 
-### V1.4 governance state
+**⚪ PLANNED.** Queue isolation, concurrency, model routing, cost controls, SLOs, disaster recovery, security/compliance, evaluation/regression prevention, incident response, retention/deletion, explainability, audit and external-production evidence.
 
-- [x] Blueprint frozen.
-- [x] Initial dependency-ordered gap closure executed.
-- [x] PR #73 merged with verification.
-- [x] Older/open planning PRs reconciled and closed where superseded (#67, #68).
-- [x] Older draft execution branches reconciled and closed where no longer the active frontier (#64, #57).
-- [x] Phase 7 existing implementation audited; no duplicate implementation PR required.
-- [ ] Continue the next dependency-ordered V1.4 slice after this documentation reconciliation checkpoint.
+# Cross-cutting Definition of Done
 
-## Cross-cutting acceptance gates
+Every phase must preserve:
 
-Every phase preserves:
+- backend-enforced tenant isolation
+- RBAC at API/service boundaries
+- equal authorization for Human and Agent execution
+- policy-driven approval for risky actions
+- scoped tools and credentials
+- complete auditability
+- usage/cost attribution
+- safe test execution
+- secrets excluded from source/artifacts
+- one authoritative Alembic graph
+- reproducible CI/release artifacts
+- explicit local/CI/production evidence boundaries
 
-- Backend-enforced tenant isolation.
-- RBAC at API/service boundaries.
-- Auditability of privileged actions.
-- Secrets excluded from source and distributable artifacts.
-- One authoritative Alembic graph.
-- Fast CI for ordinary changes.
-- Separate release certification gates.
-- Reproducible artifacts from immutable commits.
-- Explicit distinction between local, CI and external-production evidence.
+# Immediate execution order
 
-## Runtime hierarchy
-
-```text
-Vendor
-  └── Reseller
-        └── Customer
-```
-
-No downstream edition may gain implicit access to the control plane of the edition above it.
-
-## Definition of Commercially Deliverable
-
-A release is commercially deliverable only when the exact release identity is immutable, certification evidence is attached, edition boundaries are enforced, installation/migration/backup/restore/rollback are executable, secrets/configuration are externalized, acceptance criteria are executable, upgrade paths are defined, responsibilities are documented, and required production-target evidence exists.
-
-## Immediate next action
-
-**Phase 7 implementation is already present and should not be duplicated. The next action is to continue V1.4 gap closure in dependency order while separately executing Phase 6E against real infrastructure in the order Vendor → Reseller → Customer. Any future Phase 7 change must be driven by a demonstrated gap. Do not mark 6E complete or claim commercial go-live until environment-specific production evidence is attached for all required gates.**
+1. Finish/reconcile V1.4 workspace separation and CI.
+2. Implement Phase 8 unified execution foundation.
+3. Add Test Center contracts and backend authorization for all three workspaces.
+4. Build Platform Command Center.
+5. Build Reseller Operations Workspace.
+6. Build Client Business Workspace.
+7. Migrate existing Employee-backed capabilities through adapters.
+8. Add Agent Teams/Marketplace only after the execution substrate is stable.
+9. Execute Phase 6E production delivery independently; never confuse CI evidence with production evidence.
