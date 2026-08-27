@@ -25,7 +25,6 @@ from app.models.user import User
 
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
-CERT_EMAIL_BASE = "i.joolaie@gmail.com"
 
 
 def request(
@@ -33,12 +32,15 @@ def request(
     path: str,
     payload: dict | None = None,
     token: str | None = None,
+    headers: dict[str, str] | None = None,
 ) -> tuple[int, dict]:
     body = None if payload is None else json.dumps(payload).encode()
-    headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    request_headers = {"Accept": "application/json", "Content-Type": "application/json"}
+    if headers:
+        request_headers.update(headers)
     if token:
-        headers["Authorization"] = f"Bearer {token}"
-    req = Request(f"{BASE_URL}{path}", data=body, headers=headers, method=method)
+        request_headers["Authorization"] = f"Bearer {token}"
+    req = Request(f"{BASE_URL}{path}", data=body, headers=request_headers, method=method)
     try:
         with urlopen(req, timeout=10) as response:
             raw = response.read().decode()
@@ -52,6 +54,37 @@ def request(
         return exc.code, detail
     except URLError as exc:
         raise AssertionError(f"{method} {path} unavailable: {exc}") from exc
+
+
+def request_multipart_file(
+    token: str,
+    filename: str,
+    content: bytes,
+    content_type: str = "text/plain",
+) -> tuple[int, dict]:
+    boundary = f"----AIEmployeeTenantIsolation{time.time_ns()}"
+    body = (
+        f"--{boundary}\r\n"
+        f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+        f"Content-Type: {content_type}\r\n\r\n"
+    ).encode() + content + f"\r\n--{boundary}--\r\n".encode()
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+        "Authorization": f"Bearer {token}",
+    }
+    req = Request(f"{BASE_URL}/files", data=body, headers=headers, method="POST")
+    try:
+        with urlopen(req, timeout=10) as response:
+            raw = response.read().decode()
+            return response.status, json.loads(raw) if raw else {}
+    except HTTPError as exc:
+        raw = exc.read().decode()
+        try:
+            detail = json.loads(raw)
+        except json.JSONDecodeError:
+            detail = {"raw": raw}
+        return exc.code, detail
 
 
 def assert_status(actual: int, expected: int, label: str, body: dict) -> None:
@@ -170,7 +203,7 @@ def main() -> int:
 
     status, cross_read = request("GET", f"/employees/{employee_id}", token=token_b)
     assert_status(status, 404, "cross-tenant employee read", cross_read)
-    print("CROSS-TENANT READ REJECT PASS")
+    print("CROSS-TENANT EMPLOYEE READ REJECT PASS")
 
     status, cross_write = request(
         "POST",
@@ -185,7 +218,33 @@ def main() -> int:
         token=token_b,
     )
     assert_status(status, 404, "cross-tenant employee write", cross_write)
-    print("CROSS-TENANT WRITE REJECT PASS")
+    print("CROSS-TENANT EMPLOYEE WRITE REJECT PASS")
+
+    file_status, file_response = request_multipart_file(
+        token_a,
+        filename=f"p0-tenant-a-{suffix}.txt",
+        content=f"TENANT_A_ONLY_MARKER_{suffix}".encode(),
+    )
+    assert_status(file_status, 201, "tenant A file create", file_response)
+    file_id = (file_response.get("data") or {}).get("id")
+    assert file_id, file_response
+    print(f"TENANT A FILE CREATE PASS file={file_id}")
+
+    status, cross_file_read = request("GET", f"/files/{file_id}", token=token_b)
+    assert_status(status, 404, "cross-tenant file read", cross_file_read)
+    print("CROSS-TENANT FILE READ REJECT PASS")
+
+    status, cross_file_download = request("GET", f"/files/{file_id}/download", token=token_b)
+    assert_status(status, 404, "cross-tenant file download", cross_file_download)
+    print("CROSS-TENANT FILE DOWNLOAD REJECT PASS")
+
+    status, cross_file_delete = request("DELETE", f"/files/{file_id}", token=token_b)
+    assert_status(status, 404, "cross-tenant file delete", cross_file_delete)
+    print("CROSS-TENANT FILE DELETE REJECT PASS")
+
+    status, allowed_file_read = request("GET", f"/files/{file_id}", token=token_a)
+    assert_status(status, 200, "same-tenant file read", allowed_file_read)
+    print("SAME-TENANT FILE READ PASS")
 
     restricted_email, restricted_password = asyncio.run(
         create_restricted_member(tenant_a_slug, suffix)
