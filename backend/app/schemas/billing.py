@@ -61,13 +61,13 @@ class RefundResponse(BaseModel):
     id: str
     operation: str
     provider: str
-    provider_refund_id: str | None
-    provider_payment_intent_id: str | None
-    provider_charge_id: str | None
-    amount_cents: int | None
+    provider_refund_id: str | None = None
+    provider_payment_intent_id: str | None = None
+    provider_charge_id: str | None = None
+    amount_cents: int | None = None
     currency: str
     status: str
-    reason: str | None
-    failure_reason: str | None
+    reason: str | None = None
+    failure_reason: str | None = None
     created_at: datetime
     updated_at: datetime
