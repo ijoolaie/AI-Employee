@@ -24,7 +24,7 @@ def test_agent_definition_contains_policy_boundaries() -> None:
         name="Support Triage",
     )
     assert AgentDefinition.version.property.columns[0].default.arg == 1
-    assert agent.capabilities == []
+    assert AgentDefinition.capabilities.property.columns[0].default.arg() == []
     assert agent.allowed_tools == []
     assert agent.policy_requirements == {}
 
@@ -36,4 +36,4 @@ def test_agent_instance_is_tenant_scoped_and_lifecycle_aware() -> None:
         name="Support Triage Production",
     )
     assert AgentInstance.status.property.columns[0].default.arg is AgentInstanceStatus.ENABLED
-    assert instance.max_concurrency == 1
+    assert AgentInstance.max_concurrency.property.columns[0].default.arg == 1
