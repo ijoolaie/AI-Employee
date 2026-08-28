@@ -1,108 +1,113 @@
-"""Integration-boundary tests for the agent WorkItem dispatch endpoint.
-
-These tests exercise the endpoint's tenant boundary and execution-service wiring
-without inventing a second database fixture stack.
-"""
+"""Integration-boundary tests for the agent WorkItem execution API."""
 from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
 
 from app.api.v1 import work_items
+from app.models.work_item import ExecutorType, WorkItemStatus
+
+
+class FakeDB:
+    async def commit(self):
+        return None
+
+    async def get(self, model, object_id):
+        return None
 
 
 @pytest.mark.asyncio
-async def test_agent_dispatch_uses_tenant_scoped_executor(monkeypatch):
+async def test_agent_dispatch_wires_adapter_into_execution_service(monkeypatch):
     tenant_id = uuid4()
     work_item_id = uuid4()
-    agent_id = uuid4()
     run_id = uuid4()
+    db = FakeDB()
     calls = {}
 
     work_item = SimpleNamespace(
         id=work_item_id,
         tenant_id=tenant_id,
-        execution_type="agent",
-        assigned_agent_instance_id=agent_id,
-        status="pending",
-        output_data=None,
+        executor_type=ExecutorType.AGENT,
+        status=WorkItemStatus.PENDING,
+        output_data={"run_id": str(run_id)},
     )
-    agent = SimpleNamespace(id=agent_id, tenant_id=tenant_id)
 
-    async def fake_get_work_item(db, item_id, requested_tenant_id):
-        calls["work_item_lookup"] = (item_id, requested_tenant_id)
+    async def fake_get_work_item(db_value, item_id, requested_tenant_id):
+        calls["lookup"] = (db_value, item_id, requested_tenant_id)
         return work_item
 
-    async def fake_get_agent(db, agent_id_value, requested_tenant_id):
-        calls["agent_lookup"] = (agent_id_value, requested_tenant_id)
-        return agent
+    class FakeAdapter:
+        def __init__(self, db_value):
+            calls["adapter_db"] = db_value
 
-    class FakeExecutor:
-        def __init__(self, db):
-            calls["executor_db"] = db
+    class FakeService:
+        def __init__(self, db_value, *, agent_executor=None):
+            calls["service"] = (db_value, agent_executor)
 
-        async def dispatch(self, item, agent_value):
-            calls["dispatch"] = (item, agent_value)
-            return {"run_id": str(run_id)}
+        async def dispatch(self, item):
+            calls["dispatch"] = item
+            return SimpleNamespace(work_item=item, dispatched=True, waiting_for_approval=False)
+
+    async def fake_record(*args, **kwargs):
+        calls["audit"] = kwargs
 
     monkeypatch.setattr(work_items, "_get_work_item", fake_get_work_item)
-    monkeypatch.setattr(work_items, "_get_agent_instance", fake_get_agent)
-    monkeypatch.setattr(work_items, "UnifiedExecutionService", FakeExecutor)
+    monkeypatch.setattr(work_items, "AgentExecutionAdapter", FakeAdapter)
+    monkeypatch.setattr(work_items, "UnifiedExecutionService", FakeService)
+    monkeypatch.setattr(work_items, "record_execution_event", fake_record)
 
-    result = await work_items.dispatch_work_item(
+    result = await work_items.dispatch(
         work_item_id,
-        db=object(),
-        tenant_id=tenant_id,
-        user_id=uuid4(),
-        idempotency_key=None,
+        db=db,
+        current_user=SimpleNamespace(tenant_id=tenant_id, user_id=uuid4()),
     )
 
-    assert calls["work_item_lookup"] == (work_item_id, tenant_id)
-    assert calls["agent_lookup"] == (agent_id, tenant_id)
-    assert calls["dispatch"] == (work_item, agent)
-    assert result["run_id"] == str(run_id)
+    assert calls["lookup"] == (db, work_item_id, tenant_id)
+    assert isinstance(calls["service"][1], FakeAdapter)
+    assert calls["adapter_db"] is db
+    assert calls["dispatch"] is work_item
+    assert result.work_item_id == work_item_id
+    assert result.dispatched is True
 
 
 @pytest.mark.asyncio
-async def test_agent_dispatch_rejects_cross_tenant_agent_before_executor(monkeypatch):
+async def test_agent_assignment_rejects_cross_tenant_agent_before_execution(monkeypatch):
     tenant_id = uuid4()
     other_tenant_id = uuid4()
     work_item_id = uuid4()
     agent_id = uuid4()
-    calls = {"executor": 0}
+    db = FakeDB()
+    calls = {"service": 0}
 
     work_item = SimpleNamespace(
         id=work_item_id,
         tenant_id=tenant_id,
-        execution_type="agent",
-        assigned_agent_instance_id=agent_id,
-        status="pending",
-        output_data=None,
+        executor_type=ExecutorType.AGENT,
+        status=WorkItemStatus.PENDING,
     )
     foreign_agent = SimpleNamespace(id=agent_id, tenant_id=other_tenant_id)
 
-    async def fake_get_work_item(db, item_id, requested_tenant_id):
+    async def fake_get_work_item(db_value, item_id, requested_tenant_id):
         return work_item
 
-    async def fake_get_agent(db, agent_id_value, requested_tenant_id):
+    async def fake_get(model, object_id):
         return foreign_agent
 
-    class ForbiddenExecutor:
-        def __init__(self, db):
-            calls["executor"] += 1
+    class ForbiddenService:
+        def __init__(self, *_args, **_kwargs):
+            calls["service"] += 1
 
+    db.get = fake_get
     monkeypatch.setattr(work_items, "_get_work_item", fake_get_work_item)
-    monkeypatch.setattr(work_items, "_get_agent_instance", fake_get_agent)
-    monkeypatch.setattr(work_items, "UnifiedExecutionService", ForbiddenExecutor)
+    monkeypatch.setattr(work_items, "UnifiedExecutionService", ForbiddenService)
 
-    with pytest.raises(Exception) as exc:
-        await work_items.dispatch_work_item(
+    with pytest.raises(work_items.HTTPException) as exc:
+        await work_items.assign_agent(
             work_item_id,
-            db=object(),
-            tenant_id=tenant_id,
-            user_id=uuid4(),
-            idempotency_key=None,
+            payload=SimpleNamespace(agent_instance_id=agent_id),
+            db=db,
+            current_user=SimpleNamespace(tenant_id=tenant_id, user_id=uuid4()),
         )
 
-    assert "tenant" in str(exc.value).lower() or "not found" in str(exc.value).lower()
-    assert calls["executor"] == 0
+    assert exc.value.status_code == 404
+    assert calls["service"] == 0
