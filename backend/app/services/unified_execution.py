@@ -66,6 +66,18 @@ class UnifiedExecutionService:
         if self._requires_approval(work_item):
             work_item.status = WorkItemStatus.WAITING_APPROVAL
             return ExecutionResult(work_item, False, True)
+
+        # A persisted Run id is the canonical marker that an Agent WorkItem has
+        # already crossed the execution boundary. Do not create another Run on
+        # retries or duplicate HTTP dispatches.
+        if (
+            work_item.executor_type is ExecutorType.AGENT
+            and work_item.status is WorkItemStatus.RUNNING
+            and isinstance(work_item.output_data, dict)
+            and work_item.output_data.get("run_id")
+        ):
+            return ExecutionResult(work_item, False)
+
         work_item.status = WorkItemStatus.RUNNING
         try:
             if work_item.executor_type is ExecutorType.HUMAN:
