@@ -7,6 +7,14 @@ from app.models.work_item import ExecutorType, WorkItemStatus
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 
 
+class FakeSession:
+    def __init__(self):
+        self.added = []
+
+    def add(self, value):
+        self.added.append(value)
+
+
 def item(*, executor_type=ExecutorType.HUMAN, requires_approval=False):
     return SimpleNamespace(
         id=uuid4(), tenant_id=uuid4(), title="Parent", description="context",
@@ -18,7 +26,8 @@ def item(*, executor_type=ExecutorType.HUMAN, requires_approval=False):
 
 def test_phase84_delegation_preserves_tenant_parent_and_context():
     parent = item()
-    service = UnifiedExecutionService(SimpleNamespace())
+    session = FakeSession()
+    service = UnifiedExecutionService(session)
     target = uuid4()
 
     child = service.delegate(
@@ -34,11 +43,12 @@ def test_phase84_delegation_preserves_tenant_parent_and_context():
     assert child.status is WorkItemStatus.ASSIGNED
     assert child.input_data["delegated_context"] == {"customer": "acme"}
     assert child.input_data["delegated_artifacts"][0]["id"] == "doc-1"
+    assert session.added == [child]
 
 
 def test_phase84_delegation_requires_current_executor():
     parent = item()
-    service = UnifiedExecutionService(SimpleNamespace())
+    service = UnifiedExecutionService(FakeSession())
     with pytest.raises(ExecutionError, match="not authorized"):
         service.delegate(
             parent, actor_id=uuid4(), target_type=ExecutorType.AGENT, target_id=uuid4()
@@ -47,7 +57,7 @@ def test_phase84_delegation_requires_current_executor():
 
 def test_phase84_approval_gated_delegation_waits_before_target_execution():
     parent = item(requires_approval=True)
-    service = UnifiedExecutionService(SimpleNamespace())
+    service = UnifiedExecutionService(FakeSession())
     child = service.delegate(
         parent, actor_id=parent.executor_id, target_type=ExecutorType.HUMAN, target_id=uuid4()
     )
