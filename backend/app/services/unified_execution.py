@@ -58,6 +58,55 @@ class UnifiedExecutionService:
         work_item.status = WorkItemStatus.ASSIGNED
         return work_item
 
+    def delegate(
+        self,
+        work_item: WorkItem,
+        *,
+        actor_id: uuid.UUID,
+        target_type: ExecutorType,
+        target_id: uuid.UUID,
+        title: str | None = None,
+        description: str | None = None,
+        context: dict[str, Any] | None = None,
+        artifacts: list[dict[str, Any]] | None = None,
+    ) -> WorkItem:
+        """Create a child WorkItem for another executor without crossing tenants."""
+        if work_item.executor_id != actor_id or work_item.executor_type is None:
+            raise ExecutionError("current executor is not authorized to delegate")
+        if work_item.status not in {WorkItemStatus.ASSIGNED, WorkItemStatus.RUNNING}:
+            raise ExecutionError("work item is not delegable")
+        if target_id == actor_id and target_type is work_item.executor_type:
+            raise ExecutionError("work item cannot be delegated to itself")
+
+        parent_context = dict(work_item.policy_context or {})
+        child_context = dict(parent_context)
+        child_context["delegated_from"] = str(work_item.id)
+        if context:
+            child_context["delegation_context"] = context
+        if artifacts:
+            child_context["delegation_artifacts"] = artifacts
+
+        child = WorkItem(
+            tenant_id=work_item.tenant_id,
+            title=title or work_item.title,
+            description=description if description is not None else work_item.description,
+            status=WorkItemStatus.WAITING_APPROVAL if parent_context.get("requires_approval") else WorkItemStatus.ASSIGNED,
+            priority=work_item.priority,
+            requester_id=work_item.requester_id,
+            executor_type=target_type,
+            executor_id=target_id,
+            input_data={
+                **(work_item.input_data or {}),
+                "delegated_context": context or {},
+                "delegated_artifacts": artifacts or [],
+            },
+            policy_context=child_context,
+            idempotency_key=f"delegation:{work_item.id}:{target_type.value}:{target_id}:{uuid.uuid4()}",
+            parent_work_item_id=work_item.id,
+        )
+        self.db.add(child)
+        return child
+
     async def dispatch(self, work_item: WorkItem) -> ExecutionResult:
         if work_item.status is WorkItemStatus.WAITING_APPROVAL:
             return ExecutionResult(work_item, False, True)
@@ -66,7 +115,6 @@ class UnifiedExecutionService:
         if self._requires_approval(work_item):
             work_item.status = WorkItemStatus.WAITING_APPROVAL
             return ExecutionResult(work_item, False, True)
-
         if (
             work_item.executor_type is ExecutorType.AGENT
             and work_item.status is WorkItemStatus.RUNNING
@@ -74,14 +122,12 @@ class UnifiedExecutionService:
             and work_item.output_data.get("run_id")
         ):
             return ExecutionResult(work_item, False)
-
         work_item.status = WorkItemStatus.RUNNING
         try:
             if work_item.executor_type is ExecutorType.HUMAN:
                 if self.human_executor is None:
                     raise ExecutionError("human executor runtime is not configured")
                 work_item.output_data = await self._invoke(self.human_executor.dispatch, work_item)
-                # Dispatch only hands ownership to the human. Completion is an explicit action.
                 work_item.status = WorkItemStatus.RUNNING
             elif work_item.executor_type is ExecutorType.AGENT:
                 if self.agent_executor is None:
@@ -101,7 +147,6 @@ class UnifiedExecutionService:
             raise
 
     def complete_human(self, work_item: WorkItem, *, executor_id: uuid.UUID, output: dict[str, Any] | None = None) -> WorkItem:
-        """Complete a human-owned WorkItem only by its assigned executor."""
         if work_item.executor_type is not ExecutorType.HUMAN:
             raise ExecutionError("work item is not assigned to a human")
         if work_item.executor_id != executor_id:
@@ -113,7 +158,6 @@ class UnifiedExecutionService:
         return work_item
 
     def fail_human(self, work_item: WorkItem, *, executor_id: uuid.UUID, output: dict[str, Any] | None = None) -> WorkItem:
-        """Record an explicit human execution failure for the assigned executor."""
         if work_item.executor_type is not ExecutorType.HUMAN:
             raise ExecutionError("work item is not assigned to a human")
         if work_item.executor_id != executor_id:
