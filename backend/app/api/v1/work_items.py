@@ -12,6 +12,7 @@ from app.core.deps import get_current_context
 from app.models.agent_instance import AgentInstance
 from app.models.audit_log import AuditLog
 from app.models.work_item import WorkItem
+from app.services.agent_execution_adapter import AgentExecutionAdapter
 from app.services.execution_audit import record_execution_event
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 
@@ -100,10 +101,11 @@ async def assign_agent(work_item_id: UUID, payload: AgentAssignmentRequest, db: 
 @router.post("/{work_item_id}/dispatch", response_model=ExecutionResponse)
 async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
+    agent_executor = AgentExecutionAdapter(db) if item.executor_type is not None and item.executor_type.value == "agent" else None
     try:
-        result = await UnifiedExecutionService(db).dispatch(item)
+        result = await UnifiedExecutionService(db, agent_executor=agent_executor).dispatch(item)
         action = "work_item.waiting_approval" if result.waiting_for_approval else "work_item.dispatched"
-        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action=action, actor_type="user", actor_id=current_user.user_id, metadata={"status": item.status.value})
+        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action=action, actor_type="user", actor_id=current_user.user_id, metadata={"status": item.status.value, **(item.output_data or {})})
         await db.commit()
     except ExecutionError as exc:
         await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.execution_failed", actor_type="user", actor_id=current_user.user_id, status="failure", metadata={"error_type": type(exc).__name__})
