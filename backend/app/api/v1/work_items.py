@@ -37,6 +37,10 @@ async def _get_work_item(db: AsyncSession, work_item_id: UUID, tenant_id: UUID) 
     return item
 
 
+def _response(result) -> ExecutionResponse:
+    return ExecutionResponse(work_item_id=result.work_item.id, status=result.work_item.status.value, dispatched=result.dispatched, waiting_for_approval=result.waiting_for_approval)
+
+
 @router.post("/{work_item_id}/assign/human", response_model=ExecutionResponse)
 async def assign_human(work_item_id: UUID, payload: HumanAssignmentRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
@@ -56,9 +60,21 @@ async def assign_agent(work_item_id: UUID, payload: AgentAssignmentRequest, db: 
     if agent is None or agent.tenant_id != current_user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="agent instance not found")
     try:
-        UnifiedExecutionService(db).assign_agent(item, agent)
+        await UnifiedExecutionService(db).assign_agent(item, agent)
         await db.commit()
     except ExecutionError as exc:
         await db.rollback()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return ExecutionResponse(work_item_id=item.id, status=item.status.value, dispatched=False, waiting_for_approval=False)
+
+
+@router.post("/{work_item_id}/dispatch", response_model=ExecutionResponse)
+async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    item = await _get_work_item(db, work_item_id, current_user.tenant_id)
+    try:
+        result = await UnifiedExecutionService(db).dispatch(item)
+        await db.commit()
+    except ExecutionError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+    return _response(result)
