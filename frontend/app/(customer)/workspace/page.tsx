@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bot, BookOpen, Brain, MessageCircle, Workflow, Code2, ArrowRight, Sparkles, Radio } from "lucide-react";
+import { Bot, BookOpen, Brain, MessageCircle, Workflow, Code2, ArrowRight, Sparkles, Radio, Activity } from "lucide-react";
 import Link from "next/link";
 
 const items = [
@@ -30,6 +30,11 @@ export default function AIWorkspacePage() {
           </div>
           <Link href="/employees/new" className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700">Create employee <ArrowRight className="h-4 w-4" /></Link>
         </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center gap-3 pb-2"><div className="rounded-lg bg-brand-50 p-2.5 text-brand-600"><Activity className="h-5 w-5" /></div><div><CardTitle className="text-base">Execution Workspace</CardTitle><p className="text-sm text-gray-500">Unified execution status, approvals and evidence.</p></div></CardHeader>
+        <CardContent><div className="grid gap-3 sm:grid-cols-3"><div className="rounded-lg border p-3"><p className="text-xs text-gray-500">Execution model</p><p className="mt-1 font-medium">Unified WorkItem</p></div><div className="rounded-lg border p-3"><p className="text-xs text-gray-500">Safety</p><p className="mt-1 font-medium">Tenant scoped</p></div><div className="rounded-lg border p-3"><p className="text-xs text-gray-500">Evidence</p><p className="mt-1 font-medium">Correlated</p></div></div></CardContent>
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
