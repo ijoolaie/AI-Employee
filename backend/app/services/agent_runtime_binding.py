@@ -1,27 +1,28 @@
-"""Resolve a tenant-scoped AgentInstance to an immutable Employee runtime version."""
+"""Resolve an AgentInstance to an executable runtime binding.
+
+AgentDefinition and Employee are deliberately separate domain models. Until a
+first-class binding exists between them, this resolver fails closed instead of
+assuming their UUIDs are interchangeable.
+"""
 from __future__ import annotations
 
 import uuid
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError
-from app.models.agent_instance import AgentInstance
-from app.models.employee import Employee, EmployeeVersion
+from app.models.agent_definition import AgentDefinition
+from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 
 
-async def resolve_employee_version(
+async def resolve_agent_definition(
     db: AsyncSession,
     *,
     tenant_id: uuid.UUID,
     agent_instance_id: uuid.UUID,
-) -> tuple[AgentInstance, Employee, EmployeeVersion]:
-    """Resolve an enabled agent to a concrete EmployeeVersion.
-
-    The binding is deliberately resolved at dispatch time and the selected
-    version is returned to the caller so RunService can persist that exact
-    version. No cross-tenant lookup is permitted.
-    """
+) -> tuple[AgentInstance, AgentDefinition]:
+    """Resolve a tenant-scoped, enabled AgentInstance and its definition."""
     result = await db.execute(
         select(AgentInstance).where(
             AgentInstance.id == agent_instance_id,
@@ -31,29 +32,36 @@ async def resolve_employee_version(
     instance = result.scalar_one_or_none()
     if instance is None:
         raise NotFoundError("Agent instance not found")
-    if not instance.enabled:
-        raise ConflictError("Agent instance is disabled")
-    if instance.status != "ENABLED":
-        raise ConflictError(f"Agent instance is not accepting executions: {instance.status}")
+    if not instance.enabled or instance.status != AgentInstanceStatus.ENABLED:
+        raise ConflictError("Agent instance is not accepting executions")
 
     result = await db.execute(
-        select(Employee).where(
-            Employee.id == instance.agent_definition_id,
-            Employee.tenant_id == tenant_id,
+        select(AgentDefinition).where(
+            AgentDefinition.id == instance.agent_definition_id,
+            AgentDefinition.tenant_id == tenant_id,
         )
     )
-    employee = result.scalar_one_or_none()
-    if employee is None:
-        raise NotFoundError("Agent runtime binding not found")
+    definition = result.scalar_one_or_none()
+    if definition is None:
+        raise NotFoundError("Agent definition not found")
+    if not definition.enabled:
+        raise ConflictError("Agent definition is disabled")
 
-    result = await db.execute(
-        select(EmployeeVersion)
-        .where(
-            EmployeeVersion.employee_id == employee.id,
-            EmployeeVersion.is_current.is_(True),
-        )
+    return instance, definition
+
+
+async def resolve_employee_version(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    agent_instance_id: uuid.UUID,
+):
+    """Fail closed until an explicit AgentDefinition→EmployeeVersion binding exists.
+
+    This intentionally does not compare UUIDs across the two domains. A future
+    binding table/service must establish that relationship explicitly.
+    """
+    await resolve_agent_definition(
+        db, tenant_id=tenant_id, agent_instance_id=agent_instance_id
     )
-    version = result.scalar_one_or_none()
-    if version is None:
-        raise ConflictError("Agent runtime has no current executable version")
-    return instance, employee, version
+    raise ConflictError("Agent runtime binding is not configured")
