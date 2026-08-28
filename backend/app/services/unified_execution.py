@@ -67,9 +67,6 @@ class UnifiedExecutionService:
             work_item.status = WorkItemStatus.WAITING_APPROVAL
             return ExecutionResult(work_item, False, True)
 
-        # A persisted Run id is the canonical marker that an Agent WorkItem has
-        # already crossed the execution boundary. Do not create another Run on
-        # retries or duplicate HTTP dispatches.
         if (
             work_item.executor_type is ExecutorType.AGENT
             and work_item.status is WorkItemStatus.RUNNING
@@ -84,7 +81,8 @@ class UnifiedExecutionService:
                 if self.human_executor is None:
                     raise ExecutionError("human executor runtime is not configured")
                 work_item.output_data = await self._invoke(self.human_executor.dispatch, work_item)
-                work_item.status = WorkItemStatus.SUCCEEDED
+                # Dispatch only hands ownership to the human. Completion is an explicit action.
+                work_item.status = WorkItemStatus.RUNNING
             elif work_item.executor_type is ExecutorType.AGENT:
                 if self.agent_executor is None:
                     raise ExecutionError("agent executor runtime is not configured")
@@ -94,8 +92,6 @@ class UnifiedExecutionService:
                 if not agent.enabled or agent.status is not AgentInstanceStatus.ENABLED:
                     raise ExecutionError("agent executor is not available")
                 work_item.output_data = await self._invoke(self.agent_executor.dispatch, work_item, agent)
-                # AgentExecutionAdapter creates the canonical Run. The existing
-                # worker owns completion, so the WorkItem must remain running.
                 work_item.status = WorkItemStatus.RUNNING
             else:
                 raise ExecutionError("unsupported executor type")
@@ -103,6 +99,31 @@ class UnifiedExecutionService:
         except Exception:
             work_item.status = WorkItemStatus.FAILED
             raise
+
+    def complete_human(self, work_item: WorkItem, *, executor_id: uuid.UUID, output: dict[str, Any] | None = None) -> WorkItem:
+        """Complete a human-owned WorkItem only by its assigned executor."""
+        if work_item.executor_type is not ExecutorType.HUMAN:
+            raise ExecutionError("work item is not assigned to a human")
+        if work_item.executor_id != executor_id:
+            raise ExecutionError("human executor does not own work item")
+        if work_item.status not in {WorkItemStatus.ASSIGNED, WorkItemStatus.RUNNING}:
+            raise ExecutionError("work item is not active")
+        work_item.output_data = output or work_item.output_data or {}
+        work_item.status = WorkItemStatus.SUCCEEDED
+        return work_item
+
+    def fail_human(self, work_item: WorkItem, *, executor_id: uuid.UUID, output: dict[str, Any] | None = None) -> WorkItem:
+        """Record an explicit human execution failure for the assigned executor."""
+        if work_item.executor_type is not ExecutorType.HUMAN:
+            raise ExecutionError("work item is not assigned to a human")
+        if work_item.executor_id != executor_id:
+            raise ExecutionError("human executor does not own work item")
+        if work_item.status not in {WorkItemStatus.ASSIGNED, WorkItemStatus.RUNNING}:
+            raise ExecutionError("work item is not active")
+        if output is not None:
+            work_item.output_data = output
+        work_item.status = WorkItemStatus.FAILED
+        return work_item
 
     @staticmethod
     async def _invoke(fn, *args):
