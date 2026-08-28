@@ -86,5 +86,6 @@ async def test_agent_dispatch_is_tenant_scoped():
     result = await service.dispatch(item)
 
     assert result.dispatched is True
-    assert item.status is WorkItemStatus.SUCCEEDED
+    # Dispatch starts the runtime asynchronously; completion is recorded by the worker.
+    assert item.status is WorkItemStatus.RUNNING
     assert item.output_data["executor"] == "agent"
