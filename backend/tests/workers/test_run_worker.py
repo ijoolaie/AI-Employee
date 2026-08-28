@@ -76,3 +76,22 @@ async def test_run_worker_passes_matching_tenant_to_run_service(monkeypatch):
 
     assert calls == [(db, run_id)]
     assert db.committed is True
+
+
+@pytest.mark.asyncio
+async def test_run_worker_commits_failure_before_reraising(monkeypatch):
+    run_id = uuid4()
+    tenant_id = uuid4()
+    db = _Db(SimpleNamespace(id=run_id, tenant_id=tenant_id))
+
+    async def _execute(_db_arg, *, run_id):
+        raise RuntimeError(f"execution failed: {run_id}")
+
+    monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(run_worker, "span", _span)
+    monkeypatch.setattr(run_worker.run_service, "execute_run", _execute)
+
+    with pytest.raises(RuntimeError, match="execution failed"):
+        await run_worker._run_async(str(run_id), str(tenant_id))
+
+    assert db.committed is True
