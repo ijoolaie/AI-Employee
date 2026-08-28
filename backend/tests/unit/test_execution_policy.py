@@ -27,7 +27,7 @@ def test_policy_rejects_tenant_mismatch():
 
 def test_policy_rejects_missing_capability():
     with pytest.raises(ExecutionPolicyError, match="not authorized"):
-        ExecutionPolicy.authorize(tenant_id:=uuid4(), actor_tenant_id=tenant_id, capabilities=set(), required_capability="refund:write")
+        ExecutionPolicy.authorize(tenant_id=(tenant_id := uuid4()), actor_tenant_id=tenant_id, capabilities=set(), required_capability="refund:write")
 
 
 def test_policy_rejects_out_of_scope_tool():
