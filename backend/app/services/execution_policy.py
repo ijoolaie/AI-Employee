@@ -5,7 +5,10 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from app.services.unified_execution import ExecutionError
+
+class ExecutionPolicyError(RuntimeError):
+    """Raised when an execution policy denies an operation."""
+
 
 
 class ExecutionPolicy:
@@ -31,21 +34,21 @@ class ExecutionPolicy:
         export_secret: bool = False,
     ) -> dict[str, Any]:
         if tenant_id != actor_tenant_id:
-            raise ExecutionError("execution policy tenant mismatch")
+            raise ExecutionPolicyError("execution policy tenant mismatch")
         if required_capability and required_capability not in capabilities:
-            raise ExecutionError("required capability is not authorized")
+            raise ExecutionPolicyError("required capability is not authorized")
         if tool and tool not in (allowed_tools or set()):
-            raise ExecutionError("tool is outside executor scope")
+            raise ExecutionPolicyError("tool is outside executor scope")
         if budget_limit is not None and budget_used >= budget_limit:
-            raise ExecutionError("executor budget exceeded")
+            raise ExecutionPolicyError("executor budget exceeded")
         if requires_approval and not approved:
             return {"authorized": False, "waiting_for_approval": True}
         if concurrency_limit is not None and active_executions >= concurrency_limit:
-            raise ExecutionError("executor concurrency limit exceeded")
+            raise ExecutionPolicyError("executor concurrency limit exceeded")
         if requested_secret and requested_secret not in (secret_names or set()):
-            raise ExecutionError("secret is outside executor scope")
+            raise ExecutionPolicyError("secret is outside executor scope")
         if export_secret:
-            raise ExecutionError("secrets are non-exportable")
+            raise ExecutionPolicyError("secrets are non-exportable")
         return {
             "authorized": True,
             "waiting_for_approval": False,
