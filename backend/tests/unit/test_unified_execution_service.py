@@ -44,7 +44,9 @@ async def test_assign_human_and_dispatch():
 
     assert result.dispatched is True
     assert item.executor_type is ExecutorType.HUMAN
-    assert item.status is WorkItemStatus.SUCCEEDED
+    # Human execution remains open until the assigned human completes it.
+    assert item.status is WorkItemStatus.RUNNING
+    assert item.output_data["executor"] == "human"
 
 
 @pytest.mark.asyncio
