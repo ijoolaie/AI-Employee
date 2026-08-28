@@ -1,12 +1,9 @@
 from uuid import uuid4
 
-import pytest
-
 from app.workers import run_worker
 
 
-@pytest.mark.asyncio
-async def test_phase84_worker_task_propagates_explicit_tenant_context(monkeypatch):
+def test_phase84_worker_task_propagates_explicit_tenant_context(monkeypatch):
     run_id = str(uuid4())
     tenant_id = str(uuid4())
     captured = {}
