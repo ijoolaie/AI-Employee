@@ -113,19 +113,4 @@ async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), curre
         await db.commit()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
 
-    if result.dispatched and is_agent and not result.waiting_for_approval:
-        run_id = (item.output_data or {}).get("run_id")
-        if run_id:
-            try:
-                from app.workers.run_worker import execute_run_task
-
-                execute_run_task.delay(str(run_id), str(item.tenant_id))
-            except Exception:  # noqa: BLE001
-                # The Run is durable. Return it to pending so a queue retry can
-                # safely pick it up instead of leaving the WorkItem permanently
-                # RUNNING after a broker outage.
-                item.status = "pending"
-                await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.enqueue_failed", actor_type="system", status="failure", metadata={"run_id": str(run_id)})
-                await db.commit()
-
     return _response(result)
