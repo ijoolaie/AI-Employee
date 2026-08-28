@@ -6,7 +6,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
@@ -14,10 +14,6 @@ from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 
 class ExecutionError(RuntimeError):
     """Raised when a work item cannot be dispatched safely."""
-
-
-class ApprovalRequired(ExecutionError):
-    """Raised when policy requires an explicit approval before execution."""
 
 
 class HumanExecutor(Protocol):
@@ -36,15 +32,9 @@ class ExecutionResult:
 
 
 class UnifiedExecutionService:
-    """Canonical dispatcher for human and AI-agent execution."""
+    """Canonical async dispatcher for human and specialized AI-agent execution."""
 
-    def __init__(
-        self,
-        db: Session,
-        *,
-        human_executor: HumanExecutor | None = None,
-        agent_executor: AgentExecutor | None = None,
-    ) -> None:
+    def __init__(self, db: AsyncSession, *, human_executor: HumanExecutor | None = None, agent_executor: AgentExecutor | None = None) -> None:
         self.db = db
         self.human_executor = human_executor
         self.agent_executor = agent_executor
@@ -56,29 +46,25 @@ class UnifiedExecutionService:
         work_item.status = WorkItemStatus.ASSIGNED
         return work_item
 
-    def assign_agent(self, work_item: WorkItem, agent: AgentInstance) -> WorkItem:
+    async def assign_agent(self, work_item: WorkItem, agent: AgentInstance) -> WorkItem:
         self._assert_assignable(work_item)
         if agent.tenant_id != work_item.tenant_id:
             raise ExecutionError("cross-tenant agent assignment is forbidden")
         if not agent.enabled or agent.status is not AgentInstanceStatus.ENABLED:
             raise ExecutionError("agent instance is not available")
-
         work_item.executor_type = ExecutorType.AGENT
         work_item.executor_id = agent.id
         work_item.status = WorkItemStatus.ASSIGNED
         return work_item
 
-    def dispatch(self, work_item: WorkItem) -> ExecutionResult:
+    async def dispatch(self, work_item: WorkItem) -> ExecutionResult:
         if work_item.status is WorkItemStatus.WAITING_APPROVAL:
-            return ExecutionResult(work_item=work_item, dispatched=False, waiting_for_approval=True)
-
+            return ExecutionResult(work_item, False, True)
         if work_item.executor_type is None or work_item.executor_id is None:
             raise ExecutionError("work item has no executor")
-
         if self._requires_approval(work_item):
             work_item.status = WorkItemStatus.WAITING_APPROVAL
-            return ExecutionResult(work_item=work_item, dispatched=False, waiting_for_approval=True)
-
+            return ExecutionResult(work_item, False, True)
         work_item.status = WorkItemStatus.RUNNING
         try:
             if work_item.executor_type is ExecutorType.HUMAN:
@@ -88,7 +74,7 @@ class UnifiedExecutionService:
             elif work_item.executor_type is ExecutorType.AGENT:
                 if self.agent_executor is None:
                     raise ExecutionError("agent executor runtime is not configured")
-                agent = self.db.get(AgentInstance, work_item.executor_id)
+                agent = await self.db.get(AgentInstance, work_item.executor_id)
                 if agent is None or agent.tenant_id != work_item.tenant_id:
                     raise ExecutionError("agent executor is unavailable")
                 if not agent.enabled or agent.status is not AgentInstanceStatus.ENABLED:
@@ -96,9 +82,8 @@ class UnifiedExecutionService:
                 work_item.output_data = self.agent_executor.dispatch(work_item, agent)
             else:
                 raise ExecutionError("unsupported executor type")
-
             work_item.status = WorkItemStatus.SUCCEEDED
-            return ExecutionResult(work_item=work_item, dispatched=True)
+            return ExecutionResult(work_item, True)
         except Exception:
             work_item.status = WorkItemStatus.FAILED
             raise
@@ -109,8 +94,5 @@ class UnifiedExecutionService:
 
     @staticmethod
     def _assert_assignable(work_item: WorkItem) -> None:
-        if work_item.status in {
-            WorkItemStatus.SUCCEEDED,
-            WorkItemStatus.CANCELLED,
-        }:
+        if work_item.status in {WorkItemStatus.SUCCEEDED, WorkItemStatus.CANCELLED}:
             raise ExecutionError("terminal work items cannot be assigned")
