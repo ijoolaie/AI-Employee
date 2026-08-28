@@ -2,13 +2,15 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.auth import get_current_user
 from app.core.database import get_db
 from app.models.agent_instance import AgentInstance
+from app.models.audit_log import AuditLog
 from app.models.work_item import WorkItem
 from app.services.execution_audit import record_execution_event
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
@@ -31,6 +33,17 @@ class ExecutionResponse(BaseModel):
     waiting_for_approval: bool
 
 
+class ExecutionHistoryItem(BaseModel):
+    id: UUID
+    action: str
+    actor_type: str
+    actor_id: UUID | None
+    status: str
+    request_id: str | None
+    metadata: dict
+    created_at: object
+
+
 async def _get_work_item(db: AsyncSession, work_item_id: UUID, tenant_id: UUID) -> WorkItem:
     item = await db.get(WorkItem, work_item_id)
     if item is None or item.tenant_id != tenant_id:
@@ -40,6 +53,19 @@ async def _get_work_item(db: AsyncSession, work_item_id: UUID, tenant_id: UUID) 
 
 def _response(result) -> ExecutionResponse:
     return ExecutionResponse(work_item_id=result.work_item.id, status=result.work_item.status.value, dispatched=result.dispatched, waiting_for_approval=result.waiting_for_approval)
+
+
+@router.get("/{work_item_id}/history", response_model=list[ExecutionHistoryItem])
+async def history(work_item_id: UUID, limit: int = Query(default=100, ge=1, le=200), db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+    await _get_work_item(db, work_item_id, current_user.tenant_id)
+    stmt = (
+        select(AuditLog)
+        .where(AuditLog.tenant_id == current_user.tenant_id, AuditLog.resource_type == "work_item", AuditLog.resource_id == str(work_item_id))
+        .order_by(AuditLog.created_at.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    return [ExecutionHistoryItem(id=e.id, action=e.action, actor_type=e.actor_type, actor_id=e.actor_id, status=e.status, request_id=e.request_id, metadata=e.metadata_ or {}, created_at=e.created_at) for e in result.scalars().all()]
 
 
 @router.post("/{work_item_id}/assign/human", response_model=ExecutionResponse)
