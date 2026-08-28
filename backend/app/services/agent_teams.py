@@ -38,37 +38,22 @@ class TeamAssignment:
     role: str
     capability: str
     correlation_id: str
+    approval_required: bool = False
 
 
 class AgentTeamService:
-    """Small orchestration boundary; execution remains on Unified Execution."""
+    """Orchestration boundary; actual execution remains on Unified Execution."""
 
-    def assign(self, team: AgentTeam, *, tenant_id: UUID, capability: str, correlation_id: str | None = None) -> TeamAssignment:
+    def assign(self, team: AgentTeam, *, tenant_id: UUID, capability: str, correlation_id: str | None = None, approval_required: bool = False) -> TeamAssignment:
         if team.tenant_id != tenant_id:
             raise AgentTeamError("team tenant mismatch")
         for member in team.members:
             if capability in member.capabilities:
-                return TeamAssignment(
-                    team_id=team.id,
-                    tenant_id=tenant_id,
-                    agent_id=member.agent_id,
-                    role=member.role,
-                    capability=capability,
-                    correlation_id=correlation_id or str(uuid4()),
-                )
+                return TeamAssignment(team.id, tenant_id, member.agent_id, member.role, capability, correlation_id or str(uuid4()), approval_required)
         raise AgentTeamError(f"no team member can perform capability: {capability}")
 
     @staticmethod
     def handoff(assignment: TeamAssignment, *, target: TeamMember) -> TeamAssignment:
-        if assignment.tenant_id is None:
-            raise AgentTeamError("invalid assignment tenant")
         if assignment.capability not in target.capabilities:
             raise AgentTeamError("handoff target lacks capability")
-        return TeamAssignment(
-            team_id=assignment.team_id,
-            tenant_id=assignment.tenant_id,
-            agent_id=target.agent_id,
-            role=target.role,
-            capability=assignment.capability,
-            correlation_id=assignment.correlation_id,
-        )
+        return TeamAssignment(assignment.team_id, assignment.tenant_id, target.agent_id, target.role, assignment.capability, assignment.correlation_id, assignment.approval_required)
