@@ -21,13 +21,13 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.UniqueConstraint("tenant_id", "agent_definition_id", name="uq_agent_runtime_binding_agent"),
     )
-    op.create_index("ix_agent_runtime_bindings_tenant", "agent_runtime_bindings", ["tenant_id"])
-    op.create_index("ix_agent_runtime_bindings_definition", "agent_runtime_bindings", ["agent_definition_id"])
-    op.create_index("ix_agent_runtime_bindings_employee_version", "agent_runtime_bindings", ["employee_version_id"])
+    op.create_index("ix_agent_runtime_bindings_tenant_id", "agent_runtime_bindings", ["tenant_id"])
+    op.create_index("ix_agent_runtime_bindings_agent_definition_id", "agent_runtime_bindings", ["agent_definition_id"])
+    op.create_index("ix_agent_runtime_bindings_employee_version_id", "agent_runtime_bindings", ["employee_version_id"])
 
 
 def downgrade() -> None:
-    op.drop_index("ix_agent_runtime_bindings_employee_version", table_name="agent_runtime_bindings")
-    op.drop_index("ix_agent_runtime_bindings_definition", table_name="agent_runtime_bindings")
-    op.drop_index("ix_agent_runtime_bindings_tenant", table_name="agent_runtime_bindings")
+    op.drop_index("ix_agent_runtime_bindings_employee_version_id", table_name="agent_runtime_bindings")
+    op.drop_index("ix_agent_runtime_bindings_agent_definition_id", table_name="agent_runtime_bindings")
+    op.drop_index("ix_agent_runtime_bindings_tenant_id", table_name="agent_runtime_bindings")
     op.drop_table("agent_runtime_bindings")
