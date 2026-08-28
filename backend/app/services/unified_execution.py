@@ -72,6 +72,7 @@ class UnifiedExecutionService:
                 if self.human_executor is None:
                     raise ExecutionError("human executor runtime is not configured")
                 work_item.output_data = await self._invoke(self.human_executor.dispatch, work_item)
+                work_item.status = WorkItemStatus.SUCCEEDED
             elif work_item.executor_type is ExecutorType.AGENT:
                 if self.agent_executor is None:
                     raise ExecutionError("agent executor runtime is not configured")
@@ -81,9 +82,11 @@ class UnifiedExecutionService:
                 if not agent.enabled or agent.status is not AgentInstanceStatus.ENABLED:
                     raise ExecutionError("agent executor is not available")
                 work_item.output_data = await self._invoke(self.agent_executor.dispatch, work_item, agent)
+                # AgentExecutionAdapter creates the canonical Run. The existing
+                # worker owns completion, so the WorkItem must remain running.
+                work_item.status = WorkItemStatus.RUNNING
             else:
                 raise ExecutionError("unsupported executor type")
-            work_item.status = WorkItemStatus.SUCCEEDED
             return ExecutionResult(work_item, True)
         except Exception:
             work_item.status = WorkItemStatus.FAILED
