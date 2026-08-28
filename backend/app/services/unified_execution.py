@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
+from app.services.execution_policy import ExecutionPolicy
 
 
 class ExecutionError(RuntimeError):
@@ -112,7 +113,25 @@ class UnifiedExecutionService:
             return ExecutionResult(work_item, False, True)
         if work_item.executor_type is None or work_item.executor_id is None:
             raise ExecutionError("work item has no executor")
-        if self._requires_approval(work_item):
+        policy = work_item.policy_context or {}
+        policy_result = ExecutionPolicy.authorize(
+            tenant_id=work_item.tenant_id,
+            actor_tenant_id=work_item.tenant_id,
+            capabilities=set(policy.get("capabilities", [])),
+            required_capability=policy.get("required_capability"),
+            tool=policy.get("tool"),
+            allowed_tools=set(policy.get("allowed_tools", [])),
+            budget_used=float(policy.get("budget_used", 0.0)),
+            budget_limit=policy.get("budget_limit"),
+            requires_approval=self._requires_approval(work_item),
+            approved=bool(policy.get("approved")),
+            active_executions=int(policy.get("active_executions", 0)),
+            concurrency_limit=policy.get("concurrency_limit"),
+            secret_names=set(policy.get("secret_names", [])),
+            requested_secret=policy.get("requested_secret"),
+            export_secret=bool(policy.get("export_secret")),
+        )
+        if policy_result.get("waiting_for_approval"):
             work_item.status = WorkItemStatus.WAITING_APPROVAL
             return ExecutionResult(work_item, False, True)
         if (
