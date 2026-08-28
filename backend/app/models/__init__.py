@@ -36,6 +36,7 @@ from app.models.license import CommercialLicense
 from app.models.work_item import WorkItem, WorkItemStatus, ExecutorType
 from app.models.agent_definition import AgentDefinition
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
+from app.models.agent_runtime_binding import AgentRuntimeBinding
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -47,5 +48,5 @@ __all__ = [
     "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "PasswordResetToken",
     "TenantEntitlement", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
-    "AgentDefinition", "AgentInstance", "AgentInstanceStatus",
+    "AgentDefinition", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding",
 ]
