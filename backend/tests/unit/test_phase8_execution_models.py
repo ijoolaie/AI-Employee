@@ -25,7 +25,7 @@ def test_agent_definition_contains_policy_boundaries() -> None:
     )
     assert AgentDefinition.version.property.columns[0].default.arg == 1
     assert AgentDefinition.capabilities.property.columns[0].default.is_callable
-    assert agent.allowed_tools == []
+    assert AgentDefinition.allowed_tools.property.columns[0].default.is_callable
     assert agent.policy_requirements == {}
 
 
