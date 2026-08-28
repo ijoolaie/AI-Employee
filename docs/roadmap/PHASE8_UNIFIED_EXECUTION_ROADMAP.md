@@ -4,7 +4,6 @@
 **Baseline:** 2026-08-27
 
 ## 8.1 Contract foundation — COMPLETE
-
 - WorkItem domain contract
 - AgentDefinition / AgentInstance contracts
 - Executor abstraction
@@ -14,7 +13,6 @@
 - API contract
 
 ## 8.2 Persistence — IN IMPLEMENTATION
-
 - [x] WorkItem persistence model
 - [x] AgentDefinition persistence model
 - [x] AgentInstance persistence model
@@ -26,52 +24,39 @@
 - [ ] compatibility mapping to Employee/Run
 - [ ] database isolation integration tests
 
-## 8.3 Execution service
+## 8.3 Execution service — ACTIVE
+- [x] unified executor dispatch
+- [x] Human execution path
+- [x] Agent execution path
+- [ ] cancellation/retry/timeout
+- [ ] result/error normalization
 
-- unified executor dispatch
-- Human execution path
-- Agent execution path
-- cancellation/retry/timeout
-- result/error normalization
+## 8.4 Delegation and handoff — SUBSTANTIALLY COMPLETE
+- [x] Human → Agent
+- [x] Agent → Human
+- [x] Agent → Agent
+- [x] approval-gated delegation boundary
+- [x] context and artifact transfer
 
-## 8.4 Delegation and handoff
-
-- Human → Agent
-- Agent → Human
-- Agent → Agent
-- approval-gated delegation
-- context and artifact transfer
-
-## 8.5 Policy and tools
-
-- capability authorization
-- tool scopes
-- approval policies
-- secrets boundaries
-- per-agent budgets/concurrency
+## 8.5 Policy and tools — IN PROGRESS
+- [x] capability authorization boundary
+- [x] tool scopes boundary
+- [x] budget boundary
+- [ ] approval policies
+- [ ] secrets boundaries
+- [ ] per-agent concurrency
 
 ## 8.6 Observability and economics
-
-- audit events
-- usage/cost attribution
-- execution traces
-- SLA/latency metrics
+- [ ] audit events
+- [ ] usage/cost attribution
+- [ ] execution traces
+- [ ] SLA/latency metrics
 
 ## 8.7 Test Center
 
-Every Platform, Reseller and Client workspace gets role-aware test operations. Tests must support Human execution and Agent execution through the same WorkItem contract.
-
 ## 8.8 Workspace UX
 
-Build role-specific surfaces only after the shared execution API is stable:
-
-- Platform control plane
-- Reseller portfolio/service operations
-- Client business workspace
-
 ## 8.9 Agent teams
-
-Specialist coordination, routing, escalation and team-level policies.
 
 ## Exit gate
 
