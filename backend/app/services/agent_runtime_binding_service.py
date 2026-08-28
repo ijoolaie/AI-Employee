@@ -1,4 +1,4 @@
-"""Application service for safely creating and resolving Agent runtime bindings."""
+"""Application service for safely creating Agent runtime bindings."""
 from __future__ import annotations
 
 import uuid
@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictError, NotFoundError
 from app.models.agent_definition import AgentDefinition
 from app.models.agent_runtime_binding import AgentRuntimeBinding
-from app.models.employee import EmployeeVersion
+from app.models.employee import Employee, EmployeeVersion
 
 
 async def bind_employee_version(
@@ -26,15 +26,19 @@ async def bind_employee_version(
     if definition is None:
         raise NotFoundError("Agent definition not found")
 
-    version = (await db.execute(select(EmployeeVersion).where(
-        EmployeeVersion.id == employee_version_id,
-    ))).scalar_one_or_none()
-    if version is None:
-        raise NotFoundError("Employee version not found")
-
-    employee_tenant = getattr(version.employee, "tenant_id", None) if version.employee is not None else None
-    if employee_tenant != tenant_id:
-        raise ConflictError("Employee version belongs to a different tenant")
+    result = await db.execute(
+        select(EmployeeVersion, Employee).join(
+            Employee, Employee.id == EmployeeVersion.employee_id
+        ).where(
+            EmployeeVersion.id == employee_version_id,
+            Employee.tenant_id == tenant_id,
+            Employee.is_active.is_(True),
+        )
+    )
+    version_row = result.one_or_none()
+    if version_row is None:
+        raise NotFoundError("Employee version not found for tenant")
+    version, _employee = version_row
 
     existing = (await db.execute(select(AgentRuntimeBinding).where(
         AgentRuntimeBinding.tenant_id == tenant_id,
@@ -48,7 +52,7 @@ async def bind_employee_version(
     binding = AgentRuntimeBinding(
         tenant_id=tenant_id,
         agent_definition_id=agent_definition_id,
-        employee_version_id=employee_version_id,
+        employee_version_id=version.id,
         is_active=True,
     )
     db.add(binding)
