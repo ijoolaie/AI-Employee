@@ -7,8 +7,8 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.auth import get_current_user
 from app.core.database import get_db
+from app.core.deps import get_current_context
 from app.models.agent_instance import AgentInstance
 from app.models.audit_log import AuditLog
 from app.models.work_item import WorkItem
@@ -56,7 +56,7 @@ def _response(result) -> ExecutionResponse:
 
 
 @router.get("/{work_item_id}/history", response_model=list[ExecutionHistoryItem])
-async def history(work_item_id: UUID, limit: int = Query(default=100, ge=1, le=200), db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+async def history(work_item_id: UUID, limit: int = Query(default=100, ge=1, le=200), db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     await _get_work_item(db, work_item_id, current_user.tenant_id)
     stmt = (
         select(AuditLog)
@@ -69,11 +69,11 @@ async def history(work_item_id: UUID, limit: int = Query(default=100, ge=1, le=2
 
 
 @router.post("/{work_item_id}/assign/human", response_model=ExecutionResponse)
-async def assign_human(work_item_id: UUID, payload: HumanAssignmentRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+async def assign_human(work_item_id: UUID, payload: HumanAssignmentRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
     try:
         UnifiedExecutionService(db).assign_human(item, payload.executor_id)
-        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.assigned", actor_type="user", actor_id=current_user.id, metadata={"executor_type": "human", "executor_id": str(payload.executor_id)})
+        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.assigned", actor_type="user", actor_id=current_user.user_id, metadata={"executor_type": "human", "executor_id": str(payload.executor_id)})
         await db.commit()
     except ExecutionError as exc:
         await db.rollback()
@@ -82,14 +82,14 @@ async def assign_human(work_item_id: UUID, payload: HumanAssignmentRequest, db: 
 
 
 @router.post("/{work_item_id}/assign/agent", response_model=ExecutionResponse)
-async def assign_agent(work_item_id: UUID, payload: AgentAssignmentRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+async def assign_agent(work_item_id: UUID, payload: AgentAssignmentRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
     agent = await db.get(AgentInstance, payload.agent_instance_id)
     if agent is None or agent.tenant_id != current_user.tenant_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="agent instance not found")
     try:
         await UnifiedExecutionService(db).assign_agent(item, agent)
-        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.assigned", actor_type="user", actor_id=current_user.id, metadata={"executor_type": "agent", "agent_instance_id": str(agent.id)})
+        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.assigned", actor_type="user", actor_id=current_user.user_id, metadata={"executor_type": "agent", "agent_instance_id": str(agent.id)})
         await db.commit()
     except ExecutionError as exc:
         await db.rollback()
@@ -98,15 +98,15 @@ async def assign_agent(work_item_id: UUID, payload: AgentAssignmentRequest, db: 
 
 
 @router.post("/{work_item_id}/dispatch", response_model=ExecutionResponse)
-async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_user)):
+async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
     try:
         result = await UnifiedExecutionService(db).dispatch(item)
         action = "work_item.waiting_approval" if result.waiting_for_approval else "work_item.dispatched"
-        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action=action, actor_type="user", actor_id=current_user.id, metadata={"status": item.status.value})
+        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action=action, actor_type="user", actor_id=current_user.user_id, metadata={"status": item.status.value})
         await db.commit()
     except ExecutionError as exc:
-        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.execution_failed", actor_type="user", actor_id=current_user.id, status="failure", metadata={"error_type": type(exc).__name__})
+        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.execution_failed", actor_type="user", actor_id=current_user.user_id, status="failure", metadata={"error_type": type(exc).__name__})
         await db.commit()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
     return _response(result)
