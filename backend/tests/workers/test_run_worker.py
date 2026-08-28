@@ -42,6 +42,21 @@ def test_execute_run_task_rejects_invalid_context():
         run_worker.execute_run_task("not-a-uuid", str(uuid4()))
 
 
+def test_execute_run_task_forwards_explicit_tenant_context(monkeypatch):
+    run_id = str(uuid4())
+    tenant_id = str(uuid4())
+    calls = []
+
+    def _run(coro):
+        calls.append((run_id, tenant_id))
+        coro.close()
+
+    monkeypatch.setattr(run_worker.asyncio, "run", _run)
+
+    assert run_worker.execute_run_task(run_id, tenant_id) is None
+    assert calls == [(run_id, tenant_id)]
+
+
 @pytest.mark.asyncio
 async def test_run_worker_fails_closed_on_tenant_mismatch(monkeypatch):
     run_id = uuid4()
