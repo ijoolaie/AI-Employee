@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import uuid
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -70,7 +71,7 @@ class UnifiedExecutionService:
             if work_item.executor_type is ExecutorType.HUMAN:
                 if self.human_executor is None:
                     raise ExecutionError("human executor runtime is not configured")
-                work_item.output_data = self.human_executor.dispatch(work_item)
+                work_item.output_data = await self._invoke(self.human_executor.dispatch, work_item)
             elif work_item.executor_type is ExecutorType.AGENT:
                 if self.agent_executor is None:
                     raise ExecutionError("agent executor runtime is not configured")
@@ -79,7 +80,7 @@ class UnifiedExecutionService:
                     raise ExecutionError("agent executor is unavailable")
                 if not agent.enabled or agent.status is not AgentInstanceStatus.ENABLED:
                     raise ExecutionError("agent executor is not available")
-                work_item.output_data = self.agent_executor.dispatch(work_item, agent)
+                work_item.output_data = await self._invoke(self.agent_executor.dispatch, work_item, agent)
             else:
                 raise ExecutionError("unsupported executor type")
             work_item.status = WorkItemStatus.SUCCEEDED
@@ -87,6 +88,11 @@ class UnifiedExecutionService:
         except Exception:
             work_item.status = WorkItemStatus.FAILED
             raise
+
+    @staticmethod
+    async def _invoke(fn, *args):
+        result = fn(*args)
+        return await result if inspect.isawaitable(result) else result
 
     @staticmethod
     def _requires_approval(work_item: WorkItem) -> bool:
