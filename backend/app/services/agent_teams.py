@@ -3,11 +3,24 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 from uuid import UUID, uuid4
 
 
 class AgentTeamError(RuntimeError):
     """Raised when team orchestration violates a contract."""
+
+
+class TeamRunStatus(StrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    WAITING_APPROVAL = "waiting_approval"
+    FAILED = "failed"
+    COMPLETED = "completed"
+
+    @property
+    def terminal(self) -> bool:
+        return self in {self.FAILED, self.COMPLETED}
 
 
 @dataclass(frozen=True)
@@ -39,6 +52,38 @@ class TeamAssignment:
     capability: str
     correlation_id: str
     approval_required: bool = False
+
+
+@dataclass
+class TeamRun:
+    team_id: UUID
+    tenant_id: UUID
+    correlation_id: str
+    status: TeamRunStatus = TeamRunStatus.PENDING
+    approval_required: bool = False
+    failure_reason: str | None = None
+    evidence: list[dict[str, str]] = field(default_factory=list)
+
+    def transition(self, target: TeamRunStatus, *, actor_tenant_id: UUID, reason: str | None = None) -> None:
+        if actor_tenant_id != self.tenant_id:
+            raise AgentTeamError("run tenant mismatch")
+        if self.status.terminal:
+            raise AgentTeamError("team run is terminal")
+        if target == TeamRunStatus.WAITING_APPROVAL:
+            self.approval_required = True
+        if target == TeamRunStatus.FAILED:
+            self.failure_reason = reason or "team execution failed"
+        self.status = target
+        self.evidence.append({"event": target.value, "correlation_id": self.correlation_id})
+
+    def propagate_assignment(self, assignment: TeamAssignment, *, actor_tenant_id: UUID) -> None:
+        if actor_tenant_id != self.tenant_id or assignment.tenant_id != self.tenant_id:
+            raise AgentTeamError("assignment tenant mismatch")
+        if assignment.approval_required:
+            self.approval_required = True
+            if not self.status.terminal:
+                self.status = TeamRunStatus.WAITING_APPROVAL
+        self.evidence.append({"event": "handoff", "correlation_id": assignment.correlation_id, "agent_id": str(assignment.agent_id)})
 
 
 class AgentTeamService:
