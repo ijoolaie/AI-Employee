@@ -101,7 +101,8 @@ async def assign_agent(work_item_id: UUID, payload: AgentAssignmentRequest, db: 
 @router.post("/{work_item_id}/dispatch", response_model=ExecutionResponse)
 async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
-    agent_executor = AgentExecutionAdapter(db) if item.executor_type is not None and item.executor_type.value == "agent" else None
+    is_agent = item.executor_type is not None and item.executor_type.value == "agent"
+    agent_executor = AgentExecutionAdapter(db) if is_agent else None
     try:
         result = await UnifiedExecutionService(db, agent_executor=agent_executor).dispatch(item)
         action = "work_item.waiting_approval" if result.waiting_for_approval else "work_item.dispatched"
@@ -111,4 +112,20 @@ async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), curre
         await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.execution_failed", actor_type="user", actor_id=current_user.user_id, status="failure", metadata={"error_type": type(exc).__name__})
         await db.commit()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+    if result.dispatched and is_agent and not result.waiting_for_approval:
+        run_id = (item.output_data or {}).get("run_id")
+        if run_id:
+            try:
+                from app.workers.run_worker import execute_run_task
+
+                execute_run_task.delay(str(run_id), str(item.tenant_id))
+            except Exception:  # noqa: BLE001
+                # The Run is durable. Return it to pending so a queue retry can
+                # safely pick it up instead of leaving the WorkItem permanently
+                # RUNNING after a broker outage.
+                item.status = "pending"
+                await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.enqueue_failed", actor_type="system", status="failure", metadata={"run_id": str(run_id)})
+                await db.commit()
+
     return _response(result)
