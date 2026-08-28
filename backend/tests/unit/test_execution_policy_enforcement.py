@@ -3,7 +3,7 @@ from uuid import uuid4
 import pytest
 
 from app.services.execution_policy import ExecutionPolicy
-from app.services.unified_execution import ExecutionError
+from app.services.execution_policy import ExecutionPolicyError
 
 
 def test_policy_waits_for_required_approval():
@@ -21,7 +21,7 @@ def test_policy_waits_for_required_approval():
 
 def test_policy_rejects_concurrency_limit():
     tenant = uuid4()
-    with pytest.raises(ExecutionError, match="concurrency"):
+    with pytest.raises(ExecutionPolicyError, match="concurrency"):
         ExecutionPolicy.authorize(
             tenant_id=tenant,
             actor_tenant_id=tenant,
@@ -33,7 +33,7 @@ def test_policy_rejects_concurrency_limit():
 
 def test_policy_rejects_secret_export_and_out_of_scope_secret():
     tenant = uuid4()
-    with pytest.raises(ExecutionError, match="non-exportable"):
+    with pytest.raises(ExecutionPolicyError, match="non-exportable"):
         ExecutionPolicy.authorize(
             tenant_id=tenant,
             actor_tenant_id=tenant,
@@ -42,7 +42,7 @@ def test_policy_rejects_secret_export_and_out_of_scope_secret():
             requested_secret="payments",
             export_secret=True,
         )
-    with pytest.raises(ExecutionError, match="outside executor scope"):
+    with pytest.raises(ExecutionPolicyError, match="outside executor scope"):
         ExecutionPolicy.authorize(
             tenant_id=tenant,
             actor_tenant_id=tenant,
