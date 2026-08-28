@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services.execution_policy import ExecutionPolicy
+from app.services.execution_telemetry import ExecutionEvent, ExecutionTelemetry
 
 
 class ExecutionError(RuntimeError):
@@ -40,6 +41,7 @@ class UnifiedExecutionService:
         self.db = db
         self.human_executor = human_executor
         self.agent_executor = agent_executor
+        self.telemetry = ExecutionTelemetry()
 
     def assign_human(self, work_item: WorkItem, executor_id: uuid.UUID) -> WorkItem:
         self._assert_assignable(work_item)
@@ -142,6 +144,9 @@ class UnifiedExecutionService:
         ):
             return ExecutionResult(work_item, False)
         work_item.status = WorkItemStatus.RUNNING
+        started = self.telemetry.started()
+        correlation_id = str(work_item.id)
+        self.telemetry.emit(ExecutionEvent(tenant_id=work_item.tenant_id, work_item_id=work_item.id, event="started", correlation_id=correlation_id))
         try:
             if work_item.executor_type is ExecutorType.HUMAN:
                 if self.human_executor is None:
@@ -160,9 +165,11 @@ class UnifiedExecutionService:
                 work_item.status = WorkItemStatus.RUNNING
             else:
                 raise ExecutionError("unsupported executor type")
+            self.telemetry.emit(ExecutionEvent(tenant_id=work_item.tenant_id, work_item_id=work_item.id, event="dispatched", duration_ms=self.telemetry.elapsed_ms(started), correlation_id=correlation_id))
             return ExecutionResult(work_item, True)
         except Exception:
             work_item.status = WorkItemStatus.FAILED
+            self.telemetry.emit(ExecutionEvent(tenant_id=work_item.tenant_id, work_item_id=work_item.id, event="failed", duration_ms=self.telemetry.elapsed_ms(started), correlation_id=correlation_id))
             raise
 
     def complete_human(self, work_item: WorkItem, *, executor_id: uuid.UUID, output: dict[str, Any] | None = None) -> WorkItem:
