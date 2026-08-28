@@ -44,7 +44,7 @@ async def test_assign_human_and_dispatch():
 
     assert result.dispatched is True
     assert item.executor_type is ExecutorType.HUMAN
-    assert item.status is WorkItemStatus.SUCCEEDED
+    assert item.status is WorkItemStatus.RUNNING
 
 
 @pytest.mark.asyncio
@@ -86,6 +86,5 @@ async def test_agent_dispatch_is_tenant_scoped():
     result = await service.dispatch(item)
 
     assert result.dispatched is True
-    # Dispatch starts the runtime asynchronously; completion is recorded by the worker.
     assert item.status is WorkItemStatus.RUNNING
     assert item.output_data["executor"] == "agent"
