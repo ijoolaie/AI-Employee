@@ -28,7 +28,7 @@ async def test_agent_dispatch_wires_adapter_into_execution_service(monkeypatch):
         id=work_item_id,
         tenant_id=tenant_id,
         executor_type=ExecutorType.AGENT,
-        status=WorkItemStatus.PENDING,
+        status=WorkItemStatus.READY,
         output_data={"run_id": str(run_id)},
     )
 
@@ -83,7 +83,7 @@ async def test_agent_assignment_rejects_cross_tenant_agent_before_execution(monk
         id=work_item_id,
         tenant_id=tenant_id,
         executor_type=ExecutorType.AGENT,
-        status=WorkItemStatus.PENDING,
+        status=WorkItemStatus.READY,
     )
     foreign_agent = SimpleNamespace(id=agent_id, tenant_id=other_tenant_id)
 
