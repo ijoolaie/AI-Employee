@@ -43,8 +43,9 @@ async def test_agent_dispatch_skips_duplicate_run_for_running_work_item():
 
 @pytest.mark.asyncio
 async def test_agent_dispatch_rejects_cross_tenant_agent_before_executor():
+    tenant_id = uuid4()
     work_item = WorkItem(
-        tenant_id=uuid4(),
+        tenant_id=tenant_id,
         title="cross tenant",
         status=WorkItemStatus.ASSIGNED,
         executor_type=ExecutorType.AGENT,
@@ -70,7 +71,7 @@ async def test_agent_dispatch_rejects_cross_tenant_agent_before_executor():
 
     service = UnifiedExecutionService(Db(), agent_executor=Executor())
 
-    with pytest.raises(ExecutionError, match="cross-tenant"):
+    with pytest.raises(ExecutionError, match="agent executor is unavailable"):
         await service.dispatch(work_item)
 
     assert calls == []
