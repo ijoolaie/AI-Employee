@@ -1,6 +1,5 @@
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -47,7 +46,7 @@ async def test_history_returns_only_current_tenant_events():
         resource_id=str(work_item_id), status="success", metadata_={"x": 1},
         created_at=datetime.now(timezone.utc),
     )
-    result = await history(work_item_id, db=HistoryDB(item, [entry]), current_user=user)
+    result = await history(work_item_id, limit=100, db=HistoryDB(item, [entry]), current_user=user)
     assert len(result) == 1
     assert result[0].id == entry.id
     assert result[0].metadata == {"x": 1}
@@ -61,7 +60,7 @@ async def test_history_hides_work_item_from_other_tenant():
     user = SimpleNamespace(tenant_id=foreign_tenant, id=uuid4())
 
     with pytest.raises(HTTPException) as exc:
-        await history(item.id, db=HistoryDB(item, []), current_user=user)
+        await history(item.id, limit=100, db=HistoryDB(item, []), current_user=user)
 
     assert exc.value.status_code == 404
     assert exc.value.detail == "work item not found"
@@ -79,6 +78,6 @@ async def test_history_query_is_tenant_scoped_for_matching_work_item():
         resource_id=str(work_item_id), status="success", metadata_={},
         created_at=datetime.now(timezone.utc),
     )
-    result = await history(work_item_id, db=HistoryDB(item, []), current_user=user)
+    result = await history(work_item_id, limit=100, db=HistoryDB(item, []), current_user=user)
     assert result == []
     assert other_tenant_entry.tenant_id != tenant_id
