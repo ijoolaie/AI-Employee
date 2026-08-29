@@ -4,9 +4,9 @@
 
 Authoritative delivery roadmap. V1.4 remains the frozen architecture foundation; V1.5 adds the Human + Agent operating model.
 
-## Current position — 2026-08-27
+## Current position — 2026-08-29
 
-**V1.4 frozen foundation + three-workspace separation + V1.5 Agentic Operating Model documented; implementation frontier is the unified Human/Agent execution layer.**
+**V1.4 frozen foundation + V1.5 Agentic Operating Model; Phase 8 unified execution implementation is substantially advanced through Agent Team operational health gates. Documentation is reconciled to merged implementation slices below.**
 
 The product is **Agent-first, not Employee-first**. Every capability in Platform, Reseller and Client must be executable by a Human, a specialized Agent, or both. The same WorkItem, authorization, tools, approvals, audit and output contracts apply to either executor. Existing Employee code remains a compatibility layer during migration.
 
@@ -52,7 +52,9 @@ Authoritative V1.5 architecture: `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md
 
 ## Phase 8 — Unified Execution Foundation
 
-**🟡 DOCUMENTATION COMPLETE; NEXT IMPLEMENTATION PHASE.**
+**🟢 SUBSTANTIALLY IMPLEMENTED / ACTIVE RECONCILIATION.**
+
+Merged implementation slices now cover WorkItem execution, delegation/handoff, policy/tool controls, telemetry, Test Center contracts, Workspace projections, and Agent Team orchestration/lifecycle/recovery/completion/health. Remaining work is reconciliation, gap closure and production hardening—not treating Phase 8 as merely planned.
 
 Build the common substrate before adding many new agent screens.
 
@@ -73,7 +75,7 @@ Build the common substrate before adding many new agent screens.
 
 ## Phase 9 — Platform Command Center
 
-**⚪ PLANNED.**
+**⚪ NEXT PRODUCT PHASE.**
 
 Role-specific experiences for Executive, Operations, Finance, HR, Sales, Marketing, Customer Success, Support, Security/Compliance, Engineering/QA and Analytics/BI.
 
