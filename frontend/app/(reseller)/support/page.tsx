@@ -1,3 +1,0 @@
-import { Header } from "@/components/layout/header";
-import { ResellerSurface } from "@/components/reseller/reseller-surface";
-export default function ResellerSupportPage(){return <><Header title="Client Support" description="A reseller-facing support command center, separate from platform engineering logs."/><ResellerSurface title="Support command center" description="Use this area for client escalations, SLA tracking, incident ownership, and handoff to the platform team when an issue is outside reseller authority." capabilities={["Client ticket intake and ownership","SLA and priority tracking","Client-visible communication history","Escalation to Platform Support with audit context","Incident notes and resolution history"]}/></>}
