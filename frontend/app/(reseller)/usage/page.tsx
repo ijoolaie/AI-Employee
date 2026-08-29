@@ -1,3 +1,0 @@
-import { Header } from "@/components/layout/header";
-import { ResellerSurface } from "@/components/reseller/reseller-surface";
-export default function ResellerUsagePage(){return <><Header title="Usage & Cost" description="Understand reseller-level AI and service consumption without exposing other tenants."/><ResellerSurface title="Usage intelligence" description="This surface is intended for reseller operational cost control and client-level usage visibility. Tenant-specific data must remain scoped to authorized clients." capabilities={["Reseller-wide AI consumption","Client usage summaries","Cost and margin monitoring","Usage anomaly alerts","Exportable operational reports"]}/></>}
