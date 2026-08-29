@@ -1,3 +1,0 @@
-import { Header } from "@/components/layout/header";
-import { ResellerSurface } from "@/components/reseller/reseller-surface";
-export default function ResellerSettingsPage(){return <><Header title="Reseller Settings" description="Organization, branding, defaults, and reseller operating preferences."/><ResellerSurface title="Organization settings" description="Settings here apply to the reseller workspace only. Client configuration remains isolated inside each client tenant." capabilities={["Reseller organization profile","Branding and client-facing defaults","Default onboarding policies","Notification preferences","Workspace security policies"]}/></>}
