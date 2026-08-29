@@ -1,21 +1,25 @@
 # Current Priorities
 
-## Priority 0 — Documentation Governance
+## Priority 0 — Documentation Truth Reconciliation
 
-Create one understandable documentation system before major new implementation.
+Keep roadmap/status documents aligned with merged implementation. Historical planning text must not describe completed Phase 8 work as future-only.
 
-## Priority 1 — Unified Execution Foundation
+## Priority 1 — Phase 8 Gap Closure
 
-Introduce WorkItem, AgentDefinition, AgentInstance, Human executor abstraction, delegation, handoff, approvals, tool authorization and compatibility adapters.
+Unified execution is substantially implemented. Close remaining runtime gaps, reconcile stale issues, strengthen compatibility paths, and preserve tenant/RBAC/policy/audit boundaries.
 
-## Priority 2 — Workspace UX
+## Priority 2 — Platform Command Center
 
-Build role-aware Platform, Reseller and Client workspaces on the shared execution model.
+Build the first role-aware Platform workspace on the shared execution model.
 
-## Priority 3 — Test Center
+## Priority 3 — Reseller and Client Workspaces
 
-Expose safe, permission-aware testing and evidence tools in all three workspaces.
+Build role-aware Reseller Operations and Client Business workspaces using the same Human/Agent execution contracts.
 
-## Priority 4 — Scale and Governance
+## Priority 4 — Test Center & Evidence Expansion
 
-Agent teams, evaluations, cost controls, observability, reliability and production governance.
+Promote safe, permission-aware testing and evidence from backend contracts into all workspace surfaces.
+
+## Priority 5 — Scale and Governance
+
+Continue Agent Teams, evaluations, cost controls, observability, reliability and production governance.
