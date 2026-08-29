@@ -2,24 +2,28 @@
 
 ## Priority 0 — Documentation Truth Reconciliation
 
-Keep roadmap/status documents aligned with merged implementation. Historical planning text must not describe completed Phase 8 work as future-only.
+Keep roadmap/status documents aligned with merged implementation. This reconciliation records the completed workspace integration merged through PR #168 and removes stale wording that treated completed Platform/Reseller workspace work as future-only.
 
-## Priority 1 — Phase 8 Gap Closure
+## Priority 1 — Unified Execution E2E Acceptance
 
-Unified execution is substantially implemented. Close remaining runtime gaps, reconcile stale issues, strengthen compatibility paths, and preserve tenant/RBAC/policy/audit boundaries.
+Validate the real end-to-end execution contract:
 
-## Priority 2 — Platform Command Center
+`Human or Agent → WorkItem → authorization/policy → approval when required → execution → audit → result/history`.
 
-Build the first role-aware Platform workspace on the shared execution model.
+Acceptance must exercise runtime integration, not only unit or contract tests.
 
-## Priority 3 — Reseller and Client Workspaces
+## Priority 2 — Workspace ↔ Execution Integration
 
-Build role-aware Reseller Operations and Client Business workspaces using the same Human/Agent execution contracts.
+Verify Platform, Reseller and Client workspaces against real WorkItem/Agent APIs and role boundaries. Navigation and route separation are merged; remaining acceptance work is operational behavior and evidence.
 
-## Priority 4 — Test Center & Evidence Expansion
+## Priority 3 — Test Center & Evidence Expansion
 
-Promote safe, permission-aware testing and evidence from backend contracts into all workspace surfaces.
+Promote safe, permission-aware testing and repeatable acceptance evidence into workspace workflows where E2E validation requires it.
+
+## Priority 4 — Production Hardening and External Evidence
+
+Continue production hardening, release/certification reconciliation and independent collection of external production evidence. CI success must not be used as a substitute for production acceptance.
 
 ## Priority 5 — Scale and Governance
 
-Continue Agent Teams, evaluations, cost controls, observability, reliability and production governance.
+Continue Agent Teams, evaluations, cost controls, observability, reliability and production governance after the execution substrate and E2E acceptance are stable.

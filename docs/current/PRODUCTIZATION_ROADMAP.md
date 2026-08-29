@@ -6,7 +6,7 @@ Authoritative delivery roadmap. V1.4 remains the frozen architecture foundation;
 
 ## Current position — 2026-08-29
 
-**V1.4 frozen foundation + V1.5 Agentic Operating Model; Phase 8 unified execution implementation is substantially advanced through Agent Team operational health gates. Documentation is reconciled to merged implementation slices below.**
+**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation, Platform/Reseller implementation slices, and role-aware workspace separation are merged. The active frontier is now end-to-end acceptance and production hardening.**
 
 The product is **Agent-first, not Employee-first**. Every capability in Platform, Reseller and Client must be executable by a Human, a specialized Agent, or both. The same WorkItem, authorization, tools, approvals, audit and output contracts apply to either executor. Existing Employee code remains a compatibility layer during migration.
 
