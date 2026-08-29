@@ -1,4 +1,4 @@
-from app.services.platform_workspace_drilldown import workspace_drilldown
+from app.services.platform_workspace_correlation import workspace_drilldown
 
 
 def test_workspace_drilldown_projects_safe_fields_only():
