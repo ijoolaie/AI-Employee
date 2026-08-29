@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-08-27
+**Last reconciled:** 2026-08-29
 **Status:** ACTIVE ARCHITECTURE TRANSITION
 
 ## Where we are
@@ -12,7 +12,7 @@
 | Latest release tag | v1.3.0 → `73ae16ca51f4cced83e3f03cb5dc0e6239287471` |
 | Architecture baseline | V1.4 (frozen) |
 | Current architecture extension | V1.5 Agentic Operating Model |
-| Active repository frontier | Documentation truth reconciliation + unified Human/Agent execution planning |
+| Active repository frontier | Phase 8 gap closure + Platform Command Center preparation |
 | External Vendor → Reseller → Client acceptance | Pending |
 
 ## Git truth
@@ -31,12 +31,12 @@ The repository currently has published tags through `v1.3.0`. `v1.3.0` is a publ
 
 ## In progress / next
 
-1. Complete documentation normalization and code/documentation traceability.
-2. Reconcile Git tags, releases, CI and certification into the release truth ledger.
-3. Canonicalize Platform / Reseller / Client vocabulary.
-4. Build Unified WorkItem + Agent/Human execution foundation.
-5. Build role-aware Platform, Reseller and Client workspaces.
-6. Build the shared Test Center across all workspaces.
+1. Reconcile documentation and stale issues with merged Phase 8 implementation truth.
+2. Close remaining Unified Execution runtime gaps and compatibility paths.
+3. Build the Platform Command Center on the shared execution model.
+4. Build Reseller and Client workspaces on the same contracts.
+5. Expand Test Center contracts into workspace UX and evidence workflows.
+6. Continue production hardening and release/certification truth reconciliation.
 
 ## Important boundaries
 
