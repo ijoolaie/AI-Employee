@@ -1,3 +1,0 @@
-import { Header } from "@/components/layout/header";
-import { ResellerSurface } from "@/components/reseller/reseller-surface";
-export default function ResellerBillingPage(){return <><Header title="Billing" description="Commercial controls for the reseller relationship and managed client portfolio."/><ResellerSurface title="Reseller billing" description="Separate reseller commercial obligations from client-level billing. Client invoices and subscriptions belong to the client workspace or delegated commercial flow." capabilities={["Reseller subscription and plan","Client commercial status","Usage-based cost review","Invoice history","Commercial alerts and renewal visibility"]}/></>}
