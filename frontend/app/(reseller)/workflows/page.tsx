@@ -1,0 +1,3 @@
+import { Header } from "@/components/layout/header";
+import { ResellerSurface } from "@/components/reseller/reseller-surface";
+export default function ResellerWorkflowsPage(){return <><Header title="Service Workflows" description="Automation used by the reseller operation. Client workflows stay inside client tenants."/><ResellerSurface title="Reseller automation" description="Design internal workflows for onboarding, support triage, sales operations, reporting, and service delivery without crossing tenant boundaries." capabilities={["Internal support and escalation workflows","Client onboarding and handoff automation","Scheduled operational reports","Approval-controlled actions","Workflow runs, retries, and audit visibility"]}/></>}
