@@ -6,38 +6,37 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
-export default function CustomerLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const tenant = useAuthStore((s) => s.tenant);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Wait for zustand persist rehydration
-    const unsub = useAuthStore.persist.onFinishHydration(() => {
+    const check = () => {
       if (!isAuthenticated()) {
         router.replace("/login");
-      } else {
-        setReady(true);
+        return;
       }
-    });
-    // If already hydrated
-    if (useAuthStore.persist.hasHydrated()) {
-      if (!isAuthenticated()) {
-        router.replace("/login");
-      } else {
-        setReady(true);
+      if (user?.is_platform_admin) {
+        router.replace("/admin");
+        return;
       }
-    }
-    return unsub;
-  }, [isAuthenticated, router]);
+      const tenantKind = (tenant as (typeof tenant & { tenant_kind?: string }) | null)?.tenant_kind;
+      if (tenantKind === "reseller") {
+        router.replace("/reseller/dashboard");
+        return;
+      }
+      setReady(true);
+    };
 
-  if (!ready) {
-    return <Spinner className="min-h-screen" />;
-  }
+    const unsub = useAuthStore.persist.onFinishHydration(check);
+    if (useAuthStore.persist.hasHydrated()) check();
+    return unsub;
+  }, [isAuthenticated, router, tenant, user]);
+
+  if (!ready) return <Spinner className="min-h-screen" />;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
