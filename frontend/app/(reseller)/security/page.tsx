@@ -1,0 +1,3 @@
+import { Header } from "@/components/layout/header";
+import { ResellerSurface } from "@/components/reseller/reseller-surface";
+export default function ResellerSecurityPage(){return <><Header title="Security" description="Authentication and access controls for the reseller team."/><ResellerSurface title="Security controls" description="Keep security focused on the reseller account. Platform security remains under Platform Admin; client security remains under each client." capabilities={["Password and session security","Team role review","API credential rotation","Security activity and audit history","Support access boundaries"]}/></>}

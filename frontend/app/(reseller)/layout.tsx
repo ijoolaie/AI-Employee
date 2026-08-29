@@ -1,12 +1,12 @@
 "use client";
 
-import { Sidebar } from "@/components/layout/sidebar";
+import { ResellerSidebar } from "@/components/layout/reseller-sidebar";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
-export default function CustomerLayout({ children }: { children: React.ReactNode }) {
+export default function ResellerLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
@@ -15,22 +15,12 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
 
   useEffect(() => {
     const check = () => {
-      if (!isAuthenticated()) {
-        router.replace("/login");
-        return;
-      }
-      if (user?.is_platform_admin) {
-        router.replace("/admin");
-        return;
-      }
+      if (!isAuthenticated()) { router.replace("/login"); return; }
+      if (user?.is_platform_admin) { router.replace("/admin"); return; }
       const tenantKind = (tenant as (typeof tenant & { tenant_kind?: string }) | null)?.tenant_kind;
-      if (tenantKind === "reseller") {
-        router.replace("/reseller/dashboard");
-        return;
-      }
+      if (tenantKind !== "reseller") { router.replace("/dashboard"); return; }
       setReady(true);
     };
-
     const unsub = useAuthStore.persist.onFinishHydration(check);
     if (useAuthStore.persist.hasHydrated()) check();
     return unsub;
@@ -38,12 +28,5 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
 
   if (!ready) return <Spinner className="min-h-screen" />;
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar />
-      <main className="flex flex-1 flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto">{children}</div>
-      </main>
-    </div>
-  );
+  return <div className="flex h-screen overflow-hidden bg-slate-50"><ResellerSidebar /><main className="flex flex-1 flex-col overflow-hidden"><div className="flex-1 overflow-y-auto">{children}</div></main></div>;
 }

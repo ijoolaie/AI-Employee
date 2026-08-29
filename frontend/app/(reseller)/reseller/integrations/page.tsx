@@ -1,0 +1,3 @@
+import { Header } from "@/components/layout/header";
+import { ResellerSurface } from "@/components/reseller/reseller-surface";
+export default function ResellerIntegrationsPage(){return <><Header title="Integrations" description="Connections used by the reseller operation and its managed service stack."/><ResellerSurface title="Integration management" description="Keep reseller-level integrations separate from client credentials. Client-specific integrations belong to the client workspace and never appear here." capabilities={["CRM and support integrations","Communication providers","Billing and finance connections","Webhook configuration","Secret and credential ownership boundaries"]}/></>}

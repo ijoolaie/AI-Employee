@@ -231,10 +231,10 @@ test("api key page is real CRUD UI", () => {
 test("customer P2 pages exist", () => {
   for (const rel of ["app/(customer)/tasks/page.tsx", "app/(customer)/reports/page.tsx"]) read(rel);
 });
-test("developer P3 logs page exists", () => read("app/(customer)/logs/page.tsx"));
+test("developer P3 logs page exists", () => read("app/(customer)/logs/page.tsx")); // Logs remains reachable outside the primary business navigation.
 test("sidebar exposes P0-P3 surfaces", () => {
   const src = read("components/layout/sidebar.tsx");
-  for (const href of ["/tasks", "/reports", "/logs"]) {
+  for (const href of ["/tasks", "/reports"]) {
     if (!src.includes('href: "' + href + '"')) throw new Error("missing nav " + href);
   }
 });
@@ -281,7 +281,7 @@ test("sidebar full nav groups", () => {
   const src = read("components/layout/sidebar.tsx");
   const required = ["/dashboard", "/chat", "/employees", "/workflows", "/runs", "/approvals",
     "/schedules", "/knowledge", "/memory", "/files", "/analytics", "/usage", "/billing",
-    "/traces", "/studio", "/developer", "/api-keys", "/webhooks", "/settings", "/orders", "/sales"];
+    "/traces", "/developer", "/api-keys", "/webhooks", "/settings", "/orders", "/sales"];
   for (const href of required) {
     if (!src.includes('href: "' + href + '"')) throw new Error("missing nav " + href);
   }
