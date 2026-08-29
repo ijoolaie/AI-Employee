@@ -1,3 +1,0 @@
-import { Header } from "@/components/layout/header";
-import { ResellerSurface } from "@/components/reseller/reseller-surface";
-export default function ResellerReportsPage(){return <><Header title="Reports" description="Management reporting for the reseller business."/><ResellerSurface title="Reseller reporting" description="Focus reports on portfolio health, service quality, revenue, usage, and AI workforce performance." capabilities={["Client portfolio health","Service SLA and incident reporting","Revenue and margin reporting","AI workforce performance","Scheduled executive summaries"]}/></>}
