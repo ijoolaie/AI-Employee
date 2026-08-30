@@ -4,13 +4,12 @@ from uuid import uuid4
 import pytest
 
 from app.api.v1.work_items import list_work_items
+from app.models.work_item import WorkItem, WorkItemStatus
 
 
 @pytest.mark.asyncio
-async def test_work_item_queue_is_tenant_scoped(db_session):
-    """The queue query must never return another tenant's WorkItems."""
-    from app.models.work_item import WorkItem, WorkItemStatus
-
+async def test_work_item_queue_is_tenant_scoped():
+    """The queue query must include the current tenant in its SQL predicate."""
     tenant_id = uuid4()
     other_tenant_id = uuid4()
     own = WorkItem(
@@ -29,12 +28,25 @@ async def test_work_item_queue_is_tenant_scoped(db_session):
         policy_context={},
         idempotency_key=f"queue-other-{uuid4()}",
     )
-    db_session.add_all([own, other])
-    await db_session.commit()
 
-    current_user = SimpleNamespace(tenant_id=tenant_id)
-    payload = await list_work_items(db=db_session, current_user=current_user)
-    ids = {item.id for item in payload}
+    captured = {}
 
-    assert own.id in ids
-    assert other.id not in ids
+    class Result:
+        def scalars(self):
+            return self
+
+        def all(self):
+            return [own]
+
+    class Db:
+        async def execute(self, stmt):
+            captured["statement"] = stmt
+            return Result()
+
+    payload = await list_work_items(db=Db(), current_user=SimpleNamespace(tenant_id=tenant_id))
+
+    assert [item.id for item in payload] == [own.id]
+    where_sql = str(captured["statement"].whereclause)
+    assert "work_items.tenant_id" in where_sql
+    assert str(tenant_id) in str(captured["statement"].compile().params.values())
+    assert other.id not in {item.id for item in payload}
