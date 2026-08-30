@@ -6,9 +6,9 @@
 
 ## Executive status
 
-AI-Employee has substantial real implementation across core SaaS, AI, tenant, billing, integrations, frontend, delivery and the V1.5 Agentic Operating Model. The current engineering frontier is the **final Unified Execution E2E acceptance** followed by workspace/runtime verification, runtime gap closure, production hardening and external production evidence.
+AI-Employee has substantial real implementation across core SaaS, AI, tenant, billing, integrations, frontend, delivery and the V1.5 Agentic Operating Model. The current engineering frontier is **remaining Unified Execution full-path acceptance reconciliation**, followed by workspace/runtime verification, production hardening and external production evidence.
 
-The Unified Execution implementation and lifecycle/concurrency hardening are already merged through PR #189. Phase 11 is therefore not an initial implementation phase; it is an acceptance/evidence phase. Issue #170 remains open until its runtime exit criteria are fully evidenced.
+The Unified Execution implementation and lifecycle/concurrency hardening are already merged through PR #189. Phase 11 is therefore not an initial implementation phase; it is an acceptance/evidence phase. Issue #170 remains open because its full exit criteria still require reconciliation across both Human and Agent runtime paths, approval/policy negatives and workspace acceptance; the new Human real-stack gate itself is now evidenced.
 
 ## Evidence levels
 
@@ -38,11 +38,11 @@ The V1.5 execution sequence has additionally merged WorkItem execution, Human an
 - Cancel and retry lifecycle behavior has dedicated implementation/test slices.
 - Dispatch claim concurrency is hardened with tenant-scoped row locking and a committed RUNNING state before external execution.
 - PR #189 completed the latest dispatch concurrency hardening and passed the reviewed CI, CodeQL, Architecture Guard, Production Observability and Production Rollback & Alerting checks before merge.
-- A production-like real-stack certification script now exercises registration → real database WorkItem creation → API assignment → API dispatch → database state → execution history, and is wired into the release-grade Production Certification product gates.
+- Production Certification run 33322632204 passed with Failed gates: 0, including the real-stack Unified WorkItem registration → PostgreSQL WorkItem → API assignment → API dispatch → database state → execution history gate.
 
 ### Remaining Phase 11 acceptance
 
-- Execute the new real-stack Unified WorkItem gate in GitHub Actions and retain its CI evidence.
+- Reconcile the passed real-stack Human WorkItem gate with the remaining Issue #170 exit criteria; its GitHub Actions evidence is Production Certification run 33322632204 (job 99287177728).
 - Complete runtime E2E evidence for both Human and Agent paths where the current certification stack supports them.
 - Verify the complete authorization/policy → approval → execution → audit → result/history chain under real runtime conditions.
 - Verify negative policy/authorization cases required by Issue #170.
@@ -75,7 +75,7 @@ The V1.5 execution sequence has additionally merged WorkItem execution, Human an
 | WhatsApp inbound | AS-BUILT | Inbound foundation exists. |
 | WhatsApp outbound | EXTERNAL-PENDING | Provider/runtime certification remains. |
 | Unified Execution foundation | VERIFIED AS-BUILT | Human/Agent execution substrate and lifecycle hardening are merged and tested. |
-| Unified Execution E2E | IN PROGRESS | Real-stack gate has been added; CI evidence and remaining full-path acceptance are still required; Issue #170 is open. |
+| Unified Execution E2E | PARTIALLY VERIFIED / IN PROGRESS | Production Certification run 33322632204 passed the real-stack Human assignment/dispatch/audit gate with Failed gates: 0; remaining Issue #170 full-path criteria still require explicit reconciliation. |
 | Workspace architecture | VERIFIED AS-BUILT | Platform/Reseller/Client route and role separation is merged. |
 | Workspace ↔ execution runtime integration | IN PROGRESS | Must be verified against real WorkItem/Agent APIs. |
 | Test Center | PLANNED / PARTIAL CONTRACTS | Evidence contracts/slices exist; first-class platform remains downstream. |
@@ -96,7 +96,7 @@ The V1.5 execution sequence has additionally merged WorkItem execution, Human an
 
 - The V1.4 engineering baseline has substantial real-stack verification evidence.
 - The V1.5 Unified Execution substrate is implemented and lifecycle/concurrency hardened through PR #189.
-- A real-stack Unified WorkItem assignment/dispatch/audit certification path is now part of the release-grade certification workflow.
+- A real-stack Unified WorkItem assignment/dispatch/audit certification path passed in Production Certification run 33322632204 with Failed gates: 0.
 - Phase 11 / Unified Execution E2E remains in final acceptance until the new gate and remaining full-path evidence pass.
 - Workspace architecture is merged; runtime workspace-to-execution integration remains an acceptance task.
 - CI success is current engineering evidence, not proof of external production deployment or customer acceptance.
@@ -105,8 +105,8 @@ Do not claim complete Unified Execution E2E certification until Issue #170 exit 
 
 ## Next execution order
 
-1. Run and validate the new real-stack Unified WorkItem certification gate in Production Certification.
-2. Finish remaining Human/Agent full-path E2E acceptance and close Issue #170 only after its exit criteria are evidenced.
+1. Reconcile Production Certification run 33322632204 evidence against every remaining Issue #170 exit criterion, especially Agent runtime, approval/policy negatives and workspace real-API acceptance.
+2. Finish any genuinely missing full-path acceptance and close Issue #170 only after every exit criterion is evidenced.
 3. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs and role/tenant boundaries.
 4. Close runtime integration gaps discovered by E2E acceptance while preserving authorization, tenant isolation and audit invariants.
 5. Expand Test Center evidence workflows where repeatable acceptance proof is required.
