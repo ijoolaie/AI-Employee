@@ -21,6 +21,8 @@ On 2026-08-30, the Unified Execution lifecycle/concurrency hardening sequence th
 
 The current implementation establishes a canonical WorkItem execution path for Human and Agent executors, including assignment, authorization/policy, approval, dispatch, cancellation/retry, execution result and audit/history. The remaining Phase 11 work is final runtime E2E acceptance and evidence reconciliation, not initial implementation of the execution substrate.
 
+The latest Phase 11 hardening pass also aligned the frontend WorkItem client with the canonical backend response shapes while retaining compatibility with the shared API response envelope. This is tracked in PR #190 and remains subject to its normal CI gate before merge.
+
 ## Done / evidenced
 
 - V1.4 initial execution wave (#69–#73) completed.
@@ -39,11 +41,12 @@ The current implementation establishes a canonical WorkItem execution path for H
 ## In progress / next
 
 1. Finish Unified Execution E2E acceptance for the canonical path: Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history.
-2. Reconcile the remaining Phase 11 evidence and close Issue #170 when all exit criteria are actually evidenced.
-3. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than navigation or shell-only evidence.
-4. Close runtime integration gaps discovered by E2E acceptance, preserving authorization, tenant isolation and audit invariants.
-5. Expand Test Center evidence workflows where acceptance needs repeatable proof.
-6. Continue compatibility migration and production hardening; collect independent external production evidence separately from CI evidence.
+2. Merge PR #190 after its CI gate passes; this is a small runtime response-contract compatibility fix in the WorkItem frontend client.
+3. Reconcile the remaining Phase 11 evidence and close Issue #170 when all exit criteria are actually evidenced.
+4. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than navigation or shell-only evidence.
+5. Close runtime integration gaps discovered by E2E acceptance, preserving authorization, tenant isolation and audit invariants.
+6. Expand Test Center evidence workflows where acceptance needs repeatable proof.
+7. Continue compatibility migration and production hardening; collect independent external production evidence separately from CI evidence.
 
 ## Important boundaries
 
