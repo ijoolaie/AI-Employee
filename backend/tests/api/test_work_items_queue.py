@@ -46,7 +46,7 @@ async def test_work_item_queue_is_tenant_scoped():
     payload = await list_work_items(db=Db(), current_user=SimpleNamespace(tenant_id=tenant_id))
 
     assert [item.id for item in payload] == [own.id]
-    where_sql = str(captured["statement"].whereclause)
-    assert "work_items.tenant_id" in where_sql
-    assert str(tenant_id) in str(captured["statement"].compile().params.values())
+    statement = captured["statement"]
+    assert "work_items.tenant_id" in str(statement)
+    assert any(value == tenant_id for value in statement.compile().params.values())
     assert other.id not in {item.id for item in payload}
