@@ -30,5 +30,5 @@ async def decide_approval(approval_id: UUID, payload: ApprovalDecision, ctx: App
     )
     if approval.status == "approved":
         from app.workers.run_worker import execute_run_task
-        execute_run_task.delay(str(approval.run_id))
+        execute_run_task.delay(str(approval.run_id), str(ctx.tenant_id))
     return APIResponse(success=True, data=ToolApprovalResponse.model_validate(approval))
