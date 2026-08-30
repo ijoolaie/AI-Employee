@@ -52,7 +52,7 @@ Authoritative V1.5 architecture: `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md
 
 ## Phase 8 — Unified Execution Foundation
 
-**🟢 SUBSTANTIALLY IMPLEMENTED / ACTIVE RECONCILIATION.**
+**🟢 IMPLEMENTATION SUBSTANTIALLY COMPLETE / E2E ACCEPTANCE NEXT.**
 
 Merged implementation slices now cover WorkItem execution, delegation/handoff, policy/tool controls, telemetry, Test Center contracts, Workspace projections, and Agent Team orchestration/lifecycle/recovery/completion/health. Remaining work is reconciliation, gap closure and production hardening—not treating Phase 8 as merely planned.
 
@@ -75,7 +75,7 @@ Build the common substrate before adding many new agent screens.
 
 ## Phase 9 — Platform Command Center
 
-**⚪ NEXT PRODUCT PHASE.**
+**🟢 IMPLEMENTATION SLICES MERGED.**
 
 Role-specific experiences for Executive, Operations, Finance, HR, Sales, Marketing, Customer Success, Support, Security/Compliance, Engineering/QA and Analytics/BI.
 
@@ -85,7 +85,7 @@ Each business function must support Human, Agent and collaborative execution.
 
 ## Phase 10 — Reseller Operations Workspace
 
-**⚪ PLANNED.**
+**🟢 IMPLEMENTATION SLICES + ROLE-AWARE WORKSPACE MERGED.**
 
 Portfolio, Sales, Support, Operations, Billing and Customer Success optimized for reseller roles.
 
@@ -95,7 +95,7 @@ Every task can be performed manually, delegated to an Agent, or collaboratively 
 
 ## Phase 11 — Client Business Workspace
 
-**⚪ PLANNED.**
+**🟡 WORKSPACE ARCHITECTURE MERGED / OPERATIONAL E2E ACCEPTANCE NEXT.**
 
 Outcome-first UI: Home, Customers, Orders, Products, Sales, Marketing, Support, Finance, Tasks, AI & Automation, Reports, Integrations and **Test Center**.
 
@@ -160,12 +160,10 @@ Every phase must preserve:
 
 # Immediate execution order
 
-1. Finish/reconcile V1.4 workspace separation and CI.
-2. Implement Phase 8 unified execution foundation.
-3. Add Test Center contracts and backend authorization for all three workspaces.
-4. Build Platform Command Center.
-5. Build Reseller Operations Workspace.
-6. Build Client Business Workspace.
-7. Migrate existing Employee-backed capabilities through adapters.
-8. Add Agent Teams/Marketplace only after the execution substrate is stable.
-9. Execute Phase 6E production delivery independently; never confuse CI evidence with production evidence.
+1. Execute Unified Execution E2E acceptance for both Human and Agent paths.
+2. Verify Platform/Reseller/Client workspace actions against real WorkItem and Agent APIs.
+3. Close runtime gaps discovered by E2E acceptance and preserve authorization/audit invariants.
+4. Expand Test Center evidence where repeatable acceptance proof is required.
+5. Continue compatibility migration for existing Employee-backed capabilities.
+6. Add downstream Agent Teams/Marketplace work only after the execution substrate is operationally stable.
+7. Execute Phase 6E production delivery independently; never confuse CI evidence with production evidence.
