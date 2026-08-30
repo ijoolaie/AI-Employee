@@ -6,7 +6,7 @@ Authoritative delivery roadmap. V1.4 remains the frozen architecture foundation;
 
 ## Current position — 2026-08-30
 
-**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation and lifecycle/concurrency hardening, Platform/Reseller implementation slices, and role-aware workspace separation are merged. The active frontier is now final Unified Execution E2E acceptance, runtime workspace verification, and production hardening.**
+**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation and lifecycle/concurrency hardening, Platform/Reseller implementation slices, and role-aware workspace separation are merged. The active frontier is final Unified Execution E2E acceptance, runtime workspace verification, and production hardening.**
 
 The product is **Agent-first, not Employee-first**. Every capability in Platform, Reseller and Client must be executable by a Human, a specialized Agent, or both. The same WorkItem, authorization, tools, approvals, audit and output contracts apply to either executor. Existing Employee code remains a compatibility layer during migration.
 
@@ -54,86 +54,25 @@ Authoritative V1.5 architecture: `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md
 
 **🟢 IMPLEMENTATION SUBSTANTIALLY COMPLETE / E2E ACCEPTANCE NEAR COMPLETION.** Merged implementation slices cover WorkItem execution, delegation/handoff, policy/tool controls, telemetry, Test Center contracts, Workspace projections, and Agent Team orchestration/lifecycle/recovery/completion/health. Lifecycle and dispatch concurrency hardening are also merged. Remaining work is final runtime acceptance, reconciliation, gap closure and production hardening—not initial implementation of the execution substrate.
 
-Build the common substrate before adding many new agent screens.
-
-- WorkItem model and lifecycle
-- AgentDefinition
-- AgentInstance
-- HumanExecutor
-- unified execution service
-- Human ↔ Agent delegation/fallback
-- Agent ↔ Agent handoff
-- policy-driven approvals
-- scoped tools/credentials
-- execution/audit timeline
-- usage/cost attribution
-- compatibility adapters for Employee APIs
-
-**Gate:** the same WorkItem can be completed by Human or Agent with the same authorization and audit boundary.
-
 ## Phase 9 — Platform Command Center
 
-**🟢 IMPLEMENTATION SLICES MERGED.**
-
-Role-specific experiences for Executive, Operations, Finance, HR, Sales, Marketing, Customer Success, Support, Security/Compliance, Engineering/QA and Analytics/BI.
-
-Core surfaces: Command Center, Tenants, Agents, Agent Teams, Workflows, Tasks, Approvals, Knowledge, Memory, Tools/Integrations, Usage/Cost, Billing, Audit, Developer and **Test Center**.
-
-Each business function must support Human, Agent and collaborative execution.
+**🟢 IMPLEMENTATION SLICES MERGED.** Role-specific Platform experiences and core operational surfaces are implemented; remaining acceptance is tied to real execution integration and evidence.
 
 ## Phase 10 — Reseller Operations Workspace
 
-**🟢 IMPLEMENTATION SLICES + ROLE-AWARE WORKSPACE MERGED.**
-
-Portfolio, Sales, Support, Operations, Billing and Customer Success optimized for reseller roles.
-
-Specialized agents: Portfolio Health, Account Management, Sales, Support/Triage, Customer Success, Usage/Cost, Billing, Reporting and Operations.
-
-Every task can be performed manually, delegated to an Agent, or collaboratively executed.
+**🟢 IMPLEMENTATION SLICES + ROLE-AWARE WORKSPACE MERGED.** Portfolio, Sales, Support, Operations, Billing and Customer Success surfaces are implemented; remaining acceptance is tied to real execution integration and evidence.
 
 ## Phase 11 — Client Business Workspace / Unified Execution Acceptance
 
-**🟡 WORKSPACE ARCHITECTURE AND EXECUTION SLICES MERGED / FINAL OPERATIONAL E2E ACCEPTANCE IN PROGRESS.** The acceptance scope is Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history, including tenant/RBAC boundaries and real workspace API usage. Issue #170 remains open until all exit criteria are evidenced and reconciled.
-
-Outcome-first UI: Home, Customers, Orders, Products, Sales, Marketing, Support, Finance, Tasks, AI & Automation, Reports, Integrations and **Test Center**.
-
-Specialized agents include Lead Research, Qualification, Outreach, Follow-up, Proposal, CRM, Marketing Content, SEO, Support, Order, Invoice/Finance, Document, Analytics and Reporting.
+**🟡 FINAL OPERATIONAL E2E ACCEPTANCE IN PROGRESS.** Workspace architecture and the major execution/lifecycle slices are merged. The remaining acceptance scope is Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history, including tenant/RBAC boundaries, negative policy paths and real workspace API usage. Issue #170 remains open until all exit criteria are evidenced and reconciled.
 
 ## Phase 12 — Test Center & Evidence Platform
 
-**⚪ PLANNED.**
-
-Test Center is a first-class dashboard tool in **Platform, Reseller and Client**, with role-aware visibility.
-
-Required test families:
-
-- API health
-- authentication/session
-- tenant isolation
-- RBAC/permissions
-- Agent smoke tests
-- tool calls
-- workflows
-- Human ↔ Agent handoff
-- approvals
-- Knowledge/RAG
-- memory
-- integrations
-- webhooks/idempotency
-- usage metering
-- billing/sandbox
-- channels/notifications
-- workers/queues
-- model/provider
-- full E2E business scenarios
-
-Required UX: environment selector, dry-run/safe mode, production mutation guard, isolated test data, run history, logs, artifacts, pass/fail evidence and exportable verification records.
+**⚪ PLANNED.** First-class role-aware Test Center with safe execution, isolated data, run history, logs, artifacts, pass/fail evidence and exportable verification records.
 
 ## Phase 13 — Agent Teams & Marketplace
 
 **⚪ PLANNED.** Reusable Agent Teams, templates, agent versioning, evaluation suites, tenant-installed agents, marketplace boundary, long-running workflows, budgets, rate limits and SLA-aware orchestration.
-
-Marketplace remains downstream of tenant isolation, RBAC, permission grants, usage and billing.
 
 ## Phase 14 — Scale, Governance & Production
 
@@ -165,4 +104,4 @@ Every phase must preserve:
 5. Continue compatibility migration for existing Employee-backed capabilities.
 6. Continue production hardening and independently collect external production evidence; do not treat CI as production certification.
 7. Execute Phase 6E Vendor → Reseller → Client production delivery when the required external evidence is available.
-8. Add downstream Agent Teams/Marketplace work only after the execution substrate and acceptance are operationally stable.
+8. Add downstream Agent Teams/Marketplace and scale/governance work only after the execution substrate and acceptance are operationally stable.
