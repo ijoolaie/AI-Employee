@@ -12,7 +12,7 @@
 | Latest release tag | v1.3.0 → `73ae16ca51f4cced83e3f03cb5dc0e6239287471` |
 | Architecture baseline | V1.4 (frozen) |
 | Current architecture extension | V1.5 Agentic Operating Model |
-| Active repository frontier | Unified Execution E2E acceptance nearing completion; workspace/runtime verification and production hardening follow |
+| Active repository frontier | Final Unified Execution E2E acceptance; workspace/runtime verification and production hardening follow |
 | External Vendor → Reseller → Client acceptance | Pending external production evidence |
 
 ## Git / implementation truth
