@@ -1,7 +1,7 @@
 # Current Status
 
-**Last reconciled:** 2026-08-29
-**Status:** ACTIVE IMPLEMENTATION / E2E ACCEPTANCE TRANSITION
+**Last reconciled:** 2026-08-30
+**Status:** ACTIVE IMPLEMENTATION / FINAL UNIFIED EXECUTION E2E ACCEPTANCE
 
 ## Where we are
 
@@ -12,19 +12,20 @@
 | Latest release tag | v1.3.0 → `73ae16ca51f4cced83e3f03cb5dc0e6239287471` |
 | Architecture baseline | V1.4 (frozen) |
 | Current architecture extension | V1.5 Agentic Operating Model |
-| Active repository frontier | Workspace integration complete; Unified Execution E2E acceptance next |
+| Active repository frontier | Unified Execution E2E acceptance nearing completion; workspace/runtime verification and production hardening follow |
 | External Vendor → Reseller → Client acceptance | Pending external production evidence |
 
 ## Git / implementation truth
 
-On 2026-08-29, the current-main workspace implementation was merged through PR #168. The stale predecessor PR #103 was closed without merge after its useful changes were cleanly ported onto current `main`.
+On 2026-08-30, the Unified Execution lifecycle/concurrency hardening sequence through PR #189 is merged on current `main`. PR #189 (`fix(execution): make dispatch claim concurrency-safe`) completed the latest dispatch claim/finalization concurrency hardening and passed its reviewed CI, CodeQL, Architecture Guard, Production Observability and Production Rollback & Alerting checks before merge.
 
-The merged workspace implementation establishes distinct Platform Control Plane, Reseller Workspace and Client Business Workspace routing and navigation. GitHub Actions for PR #168 completed successfully across CI, Architecture Guard, CodeQL, Production Observability and Production Rollback & Alerting.
+The current implementation establishes a canonical WorkItem execution path for Human and Agent executors, including assignment, authorization/policy, approval, dispatch, cancellation/retry, execution result and audit/history. The remaining Phase 11 work is final runtime E2E acceptance and evidence reconciliation, not initial implementation of the execution substrate.
 
 ## Done / evidenced
 
 - V1.4 initial execution wave (#69–#73) completed.
 - Unified Execution implementation slices through Phase 10.3 are merged.
+- Unified Execution lifecycle hardening through completion, cancel/retry and dispatch concurrency is merged through PR #189.
 - Platform Command Center implementation slices are merged.
 - Reseller Operations implementation slices are merged.
 - Role-aware Platform, Reseller and Client workspace separation is merged.
@@ -33,14 +34,16 @@ The merged workspace implementation establishes distinct Platform Control Plane,
 - Vendor/Reseller/Customer delivery model exists.
 - Agent-first, Human + Agent execution model is documented.
 - Documentation governance, source-of-truth map and release/tag policy are established.
+- Phase 11 acceptance slices cover Human execution, Agent execution, approval, authorization/tenant boundaries, audit/history, cancel/retry and dispatch concurrency.
 
 ## In progress / next
 
-1. Run end-to-end acceptance for the Unified Execution path: Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result.
-2. Verify Workspace surfaces against real WorkItem/Agent APIs rather than navigation or shell-only evidence.
-3. Close any runtime integration gaps discovered by E2E acceptance.
-4. Expand Test Center evidence workflows where acceptance needs repeatable proof.
-5. Continue production hardening and independently collect external production evidence.
+1. Finish Unified Execution E2E acceptance for the canonical path: Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history.
+2. Reconcile the remaining Phase 11 evidence and close Issue #170 when all exit criteria are actually evidenced.
+3. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than navigation or shell-only evidence.
+4. Close runtime integration gaps discovered by E2E acceptance, preserving authorization, tenant isolation and audit invariants.
+5. Expand Test Center evidence workflows where acceptance needs repeatable proof.
+6. Continue compatibility migration and production hardening; collect independent external production evidence separately from CI evidence.
 
 ## Important boundaries
 
@@ -51,6 +54,7 @@ The merged workspace implementation establishes distinct Platform Control Plane,
 - Historical documents cannot override this status file.
 - Existing Employee functionality must migrate incrementally through compatibility paths.
 - Placeholder/informational workspace surfaces must not be represented as completed backend integrations.
+- Phase 11 is not marked complete until its runtime E2E exit criteria and evidence are closed.
 
 ## Canonical documents
 
