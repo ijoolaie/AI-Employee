@@ -5,6 +5,7 @@ import pytest
 
 from app.models.agent_instance import AgentInstanceStatus
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
+from app.services.human_execution_adapter import HumanExecutionAdapter
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 
 
@@ -39,12 +40,7 @@ async def test_human_work_item_happy_path_assign_dispatch_complete():
         idempotency_key="phase-11-human-happy",
     )
 
-    class HumanExecutor:
-        async def dispatch(self, received):
-            assert received is work_item
-            return {"accepted": True, "correlation_id": str(received.id)}
-
-    service = UnifiedExecutionService(DispatchDb(work_item), human_executor=HumanExecutor())
+    service = UnifiedExecutionService(DispatchDb(work_item), human_executor=HumanExecutionAdapter())
     service.assign_human(work_item, human_id)
 
     dispatched = await service.dispatch(work_item)
@@ -56,6 +52,8 @@ async def test_human_work_item_happy_path_assign_dispatch_complete():
 
     assert dispatched.dispatched is True
     assert dispatched.waiting_for_approval is False
+    assert dispatched.work_item.status is WorkItemStatus.RUNNING
+    assert dispatched.work_item.output_data["status"] == "dispatched"
     assert completed.status is WorkItemStatus.SUCCEEDED
     assert completed.output_data["result"] == "done"
 
@@ -95,6 +93,33 @@ async def test_human_work_item_waits_for_approval_then_dispatches_after_approval
     assert resumed.dispatched is True
     assert resumed.waiting_for_approval is False
     assert len(calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_human_dispatch_does_not_require_external_runtime():
+    tenant_id = uuid4()
+    human_id = uuid4()
+    work_item = WorkItem(
+        tenant_id=tenant_id,
+        title="human runtime",
+        status=WorkItemStatus.ASSIGNED,
+        executor_type=ExecutorType.HUMAN,
+        executor_id=human_id,
+        input_data={},
+        policy_context={},
+        idempotency_key="phase-11-human-runtime",
+    )
+
+    service = UnifiedExecutionService(DispatchDb(work_item), human_executor=HumanExecutionAdapter())
+    result = await service.dispatch(work_item)
+
+    assert result.dispatched is True
+    assert result.work_item.status is WorkItemStatus.RUNNING
+    assert result.work_item.output_data == {
+        "executor_type": "human",
+        "executor_id": str(human_id),
+        "status": "dispatched",
+    }
 
 
 def test_human_completion_rejects_non_owner():
