@@ -1,6 +1,6 @@
 """Regression coverage for the database row lock used by retry."""
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -14,7 +14,7 @@ async def test_get_work_item_for_update_uses_tenant_scoped_row_lock() -> None:
     tenant_id = uuid4()
     work_item_id = uuid4()
     item = WorkItem(id=work_item_id, tenant_id=tenant_id)
-    result = AsyncMock()
+    result = MagicMock()
     result.scalar_one_or_none.return_value = item
     db = AsyncMock()
     db.execute.return_value = result
@@ -30,7 +30,7 @@ async def test_get_work_item_for_update_uses_tenant_scoped_row_lock() -> None:
 @pytest.mark.asyncio
 async def test_get_work_item_for_update_rejects_missing_row() -> None:
     db = AsyncMock()
-    result = AsyncMock()
+    result = MagicMock()
     result.scalar_one_or_none.return_value = None
     db.execute.return_value = result
 
