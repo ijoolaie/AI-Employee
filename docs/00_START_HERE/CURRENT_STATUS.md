@@ -21,7 +21,7 @@ On 2026-08-30, the Unified Execution lifecycle/concurrency hardening sequence th
 
 The current implementation establishes a canonical WorkItem execution path for Human and Agent executors, including assignment, authorization/policy, approval, dispatch, cancellation/retry, execution result and audit/history. The remaining Phase 11 work is final runtime E2E acceptance and evidence reconciliation, not initial implementation of the execution substrate.
 
-The latest Phase 11 hardening pass also aligned the frontend WorkItem client with the canonical backend response shapes while retaining compatibility with the shared API response envelope. This is tracked in PR #190 and remains subject to its normal CI gate before merge.
+The latest Phase 11 hardening pass aligned the frontend WorkItem client with the canonical backend response shapes while retaining compatibility with the shared API response envelope. PR #190 passed CI and CodeQL and was merged on 2026-08-30 as commit `7ada3457afdf01a774b42b5efbebe3f79c17e8fb`.
 
 ## Done / evidenced
 
@@ -37,16 +37,16 @@ The latest Phase 11 hardening pass also aligned the frontend WorkItem client wit
 - Agent-first, Human + Agent execution model is documented.
 - Documentation governance, source-of-truth map and release/tag policy are established.
 - Phase 11 acceptance slices cover Human execution, Agent execution, approval, authorization/tenant boundaries, audit/history, cancel/retry and dispatch concurrency.
+- PR #190 closed a concrete frontend/backend WorkItem response-contract compatibility gap and passed CI + CodeQL before merge.
 
 ## In progress / next
 
 1. Finish Unified Execution E2E acceptance for the canonical path: Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history.
-2. Merge PR #190 after its CI gate passes; this is a small runtime response-contract compatibility fix in the WorkItem frontend client.
-3. Reconcile the remaining Phase 11 evidence and close Issue #170 when all exit criteria are actually evidenced.
-4. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than navigation or shell-only evidence.
-5. Close runtime integration gaps discovered by E2E acceptance, preserving authorization, tenant isolation and audit invariants.
-6. Expand Test Center evidence workflows where acceptance needs repeatable proof.
-7. Continue compatibility migration and production hardening; collect independent external production evidence separately from CI evidence.
+2. Reconcile the remaining Phase 11 evidence and close Issue #170 when all exit criteria are actually evidenced.
+3. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than navigation or shell-only evidence.
+4. Close runtime integration gaps discovered by E2E acceptance, preserving authorization, tenant isolation and audit invariants.
+5. Expand Test Center evidence workflows where acceptance needs repeatable proof.
+6. Continue compatibility migration and production hardening; collect independent external production evidence separately from CI evidence.
 
 ## Important boundaries
 
