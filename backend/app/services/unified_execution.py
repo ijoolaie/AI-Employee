@@ -142,6 +142,30 @@ class UnifiedExecutionService:
             self.telemetry.emit(ExecutionEvent(tenant_id=work_item.tenant_id, work_item_id=work_item.id, event="failed", duration_ms=self.telemetry.elapsed_ms(started), correlation_id=correlation_id))
             raise
 
+    def cancel(self, work_item: WorkItem) -> WorkItem:
+        if work_item.status in {WorkItemStatus.SUCCEEDED, WorkItemStatus.CANCELLED}:
+            raise ExecutionError("terminal work item cannot be cancelled")
+        if work_item.status is WorkItemStatus.DRAFT:
+            raise ExecutionError("draft work item cannot be cancelled")
+        work_item.status = WorkItemStatus.CANCELLED
+        return work_item
+
+    def retry(self, work_item: WorkItem) -> WorkItem:
+        if work_item.status is not WorkItemStatus.FAILED:
+            raise ExecutionError("only failed work items can be retried")
+        if work_item.executor_type is None or work_item.executor_id is None:
+            raise ExecutionError("failed work item has no executor")
+        context = dict(work_item.policy_context or {})
+        retry_count = int(context.get("retry_count", 0)) + 1
+        max_retries = context.get("max_retries")
+        if max_retries is not None and retry_count > int(max_retries):
+            raise ExecutionError("maximum retry count exceeded")
+        context["retry_count"] = retry_count
+        work_item.policy_context = context
+        work_item.output_data = None
+        work_item.status = WorkItemStatus.ASSIGNED
+        return work_item
+
     def complete_human(self, work_item: WorkItem, *, executor_id: uuid.UUID, output: dict[str, Any] | None = None) -> WorkItem:
         if work_item.executor_type is not ExecutorType.HUMAN:
             raise ExecutionError("work item is not assigned to a human")
