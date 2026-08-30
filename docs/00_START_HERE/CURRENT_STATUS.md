@@ -21,7 +21,7 @@ On 2026-08-30, the Unified Execution lifecycle/concurrency hardening sequence th
 
 The current implementation establishes a canonical WorkItem execution path for Human and Agent executors, including assignment, authorization/policy, approval, dispatch, cancellation/retry, execution result and audit/history. The remaining Phase 11 work is final runtime E2E acceptance and evidence reconciliation, not initial implementation of the execution substrate.
 
-The latest Phase 11 hardening pass aligned the frontend WorkItem client with the canonical backend response shapes while retaining compatibility with the shared API response envelope. PR #190 passed CI and CodeQL and was merged on 2026-08-30 as commit `7ada3457afdf01a774b42b5efbebe3f79c17e8fb`. PR #192 then added focused, repeatable API-boundary acceptance evidence for Human assignment/dispatch, approval waiting semantics, Agent adapter wiring and truthful execution-failure audit semantics; CI, CodeQL and Architecture Guard passed before merge.
+PR #190 aligned the frontend WorkItem client with canonical backend response shapes and passed CI + CodeQL before merge. PR #192 added focused API-boundary acceptance evidence for Human assignment/dispatch, approval waiting semantics, Agent adapter wiring and truthful execution-failure audit semantics; CI, CodeQL and Architecture Guard passed before merge. PR #194 adds repeatable negative-policy, cross-tenant and approval-resume acceptance evidence; CI, CodeQL and Architecture Guard all passed on the PR head before merge.
 
 ## Done / evidenced
 
@@ -39,6 +39,7 @@ The latest Phase 11 hardening pass aligned the frontend WorkItem client with the
 - Phase 11 acceptance slices cover Human execution, Agent execution, approval, authorization/tenant boundaries, audit/history, cancel/retry and dispatch concurrency.
 - PR #190 closed a concrete frontend/backend WorkItem response-contract compatibility gap and passed CI + CodeQL before merge.
 - PR #192 added repeatable API-boundary Phase 11 acceptance evidence for Human dispatch, approval waiting and Agent failure/audit paths; CI, CodeQL and Architecture Guard passed before merge.
+- PR #194 adds repeatable negative policy, cross-tenant and approval-resume evidence; CI, CodeQL and Architecture Guard passed before merge.
 
 ## In progress / next
 
