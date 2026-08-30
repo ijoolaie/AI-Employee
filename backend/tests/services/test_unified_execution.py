@@ -114,3 +114,96 @@ async def test_agent_dispatch_passes_canonical_run_result_and_keeps_work_item_ru
     assert result.dispatched is True
     assert work_item.status is WorkItemStatus.RUNNING
     assert work_item.output_data["run_id"] == str(run_id)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", ["success", "succeeded", "completed", "complete"])
+async def test_agent_dispatch_completes_work_item_on_terminal_success(status):
+    tenant_id = uuid4()
+    agent_id = uuid4()
+    work_item = WorkItem(
+        tenant_id=tenant_id,
+        title="completed agent execution",
+        status=WorkItemStatus.ASSIGNED,
+        executor_type=ExecutorType.AGENT,
+        executor_id=agent_id,
+        input_data={"task": "finish"},
+        policy_context={},
+    )
+    agent = SimpleNamespace(id=agent_id, tenant_id=tenant_id, enabled=True, status=AgentInstanceStatus.ENABLED)
+
+    class Db:
+        async def get(self, *_args):
+            return agent
+
+    class Executor:
+        async def dispatch(self, *_args):
+            return {"status": status, "result": "done"}
+
+    result = await UnifiedExecutionService(Db(), agent_executor=Executor()).dispatch(work_item)
+
+    assert result.dispatched is True
+    assert work_item.status is WorkItemStatus.SUCCEEDED
+    assert work_item.output_data["status"] == status
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", ["failed", "failure", "error"])
+async def test_agent_dispatch_fails_work_item_on_terminal_failure(status):
+    tenant_id = uuid4()
+    agent_id = uuid4()
+    work_item = WorkItem(
+        tenant_id=tenant_id,
+        title="failed agent execution",
+        status=WorkItemStatus.ASSIGNED,
+        executor_type=ExecutorType.AGENT,
+        executor_id=agent_id,
+        input_data={"task": "fail"},
+        policy_context={},
+    )
+    agent = SimpleNamespace(id=agent_id, tenant_id=tenant_id, enabled=True, status=AgentInstanceStatus.ENABLED)
+
+    class Db:
+        async def get(self, *_args):
+            return agent
+
+    class Executor:
+        async def dispatch(self, *_args):
+            return {"status": status, "error": "execution failed"}
+
+    result = await UnifiedExecutionService(Db(), agent_executor=Executor()).dispatch(work_item)
+
+    assert result.dispatched is True
+    assert work_item.status is WorkItemStatus.FAILED
+    assert work_item.output_data["status"] == status
+
+
+@pytest.mark.asyncio
+async def test_agent_dispatch_preserves_running_for_async_result():
+    tenant_id = uuid4()
+    agent_id = uuid4()
+    run_id = uuid4()
+    work_item = WorkItem(
+        tenant_id=tenant_id,
+        title="async agent execution",
+        status=WorkItemStatus.ASSIGNED,
+        executor_type=ExecutorType.AGENT,
+        executor_id=agent_id,
+        input_data={"task": "run"},
+        policy_context={},
+    )
+    agent = SimpleNamespace(id=agent_id, tenant_id=tenant_id, enabled=True, status=AgentInstanceStatus.ENABLED)
+
+    class Db:
+        async def get(self, *_args):
+            return agent
+
+    class Executor:
+        async def dispatch(self, *_args):
+            return {"run_id": str(run_id), "executor_type": "agent"}
+
+    result = await UnifiedExecutionService(Db(), agent_executor=Executor()).dispatch(work_item)
+
+    assert result.dispatched is True
+    assert work_item.status is WorkItemStatus.RUNNING
+    assert work_item.output_data["run_id"] == str(run_id)
