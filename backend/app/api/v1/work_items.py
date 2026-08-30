@@ -190,7 +190,7 @@ async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), curre
 
 @router.post("/{work_item_id}/cancel", response_model=ExecutionResponse)
 async def cancel(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
-    item = await _get_work_item(db, work_item_id, current_user.tenant_id)
+    item = await _get_work_item(db, work_item_id, current_user.tenant_id, for_update=True)
     try:
         UnifiedExecutionService(db).cancel(item)
         await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.cancelled", actor_type="user", actor_id=current_user.user_id, status="success", metadata={"status": item.status.value})
