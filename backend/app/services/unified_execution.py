@@ -7,6 +7,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
@@ -92,7 +93,30 @@ class UnifiedExecutionService:
         self.db.add(child)
         return child
 
+    async def _claim_dispatch(self, work_item: WorkItem) -> WorkItem:
+        stmt = select(WorkItem).where(WorkItem.id == work_item.id, WorkItem.tenant_id == work_item.tenant_id).with_for_update()
+        current = (await self.db.execute(stmt)).scalar_one_or_none()
+        if current is None:
+            raise ExecutionError("work item not found")
+        if current.status is WorkItemStatus.CANCELLED:
+            raise ExecutionError("cancelled work item cannot be dispatched")
+        if current.status not in {WorkItemStatus.ASSIGNED, WorkItemStatus.RUNNING}:
+            raise ExecutionError("work item is not dispatchable")
+        return current
+
+    async def _finalize_dispatch(self, work_item: WorkItem, output: dict[str, Any] | None, status_value: WorkItemStatus) -> WorkItem:
+        stmt = select(WorkItem).where(WorkItem.id == work_item.id, WorkItem.tenant_id == work_item.tenant_id).with_for_update()
+        current = (await self.db.execute(stmt)).scalar_one_or_none()
+        if current is None:
+            raise ExecutionError("work item not found")
+        if current.status is WorkItemStatus.CANCELLED:
+            return current
+        current.output_data = output
+        current.status = status_value
+        return current
+
     async def dispatch(self, work_item: WorkItem) -> ExecutionResult:
+        work_item = await self._claim_dispatch(work_item)
         if work_item.status is WorkItemStatus.WAITING_APPROVAL:
             return ExecutionResult(work_item, False, True)
         if work_item.executor_type is None or work_item.executor_id is None:
@@ -113,6 +137,8 @@ class UnifiedExecutionService:
         if work_item.executor_type is ExecutorType.AGENT and work_item.status is WorkItemStatus.RUNNING and isinstance(work_item.output_data, dict) and work_item.output_data.get("run_id"):
             return ExecutionResult(work_item, False)
         work_item.status = WorkItemStatus.RUNNING
+        await self.db.flush()
+        await self.db.commit()
         started = self.telemetry.started()
         correlation_id = str(work_item.id)
         self.telemetry.emit(ExecutionEvent(tenant_id=work_item.tenant_id, work_item_id=work_item.id, event="started", correlation_id=correlation_id))
@@ -120,8 +146,8 @@ class UnifiedExecutionService:
             if work_item.executor_type is ExecutorType.HUMAN:
                 if self.human_executor is None:
                     raise ExecutionError("human executor runtime is not configured")
-                work_item.output_data = await self._invoke(self.human_executor.dispatch, work_item)
-                work_item.status = WorkItemStatus.RUNNING
+                output = await self._invoke(self.human_executor.dispatch, work_item)
+                current = await self._finalize_dispatch(work_item, output, WorkItemStatus.RUNNING)
             elif work_item.executor_type is ExecutorType.AGENT:
                 if self.agent_executor is None:
                     raise ExecutionError("agent executor runtime is not configured")
@@ -131,15 +157,14 @@ class UnifiedExecutionService:
                 if not agent.enabled or agent.status is not AgentInstanceStatus.ENABLED:
                     raise ExecutionError("agent executor is not available")
                 output = await self._invoke(self.agent_executor.dispatch, work_item, agent)
-                work_item.output_data = output
-                work_item.status = self._agent_result_status(output)
+                current = await self._finalize_dispatch(work_item, output, self._agent_result_status(output))
             else:
                 raise ExecutionError("unsupported executor type")
-            self.telemetry.emit(ExecutionEvent(tenant_id=work_item.tenant_id, work_item_id=work_item.id, event="dispatched", duration_ms=self.telemetry.elapsed_ms(started), correlation_id=correlation_id))
-            return ExecutionResult(work_item, True)
+            self.telemetry.emit(ExecutionEvent(tenant_id=current.tenant_id, work_item_id=current.id, event="dispatched", duration_ms=self.telemetry.elapsed_ms(started), correlation_id=correlation_id))
+            return ExecutionResult(current, True)
         except Exception:
-            work_item.status = WorkItemStatus.FAILED
-            self.telemetry.emit(ExecutionEvent(tenant_id=work_item.tenant_id, work_item_id=work_item.id, event="failed", duration_ms=self.telemetry.elapsed_ms(started), correlation_id=correlation_id))
+            current = await self._finalize_dispatch(work_item, None, WorkItemStatus.FAILED)
+            self.telemetry.emit(ExecutionEvent(tenant_id=current.tenant_id, work_item_id=current.id, event="failed", duration_ms=self.telemetry.elapsed_ms(started), correlation_id=correlation_id))
             raise
 
     def cancel(self, work_item: WorkItem) -> WorkItem:
