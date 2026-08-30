@@ -8,6 +8,24 @@ from app.models.work_item import ExecutorType, WorkItemStatus
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 
 
+class DispatchDb:
+    def __init__(self, work_item, agent=None):
+        self.work_item = work_item
+        self.agent = agent
+
+    async def execute(self, *_args):
+        return SimpleNamespace(scalar_one_or_none=lambda: self.work_item)
+
+    async def get(self, *_args):
+        return self.agent
+
+    async def flush(self):
+        return None
+
+    async def commit(self):
+        return None
+
+
 class HumanRuntime:
     def dispatch(self, work_item):
         return {"executor": "human", "work_item_id": str(work_item.id)}
@@ -37,7 +55,7 @@ def agent(tenant_id):
 async def test_assign_human_and_dispatch():
     tenant_id = uuid4()
     item = work_item(tenant_id)
-    service = UnifiedExecutionService(SimpleNamespace(get=None), human_executor=HumanRuntime())
+    service = UnifiedExecutionService(DispatchDb(item), human_executor=HumanRuntime())
 
     service.assign_human(item, uuid4())
     result = await service.dispatch(item)
@@ -61,7 +79,7 @@ async def test_approval_gate_prevents_dispatch():
     tenant_id = uuid4()
     item = work_item(tenant_id)
     item.policy_context = {"requires_approval": True}
-    service = UnifiedExecutionService(SimpleNamespace(get=None), human_executor=HumanRuntime())
+    service = UnifiedExecutionService(DispatchDb(item), human_executor=HumanRuntime())
     service.assign_human(item, uuid4())
 
     result = await service.dispatch(item)
@@ -76,11 +94,7 @@ async def test_agent_dispatch_is_tenant_scoped():
     tenant_id = uuid4()
     item = work_item(tenant_id)
     runtime_agent = agent(tenant_id)
-
-    async def get_agent(model, key):
-        return runtime_agent if key == runtime_agent.id else None
-
-    service = UnifiedExecutionService(SimpleNamespace(get=get_agent), agent_executor=AgentRuntime())
+    service = UnifiedExecutionService(DispatchDb(item, runtime_agent), agent_executor=AgentRuntime())
 
     await service.assign_agent(item, runtime_agent)
     result = await service.dispatch(item)
