@@ -189,6 +189,23 @@ export async function createEmployee(payload: EmployeeCreate) {
   );
 }
 
+
+// ── Unified Execution / WorkItems ─────────────────────
+export interface WorkItemHistoryEvent {
+  id: string;
+  action: string;
+  actor_type: string;
+  actor_id: string | null;
+  status: string;
+  request_id: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export async function getWorkItemHistory(id: string) {
+  return unwrap(await api.get<APIResponse<WorkItemHistoryEvent[]>>(`/work-items/${id}/history`));
+}
+
 // ── Runs ──────────────────────────────────────────────
 export async function listRuns(employeeId?: string) {
   const params = employeeId ? { employee_id: employeeId } : undefined;
