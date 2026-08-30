@@ -35,3 +35,15 @@ export async function dispatchWorkItem(id: string) {
   if (!res.data.success || res.data.data === undefined) throw new Error("Unexpected API response");
   return res.data.data;
 }
+
+export async function cancelWorkItem(id: string) {
+  const res = await api.post<APIResponse<WorkItemExecutionResponse>>(`/work-items/${id}/cancel`);
+  if (!res.data.success || res.data.data === undefined) throw new Error("Unexpected API response");
+  return res.data.data;
+}
+
+export async function retryWorkItem(id: string) {
+  const res = await api.post<APIResponse<WorkItemExecutionResponse>>(`/work-items/${id}/retry`);
+  if (!res.data.success || res.data.data === undefined) throw new Error("Unexpected API response");
+  return res.data.data;
+}

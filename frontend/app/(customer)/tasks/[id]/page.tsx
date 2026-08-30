@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { decideApproval, getErrorMessage, getWorkItemHistory, listApprovals, type WorkItemHistoryEvent } from "@/lib/api";
-import { dispatchWorkItem, listWorkItems } from "@/lib/work-items-api";
+import { cancelWorkItem, dispatchWorkItem, listWorkItems, retryWorkItem } from "@/lib/work-items-api";
 import { formatDate } from "@/lib/utils";
 
 export default function WorkItemDetailPage() {
@@ -19,17 +19,15 @@ export default function WorkItemDetailPage() {
   const runId = typeof item?.output_data?.run_id === "string" ? item.output_data.run_id : null;
   const approvalsQuery = useQuery({ queryKey: ["work-item-approvals", runId], queryFn: () => listApprovals("pending"), enabled: Boolean(runId) });
   const approval = approvalsQuery.data?.find((candidate) => candidate.run_id === runId);
-  const dispatchMutation = useMutation({
-    mutationFn: () => dispatchWorkItem(id),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["work-item", id] }),
-        queryClient.invalidateQueries({ queryKey: ["work-item-history", id] }),
-        queryClient.invalidateQueries({ queryKey: ["work-item-approvals", runId] }),
-        queryClient.invalidateQueries({ queryKey: ["work-items"] }),
-      ]);
-    },
-  });
+  const refresh = async () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ["work-item", id] }),
+    queryClient.invalidateQueries({ queryKey: ["work-item-history", id] }),
+    queryClient.invalidateQueries({ queryKey: ["work-item-approvals", runId] }),
+    queryClient.invalidateQueries({ queryKey: ["work-items"] }),
+  ]);
+  const dispatchMutation = useMutation({ mutationFn: () => dispatchWorkItem(id), onSuccess: refresh });
+  const cancelMutation = useMutation({ mutationFn: () => cancelWorkItem(id), onSuccess: refresh });
+  const retryMutation = useMutation({ mutationFn: () => retryWorkItem(id), onSuccess: refresh });
   const decisionMutation = useMutation({
     mutationFn: ({ approvalId, decision }: { approvalId: string; decision: "approve" | "reject" }) => decideApproval(approvalId, decision),
     onSuccess: async () => {
@@ -40,13 +38,16 @@ export default function WorkItemDetailPage() {
       ]);
     },
   });
+  const busy = dispatchMutation.isPending || cancelMutation.isPending || retryMutation.isPending;
+  const canCancel = Boolean(item && ["assigned", "running", "waiting_approval"].includes(item.status));
+  const canRetry = item?.status === "failed";
 
   return <><Header title="Task" description="Canonical WorkItem execution detail"/><div className="p-6 space-y-4">
     {itemQuery.isLoading && <Spinner/>}
     {itemQuery.error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{getErrorMessage(itemQuery.error)}</div>}
     {!itemQuery.isLoading && !itemQuery.error && !item && <div className="rounded-lg border p-4 text-sm text-gray-600">Work item not found.</div>}
     {item && <>
-      <div className="rounded-xl border bg-white p-5 shadow-sm space-y-4"><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold">{item.title}</h2><p className="text-xs text-gray-500">Created {formatDate(item.created_at)}</p></div><div className="flex items-center gap-2"><Badge status={item.status}/>{item.executor_type && item.status !== "succeeded" && item.status !== "cancelled" && <Button size="sm" onClick={() => dispatchMutation.mutate()} loading={dispatchMutation.isPending}>Dispatch</Button>}</div></div><p className="text-sm text-gray-700">{item.description ?? String(item.input_data?.message ?? "Work item")}</p><dl className="grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-gray-500">Priority</dt><dd>{item.priority}</dd></div><div><dt className="text-gray-500">Executor</dt><dd>{item.executor_type ?? "Unassigned"}</dd></div><div><dt className="text-gray-500">Run</dt><dd>{runId ?? "Not started"}</dd></div></dl>{dispatchMutation.error && <p className="text-sm text-red-700">{getErrorMessage(dispatchMutation.error)}</p>}</div>
+      <div className="rounded-xl border bg-white p-5 shadow-sm space-y-4"><div className="flex items-center justify-between gap-3"><div><h2 className="font-semibold">{item.title}</h2><p className="text-xs text-gray-500">Created {formatDate(item.created_at)}</p></div><div className="flex items-center gap-2"><Badge status={item.status}/>{item.executor_type && !["succeeded", "cancelled"].includes(item.status) && <Button size="sm" onClick={() => dispatchMutation.mutate()} loading={dispatchMutation.isPending} disabled={busy}>Dispatch</Button>}{canCancel && <Button size="sm" variant="danger" onClick={() => cancelMutation.mutate()} loading={cancelMutation.isPending} disabled={busy}>Cancel</Button>}{canRetry && <Button size="sm" onClick={() => retryMutation.mutate()} loading={retryMutation.isPending} disabled={busy}>Retry</Button>}</div></div><p className="text-sm text-gray-700">{item.description ?? String(item.input_data?.message ?? "Work item")}</p><dl className="grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-gray-500">Priority</dt><dd>{item.priority}</dd></div><div><dt className="text-gray-500">Executor</dt><dd>{item.executor_type ?? "Unassigned"}</dd></div><div><dt className="text-gray-500">Run</dt><dd>{runId ?? "Not started"}</dd></div></dl>{dispatchMutation.error && <p className="text-sm text-red-700">{getErrorMessage(dispatchMutation.error)}</p>}{cancelMutation.error && <p className="text-sm text-red-700">{getErrorMessage(cancelMutation.error)}</p>}{retryMutation.error && <p className="text-sm text-red-700">{getErrorMessage(retryMutation.error)}</p>}</div>
       {runId && <section className="rounded-xl border bg-white p-5 shadow-sm"><div className="mb-4"><h3 className="font-semibold">Approval</h3><p className="text-xs text-gray-500">Approval requests are scoped to the WorkItem&apos;s correlated Run.</p></div>
         {approvalsQuery.isLoading && <Spinner/>}
         {approvalsQuery.error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{getErrorMessage(approvalsQuery.error)}</div>}
