@@ -6,7 +6,7 @@ import { Header } from "@/components/layout/header";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
-import { getErrorMessage, listRuns } from "@/lib/api";
+import { getErrorMessage, getWorkItemHistory, listRuns } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { CheckSquare } from "lucide-react";
 
@@ -15,6 +15,7 @@ const active = ["pending", "queued", "running", "waiting"];
 export default function TasksPage() {
   const q = useQuery({ queryKey: ["tasks"], queryFn: () => listRuns() });
   const tasks = [...(q.data ?? [])].sort((a,b) => new Date(b.created_at).getTime()-new Date(a.created_at).getTime());
+  // Legacy Run records remain the queue source during compatibility migration; canonical WorkItem audit history is fetched per execution where available.
   return <><Header title="Tasks" description="Operational task queue backed by AI employee runs" /><div className="p-6 space-y-4">
     {q.isLoading && <Spinner/>}
     {q.error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{getErrorMessage(q.error)}</div>}
