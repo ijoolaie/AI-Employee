@@ -71,11 +71,12 @@ async def test_human_work_item_waits_for_approval_then_dispatches_after_approval
     assert calls == []
 
     work_item.policy_context["approved"] = True
+    work_item.status = WorkItemStatus.ASSIGNED
     resumed = await service.dispatch(work_item)
 
-    assert resumed.dispatched is False
-    assert resumed.waiting_for_approval is True
-    assert calls == []
+    assert resumed.dispatched is True
+    assert resumed.waiting_for_approval is False
+    assert len(calls) == 1
 
 
 def test_human_completion_rejects_non_owner():
