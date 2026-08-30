@@ -5,7 +5,8 @@ import { Header } from "@/components/layout/header";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
-import { getErrorMessage, listWorkItems } from "@/lib/api";
+import { getErrorMessage } from "@/lib/api";
+import { listWorkItems } from "@/lib/work-items-api";
 import { formatDate } from "@/lib/utils";
 import { CheckSquare } from "lucide-react";
 
