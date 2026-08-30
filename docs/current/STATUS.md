@@ -10,7 +10,7 @@ AI-Employee has substantial real implementation across core SaaS, AI, tenant, bi
 
 The Unified Execution implementation and lifecycle/concurrency hardening are already merged through PR #189. Phase 11 is therefore not an initial implementation phase; it is an acceptance/evidence phase. Issue #170 remains open until its runtime exit criteria are fully evidenced.
 
-### Evidence levels
+## Evidence levels
 
 - **AS-BUILT** — implementation exists and is wired into the application.
 - **VERIFIED** — relevant automated verification has passed.
@@ -31,16 +31,19 @@ The V1.5 execution sequence has additionally merged WorkItem execution, Human an
 - Human and Agent assignment/dispatch paths exist.
 - UnifiedExecutionService is the canonical execution service.
 - AgentExecutionAdapter bridges Agent WorkItems to the existing Run runtime.
+- HumanExecutionAdapter records real human dispatch without falsely completing the human task.
 - Authorization and tenant boundaries are enforced in the reviewed execution paths.
 - Approval-required execution is represented in the execution contract.
 - Audit/history is exposed through the canonical execution history path.
 - Cancel and retry lifecycle behavior has dedicated implementation/test slices.
 - Dispatch claim concurrency is hardened with tenant-scoped row locking and a committed RUNNING state before external execution.
 - PR #189 completed the latest dispatch concurrency hardening and passed the reviewed CI, CodeQL, Architecture Guard, Production Observability and Production Rollback & Alerting checks before merge.
+- A production-like real-stack certification script now exercises registration → real database WorkItem creation → API assignment → API dispatch → database state → execution history, and is wired into the release-grade Production Certification product gates.
 
 ### Remaining Phase 11 acceptance
 
-- Complete runtime E2E evidence for Human and Agent paths.
+- Execute the new real-stack Unified WorkItem gate in GitHub Actions and retain its CI evidence.
+- Complete runtime E2E evidence for both Human and Agent paths where the current certification stack supports them.
 - Verify the complete authorization/policy → approval → execution → audit → result/history chain under real runtime conditions.
 - Verify negative policy/authorization cases required by Issue #170.
 - Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than shell/navigation-only evidence.
@@ -72,7 +75,7 @@ The V1.5 execution sequence has additionally merged WorkItem execution, Human an
 | WhatsApp inbound | AS-BUILT | Inbound foundation exists. |
 | WhatsApp outbound | EXTERNAL-PENDING | Provider/runtime certification remains. |
 | Unified Execution foundation | VERIFIED AS-BUILT | Human/Agent execution substrate and lifecycle hardening are merged and tested. |
-| Unified Execution E2E | IN PROGRESS | Final runtime acceptance and evidence reconciliation remain; Issue #170 is open. |
+| Unified Execution E2E | IN PROGRESS | Real-stack gate has been added; CI evidence and remaining full-path acceptance are still required; Issue #170 is open. |
 | Workspace architecture | VERIFIED AS-BUILT | Platform/Reseller/Client route and role separation is merged. |
 | Workspace ↔ execution runtime integration | IN PROGRESS | Must be verified against real WorkItem/Agent APIs. |
 | Test Center | PLANNED / PARTIAL CONTRACTS | Evidence contracts/slices exist; first-class platform remains downstream. |
@@ -93,7 +96,8 @@ The V1.5 execution sequence has additionally merged WorkItem execution, Human an
 
 - The V1.4 engineering baseline has substantial real-stack verification evidence.
 - The V1.5 Unified Execution substrate is implemented and lifecycle/concurrency hardened through PR #189.
-- Phase 11 / Unified Execution E2E is in its final acceptance stage, not initial implementation.
+- A real-stack Unified WorkItem assignment/dispatch/audit certification path is now part of the release-grade certification workflow.
+- Phase 11 / Unified Execution E2E remains in final acceptance until the new gate and remaining full-path evidence pass.
 - Workspace architecture is merged; runtime workspace-to-execution integration remains an acceptance task.
 - CI success is current engineering evidence, not proof of external production deployment or customer acceptance.
 
@@ -101,14 +105,15 @@ Do not claim complete Unified Execution E2E certification until Issue #170 exit 
 
 ## Next execution order
 
-1. Finish Unified Execution E2E acceptance for Human and Agent paths and close Issue #170 only after its exit criteria are evidenced.
-2. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs and role/tenant boundaries.
-3. Close runtime integration gaps discovered by E2E acceptance while preserving authorization, tenant isolation and audit invariants.
-4. Expand Test Center evidence workflows where repeatable acceptance proof is required.
-5. Continue compatibility migration for existing Employee-backed capabilities.
-6. Continue production hardening and independently collect external production evidence.
-7. Execute Phase 6E Vendor → Reseller → Client production delivery when required external evidence is available.
-8. Only after the execution substrate is operationally stable, proceed with downstream Agent Teams/Marketplace and scale/governance work.
+1. Run and validate the new real-stack Unified WorkItem certification gate in Production Certification.
+2. Finish remaining Human/Agent full-path E2E acceptance and close Issue #170 only after its exit criteria are evidenced.
+3. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs and role/tenant boundaries.
+4. Close runtime integration gaps discovered by E2E acceptance while preserving authorization, tenant isolation and audit invariants.
+5. Expand Test Center evidence workflows where repeatable acceptance proof is required.
+6. Continue compatibility migration for existing Employee-backed capabilities.
+7. Continue production hardening and independently collect external production evidence.
+8. Execute Phase 6E Vendor → Reseller → Client production delivery when required external evidence is available.
+9. Only after the execution substrate is operationally stable, proceed with downstream Agent Teams/Marketplace and scale/governance work.
 
 ## Documentation policy
 
