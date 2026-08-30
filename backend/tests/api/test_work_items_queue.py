@@ -13,16 +13,20 @@ async def test_work_item_queue_is_tenant_scoped():
     tenant_id = uuid4()
     other_tenant_id = uuid4()
     own = WorkItem(
+        id=uuid4(),
         tenant_id=tenant_id,
         title="own item",
+        priority=1,
         status=WorkItemStatus.READY,
         input_data={},
         policy_context={},
         idempotency_key=f"queue-own-{uuid4()}",
     )
     other = WorkItem(
+        id=uuid4(),
         tenant_id=other_tenant_id,
         title="other item",
+        priority=1,
         status=WorkItemStatus.READY,
         input_data={},
         policy_context={},
