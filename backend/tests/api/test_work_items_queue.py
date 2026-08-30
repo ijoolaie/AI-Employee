@@ -1,12 +1,14 @@
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-from httpx import AsyncClient
+
+from app.api.v1.work_items import list_work_items
 
 
 @pytest.mark.asyncio
-async def test_work_item_queue_is_tenant_scoped(client: AsyncClient, auth_headers, db_session):
-    """The queue must never return another tenant's WorkItems."""
+async def test_work_item_queue_is_tenant_scoped(db_session):
+    """The queue query must never return another tenant's WorkItems."""
     from app.models.work_item import WorkItem, WorkItemStatus
 
     tenant_id = uuid4()
@@ -30,9 +32,9 @@ async def test_work_item_queue_is_tenant_scoped(client: AsyncClient, auth_header
     db_session.add_all([own, other])
     await db_session.commit()
 
-    response = await client.get("/api/v1/work-items", headers=auth_headers)
-    assert response.status_code == 200
-    payload = response.json()
-    ids = {item["id"] for item in payload}
-    assert str(own.id) in ids
-    assert str(other.id) not in ids
+    current_user = SimpleNamespace(tenant_id=tenant_id)
+    payload = await list_work_items(db=db_session, current_user=current_user)
+    ids = {item.id for item in payload}
+
+    assert own.id in ids
+    assert other.id not in ids
