@@ -23,6 +23,8 @@ The current implementation establishes a canonical WorkItem execution path for H
 
 PR #190 aligned the frontend WorkItem client with canonical backend response shapes and passed CI + CodeQL before merge. PR #192 added focused API-boundary acceptance evidence for Human assignment/dispatch, approval waiting semantics, Agent adapter wiring and truthful execution-failure audit semantics; CI, CodeQL and Architecture Guard passed before merge. PR #194 adds repeatable negative-policy, cross-tenant and approval-resume acceptance evidence; CI, CodeQL and Architecture Guard passed on the PR head before its changes were reconciled onto current `main`.
 
+A remaining Human runtime gap was identified in the canonical dispatch API: the service required a HumanExecutor at dispatch time while the API supplied no runtime adapter. The gap is now addressed by `backend/app/services/human_execution_adapter.py`, and the WorkItem dispatch API wires that lightweight adapter for Human work. The adapter records dispatch and leaves the WorkItem `RUNNING`; explicit Human completion remains the terminal success operation. A Phase 11 acceptance test now covers this runtime path. The fix is implementation evidence only until its CI execution is observed.
+
 ## Done / evidenced
 
 - V1.4 initial execution wave (#69–#73) completed.
@@ -40,14 +42,16 @@ PR #190 aligned the frontend WorkItem client with canonical backend response sha
 - PR #190 closed a concrete frontend/backend WorkItem response-contract compatibility gap and passed CI + CodeQL before merge.
 - PR #192 added repeatable API-boundary Phase 11 acceptance evidence for Human dispatch, approval waiting and Agent failure/audit paths; CI, CodeQL and Architecture Guard passed before merge.
 - PR #194 added repeatable negative policy, cross-tenant and approval-resume acceptance evidence; its CI, CodeQL and Architecture Guard runs all passed on the PR head.
+- Human WorkItem dispatch now has a canonical lightweight runtime adapter, with explicit completion remaining separate from dispatch.
 
 ## In progress / next
 
-1. Reconcile the remaining full-path runtime evidence for Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history and close Issue #170 only when its complete exit criteria are evidenced.
-2. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than navigation or shell-only evidence.
-3. Close runtime integration gaps discovered by E2E acceptance, preserving authorization, tenant isolation and audit invariants.
-4. Expand Test Center evidence workflows where acceptance needs repeatable proof.
-5. Continue compatibility migration and production hardening; collect independent external production evidence separately from CI evidence.
+1. Observe CI evidence for the Human runtime adapter fix and resolve any failures.
+2. Reconcile the remaining full-path runtime evidence for Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history and close Issue #170 only when its complete exit criteria are evidenced.
+3. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than navigation or shell-only evidence.
+4. Close runtime integration gaps discovered by E2E acceptance, preserving authorization, tenant isolation and audit invariants.
+5. Expand Test Center evidence workflows where acceptance needs repeatable proof.
+6. Continue compatibility migration and production hardening; collect independent external production evidence separately from CI evidence.
 
 ## Important boundaries
 
