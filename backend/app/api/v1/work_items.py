@@ -34,6 +34,21 @@ class ExecutionResponse(BaseModel):
     waiting_for_approval: bool
 
 
+class WorkItemSummary(BaseModel):
+    id: UUID
+    title: str
+    description: str | None
+    status: str
+    priority: int
+    requester_id: UUID | None
+    executor_type: str | None
+    executor_id: UUID | None
+    input_data: dict
+    output_data: dict | None
+    created_at: object
+    updated_at: object
+
+
 class ExecutionHistoryItem(BaseModel):
     id: UUID
     action: str
@@ -52,8 +67,43 @@ async def _get_work_item(db: AsyncSession, work_item_id: UUID, tenant_id: UUID) 
     return item
 
 
+def _summary(item: WorkItem) -> WorkItemSummary:
+    return WorkItemSummary(
+        id=item.id,
+        title=item.title,
+        description=item.description,
+        status=item.status.value,
+        priority=item.priority,
+        requester_id=item.requester_id,
+        executor_type=item.executor_type.value if item.executor_type else None,
+        executor_id=item.executor_id,
+        input_data=item.input_data or {},
+        output_data=item.output_data,
+        created_at=item.created_at,
+        updated_at=item.updated_at,
+    )
+
+
 def _response(result) -> ExecutionResponse:
     return ExecutionResponse(work_item_id=result.work_item.id, status=result.work_item.status.value, dispatched=result.dispatched, waiting_for_approval=result.waiting_for_approval)
+
+
+@router.get("", response_model=list[WorkItemSummary])
+async def list_work_items(
+    status_filter: str | None = Query(default=None, alias="status"),
+    limit: int = Query(default=100, ge=1, le=200),
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_context),
+):
+    stmt = select(WorkItem).where(WorkItem.tenant_id == current_user.tenant_id).order_by(WorkItem.created_at.desc()).limit(limit)
+    if status_filter:
+        try:
+            from app.models.work_item import WorkItemStatus
+            stmt = stmt.where(WorkItem.status == WorkItemStatus(status_filter))
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid work item status") from exc
+    result = await db.execute(stmt)
+    return [_summary(item) for item in result.scalars().all()]
 
 
 @router.get("/{work_item_id}/history", response_model=list[ExecutionHistoryItem])
