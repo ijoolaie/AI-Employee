@@ -14,6 +14,7 @@ from app.models.audit_log import AuditLog
 from app.models.work_item import WorkItem
 from app.services.agent_execution_adapter import AgentExecutionAdapter
 from app.services.execution_audit import record_execution_event
+from app.services.human_execution_adapter import HumanExecutionAdapter
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 
 router = APIRouter(prefix="/work-items", tags=["work-items"])
@@ -175,8 +176,9 @@ async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), curre
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
     is_agent = item.executor_type is not None and item.executor_type.value == "agent"
     agent_executor = AgentExecutionAdapter(db) if is_agent else None
+    human_executor = None if is_agent else HumanExecutionAdapter()
     try:
-        result = await UnifiedExecutionService(db, agent_executor=agent_executor).dispatch(item)
+        result = await UnifiedExecutionService(db, human_executor=human_executor, agent_executor=agent_executor).dispatch(item)
         action = _dispatch_audit_action(result)
         await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action=action, actor_type="user", actor_id=current_user.user_id, status="success" if result.work_item.status.value == "succeeded" else "failure" if result.work_item.status.value == "failed" else "pending", metadata={"status": item.status.value, **(item.output_data or {})})
         await db.commit()
