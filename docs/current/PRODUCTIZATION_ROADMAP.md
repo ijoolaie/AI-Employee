@@ -4,9 +4,9 @@
 
 Authoritative delivery roadmap. V1.4 remains the frozen architecture foundation; V1.5 adds the Human + Agent operating model.
 
-## Current position — 2026-08-29
+## Current position — 2026-08-30
 
-**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation, Platform/Reseller implementation slices, and role-aware workspace separation are merged. The active frontier is now end-to-end acceptance and production hardening.**
+**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation and lifecycle/concurrency hardening, Platform/Reseller implementation slices, and role-aware workspace separation are merged. The active frontier is now final Unified Execution E2E acceptance, runtime workspace verification, and production hardening.**
 
 The product is **Agent-first, not Employee-first**. Every capability in Platform, Reseller and Client must be executable by a Human, a specialized Agent, or both. The same WorkItem, authorization, tools, approvals, audit and output contracts apply to either executor. Existing Employee code remains a compatibility layer during migration.
 
@@ -52,9 +52,7 @@ Authoritative V1.5 architecture: `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md
 
 ## Phase 8 — Unified Execution Foundation
 
-**🟢 IMPLEMENTATION SUBSTANTIALLY COMPLETE / E2E ACCEPTANCE NEXT.**
-
-Merged implementation slices now cover WorkItem execution, delegation/handoff, policy/tool controls, telemetry, Test Center contracts, Workspace projections, and Agent Team orchestration/lifecycle/recovery/completion/health. Remaining work is reconciliation, gap closure and production hardening—not treating Phase 8 as merely planned.
+**🟢 IMPLEMENTATION SUBSTANTIALLY COMPLETE / E2E ACCEPTANCE NEAR COMPLETION.** Merged implementation slices cover WorkItem execution, delegation/handoff, policy/tool controls, telemetry, Test Center contracts, Workspace projections, and Agent Team orchestration/lifecycle/recovery/completion/health. Lifecycle and dispatch concurrency hardening are also merged. Remaining work is final runtime acceptance, reconciliation, gap closure and production hardening—not initial implementation of the execution substrate.
 
 Build the common substrate before adding many new agent screens.
 
@@ -93,9 +91,9 @@ Specialized agents: Portfolio Health, Account Management, Sales, Support/Triage,
 
 Every task can be performed manually, delegated to an Agent, or collaboratively executed.
 
-## Phase 11 — Client Business Workspace
+## Phase 11 — Client Business Workspace / Unified Execution Acceptance
 
-**🟡 WORKSPACE ARCHITECTURE MERGED / OPERATIONAL E2E ACCEPTANCE NEXT.**
+**🟡 WORKSPACE ARCHITECTURE AND EXECUTION SLICES MERGED / FINAL OPERATIONAL E2E ACCEPTANCE IN PROGRESS.** The acceptance scope is Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history, including tenant/RBAC boundaries and real workspace API usage. Issue #170 remains open until all exit criteria are evidenced and reconciled.
 
 Outcome-first UI: Home, Customers, Orders, Products, Sales, Marketing, Support, Finance, Tasks, AI & Automation, Reports, Integrations and **Test Center**.
 
@@ -160,10 +158,11 @@ Every phase must preserve:
 
 # Immediate execution order
 
-1. Execute Unified Execution E2E acceptance for both Human and Agent paths.
-2. Verify Platform/Reseller/Client workspace actions against real WorkItem and Agent APIs.
-3. Close runtime gaps discovered by E2E acceptance and preserve authorization/audit invariants.
+1. Finish Unified Execution E2E acceptance for both Human and Agent paths and close Issue #170 only after its exit criteria are evidenced.
+2. Verify Platform/Reseller/Client workspace actions against real WorkItem and Agent APIs, including role and tenant boundaries.
+3. Close runtime gaps discovered by E2E acceptance and preserve authorization, tenant isolation and audit invariants.
 4. Expand Test Center evidence where repeatable acceptance proof is required.
 5. Continue compatibility migration for existing Employee-backed capabilities.
-6. Add downstream Agent Teams/Marketplace work only after the execution substrate is operationally stable.
-7. Execute Phase 6E production delivery independently; never confuse CI evidence with production evidence.
+6. Continue production hardening and independently collect external production evidence; do not treat CI as production certification.
+7. Execute Phase 6E Vendor → Reseller → Client production delivery when the required external evidence is available.
+8. Add downstream Agent Teams/Marketplace work only after the execution substrate and acceptance are operationally stable.
