@@ -6,7 +6,7 @@ Authoritative delivery roadmap. V1.4 remains the frozen architecture foundation;
 
 ## Current position — 2026-08-30
 
-**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation and lifecycle/concurrency hardening, Platform/Reseller implementation slices, and role-aware workspace separation are merged. The active frontier is final Unified Execution E2E acceptance, runtime workspace verification, and production hardening.**
+**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation and lifecycle/concurrency hardening, Platform/Reseller implementation slices, and role-aware workspace separation are merged. Production Certification run 33322632204 passed the real-stack Unified WorkItem Human gate; the active frontier is reconciliation of the remaining Unified Execution exit criteria, runtime workspace verification, and production hardening.**
 
 The product is **Agent-first, not Employee-first**. Every capability in Platform, Reseller and Client must be executable by a Human, a specialized Agent, or both. The same WorkItem, authorization, tools, approvals, audit and output contracts apply to either executor. Existing Employee code remains a compatibility layer during migration.
 
@@ -64,7 +64,7 @@ Authoritative V1.5 architecture: `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md
 
 ## Phase 11 — Client Business Workspace / Unified Execution Acceptance
 
-**🟡 FINAL OPERATIONAL E2E ACCEPTANCE IN PROGRESS.** Workspace architecture and the major execution/lifecycle slices are merged. The remaining acceptance scope is Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history, including tenant/RBAC boundaries, negative policy paths and real workspace API usage. Issue #170 remains open until all exit criteria are evidenced and reconciled.
+**🟡 ACCEPTANCE RECONCILIATION IN PROGRESS.** Workspace architecture and the major execution/lifecycle slices are merged. Production Certification run 33322632204 passed with Failed gates: 0 and included the real-stack Human WorkItem assignment → dispatch → PostgreSQL state → audit/history gate. The remaining acceptance scope is explicit reconciliation of Agent runtime, approval/policy negatives and real workspace API usage against Issue #170. Issue #170 remains open until all exit criteria are evidenced and reconciled.
 
 ## Phase 12 — Test Center & Evidence Platform
 
@@ -97,7 +97,7 @@ Every phase must preserve:
 
 # Immediate execution order
 
-1. Finish Unified Execution E2E acceptance for both Human and Agent paths and close Issue #170 only after its exit criteria are evidenced.
+1. Reconcile Production Certification run 33322632204 and existing acceptance evidence against every Issue #170 exit criterion; add only genuinely missing Human/Agent, approval/policy or workspace real-API evidence, then close #170.
 2. Verify Platform/Reseller/Client workspace actions against real WorkItem and Agent APIs, including role and tenant boundaries.
 3. Close runtime gaps discovered by E2E acceptance and preserve authorization, tenant isolation and audit invariants.
 4. Expand Test Center evidence where repeatable acceptance proof is required.
