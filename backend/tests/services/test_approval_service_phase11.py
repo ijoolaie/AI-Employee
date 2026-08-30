@@ -29,22 +29,16 @@ class Db:
 
 @pytest.mark.asyncio
 async def test_approval_decision_approve_moves_run_to_pending_and_audits(monkeypatch):
-    tenant_id = uuid4()
-    approval_id = uuid4()
-    run_id = uuid4()
-    user_id = uuid4()
-    approval = SimpleNamespace(
-        id=approval_id, tenant_id=tenant_id, run_id=run_id, tool_name="crm.lookup",
-        status="pending", decided_by=None, decision_reason=None, decided_at=None,
-    )
+    tenant_id, approval_id, run_id, user_id = uuid4(), uuid4(), uuid4(), uuid4()
+    approval = SimpleNamespace(id=approval_id, tenant_id=tenant_id, run_id=run_id, tool_name="crm.lookup", status="pending", decided_by=None, decision_reason=None, decided_at=None)
     run = SimpleNamespace(id=run_id, tenant_id=tenant_id, status="waiting", error=None, request_id="req-11")
     audit = []
-    monkeypatch.setattr(approval_service.audit_service, "record", lambda *args, **kwargs: audit.append(kwargs))
 
-    result = await approval_service.decide(
-        Db(approval, run), approval_id=approval_id, tenant_id=tenant_id,
-        decided_by=user_id, decision="approve", reason="safe", actor_type="user",
-    )
+    async def record(*args, **kwargs):
+        audit.append(kwargs)
+
+    monkeypatch.setattr(approval_service.audit_service, "record", record)
+    result = await approval_service.decide(Db(approval, run), approval_id=approval_id, tenant_id=tenant_id, decided_by=user_id, decision="approve", reason="safe", actor_type="user")
 
     assert result.status == "approved"
     assert run.status == "pending"
@@ -56,17 +50,14 @@ async def test_approval_decision_approve_moves_run_to_pending_and_audits(monkeyp
 @pytest.mark.asyncio
 async def test_approval_decision_rejects_and_records_failure(monkeypatch):
     tenant_id = uuid4()
-    approval = SimpleNamespace(
-        id=uuid4(), tenant_id=tenant_id, run_id=uuid4(), tool_name="payments.refund",
-        status="pending", decided_by=None, decision_reason=None, decided_at=None,
-    )
+    approval = SimpleNamespace(id=uuid4(), tenant_id=tenant_id, run_id=uuid4(), tool_name="payments.refund", status="pending", decided_by=None, decision_reason=None, decided_at=None)
     run = SimpleNamespace(id=approval.run_id, tenant_id=tenant_id, status="waiting", error=None, request_id=None)
-    monkeypatch.setattr(approval_service.audit_service, "record", lambda *args, **kwargs: None)
 
-    result = await approval_service.decide(
-        Db(approval, run), approval_id=approval.id, tenant_id=tenant_id,
-        decided_by=uuid4(), decision="reject", reason="policy denied", actor_type="user",
-    )
+    async def record(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(approval_service.audit_service, "record", record)
+    result = await approval_service.decide(Db(approval, run), approval_id=approval.id, tenant_id=tenant_id, decided_by=uuid4(), decision="reject", reason="policy denied", actor_type="user")
 
     assert result.status == "rejected"
     assert run.status == "failed"
@@ -76,23 +67,15 @@ async def test_approval_decision_rejects_and_records_failure(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_agent_approval_requires_explicit_delegation_policy():
-    tenant_id = uuid4()
-    agent_id = uuid4()
+    tenant_id, agent_id = uuid4(), uuid4()
     approval = SimpleNamespace(tool_name="crm.lookup")
-    agent = SimpleNamespace(
-        id=agent_id, tenant_id=tenant_id, enabled=True,
-        status=AgentInstanceStatus.ENABLED, configuration={},
-    )
+    agent = SimpleNamespace(id=agent_id, tenant_id=tenant_id, enabled=True, status=AgentInstanceStatus.ENABLED, configuration={})
 
     with pytest.raises(ConflictError, match="not authorized"):
-        await approval_service._authorize_agent_decision(
-            Db(agent), agent_id=agent_id, tenant_id=tenant_id, approval=approval,
-        )
+        await approval_service._authorize_agent_decision(Db(agent), agent_id=agent_id, tenant_id=tenant_id, approval=approval)
 
 
 @pytest.mark.asyncio
 async def test_agent_approval_is_tenant_scoped():
     with pytest.raises(NotFoundError, match="not found"):
-        await approval_service._authorize_agent_decision(
-            Db(None), agent_id=uuid4(), tenant_id=uuid4(), approval=SimpleNamespace(tool_name="crm.lookup"),
-        )
+        await approval_service._authorize_agent_decision(Db(None), agent_id=uuid4(), tenant_id=uuid4(), approval=SimpleNamespace(tool_name="crm.lookup"))
