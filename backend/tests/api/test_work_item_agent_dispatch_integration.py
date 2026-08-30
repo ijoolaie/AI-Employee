@@ -41,8 +41,8 @@ async def test_agent_dispatch_wires_adapter_into_execution_service(monkeypatch):
             calls["adapter_db"] = db_value
 
     class FakeService:
-        def __init__(self, db_value, *, agent_executor=None):
-            calls["service"] = (db_value, agent_executor)
+        def __init__(self, db_value, *, agent_executor=None, human_executor=None):
+            calls["service"] = (db_value, agent_executor, human_executor)
 
         async def dispatch(self, item):
             calls["dispatch"] = item
@@ -64,6 +64,7 @@ async def test_agent_dispatch_wires_adapter_into_execution_service(monkeypatch):
 
     assert calls["lookup"] == (db, work_item_id, tenant_id)
     assert isinstance(calls["service"][1], FakeAdapter)
+    assert calls["service"][2] is None
     assert calls["adapter_db"] is db
     assert calls["dispatch"] is work_item
     assert result.work_item_id == work_item_id

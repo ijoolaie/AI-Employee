@@ -44,6 +44,8 @@ async def test_human_work_item_happy_path_assign_dispatch_complete():
     service.assign_human(work_item, human_id)
 
     dispatched = await service.dispatch(work_item)
+    dispatched_status = dispatched.work_item.status
+    dispatched_output = dict(dispatched.work_item.output_data or {})
     completed = service.complete_human(
         work_item,
         executor_id=human_id,
@@ -52,8 +54,8 @@ async def test_human_work_item_happy_path_assign_dispatch_complete():
 
     assert dispatched.dispatched is True
     assert dispatched.waiting_for_approval is False
-    assert dispatched.work_item.status is WorkItemStatus.RUNNING
-    assert dispatched.work_item.output_data["status"] == "dispatched"
+    assert dispatched_status is WorkItemStatus.RUNNING
+    assert dispatched_output["status"] == "dispatched"
     assert completed.status is WorkItemStatus.SUCCEEDED
     assert completed.output_data["result"] == "done"
 

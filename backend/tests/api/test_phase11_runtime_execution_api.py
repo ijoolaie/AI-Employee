@@ -151,8 +151,9 @@ async def test_agent_dispatch_failure_is_audited_truthfully(monkeypatch):
             calls["adapter"] = True
 
     class FakeService:
-        def __init__(self, _db, *, agent_executor=None):
+        def __init__(self, _db, *, agent_executor=None, human_executor=None):
             calls["service_agent_executor"] = agent_executor
+            calls["service_human_executor"] = human_executor
 
         async def dispatch(self, received):
             return SimpleNamespace(work_item=received, dispatched=False, waiting_for_approval=False)
@@ -172,6 +173,7 @@ async def test_agent_dispatch_failure_is_audited_truthfully(monkeypatch):
     )
 
     assert isinstance(calls["service_agent_executor"], FakeAdapter)
+    assert calls["service_human_executor"] is None
     assert result.status == WorkItemStatus.FAILED.value
     assert calls["audit"]["action"] == "work_item.execution_failed"
     assert calls["audit"]["status"] == "failure"
