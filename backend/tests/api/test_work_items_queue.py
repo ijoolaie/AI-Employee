@@ -44,6 +44,7 @@ async def test_work_item_queue_is_tenant_scoped():
             return Result()
 
     payload = await list_work_items(
+        status_filter=None,
         db=Db(),
         current_user=SimpleNamespace(tenant_id=tenant_id),
         limit=100,
