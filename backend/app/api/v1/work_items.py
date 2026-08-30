@@ -88,6 +88,16 @@ def _response(result) -> ExecutionResponse:
     return ExecutionResponse(work_item_id=result.work_item.id, status=result.work_item.status.value, dispatched=result.dispatched, waiting_for_approval=result.waiting_for_approval)
 
 
+def _dispatch_audit_action(result) -> str:
+    if result.waiting_for_approval:
+        return "work_item.waiting_approval"
+    if result.work_item.status.value == "succeeded":
+        return "work_item.execution_succeeded"
+    if result.work_item.status.value == "failed":
+        return "work_item.execution_failed"
+    return "work_item.dispatched"
+
+
 @router.get("", response_model=list[WorkItemSummary])
 async def list_work_items(
     status_filter: str | None = Query(default=None, alias="status"),
@@ -155,8 +165,8 @@ async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), curre
     agent_executor = AgentExecutionAdapter(db) if is_agent else None
     try:
         result = await UnifiedExecutionService(db, agent_executor=agent_executor).dispatch(item)
-        action = "work_item.waiting_approval" if result.waiting_for_approval else "work_item.dispatched"
-        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action=action, actor_type="user", actor_id=current_user.user_id, metadata={"status": item.status.value, **(item.output_data or {})})
+        action = _dispatch_audit_action(result)
+        await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action=action, actor_type="user", actor_id=current_user.user_id, status="success" if result.work_item.status.value == "succeeded" else "failure" if result.work_item.status.value == "failed" else "pending", metadata={"status": item.status.value, **(item.output_data or {})})
         await db.commit()
     except ExecutionError as exc:
         await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.execution_failed", actor_type="user", actor_id=current_user.user_id, status="failure", metadata={"error_type": type(exc).__name__})
