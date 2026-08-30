@@ -31,7 +31,7 @@ async def test_execution_dispatch_emits_correlated_telemetry():
     item = SimpleNamespace(
         id=uuid4(),
         tenant_id=uuid4(),
-        status=WorkItemStatus.READY,
+        status=WorkItemStatus.ASSIGNED,
         executor_type=ExecutorType.HUMAN,
         executor_id=uuid4(),
         output_data=None,
@@ -56,7 +56,7 @@ async def test_execution_failure_emits_failed_telemetry():
     item = SimpleNamespace(
         id=uuid4(),
         tenant_id=uuid4(),
-        status=WorkItemStatus.READY,
+        status=WorkItemStatus.ASSIGNED,
         executor_type=ExecutorType.HUMAN,
         executor_id=uuid4(),
         output_data=None,
