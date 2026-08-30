@@ -61,26 +61,13 @@ class UnifiedExecutionService:
         work_item.status = WorkItemStatus.ASSIGNED
         return work_item
 
-    def delegate(
-        self,
-        work_item: WorkItem,
-        *,
-        actor_id: uuid.UUID,
-        target_type: ExecutorType,
-        target_id: uuid.UUID,
-        title: str | None = None,
-        description: str | None = None,
-        context: dict[str, Any] | None = None,
-        artifacts: list[dict[str, Any]] | None = None,
-    ) -> WorkItem:
-        """Create a child WorkItem for another executor without crossing tenants."""
+    def delegate(self, work_item: WorkItem, *, actor_id: uuid.UUID, target_type: ExecutorType, target_id: uuid.UUID, title: str | None = None, description: str | None = None, context: dict[str, Any] | None = None, artifacts: list[dict[str, Any]] | None = None) -> WorkItem:
         if work_item.executor_id != actor_id or work_item.executor_type is None:
             raise ExecutionError("current executor is not authorized to delegate")
         if work_item.status not in {WorkItemStatus.ASSIGNED, WorkItemStatus.RUNNING}:
             raise ExecutionError("work item is not delegable")
         if target_id == actor_id and target_type is work_item.executor_type:
             raise ExecutionError("work item cannot be delegated to itself")
-
         parent_context = dict(work_item.policy_context or {})
         child_context = dict(parent_context)
         child_context["delegated_from"] = str(work_item.id)
@@ -88,7 +75,6 @@ class UnifiedExecutionService:
             child_context["delegation_context"] = context
         if artifacts:
             child_context["delegation_artifacts"] = artifacts
-
         child = WorkItem(
             tenant_id=work_item.tenant_id,
             title=title or work_item.title,
@@ -98,11 +84,7 @@ class UnifiedExecutionService:
             requester_id=work_item.requester_id,
             executor_type=target_type,
             executor_id=target_id,
-            input_data={
-                **(work_item.input_data or {}),
-                "delegated_context": context or {},
-                "delegated_artifacts": artifacts or [],
-            },
+            input_data={**(work_item.input_data or {}), "delegated_context": context or {}, "delegated_artifacts": artifacts or []},
             policy_context=child_context,
             idempotency_key=f"delegation:{work_item.id}:{target_type.value}:{target_id}:{uuid.uuid4()}",
             parent_work_item_id=work_item.id,
@@ -117,31 +99,18 @@ class UnifiedExecutionService:
             raise ExecutionError("work item has no executor")
         policy = work_item.policy_context or {}
         policy_result = ExecutionPolicy.authorize(
-            tenant_id=work_item.tenant_id,
-            actor_tenant_id=work_item.tenant_id,
-            capabilities=set(policy.get("capabilities", [])),
-            required_capability=policy.get("required_capability"),
-            tool=policy.get("tool"),
-            allowed_tools=set(policy.get("allowed_tools", [])),
-            budget_used=float(policy.get("budget_used", 0.0)),
-            budget_limit=policy.get("budget_limit"),
-            requires_approval=self._requires_approval(work_item),
-            approved=bool(policy.get("approved")),
-            active_executions=int(policy.get("active_executions", 0)),
-            concurrency_limit=policy.get("concurrency_limit"),
-            secret_names=set(policy.get("secret_names", [])),
-            requested_secret=policy.get("requested_secret"),
-            export_secret=bool(policy.get("export_secret")),
+            tenant_id=work_item.tenant_id, actor_tenant_id=work_item.tenant_id,
+            capabilities=set(policy.get("capabilities", [])), required_capability=policy.get("required_capability"),
+            tool=policy.get("tool"), allowed_tools=set(policy.get("allowed_tools", [])),
+            budget_used=float(policy.get("budget_used", 0.0)), budget_limit=policy.get("budget_limit"),
+            requires_approval=self._requires_approval(work_item), approved=bool(policy.get("approved")),
+            active_executions=int(policy.get("active_executions", 0)), concurrency_limit=policy.get("concurrency_limit"),
+            secret_names=set(policy.get("secret_names", [])), requested_secret=policy.get("requested_secret"), export_secret=bool(policy.get("export_secret")),
         )
         if policy_result.get("waiting_for_approval"):
             work_item.status = WorkItemStatus.WAITING_APPROVAL
             return ExecutionResult(work_item, False, True)
-        if (
-            work_item.executor_type is ExecutorType.AGENT
-            and work_item.status is WorkItemStatus.RUNNING
-            and isinstance(work_item.output_data, dict)
-            and work_item.output_data.get("run_id")
-        ):
+        if work_item.executor_type is ExecutorType.AGENT and work_item.status is WorkItemStatus.RUNNING and isinstance(work_item.output_data, dict) and work_item.output_data.get("run_id"):
             return ExecutionResult(work_item, False)
         work_item.status = WorkItemStatus.RUNNING
         started = self.telemetry.started()
@@ -161,8 +130,9 @@ class UnifiedExecutionService:
                     raise ExecutionError("agent executor is unavailable")
                 if not agent.enabled or agent.status is not AgentInstanceStatus.ENABLED:
                     raise ExecutionError("agent executor is not available")
-                work_item.output_data = await self._invoke(self.agent_executor.dispatch, work_item, agent)
-                work_item.status = WorkItemStatus.RUNNING
+                output = await self._invoke(self.agent_executor.dispatch, work_item, agent)
+                work_item.output_data = output
+                work_item.status = self._agent_result_status(output)
             else:
                 raise ExecutionError("unsupported executor type")
             self.telemetry.emit(ExecutionEvent(tenant_id=work_item.tenant_id, work_item_id=work_item.id, event="dispatched", duration_ms=self.telemetry.elapsed_ms(started), correlation_id=correlation_id))
@@ -194,6 +164,14 @@ class UnifiedExecutionService:
             work_item.output_data = output
         work_item.status = WorkItemStatus.FAILED
         return work_item
+
+    @staticmethod
+    def _agent_result_status(output: dict[str, Any] | None) -> WorkItemStatus:
+        if isinstance(output, dict) and str(output.get("status", "")).lower() in {"failed", "failure", "error"}:
+            return WorkItemStatus.FAILED
+        if isinstance(output, dict) and str(output.get("status", "")).lower() in {"succeeded", "success", "completed", "complete"}:
+            return WorkItemStatus.SUCCEEDED
+        return WorkItemStatus.RUNNING
 
     @staticmethod
     async def _invoke(fn, *args):
