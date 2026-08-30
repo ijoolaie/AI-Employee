@@ -60,9 +60,21 @@ class ExecutionHistoryItem(BaseModel):
     created_at: object
 
 
-async def _get_work_item(db: AsyncSession, work_item_id: UUID, tenant_id: UUID) -> WorkItem:
-    item = await db.get(WorkItem, work_item_id)
-    if item is None or item.tenant_id != tenant_id:
+async def _get_work_item(
+    db: AsyncSession, work_item_id: UUID, tenant_id: UUID, *, for_update: bool = False
+) -> WorkItem:
+    if for_update:
+        stmt = (
+            select(WorkItem)
+            .where(WorkItem.id == work_item_id, WorkItem.tenant_id == tenant_id)
+            .with_for_update()
+        )
+        item = (await db.execute(stmt)).scalar_one_or_none()
+    else:
+        item = await db.get(WorkItem, work_item_id)
+        if item is not None and item.tenant_id != tenant_id:
+            item = None
+    if item is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="work item not found")
     return item
 
@@ -191,7 +203,7 @@ async def cancel(work_item_id: UUID, db: AsyncSession = Depends(get_db), current
 
 @router.post("/{work_item_id}/retry", response_model=ExecutionResponse)
 async def retry(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
-    item = await _get_work_item(db, work_item_id, current_user.tenant_id)
+    item = await _get_work_item(db, work_item_id, current_user.tenant_id, for_update=True)
     try:
         UnifiedExecutionService(db).retry(item)
         await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.retry", actor_type="user", actor_id=current_user.user_id, status="success", metadata={"status": item.status.value, "retry_count": (item.policy_context or {}).get("retry_count", 0)})
