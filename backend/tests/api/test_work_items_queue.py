@@ -43,7 +43,11 @@ async def test_work_item_queue_is_tenant_scoped():
             captured["statement"] = stmt
             return Result()
 
-    payload = await list_work_items(db=Db(), current_user=SimpleNamespace(tenant_id=tenant_id))
+    payload = await list_work_items(
+        db=Db(),
+        current_user=SimpleNamespace(tenant_id=tenant_id),
+        limit=100,
+    )
 
     assert [item.id for item in payload] == [own.id]
     statement = captured["statement"]
