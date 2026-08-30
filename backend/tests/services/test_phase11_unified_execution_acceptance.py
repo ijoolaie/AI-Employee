@@ -8,6 +8,24 @@ from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 
 
+class DispatchDb:
+    def __init__(self, work_item, agent=None):
+        self.work_item = work_item
+        self.agent = agent
+
+    async def execute(self, *_args):
+        return SimpleNamespace(scalar_one_or_none=lambda: self.work_item)
+
+    async def get(self, *_args):
+        return self.agent
+
+    async def flush(self):
+        return None
+
+    async def commit(self):
+        return None
+
+
 @pytest.mark.asyncio
 async def test_human_work_item_happy_path_assign_dispatch_complete():
     tenant_id = uuid4()
@@ -26,7 +44,7 @@ async def test_human_work_item_happy_path_assign_dispatch_complete():
             assert received is work_item
             return {"accepted": True, "correlation_id": str(received.id)}
 
-    service = UnifiedExecutionService(SimpleNamespace(), human_executor=HumanExecutor())
+    service = UnifiedExecutionService(DispatchDb(work_item), human_executor=HumanExecutor())
     service.assign_human(work_item, human_id)
 
     dispatched = await service.dispatch(work_item)
@@ -61,7 +79,7 @@ async def test_human_work_item_waits_for_approval_then_dispatches_after_approval
             calls.append(received.id)
             return {"accepted": True}
 
-    service = UnifiedExecutionService(SimpleNamespace(), human_executor=HumanExecutor())
+    service = UnifiedExecutionService(DispatchDb(work_item), human_executor=HumanExecutor())
     service.assign_human(work_item, human_id)
 
     waiting = await service.dispatch(work_item)
@@ -122,16 +140,12 @@ async def test_agent_dispatch_records_run_correlation_and_duplicate_is_idempoten
     )
     calls = []
 
-    class Db:
-        async def get(self, *_args):
-            return agent
-
     class AgentExecutor:
         async def dispatch(self, *_args):
             calls.append(True)
             return {"run_id": str(run_id)}
 
-    service = UnifiedExecutionService(Db(), agent_executor=AgentExecutor())
+    service = UnifiedExecutionService(DispatchDb(work_item, agent), agent_executor=AgentExecutor())
     first = await service.dispatch(work_item)
     second = await service.dispatch(work_item)
 
