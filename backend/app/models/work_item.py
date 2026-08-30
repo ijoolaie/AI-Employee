@@ -41,10 +41,17 @@ class WorkItem(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
-    status: Mapped[WorkItemStatus] = mapped_column(Enum(WorkItemStatus), nullable=False, default=WorkItemStatus.DRAFT, insert_default=WorkItemStatus.DRAFT)
+    status: Mapped[WorkItemStatus] = mapped_column(
+        Enum(WorkItemStatus, values_callable=lambda enum_type: [item.value for item in enum_type]),
+        nullable=False,
+        default=WorkItemStatus.DRAFT,
+        insert_default=WorkItemStatus.DRAFT,
+    )
     priority: Mapped[int] = mapped_column(nullable=False, default=0)
     requester_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
-    executor_type: Mapped[ExecutorType | None] = mapped_column(Enum(ExecutorType))
+    executor_type: Mapped[ExecutorType | None] = mapped_column(
+        Enum(ExecutorType, values_callable=lambda enum_type: [item.value for item in enum_type])
+    )
     executor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
     input_data: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     output_data: Mapped[dict | None] = mapped_column(JSONB)
