@@ -120,6 +120,27 @@ jobs:
           path: phase6e-evidence/
           if-no-files-found: error
 
+      - name: Collect stack diagnostics on failure
+        if: failure()
+        run: |
+          set +e
+          mkdir -p phase6e-evidence/failure-diagnostics
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production ps > phase6e-evidence/failure-diagnostics/compose-ps.txt 2>&1
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production logs --no-color api > phase6e-evidence/failure-diagnostics/api.log 2>&1
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production logs --no-color worker > phase6e-evidence/failure-diagnostics/worker.log 2>&1
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production logs --no-color beat > phase6e-evidence/failure-diagnostics/beat.log 2>&1
+          docker inspect $(docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production ps -q api) > phase6e-evidence/failure-diagnostics/api-inspect.json 2>&1
+          curl -sv http://127.0.0.1:18000/health/dependencies > phase6e-evidence/failure-diagnostics/api-health.txt 2>&1
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production ps
+
+      - name: Upload failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: phase6e-failure-diagnostics-${{ github.run_id }}
+          path: phase6e-evidence/failure-diagnostics/
+          if-no-files-found: warn
+
       - name: Cleanup
         if: always()
         run: |
