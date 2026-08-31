@@ -54,6 +54,7 @@ jobs:
           RATE_LIMIT_ENABLED=true
           RATE_LIMIT_FAIL_CLOSED=true
           SMTP_ALLOWED_RECIPIENT_DOMAINS=[]
+          STRIPE_PRICE_MAP={}
           EOF
 
       - name: Validate production compose
