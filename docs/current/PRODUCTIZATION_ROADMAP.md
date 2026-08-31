@@ -4,9 +4,9 @@
 
 Authoritative delivery roadmap. V1.4 remains the frozen architecture foundation; V1.5 adds the Human + Agent operating model.
 
-## Current position — 2026-08-30
+## Current position — 2026-08-31
 
-**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation and lifecycle/concurrency hardening, Platform/Reseller implementation slices, and role-aware workspace separation are merged. Production Certification run 33322632204 passed the real-stack Unified WorkItem Human gate; the active frontier is reconciliation of the remaining Unified Execution exit criteria, runtime workspace verification, and production hardening.**
+**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation and lifecycle/concurrency hardening, Platform/Reseller implementation slices, role-aware workspace separation, and Phase 11 real-stack acceptance are complete. Production Certification run 33369071987 passed Human and Agent Unified WorkItem gates with Failed gates: 0. The active frontier is external production evidence for Phase 5/6E, followed by Phase 12 Test Center & Evidence Platform.**
 
 The product is **Agent-first, not Employee-first**. Every capability in Platform, Reseller and Client must be executable by a Human, a specialized Agent, or both. The same WorkItem, authorization, tools, approvals, audit and output contracts apply to either executor. Existing Employee code remains a compatibility layer during migration.
 
@@ -64,7 +64,7 @@ Authoritative V1.5 architecture: `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md
 
 ## Phase 11 — Client Business Workspace / Unified Execution Acceptance
 
-**🟡 ACCEPTANCE RECONCILIATION IN PROGRESS.** Workspace architecture and the major execution/lifecycle slices are merged. Production Certification run 33322632204 passed with Failed gates: 0 and included the real-stack Human WorkItem assignment → dispatch → PostgreSQL state → audit/history gate. The remaining acceptance scope is explicit reconciliation of Agent runtime, approval/policy negatives and real workspace API usage against Issue #170. Issue #170 remains open until all exit criteria are evidenced and reconciled.
+**🟢 COMPLETE.** Phase 11 exit criteria are reconciled and Issue #170 is closed. Production Certification run **33369071987** on commit **bcacbc0eb03b247ad00a232e4eb6324ce5c849df** passed the real-stack Human and Agent WorkItem gates with **Failed gates: 0**, including Agent runtime binding, Agent → Run correlation, commercial licensing, policy/negative-path evidence, approval/resume evidence, workspace/canonical WorkItem API acceptance, backend/frontend test suites and Playwright E2E.
 
 ## Phase 12 — Test Center & Evidence Platform
 
@@ -97,9 +97,9 @@ Every phase must preserve:
 
 # Immediate execution order
 
-1. Reconcile Production Certification run 33322632204 and existing acceptance evidence against every Issue #170 exit criterion; add only genuinely missing Human/Agent, approval/policy or workspace real-API evidence, then close #170.
-2. Verify Platform/Reseller/Client workspace actions against real WorkItem and Agent APIs, including role and tenant boundaries.
-3. Close runtime gaps discovered by E2E acceptance and preserve authorization, tenant isolation and audit invariants.
+1. Preserve Phase 11 closure evidence and keep Issue #170 closed unless new regression evidence reopens the acceptance scope.
+2. Verify Platform/Reseller/Client workspace actions against real WorkItem and Agent APIs, including role and tenant boundaries, as ongoing production hardening.
+3. Close runtime gaps discovered by future E2E acceptance and preserve authorization, tenant isolation and audit invariants.
 4. Expand Test Center evidence where repeatable acceptance proof is required.
 5. Continue compatibility migration for existing Employee-backed capabilities.
 6. Continue production hardening and independently collect external production evidence; do not treat CI as production certification.
