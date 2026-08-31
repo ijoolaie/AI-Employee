@@ -1,0 +1,126 @@
+name: Phase 6E Self-Hosted Acceptance Rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Exact git revision to rehearse
+        required: true
+        type: string
+      release_version:
+        description: Release version represented by the revision
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  self-hosted-rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.revision }}
+          fetch-depth: 1
+
+      - name: Verify exact revision
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "${{ inputs.revision }}"
+          printf 'source_commit_sha=%s\n' "$actual"
+
+      - name: Create rehearsal production configuration
+        run: |
+          set -euo pipefail
+          cat > .env.production <<'EOF'
+          POSTGRES_USER=aiep
+          POSTGRES_PASSWORD=rehearsal-only-password
+          POSTGRES_DB=aiep
+          REDIS_PASSWORD=rehearsal-only-redis-password
+          SECRET_KEY=rehearsal-only-secret-key-change-me
+          DATABASE_URL=postgresql+asyncpg://aiep:rehearsal-only-password@postgres:5432/aiep
+          DATABASE_URL_SYNC=postgresql://aiep:rehearsal-only-password@postgres:5432/aiep
+          REDIS_URL=redis://:rehearsal-only-redis-password@redis:6379/0
+          CELERY_BROKER_URL=redis://:rehearsal-only-redis-password@redis:6379/1
+          CELERY_RESULT_BACKEND=redis://:rehearsal-only-redis-password@redis:6379/2
+          CORS_ORIGINS=["http://127.0.0.1:13000"]
+          FRONTEND_BASE_URL=http://127.0.0.1:13000
+          FRONTEND_APP_URL=http://127.0.0.1:13000
+          NEXT_PUBLIC_API_URL=http://127.0.0.1:18000
+          RATE_LIMIT_ENABLED=true
+          RATE_LIMIT_FAIL_CLOSED=true
+          EOF
+
+      - name: Validate production compose
+        run: |
+          set -euo pipefail
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml config --quiet
+
+      - name: Deploy local production-like stack
+        run: |
+          set -euo pipefail
+          ./scripts/local_production_deploy.sh
+
+      - name: Run database migration and record head
+        run: |
+          set -euo pipefail
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production exec -T api alembic upgrade head
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production exec -T api alembic current
+
+      - name: Run backup restore smoke
+        run: |
+          set -euo pipefail
+          ./scripts/production_backup_restore_smoke.sh
+
+      - name: Run controlled recovery drill
+        run: |
+          set -euo pipefail
+          ./scripts/local_rollback_drill.sh
+
+      - name: Collect self-hosted evidence manifest
+        run: |
+          set -euo pipefail
+          mkdir -p phase6e-evidence
+          source_sha="$(git rev-parse HEAD)"
+          timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          migration_head="$(docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production exec -T api alembic current | tr -d '\r' | tail -n 1)"
+          cat > phase6e-evidence/self-hosted-vendor-rehearsal.md <<EOF
+          # Phase 6E Self-Hosted Vendor Rehearsal
+
+          This record is a local production-like rehearsal. It is NOT external Vendor production acceptance.
+
+          - environment_id: vendor-self-hosted-rehearsal
+          - edition: vendor
+          - release_version: ${{ inputs.release_version }}
+          - source_commit_sha: $source_sha
+          - deployment_timestamp_utc: $timestamp
+          - migration_head: $migration_head
+          - hostname_or_service_identifier: github-actions-ubuntu-runner
+          - operator: GitHub Actions workflow
+          - health_check_result: PASS
+          - backup_check_result: PASS
+          - monitoring_check_result: NOT_CONFIGURED_IN_REHEARSAL
+          - security_check_result: REHEARSAL_ONLY
+          - recovery_check_result: PASS
+          - handoff_status: NOT_APPLICABLE
+
+          ## Evidence boundary
+
+          This rehearsal validates repository deployment automation, production Compose configuration, migrations, health checks, backup/restore smoke behavior, and controlled recovery. It does not prove external DNS/TLS, production secrets, monitoring destinations, customer acceptance, or external Vendor production deployment.
+          EOF
+
+      - name: Upload rehearsal evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: phase6e-self-hosted-rehearsal-${{ inputs.release_version }}
+          path: phase6e-evidence/
+          if-no-files-found: error
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production down -v --remove-orphans || true
