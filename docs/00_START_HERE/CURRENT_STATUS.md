@@ -1,70 +1,61 @@
 # Current Status
 
-**Last reconciled:** 2026-08-30
-**Status:** ACTIVE IMPLEMENTATION / UNIFIED EXECUTION ACCEPTANCE RECONCILIATION
+**Last reconciled:** 2026-08-31  
+**Status:** ACTIVE IMPLEMENTATION / PRODUCTION HARDENING + EXTERNAL EVIDENCE
 
 ## Where we are
 
 | Dimension | Current truth |
 |---|---|
 | Latest published GitHub release | v1.3.0 |
-| Latest production-certified baseline | v1.2.1-final (certification inherited by v1.2.2 release record) |
+| Latest explicitly production-certified baseline | v1.2.1-final (later release records carry/inherit that certification lineage) |
 | Latest release tag | v1.3.0 → `73ae16ca51f4cced83e3f03cb5dc0e6239287471` |
+| Current main | `94243f15184d2055dc5e0c2c65d78c73ab06eb20` |
+| Main vs v1.3.0 | **221 commits ahead** |
 | Architecture baseline | V1.4 (frozen) |
 | Current architecture extension | V1.5 Agentic Operating Model |
-| Active repository frontier | Reconcile remaining Unified Execution exit criteria; workspace/runtime verification and production hardening follow |
-| External Vendor → Reseller → Client acceptance | Pending external production evidence |
+| Phase 11 | **COMPLETE** — Production Certification `33369071987`, Failed gates: 0; Issue #170 closed |
+| Active repository frontier | Production hardening, release/reconciliation work and independent external production evidence |
+| Phase 5 / 6E | External production evidence pending |
+| Next planned product phase | Phase 12 — Test Center & Evidence Platform |
 
-## Git / implementation truth
+## Current implementation truth
 
-On 2026-08-30, the Unified Execution lifecycle/concurrency hardening sequence through PR #189 is merged on current `main`. PR #189 (`fix(execution): make dispatch claim concurrency-safe`) completed the latest dispatch claim/finalization concurrency hardening and passed its reviewed CI, CodeQL, Architecture Guard, Production Observability and Production Rollback & Alerting checks before merge.
+The current `main` is materially ahead of the published `v1.3.0` tag. A Git comparison reports 221 commits ahead of `73ae16ca51f4cced83e3f03cb5dc0e6239287471`. Those commits include the V1.5 Agentic Operating Model, Unified Execution services/models/migrations, Agent runtime binding and execution adapter, policy/approval/audit/telemetry, Agent Teams foundations, Platform Command Center, role-aware workspaces, E2E certification scripts and Phase 11 acceptance tests.
 
-The current implementation establishes a canonical WorkItem execution path for Human and Agent executors, including assignment, authorization/policy, approval, dispatch, cancellation/retry, execution result and audit/history. The remaining Phase 11 work is evidence reconciliation against the complete exit criteria, not initial implementation of the execution substrate.
+This establishes implementation progress beyond `v1.3.0`; it does **not** establish external production deployment for those post-release commits.
 
-PR #190 aligned the frontend WorkItem client with canonical backend response shapes and passed CI + CodeQL before merge. PR #192 added focused API-boundary acceptance evidence for Human assignment/dispatch, approval waiting semantics, Agent adapter wiring and truthful execution-failure audit semantics; CI, CodeQL and Architecture Guard passed before merge. PR #194 adds repeatable negative-policy, cross-tenant and approval-resume acceptance evidence; CI, CodeQL and Architecture Guard passed on the PR head before its changes were reconciled onto current `main`.
+## Phase 11 final evidence
 
-A remaining Human runtime gap was identified in the canonical dispatch API: the service required a HumanExecutor at dispatch time while the API supplied no runtime adapter. The gap is now addressed by `backend/app/services/human_execution_adapter.py`, and the WorkItem dispatch API wires that lightweight adapter for Human work. The adapter records dispatch and leaves the WorkItem `RUNNING`; explicit Human completion remains the terminal success operation. A Phase 11 acceptance test now covers this runtime path. The fix is implementation evidence only until its CI execution is observed.
+Phase 11 is complete. Production Certification run **33369071987** on commit **bcacbc0eb03b247ad00a232e4eb6324ce5c849df** passed Human and Agent real-stack Unified WorkItem gates with **Failed gates: 0**. Evidence includes Agent runtime binding, Agent → Run correlation, commercial licensing, policy/negative paths, approval/resume, workspace/canonical WorkItem API acceptance, backend/frontend suites and Playwright E2E. Issue #170 is closed.
 
-## Done / evidenced
+## Evidence levels
 
-- V1.4 initial execution wave (#69–#73) completed.
-- Unified Execution implementation slices through Phase 10.3 are merged.
-- Unified Execution lifecycle hardening through completion, cancel/retry and dispatch concurrency is merged through PR #189.
-- Platform Command Center implementation slices are merged.
-- Reseller Operations implementation slices are merged.
-- Role-aware Platform, Reseller and Client workspace separation is merged.
-- Workspace route-collision fixes are merged and the production frontend build passed in PR #168.
-- Tenant/RBAC and key product acceptance gates have internal verification evidence.
-- Vendor/Reseller/Customer delivery model exists.
-- Agent-first, Human + Agent execution model is documented.
-- Documentation governance, source-of-truth map and release/tag policy are established.
-- Phase 11 acceptance slices cover Human execution, Agent execution, approval, authorization/tenant boundaries, audit/history, cancel/retry and dispatch concurrency.
-- PR #190 closed a concrete frontend/backend WorkItem response-contract compatibility gap and passed CI + CodeQL before merge.
-- PR #192 added repeatable API-boundary Phase 11 acceptance evidence for Human dispatch, approval waiting and Agent failure/audit paths; CI, CodeQL and Architecture Guard passed before merge.
-- PR #194 added repeatable negative policy, cross-tenant and approval-resume acceptance evidence; its CI, CodeQL and Architecture Guard runs all passed on the PR head.
-- Human WorkItem dispatch now has a canonical lightweight runtime adapter, with explicit completion remaining separate from dispatch.
+- **AS-BUILT** — implementation exists and is wired into the application.
+- **VERIFIED** — relevant automated or certification verification has passed.
+- **EXTERNAL-PENDING** — source/tooling exists but independent external runtime/provider/customer evidence is missing.
+- **DEFERRED** — outside current scope.
 
-## In progress / next
+## Current priorities
 
-Production Certification run 33322632204 (job 99287177728) passed with Failed gates: 0, including the real-stack Unified WorkItem Human assignment → dispatch → PostgreSQL state → audit/history gate.
-
-1. Reconcile that passing evidence with every Issue #170 exit criterion, especially explicit Agent runtime, approval/policy negative and workspace real-API evidence.
-2. Close Issue #170 only when the complete Human/Agent → WorkItem → authorization/policy → approval → execution → audit → result/history contract is evidenced.
-3. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than navigation or shell-only evidence.
-4. Close runtime integration gaps discovered by E2E acceptance, preserving authorization, tenant isolation and audit invariants.
-5. Expand Test Center evidence workflows where acceptance needs repeatable proof.
-6. Continue compatibility migration and production hardening; collect independent external production evidence separately from CI evidence.
+1. Preserve Phase 11 closure evidence and monitor for regression.
+2. Reconcile the current `main` implementation against release identity and external-production readiness; do not treat `v1.3.0` as the current implementation baseline.
+3. Execute Phase 5/6E Vendor → Reseller → Client production delivery only with an explicitly selected immutable release candidate and environment-specific evidence.
+4. Continue Platform/Reseller/Client workspace operational hardening under real role and tenant boundaries.
+5. Expand the Test Center into the first-class Phase 12 evidence platform.
+6. Continue compatibility migration of Employee-backed capabilities.
+7. Proceed to Phase 13/14 only after productionization and execution stability are operationally established.
 
 ## Important boundaries
 
-- CI/internal verification is not external production certification.
+- CI/internal certification is not external production certification.
 - A Git tag or GitHub release does not by itself prove deployment or production acceptance.
 - V1.4 is an architecture/execution baseline, not automatically a semantic product release.
 - V1.5 is an architecture extension, not a released product version.
 - Historical documents cannot override this status file.
 - Existing Employee functionality must migrate incrementally through compatibility paths.
-- Placeholder/informational workspace surfaces must not be represented as completed backend integrations.
-- Phase 11 is not marked complete merely because one real-stack gate passed; all Issue #170 exit criteria must be reconciled and evidenced.
+- Do not create a new release merely to make the roadmap appear current; release identity must be tied to an intentional immutable production candidate.
+- External Vendor/Reseller/Client production evidence remains pending until independently collected.
 
 ## Canonical documents
 
