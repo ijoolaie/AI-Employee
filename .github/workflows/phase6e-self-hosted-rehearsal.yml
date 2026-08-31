@@ -63,7 +63,7 @@ jobs:
       - name: Deploy local production-like stack
         run: |
           set -euo pipefail
-          ./scripts/local_production_deploy.sh
+          bash ./scripts/local_production_deploy.sh
 
       - name: Run database migration and record head
         run: |
@@ -74,12 +74,12 @@ jobs:
       - name: Run backup restore smoke
         run: |
           set -euo pipefail
-          ./scripts/production_backup_restore_smoke.sh
+          bash ./scripts/production_backup_restore_smoke.sh
 
       - name: Run controlled recovery drill
         run: |
           set -euo pipefail
-          ./scripts/local_rollback_drill.sh
+          bash ./scripts/local_rollback_drill.sh
 
       - name: Collect self-hosted evidence manifest
         run: |
