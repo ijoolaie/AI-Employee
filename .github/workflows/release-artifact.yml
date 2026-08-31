@@ -82,7 +82,12 @@ jobs:
         run: python scripts/build_release_package.py "${{ steps.release.outputs.version }}"
 
       - name: Generate release notes from exact release ref
-        run: python scripts/generate_release_notes.py "${{ steps.release.outputs.version }}"
+        shell: bash
+        run: |
+          set -euo pipefail
+          notes_tool_commit="396d17dbec5cf5a8b67f346c9e497ea7f60f1f44"
+          git show "${notes_tool_commit}:scripts/generate_release_notes.py" > /tmp/generate_release_notes.py
+          python /tmp/generate_release_notes.py "${{ steps.release.outputs.version }}"
 
       - name: Build Vendor, Reseller and Customer packages
         run: |
