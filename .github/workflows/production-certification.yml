@@ -137,6 +137,7 @@ jobs:
           run_gate "Orders -> Sales -> Invoice -> Billing" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_commerce_billing_verify.py'
           run_gate "Reports / Analytics Tenant Isolation" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_reports_analytics_verify.py'
           run_gate "Unified WorkItem real-stack execution" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_unified_work_item_verify.py'
+          run_gate "Agent WorkItem real-stack runtime binding" docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_agent_work_item_verify.py'
           echo "========== PRODUCT GATE SUMMARY =========="
           echo "Failed gates: ${failures}"
           [ "$failures" -eq 0 ]
