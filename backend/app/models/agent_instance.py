@@ -27,7 +27,16 @@ class AgentInstance(Base):
     agent_definition_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     configuration: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
-    status: Mapped[AgentInstanceStatus] = mapped_column(Enum(AgentInstanceStatus), nullable=False, default=AgentInstanceStatus.ENABLED, insert_default=AgentInstanceStatus.ENABLED)
+    status: Mapped[AgentInstanceStatus] = mapped_column(
+        Enum(
+            AgentInstanceStatus,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            name="agentinstancestatus",
+        ),
+        nullable=False,
+        default=AgentInstanceStatus.ENABLED,
+        insert_default=AgentInstanceStatus.ENABLED,
+    )
     max_concurrency: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     budget_policy: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
