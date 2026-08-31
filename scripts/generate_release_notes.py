@@ -11,6 +11,28 @@ def run(*args: str) -> str:
     return subprocess.check_output(["git", *args], text=True).strip()
 
 
+def previous_release_tag(version: str) -> str | None:
+    """Return the latest reachable release tag before ``version`` is created.
+
+    During workflow_dispatch packaging, the requested version is normally not
+    tagged yet. In that case ``git describe <version>^`` fails because the
+    version ref does not exist. If the version tag already exists, resolving
+    its parent preserves the expected behaviour for tag-triggered releases.
+    """
+    try:
+        run("rev-parse", "--verify", f"refs/tags/{version}^{{commit}}")
+    except subprocess.CalledProcessError:
+        try:
+            return run("describe", "--tags", "--abbrev=0", "HEAD")
+        except subprocess.CalledProcessError:
+            return None
+
+    try:
+        return run("describe", "--tags", "--abbrev=0", f"{version}^")
+    except subprocess.CalledProcessError:
+        return None
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print("usage: generate_release_notes.py <version>", file=sys.stderr)
@@ -23,11 +45,7 @@ def main() -> int:
 
     commit = run("rev-parse", "HEAD")
     date = run("show", "-s", "--format=%cs", "HEAD")
-
-    try:
-        previous = run("describe", "--tags", "--abbrev=0", f"{version}^")
-    except subprocess.CalledProcessError:
-        previous = None
+    previous = previous_release_tag(version)
 
     range_spec = f"{previous}..HEAD" if previous else "HEAD"
     commits = run(
@@ -36,7 +54,11 @@ def main() -> int:
         "--pretty=format:- %s (%h)",
         range_spec,
     )
-    files = run("diff", "--name-only", previous, "HEAD") if previous else run("show", "--format=", "--name-only", "HEAD")
+    files = (
+        run("diff", "--name-only", previous, "HEAD")
+        if previous
+        else run("show", "--format=", "--name-only", "HEAD")
+    )
 
     lines = [
         f"# Release Notes — {version}",
