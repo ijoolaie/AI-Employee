@@ -1,14 +1,16 @@
 # Current Project Status
 
 **Baseline:** V1.4  
-**Status date:** 2026-08-30  
+**Status date:** 2026-08-31  
 **Current source of truth:** this file, reconciled against repository source, merged PR history and the latest available CI evidence.
 
 ## Executive status
 
-AI-Employee has substantial real implementation across core SaaS, AI, tenant, billing, integrations, frontend, delivery and the V1.5 Agentic Operating Model. The current engineering frontier is **remaining Unified Execution full-path acceptance reconciliation**, followed by workspace/runtime verification, production hardening and external production evidence.
+AI-Employee has substantial real implementation across core SaaS, AI, tenant, billing, integrations, frontend, delivery and the V1.5 Agentic Operating Model. The current engineering frontier is **Unified Execution full-path acceptance reconciliation**, followed by workspace/runtime verification, production hardening and external production evidence.
 
-The Unified Execution implementation and lifecycle/concurrency hardening are already merged through PR #189. Phase 11 is therefore not an initial implementation phase; it is an acceptance/evidence phase. Issue #170 remains open because its full exit criteria still require reconciliation across both Human and Agent runtime paths, approval/policy negatives and workspace acceptance; the new Human real-stack gate itself is now evidenced.
+The Unified Execution implementation and lifecycle/concurrency hardening are already merged through PR #189. Production Certification run 33322632204 proved the Human real-stack WorkItem path. A new explicit Agent real-stack certification gate has now been added on branch `test/phase11-agent-real-stack-certification`; it is pending CI and runtime evidence.
+
+Issue #170 remains open because its full exit criteria still require reconciliation across both Human and Agent runtime paths, approval/policy negatives and workspace acceptance.
 
 ## Evidence levels
 
@@ -37,13 +39,13 @@ The V1.5 execution sequence has additionally merged WorkItem execution, Human an
 - Audit/history is exposed through the canonical execution history path.
 - Cancel and retry lifecycle behavior has dedicated implementation/test slices.
 - Dispatch claim concurrency is hardened with tenant-scoped row locking and a committed RUNNING state before external execution.
-- PR #189 completed the latest dispatch concurrency hardening and passed the reviewed CI, CodeQL, Architecture Guard, Production Observability and Production Rollback & Alerting checks before merge.
-- Production Certification run 33322632204 passed with Failed gates: 0, including the real-stack Unified WorkItem registration → PostgreSQL WorkItem → API assignment → API dispatch → database state → execution history gate.
+- Production Certification run 33322632204 passed with Failed gates: 0, including the real-stack Human Unified WorkItem registration → PostgreSQL WorkItem → API assignment → API dispatch → database state → execution history gate.
+- An explicit real-stack Agent certification script now provisions AgentDefinition, AgentInstance, AgentRuntimeBinding and EmployeeVersion records in PostgreSQL, dispatches an Agent WorkItem through the API, and verifies the resulting tenant-scoped Run correlation. The gate is wired into Production Certification on branch `test/phase11-agent-real-stack-certification` and awaits CI/runtime evidence.
 
 ### Remaining Phase 11 acceptance
 
-- Reconcile the passed real-stack Human WorkItem gate with the remaining Issue #170 exit criteria; its GitHub Actions evidence is Production Certification run 33322632204 (job 99287177728).
-- Complete runtime E2E evidence for both Human and Agent paths where the current certification stack supports them.
+- Run and evidence the new real-stack Agent WorkItem certification gate.
+- Reconcile Human and Agent real-stack evidence with every Issue #170 exit criterion.
 - Verify the complete authorization/policy → approval → execution → audit → result/history chain under real runtime conditions.
 - Verify negative policy/authorization cases required by Issue #170.
 - Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs rather than shell/navigation-only evidence.
@@ -75,7 +77,8 @@ The V1.5 execution sequence has additionally merged WorkItem execution, Human an
 | WhatsApp inbound | AS-BUILT | Inbound foundation exists. |
 | WhatsApp outbound | EXTERNAL-PENDING | Provider/runtime certification remains. |
 | Unified Execution foundation | VERIFIED AS-BUILT | Human/Agent execution substrate and lifecycle hardening are merged and tested. |
-| Unified Execution E2E | PARTIALLY VERIFIED / IN PROGRESS | Production Certification run 33322632204 passed the real-stack Human assignment/dispatch/audit gate with Failed gates: 0; remaining Issue #170 full-path criteria still require explicit reconciliation. |
+| Unified WorkItem Human real-stack | VERIFIED | Production Certification run 33322632204 passed with Failed gates: 0. |
+| Unified WorkItem Agent real-stack | IN PROGRESS | Certification script and Production Certification gate are implemented; CI/runtime evidence is pending. |
 | Workspace architecture | VERIFIED AS-BUILT | Platform/Reseller/Client route and role separation is merged. |
 | Workspace ↔ execution runtime integration | IN PROGRESS | Must be verified against real WorkItem/Agent APIs. |
 | Test Center | PLANNED / PARTIAL CONTRACTS | Evidence contracts/slices exist; first-class platform remains downstream. |
@@ -96,8 +99,9 @@ The V1.5 execution sequence has additionally merged WorkItem execution, Human an
 
 - The V1.4 engineering baseline has substantial real-stack verification evidence.
 - The V1.5 Unified Execution substrate is implemented and lifecycle/concurrency hardened through PR #189.
-- A real-stack Unified WorkItem assignment/dispatch/audit certification path passed in Production Certification run 33322632204 with Failed gates: 0.
-- Phase 11 / Unified Execution E2E remains in final acceptance until the new gate and remaining full-path evidence pass.
+- The Human real-stack Unified WorkItem assignment/dispatch/audit path passed in Production Certification run 33322632204 with Failed gates: 0.
+- An Agent real-stack certification gate is now implemented and wired into Production Certification, but is not yet VERIFIED until a GitHub run proves it.
+- Phase 11 / Unified Execution E2E remains in final acceptance until Human + Agent full-path evidence and the remaining Issue #170 criteria pass.
 - Workspace architecture is merged; runtime workspace-to-execution integration remains an acceptance task.
 - CI success is current engineering evidence, not proof of external production deployment or customer acceptance.
 
@@ -105,15 +109,16 @@ Do not claim complete Unified Execution E2E certification until Issue #170 exit 
 
 ## Next execution order
 
-1. Reconcile Production Certification run 33322632204 evidence against every remaining Issue #170 exit criterion, especially Agent runtime, approval/policy negatives and workspace real-API acceptance.
-2. Finish any genuinely missing full-path acceptance and close Issue #170 only after every exit criterion is evidenced.
-3. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs and role/tenant boundaries.
-4. Close runtime integration gaps discovered by E2E acceptance while preserving authorization, tenant isolation and audit invariants.
-5. Expand Test Center evidence workflows where repeatable acceptance proof is required.
-6. Continue compatibility migration for existing Employee-backed capabilities.
-7. Continue production hardening and independently collect external production evidence.
-8. Execute Phase 6E Vendor → Reseller → Client production delivery when required external evidence is available.
-9. Only after the execution substrate is operationally stable, proceed with downstream Agent Teams/Marketplace and scale/governance work.
+1. Run the new real-stack Agent WorkItem certification gate in Production Certification and retain its CI evidence.
+2. Reconcile the Human + Agent evidence against every remaining Issue #170 exit criterion, especially approval/policy negatives and workspace real-API acceptance.
+3. Finish any genuinely missing full-path acceptance and close Issue #170 only after every exit criterion is evidenced.
+4. Verify Platform/Reseller/Client workspace actions against real WorkItem/Agent APIs and role/tenant boundaries.
+5. Close runtime integration gaps discovered by E2E acceptance while preserving authorization, tenant isolation and audit invariants.
+6. Expand Test Center evidence workflows where repeatable acceptance proof is required.
+7. Continue compatibility migration for existing Employee-backed capabilities.
+8. Continue production hardening and independently collect external production evidence.
+9. Execute Phase 6E Vendor → Reseller → Client production delivery when required external evidence is available.
+10. Only after the execution substrate is operationally stable, proceed with downstream Agent Teams/Marketplace and scale/governance work.
 
 ## Documentation policy
 
