@@ -1,33 +1,33 @@
 # Current Priorities
 
-## Priority 0 — Documentation Truth Reconciliation
+## Priority 0 — Preserve Phase 11 Closure
 
-Keep roadmap/status documents aligned with merged implementation. The current reconciliation records workspace integration through PR #168 and the subsequent Unified Execution lifecycle/concurrency hardening through PR #189. Current wording must distinguish implementation-complete slices from final runtime acceptance evidence.
+Phase 11 Unified Execution E2E acceptance is complete. Production Certification run 33369071987 on commit `bcacbc0eb03b247ad00a232e4eb6324ce5c849df` passed the Human and Agent real-stack gates with Failed gates: 0, and Issue #170 is closed. Reopen this scope only if new regression evidence appears.
 
-## Priority 1 — Finish Unified Execution E2E Acceptance
+## Priority 1 — Current-State / Release Reconciliation
 
-Complete the final runtime acceptance evidence for the canonical execution contract:
+Keep the roadmap and status documents aligned with the actual `main` branch, merged PRs, release tags and certification evidence. The current `main` is 221 commits ahead of the published `v1.3.0` tag, so `v1.3.0` must not be treated as the current implementation baseline. Do not create a release merely to make documentation current.
 
-`Human or Agent → WorkItem → authorization/policy → approval when required → execution → audit → result/history`.
+## Priority 2 — Production Hardening & External Evidence
 
-The implementation and major acceptance slices are already merged. The remaining work is final runtime evidence reconciliation, gap closure and closure of Issue #170 only after its exit criteria are actually met.
+Continue production hardening and independently collect environment-specific evidence. CI and internal Production Certification are engineering evidence, not proof of external production deployment, live provider behavior or customer acceptance.
 
-## Priority 2 — Workspace ↔ Execution Integration
+## Priority 3 — Phase 5 / 6E External Delivery
 
-Verify Platform, Reseller and Client workspace actions against real WorkItem/Agent APIs and role boundaries. Navigation and route separation are merged; operational behavior and evidence remain the acceptance focus.
+When an intentional immutable release candidate is selected, execute the Vendor → Reseller → Client production delivery path with exact version/SHA, migration identity, artifact/checksum evidence and environment-specific acceptance. The implementation capability exists; the remaining claim is external evidence.
 
-## Priority 3 — Runtime Gap Closure & Compatibility
+## Priority 4 — Workspace Operational Hardening
 
-Close discrepancies discovered by E2E acceptance across API contracts, authorization, tenant boundaries, lifecycle behavior, frontend/backend integration and legacy Employee compatibility paths.
+Continue Platform, Reseller and Client workspace verification under real role and tenant boundaries and address any regressions discovered after Phase 11. The canonical WorkItem/Agent API path is accepted for Phase 11; broader production behavior remains subject to external evidence.
 
-## Priority 4 — Test Center & Evidence Expansion
+## Priority 5 — Test Center & Evidence Expansion
 
-Promote safe, permission-aware testing and repeatable acceptance evidence into workspace workflows where E2E validation requires it. Test Center remains a planned first-class evidence platform, not a prerequisite for every existing acceptance slice.
+Promote existing test/evidence contracts and service slices into the first-class Phase 12 Test Center once the execution substrate is operationally stable and productionization work is sufficiently controlled.
 
-## Priority 5 — Production Hardening and External Evidence
+## Priority 6 — Compatibility Migration
 
-Continue production hardening, release/certification reconciliation and independent collection of external production evidence. CI success must not be used as a substitute for production acceptance.
+Continue incremental migration of existing Employee-backed capabilities onto the unified Human/Agent execution model without breaking compatibility paths.
 
-## Priority 6 — Downstream Scale and Governance
+## Priority 7 — Downstream Productization
 
-After the execution substrate and E2E acceptance are operationally stable, continue Agent Teams, evaluations, cost controls, observability, reliability, governance and later Marketplace work according to the roadmap.
+After productionization and execution stability, proceed with Phase 13 Agent Teams & Marketplace and Phase 14 Scale, Governance & Production.
