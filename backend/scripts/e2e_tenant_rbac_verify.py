@@ -9,11 +9,9 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from sqlalchemy import delete, exists, select
-from sqlalchemy.sql.schema import Table
-from sqlalchemy.sql.elements import BooleanClauseList
-
+from sqlalchemy import delete, exists, or_, select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.sql.schema import Table
 
 from app.core.database import AsyncSessionLocal, Base
 from app.core.security import hash_password
@@ -105,21 +103,11 @@ async def create_restricted_member(tenant_slug: str, suffix: str) -> tuple[str, 
 
 
 def _tenant_cleanup_predicates(tenant_ids: list) -> dict[Table, object]:
-    """Build row predicates for every table reachable from the test tenants.
-
-    The test exercises several tables indirectly (employee versions, RBAC
-    association tables, knowledge chunks, etc.).  Deleting only `tenant_id`
-    rows is not enough because some dependent tables have only a foreign key
-    to another tenant-owned row.  We derive the dependency closure from the
-    SQLAlchemy metadata and delete it in reverse topological order.
-    """
+    """Build predicates for all rows owned by the supplied test tenants."""
     tables = list(Base.metadata.sorted_tables)
     tenant_table = Tenant.__table__
-    predicates: dict[Table, object] = {tenant_table: tenant_table.c.id.in_(tenant_ids)}
     scoped_tables = {tenant_table}
 
-    # A table is tenant-scoped if it directly stores tenant_id or has a FK to
-    # a tenant/scoped table. Repeat until the dependency closure stabilizes.
     changed = True
     while changed:
         changed = False
@@ -127,11 +115,14 @@ def _tenant_cleanup_predicates(tenant_ids: list) -> dict[Table, object]:
             if table in scoped_tables:
                 continue
             if "tenant_id" in table.c or any(
-                fk.column.table in scoped_tables for column in table.columns for fk in column.foreign_keys
+                fk.column.table in scoped_tables
+                for column in table.columns
+                for fk in column.foreign_keys
             ):
                 scoped_tables.add(table)
                 changed = True
 
+    predicates: dict[Table, object] = {tenant_table: tenant_table.c.id.in_(tenant_ids)}
     for table in tables:
         if table is tenant_table:
             continue
@@ -142,15 +133,8 @@ def _tenant_cleanup_predicates(tenant_ids: list) -> dict[Table, object]:
 
         for constraint in table.foreign_key_constraints:
             parent = constraint.referred_table
-            if parent not in scoped_tables:
-                continue
-            pairs = [
-                (element.parent, element.column)
-                for element in constraint.elements
-            ]
             parent_predicate = predicates.get(parent)
-            if parent_predicate is None:
-                # Parent predicates are computed in metadata/topological order.
+            if parent not in scoped_tables or parent_predicate is None:
                 continue
             clauses.append(
                 exists(
@@ -158,23 +142,24 @@ def _tenant_cleanup_predicates(tenant_ids: list) -> dict[Table, object]:
                     .select_from(parent)
                     .where(
                         parent_predicate,
-                        *[local == remote for local, remote in pairs],
+                        *[element.parent == element.column for element in constraint.elements],
                     )
                 )
             )
 
         if clauses:
-            predicates[table] = clauses[0] if len(clauses) == 1 else BooleanClauseList.or_(*clauses)
+            predicates[table] = or_(*clauses)
 
     return predicates
 
 
-async def cleanup_test_tenants(slugs: list[str], file_id: str | None = None) -> None:
-    """Remove only tenants created by this certification run.
+async def cleanup_test_tenants(slugs: list[str]) -> None:
+    """Delete only tenants created by this certification run.
 
-    This is intentionally DB-level cleanup rather than a production tenant
-    deletion API: certification fixtures must not depend on customer-facing
-    lifecycle APIs, and cleanup must still run when an assertion fails.
+    The cleanup follows the real FK graph so dependent rows without their own
+    tenant_id (for example employee_versions and user_roles) are removed
+    before their tenant-owned parents. It runs from a finally block, so a
+    failed certification cannot leave another pair of tenants behind.
     """
     if not slugs:
         return
@@ -186,7 +171,6 @@ async def cleanup_test_tenants(slugs: list[str], file_id: str | None = None) -> 
             return
 
         predicates = _tenant_cleanup_predicates(tenant_ids)
-        # Parent tables remain present while their dependent rows are deleted.
         for table in reversed(Base.metadata.sorted_tables):
             predicate = predicates.get(table)
             if predicate is not None:
@@ -197,7 +181,6 @@ async def cleanup_test_tenants(slugs: list[str], file_id: str | None = None) -> 
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     created_slugs: list[str] = []
-    file_id: str | None = None
     try:
         tenant_a_slug, _, token_a = register(suffix, "a")
         created_slugs.append(tenant_a_slug)
@@ -258,8 +241,6 @@ def main() -> int:
         assert "Missing permission: employee.write" in str(denied_write)
         print("RBAC WRITE DENY PASS")
 
-        # Knowledge isolation: Tenant A's file is the only source for its marker.
-        # Tenant B must not be able to retrieve or index Tenant A's knowledge resource.
         status, cross_index = request("POST", f"/knowledge/index/{file_id}", token=token_b)
         assert_status(status, 404, "cross-tenant knowledge index", cross_index)
         print("CROSS-TENANT KNOWLEDGE INDEX REJECT PASS")
@@ -274,7 +255,7 @@ def main() -> int:
         return 0
     finally:
         try:
-            asyncio.run(cleanup_test_tenants(created_slugs, file_id))
+            asyncio.run(cleanup_test_tenants(created_slugs))
             print(f"CERTIFICATION FIXTURE CLEANUP PASS tenants={len(created_slugs)}")
         except Exception as exc:  # pragma: no cover - cleanup must not hide the gate result
             print(f"CERTIFICATION FIXTURE CLEANUP FAIL: {exc}", file=sys.stderr)
