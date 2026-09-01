@@ -1,33 +1,48 @@
 # Current Priorities
 
-## Priority 0 — Preserve Phase 11 Closure
+## Priority 0 — Preserve v1.3.2 Release Identity
 
-Phase 11 Unified Execution E2E acceptance is complete. Production Certification run 33369071987 on commit `bcacbc0eb03b247ad00a232e4eb6324ce5c849df` passed the Human and Agent real-stack gates with Failed gates: 0, and Issue #170 is closed. Reopen this scope only if new regression evidence appears.
+The canonical candidate is `v1.3.2` on `release/v1.3.2-phase6e-candidate` at exact commit `728b7f447d3bc6376fb01d47730cdd70eaf07746`. Phase 6E rehearsal, Production Certification and release packaging have passed on that exact identity. Do not rebuild, retag or replace it without a real defect.
 
-## Priority 1 — Current-State / Release Reconciliation
+## Priority 1 — Production Target Prerequisite
 
-Keep the roadmap and status documents aligned with the actual `main` branch, merged PRs, release tags and certification evidence. The current `main` is 221 commits ahead of the published `v1.3.0` tag, so `v1.3.0` must not be treated as the current implementation baseline. Do not create a release merely to make documentation current.
+A real production target is required before target-specific evidence can be collected. The deployment workflow requires `PRODUCTION_DEPLOY_HOST`, `PRODUCTION_DEPLOY_USER`, `PRODUCTION_DEPLOY_SSH_KEY` and `PRODUCTION_CONTAINER_REGISTRY`, and verifies deployment against an immutable revision. Until a target exists and is configured, target deployment and target-specific production evidence remain blocked.
 
-## Priority 2 — Production Hardening & External Evidence
+## Priority 2 — Target-Specific Production Hardening
 
-Continue production hardening and independently collect environment-specific evidence. CI and internal Production Certification are engineering evidence, not proof of external production deployment, live provider behavior or customer acceptance.
+Once the target exists, execute the repository's production hardening and observability workflows against the exact candidate revision. Do not classify workflow existence as production evidence.
 
-## Priority 3 — Phase 5 / 6E External Delivery
+## Priority 3 — Recovery, DR and Rollback
 
-When an intentional immutable release candidate is selected, execute the Vendor → Reseller → Client production delivery path with exact version/SHA, migration identity, artifact/checksum evidence and environment-specific acceptance. The implementation capability exists; the remaining claim is external evidence.
+Run target-specific backup/restore, disaster-recovery and controlled rollback exercises on the exact release identity. Preserve logs, artifacts and recovery evidence for the final reconciliation.
 
-## Priority 4 — Workspace Operational Hardening
+## Priority 4 — Exact-Revision Deployment & Smoke Verification
 
-Continue Platform, Reseller and Client workspace verification under real role and tenant boundaries and address any regressions discovered after Phase 11. The canonical WorkItem/Agent API path is accepted for Phase 11; broader production behavior remains subject to external evidence.
+Deploy `v1.3.2` / `728b7f447...` to the real target, verify health/readiness and product behavior, and reconcile deployment revision with migration and artifact identities.
 
-## Priority 5 — Test Center & Evidence Expansion
+## Priority 5 — Final Evidence Reconciliation
 
-Promote existing test/evidence contracts and service slices into the first-class Phase 12 Test Center once the execution substrate is operationally stable and productionization work is sufficiently controlled.
+Build one authoritative evidence manifest tying together version/tag, exact SHA, migration head, certification runs, runtime checksum, edition checksum, deployment revision, observability, recovery/DR and rollback evidence.
 
-## Priority 6 — Compatibility Migration
+## Priority 6 — External Acceptance
 
-Continue incremental migration of existing Employee-backed capabilities onto the unified Human/Agent execution model without breaking compatibility paths.
+Only after the target-specific gates pass may the project enter the external Vendor → Reseller → Client acceptance sequence. There is currently no Vendor acceptance event to record.
 
-## Priority 7 — Downstream Productization
+## Priority 7 — Phase 12 Test Center & Evidence Platform
+
+Expand existing test/evidence contracts into the first-class Phase 12 Test Center where repeatable acceptance proof is needed, without destabilizing the release candidate.
+
+## Priority 8 — Compatibility Migration
+
+Continue incremental migration of existing Employee-backed capabilities onto the unified Human/Agent execution model while preserving compatibility paths.
+
+## Priority 9 — Downstream Productization
 
 After productionization and execution stability, proceed with Phase 13 Agent Teams & Marketplace and Phase 14 Scale, Governance & Production.
+
+## Evidence boundary
+
+- CI/internal certification is engineering evidence.
+- A GitHub release/tag is a release identity, not proof of production deployment.
+- External Vendor/Reseller/Client acceptance requires independent evidence.
+- No acceptance state may be marked complete without the corresponding external evidence.
