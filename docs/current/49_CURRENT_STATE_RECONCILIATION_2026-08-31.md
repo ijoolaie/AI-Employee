@@ -1,19 +1,18 @@
-# Current State Reconciliation — 2026-08-31
+# Current State Reconciliation — 2026-09-01
 
 ## Purpose
 
-This document reconciles the repository's current implementation truth against the published release lineage, roadmap, merged implementation, CI/certification evidence and the remaining external-production claims.
+This document reconciles repository implementation truth against release lineage, roadmap, merged implementation, CI/certification evidence and remaining production-target claims.
 
 ## Current repository baseline
 
 - Default branch: `main`
-- Current main commit: `924151db0493f41cac428abb1df16206b763e646`
-- Latest published GitHub release: `v1.3.0`
-- `v1.3.0` commit: `73ae16ca51f4cced83e3f03cb5dc0e6239287471`
-- Main is **221 commits ahead** of `v1.3.0`.
-- Main has no commits behind that baseline.
+- Current implementation lineage includes the v1.3.2 candidate revision `728b7f447d3bc6376fb01d47730cdd70eaf07746`.
+- Latest release candidate: `v1.3.2`
+- `v1.3.2` tag target: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
+- Candidate branch: `release/v1.3.2-phase6e-candidate`
 
-The current `main` is therefore the implementation baseline. `v1.3.0` remains the latest published product release, but it is not the current implementation state.
+The published `v1.3.2` prerelease is now the canonical release identity for the independently validated candidate. It must not be conflated with the earlier `v1.3.1` / `bcacbc0...` certification boundary.
 
 ## Release lineage
 
@@ -22,27 +21,34 @@ The current `main` is therefore the implementation baseline. `v1.3.0` remains th
 | `v1.2.0` | Historical certified controlled-deployment line | Historical release/reconciliation record |
 | `v1.2.1-final` | Explicit production-certified baseline | Published release + certification record |
 | `v1.2.2` | Published release; distinct certification not established | Release record only |
-| `v1.3.0` | Latest published development/product-expansion release | Git tag + release record; production certification not claimed |
-| `main` | Current implementation baseline | Git history, merged code, tests and current CI/certification evidence |
+| `v1.3.0` | Published development/product-expansion release | Git tag + release record |
+| `v1.3.1` / `bcacbc0...` | Previous independently certified engineering identity | Exact certification evidence only |
+| `v1.3.2` / `728b7f44...` | Current independently validated candidate and prerelease | Phase 6E + Production Certification + release packaging evidence |
 
 No certification is inherited by a newer release merely because an older release was certified.
 
-## Implementation reconciliation
+## v1.3.2 evidence reconciliation
 
-The post-`v1.3.0` history contains substantive implementation, not documentation-only drift. Current main includes the V1.5 Agentic Operating Model and Unified Execution work, including:
+The canonical candidate identity is:
 
-- Human and Agent WorkItem execution
-- Agent definition/instance and runtime binding
-- Agent execution adapter and Agent → Run correlation
-- authorization, policy, approval, audit/history and telemetry
-- cancellation/retry and dispatch/lifecycle concurrency hardening
-- Platform Command Center implementation
-- role-aware Platform/Reseller/Client workspace separation
-- Agent Teams foundations
-- Phase 11 real-stack certification scripts and acceptance tests
-- supporting migrations, APIs and frontend/backend test coverage
+- Branch: `release/v1.3.2-phase6e-candidate`
+- SHA: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
+- Tag: `v1.3.2`
+- Migration head: `p8_03_agent_binding`
 
-This establishes implementation progress beyond `v1.3.0`; it does **not** establish external production deployment of those post-release commits.
+Evidence:
+
+- Phase 6E self-hosted rehearsal: Run `33482911674` — PASS
+- Production Certification: Run `33484435738` — PASS
+- Release packaging: Run `33486097337` — PASS
+- Runtime artifact SHA-256: `bdcfe2aabaa2e94d038b57ee2629083eef48bc566257319cd552df8ce1593324`
+- Editions artifact SHA-256: `fb41dfe569610d129f36caff0df3e9e330607c86e731ba78f0cc862d3017833c`
+- GitHub release assets: present on `v1.3.2`
+
+Invalidated packaging attempts:
+
+- Run `33485801162` must not be used as v1.3.2 evidence because its artifact metadata pointed to `bcacbc0...` despite the v1.3.2 package name.
+- Run `33485442018` produced v1.3.1-named artifacts and is not the canonical v1.3.2 package run.
 
 ## Phase reconciliation
 
@@ -53,9 +59,9 @@ This establishes implementation progress beyond `v1.3.0`; it does **not** establ
 | Phase 2 | Foundation implemented; agentic expansion continues | As-built / partial |
 | Phase 3 | Foundation implemented; business-outcome execution continues | As-built / partial |
 | Phase 4 | Implemented; local validation complete | Verified |
-| Phase 5 | Substantially implemented; external payment/deployment/monitoring/rollback/environment certification remain | External-pending |
+| Phase 5 | Substantially implemented; real production target evidence remains | External-pending |
 | Phase 6A–6D | Complete | Verified |
-| Phase 6E | Vendor → Reseller → Client external production evidence remains | External-pending |
+| Phase 6E | Internal candidate evidence complete; external target/Vendor evidence remains | External-pending |
 | Phase 7 | Implemented / locally verified | Verified |
 | Phase 8 | Execution substrate implemented; acceptance substantially advanced through Phase 11 | Verified / reconciled |
 | Phase 9 | Implementation slices merged; operational hardening continues | As-built / verified |
@@ -65,38 +71,51 @@ This establishes implementation progress beyond `v1.3.0`; it does **not** establ
 | Phase 13 | Planned; foundations exist | Planned |
 | Phase 14 | Planned | Planned |
 
-## Phase 11 closure evidence
-
-Phase 11 is closed. Production Certification run `33369071987` on commit `bcacbc0eb03b247ad00a232e4eb6324ce5c849df` passed Human and Agent real-stack WorkItem gates with **Failed gates: 0**. Issue #170 is closed.
-
-The final evidence covers Agent runtime binding, Agent → Run correlation, commercial licensing, policy/negative paths, approval/resume, workspace/canonical WorkItem API acceptance, backend/frontend suites and Playwright E2E.
-
 ## What remains unproven
 
-The repository currently does not establish, solely from GitHub/CI evidence:
+GitHub/CI evidence does not by itself establish:
 
-- deployment of current `main` or a post-`v1.3.0` commit to an external production environment
-- live payment/provider behavior for the current implementation
+- deployment of `v1.3.2` to an external production target
+- target-specific observability/monitoring behavior
+- target-specific recovery/DR and rollback evidence
+- live payment/provider behavior
 - live WhatsApp outbound provider certification
 - independent Vendor → Reseller → Client production acceptance
 - customer acceptance
 - final commercial go-live
 
-These are **external evidence claims**, not missing implementation features unless a future environment-specific test identifies a real gap.
+These are external evidence claims, not automatically missing implementation features.
 
-## Correct next action
+## Immediate execution order
 
-Do **not** create a release merely to make the roadmap current.
+1. Keep `v1.3.2` prerelease identity fixed to `728b7f447...`; do not rebuild or retag without a real defect.
+2. Configure a real production target required by the deployment workflow.
+3. Run production hardening against the exact candidate revision.
+4. Run target observability/monitoring validation.
+5. Run target backup/restore and DR validation.
+6. Execute the exact-revision production deployment.
+7. Run target health/product smoke verification.
+8. Execute controlled rollback and verify recovery to the known-good revision.
+9. Reconcile deployment revision, migration head, artifact identities and checksums into one evidence manifest.
+10. Only after those gates pass, begin external Vendor → Reseller → Client acceptance.
 
-The next execution step is to select an intentional immutable production candidate from the current implementation lineage, reconcile its exact commit SHA, migration identity and artifact/checksum evidence, and only then execute the Phase 5/6E Vendor → Reseller → Client external evidence path.
+## Production target prerequisite
 
-If the current implementation cannot yet be promoted as that candidate, record the exact release/readiness blocker rather than creating a synthetic version.
+The production deployment workflow requires:
+
+- `PRODUCTION_DEPLOY_HOST`
+- `PRODUCTION_DEPLOY_USER`
+- `PRODUCTION_DEPLOY_SSH_KEY`
+- `PRODUCTION_CONTAINER_REGISTRY`
+
+It also requires an immutable deployment revision and verifies that the checked-out `GITHUB_SHA` equals the requested revision. Therefore a real target and its required configuration are prerequisites, not optional paperwork.
 
 ## Authority rules
 
-1. Current `main` is the implementation baseline.
-2. Published release tags remain product-release identities, not implementation snapshots of current `main`.
-3. Certification evidence applies only to the exact tested identity unless explicitly and validly reproduced.
-4. CI/internal certification is not external production evidence.
+1. The exact tested commit is the certification boundary.
+2. Published release/tag identities do not inherit certification from older identities.
+3. CI/internal certification is not external production evidence.
+4. A GitHub release does not prove deployment or production acceptance.
 5. Historical documents do not override this reconciliation.
-6. Any future production release must use an immutable tag, exact SHA, migration identity and artifact/checksum evidence.
+6. Production evidence must bind version, exact SHA, migration identity and artifact/checksum identity.
+7. Vendor, Reseller and Client acceptance must remain unclaimed until independently evidenced.
