@@ -2,70 +2,99 @@
 
 ## Decision
 
-The previously certified engineering candidate remains `bcacbc0eb03b247ad00a232e4eb6324ce5c849df` and is not being re-certified or retargeted.
+The previous certified engineering identity remains `bcacbc0eb03b247ad00a232e4eb6324ce5c849df`. Its certification is not transferred to any later revision.
 
-The current `main` tip is `728b7f447d3bc6376fb01d47730cdd70eaf07746`, which contains the Phase 6E published-frontend-port validation fix. Git evidence shows that the post-`bcacbc0` lineage is not documentation-only; therefore the previous readiness statement that the intervening changes were documentation-only is obsolete and is superseded by this record.
+The independently validated Phase 6E candidate is now `728b7f447d3bc6376fb01d47730cdd70eaf07746`.
 
-## New candidate decision
+## Canonical v1.3.2 candidate
 
-A separate immutable candidate branch has been created:
-
-- Candidate branch: `release/v1.3.2-candidate`
+- Candidate branch: `release/v1.3.2-phase6e-candidate`
 - Candidate source SHA: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
-- Candidate status: **PROPOSED — NOT CERTIFIED**
-- Reason for selection: contains the validated Phase 6E published-host-port fix and is the exact revision used by self-hosted rehearsal run `33482911674`.
+- Release/tag: `v1.3.2`
+- Tag target: exact commit `728b7f447d3bc6376fb01d47730cdd70eaf07746`
+- Release state: GitHub prerelease
+- Candidate status: **INTERNAL RELEASE EVIDENCE COMPLETE; EXTERNAL PRODUCTION PENDING**
 
-This does **not** transfer any certification from `bcacbc0...` to `728b7f44...`.
+The v1.3.2 identity is independent of the previous `v1.3.1` / `bcacbc0...` certification boundary.
 
-## Existing certification boundary
+## Independent validation evidence
 
-- Previous Production Certification: `33369071987`
-- Previously certified commit: `bcacbc0eb03b247ad00a232e4eb6324ce5c849df`
-- Previous Human real-stack gate: PASS
-- Previous Agent real-stack gate: PASS
-- Previous product gate failures: `0`
-
-Those results remain attributable only to `bcacbc0...`.
-
-## Independent rehearsal evidence for proposed candidate
+### Phase 6E self-hosted rehearsal
 
 - Workflow run: `33482911674`
 - Exact revision: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
-- Release label supplied to rehearsal: `v1.3.1`
 - Rehearsal result: PASS
-- Artifact: `phase6e-self-hosted-rehearsal-v1.3.1`
-- Artifact SHA-256: `2305cefc54eb31eaf40da95564b2c64461aaf43512658766a28a0c0895278da9`
-- Migration head recorded: `p8_03_agent_binding`
-- Health / migration / backup-restore / recovery / evidence upload: PASS
+- Migration head: `p8_03_agent_binding`
+- Health / migration / backup-restore / controlled recovery / evidence upload: PASS
 - Monitoring: not configured in rehearsal
 - Security: rehearsal-only
 - External Vendor production acceptance: not established
 
-The rehearsal evidence is valid for `728b7f44...` only.
+### Production Certification
 
-## Required independent certification
+- Workflow run: `33484435738`
+- Exact revision: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
+- Result: PASS
 
-Before external production promotion, the proposed candidate must independently pass the production certification gates on the exact candidate SHA. No existing certification is inherited.
+Certification applies only to the exact tested SHA.
 
-After certification, the same exact SHA must be used to establish:
+### Release packaging
 
-1. intentional immutable product version/tag
-2. exact source commit identity
-3. migration identity/head
-4. runtime artifact identity
-5. Vendor artifact SHA-256
-6. Reseller artifact SHA-256
-7. Customer artifact SHA-256
-8. release/certification evidence
+- Workflow run: `33486097337`
+- Exact revision: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
+- Result: PASS
 
-Only then may the Vendor → Reseller → Customer external acceptance sequence begin.
+Canonical artifacts:
+
+- `ai-employee-v1.3.2-runtime`
+  - SHA-256: `bdcfe2aabaa2e94d038b57ee2629083eef48bc566257319cd552df8ce1593324`
+- `ai-employee-v1.3.2-editions`
+  - SHA-256: `fb41dfe569610d129f36caff0df3e9e330607c86e731ba78f0cc862d3017833c`
+
+Both artifacts are from Run `33486097337` and are bound to the exact candidate SHA above. The corresponding assets are attached to the `v1.3.2` GitHub prerelease.
+
+## Invalidated packaging attempts
+
+The following must not be used as v1.3.2 evidence:
+
+- Run `33485801162`: package names were `v1.3.2`, but artifact metadata identified the old `bcacbc0...` source.
+- Run `33485442018`: package artifacts were named `v1.3.1` and therefore do not establish v1.3.2 release identity.
+
+The naming/source mismatch is resolved by the canonical Run `33486097337`.
+
+## Remaining external-production gates
+
+The repository contains workflows for production hardening, observability, recovery/DR, rollback and target deployment, but the existence of those workflows is not itself production-target evidence.
+
+Remaining gates are:
+
+1. production hardening on the actual target environment
+2. target observability/monitoring evidence
+3. target backup/restore and disaster-recovery evidence
+4. controlled rollback evidence on the target
+5. deployment of the exact `728b7f44...` revision to a real production target
+6. target health/product smoke verification
+7. final reconciliation of deployment, migration, artifact and checksum identities
+8. external Vendor acceptance, followed by Reseller and Client acceptance
+
+The production target workflow explicitly requires `PRODUCTION_DEPLOY_HOST`, `PRODUCTION_DEPLOY_USER`, `PRODUCTION_DEPLOY_SSH_KEY`, and `PRODUCTION_CONTAINER_REGISTRY`. Until an actual target is configured, target deployment and target-specific evidence cannot honestly be marked complete.
 
 ## Current gate
 
-**Candidate reconciliation: RESOLVED** — `728b7f44...` is now isolated as a separate proposed candidate branch.
+**Candidate reconciliation: RESOLVED.**
 
-**Production Certification: PENDING** — certification must run independently on `release/v1.3.2-candidate` / `728b7f44...`.
+**Phase 6E self-hosted rehearsal: PASS.**
 
-**Vendor acceptance: NOT STARTED**.
+**Production Certification on candidate SHA: PASS.**
 
-Do not create or retarget a production release tag until the independent certification and exact artifact/checksum reconciliation succeed.
+**Release packaging and checksum reconciliation: PASS.**
+
+**v1.3.2 tag identity: VERIFIED.**
+
+**Release assets: PRESENT.**
+
+**External production target evidence: PENDING.**
+
+**Vendor acceptance: NOT STARTED / NOT AVAILABLE.**
+
+Do not claim Vendor, Reseller or Client production acceptance until independent external evidence exists for this exact release identity.
