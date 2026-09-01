@@ -4,7 +4,7 @@
 
 The previous certified engineering identity remains `bcacbc0eb03b247ad00a232e4eb6324ce5c849df`. Its certification is not transferred to any later revision.
 
-The independently validated Phase 6E candidate is now `728b7f447d3bc6376fb01d47730cdd70eaf07746`.
+The independently validated Phase 6E candidate is `728b7f447d3bc6376fb01d47730cdd70eaf07746`.
 
 ## Canonical v1.3.2 candidate
 
@@ -13,9 +13,16 @@ The independently validated Phase 6E candidate is now `728b7f447d3bc6376fb01d477
 - Release/tag: `v1.3.2`
 - Tag target: exact commit `728b7f447d3bc6376fb01d47730cdd70eaf07746`
 - Release state: GitHub prerelease
-- Candidate status: **INTERNAL RELEASE EVIDENCE COMPLETE; EXTERNAL PRODUCTION PENDING**
+- Current delivery scope: **LOCAL PRODUCTION-LIKE VALIDATION → CUSTOMER DELIVERY**
+- Local candidate evidence status: **INTERNAL RELEASE EVIDENCE COMPLETE; LOCAL FINAL ACCEPTANCE REMAINS**
 
 The v1.3.2 identity is independent of the previous `v1.3.1` / `bcacbc0...` certification boundary.
+
+## Scope boundary
+
+The current project objective is temporary execution and complete validation on the owner's local workstation, followed by customer delivery. No external production server, external registry, Vendor, Reseller or live customer environment is currently available or required for this validation cycle.
+
+The repository contains external-production workflows. Those workflows describe a future deployment context and must not be satisfied with fabricated hosts, credentials, registries or acceptance records.
 
 ## Independent validation evidence
 
@@ -26,9 +33,9 @@ The v1.3.2 identity is independent of the previous `v1.3.1` / `bcacbc0...` certi
 - Rehearsal result: PASS
 - Migration head: `p8_03_agent_binding`
 - Health / migration / backup-restore / controlled recovery / evidence upload: PASS
-- Monitoring: not configured in rehearsal
-- Security: rehearsal-only
-- External Vendor production acceptance: not established
+- Monitoring: `NOT_CONFIGURED_IN_REHEARSAL`
+- Security: `REHEARSAL_ONLY`
+- External Vendor production acceptance: not established and not required for the current local-only cycle
 
 ### Production Certification
 
@@ -62,22 +69,30 @@ The following must not be used as v1.3.2 evidence:
 
 The naming/source mismatch is resolved by the canonical Run `33486097337`.
 
-## Remaining external-production gates
+## Remaining local acceptance gates
 
-The repository contains workflows for production hardening, observability, recovery/DR, rollback and target deployment, but the existence of those workflows is not itself production-target evidence.
+The next gates are **local**, not external-production gates:
 
-Remaining gates are:
+1. Run the repository's production hardening/security checks against the local production-like stack and exact candidate revision where applicable.
+2. Run the repository's observability/monitoring contract checks locally and record the explicit boundary of what can and cannot be exercised without an external alert provider.
+3. Reconfirm local backup/restore and disaster-recovery evidence for the exact candidate identity.
+4. Reconfirm the controlled rollback path locally and bind the evidence to the exact candidate/known-good identities.
+5. Run final local health/readiness/product smoke/E2E verification against `v1.3.2`.
+6. Reconcile local deployment revision, migration head, artifact identities and checksums into one evidence manifest.
+7. If all local acceptance gates pass, prepare the customer delivery package and handoff documentation.
 
-1. production hardening on the actual target environment
-2. target observability/monitoring evidence
-3. target backup/restore and disaster-recovery evidence
-4. controlled rollback evidence on the target
-5. deployment of the exact `728b7f44...` revision to a real production target
-6. target health/product smoke verification
-7. final reconciliation of deployment, migration, artifact and checksum identities
-8. external Vendor acceptance, followed by Reseller and Client acceptance
+## Future external-production gates
 
-The production target workflow explicitly requires `PRODUCTION_DEPLOY_HOST`, `PRODUCTION_DEPLOY_USER`, `PRODUCTION_DEPLOY_SSH_KEY`, and `PRODUCTION_CONTAINER_REGISTRY`. Until an actual target is configured, target deployment and target-specific evidence cannot honestly be marked complete.
+These are intentionally **not blockers for the current local delivery cycle**:
+
+- external production target deployment
+- external target observability/monitoring
+- external target recovery/DR and rollback
+- live payment/provider certification
+- live WhatsApp outbound provider certification
+- independent Vendor → Reseller → Client acceptance
+
+If an external production deployment is later required, the existing deployment workflow requires `PRODUCTION_DEPLOY_HOST`, `PRODUCTION_DEPLOY_USER`, `PRODUCTION_DEPLOY_SSH_KEY`, and `PRODUCTION_CONTAINER_REGISTRY`. Those values must come from a real environment and must never be fabricated for testing.
 
 ## Current gate
 
@@ -93,8 +108,10 @@ The production target workflow explicitly requires `PRODUCTION_DEPLOY_HOST`, `PR
 
 **Release assets: PRESENT.**
 
-**External production target evidence: PENDING.**
+**Local final acceptance: IN PROGRESS.**
 
-**Vendor acceptance: NOT STARTED / NOT AVAILABLE.**
+**External production target: NOT REQUIRED FOR CURRENT SCOPE.**
 
-Do not claim Vendor, Reseller or Client production acceptance until independent external evidence exists for this exact release identity.
+**Vendor acceptance: NOT STARTED / NOT REQUIRED FOR CURRENT SCOPE.**
+
+Do not claim external production, Vendor, Reseller or Client acceptance until the corresponding independent environment and evidence actually exist.
