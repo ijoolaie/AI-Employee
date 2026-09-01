@@ -9,12 +9,16 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from sqlalchemy import select
+from sqlalchemy import delete, exists, select
+from sqlalchemy.sql.schema import Table
+from sqlalchemy.sql.elements import BooleanClauseList
+
 from sqlalchemy.dialects.postgresql import insert
 
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, Base
 from app.core.security import hash_password
 from app.models.role import Permission, Role, role_permissions, user_roles
+from app.models.tenant import Tenant
 from app.models.user import User
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
@@ -78,7 +82,6 @@ def register(suffix: str, label: str) -> tuple[str, str, str]:
 
 async def create_restricted_member(tenant_slug: str, suffix: str) -> tuple[str, str]:
     async with AsyncSessionLocal() as db:
-        from app.models.tenant import Tenant
         tenant = (await db.execute(select(Tenant).where(Tenant.slug == tenant_slug))).scalar_one()
         permission = (await db.execute(select(Permission).where(Permission.code == "employee.read"))).scalar_one_or_none()
         if permission is None:
@@ -101,79 +104,180 @@ async def create_restricted_member(tenant_slug: str, suffix: str) -> tuple[str, 
         return email, password
 
 
+def _tenant_cleanup_predicates(tenant_ids: list) -> dict[Table, object]:
+    """Build row predicates for every table reachable from the test tenants.
+
+    The test exercises several tables indirectly (employee versions, RBAC
+    association tables, knowledge chunks, etc.).  Deleting only `tenant_id`
+    rows is not enough because some dependent tables have only a foreign key
+    to another tenant-owned row.  We derive the dependency closure from the
+    SQLAlchemy metadata and delete it in reverse topological order.
+    """
+    tables = list(Base.metadata.sorted_tables)
+    tenant_table = Tenant.__table__
+    predicates: dict[Table, object] = {tenant_table: tenant_table.c.id.in_(tenant_ids)}
+    scoped_tables = {tenant_table}
+
+    # A table is tenant-scoped if it directly stores tenant_id or has a FK to
+    # a tenant/scoped table. Repeat until the dependency closure stabilizes.
+    changed = True
+    while changed:
+        changed = False
+        for table in tables:
+            if table in scoped_tables:
+                continue
+            if "tenant_id" in table.c or any(
+                fk.column.table in scoped_tables for column in table.columns for fk in column.foreign_keys
+            ):
+                scoped_tables.add(table)
+                changed = True
+
+    for table in tables:
+        if table is tenant_table:
+            continue
+
+        clauses: list[object] = []
+        if "tenant_id" in table.c:
+            clauses.append(table.c.tenant_id.in_(tenant_ids))
+
+        for constraint in table.foreign_key_constraints:
+            parent = constraint.referred_table
+            if parent not in scoped_tables:
+                continue
+            pairs = [
+                (element.parent, element.column)
+                for element in constraint.elements
+            ]
+            parent_predicate = predicates.get(parent)
+            if parent_predicate is None:
+                # Parent predicates are computed in metadata/topological order.
+                continue
+            clauses.append(
+                exists(
+                    select(1)
+                    .select_from(parent)
+                    .where(
+                        parent_predicate,
+                        *[local == remote for local, remote in pairs],
+                    )
+                )
+            )
+
+        if clauses:
+            predicates[table] = clauses[0] if len(clauses) == 1 else BooleanClauseList.or_(*clauses)
+
+    return predicates
+
+
+async def cleanup_test_tenants(slugs: list[str], file_id: str | None = None) -> None:
+    """Remove only tenants created by this certification run.
+
+    This is intentionally DB-level cleanup rather than a production tenant
+    deletion API: certification fixtures must not depend on customer-facing
+    lifecycle APIs, and cleanup must still run when an assertion fails.
+    """
+    if not slugs:
+        return
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(Tenant.id).where(Tenant.slug.in_(slugs)))
+        tenant_ids = list(result.scalars().all())
+        if not tenant_ids:
+            return
+
+        predicates = _tenant_cleanup_predicates(tenant_ids)
+        # Parent tables remain present while their dependent rows are deleted.
+        for table in reversed(Base.metadata.sorted_tables):
+            predicate = predicates.get(table)
+            if predicate is not None:
+                await db.execute(delete(table).where(predicate))
+        await db.commit()
+
+
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
-    tenant_a_slug, _, token_a = register(suffix, "a")
-    tenant_b_slug, _, token_b = register(suffix, "b")
-    print(f"TENANT A REGISTER PASS tenant={tenant_a_slug}")
-    print(f"TENANT B REGISTER PASS tenant={tenant_b_slug}")
+    created_slugs: list[str] = []
+    file_id: str | None = None
+    try:
+        tenant_a_slug, _, token_a = register(suffix, "a")
+        created_slugs.append(tenant_a_slug)
+        tenant_b_slug, _, token_b = register(suffix, "b")
+        created_slugs.append(tenant_b_slug)
+        print(f"TENANT A REGISTER PASS tenant={tenant_a_slug}")
+        print(f"TENANT B REGISTER PASS tenant={tenant_b_slug}")
 
-    status, me_a = request("GET", "/auth/me", token=token_a)
-    assert_status(status, 200, "tenant A current-user", me_a)
-    me_a_data = me_a.get("data") or {}
-    assert me_a_data.get("tenant", {}).get("slug") == tenant_a_slug
-    assert me_a_data.get("user", {}).get("tenant_id") == me_a_data.get("tenant", {}).get("id")
-    print("TENANT A CONTEXT PASS")
+        status, me_a = request("GET", "/auth/me", token=token_a)
+        assert_status(status, 200, "tenant A current-user", me_a)
+        me_a_data = me_a.get("data") or {}
+        assert me_a_data.get("tenant", {}).get("slug") == tenant_a_slug
+        assert me_a_data.get("user", {}).get("tenant_id") == me_a_data.get("tenant", {}).get("id")
+        print("TENANT A CONTEXT PASS")
 
-    status, created = request("POST", "/employees", {"slug": f"p0-isolation-{suffix}", "name": "P0 Isolation Employee", "kind": "custom", "input_schema": {}, "output_schema": {}, "prompt_template": "Return the input unchanged.", "allowed_tools": [], "rules": {}}, token=token_a)
-    assert_status(status, 201, "tenant A employee create", created)
-    employee_id = (created.get("data") or {}).get("id")
-    assert employee_id
-    print(f"TENANT A EMPLOYEE CREATE PASS employee={employee_id}")
+        status, created = request("POST", "/employees", {"slug": f"p0-isolation-{suffix}", "name": "P0 Isolation Employee", "kind": "custom", "input_schema": {}, "output_schema": {}, "prompt_template": "Return the input unchanged.", "allowed_tools": [], "rules": {}}, token=token_a)
+        assert_status(status, 201, "tenant A employee create", created)
+        employee_id = (created.get("data") or {}).get("id")
+        assert employee_id
+        print(f"TENANT A EMPLOYEE CREATE PASS employee={employee_id}")
 
-    status, cross_read = request("GET", f"/employees/{employee_id}", token=token_b)
-    assert_status(status, 404, "cross-tenant employee read", cross_read)
-    print("CROSS-TENANT EMPLOYEE READ REJECT PASS")
-    status, cross_write = request("POST", f"/employees/{employee_id}/versions", {"input_schema": {}, "output_schema": {}, "prompt_template": "cross-tenant write must fail", "allowed_tools": [], "rules": {}}, token=token_b)
-    assert_status(status, 404, "cross-tenant employee write", cross_write)
-    print("CROSS-TENANT EMPLOYEE WRITE REJECT PASS")
+        status, cross_read = request("GET", f"/employees/{employee_id}", token=token_b)
+        assert_status(status, 404, "cross-tenant employee read", cross_read)
+        print("CROSS-TENANT EMPLOYEE READ REJECT PASS")
+        status, cross_write = request("POST", f"/employees/{employee_id}/versions", {"input_schema": {}, "output_schema": {}, "prompt_template": "cross-tenant write must fail", "allowed_tools": [], "rules": {}}, token=token_b)
+        assert_status(status, 404, "cross-tenant employee write", cross_write)
+        print("CROSS-TENANT EMPLOYEE WRITE REJECT PASS")
 
-    file_status, file_response = request_multipart_file(token_a, filename=f"p0-tenant-a-{suffix}.txt", content=f"TENANT_A_ONLY_MARKER_{suffix}".encode())
-    assert_status(file_status, 201, "tenant A file create", file_response)
-    file_id = (file_response.get("data") or {}).get("id")
-    assert file_id
-    print(f"TENANT A FILE CREATE PASS file={file_id}")
-    status, cross_file_read = request("GET", f"/files/{file_id}", token=token_b)
-    assert_status(status, 404, "cross-tenant file read", cross_file_read)
-    print("CROSS-TENANT FILE READ REJECT PASS")
-    status, cross_file_download = request("GET", f"/files/{file_id}/download", token=token_b)
-    assert_status(status, 404, "cross-tenant file download", cross_file_download)
-    print("CROSS-TENANT FILE DOWNLOAD REJECT PASS")
-    status, cross_file_delete = request("DELETE", f"/files/{file_id}", token=token_b)
-    assert_status(status, 404, "cross-tenant file delete", cross_file_delete)
-    print("CROSS-TENANT FILE DELETE REJECT PASS")
-    status, allowed_file_read = request("GET", f"/files/{file_id}", token=token_a)
-    assert_status(status, 200, "same-tenant file read", allowed_file_read)
-    print("SAME-TENANT FILE READ PASS")
+        file_status, file_response = request_multipart_file(token_a, filename=f"p0-tenant-a-{suffix}.txt", content=f"TENANT_A_ONLY_MARKER_{suffix}".encode())
+        assert_status(file_status, 201, "tenant A file create", file_response)
+        file_id = (file_response.get("data") or {}).get("id")
+        assert file_id
+        print(f"TENANT A FILE CREATE PASS file={file_id}")
+        status, cross_file_read = request("GET", f"/files/{file_id}", token=token_b)
+        assert_status(status, 404, "cross-tenant file read", cross_file_read)
+        print("CROSS-TENANT FILE READ REJECT PASS")
+        status, cross_file_download = request("GET", f"/files/{file_id}/download", token=token_b)
+        assert_status(status, 404, "cross-tenant file download", cross_file_download)
+        print("CROSS-TENANT FILE DOWNLOAD REJECT PASS")
+        status, cross_file_delete = request("DELETE", f"/files/{file_id}", token=token_b)
+        assert_status(status, 404, "cross-tenant file delete", cross_file_delete)
+        print("CROSS-TENANT FILE DELETE REJECT PASS")
+        status, allowed_file_read = request("GET", f"/files/{file_id}", token=token_a)
+        assert_status(status, 200, "same-tenant file read", allowed_file_read)
+        print("SAME-TENANT FILE READ PASS")
 
-    restricted_email, restricted_password = asyncio.run(create_restricted_member(tenant_a_slug, suffix))
-    status, restricted_login = request("POST", "/auth/login", {"email": restricted_email, "password": restricted_password, "tenant_slug": tenant_a_slug})
-    assert_status(status, 200, "restricted member login", restricted_login)
-    restricted_token = (restricted_login.get("data") or {}).get("access_token")
-    assert restricted_token
-    print("RBAC RESTRICTED USER LOGIN PASS")
-    status, allowed_read = request("GET", "/employees", token=restricted_token)
-    assert_status(status, 200, "restricted employee read", allowed_read)
-    print("RBAC ALLOWED READ PASS")
-    status, denied_write = request("POST", "/employees", {"slug": f"p0-rbac-denied-{suffix}", "name": "Must Not Be Created", "kind": "custom", "input_schema": {}, "output_schema": {}, "prompt_template": "This write must be denied.", "allowed_tools": [], "rules": {}}, token=restricted_token)
-    assert_status(status, 403, "restricted employee write", denied_write)
-    assert "Missing permission: employee.write" in str(denied_write)
-    print("RBAC WRITE DENY PASS")
+        restricted_email, restricted_password = asyncio.run(create_restricted_member(tenant_a_slug, suffix))
+        status, restricted_login = request("POST", "/auth/login", {"email": restricted_email, "password": restricted_password, "tenant_slug": tenant_a_slug})
+        assert_status(status, 200, "restricted member login", restricted_login)
+        restricted_token = (restricted_login.get("data") or {}).get("access_token")
+        assert restricted_token
+        print("RBAC RESTRICTED USER LOGIN PASS")
+        status, allowed_read = request("GET", "/employees", token=restricted_token)
+        assert_status(status, 200, "restricted employee read", allowed_read)
+        print("RBAC ALLOWED READ PASS")
+        status, denied_write = request("POST", "/employees", {"slug": f"p0-rbac-denied-{suffix}", "name": "Must Not Be Created", "kind": "custom", "input_schema": {}, "output_schema": {}, "prompt_template": "This write must be denied.", "allowed_tools": [], "rules": {}}, token=restricted_token)
+        assert_status(status, 403, "restricted employee write", denied_write)
+        assert "Missing permission: employee.write" in str(denied_write)
+        print("RBAC WRITE DENY PASS")
 
-    # Knowledge isolation: Tenant A's file is the only source for its marker.
-    # Tenant B must not be able to retrieve or index Tenant A's knowledge resource.
-    status, cross_index = request("POST", f"/knowledge/index/{file_id}", token=token_b)
-    assert_status(status, 404, "cross-tenant knowledge index", cross_index)
-    print("CROSS-TENANT KNOWLEDGE INDEX REJECT PASS")
+        # Knowledge isolation: Tenant A's file is the only source for its marker.
+        # Tenant B must not be able to retrieve or index Tenant A's knowledge resource.
+        status, cross_index = request("POST", f"/knowledge/index/{file_id}", token=token_b)
+        assert_status(status, 404, "cross-tenant knowledge index", cross_index)
+        print("CROSS-TENANT KNOWLEDGE INDEX REJECT PASS")
 
-    status, search_b = request("POST", "/knowledge/search", {"query": f"TENANT_A_ONLY_MARKER_{suffix}", "limit": 10}, token=token_b)
-    assert_status(status, 200, "tenant B knowledge search", search_b)
-    search_data = search_b.get("data") or {}
-    assert not search_data.get("results"), f"cross-tenant knowledge leakage: {search_data}"
-    print("CROSS-TENANT KNOWLEDGE SEARCH ISOLATION PASS")
+        status, search_b = request("POST", "/knowledge/search", {"query": f"TENANT_A_ONLY_MARKER_{suffix}", "limit": 10}, token=token_b)
+        assert_status(status, 200, "tenant B knowledge search", search_b)
+        search_data = search_b.get("data") or {}
+        assert not search_data.get("results"), f"cross-tenant knowledge leakage: {search_data}"
+        print("CROSS-TENANT KNOWLEDGE SEARCH ISOLATION PASS")
 
-    print("TENANT ISOLATION + RBAC + KNOWLEDGE P0 REAL-STACK CERTIFICATION PASS")
-    return 0
+        print("TENANT ISOLATION + RBAC + KNOWLEDGE P0 REAL-STACK CERTIFICATION PASS")
+        return 0
+    finally:
+        try:
+            asyncio.run(cleanup_test_tenants(created_slugs, file_id))
+            print(f"CERTIFICATION FIXTURE CLEANUP PASS tenants={len(created_slugs)}")
+        except Exception as exc:  # pragma: no cover - cleanup must not hide the gate result
+            print(f"CERTIFICATION FIXTURE CLEANUP FAIL: {exc}", file=sys.stderr)
 
 
 if __name__ == "__main__":
