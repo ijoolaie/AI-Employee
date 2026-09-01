@@ -1,48 +1,71 @@
-# Production Candidate Readiness — 2026-08-31
+# Production Candidate Readiness — 2026-09-01
 
 ## Decision
 
-The current implementation lineage has a verified engineering candidate at commit `bcacbc0eb03b247ad00a232e4eb6324ce5c849df`.
+The previously certified engineering candidate remains `bcacbc0eb03b247ad00a232e4eb6324ce5c849df` and is not being re-certified or retargeted.
 
-This commit is the exact code identity used by Production Certification run `33369071987`, which passed the Human and Agent real-stack product gates with `Failed gates: 0`.
+The current `main` tip is `728b7f447d3bc6376fb01d47730cdd70eaf07746`, which contains the Phase 6E published-frontend-port validation fix. Git evidence shows that the post-`bcacbc0` lineage is not documentation-only; therefore the previous readiness statement that the intervening changes were documentation-only is obsolete and is superseded by this record.
 
-## Why this commit is the candidate
+## New candidate decision
 
-The six commits after `bcacbc0eb03b247ad00a232e4eb6324ce5c849df` and before the current `main` tip are documentation-only changes. A Git compare confirms that the changed files are limited to current-state, roadmap, priorities and historical reconciliation documents. No application source, migration, workflow, test or frontend/backend implementation file changed in that interval.
+A separate immutable candidate branch has been created:
 
-Therefore the verified implementation identity remains `bcacbc0eb03b247ad00a232e4eb6324ce5c849df`, while the current `main` contains subsequent documentation reconciliation only.
+- Candidate branch: `release/v1.3.2-candidate`
+- Candidate source SHA: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
+- Candidate status: **PROPOSED — NOT CERTIFIED**
+- Reason for selection: contains the validated Phase 6E published-host-port fix and is the exact revision used by self-hosted rehearsal run `33482911674`.
 
-## Verification boundary
+This does **not** transfer any certification from `bcacbc0...` to `728b7f44...`.
 
-- Production Certification: `33369071987`
-- Certified commit: `bcacbc0eb03b247ad00a232e4eb6324ce5c849df`
-- Human real-stack gate: PASS
-- Agent real-stack gate: PASS
-- Agent runtime binding: PASS
-- Agent → Run correlation: PASS
-- Commercial licensing boundary: PASS
-- Product gate failures: `0`
-- Frontend Playwright E2E: PASS
+## Existing certification boundary
 
-## Migration identity
+- Previous Production Certification: `33369071987`
+- Previously certified commit: `bcacbc0eb03b247ad00a232e4eb6324ce5c849df`
+- Previous Human real-stack gate: PASS
+- Previous Agent real-stack gate: PASS
+- Previous product gate failures: `0`
 
-The certification workflow upgrades the database to Alembic `head`, runs `alembic check`, and verifies that exactly one migration head exists. The current workflow therefore establishes migration-graph validity for the certified commit, but this document does not invent a migration-head identifier that has not been independently recorded.
+Those results remain attributable only to `bcacbc0...`.
 
-## Artifact / checksum boundary
+## Independent rehearsal evidence for proposed candidate
 
-Production Certification run `33369071987` has no GitHub Actions artifacts. No artifact checksum is therefore claimed here.
+- Workflow run: `33482911674`
+- Exact revision: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
+- Release label supplied to rehearsal: `v1.3.1`
+- Rehearsal result: PASS
+- Artifact: `phase6e-self-hosted-rehearsal-v1.3.1`
+- Artifact SHA-256: `2305cefc54eb31eaf40da95564b2c64461aaf43512658766a28a0c0895278da9`
+- Migration head recorded: `p8_03_agent_binding`
+- Health / migration / backup-restore / recovery / evidence upload: PASS
+- Monitoring: not configured in rehearsal
+- Security: rehearsal-only
+- External Vendor production acceptance: not established
 
-An external production release must establish its own immutable release identity including:
+The rehearsal evidence is valid for `728b7f44...` only.
 
-1. exact Git tag
-2. exact commit SHA
+## Required independent certification
+
+Before external production promotion, the proposed candidate must independently pass the production certification gates on the exact candidate SHA. No existing certification is inherited.
+
+After certification, the same exact SHA must be used to establish:
+
+1. intentional immutable product version/tag
+2. exact source commit identity
 3. migration identity/head
-4. deployable artifact identity
-5. artifact checksums
-6. environment-specific deployment evidence
+4. runtime artifact identity
+5. Vendor artifact SHA-256
+6. Reseller artifact SHA-256
+7. Customer artifact SHA-256
+8. release/certification evidence
 
-## Release decision
+Only then may the Vendor → Reseller → Customer external acceptance sequence begin.
 
-Do **not** create a product release tag yet solely from this document. The verified engineering candidate is identified, but external production evidence has not been produced for it.
+## Current gate
 
-The next action is to package/tag this exact verified implementation identity only when the release process can preserve the exact SHA and produce the required artifact/checksum evidence, then execute Vendor → Reseller → Client external acceptance.
+**Candidate reconciliation: RESOLVED** — `728b7f44...` is now isolated as a separate proposed candidate branch.
+
+**Production Certification: PENDING** — certification must run independently on `release/v1.3.2-candidate` / `728b7f44...`.
+
+**Vendor acceptance: NOT STARTED**.
+
+Do not create or retarget a production release tag until the independent certification and exact artifact/checksum reconciliation succeed.
