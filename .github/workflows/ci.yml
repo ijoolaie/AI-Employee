@@ -94,6 +94,30 @@ jobs:
           alembic heads --verbose
           echo '=== ALEMBIC CURRENT ==='
           alembic current
+      - name: Validate Alembic graph traversal
+        working-directory: backend
+        run: |
+          python - <<'PY'
+          from alembic.config import Config
+          from alembic.script import ScriptDirectory
+
+          cfg = Config('alembic.ini')
+          script = ScriptDirectory.from_config(cfg)
+          heads = tuple(script.get_heads())
+          print(f'=== ALEMBIC GRAPH PREFLIGHT ===')
+          print(f'heads={heads}')
+          revisions = list(script.walk_revisions(base='base', head='heads'))
+          print(f'walk_revisions_count={len(revisions)}')
+          print('walk_revisions completed successfully')
+
+          if len(heads) != 1:
+              raise SystemExit(f'Expected exactly one effective head, found {heads}')
+
+          path = list(script.iterate_revisions(heads[0], 'base', inclusive=True))
+          print(f'head_to_base_path_count={len(path)}')
+          print(f'head={heads[0]}')
+          print(f'base={path[-1].revision if path else None}')
+          PY
       - name: Alembic upgrade
         working-directory: backend
         env:
@@ -110,7 +134,7 @@ jobs:
           while kill -0 "$alembic_pid" 2>/dev/null; do
             elapsed=$(( $(date +%s) - started ))
             echo "=== PostgreSQL activity (${elapsed}s) ==="
-            PGPASSWORD=aiep psql "postgresql://aiep:aiep@localhost:5432/aiep" -X -A -F ' | ' -t -c "SELECT pid, state, COALESCE(wait_event_type,''), COALESCE(wait_event,''), LEFT(REPLACE(query, E'\\n', ' '), 240) FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid() ORDER BY pid;" || true
+            PGPASSWORD=aiep psql "postgresql://aiep:aiep@localhost:5432/aiep" -X -A -F ' | ' -t -c "SELECT pid, state, COALESCE(wait_event_type,''), COALESCE(wait_event,''), COALESCE(backend_xid::text,''), LEFT(REPLACE(query, E'\\n', ' '), 240) FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid() ORDER BY pid;" || true
             echo '=== Alembic output ==='
             tail -n 80 /tmp/alembic-upgrade.log || true
             if [ "$elapsed" -ge 360 ]; then
