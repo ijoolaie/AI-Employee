@@ -2,7 +2,7 @@
 
 Dry-run by default. Pass --apply to commit deletion.
 Only tenants with the exact certification slug prefixes are eligible:
-  cert-a-* / cert-b-*
+  security-a-* / security-b-*
 No production/test tenants with unrelated slugs are touched.
 """
 from __future__ import annotations
@@ -16,7 +16,7 @@ from sqlalchemy.sql.schema import Table
 from app.core.database import AsyncSessionLocal, Base
 from app.models.tenant import Tenant
 
-PREFIXES = ("cert-a-", "cert-b-")
+PREFIXES = ("security-a-", "security-b-")
 
 
 def cleanup_predicates(tenant_ids: list) -> dict[Table, object]:
