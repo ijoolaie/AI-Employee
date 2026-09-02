@@ -1,7 +1,8 @@
-"""Safe Test Center execution boundary for P12.2/P12.3."""
+"""Safe Test Center execution boundary for P12.2-P12.4."""
 
 from __future__ import annotations
 
+import re
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -12,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.test_definition import TestDefinition
 from app.models.test_run import TestRun, TestRunStatus
+from app.models.test_run_artifact import TestRunArtifact
 
 
 class TestCenterError(RuntimeError):
@@ -30,6 +32,7 @@ class TestExecutionContext:
 
 _FORBIDDEN_FIXTURE_KEYS = {"password", "passwd", "secret", "token", "api_key", "access_token", "refresh_token"}
 _MAX_FIXTURE_KEYS = 100
+_SHA256_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
 def _safe_fixtures(fixtures: dict[str, Any] | None) -> dict[str, Any]:
@@ -42,6 +45,14 @@ def _safe_fixtures(fixtures: dict[str, Any] | None) -> dict[str, Any]:
         if normalized in _FORBIDDEN_FIXTURE_KEYS or any(part in normalized for part in ("password", "secret", "token")):
             raise TestCenterError("secret-bearing test fixtures are forbidden")
     return value
+
+
+def _safe_sha256(value: str | None) -> str | None:
+    if value is None:
+        return None
+    if not _SHA256_PATTERN.fullmatch(value):
+        raise TestCenterError("artifact sha256 must be a 64-character hexadecimal digest")
+    return value.lower()
 
 
 class TestCenterService:
@@ -121,6 +132,9 @@ class TestCenterService:
         result: dict[str, Any] | None = None,
         evidence: dict[str, Any] | None = None,
         error: str | None = None,
+        runtime_version: str | None = None,
+        migration_identity: str | None = None,
+        git_sha: str | None = None,
     ) -> TestRun:
         run = await self._get_run_for_tenant(run_id, tenant_id, for_update=True)
         if run.status is not TestRunStatus.RUNNING:
@@ -129,9 +143,56 @@ class TestCenterService:
         run.result = result or {}
         run.evidence = evidence or {}
         run.error = error
+        run.runtime_version = runtime_version
+        run.migration_identity = migration_identity
+        run.git_sha = git_sha
         run.finished_at = datetime.now(timezone.utc)
         await self.db.flush()
         return run
+
+    async def add_artifact(
+        self,
+        *,
+        run_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        artifact_type: str,
+        label: str,
+        reference: str,
+        sha256: str | None = None,
+        size_bytes: int | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> TestRunArtifact:
+        run = await self._get_run_for_tenant(run_id, tenant_id, for_update=False)
+        if run.status in {TestRunStatus.QUEUED, TestRunStatus.RUNNING}:
+            raise TestCenterError("artifacts can only be attached to completed test runs")
+        if not artifact_type.strip() or not label.strip() or not reference.strip():
+            raise TestCenterError("artifact type, label and reference are required")
+        if len(artifact_type) > 50 or len(label) > 255 or len(reference) > 2048:
+            raise TestCenterError("artifact metadata exceeds allowed length")
+        if size_bytes is not None and size_bytes < 0:
+            raise TestCenterError("artifact size cannot be negative")
+        artifact = TestRunArtifact(
+            tenant_id=tenant_id,
+            test_run_id=run.id,
+            artifact_type=artifact_type.strip(),
+            label=label.strip(),
+            reference=reference.strip(),
+            sha256=_safe_sha256(sha256),
+            size_bytes=size_bytes,
+            metadata=dict(metadata or {}),
+        )
+        self.db.add(artifact)
+        await self.db.flush()
+        return artifact
+
+    async def list_artifacts(self, *, run_id: uuid.UUID, tenant_id: uuid.UUID) -> list[TestRunArtifact]:
+        await self._get_run_for_tenant(run_id, tenant_id, for_update=False)
+        result = await self.db.execute(
+            select(TestRunArtifact)
+            .where(TestRunArtifact.test_run_id == run_id, TestRunArtifact.tenant_id == tenant_id)
+            .order_by(TestRunArtifact.created_at.asc())
+        )
+        return list(result.scalars().all())
 
     async def cancel_run(self, *, run_id: uuid.UUID, tenant_id: uuid.UUID) -> TestRun:
         run = await self._get_run_for_tenant(run_id, tenant_id, for_update=True)
