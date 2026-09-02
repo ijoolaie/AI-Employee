@@ -1,4 +1,4 @@
-"""Phase 12 Test Center backend contract: definitions + tenant-bound runs."""
+"""Phase 12 Test Center backend contract: definitions, runs and evidence."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from app.core.database import get_db
 from app.core.deps import RunExecuteContext, RunReadContext
 from app.models.test_definition import TestDefinition
 from app.models.test_run import TestRun, TestRunStatus
+from app.models.test_run_artifact import TestRunArtifact
 from app.services.audit_service import record
 from app.services.test_center import TestCenterError, TestCenterService
 
@@ -59,6 +60,29 @@ class TestRunFinish(BaseModel):
     result: dict = Field(default_factory=dict)
     evidence: dict = Field(default_factory=dict)
     error: str | None = None
+    runtime_version: str | None = Field(default=None, max_length=120)
+    migration_identity: str | None = Field(default=None, max_length=120)
+    git_sha: str | None = Field(default=None, min_length=64, max_length=64, pattern=r"^[0-9a-fA-F]{64}$")
+
+
+class TestRunArtifactCreate(BaseModel):
+    artifact_type: str = Field(min_length=1, max_length=50)
+    label: str = Field(min_length=1, max_length=255)
+    reference: str = Field(min_length=1, max_length=2048)
+    sha256: str | None = Field(default=None, min_length=64, max_length=64, pattern=r"^[0-9a-fA-F]{64}$")
+    size_bytes: int | None = Field(default=None, ge=0)
+    metadata: dict = Field(default_factory=dict)
+
+
+class TestRunArtifactSummary(BaseModel):
+    id: UUID
+    artifact_type: str
+    label: str
+    reference: str
+    sha256: str | None
+    size_bytes: int | None
+    metadata: dict
+    created_at: datetime
 
 
 class TestRunSummary(BaseModel):
@@ -73,6 +97,10 @@ class TestRunSummary(BaseModel):
     result: dict | None
     error: str | None
     evidence: dict
+    runtime_version: str | None
+    migration_identity: str | None
+    git_sha: str | None
+    evidence_boundary: str
     queued_at: datetime
     started_at: datetime | None
     finished_at: datetime | None
@@ -97,11 +125,28 @@ def _run_summary(item: TestRun) -> TestRunSummary:
         result=item.result,
         error=item.error,
         evidence=item.evidence or {},
+        runtime_version=item.runtime_version,
+        migration_identity=item.migration_identity,
+        git_sha=item.git_sha,
+        evidence_boundary=item.evidence_boundary,
         queued_at=item.queued_at,
         started_at=item.started_at,
         finished_at=item.finished_at,
         created_at=item.created_at,
         updated_at=item.updated_at,
+    )
+
+
+def _artifact_summary(item: TestRunArtifact) -> TestRunArtifactSummary:
+    return TestRunArtifactSummary(
+        id=item.id,
+        artifact_type=item.artifact_type,
+        label=item.label,
+        reference=item.reference,
+        sha256=item.sha256,
+        size_bytes=item.size_bytes,
+        metadata=item.metadata or {},
+        created_at=item.created_at,
     )
 
 
@@ -134,7 +179,16 @@ async def create_definition(
     db.add(definition)
     try:
         await db.flush()
-        await record(db, action="test_definition.created", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_definition", resource_id=definition.id, metadata={"code": definition.code, "category": definition.category})
+        await record(
+            db,
+            action="test_definition.created",
+            actor_type="user",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="test_definition",
+            resource_id=definition.id,
+            metadata={"code": definition.code, "category": definition.category},
+        )
         await db.commit()
     except Exception as exc:
         await db.rollback()
@@ -151,7 +205,20 @@ async def create_run(
     service = TestCenterService(db)
     try:
         run = await service.create_run(tenant_id=ctx.tenant_id, actor_id=ctx.user_id, **payload.model_dump())
-        await record(db, action="test_run.queued", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_run", resource_id=run.id, metadata={"test_definition_id": str(run.test_definition_id), "correlation_id": str(run.correlation_id), "workspace_key": run.workspace_key})
+        await record(
+            db,
+            action="test_run.queued",
+            actor_type="user",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="test_run",
+            resource_id=run.id,
+            metadata={
+                "test_definition_id": str(run.test_definition_id),
+                "correlation_id": str(run.correlation_id),
+                "workspace_key": run.workspace_key,
+            },
+        )
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()
@@ -196,7 +263,16 @@ async def start_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Dep
     try:
         run = await service.start_run(run_id=run_id, tenant_id=ctx.tenant_id)
         await service.build_context(run.id, tenant_id=ctx.tenant_id)
-        await record(db, action="test_run.started", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_run", resource_id=run.id, metadata={"correlation_id": str(run.correlation_id)})
+        await record(
+            db,
+            action="test_run.started",
+            actor_type="user",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="test_run",
+            resource_id=run.id,
+            metadata={"correlation_id": str(run.correlation_id)},
+        )
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()
@@ -209,7 +285,17 @@ async def finish_run(run_id: UUID, payload: TestRunFinish, ctx: RunExecuteContex
     service = TestCenterService(db)
     try:
         run = await service.finish_run(run_id=run_id, tenant_id=ctx.tenant_id, **payload.model_dump())
-        await record(db, action="test_run.passed" if payload.passed else "test_run.failed", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_run", resource_id=run.id, status="success" if payload.passed else "failure", metadata={"correlation_id": str(run.correlation_id), "evidence_boundary": "engineering_product_evidence"})
+        await record(
+            db,
+            action="test_run.passed" if payload.passed else "test_run.failed",
+            actor_type="user",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="test_run",
+            resource_id=run.id,
+            status="success" if payload.passed else "failure",
+            metadata={"correlation_id": str(run.correlation_id), "evidence_boundary": run.evidence_boundary},
+        )
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()
@@ -217,12 +303,58 @@ async def finish_run(run_id: UUID, payload: TestRunFinish, ctx: RunExecuteContex
     return _run_summary(run)
 
 
+@router.post("/runs/{run_id}/artifacts", response_model=TestRunArtifactSummary, status_code=status.HTTP_201_CREATED)
+async def add_artifact(
+    run_id: UUID,
+    payload: TestRunArtifactCreate,
+    ctx: RunExecuteContext,
+    db: AsyncSession = Depends(get_db),
+):
+    service = TestCenterService(db)
+    try:
+        artifact = await service.add_artifact(run_id=run_id, tenant_id=ctx.tenant_id, **payload.model_dump())
+        await record(
+            db,
+            action="test_run.artifact_added",
+            actor_type="user",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="test_run_artifact",
+            resource_id=artifact.id,
+            metadata={"test_run_id": str(run_id), "artifact_type": artifact.artifact_type},
+        )
+        await db.commit()
+    except TestCenterError as exc:
+        await db.rollback()
+        raise _error(exc) from exc
+    return _artifact_summary(artifact)
+
+
+@router.get("/runs/{run_id}/artifacts", response_model=list[TestRunArtifactSummary])
+async def list_artifacts(run_id: UUID, ctx: RunReadContext, db: AsyncSession = Depends(get_db)):
+    service = TestCenterService(db)
+    try:
+        artifacts = await service.list_artifacts(run_id=run_id, tenant_id=ctx.tenant_id)
+    except TestCenterError as exc:
+        raise _error(exc) from exc
+    return [_artifact_summary(item) for item in artifacts]
+
+
 @router.post("/runs/{run_id}/cancel", response_model=TestRunSummary)
 async def cancel_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db)):
     service = TestCenterService(db)
     try:
         run = await service.cancel_run(run_id=run_id, tenant_id=ctx.tenant_id)
-        await record(db, action="test_run.cancelled", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_run", resource_id=run.id, metadata={"correlation_id": str(run.correlation_id)})
+        await record(
+            db,
+            action="test_run.cancelled",
+            actor_type="user",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="test_run",
+            resource_id=run.id,
+            metadata={"correlation_id": str(run.correlation_id)},
+        )
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()
