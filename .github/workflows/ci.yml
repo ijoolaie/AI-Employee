@@ -97,11 +97,38 @@ jobs:
       - name: Alembic upgrade
         working-directory: backend
         env:
-          PGOPTIONS: '-c lock_timeout=30s -c statement_timeout=10min'
+          PGOPTIONS: '-c lock_timeout=30s -c statement_timeout=5min'
         run: |
-          set -euxo pipefail
-          echo '=== ALEMBIC UPGRADE (lock_timeout=30s, statement_timeout=10min) ==='
-          alembic upgrade head
+          set -uo pipefail
+          rm -f /tmp/alembic-upgrade.log
+          echo '=== ALEMBIC UPGRADE DIAGNOSTIC ==='
+          echo 'Starting migration with lock_timeout=30s, statement_timeout=5min'
+          alembic upgrade head > /tmp/alembic-upgrade.log 2>&1 &
+          alembic_pid=$!
+          started=$(date +%s)
+
+          while kill -0 "$alembic_pid" 2>/dev/null; do
+            elapsed=$(( $(date +%s) - started ))
+            echo "=== PostgreSQL activity (${elapsed}s) ==="
+            PGPASSWORD=aiep psql "postgresql://aiep:aiep@localhost:5432/aiep" -X -A -F ' | ' -t -c "SELECT pid, state, COALESCE(wait_event_type,''), COALESCE(wait_event,''), LEFT(REPLACE(query, E'\\n', ' '), 240) FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid() ORDER BY pid;" || true
+            echo '=== Alembic output ==='
+            tail -n 80 /tmp/alembic-upgrade.log || true
+            if [ "$elapsed" -ge 360 ]; then
+              echo 'ERROR: Alembic upgrade exceeded 6 minutes; terminating for diagnosis.'
+              kill "$alembic_pid" 2>/dev/null || true
+              sleep 2
+              kill -9 "$alembic_pid" 2>/dev/null || true
+              wait "$alembic_pid" || true
+              exit 124
+            fi
+            sleep 10
+          done
+
+          wait "$alembic_pid"
+          status=$?
+          echo '=== Final Alembic output ==='
+          cat /tmp/alembic-upgrade.log || true
+          exit "$status"
       - name: Alembic consistency
         working-directory: backend
         run: |
