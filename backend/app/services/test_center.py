@@ -1,4 +1,4 @@
-"""Safe Test Center execution boundary for P12.2-P12.4."""
+"""Safe Test Center execution boundary for P12.2-P12.5."""
 
 from __future__ import annotations
 
@@ -89,6 +89,42 @@ class TestCenterService:
         await self.db.flush()
         return run
 
+    async def list_history(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        workspace_key: str | None = None,
+        test_definition_id: uuid.UUID | None = None,
+        status: TestRunStatus | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[TestRun]:
+        """Return read-only, tenant/workspace-scoped run history in stable newest-first order."""
+        if limit < 1 or limit > 200:
+            raise TestCenterError("history limit must be between 1 and 200")
+        if offset < 0:
+            raise TestCenterError("history offset cannot be negative")
+        if created_after is not None and created_before is not None and created_after > created_before:
+            raise TestCenterError("history date range is invalid")
+
+        stmt = select(TestRun).where(TestRun.tenant_id == tenant_id)
+        if workspace_key is not None:
+            stmt = stmt.where(TestRun.workspace_key == workspace_key)
+        if test_definition_id is not None:
+            stmt = stmt.where(TestRun.test_definition_id == test_definition_id)
+        if status is not None:
+            stmt = stmt.where(TestRun.status == status)
+        if created_after is not None:
+            stmt = stmt.where(TestRun.created_at >= created_after)
+        if created_before is not None:
+            stmt = stmt.where(TestRun.created_at <= created_before)
+
+        stmt = stmt.order_by(TestRun.created_at.desc(), TestRun.id.desc()).offset(offset).limit(limit)
+        result = await self.db.execute(stmt)
+        return list(result.scalars().all())
+
     async def build_context(self, run_id: uuid.UUID, *, tenant_id: uuid.UUID) -> TestExecutionContext:
         run = (
             await self.db.execute(select(TestRun).where(TestRun.id == run_id, TestRun.tenant_id == tenant_id))
@@ -113,14 +149,31 @@ class TestCenterService:
         await self.db.flush()
         return run
 
-    async def finish_run(self, *, run_id: uuid.UUID, tenant_id: uuid.UUID, passed: bool, result: dict[str, Any] | None = None, evidence: dict[str, Any] | None = None, error: str | None = None) -> TestRun:
+    async def finish_run(
+        self,
+        *,
+        run_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        passed: bool,
+        result: dict[str, Any] | None = None,
+        evidence: dict[str, Any] | None = None,
+        error: str | None = None,
+        runtime_version: str | None = None,
+        migration_identity: str | None = None,
+        git_sha: str | None = None,
+    ) -> TestRun:
         run = await self._get_run_for_tenant(run_id, tenant_id, for_update=True)
         if run.status is not TestRunStatus.RUNNING:
             raise TestCenterError("only running test runs can finish")
+        if git_sha is not None and (len(git_sha) > 64 or not re.fullmatch(r"[0-9a-fA-F]+", git_sha)):
+            raise TestCenterError("git sha must be hexadecimal and at most 64 characters")
         run.status = TestRunStatus.PASSED if passed else TestRunStatus.FAILED
         run.result = result or {}
         run.evidence = evidence or {}
         run.error = error
+        run.runtime_version = runtime_version
+        run.migration_identity = migration_identity
+        run.git_sha = git_sha.lower() if git_sha else None
         run.finished_at = datetime.now(timezone.utc)
         await self.db.flush()
         return run
