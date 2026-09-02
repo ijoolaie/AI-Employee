@@ -64,7 +64,7 @@ def request_multipart_file(token: str, filename: str, content: bytes, content_ty
 
 
 def assert_status(actual: int, expected: int, label: str, body: dict) -> None:
-    assert actual == expected, f"{label}: expected HTTP {expected}, got {actual}: {body}"
+    assert actual == expected, f"{label}: expected HTTP {expected}, got {actual}"
 
 
 def register(suffix: str, label: str) -> tuple[str, str, str]:
@@ -74,7 +74,7 @@ def register(suffix: str, label: str) -> tuple[str, str, str]:
     status, response = request("POST", "/auth/register", {"tenant_name": f"P0 {label} Tenant {suffix}", "tenant_slug": tenant_slug, "email": email, "password": password, "full_name": f"P0 {label} Admin"})
     assert_status(status, 201, f"{label} registration", response)
     token = (response.get("data") or {}).get("access_token")
-    assert token, response
+    assert token, f"{label} registration did not return an access token"
     return tenant_slug, email, token
 
 
@@ -231,7 +231,7 @@ def main() -> int:
         status, restricted_login = request("POST", "/auth/login", {"email": restricted_email, "password": restricted_password, "tenant_slug": tenant_a_slug})
         assert_status(status, 200, "restricted member login", restricted_login)
         restricted_token = (restricted_login.get("data") or {}).get("access_token")
-        assert restricted_token
+        assert restricted_token, "restricted member login did not return an access token"
         print("RBAC RESTRICTED USER LOGIN PASS")
         status, allowed_read = request("GET", "/employees", token=restricted_token)
         assert_status(status, 200, "restricted employee read", allowed_read)
@@ -248,7 +248,7 @@ def main() -> int:
         status, search_b = request("POST", "/knowledge/search", {"query": f"TENANT_A_ONLY_MARKER_{suffix}", "limit": 10}, token=token_b)
         assert_status(status, 200, "tenant B knowledge search", search_b)
         search_data = search_b.get("data") or {}
-        assert not search_data.get("results"), f"cross-tenant knowledge leakage: {search_data}"
+        assert not search_data.get("results"), "cross-tenant knowledge leakage detected"
         print("CROSS-TENANT KNOWLEDGE SEARCH ISOLATION PASS")
 
         print("TENANT ISOLATION + RBAC + KNOWLEDGE P0 REAL-STACK CERTIFICATION PASS")
@@ -258,7 +258,7 @@ def main() -> int:
             asyncio.run(cleanup_test_tenants(created_slugs))
             print(f"CERTIFICATION FIXTURE CLEANUP PASS tenants={len(created_slugs)}")
         except Exception as exc:  # pragma: no cover - cleanup must not hide the gate result
-            print(f"CERTIFICATION FIXTURE CLEANUP FAIL: {exc}", file=sys.stderr)
+            print(f"CERTIFICATION FIXTURE CLEANUP FAIL: {type(exc).__name__}", file=sys.stderr)
 
 
 if __name__ == "__main__":
