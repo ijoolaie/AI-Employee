@@ -1,4 +1,4 @@
-"""Test Center run lifecycle persistence (P12.3)."""
+"""Test Center run lifecycle and evidence identity persistence (P12.3/P12.4)."""
 
 from __future__ import annotations
 
@@ -29,6 +29,7 @@ class TestRun(Base):
         Index("ix_test_runs_tenant_status", "tenant_id", "status"),
         Index("ix_test_runs_tenant_definition", "tenant_id", "test_definition_id"),
         Index("ix_test_runs_tenant_workspace", "tenant_id", "workspace_key"),
+        Index("ix_test_runs_tenant_git_sha", "tenant_id", "git_sha"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -51,6 +52,12 @@ class TestRun(Base):
     result: Mapped[dict | None] = mapped_column(JSONB)
     error: Mapped[str | None] = mapped_column(Text)
     evidence: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    runtime_version: Mapped[str | None] = mapped_column(String(120))
+    migration_identity: Mapped[str | None] = mapped_column(String(120))
+    git_sha: Mapped[str | None] = mapped_column(String(64))
+    evidence_boundary: Mapped[str] = mapped_column(
+        String(80), nullable=False, default="engineering_product_evidence"
+    )
     queued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
