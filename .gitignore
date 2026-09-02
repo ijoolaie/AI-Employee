@@ -42,3 +42,6 @@ frontend/playwright-report/
 frontend/test-results/
 
 dist/
+
+# Local disaster-recovery database backups
+artifacts/dr/
