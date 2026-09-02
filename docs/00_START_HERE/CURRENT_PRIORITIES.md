@@ -10,45 +10,43 @@ The repository contains external-production workflows for a later deployment con
 
 The canonical candidate is `v1.3.2` on `release/v1.3.2-phase6e-candidate` at exact commit `728b7f447d3bc6376fb01d47730cdd70eaf07746`. Phase 6E rehearsal, Production Certification and release packaging have passed on that exact identity. Do not rebuild, retag or replace it without a real defect.
 
-## Priority 1 — Local Production Hardening / Security
+## Priority 1 — Preserve Completed Local Delivery Evidence
 
-The six local Product Acceptance gates are complete and recorded in `docs/current/51_LOCAL_FINAL_ACCEPTANCE_RECONCILIATION_2026-09-02.md`. Do not rerun them merely to reproduce status. Continue with local production hardening/security validation against the applicable candidate identity.
+The six local Product Acceptance gates, runtime hardening, Redis/Beat recovery, backup/restore verification, migration audit and rollback evidence are complete. Do not rerun them merely to reproduce status. Rerun only after regression, relevant code/configuration change, a new release/candidate SHA, material environment change, or explicit evidence invalidation.
 
-## Priority 2 — Local Observability / Monitoring
+## Priority 2 — Customer Delivery Package
 
-Run the repository's local observability/monitoring contract validation. Record the explicit limitation that external alert-provider delivery is not exercised without a real external provider.
+Prepare the customer delivery package and handoff documentation within the current local-delivery scope. Customer deployment/acceptance is a separate event and must not be claimed before it actually occurs.
 
-## Priority 3 — Local Recovery / DR / Rollback Reconciliation
+## Priority 3 — Phase 12 Test Center & Evidence Platform
 
-Reconfirm local backup/restore and disaster-recovery evidence and the controlled rollback path where applicable. Bind evidence to the exact candidate and known-good identities.
+Expand the existing acceptance/evidence contracts into the first-class Phase 12 Test Center: safe execution, isolated data, run history, logs, artifacts, pass/fail evidence and exportable verification records.
 
-## Priority 4 — Final Local Delivery Verification
+The first engineering slice is intentionally backend-first:
 
-Run only the remaining local health/readiness/product smoke checks not already covered by the completed acceptance evidence. Reconcile deployed revision, migration head, runtime artifact and edition artifact identities.
+**Test Definition → authorized Test Run creation → isolated execution context → Run lifecycle → persisted result → tenant-scoped retrieval → audit/evidence record.**
 
-## Priority 5 — Final Local Evidence Manifest
+Do not replace the existing certified acceptance suite and do not weaken tenant, RBAC, audit or Human/Agent execution controls.
 
-Build one authoritative local-delivery evidence manifest tying together version/tag, exact SHA, migration head, certification runs, runtime checksum, edition checksum, local deployment/recovery/rollback evidence and explicit limitations.
+## Priority 4 — Workspace / Unified Execution Hardening
 
-## Priority 6 — Customer Delivery Package
+Continue validating Platform/Reseller/Client workspace actions against real WorkItem and Agent APIs, including role, tenant, authorization and audit boundaries.
 
-After the remaining local acceptance gates pass, prepare the customer delivery package and handoff documentation. Customer deployment/acceptance is a separate event and must not be claimed before it actually occurs.
+## Priority 5 — Compatibility Migration
 
-## Priority 7 — External Production (Future / Conditional)
+Continue incremental migration of existing Employee-backed capabilities onto the unified Human/Agent execution model while preserving compatibility paths.
+
+## Priority 6 — External Production (Future / Conditional)
 
 Only if a later business deployment requires an external production target, configure the required target and execute the repository's target-specific hardening, observability, recovery/DR, deployment and rollback workflows. Do not create fake values for `PRODUCTION_DEPLOY_HOST`, `PRODUCTION_DEPLOY_USER`, `PRODUCTION_DEPLOY_SSH_KEY` or `PRODUCTION_CONTAINER_REGISTRY` merely to satisfy those future workflows.
 
-## Priority 8 — Vendor / Reseller / Client Acceptance (Future / Conditional)
+## Priority 7 — Vendor / Reseller / Client Acceptance (Future / Conditional)
 
 External Vendor → Reseller → Client acceptance is outside the current local-only delivery scope. It can begin only when an actual external deployment/acceptance context exists and independent evidence is available.
 
-## Priority 9 — Phase 12 Test Center & Evidence Platform
+## Priority 8 — Downstream Productization
 
-Expand existing test/evidence contracts into the first-class Phase 12 Test Center where repeatable acceptance proof is needed, without destabilizing the release candidate.
-
-## Priority 10 — Compatibility Migration / Downstream Productization
-
-Continue incremental migration of existing Employee-backed capabilities onto the unified Human/Agent execution model while preserving compatibility paths. After local delivery readiness and execution stability, proceed with Phase 13 Agent Teams & Marketplace and Phase 14 Scale, Governance & Production according to the roadmap.
+After local delivery readiness and execution stability, proceed with Phase 13 Agent Teams & Marketplace and Phase 14 Scale, Governance & Production according to the roadmap.
 
 ## Completed local acceptance checkpoint
 
@@ -69,4 +67,5 @@ See `docs/current/51_LOCAL_FINAL_ACCEPTANCE_RECONCILIATION_2026-09-02.md` for th
 - Local production-like deployment/recovery evidence is valid local evidence.
 - A GitHub release/tag is a release identity, not proof of external production deployment.
 - External Vendor/Reseller/Client acceptance requires independent evidence.
+- Phase 12 implementation evidence is engineering/product evidence and does not constitute external production certification.
 - No acceptance state may be marked complete without the corresponding evidence.
