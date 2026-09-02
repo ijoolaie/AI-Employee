@@ -39,6 +39,7 @@ from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_runtime_binding import AgentRuntimeBinding
 from app.models.test_definition import TestDefinition
 from app.models.test_run import TestRun, TestRunStatus
+from app.models.test_run_artifact import TestRunArtifact
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -51,4 +52,5 @@ __all__ = [
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "PasswordResetToken",
     "TenantEntitlement", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
     "AgentDefinition", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding", "TestDefinition", "TestRun", "TestRunStatus",
+    "TestRunArtifact",
 ]
