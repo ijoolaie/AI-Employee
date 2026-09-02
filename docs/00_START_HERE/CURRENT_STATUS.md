@@ -1,7 +1,7 @@
 # Current Status
 
 **Last reconciled:** 2026-09-02  
-**Status:** v1.3.2 INTERNAL RELEASE EVIDENCE COMPLETE / LOCAL PRODUCT ACCEPTANCE GATES COMPLETE / REMAINING LOCAL HARDENING PENDING
+**Status:** v1.3.2 INTERNAL RELEASE EVIDENCE COMPLETE / LOCAL PRODUCT ACCEPTANCE GATES COMPLETE / LOCAL DELIVERY EVIDENCE COMPLETE / EXTERNAL PRODUCTION PENDING
 
 ## Where we are
 
@@ -16,6 +16,11 @@
 | Migration head | `p8_03_agent_binding` |
 | Release assets | Present on `v1.3.2` |
 | Local Product Acceptance gates | **COMPLETE** — recorded 2026-09-02 |
+| Local runtime hardening | **COMPLETE** — Redis/Beat recovery and API security-header smoke evidence recorded 2026-09-02 |
+| Local DR / restore verification | **COMPLETE** — PostgreSQL custom-format backup and isolated restore verified 2026-09-02 |
+| Migration graph audit | **COMPLETE** — single head and upgrade/downgrade coverage verified |
+| Local rollback strategy | **DOCUMENTED** — Git/Compose rebuild and health/smoke verification path |
+| Final local evidence | **COMPLETE** — evidence manifest recorded 2026-09-02 |
 | External production target | **NOT CONFIGURED / NOT AVAILABLE** |
 | Vendor acceptance | **NOT STARTED / NOT REQUIRED FOR CURRENT LOCAL SCOPE** |
 | Reseller acceptance | **NOT STARTED / NOT REQUIRED FOR CURRENT LOCAL SCOPE** |
@@ -23,7 +28,7 @@
 | Architecture baseline | V1.4 (frozen) |
 | Current architecture extension | V1.5 Agentic Operating Model |
 | Phase 11 | **COMPLETE** — prior certification `33369071987`, Failed gates: 0; Issue #170 closed |
-| Next execution frontier | Local production hardening, observability/monitoring, recovery/DR, rollback and final evidence manifest |
+| Next execution frontier | Phase 12 Test Center & Evidence Platform, with ongoing workspace/execution hardening and external-production evidence remaining separate |
 
 ## Canonical v1.3.2 identity
 
@@ -78,6 +83,22 @@ Workflow certification initially failed because Beat could not resolve `redis`. 
 
 This was a local Docker network-state incident, not an application Workflow defect. If it recurs, inspect network membership/DNS before changing application code or database state.
 
+## Local delivery evidence — 2026-09-02
+
+- Docker / Compose runtime: PASS.
+- Redis DNS connectivity from API, Worker and Beat: PASS.
+- Redis PING: PASS.
+- Celery Beat scheduling: PASS.
+- API security-header smoke test: PASS.
+- PostgreSQL custom-format backup: PASS.
+- Isolated PostgreSQL restore: PASS; 53 tables restored and migration `p8_03_agent_binding` present.
+- Migration graph: single head `p8_03_agent_binding`; migration upgrade/downgrade functions audited.
+- Backup is excluded from Git under `artifacts/dr/`.
+- Application rollback strategy is documented as known-good Git commit → rebuild application images → production Compose deployment → dependency/service health verification → application smoke verification.
+- Immutable image rollback, destructive production rollback drill, production restore drill, measured production RPO/RTO and external production deployment remain unverified.
+
+See `docs/LOCAL_RUNTIME_HARDENING_EVIDENCE_2026-09-02.md`, `docs/PRODUCTION_READINESS_DR_ROLLBACK_EVIDENCE_2026-09-02.md`, and `docs/FINAL_LOCAL_DELIVERY_EVIDENCE_MANIFEST_2026-09-02.md` for the detailed evidence boundaries.
+
 ## Invalidated attempts
 
 Run `33485801162` is not v1.3.2 evidence because its artifact metadata pointed to the previous `bcacbc0...` source despite the v1.3.2 package naming. Run `33485442018` is not the canonical v1.3.2 package run.
@@ -92,13 +113,13 @@ Run `33485801162` is not v1.3.2 evidence because its artifact metadata pointed t
 ## Current priorities
 
 1. Preserve the canonical `v1.3.2` identity and do not rebuild/re-tag without a real defect.
-2. Run the remaining local production hardening/security validation.
-3. Run local observability/monitoring contract validation and record the external alert-provider limitation.
-4. Reconfirm local backup/restore and DR evidence where not already covered by the candidate evidence.
-5. Reconfirm the controlled local rollback path.
-6. Build one final local evidence manifest binding version, exact SHA, migration and artifact/checksum identities.
-7. Prepare the customer delivery package and handoff documentation if the remaining local gates pass.
-8. Only if a future external deployment context is introduced, execute target-specific deployment and external acceptance workflows.
+2. Preserve the completed local Product Acceptance, runtime hardening, DR/restore and rollback evidence; rerun only on invalidation.
+3. Prepare the customer delivery package and handoff documentation within the current local-delivery scope.
+4. Begin Phase 12 Test Center & Evidence Platform implementation using the existing acceptance/evidence contracts.
+5. Continue Platform/Reseller/Client workspace validation against real WorkItem and Agent APIs as ongoing hardening.
+6. Continue compatibility migration for existing Employee-backed capabilities without breaking the unified execution model.
+7. Independently collect external production evidence only when a real deployment target exists.
+8. Execute Phase 6E Vendor → Reseller → Client production delivery only when the required external context and evidence exist.
 
 ## Important boundaries
 
@@ -106,4 +127,5 @@ Run `33485801162` is not v1.3.2 evidence because its artifact metadata pointed t
 - A Git tag or GitHub release does not by itself prove deployment or production acceptance.
 - `v1.3.2` remains a prerelease until the applicable release/promotion decision is supported by evidence.
 - Vendor, Reseller and Customer-environment acceptance cannot be claimed when no corresponding external acceptance event exists.
-- Historical documents cannot override this status file.
+- Phase 12 engineering evidence does not retroactively change the canonical v1.3.2 certification identity.
+- No acceptance state may be marked complete without the corresponding evidence.
