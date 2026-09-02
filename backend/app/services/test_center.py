@@ -61,15 +61,7 @@ class TestCenterService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_run(
-        self,
-        *,
-        tenant_id: uuid.UUID,
-        actor_id: uuid.UUID | None,
-        test_definition_id: uuid.UUID,
-        workspace_key: str | None = None,
-        fixtures: dict[str, Any] | None = None,
-    ) -> TestRun:
+    async def create_run(self, *, tenant_id: uuid.UUID, actor_id: uuid.UUID | None, test_definition_id: uuid.UUID, workspace_key: str | None = None, fixtures: dict[str, Any] | None = None) -> TestRun:
         definition = (
             await self.db.execute(
                 select(TestDefinition).where(
@@ -99,9 +91,7 @@ class TestCenterService:
 
     async def build_context(self, run_id: uuid.UUID, *, tenant_id: uuid.UUID) -> TestExecutionContext:
         run = (
-            await self.db.execute(
-                select(TestRun).where(TestRun.id == run_id, TestRun.tenant_id == tenant_id)
-            )
+            await self.db.execute(select(TestRun).where(TestRun.id == run_id, TestRun.tenant_id == tenant_id))
         ).scalar_one_or_none()
         if run is None:
             raise TestCenterError("test run not found")
@@ -123,19 +113,7 @@ class TestCenterService:
         await self.db.flush()
         return run
 
-    async def finish_run(
-        self,
-        *,
-        run_id: uuid.UUID,
-        tenant_id: uuid.UUID,
-        passed: bool,
-        result: dict[str, Any] | None = None,
-        evidence: dict[str, Any] | None = None,
-        error: str | None = None,
-        runtime_version: str | None = None,
-        migration_identity: str | None = None,
-        git_sha: str | None = None,
-    ) -> TestRun:
+    async def finish_run(self, *, run_id: uuid.UUID, tenant_id: uuid.UUID, passed: bool, result: dict[str, Any] | None = None, evidence: dict[str, Any] | None = None, error: str | None = None) -> TestRun:
         run = await self._get_run_for_tenant(run_id, tenant_id, for_update=True)
         if run.status is not TestRunStatus.RUNNING:
             raise TestCenterError("only running test runs can finish")
@@ -143,25 +121,26 @@ class TestCenterService:
         run.result = result or {}
         run.evidence = evidence or {}
         run.error = error
-        run.runtime_version = runtime_version
-        run.migration_identity = migration_identity
-        run.git_sha = git_sha
         run.finished_at = datetime.now(timezone.utc)
         await self.db.flush()
         return run
 
-    async def add_artifact(
-        self,
-        *,
-        run_id: uuid.UUID,
-        tenant_id: uuid.UUID,
-        artifact_type: str,
-        label: str,
-        reference: str,
-        sha256: str | None = None,
-        size_bytes: int | None = None,
-        metadata: dict[str, Any] | None = None,
-    ) -> TestRunArtifact:
+    async def record_evidence_identity(self, *, run_id: uuid.UUID, tenant_id: uuid.UUID, runtime_version: str | None = None, migration_identity: str | None = None, git_sha: str | None = None, evidence_boundary: str = "engineering_product_evidence") -> TestRun:
+        run = await self._get_run_for_tenant(run_id, tenant_id, for_update=True)
+        if run.status not in {TestRunStatus.PASSED, TestRunStatus.FAILED}:
+            raise TestCenterError("evidence identity requires a completed test run")
+        if evidence_boundary != "engineering_product_evidence":
+            raise TestCenterError("unsupported evidence boundary")
+        if git_sha is not None and (len(git_sha) > 64 or not re.fullmatch(r"[0-9a-fA-F]+", git_sha)):
+            raise TestCenterError("git sha must be hexadecimal and at most 64 characters")
+        run.runtime_version = runtime_version
+        run.migration_identity = migration_identity
+        run.git_sha = git_sha.lower() if git_sha else None
+        run.evidence_boundary = evidence_boundary
+        await self.db.flush()
+        return run
+
+    async def add_artifact(self, *, run_id: uuid.UUID, tenant_id: uuid.UUID, artifact_type: str, label: str, reference: str, sha256: str | None = None, size_bytes: int | None = None, metadata: dict[str, Any] | None = None) -> TestRunArtifact:
         run = await self._get_run_for_tenant(run_id, tenant_id, for_update=False)
         if run.status in {TestRunStatus.QUEUED, TestRunStatus.RUNNING}:
             raise TestCenterError("artifacts can only be attached to completed test runs")
@@ -188,9 +167,7 @@ class TestCenterService:
     async def list_artifacts(self, *, run_id: uuid.UUID, tenant_id: uuid.UUID) -> list[TestRunArtifact]:
         await self._get_run_for_tenant(run_id, tenant_id, for_update=False)
         result = await self.db.execute(
-            select(TestRunArtifact)
-            .where(TestRunArtifact.test_run_id == run_id, TestRunArtifact.tenant_id == tenant_id)
-            .order_by(TestRunArtifact.created_at.asc())
+            select(TestRunArtifact).where(TestRunArtifact.test_run_id == run_id, TestRunArtifact.tenant_id == tenant_id).order_by(TestRunArtifact.created_at.asc())
         )
         return list(result.scalars().all())
 
