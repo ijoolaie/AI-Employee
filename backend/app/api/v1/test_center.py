@@ -213,17 +213,47 @@ async def create_run(
             tenant_id=ctx.tenant_id,
             resource_type="test_run",
             resource_id=run.id,
-            metadata={
-                "test_definition_id": str(run.test_definition_id),
-                "correlation_id": str(run.correlation_id),
-                "workspace_key": run.workspace_key,
-            },
+            metadata={"test_definition_id": str(run.test_definition_id), "correlation_id": str(run.correlation_id), "workspace_key": run.workspace_key},
         )
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()
         raise _error(exc) from exc
     return _run_summary(run)
+
+
+async def _history_response(
+    *,
+    ctx: RunReadContext,
+    db: AsyncSession,
+    status_filter: str | None,
+    test_definition_id: UUID | None,
+    workspace_key: str | None,
+    created_after: datetime | None,
+    created_before: datetime | None,
+    limit: int,
+    offset: int,
+):
+    service = TestCenterService(db)
+    parsed_status = None
+    if status_filter:
+        try:
+            parsed_status = TestRunStatus(status_filter)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail="invalid test run status") from exc
+    try:
+        return await service.list_history(
+            tenant_id=ctx.tenant_id,
+            workspace_key=workspace_key,
+            test_definition_id=test_definition_id,
+            status=parsed_status,
+            created_after=created_after,
+            created_before=created_before,
+            limit=limit,
+            offset=offset,
+        )
+    except TestCenterError as exc:
+        raise _error(exc) from exc
 
 
 @router.get("/runs", response_model=list[TestRunSummary])
@@ -233,20 +263,50 @@ async def list_runs(
     status_filter: str | None = Query(default=None, alias="status"),
     test_definition_id: UUID | None = Query(default=None),
     workspace_key: str | None = Query(default=None),
+    created_after: datetime | None = Query(default=None),
+    created_before: datetime | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
 ):
-    stmt = select(TestRun).where(TestRun.tenant_id == ctx.tenant_id).order_by(TestRun.created_at.desc()).limit(limit)
-    if status_filter:
-        try:
-            stmt = stmt.where(TestRun.status == TestRunStatus(status_filter))
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail="invalid test run status") from exc
-    if test_definition_id is not None:
-        stmt = stmt.where(TestRun.test_definition_id == test_definition_id)
-    if workspace_key is not None:
-        stmt = stmt.where(TestRun.workspace_key == workspace_key)
-    result = await db.execute(stmt)
-    return [_run_summary(item) for item in result.scalars().all()]
+    runs = await _history_response(
+        ctx=ctx,
+        db=db,
+        status_filter=status_filter,
+        test_definition_id=test_definition_id,
+        workspace_key=workspace_key,
+        created_after=created_after,
+        created_before=created_before,
+        limit=limit,
+        offset=offset,
+    )
+    return [_run_summary(item) for item in runs]
+
+
+@router.get("/history", response_model=list[TestRunSummary])
+async def run_history(
+    ctx: RunReadContext,
+    db: AsyncSession = Depends(get_db),
+    status_filter: str | None = Query(default=None, alias="status"),
+    test_definition_id: UUID | None = Query(default=None),
+    workspace_key: str | None = Query(default=None),
+    created_after: datetime | None = Query(default=None),
+    created_before: datetime | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+):
+    """Read-only history surface; visibility is enforced by RunReadContext."""
+    runs = await _history_response(
+        ctx=ctx,
+        db=db,
+        status_filter=status_filter,
+        test_definition_id=test_definition_id,
+        workspace_key=workspace_key,
+        created_after=created_after,
+        created_before=created_before,
+        limit=limit,
+        offset=offset,
+    )
+    return [_run_summary(item) for item in runs]
 
 
 @router.get("/runs/{run_id}", response_model=TestRunSummary)
@@ -263,16 +323,7 @@ async def start_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Dep
     try:
         run = await service.start_run(run_id=run_id, tenant_id=ctx.tenant_id)
         await service.build_context(run.id, tenant_id=ctx.tenant_id)
-        await record(
-            db,
-            action="test_run.started",
-            actor_type="user",
-            actor_id=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-            resource_type="test_run",
-            resource_id=run.id,
-            metadata={"correlation_id": str(run.correlation_id)},
-        )
+        await record(db, action="test_run.started", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_run", resource_id=run.id, metadata={"correlation_id": str(run.correlation_id)})
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()
@@ -285,17 +336,7 @@ async def finish_run(run_id: UUID, payload: TestRunFinish, ctx: RunExecuteContex
     service = TestCenterService(db)
     try:
         run = await service.finish_run(run_id=run_id, tenant_id=ctx.tenant_id, **payload.model_dump())
-        await record(
-            db,
-            action="test_run.passed" if payload.passed else "test_run.failed",
-            actor_type="user",
-            actor_id=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-            resource_type="test_run",
-            resource_id=run.id,
-            status="success" if payload.passed else "failure",
-            metadata={"correlation_id": str(run.correlation_id), "evidence_boundary": run.evidence_boundary},
-        )
+        await record(db, action="test_run.passed" if payload.passed else "test_run.failed", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_run", resource_id=run.id, status="success" if payload.passed else "failure", metadata={"correlation_id": str(run.correlation_id), "evidence_boundary": run.evidence_boundary})
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()
@@ -304,25 +345,11 @@ async def finish_run(run_id: UUID, payload: TestRunFinish, ctx: RunExecuteContex
 
 
 @router.post("/runs/{run_id}/artifacts", response_model=TestRunArtifactSummary, status_code=status.HTTP_201_CREATED)
-async def add_artifact(
-    run_id: UUID,
-    payload: TestRunArtifactCreate,
-    ctx: RunExecuteContext,
-    db: AsyncSession = Depends(get_db),
-):
+async def add_artifact(run_id: UUID, payload: TestRunArtifactCreate, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db)):
     service = TestCenterService(db)
     try:
         artifact = await service.add_artifact(run_id=run_id, tenant_id=ctx.tenant_id, **payload.model_dump())
-        await record(
-            db,
-            action="test_run.artifact_added",
-            actor_type="user",
-            actor_id=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-            resource_type="test_run_artifact",
-            resource_id=artifact.id,
-            metadata={"test_run_id": str(run_id), "artifact_type": artifact.artifact_type},
-        )
+        await record(db, action="test_run.artifact_added", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_run_artifact", resource_id=artifact.id, metadata={"test_run_id": str(run_id), "artifact_type": artifact.artifact_type})
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()
@@ -345,16 +372,7 @@ async def cancel_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = De
     service = TestCenterService(db)
     try:
         run = await service.cancel_run(run_id=run_id, tenant_id=ctx.tenant_id)
-        await record(
-            db,
-            action="test_run.cancelled",
-            actor_type="user",
-            actor_id=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-            resource_type="test_run",
-            resource_id=run.id,
-            metadata={"correlation_id": str(run.correlation_id)},
-        )
+        await record(db, action="test_run.cancelled", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_run", resource_id=run.id, metadata={"correlation_id": str(run.correlation_id)})
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()
