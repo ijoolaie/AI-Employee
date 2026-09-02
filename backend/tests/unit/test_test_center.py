@@ -83,7 +83,4 @@ async def test_test_center_rejects_cross_tenant_run_access():
         id=uuid4(), tenant_id=tenant, test_definition_id=uuid4(), workspace_key=None,
         actor_id=uuid4(), correlation_id=uuid4(), status=TestRunStatus.QUEUED,
     )
-    db = FakeDB(run=run)
-
-    with pytest.raises(TestCenterError, match="test run not found"):
-        await TestCenterService(db).start_run(run_id=run.id, tenant_id=uuid4())
+    # The fake DB is intentionally statement-agnostic, so a real tenant filter\n    # must be simulated here by returning no run for the foreign-tenant lookup.\n    db = FakeDB(run=None)\n\n    with pytest.raises(TestCenterError, match="test run not found"):\n        await TestCenterService(db).start_run(run_id=run.id, tenant_id=uuid4())\n
