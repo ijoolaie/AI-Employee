@@ -31,5 +31,5 @@ class TestRunArtifact(Base):
     reference: Mapped[str] = mapped_column(String(2048), nullable=False)
     sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
     size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    metadata: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
