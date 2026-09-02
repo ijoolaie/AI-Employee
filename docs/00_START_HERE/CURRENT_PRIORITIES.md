@@ -20,11 +20,13 @@ Prepare the customer delivery package and handoff documentation within the curre
 
 ## Priority 3 — Phase 12 Test Center & Evidence Platform
 
-Expand the existing acceptance/evidence contracts into the first-class Phase 12 Test Center: safe execution, isolated data, run history, logs, artifacts, pass/fail evidence and exportable verification records.
+The first backend foundation is now **AS-BUILT** on `main`: `TestDefinition`, tenant-bound `TestRun`, queued/running/passed/failed/cancelled/expired lifecycle, safe fixture handling, workspace-bound context checks, existing `run.read` / `run.execute` authorization boundaries, and tenant-scoped audit records. The next step is targeted backend contract validation; unrelated certified acceptance suites remain preserved and should not be rerun merely to reproduce status.
 
-The first engineering slice is intentionally backend-first:
+The implemented first engineering slice is:
 
 **Test Definition → authorized Test Run creation → isolated execution context → Run lifecycle → persisted result → tenant-scoped retrieval → audit/evidence record.**
+
+After validation, continue with P12.4 evidence/artifacts, P12.5 history/visibility and P12.6 exportable verification records. Do not begin the full UI until the backend contract slice is verified.
 
 Do not replace the existing certified acceptance suite and do not weaken tenant, RBAC, audit or Human/Agent execution controls.
 
