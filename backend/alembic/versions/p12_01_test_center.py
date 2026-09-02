@@ -37,11 +37,11 @@ def upgrade() -> None:
     op.create_index("ix_test_definitions_tenant_workspace", "test_definitions", ["tenant_id", "workspace_key"])
     op.create_index("ix_test_definitions_tenant_enabled", "test_definitions", ["tenant_id", "enabled"])
 
-    test_run_status = sa.Enum(
+    test_run_status = postgresql.ENUM(
         "queued", "running", "passed", "failed", "cancelled", "expired",
         name="testrunstatus",
+        create_type=True,
     )
-    test_run_status.create(op.get_bind(), checkfirst=True)
     op.create_table(
         "test_runs",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
