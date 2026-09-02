@@ -96,7 +96,12 @@ jobs:
           alembic current
       - name: Alembic upgrade
         working-directory: backend
-        run: alembic upgrade head
+        env:
+          PGOPTIONS: '-c lock_timeout=30s -c statement_timeout=10min'
+        run: |
+          set -euxo pipefail
+          echo '=== ALEMBIC UPGRADE (lock_timeout=30s, statement_timeout=10min) ==='
+          alembic upgrade head
       - name: Alembic consistency
         working-directory: backend
         run: |
