@@ -10,57 +10,58 @@ The repository contains external-production workflows for a later deployment con
 
 The canonical candidate is `v1.3.2` on `release/v1.3.2-phase6e-candidate` at exact commit `728b7f447d3bc6376fb01d47730cdd70eaf07746`. Phase 6E rehearsal, Production Certification and release packaging have passed on that exact identity. Do not rebuild, retag or replace it without a real defect.
 
-## Priority 1 — Complete Local Final Acceptance
+## Priority 1 — Local Production Hardening / Security
 
-Continue validation on the local production-like stack using the exact `v1.3.2` release identity. The objective is to close every **local** test/evidence gap before customer delivery. Local evidence must remain explicitly labeled as local; it must not be represented as external production evidence.
+The six local Product Acceptance gates are complete and recorded in `docs/current/51_LOCAL_FINAL_ACCEPTANCE_RECONCILIATION_2026-09-02.md`. Do not rerun them merely to reproduce status. Continue with local production hardening/security validation against the applicable candidate identity.
 
-Known local evidence boundary from the Phase 6E rehearsal:
+## Priority 2 — Local Observability / Monitoring
 
-- Health: PASS
-- Migration: PASS
-- Backup/restore: PASS
-- Controlled recovery: PASS
-- Evidence generation/upload: PASS
-- Monitoring: `NOT_CONFIGURED_IN_REHEARSAL`
-- Security: `REHEARSAL_ONLY`
+Run the repository's local observability/monitoring contract validation. Record the explicit limitation that external alert-provider delivery is not exercised without a real external provider.
 
-Therefore the next local work must address the remaining monitoring/observability and security/hardening evidence that can be meaningfully exercised on the local production-like stack, plus any other local acceptance criteria found in the current runbooks/workflows.
+## Priority 3 — Local Recovery / DR / Rollback Reconciliation
 
-## Priority 2 — Local Recovery / DR / Rollback Reconciliation
+Reconfirm local backup/restore and disaster-recovery evidence and the controlled rollback path where applicable. Bind evidence to the exact candidate and known-good identities.
 
-Confirm the repository's recovery, DR and rollback contracts against the local production-like stack where they are applicable. Preserve logs, artifacts and evidence and bind them to the exact `728b7f447...` revision.
+## Priority 4 — Final Local Delivery Verification
 
-## Priority 3 — Local End-to-End Delivery Verification
+Run only the remaining local health/readiness/product smoke checks not already covered by the completed acceptance evidence. Reconcile deployed revision, migration head, runtime artifact and edition artifact identities.
 
-Run the final local health, readiness and product smoke/E2E checks on the exact release identity. Reconcile the deployed revision, migration head, runtime artifact and edition artifact identities.
+## Priority 5 — Final Local Evidence Manifest
 
-## Priority 4 — Final Local Evidence Manifest
+Build one authoritative local-delivery evidence manifest tying together version/tag, exact SHA, migration head, certification runs, runtime checksum, edition checksum, local deployment/recovery/rollback evidence and explicit limitations.
 
-Build one authoritative local-delivery evidence manifest tying together version/tag, exact SHA, migration head, certification runs, runtime checksum, edition checksum, local deployment/recovery/rollback evidence and any explicit limitations.
+## Priority 6 — Customer Delivery Package
 
-## Priority 5 — Customer Delivery Package
+After the remaining local acceptance gates pass, prepare the customer delivery package and handoff documentation. Customer deployment/acceptance is a separate event and must not be claimed before it actually occurs.
 
-After local final acceptance passes, prepare the customer delivery package and handoff documentation. Customer deployment/acceptance is a separate event and must not be claimed before it actually occurs.
-
-## Priority 6 — External Production (Future / Conditional)
+## Priority 7 — External Production (Future / Conditional)
 
 Only if a later business deployment requires an external production target, configure the required target and execute the repository's target-specific hardening, observability, recovery/DR, deployment and rollback workflows. Do not create fake values for `PRODUCTION_DEPLOY_HOST`, `PRODUCTION_DEPLOY_USER`, `PRODUCTION_DEPLOY_SSH_KEY` or `PRODUCTION_CONTAINER_REGISTRY` merely to satisfy those future workflows.
 
-## Priority 7 — Vendor / Reseller / Client Acceptance (Future / Conditional)
+## Priority 8 — Vendor / Reseller / Client Acceptance (Future / Conditional)
 
 External Vendor → Reseller → Client acceptance is outside the current local-only delivery scope. It can begin only when an actual external deployment/acceptance context exists and independent evidence is available.
 
-## Priority 8 — Phase 12 Test Center & Evidence Platform
+## Priority 9 — Phase 12 Test Center & Evidence Platform
 
 Expand existing test/evidence contracts into the first-class Phase 12 Test Center where repeatable acceptance proof is needed, without destabilizing the release candidate.
 
-## Priority 9 — Compatibility Migration
+## Priority 10 — Compatibility Migration / Downstream Productization
 
-Continue incremental migration of existing Employee-backed capabilities onto the unified Human/Agent execution model while preserving compatibility paths.
+Continue incremental migration of existing Employee-backed capabilities onto the unified Human/Agent execution model while preserving compatibility paths. After local delivery readiness and execution stability, proceed with Phase 13 Agent Teams & Marketplace and Phase 14 Scale, Governance & Production according to the roadmap.
 
-## Priority 10 — Downstream Productization
+## Completed local acceptance checkpoint
 
-After local delivery readiness and execution stability, proceed with Phase 13 Agent Teams & Marketplace and Phase 14 Scale, Governance & Production according to the roadmap.
+As of 2026-09-02, the following local gates are recorded as PASS and should not be repeated unless invalidated by regression, relevant code/configuration change, a new release/candidate SHA, material environment change, or explicit evidence invalidation:
+
+- Tenant Isolation + RBAC + Knowledge P0 — PASS twice
+- Conversation Tenant Isolation P0 — PASS
+- Employee → Run → AI → Result — PASS
+- Files → Knowledge → Memory — PASS
+- Admin / Developer API Keys — PASS
+- Workflow + Approval + Schedule — PASS
+
+See `docs/current/51_LOCAL_FINAL_ACCEPTANCE_RECONCILIATION_2026-09-02.md` for the detailed evidence and incident-resolution record.
 
 ## Evidence boundary
 

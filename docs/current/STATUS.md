@@ -1,7 +1,7 @@
 # Current Project Status
 
 **Baseline:** V1.4  
-**Status date:** 2026-08-31  
+**Status date:** 2026-08-31 (plus local acceptance evidence recorded 2026-09-02)  
 **Current source of truth:** this file, reconciled against current `main`, merged implementation, release history and the latest available CI/production-certification evidence.
 
 ## Executive status
@@ -10,7 +10,9 @@ AI-Employee has substantial implementation across core SaaS, AI, tenant, billing
 
 Phase 11 Unified Execution E2E acceptance is **COMPLETE**. Production Certification run **33369071987** on commit **bcacbc0eb03b247ad00a232e4eb6324ce5c849df** passed the Human and Agent real-stack WorkItem gates with **Failed gates: 0**. Issue #170 is closed.
 
-The current engineering/product frontier is therefore no longer initial Unified Execution implementation or Phase 11 acceptance. It is **production hardening and independently collected external production evidence**, including the Phase 5/6E Vendor → Reseller → Client delivery path, followed by the planned Test Center & Evidence Platform (Phase 12).
+The 2026-09-02 local acceptance cycle additionally completed the six reviewed product gates recorded in `docs/current/50_LOCAL_ACCEPTANCE_EVIDENCE_2026-09-02.md`: Tenant Isolation + RBAC + Knowledge P0, Conversation Tenant Isolation P0, Employee → Run → AI → Result, Files → Knowledge → Memory, Admin / Developer API Keys, and Workflow + Approval + Schedule. The Workflow gate required recovery from a Docker Compose network mismatch between `beat` and `redis`; after a volume-preserving Compose recreation it passed completely.
+
+The current engineering/product frontier remains **production hardening and independently collected external production evidence**, including the Phase 5/6E Vendor → Reseller → Client delivery path, followed by the planned Test Center & Evidence Platform (Phase 12).
 
 ## Evidence levels
 
@@ -25,6 +27,30 @@ The current engineering/product frontier is therefore no longer initial Unified 
 The current `main` contains the V1.5 Agentic Operating Model implementation beyond the `v1.3.0` release baseline, including WorkItem execution, Human and Agent executors, Agent runtime binding, Agent → Run correlation, authorization/policy, approval, audit/history, cancellation/retry, dispatch concurrency hardening, Platform Command Center, role-aware Platform/Reseller/Client workspaces, and the Phase 11 real-stack certification gates.
 
 The Git comparison from `v1.3.0` to `main` reports 221 commits and includes the execution models/services, migrations, E2E certification scripts, acceptance tests, workspace/API changes and current roadmap/status documentation. This is implementation evidence that the repository has advanced beyond the published `v1.3.0` release lineage; it is not by itself evidence that those post-release commits have been deployed to external production.
+
+## 2026-09-02 Local Acceptance Evidence
+
+**Evidence record:** `docs/current/50_LOCAL_ACCEPTANCE_EVIDENCE_2026-09-02.md`
+
+### Completed gates
+
+- Tenant Isolation + RBAC + Knowledge P0 — PASS; executed twice, both with automatic cleanup.
+- Conversation Tenant Isolation P0 — PASS.
+- Employee → Run → AI → Result — PASS.
+- Files → Knowledge → Memory — PASS.
+- Admin / Developer API Keys — PASS.
+- Workflow + Approval + Schedule — PASS after Docker Compose network recovery.
+
+### Operational findings resolved
+
+- Legacy `security-a-*` / `security-b-*` certification fixture pollution was identified and cleaned; final remaining security certification tenants: **0**.
+- The tenant fixture cleanup helper was aligned with both current and legacy certification slug prefixes and merged in PR #212.
+- CodeQL-sensitive response/exception logging in the tenant certification script was removed/hardened in PR #212.
+- A Docker Compose network mismatch placed `beat` on `ai-employee_backend` while `redis`, `worker`, and `api` were on `ai-employee_default`; this prevented Beat from resolving `redis` and initially blocked Workflow approval creation. A `docker compose down` followed by `docker compose up -d` (without `-v`) restored the shared runtime network state. The workflow certification then passed.
+
+### Reuse rule
+
+Do not repeat the six local acceptance gates merely for rediscovery. Re-run them when a relevant code, migration, configuration, infrastructure, dependency, runtime, or environment change creates regression risk, or when a new release candidate requires fresh evidence.
 
 ## Phase 11 acceptance status
 
@@ -61,7 +87,7 @@ Earlier Agent certification failures were resolved by the enum persistence fix a
 | Files | VERIFIED | Isolation evidence exists. |
 | Knowledge / Memory | VERIFIED | Isolation and integration evidence exists. |
 | Conversations | VERIFIED | Tenant/public-boundary evidence exists. |
-| Workflows / schedules / approvals | VERIFIED | Reviewed acceptance gates pass. |
+| Workflows / schedules / approvals | VERIFIED | 2026-09-02 local acceptance gate passed after runtime network recovery. |
 | Reports / analytics | VERIFIED | Dedicated isolation evidence exists. |
 | Billing domain | VERIFIED | Commerce and tenant-isolation evidence exists. |
 | Stripe integration | AS-BUILT / EXTERNAL-PENDING | Integration exists; live-provider evidence is separate. |
@@ -77,7 +103,7 @@ Earlier Agent certification failures were resolved by the enum persistence fix a
 | Workspace ↔ execution runtime | VERIFIED for Phase 11 acceptance | Canonical WorkItem/Agent API acceptance passed in final certification; broader production behavior remains external-pending. |
 | Test Center | PLANNED / PARTIAL CONTRACTS | Contracts and service slices exist; first-class Phase 12 platform remains downstream. |
 | Agent Teams / Marketplace | PLANNED | Foundations exist in V1.5; full productization is Phase 13. |
-| Docker / production compose | VERIFIED | Reviewed production-compose validation passes. |
+| Docker / production compose | VERIFIED | Reviewed production-compose validation passes; 2026-09-02 also recovered the local Compose network mismatch without volume deletion. |
 | Backend CI | VERIFIED | Reviewed gates pass. |
 | Frontend CI | VERIFIED | Reviewed gates pass. |
 | Architecture Guard | VERIFIED | Reviewed gates pass where required. |
@@ -128,6 +154,7 @@ After productionization and execution stability, proceed with Agent Teams/Market
 - The V1.4 engineering baseline has substantial real-stack verification evidence.
 - The V1.5 Unified Execution substrate is implemented and lifecycle/concurrency hardened.
 - Phase 11 Unified Execution E2E acceptance is **COMPLETE** with fresh real-stack evidence and zero failed product gates.
+- The 2026-09-02 local acceptance cycle completed all six reviewed product acceptance gates documented in `50_LOCAL_ACCEPTANCE_EVIDENCE_2026-09-02.md`.
 - The current `main` is materially ahead of the published `v1.3.0` release baseline.
 - The repository has implementation evidence for the current Agentic Operating Model, Platform/Reseller/Client workspace work and supporting migrations/tests.
 - External production deployment, live provider behavior, customer acceptance and commercial go-live remain **EXTERNAL-PENDING** until independently evidenced.
@@ -142,6 +169,7 @@ Do not claim that the current `main` is externally production-certified merely b
 - Documentation map: `docs/DOCUMENTATION_INDEX.md`
 - Implementation truth: `docs/current/STATUS.md`
 - Roadmap: `docs/current/PRODUCTIZATION_ROADMAP.md`
+- Local acceptance evidence: `docs/current/50_LOCAL_ACCEPTANCE_EVIDENCE_2026-09-02.md`
 - Workspace architecture: `docs/current/14_FRONTEND_WORKSPACE_ARCHITECTURE.md`
 - Version/release truth: `docs/current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md`
 - Production certification baseline: `docs/current/45_PRODUCTION_CERTIFICATION_BASELINE_2026-08-27.md`
