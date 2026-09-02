@@ -129,7 +129,7 @@ Rollback sequence:
 8. Preserve the current database unless a separate, explicitly approved recovery procedure is required.
 
 Current repository state:
-- HEAD: bbfa2a4
+- HEAD: 7c3b9d5
 - origin/main: bc51ac5
 
 No destructive rollback drill was executed because it would alter the active runtime without adding meaningful evidence beyond the verified deployment mechanism.
