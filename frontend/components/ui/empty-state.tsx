@@ -1,15 +1,15 @@
-import { LucideIcon } from "lucide-react";
+import { Inbox, LucideIcon } from "lucide-react";
 import { ReactNode } from "react";
 
 interface EmptyStateProps {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   title: string;
   description?: string;
   action?: ReactNode;
 }
 
 export function EmptyState({
-  icon: Icon,
+  icon: Icon = Inbox,
   title,
   description,
   action,
