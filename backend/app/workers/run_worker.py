@@ -7,11 +7,13 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from app.agents.memory import build_runtime_memory
 from app.agents.runtime import AgentRuntime
 from app.agents.runtime_contract import AgentRuntimeContract
 from app.core.database import worker_db_session
 from app.core.telemetry import span
 from app.core.exceptions import NotFoundError, ValidationAppError
+from app.models.employee import EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services import run_service
@@ -21,12 +23,7 @@ logger = logging.getLogger("app.workers.run")
 
 
 async def _run_async(run_id: str, tenant_id: str) -> None:
-    """Execute a Run only when the queued tenant context matches its owner.
-
-    Tenant identity is carried explicitly in the Celery payload rather than
-    being inferred solely from the database record. The worker fails closed
-    when the context is missing, malformed, or does not match the Run owner.
-    """
+    """Execute a Run only when the queued tenant context matches its owner."""
     with span("aiep.employee_run.execute", run_id=run_id, tenant_id=tenant_id):
         async with worker_db_session() as db:
             try:
@@ -35,9 +32,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             except (ValueError, AttributeError) as exc:
                 raise ValidationAppError("Invalid worker tenant/run context") from exc
 
-            result = await db.execute(
-                select(Run).where(Run.id == parsed_run_id)
-            )
+            result = await db.execute(select(Run).where(Run.id == parsed_run_id))
             run = result.scalar_one_or_none()
             if run is None:
                 raise NotFoundError("Run not found")
@@ -46,6 +41,22 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     "Worker tenant context does not match Run tenant",
                     details={"run_id": run_id},
                 )
+
+            version_result = await db.execute(
+                select(EmployeeVersion).where(EmployeeVersion.id == run.employee_version_id)
+            )
+            version = version_result.scalar_one_or_none()
+            if version is None:
+                raise NotFoundError("Employee version not found for this Run")
+
+            runtime_memory = await build_runtime_memory(
+                db,
+                tenant_id=run.tenant_id,
+                employee_id=run.employee_id,
+                employee_version_id=run.employee_version_id,
+                input_data=run.input_data or {},
+                rules=version.rules or {},
+            )
 
             approval_result = await db.execute(
                 select(ToolApprovalRequest)
@@ -66,13 +77,17 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                 employee_version_id=str(run.employee_version_id),
                 input_data=run.input_data or {},
                 context={"executor": "celery_worker"},
+                memory=runtime_memory,
                 approval_state=approval_state,
                 approval_id=approval_id,
                 evidence={
                     "runtime_boundary": "celery_worker",
                     "approval_state": approval_state,
+                    "memory_count": len(runtime_memory),
+                    "memory_employee_version_id": str(run.employee_version_id),
                 },
             )
+            contract.validate()
             runtime = AgentRuntime(contract)
 
             try:
@@ -92,13 +107,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
 
 @celery_app.task(name="run.execute")
 def execute_run_task(run_id: str, tenant_id: str) -> None:
-    """Execute one Run with an explicit, validated tenant context.
-
-    Deliberate Celery retries are not configured here because an exception can
-    occur after an external AI/tool side effect. Automatically replaying the
-    same Run would therefore risk duplicate provider calls or tool side effects.
-    The runtime therefore defaults to one attempt for the complete Run.
-    """
+    """Execute one Run with no automatic replay of side-effecting work."""
     if not tenant_id:
         raise ValidationAppError("tenant_id is required for run.execute")
     asyncio.run(_run_async(run_id, tenant_id))
