@@ -1,4 +1,4 @@
-"""Phase 13.5 marketplace publication and discovery endpoints."""
+"""Phase 13.5 marketplace publication, discovery and import endpoints."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -11,12 +11,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.deps import TenantContext, require_permission
 from app.models.marketplace_publication import MarketplacePublication
+from app.models.team_installation import TeamInstallation
 from app.services.audit_service import record
 from app.services.marketplace import MarketplaceError, MarketplaceService
 
 router = APIRouter(prefix="/marketplace/publications", tags=["marketplace"])
 MarketplacePublishContext = TenantContext
 MarketplaceReadContext = TenantContext
+MarketplaceInstallContext = TenantContext
 
 
 class MarketplacePublicationCreate(BaseModel):
@@ -42,8 +44,27 @@ class MarketplacePublicationRead(BaseModel):
     trust_basis: str = "recorded_evidence_only"
 
 
+class MarketplaceInstallRequest(BaseModel):
+    workspace_key: str | None = Field(default=None, max_length=120)
+
+
+class MarketplaceInstallResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    team_version_id: UUID
+    source_publication_id: UUID
+    workspace_key: str | None
+    enabled: bool
+    installed_by: UUID | None
+    installed_at: datetime
+
+
 def _read(item: MarketplacePublication) -> MarketplacePublicationRead:
     return MarketplacePublicationRead.model_validate(item, from_attributes=True)
+
+
+def _installation(item: TeamInstallation) -> MarketplaceInstallResponse:
+    return MarketplaceInstallResponse.model_validate(item, from_attributes=True)
 
 
 def _error(exc: MarketplaceError) -> HTTPException:
@@ -88,6 +109,44 @@ async def publish_team_version(
         await db.rollback()
         raise _error(exc) from exc
     return _read(publication)
+
+
+@router.post("/{publication_id}/install", response_model=MarketplaceInstallResponse, status_code=status.HTTP_201_CREATED)
+async def install_publication(
+    publication_id: UUID,
+    payload: MarketplaceInstallRequest,
+    ctx: MarketplaceInstallContext = Depends(require_permission("marketplace.install")),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        installation = await MarketplaceService(db).import_publication(
+            tenant_id=ctx.tenant_id,
+            publication_id=publication_id,
+            actor_id=ctx.user_id,
+            workspace_key=payload.workspace_key,
+        )
+        await record(
+            db,
+            action="marketplace_publication.installed",
+            actor_type="user",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="team_installation",
+            resource_id=installation.id,
+            metadata={
+                "source_publication_id": str(publication_id),
+                "team_version_id": str(installation.team_version_id),
+                "workspace_key": installation.workspace_key,
+                "customer_acceptance": "not_implied",
+                "production_deployment": "not_implied",
+                "trust_basis": "recorded_evidence_only",
+            },
+        )
+        await db.commit()
+    except MarketplaceError as exc:
+        await db.rollback()
+        raise _error(exc) from exc
+    return _installation(installation)
 
 
 @router.get("", response_model=list[MarketplacePublicationRead])
