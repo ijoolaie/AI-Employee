@@ -1,6 +1,6 @@
 # Phase 13 — Agent Teams & Marketplace Design
 
-**Status:** OPERATIONAL VALIDATION COMPLETE — LOCAL/RUNTIME EVIDENCE RECORDED  
+**Status:** BACKEND FOUNDATION IMPLEMENTED — MARKETPLACE IMPORT BOUNDARY ADDED  
 **Date:** 2026-09-03
 
 ## Scope
@@ -27,55 +27,41 @@ Every Phase 13 capability must preserve:
 
 ### 13.1 Team Definition Contract
 
-Define a tenant-scoped reusable team containing:
-
-- stable team identifier and version;
-- member AgentDefinition references;
-- role/skill metadata;
-- execution policy and allowed tools;
-- lifecycle status;
-- immutable version identity.
+Implemented with tenant-scoped `TeamDefinition` and immutable `TeamVersion` contracts and migrations.
 
 ### 13.2 Team Installation Boundary
 
-Install a published team into a tenant through an explicit, authorized operation.
-
-Installation must create tenant-local references without granting the installed team control-plane authority outside the tenant.
+Implemented through `TeamInstallation` and an authorized tenant-local installation service/API. Same-tenant installation remains available for existing team definitions.
 
 ### 13.3 Team Execution Contract
 
-Execute an installed team through the existing WorkItem/Agent execution substrate. Do not create a second task/lifecycle system.
-
-Execution must retain:
-
-- actor identity;
-- tenant/workspace identity;
-- correlation ID;
-- approval state where required;
-- audit events;
-- cancellation and failure semantics.
+Implemented through the existing WorkItem/Agent execution substrate. Installed teams dispatch member work through canonical Agent execution rather than a parallel task lifecycle.
 
 ### 13.4 Evaluation & Versioning
 
-Support immutable team versions and evaluation records so published versions can be compared without mutating historical evidence.
-
-Evaluation outputs are engineering/product evidence unless independently backed by external acceptance evidence.
+Implemented with immutable `TeamEvaluation` records tied to immutable `TeamVersion` identities.
 
 ### 13.5 Marketplace Boundary
 
-Introduce a marketplace-facing publication/install contract with explicit ownership, visibility and tenant installation rules.
+Implemented with publication/discovery metadata and an explicit authorized import operation.
 
-Marketplace publication must never imply customer acceptance, production deployment or trust beyond the recorded evidence.
+A public publication can be imported into another tenant only through `marketplace.install`. Import creates tenant-local copies of the TeamDefinition, TeamVersion and referenced AgentDefinitions, records the source publication on `TeamInstallation`, and emits an audit event. No AgentInstance is created automatically; target-tenant provisioning remains an operational responsibility.
+
+Marketplace publication/import does not imply customer acceptance, production deployment or trust beyond recorded evidence.
+
+### 13.6 Authorized UI
+
+**NOT YET IMPLEMENTED for Teams/Marketplace.** The next product-facing slice is an authorized UI consuming the backend contracts without reimplementing authorization in the browser.
 
 ## Recommended implementation order
 
-1. TeamDefinition + immutable TeamVersion data model and migration.
-2. Tenant-scoped authorization/service contract.
-3. Team installation contract.
-4. WorkItem-backed team execution orchestration.
-5. Evaluation/version evidence.
-6. Marketplace publication/discovery boundary.
-7. Authorized UI surfaces.
+1. TeamDefinition + immutable TeamVersion data model and migration. **DONE**
+2. Tenant-scoped authorization/service contract. **DONE**
+3. Team installation contract. **DONE**
+4. WorkItem-backed team execution orchestration. **DONE**
+5. Evaluation/version evidence. **DONE**
+6. Marketplace publication/discovery/import boundary. **DONE — backend**
+7. Authorized UI surfaces. **NEXT**
 
 ## Definition of Done
 
