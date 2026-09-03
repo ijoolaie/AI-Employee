@@ -49,6 +49,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "memory.delete",
     "feedback.create",
     "feedback.read",
+    "team.install",
 )
 
 

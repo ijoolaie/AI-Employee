@@ -26,14 +26,14 @@ RESELLER_PERMISSIONS = {
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
     "reseller.customer.create", "reseller.customer.read", "reseller.customer.manage",
-    "reseller.entitlement.delegate", "support.escalation.create",
+    "reseller.entitlement.delegate", "support.escalation.create", "team.install",
 }
 CUSTOMER_PERMISSIONS = {
     "employee.read", "employee.write", "run.read", "run.execute", "file.read", "file.write",
     "audit.read", "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel",
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
-    "support.escalation.create",
+    "support.escalation.create", "team.install",
 }
 
 
