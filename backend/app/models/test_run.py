@@ -6,11 +6,12 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, Text, event, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.services.test_center_safety import sanitize_test_payload
 
 
 class TestRunStatus(str, enum.Enum):
@@ -64,3 +65,11 @@ class TestRun(Base):
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+@event.listens_for(TestRun, "before_insert")
+@event.listens_for(TestRun, "before_update")
+def _validate_persisted_evidence(mapper, connection, target: TestRun) -> None:
+    if target.result is not None:
+        target.result = sanitize_test_payload(target.result)
+    target.evidence = sanitize_test_payload(target.evidence or {})
