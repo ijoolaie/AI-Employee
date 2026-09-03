@@ -34,9 +34,13 @@ def upgrade() -> None:
     )
     op.create_index("ix_team_evaluations_tenant_id", "team_evaluations", ["tenant_id"])
     op.create_index("ix_team_evaluations_team_version_id", "team_evaluations", ["team_version_id"])
+    op.execute(sa.text("INSERT INTO permissions (id, code, description) VALUES (gen_random_uuid(), 'team.evaluate', 'Core permission: team.evaluate') ON CONFLICT (code) DO NOTHING"))
+    op.execute(sa.text("INSERT INTO role_permissions (role_id, permission_id) SELECT r.id, p.id FROM roles r CROSS JOIN permissions p WHERE r.name = 'Admin' AND p.code = 'team.evaluate' ON CONFLICT DO NOTHING"))
 
 
 def downgrade() -> None:
+    op.execute(sa.text("DELETE FROM role_permissions WHERE permission_id IN (SELECT id FROM permissions WHERE code = 'team.evaluate')"))
+    op.execute(sa.text("DELETE FROM permissions WHERE code = 'team.evaluate'"))
     op.drop_index("ix_team_evaluations_team_version_id", table_name="team_evaluations")
     op.drop_index("ix_team_evaluations_tenant_id", table_name="team_evaluations")
     op.drop_table("team_evaluations")
