@@ -42,9 +42,7 @@ class TenantContext:
 
 
 async def get_current_context(
-    credentials: Annotated[
-        HTTPAuthorizationCredentials | None, Depends(security_scheme)
-    ],
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security_scheme)],
     api_key: Annotated[str | None, Depends(api_key_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TenantContext:
@@ -67,11 +65,7 @@ async def get_current_context(
         return TenantContext(user=user, tenant=tenant, api_key_id=key_row.id, api_key_scopes=key_row.scopes)
 
     if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated", headers={"WWW-Authenticate": "Bearer"})
     try:
         payload = decode_token(credentials.credentials)
         if payload.get("type") != "access":
@@ -87,10 +81,8 @@ async def get_current_context(
     user = user_result.scalar_one_or_none()
     if user is None or not user.is_active:
         raise HTTPException(status_code=401, detail="User not found or inactive")
-
     if payload.get("auth_token_version") is not None and payload.get("auth_token_version") != user.auth_token_version:
         raise HTTPException(status_code=401, detail="Session invalidated; please sign in again")
-
     if str(user.tenant_id) != str(tenant_id):
         raise HTTPException(status_code=403, detail="Tenant mismatch")
 
@@ -98,17 +90,12 @@ async def get_current_context(
     tenant = tenant_result.scalar_one_or_none()
     if tenant is None or tenant.status != "active":
         raise HTTPException(status_code=403, detail="Tenant not available")
-
     RequestContextMiddleware.bind_identity(str(tenant.id), str(user.id))
     return TenantContext(user=user, tenant=tenant)
 
 
 async def has_permission(ctx: TenantContext, permission_code: str) -> bool:
-    """Return whether the request has a tenant permission.
-
-    Explicit API-key scopes are an upper bound on the owner's RBAC permissions.
-    Legacy pre-scope keys have NULL scopes and retain their historical behavior.
-    """
+    """Return whether the request has a tenant permission."""
     if ctx.api_key_scopes is not None and permission_code not in set(ctx.api_key_scopes):
         return False
     if ctx.user.is_superuser:
@@ -125,10 +112,7 @@ def require_permission(permission_code: str):
     """FastAPI dependency factory for endpoint-level RBAC enforcement."""
     async def checker(ctx: Annotated[TenantContext, Depends(get_current_context)]) -> TenantContext:
         if not await has_permission(ctx, permission_code):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Missing permission: {permission_code}",
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Missing permission: {permission_code}")
         return ctx
     return checker
 
@@ -138,6 +122,8 @@ CurrentContext = Annotated[TenantContext, Depends(get_current_context)]
 
 EmployeeReadContext = Annotated[TenantContext, Depends(require_permission("employee.read"))]
 EmployeeWriteContext = Annotated[TenantContext, Depends(require_permission("employee.write"))]
+EmployeeGuardrailsReadContext = Annotated[TenantContext, Depends(require_permission("employee.guardrails.read"))]
+EmployeeGuardrailsWriteContext = Annotated[TenantContext, Depends(require_permission("employee.guardrails.write"))]
 RunReadContext = Annotated[TenantContext, Depends(require_permission("run.read"))]
 RunExecuteContext = Annotated[TenantContext, Depends(require_permission("run.execute"))]
 FileReadContext = Annotated[TenantContext, Depends(require_permission("file.read"))]
@@ -147,6 +133,9 @@ FeedbackCreateContext = Annotated[TenantContext, Depends(require_permission("fee
 FeedbackReadContext = Annotated[TenantContext, Depends(require_permission("feedback.read"))]
 ApprovalReadContext = Annotated[TenantContext, Depends(require_permission("approval.read"))]
 ApprovalDecideContext = Annotated[TenantContext, Depends(require_permission("approval.decide"))]
+PrivacyCustomerReadContext = Annotated[TenantContext, Depends(require_permission("privacy.customer.read"))]
+PrivacyCustomerExportContext = Annotated[TenantContext, Depends(require_permission("privacy.customer.export"))]
+PrivacyCustomerDeleteContext = Annotated[TenantContext, Depends(require_permission("privacy.customer.delete"))]
 MemoryReadContext = Annotated[TenantContext, Depends(require_permission("memory.read"))]
 MemoryWriteContext = Annotated[TenantContext, Depends(require_permission("memory.write"))]
 MemoryDeleteContext = Annotated[TenantContext, Depends(require_permission("memory.delete"))]
