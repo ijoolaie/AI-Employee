@@ -7,6 +7,8 @@ from uuid import UUID
 
 from sqlalchemy import select
 
+from app.agents.runtime import AgentRuntime
+from app.agents.runtime_contract import AgentRuntimeContract
 from app.core.database import worker_db_session
 from app.core.telemetry import span
 from app.core.exceptions import NotFoundError, ValidationAppError
@@ -44,8 +46,22 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     details={"run_id": run_id},
                 )
 
+            contract = AgentRuntimeContract(
+                tenant_id=str(run.tenant_id),
+                run_id=str(run.id),
+                employee_id=str(run.employee_id),
+                employee_version_id=str(run.employee_version_id),
+                input_data=run.input_data or {},
+                context={"executor": "celery_worker"},
+                evidence={"runtime_boundary": "celery_worker"},
+            )
+            runtime = AgentRuntime(contract)
+
             try:
-                await run_service.execute_run(db, run_id=parsed_run_id)
+                await runtime.execute(
+                    lambda: run_service.execute_run(db, run_id=parsed_run_id),
+                    retryable=False,
+                )
                 await db.commit()
             except Exception:
                 await db.commit()
@@ -63,8 +79,7 @@ def execute_run_task(run_id: str, tenant_id: str) -> None:
     Deliberate Celery retries are not configured here because an exception can
     occur after an external AI/tool side effect. Automatically replaying the
     same Run would therefore risk duplicate provider calls or tool side effects.
-    The Run service persists ``failed`` before the exception is re-raised, and
-    its idempotency guard makes duplicate deliveries harmless.
+    The runtime therefore defaults to one attempt for the complete Run.
     """
     if not tenant_id:
         raise ValidationAppError("tenant_id is required for run.execute")
