@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
-import { LayoutDashboard, LogOut, Settings, BarChart3, CreditCard, Sparkles, GitBranch, CalendarClock, ShieldCheck, BookOpen, Brain, ShoppingCart, TrendingUp, Activity, MessageCircle, Bot, Play, FileText, Radio, Package, PlugZap, ListChecks, UserRound, KeyRound, Users, Code2 } from "lucide-react";
+import { LayoutDashboard, LogOut, Settings, BarChart3, CreditCard, Sparkles, GitBranch, CalendarClock, ShieldCheck, BookOpen, Brain, ShoppingCart, TrendingUp, Activity, MessageCircle, Bot, Play, FileText, Radio, Package, PlugZap, ListChecks, UserRound, KeyRound, Users, Code2, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
@@ -42,6 +42,7 @@ const groups = [
     { href: "/integrations", label: "Integrations", icon: PlugZap },
     { href: "/files", label: "Files", icon: FileText },
     { href: "/runs", label: "Runs", icon: Play },
+    { href: "/test-center", label: "Test Center", icon: FlaskConical },
     { href: "/traces", label: "Trace Explorer", icon: Activity },
   ]},
   { label: "Developer", items: [
