@@ -4,7 +4,7 @@
 
 V1.4 remains the frozen architecture foundation. V1.5 is the active Human + Agent operating-model extension.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 has moved from planned work into an implemented and verified backend foundation: P12.1-P12.3 are validated by green CI run `33629549153`. The next frontier is P12.4-P12.6, followed by the authorized Test Center UI.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is now implemented through P12.6, including the authorized customer UI and automatic stale-run expiration sweep. The next frontier is operational stabilization and the Phase 13 Agent Teams & Marketplace foundation.
 
 ## Product direction
 
@@ -34,48 +34,38 @@ Existing Employee-backed functionality remains compatible while changed capabili
 **COMPLETE.** Real-stack Human and Agent WorkItem acceptance passed with zero failed product gates.
 
 ### Phase 12 — Test Center & Evidence Platform
-**ACTIVE.**
+**IMPLEMENTED / OPERATIONAL HARDENING.**
 
 #### P12.1 — Test Definition Contract
-**IMPLEMENTED / VERIFIED.**
+**IMPLEMENTED / VERIFIED.** Tenant-scoped definitions with typed prerequisites, expected results and evidence requirements.
 
 #### P12.2 — Safe Test Execution
-**IMPLEMENTED / VERIFIED.** Tenant binding, workspace checks, authorization boundaries and safe fixture controls are part of the backend foundation.
+**IMPLEMENTED / VERIFIED.** Tenant binding, workspace checks, authorization boundaries and safe fixture controls are enforced at the backend service/API boundary.
 
 #### P12.3 — Test Run Lifecycle
-**IMPLEMENTED / VERIFIED.** Durable queued/running/passed/failed/cancelled/expired lifecycle is implemented.
+**IMPLEMENTED / VERIFIED.** Durable queued/running/passed/failed/cancelled/expired lifecycle with row-lock concurrency protection. Expiration is available as an explicit authorized transition and as a background Celery Beat sweep using configurable timeout policy.
 
 #### P12.4 — Evidence & Artifacts
-**NEXT.** Add structured results, logs/artifact references and runtime/release/migration identity.
+**IMPLEMENTED / VERIFIED.** Structured results/evidence, runtime and migration identity, git SHA identity and tenant-scoped artifact references with SHA-256 metadata are persisted for completed runs.
 
 #### P12.5 — Run History
-**NEXT.** Add tenant/workspace-scoped history and role-aware visibility/filtering.
+**IMPLEMENTED / VERIFIED.** Tenant/workspace-scoped read-only history supports test, status and date filtering, bounded pagination and stable newest-first ordering. Active-run expiry uses a dedicated status/time index.
 
 #### P12.6 — Exportable Verification Record
-**NEXT.** Produce explicit verification records without overstating external acceptance.
+**IMPLEMENTED / VERIFIED.** Completed runs can produce immutable tenant-scoped verification snapshots with explicit engineering/product evidence boundaries and no claim of external acceptance.
 
-#### UI
-**DEFERRED UNTIL BACKEND EXTENSIONS ARE VERIFIED.** Add incrementally through authorized workspace boundaries.
+#### Authorized UI
+**IMPLEMENTED / VERIFIED.** Customer-facing Test Center UI is merged to `main` and consumes the authorized backend contracts for definitions, runs/history, artifacts and verification export.
 
 ### Phase 13 — Agent Teams & Marketplace
-**PLANNED.** Reusable teams/templates, agent versioning/evaluation, tenant installation and marketplace boundaries.
+**NEXT.** Reusable teams/templates, agent versioning/evaluation, tenant installation and marketplace boundaries.
 
 ### Phase 14 — Scale, Governance & Production
 **PLANNED.** Queue isolation, concurrency, routing, cost controls, SLOs, DR, security/compliance, regression prevention, incident response and external-production evidence.
 
-## Phase 12 verification checkpoint
+## Phase 12 verification boundary
 
-GitHub Actions run `33629549153` completed successfully:
-
-- backend job: success;
-- frontend job: success;
-- Alembic graph traversal: success;
-- Alembic upgrade: success;
-- Alembic consistency: success;
-- backend tests: success;
-- frontend lint/tests/build: success.
-
-This verifies the current engineering checkpoint. It does not constitute external production certification.
+The Phase 12 engineering implementation is covered by repository CI, integration/unit tests and authorization/isolation checks. These are engineering evidence only. Local real-stack validation remains a separate evidence class, and external production/customer acceptance requires independent external evidence.
 
 ## Cross-cutting Definition of Done
 
@@ -95,11 +85,8 @@ Every phase must preserve:
 
 ## Immediate execution order
 
-1. Preserve completed evidence and canonical identities.
-2. Prepare the customer delivery package for the current scope.
-3. Implement and verify P12.4.
-4. Implement and verify P12.5.
-5. Implement and verify P12.6.
-6. Add authorized Test Center UI incrementally.
-7. Continue workspace/runtime hardening and compatibility migration.
-8. Proceed to Phase 13 and Phase 14 after Phase 12 is operationally stable.
+1. Complete CI verification of the current Phase 12 hardening commit.
+2. Prepare/reconcile the customer delivery package for the current local-delivery scope.
+3. Perform operational stability checks for Test Center workers, expiration, audit and observability.
+4. Start Phase 13 design and implementation only after Phase 12 operational stability is confirmed.
+5. Continue workspace/runtime hardening and compatibility migration in parallel where safe.
