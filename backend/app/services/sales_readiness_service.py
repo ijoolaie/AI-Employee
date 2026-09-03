@@ -3,7 +3,8 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.exceptions import NotFoundError
+from app.ai.tool_registry import registry
+from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.employee import Employee, EmployeeVersion
 from app.models.conversation import CustomerConversation, CustomerMessage
 from app.models.run import Run
@@ -12,7 +13,7 @@ from app.models.customer import Customer
 from app.services import employee_service, audit_service
 
 TEMPLATES = [
-    {"code":"sales_assistant","name":"Sales Assistant","description":"Recommends products, checks inventory and guides customers to purchase.","allowed_tools":["search_products","get_product","check_inventory","add_to_cart","create_order"],"rules":{"max_discount_percent":10,"require_approval_for":["create_order"],"forbidden_actions":["change_price","delete_customer"]},"prompt_template":"You are a helpful sales assistant. Recommend the best products based on customer needs and current inventory."},
+    {"code":"sales_assistant","name":"Sales Assistant","description":"Recommends products, checks inventory and guides customers to purchase.","allowed_tools":["search_products","get_product","check_inventory","create_order"],"rules":{"max_discount_percent":10,"require_approval_for":["create_order"],"forbidden_actions":["change_price","delete_customer"]},"prompt_template":"You are a helpful sales assistant. Recommend the best products based on customer needs and current inventory."},
     {"code":"support_agent","name":"Customer Support Agent","description":"Answers support questions and escalates complex cases to a human.","allowed_tools":["get_order","track_order"],"rules":{"require_human_for":["refund","complaint"],"forbidden_actions":["change_price"]},"prompt_template":"You are a calm customer support agent. Resolve routine issues and hand off sensitive cases to a human."},
     {"code":"order_assistant","name":"Order Assistant","description":"Handles order lookup and delivery status conversations.","allowed_tools":["get_order","track_order"],"rules":{"forbidden_actions":["cancel_order","refund"]},"prompt_template":"You help customers find order status and delivery information. Never invent order data."},
 ]
@@ -20,10 +21,27 @@ TEMPLATES = [
 def list_templates():
     return TEMPLATES
 
+def _validate_template_tools(template: dict) -> None:
+    """Fail closed when a template references a tool absent from the registry."""
+    unknown = [name for name in template.get("allowed_tools", []) if not _tool_is_registered(name)]
+    if unknown:
+        raise ValidationAppError(
+            "Employee template references unregistered tools",
+            details={"template": template.get("code"), "unknown_tools": sorted(unknown)},
+        )
+
+def _tool_is_registered(name: str) -> bool:
+    try:
+        registry.get(name)
+    except ValidationAppError:
+        return False
+    return True
+
 async def create_from_template(db: AsyncSession, *, tenant_id: uuid.UUID, actor_id: uuid.UUID, code: str) -> Employee:
     template = next((x for x in TEMPLATES if x["code"] == code), None)
     if not template:
         raise NotFoundError("Employee template not found")
+    _validate_template_tools(template)
     slug = template["code"]
     existing = await db.execute(select(Employee).where(Employee.tenant_id==tenant_id, Employee.slug==slug))
     if existing.scalar_one_or_none():
@@ -37,8 +55,12 @@ async def get_guardrails(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id:
 
 async def update_guardrails(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID, actor_id: uuid.UUID, rules: dict, allowed_tools: list[str] | None):
     employee, current = await get_guardrails(db, tenant_id=tenant_id, employee_id=employee_id)
+    effective_tools = allowed_tools if allowed_tools is not None else current.allowed_tools
+    for name in effective_tools or []:
+        if not _tool_is_registered(name):
+            raise ValidationAppError("Employee guardrails reference an unregistered tool", details={"tool": name})
     merged_rules = {**(current.rules or {}), **rules}
-    return await employee_service.publish_new_version(db, employee_id=employee.id, tenant_id=tenant_id, input_schema=current.input_schema, output_schema=current.output_schema, prompt_template=current.prompt_template, allowed_tools=allowed_tools if allowed_tools is not None else current.allowed_tools, rules=merged_rules, actor_id=actor_id)
+    return await employee_service.publish_new_version(db, employee_id=employee.id, tenant_id=tenant_id, input_schema=current.input_schema, output_schema=current.output_schema, prompt_template=current.prompt_template, allowed_tools=effective_tools, rules=merged_rules, actor_id=actor_id)
 
 async def analytics(db: AsyncSession, *, tenant_id: uuid.UUID) -> dict:
     conversations = int((await db.execute(select(func.count(CustomerConversation.id)).where(CustomerConversation.tenant_id==tenant_id))).scalar_one() or 0)
