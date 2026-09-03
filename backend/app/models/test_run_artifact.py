@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.services.test_center_safety import sanitize_test_payload
+from app.core.test_center_safety import sanitize_test_payload
 
 
 class TestRunArtifact(Base):
