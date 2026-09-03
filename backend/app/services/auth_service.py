@@ -10,13 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, UnauthorizedError
 from app.core.logging import request_id_var
-from app.core.security import (
-    create_access_token,
-    create_refresh_token,
-    decode_token,
-    hash_password,
-    verify_password,
-)
+from app.core.security import create_access_token, create_refresh_token, decode_token, hash_password, verify_password
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.role import Permission, Role, role_permissions, user_roles
@@ -26,11 +20,12 @@ from jose import JWTError
 
 
 DEFAULT_TENANT_ADMIN_PERMISSIONS = (
-    "employee.read", "employee.write", "run.read", "run.execute", "file.read", "file.write",
-    "audit.read", "approval.read", "approval.decide", "workflow.read", "workflow.write",
-    "workflow.execute", "workflow.cancel", "workflow.approval.read", "workflow.approval.decide",
-    "workflow.event.read", "workflow.event.write", "workflow.event.ingest", "memory.read",
-    "memory.write", "memory.delete", "feedback.create", "feedback.read", "team.install",
+    "employee.read", "employee.write", "employee.guardrails.read", "employee.guardrails.write",
+    "run.read", "run.execute", "file.read", "file.write", "audit.read", "approval.read", "approval.decide",
+    "privacy.customer.read", "privacy.customer.export", "privacy.customer.delete",
+    "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel", "workflow.approval.read",
+    "workflow.approval.decide", "workflow.event.read", "workflow.event.write", "workflow.event.ingest",
+    "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read", "team.install",
     "team.execute", "team.evaluate", "marketplace.publish", "marketplace.read",
 )
 

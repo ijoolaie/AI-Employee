@@ -1,6 +1,6 @@
 from uuid import UUID
 from fastapi import APIRouter
-from app.core.deps import CurrentContext, DbSession
+from app.core.deps import CurrentContext, DbSession, EmployeeGuardrailsReadContext, EmployeeGuardrailsWriteContext, PrivacyCustomerExportContext, PrivacyCustomerDeleteContext
 from app.schemas.common import APIResponse
 from app.schemas.sales_readiness import EmployeeTemplate, GuardrailsResponse, GuardrailsUpdate, AnalyticsResponse, PrivacyExport
 from app.services import sales_readiness_service
@@ -17,12 +17,12 @@ async def install_template(code: str, ctx: CurrentContext, db: DbSession):
     return APIResponse(success=True,data={"id":str(e.id),"name":e.name,"slug":e.slug})
 
 @router.get("/employees/{employee_id}/guardrails", response_model=APIResponse[GuardrailsResponse])
-async def get_guardrails(employee_id: UUID, ctx: CurrentContext, db: DbSession):
+async def get_guardrails(employee_id: UUID, ctx: EmployeeGuardrailsReadContext, db: DbSession):
     e,v=await sales_readiness_service.get_guardrails(db,tenant_id=ctx.tenant_id,employee_id=employee_id)
     return APIResponse(success=True,data=GuardrailsResponse(employee_id=e.id,version_id=v.id,rules=v.rules or {}))
 
 @router.put("/employees/{employee_id}/guardrails", response_model=APIResponse[GuardrailsResponse])
-async def put_guardrails(employee_id: UUID,payload: GuardrailsUpdate,ctx: CurrentContext,db: DbSession):
+async def put_guardrails(employee_id: UUID,payload: GuardrailsUpdate,ctx: EmployeeGuardrailsWriteContext,db: DbSession):
     v=await sales_readiness_service.update_guardrails(db,tenant_id=ctx.tenant_id,employee_id=employee_id,actor_id=ctx.user_id,rules=payload.rules,allowed_tools=payload.allowed_tools)
     return APIResponse(success=True,data=GuardrailsResponse(employee_id=employee_id,version_id=v.id,rules=v.rules or {}))
 
@@ -31,9 +31,9 @@ async def roi(ctx: CurrentContext, db: DbSession):
     return APIResponse(success=True,data=AnalyticsResponse(**(await sales_readiness_service.analytics(db,tenant_id=ctx.tenant_id))))
 
 @router.get("/privacy/customers/{customer_id}/export", response_model=APIResponse[PrivacyExport])
-async def export_customer(customer_id: UUID,ctx: CurrentContext,db: DbSession):
+async def export_customer(customer_id: UUID,ctx: PrivacyCustomerExportContext,db: DbSession):
     return APIResponse(success=True,data=PrivacyExport(**(await sales_readiness_service.export_customer(db,tenant_id=ctx.tenant_id,customer_id=customer_id))))
 
 @router.delete("/privacy/customers/{customer_id}", response_model=APIResponse[dict])
-async def delete_customer(customer_id: UUID,ctx: CurrentContext,db: DbSession):
+async def delete_customer(customer_id: UUID,ctx: PrivacyCustomerDeleteContext,db: DbSession):
     return APIResponse(success=True,data=await sales_readiness_service.delete_customer(db,tenant_id=ctx.tenant_id,customer_id=customer_id,actor_id=ctx.user_id))

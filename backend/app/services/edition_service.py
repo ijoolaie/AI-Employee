@@ -20,8 +20,13 @@ EDITION_VENDOR = "vendor"
 EDITION_RESELLER = "reseller"
 EDITION_CUSTOMER = "customer"
 
+ADMIN_SECURITY_PERMISSIONS = {
+    "employee.guardrails.read", "employee.guardrails.write",
+    "privacy.customer.read", "privacy.customer.export", "privacy.customer.delete",
+}
+
 RESELLER_PERMISSIONS = {
-    "employee.read", "employee.write", "run.read", "run.execute", "file.read", "file.write",
+    "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
     "audit.read", "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel",
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
@@ -30,7 +35,7 @@ RESELLER_PERMISSIONS = {
     "marketplace.publish", "marketplace.read",
 }
 CUSTOMER_PERMISSIONS = {
-    "employee.read", "employee.write", "run.read", "run.execute", "file.read", "file.write",
+    "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
     "audit.read", "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel",
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
