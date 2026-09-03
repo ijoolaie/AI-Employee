@@ -16,7 +16,7 @@ celery_app = Celery(
     "aiep",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.workers.run_worker", "app.workers.workflow_worker", "app.workers.workflow_trigger_worker", "app.workers.outbox_worker", "app.workers.email_worker"],
+    include=["app.workers.run_worker", "app.workers.workflow_worker", "app.workers.workflow_trigger_worker", "app.workers.outbox_worker", "app.workers.email_worker", "app.workers.test_center_worker"],
 )
 
 celery_app.conf.update(
@@ -29,6 +29,7 @@ celery_app.conf.update(
     beat_schedule={"workflow-schedule-tick": {"task": "workflow.schedule_tick", "schedule": 30.0},
         "workflow-approval-expiry": {"task": "workflow.approval_expiry", "schedule": 30.0},
         "workflow-timeout-sweep": {"task": "workflow.timeout_sweep", "schedule": 30.0},
+        "test-center-expiration-sweep": {"task": "test_center.expiration_sweep", "schedule": 30.0},
         "outbox-dispatch": {"task": "outbox.dispatch", "schedule": 5.0}},
 )
 
