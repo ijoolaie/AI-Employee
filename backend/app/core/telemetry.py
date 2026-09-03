@@ -1,6 +1,7 @@
 """Phase 1 OpenTelemetry bootstrap and reusable span helpers."""
 from __future__ import annotations
 
+import sys
 from contextlib import contextmanager
 from typing import Iterator
 
@@ -53,20 +54,38 @@ def get_tracer():
 
 @contextmanager
 def span(name: str, **attributes: object) -> Iterator[object | None]:
-    """Start a best-effort span; telemetry failures must never affect business logic."""
+    """Start a best-effort span without ever changing business exception flow."""
     try:
         tracer = get_tracer()
-        if tracer is None:
-            yield None
-            return
-        with tracer.start_as_current_span(name) as current:
-            for key, value in attributes.items():
-                if value is not None:
-                    current.set_attribute(key, value)
-            yield current
     except Exception:
-        # Exporters/SDKs are explicitly non-authoritative operational plumbing.
+        tracer = None
+
+    if tracer is None:
         yield None
+        return
+
+    try:
+        span_manager = tracer.start_as_current_span(name)
+        current = span_manager.__enter__()
+        for key, value in attributes.items():
+            if value is not None:
+                current.set_attribute(key, value)
+    except Exception:
+        try:
+            span_manager.__exit__(*sys.exc_info())
+        except Exception:
+            pass
+        yield None
+        return
+
+    try:
+        yield current
+    finally:
+        try:
+            span_manager.__exit__(*sys.exc_info())
+        except Exception:
+            # Exporters/SDK cleanup are explicitly non-authoritative plumbing.
+            pass
 
 
 @contextmanager
