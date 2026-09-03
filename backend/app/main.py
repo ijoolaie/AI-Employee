@@ -20,6 +20,12 @@ settings = get_settings()
 configure_logging(debug=settings.debug)
 init_telemetry()
 
+API_VERSION = "1.0.0-rc.8"
+BACKEND_PACKAGE_VERSION = "1.1.1"
+FRONTEND_PACKAGE_VERSION = "1.1.1"
+PRODUCT_VERSION = os.getenv("PRODUCT_VERSION", "unreleased")
+GIT_COMMIT_SHA = os.getenv("GIT_COMMIT_SHA", "unknown")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,7 +34,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    version="1.0.0-rc.8",
+    version=API_VERSION,
     openapi_url=f"{settings.api_v1_prefix}/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -63,7 +69,6 @@ try:
     FastAPIInstrumentor.instrument_app(app)
     SQLAlchemyInstrumentor().instrument(engine=engine.sync_engine)
 except Exception:
-    # Optional instrumentation must never block application startup.
     pass
 
 app.add_exception_handler(AppError, app_error_handler)
@@ -136,7 +141,7 @@ async def metrics(request: Request):
     if REQUEST_COUNT is None:
         return Response(content="", media_type="text/plain")
     try:
-        from sqlalchemy import func, select, text
+        from sqlalchemy import func, select
         from app.core.database import engine
         from app.models.workflow import WorkflowRun, WorkflowStepRun
         from app.models.outbox import OutboxMessage
@@ -163,7 +168,19 @@ async def metrics(request: Request):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": settings.app_name, "version": "1.0.0-rc.8"}
+    return {
+        "status": "ok",
+        "service": settings.app_name,
+        "version": API_VERSION,
+        "build": {
+            "product_version": PRODUCT_VERSION,
+            "backend_package_version": BACKEND_PACKAGE_VERSION,
+            "frontend_package_version": FRONTEND_PACKAGE_VERSION,
+            "api_version": API_VERSION,
+            "git_commit_sha": GIT_COMMIT_SHA,
+            "environment": settings.app_env,
+        },
+    }
 
 
 @app.get("/health/dependencies")
@@ -191,7 +208,18 @@ async def dependency_health():
         await redis_client.aclose()
 
     healthy = all(value == "ok" for value in checks.values())
-    from fastapi import HTTPException
     if not healthy:
         raise HTTPException(status_code=503, detail={"status": "degraded", "checks": checks})
-    return {"status": "ok", "checks": checks, "version": "1.0.0-rc.8"}
+    return {
+        "status": "ok",
+        "checks": checks,
+        "version": API_VERSION,
+        "build": {
+            "product_version": PRODUCT_VERSION,
+            "backend_package_version": BACKEND_PACKAGE_VERSION,
+            "frontend_package_version": FRONTEND_PACKAGE_VERSION,
+            "api_version": API_VERSION,
+            "git_commit_sha": GIT_COMMIT_SHA,
+            "environment": settings.app_env,
+        },
+    }
