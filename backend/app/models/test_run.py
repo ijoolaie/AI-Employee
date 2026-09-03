@@ -11,7 +11,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
-from app.services.test_center_safety import sanitize_test_payload
+from app.core.test_center_safety import sanitize_test_payload
 
 
 class TestRunStatus(str, enum.Enum):
@@ -35,18 +35,10 @@ class TestRun(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
-    )
-    test_definition_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("test_definitions.id", ondelete="RESTRICT"), nullable=False
-    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    test_definition_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("test_definitions.id", ondelete="RESTRICT"), nullable=False)
     workspace_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
-    status: Mapped[TestRunStatus] = mapped_column(
-        Enum(TestRunStatus, values_callable=lambda enum_type: [item.value for item in enum_type]),
-        nullable=False,
-        default=TestRunStatus.QUEUED,
-    )
+    status: Mapped[TestRunStatus] = mapped_column(Enum(TestRunStatus, values_callable=lambda enum_type: [item.value for item in enum_type]), nullable=False, default=TestRunStatus.QUEUED)
     actor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
     executor_type: Mapped[str] = mapped_column(String(30), nullable=False, default="backend")
     correlation_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, unique=True, default=uuid.uuid4)
@@ -57,9 +49,7 @@ class TestRun(Base):
     runtime_version: Mapped[str | None] = mapped_column(String(120))
     migration_identity: Mapped[str | None] = mapped_column(String(120))
     git_sha: Mapped[str | None] = mapped_column(String(64))
-    evidence_boundary: Mapped[str] = mapped_column(
-        String(80), nullable=False, default="engineering_product_evidence"
-    )
+    evidence_boundary: Mapped[str] = mapped_column(String(80), nullable=False, default="engineering_product_evidence")
     queued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
