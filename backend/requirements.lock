@@ -1,11 +1,10 @@
 # AI Employee backend direct dependency lock baseline.
 #
-# This file intentionally pins every direct dependency declared by
-# backend/requirements.txt to the minimum compatible version currently
-# declared there. Transitive resolution remains delegated to pip until a
-# resolver-generated hash lock is introduced; CI should treat this file as the
-# direct-dependency compatibility baseline rather than a claim of a complete
-# transitive SBOM lock.
+# This file pins every direct runtime/test dependency declared by
+# backend/requirements.txt and backend/pyproject.toml to its declared minimum
+# compatible version. Transitive resolution remains delegated to pip until a
+# resolver-generated hash lock is introduced; this file is therefore the
+# direct-dependency reproducibility baseline, not a complete transitive SBOM.
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 sqlalchemy[asyncio]==2.0.36
@@ -14,6 +13,7 @@ alembic==1.14.0
 pydantic==2.10.0
 pydantic-settings==2.6.0
 python-jose[cryptography]==3.3.0
+cryptography==43.0.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.0
 python-multipart==0.0.17
