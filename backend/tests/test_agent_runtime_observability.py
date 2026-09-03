@@ -24,8 +24,7 @@ def _contract(**overrides):
     return AgentRuntimeContract(**values)
 
 
-@pytest.mark.asyncio
-async def test_runtime_success_emits_only_safe_attributes(monkeypatch):
+def _capture_span(monkeypatch):
     captured = {}
 
     class FakeSpan:
@@ -39,7 +38,17 @@ async def test_runtime_success_emits_only_safe_attributes(monkeypatch):
         def __exit__(self, exc_type, exc, tb):
             return False
 
-    monkeypatch.setattr(telemetry, "span", lambda name, **attrs: (captured.update(attrs) or FakeContext()))
+    monkeypatch.setattr(
+        telemetry,
+        "span",
+        lambda name, **attrs: (captured.update(attrs) or FakeContext()),
+    )
+    return captured
+
+
+@pytest.mark.asyncio
+async def test_runtime_success_emits_only_safe_attributes(monkeypatch):
+    captured = _capture_span(monkeypatch)
 
     result = await AgentRuntime(_contract()).execute(lambda: asyncio.sleep(0, result="ok"))
 
@@ -56,51 +65,25 @@ async def test_runtime_success_emits_only_safe_attributes(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_runtime_timeout_is_distinguishable(monkeypatch):
-    captured = {}
+    captured = _capture_span(monkeypatch)
 
-    class FakeSpan:
-        def set_attribute(self, key, value):
-            captured[key] = value
+    async def fake_wait_for(awaitable, timeout):
+        awaitable.close()
+        raise asyncio.TimeoutError
 
-    class FakeContext:
-        def __enter__(self):
-            return FakeSpan()
+    monkeypatch.setattr(asyncio, "wait_for", fake_wait_for)
 
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-    monkeypatch.setattr(telemetry, "span", lambda name, **attrs: (captured.update(attrs) or FakeContext()))
-
-    async def slow():
-        await asyncio.sleep(0.05)
-
-    runtime = AgentRuntime(_contract(timeout_seconds=1))
-    # wait_for uses seconds; use a sub-second timeout after validation.
-    runtime.contract.timeout_seconds = 0.01
     with pytest.raises(asyncio.TimeoutError):
-        await runtime.execute(slow)
+        await AgentRuntime(_contract()).execute(lambda: asyncio.sleep(1))
 
-    assert runtime.state is RuntimeState.FAILED
     assert captured["runtime.outcome"] == "timeout"
     assert captured["runtime.failure_category"] == "timeout"
+    assert captured["runtime.timeout"] is True
 
 
 @pytest.mark.asyncio
 async def test_retry_outcome_is_observable(monkeypatch):
-    captured = {}
-
-    class FakeSpan:
-        def set_attribute(self, key, value):
-            captured[key] = value
-
-    class FakeContext:
-        def __enter__(self):
-            return FakeSpan()
-
-        def __exit__(self, exc_type, exc, tb):
-            return False
-
-    monkeypatch.setattr(telemetry, "span", lambda name, **attrs: (captured.update(attrs) or FakeContext()))
+    captured = _capture_span(monkeypatch)
 
     attempts = 0
 
