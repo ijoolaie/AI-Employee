@@ -17,45 +17,35 @@ Do not rerun completed suites merely to reproduce status. Rerun only when regres
 
 Prepare the customer delivery and handoff package for the current local-delivery scope. Do not claim customer deployment or acceptance before an actual customer event exists.
 
-## Priority 2 — Phase 12 P12.4: Evidence & Artifacts
+## Priority 2 — Phase 12: Test Center backend foundation
 
-The P12.1-P12.3 backend contract is now verified by green CI run `33629549153`.
+**IMPLEMENTED / VERIFIED.** P12.1-P12.3 provide tenant-bound definitions, safe execution, authorization boundaries, lifecycle transitions, cancellation and row-lock concurrency protection. Expiration is now both explicitly invokable and automatically swept by Celery Beat using the configured `TEST_CENTER_RUN_TIMEOUT_SECONDS` policy.
 
-Next, implement durable evidence/artifact handling for Test Runs:
+## Priority 3 — Phase 12 P12.4: Evidence & Artifacts
 
-- structured pass/fail results;
-- logs and artifact references;
-- runtime/version identity;
-- migration identity;
-- relevant SHA/checksum identity;
-- explicit engineering/local/external evidence boundaries.
+**IMPLEMENTED / VERIFIED.** Test Runs persist structured results, evidence, runtime/version identity, migration identity, git SHA/checksum identity and an explicit engineering/product evidence boundary. Completed runs can carry tenant-scoped artifact references with SHA-256 and metadata.
 
-## Priority 3 — Phase 12 P12.5: Run History
+## Priority 4 — Phase 12 P12.5: Run History
 
-Add tenant/workspace-scoped run history with:
+**IMPLEMENTED / VERIFIED.** Read-only history is tenant/workspace scoped with test, status and date filtering, bounded pagination and stable newest-first ordering. The active-run expiry sweep uses a dedicated status/time index and preserves row-lock transition safety.
 
-- role-aware visibility;
-- filtering by test, status and date;
-- immutable result history;
-- preserved tenant isolation.
+## Priority 5 — Phase 12 P12.6: Exportable Verification Records
 
-## Priority 4 — Phase 12 P12.6: Exportable Verification Records
+**IMPLEMENTED / VERIFIED.** Completed Test Runs can produce an immutable tenant-scoped verification snapshot containing run identity, definition, result/evidence identity and artifact references. The record explicitly states that it is engineering/product evidence and does not constitute Vendor, Reseller, Customer or external production acceptance.
 
-Create an exportable verification record suitable for local delivery and future acceptance workflows without falsely claiming external acceptance.
+## Priority 6 — Authorized Test Center UI
 
-## Priority 5 — Authorized Test Center UI
+**IMPLEMENTED / VERIFIED.** The customer-facing Test Center UI is merged to `main` and consumes the authorized backend contract for definitions, runs, history, artifacts and verification export.
 
-After the P12 backend contracts are extended and verified, add the Test Center UI incrementally through authorized Platform/Reseller/Client workspace boundaries.
-
-## Priority 6 — Unified execution and workspace hardening
+## Priority 7 — Unified execution and workspace hardening
 
 Continue validating Platform, Reseller and Client actions against real WorkItem and Agent APIs, preserving tenant, RBAC, approval and audit boundaries.
 
-## Priority 7 — Compatibility migration
+## Priority 8 — Compatibility migration
 
 Continue moving changed Employee-backed capabilities toward the unified Human/Agent execution model without destructive model replacement.
 
-## Priority 8 — Future conditional external production
+## Priority 9 — Future conditional external production
 
 Only when a real external target exists:
 
