@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import work_items, test_center, test_center_evidence, test_center_verification, team_installations, api_keys, admin, approvals, auth, employees, feedback, files, runs, usage, knowledge, memory, workflows, workflow_events, workflow_schedules, workflow_approvals, operations, customer_dashboard, billing, billing_webhooks, invoices, orders, sales, customer_channels, public_chat, products, commerce_integrations, onboarding, inbox, customers, channel_webhooks, sales_readiness, tenant_admin, reseller_admin, admin_providers, edition_control, license_control
+from app.api.v1 import work_items, test_center, test_center_evidence, test_center_verification, team_installations, team_execution, api_keys, admin, approvals, auth, employees, feedback, files, runs, usage, knowledge, memory, workflows, workflow_events, workflow_schedules, workflow_approvals, operations, customer_dashboard, billing, billing_webhooks, invoices, orders, sales, customer_channels, public_chat, products, commerce_integrations, onboarding, inbox, customers, channel_webhooks, sales_readiness, tenant_admin, reseller_admin, admin_providers, edition_control, license_control
 
 api_router = APIRouter()
 api_router.include_router(work_items.router)
@@ -10,6 +10,7 @@ api_router.include_router(test_center.router)
 api_router.include_router(test_center_evidence.router)
 api_router.include_router(test_center_verification.router)
 api_router.include_router(team_installations.router)
+api_router.include_router(team_execution.router)
 api_router.include_router(auth.router)
 api_router.include_router(api_keys.router)
 api_router.include_router(admin.router)

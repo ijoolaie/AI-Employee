@@ -26,14 +26,14 @@ RESELLER_PERMISSIONS = {
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
     "reseller.customer.create", "reseller.customer.read", "reseller.customer.manage",
-    "reseller.entitlement.delegate", "support.escalation.create", "team.install",
+    "reseller.entitlement.delegate", "support.escalation.create", "team.install", "team.execute",
 }
 CUSTOMER_PERMISSIONS = {
     "employee.read", "employee.write", "run.read", "run.execute", "file.read", "file.write",
     "audit.read", "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel",
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
-    "support.escalation.create", "team.install",
+    "support.escalation.create", "team.install", "team.execute",
 }
 
 
@@ -171,22 +171,10 @@ async def delegate_entitlement(
 ) -> TenantEntitlement:
     expected_kind = EDITION_RESELLER if parent.tenant_kind == EDITION_VENDOR else EDITION_CUSTOMER
     assert_direct_child(parent, child, expected_kind)
-    effective_quota = await _authorized_parent_entitlement(
-        db, parent=parent, feature_code=feature_code, requested_quota=quota_limit
-    )
-    row = (await db.execute(select(TenantEntitlement).where(
-        TenantEntitlement.tenant_id == child.id,
-        TenantEntitlement.feature_code == feature_code,
-    ))).scalar_one_or_none()
+    effective_quota = await _authorized_parent_entitlement(db, parent=parent, feature_code=feature_code, requested_quota=quota_limit)
+    row = (await db.execute(select(TenantEntitlement).where(TenantEntitlement.tenant_id == child.id, TenantEntitlement.feature_code == feature_code))).scalar_one_or_none()
     if row is None:
-        row = TenantEntitlement(
-            tenant_id=child.id,
-            delegated_from_tenant_id=parent.id,
-            feature_code=feature_code,
-            quota_limit=effective_quota,
-            quota_used=0,
-            is_enabled=True,
-        )
+        row = TenantEntitlement(tenant_id=child.id, delegated_from_tenant_id=parent.id, feature_code=feature_code, quota_limit=effective_quota, quota_used=0, is_enabled=True)
         db.add(row)
     else:
         row.quota_limit = effective_quota

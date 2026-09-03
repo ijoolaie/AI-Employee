@@ -50,6 +50,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "feedback.create",
     "feedback.read",
     "team.install",
+    "team.execute",
 )
 
 
