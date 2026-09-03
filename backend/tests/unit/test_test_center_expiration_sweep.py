@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 
 from app.models.test_run import TestRunStatus
-from app.services.test_center import TestCenterService
+from app.services.test_center import TestCenterError, TestCenterService
 
 
 class Result:
@@ -20,9 +20,6 @@ class Result:
     def all(self):
         return self.value or []
 
-    def scalar_one_or_none(self):
-        return self.value
-
 
 class SweepDB:
     def __init__(self, candidates):
@@ -30,6 +27,15 @@ class SweepDB:
 
     async def execute(self, _statement):
         return Result(self.candidates)
+
+
+async def _fake_expire_run(*, run_id, tenant_id, timeout_seconds, now):
+    del run_id, tenant_id, timeout_seconds
+    run = _fake_expire_run.run
+    run.status = TestRunStatus.EXPIRED
+    run.finished_at = now
+    run.error = "test run expired"
+    return run
 
 
 @pytest.mark.asyncio
@@ -41,9 +47,11 @@ async def test_expire_stale_runs_expires_queued_candidates_at_cutoff():
         queued_at=now - timedelta(seconds=60), started_at=None,
         finished_at=None, error=None,
     )
-    db = SweepDB([run])
+    _fake_expire_run.run = run
+    service = TestCenterService(SweepDB([run]))
+    service.expire_run = _fake_expire_run
 
-    expired = await TestCenterService(db).expire_stale_runs(
+    expired = await service.expire_stale_runs(
         timeout_seconds=60,
         now=now,
         batch_size=200,
@@ -64,9 +72,11 @@ async def test_expire_stale_runs_uses_started_at_for_running_candidates():
         queued_at=now - timedelta(hours=2), started_at=now - timedelta(seconds=60),
         finished_at=None, error=None,
     )
-    db = SweepDB([run])
+    _fake_expire_run.run = run
+    service = TestCenterService(SweepDB([run]))
+    service.expire_run = _fake_expire_run
 
-    expired = await TestCenterService(db).expire_stale_runs(
+    expired = await service.expire_stale_runs(
         timeout_seconds=60,
         now=now,
         batch_size=200,
@@ -78,7 +88,7 @@ async def test_expire_stale_runs_uses_started_at_for_running_candidates():
 
 @pytest.mark.asyncio
 async def test_expire_stale_runs_rejects_invalid_batch_size():
-    with pytest.raises(Exception, match="batch size"):
+    with pytest.raises(TestCenterError, match="batch size"):
         await TestCenterService(SweepDB([])).expire_stale_runs(
             timeout_seconds=60,
             batch_size=0,
