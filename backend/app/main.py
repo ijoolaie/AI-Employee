@@ -1,6 +1,8 @@
 """FastAPI application entrypoint."""
 
 from contextlib import asynccontextmanager
+import os
+import secrets
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -115,8 +117,22 @@ app.include_router(api_router, prefix=settings.api_v1_prefix)
 
 
 @app.get("/metrics")
-async def metrics():
-    """Prometheus scrape endpoint with durable queue/run gauges refreshed on scrape."""
+async def metrics(request: Request):
+    """Prometheus scrape endpoint protected by a dedicated bearer token.
+
+    Production must configure METRICS_AUTH_TOKEN. Development may omit the
+    token to preserve local observability convenience; production never falls
+    back to an unauthenticated metrics surface.
+    """
+    expected_token = os.getenv("METRICS_AUTH_TOKEN")
+    if settings.app_env.lower() in {"production", "prod"} and not expected_token:
+        raise HTTPException(status_code=503, detail="Metrics authentication is not configured")
+    if expected_token:
+        authorization = request.headers.get("Authorization", "")
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not token or not secrets.compare_digest(token, expected_token):
+            raise HTTPException(status_code=401, detail="Metrics authentication required", headers={"WWW-Authenticate": "Bearer"})
+
     if REQUEST_COUNT is None:
         return Response(content="", media_type="text/plain")
     try:
@@ -136,9 +152,6 @@ async def metrics():
     except Exception:
         DEPENDENCY_UP.labels("postgres").set(0)
     try:
-        # Celery uses a dedicated Redis DB (`celery_broker_url`, DB 1 in E2E).
-        # Reading queue depth from `redis_url` would silently inspect DB 0 and
-        # report an incorrect zero/empty broker queue.
         redis_client = Redis.from_url(settings.celery_broker_url, decode_responses=True)
         REDIS_QUEUE_DEPTH.labels("celery").set(await redis_client.llen("celery"))
         DEPENDENCY_UP.labels("redis").set(1)
