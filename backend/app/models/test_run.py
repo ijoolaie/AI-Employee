@@ -30,6 +30,7 @@ class TestRun(Base):
         Index("ix_test_runs_tenant_definition", "tenant_id", "test_definition_id"),
         Index("ix_test_runs_tenant_workspace", "tenant_id", "workspace_key"),
         Index("ix_test_runs_tenant_git_sha", "tenant_id", "git_sha"),
+        Index("ix_test_runs_status_queued_started", "status", "queued_at", "started_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
