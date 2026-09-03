@@ -31,7 +31,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "workflow.execute", "workflow.cancel", "workflow.approval.read", "workflow.approval.decide",
     "workflow.event.read", "workflow.event.write", "workflow.event.ingest", "memory.read",
     "memory.write", "memory.delete", "feedback.create", "feedback.read", "team.install",
-    "team.execute", "team.evaluate",
+    "team.execute", "team.evaluate", "marketplace.publish", "marketplace.read",
 )
 
 
