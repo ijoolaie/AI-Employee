@@ -43,6 +43,7 @@ from app.models.test_run_artifact import TestRunArtifact
 from app.models.team_definition import TeamDefinition
 from app.models.team_version import TeamVersion
 from app.models.team_installation import TeamInstallation
+from app.models.team_evaluation import TeamEvaluation
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -55,5 +56,5 @@ __all__ = [
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "PasswordResetToken",
     "TenantEntitlement", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
     "AgentDefinition", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding", "TestDefinition", "TestRun", "TestRunStatus",
-    "TestRunArtifact", "TeamDefinition", "TeamVersion", "TeamInstallation",
+    "TestRunArtifact", "TeamDefinition", "TeamVersion", "TeamInstallation", "TeamEvaluation",
 ]
