@@ -1,6 +1,6 @@
 """Phase 13.2 tenant-local Agent Team installation boundary.
 
-Revision ID: p13_02_team_installation_boundary
+Revision ID: p13_02_team_install_boundary
 Revises: p13_01_team_definition_contract
 """
 
@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "p13_02_team_installation_boundary"
+revision = "p13_02_team_install_boundary"
 down_revision = "p13_01_team_definition_contract"
 branch_labels = None
 depends_on = None
