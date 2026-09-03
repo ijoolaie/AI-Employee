@@ -7,6 +7,7 @@ import app.main as main
 from app.ai.tool_registry import registry
 from app.core.exceptions import ValidationAppError
 from app.services.file_policy import validate_content_type
+from app.services.file_service import _LimitedReader
 from app.services.sales_readiness_service import TEMPLATES
 from app.services.tool_approval_policy import MANDATORY_APPROVAL_TOOLS
 
@@ -40,8 +41,9 @@ def test_security_regression_file_policy_rejects_unsafe_types():
 
 
 def test_security_regression_bounded_reader():
-    reader = main  # keep this matrix tied to the application security surface
-    assert reader is not None
+    reader = _LimitedReader(io.BytesIO(b"abcdef"), 3)
+    assert reader.read(1024) == b"abc"
+    assert reader.read(1024) == b""
 
 
 @pytest.mark.asyncio
