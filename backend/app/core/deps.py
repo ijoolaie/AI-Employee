@@ -48,8 +48,6 @@ async def get_current_context(
     api_key: Annotated[str | None, Depends(api_key_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TenantContext:
-    # API keys resolve to their creator's tenant/user and may narrow that user's
-    # RBAC permissions through an explicit scope set. NULL scopes are legacy keys.
     if api_key:
         key_row = await verify_key(db, api_key)
         if key_row is None:
@@ -162,3 +160,4 @@ WorkflowEventReadContext = Annotated[TenantContext, Depends(require_permission("
 WorkflowEventWriteContext = Annotated[TenantContext, Depends(require_permission("workflow.event.write"))]
 BillingRefundContext = Annotated[TenantContext, Depends(require_permission("billing.refund"))]
 TeamInstallContext = Annotated[TenantContext, Depends(require_permission("team.install"))]
+TeamExecuteContext = Annotated[TenantContext, Depends(require_permission("team.execute"))]
