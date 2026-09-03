@@ -139,8 +139,8 @@ async def _execute_run_async(run_id: UUID) -> str:
         return str(run.id)
 
 
-@celery_app.task(name="test_center.execute_run", bind=True, acks_late=True)
-def execute_run_task(self, run_id: str) -> str:
+@celery_app.task(name="test_center.execute_run", acks_late=True)
+def execute_run_task(run_id: str) -> str:
     """Execute one queued Test Center run through the backend worker boundary."""
     try:
         return asyncio.run(_execute_run_async(UUID(run_id)))
