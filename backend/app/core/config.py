@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
     celery_broker_url: str = "redis://localhost:6379/1"
     celery_result_backend: str = "redis://localhost:6379/2"
+    test_center_run_timeout_seconds: int = 3600
 
     cors_origins: List[str] = [
         "http://localhost:3000",
@@ -48,6 +49,8 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_production_safety(self):
         """Fail fast on unsafe production configuration."""
+        if self.test_center_run_timeout_seconds < 1 or self.test_center_run_timeout_seconds > 86_400:
+            raise ValueError("TEST_CENTER_RUN_TIMEOUT_SECONDS must be between 1 and 86400")
         if self.app_env.lower() in {"production", "prod"}:
             if self.debug:
                 raise ValueError("DEBUG must be false in production")
