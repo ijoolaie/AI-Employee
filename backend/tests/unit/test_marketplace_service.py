@@ -155,8 +155,11 @@ async def test_import_rejects_duplicate_publication_scope():
     target_tenant = uuid4()
     publication_id = uuid4()
     existing = SimpleNamespace(id=uuid4())
+    publication = SimpleNamespace(id=publication_id, visibility="public", status="published")
+    source_version = SimpleNamespace(version=1, member_agent_definition_ids=[uuid4()])
+    source_team = SimpleNamespace(enabled=True)
     db = FakeSession([
-        Result(row=(SimpleNamespace(id=publication_id, visibility="public", status="published"), SimpleNamespace(), SimpleNamespace())),
+        Result(row=(publication, source_version, source_team)),
         Result(scalar=existing),
     ])
 
