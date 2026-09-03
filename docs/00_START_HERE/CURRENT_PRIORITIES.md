@@ -1,73 +1,80 @@
 # Current Priorities
 
-## Scope clarification
+**Reconciled:** 2026-09-03
 
-The current delivery objective is **temporary local execution and validation on the owner's workstation, followed by customer delivery**. An external production host, external registry, Vendor, Reseller, or live customer environment is **not a prerequisite for the current validation cycle**.
+## Priority 0 — Preserve verified identities and evidence
 
-The repository contains external-production workflows for a later deployment context. Their prerequisites must not be fabricated or treated as blockers for the current local acceptance cycle.
+Preserve:
 
-## Priority 0 — Preserve v1.3.2 Release Identity
+- canonical `v1.3.2` identity at `728b7f447d3bc6376fb01d47730cdd70eaf07746`;
+- completed local Product Acceptance evidence;
+- local runtime hardening and DR/restore evidence;
+- the verified Alembic graph and migration lineage.
 
-The canonical candidate is `v1.3.2` on `release/v1.3.2-phase6e-candidate` at exact commit `728b7f447d3bc6376fb01d47730cdd70eaf07746`. Phase 6E rehearsal, Production Certification and release packaging have passed on that exact identity. Do not rebuild, retag or replace it without a real defect.
+Do not rerun completed suites merely to reproduce status. Rerun only when regression risk or explicit evidence invalidation exists.
 
-## Priority 1 — Preserve Completed Local Delivery Evidence
+## Priority 1 — Customer Delivery Package
 
-The six local Product Acceptance gates, runtime hardening, Redis/Beat recovery, backup/restore verification, migration audit and rollback evidence are complete. Do not rerun them merely to reproduce status. Rerun only after regression, relevant code/configuration change, a new release/candidate SHA, material environment change, or explicit evidence invalidation.
+Prepare the customer delivery and handoff package for the current local-delivery scope. Do not claim customer deployment or acceptance before an actual customer event exists.
 
-## Priority 2 — Customer Delivery Package
+## Priority 2 — Phase 12 P12.4: Evidence & Artifacts
 
-Prepare the customer delivery package and handoff documentation within the current local-delivery scope. Customer deployment/acceptance is a separate event and must not be claimed before it actually occurs.
+The P12.1-P12.3 backend contract is now verified by green CI run `33629549153`.
 
-## Priority 3 — Phase 12 Test Center & Evidence Platform
+Next, implement durable evidence/artifact handling for Test Runs:
 
-The first backend foundation is now **AS-BUILT** on `main`: `TestDefinition`, tenant-bound `TestRun`, queued/running/passed/failed/cancelled/expired lifecycle, safe fixture handling, workspace-bound context checks, existing `run.read` / `run.execute` authorization boundaries, and tenant-scoped audit records. The next step is targeted backend contract validation; unrelated certified acceptance suites remain preserved and should not be rerun merely to reproduce status.
+- structured pass/fail results;
+- logs and artifact references;
+- runtime/version identity;
+- migration identity;
+- relevant SHA/checksum identity;
+- explicit engineering/local/external evidence boundaries.
 
-The implemented first engineering slice is:
+## Priority 3 — Phase 12 P12.5: Run History
 
-**Test Definition → authorized Test Run creation → isolated execution context → Run lifecycle → persisted result → tenant-scoped retrieval → audit/evidence record.**
+Add tenant/workspace-scoped run history with:
 
-After validation, continue with P12.4 evidence/artifacts, P12.5 history/visibility and P12.6 exportable verification records. Do not begin the full UI until the backend contract slice is verified.
+- role-aware visibility;
+- filtering by test, status and date;
+- immutable result history;
+- preserved tenant isolation.
 
-Do not replace the existing certified acceptance suite and do not weaken tenant, RBAC, audit or Human/Agent execution controls.
+## Priority 4 — Phase 12 P12.6: Exportable Verification Records
 
-## Priority 4 — Workspace / Unified Execution Hardening
+Create an exportable verification record suitable for local delivery and future acceptance workflows without falsely claiming external acceptance.
 
-Continue validating Platform/Reseller/Client workspace actions against real WorkItem and Agent APIs, including role, tenant, authorization and audit boundaries.
+## Priority 5 — Authorized Test Center UI
 
-## Priority 5 — Compatibility Migration
+After the P12 backend contracts are extended and verified, add the Test Center UI incrementally through authorized Platform/Reseller/Client workspace boundaries.
 
-Continue incremental migration of existing Employee-backed capabilities onto the unified Human/Agent execution model while preserving compatibility paths.
+## Priority 6 — Unified execution and workspace hardening
 
-## Priority 6 — External Production (Future / Conditional)
+Continue validating Platform, Reseller and Client actions against real WorkItem and Agent APIs, preserving tenant, RBAC, approval and audit boundaries.
 
-Only if a later business deployment requires an external production target, configure the required target and execute the repository's target-specific hardening, observability, recovery/DR, deployment and rollback workflows. Do not create fake values for `PRODUCTION_DEPLOY_HOST`, `PRODUCTION_DEPLOY_USER`, `PRODUCTION_DEPLOY_SSH_KEY` or `PRODUCTION_CONTAINER_REGISTRY` merely to satisfy those future workflows.
+## Priority 7 — Compatibility migration
 
-## Priority 7 — Vendor / Reseller / Client Acceptance (Future / Conditional)
+Continue moving changed Employee-backed capabilities toward the unified Human/Agent execution model without destructive model replacement.
 
-External Vendor → Reseller → Client acceptance is outside the current local-only delivery scope. It can begin only when an actual external deployment/acceptance context exists and independent evidence is available.
+## Priority 8 — Future conditional external production
 
-## Priority 8 — Downstream Productization
+Only when a real external target exists:
 
-After local delivery readiness and execution stability, proceed with Phase 13 Agent Teams & Marketplace and Phase 14 Scale, Governance & Production according to the roadmap.
+- configure the real deployment context;
+- collect deployment/observability/recovery evidence;
+- execute Vendor → Reseller → Client acceptance where applicable.
 
-## Completed local acceptance checkpoint
+Never fabricate production configuration merely to satisfy CI.
 
-As of 2026-09-02, the following local gates are recorded as PASS and should not be repeated unless invalidated by regression, relevant code/configuration change, a new release/candidate SHA, material environment change, or explicit evidence invalidation:
+## Downstream roadmap
 
-- Tenant Isolation + RBAC + Knowledge P0 — PASS twice
-- Conversation Tenant Isolation P0 — PASS
-- Employee → Run → AI → Result — PASS
-- Files → Knowledge → Memory — PASS
-- Admin / Developer API Keys — PASS
-- Workflow + Approval + Schedule — PASS
+After Phase 12 is operationally stable:
 
-See `docs/current/51_LOCAL_FINAL_ACCEPTANCE_RECONCILIATION_2026-09-02.md` for the detailed evidence and incident-resolution record.
+1. Phase 13 — Agent Teams & Marketplace.
+2. Phase 14 — Scale, Governance & Production.
 
 ## Evidence boundary
 
-- CI/internal certification is engineering evidence.
-- Local production-like deployment/recovery evidence is valid local evidence.
-- A GitHub release/tag is a release identity, not proof of external production deployment.
-- External Vendor/Reseller/Client acceptance requires independent evidence.
-- Phase 12 implementation evidence is engineering/product evidence and does not constitute external production certification.
-- No acceptance state may be marked complete without the corresponding evidence.
+- CI/internal certification = engineering evidence.
+- Local real-stack validation = local evidence.
+- External production and customer acceptance require independent external evidence.
+- Phase 12 verification does not change canonical v1.3.2 certification identity.
