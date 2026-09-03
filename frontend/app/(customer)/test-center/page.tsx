@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
 import { getErrorMessage } from "@/lib/api";
-import { createTestRun, exportVerificationRecord, getTestRunArtifacts, listTestDefinitions, listTestRuns, type TestRun } from "@/lib/test-center";
+import { createTestRun, dispatchTestRun, exportVerificationRecord, getTestRunArtifacts, listTestDefinitions, listTestRuns, type TestRun } from "@/lib/test-center";
 
 function shortId(value: string) { return `${value.slice(0, 8)}…`; }
 function formatDate(value: string | null) { return value ? new Date(value).toLocaleString() : "—"; }
@@ -29,9 +29,18 @@ export default function TestCenterPage() {
     refetchInterval: (query) => query.state.data?.some((run) => ["queued", "running"].includes(run.status)) ? 3000 : false,
   });
   const artifactsQuery = useQuery({ queryKey: ["test-center", "artifacts", selectedRun?.id], queryFn: () => getTestRunArtifacts(selectedRun!.id), enabled: Boolean(selectedRun) });
+
   const runMutation = useMutation({
-    mutationFn: (definition: { id: string; workspace_key: string | null }) => createTestRun({ test_definition_id: definition.id, workspace_key: definition.workspace_key }),
-    onSuccess: (run) => { setSelectedRun(run); setMessage(`Queued test run ${shortId(run.id)}.`); queryClient.invalidateQueries({ queryKey: ["test-center", "runs"] }); },
+    mutationFn: async (definition: { id: string; workspace_key: string | null }) => {
+      const run = await createTestRun({ test_definition_id: definition.id, workspace_key: definition.workspace_key });
+      const dispatch = await dispatchTestRun(run.id);
+      return { run, dispatch };
+    },
+    onSuccess: ({ run, dispatch }) => {
+      setSelectedRun(run);
+      setMessage(`Dispatched test run ${shortId(run.id)} to the worker (${shortId(dispatch.task_id)}).`);
+      queryClient.invalidateQueries({ queryKey: ["test-center", "runs"] });
+    },
     onError: (error) => setMessage(getErrorMessage(error)),
   });
 
