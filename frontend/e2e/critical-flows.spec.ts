@@ -26,4 +26,9 @@ test.describe("critical platform flows", () => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/login/);
   });
+
+  test("marketplace installation surface requires authentication", async ({ page }) => {
+    await page.goto("/marketplace");
+    await expect(page).toHaveURL(/\/login/);
+  });
 });
