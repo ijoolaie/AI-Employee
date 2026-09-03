@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from app.core.exceptions import ValidationAppError
 from app.services.approval_service import validate_resume_approval
 
 
@@ -32,7 +33,7 @@ def test_resume_approval_accepts_exact_grant():
 @pytest.mark.parametrize("status", ["pending", "rejected", "consumed"])
 def test_resume_approval_rejects_non_current_status(status):
     item = approval(status=status)
-    with pytest.raises(Exception, match="Approval is not currently granted"):
+    with pytest.raises(ValidationAppError, match="Approval is not currently granted"):
         validate_resume_approval(
             item,
             tenant_id=item.tenant_id,
@@ -44,7 +45,7 @@ def test_resume_approval_rejects_non_current_status(status):
 
 def test_resume_approval_rejects_tenant_mismatch():
     item = approval()
-    with pytest.raises(Exception, match="does not match the Run tenant"):
+    with pytest.raises(ValidationAppError, match="does not match the Run tenant"):
         validate_resume_approval(
             item,
             tenant_id=uuid.uuid4(),
@@ -56,7 +57,7 @@ def test_resume_approval_rejects_tenant_mismatch():
 
 def test_resume_approval_rejects_tool_call_mismatch():
     item = approval()
-    with pytest.raises(Exception, match="does not match the requested tool call"):
+    with pytest.raises(ValidationAppError, match="does not match the requested tool call"):
         validate_resume_approval(
             item,
             tenant_id=item.tenant_id,
