@@ -1,107 +1,105 @@
 # AI Employee Platform — Productization & Delivery Roadmap
 
-## Purpose
+## Current position — 2026-09-03
 
-Authoritative delivery roadmap. V1.4 remains the frozen architecture foundation; V1.5 adds the Human + Agent operating model.
+V1.4 remains the frozen architecture foundation. V1.5 is the active Human + Agent operating-model extension.
 
-## Current position — 2026-08-31
+Phase 11 Unified Execution acceptance is complete. Phase 12 has moved from planned work into an implemented and verified backend foundation: P12.1-P12.3 are validated by green CI run `33629549153`. The next frontier is P12.4-P12.6, followed by the authorized Test Center UI.
 
-**V1.4 frozen foundation + V1.5 Agentic Operating Model. Unified Execution implementation and lifecycle/concurrency hardening, Platform/Reseller implementation slices, role-aware workspace separation, and Phase 11 real-stack acceptance are complete. Production Certification run 33369071987 passed Human and Agent Unified WorkItem gates with Failed gates: 0. The active frontier is external production evidence for Phase 5/6E, followed by Phase 12 Test Center & Evidence Platform.**
+## Product direction
 
-The product is **Agent-first, not Employee-first**. Every capability in Platform, Reseller and Client must be executable by a Human, a specialized Agent, or both. The same WorkItem, authorization, tools, approvals, audit and output contracts apply to either executor. Existing Employee code remains a compatibility layer during migration.
+The platform is evolving toward shared business execution contracts in which Humans and specialized Agents operate under the same core boundaries:
 
-Authoritative V1.5 architecture: `docs/blueprint/V1.5_AGENTIC_OPERATING_MODEL.md`.
+- tenant isolation;
+- authorization/RBAC;
+- policy and approval;
+- scoped tools;
+- audit/history;
+- lifecycle and concurrency controls.
 
-## Phase 0 — Release Integrity
+Existing Employee-backed functionality remains compatible while changed capabilities migrate incrementally.
 
-**🟢 COMPLETE.** Immutable release identity, certification boundaries and release evidence are established.
+## Phase status
 
-## Phase 1 — Vendor Edition
+### Phase 8 — Unified Execution Foundation
+**COMPLETE / VERIFIED FOUNDATION.** Human and Agent execution, lifecycle and concurrency hardening form the shared execution substrate.
 
-**🟢 FOUNDATION IMPLEMENTED.** Vendor runtime, provisioning, entitlement, licensing and audit boundaries exist; operational authority/tooling continues.
+### Phase 9 — Platform Command Center
+**IMPLEMENTED / HARDENING CONTINUES.** Role-specific Platform operations are implemented; ongoing work validates runtime behavior.
 
-## Phase 2 — Reseller Edition
+### Phase 10 — Reseller Operations Workspace
+**IMPLEMENTED / HARDENING CONTINUES.** Role-aware reseller operations are implemented; runtime validation continues.
 
-**🟢 FOUNDATION IMPLEMENTED.** Reseller identity, isolation, lifecycle, quota delegation, licensing, audit and support boundaries exist. V1.5 adds agentic portfolio/revenue operations.
+### Phase 11 — Client Business Workspace / Unified Execution Acceptance
+**COMPLETE.** Real-stack Human and Agent WorkItem acceptance passed with zero failed product gates.
 
-## Phase 3 — Client Edition
+### Phase 12 — Test Center & Evidence Platform
+**ACTIVE.**
 
-**🟢 FOUNDATION IMPLEMENTED.** Client isolation, RBAC, lifecycle and audit boundaries exist. V1.5 adds business-outcome-oriented Human/Agent execution.
+#### P12.1 — Test Definition Contract
+**IMPLEMENTED / VERIFIED.**
 
-## Phase 4 — Delivery Package
+#### P12.2 — Safe Test Execution
+**IMPLEMENTED / VERIFIED.** Tenant binding, workspace checks, authorization boundaries and safe fixture controls are part of the backend foundation.
 
-**🟢 IMPLEMENTED / LOCAL VALIDATION COMPLETE.** Release, configuration, installation, migration, recovery, security and handoff artifacts exist.
+#### P12.3 — Test Run Lifecycle
+**IMPLEMENTED / VERIFIED.** Durable queued/running/passed/failed/cancelled/expired lifecycle is implemented.
 
-## Phase 5 — Commercial Production
+#### P12.4 — Evidence & Artifacts
+**NEXT.** Add structured results, logs/artifact references and runtime/release/migration identity.
 
-**🟡 SUBSTANTIALLY IMPLEMENTED.** External payment, deployment, monitoring, rollback/recovery and environment-specific certification remain open.
+#### P12.5 — Run History
+**NEXT.** Add tenant/workspace-scoped history and role-aware visibility/filtering.
 
-## Phase 6 — Edition-Separated Delivery
+#### P12.6 — Exportable Verification Record
+**NEXT.** Produce explicit verification records without overstating external acceptance.
 
-**🟢 6A–6D COMPLETE; 6E OPEN FOR EXTERNAL EXECUTION.** Vendor → Reseller → Client delivery remains one authoritative source with environment-specific evidence required.
+#### UI
+**DEFERRED UNTIL BACKEND EXTENSIONS ARE VERIFIED.** Add incrementally through authorized workspace boundaries.
 
-## Phase 7 — Existing Invoice Capability
+### Phase 13 — Agent Teams & Marketplace
+**PLANNED.** Reusable teams/templates, agent versioning/evaluation, tenant installation and marketplace boundaries.
 
-**🟢 IMPLEMENTED / LOCAL VERIFIED.** Existing invoice functionality remains supported and must migrate toward the unified WorkItem/Agent model when changed. Do not duplicate the Stripe billing path.
+### Phase 14 — Scale, Governance & Production
+**PLANNED.** Queue isolation, concurrency, routing, cost controls, SLOs, DR, security/compliance, regression prevention, incident response and external-production evidence.
 
-# V1.4 — Architecture & Gap Closure
+## Phase 12 verification checkpoint
 
-**🟡 FROZEN BASELINE / IMPLEMENTATION TRACK.** Tenant/worker context, knowledge isolation, conversation isolation, scoped API keys and idempotent usage work were established in the first dependency-ordered wave. V1.4 security, tenant, RBAC, billing and migration invariants remain mandatory for V1.5.
+GitHub Actions run `33629549153` completed successfully:
 
-# V1.5 — Agentic Productization Roadmap
+- backend job: success;
+- frontend job: success;
+- Alembic graph traversal: success;
+- Alembic upgrade: success;
+- Alembic consistency: success;
+- backend tests: success;
+- frontend lint/tests/build: success.
 
-## Phase 8 — Unified Execution Foundation
+This verifies the current engineering checkpoint. It does not constitute external production certification.
 
-**🟢 IMPLEMENTATION SUBSTANTIALLY COMPLETE / E2E ACCEPTANCE NEAR COMPLETION.** Merged implementation slices cover WorkItem execution, delegation/handoff, policy/tool controls, telemetry, Test Center contracts, Workspace projections, and Agent Team orchestration/lifecycle/recovery/completion/health. Lifecycle and dispatch concurrency hardening are also merged. Remaining work is final runtime acceptance, reconciliation, gap closure and production hardening—not initial implementation of the execution substrate.
-
-## Phase 9 — Platform Command Center
-
-**🟢 IMPLEMENTATION SLICES MERGED.** Role-specific Platform experiences and core operational surfaces are implemented; remaining acceptance is tied to real execution integration and evidence.
-
-## Phase 10 — Reseller Operations Workspace
-
-**🟢 IMPLEMENTATION SLICES + ROLE-AWARE WORKSPACE MERGED.** Portfolio, Sales, Support, Operations, Billing and Customer Success surfaces are implemented; remaining acceptance is tied to real execution integration and evidence.
-
-## Phase 11 — Client Business Workspace / Unified Execution Acceptance
-
-**🟢 COMPLETE.** Phase 11 exit criteria are reconciled and Issue #170 is closed. Production Certification run **33369071987** on commit **bcacbc0eb03b247ad00a232e4eb6324ce5c849df** passed the real-stack Human and Agent WorkItem gates with **Failed gates: 0**, including Agent runtime binding, Agent → Run correlation, commercial licensing, policy/negative-path evidence, approval/resume evidence, workspace/canonical WorkItem API acceptance, backend/frontend test suites and Playwright E2E.
-
-## Phase 12 — Test Center & Evidence Platform
-
-**⚪ PLANNED.** First-class role-aware Test Center with safe execution, isolated data, run history, logs, artifacts, pass/fail evidence and exportable verification records.
-
-## Phase 13 — Agent Teams & Marketplace
-
-**⚪ PLANNED.** Reusable Agent Teams, templates, agent versioning, evaluation suites, tenant-installed agents, marketplace boundary, long-running workflows, budgets, rate limits and SLA-aware orchestration.
-
-## Phase 14 — Scale, Governance & Production
-
-**⚪ PLANNED.** Queue isolation, concurrency, model routing, cost controls, SLOs, disaster recovery, security/compliance, evaluation/regression prevention, incident response, retention/deletion, explainability, audit and external-production evidence.
-
-# Cross-cutting Definition of Done
+## Cross-cutting Definition of Done
 
 Every phase must preserve:
 
-- backend-enforced tenant isolation
-- RBAC at API/service boundaries
-- equal authorization for Human and Agent execution
-- policy-driven approval for risky actions
-- scoped tools and credentials
-- complete auditability
-- usage/cost attribution
-- safe test execution
-- secrets excluded from source/artifacts
-- one authoritative Alembic graph
-- reproducible CI/release artifacts
-- explicit local/CI/production evidence boundaries
+- backend-enforced tenant isolation;
+- RBAC at API/service boundaries;
+- equivalent authorization controls for Human and Agent execution;
+- policy-driven approval for risky actions;
+- scoped tools and credentials;
+- auditability;
+- safe test execution;
+- secrets excluded from source/artifacts;
+- one authoritative Alembic graph;
+- reproducible CI/release artifacts;
+- explicit local/CI/production evidence boundaries.
 
-# Immediate execution order
+## Immediate execution order
 
-1. Preserve Phase 11 closure evidence and keep Issue #170 closed unless new regression evidence reopens the acceptance scope.
-2. Verify Platform/Reseller/Client workspace actions against real WorkItem and Agent APIs, including role and tenant boundaries, as ongoing production hardening.
-3. Close runtime gaps discovered by future E2E acceptance and preserve authorization, tenant isolation and audit invariants.
-4. Expand Test Center evidence where repeatable acceptance proof is required.
-5. Continue compatibility migration for existing Employee-backed capabilities.
-6. Continue production hardening and independently collect external production evidence; do not treat CI as production certification.
-7. Execute Phase 6E Vendor → Reseller → Client production delivery when the required external evidence is available.
-8. Add downstream Agent Teams/Marketplace and scale/governance work only after the execution substrate and acceptance are operationally stable.
+1. Preserve completed evidence and canonical identities.
+2. Prepare the customer delivery package for the current scope.
+3. Implement and verify P12.4.
+4. Implement and verify P12.5.
+5. Implement and verify P12.6.
+6. Add authorized Test Center UI incrementally.
+7. Continue workspace/runtime hardening and compatibility migration.
+8. Proceed to Phase 13 and Phase 14 after Phase 12 is operationally stable.
