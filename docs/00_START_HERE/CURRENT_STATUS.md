@@ -1,28 +1,31 @@
 # Current Status
 
 **Last reconciled:** 2026-09-03  
-**Status:** LOCAL DELIVERY EVIDENCE COMPLETE / PHASE 11 COMPLETE / PHASE 12 P12.1-P12.3 BACKEND FOUNDATION VERIFIED / CI GREEN / EXTERNAL PRODUCTION PENDING
+**Status:** LOCAL DELIVERY EVIDENCE COMPLETE / PHASE 11 COMPLETE / PHASE 12 P12.1-P12.6 IMPLEMENTED / SECURITY HARDENING MERGED / PHASE 13 DESIGN STARTED / EXTERNAL PRODUCTION PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work is represented through shared execution contracts so that a Human, a specialized Agent, or both can participate under the same authorization, approval, tool, audit and evidence controls.
 
-The repository currently contains a frozen V1.4 foundation and the active V1.5 Agentic Operating Model extension. Phase 11 Unified Execution acceptance is complete. The first Phase 12 backend slice is now verified by a fully green CI run.
+The repository contains a frozen V1.4 foundation and the active V1.5 Agentic Operating Model extension. Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6, including authorized UI, automatic stale-run expiration and persisted evidence safety hardening.
 
 ## Current verified checkpoint
 
-GitHub Actions run `33629549153` completed successfully on the latest Phase 12 repair/validation line:
+Phase 12 hardening was merged to `main` in commit `d5487dcaba9382b962afbe24c6f600677a16e2a9` after all PR gate workflows completed successfully.
 
-- Backend: **SUCCESS**
-- Frontend: **SUCCESS**
-- Alembic heads diagnostic: **SUCCESS**
-- Alembic graph traversal: **SUCCESS**
-- `alembic upgrade`: **SUCCESS**
-- Alembic consistency: **SUCCESS**
-- Backend tests: **SUCCESS**
-- Frontend lint, contract tests, unit tests and production build: **SUCCESS**
+Verified PR gates included:
 
-The previously observed Alembic hang was resolved by restoring valid migration lineage and introducing the required merge point rather than retroactively mutating historical ancestry. The duplicate PostgreSQL enum creation failure was also corrected. The final backend test failure was a test-double issue in cross-tenant coverage and was corrected without weakening production tenant isolation.
+- Backend CI: **SUCCESS**
+- Frontend CI: **SUCCESS**
+- CodeQL Python: **SUCCESS**
+- CodeQL JavaScript/TypeScript: **SUCCESS**
+- Architecture Guard: **SUCCESS**
+- Production Observability: **SUCCESS**
+- Production Rollback & Alerting: **SUCCESS**
+
+The hardening adds persistence-boundary validation for Test Run result/evidence and artifact metadata. Secret-bearing keys, excessive nesting/items, cyclic structures and non-JSON-compatible values are rejected before persistence.
+
+These are repository engineering gates. They do not constitute external production or customer acceptance evidence.
 
 ## What the product does today
 
@@ -51,36 +54,26 @@ Execution is governed through shared contracts for:
 - usage/cost attribution where applicable.
 
 ### 4. Business capabilities
-The repository contains verified or implemented capability areas including:
-
-- authentication and JWT;
-- tenant isolation and RBAC;
-- scoped API keys;
-- AI execution and usage/audit paths;
-- files, knowledge, memory and conversations;
-- workflows, schedules and approvals;
-- reporting/analytics;
-- billing, invoices, refunds/reversals and commercial boundaries;
-- Platform/Reseller/Client role-aware workspaces;
-- Agent runtime binding and Agent-to-Run correlation.
+The repository contains verified or implemented capability areas including authentication/JWT, tenant isolation and RBAC, scoped API keys, AI execution and usage/audit paths, files/knowledge/memory/conversations, workflows/schedules/approvals, reporting/analytics, billing/commercial boundaries, role-aware workspaces and Agent runtime binding.
 
 External provider behavior remains explicitly separate from repository/CI evidence where live-provider verification is unavailable.
 
-### 5. Test Center foundation
-Phase 12 now provides a verified backend foundation for a first-class Test Center:
+### 5. Test Center
+Phase 12 provides a first-class Test Center with:
 
-**Test Definition → authorized Test Run → tenant/workspace isolation → lifecycle → persisted result → tenant-scoped retrieval → audit/evidence boundary**
+- tenant-scoped Test Definitions;
+- authorized Test Runs;
+- workspace and RBAC enforcement;
+- queued/running/passed/failed/cancelled/expired lifecycle;
+- explicit and automatic expiration;
+- tenant-scoped run history;
+- persisted structured result/evidence;
+- SHA-256 artifact identity and metadata;
+- immutable exportable verification records;
+- authorized customer-facing UI;
+- persistence-boundary safety validation for result/evidence/metadata.
 
-Implemented lifecycle states are:
-
-- queued
-- running
-- passed
-- failed
-- cancelled
-- expired
-
-The backend foundation includes tenant binding, workspace checks, authorization boundaries, safe fixture handling and tenant-scoped audit records. The full Test Center UI, richer artifact/history surfaces and export records are not yet complete.
+The Test Center evidence boundary remains engineering/product evidence and must not be represented as external production or customer acceptance.
 
 ## Release and evidence boundaries
 
@@ -107,20 +100,19 @@ External production deployment, live customer acceptance and Vendor/Reseller/Cli
 | Phase 9 Platform Command Center | implementation/acceptance slices complete; ongoing hardening |
 | Phase 10 Reseller Operations | implementation/acceptance slices complete; ongoing hardening |
 | Phase 11 Client / Unified Execution acceptance | **COMPLETE** |
-| Phase 12 Test Center | **P12.1-P12.3 VERIFIED backend foundation; P12.4-P12.6 next** |
-| Phase 13 Agent Teams & Marketplace | PLANNED |
+| Phase 12 Test Center | **P12.1-P12.6 IMPLEMENTED / OPERATIONAL HARDENING** |
+| Phase 13 Agent Teams & Marketplace | **DESIGN STARTED / IMPLEMENTATION GATED** |
 | Phase 14 Scale / Governance / Production | PLANNED |
 
 ## Current priorities
 
 1. Preserve canonical release identities and completed local evidence.
-2. Prepare the customer delivery package within the current local-delivery scope.
-3. Continue Phase 12 with P12.4 Evidence & Artifacts, P12.5 Run History and P12.6 Exportable Verification Records.
-4. Add the Test Center UI only against the verified backend contract and authorized workspace boundaries.
+2. Complete real runtime operational validation for Test Center workers, expiration, audit and observability.
+3. Prepare the customer delivery package within the current local-delivery scope.
+4. Implement Phase 13 contract-first slices only after the Phase 12 operational gate is evidenced.
 5. Continue Platform/Reseller/Client runtime hardening against real WorkItem and Agent APIs.
 6. Continue compatibility migration from Employee-backed capabilities without breaking the unified execution model.
 7. Collect external production evidence only when a real deployment/acceptance context exists.
-8. Proceed to Phase 13 and Phase 14 after execution and Test Center productization are operationally stable.
 
 ## Evidence rules
 
