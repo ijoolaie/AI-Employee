@@ -6,11 +6,12 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, String, func
+from sqlalchemy import BigInteger, DateTime, ForeignKey, Index, String, event, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
+from app.core.test_center_safety import sanitize_test_payload
 
 
 class TestRunArtifact(Base):
@@ -46,3 +47,9 @@ class TestRunArtifact(Base):
         if name == "metadata":
             return object.__getattribute__(self, "metadata_")
         return super().__getattribute__(name)
+
+
+@event.listens_for(TestRunArtifact, "before_insert")
+@event.listens_for(TestRunArtifact, "before_update")
+def _validate_persisted_metadata(mapper, connection, target: TestRunArtifact) -> None:
+    target.metadata_ = sanitize_test_payload(target.metadata_ or {})
