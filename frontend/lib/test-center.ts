@@ -62,6 +62,12 @@ type VerificationRecord = {
   artifacts: Artifact[];
 };
 
+type DispatchResult = {
+  run_id: string;
+  task_id: string;
+  status: string;
+};
+
 function unwrap<T>(response: { data: { success: boolean; data?: T } }): T {
   if (!response.data.success || response.data.data === undefined) {
     throw new Error("Unexpected API response");
@@ -91,6 +97,10 @@ export async function createTestRun(payload: {
   return unwrap((await api.post<{ success: boolean; data?: TestRun }>("/test-center/runs", payload)));
 }
 
+export async function dispatchTestRun(runId: string) {
+  return unwrap((await api.post<{ success: boolean; data?: DispatchResult }>(`/test-center/runs/${runId}/execute`)));
+}
+
 export async function getTestRun(runId: string) {
   return unwrap((await api.get<{ success: boolean; data?: TestRun }>(`/test-center/runs/${runId}`)));
 }
@@ -106,4 +116,4 @@ export async function exportVerificationRecord(runId: string) {
   return response.data;
 }
 
-export type { Artifact, TestDefinition, TestRun, VerificationRecord };
+export type { Artifact, DispatchResult, TestDefinition, TestRun, VerificationRecord };
