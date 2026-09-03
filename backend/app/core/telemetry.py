@@ -53,12 +53,41 @@ def get_tracer():
 
 @contextmanager
 def span(name: str, **attributes: object) -> Iterator[object | None]:
-    tracer = get_tracer()
-    if tracer is None:
+    """Start a best-effort span; telemetry failures must never affect business logic."""
+    try:
+        tracer = get_tracer()
+        if tracer is None:
+            yield None
+            return
+        with tracer.start_as_current_span(name) as current:
+            for key, value in attributes.items():
+                if value is not None:
+                    current.set_attribute(key, value)
+            yield current
+    except Exception:
+        # Exporters/SDKs are explicitly non-authoritative operational plumbing.
         yield None
-        return
-    with tracer.start_as_current_span(name) as current:
-        for key, value in attributes.items():
-            if value is not None:
-                current.set_attribute(key, value)
+
+
+@contextmanager
+def agent_runtime_span(**attributes: object) -> Iterator[object | None]:
+    """Runtime span with a deliberately narrow, caller-supplied attribute set."""
+    allowed = {
+        "run.id",
+        "tenant.id",
+        "employee.id",
+        "employee.version.id",
+        "approval.state",
+        "approval.id",
+        "memory.count",
+        "memory.employee.version.id",
+        "runtime.retryable",
+        "runtime.max_attempts",
+        "runtime.attempt",
+        "runtime.outcome",
+        "runtime.failure_category",
+        "runtime.timeout",
+    }
+    safe = {key: value for key, value in attributes.items() if key in allowed}
+    with span("aiep.agent.runtime", **safe) as current:
         yield current
