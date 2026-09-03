@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createTestRun, dispatchTestRun, getTestRun } from "@/lib/test-center";
-
-const get = vi.fn(async (path: string) => ({
-  data: path.includes("/runs/run-1")
-    ? { success: true, data: { id: "run-1", status: "passed", updated_at: "2026-09-03T00:00:00Z" } }
-    : { success: true, data: [] },
+const { get } = vi.hoisted(() => ({
+  get: vi.fn(async (path: string) => ({
+    data: path.includes("/runs/run-1")
+      ? { success: true, data: { id: "run-1", status: "passed", updated_at: "2026-09-03T00:00:00Z" } }
+      : { success: true, data: [] },
+  })),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -18,6 +18,8 @@ vi.mock("@/lib/api", () => ({
     })),
   },
 }));
+
+import { createTestRun, dispatchTestRun, getTestRun } from "@/lib/test-center";
 
 describe("Test Center execution client", () => {
   it("creates a run and dispatches the same run to the worker boundary", async () => {
