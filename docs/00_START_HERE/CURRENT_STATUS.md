@@ -1,149 +1,130 @@
 # Current Status
 
-**Last reconciled:** 2026-09-02  
-**Status:** v1.3.2 INTERNAL RELEASE EVIDENCE COMPLETE / LOCAL PRODUCT ACCEPTANCE GATES COMPLETE / LOCAL DELIVERY EVIDENCE COMPLETE / PHASE 12 BACKEND SLICE AS-BUILT / EXTERNAL PRODUCTION PENDING
+**Last reconciled:** 2026-09-03  
+**Status:** LOCAL DELIVERY EVIDENCE COMPLETE / PHASE 11 COMPLETE / PHASE 12 P12.1-P12.3 BACKEND FOUNDATION VERIFIED / CI GREEN / EXTERNAL PRODUCTION PENDING
 
-## Where we are
+## Executive truth
 
-| Dimension | Current truth |
-|---|---|
-| Current candidate release | `v1.3.2` prerelease |
-| Candidate branch | `release/v1.3.2-phase6e-candidate` |
-| Candidate SHA | `728b7f447d3bc6376fb01d47730cdd70eaf07746` |
-| Phase 6E self-hosted rehearsal | **PASS** — Run `33482911674` |
-| Production Certification | **PASS** — Run `33484435738` |
-| Release packaging | **PASS** — Run `33486097337` |
-| Canonical v1.3.2 migration | `p8_03_agent_binding` |
-| Main development migration head | `p12_01_test_center` — new Phase 12 migration; not part of canonical v1.3.2 identity |
-| Release assets | Present on `v1.3.2` |
-| Local Product Acceptance gates | **COMPLETE** — recorded 2026-09-02 |
-| Local runtime hardening | **COMPLETE** — Redis/Beat recovery and API security-header smoke evidence recorded 2026-09-02 |
-| Local DR / restore verification | **COMPLETE** — PostgreSQL custom-format backup and isolated restore verified 2026-09-02 |
-| Migration graph audit | **COMPLETE for canonical v1.3.2**; main now extends the graph with `p12_01_test_center` |
-| Local rollback strategy | **DOCUMENTED** — Git/Compose rebuild and health/smoke verification path |
-| Final local evidence | **COMPLETE** — evidence manifest recorded 2026-09-02 |
-| External production target | **NOT CONFIGURED / NOT AVAILABLE** |
-| Vendor acceptance | **NOT STARTED / NOT REQUIRED FOR CURRENT LOCAL SCOPE** |
-| Reseller acceptance | **NOT STARTED / NOT REQUIRED FOR CURRENT LOCAL SCOPE** |
-| Customer-environment acceptance | **NOT STARTED / NOT REQUIRED FOR CURRENT LOCAL SCOPE** |
-| Architecture baseline | V1.4 (frozen) |
-| Current architecture extension | V1.5 Agentic Operating Model |
-| Phase 11 | **COMPLETE** — prior certification `33369071987`, Failed gates: 0; Issue #170 closed |
-| Phase 12 P12.1-P12.3 backend foundation | **AS-BUILT** — definitions, tenant-bound run lifecycle, authorization boundary, fixture guard, audit records; backend contract validation pending |
-| Next execution frontier | Phase 12 backend validation, then P12.4-P12.6; UI remains deferred until the backend contract slice is verified |
+The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work is represented through shared execution contracts so that a Human, a specialized Agent, or both can participate under the same authorization, approval, tool, audit and evidence controls.
 
-## Canonical v1.3.2 identity
+The repository currently contains a frozen V1.4 foundation and the active V1.5 Agentic Operating Model extension. Phase 11 Unified Execution acceptance is complete. The first Phase 12 backend slice is now verified by a fully green CI run.
 
+## Current verified checkpoint
+
+GitHub Actions run `33629549153` completed successfully on the latest Phase 12 repair/validation line:
+
+- Backend: **SUCCESS**
+- Frontend: **SUCCESS**
+- Alembic heads diagnostic: **SUCCESS**
+- Alembic graph traversal: **SUCCESS**
+- `alembic upgrade`: **SUCCESS**
+- Alembic consistency: **SUCCESS**
+- Backend tests: **SUCCESS**
+- Frontend lint, contract tests, unit tests and production build: **SUCCESS**
+
+The previously observed Alembic hang was resolved by restoring valid migration lineage and introducing the required merge point rather than retroactively mutating historical ancestry. The duplicate PostgreSQL enum creation failure was also corrected. The final backend test failure was a test-double issue in cross-tenant coverage and was corrected without weakening production tenant isolation.
+
+## What the product does today
+
+### 1. Multi-tenant business platform
+The system supports separate Platform/Vendor, Reseller and Client operating contexts. Downstream workspaces do not receive implicit control-plane authority over upstream workspaces.
+
+### 2. Human + Agent execution
+Work can be executed by:
+
+- a Human;
+- a specialized Agent;
+- Human + Agent collaboration;
+- supported automated execution paths.
+
+The direction of travel is Agent-first execution while preserving compatibility with existing Employee-backed capabilities.
+
+### 3. Unified business execution controls
+Execution is governed through shared contracts for:
+
+- WorkItems and execution lifecycle;
+- authorization and RBAC;
+- policy and approvals;
+- scoped tools/credentials;
+- audit/history;
+- cancellation/retry and concurrency handling;
+- usage/cost attribution where applicable.
+
+### 4. Business capabilities
+The repository contains verified or implemented capability areas including:
+
+- authentication and JWT;
+- tenant isolation and RBAC;
+- scoped API keys;
+- AI execution and usage/audit paths;
+- files, knowledge, memory and conversations;
+- workflows, schedules and approvals;
+- reporting/analytics;
+- billing, invoices, refunds/reversals and commercial boundaries;
+- Platform/Reseller/Client role-aware workspaces;
+- Agent runtime binding and Agent-to-Run correlation.
+
+External provider behavior remains explicitly separate from repository/CI evidence where live-provider verification is unavailable.
+
+### 5. Test Center foundation
+Phase 12 now provides a verified backend foundation for a first-class Test Center:
+
+**Test Definition → authorized Test Run → tenant/workspace isolation → lifecycle → persisted result → tenant-scoped retrieval → audit/evidence boundary**
+
+Implemented lifecycle states are:
+
+- queued
+- running
+- passed
+- failed
+- cancelled
+- expired
+
+The backend foundation includes tenant binding, workspace checks, authorization boundaries, safe fixture handling and tenant-scoped audit records. The full Test Center UI, richer artifact/history surfaces and export records are not yet complete.
+
+## Release and evidence boundaries
+
+### Canonical v1.3.2 identity
 - Tag: `v1.3.2`
 - Exact commit: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
 - Candidate branch: `release/v1.3.2-phase6e-candidate`
-- Migration: `p8_03_agent_binding`
+- Canonical migration: `p8_03_agent_binding`
 
-The tag is bound to the exact candidate SHA. Certification applies only to that exact tested identity.
+Phase 12 development on `main` does not alter or retroactively become part of that certified identity.
 
-## v1.3.2 evidence
+### Local evidence
+Local Product Acceptance, runtime hardening, backup/restore, migration audit and rollback documentation are complete within their documented evidence boundaries.
 
-### Phase 6E self-hosted rehearsal
+### External evidence
+External production deployment, live customer acceptance and Vendor/Reseller/Client acceptance remain **EXTERNAL-PENDING** unless independently evidenced.
 
-Run `33482911674` passed on `728b7f447...`. Health, migration, backup/restore, controlled recovery and evidence upload passed. Monitoring was not configured in the rehearsal and security evidence was rehearsal-only.
+## Current position by phase
 
-### Production Certification
-
-Run `33484435738` passed on the exact candidate SHA. This is internal engineering/certification evidence, not external production acceptance.
-
-### Release packaging
-
-Run `33486097337` passed on the exact candidate SHA and produced the canonical v1.3.2 runtime and edition artifacts.
-
-- Runtime SHA-256: `bdcfe2aabaa2e94d038b57ee2629083eef48bc566257319cd552df8ce1593324`
-- Editions SHA-256: `fb41dfe569610d129f36caff0df3e9e330607c86e731ba78f0cc862d3017833c`
-
-The corresponding assets are attached to the `v1.3.2` GitHub prerelease.
-
-## Local Product Acceptance — 2026-09-02
-
-The following local real-stack gates passed successfully and are recorded in `docs/current/51_LOCAL_FINAL_ACCEPTANCE_RECONCILIATION_2026-09-02.md`:
-
-1. Tenant Isolation + RBAC + Knowledge P0 — PASS twice; each run cleaned its two certification tenants.
-2. Conversation Tenant Isolation P0 — PASS.
-3. Employee → Run → AI → Result — PASS.
-4. Files → Knowledge → Memory — PASS.
-5. Admin / Developer API Keys — PASS.
-6. Workflow + Approval + Schedule — PASS, including approval creation/approval/resume and schedule lifecycle.
-
-These completed gates must not be rerun merely to reproduce status. They should be rerun only for regression, relevant code/configuration change, a new release/candidate SHA, material environment change, or explicit evidence invalidation.
-
-## Operational incidents resolved during acceptance
-
-### Tenant fixture pollution
-
-The local Tenant/RBAC certification initially accumulated `security-a-*` / `security-b-*` fixtures. The cleanup helper naming compatibility was corrected in merged PR #212, and local cleanup was verified with `remaining_security_tenants = 0`. The certification was then run twice successfully with cleanup on each run.
-
-### Docker Compose Beat/Redis network mismatch
-
-Workflow certification initially failed because Beat could not resolve `redis`. Runtime inspection showed Beat on `ai-employee_backend` while Redis/Worker/API/Postgres were on `ai-employee_default`. The local Compose stack was reconciled without deleting volumes. Workflow certification subsequently passed completely.
-
-This was a local Docker network-state incident, not an application Workflow defect. If it recurs, inspect network membership/DNS before changing application code or database state.
-
-## Local delivery evidence — 2026-09-02
-
-- Docker / Compose runtime: PASS.
-- Redis DNS connectivity from API, Worker and Beat: PASS.
-- Redis PING: PASS.
-- Celery Beat scheduling: PASS.
-- API security-header smoke test: PASS.
-- PostgreSQL custom-format backup: PASS.
-- Isolated PostgreSQL restore: PASS; 53 tables restored and migration `p8_03_agent_binding` present.
-- Canonical v1.3.2 migration graph: single head `p8_03_agent_binding`; migration upgrade/downgrade functions audited.
-- Main development branch now adds Phase 12 migration `p12_01_test_center`; this must not be retroactively attributed to the canonical v1.3.2 certification.
-- Backup is excluded from Git under `artifacts/dr/`.
-- Application rollback strategy is documented as known-good Git commit → rebuild application images → production Compose deployment → dependency/service health verification → application smoke verification.
-- Immutable image rollback, destructive production rollback drill, production restore drill, measured production RPO/RTO and external production deployment remain unverified.
-
-See `docs/LOCAL_RUNTIME_HARDENING_EVIDENCE_2026-09-02.md`, `docs/PRODUCTION_READINESS_DR_ROLLBACK_EVIDENCE_2026-09-02.md`, and `docs/FINAL_LOCAL_DELIVERY_EVIDENCE_MANIFEST_2026-09-02.md` for the detailed evidence boundaries.
-
-## Phase 12 backend foundation — 2026-09-02
-
-The first engineering slice is now implemented on `main` at commit `9b0641b54739827bb0265875904229db1b9b4507`:
-
-- `TestDefinition` provides stable tenant-scoped codes plus test type/category, workspace context, prerequisites, expected result and evidence requirements.
-- `TestRun` provides queued/running/passed/failed/cancelled/expired lifecycle states, actor identity, executor identity, correlation ID and durable timestamps.
-- `TestCenterService` resolves definitions and runs only through the caller tenant, rejects workspace mismatches and rejects secret-bearing fixtures.
-- Test Center endpoints use existing `run.read` / `run.execute` RBAC permissions for the first slice, avoiding a new permission migration before the contract is validated.
-- Creation, start, finish and cancellation emit tenant-scoped audit records.
-- The existing Human + Agent unified execution substrate was not modified.
-- No frontend Test Center was added yet.
-
-This is **AS-BUILT engineering evidence**, not VERIFIED evidence. The dedicated backend contract tests have been added but were not rerun in this step; no new acceptance claim is made until validation is performed.
-
-## Invalidated attempts
-
-Run `33485801162` is not v1.3.2 evidence because its artifact metadata pointed to the previous `bcacbc0...` source despite the v1.3.2 package naming. Run `33485442018` is not the canonical v1.3.2 package run.
-
-## Evidence levels
-
-- **AS-BUILT** — implementation exists and is wired into the application.
-- **VERIFIED** — relevant automated or certification verification has passed.
-- **EXTERNAL-PENDING** — source/tooling exists but independent external runtime/provider/customer evidence is missing.
-- **DEFERRED** — outside current scope.
+| Phase | Status |
+|---|---|
+| V1.4 foundation | FROZEN / VERIFIED BASELINE |
+| Phase 8 Unified Execution | VERIFIED foundation |
+| Phase 9 Platform Command Center | implementation/acceptance slices complete; ongoing hardening |
+| Phase 10 Reseller Operations | implementation/acceptance slices complete; ongoing hardening |
+| Phase 11 Client / Unified Execution acceptance | **COMPLETE** |
+| Phase 12 Test Center | **P12.1-P12.3 VERIFIED backend foundation; P12.4-P12.6 next** |
+| Phase 13 Agent Teams & Marketplace | PLANNED |
+| Phase 14 Scale / Governance / Production | PLANNED |
 
 ## Current priorities
 
-1. Preserve the canonical `v1.3.2` identity and do not rebuild/re-tag without a real defect.
-2. Preserve the completed local Product Acceptance, runtime hardening, DR/restore and rollback evidence; rerun only on invalidation.
-3. Validate the new Phase 12 P12.1-P12.3 backend contract and negative tenant/RBAC paths without rerunning unrelated certified suites.
-4. Complete P12.4-P12.6 evidence/artifact, history and export contracts after backend validation.
-5. Prepare the customer delivery package and handoff documentation within the current local-delivery scope.
-6. Continue Platform/Reseller/Client workspace validation against real WorkItem and Agent APIs as ongoing hardening.
-7. Continue compatibility migration for existing Employee-backed capabilities without breaking the unified execution model.
-8. Independently collect external production evidence only when a real deployment target exists.
-9. Execute Phase 6E Vendor → Reseller → Client production delivery only when the required external context and evidence exist.
+1. Preserve canonical release identities and completed local evidence.
+2. Prepare the customer delivery package within the current local-delivery scope.
+3. Continue Phase 12 with P12.4 Evidence & Artifacts, P12.5 Run History and P12.6 Exportable Verification Records.
+4. Add the Test Center UI only against the verified backend contract and authorized workspace boundaries.
+5. Continue Platform/Reseller/Client runtime hardening against real WorkItem and Agent APIs.
+6. Continue compatibility migration from Employee-backed capabilities without breaking the unified execution model.
+7. Collect external production evidence only when a real deployment/acceptance context exists.
+8. Proceed to Phase 13 and Phase 14 after execution and Test Center productization are operationally stable.
 
-## Important boundaries
+## Evidence rules
 
-- CI/internal certification is not external production certification.
-- A Git tag or GitHub release does not by itself prove deployment or production acceptance.
-- `v1.3.2` remains a prerelease until the applicable release/promotion decision is supported by evidence.
-- Vendor, Reseller and Customer-environment acceptance cannot be claimed when no corresponding external acceptance event exists.
-- Phase 12 engineering evidence does not retroactively change the canonical v1.3.2 certification identity.
-- No acceptance state may be marked complete without the corresponding evidence.
+- Green CI is engineering verification, not proof of external production deployment.
+- A Git tag/release is an immutable release identity, not customer acceptance.
+- Completed acceptance suites are not rerun merely to reproduce status.
+- No acceptance state is marked complete without matching evidence.
