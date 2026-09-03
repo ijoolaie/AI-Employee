@@ -4,7 +4,7 @@
 
 V1.4 remains the frozen architecture foundation. V1.5 is the active Human + Agent operating-model extension.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6, including the authorized customer UI and automatic stale-run expiration sweep. The Phase 13 Agent Teams & Marketplace backend foundation is now implemented through the marketplace publication/import boundary; authorized UI and end-to-end product acceptance remain next.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6, including the authorized customer UI and automatic stale-run expiration sweep. Phase 13 Agent Teams & Marketplace engineering implementation is now complete through authorized UI and deterministic browser acceptance; external production/customer acceptance remains a separate evidence class.
 
 ## Product direction
 
@@ -58,7 +58,7 @@ Existing Employee-backed functionality remains compatible while changed capabili
 **IMPLEMENTED / VERIFIED.** Customer-facing Test Center UI is merged to `main` and consumes the authorized backend contracts for definitions, runs/history, artifacts and verification export.
 
 ### Phase 13 — Agent Teams & Marketplace
-**BACKEND FOUNDATION IMPLEMENTED / UI NEXT.**
+**ENGINEERING IMPLEMENTATION COMPLETE / EXTERNAL ACCEPTANCE PENDING.**
 
 #### 13.1 — Team Definition Contract
 **IMPLEMENTED.** Tenant-scoped TeamDefinition and immutable TeamVersion contracts.
@@ -76,17 +76,17 @@ Existing Employee-backed functionality remains compatible while changed capabili
 **IMPLEMENTED / BACKEND.** Publication/discovery plus authorized cross-tenant import. Public publications are imported as tenant-local TeamDefinition, TeamVersion and AgentDefinition copies; source publication provenance is retained on TeamInstallation. No AgentInstance is provisioned automatically.
 
 #### 13.6 — Authorized UI
-**NEXT.** Build authorized Team/Marketplace customer surfaces on the existing backend contracts.
+**IMPLEMENTED / MERGED.** Authenticated Marketplace discovery, workspace-scoped install review, tenant-local result/provenance and explicit install/acceptance/deployment boundary messaging are covered.
 
 #### 13.7 — End-to-End Product Acceptance
-**PENDING.** Requires integration/runtime evidence for publish → discover → authorized import → local provisioning → WorkItem execution plus tenant/RBAC negative paths. Engineering evidence must remain distinct from external production/customer acceptance.
+**IMPLEMENTED / MERGED.** Playwright acceptance covers authenticated discovery, workspace-scoped review, deterministic install success UX and authorization failure handling. Backend authorization and tenant isolation remain authoritative; the browser suite does not claim a live production cross-tenant environment.
 
 ### Phase 14 — Scale, Governance & Production
-**PLANNED.** Queue isolation, concurrency, routing, cost controls, SLOs, DR, security/compliance, regression prevention, incident response and external-production evidence.
+**PLANNED / NEXT ENGINEERING PHASE.** Queue isolation, concurrency, routing, cost controls, SLOs, DR, security/compliance, regression prevention, incident response and external-production evidence.
 
-## Phase 12 verification boundary
+## Evidence boundary
 
-The Phase 12 engineering implementation is covered by repository CI, integration/unit tests and authorization/isolation checks. These are engineering evidence only. Local real-stack validation remains a separate evidence class, and external production/customer acceptance requires independent external evidence.
+Phase 13 completion is an engineering/repository milestone. CI, CodeQL, Architecture Guard and applicable operational workflow results are engineering evidence; prior local Docker validation is local/runtime evidence. None of these records alone establishes external production deployment, live third-party provider validation, customer acceptance, commercial go-live or production certification.
 
 ## Cross-cutting Definition of Done
 
@@ -106,8 +106,7 @@ Every phase must preserve:
 
 ## Immediate execution order
 
-1. Merge and verify the Phase 13 marketplace import backend slice.
-2. Build authorized Team/Marketplace UI against the existing backend contracts.
-3. Add end-to-end publish → discover → import → tenant-local provisioning → execution evidence.
-4. Keep external production/customer acceptance explicitly separate from repository/local evidence.
-5. Continue workspace/runtime hardening and compatibility migration in parallel where safe.
+1. Phase 13 engineering implementation is complete and recorded.
+2. Begin Phase 14 scale, governance and production-hardening work.
+3. Preserve explicit separation between repository/local engineering evidence and external production/customer acceptance.
+4. Continue workspace/runtime hardening and compatibility migration in parallel where safe.
