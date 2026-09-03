@@ -13,6 +13,7 @@ from app.core.database import worker_db_session
 from app.core.telemetry import span
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.run import Run
+from app.models.tool_approval import ToolApprovalRequest
 from app.services import run_service
 from app.workers.celery_app import celery_app
 
@@ -46,6 +47,18 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     details={"run_id": run_id},
                 )
 
+            approval_result = await db.execute(
+                select(ToolApprovalRequest)
+                .where(
+                    ToolApprovalRequest.run_id == run.id,
+                    ToolApprovalRequest.tenant_id == run.tenant_id,
+                )
+                .order_by(ToolApprovalRequest.created_at.desc())
+            )
+            latest_approval = approval_result.scalars().first()
+            approval_state = "granted" if latest_approval is not None and latest_approval.status == "approved" else "not_required"
+            approval_id = str(latest_approval.id) if approval_state == "granted" else None
+
             contract = AgentRuntimeContract(
                 tenant_id=str(run.tenant_id),
                 run_id=str(run.id),
@@ -53,7 +66,12 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                 employee_version_id=str(run.employee_version_id),
                 input_data=run.input_data or {},
                 context={"executor": "celery_worker"},
-                evidence={"runtime_boundary": "celery_worker"},
+                approval_state=approval_state,
+                approval_id=approval_id,
+                evidence={
+                    "runtime_boundary": "celery_worker",
+                    "approval_state": approval_state,
+                },
             )
             runtime = AgentRuntime(contract)
 
