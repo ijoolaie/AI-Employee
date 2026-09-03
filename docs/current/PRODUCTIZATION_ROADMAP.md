@@ -4,7 +4,7 @@
 
 V1.4 remains the frozen architecture foundation. V1.5 is the active Human + Agent operating-model extension.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is now implemented through P12.6, including the authorized customer UI and automatic stale-run expiration sweep. The next frontier is operational stabilization and the Phase 13 Agent Teams & Marketplace foundation.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6, including the authorized customer UI and automatic stale-run expiration sweep. The Phase 13 Agent Teams & Marketplace backend foundation is now implemented through the marketplace publication/import boundary; authorized UI and end-to-end product acceptance remain next.
 
 ## Product direction
 
@@ -58,7 +58,28 @@ Existing Employee-backed functionality remains compatible while changed capabili
 **IMPLEMENTED / VERIFIED.** Customer-facing Test Center UI is merged to `main` and consumes the authorized backend contracts for definitions, runs/history, artifacts and verification export.
 
 ### Phase 13 — Agent Teams & Marketplace
-**NEXT.** Reusable teams/templates, agent versioning/evaluation, tenant installation and marketplace boundaries.
+**BACKEND FOUNDATION IMPLEMENTED / UI NEXT.**
+
+#### 13.1 — Team Definition Contract
+**IMPLEMENTED.** Tenant-scoped TeamDefinition and immutable TeamVersion contracts.
+
+#### 13.2 — Team Installation Boundary
+**IMPLEMENTED.** Authorized tenant-local TeamInstallation with workspace scoping and audit coverage.
+
+#### 13.3 — Team Execution Contract
+**IMPLEMENTED.** Installed teams dispatch through the canonical WorkItem/Agent execution substrate.
+
+#### 13.4 — Evaluation & Versioning
+**IMPLEMENTED.** Immutable TeamEvaluation records tied to TeamVersion.
+
+#### 13.5 — Marketplace Boundary
+**IMPLEMENTED / BACKEND.** Publication/discovery plus authorized cross-tenant import. Public publications are imported as tenant-local TeamDefinition, TeamVersion and AgentDefinition copies; source publication provenance is retained on TeamInstallation. No AgentInstance is provisioned automatically.
+
+#### 13.6 — Authorized UI
+**NEXT.** Build authorized Team/Marketplace customer surfaces on the existing backend contracts.
+
+#### 13.7 — End-to-End Product Acceptance
+**PENDING.** Requires integration/runtime evidence for publish → discover → authorized import → local provisioning → WorkItem execution plus tenant/RBAC negative paths. Engineering evidence must remain distinct from external production/customer acceptance.
 
 ### Phase 14 — Scale, Governance & Production
 **PLANNED.** Queue isolation, concurrency, routing, cost controls, SLOs, DR, security/compliance, regression prevention, incident response and external-production evidence.
@@ -85,8 +106,8 @@ Every phase must preserve:
 
 ## Immediate execution order
 
-1. Complete CI verification of the current Phase 12 hardening commit.
-2. Prepare/reconcile the customer delivery package for the current local-delivery scope.
-3. Perform operational stability checks for Test Center workers, expiration, audit and observability.
-4. Start Phase 13 design and implementation only after Phase 12 operational stability is confirmed.
+1. Merge and verify the Phase 13 marketplace import backend slice.
+2. Build authorized Team/Marketplace UI against the existing backend contracts.
+3. Add end-to-end publish → discover → import → tenant-local provisioning → execution evidence.
+4. Keep external production/customer acceptance explicitly separate from repository/local evidence.
 5. Continue workspace/runtime hardening and compatibility migration in parallel where safe.
