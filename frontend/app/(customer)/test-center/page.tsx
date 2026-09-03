@@ -35,13 +35,14 @@ export default function TestCenterPage() {
     onError: (error) => setMessage(getErrorMessage(error)),
   });
 
-  const definitions = definitionsQuery.data ?? [];
+  const definitions = useMemo(() => definitionsQuery.data ?? [], [definitionsQuery.data]);
   const runs = runsQuery.data ?? [];
   const definitionById = useMemo(() => new Map(definitions.map((definition) => [definition.id, definition])), [definitions]);
 
   async function handleExport(runId: string) {
     try {
-      const blob = await exportVerificationRecord(runId);
+      const record = await exportVerificationRecord(runId);
+      const blob = new Blob([JSON.stringify(record, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url; anchor.download = `test-run-${runId}-verification.json`; anchor.click(); URL.revokeObjectURL(url);
