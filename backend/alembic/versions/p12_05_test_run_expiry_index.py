@@ -1,13 +1,13 @@
 """Phase 12.5 Test Center active-run expiry sweep index.
 
 Revision ID: p12_05_test_run_expiry_index
-Revises: p12_04_test_evidence
+Revises: rc9p8merge01
 """
 
 from alembic import op
 
 revision = "p12_05_test_run_expiry_index"
-down_revision = "p12_04_test_evidence"
+down_revision = "rc9p8merge01"
 branch_labels = None
 depends_on = None
 
