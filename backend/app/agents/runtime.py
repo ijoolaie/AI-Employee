@@ -36,13 +36,7 @@ class RuntimeResult:
 
 
 class AgentRuntime:
-    """Execute one contract-bound operation with bounded lifecycle controls.
-
-    Retries are opt-in per operation. This is intentional: replaying an entire
-    Employee Run may duplicate provider calls or external side effects, so the
-    default is exactly one attempt. Callers may mark an operation retryable only
-    when they know it is safe/idempotent to replay.
-    """
+    """Execute one contract-bound operation with bounded lifecycle controls."""
 
     def __init__(self, contract: AgentRuntimeContract) -> None:
         contract.validate()
@@ -50,9 +44,15 @@ class AgentRuntime:
         self.state = RuntimeState.RECEIVED
 
     def _telemetry_attributes(self, **extra: object) -> dict[str, object]:
-        attributes = self.contract.evidence_context()
-        attributes.update(extra)
-        return attributes
+        context = self.contract.evidence_context()
+        return {
+            "run.id": context["run_id"],
+            "tenant.id": context["tenant_id"],
+            "employee.id": context["employee_id"],
+            "employee.version.id": context["employee_version_id"],
+            "approval.id": context["approval_id"],
+            **extra,
+        }
 
     async def execute(
         self,
