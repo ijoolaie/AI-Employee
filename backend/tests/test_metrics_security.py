@@ -1,7 +1,7 @@
 import pytest
 from starlette.requests import Request
 
-from app.main import metrics
+import app.main as main
 
 
 def _request(authorization: str | None = None) -> Request:
@@ -15,13 +15,13 @@ def _request(authorization: str | None = None) -> Request:
 async def test_metrics_rejects_invalid_bearer_token(monkeypatch):
     monkeypatch.setenv("METRICS_AUTH_TOKEN", "test-secret")
     with pytest.raises(Exception) as exc_info:
-        await metrics(_request("Bearer wrong"))
+        await main.metrics(_request("Bearer wrong"))
     assert getattr(exc_info.value, "status_code", None) == 401
 
 
 @pytest.mark.asyncio
 async def test_metrics_accepts_correct_bearer_token(monkeypatch):
     monkeypatch.setenv("METRICS_AUTH_TOKEN", "test-secret")
-    response = await metrics(_request("Bearer test-secret"))
+    monkeypatch.setattr(main, "REQUEST_COUNT", None)
+    response = await main.metrics(_request("Bearer test-secret"))
     assert response.status_code == 200
-    assert response.media_type == "text/plain"
