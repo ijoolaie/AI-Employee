@@ -1,95 +1,27 @@
 # Current Status
 
 **Last reconciled:** 2026-09-03  
-**Status:** LOCAL DELIVERY EVIDENCE COMPLETE / PHASE 11 COMPLETE / PHASE 12 P12.1-P12.6 IMPLEMENTED / SECURITY HARDENING MERGED / PHASE 13 DESIGN STARTED / EXTERNAL PRODUCTION PENDING
+**Status:** LOCAL DELIVERY EVIDENCE COMPLETE / PHASE 11 COMPLETE / PHASE 12 P12.1-P12.6 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / EXTERNAL PRODUCTION PENDING
 
 ## Executive truth
 
-The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work is represented through shared execution contracts so that a Human, a specialized Agent, or both can participate under the same authorization, approval, tool, audit and evidence controls.
+The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work uses shared execution contracts for Human, Agent and collaborative execution under common authorization, approval, tool, audit and evidence controls.
 
-The repository contains a frozen V1.4 foundation and the active V1.5 Agentic Operating Model extension. Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6, including authorized UI, automatic stale-run expiration and persisted evidence safety hardening.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6, including authorized UI, automatic stale-run expiration and persisted evidence safety hardening. **Phase 13 Agent Teams & Marketplace engineering implementation is complete**, including backend contracts, authorized Marketplace UI and browser acceptance coverage.
 
-## Current verified checkpoint
+## Phase 13 checkpoint
 
-Phase 12 hardening was merged to `main` in commit `d5487dcaba9382b962afbe24c6f600677a16e2a9` after all PR gate workflows completed successfully.
+Phase 13 implementation is complete on `main` through the following merged slices:
 
-Verified PR gates included:
+- TeamDefinition + immutable TeamVersion contract.
+- Tenant-local TeamInstallation and authorized execution boundary.
+- WorkItem-backed team execution.
+- Immutable TeamEvaluation/version evidence.
+- Marketplace publication/discovery/import with tenant-local copies and provenance.
+- Authorized Marketplace discovery, workspace-scoped install review and installation result UI.
+- Playwright acceptance for authenticated discovery, review, tenant-local installation UX and authorization failure boundaries.
 
-- Backend CI: **SUCCESS**
-- Frontend CI: **SUCCESS**
-- CodeQL Python: **SUCCESS**
-- CodeQL JavaScript/TypeScript: **SUCCESS**
-- Architecture Guard: **SUCCESS**
-- Production Observability: **SUCCESS**
-- Production Rollback & Alerting: **SUCCESS**
-
-The hardening adds persistence-boundary validation for Test Run result/evidence and artifact metadata. Secret-bearing keys, excessive nesting/items, cyclic structures and non-JSON-compatible values are rejected before persistence.
-
-These are repository engineering gates. They do not constitute external production or customer acceptance evidence.
-
-## What the product does today
-
-### 1. Multi-tenant business platform
-The system supports separate Platform/Vendor, Reseller and Client operating contexts. Downstream workspaces do not receive implicit control-plane authority over upstream workspaces.
-
-### 2. Human + Agent execution
-Work can be executed by:
-
-- a Human;
-- a specialized Agent;
-- Human + Agent collaboration;
-- supported automated execution paths.
-
-The direction of travel is Agent-first execution while preserving compatibility with existing Employee-backed capabilities.
-
-### 3. Unified business execution controls
-Execution is governed through shared contracts for:
-
-- WorkItems and execution lifecycle;
-- authorization and RBAC;
-- policy and approvals;
-- scoped tools/credentials;
-- audit/history;
-- cancellation/retry and concurrency handling;
-- usage/cost attribution where applicable.
-
-### 4. Business capabilities
-The repository contains verified or implemented capability areas including authentication/JWT, tenant isolation and RBAC, scoped API keys, AI execution and usage/audit paths, files/knowledge/memory/conversations, workflows/schedules/approvals, reporting/analytics, billing/commercial boundaries, role-aware workspaces and Agent runtime binding.
-
-External provider behavior remains explicitly separate from repository/CI evidence where live-provider verification is unavailable.
-
-### 5. Test Center
-Phase 12 provides a first-class Test Center with:
-
-- tenant-scoped Test Definitions;
-- authorized Test Runs;
-- workspace and RBAC enforcement;
-- queued/running/passed/failed/cancelled/expired lifecycle;
-- explicit and automatic expiration;
-- tenant-scoped run history;
-- persisted structured result/evidence;
-- SHA-256 artifact identity and metadata;
-- immutable exportable verification records;
-- authorized customer-facing UI;
-- persistence-boundary safety validation for result/evidence/metadata.
-
-The Test Center evidence boundary remains engineering/product evidence and must not be represented as external production or customer acceptance.
-
-## Release and evidence boundaries
-
-### Canonical v1.3.2 identity
-- Tag: `v1.3.2`
-- Exact commit: `728b7f447d3bc6376fb01d47730cdd70eaf07746`
-- Candidate branch: `release/v1.3.2-phase6e-candidate`
-- Canonical migration: `p8_03_agent_binding`
-
-Phase 12 development on `main` does not alter or retroactively become part of that certified identity.
-
-### Local evidence
-Local Product Acceptance, runtime hardening, backup/restore, migration audit and rollback documentation are complete within their documented evidence boundaries.
-
-### External evidence
-External production deployment, live customer acceptance and Vendor/Reseller/Client acceptance remain **EXTERNAL-PENDING** unless independently evidenced.
+Marketplace import does not imply customer acceptance, production deployment or AgentInstance provisioning. External production and customer acceptance remain separately evidenced states.
 
 ## Current position by phase
 
@@ -101,22 +33,21 @@ External production deployment, live customer acceptance and Vendor/Reseller/Cli
 | Phase 10 Reseller Operations | implementation/acceptance slices complete; ongoing hardening |
 | Phase 11 Client / Unified Execution acceptance | **COMPLETE** |
 | Phase 12 Test Center | **P12.1-P12.6 IMPLEMENTED / OPERATIONAL HARDENING** |
-| Phase 13 Agent Teams & Marketplace | **DESIGN STARTED / IMPLEMENTATION GATED** |
-| Phase 14 Scale / Governance / Production | PLANNED |
-
-## Current priorities
-
-1. Preserve canonical release identities and completed local evidence.
-2. Complete real runtime operational validation for Test Center workers, expiration, audit and observability.
-3. Prepare the customer delivery package within the current local-delivery scope.
-4. Implement Phase 13 contract-first slices only after the Phase 12 operational gate is evidenced.
-5. Continue Platform/Reseller/Client runtime hardening against real WorkItem and Agent APIs.
-6. Continue compatibility migration from Employee-backed capabilities without breaking the unified execution model.
-7. Collect external production evidence only when a real deployment/acceptance context exists.
+| Phase 13 Agent Teams & Marketplace | **ENGINEERING COMPLETE** |
+| Phase 14 Scale / Governance / Production | **PLANNED / NEXT** |
 
 ## Evidence rules
 
-- Green CI is engineering verification, not proof of external production deployment.
+- CI and automated acceptance are engineering verification, not proof of external production deployment.
+- Local real-stack validation is local evidence.
 - A Git tag/release is an immutable release identity, not customer acceptance.
-- Completed acceptance suites are not rerun merely to reproduce status.
-- No acceptance state is marked complete without matching evidence.
+- External production deployment, live provider behavior and customer acceptance remain **EXTERNAL-PENDING** unless independently evidenced.
+- Do not rerun completed acceptance suites merely to reproduce status; rerun when relevant regression risk exists.
+
+## Canonical documents
+
+- `docs/current/STATUS.md`
+- `docs/current/PRODUCTIZATION_ROADMAP.md`
+- `docs/current/PHASE_13_DESIGN.md`
+- `docs/00_START_HERE/PROJECT_OVERVIEW.md`
+- `docs/00_START_HERE/CURRENT_PRIORITIES.md`
