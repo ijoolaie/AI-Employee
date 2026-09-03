@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.test_definition import TestDefinition
@@ -211,6 +211,55 @@ class TestCenterService:
         run.error = run.error or "test run expired"
         await self.db.flush()
         return run
+
+    async def expire_stale_runs(
+        self,
+        *,
+        timeout_seconds: int,
+        now: datetime | None = None,
+        batch_size: int = 200,
+    ) -> list[TestRun]:
+        """Expire stale queued/running runs across tenants for the system sweep.
+
+        Each candidate is re-locked and revalidated through ``expire_run`` so a
+        concurrent start, finish or cancel cannot be overwritten by the sweep.
+        """
+        if timeout_seconds < 1:
+            raise TestCenterError("expiration timeout must be positive")
+        if batch_size < 1 or batch_size > 1000:
+            raise TestCenterError("expiration batch size must be between 1 and 1000")
+
+        current_time = now or datetime.now(timezone.utc)
+        cutoff = current_time - timedelta(seconds=timeout_seconds)
+        stmt = (
+            select(TestRun)
+            .where(
+                TestRun.status.in_([TestRunStatus.QUEUED, TestRunStatus.RUNNING]),
+                or_(
+                    TestRun.queued_at <= cutoff,
+                    (TestRun.status == TestRunStatus.RUNNING) & (TestRun.started_at <= cutoff),
+                ),
+            )
+            .order_by(TestRun.queued_at.asc(), TestRun.id.asc())
+            .limit(batch_size)
+        )
+        result = await self.db.execute(stmt)
+        candidates = list(result.scalars().all())
+        expired: list[TestRun] = []
+        for candidate in candidates:
+            try:
+                expired.append(
+                    await self.expire_run(
+                        run_id=candidate.id,
+                        tenant_id=candidate.tenant_id,
+                        timeout_seconds=timeout_seconds,
+                        now=current_time,
+                    )
+                )
+            except TestCenterError:
+                # Another worker/request may have legitimately transitioned the row.
+                continue
+        return expired
 
     async def record_evidence_identity(self, *, run_id: uuid.UUID, tenant_id: uuid.UUID, runtime_version: str | None = None, migration_identity: str | None = None, git_sha: str | None = None, evidence_boundary: str = "engineering_product_evidence") -> TestRun:
         run = await self._get_run_for_tenant(run_id, tenant_id, for_update=True)
