@@ -14,8 +14,8 @@ from app.core.database import Base
 class TeamInstallation(Base):
     """Authorized tenant-local binding to an immutable TeamVersion.
 
-    P13.2 deliberately supports same-tenant installation only. Cross-tenant
-    package publication/import belongs to the later Marketplace boundary.
+    Marketplace imports create a tenant-local TeamDefinition/TeamVersion copy
+    and retain the publication identity here for provenance and idempotency.
     """
 
     __tablename__ = "team_installations"
@@ -23,6 +23,10 @@ class TeamInstallation(Base):
         UniqueConstraint(
             "tenant_id", "team_version_id", "workspace_key",
             name="uq_team_installations_tenant_version_workspace",
+        ),
+        UniqueConstraint(
+            "tenant_id", "source_publication_id", "workspace_key",
+            name="uq_team_installations_tenant_publication_workspace",
         ),
     )
 
@@ -32,6 +36,9 @@ class TeamInstallation(Base):
     )
     team_version_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("team_versions.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
+    source_publication_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("marketplace_publications.id", ondelete="RESTRICT"), nullable=True, index=True
     )
     workspace_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
