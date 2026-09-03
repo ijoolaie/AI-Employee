@@ -65,6 +65,10 @@ class TestRunFinish(BaseModel):
     git_sha: str | None = Field(default=None, min_length=64, max_length=64, pattern=r"^[0-9a-fA-F]{64}$")
 
 
+class TestRunExpire(BaseModel):
+    timeout_seconds: int = Field(ge=1, le=86_400)
+
+
 class TestRunArtifactCreate(BaseModel):
     artifact_type: str = Field(min_length=1, max_length=50)
     label: str = Field(min_length=1, max_length=255)
@@ -337,6 +341,38 @@ async def finish_run(run_id: UUID, payload: TestRunFinish, ctx: RunExecuteContex
     try:
         run = await service.finish_run(run_id=run_id, tenant_id=ctx.tenant_id, **payload.model_dump())
         await record(db, action="test_run.passed" if payload.passed else "test_run.failed", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="test_run", resource_id=run.id, status="success" if payload.passed else "failure", metadata={"correlation_id": str(run.correlation_id), "evidence_boundary": run.evidence_boundary})
+        await db.commit()
+    except TestCenterError as exc:
+        await db.rollback()
+        raise _error(exc) from exc
+    return _run_summary(run)
+
+
+@router.post("/runs/{run_id}/expire", response_model=TestRunSummary)
+async def expire_run(
+    run_id: UUID,
+    payload: TestRunExpire,
+    ctx: RunExecuteContext,
+    db: AsyncSession = Depends(get_db),
+):
+    """Expire an active run only after its configured timeout has elapsed."""
+    service = TestCenterService(db)
+    try:
+        run = await service.expire_run(
+            run_id=run_id,
+            tenant_id=ctx.tenant_id,
+            timeout_seconds=payload.timeout_seconds,
+        )
+        await record(
+            db,
+            action="test_run.expired",
+            actor_type="user",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="test_run",
+            resource_id=run.id,
+            metadata={"correlation_id": str(run.correlation_id), "timeout_seconds": payload.timeout_seconds},
+        )
         await db.commit()
     except TestCenterError as exc:
         await db.rollback()

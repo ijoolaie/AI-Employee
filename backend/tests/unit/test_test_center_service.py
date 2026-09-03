@@ -97,11 +97,12 @@ async def test_cross_tenant_definition_is_not_resolvable():
 @pytest.mark.asyncio
 async def test_run_lifecycle_is_queued_running_passed():
     tenant_id = uuid4()
+    now = datetime.now(timezone.utc)
     run = SimpleNamespace(
         id=uuid4(), tenant_id=tenant_id, test_definition_id=uuid4(), workspace_key=None,
         actor_id=uuid4(), correlation_id=uuid4(), status=TestRunStatus.QUEUED,
         fixtures={}, result=None, evidence={}, error=None, started_at=None, finished_at=None,
-        runtime_version=None, migration_identity=None, git_sha=None,
+        queued_at=now, runtime_version=None, migration_identity=None, git_sha=None,
         evidence_boundary="engineering_product_evidence",
     )
     db = FakeDB(run=run)
@@ -118,6 +119,52 @@ async def test_run_lifecycle_is_queued_running_passed():
     assert finished.runtime_version == "python-3.12"
     assert finished.migration_identity == "p12_04_test_evidence"
     assert finished.git_sha == "a" * 64
+
+
+@pytest.mark.asyncio
+async def test_expired_transition_is_time_bound_and_terminal():
+    tenant_id = uuid4()
+    queued_at = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    run = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, status=TestRunStatus.QUEUED,
+        queued_at=queued_at, started_at=None, finished_at=None, error=None,
+    )
+    db = FakeDB(run=run)
+    service = TestCenterService(db)
+    with pytest.raises(TestCenterError, match="has not expired"):
+        await service.expire_run(
+            run_id=run.id, tenant_id=tenant_id, timeout_seconds=60,
+            now=queued_at + timedelta(seconds=59),
+        )
+    expired = await service.expire_run(
+        run_id=run.id, tenant_id=tenant_id, timeout_seconds=60,
+        now=queued_at + timedelta(seconds=60),
+    )
+    assert expired.status is TestRunStatus.EXPIRED
+    assert expired.finished_at == queued_at + timedelta(seconds=60)
+    assert expired.error == "test run expired"
+    with pytest.raises(TestCenterError, match="terminal"):
+        await service.expire_run(
+            run_id=run.id, tenant_id=tenant_id, timeout_seconds=60,
+            now=queued_at + timedelta(seconds=120),
+        )
+
+
+@pytest.mark.asyncio
+async def test_running_expiration_uses_started_at():
+    tenant_id = uuid4()
+    started_at = datetime(2026, 9, 1, 1, 0, tzinfo=timezone.utc)
+    run = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, status=TestRunStatus.RUNNING,
+        queued_at=started_at - timedelta(hours=1), started_at=started_at,
+        finished_at=None, error=None,
+    )
+    db = FakeDB(run=run)
+    expired = await TestCenterService(db).expire_run(
+        run_id=run.id, tenant_id=tenant_id, timeout_seconds=30,
+        now=started_at + timedelta(seconds=30),
+    )
+    assert expired.status is TestRunStatus.EXPIRED
 
 
 @pytest.mark.asyncio

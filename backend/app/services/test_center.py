@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import select
@@ -175,6 +175,40 @@ class TestCenterService:
         run.migration_identity = migration_identity
         run.git_sha = git_sha.lower() if git_sha else None
         run.finished_at = datetime.now(timezone.utc)
+        await self.db.flush()
+        return run
+
+    async def expire_run(
+        self,
+        *,
+        run_id: uuid.UUID,
+        tenant_id: uuid.UUID,
+        timeout_seconds: int,
+        now: datetime | None = None,
+    ) -> TestRun:
+        """Move an active run to EXPIRED once its queued/running timeout has elapsed.
+
+        The row is locked before checking state and age, so a concurrent finish,
+        cancel, or start cannot also transition the same run after this check.
+        ``queued_at`` is the anchor for queued runs; ``started_at`` is the anchor
+        once execution has begun.
+        """
+        if timeout_seconds < 1:
+            raise TestCenterError("expiration timeout must be positive")
+        run = await self._get_run_for_tenant(run_id, tenant_id, for_update=True)
+        if run.status in {TestRunStatus.PASSED, TestRunStatus.FAILED, TestRunStatus.CANCELLED, TestRunStatus.EXPIRED}:
+            raise TestCenterError("terminal test run cannot expire")
+
+        reference_time = run.started_at if run.status is TestRunStatus.RUNNING else run.queued_at
+        if reference_time is None:
+            raise TestCenterError("test run has no expiration reference time")
+        current_time = now or datetime.now(timezone.utc)
+        if current_time < reference_time + timedelta(seconds=timeout_seconds):
+            raise TestCenterError("test run has not expired")
+
+        run.status = TestRunStatus.EXPIRED
+        run.finished_at = current_time
+        run.error = run.error or "test run expired"
         await self.db.flush()
         return run
 
