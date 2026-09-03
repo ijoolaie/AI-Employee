@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Play, ShieldCheck } from "lucide-react";
+import { Download, Play, RefreshCw, ShieldCheck } from "lucide-react";
 
 import { Header } from "@/components/layout/header";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +10,11 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
 import { getErrorMessage } from "@/lib/api";
-import { createTestRun, dispatchTestRun, exportVerificationRecord, getTestRunArtifacts, listTestDefinitions, listTestRuns, type TestRun } from "@/lib/test-center";
+import { createTestRun, dispatchTestRun, exportVerificationRecord, getTestRun, getTestRunArtifacts, listTestDefinitions, listTestRuns, type TestRun } from "@/lib/test-center";
 
 function shortId(value: string) { return `${value.slice(0, 8)}…`; }
 function formatDate(value: string | null) { return value ? new Date(value).toLocaleString() : "—"; }
+function isActiveStatus(value: string) { return ["queued", "running"].includes(value); }
 
 export default function TestCenterPage() {
   const queryClient = useQueryClient();
@@ -26,9 +27,22 @@ export default function TestCenterPage() {
   const runsQuery = useQuery({
     queryKey: ["test-center", "runs", workspace, status],
     queryFn: () => listTestRuns({ workspace_key: workspace || undefined, status: status || undefined }),
-    refetchInterval: (query) => query.state.data?.some((run) => ["queued", "running"].includes(run.status)) ? 3000 : false,
+    refetchInterval: (query) => query.state.data?.some((run) => isActiveStatus(run.status)) ? 3000 : false,
+  });
+  const selectedRunQuery = useQuery({
+    queryKey: ["test-center", "run", selectedRun?.id],
+    queryFn: () => getTestRun(selectedRun!.id),
+    enabled: Boolean(selectedRun),
+    refetchInterval: (query) => query.state.data && isActiveStatus(query.state.data.status) ? 1500 : false,
   });
   const artifactsQuery = useQuery({ queryKey: ["test-center", "artifacts", selectedRun?.id], queryFn: () => getTestRunArtifacts(selectedRun!.id), enabled: Boolean(selectedRun) });
+
+  useEffect(() => {
+    if (selectedRunQuery.data && selectedRunQuery.data.updated_at !== selectedRun?.updated_at) {
+      setSelectedRun(selectedRunQuery.data);
+      queryClient.setQueryData<TestRun[]>(["test-center", "runs", workspace, status], (current = []) => current.map((run) => run.id === selectedRunQuery.data!.id ? selectedRunQuery.data! : run));
+    }
+  }, [queryClient, selectedRun?.updated_at, selectedRunQuery.data, status, workspace]);
 
   const runMutation = useMutation({
     mutationFn: async (definition: { id: string; workspace_key: string | null }) => {
@@ -40,13 +54,23 @@ export default function TestCenterPage() {
       setSelectedRun(run);
       setMessage(`Dispatched test run ${shortId(run.id)} to the worker (${shortId(dispatch.task_id)}).`);
       queryClient.invalidateQueries({ queryKey: ["test-center", "runs"] });
+      queryClient.invalidateQueries({ queryKey: ["test-center", "run", run.id] });
     },
     onError: (error) => setMessage(getErrorMessage(error)),
   });
 
   const definitions = useMemo(() => definitionsQuery.data ?? [], [definitionsQuery.data]);
   const runs = runsQuery.data ?? [];
+  const liveSelectedRun = selectedRunQuery.data ?? selectedRun;
   const definitionById = useMemo(() => new Map(definitions.map((definition) => [definition.id, definition])), [definitions]);
+
+  async function refreshSelectedRun() {
+    if (!selectedRun) return;
+    try {
+      await Promise.all([selectedRunQuery.refetch(), artifactsQuery.refetch(), runsQuery.refetch()]);
+      setMessage("Selected run refreshed.");
+    } catch (error) { setMessage(getErrorMessage(error)); }
+  }
 
   async function handleExport(runId: string) {
     try {
@@ -74,7 +98,7 @@ export default function TestCenterPage() {
         <div className="grid gap-4 lg:grid-cols-2">{definitions.map((definition) => <div key={definition.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{definition.code}</p><h3 className="mt-1 font-semibold text-gray-900">{definition.name}</h3><p className="mt-1 text-sm text-gray-500">{definition.description || "No description provided."}</p></div><Badge status={definition.enabled ? "enabled" : "disabled"} /></div><div className="mt-4 flex items-center justify-between text-xs text-gray-500"><span>{definition.category} · {definition.test_type}</span><Button size="sm" loading={runMutation.isPending} onClick={() => runMutation.mutate({ id: definition.id, workspace_key: definition.workspace_key })}><Play className="h-3.5 w-3.5" /> Run</Button></div></div>)}</div>
       </section>
       <section className="space-y-3"><h2 className="text-lg font-semibold text-gray-900">Run history</h2>{runsQuery.isLoading && <Spinner />}{!runsQuery.isLoading && runs.length === 0 && <EmptyState title="No test runs" description="Run an available test to create the first evidence record." />}{!runsQuery.isLoading && runs.length > 0 && <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="border-b border-gray-100 bg-gray-50 text-xs uppercase text-gray-500"><tr><th className="px-4 py-3">Run</th><th className="px-4 py-3">Test</th><th className="px-4 py-3">Workspace</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Created</th><th className="px-4 py-3 text-right">Actions</th></tr></thead><tbody>{runs.map((run) => <tr key={run.id} className="border-b border-gray-50 hover:bg-gray-50/50"><td className="px-4 py-3"><button className="font-medium text-brand-600 hover:underline" onClick={() => setSelectedRun(run)}>{shortId(run.id)}</button></td><td className="px-4 py-3 text-gray-700">{definitionById.get(run.test_definition_id)?.name || shortId(run.test_definition_id)}</td><td className="px-4 py-3 text-gray-500">{run.workspace_key || "—"}</td><td className="px-4 py-3"><Badge status={run.status} /></td><td className="px-4 py-3 text-gray-500">{formatDate(run.created_at)}</td><td className="px-4 py-3 text-right">{(run.status === "passed" || run.status === "failed") && <Button variant="ghost" size="sm" onClick={() => void handleExport(run.id)}><Download className="h-3.5 w-3.5" /> Evidence</Button>}</td></tr>)}</tbody></table></div></div>}</section>
-      {selectedRun && <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"><div className="flex flex-col justify-between gap-3 md:flex-row md:items-start"><div><p className="text-xs uppercase tracking-wide text-gray-400">Selected run</p><h2 className="mt-1 font-semibold text-gray-900">{shortId(selectedRun.id)} · {selectedRun.status}</h2><p className="mt-1 text-xs text-gray-500">Correlation: {selectedRun.correlation_id}</p></div>{(selectedRun.status === "passed" || selectedRun.status === "failed") && <Button size="sm" onClick={() => void handleExport(selectedRun.id)}><Download className="h-4 w-4" /> Export verification record</Button>}</div><div className="mt-5 grid gap-4 text-sm md:grid-cols-3"><div><p className="text-xs text-gray-400">Queued</p><p className="mt-1 text-gray-700">{formatDate(selectedRun.queued_at)}</p></div><div><p className="text-xs text-gray-400">Started</p><p className="mt-1 text-gray-700">{formatDate(selectedRun.started_at)}</p></div><div><p className="text-xs text-gray-400">Finished</p><p className="mt-1 text-gray-700">{formatDate(selectedRun.finished_at)}</p></div></div><div className="mt-5 grid gap-4 md:grid-cols-2"><div className="rounded-lg bg-gray-50 p-4"><p className="text-xs font-semibold uppercase text-gray-400">Result</p><pre className="mt-2 overflow-auto text-xs text-gray-700">{JSON.stringify(selectedRun.result || {}, null, 2)}</pre></div><div className="rounded-lg bg-gray-50 p-4"><p className="text-xs font-semibold uppercase text-gray-400">Evidence</p><pre className="mt-2 overflow-auto text-xs text-gray-700">{JSON.stringify(selectedRun.evidence || {}, null, 2)}</pre></div></div><div className="mt-5"><p className="text-xs font-semibold uppercase text-gray-400">Artifacts</p>{artifactsQuery.isLoading && <Spinner />}{!artifactsQuery.isLoading && (artifactsQuery.data ?? []).length === 0 && <p className="mt-2 text-sm text-gray-500">No artifacts attached.</p>}<ul className="mt-2 space-y-2">{(artifactsQuery.data ?? []).map((artifact) => <li key={artifact.id} className="rounded-lg border border-gray-100 px-3 py-2 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium text-gray-800">{artifact.label}</span><span className="text-xs text-gray-500">{artifact.artifact_type} · {artifact.size_bytes ?? 0} bytes</span></div><p className="mt-1 break-all text-xs text-gray-500">{artifact.reference}</p>{artifact.sha256 && <p className="mt-1 break-all font-mono text-[11px] text-gray-400">SHA-256 {artifact.sha256}</p>}</li>)}</ul></div></section>}
+      {liveSelectedRun && <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"><div className="flex flex-col justify-between gap-3 md:flex-row md:items-start"><div><p className="text-xs uppercase tracking-wide text-gray-400">Selected run</p><div className="mt-1 flex items-center gap-2"><h2 className="font-semibold text-gray-900">{shortId(liveSelectedRun.id)}</h2><Badge status={liveSelectedRun.status} /></div><p className="mt-1 text-xs text-gray-500">Correlation: {liveSelectedRun.correlation_id}</p>{isActiveStatus(liveSelectedRun.status) && <p className="mt-2 text-xs text-brand-600">Live status refresh is active.</p>}</div><div className="flex gap-2"><Button variant="ghost" size="sm" loading={selectedRunQuery.isFetching || artifactsQuery.isFetching} onClick={() => void refreshSelectedRun()}><RefreshCw className="h-4 w-4" /> Refresh</Button>{(liveSelectedRun.status === "passed" || liveSelectedRun.status === "failed") && <Button size="sm" onClick={() => void handleExport(liveSelectedRun.id)}><Download className="h-4 w-4" /> Export verification record</Button>}</div></div><div className="mt-5 grid gap-4 text-sm md:grid-cols-3"><div><p className="text-xs text-gray-400">Queued</p><p className="mt-1 text-gray-700">{formatDate(liveSelectedRun.queued_at)}</p></div><div><p className="text-xs text-gray-400">Started</p><p className="mt-1 text-gray-700">{formatDate(liveSelectedRun.started_at)}</p></div><div><p className="text-xs text-gray-400">Finished</p><p className="mt-1 text-gray-700">{formatDate(liveSelectedRun.finished_at)}</p></div></div>{liveSelectedRun.error && <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4"><p className="text-xs font-semibold uppercase text-red-500">Execution error</p><p className="mt-2 whitespace-pre-wrap text-sm text-red-800">{liveSelectedRun.error}</p></div>}<div className="mt-5 grid gap-4 md:grid-cols-2"><div className="rounded-lg bg-gray-50 p-4"><p className="text-xs font-semibold uppercase text-gray-400">Result</p><pre className="mt-2 overflow-auto text-xs text-gray-700">{JSON.stringify(liveSelectedRun.result || {}, null, 2)}</pre></div><div className="rounded-lg bg-gray-50 p-4"><p className="text-xs font-semibold uppercase text-gray-400">Evidence</p><pre className="mt-2 overflow-auto text-xs text-gray-700">{JSON.stringify(liveSelectedRun.evidence || {}, null, 2)}</pre></div></div><div className="mt-5"><p className="text-xs font-semibold uppercase text-gray-400">Artifacts</p>{artifactsQuery.isLoading && <Spinner />}{!artifactsQuery.isLoading && (artifactsQuery.data ?? []).length === 0 && <p className="mt-2 text-sm text-gray-500">No artifacts attached.</p>}<ul className="mt-2 space-y-2">{(artifactsQuery.data ?? []).map((artifact) => <li key={artifact.id} className="rounded-lg border border-gray-100 px-3 py-2 text-sm"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium text-gray-800">{artifact.label}</span><span className="text-xs text-gray-500">{artifact.artifact_type} · {artifact.size_bytes ?? 0} bytes</span></div><p className="mt-1 break-all text-xs text-gray-500">{artifact.reference}</p>{artifact.sha256 && <p className="mt-1 break-all font-mono text-[11px] text-gray-400">SHA-256 {artifact.sha256}</p>}</li>)}</ul></div></section>}
     </div>
   </>);
 }
