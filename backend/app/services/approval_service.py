@@ -8,11 +8,28 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services import audit_service
+
+
+def validate_resume_approval(
+    approval: ToolApprovalRequest,
+    *,
+    tenant_id: uuid.UUID,
+    run_id: uuid.UUID,
+    tool_name: str,
+    tool_call_id: str,
+) -> None:
+    """Fail closed unless an approval is current for this exact execution."""
+    if approval.tenant_id != tenant_id or approval.run_id != run_id:
+        raise ValidationAppError("Approval context does not match the Run tenant")
+    if approval.status != "approved":
+        raise ValidationAppError("Approval is not currently granted")
+    if approval.tool_name != tool_name or approval.tool_call_id != tool_call_id:
+        raise ValidationAppError("Approval does not match the requested tool call")
 
 
 async def create_request(db: AsyncSession, *, tenant_id: uuid.UUID, run: Run, tool_name: str, tool_call_id: str, arguments: dict, continuation_messages: list[dict], iteration: int, requested_by: uuid.UUID | None) -> ToolApprovalRequest:
