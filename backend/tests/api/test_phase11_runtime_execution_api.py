@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
+from fastapi import HTTPException
 
 from app.api.v1 import work_items
 from app.models.work_item import ExecutorType, WorkItemStatus
@@ -13,6 +14,10 @@ class FakeDB:
     def __init__(self):
         self.commits = 0
         self.rollbacks = 0
+        self.users = {}
+
+    async def get(self, model, object_id):
+        return self.users.get(object_id)
 
     async def commit(self):
         self.commits += 1
@@ -28,6 +33,7 @@ async def test_human_assignment_dispatch_and_terminal_result_are_exposed(monkeyp
     human_id = uuid4()
     work_item_id = uuid4()
     db = FakeDB()
+    db.users[human_id] = SimpleNamespace(tenant_id=tenant_id, is_active=True)
     calls = {}
 
     item = SimpleNamespace(
@@ -80,6 +86,31 @@ async def test_human_assignment_dispatch_and_terminal_result_are_exposed(monkeyp
     assert calls["dispatched"] is item
     assert calls["audit"][0]["action"] == "work_item.assigned"
     assert calls["audit"][1]["action"] == "work_item.dispatched"
+
+
+@pytest.mark.asyncio
+async def test_human_assignment_rejects_cross_tenant_or_inactive_executor(monkeypatch):
+    tenant_id = uuid4()
+    work_item_id = uuid4()
+    foreign_id = uuid4()
+    db = FakeDB()
+    db.users[foreign_id] = SimpleNamespace(tenant_id=uuid4(), is_active=True)
+
+    async def fake_get_work_item(*_args, **_kwargs):
+        return SimpleNamespace(id=work_item_id, tenant_id=tenant_id, status=WorkItemStatus.READY)
+
+    monkeypatch.setattr(work_items, "_get_work_item", fake_get_work_item)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await work_items.assign_human(
+            work_item_id,
+            payload=SimpleNamespace(executor_id=foreign_id),
+            db=db,
+            current_user=SimpleNamespace(tenant_id=tenant_id, user_id=uuid4()),
+        )
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "human executor not found"
 
 
 @pytest.mark.asyncio
