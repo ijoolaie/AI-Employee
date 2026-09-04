@@ -15,7 +15,7 @@ Phase 13 and Phase 14.1–14.9 engineering are complete. The remaining work is n
 - reconcile all status/readiness documents after completion.
 
 ### Stage 2 — Tenant-Fair Scheduling & Resource Isolation
-**Issue #286 — QUEUED**
+**Issue #286 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
 
 - explicit per-tenant fairness/resource shares;
 - starvation protection;
