@@ -8,6 +8,10 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import case, func, select
+
+
+class UsageLimitExceeded(Exception):
+    """Raised before an operation would exceed a tenant usage budget."""
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -171,3 +175,14 @@ async def get_usage_summary(
             "Phase 4 quota enforcement is applied from the tenant subscription plan; invoices remain provider-adapter data.",
         ],
     }
+
+
+async def enforce_cost_limit(db: AsyncSession, *, tenant_id: uuid.UUID, max_cost_usd: float | Decimal, requested_cost_usd: float | Decimal = 0) -> None:
+    """Fail closed when tenant cost plus a requested reservation exceeds a limit."""
+    limit = Decimal(str(max_cost_usd))
+    requested = Decimal(str(requested_cost_usd))
+    if limit < 0 or requested < 0:
+        raise ValueError("usage limits and requested cost must be non-negative")
+    current = (await db.execute(select(func.coalesce(func.sum(UsageEvent.cost_usd), 0)).where(UsageEvent.tenant_id == tenant_id))).scalar_one()
+    if Decimal(str(current)) + requested > limit:
+        raise UsageLimitExceeded("tenant usage cost limit exceeded")

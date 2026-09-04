@@ -96,3 +96,20 @@ async def test_record_event_recovers_from_concurrent_unique_violation():
     )
 
     assert result is winner
+
+
+import pytest
+from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock
+from app.services.usage_service import UsageLimitExceeded, enforce_cost_limit
+
+@pytest.mark.asyncio
+async def test_cost_limit_fails_closed_for_excess_usage():
+    tenant_id = uuid.uuid4(); db = AsyncMock(); result = MagicMock(); result.scalar_one.return_value = Decimal("9.50"); db.execute.return_value = result
+    with pytest.raises(UsageLimitExceeded):
+        await enforce_cost_limit(db, tenant_id=tenant_id, max_cost_usd=10, requested_cost_usd=1)
+
+@pytest.mark.asyncio
+async def test_cost_limit_allows_usage_within_budget():
+    tenant_id = uuid.uuid4(); db = AsyncMock(); result = MagicMock(); result.scalar_one.return_value = Decimal("9.50"); db.execute.return_value = result
+    await enforce_cost_limit(db, tenant_id=tenant_id, max_cost_usd=10, requested_cost_usd=0.50)
