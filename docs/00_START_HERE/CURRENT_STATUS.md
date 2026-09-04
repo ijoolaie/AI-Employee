@@ -1,13 +1,13 @@
 # Current Status
 
 **Last reconciled:** 2026-09-04  
-**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.13 ENGINEERING COMPLETE / PHASE 14.14 ACTIVE / PHASE 14.10 EXTERNAL-PENDING
+**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.14 ENGINEERING COMPLETE / PHASE 14.10 EXTERNAL-PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work uses shared execution contracts for Human, Agent and collaborative execution under common authorization, approval, tool, audit and evidence controls.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.13 engineering implementation is complete. Phase 14.13 is backed by bounded synthetic CI load/capacity evidence on test-merge SHA `98771d087bc658d633a99a63c9ef0476e13c18ae`, finalized on main as `599cb8b167103e3627678739f8440d854cad55f1`, with artifact SHA256 `1f19b7d7ee6adc0623904bec76eaed4619ee88bca02af7d65107dae7ae925845`. This evidence is engineering evidence only and makes no production-capacity claim.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.14 engineering implementation is complete. Phase 14.13 is backed by bounded synthetic CI load/capacity evidence; Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence. These are engineering evidence only and make no external production-certification claim.
 
 ## Ordered remaining stages
 
@@ -16,7 +16,7 @@ Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Eviden
 | 1 | #285 | **IN PROGRESS** | Certification-readiness, configuration preflight and cross-platform portability hardening |
 | 2 | #286 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Tenant-fair scheduling, starvation protection and resource isolation with Redis runtime evidence |
 | 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/capacity validation with measurable thresholds and SHA-bound artifact |
-| 4 | #288 | **IN PROGRESS** | Security/privacy/compliance engineering extensions and pentest-ready scope |
+| 4 | #288 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Security/privacy/compliance engineering extensions and pentest-ready scope |
 | 5 | #289 | **QUEUED** | Capacity, cost and operational optimization |
 | 6 | #290 | **QUEUED** | V1.5 Human + Agent operating-model evolution |
 | 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | Independent production deployment, provider/SLO/DR evidence and ordered customer acceptance |
@@ -25,9 +25,9 @@ Each engineering stage must update the canonical status, priorities, roadmap and
 
 ## Phase 14.14 security/privacy/compliance checkpoint
 
-The active Stage 4 implementation adds a deterministic recursive privacy boundary for structured metadata: common credentials, tokens, connection strings and direct PII are redacted before audit metadata is persisted or structured JSON logs are emitted. Unit regressions cover nested mappings, lists/tuples, non-sensitive identifiers and caller-container immutability.
+The merged Stage 4 implementation adds deterministic recursive redaction for credentials, tokens, connection strings and direct PII before structured audit metadata is persisted or JSON logs are emitted. Tenant-scoped authorization and tool-side-effect regressions pass. The dedicated security gate passed its regression suite, Ruff and `pip-audit`; CodeQL Python/JavaScript, full CI, architecture, observability and rollback/alerting checks also passed on the merge candidate.
 
-The threat-model refresh, privacy/retention boundary, compliance-control matrix and external-pentest-ready scope/runbook are recorded in `docs/current/PHASE_14_14_SECURITY_PRIVACY_COMPLIANCE.md`. This is engineering preparation only; external pentest, legal compliance attestation and production security certification remain external evidence.
+Final merged main SHA: `0789d091ab8f804d7bfc853470b9df42108085ed`. Security evidence artifact: `phase-14-14-security-27e19b67ac58776796b3f3db89dd402cbc958a45`; SHA256 `209a4b4a4249cd7c26cf17f83eb77a9b59de012416a2053632d7a5bc19844696`. External pentest, legal compliance attestation and production security certification remain external evidence.
 
 ## Evidence rules
 
@@ -39,14 +39,14 @@ The threat-model refresh, privacy/retention boundary, compliance-control matrix 
 
 ## Current mainline
 
-`599cb8b167103e3627678739f8440d854cad55f1`
+`0789d091ab8f804d7bfc853470b9df42108085ed`
 
-This is the current `main` baseline after Phase 14.13 implementation and before the Phase 14.14 branch is merged. It is **not** externally production-certified merely because repository checks are green.
+This is the current `main` baseline after Phase 14.14 engineering merge. It is **not** externally production-certified merely because repository checks are green.
 
 ## Phase 14.13 evidence record
 
 - Test-merge evidence SHA: `98771d087bc658d633a99a63c9ef0476e13c18ae`.
-- Final main merge SHA: `599cb8b167103e3627678739f8440d854cad55f1`.
+- Final Phase 14.13 main SHA: `599cb8b167103e3627678739f8440d854cad55f1`.
 - Scenario set: 240-request bounded API burst; 500 scheduler reservations; 32 concurrent resource-admission attempts with lease-expiry recovery.
 - Acceptance: 3/3 load-capacity tests passed in 5.03s; no 5xx responses; controlled 429 rate-limit responses are accepted as backpressure; p95 latency and throughput thresholds passed.
 - Artifact: `phase-14-13-load-capacity-98771d087bc658d633a99a63c9ef0476e13c18ae`.
