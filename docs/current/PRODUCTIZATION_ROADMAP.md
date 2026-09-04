@@ -2,7 +2,7 @@
 
 ## Current position — 2026-09-04
 
-V1.4 remains the frozen architecture foundation. V1.5 is the Human + Agent operating-model extension. Phase 11 is complete, Phase 12 is operationally hardened, Phase 13 engineering is complete, and Phase 14.1–14.14 engineering is complete. Phase 14.11 certification-readiness hardening is complete through merged PR #291. Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence, merged at `0789d091ab8f804d7bfc853470b9df42108085ed`.
+V1.4 remains the frozen architecture foundation. V1.5 is the Human + Agent operating-model extension. Phase 11 is complete, Phase 12 is operationally hardened, Phase 13 engineering is complete, and Phase 14.1–14.15 engineering is complete. Phase 14.11 certification-readiness hardening is complete through merged PR #291. Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence, merged at `0789d091ab8f804d7bfc853470b9df42108085ed`. Phase 14.15 is backed by green repository CI and reconciled engineering evidence.
 
 The remaining roadmap is intentionally ordered so **External Production Certification & Customer Acceptance is the final stage**.
 
@@ -29,12 +29,12 @@ Implemented a bounded synthetic load/capacity harness covering API burst behavio
 Merged at main SHA `0789d091ab8f804d7bfc853470b9df42108085ed`. The implementation refreshes threat modeling, expands security regression coverage, enforces privacy/data-minimization boundaries for operational metadata, documents retention responsibilities, maps compliance controls and prepares external-pentest scope/runbook. Security gate and repository CI evidence passed. External findings remain external evidence.
 
 ### Stage 5 — Phase 14.15: Capacity, Cost & Operational Optimization
-**Issue #289 — IN PROGRESS / PR #311**
+**Issue #289 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
 
-PR #311 adds measured monthly unit economics from existing AI provider/Run records, cost per successful WorkItem, plan budget utilization and warning/exhausted states, actionable optimization guidance, and worker-sizing decision support derived from observed throughput with explicit utilization headroom. Final acceptance requires green CI and reconciliation of the canonical documentation set.
+PR #311 merged at main SHA `56984bc793ba3119f8c6d45bf9b03f738ce2d59e`. It adds measured monthly unit economics from existing AI provider/Run records, cost per successful WorkItem, plan budget utilization and warning/exhausted states, actionable optimization guidance, and worker-sizing decision support derived from observed throughput with explicit utilization headroom. CodeQL, full backend/frontend CI, architecture, security/privacy, observability and rollback/alerting checks passed. This is engineering decision support; it is not production capacity certification.
 
 ### Stage 6 — Phase 14.16: V1.5 Human + Agent Operating Model
-**Issue #290 — QUEUED**
+**Issue #290 — QUEUED / NEXT**
 
 Formalize the Human + Agent operating model on the unified WorkItem substrate and strengthen governance, approval and audit flows.
 
