@@ -2,7 +2,7 @@
 
 ## Current position — 2026-09-04
 
-V1.4 remains the frozen architecture foundation. V1.5 is the Human + Agent operating-model extension. Phase 11 is complete, Phase 12 is operationally hardened, Phase 13 engineering is complete, and Phase 14.1–14.15 engineering is complete. Phase 14.11 certification-readiness hardening is complete through merged PR #291. Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence, merged at `0789d091ab8f804d7bfc853470b9df42108085ed`. Phase 14.15 is backed by green repository CI and reconciled engineering evidence.
+V1.4 remains the frozen architecture foundation. V1.5 is the Human + Agent operating-model extension. Phase 11 is complete, Phase 12 is operationally hardened, Phase 13 engineering is complete, and Phase 14.1–14.16 engineering is complete. Phase 14.11 certification-readiness hardening is complete through merged PR #291. Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence, merged at `0789d091ab8f804d7bfc853470b9df42108085ed`. Phase 14.15 is backed by green repository CI and reconciled engineering evidence. Phase 14.16 adds the first unified Human + Agent workspace read model over WorkItems and pending approval queues.
 
 The remaining roadmap is intentionally ordered so **External Production Certification & Customer Acceptance is the final stage**.
 
@@ -34,9 +34,9 @@ Merged at main SHA `0789d091ab8f804d7bfc853470b9df42108085ed`. The implementatio
 PR #311 merged at main SHA `56984bc793ba3119f8c6d45bf9b03f738ce2d59e`. It adds measured monthly unit economics from existing AI provider/Run records, cost per successful WorkItem, plan budget utilization and warning/exhausted states, actionable optimization guidance, and worker-sizing decision support derived from observed throughput with explicit utilization headroom. CodeQL, full backend/frontend CI, architecture, security/privacy, observability and rollback/alerting checks passed. This is engineering decision support; it is not production capacity certification.
 
 ### Stage 6 — Phase 14.16: V1.5 Human + Agent Operating Model
-**Issue #290 — QUEUED / NEXT**
+**Issue #290 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
 
-Formalize the Human + Agent operating model on the unified WorkItem substrate and strengthen governance, approval and audit flows.
+PR #312 merged at main SHA `7657b4244a47af95960e5854fa52f92a0dbe618b`. It adds `/api/v1/workspace`, a tenant-scoped read model combining unified WorkItems with pending workflow/tool approvals and Human/Agent executor queue counts. Existing assignment and approval mutation APIs remain authoritative, and the workspace endpoint uses the existing `audit.read` permission boundary. PR CI passed backend/frontend CI, Python/JavaScript CodeQL, architecture, production observability and production rollback/alerting checks. This is engineering/productization evidence only.
 
 ### Stage 7 — Phase 14.10: External Production Certification & Customer Acceptance
 **Issues #269 / #210 / #19 — FINAL / EXTERNAL-PENDING**
