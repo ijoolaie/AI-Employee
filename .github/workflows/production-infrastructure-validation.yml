@@ -85,7 +85,7 @@ jobs:
         run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml config --quiet
 
       - name: Build production application images in parallel
-        run: docker compose --parallel --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" build api worker beat frontend
+        run: docker compose --parallel=4 --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" build api worker beat frontend
 
       - name: Start infrastructure dependencies
         run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" up -d postgres redis storage-init
