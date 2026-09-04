@@ -8,7 +8,9 @@ on:
       - 'frontend/**'
       - 'scripts/**'
       - 'docs/releases/**'
+      - 'docs/current/PHASE_14_INCIDENT_RESPONSE.md'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/release-artifact.yml'
       - 'docker-compose*.yml'
   push:
     branches: [main]
@@ -17,7 +19,9 @@ on:
       - 'frontend/**'
       - 'scripts/**'
       - 'docs/releases/**'
+      - 'docs/current/PHASE_14_INCIDENT_RESPONSE.md'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/release-artifact.yml'
       - 'docker-compose*.yml'
 
 concurrency:
@@ -91,6 +95,8 @@ jobs:
         run: ruff check app tests
       - name: Validate regression and release gate contracts
         run: python scripts/validate_regression_release_gates.py
+      - name: Validate incident response runbook contract
+        run: python scripts/validate_incident_response_runbook.py
       - name: Diagnose Alembic heads
         working-directory: backend
         run: |
