@@ -4,7 +4,7 @@
 
 ## Current release and project boundary
 
-The repository's current engineering baseline includes the completed Phase 13 implementation and Phase 14.1–14.15 engineering workstreams. Phase 14.11 certification-readiness hardening is also complete. Before external certification, the remaining engineering roadmap is ordered as Stages 6–7. **Phase 14.10 — External Production Certification & Customer Acceptance Evidence is Stage 7 and the final gate.**
+The repository's current engineering baseline includes the completed Phase 13 implementation and Phase 14.1–14.16 engineering workstreams. Phase 14.11 certification-readiness hardening is also complete. Before external certification, the remaining roadmap is Stage 7 only. **Phase 14.10 — External Production Certification & Customer Acceptance Evidence is Stage 7 and the final gate.**
 
 Repository implementation and CI/release verification remain distinct from external production certification. No repository state alone establishes live deployment, provider operation, measured production SLO attainment, customer acceptance, commercial go-live, or independent certification.
 
@@ -17,10 +17,16 @@ Repository implementation and CI/release verification remain distinct from exter
 | 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/stress and measurable capacity validation |
 | 4 | #288 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Security/privacy/compliance engineering extensions |
 | 5 | #289 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Capacity, cost and operational optimization |
-| 6 | #290 | **QUEUED / NEXT** | V1.5 Human + Agent operating-model evolution |
+| 6 | #290 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | V1.5 Human + Agent operating-model evolution |
 | 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | External deployment, provider/SLO/DR evidence and ordered acceptance |
 
 Every engineering stage must reconcile the canonical status, priorities, roadmap and this production-readiness document before closure.
+
+## Phase 14.16 engineering evidence
+
+PR #312 merged to `main` at `7657b4244a47af95960e5854fa52f92a0dbe618b`. It adds tenant-scoped `/api/v1/workspace`, a unified read model over WorkItems and pending workflow/tool approvals, and Human/Agent executor queue counts. Existing assignment and approval mutation APIs remain authoritative, and the workspace endpoint is protected by the existing `audit.read` permission boundary.
+
+Verification: backend/frontend CI, Python/JavaScript CodeQL, architecture, production observability and production rollback/alerting checks passed on the merge candidate. This is engineering/productization evidence only. It does not establish production deployment, external customer acceptance, production SLO attainment or external certification.
 
 ## Phase 14.15 engineering evidence
 
