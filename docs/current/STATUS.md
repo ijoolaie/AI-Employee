@@ -1,12 +1,12 @@
 # Current Project Status
 
-**Baseline:** V1.4  
+**Baseline:** V1.5  
 **Status date:** 2026-09-04  
 **Current source of truth:** this file, reconciled against current `main`, merged implementation and available CI/runtime evidence.
 
 ## Executive status
 
-Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. **Phase 14.1–14.15 engineering is COMPLETE. Remaining work is ordered in Stages 6–7, with External Production Certification last.**
+Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. **Phase 14.1–14.16 engineering is COMPLETE. Remaining work is ordered in Stage 7, with External Production Certification last.**
 
 ## Evidence levels
 
@@ -24,10 +24,14 @@ Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.
 | 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/stress validation and measurable capacity thresholds |
 | 4 | #288 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Security/privacy/compliance engineering extensions and pentest-ready preparation |
 | 5 | #289 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Capacity, cost and operational optimization |
-| 6 | #290 | **QUEUED / NEXT** | V1.5 Human + Agent operating-model evolution |
+| 6 | #290 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | V1.5 Human + Agent operating-model evolution |
 | 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | Immutable release, real deployment, provider/SLO/DR evidence, external security/compliance and ordered Vendor → Reseller → Client acceptance |
 
 **Documentation rule:** every stage updates this file, `docs/00_START_HERE/CURRENT_STATUS.md`, `docs/00_START_HERE/CURRENT_PRIORITIES.md`, `docs/current/PRODUCTIZATION_ROADMAP.md` and `docs/current/09_PRODUCTION_READINESS_STATUS.md` before closure. No stage inherits a completion claim from an older SHA.
+
+## Phase 14.16 verification record
+
+PR #312 merged to `main` at `7657b4244a47af95960e5854fa52f92a0dbe618b`. The implementation adds tenant-scoped `/api/v1/workspace`, a unified read model over WorkItems and pending workflow/tool approvals, and Human/Agent executor queue counts. Existing assignment and approval mutation APIs remain authoritative, with the workspace endpoint protected by the existing `audit.read` permission. PR CI passed backend/frontend CI, Python/JavaScript CodeQL, architecture, production observability and production rollback/alerting checks. This is engineering/productization evidence only; it does not establish external production certification.
 
 ## Phase 14.15 verification record
 
@@ -49,15 +53,16 @@ Security evidence artifact: `phase-14-14-security-27e19b67ac58776796b3f3db89dd40
 
 ## Current frontier
 
-Stage 6 (#290) is now the next engineering workstream. Stage 7 remains external-pending and final.
+Stage 7 is now the only remaining roadmap stage and is external-pending/final.
 
 ## What can be claimed now
 
-- Phase 14.1–14.15 engineering implementation is complete on merged `main`.
+- Phase 14.1–14.16 engineering implementation is complete on merged `main`.
 - Phase 14.11 certification-readiness hardening is complete and reconciled.
 - Phase 14.13 has reproducible bounded load/capacity evidence with retained SHA-bound artifact identity.
 - Phase 14.14 has repository-level security/privacy engineering evidence; this does not establish external pentest, compliance certification or production security certification.
 - Phase 14.15 has green repository CI and reconciled engineering evidence for unit economics, budget signals and capacity-sizing decision support; this does not establish production/customer-scale capacity.
+- Phase 14.16 has a unified tenant-scoped Human + Agent workspace read model and preserved approval/assignment governance boundaries; this does not establish external customer acceptance or production deployment.
 - External production deployment, live provider behavior, measured production SLO/DR evidence, customer acceptance and commercial go-live remain **EXTERNAL-PENDING**.
 
 ## Security rule
