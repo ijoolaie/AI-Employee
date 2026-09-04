@@ -47,6 +47,8 @@ jobs:
       FRONTEND_APP_URL: http://127.0.0.1:13000
       NEXT_PUBLIC_API_URL: http://127.0.0.1:18000/api/v1
       LM_STUDIO_BASE_URL: https://ai.example.test/v1
+      SMTP_ALLOWED_RECIPIENT_DOMAINS: '[]'
+      STRIPE_PRICE_MAP: '{}'
       APP_ENV: production
       DEBUG: 'false'
       RATE_LIMIT_ENABLED: 'true'
@@ -75,6 +77,8 @@ jobs:
           FRONTEND_APP_URL=http://127.0.0.1:13000
           NEXT_PUBLIC_API_URL=http://127.0.0.1:18000/api/v1
           LM_STUDIO_BASE_URL=https://ai.example.test/v1
+          SMTP_ALLOWED_RECIPIENT_DOMAINS=[]
+          STRIPE_PRICE_MAP={}
           EOF
 
       - name: Validate production compose contract
