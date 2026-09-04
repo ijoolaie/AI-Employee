@@ -90,7 +90,7 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
         raise UnauthorizedError("Invalid credentials")
     user.last_login_at = datetime.now(timezone.utc)
     await db.flush()
-    await audit_service.record(db, action="auth.login", actor_type="user", tenant_id=tenant.id, status="success", request_id=request_id_var.get(), metadata={"user_id": str(user.id)})
+    await audit_service.record(db, action="auth.login", actor_type="user", actor_id=user.id, tenant_id=tenant.id, status="success", request_id=request_id_var.get())
     return user
 
 
