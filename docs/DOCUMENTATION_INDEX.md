@@ -18,10 +18,16 @@ This is the top-level map for project documentation. Start here, then use the ca
 | Implementation / verification | `current/STATUS.md` |
 | Delivery roadmap | `current/PRODUCTIZATION_ROADMAP.md` |
 | Current documentation set | `current/README.md` |
+| Phase 14 DR / backup / restore | `current/PHASE_14_DR.md` |
+| Phase 14 security / compliance | `current/PHASE_14_SECURITY.md` |
+| Phase 14 incident response | `current/PHASE_14_INCIDENT_RESPONSE.md` |
+| Phase 14 external production evidence | `current/PHASE_14_EXTERNAL_PRODUCTION_EVIDENCE.md` |
 | Current-state reconciliation | `current/49_CURRENT_STATE_RECONCILIATION_2026-08-31.md` |
 | Production-candidate boundary | `current/50_PRODUCTION_CANDIDATE_READINESS_2026-08-31.md` |
 | Code ↔ documentation traceability | `current/CODE_DOCUMENTATION_TRACEABILITY.md` |
 | Canonical vocabulary | `current/CANONICAL_VOCABULARY.md` |
+
+The dated reconciliation and production-candidate documents are retained as point-in-time evidence. For present decisions, the undated canonical status/roadmap documents above take precedence.
 
 ## 3. Architecture
 

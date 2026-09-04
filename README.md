@@ -76,6 +76,17 @@ Phase 13 Agent Teams / Marketplace
 Phase 14 Scale / Governance / Production
 ```
 
+## Current position
+
+- Phase 11 Unified Execution acceptance: **COMPLETE**.
+- Phase 12 Test Center P12.1-P12.6: **IMPLEMENTED / OPERATIONAL HARDENING**.
+- Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**.
+- Phase 14.1–14.9: **ENGINEERING COMPLETE**.
+- Phase 14.10 External Production / Customer Acceptance: **EXTERNAL-PENDING**.
+- Current mainline: `d85d74e6da517c6bc7f63673afd798c53ca00a10`.
+
+Phase 14 engineering covered queue/worker isolation, concurrency/backpressure, routing/scheduling, cost controls, SLO instrumentation, DR/backup/restore, security/compliance hardening, regression/release gates and incident response. The remaining Phase 14.10 gate requires independent external evidence; CI alone cannot establish production certification or customer acceptance.
+
 ## Release rules
 
 - Keep `main` as vendor source of truth.
@@ -86,14 +97,15 @@ Phase 14 Scale / Governance / Production
 - CI/repository evidence is not production evidence.
 - Maintain one authoritative Alembic graph.
 - Reconcile every release tag to its underlying commit.
+- Never inherit certification or acceptance evidence across different SHAs.
 
-## Current position
+## Active external gates
 
-- Latest published release: `v1.3.0` (development/product-expansion release; certification pending in its release record).
-- Current certified controlled-deployment line: `v1.2.0`.
-- Explicit production-certified baseline: `v1.2.1-final`.
-- Current implementation baseline: `V1.4`.
-- Next architecture extension: `V1.5 Agentic Operating Model`.
+- #210 — consolidated immutable release / external-production gate.
+- #19 — Vendor → Reseller → Client runtime isolation/RBAC evidence.
+- #269 — Phase 14.10 evidence package and acceptance decision boundary.
+
+These gates remain open until independent evidence is reconciled to one exact accepted release identity.
 
 ## Migration note
 

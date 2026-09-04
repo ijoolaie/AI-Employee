@@ -30,18 +30,27 @@ Phase 12 provides a first-class Test Center with tenant-scoped definitions and r
 
 ## Phase 13 — Agent Teams & Marketplace
 
-**Engineering implementation complete.** Phase 13 now includes:
-
-1. tenant-scoped TeamDefinition and immutable TeamVersion;
-2. authorized tenant-local TeamInstallation;
-3. WorkItem-backed team execution;
-4. immutable TeamEvaluation/version evidence;
-5. Marketplace publication/discovery and authorized cross-tenant import;
-6. tenant-local imported copies with source provenance and no automatic AgentInstance provisioning;
-7. authorized Marketplace discovery and workspace-scoped installation review UI;
-8. Playwright browser acceptance for authenticated discovery, review, installation UX and authorization-failure boundaries.
+**Engineering implementation complete.** Phase 13 includes tenant-scoped TeamDefinition and immutable TeamVersion, authorized tenant-local TeamInstallation, WorkItem-backed team execution, immutable TeamEvaluation evidence, Marketplace publication/discovery/import, tenant-local copies with provenance, authorized Marketplace UI and Playwright browser acceptance.
 
 The Marketplace contract explicitly separates **install**, **customer acceptance** and **production deployment**. The repository does not claim external production/customer acceptance from CI or browser acceptance alone.
+
+## Phase 14 — Scale, Governance & Production
+
+**Engineering workstreams 14.1–14.9 complete. Phase 14.10 external evidence pending.**
+
+Completed engineering baselines cover:
+
+- queue/worker isolation;
+- concurrency and backpressure hardening;
+- routing/scheduling;
+- tenant-scoped cost controls;
+- aggregate SLO/observability instrumentation;
+- backup/restore and recovery procedures;
+- security/compliance hardening and negative paths;
+- regression/release gates;
+- incident response and operational readiness.
+
+Phase 14.10 remains external-only: an exact immutable release must be independently validated for deployment, live providers, measured SLO/DR, security/compliance, Vendor → Reseller → Client acceptance and rollback readiness.
 
 ## Where the project is now
 
@@ -50,8 +59,17 @@ The Marketplace contract explicitly separates **install**, **customer acceptance
 - Phase 11 Unified Execution acceptance: **complete**.
 - Phase 12 Test Center P12.1-P12.6: **implemented / operational hardening**.
 - Phase 13 Agent Teams & Marketplace: **engineering complete**.
-- Phase 14 Scale, Governance & Production: **next planned phase**.
+- Phase 14.1–14.9: **engineering complete**.
+- Phase 14.10 External Production / Customer Acceptance: **external-pending**.
 
 ## Evidence boundary
 
-The repository distinguishes implementation evidence, automated/CI verification, local real-stack validation, external production evidence and Vendor/Reseller/Client acceptance. Green CI, a release or browser acceptance does not by itself prove external production deployment or customer acceptance.
+The repository distinguishes implementation evidence, automated/CI verification, local real-stack validation, external production evidence and Vendor/Reseller/Client acceptance. Green CI, a release or browser acceptance does not by itself prove external production deployment, measured production SLO attainment or customer acceptance.
+
+## Active external gates
+
+- #210 — consolidated immutable release / external-production gate;
+- #19 — Vendor → Reseller → Client runtime isolation/RBAC evidence;
+- #269 — Phase 14.10 evidence package and acceptance decision boundary.
+
+These gates remain open until independent evidence is reconciled to one exact accepted release identity.
