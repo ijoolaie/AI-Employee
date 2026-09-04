@@ -1,7 +1,7 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "status": "current_release_index",
-  "generated_at": "2026-08-27T05:13:00Z",
+  "generated_at": "2026-09-04T16:56:00Z",
   "current_certified_vendor_release": {
     "version": "v1.2.0",
     "release_truth": "docs/current/39_RELEASE_TRUTH_V1.2.0.md",
@@ -10,14 +10,18 @@
     "editions_artifact": "ai-employee-v1.2.0-editions"
   },
   "current_implementation_baseline": {
-    "version": "V1.4",
-    "reconciliation": "docs/current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md"
+    "architecture": "V1.4",
+    "operating_model": "V1.5 Human + Agent",
+    "engineering_baseline": "93c717969a192ae5b90b909c2c4e8aaa89bea50a",
+    "reconciliation": "docs/current/PRODUCTIZATION_ROADMAP.md"
   },
   "external_production": {
-    "phase": "Phase 6E",
-    "status": "pending_real_target_execution",
-    "note": "Controlled release certification is not external production or commercial go-live certification."
+    "stage": "Stage 7 / Phase 14.10",
+    "issues": [269, 210, 19],
+    "status": "external_pending",
+    "note": "Controlled release and production-like CI validation are not external production or commercial go-live certification."
   },
+  "production_gap_register": "docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md",
   "migration_graph": {
     "expected_single_head": "v14006merge",
     "reconciliation_migration": "backend/alembic/versions/v14006_merge_vendor_identity_and_usage.py"
@@ -29,6 +33,8 @@
   "authority_order": [
     "docs/current/39_RELEASE_TRUTH_V1.2.0.md",
     "docs/current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md",
-    "docs/current/PRODUCTIZATION_ROADMAP.md"
+    "docs/current/PRODUCTIZATION_ROADMAP.md",
+    "docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md",
+    "docs/00_START_HERE/CURRENT_STATUS.md"
   ]
 }
