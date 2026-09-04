@@ -1,13 +1,27 @@
 # Current Status
 
 **Last reconciled:** 2026-09-04  
-**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.9 ENGINEERING COMPLETE / PHASE 14.10 EXTERNAL-PENDING
+**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.9 ENGINEERING COMPLETE / REMAINING ENGINEERING STAGES 1–6 QUEUED/IN PROGRESS / PHASE 14.10 EXTERNAL-PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work uses shared execution contracts for Human, Agent and collaborative execution under common authorization, approval, tool, audit and evidence controls.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6, including authorized UI and operational hardening. **Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14 engineering workstreams 14.1 through 14.9 are complete. Phase 14.10 is the only remaining external-production/customer-acceptance gate.**
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.9 engineering implementation is complete. The remaining roadmap is now explicitly ordered so **External Production Certification & Customer Acceptance is the final stage**.
+
+## Ordered remaining stages
+
+| Stage | Issue | Status | Outcome |
+|---|---:|---|---|
+| 1 | #285 | **IN PROGRESS** | Certification-readiness, configuration preflight and cross-platform portability hardening |
+| 2 | #286 | **QUEUED** | Tenant-fair scheduling, starvation protection and resource isolation |
+| 3 | #287 | **QUEUED** | Load/stress validation with measurable capacity thresholds |
+| 4 | #288 | **QUEUED** | Security/privacy/compliance engineering extensions and pentest-ready scope |
+| 5 | #289 | **QUEUED** | Capacity, cost and operational optimization |
+| 6 | #290 | **QUEUED** | V1.5 Human + Agent operating-model evolution |
+| 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | Independent production deployment, provider/SLO/DR evidence and ordered customer acceptance |
+
+Each engineering stage must update the canonical status, priorities, roadmap and production-readiness documentation before it is closed. Stage 7 is deliberately last and remains blocked until the preceding engineering work is reconciled.
 
 ## Phase 13 checkpoint
 
@@ -41,7 +55,8 @@ These establish engineering/repository evidence only. Production SLO attainment,
 | Phase 12 Test Center | **IMPLEMENTED / OPERATIONAL HARDENING** |
 | Phase 13 Agent Teams & Marketplace | **ENGINEERING COMPLETE** |
 | Phase 14.1–14.9 | **ENGINEERING COMPLETE** |
-| Phase 14.10 External Production / Customer Acceptance | **EXTERNAL-PENDING** |
+| Remaining engineering stages 1–6 | **ORDERED / ACTIVE ROADMAP** |
+| Phase 14.10 External Production / Customer Acceptance | **FINAL / EXTERNAL-PENDING** |
 
 ## Evidence rules
 
@@ -54,13 +69,13 @@ These establish engineering/repository evidence only. Production SLO attainment,
 
 ## Current mainline
 
-`d85d74e6da517c6bc7f63673afd798c53ca00a10`
+`9efc08ab76c9d403338e2735561ce372b9294435`
 
-This mainline contains the Phase 14.10 evidence-gate definition. It is **not** externally production-certified merely because repository checks are green.
+This is the current `main` baseline after documentation reconciliation. It is **not** externally production-certified merely because repository checks are green.
 
 ## External evidence gates
 
-The active external gate is consolidated across:
+The final external gate is consolidated across:
 
 - **#210** — immutable release candidate, deployment and external-production gate;
 - **#19** — Vendor → Reseller → Client runtime isolation/RBAC evidence;
@@ -75,6 +90,7 @@ All remain open until independent evidence is supplied and reconciled to one exa
 - Phase 13 Agent Teams & Marketplace engineering implementation is complete.
 - Phase 13 Marketplace UI and browser acceptance are merged.
 - Phase 14.1–14.9 engineering implementation is complete.
+- Stage 1 certification-readiness hardening has started; its branch changes are not yet merged to `main`.
 - External production deployment, live provider behavior, measured production SLO/DR evidence, customer acceptance and commercial go-live remain **EXTERNAL-PENDING**.
 
 ## Canonical documents
@@ -85,5 +101,6 @@ All remain open until independent evidence is supplied and reconciled to one exa
 - Current priorities: `docs/00_START_HERE/CURRENT_PRIORITIES.md`
 - Implementation truth: `docs/current/STATUS.md`
 - Roadmap: `docs/current/PRODUCTIZATION_ROADMAP.md`
+- Production readiness: `docs/current/09_PRODUCTION_READINESS_STATUS.md`
 - Phase 13 design: `docs/current/PHASE_13_DESIGN.md`
 - Phase 14 external evidence: `docs/current/PHASE_14_EXTERNAL_PRODUCTION_EVIDENCE.md`
