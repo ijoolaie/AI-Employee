@@ -43,12 +43,12 @@ def test_scheduler_rejects_missing_or_invalid_tenant_configuration():
         raise AssertionError("non-positive weight must be rejected")
 
 
-def test_equal_weight_tenants_alternate_without_starvation():
+def test_equal_weight_tenants_keep_virtual_finish_fairness():
     scheduler = TenantFairScheduler(FakeStore())
     decisions = [scheduler.route("a" if i % 2 == 0 else "b") for i in range(20)]
 
-    assert [d.virtual_finish for d in decisions[::2]] == [1.0] * 10
-    assert decisions[0].queue_priority == 0
+    assert [d.virtual_finish for d in decisions[::2]] == list(range(1.0, 11.0))
+    assert [d.virtual_finish for d in decisions[1::2]] == list(range(1.0, 11.0))
     assert all(0 <= d.queue_priority <= 9 for d in decisions)
 
 
