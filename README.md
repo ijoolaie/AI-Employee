@@ -83,7 +83,7 @@ Phase 14 Scale / Governance / Production
 - Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**.
 - Phase 14.1–14.9: **ENGINEERING COMPLETE**.
 - Phase 14.10 External Production / Customer Acceptance: **EXTERNAL-PENDING**.
-- Current mainline: `d85d74e6da517c6bc7f63673afd798c53ca00a10`.
+- Current mainline: `fc7ee65c420538e5feec26db5ebd7caa1507fd00`.
 
 Phase 14 engineering covered queue/worker isolation, concurrency/backpressure, routing/scheduling, cost controls, SLO instrumentation, DR/backup/restore, security/compliance hardening, regression/release gates and incident response. The remaining Phase 14.10 gate requires independent external evidence; CI alone cannot establish production certification or customer acceptance.
 
