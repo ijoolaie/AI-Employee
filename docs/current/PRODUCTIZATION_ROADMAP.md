@@ -2,7 +2,7 @@
 
 ## Current position — 2026-09-04
 
-V1.4 remains the frozen architecture foundation. V1.5 is the Human + Agent operating-model extension. Phase 11 is complete, Phase 12 is operationally hardened, Phase 13 engineering is complete, and Phase 14.1–14.9 engineering is complete.
+V1.4 remains the frozen architecture foundation. V1.5 is the Human + Agent operating-model extension. Phase 11 is complete, Phase 12 is operationally hardened, Phase 13 engineering is complete, and Phase 14.1–14.12 engineering is complete, with Phase 14.12 Redis runtime evidence merged at `ac9fdf7063b459b3be5d4e8104e5b1f34ecb284d`.
 
 The remaining roadmap is intentionally ordered so **External Production Certification & Customer Acceptance is the final stage**.
 
@@ -14,9 +14,9 @@ The remaining roadmap is intentionally ordered so **External Production Certific
 Harden the certification path before any external deployment: LF-normalize shell scripts, add deterministic application configuration preflight, improve local evidence reproducibility and preserve secret-safe evidence boundaries.
 
 ### Stage 2 — Phase 14.12: Tenant-Fair Scheduling & Resource Isolation
-**Issue #286 — QUEUED**
+**Issue #286 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
 
-Extend the existing queue/concurrency/routing baseline with explicit tenant fairness, starvation protection, bounded per-tenant resource shares and measurable fairness regression coverage.
+Implemented with Redis-backed per-tenant resource caps, starvation-protection scheduling and weighted virtual-finish service-share signals. Runtime integration evidence exercises the production Lua admission paths and fixed-point Redis scores at `ac9fdf7063b459b3be5d4e8104e5b1f34ecb284d`.
 
 ### Stage 3 — Phase 14.13: Load, Stress & Capacity Validation
 **Issue #287 — QUEUED**
