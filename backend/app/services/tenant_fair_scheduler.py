@@ -79,7 +79,8 @@ class RedisFairnessStore:
     local current = tonumber(current_raw) or 0
     clock = tonumber(clock) or 0
     local start = math.max(current, clock)
-    local finish = start + (1 / tonumber(ARGV[2]))
+    local weight = tonumber(ARGV[2])
+    local finish = start + (1.0 / weight)
     redis.call('ZADD', KEYS[1], finish, ARGV[1])
     local frontier = redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES')
     local frontier_score = finish
