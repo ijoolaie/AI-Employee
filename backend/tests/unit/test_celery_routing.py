@@ -4,6 +4,7 @@ from app.workers.celery_app import (
     EXECUTION_QUEUE,
     OUTBOX_QUEUE,
     TASK_ROUTES,
+    SCHEDULE_INTERVALS,
     TEST_CENTER_QUEUE,
     UNROUTED_QUEUE,
     celery_app,
@@ -46,3 +47,9 @@ def test_worker_delivery_is_bounded_and_late_acked():
 
 def test_worker_recycling_has_an_explicit_bound():
     assert celery_app.conf.worker_max_tasks_per_child == 1000
+
+
+def test_scheduling_intervals_are_explicit_positive_contracts():
+    assert SCHEDULE_INTERVALS
+    assert all(value > 0 for value in SCHEDULE_INTERVALS.values())
+    assert SCHEDULE_INTERVALS["outbox_dispatch_seconds"] <= SCHEDULE_INTERVALS["workflow_schedule_tick_seconds"]
