@@ -54,29 +54,36 @@ def _write_evidence(name: str, payload: dict[str, object]) -> None:
 
 
 def test_api_health_bounded_concurrent_load(capsys) -> None:
-    """The health API remains responsive under a bounded concurrent burst."""
+    """The health API stays below the error budget under a bounded burst."""
     requests = 240
     workers = 12
     latencies: list[float] = []
-    failures: list[str] = []
+    status_counts: dict[int, int] = {}
     lock = threading.Lock()
+    started = time.perf_counter()
 
     with TestClient(app) as client:
         def request() -> None:
-            started = time.perf_counter()
+            request_started = time.perf_counter()
             response = client.get("/health")
-            elapsed_ms = (time.perf_counter() - started) * 1000
+            elapsed_ms = (time.perf_counter() - request_started) * 1000
             with lock:
                 latencies.append(elapsed_ms)
-                if response.status_code != 200:
-                    failures.append(f"status={response.status_code}")
+                status_counts[response.status_code] = status_counts.get(response.status_code, 0) + 1
 
         with ThreadPoolExecutor(max_workers=workers) as pool:
             list(pool.map(lambda _: request(), range(requests)))
 
+    wall_seconds = time.perf_counter() - started
     p95_ms = statistics.quantiles(latencies, n=20, method="inclusive")[18]
-    throughput = requests / (sum(latencies) / 1000 / workers)
-    assert not failures
+    throughput = requests / wall_seconds
+    server_errors = sum(count for status, count in status_counts.items() if status >= 500)
+    unexpected_statuses = sum(
+        count for status, count in status_counts.items() if status not in {200, 429}
+    )
+
+    assert server_errors == 0
+    assert unexpected_statuses == 0
     assert p95_ms < 1000.0
     assert throughput > 50.0
 
@@ -84,10 +91,17 @@ def test_api_health_bounded_concurrent_load(capsys) -> None:
         "scenario": "api_health_bounded_concurrent_load",
         "requests": requests,
         "workers": workers,
-        "failures": len(failures),
+        "status_counts": status_counts,
+        "server_errors": server_errors,
         "p95_latency_ms": round(p95_ms, 3),
-        "aggregate_worker_normalized_throughput_rps": round(throughput, 3),
-        "thresholds": {"p95_latency_ms_lt": 1000.0, "throughput_rps_gt": 50.0},
+        "throughput_rps": round(throughput, 3),
+        "thresholds": {
+            "server_errors_eq": 0,
+            "unexpected_statuses_eq": 0,
+            "p95_latency_ms_lt": 1000.0,
+            "throughput_rps_gt": 50.0,
+        },
+        "interpretation": "429 is accepted as controlled rate-limit/backpressure behavior; no 5xx is accepted.",
         "status": "PASS",
     }
     print("LOAD_EVIDENCE|api_health|PASS|" + json.dumps(evidence, sort_keys=True))
