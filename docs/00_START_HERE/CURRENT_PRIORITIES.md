@@ -2,53 +2,53 @@
 
 **Reconciled:** 2026-09-04
 
-## Ordered remaining work
+## Executive priority
 
-Phase 13 and Phase 14.1–14.16 engineering are complete. Phase 14.11 certification-readiness hardening is also complete. The remaining work is intentionally sequenced so that **External Production Certification & Customer Acceptance is the final stage**.
+Phase 13 and Phase 14.1–14.16 engineering are complete. Production-like infrastructure validation is complete in CI. The remaining program is **Stage 7 — External Production Certification & Customer Acceptance**, plus explicitly tracked P1 productization/operational completeness items.
 
-### Stage 1 — Certification Readiness & Cross-Platform Hardening
-**Issue #285 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
+The complete gap list is maintained in `docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md` and the ordered roadmap in `docs/current/PRODUCTIZATION_ROADMAP.md`.
 
-PR #291 delivered the fail-fast configuration preflight, cross-platform LF normalization, reproducibility/secret-safe evidence handling and canonical documentation reconciliation. This stage remains engineering evidence only and does not satisfy external certification.
+## P0 — certification blockers
 
-### Stage 2 — Tenant-Fair Scheduling & Resource Isolation
-**Issue #286 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
+1. **Immutable release & release identity** — freeze one exact SHA/tag and provenance.
+2. **External production deployment** — deploy that exact identity to the real target.
+3. **Real backup/restore & DR drill** — prove target RPO/RTO.
+4. **Production SLO/SLI & error budget** — define and measure against the target.
+5. **Live provider validation** — validate real AI/email/payment/storage/provider behavior and failure modes.
+6. **Vendor → Reseller → Client runtime isolation/RBAC** — complete real-stack evidence for #19.
+7. **DAST** — scan the deployed running stack, triage and retest.
+8. **Independent penetration test/security review** — obtain independent findings and disposition.
+9. **Production networking hardening** — TLS, ingress, firewall and network-policy evidence.
+10. **Secret management, rotation & recovery** — prove the external secret lifecycle.
+11. **High availability & failure recovery** — rehearse failure/failover against recovery objectives.
+12. **Incident-response drill** — execute a realistic incident scenario and capture lessons.
+13. **Alert ownership & on-call escalation** — prove routing, ownership and escalation.
+14. **Final external certification & customer acceptance** — ordered acceptance and final sign-off (#210/#269).
 
-Tenant fairness, starvation protection and resource shares are backed by Redis runtime evidence.
+## P1 — productization & operational completeness
 
-### Stage 3 — Load, Stress & Capacity Validation
-**Issue #287 — ENGINEERING COMPLETE / EVIDENCE RECONCILED**
+15. **Data retention & lifecycle enforcement** — reconcile policy, implementation and target verification.
+16. **Human-in-the-loop TODO reconciliation** — resolve the documented approval-path TODO in `backend/app/services/run_service.py`.
+17. **Documentation consolidation & evidence index** — keep canonical docs synchronized and remove stale claims.
+18. **Platform operations dashboard** — complete a dedicated operational view beyond the current workspace read model.
+19. **Customer usage, budget & cost controls** — extend current admin optimization/budget signals to customer operations where required.
+20. **Cost anomaly detection & forecasting** — add deterministic anomaly/forecast signals with alert/audit behavior.
 
-Phase 14.13 has a bounded synthetic CI evidence harness covering API load, scheduler/routing capacity, tenant resource admission and lease-expiry recovery.
+## Completed engineering stages
 
-### Stage 4 — Security, Privacy & Compliance Engineering Extensions
-**Issue #288 — ENGINEERING COMPLETE / EVIDENCE RECONCILED**
-
-Phase 14.14 engineering evidence is complete on merged main SHA `0789d091ab8f804d7bfc853470b9df42108085ed`. Security gate, regression tests, Ruff, `pip-audit`, CodeQL, full CI, architecture, observability and rollback/alerting checks passed. Security evidence artifact: `phase-14-14-security-27e19b67ac58776796b3f3db89dd402cbc958a45`, SHA256 `209a4b4a4249cd7c26cf17f83eb77a9b59de012416a2053632d7a5bc19844696`. External pentest/certification remains external evidence.
-
-### Stage 5 — Capacity, Cost & Operational Optimization
-**Issue #289 — ENGINEERING COMPLETE / PR #311 MERGED**
-
-Phase 14.15 delivers measured monthly unit economics, cost per successful WorkItem, plan budget utilization/warning signals, optimization actions and worker-sizing decision support based on observed throughput with explicit headroom. CI passed for CodeQL, full backend/frontend CI, architecture, security/privacy, observability and rollback/alerting. Production capacity certification remains external.
-
-### Stage 6 — V1.5 Human + Agent Operating Model
-**Issue #290 — ENGINEERING COMPLETE / PR #312 MERGED**
-
-PR #312 merged at main SHA `7657b4244a47af95960e5854fa52f92a0dbe618b`. It adds a tenant-scoped workspace read model over the unified WorkItem substrate, combining Human/Agent executor visibility with pending workflow/tool approvals and queue counts. Existing assignment/approval mutation APIs and RBAC boundaries remain authoritative. PR CI passed backend/frontend CI, Python/JavaScript CodeQL, architecture, production observability and production rollback/alerting checks. This is engineering/productization evidence only.
-
-### Stage 7 — External Production Certification & Customer Acceptance
-**Issues #269 / #210 / #19 — FINAL / EXTERNAL-PENDING**
-
-Only after Stages 1–6 are complete and documentation is reconciled: freeze an immutable release, deploy that exact identity to the real target, collect provider/SLO/DR evidence, complete applicable independent security/compliance review, execute ordered acceptance and record the final decision.
-
-## Infrastructure validation checkpoint
-
-PR #315 merged to `main` at `93c717969a192ae5b90b909c2c4e8aaa89bea50a`. The production-like infrastructure validation ran on GitHub-hosted Linux infrastructure using ephemeral CI-only credentials and passed: production Compose contract, image builds, PostgreSQL/Redis readiness, Alembic migrations, API/Worker/Beat/Frontend startup, PostgreSQL persistence after restart, Redis persistence after restart, API dependency readiness, Frontend HTTP reachability, and real PostgreSQL custom-format backup plus isolated restore. This is local/CI engineering evidence, not external production certification or measured target-environment RPO/RTO.
+- Stage 1 / #285 — certification-readiness and cross-platform hardening: complete.
+- Stage 2 / #286 — tenant-fair scheduling and resource isolation: complete.
+- Stage 3 / #287 — bounded load/stress/capacity validation: complete.
+- Stage 4 / #288 — security/privacy/compliance engineering: complete.
+- Stage 5 / #289 — capacity/cost/operational optimization: complete.
+- Stage 6 / #290 — V1.5 Human + Agent operating model: complete.
+- PR #315 — production-like infrastructure validation: merged at `93c717969a192ae5b90b909c2c4e8aaa89bea50a`.
 
 ## Evidence rules
 
 - CI/internal load and security validation = engineering evidence.
 - Local real-stack validation = local evidence.
 - External production/customer acceptance = independent external evidence.
-- Certification never transfers automatically across commit SHAs.
+- Certification never transfers automatically across SHAs.
 - Never fabricate production configuration, customer acceptance, provider evidence or compliance certification.
+- P0 completion requires evidence attached to the exact immutable release identity intended for acceptance.
