@@ -72,7 +72,7 @@ The following engineering slices are complete and merged:
 
 ## Release / lineage truth
 
-The canonical published release identities remain unchanged. Phase 13/14 engineering completion does not retroactively modify or certify an older release tag. The current mainline is `d85d74e6da517c6bc7f63673afd798c53ca00a10`; it contains the Phase 14.10 evidence-gate definition but is not itself externally certified.
+The canonical published release identities remain unchanged. Phase 13/14 engineering completion does not retroactively modify or certify an older release tag. The current mainline is `fc7ee65c420538e5feec26db5ebd7caa1507fd00`; this documentation reconciliation commit is not itself externally certified.
 
 Future production releases must use an immutable version/tag, exact commit SHA, migration identity and artifact/checksum evidence.
 
