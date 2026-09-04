@@ -22,7 +22,10 @@ async def _dispatch_async(limit: int = 50) -> int:
                 try:
                     if row.kind == "workflow.execute":
                         from app.workers.workflow_worker import execute_workflow_task
-                        execute_workflow_task.delay(row.payload["workflow_run_id"])
+                        execute_workflow_task.delay(
+                            row.payload["workflow_run_id"],
+                            str(row.tenant_id),
+                        )
                     elif row.kind == "workflow.event_dispatch":
                         from app.workers.workflow_trigger_worker import event_dispatch
                         event_dispatch.delay(row.payload["delivery_id"])

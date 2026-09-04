@@ -187,7 +187,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install frontend
         working-directory: frontend
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit --no-fund
       - name: Lint
         working-directory: frontend
         run: npm run lint

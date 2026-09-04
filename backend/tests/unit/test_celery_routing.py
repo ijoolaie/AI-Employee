@@ -1,3 +1,4 @@
+from app.services.tenant_fair_scheduler import FairnessDecision
 from app.workers.celery_app import (
     CONTROL_QUEUE,
     EMAIL_QUEUE,
@@ -8,6 +9,7 @@ from app.workers.celery_app import (
     TEST_CENTER_QUEUE,
     UNROUTED_QUEUE,
     celery_app,
+    tenant_fair_route,
 )
 
 
@@ -53,3 +55,22 @@ def test_scheduling_intervals_are_explicit_positive_contracts():
     assert SCHEDULE_INTERVALS
     assert all(value > 0 for value in SCHEDULE_INTERVALS.values())
     assert SCHEDULE_INTERVALS["outbox_dispatch_seconds"] <= SCHEDULE_INTERVALS["workflow_schedule_tick_seconds"]
+
+
+def test_fair_router_extracts_tenant_context_and_adds_bounded_priority(monkeypatch):
+    class FakeScheduler:
+        def route(self, tenant_id):
+            assert tenant_id == "tenant-a"
+            return FairnessDecision("tenant-a", 3.0, 2, 1.0)
+
+    import app.workers.celery_app as module
+    monkeypatch.setattr(module, "_fair_scheduler", FakeScheduler())
+
+    assert tenant_fair_route("run.execute", ("run-1", "tenant-a"), {}, {}, None) == {
+        "queue": EXECUTION_QUEUE,
+        "priority": 2,
+    }
+
+
+def test_fair_router_does_not_touch_non_tenant_control_tasks():
+    assert tenant_fair_route("workflow.schedule_tick", (), {}, {}, None) is None

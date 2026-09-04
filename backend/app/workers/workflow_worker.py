@@ -15,14 +15,16 @@ from app.workers.celery_app import celery_app
 logger = logging.getLogger("app.workers.workflow")
 
 
-async def _run_async(workflow_run_id: str) -> None:
+async def _run_async(workflow_run_id: str, tenant_id: str) -> None:
     started = perf_counter()
-    with span("aiep.workflow.execute", workflow_run_id=workflow_run_id) as current_span:
+    with span("aiep.workflow.execute", workflow_run_id=workflow_run_id, tenant_id=tenant_id) as current_span:
         async with worker_db_session() as db:
             try:
                 run = await workflow_service.execute_workflow(
                     db, workflow_run_id=uuid.UUID(workflow_run_id)
                 )
+                if str(run.tenant_id) != str(tenant_id):
+                    raise ValueError("Worker tenant context does not match Workflow Run tenant")
                 await db.commit()
                 status = run.status
                 WORKFLOW_RUNS.labels(status).inc()
@@ -41,9 +43,9 @@ async def _run_async(workflow_run_id: str) -> None:
 
 
 @celery_app.task(name="workflow.execute", bind=True, max_retries=3, default_retry_delay=10)
-def execute_workflow_task(self, workflow_run_id: str) -> None:
+def execute_workflow_task(self, workflow_run_id: str, tenant_id: str) -> None:
     try:
-        asyncio.run(_run_async(workflow_run_id))
+        asyncio.run(_run_async(workflow_run_id, tenant_id))
     except Exception as exc:
         raise self.retry(exc=exc, countdown=min(300, 5 * (2 ** self.request.retries)))
 
