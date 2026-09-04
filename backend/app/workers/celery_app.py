@@ -1,9 +1,5 @@
-"""Celery application instance and explicit queue topology.
-
-Workers consume only their assigned queues. Tasks that are not explicitly
-routed are sent to ``unrouted`` and no production worker consumes that queue;
-this prevents an unknown task from silently landing on an execution worker.
-"""
+"""Celery application instance and explicit queue topology."""
+from __future__ import annotations
 
 from time import perf_counter
 
@@ -14,6 +10,7 @@ from kombu import Queue
 from app.core.config import get_settings
 from app.core.metrics import CELERY_TASKS, CELERY_TASK_LATENCY
 from app.core.telemetry import get_tracer
+from app.services.tenant_fair_scheduler import DEFAULT_PRIORITY, build_redis_scheduler
 
 settings = get_settings()
 
@@ -32,9 +29,6 @@ celery_app = Celery(
 )
 
 
-# Phase 14.3: scheduling policy is an explicit, observable contract. Keep the
-# cadence centralized so operations can tune schedules without hunting through
-# worker implementations.
 SCHEDULE_INTERVALS = {
     "workflow_schedule_tick_seconds": 30.0,
     "workflow_approval_expiry_seconds": 30.0,
@@ -43,8 +37,6 @@ SCHEDULE_INTERVALS = {
     "outbox_dispatch_seconds": 5.0,
 }
 
-# Queue names are intentionally stable deployment contracts. ``unrouted`` is
-# a safety sink: no worker command consumes it.
 EXECUTION_QUEUE = "execution"
 TEST_CENTER_QUEUE = "test_center"
 CONTROL_QUEUE = "control"
@@ -66,6 +58,41 @@ TASK_ROUTES = {
     "email.send": {"queue": EMAIL_QUEUE},
 }
 
+_fair_scheduler = None
+
+
+def _tenant_id_for_task(name: str, args: tuple, kwargs: dict) -> str | None:
+    if kwargs.get("tenant_id"):
+        return str(kwargs["tenant_id"])
+    if name == "run.execute" and len(args) >= 2:
+        return str(args[1])
+    if name == "workflow.execute" and len(args) >= 2:
+        return str(args[1])
+    return None
+
+
+def tenant_fair_route(name, args, kwargs, options, task=None, **_kw):
+    """Add a bounded tenant-fair priority while preserving explicit queue routing."""
+    global _fair_scheduler
+    if name not in {"run.execute", "workflow.execute"}:
+        return None
+    tenant_id = _tenant_id_for_task(name, args, kwargs)
+    if not tenant_id:
+        return None
+    if _fair_scheduler is None:
+        try:
+            _fair_scheduler = build_redis_scheduler(settings.redis_url)
+        except Exception:
+            _fair_scheduler = False
+    if _fair_scheduler is False:
+        return {"queue": EXECUTION_QUEUE, "priority": DEFAULT_PRIORITY}
+    try:
+        decision = _fair_scheduler.route(tenant_id)
+        return {"queue": EXECUTION_QUEUE, "priority": decision.queue_priority}
+    except Exception:
+        return {"queue": EXECUTION_QUEUE, "priority": DEFAULT_PRIORITY}
+
+
 celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
@@ -73,19 +100,13 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
     task_track_started=True,
-    # Phase 14.2: bound broker-side prefetch so one worker cannot reserve an
-    # unbounded backlog. Fair dispatch is delegated to the broker instead of
-    # allowing a busy process to hoard messages.
     worker_prefetch_multiplier=1,
     task_acks_late=True,
     task_reject_on_worker_lost=True,
     task_default_queue=UNROUTED_QUEUE,
     task_default_exchange=UNROUTED_QUEUE,
     task_default_routing_key=UNROUTED_QUEUE,
-    task_routes=TASK_ROUTES,
-    # Hard capacity is a deployment contract. Environment-specific worker
-    # concurrency remains explicit in the worker command; tasks never inherit
-    # an unbounded prefetch backlog.
+    task_routes=(tenant_fair_route, TASK_ROUTES),
     worker_max_tasks_per_child=1000,
     task_queues=(
         Queue(EXECUTION_QUEUE),
@@ -151,11 +172,7 @@ def _finish_task(task_id, task_name: str, status: str):
 @task_postrun.connect
 def _telemetry_task_finished(task_id=None, task=None, state=None, **kwargs):
     if task_id and task is not None:
-        _finish_task(
-            task_id,
-            task.name,
-            "success" if state == "SUCCESS" else str(state or "finished").lower(),
-        )
+        _finish_task(task_id, task.name, "success" if state == "SUCCESS" else str(state or "finished").lower())
 
 
 @task_failure.connect
