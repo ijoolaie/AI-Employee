@@ -22,6 +22,12 @@ Repository implementation and CI/release verification remain distinct from exter
 
 Every engineering stage must reconcile the canonical status, priorities, roadmap and this production-readiness document before closure.
 
+## Production infrastructure validation evidence
+
+PR #315 merged to `main` at `93c717969a192ae5b90b909c2c4e8aaa89bea50a`. Validation run `33884955068` passed on GitHub-hosted Linux infrastructure. The run validated the production Compose contract, built the API/Worker/Beat/Frontend images, started PostgreSQL/Redis/storage, waited for dependency readiness, applied Alembic migrations, started API/Worker/Beat/Frontend, verified PostgreSQL and Redis persistence across restart, verified API dependency readiness and Frontend HTTP reachability, and executed a real PostgreSQL custom-format `pg_dump` plus isolated `pg_restore`. The ephemeral environment was torn down after the run.
+
+This evidence demonstrates repository production-like lifecycle/recovery behavior. It does **not** establish real production deployment, provider behavior, measured production SLO/error budget, durable target backup cadence, target-environment RPO/RTO, external rollback rehearsal, security/compliance certification or customer acceptance.
+
 ## Phase 14.16 engineering evidence
 
 PR #312 merged to `main` at `7657b4244a47af95960e5854fa52f92a0dbe618b`. It adds tenant-scoped `/api/v1/workspace`, a unified read model over WorkItems and pending workflow/tool approvals, and Human/Agent executor queue counts. Existing assignment and approval mutation APIs remain authoritative, and the workspace endpoint is protected by the existing `audit.read` permission boundary.
