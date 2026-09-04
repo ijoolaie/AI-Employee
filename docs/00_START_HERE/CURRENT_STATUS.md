@@ -7,27 +7,31 @@
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work uses shared execution contracts for Human, Agent and collaborative execution under common authorization, approval, tool, audit and evidence controls.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.14 engineering implementation is complete. Phase 14.13 is backed by bounded synthetic CI load/capacity evidence; Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence. These are engineering evidence only and make no external production-certification claim.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.14 engineering implementation is complete. Phase 14.11 certification-readiness hardening is also complete through merged PR #291. Phase 14.13 is backed by bounded synthetic CI load/capacity evidence; Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence. These are engineering evidence only and make no external production-certification claim.
 
 ## Ordered remaining stages
 
 | Stage | Issue | Status | Outcome |
 |---|---:|---|---|
-| 1 | #285 | **IN PROGRESS** | Certification-readiness, configuration preflight and cross-platform portability hardening |
+| 1 | #285 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Certification-readiness, configuration preflight and cross-platform portability hardening |
 | 2 | #286 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Tenant-fair scheduling, starvation protection and resource isolation with Redis runtime evidence |
 | 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/capacity validation with measurable thresholds and SHA-bound artifact |
 | 4 | #288 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Security/privacy/compliance engineering extensions and pentest-ready scope |
-| 5 | #289 | **QUEUED** | Capacity, cost and operational optimization |
+| 5 | #289 | **QUEUED / NEXT** | Capacity, cost and operational optimization |
 | 6 | #290 | **QUEUED** | V1.5 Human + Agent operating-model evolution |
 | 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | Independent production deployment, provider/SLO/DR evidence and ordered customer acceptance |
 
 Each engineering stage must update the canonical status, priorities, roadmap and production-readiness documentation before it is closed. Stage 7 is deliberately last and remains blocked until the preceding engineering work is reconciled.
 
+## Phase 14.11 certification-readiness checkpoint
+
+PR #291 delivered fail-fast configuration preflight for the local certification harness, cross-platform LF normalization via `.gitattributes`, reproducibility/secret-safe evidence handling and canonical documentation reconciliation. This stage is engineering-only and does not satisfy external certification.
+
 ## Phase 14.14 security/privacy/compliance checkpoint
 
 The merged Stage 4 implementation adds deterministic recursive redaction for credentials, tokens, connection strings and direct PII before structured audit metadata is persisted or JSON logs are emitted. Tenant-scoped authorization and tool-side-effect regressions pass. The dedicated security gate passed its regression suite, Ruff and `pip-audit`; CodeQL Python/JavaScript, full CI, architecture, observability and rollback/alerting checks also passed on the merge candidate.
 
-Final merged main SHA: `0789d091ab8f804d7bfc853470b9df42108085ed`. Security evidence artifact: `phase-14-14-security-27e19b67ac58776796b3f3db89dd402cbc958a45`; SHA256 `209a4b4a4249cd7c26cf17f83eb77a9b59de012416a2053632d7a5bc19844696`. External pentest, legal compliance attestation and production security certification remain external evidence.
+Phase 14.14 merged main SHA: `0789d091ab8f804d7bfc853470b9df42108085ed`. Security evidence artifact: `phase-14-14-security-27e19b67ac58776796b3f3db89dd402cbc958a45`; SHA256 `209a4b4a4249cd7c26cf17f83eb77a9b59de012416a2053632d7a5bc19844696`. External pentest, legal compliance attestation and production security certification remain external evidence.
 
 ## Evidence rules
 
@@ -39,9 +43,7 @@ Final merged main SHA: `0789d091ab8f804d7bfc853470b9df42108085ed`. Security evid
 
 ## Current mainline
 
-`0789d091ab8f804d7bfc853470b9df42108085ed`
-
-This is the current `main` baseline after Phase 14.14 engineering merge. It is **not** externally production-certified merely because repository checks are green.
+`0789d091ab8f804d7bfc853470b9df42108085ed` is the Phase 14.14 implementation merge; later documentation-only reconciliation commits update the current mainline without changing that implementation identity.
 
 ## Phase 14.13 evidence record
 
