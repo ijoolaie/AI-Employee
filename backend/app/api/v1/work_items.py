@@ -8,9 +8,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_context
+from app.core.deps import get_current_context, require_permission
 from app.models.agent_instance import AgentInstance
 from app.models.audit_log import AuditLog
+from app.models.user import User
 from app.models.work_item import WorkItem
 from app.services.agent_execution_adapter import AgentExecutionAdapter
 from app.services.execution_audit import record_execution_event
@@ -111,7 +112,7 @@ def _dispatch_audit_action(result) -> str:
     return "work_item.dispatched"
 
 
-@router.get("", response_model=list[WorkItemSummary])
+@router.get("", response_model=list[WorkItemSummary], dependencies=[Depends(require_permission("run.read"))])
 async def list_work_items(
     status_filter: str | None = Query(default=None, alias="status"),
     limit: int = Query(default=100, ge=1, le=200),
@@ -129,7 +130,7 @@ async def list_work_items(
     return [_summary(item) for item in result.scalars().all()]
 
 
-@router.get("/{work_item_id}/history", response_model=list[ExecutionHistoryItem])
+@router.get("/{work_item_id}/history", response_model=list[ExecutionHistoryItem], dependencies=[Depends(require_permission("audit.read"))])
 async def history(work_item_id: UUID, limit: int = Query(default=100, ge=1, le=200), db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     await _get_work_item(db, work_item_id, current_user.tenant_id)
     stmt = (
@@ -142,9 +143,12 @@ async def history(work_item_id: UUID, limit: int = Query(default=100, ge=1, le=2
     return [ExecutionHistoryItem(id=e.id, action=e.action, actor_type=e.actor_type, actor_id=e.actor_id, status=e.status, request_id=e.request_id, metadata=e.metadata_ or {}, created_at=e.created_at) for e in result.scalars().all()]
 
 
-@router.post("/{work_item_id}/assign/human", response_model=ExecutionResponse)
+@router.post("/{work_item_id}/assign/human", response_model=ExecutionResponse, dependencies=[Depends(require_permission("run.execute"))])
 async def assign_human(work_item_id: UUID, payload: HumanAssignmentRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
+    executor = await db.get(User, payload.executor_id)
+    if executor is None or executor.tenant_id != current_user.tenant_id or not executor.is_active:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="human executor not found")
     try:
         UnifiedExecutionService(db).assign_human(item, payload.executor_id)
         await record_execution_event(db, tenant_id=item.tenant_id, work_item_id=item.id, action="work_item.assigned", actor_type="user", actor_id=current_user.user_id, metadata={"executor_type": "human", "executor_id": str(payload.executor_id)})
@@ -155,7 +159,7 @@ async def assign_human(work_item_id: UUID, payload: HumanAssignmentRequest, db: 
     return ExecutionResponse(work_item_id=item.id, status=item.status.value, dispatched=False, waiting_for_approval=False)
 
 
-@router.post("/{work_item_id}/assign/agent", response_model=ExecutionResponse)
+@router.post("/{work_item_id}/assign/agent", response_model=ExecutionResponse, dependencies=[Depends(require_permission("run.execute"))])
 async def assign_agent(work_item_id: UUID, payload: AgentAssignmentRequest, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
     agent = await db.get(AgentInstance, payload.agent_instance_id)
@@ -171,7 +175,7 @@ async def assign_agent(work_item_id: UUID, payload: AgentAssignmentRequest, db: 
     return ExecutionResponse(work_item_id=item.id, status=item.status.value, dispatched=False, waiting_for_approval=False)
 
 
-@router.post("/{work_item_id}/dispatch", response_model=ExecutionResponse)
+@router.post("/{work_item_id}/dispatch", response_model=ExecutionResponse, dependencies=[Depends(require_permission("run.execute"))])
 async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
     is_agent = item.executor_type is not None and item.executor_type.value == "agent"
@@ -190,7 +194,7 @@ async def dispatch(work_item_id: UUID, db: AsyncSession = Depends(get_db), curre
     return _response(result)
 
 
-@router.post("/{work_item_id}/cancel", response_model=ExecutionResponse)
+@router.post("/{work_item_id}/cancel", response_model=ExecutionResponse, dependencies=[Depends(require_permission("run.cancel"))])
 async def cancel(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id, for_update=True)
     try:
@@ -203,7 +207,7 @@ async def cancel(work_item_id: UUID, db: AsyncSession = Depends(get_db), current
     return ExecutionResponse(work_item_id=item.id, status=item.status.value, dispatched=False, waiting_for_approval=False)
 
 
-@router.post("/{work_item_id}/retry", response_model=ExecutionResponse)
+@router.post("/{work_item_id}/retry", response_model=ExecutionResponse, dependencies=[Depends(require_permission("run.execute"))])
 async def retry(work_item_id: UUID, db: AsyncSession = Depends(get_db), current_user=Depends(get_current_context)):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id, for_update=True)
     try:
