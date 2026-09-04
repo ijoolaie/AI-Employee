@@ -31,6 +31,18 @@ celery_app = Celery(
     ],
 )
 
+
+# Phase 14.3: scheduling policy is an explicit, observable contract. Keep the
+# cadence centralized so operations can tune schedules without hunting through
+# worker implementations.
+SCHEDULE_INTERVALS = {
+    "workflow_schedule_tick_seconds": 30.0,
+    "workflow_approval_expiry_seconds": 30.0,
+    "workflow_timeout_sweep_seconds": 30.0,
+    "test_center_expiration_sweep_seconds": 30.0,
+    "outbox_dispatch_seconds": 5.0,
+}
+
 # Queue names are intentionally stable deployment contracts. ``unrouted`` is
 # a safety sink: no worker command consumes it.
 EXECUTION_QUEUE = "execution"
@@ -86,21 +98,21 @@ celery_app.conf.update(
     beat_schedule={
         "workflow-schedule-tick": {
             "task": "workflow.schedule_tick",
-            "schedule": 30.0,
+            "schedule": SCHEDULE_INTERVALS["workflow_schedule_tick_seconds"],
         },
         "workflow-approval-expiry": {
             "task": "workflow.approval_expiry",
-            "schedule": 30.0,
+            "schedule": SCHEDULE_INTERVALS["workflow_approval_expiry_seconds"],
         },
         "workflow-timeout-sweep": {
             "task": "workflow.timeout_sweep",
-            "schedule": 30.0,
+            "schedule": SCHEDULE_INTERVALS["workflow_timeout_sweep_seconds"],
         },
         "test-center-expiration-sweep": {
             "task": "test_center.expiration_sweep",
-            "schedule": 30.0,
+            "schedule": SCHEDULE_INTERVALS["test_center_expiration_sweep_seconds"],
         },
-        "outbox-dispatch": {"task": "outbox.dispatch", "schedule": 5.0},
+        "outbox-dispatch": {"task": "outbox.dispatch", "schedule": SCHEDULE_INTERVALS["outbox_dispatch_seconds"]},
     },
 )
 
