@@ -21,6 +21,8 @@ def test_prometheus_surface_contains_phase1_metrics():
     for metric in (
         "aiep_http_requests_total",
         "aiep_workflow_runs_total",
+        "aiep_slo_events_total",
+        "aiep_slo_error_budget_ratio",
         "aiep_workflow_steps_total",
         "aiep_ai_provider_calls_total",
         "aiep_ai_cost_usd_total",
