@@ -1,13 +1,13 @@
 # Current Status
 
 **Last reconciled:** 2026-09-04  
-**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.15 ENGINEERING COMPLETE / PHASE 14.10 EXTERNAL-PENDING
+**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.16 ENGINEERING COMPLETE / PHASE 14.10 EXTERNAL-PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work uses shared execution contracts for Human, Agent and collaborative execution under common authorization, approval, tool, audit and evidence controls.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.15 engineering implementation is complete. Phase 14.11 certification-readiness hardening is also complete through merged PR #291. Phase 14.13 is backed by bounded synthetic CI load/capacity evidence; Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence. Phase 14.15 is backed by green repository CI and adds operational unit-economics, budget and sizing decision-support signals. These are engineering evidence only and make no external production-certification claim.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.16 engineering implementation is complete. Phase 14.11 certification-readiness hardening is also complete through merged PR #291. Phase 14.13 is backed by bounded synthetic CI load/capacity evidence; Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence. Phase 14.15 is backed by green repository CI and adds operational unit-economics, budget and sizing decision-support signals. Phase 14.16 adds a tenant-scoped Human + Agent workspace read model that unifies WorkItems with pending workflow/tool approvals while preserving existing mutation and RBAC boundaries. These are engineering evidence only and make no external production-certification claim.
 
 ## Ordered remaining stages
 
@@ -18,10 +18,14 @@ Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Eviden
 | 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/capacity validation with measurable thresholds and SHA-bound artifact |
 | 4 | #288 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Security/privacy/compliance engineering extensions and pentest-ready scope |
 | 5 | #289 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Capacity, cost and operational optimization |
-| 6 | #290 | **QUEUED / NEXT** | V1.5 Human + Agent operating-model evolution |
+| 6 | #290 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | V1.5 Human + Agent operating-model evolution |
 | 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | Independent production deployment, provider/SLO/DR evidence and ordered customer acceptance |
 
 Each engineering stage must update the canonical status, priorities, roadmap and production-readiness documentation before it is closed. Stage 7 is deliberately last and remains blocked until the preceding engineering work is reconciled.
+
+## Phase 14.16 operating-model checkpoint
+
+PR #312 was merged to `main` at `7657b4244a47af95960e5854fa52f92a0dbe618b`. The implementation adds `/api/v1/workspace`, a tenant-scoped read model combining unified WorkItems with pending workflow/tool approvals, plus human/agent executor counts. Existing assignment and approval mutation APIs remain authoritative; the workspace endpoint is protected by the existing `audit.read` permission. PR CI passed backend/frontend CI, Python/JavaScript CodeQL, architecture, production observability and production rollback/alerting checks. This is productization/engineering evidence only and does not establish external production certification.
 
 ## Phase 14.15 optimization checkpoint
 
@@ -43,7 +47,7 @@ Phase 14.14 merged main SHA: `0789d091ab8f804d7bfc853470b9df42108085ed`. Securit
 
 ## Current mainline
 
-`56984bc793ba3119f8c6d45bf9b03f738ce2d59e` is the Phase 14.15 implementation merge and current mainline at reconciliation time.
+`7657b4244a47af95960e5854fa52f92a0dbe618b` is the Phase 14.16 implementation merge and current mainline at reconciliation time.
 
 ## Phase 14.13 evidence record
 
