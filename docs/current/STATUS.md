@@ -20,7 +20,7 @@ AI-Employee contains the V1.4 engineering foundation and the active V1.5 Human +
 | Stage | Issue | Status | Scope |
 |---|---:|---|---|
 | 1 | #285 | **IN PROGRESS** | Certification-readiness, configuration preflight, cross-platform portability and evidence reproducibility |
-| 2 | #286 | **QUEUED** | Tenant-fair scheduling, starvation protection and resource isolation |
+| 2 | #286 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Tenant-fair scheduling, starvation protection and resource isolation with Redis runtime evidence |
 | 3 | #287 | **QUEUED** | Load/stress validation and measurable capacity thresholds |
 | 4 | #288 | **QUEUED** | Security/privacy/compliance engineering extensions and pentest-ready preparation |
 | 5 | #289 | **QUEUED** | Capacity, cost and operational optimization |
@@ -56,15 +56,15 @@ The engineering frontier is Stage 1 (#285). The external gate is intentionally h
 
 ## Release / lineage truth
 
-The canonical published release identities remain unchanged. Phase 13/14 engineering completion does not retroactively modify or certify an older release tag. The current mainline is `9efc08ab76c9d403338e2735561ce372b9294435`; the exact accepted production identity must be frozen separately for the final external certification stage.
+The canonical published release identities remain unchanged. Phase 13/14 engineering completion does not retroactively modify or certify an older release tag. The current mainline is `ac9fdf7063b459b3be5d4e8104e5b1f34ecb284d`; the exact accepted production identity must be frozen separately for the final external certification stage.
 
 ## What can be claimed now
 
 - Phase 11 is complete with real-stack acceptance evidence.
 - Phase 12 P12.1-P12.6 is implemented and operationally hardened.
 - Phase 13 Agent Teams & Marketplace engineering implementation is complete.
-- Phase 14.1–14.9 engineering implementation is complete.
-- Stage 1 has an active hardening branch but is not yet merged to `main`.
+- Phase 14.1–14.12 engineering implementation is complete; Phase 14.12 includes Redis runtime fairness/resource-isolation evidence.
+- Stage 2 (#286) is engineering complete and documentation-reconciled on `main`; Stage 1 (#285) remains open because its certification-readiness closure is independent.
 - External production deployment, live provider behavior, measured production SLO/DR evidence, customer acceptance and commercial go-live remain **EXTERNAL-PENDING**.
 
 ## Security rule
