@@ -4,7 +4,7 @@
 
 ## Current release and project boundary
 
-The repository's current engineering baseline includes the completed Phase 13 implementation and Phase 14.1–14.14 engineering workstreams. Phase 14.11 certification-readiness hardening is also complete. Before external certification, the remaining engineering roadmap is ordered as Stages 5–6. **Phase 14.10 — External Production Certification & Customer Acceptance Evidence is Stage 7 and the final gate.**
+The repository's current engineering baseline includes the completed Phase 13 implementation and Phase 14.1–14.14 engineering workstreams. Phase 14.11 certification-readiness hardening is also complete. Phase 14.15 is now the active engineering workstream through PR #311. Before external certification, the remaining engineering roadmap is ordered as Stages 5–6. **Phase 14.10 — External Production Certification & Customer Acceptance Evidence is Stage 7 and the final gate.**
 
 Repository implementation and CI/release verification remain distinct from external production certification. No repository state alone establishes live deployment, provider operation, measured production SLO attainment, customer acceptance, commercial go-live, or independent certification.
 
@@ -16,11 +16,17 @@ Repository implementation and CI/release verification remain distinct from exter
 | 2 | #286 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Tenant-fair scheduling and resource isolation with Redis runtime evidence |
 | 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/stress and measurable capacity validation |
 | 4 | #288 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Security/privacy/compliance engineering extensions |
-| 5 | #289 | **QUEUED / NEXT** | Capacity, cost and operational optimization |
+| 5 | #289 | **IN PROGRESS / PR #311** | Capacity, cost and operational optimization |
 | 6 | #290 | **QUEUED** | V1.5 Human + Agent operating-model evolution |
 | 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | External deployment, provider/SLO/DR evidence and ordered acceptance |
 
 Every engineering stage must reconcile the canonical status, priorities, roadmap and this production-readiness document before closure.
+
+## Phase 14.15 engineering checkpoint
+
+PR #311 adds measured monthly unit economics from existing tenant-scoped AI provider and Run records, cost per successful WorkItem, deterministic plan budget utilization states, actionable optimization guidance and worker-sizing decision support using observed throughput with explicit utilization headroom. The vendor platform-admin `/api/v1/admin/optimization` endpoint is protected by the existing platform-admin/vendor authorization boundary.
+
+This checkpoint is engineering decision support only. It does not establish production worker capacity, provider throughput, production SLO attainment or customer-scale acceptance. CI must pass before the issue is closed.
 
 ## Phase 14.11 certification-readiness evidence
 
