@@ -101,7 +101,7 @@ Continue Platform/Reseller/Client runtime hardening and incremental migration fr
 - Phase 14.1–14.9 engineering implementation is complete.
 - External production deployment, live provider behavior, measured production SLO/DR evidence, customer acceptance and commercial go-live remain **EXTERNAL-PENDING**.
 
-Do not claim that the current `main` is externally production-certified merely because CI, CodeQL, browser acceptance or repository evidence is green. GitHub also requires required checks to pass against the latest commit SHA rather than relying on checks from earlier commits. citeturn0view0
+Do not claim that the current `main` is externally production-certified merely because CI, CodeQL, browser acceptance or repository evidence is green. Required checks must also be valid for the latest commit SHA.
 
 ## Canonical documents
 
