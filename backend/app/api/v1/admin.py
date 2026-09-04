@@ -1,10 +1,10 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.deps import DbSession, TenantContext, get_current_context
-from app.schemas.admin import AdminDashboardResponse, AdminTenantListResponse
+from app.schemas.admin import AdminDashboardResponse, AdminTenantListResponse, AdminOptimizationResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
-from app.services import admin_service, feedback_service, billing_service
+from app.services import admin_service, feedback_service, billing_service, optimization_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -41,3 +41,10 @@ async def get_validation_summary(ctx: PlatformAdminContext, db: DbSession):
 @router.get("/billing")
 async def get_billing_summary(ctx: PlatformAdminContext, db: DbSession):
     return APIResponse(success=True, data=await billing_service.platform_mrr(db))
+
+
+@router.get("/optimization", response_model=APIResponse[AdminOptimizationResponse])
+async def get_optimization_summary(ctx: PlatformAdminContext, db: DbSession):
+    """Return measured monthly unit economics and budget/optimization signals."""
+    data = await optimization_service.tenant_optimization_summary(db, tenant_id=ctx.tenant.id)
+    return APIResponse(success=True, data=AdminOptimizationResponse.model_validate(data))

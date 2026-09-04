@@ -27,9 +27,9 @@ Phase 14.13 has a bounded synthetic CI evidence harness covering API load, sched
 Phase 14.14 engineering evidence is complete on merged main SHA `0789d091ab8f804d7bfc853470b9df42108085ed`. Security gate, regression tests, Ruff, `pip-audit`, CodeQL, full CI, architecture, observability and rollback/alerting checks passed. Security evidence artifact: `phase-14-14-security-27e19b67ac58776796b3f3db89dd402cbc958a45`, SHA256 `209a4b4a4249cd7c26cf17f83eb77a9b59de012416a2053632d7a5bc19844696`. External pentest/certification remains external evidence.
 
 ### Stage 5 — Capacity, Cost & Operational Optimization
-**Issue #289 — QUEUED / NEXT**
+**Issue #289 — IN PROGRESS / PR #311**
 
-Use measured load results to establish capacity/sizing guidance, cost visibility and operational optimization.
+Phase 14.15 now adds measured monthly unit economics, cost per successful WorkItem, plan budget utilization/warning signals, optimization actions and worker-sizing guidance based on observed throughput with explicit headroom. CI and review remain gating conditions before closure.
 
 ### Stage 6 — V1.5 Human + Agent Operating Model
 **Issue #290 — QUEUED**
