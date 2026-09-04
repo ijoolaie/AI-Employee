@@ -34,8 +34,8 @@ class ResourceLease:
     expires_at: float
 
 
-class TenantResourceLimitError(RuntimeError):
-    """Raised when a tenant has no available execution resource slot."""
+class TenantResourceUnavailableError(RuntimeError):
+    """Raised when the resource store is unavailable and policy is fail-closed."""
 
 
 class TenantResourceLimiter:
@@ -94,3 +94,23 @@ def build_tenant_resource_limiter() -> TenantResourceLimiter:
         default_limit=settings.tenant_resource_default_concurrency,
         lease_seconds=settings.tenant_resource_lease_seconds,
     )
+
+
+def acquire_tenant_resource(tenant_id: str) -> ResourceLease | None:
+    settings = get_settings()
+    try:
+        return build_tenant_resource_limiter().acquire(tenant_id)
+    except Exception as exc:
+        if settings.app_env.lower() in {"production", "prod"}:
+            raise TenantResourceUnavailableError("Tenant resource store is unavailable") from exc
+        logger.warning("tenant_resource_store_unavailable_fail_open")
+        return ResourceLease(tenant_id=tenant_id, token="", expires_at=0.0)
+
+
+def release_tenant_resource(lease: ResourceLease) -> None:
+    if not lease.token:
+        return
+    try:
+        build_tenant_resource_limiter().release(lease)
+    except Exception:
+        logger.exception("tenant_resource_release_failed", extra={"tenant_id": lease.tenant_id})
