@@ -2,69 +2,87 @@
 
 **Reconciled:** 2026-09-04
 
-## Priority 0 — Preserve verified identities and evidence
+## Ordered remaining work
 
-Preserve canonical release identities, completed acceptance evidence, runtime hardening evidence and the authoritative Alembic graph. Do not inherit certification across SHAs.
+Phase 13 and Phase 14.1–14.9 engineering are complete. The remaining work is now intentionally sequenced so that **External Production Certification & Customer Acceptance is the final stage**.
 
-## Priority 1 — Phase 14.10 external production evidence
+### Stage 1 — Certification Readiness & Cross-Platform Hardening
+**Issue #285 — IN PROGRESS**
 
-Phase 14.1–14.9 engineering implementation is complete. The active frontier is the external evidence gate: fresh immutable release candidate, artifact identity, deployment evidence, live provider validation, measured production SLO/error-budget evidence, measured DR RPO/RTO evidence, security/compliance review, rollback readiness and ordered Vendor → Reseller → Client acceptance where applicable.
+- normalize shell-script line endings across platforms;
+- add fail-fast application configuration preflight to the local certification harness;
+- improve reproducibility and secret-safe evidence handling;
+- reconcile all status/readiness documents after completion.
 
-## Priority 2 — Production hardening and external certification
+### Stage 2 — Tenant-Fair Scheduling & Resource Isolation
+**Issue #286 — QUEUED**
 
-Continue environment-specific certification for the current implementation. Keep repository CI, local runtime evidence and external production/customer evidence explicitly separated.
+- explicit per-tenant fairness/resource shares;
+- starvation protection;
+- measurable fairness and negative-path regression tests;
+- preserve RBAC, tenant isolation and approval boundaries.
 
-## Priority 3 — Customer delivery package
+### Stage 3 — Load, Stress & Capacity Validation
+**Issue #287 — QUEUED**
 
-Prepare customer delivery and handoff material for the current implementation scope. Do not claim customer deployment or acceptance before an actual customer event exists.
+- reproducible API/WorkItem/queue-worker load scenarios;
+- routing, cost-control and recovery stress paths;
+- measurable thresholds and retained evidence artifacts;
+- reconcile results to exact commit/artifact identities.
 
-## Priority 4 — Unified execution and workspace hardening
+### Stage 4 — Security, Privacy & Compliance Engineering Extensions
+**Issue #288 — QUEUED**
 
-Continue validating Platform, Reseller and Client actions against real WorkItem and Agent APIs while preserving tenant, RBAC, approval and audit boundaries.
+- threat-model refresh;
+- security regression expansion;
+- privacy/data-retention boundary checks;
+- compliance-control mapping and pentest-ready scope/runbook.
 
-## Priority 5 — Compatibility migration
+External pentest/attestation remains external evidence and is not fabricated by repository work.
 
-Continue moving changed Employee-backed capabilities toward the unified Human/Agent execution model without destructive model replacement.
+### Stage 5 — Capacity, Cost & Operational Optimization
+**Issue #289 — QUEUED**
 
-## Phase 14 completion record
+- capacity model and sizing guidance;
+- cost-per-WorkItem visibility;
+- budget/resource optimization;
+- operational runbooks and guardrails.
 
-Engineering workstreams 14.1–14.9 are complete:
+### Stage 6 — V1.5 Human + Agent Operating Model
+**Issue #290 — QUEUED**
 
-- queue/worker isolation;
-- concurrency/backpressure hardening;
-- routing/scheduling;
-- tenant-scoped cost controls;
-- SLO/reliability/observability instrumentation;
-- disaster recovery/backup/restore baseline;
-- security/compliance hardening;
-- regression/release gates;
-- incident response/operational readiness.
+- formalize Human + Agent operating-model contracts on unified WorkItem;
+- align Platform/Reseller/Client UX and APIs;
+- governance, approvals and auditability;
+- migrate remaining Employee-backed capabilities incrementally and safely.
 
-Phase 14.10 is **EXTERNAL-PENDING** and is not satisfied by CI or repository tests.
+### Stage 7 — External Production Certification & Customer Acceptance
+**Issues #269 / #210 / #19 — FINAL / EXTERNAL-PENDING**
 
-## Active external gates
+Only after Stages 1–6 are complete and their documentation is reconciled:
 
-- #210 — consolidated immutable release and external-production gate;
-- #19 — Vendor → Reseller → Client runtime isolation/RBAC evidence;
-- #269 — Phase 14.10 evidence package and acceptance decision boundary.
+- freeze one exact immutable release candidate;
+- reconcile artifacts, migrations and checksums;
+- deploy that exact identity to the real target;
+- collect provider, production SLO/error-budget and DR RPO/RTO evidence;
+- complete security/compliance review and external rollback evidence;
+- execute ordered Vendor → Reseller → Client acceptance where applicable;
+- record exceptions/residual risks and the final certification decision.
 
-These issues remain open until independent evidence is complete and reconciled to one exact accepted release identity.
+This is the final stage. CI, local runtime validation, browser acceptance or rehearsal evidence cannot substitute for independent external evidence.
 
-## Future conditional external production
+## Completed baseline
 
-Only when a real external target exists:
+- Phase 11 Unified Execution acceptance — complete.
+- Phase 12 P12.1–P12.6 — implemented and operationally hardened.
+- Phase 13 Agent Teams & Marketplace — engineering complete.
+- Phase 14.1–14.9 — engineering complete.
+- Phase 14.10 local production-like certification harness — implemented; successful local run remains engineering evidence only.
 
-- freeze the exact release candidate;
-- configure the real deployment context;
-- collect deployment, provider, observability and recovery evidence;
-- execute Vendor → Reseller → Client acceptance where applicable;
-- record the final certification decision against the exact release identity.
-
-Never fabricate production configuration merely to satisfy CI.
-
-## Evidence boundary
+## Evidence rules
 
 - CI/internal certification = engineering evidence.
 - Local real-stack validation = local evidence.
-- External production and customer acceptance require independent external evidence.
-- Phase 14.1–14.9 completion does not change canonical release certification identities.
+- External production/customer acceptance = independent external evidence.
+- Certification never transfers automatically across commit SHAs.
+- Never fabricate production configuration, customer acceptance, provider evidence or compliance certification merely to satisfy a gate.
