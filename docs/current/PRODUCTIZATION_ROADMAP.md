@@ -38,6 +38,10 @@ PR #311 merged at main SHA `56984bc793ba3119f8c6d45bf9b03f738ce2d59e`. It adds m
 
 PR #312 merged at main SHA `7657b4244a47af95960e5854fa52f92a0dbe618b`. It adds `/api/v1/workspace`, a tenant-scoped read model combining unified WorkItems with pending workflow/tool approvals and Human/Agent executor queue counts. Existing assignment and approval mutation APIs remain authoritative, and the workspace endpoint uses the existing `audit.read` permission boundary. PR CI passed backend/frontend CI, Python/JavaScript CodeQL, architecture, production observability and production rollback/alerting checks. This is engineering/productization evidence only.
 
+### Infrastructure Validation Checkpoint
+
+PR #315 merged at `93c717969a192ae5b90b909c2c4e8aaa89bea50a`. CI run `33884955068` executed the production-like Compose topology on GitHub-hosted Linux infrastructure with ephemeral CI-only credentials. It passed Compose validation, image builds, PostgreSQL/Redis readiness, Alembic migration, API/Worker/Beat/Frontend startup, PostgreSQL and Redis restart persistence, API dependency readiness, Frontend reachability, and a real PostgreSQL custom-format backup plus isolated restore. The stack was torn down after validation. This is local/CI engineering evidence only and does not establish external production deployment, provider certification, production SLOs or target RPO/RTO.
+
 ### Stage 7 — Phase 14.10: External Production Certification & Customer Acceptance
 **Issues #269 / #210 / #19 — FINAL / EXTERNAL-PENDING**
 
