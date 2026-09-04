@@ -12,11 +12,6 @@ compose() {
   docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$PROJECT_NAME" "$@"
 }
 
-cleanup() {
-  compose down --volumes --remove-orphans >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
-
 compose config --quiet
 compose build
 compose up -d
