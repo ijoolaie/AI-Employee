@@ -10,6 +10,11 @@ from app.core.database import worker_db_session
 from app.core.metrics import WORKFLOW_LATENCY, WORKFLOW_RUNS
 from app.core.telemetry import span
 from app.services import workflow_service
+from app.services.tenant_resource_limiter import (
+    TenantResourceUnavailableError,
+    acquire_tenant_resource,
+    release_tenant_resource,
+)
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger("app.workers.workflow")
@@ -44,10 +49,25 @@ async def _run_async(workflow_run_id: str, tenant_id: str) -> None:
 
 @celery_app.task(name="workflow.execute", bind=True, max_retries=3, default_retry_delay=10)
 def execute_workflow_task(self, workflow_run_id: str, tenant_id: str) -> None:
+    """Execute a Workflow Run only while its tenant owns a resource lease."""
+    if not tenant_id:
+        raise ValueError("tenant_id is required for workflow.execute")
     try:
-        asyncio.run(_run_async(workflow_run_id, tenant_id))
-    except Exception as exc:
-        raise self.retry(exc=exc, countdown=min(300, 5 * (2 ** self.request.retries)))
+        lease = acquire_tenant_resource(tenant_id)
+    except TenantResourceUnavailableError as exc:
+        raise self.retry(exc=exc, countdown=min(60, 5 * (2 ** self.request.retries)))
+    if lease is None:
+        raise self.retry(
+            exc=RuntimeError("Tenant execution capacity is currently exhausted"),
+            countdown=min(60, 5 * (2 ** self.request.retries)),
+        )
+    try:
+        try:
+            asyncio.run(_run_async(workflow_run_id, tenant_id))
+        except Exception as exc:
+            raise self.retry(exc=exc, countdown=min(300, 5 * (2 ** self.request.retries)))
+    finally:
+        release_tenant_resource(lease)
 
 
 async def _parallel_branch_async(branch_id: str) -> None:
