@@ -18,6 +18,8 @@ import time
 import uuid
 from typing import Any
 
+from app.core.privacy import redact_sensitive_data
+
 request_id_var: contextvars.ContextVar[str | None] = contextvars.ContextVar(
     "request_id", default=None
 )
@@ -56,7 +58,7 @@ class JSONLogFormatter(logging.Formatter):
             payload[key] = value
         if record.exc_info:
             payload["exc_info"] = self.formatException(record.exc_info)
-        return json.dumps(payload, default=str)
+        return json.dumps(redact_sensitive_data(payload), default=str)
 
 
 def configure_logging(debug: bool = False) -> None:
