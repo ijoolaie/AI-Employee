@@ -4,7 +4,7 @@
 
 ## Ordered remaining work
 
-Phase 13 and Phase 14.1–14.15 engineering are complete. Phase 14.11 certification-readiness hardening is also complete. The remaining work is intentionally sequenced so that **External Production Certification & Customer Acceptance is the final stage**.
+Phase 13 and Phase 14.1–14.16 engineering are complete. Phase 14.11 certification-readiness hardening is also complete. The remaining work is intentionally sequenced so that **External Production Certification & Customer Acceptance is the final stage**.
 
 ### Stage 1 — Certification Readiness & Cross-Platform Hardening
 **Issue #285 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
@@ -32,9 +32,9 @@ Phase 14.14 engineering evidence is complete on merged main SHA `0789d091ab8f804
 Phase 14.15 delivers measured monthly unit economics, cost per successful WorkItem, plan budget utilization/warning signals, optimization actions and worker-sizing decision support based on observed throughput with explicit headroom. CI passed for CodeQL, full backend/frontend CI, architecture, security/privacy, observability and rollback/alerting. Production capacity certification remains external.
 
 ### Stage 6 — V1.5 Human + Agent Operating Model
-**Issue #290 — QUEUED / NEXT**
+**Issue #290 — ENGINEERING COMPLETE / PR #312 MERGED**
 
-Formalize Human + Agent operating-model contracts, governance, approvals, auditability and remaining capability migration.
+PR #312 merged at main SHA `7657b4244a47af95960e5854fa52f92a0dbe618b`. It adds a tenant-scoped workspace read model over the unified WorkItem substrate, combining Human/Agent executor visibility with pending workflow/tool approvals and queue counts. Existing assignment/approval mutation APIs and RBAC boundaries remain authoritative. PR CI passed backend/frontend CI, Python/JavaScript CodeQL, architecture, production observability and production rollback/alerting checks. This is engineering/productization evidence only.
 
 ### Stage 7 — External Production Certification & Customer Acceptance
 **Issues #269 / #210 / #19 — FINAL / EXTERNAL-PENDING**
