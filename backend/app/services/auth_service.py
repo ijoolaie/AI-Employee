@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+import jwt
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import selectinload
@@ -16,7 +17,6 @@ from app.models.user import User
 from app.models.role import Permission, Role, role_permissions, user_roles
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
 from app.services import audit_service, billing_service
-from jose import JWTError
 
 
 DEFAULT_TENANT_ADMIN_PERMISSIONS = (
@@ -90,7 +90,7 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
         raise UnauthorizedError("Invalid credentials")
     user.last_login_at = datetime.now(timezone.utc)
     await db.flush()
-    await audit_service.record(db, action="auth.login", actor_type="user", actor_id=user.id, tenant_id=tenant.id, status="success", request_id=request_id_var.get())
+    await audit_service.record(db, action="auth.login", actor_type="user", tenant_id=tenant.id, status="success", request_id=request_id_var.get(), metadata={"user_id": str(user.id)})
     return user
 
 
@@ -107,7 +107,7 @@ async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenResponse:
             raise UnauthorizedError("Invalid token type")
         user_id = payload.get("sub")
         tenant_id = payload.get("tenant_id")
-    except JWTError:
+    except jwt.InvalidTokenError:
         raise UnauthorizedError("Invalid refresh token")
     user_result = await db.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
