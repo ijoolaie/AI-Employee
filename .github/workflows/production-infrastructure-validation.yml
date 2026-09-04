@@ -1,0 +1,98 @@
+name: Production Infrastructure Validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docker-compose.production.yml'
+      - 'docker-compose.local-production.yml'
+      - 'backend/**'
+      - 'frontend/**'
+      - 'scripts/production_infrastructure_validation.sh'
+      - 'scripts/production_backup_restore_smoke.sh'
+      - '.github/workflows/production-infrastructure-validation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose.production.yml'
+      - 'docker-compose.local-production.yml'
+      - 'backend/**'
+      - 'frontend/**'
+      - 'scripts/production_infrastructure_validation.sh'
+      - 'scripts/production_backup_restore_smoke.sh'
+      - '.github/workflows/production-infrastructure-validation.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: production-infrastructure-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  infrastructure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      POSTGRES_USER: prod_ci
+      POSTGRES_PASSWORD: ci-only-postgres-password
+      POSTGRES_DB: ai_employee_ci
+      REDIS_PASSWORD: ci-only-redis-password
+      SECRET_KEY: ci-only-secret-key-012345678901234567890123456789
+      DATABASE_URL: postgresql+asyncpg://prod_ci:ci-only-postgres-password@postgres:5432/ai_employee_ci
+      DATABASE_URL_SYNC: postgresql://prod_ci:ci-only-postgres-password@postgres:5432/ai_employee_ci
+      REDIS_URL: redis://:ci-only-redis-password@redis:6379/0
+      CELERY_BROKER_URL: redis://:ci-only-redis-password@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:ci-only-redis-password@redis:6379/2
+      CORS_ORIGINS: '["http://127.0.0.1:13000"]'
+      FRONTEND_BASE_URL: http://127.0.0.1:13000
+      FRONTEND_APP_URL: http://127.0.0.1:13000
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:18000/api/v1
+      LM_STUDIO_BASE_URL: https://ai.example.test/v1
+      APP_ENV: production
+      DEBUG: 'false'
+      RATE_LIMIT_ENABLED: 'true'
+      RATE_LIMIT_FAIL_CLOSED: 'true'
+      COMPOSE_PROJECT_NAME: ai-employee-infra-validation
+      ENV_FILE: .env.production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Create ephemeral production validation environment
+        run: |
+          cat > .env.production <<'EOF'
+          POSTGRES_USER=prod_ci
+          POSTGRES_PASSWORD=ci-only-postgres-password
+          POSTGRES_DB=ai_employee_ci
+          SECRET_KEY=ci-only-secret-key-012345678901234567890123456789
+          DATABASE_URL=postgresql+asyncpg://prod_ci:ci-only-postgres-password@postgres:5432/ai_employee_ci
+          DATABASE_URL_SYNC=postgresql://prod_ci:ci-only-postgres-password@postgres:5432/ai_employee_ci
+          REDIS_PASSWORD=ci-only-redis-password
+          REDIS_URL=redis://:ci-only-redis-password@redis:6379/0
+          CELERY_BROKER_URL=redis://:ci-only-redis-password@redis:6379/1
+          CELERY_RESULT_BACKEND=redis://:ci-only-redis-password@redis:6379/2
+          CORS_ORIGINS=["http://127.0.0.1:13000"]
+          FRONTEND_BASE_URL=http://127.0.0.1:13000
+          FRONTEND_APP_URL=http://127.0.0.1:13000
+          NEXT_PUBLIC_API_URL=http://127.0.0.1:18000/api/v1
+          LM_STUDIO_BASE_URL=https://ai.example.test/v1
+          EOF
+
+      - name: Validate production compose contract
+        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml config --quiet
+
+      - name: Build and start full production-like stack
+        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" up -d --build
+
+      - name: Validate PostgreSQL Redis API Worker Beat Frontend lifecycle and persistence
+        run: bash scripts/production_infrastructure_validation.sh
+
+      - name: Validate real PostgreSQL backup and isolated restore
+        run: bash scripts/production_backup_restore_smoke.sh
+
+      - name: Capture service state on failure
+        if: failure()
+        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" ps
+
+      - name: Tear down ephemeral stack
+        if: always()
+        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" down --volumes --remove-orphans
