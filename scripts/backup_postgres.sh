@@ -15,16 +15,16 @@ chmod 700 "$BACKUP_DIR"
 output="$BACKUP_DIR/$BACKUP_NAME"
 [[ ! -e "$output" ]] || { echo "Refusing to overwrite existing backup: $output" >&2; exit 1; }
 
-# Keep credentials out of pg_dump argv. libpq reads these connection fields
-# from the environment, while the command line contains only a local database
-# name. This is still protected by the runner/process account and must never be
-# logged or exported into CI artifacts.
-eval "$(python - "$DATABASE_URL_SYNC" <<'PY'
+# Keep credentials out of every child process argv. The URI is passed to the
+# parser through an inherited file descriptor; parsed libpq fields are then
+# exported for pg_dump. The secret must never be logged or copied to artifacts.
+eval "$(python - 3<<<"$DATABASE_URL_SYNC" <<'PY'
+import os
 import shlex
-import sys
 from urllib.parse import parse_qs, unquote, urlsplit
 
-url = sys.argv[1]
+with os.fdopen(3, "r", encoding="utf-8") as stream:
+    url = stream.read().rstrip("\n")
 parsed = urlsplit(url)
 if parsed.scheme not in {"postgres", "postgresql"}:
     raise SystemExit("DATABASE_URL_SYNC must use postgres:// or postgresql://")
