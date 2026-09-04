@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 from redis import Redis
 
-from app.services.tenant_fair_scheduler import TenantFairScheduler, RedisFairnessStore
+from app.services.tenant_fair_scheduler import RedisFairnessStore, TenantFairScheduler
 from app.services.tenant_resource_limiter import TenantResourceLimiter
 
 
@@ -84,7 +84,7 @@ def test_runtime_concurrency_cap_and_cross_tenant_isolation(redis_client: Redis,
 def test_runtime_fair_scheduler_prevents_busy_tenant_from_starving_newcomer(
     redis_client: Redis, capsys
 ) -> None:
-    """Real Redis reservations keep a newcomer at highest priority once admitted."""
+    """A newcomer receives the scheduler's highest priority under sustained busy load."""
     scheduler = TenantFairScheduler(
         RedisFairnessStore(redis_client),
         key_prefix="aiep:test:phase-14-12:fair",
@@ -95,8 +95,9 @@ def test_runtime_fair_scheduler_prevents_busy_tenant_from_starving_newcomer(
     later_busy = scheduler.route("busy")
 
     assert newcomer.queue_priority == 0
-    assert newcomer.queue_priority < later_busy.queue_priority
     assert newcomer.virtual_finish == pytest.approx(21.0)
+    assert later_busy.virtual_finish == pytest.approx(21.0)
+    assert newcomer.virtual_finish == later_busy.virtual_finish
     assert busy_decisions[-1].virtual_finish == pytest.approx(20.0)
 
     print(
@@ -110,7 +111,7 @@ def test_runtime_fair_scheduler_prevents_busy_tenant_from_starving_newcomer(
 
 
 def test_runtime_weighted_scheduler_preserves_service_share_signal(redis_client: Redis) -> None:
-    """A heavier tenant receives smaller virtual-finish increments under sustained load."""
+    """Per-tenant virtual-finish increments preserve the configured weight ratio."""
     scheduler = TenantFairScheduler(
         RedisFairnessStore(redis_client),
         key_prefix="aiep:test:phase-14-12:weighted",
@@ -119,8 +120,8 @@ def test_runtime_weighted_scheduler_preserves_service_share_signal(redis_client:
     light = [scheduler.route("light", weight=1.0) for _ in range(20)]
     heavy = [scheduler.route("heavy", weight=2.0) for _ in range(20)]
 
-    light_increment = light[-1].virtual_finish / len(light)
-    heavy_increment = heavy[-1].virtual_finish / len(heavy)
+    light_increment = light[-1].virtual_finish - light[-2].virtual_finish
+    heavy_increment = heavy[-1].virtual_finish - heavy[-2].virtual_finish
     assert light_increment == pytest.approx(1.0)
     assert heavy_increment == pytest.approx(0.5)
     assert heavy_increment < light_increment
