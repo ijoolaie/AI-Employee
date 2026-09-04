@@ -82,8 +82,6 @@ async def test_publish_creates_discovery_record_without_acceptance_semantics():
 async def test_get_for_tenant_allows_public_but_not_private_cross_tenant():
     other_tenant = uuid4()
     public = SimpleNamespace(visibility="public", status="published")
-    private = SimpleNamespace(visibility="private", status="published")
-
     public_db = FakeSession([Result(scalar=public)])
     assert await MarketplaceService(public_db).get_for_tenant(tenant_id=other_tenant, publication_id=uuid4()) is public
 
@@ -99,14 +97,9 @@ async def test_import_public_publication_clones_team_and_agents_into_target_tena
     source_agent_id = uuid4()
     publication_id = uuid4()
     source_version = SimpleNamespace(
-        id=uuid4(),
-        version=3,
-        member_agent_definition_ids=[source_agent_id],
-        roles={"lead": "agent"},
-        execution_policy={"approval": "required"},
-        allowed_tools=["calendar.read"],
-        input_schema={"type": "object"},
-        output_schema={"type": "object"},
+        id=uuid4(), version=3, member_agent_definition_ids=[source_agent_id],
+        roles={"lead": "agent"}, execution_policy={"approval": "required"},
+        allowed_tools=["calendar.read"], input_schema={"type": "object"}, output_schema={"type": "object"},
     )
     source_team = SimpleNamespace(
         id=uuid4(), tenant_id=source_tenant, enabled=True,
@@ -122,17 +115,10 @@ async def test_import_public_publication_clones_team_and_agents_into_target_tena
         model_policy={"model": "safe"}, input_schema={"type": "object"},
         output_schema={"type": "object"}, policy_requirements={"approval": True}, enabled=True,
     )
-    db = FakeSession([
-        Result(row=(publication, source_version, source_team)),
-        Result(scalar=None),
-        Result(items=[source_agent]),
-    ])
+    db = FakeSession([Result(row=(publication, source_version, source_team)), Result(scalar=None), Result(items=[source_agent])])
 
     installation = await MarketplaceService(db).import_publication(
-        tenant_id=target_tenant,
-        publication_id=publication_id,
-        actor_id=uuid4(),
-        workspace_key="customer-a",
+        tenant_id=target_tenant, publication_id=publication_id, actor_id=uuid4(), workspace_key="customer-a",
     )
 
     imported_agent, imported_team, imported_version = db.added[:3]
@@ -151,6 +137,45 @@ async def test_import_public_publication_clones_team_and_agents_into_target_tena
 
 
 @pytest.mark.asyncio
+async def test_import_uses_distinct_slugs_for_distinct_workspace_scopes():
+    source_tenant = uuid4()
+    target_tenant = uuid4()
+    source_agent_id = uuid4()
+    publication_id = uuid4()
+    source_version = SimpleNamespace(id=uuid4(), version=1, member_agent_definition_ids=[source_agent_id], roles={}, execution_policy={}, allowed_tools=[], input_schema={}, output_schema={})
+    source_team = SimpleNamespace(id=uuid4(), tenant_id=source_tenant, enabled=True, slug="sales-team", name="Sales", description=None)
+    publication = SimpleNamespace(id=publication_id, owner_tenant_id=source_tenant, team_version_id=source_version.id, visibility="public", status="published")
+    source_agent = SimpleNamespace(id=source_agent_id, tenant_id=source_tenant, slug="sales-agent", name="Sales", description=None, version=1, capabilities=[], allowed_tools=[], model_policy={}, input_schema={}, output_schema={}, policy_requirements={}, enabled=True)
+
+    first_db = FakeSession([Result(row=(publication, source_version, source_team)), Result(scalar=None), Result(items=[source_agent])])
+    await MarketplaceService(first_db).import_publication(tenant_id=target_tenant, publication_id=publication_id, actor_id=uuid4(), workspace_key="workspace-a")
+    first_agent, first_team = first_db.added[:2]
+
+    second_db = FakeSession([Result(row=(publication, source_version, source_team)), Result(scalar=None), Result(items=[source_agent])])
+    await MarketplaceService(second_db).import_publication(tenant_id=target_tenant, publication_id=publication_id, actor_id=uuid4(), workspace_key="workspace-b")
+    second_agent, second_team = second_db.added[:2]
+
+    assert first_agent.slug != second_agent.slug
+    assert first_team.slug != second_team.slug
+
+
+@pytest.mark.asyncio
+async def test_import_rejects_embedded_secret_policy():
+    source_tenant = uuid4()
+    target_tenant = uuid4()
+    source_agent_id = uuid4()
+    publication_id = uuid4()
+    source_version = SimpleNamespace(id=uuid4(), version=1, member_agent_definition_ids=[source_agent_id], roles={}, execution_policy={}, allowed_tools=[], input_schema={}, output_schema={})
+    source_team = SimpleNamespace(id=uuid4(), tenant_id=source_tenant, enabled=True, slug="secure-team", name="Secure", description=None)
+    publication = SimpleNamespace(id=publication_id, owner_tenant_id=source_tenant, team_version_id=source_version.id, visibility="public", status="published")
+    source_agent = SimpleNamespace(id=source_agent_id, tenant_id=source_tenant, slug="secure-agent", name="Secure", description=None, version=1, capabilities=[], allowed_tools=[], model_policy={"provider": {"api_key": "do-not-copy"}}, input_schema={}, output_schema={}, policy_requirements={}, enabled=True)
+    db = FakeSession([Result(row=(publication, source_version, source_team)), Result(scalar=None), Result(items=[source_agent])])
+
+    with pytest.raises(MarketplaceError, match="prohibited secret field"):
+        await MarketplaceService(db).import_publication(tenant_id=target_tenant, publication_id=publication_id, actor_id=uuid4(), workspace_key="secure")
+
+
+@pytest.mark.asyncio
 async def test_import_rejects_duplicate_publication_scope():
     target_tenant = uuid4()
     publication_id = uuid4()
@@ -158,14 +183,7 @@ async def test_import_rejects_duplicate_publication_scope():
     publication = SimpleNamespace(id=publication_id, visibility="public", status="published")
     source_version = SimpleNamespace(version=1, member_agent_definition_ids=[uuid4()])
     source_team = SimpleNamespace(enabled=True)
-    db = FakeSession([
-        Result(row=(publication, source_version, source_team)),
-        Result(scalar=existing),
-    ])
+    db = FakeSession([Result(row=(publication, source_version, source_team)), Result(scalar=existing)])
 
     with pytest.raises(MarketplaceError, match="already installed"):
-        await MarketplaceService(db).import_publication(
-            tenant_id=target_tenant,
-            publication_id=publication_id,
-            actor_id=uuid4(),
-        )
+        await MarketplaceService(db).import_publication(tenant_id=target_tenant, publication_id=publication_id, actor_id=uuid4())

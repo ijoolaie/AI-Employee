@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
@@ -22,9 +23,32 @@ class MarketplaceService:
     """Publication is discovery metadata; import creates a tenant-local package."""
 
     VISIBILITIES = {"private", "unlisted", "public"}
+    SECRET_KEY_FRAGMENTS = {
+        "api_key",
+        "apikey",
+        "authorization",
+        "credential",
+        "password",
+        "private_key",
+        "secret",
+        "token",
+    }
 
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    @classmethod
+    def _assert_no_embedded_secrets(cls, value: object, *, path: str = "policy") -> None:
+        """Reject secret-bearing policy payloads instead of copying them cross-tenant."""
+        if isinstance(value, Mapping):
+            for key, child in value.items():
+                normalized = str(key).strip().lower().replace("-", "_")
+                if any(fragment in normalized for fragment in cls.SECRET_KEY_FRAGMENTS):
+                    raise MarketplaceError(f"marketplace policy contains a prohibited secret field: {path}.{key}")
+                cls._assert_no_embedded_secrets(child, path=f"{path}.{key}")
+        elif isinstance(value, (list, tuple)):
+            for index, child in enumerate(value):
+                cls._assert_no_embedded_secrets(child, path=f"{path}[{index}]")
 
     async def publish(
         self,
@@ -147,10 +171,15 @@ class MarketplaceService:
         if len(source_agents) != len(source_ids):
             raise MarketplaceError("marketplace publication references unavailable agent definitions")
 
+        scope_suffix = publication.id.hex[:8]
+        if workspace_key:
+            scope_suffix = f"{scope_suffix}-{uuid.uuid5(publication.id, workspace_key).hex[:8]}"
+
         imported_agent_ids: list[str] = []
         for source_id in source_ids:
             source_agent = source_agents[source_id]
-            slug_base = f"{source_agent.slug}-marketplace-{publication.id.hex[:8]}"
+            self._assert_no_embedded_secrets(source_agent.model_policy or {}, path="model_policy")
+            slug_base = f"{source_agent.slug}-marketplace-{scope_suffix}"
             slug = slug_base[:120]
             imported_agent = AgentDefinition(
                 tenant_id=tenant_id,
@@ -170,7 +199,7 @@ class MarketplaceService:
             await self.db.flush()
             imported_agent_ids.append(str(imported_agent.id))
 
-        team_slug = f"{source_team.slug}-marketplace-{publication.id.hex[:8]}"[:120]
+        team_slug = f"{source_team.slug}-marketplace-{scope_suffix}"[:120]
         imported_team = TeamDefinition(
             tenant_id=tenant_id,
             slug=team_slug,
