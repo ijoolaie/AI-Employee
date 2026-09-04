@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import floor
+
+FAIRNESS_SCORE_SCALE = 1_000_000
 from typing import Protocol
 
 DEFAULT_TENANT_WEIGHT = 1.0
@@ -79,7 +81,10 @@ class RedisFairnessStore:
     local current = tonumber(current_raw) or 0
     clock = tonumber(clock) or 0
     local start = math.max(current, clock)
-    local finish = start + (1 / tonumber(ARGV[2]))
+    local weight = tonumber(ARGV[2])
+    local scale = tonumber(ARGV[3])
+    local increment = math.floor(scale / weight + 0.5)
+    local finish = start + increment
     redis.call('ZADD', KEYS[1], finish, ARGV[1])
     local frontier = redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES')
     local frontier_score = finish
@@ -87,7 +92,7 @@ class RedisFairnessStore:
         frontier_score = tonumber(frontier[2])
     end
     redis.call('SET', KEYS[2], frontier_score)
-    return {finish, frontier_score, was_new and 1 or 0}
+    return {tostring(finish), tostring(frontier_score), was_new and 1 or 0}
     """
 
     def __init__(self, redis) -> None:
@@ -103,8 +108,13 @@ class RedisFairnessStore:
             clock_key,
             tenant_id,
             str(weight),
+            str(FAIRNESS_SCORE_SCALE),
         )
-        return float(result[0]), float(result[1]), bool(int(result[2]))
+        return (
+            float(result[0]) / FAIRNESS_SCORE_SCALE,
+            float(result[1]) / FAIRNESS_SCORE_SCALE,
+            bool(int(result[2])),
+        )
 
 
 def build_redis_scheduler(redis_url: str) -> TenantFairScheduler:
