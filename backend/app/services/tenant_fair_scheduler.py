@@ -1,20 +1,9 @@
-"""Distributed tenant-fair admission/routing primitives.
-
-The scheduler uses Redis as a small virtual-finish-time ledger. Each tenant
-receives a monotonically increasing virtual finish score; newly submitted
-work from a tenant with a large backlog therefore receives a lower Celery
-priority than work from a tenant that has not recently consumed capacity.
-
-This is an admission/routing fairness signal, not a production SLO claim.
-Redis failures fail open to the neutral priority so queue availability is not
-made dependent on the fairness sidecar state.
-"""
+"""Distributed tenant-fair admission/routing primitives."""
 from __future__ import annotations
 
 from dataclasses import dataclass
 from math import floor
 from typing import Protocol
-
 
 DEFAULT_TENANT_WEIGHT = 1.0
 MIN_PRIORITY = 0
@@ -39,13 +28,8 @@ class FairnessDecision:
 
 
 def _priority_from_distance(distance: float) -> int:
-    """Map virtual-finish distance into Celery's bounded 0..9 priority range.
-
-    A tenant closest to the current fair frontier gets the highest priority.
-    Larger distance means that tenant has recently consumed more scheduling
-    turns and should yield capacity to other tenants.
-    """
-    return max(MIN_PRIORITY, min(MAX_PRIORITY, MAX_PRIORITY - floor(max(distance, 0.0))))
+    """Map virtual-finish distance to Redis/Celery's bounded 0..9 priority."""
+    return max(MIN_PRIORITY, min(MAX_PRIORITY, floor(max(distance, 0.0))))
 
 
 class TenantFairScheduler:
@@ -94,5 +78,10 @@ def build_redis_scheduler(redis_url: str) -> TenantFairScheduler:
     """Build the production scheduler without logging or exposing the URL."""
     from redis import Redis
 
-    store = Redis.from_url(redis_url, decode_responses=True, socket_connect_timeout=1.0, socket_timeout=1.0)
+    store = Redis.from_url(
+        redis_url,
+        decode_responses=True,
+        socket_connect_timeout=1.0,
+        socket_timeout=1.0,
+    )
     return TenantFairScheduler(store)
