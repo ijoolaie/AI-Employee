@@ -36,3 +36,13 @@ def test_unknown_tasks_use_unrouted_safety_queue():
         OUTBOX_QUEUE,
         EMAIL_QUEUE,
     }
+
+
+def test_worker_delivery_is_bounded_and_late_acked():
+    assert celery_app.conf.worker_prefetch_multiplier == 1
+    assert celery_app.conf.task_acks_late is True
+    assert celery_app.conf.task_reject_on_worker_lost is True
+
+
+def test_worker_recycling_has_an_explicit_bound():
+    assert celery_app.conf.worker_max_tasks_per_child == 1000
