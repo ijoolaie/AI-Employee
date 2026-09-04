@@ -8,6 +8,7 @@ class FakeStore:
 
     def reserve(self, score_key, clock_key, tenant_id, weight):
         scores = self.scores.setdefault(score_key, {})
+        was_new = tenant_id not in scores
         current = float(scores.get(tenant_id, 0.0))
         clock = float(self.clock.get(clock_key, 0.0))
         start = max(current, clock)
@@ -15,7 +16,7 @@ class FakeStore:
         scores[tenant_id] = finish
         frontier_score = min(scores.values()) if scores else finish
         self.clock[clock_key] = frontier_score
-        return finish, frontier_score
+        return finish, frontier_score, was_new
 
 
 def test_scheduler_rejects_missing_or_invalid_tenant_configuration():
@@ -54,7 +55,17 @@ def test_busy_tenant_does_not_starve_newcomer():
     newcomer = scheduler.route("new")
 
     assert newcomer.virtual_finish == 4.0
+    assert newcomer.queue_priority == 0
     assert newcomer.queue_priority <= first.queue_priority
+
+
+def test_new_tenant_gets_starvation_protection_priority():
+    scheduler = TenantFairScheduler(FakeStore())
+    scheduler.route("busy")
+    scheduler.route("busy")
+    newcomer = scheduler.route("new")
+
+    assert newcomer.queue_priority == 0
 
 
 def test_weighted_tenant_gets_smaller_virtual_finish_increment():
