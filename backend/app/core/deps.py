@@ -3,9 +3,9 @@
 from typing import Annotated
 from uuid import UUID
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, APIKeyHeader
-from jose import JWTError
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -74,7 +74,7 @@ async def get_current_context(
         tenant_id = payload.get("tenant_id")
         if not user_id or not tenant_id:
             raise HTTPException(status_code=401, detail="Invalid token payload")
-    except JWTError:
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
     user_result = await db.execute(select(User).options(selectinload(User.roles).selectinload(Role.permissions)).where(User.id == user_id))
