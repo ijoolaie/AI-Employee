@@ -46,7 +46,7 @@ This is the current `main` baseline after Phase 14.13 implementation and before 
 ## Phase 14.13 evidence record
 
 - Test-merge evidence SHA: `98771d087bc658d633a99a63c9ef0476e13c18ae`.
-- Final main merge SHA: `599cb8b167103e3627678739f8440d8540d854cad55f1`.
+- Final main merge SHA: `599cb8b167103e3627678739f8440d854cad55f1`.
 - Scenario set: 240-request bounded API burst; 500 scheduler reservations; 32 concurrent resource-admission attempts with lease-expiry recovery.
 - Acceptance: 3/3 load-capacity tests passed in 5.03s; no 5xx responses; controlled 429 rate-limit responses are accepted as backpressure; p95 latency and throughput thresholds passed.
 - Artifact: `phase-14-13-load-capacity-98771d087bc658d633a99a63c9ef0476e13c18ae`.
