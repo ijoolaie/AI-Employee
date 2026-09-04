@@ -41,6 +41,10 @@ PR #312 merged at main SHA `7657b4244a47af95960e5854fa52f92a0dbe618b`. It adds a
 
 Only after Stages 1–6 are complete and documentation is reconciled: freeze an immutable release, deploy that exact identity to the real target, collect provider/SLO/DR evidence, complete applicable independent security/compliance review, execute ordered acceptance and record the final decision.
 
+## Infrastructure validation checkpoint
+
+PR #315 merged to `main` at `93c717969a192ae5b90b909c2c4e8aaa89bea50a`. The production-like infrastructure validation ran on GitHub-hosted Linux infrastructure using ephemeral CI-only credentials and passed: production Compose contract, image builds, PostgreSQL/Redis readiness, Alembic migrations, API/Worker/Beat/Frontend startup, PostgreSQL persistence after restart, Redis persistence after restart, API dependency readiness, Frontend HTTP reachability, and real PostgreSQL custom-format backup plus isolated restore. This is local/CI engineering evidence, not external production certification or measured target-environment RPO/RTO.
+
 ## Evidence rules
 
 - CI/internal load and security validation = engineering evidence.
