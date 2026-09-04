@@ -31,6 +31,10 @@ PR #312 was merged to `main` at `7657b4244a47af95960e5854fa52f92a0dbe618b`. The 
 
 PR #311 was merged to `main` at `56984bc793ba3119f8c6d45bf9b03f738ce2d59e`. The implementation adds a vendor platform-admin optimization summary backed by existing tenant-scoped AI provider call and Run records. It reports monthly usage, total cost, cost per successful WorkItem, plan run/token budget utilization and deterministic warning/exhausted states. It also provides worker-sizing decision support that converts observed throughput into a recommended worker count using explicit utilization headroom. PR CI passed CodeQL, full backend/frontend CI, architecture, security/privacy, observability and rollback/alerting checks. This is operational decision support, not production capacity certification.
 
+## Infrastructure validation checkpoint
+
+PR #315 was merged to `main` at `93c717969a192ae5b90b909c2c4e8aaa89bea50a`. Production-like infrastructure validation run `33884955068` passed on GitHub-hosted Linux infrastructure. The run built the production application images, started PostgreSQL/Redis/storage, waited for dependency readiness, ran the full Alembic migration, started API/Worker/Beat/Frontend, verified PostgreSQL and Redis persistence across container restart, verified API dependency readiness and Frontend HTTP reachability, and completed a real PostgreSQL custom-format `pg_dump` followed by isolated `pg_restore`. The stack used ephemeral CI-only credentials and was torn down after validation. This is local/CI engineering evidence only; it does not establish production deployment, production SLOs, target-environment RPO/RTO or external certification.
+
 ## Phase 14.14 security/privacy/compliance checkpoint
 
 The merged Stage 4 implementation adds deterministic recursive redaction for credentials, tokens, connection strings and direct PII before structured audit metadata is persisted or JSON logs are emitted. Tenant-scoped authorization and tool-side-effect regressions pass. The dedicated security gate passed its regression suite, Ruff and `pip-audit`; CodeQL Python/JavaScript, full CI, architecture, observability and rollback/alerting checks also passed on the merge candidate.
@@ -47,7 +51,7 @@ Phase 14.14 merged main SHA: `0789d091ab8f804d7bfc853470b9df42108085ed`. Securit
 
 ## Current mainline
 
-`7657b4244a47af95960e5854fa52f92a0dbe618b` is the Phase 14.16 implementation merge and current mainline at reconciliation time.
+`93c717969a192ae5b90b909c2c4e8aaa89bea50a` is the Phase 14.16 implementation plus infrastructure-validation merge baseline; canonical documentation reconciliation continues on subsequent commits.
 
 ## Phase 14.13 evidence record
 
