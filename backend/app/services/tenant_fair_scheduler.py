@@ -12,11 +12,7 @@ DEFAULT_PRIORITY = 4
 
 
 class FairnessStore(Protocol):
-    def get(self, key: str): ...
-    def set(self, key: str, value, **kwargs): ...
-    def zscore(self, key: str, member: str): ...
-    def zadd(self, key: str, mapping: dict[str, float]): ...
-    def zrange(self, key: str, start: int, end: int, withscores: bool = False): ...
+    def reserve(self, score_key: str, clock_key: str, tenant_id: str, weight: float) -> tuple[float, float]: ...
 
 
 @dataclass(frozen=True)
@@ -54,18 +50,12 @@ class TenantFairScheduler:
             raise ValueError("tenant weight must be positive")
 
         tenant_id = tenant_id.strip()
-        current = self.store.zscore(self.score_key, tenant_id)
-        clock = self.store.get(self.clock_key)
-        current_score = float(current) if current is not None else 0.0
-        virtual_clock = float(clock) if clock is not None else 0.0
-
-        start = max(current_score, virtual_clock)
-        finish = start + (1.0 / weight)
-        self.store.zadd(self.score_key, {tenant_id: finish})
-        self.store.set(self.clock_key, str(min(start, finish)))
-
-        frontier = self.store.zrange(self.score_key, 0, 0, withscores=True)
-        frontier_score = float(frontier[0][1]) if frontier else start
+        finish, frontier_score = self.store.reserve(
+            self.score_key,
+            self.clock_key,
+            tenant_id,
+            weight,
+        )
         return FairnessDecision(
             tenant_id=tenant_id,
             virtual_finish=finish,
@@ -74,14 +64,49 @@ class TenantFairScheduler:
         )
 
 
+class RedisFairnessStore:
+    """Atomic Redis implementation of the tenant virtual-finish ledger."""
+
+    _RESERVE_SCRIPT = """
+    local current = redis.call('ZSCORE', KEYS[1], ARGV[1])
+    local clock = redis.call('GET', KEYS[2])
+    current = tonumber(current) or 0
+    clock = tonumber(clock) or 0
+    local start = math.max(current, clock)
+    local finish = start + (1 / tonumber(ARGV[2]))
+    redis.call('ZADD', KEYS[1], finish, ARGV[1])
+    local frontier = redis.call('ZRANGE', KEYS[1], 0, 0, 'WITHSCORES')
+    local frontier_score = finish
+    if #frontier >= 2 then
+        frontier_score = tonumber(frontier[2])
+    end
+    redis.call('SET', KEYS[2], frontier_score)
+    return {finish, frontier_score}
+    """
+
+    def __init__(self, redis) -> None:
+        self.redis = redis
+
+    def reserve(self, score_key: str, clock_key: str, tenant_id: str, weight: float) -> tuple[float, float]:
+        result = self.redis.eval(
+            self._RESERVE_SCRIPT,
+            2,
+            score_key,
+            clock_key,
+            tenant_id,
+            str(weight),
+        )
+        return float(result[0]), float(result[1])
+
+
 def build_redis_scheduler(redis_url: str) -> TenantFairScheduler:
     """Build the production scheduler without logging or exposing the URL."""
     from redis import Redis
 
-    store = Redis.from_url(
+    redis = Redis.from_url(
         redis_url,
         decode_responses=True,
         socket_connect_timeout=1.0,
         socket_timeout=1.0,
     )
-    return TenantFairScheduler(store)
+    return TenantFairScheduler(RedisFairnessStore(redis))
