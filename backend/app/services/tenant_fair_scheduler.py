@@ -12,7 +12,9 @@ DEFAULT_PRIORITY = 4
 
 
 class FairnessStore(Protocol):
-    def reserve(self, score_key: str, clock_key: str, tenant_id: str, weight: float) -> tuple[float, float]: ...
+    def reserve(
+        self, score_key: str, clock_key: str, tenant_id: str, weight: float
+    ) -> tuple[float, float, bool]: ...
 
 
 @dataclass(frozen=True)
@@ -50,16 +52,19 @@ class TenantFairScheduler:
             raise ValueError("tenant weight must be positive")
 
         tenant_id = tenant_id.strip()
-        finish, frontier_score = self.store.reserve(
+        finish, frontier_score, was_new = self.store.reserve(
             self.score_key,
             self.clock_key,
             tenant_id,
             weight,
         )
+        # A newly active tenant gets the highest broker priority once so a
+        # continuously busy tenant cannot monopolize all immediately queued work.
+        priority = MIN_PRIORITY if was_new else _priority_from_distance(finish - frontier_score)
         return FairnessDecision(
             tenant_id=tenant_id,
             virtual_finish=finish,
-            queue_priority=_priority_from_distance(finish - frontier_score),
+            queue_priority=priority,
             weight=weight,
         )
 
@@ -68,9 +73,10 @@ class RedisFairnessStore:
     """Atomic Redis implementation of the tenant virtual-finish ledger."""
 
     _RESERVE_SCRIPT = """
-    local current = redis.call('ZSCORE', KEYS[1], ARGV[1])
+    local current_raw = redis.call('ZSCORE', KEYS[1], ARGV[1])
+    local was_new = current_raw == false
     local clock = redis.call('GET', KEYS[2])
-    current = tonumber(current) or 0
+    local current = tonumber(current_raw) or 0
     clock = tonumber(clock) or 0
     local start = math.max(current, clock)
     local finish = start + (1 / tonumber(ARGV[2]))
@@ -81,13 +87,15 @@ class RedisFairnessStore:
         frontier_score = tonumber(frontier[2])
     end
     redis.call('SET', KEYS[2], frontier_score)
-    return {finish, frontier_score}
+    return {finish, frontier_score, was_new and 1 or 0}
     """
 
     def __init__(self, redis) -> None:
         self.redis = redis
 
-    def reserve(self, score_key: str, clock_key: str, tenant_id: str, weight: float) -> tuple[float, float]:
+    def reserve(
+        self, score_key: str, clock_key: str, tenant_id: str, weight: float
+    ) -> tuple[float, float, bool]:
         result = self.redis.eval(
             self._RESERVE_SCRIPT,
             2,
@@ -96,7 +104,7 @@ class RedisFairnessStore:
             tenant_id,
             str(weight),
         )
-        return float(result[0]), float(result[1])
+        return float(result[0]), float(result[1]), bool(int(result[2]))
 
 
 def build_redis_scheduler(redis_url: str) -> TenantFairScheduler:
