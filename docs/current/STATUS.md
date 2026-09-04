@@ -6,7 +6,7 @@
 
 ## Executive status
 
-Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. **Phase 14.1–14.14 engineering is COMPLETE; Phase 14.15 is IN PROGRESS. Remaining work is ordered in Stages 5–7, with External Production Certification last.**
+Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. **Phase 14.1–14.15 engineering is COMPLETE. Remaining work is ordered in Stages 6–7, with External Production Certification last.**
 
 ## Evidence levels
 
@@ -23,17 +23,17 @@ Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.
 | 2 | #286 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Tenant-fair scheduling, starvation protection and resource isolation with Redis runtime evidence |
 | 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/stress validation and measurable capacity thresholds |
 | 4 | #288 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Security/privacy/compliance engineering extensions and pentest-ready preparation |
-| 5 | #289 | **IN PROGRESS / PR #311** | Capacity, cost and operational optimization |
-| 6 | #290 | **QUEUED** | V1.5 Human + Agent operating-model evolution |
+| 5 | #289 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Capacity, cost and operational optimization |
+| 6 | #290 | **QUEUED / NEXT** | V1.5 Human + Agent operating-model evolution |
 | 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | Immutable release, real deployment, provider/SLO/DR evidence, external security/compliance and ordered Vendor → Reseller → Client acceptance |
 
 **Documentation rule:** every stage updates this file, `docs/00_START_HERE/CURRENT_STATUS.md`, `docs/00_START_HERE/CURRENT_PRIORITIES.md`, `docs/current/PRODUCTIZATION_ROADMAP.md` and `docs/current/09_PRODUCTION_READINESS_STATUS.md` before closure. No stage inherits a completion claim from an older SHA.
 
-## Phase 14.15 verification record — in progress
+## Phase 14.15 verification record
 
-PR #311 adds tenant-scoped monthly unit economics using existing AI provider and Run records, cost per successful WorkItem, deterministic plan budget utilization states, actionable optimization signals and an explicit worker-sizing helper based on observed throughput and utilization headroom. The `/api/v1/admin/optimization` endpoint is restricted to vendor platform administrators. CI evidence is still pending; production capacity remains external-pending.
+PR #311 merged to `main` at `56984bc793ba3119f8c6d45bf9b03f738ce2d59e`. The implementation adds tenant-scoped monthly unit economics from existing AI provider and Run records, cost per successful WorkItem, deterministic plan budget utilization states, actionable optimization signals and worker-sizing decision support using observed throughput and explicit utilization headroom. The `/api/v1/admin/optimization` endpoint is restricted to vendor platform administrators. PR CI passed CodeQL, full backend/frontend CI, architecture, security/privacy, observability and rollback/alerting checks. This is engineering decision support only; production capacity remains external-pending.
 
-## Phase 14.11 verification record
+## Phase 14.11 certification-readiness evidence
 
 PR #291 merged the certification-readiness hardening: fail-fast configuration preflight, cross-platform LF normalization via `.gitattributes`, reproducibility/secret-safe evidence handling and canonical documentation reconciliation. This is engineering evidence only and does not satisfy external certification.
 
@@ -49,15 +49,15 @@ Security evidence artifact: `phase-14-14-security-27e19b67ac58776796b3f3db89dd40
 
 ## Current frontier
 
-Stage 5 (#289) is the active engineering workstream through PR #311. Stage 7 remains external-pending and final.
+Stage 6 (#290) is now the next engineering workstream. Stage 7 remains external-pending and final.
 
 ## What can be claimed now
 
-- Phase 14.1–14.14 engineering implementation is complete on merged `main`.
+- Phase 14.1–14.15 engineering implementation is complete on merged `main`.
 - Phase 14.11 certification-readiness hardening is complete and reconciled.
 - Phase 14.13 has reproducible bounded load/capacity evidence with retained SHA-bound artifact identity.
 - Phase 14.14 has repository-level security/privacy engineering evidence; this does not establish external pentest, compliance certification or production security certification.
-- Phase 14.15 has an implementation candidate for unit economics, budget signals and capacity-sizing decision support; it is not yet accepted as complete until CI/evidence and final documentation reconciliation pass.
+- Phase 14.15 has green repository CI and reconciled engineering evidence for unit economics, budget signals and capacity-sizing decision support; this does not establish production/customer-scale capacity.
 - External production deployment, live provider behavior, measured production SLO/DR evidence, customer acceptance and commercial go-live remain **EXTERNAL-PENDING**.
 
 ## Security rule
