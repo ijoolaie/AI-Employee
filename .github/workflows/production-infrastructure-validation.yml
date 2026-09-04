@@ -90,6 +90,17 @@ jobs:
       - name: Start infrastructure dependencies
         run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" up -d postgres redis storage-init
 
+      - name: Wait for infrastructure readiness
+        run: |
+          for _ in $(seq 1 30); do
+            pg_ready=$(docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1 && echo yes || echo no)
+            redis_ready=$(docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" exec -T redis redis-cli -a "$REDIS_PASSWORD" ping 2>/dev/null | grep -q PONG && echo yes || echo no)
+            if [[ "$pg_ready" == yes && "$redis_ready" == yes ]]; then exit 0; fi
+            sleep 2
+          done
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" ps
+          exit 1
+
       - name: Run database migrations before API readiness gate
         run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" run --rm --no-deps api alembic upgrade head
 
