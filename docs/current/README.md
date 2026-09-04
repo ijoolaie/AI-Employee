@@ -8,8 +8,17 @@ This directory contains the maintained project documentation for the current `ma
 2. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap and phase status.
 3. `../00_START_HERE/CURRENT_STATUS.md` — executive current-state summary.
 4. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
-5. `49_CURRENT_STATE_RECONCILIATION_2026-08-31.md` — latest reconciliation of code, releases, CI, PR history, and roadmap.
-6. `50_PRODUCTION_CANDIDATE_READINESS_2026-08-31.md` — current production-candidate boundary and evidence.
+5. `PHASE_14_EXTERNAL_PRODUCTION_EVIDENCE.md` — final external-production/customer-acceptance evidence gate.
+6. `49_CURRENT_STATE_RECONCILIATION_2026-08-31.md` — retained point-in-time reconciliation evidence.
+7. `50_PRODUCTION_CANDIDATE_READINESS_2026-08-31.md` — retained point-in-time production-candidate evidence.
+
+## Current phase position
+
+- Phase 13 Agent Teams & Marketplace: **engineering complete**.
+- Phase 14.1–14.9: **engineering complete**.
+- Phase 14.10: **external-pending**.
+
+The active external-production work is tracked by issues #210, #19 and #269. No external certification or customer acceptance is inferred from repository/CI evidence.
 
 ## Document classes
 
