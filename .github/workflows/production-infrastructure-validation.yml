@@ -80,8 +80,17 @@ jobs:
       - name: Validate production compose contract
         run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml config --quiet
 
-      - name: Build and start full production-like stack
-        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" up -d --build
+      - name: Build production application images
+        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" build api worker beat frontend
+
+      - name: Start infrastructure dependencies
+        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" up -d postgres redis storage-init
+
+      - name: Run database migrations before API readiness gate
+        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" run --rm --no-deps api alembic upgrade head
+
+      - name: Start API Worker Beat and Frontend
+        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" up -d api worker beat frontend
 
       - name: Validate PostgreSQL Redis API Worker Beat Frontend lifecycle and persistence
         run: bash scripts/production_infrastructure_validation.sh
@@ -89,9 +98,11 @@ jobs:
       - name: Validate real PostgreSQL backup and isolated restore
         run: bash scripts/production_backup_restore_smoke.sh
 
-      - name: Capture service state on failure
+      - name: Capture service state and logs on failure
         if: failure()
-        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" ps
+        run: |
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" ps
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" logs --no-color --tail=200 api worker beat frontend || true
 
       - name: Tear down ephemeral stack
         if: always()
