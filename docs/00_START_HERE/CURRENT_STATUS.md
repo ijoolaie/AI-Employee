@@ -1,20 +1,20 @@
 # Current Status
 
 **Last reconciled:** 2026-09-04  
-**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.9 ENGINEERING COMPLETE / REMAINING ENGINEERING STAGES 1–6 QUEUED/IN PROGRESS / PHASE 14.10 EXTERNAL-PENDING
+**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.12 ENGINEERING COMPLETE / REMAINING ENGINEERING STAGES 14.11, 14.13–14.16 ACTIVE ROADMAP / PHASE 14.10 EXTERNAL-PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work uses shared execution contracts for Human, Agent and collaborative execution under common authorization, approval, tool, audit and evidence controls.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.9 engineering implementation is complete. The remaining roadmap is now explicitly ordered so **External Production Certification & Customer Acceptance is the final stage**.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.12 engineering implementation is complete; Phase 14.12 is backed by Redis runtime fairness/resource-isolation evidence on `ac9fdf7063b459b3be5d4e8104e5b1f34ecb284d`. The remaining roadmap is now explicitly ordered so **External Production Certification & Customer Acceptance is the final stage**.
 
 ## Ordered remaining stages
 
 | Stage | Issue | Status | Outcome |
 |---|---:|---|---|
 | 1 | #285 | **IN PROGRESS** | Certification-readiness, configuration preflight and cross-platform portability hardening |
-| 2 | #286 | **QUEUED** | Tenant-fair scheduling, starvation protection and resource isolation |
+| 2 | #286 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Tenant-fair scheduling, starvation protection and resource isolation with Redis runtime evidence |
 | 3 | #287 | **QUEUED** | Load/stress validation with measurable capacity thresholds |
 | 4 | #288 | **QUEUED** | Security/privacy/compliance engineering extensions and pentest-ready scope |
 | 5 | #289 | **QUEUED** | Capacity, cost and operational optimization |
@@ -54,7 +54,7 @@ These establish engineering/repository evidence only. Production SLO attainment,
 | Phase 11 Client / Unified Execution acceptance | **COMPLETE** |
 | Phase 12 Test Center | **IMPLEMENTED / OPERATIONAL HARDENING** |
 | Phase 13 Agent Teams & Marketplace | **ENGINEERING COMPLETE** |
-| Phase 14.1–14.9 | **ENGINEERING COMPLETE** |
+| Phase 14.1–14.12 | **ENGINEERING COMPLETE** |
 | Remaining engineering stages 1–6 | **ORDERED / ACTIVE ROADMAP** |
 | Phase 14.10 External Production / Customer Acceptance | **FINAL / EXTERNAL-PENDING** |
 
@@ -69,7 +69,7 @@ These establish engineering/repository evidence only. Production SLO attainment,
 
 ## Current mainline
 
-`9efc08ab76c9d403338e2735561ce372b9294435`
+`ac9fdf7063b459b3be5d4e8104e5b1f34ecb284d`
 
 This is the current `main` baseline after documentation reconciliation. It is **not** externally production-certified merely because repository checks are green.
 
@@ -89,7 +89,7 @@ All remain open until independent evidence is supplied and reconciled to one exa
 - Phase 12 P12.1-P12.6 is implemented and operationally hardened.
 - Phase 13 Agent Teams & Marketplace engineering implementation is complete.
 - Phase 13 Marketplace UI and browser acceptance are merged.
-- Phase 14.1–14.9 engineering implementation is complete.
+- Phase 14.1–14.12 engineering implementation is complete; Phase 14.12 includes Redis runtime fairness/resource-isolation evidence.
 - Stage 1 certification-readiness hardening has started; its branch changes are not yet merged to `main`.
 - External production deployment, live provider behavior, measured production SLO/DR evidence, customer acceptance and commercial go-live remain **EXTERNAL-PENDING**.
 
