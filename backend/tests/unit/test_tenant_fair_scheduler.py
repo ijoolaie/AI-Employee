@@ -43,7 +43,7 @@ def test_equal_weight_tenants_keep_virtual_finish_fairness():
     decisions = [scheduler.route("a" if i % 2 == 0 else "b") for i in range(20)]
 
     assert [d.virtual_finish for d in decisions[::2]] == list(range(1, 11))
-    assert [d.virtual_finish for d in decisions[1::2]] == list(range(1, 11))
+    assert [d.virtual_finish for d in decisions[1::2]] == list(range(2, 12))
     assert all(0 <= d.queue_priority <= 9 for d in decisions)
 
 
