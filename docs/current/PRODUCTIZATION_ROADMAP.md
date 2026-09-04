@@ -2,125 +2,68 @@
 
 ## Current position — 2026-09-04
 
-V1.4 remains the frozen architecture foundation. V1.5 is the active Human + Agent operating-model extension.
+V1.4 remains the frozen architecture foundation. V1.5 is the Human + Agent operating-model extension. Phase 11 is complete, Phase 12 is operationally hardened, Phase 13 engineering is complete, and Phase 14.1–14.9 engineering is complete.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6, including authorized UI and stale-run expiration hardening. Phase 13 Agent Teams & Marketplace engineering implementation is complete through authorized UI and deterministic browser acceptance. Phase 14 engineering workstreams 14.1–14.9 are complete; Phase 14.10 is the only remaining external-evidence gate.
+The remaining roadmap is intentionally ordered so **External Production Certification & Customer Acceptance is the final stage**.
 
-## Product direction
+## Ordered remaining stages
 
-The platform is evolving toward shared business execution contracts in which Humans and specialized Agents operate under the same core boundaries:
+### Stage 1 — Phase 14.11: Certification Readiness & Cross-Platform Hardening
+**Issue #285 — IN PROGRESS**
 
-- tenant isolation;
-- authorization/RBAC;
-- policy and approval;
-- scoped tools;
-- audit/history;
-- lifecycle and concurrency controls.
+Harden the certification path before any external deployment: LF-normalize shell scripts, add deterministic application configuration preflight, improve local evidence reproducibility and preserve secret-safe evidence boundaries.
 
-Existing Employee-backed functionality remains compatible while changed capabilities migrate incrementally.
+### Stage 2 — Phase 14.12: Tenant-Fair Scheduling & Resource Isolation
+**Issue #286 — QUEUED**
 
-## Phase status
+Extend the existing queue/concurrency/routing baseline with explicit tenant fairness, starvation protection, bounded per-tenant resource shares and measurable fairness regression coverage.
 
-### Phase 8 — Unified Execution Foundation
-**COMPLETE / VERIFIED FOUNDATION.** Human and Agent execution, lifecycle and concurrency hardening form the shared execution substrate.
+### Stage 3 — Phase 14.13: Load, Stress & Capacity Validation
+**Issue #287 — QUEUED**
 
-### Phase 9 — Platform Command Center
-**IMPLEMENTED / HARDENING CONTINUES.** Role-specific Platform operations are implemented; ongoing work validates runtime behavior.
+Create reproducible load/stress scenarios across API, WorkItem execution, queues/workers, routing, cost controls and recovery paths, with measurable thresholds and exact artifact identity.
 
-### Phase 10 — Reseller Operations Workspace
-**IMPLEMENTED / HARDENING CONTINUES.** Role-aware reseller operations are implemented; runtime validation continues.
+### Stage 4 — Phase 14.14: Security, Privacy & Compliance Engineering Extensions
+**Issue #288 — QUEUED**
 
-### Phase 11 — Client Business Workspace / Unified Execution Acceptance
-**COMPLETE.** Real-stack Human and Agent WorkItem acceptance passed with zero failed product gates.
+Refresh threat modeling, expand security regression coverage, verify privacy/data-retention boundaries, map compliance controls and prepare an external-pentest scope/runbook. External findings remain external evidence.
 
-### Phase 12 — Test Center & Evidence Platform
-**IMPLEMENTED / OPERATIONAL HARDENING.**
+### Stage 5 — Phase 14.15: Capacity, Cost & Operational Optimization
+**Issue #289 — QUEUED**
 
-#### P12.1 — Test Definition Contract
-**IMPLEMENTED / VERIFIED.** Tenant-scoped definitions with typed prerequisites, expected results and evidence requirements.
+Use measured load results to establish capacity/sizing guidance, cost-per-WorkItem visibility, budget/resource optimization and operational runbooks without weakening tenant isolation or safety controls.
 
-#### P12.2 — Safe Test Execution
-**IMPLEMENTED / VERIFIED.** Tenant binding, workspace checks, authorization boundaries and safe fixture controls are enforced at the backend service/API boundary.
+### Stage 6 — Phase 14.16: V1.5 Human + Agent Operating Model
+**Issue #290 — QUEUED**
 
-#### P12.3 — Test Run Lifecycle
-**IMPLEMENTED / VERIFIED.** Durable lifecycle with concurrency protection and stale-run expiration.
+Formalize the Human + Agent operating model on the unified WorkItem substrate, align Platform/Reseller/Client UX and APIs, strengthen governance/approval/audit flows and migrate remaining Employee-backed capabilities incrementally.
 
-#### P12.4 — Evidence & Artifacts
-**IMPLEMENTED / VERIFIED.** Structured results/evidence, runtime and migration identity, git SHA identity and tenant-scoped artifact references are persisted for completed runs.
+### Stage 7 — Phase 14.10: External Production Certification & Customer Acceptance
+**Issues #269 / #210 / #19 — FINAL / EXTERNAL-PENDING**
 
-#### P12.5 — Run History
-**IMPLEMENTED / VERIFIED.** Tenant/workspace-scoped history supports filtering, bounded pagination and stable ordering.
+Only after Stages 1–6 are complete and their documentation is reconciled:
 
-#### P12.6 — Exportable Verification Record
-**IMPLEMENTED / VERIFIED.** Completed runs can produce immutable tenant-scoped verification snapshots with explicit evidence boundaries.
+1. freeze one exact immutable release candidate;
+2. reconcile artifacts, migrations and checksums;
+3. deploy that exact identity to the real target;
+4. collect live provider, production SLO/error-budget and DR RPO/RTO evidence;
+5. complete applicable external security/compliance review and rollback evidence;
+6. execute ordered Vendor → Reseller → Client acceptance;
+7. record exceptions/residual risks and the final certification decision.
 
-#### Authorized UI
-**IMPLEMENTED / VERIFIED.** Customer-facing Test Center UI is merged to `main`.
+CI, repository tests, browser acceptance, local Docker validation and rehearsal evidence remain engineering evidence and cannot close Stage 7.
 
-### Phase 13 — Agent Teams & Marketplace
-**ENGINEERING IMPLEMENTATION COMPLETE / EXTERNAL ACCEPTANCE PENDING.**
+## Completed baseline
 
-#### 13.1 — Team Definition Contract
-**IMPLEMENTED.** Tenant-scoped TeamDefinition and immutable TeamVersion contracts.
-
-#### 13.2 — Team Installation Boundary
-**IMPLEMENTED.** Authorized tenant-local TeamInstallation with workspace scoping and audit coverage.
-
-#### 13.3 — Team Execution Contract
-**IMPLEMENTED.** Installed teams dispatch through the canonical WorkItem/Agent execution substrate.
-
-#### 13.4 — Evaluation & Versioning
-**IMPLEMENTED.** Immutable TeamEvaluation records tied to TeamVersion.
-
-#### 13.5 — Marketplace Boundary
-**IMPLEMENTED / BACKEND.** Publication/discovery plus authorized cross-tenant import with tenant-local copies and provenance. No AgentInstance is provisioned automatically.
-
-#### 13.6 — Authorized UI
-**IMPLEMENTED / MERGED.** Authenticated Marketplace discovery, workspace-scoped install review, tenant-local result/provenance and explicit install/acceptance/deployment boundary messaging.
-
-#### 13.7 — End-to-End Product Acceptance
-**IMPLEMENTED / MERGED.** Playwright acceptance covers authenticated discovery, workspace-scoped review, deterministic installation UX and authorization failure handling. Browser acceptance does not claim a live production cross-tenant environment.
-
-### Phase 14 — Scale, Governance & Production
-**ENGINEERING 14.1–14.9 COMPLETE / 14.10 EXTERNAL-PENDING.**
-
-#### 14.1 — Queue / Worker Isolation
-**IMPLEMENTED / MERGED.** Explicit Celery queue topology and worker separation.
-
-#### 14.2 — Concurrency, Backpressure & Fairness
-**IMPLEMENTED / MERGED.** Bounded prefetch, late acknowledgement, worker-loss redelivery and worker recycling baseline. This is not a full tenant-fairness scheduler.
-
-#### 14.3 — Routing & Scheduling
-**IMPLEMENTED / MERGED.** Centralized schedule cadence and routing regression coverage.
-
-#### 14.4 — Cost & Usage Controls
-**IMPLEMENTED / MERGED.** Tenant-scoped usage cost-limit enforcement primitive and regression coverage.
-
-#### 14.5 — SLO, Reliability & Observability
-**IMPLEMENTED / MERGED.** Aggregate-only SLO outcome/error-budget instrumentation. Production attainment remains deployment evidence.
-
-#### 14.6 — Disaster Recovery / Backup & Restore
-**IMPLEMENTED / MERGED.** Reproducible backup/verification/isolated-restore scripts and recovery baseline with planning RPO/RTO thresholds. Production RPO/RTO remains external evidence.
-
-#### 14.7 — Security & Compliance Hardening
-**IMPLEMENTED / MERGED.** Marketplace import collision hardening, secret-bearing policy rejection and negative-path coverage. This is engineering hardening, not external compliance certification.
-
-#### 14.8 — Regression & Release Gates
-**IMPLEMENTED / MERGED.** CI source-level contract coverage for workflow applicability, migrations, backend/frontend regression, exact release identity, checksums and edition artifact source identity.
-
-#### 14.9 — Incident Response & Operational Readiness
-**IMPLEMENTED ENGINEERING BASELINE / MERGED.** Incident taxonomy, severity model, ownership boundaries, actionable response/rollback/recovery flow, sanitized evidence capture and exercise requirements are documented and contract-validated in CI. No real incident or production-response claim is implied.
-
-#### 14.10 — External Production Certification & Customer Acceptance Evidence
-**EXTERNAL-PENDING.** The final gate requires one exact immutable release identity plus independent deployment, provider, SLO, DR, security/compliance, Vendor → Reseller → Client acceptance and rollback evidence. CI/repository evidence alone cannot close this gate.
-
-## Evidence boundary
-
-Engineering implementation, CI, CodeQL, Architecture Guard, operational workflow results and local runtime evidence are distinct from external production evidence. None of them alone establishes live deployment, live third-party provider validation, measured production SLO attainment, customer acceptance, commercial go-live or independent certification.
+- Phase 11 Unified Execution — COMPLETE.
+- Phase 12 Test Center P12.1–P12.6 — IMPLEMENTED / OPERATIONAL HARDENING.
+- Phase 13 Agent Teams & Marketplace — ENGINEERING COMPLETE.
+- Phase 14.1–14.9 — ENGINEERING COMPLETE.
+- Phase 14.10 local certification harness — IMPLEMENTED; successful local run remains engineering evidence only.
 
 ## Cross-cutting Definition of Done
 
-Every phase must preserve:
+Every stage must preserve:
 
 - backend-enforced tenant isolation;
 - RBAC at API/service boundaries;
@@ -132,12 +75,9 @@ Every phase must preserve:
 - secrets excluded from source/artifacts;
 - one authoritative Alembic graph;
 - reproducible CI/release artifacts;
-- explicit local/CI/production evidence boundaries.
+- explicit local/CI/production evidence boundaries;
+- documentation reconciliation before stage closure.
 
-## Immediate execution order
+## Evidence boundary
 
-1. Preserve completed Phase 13 and Phase 14.1–14.9 engineering evidence.
-2. Maintain the Phase 14.10 external evidence gate.
-3. Build a fresh immutable production candidate from the intended current mainline only when an external target exists.
-4. Reconcile deployment, artifacts, migrations, provider validation, measured SLO/DR evidence and Vendor → Reseller → Client acceptance to that exact candidate.
-5. Do not claim commercial production readiness until the independent evidence package is accepted.
+Engineering implementation, CI, CodeQL, Architecture Guard, operational workflow results and local runtime evidence are distinct from external production evidence. None of them alone establishes live deployment, live third-party provider validation, measured production SLO attainment, customer acceptance, commercial go-live or independent certification.
