@@ -4,9 +4,9 @@
 
 ## Current release and project boundary
 
-The repository's current engineering baseline includes the completed Phase 13 implementation and Phase 14.1–14.12 engineering workstreams. Before external certification, the remaining engineering roadmap is now explicitly ordered as Stages 1–6. **Phase 14.10 — External Production Certification & Customer Acceptance Evidence is Stage 7 and the final gate.**
+The repository's current engineering baseline includes the completed Phase 13 implementation and Phase 14.1–14.13 engineering workstreams. Phase 14.13 adds bounded synthetic load/capacity evidence with explicit thresholds and retained artifact identity. Before external certification, the remaining engineering roadmap is ordered as Stages 1–6. **Phase 14.10 — External Production Certification & Customer Acceptance Evidence is Stage 7 and the final gate.**
 
-Repository implementation and CI/release verification remain distinct from external production certification. No repository state alone establishes live deployment, provider operation, measured production SLO attainment, customer acceptance, commercial go-live, or independent certification.
+Repository implementation and CI verification remain distinct from external production certification. No repository state alone establishes live deployment, provider operation, measured production SLO attainment, customer acceptance, commercial go-live, or independent certification.
 
 ## Ordered remaining work
 
@@ -14,7 +14,7 @@ Repository implementation and CI/release verification remain distinct from exter
 |---|---:|---|---|
 | 1 | #285 | **IN PROGRESS** | Certification-readiness, configuration preflight, cross-platform portability |
 | 2 | #286 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Tenant-fair scheduling and resource isolation with Redis runtime evidence |
-| 3 | #287 | **QUEUED** | Load/stress and measurable capacity validation |
+| 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/stress and measurable capacity validation |
 | 4 | #288 | **QUEUED** | Security/privacy/compliance engineering extensions |
 | 5 | #289 | **QUEUED** | Capacity, cost and operational optimization |
 | 6 | #290 | **QUEUED** | V1.5 Human + Agent operating-model evolution |
@@ -22,55 +22,19 @@ Repository implementation and CI/release verification remain distinct from exter
 
 Every engineering stage must reconcile the canonical status, priorities, roadmap and this production-readiness document before closure.
 
-## Current engineering evidence
+## Phase 14.13 engineering evidence
 
-The following capabilities are implemented and verified at repository/CI level:
+The dedicated Phase 14.13 Load & Capacity Evidence workflow passed its three bounded scenarios on CI: API health burst, Redis-backed scheduler/Celery routing capacity, and tenant resource capacity with lease-expiry recovery. The tests completed 3/3 in 5.03 seconds on test-merge SHA `98771d087bc658d633a99a63c9ef0476e13c18ae`. The final squashed main merge is `599cb8b167103e3627678739f8440d854cad55f1`. Artifact `phase-14-13-load-capacity-98771d087bc658d633a99a63c9ef0476e13c18ae` has SHA256 `1f19b7d7ee6adc0623904bec76eaed4619ee88bca02af7d65107dae7ae925845`.
 
-- unified Human/Agent WorkItem execution substrate;
-- tenant-scoped authorization and RBAC boundaries;
-- approval and execution-policy enforcement;
-- audit and execution-history records;
-- Agent Team definition, installation, execution and evaluation foundations;
-- authorized Marketplace publication/import and browser acceptance;
-- queue/worker isolation;
-- concurrency/backpressure baseline;
-- routing and scheduling controls;
-- tenant-scoped usage/cost controls;
-- SLO/reliability/observability instrumentation;
-- backup/restore and disaster-recovery baseline;
-- security/compliance engineering hardening;
-- regression/release gates;
-- incident-response and operational-readiness baseline;
-- customer delivery/handoff package;
-- local Phase 14.10 production-like certification harness.
-
-These are engineering capabilities. Their existence does not by itself certify an external production environment.
+The API scenario treats HTTP 429 as controlled rate-limit/backpressure behavior while rejecting all 5xx and unexpected statuses; p95 latency and throughput thresholds also passed. This is reproducible bounded CI engineering evidence, not a production/customer-scale capacity claim.
 
 ## Stage 7 — External Production Certification
 
 **Status: EXTERNAL-PENDING / FINAL STAGE.**
 
-Required evidence must be attached to one exact immutable release identity:
+Required evidence must be attached to one exact immutable release identity: release SHA/tag and checksums, real-target deployment record, live provider validation, measured production SLO/error budget, target backup/restore with RPO/RTO, applicable independent security/compliance evidence, ordered Vendor → Reseller → Client acceptance, rollback evidence, and final exceptions/residual-risk disposition.
 
-1. exact release SHA/tag/ref and artifact checksums;
-2. real target deployment record and deployed SHA;
-3. live provider/API validation;
-4. measured production SLO/error-budget evidence;
-5. target backup/restore drill with measured RPO/RTO;
-6. security/compliance review and applicable independent evidence;
-7. Vendor → Reseller → Client acceptance where applicable;
-8. rollback rehearsal/readiness evidence;
-9. exceptions, residual risks and final disposition.
-
-The existing repository and CI evidence cannot substitute for these external records.
-
-## Production-like / local evidence boundary
-
-The repository contains production-like Docker/runtime, backup/restore, recovery, observability, rollback and regression evidence. These are engineering verification artifacts and remain distinct from evidence generated by the actual external target.
-
-## Customer delivery boundary
-
-The current customer delivery package is prepared. It requires target-specific tenant/RBAC verification, secret-manager configuration, deployment/provider records, monitoring and alert destinations, backup/restore ownership, rollback ownership, and Vendor/Reseller/Customer acceptance records. It is a handoff contract, not proof of a live customer deployment.
+The existing repository, CI and synthetic load evidence cannot substitute for these external records.
 
 ## Security rule
 
