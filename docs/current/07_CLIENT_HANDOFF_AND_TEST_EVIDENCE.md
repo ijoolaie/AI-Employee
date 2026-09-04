@@ -1,7 +1,7 @@
 # Client Handoff & Test Evidence — Current Project Position
 
-**Status date:** 2026-08-24
-**Repository:** `ijoolaie/AI-Employee`
+**Status date:** 2026-09-04  
+**Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** current certification boundary, productization evidence, handoff state and remaining deployment/commercial gates.
 
 > Historical RC8/RC9 documents remain audit history. Current productization truth is controlled by `docs/current/PRODUCTIZATION_ROADMAP.md` and the current evidence records.
@@ -65,7 +65,8 @@ The current supported-version policy is documented in `docs/current/26_RELEASE_C
 The repository now contains explicit preparation contracts for the remaining external work:
 
 - `docs/current/28_PRODUCTION_ENVIRONMENT_PREPARATION.md` — required production inputs, release admission, deployment order, recovery preparation and evidence boundary;
-- `docs/current/29_COMMERCIAL_SUPPORT_UPDATE_POLICY.md` — Vendor/Reseller/Customer responsibilities, support escalation, update rules and incident handling.
+- `docs/current/29_COMMERCIAL_SUPPORT_UPDATE_POLICY.md` — Vendor/Reseller/Customer responsibilities, support escalation, update rules and incident handling;
+- `docs/current/30_CUSTOMER_DELIVERY_PACKAGE.md` — current implementation scope, handoff checklist, evidence boundary and explicit acceptance outcomes.
 
 These documents define the operating contract but do not claim that a real production target, monitoring provider or customer support contact has already been configured.
 
@@ -121,3 +122,7 @@ Before a real production release:
 **PRODUCTION CERTIFIED:** NO
 
 Production certification must be granted only after deployment-specific gates pass with fresh evidence from the actual target.
+
+## 10. Current delivery package
+
+For the current implementation scope, use `docs/current/30_CUSTOMER_DELIVERY_PACKAGE.md` as the handoff checklist. It is intentionally release-identity aware and distinguishes repository engineering evidence from external deployment and customer acceptance evidence.
