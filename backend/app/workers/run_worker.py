@@ -17,6 +17,11 @@ from app.models.employee import EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services import run_service
+from app.services.tenant_resource_limiter import (
+    TenantResourceUnavailableError,
+    acquire_tenant_resource,
+    release_tenant_resource,
+)
 from app.workers.celery_app import celery_app
 
 logger = logging.getLogger("app.workers.run")
@@ -105,9 +110,21 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                 raise
 
 
-@celery_app.task(name="run.execute")
-def execute_run_task(run_id: str, tenant_id: str) -> None:
-    """Execute one Run with no automatic replay of side-effecting work."""
+@celery_app.task(name="run.execute", bind=True, max_retries=3)
+def execute_run_task(self, run_id: str, tenant_id: str) -> None:
+    """Execute one Run after acquiring its tenant resource share."""
     if not tenant_id:
         raise ValidationAppError("tenant_id is required for run.execute")
-    asyncio.run(_run_async(run_id, tenant_id))
+    try:
+        lease = acquire_tenant_resource(tenant_id)
+    except TenantResourceUnavailableError as exc:
+        raise self.retry(exc=exc, countdown=min(60, 5 * (2 ** self.request.retries)))
+    if lease is None:
+        raise self.retry(
+            exc=RuntimeError("Tenant execution capacity is currently exhausted"),
+            countdown=min(60, 5 * (2 ** self.request.retries)),
+        )
+    try:
+        asyncio.run(_run_async(run_id, tenant_id))
+    finally:
+        release_tenant_resource(lease)
