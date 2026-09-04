@@ -1,0 +1,65 @@
+name: Phase 14.13 Load & Capacity Evidence
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/app/services/tenant_fair_scheduler.py'
+      - 'backend/app/services/tenant_resource_limiter.py'
+      - 'backend/app/workers/**'
+      - 'backend/tests/integration/test_phase_14_13_load_capacity.py'
+      - '.github/workflows/phase-14-13-load.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  load-capacity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+      SECRET_KEY: ci-only-secret
+      APP_ENV: test
+      CI: true
+      PHASE_14_13_ARTIFACT_DIR: ${{ github.workspace }}/phase-14-13-evidence
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.lock
+      - name: Install backend from direct dependency lock
+        working-directory: backend
+        run: |
+          pip install -r requirements.lock
+          pip install -e . --no-deps
+      - name: Run bounded load and capacity evidence
+        working-directory: backend
+        run: pytest -q tests/integration/test_phase_14_13_load_capacity.py
+      - name: Write evidence identity
+        run: |
+          mkdir -p phase-14-13-evidence
+          printf 'commit_sha=%s\n' "$GITHUB_SHA" > phase-14-13-evidence/identity.env
+          date -u +%Y-%m-%dT%H:%M:%SZ > phase-14-13-evidence/timestamp.txt
+          printf 'scope=synthetic-bounded-ci-evidence\nexternal_certification=not_claimed\n' >> phase-14-13-evidence/identity.env
+      - name: Upload load evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-14-13-load-capacity-${{ github.sha }}
+          path: phase-14-13-evidence/
+          if-no-files-found: error
