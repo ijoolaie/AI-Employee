@@ -1,13 +1,13 @@
 # Current Status
 
 **Last reconciled:** 2026-09-04  
-**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.14 ENGINEERING COMPLETE / PHASE 14.10 EXTERNAL-PENDING
+**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.14 ENGINEERING COMPLETE / PHASE 14.15 IN PROGRESS / PHASE 14.10 EXTERNAL-PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work uses shared execution contracts for Human, Agent and collaborative execution under common authorization, approval, tool, audit and evidence controls.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.14 engineering implementation is complete. Phase 14.11 certification-readiness hardening is also complete through merged PR #291. Phase 14.13 is backed by bounded synthetic CI load/capacity evidence; Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence. These are engineering evidence only and make no external production-certification claim.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.14 engineering implementation is complete. Phase 14.11 certification-readiness hardening is also complete through merged PR #291. Phase 14.13 is backed by bounded synthetic CI load/capacity evidence; Phase 14.14 is backed by repository security/privacy regression, dependency-audit and CodeQL evidence. Phase 14.15 is in progress through PR #311 and adds operational unit-economics, budget and sizing signals. These are engineering evidence only and make no external production-certification claim.
 
 ## Ordered remaining stages
 
@@ -17,15 +17,15 @@ Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Eviden
 | 2 | #286 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Tenant-fair scheduling, starvation protection and resource isolation with Redis runtime evidence |
 | 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/capacity validation with measurable thresholds and SHA-bound artifact |
 | 4 | #288 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Security/privacy/compliance engineering extensions and pentest-ready scope |
-| 5 | #289 | **QUEUED / NEXT** | Capacity, cost and operational optimization |
+| 5 | #289 | **IN PROGRESS / PR #311** | Capacity, cost and operational optimization |
 | 6 | #290 | **QUEUED** | V1.5 Human + Agent operating-model evolution |
 | 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | Independent production deployment, provider/SLO/DR evidence and ordered customer acceptance |
 
 Each engineering stage must update the canonical status, priorities, roadmap and production-readiness documentation before it is closed. Stage 7 is deliberately last and remains blocked until the preceding engineering work is reconciled.
 
-## Phase 14.11 certification-readiness checkpoint
+## Phase 14.15 optimization checkpoint
 
-PR #291 delivered fail-fast configuration preflight for the local certification harness, cross-platform LF normalization via `.gitattributes`, reproducibility/secret-safe evidence handling and canonical documentation reconciliation. This stage is engineering-only and does not satisfy external certification.
+PR #311 adds a vendor platform-admin optimization summary backed by existing tenant-scoped AI provider call and Run records. It reports monthly usage, total cost, cost per successful WorkItem, plan run/token budget utilization and deterministic warning/exhausted states. It also provides a worker-sizing helper that converts observed throughput into a recommended worker count using explicit utilization headroom. This is an operational decision-support layer, not a production capacity certification.
 
 ## Phase 14.14 security/privacy/compliance checkpoint
 
@@ -43,7 +43,7 @@ Phase 14.14 merged main SHA: `0789d091ab8f804d7bfc853470b9df42108085ed`. Securit
 
 ## Current mainline
 
-`0789d091ab8f804d7bfc853470b9df42108085ed` is the Phase 14.14 implementation merge; later documentation-only reconciliation commits update the current mainline without changing that implementation identity.
+`0789d091ab8f804d7bfc853470b9df42108085ed` is the Phase 14.14 implementation merge; later documentation and Phase 14.15 implementation commits update the current mainline without changing that implementation identity.
 
 ## Phase 14.13 evidence record
 
