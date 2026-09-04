@@ -18,6 +18,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.privacy import redact_sensitive_data
 from app.models.audit_log import AuditLog
 
 
@@ -34,9 +35,7 @@ async def record(
     request_id: str | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> AuditLog:
-    """Insert one audit entry. Does not commit — caller controls the transaction
-    boundary (usually the enclosing request's session, which commits in
-    app.core.database.get_db)."""
+    """Insert one audit entry after applying the durable metadata privacy boundary."""
     entry = AuditLog(
         tenant_id=tenant_id,
         actor_type=actor_type,
@@ -46,7 +45,7 @@ async def record(
         resource_id=str(resource_id) if resource_id is not None else None,
         status=status,
         request_id=request_id,
-        metadata_=metadata or {},
+        metadata_=redact_sensitive_data(metadata or {}),
     )
     db.add(entry)
     await db.flush()

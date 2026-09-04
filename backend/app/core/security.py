@@ -2,12 +2,12 @@
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
-from uuid import UUID
 
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+import base64
+import hashlib
+import jwt
 from cryptography.fernet import Fernet
-import base64, hashlib
+from passlib.context import CryptContext
 
 from app.core.config import get_settings
 
@@ -23,16 +23,18 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 
-
 def _fernet() -> Fernet:
     key = base64.urlsafe_b64encode(hashlib.sha256(settings.secret_key.encode()).digest())
     return Fernet(key)
 
+
 def encrypt_secret(value: str) -> str:
     return _fernet().encrypt(value.encode()).decode()
 
+
 def decrypt_secret(value: str) -> str:
     return _fernet().decrypt(value.encode()).decode()
+
 
 def create_access_token(
     subject: str,
@@ -70,5 +72,5 @@ def create_refresh_token(subject: str, tenant_id: str, auth_token_version: int =
 
 
 def decode_token(token: str) -> dict[str, Any]:
-    """Decode and validate JWT. Raises JWTError on failure."""
+    """Decode and validate JWT. Raises InvalidTokenError on failure."""
     return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])

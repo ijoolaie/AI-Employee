@@ -1,7 +1,7 @@
 # Current Status
 
 **Last reconciled:** 2026-09-04  
-**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.13 ENGINEERING COMPLETE / REMAINING ENGINEERING STAGES 14.11, 14.14–14.16 ACTIVE ROADMAP / PHASE 14.10 EXTERNAL-PENDING
+**Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.13 ENGINEERING COMPLETE / PHASE 14.14 ACTIVE / PHASE 14.10 EXTERNAL-PENDING
 
 ## Executive truth
 
@@ -16,12 +16,18 @@ Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Eviden
 | 1 | #285 | **IN PROGRESS** | Certification-readiness, configuration preflight and cross-platform portability hardening |
 | 2 | #286 | **ENGINEERING COMPLETE / DOCUMENTATION RECONCILED** | Tenant-fair scheduling, starvation protection and resource isolation with Redis runtime evidence |
 | 3 | #287 | **ENGINEERING COMPLETE / EVIDENCE RECONCILED** | Bounded load/capacity validation with measurable thresholds and SHA-bound artifact |
-| 4 | #288 | **QUEUED** | Security/privacy/compliance engineering extensions and pentest-ready scope |
+| 4 | #288 | **IN PROGRESS** | Security/privacy/compliance engineering extensions and pentest-ready scope |
 | 5 | #289 | **QUEUED** | Capacity, cost and operational optimization |
 | 6 | #290 | **QUEUED** | V1.5 Human + Agent operating-model evolution |
 | 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | Independent production deployment, provider/SLO/DR evidence and ordered customer acceptance |
 
 Each engineering stage must update the canonical status, priorities, roadmap and production-readiness documentation before it is closed. Stage 7 is deliberately last and remains blocked until the preceding engineering work is reconciled.
+
+## Phase 14.14 security/privacy/compliance checkpoint
+
+The active Stage 4 implementation adds a deterministic recursive privacy boundary for structured metadata: common credentials, tokens, connection strings and direct PII are redacted before audit metadata is persisted or structured JSON logs are emitted. Unit regressions cover nested mappings, lists/tuples, non-sensitive identifiers and caller-container immutability.
+
+The threat-model refresh, privacy/retention boundary, compliance-control matrix and external-pentest-ready scope/runbook are recorded in `docs/current/PHASE_14_14_SECURITY_PRIVACY_COMPLIANCE.md`. This is engineering preparation only; external pentest, legal compliance attestation and production security certification remain external evidence.
 
 ## Evidence rules
 
@@ -35,7 +41,7 @@ Each engineering stage must update the canonical status, priorities, roadmap and
 
 `599cb8b167103e3627678739f8440d854cad55f1`
 
-This is the current `main` baseline after Phase 14.13 implementation. It is **not** externally production-certified merely because repository checks are green.
+This is the current `main` baseline after Phase 14.13 implementation and before the Phase 14.14 branch is merged. It is **not** externally production-certified merely because repository checks are green.
 
 ## Phase 14.13 evidence record
 
@@ -51,12 +57,6 @@ This is the current `main` baseline after Phase 14.13 implementation. It is **no
 
 The final external gate is consolidated across #210, #19 and #269. All remain open until independent evidence is supplied and reconciled to one exact accepted release identity.
 
-## Canonical documents
+## Security rule
 
-- Documentation entry point: `docs/00_START_HERE/README.md`
-- Project overview: `docs/00_START_HERE/PROJECT_OVERVIEW.md`
-- Current status: `docs/00_START_HERE/CURRENT_STATUS.md`
-- Current priorities: `docs/00_START_HERE/CURRENT_PRIORITIES.md`
-- Implementation truth: `docs/current/STATUS.md`
-- Roadmap: `docs/current/PRODUCTIZATION_ROADMAP.md`
-- Production readiness: `docs/current/09_PRODUCTION_READINESS_STATUS.md`
+Do not commit production hosts, private keys, registry credentials, webhook secrets, payment secrets, customer data or environment-specific access tokens. Missing required production inputs must fail closed.
