@@ -1,0 +1,2 @@
+# Keep shell scripts executable and LF-normalized across Windows/macOS/Linux checkouts.
+*.sh text eol=lf

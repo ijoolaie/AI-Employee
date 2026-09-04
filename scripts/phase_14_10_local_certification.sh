@@ -66,6 +66,9 @@ fi
 
 run_capture production_completeness_audit python scripts/production_completeness_audit.py
 run_capture compose_config compose config --quiet
+# Validate the application settings before starting the full stack. This catches malformed
+# JSON-backed list/dict environment values early and records the failure without exposing secrets.
+run_capture configuration_preflight compose run --rm --no-deps api python -c "from app.core.config import Settings; Settings(); print('CONFIGURATION_PREFLIGHT|PASS')"
 run_capture local_production_deploy env COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" ENV_FILE="$ENV_FILE" bash scripts/local_production_deploy.sh
 run_capture service_snapshot compose ps
 
@@ -106,6 +109,7 @@ cat >"$OUT_DIR/EVIDENCE_INDEX.md" <<EOF
 | --- | --- |
 | Production completeness audit | $(cat "$OUT_DIR/production_completeness_audit.status") |
 | Docker Compose configuration | $(cat "$OUT_DIR/compose_config.status") |
+| Configuration preflight | $(cat "$OUT_DIR/configuration_preflight.status") |
 | Local production-like deployment | $(cat "$OUT_DIR/local_production_deploy.status") |
 | Service snapshot | $(cat "$OUT_DIR/service_snapshot.status") |
 | API dependency readiness | $(cat "$OUT_DIR/api_dependency_readiness.status") |

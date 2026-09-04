@@ -4,9 +4,23 @@
 
 ## Current release and project boundary
 
-The repository's current engineering baseline includes the completed Phase 13 implementation and Phase 14.1–14.9 engineering workstreams. **Phase 14.10 — External Production Certification & Customer Acceptance Evidence is the only remaining formal external-evidence gate.**
+The repository's current engineering baseline includes the completed Phase 13 implementation and Phase 14.1–14.9 engineering workstreams. Before external certification, the remaining engineering roadmap is now explicitly ordered as Stages 1–6. **Phase 14.10 — External Production Certification & Customer Acceptance Evidence is Stage 7 and the final gate.**
 
 Repository implementation and CI/release verification remain distinct from external production certification. No repository state alone establishes live deployment, provider operation, measured production SLO attainment, customer acceptance, commercial go-live, or independent certification.
+
+## Ordered remaining work
+
+| Stage | Issue | Status | Purpose |
+|---|---:|---|---|
+| 1 | #285 | **IN PROGRESS** | Certification-readiness, configuration preflight, cross-platform portability |
+| 2 | #286 | **QUEUED** | Tenant-fair scheduling and resource isolation |
+| 3 | #287 | **QUEUED** | Load/stress and measurable capacity validation |
+| 4 | #288 | **QUEUED** | Security/privacy/compliance engineering extensions |
+| 5 | #289 | **QUEUED** | Capacity, cost and operational optimization |
+| 6 | #290 | **QUEUED** | V1.5 Human + Agent operating-model evolution |
+| 7 | #269 / #210 / #19 | **FINAL / EXTERNAL-PENDING** | External deployment, provider/SLO/DR evidence and ordered acceptance |
+
+Every engineering stage must reconcile the canonical status, priorities, roadmap and this production-readiness document before closure.
 
 ## Current engineering evidence
 
@@ -27,13 +41,14 @@ The following capabilities are implemented and verified at repository/CI level:
 - security/compliance engineering hardening;
 - regression/release gates;
 - incident-response and operational-readiness baseline;
-- customer delivery/handoff package.
+- customer delivery/handoff package;
+- local Phase 14.10 production-like certification harness.
 
 These are engineering capabilities. Their existence does not by itself certify an external production environment.
 
-## Phase 14.10 — External Production Certification
+## Stage 7 — External Production Certification
 
-**Status: EXTERNAL-PENDING.**
+**Status: EXTERNAL-PENDING / FINAL STAGE.**
 
 Required evidence must be attached to one exact immutable release identity:
 
@@ -56,23 +71,6 @@ The repository contains production-like Docker/runtime, backup/restore, recovery
 ## Customer delivery boundary
 
 The current customer delivery package is prepared. It requires target-specific tenant/RBAC verification, secret-manager configuration, deployment/provider records, monitoring and alert destinations, backup/restore ownership, rollback ownership, and Vendor/Reseller/Customer acceptance records. It is a handoff contract, not proof of a live customer deployment.
-
-## Historical records
-
-Earlier Phase 6E, V1.4 gap-closure and Phase 7 production-readiness material is retained in historical documents where appropriate. Such material is not an active blocker unless the current roadmap or a demonstrated implementation gap explicitly reactivates it.
-
-Historical release claims must not override the current release/evidence boundary. Older v1.2.0/v1.3.0/V1.4 records are retained for traceability and must not be interpreted as the current Phase 14.10 acceptance state.
-
-## Non-blocking future work
-
-The following are not current Phase 14.10 blockers unless a concrete requirement or production finding makes them applicable:
-
-- full tenant-fairness scheduling beyond the current backpressure baseline;
-- additional load/stress testing;
-- penetration testing;
-- privacy/compliance extensions;
-- capacity/cost optimization beyond existing controls;
-- later V1.5 Human + Agent operating-model evolution.
 
 ## Security rule
 
