@@ -1,33 +1,33 @@
 # AI Employee backend direct dependency lock baseline.
 #
 # This file pins every direct runtime/test dependency declared by
-# backend/requirements.txt and backend/pyproject.toml to its declared minimum
-# compatible version. Transitive resolution remains delegated to pip until a
+# backend/requirements.txt and backend/pyproject.toml to a tested secure
+# baseline. Transitive resolution remains delegated to pip until a
 # resolver-generated hash lock is introduced; this file is therefore the
 # direct-dependency reproducibility baseline, not a complete transitive SBOM.
-fastapi==0.115.0
+fastapi==0.141.1
 uvicorn[standard]==0.32.0
 sqlalchemy[asyncio]==2.0.36
 asyncpg==0.30.0
 alembic==1.14.0
 pydantic==2.10.0
 pydantic-settings==2.6.0
-python-jose[cryptography]==3.3.0
-cryptography==43.0.0
+PyJWT==2.13.0
+cryptography==46.0.6
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.0
-python-multipart==0.0.17
+python-multipart==0.0.31
 celery[redis]==5.4.0
 redis==5.2.0
 httpx==0.28.0
 openai==2.44.0
 email-validator==2.2.0
 jsonschema==4.23.0
-pytest==8.3.0
+pytest==9.0.3
 pytest-asyncio==0.24.0
 ruff==0.8.0
 psycopg2-binary==2.9.9
-pypdf==5.0.0
+pypdf==6.16.1
 python-docx==1.1.2
 pandas==2.2.0
 numpy==1.26.0
@@ -43,4 +43,4 @@ opentelemetry-exporter-otlp-proto-http==1.29.0
 stripe==11.0.0
 pytesseract==0.3.13
 pdf2image==1.17.0
-pillow==10.4.0
+pillow==12.3.0
