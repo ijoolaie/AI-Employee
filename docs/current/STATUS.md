@@ -33,6 +33,10 @@ Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.
 
 PR #312 merged to `main` at `7657b4244a47af95960e5854fa52f92a0dbe618b`. The implementation adds tenant-scoped `/api/v1/workspace`, a unified read model over WorkItems and pending workflow/tool approvals, and Human/Agent executor queue counts. Existing assignment and approval mutation APIs remain authoritative, with the workspace endpoint protected by the existing `audit.read` permission. PR CI passed backend/frontend CI, Python/JavaScript CodeQL, architecture, production observability and production rollback/alerting checks. This is engineering/productization evidence only; it does not establish external production certification.
 
+## Production infrastructure validation record
+
+PR #315 merged to `main` at `93c717969a192ae5b90b909c2c4e8aaa89bea50a`. Validation run `33884955068` passed on GitHub-hosted Linux infrastructure. It built the production application images, validated the production Compose contract, started PostgreSQL/Redis/storage, waited for dependency readiness, ran Alembic migrations, started API/Worker/Beat/Frontend, verified PostgreSQL and Redis persistence after container restart, verified API dependency readiness and Frontend HTTP reachability, and completed a real PostgreSQL custom-format backup followed by isolated restore. The ephemeral stack was torn down after validation. This is local/CI engineering evidence only; it does not establish production deployment, provider certification, production SLO attainment or target-environment RPO/RTO.
+
 ## Phase 14.15 verification record
 
 PR #311 merged to `main` at `56984bc793ba3119f8c6d45bf9b03f738ce2d59e`. The implementation adds tenant-scoped monthly unit economics from existing AI provider and Run records, cost per successful WorkItem, deterministic plan budget utilization states, actionable optimization signals and worker-sizing decision support using observed throughput and explicit utilization headroom. The `/api/v1/admin/optimization` endpoint is restricted to vendor platform administrators. PR CI passed CodeQL, full backend/frontend CI, architecture, security/privacy, observability and rollback/alerting checks. This is engineering decision support only; production capacity remains external-pending.
@@ -63,6 +67,7 @@ Stage 7 is now the only remaining roadmap stage and is external-pending/final.
 - Phase 14.14 has repository-level security/privacy engineering evidence; this does not establish external pentest, compliance certification or production security certification.
 - Phase 14.15 has green repository CI and reconciled engineering evidence for unit economics, budget signals and capacity-sizing decision support; this does not establish production/customer-scale capacity.
 - Phase 14.16 has a unified tenant-scoped Human + Agent workspace read model and preserved approval/assignment governance boundaries; this does not establish external customer acceptance or production deployment.
+- Production-like infrastructure validation now has reproducible CI evidence for lifecycle, restart persistence and PostgreSQL backup/restore against the repository's production Compose topology; this does not establish real-target production RPO/RTO.
 - External production deployment, live provider behavior, measured production SLO/DR evidence, customer acceptance and commercial go-live remain **EXTERNAL-PENDING**.
 
 ## Security rule
