@@ -1,22 +1,34 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
-TMP_DIR="${TMPDIR:-/tmp}/ai-employee-backup-smoke-$$"
-DB_DIR="$TMP_DIR/db"
-RESTORE_DIR="$TMP_DIR/restore"
-trap 'rm -rf "$TMP_DIR"' EXIT
-mkdir -p "$DB_DIR" "$RESTORE_DIR"
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}"
+LOCAL_OVERRIDE="${LOCAL_OVERRIDE:-docker-compose.local-production.yml}"
+PROJECT_NAME="${COMPOSE_PROJECT_NAME:-ai-employee-infra-validation}"
+ENV_FILE="${ENV_FILE:-.env.production}"
 
-printf '%s\n' 'backup/restore smoke: preparing deterministic database fixture'
-printf '%s\n' 'CREATE TABLE certification_probe(id INTEGER PRIMARY KEY, value TEXT);' > "$DB_DIR/schema.sql"
-printf '%s\n' "INSERT INTO certification_probe VALUES (1, 'backup-restore-pass');" > "$DB_DIR/data.sql"
-cat "$DB_DIR/schema.sql" "$DB_DIR/data.sql" > "$DB_DIR/backup.sql"
+compose() {
+  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$PROJECT_NAME" "$@"
+}
 
-# Validate the backup is self-contained and can be restored into a clean target.
-awk 'BEGIN{schema=0;data=0} /CREATE TABLE certification_probe/{schema=1} /INSERT INTO certification_probe/{data=1} END{exit !(schema && data)}' "$DB_DIR/backup.sql"
-cp "$DB_DIR/backup.sql" "$RESTORE_DIR/restored.sql"
-grep -F "backup-restore-pass" "$RESTORE_DIR/restored.sql" >/dev/null
+backup_file="/tmp/ai-employee-backup-$$.dump"
+trap 'compose exec -T postgres rm -f "$backup_file" >/dev/null 2>&1 || true' EXIT
+
+compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 \
+  -c "CREATE TABLE IF NOT EXISTS backup_restore_probe(id integer primary key, value text not null);" \
+  -c "INSERT INTO backup_restore_probe(id,value) VALUES (1,'backup-restore-pass') ON CONFLICT (id) DO UPDATE SET value=EXCLUDED.value;"
+
+# Use PostgreSQL's real custom-format backup and restore tools inside the database container.
+compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc -f "$backup_file"
+compose exec -T postgres pg_restore --list "$backup_file" >/dev/null
+
+restore_db="${POSTGRES_DB}_restore_smoke"
+compose exec -T postgres dropdb --if-exists -U "$POSTGRES_USER" "$restore_db" >/dev/null
+compose exec -T postgres createdb -U "$POSTGRES_USER" "$restore_db"
+compose exec -T postgres pg_restore -U "$POSTGRES_USER" -d "$restore_db" --exit-on-error "$backup_file"
+compose exec -T postgres psql -U "$POSTGRES_USER" -d "$restore_db" -v ON_ERROR_STOP=1 \
+  -c "SELECT 1 FROM backup_restore_probe WHERE value='backup-restore-pass';"
+compose exec -T postgres dropdb -U "$POSTGRES_USER" "$restore_db" >/dev/null
 
 echo 'BACKUP ARTIFACT PASS'
-echo 'RESTORE ARTIFACT PASS'
+echo 'RESTORE DATABASE PASS'
 echo 'BACKUP/RESTORE SMOKE PASS'
