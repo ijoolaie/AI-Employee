@@ -89,6 +89,8 @@ jobs:
       - name: Ruff
         working-directory: backend
         run: ruff check app tests
+      - name: Validate regression and release gate contracts
+        run: python scripts/validate_regression_release_gates.py
       - name: Diagnose Alembic heads
         working-directory: backend
         run: |
@@ -160,6 +162,7 @@ jobs:
         run: |
           test "$(alembic heads | grep -c '(head)')" -eq 1
           alembic check
+
       - name: Backend tests
         working-directory: backend
         run: pytest -q -m 'not requires_ocr'

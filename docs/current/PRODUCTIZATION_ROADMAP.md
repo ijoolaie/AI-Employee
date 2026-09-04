@@ -82,7 +82,31 @@ Existing Employee-backed functionality remains compatible while changed capabili
 **IMPLEMENTED / MERGED.** Playwright acceptance covers authenticated discovery, workspace-scoped review, deterministic install success UX and authorization failure handling. Backend authorization and tenant isolation remain authoritative; the browser suite does not claim a live production cross-tenant environment.
 
 ### Phase 14 — Scale, Governance & Production
-**PLANNED / NEXT ENGINEERING PHASE.** Queue isolation, concurrency, routing, cost controls, SLOs, DR, security/compliance, regression prevention, incident response and external-production evidence.
+**IN PROGRESS.** Queue isolation, concurrency, routing, cost controls, SLOs, DR, security/compliance, regression prevention, incident response and external-production evidence.
+
+#### 14.1 — Queue / Worker Isolation
+**IMPLEMENTED / MERGED.** Explicit Celery queue topology and worker separation.
+
+#### 14.2 — Concurrency, Backpressure & Fairness
+**IMPLEMENTED / MERGED.** Bounded prefetch, late acknowledgement, worker-loss redelivery and worker recycling baseline.
+
+#### 14.3 — Routing & Scheduling
+**IMPLEMENTED / MERGED.** Centralized schedule cadence and routing regression coverage.
+
+#### 14.4 — Cost & Usage Controls
+**IMPLEMENTED / MERGED.** Tenant-scoped usage cost-limit enforcement primitive and regression coverage.
+
+#### 14.5 — SLO, Reliability & Observability
+**IMPLEMENTED / MERGED.** Aggregate-only SLO outcome/error-budget instrumentation; production attainment remains deployment evidence.
+
+#### 14.6 — Disaster Recovery / Backup & Restore
+**IMPLEMENTED / MERGED.** Reproducible backup/verification/isolated-restore scripts and recovery baseline with explicit planning RPO/RTO thresholds.
+
+#### 14.7 — Security & Compliance Hardening
+**IMPLEMENTED / MERGED.** Marketplace import hardening prevents cross-workspace slug collisions and rejects secret-bearing policy fields; negative-path tests and evidence boundaries are recorded. This is engineering hardening, not external compliance certification.
+
+#### 14.8 — Regression & Release Gates
+**IMPLEMENTED BASELINE / IN PROGRESS.** CI now includes a source-level contract check covering workflow applicability, migration validation, targeted backend/frontend regression, exact release-ref checkout, release commit identity, package checksum verification and edition artifact source identity. The gate is evidence for repository/release-process correctness; it does not by itself establish production certification.
 
 ## Evidence boundary
 
@@ -107,6 +131,6 @@ Every phase must preserve:
 ## Immediate execution order
 
 1. Phase 13 engineering implementation is complete and recorded.
-2. Begin Phase 14 scale, governance and production-hardening work.
+2. Continue Phase 14 scale, governance and production-hardening work.
 3. Preserve explicit separation between repository/local engineering evidence and external production/customer acceptance.
 4. Continue workspace/runtime hardening and compatibility migration in parallel where safe.
