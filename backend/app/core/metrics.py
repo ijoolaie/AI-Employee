@@ -6,6 +6,8 @@ metrics API and the durable Trace/Usage surfaces.
 """
 from prometheus_client import Counter, Gauge, Histogram
 
+# Phase 14.5 reliability signals: aggregate-only labels avoid tenant cardinality/leakage.
+
 HTTP_REQUESTS = Counter("aiep_http_requests_total", "HTTP requests", ["method", "path", "status"])
 HTTP_LATENCY = Histogram("aiep_http_request_duration_seconds", "HTTP request latency", ["method", "path"])
 WORKFLOW_RUNS = Counter("aiep_workflow_runs_total", "Workflow execution attempts", ["status"])
@@ -27,3 +29,12 @@ TEST_CENTER_EXPIRATIONS = Counter("aiep_test_center_expirations_total", "Test Ce
 TEST_CENTER_EXPIRATION_SWEEPS = Counter("aiep_test_center_expiration_sweeps_total", "Test Center expiration sweep outcomes", ["status"])
 REDIS_QUEUE_DEPTH = Gauge("aiep_redis_broker_queue_depth", "Redis broker queue depth", ["queue"])
 DEPENDENCY_UP = Gauge("aiep_dependency_up", "Dependency health: 1 up, 0 down", ["dependency"])
+
+
+SLO_EVENTS = Counter("aiep_slo_events_total", "SLO outcome events", ["service", "objective", "outcome"])
+SLO_ERROR_BUDGET = Gauge("aiep_slo_error_budget_ratio", "Remaining error-budget ratio", ["service", "objective"])
+
+
+def record_slo_outcome(*, service: str, objective: str, success: bool) -> None:
+    """Record an aggregate SLO outcome without tenant or request identifiers."""
+    SLO_EVENTS.labels(service=service, objective=objective, outcome="success" if success else "failure").inc()
