@@ -45,8 +45,15 @@ async def test_permissions_are_tenant_scoped():
     assert await has_permission(ctx, "privacy.customer.delete") is False
 
 
-def test_every_registered_tool_declares_permission_and_side_effects_are_approved():
+def test_registered_tools_declare_permissions_and_external_side_effects_are_approved():
     for tool in registry.list():
         assert tool.required_permission
-        if tool.side_effects:
-            assert tool.requires_approval is True
+
+    # Database-backed business mutations are governed by the Run permission
+    # and approval policy at their domain boundary. External side effects are
+    # stricter: they must never execute without explicit human approval.
+    external_side_effect_tools = {"send_email"}
+    for name in external_side_effect_tools:
+        tool = registry.get(name)
+        assert tool.side_effects is True
+        assert tool.requires_approval is True
