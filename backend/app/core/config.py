@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     celery_result_backend: str = "redis://localhost:6379/2"
     test_center_run_timeout_seconds: int = 3600
 
+    # Tenant-scoped execution resource shares. A tenant-specific entry wins;
+    # the default is deliberately small so one tenant cannot monopolize workers.
+    tenant_resource_concurrency: dict[str, int] = {}
+    tenant_resource_default_concurrency: int = 1
+    tenant_resource_lease_seconds: int = 3600
+
     cors_origins: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -51,6 +57,12 @@ class Settings(BaseSettings):
         """Fail fast on unsafe production configuration."""
         if self.test_center_run_timeout_seconds < 1 or self.test_center_run_timeout_seconds > 86_400:
             raise ValueError("TEST_CENTER_RUN_TIMEOUT_SECONDS must be between 1 and 86400")
+        if self.tenant_resource_default_concurrency < 1:
+            raise ValueError("TENANT_RESOURCE_DEFAULT_CONCURRENCY must be positive")
+        if self.tenant_resource_lease_seconds < 1 or self.tenant_resource_lease_seconds > 86_400:
+            raise ValueError("TENANT_RESOURCE_LEASE_SECONDS must be between 1 and 86400")
+        if any(limit < 1 for limit in self.tenant_resource_concurrency.values()):
+            raise ValueError("TENANT_RESOURCE_CONCURRENCY values must be positive")
         if self.app_env.lower() in {"production", "prod"}:
             if self.debug:
                 raise ValueError("DEBUG must be false in production")
