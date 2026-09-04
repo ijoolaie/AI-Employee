@@ -1,6 +1,6 @@
 # AI Employee Platform — Productization & Delivery Roadmap
 
-## Current position — 2026-09-03
+## Current position — 2026-09-04
 
 V1.4 remains the frozen architecture foundation. V1.5 is the active Human + Agent operating-model extension.
 
@@ -106,7 +106,10 @@ Existing Employee-backed functionality remains compatible while changed capabili
 **IMPLEMENTED / MERGED.** Marketplace import hardening prevents cross-workspace slug collisions and rejects secret-bearing policy fields; negative-path tests and evidence boundaries are recorded. This is engineering hardening, not external compliance certification.
 
 #### 14.8 — Regression & Release Gates
-**IMPLEMENTED BASELINE / IN PROGRESS.** CI now includes a source-level contract check covering workflow applicability, migration validation, targeted backend/frontend regression, exact release-ref checkout, release commit identity, package checksum verification and edition artifact source identity. The gate is evidence for repository/release-process correctness; it does not by itself establish production certification.
+**IMPLEMENTED / MERGED.** CI includes a source-level contract check covering workflow applicability, migration validation, targeted backend/frontend regression, exact release-ref checkout, release commit identity, package checksum verification and edition artifact source identity. The gate is evidence for repository/release-process correctness; it does not by itself establish production certification.
+
+#### 14.9 — Incident Response & Operational Readiness
+**IMPLEMENTED BASELINE / IN PROGRESS.** Incident taxonomy, severity model, ownership boundaries, actionable response/rollback/recovery flow, sanitized evidence capture and exercise requirements are documented. CI validates the runbook contract; production response performance and real-incident evidence remain deployment/operational evidence.
 
 ## Evidence boundary
 
