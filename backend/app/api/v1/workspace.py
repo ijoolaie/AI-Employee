@@ -1,14 +1,12 @@
 """Unified V1.5 workspace read model for Human + Agent operations."""
 
-from uuid import UUID
-
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select
 
 from app.core.deps import AuditReadContext, DbSession
 from app.models.tool_approval import ToolApprovalRequest
 from app.models.workflow_approval import WorkflowApproval
-from app.models.work_item import WorkItem
+from app.models.work_item import WorkItem, WorkItemStatus
 from app.schemas.common import APIResponse
 
 router = APIRouter(prefix="/workspace", tags=["workspace"])
@@ -61,8 +59,11 @@ async def get_workspace(
         .limit(limit)
     )
     if status_filter:
-        from app.models.work_item import WorkItemStatus
-        stmt = stmt.where(WorkItem.status == WorkItemStatus(status_filter))
+        try:
+            parsed_status = WorkItemStatus(status_filter)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid work item status") from exc
+        stmt = stmt.where(WorkItem.status == parsed_status)
     work_items = (await db.execute(stmt)).scalars().all()
 
     workflow_result = await db.execute(
