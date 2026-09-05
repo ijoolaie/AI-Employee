@@ -8,6 +8,8 @@
 
 Every P0 item must be attached to one immutable release identity. CI, local Docker, synthetic load, simulated providers, or documentation may establish engineering readiness but cannot close an external-environment gate.
 
+Use `docs/current/PRODUCTION_EVIDENCE_INDEX.md` as the traceability index. Every evidence row must identify its evidence class and exact release SHA/tag; pending external gates must remain explicitly pending.
+
 ## Phase A — Freeze the release
 
 1. Select the candidate commit from `main` after all engineering changes are merged.
@@ -153,13 +155,15 @@ A passing alert rule without a tested owner/escalation path is not closure evide
 
 Map every retained data class to retention period, deletion/archive behavior, legal hold requirements where applicable, audit behavior and target verification.
 
+The repository enforcement command is intentionally **dry-run by default**. Run `python -m scripts.enforce_retention --execute` only under an approved operational change when destructive enforcement is intended. Physical object deletion/version expiry and backup retention remain target/provider responsibilities.
+
 ### Human-in-the-loop TODO reconciliation
 
 The execution path already contains explicit approval state handling and approved-tool resumption. The remaining repository task is documentation cleanup so the service header no longer describes the feature as a future TODO.
 
 ### Documentation/evidence index
 
-Keep `PRODUCTION_GAP_REGISTER_2026-09-04.md`, this execution pack and the canonical status documents synchronized. Every completed gate must link to its evidence artifact and immutable release identity.
+Keep `PRODUCTION_GAP_REGISTER_2026-09-04.md`, this execution pack, `PRODUCTION_EVIDENCE_INDEX.md` and the canonical status documents synchronized. Every completed gate must link to its evidence artifact and immutable release identity.
 
 ### Platform operations dashboard
 

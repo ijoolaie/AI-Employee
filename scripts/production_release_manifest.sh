@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Generate a release manifest without reading or printing secret values.
-# Usage: ./scripts/production_release_manifest.sh [output-path]
+# Usage: bash scripts/production_release_manifest.sh [output-path]
 
 OUTPUT="${1:-release-manifest.json}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -16,9 +16,9 @@ if [[ -z "$TAG" ]]; then TAG="unreleased-${SHORT_SHA}"; fi
 python - "$OUTPUT" "$SHA" "$TAG" <<'PY'
 import hashlib
 import json
-import os
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 output, sha, tag = sys.argv[1:]
@@ -35,28 +35,41 @@ def digest(path):
     return h.hexdigest()
 
 lockfiles = []
-for candidate in ("backend/requirements.txt", "backend/requirements.lock", "frontend/package-lock.json", "frontend/pnpm-lock.yaml", "frontend/yarn.lock"):
+for candidate in (
+    "backend/requirements.txt",
+    "backend/requirements.lock",
+    "frontend/package-lock.json",
+    "frontend/pnpm-lock.yaml",
+    "frontend/yarn.lock",
+):
     p = root / candidate
     if p.is_file():
         lockfiles.append({"path": candidate, "sha256": digest(p)})
 
 manifest = {
-    "schema_version": 1,
+    "schema_version": 2,
     "release": {
         "git_sha": sha,
+        "git_tree": git("rev-parse", f"{sha}^{{tree}}"),
         "git_tag": tag,
-        "generated_at_utc": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        "commit_timestamp_utc": git("show", "-s", "--format=%cI", sha),
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "dirty_worktree": bool(git("status", "--porcelain")),
     },
     "source": {"repository": "ijoolaie/AI-Employee"},
     "dependency_lock_identity": lockfiles,
-    "container_images": [],
-    "sbom": None,
-    "provenance": None,
+    "build_identity": {
+        "container_images": [],
+        "sbom": None,
+        "provenance": None,
+        "external_release_status": "pending_external_build_pipeline",
+    },
     "secret_values": "not included",
 }
 Path(output).write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 print(f"release manifest written: {output}")
 print(f"git sha: {sha}")
+print(f"git tree: {manifest['release']['git_tree']}")
 print(f"release identity: {tag}")
+print("container/SBOM/provenance: pending external release pipeline")
 PY

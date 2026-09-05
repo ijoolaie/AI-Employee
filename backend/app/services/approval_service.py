@@ -15,14 +15,17 @@ from app.models.tool_approval import ToolApprovalRequest
 from app.services import audit_service
 
 
-def validate_resume_approval(
-    approval: ToolApprovalRequest,
-    *,
-    tenant_id: uuid.UUID,
-    run_id: uuid.UUID,
-    tool_name: str,
-    tool_call_id: str,
-) -> None:
+async def requires_approval(db: AsyncSession | None = None, *, tool, tenant_id: uuid.UUID | None = None, employee_id: uuid.UUID | None = None) -> bool:
+    """Return the registered tool's approval policy.
+
+    The execution boundary supplies the database plus tenant/employee context so
+    approval policy can become context-aware without changing callers. The
+    current policy is defined by the registered tool itself.
+    """
+    return bool(getattr(tool, "requires_approval", False))
+
+
+def validate_resume_approval(approval: ToolApprovalRequest, *, tenant_id: uuid.UUID, run_id: uuid.UUID, tool_name: str, tool_call_id: str) -> None:
     """Fail closed unless an approval is current for this exact execution."""
     if approval.tenant_id != tenant_id or approval.run_id != run_id:
         raise ValidationAppError("Approval context does not match the Run tenant")
@@ -32,16 +35,18 @@ def validate_resume_approval(
         raise ValidationAppError("Approval does not match the requested tool call")
 
 
-async def create_request(db: AsyncSession, *, tenant_id: uuid.UUID, run: Run, tool_name: str, tool_call_id: str, arguments: dict, continuation_messages: list[dict], iteration: int, requested_by: uuid.UUID | None) -> ToolApprovalRequest:
+async def create_request(db: AsyncSession, *, run: Run, tool_name: str, tool_call_id: str, arguments: dict, continuation_messages: list[dict], tenant_id: uuid.UUID | None = None, iteration: int = 0, requested_by: uuid.UUID | None = None) -> ToolApprovalRequest:
+    """Create or reuse the pending approval for one exact tool call."""
+    effective_tenant_id = tenant_id or run.tenant_id
     existing = await db.execute(select(ToolApprovalRequest).where(ToolApprovalRequest.run_id == run.id, ToolApprovalRequest.tool_call_id == tool_call_id, ToolApprovalRequest.status == "pending"))
     existing_request = existing.scalar_one_or_none()
     if existing_request is not None:
         return existing_request
-    approval = ToolApprovalRequest(tenant_id=tenant_id, run_id=run.id, tool_name=tool_name, tool_call_id=tool_call_id, arguments=arguments, continuation_messages=continuation_messages, iteration=iteration, requested_by=requested_by, status="pending")
+    approval = ToolApprovalRequest(tenant_id=effective_tenant_id, run_id=run.id, tool_name=tool_name, tool_call_id=tool_call_id, arguments=arguments, continuation_messages=continuation_messages, iteration=iteration, requested_by=requested_by, status="pending")
     db.add(approval)
     run.status = "waiting"
     await db.flush()
-    await audit_service.record(db, action="tool.approval_requested", actor_type="system", tenant_id=tenant_id, resource_type="run", resource_id=run.id, request_id=run.request_id, metadata={"approval_id": str(approval.id), "tool": tool_name, "tool_call_id": tool_call_id})
+    await audit_service.record(db, action="tool.approval_requested", actor_type="system", tenant_id=effective_tenant_id, resource_type="run", resource_id=run.id, request_id=run.request_id, metadata={"approval_id": str(approval.id), "tool": tool_name, "tool_call_id": tool_call_id})
     return approval
 
 
