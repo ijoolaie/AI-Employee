@@ -22,17 +22,6 @@ def assert_true(condition: bool, message: str) -> None:
         fail(message)
 
 
-def is_template_value(value: str) -> bool:
-    """Return True only for empty values or obvious non-secret placeholders."""
-    value = value.strip()
-    if not value:
-        return True
-    if value.startswith(("<", "REPLACE_", "${")):
-        return True
-    placeholder_tokens = ("USER", "PASSWORD", "HOST", "DB")
-    return any(token in value for token in placeholder_tokens)
-
-
 def main() -> None:
     assert_true(COMPOSE.exists(), "production compose is missing")
     assert_true(CONFIG.exists(), "production config is missing")
@@ -53,6 +42,7 @@ def main() -> None:
     assert_true("change-me-to-a-long-random-string-in-production" in config, "expected weak-secret sentinel is absent from config")
     assert_true("SECRET_KEY" in config and "production" in config.lower(), "production SECRET_KEY safety guard is not visible")
 
+    placeholder_prefixes = ("<", "REPLACE_", "${")
     for path in TEMPLATES:
         if not path.exists():
             continue
@@ -60,7 +50,7 @@ def main() -> None:
         for name in CRITICAL + OPTIONAL_SECRETS:
             for match in re.finditer(rf"(?m)^\s*{re.escape(name)}\s*=\s*(.*)$", text):
                 value = match.group(1).strip()
-                assert_true(is_template_value(value), f"{path.relative_to(ROOT)} contains a concrete value for {name}")
+                assert_true(value == "" or value == "REPLACE" or value.startswith(placeholder_prefixes), f"{path.relative_to(ROOT)} contains a concrete value for {name}")
 
     workflow_root = ROOT / ".github/workflows"
     for workflow in workflow_root.glob("*.yml"):
