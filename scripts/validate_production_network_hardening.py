@@ -5,6 +5,7 @@ This is an engineering contract, not evidence of a deployed network perimeter.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,23 +17,24 @@ def require(text: str, needle: str, label: str) -> None:
         raise AssertionError(f"missing {label}: {needle}")
 
 
+def service_block(compose: str, service: str) -> str:
+    match = re.search(rf"(?ms)^  {re.escape(service)}:\n(.*?)(?=^  [A-Za-z0-9_-]+:\n|\Z)", compose)
+    if not match:
+        raise AssertionError(f"missing service block: {service}")
+    return match.group(0)
+
+
 def main() -> None:
     compose = COMPOSE.read_text(encoding="utf-8")
 
     # Production services must not publish host ports directly; ingress belongs
     # to the operator-managed edge/load-balancer layer.
-    if "    ports:" in compose:
+    if re.search(r"(?m)^    ports:", compose):
         raise AssertionError("production compose must not publish host ports")
     require(compose, "networks:\n  backend:\n    driver: bridge", "backend network declaration")
 
-    for service in ("postgres:", "redis:", "api:", "worker:", "beat:", "frontend:"):
-        require(compose, f"  {service}", f"service {service}")
-
-    # Databases and internal application components stay on the private network.
-    for service in ("postgres:", "redis:", "api:", "worker:", "beat:", "frontend:"):
-        block_start = compose.index(f"  {service}")
-        next_service = compose.find("\n  ", block_start + 3)
-        block = compose[block_start:] if next_service == -1 else compose[block_start:next_service]
+    for service in ("postgres", "redis", "api", "worker", "beat", "frontend"):
+        block = service_block(compose, service)
         require(block, "networks: [backend]", f"{service} private backend network")
 
     # Health checks use loopback, avoiding accidental dependence on published ports.
