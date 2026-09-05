@@ -17,7 +17,7 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Field | Value |
 |---|---|
 | Repository | `ijoolaie/AI-Employee` |
-| Main baseline at reconciliation | `70e00e681bf87a07a64ed5d2a3f0121754ab3fc3` |
+| Main baseline at reconciliation | `f6fda6e051541cb6c33599ac1dd6a11903cc6fab` |
 | Immutable production tag | **PENDING — external release freeze** |
 | Container image digests | **PENDING — no external image registry/release pipeline supplied** |
 | SBOM | **ENGINEERING-CAPTURED for API/frontend images; attach to immutable published release** |
@@ -50,6 +50,7 @@ The baseline above is a repository engineering identity, not a production certif
 | Alert ownership/routing contract | `ops/alerting/alert-routing.yml` + validator | ENGINEERING | Complete | live paging/routing test still external |
 | Runtime isolation + RBAC contract | `backend/scripts/e2e_tenant_rbac_verify.py` + `.github/workflows/runtime-isolation-rbac-contract.yml` + `docs/current/PHASE_14_RUNTIME_ISOLATION_RBAC_ENGINEERING.md` | ENGINEERING | Complete | ephemeral real-stack CI; external actor matrix pending |
 | Production network hardening contract | `scripts/validate_production_network_hardening.py` + `.github/workflows/production-network-hardening.yml` + `docs/current/PHASE_14_PRODUCTION_NETWORK_HARDENING.md` | ENGINEERING | Complete | compose/private-network contract; deployed perimeter still external |
+| Production secret management contract | `scripts/validate_production_secret_management.py` + `.github/workflows/production-secret-management.yml` + `docs/current/PHASE_14_PRODUCTION_SECRET_MANAGEMENT.md` | ENGINEERING | Complete | secret wiring/leakage boundary; external manager/rotation/recovery pending |
 | Real production deployment | `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` Phase B | EXTERNAL-PENDING | Blocked | requires operator-controlled target |
 | Real backup/restore/DR + RPO/RTO | Execution Pack Phase C | EXTERNAL-PENDING | Blocked | requires real infrastructure |
 | Production SLO/SLI/error budget | Execution Pack Phase D | EXTERNAL-PENDING | Blocked | requires real traffic/monitoring |
@@ -78,6 +79,10 @@ The dedicated CI gate executes the existing real-stack tenant/RBAC certification
 
 The network hardening contract prevents host-published production compose ports and requires all production services to remain on the private backend network, with loopback health checks and fail-closed rate limiting. It does **not** prove the deployed firewall/security groups, WAF/load balancer, TLS termination, DNS, management-plane restrictions, egress controls, or real network segmentation.
 
+## Secret management limitations
+
+The secret-management contract proves repository-level fail-closed secret wiring, placeholder-only checked-in templates, and a CI leakage boundary without reading secret values. It does **not** prove an external secret manager, real secret versions, rotation/revocation, recovery, operator permissions, audit logging, or live provider authentication. Those remain EXTERNAL-PENDING.
+
 ## Alerting / on-call limitations
 
 PR #327 adds deterministic severity, ownership, secondary escalation and acknowledgement targets for the repository incident scenarios. The resulting contract is engineering evidence only. It does **not** prove live alert delivery, human acknowledgement, paging escalation, staffed coverage, or production incident response.
@@ -89,10 +94,11 @@ To convert the pending rows into external evidence, the project needs:
 1. An operator-controlled staging/production target with compute, DNS/TLS and ingress access.
 2. PostgreSQL, Redis and object-storage access plus an isolated restore target.
 3. Production-safe provider credentials delivered through the runtime secret-management mechanism; never commit or paste secret values into the repository.
-4. Monitoring/alerting access and named primary/backup on-call ownership.
-5. Permission to execute controlled backup/restore, failure and DR scenarios.
-6. An independent security tester for the penetration assessment.
-7. A customer acceptance owner and written acceptance criteria.
+4. An approved external secret manager with rotation/revocation and recovery procedures.
+5. Monitoring/alerting access and named primary/backup on-call ownership.
+6. Permission to execute controlled backup/restore, failure, DR and secret-rotation scenarios.
+7. An independent security tester for the penetration assessment.
+8. A customer acceptance owner and written acceptance criteria.
 
 ## Governing document
 
