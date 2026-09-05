@@ -17,11 +17,12 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Field | Value |
 |---|---|
 | Repository | `ijoolaie/AI-Employee` |
-| Main baseline at index creation | `62211f75dec6c060c2ab85ed980178c3deac1c93` |
+| Main baseline at index creation | `242f3e949183fce8b8a5764c6c8036b62df41592` |
 | Immutable production tag | **PENDING — external release freeze** |
-| Container image digests | **PENDING — no external image registry/release pipeline supplied** |
-| SBOM | **PENDING — attach to immutable release when published** |
-| Build provenance | **PENDING — attach to immutable release when published** |
+| CI image identities | **ENGINEERING EVIDENCE — PR #320 / Immutable Release Evidence workflow** |
+| CI image digests | **ENGINEERING-CAPTURED locally in CI; external registry digest still pending** |
+| SBOM | **ENGINEERING-CAPTURED for API/frontend images; attach to immutable published release** |
+| Build provenance | **ENGINEERING-CAPTURED CI build metadata; signed/verified external attestation pending** |
 
 The baseline above is a repository engineering identity, not a production certification identity.
 
@@ -41,7 +42,10 @@ The baseline above is a repository engineering identity, not a production certif
 | Usage/budget controls | `/api/v1/usage/optimization` + frontend usage surface | ENGINEERING | Complete | current main baseline |
 | Cost anomaly/forecast | `/api/v1/usage/cost-forecast` + deterministic anomaly tests | ENGINEERING | Complete | current main baseline |
 | Operations dashboard | Existing `/admin/operations` surface | ENGINEERING | Complete | current main baseline |
-| Release manifest generation | `scripts/production_release_manifest.sh` + `.github/workflows/release-manifest.yml` | ENGINEERING | Complete | source identity only |
+| SLO/error budget contract | Phase 14 SLO baseline / PR #324 | ENGINEERING | Complete | current main baseline |
+| Provider integration preflight | Phase 14 Provider Integration Validation / PR #325; merge `242f3e949183fce8b8a5764c6c8036b62df41592` | ENGINEERING | Complete | current main baseline |
+| Release manifest generation | `scripts/production_release_manifest.sh` + `.github/workflows/release-manifest.yml` | ENGINEERING | Complete | source identity |
+| Immutable release build evidence | PR #320 / `.github/workflows/immutable-release-evidence.yml` | ENGINEERING | Complete | exact CI release SHA; registry publication still pending |
 | Real production deployment | `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` Phase B | EXTERNAL-PENDING | Blocked | requires operator-controlled target |
 | Real backup/restore/DR + RPO/RTO | Execution Pack Phase C | EXTERNAL-PENDING | Blocked | requires real infrastructure |
 | Production SLO/SLI/error budget | Execution Pack Phase D | EXTERNAL-PENDING | Blocked | requires real traffic/monitoring |
@@ -56,7 +60,11 @@ The baseline above is a repository engineering identity, not a production certif
 
 ## Release-manifest limitations
 
-The current release-manifest workflow records source SHA/tag and dependency lockfile checksums without exposing secrets. It intentionally leaves container image digests, SBOM and provenance empty because no external image registry/build-attestation pipeline is currently available. Those fields must be populated before external certification; placeholders must not be interpreted as evidence.
+The immutable-release CI workflow now builds the API and frontend images from the exact release SHA, captures local image identities, generates CycloneDX SBOMs, and records CI build metadata. This is stronger engineering evidence than source-only manifest generation. It does **not** create an externally published registry digest, signed attestation, production deployment identity, or customer acceptance record. Those remain external gates.
+
+## Provider integration limitations
+
+PR #325 adds a deterministic preflight for Stripe and Shopify adapter/test/HTTPS surfaces and records the exact live operations that still require external validation. It does not authenticate to a provider, create a customer/payment resource, receive a provider webhook, or prove production behavior.
 
 ## Required external inputs
 
