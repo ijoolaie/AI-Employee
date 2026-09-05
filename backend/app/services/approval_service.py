@@ -15,12 +15,12 @@ from app.models.tool_approval import ToolApprovalRequest
 from app.services import audit_service
 
 
-def requires_approval(*, tool, tenant_id: uuid.UUID | None = None, employee_id: uuid.UUID | None = None) -> bool:
+def requires_approval(db: AsyncSession | None = None, *, tool, tenant_id: uuid.UUID | None = None, employee_id: uuid.UUID | None = None) -> bool:
     """Return the registered tool's approval policy.
 
-    Tenant/employee context is accepted at the execution boundary so policy
-    can become context-aware without changing callers. The current policy is
-    defined by the registered tool itself.
+    The execution boundary supplies the database plus tenant/employee context so
+    approval policy can become context-aware without changing callers. The
+    current policy is defined by the registered tool itself.
     """
     return bool(getattr(tool, "requires_approval", False))
 
