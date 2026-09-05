@@ -59,3 +59,19 @@ class Run(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
     )
+
+    @property
+    def error_message(self) -> str | None:
+        """Compatibility view over the persisted structured execution error."""
+        if isinstance(self.error, dict):
+            message = self.error.get("message")
+            return str(message) if message is not None else None
+        return None
+
+    @error_message.setter
+    def error_message(self, value: str | None) -> None:
+        """Persist legacy error-message assignments in the structured field."""
+        self.error = None if value is None else {
+            "code": "RUN_EXECUTION_FAILED",
+            "message": str(value)[:2000],
+        }
