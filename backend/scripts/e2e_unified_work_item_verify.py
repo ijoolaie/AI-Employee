@@ -82,10 +82,16 @@ def main() -> int:
     status, me = request("GET", "/auth/me", token=token)
     assert status == 200, me
     assert isinstance(me, dict)
-    tenant_id = uuid.UUID(str(((me.get("data") or {}).get("tenant") or {}).get("id")))
+    me_data = me.get("data") or {}
+    tenant_id = uuid.UUID(str((me_data.get("tenant") or {}).get("id")))
+    human_id = uuid.UUID(str((me_data.get("user") or {}).get("id")))
+
+    # The registered certification user is a real active User in the same
+    # tenant.  Assigning that identity exercises the production API contract;
+    # an arbitrary UUID would correctly be rejected as a nonexistent executor.
+    assert human_id, f"auth/me did not return the certification user id: {me}"
 
     work_item_id = asyncio.run(create_work_item(tenant_id, suffix))
-    human_id = uuid.uuid4()
 
     status, assigned = request(
         "POST",
