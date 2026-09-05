@@ -17,7 +17,7 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Field | Value |
 |---|---|
 | Repository | `ijoolaie/AI-Employee` |
-| Main baseline at reconciliation | `92dc2294cf386d0172f54d354981fce51a72b90c` |
+| Main baseline at reconciliation | `70e00e681bf87a07a64ed5d2a3f0121754ab3fc3` |
 | Immutable production tag | **PENDING — external release freeze** |
 | Container image digests | **PENDING — no external image registry/release pipeline supplied** |
 | SBOM | **ENGINEERING-CAPTURED for API/frontend images; attach to immutable published release** |
@@ -47,7 +47,8 @@ The baseline above is a repository engineering identity, not a production certif
 | Provider integration preflight | Phase 14 provider validator + CI evidence | ENGINEERING | Complete | live provider validation pending |
 | HA/failure-recovery smoke | Phase 14 failure-recovery smoke + CI evidence | ENGINEERING | Complete | production HA/RTO/RPO still external |
 | Incident-response drill contract | Phase 14 incident drill + CI evidence | ENGINEERING | Complete | live human/on-call drill still external |
-| Alert ownership/routing contract | `ops/alerting/alert-routing.yml` + `scripts/validate_alert_ownership_routing.py` | ENGINEERING | Complete | live paging/routing test still external |
+| Alert ownership/routing contract | `ops/alerting/alert-routing.yml` + validator | ENGINEERING | Complete | live paging/routing test still external |
+| Runtime isolation + RBAC contract | `backend/scripts/e2e_tenant_rbac_verify.py` + `.github/workflows/runtime-isolation-rbac-contract.yml` + `docs/current/PHASE_14_RUNTIME_ISOLATION_RBAC_ENGINEERING.md` | ENGINEERING | Complete | ephemeral real-stack CI; external actor matrix pending |
 | Real production deployment | `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` Phase B | EXTERNAL-PENDING | Blocked | requires operator-controlled target |
 | Real backup/restore/DR + RPO/RTO | Execution Pack Phase C | EXTERNAL-PENDING | Blocked | requires real infrastructure |
 | Production SLO/SLI/error budget | Execution Pack Phase D | EXTERNAL-PENDING | Blocked | requires real traffic/monitoring |
@@ -67,6 +68,10 @@ The immutable-release CI workflow builds API/frontend images from an exact relea
 ## Provider integration limitations
 
 PR #325 adds a deterministic preflight for Stripe and Shopify adapter/test/HTTPS surfaces and records the exact live operations that still require external validation. It does not authenticate to a provider, create a customer/payment resource, receive a provider webhook, or prove production behavior.
+
+## Runtime isolation / RBAC limitations
+
+The dedicated CI gate executes the existing real-stack tenant/RBAC certification against an ephemeral Docker environment and is classified as ENGINEERING evidence. It verifies tenant context, cross-tenant rejection, same-tenant access, restricted permission denial, and knowledge isolation. It does **not** satisfy the external Vendor/Reseller/Customer actor matrix required by issue #19, nor does it prove production ingress/network isolation or external identity-provider behavior.
 
 ## Alerting / on-call limitations
 

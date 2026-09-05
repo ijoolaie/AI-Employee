@@ -1,0 +1,90 @@
+name: Runtime Isolation and RBAC Contract
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/**"
+      - "backend/scripts/e2e_tenant_rbac_verify.py"
+      - "backend/alembic/**"
+      - "docker-compose.yml"
+      - ".github/workflows/runtime-isolation-rbac-contract.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: runtime-isolation-rbac-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  runtime-isolation-rbac:
+    name: Tenant hierarchy isolation and RBAC
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      DATABASE_URL: postgresql+asyncpg://aiep:aiep@localhost:5432/aiep
+      DATABASE_URL_SYNC: postgresql://aiep:aiep@localhost:5432/aiep
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+      SECRET_KEY: ci-runtime-isolation-rbac-secret
+      APP_ENV: test
+      CI: true
+      E2E_API_BASE_URL: http://localhost:8000/api/v1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Start database and Redis
+        run: docker compose up -d postgres redis
+
+      - name: Wait for dependencies
+        run: |
+          set -euo pipefail
+          for i in {1..40}; do
+            if docker compose exec -T postgres pg_isready -U aiep -d aiep >/dev/null 2>&1 && docker compose exec -T redis redis-cli ping >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 3
+          done
+          docker compose logs postgres redis
+          exit 1
+
+      - name: Build and start API stack
+        run: docker compose up -d --build api worker beat
+
+      - name: Wait for API readiness
+        run: |
+          set -euo pipefail
+          for i in {1..40}; do
+            if curl -fsS http://localhost:8000/health/dependencies >/dev/null; then
+              exit 0
+            fi
+            sleep 3
+          done
+          docker compose logs api worker beat
+          exit 1
+
+      - name: Apply migrations
+        run: docker compose exec -T api alembic upgrade head
+
+      - name: Verify migration graph
+        run: |
+          set -euo pipefail
+          docker compose exec -T api alembic check
+          test "$(docker compose exec -T api alembic heads | grep -c '(head)')" -eq 1
+
+      - name: Run real-stack tenant isolation and RBAC gate
+        run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_tenant_rbac_verify.py'
+
+      - name: Assert certification boundary
+        run: |
+          set -euo pipefail
+          test -f backend/scripts/e2e_tenant_rbac_verify.py
+          ! grep -q "production_certification_claimed.*true" backend/scripts/e2e_tenant_rbac_verify.py
+
+      - name: Dump logs on failure
+        if: ${{ failure() }}
+        run: docker compose logs --no-color
+
+      - name: Teardown
+        if: ${{ always() }}
+        run: docker compose down -v
