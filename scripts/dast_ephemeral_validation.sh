@@ -2,6 +2,11 @@
 set -euo pipefail
 
 TARGET_URL="${DAST_TARGET_URL:-http://127.0.0.1:18000/}"
+# GitHub-hosted Linux runners publish Compose ports on the runner host. The
+# previous default used host.docker.internal, which resolves to the Docker
+# bridge and is not the runner host for this setup. Normalize that legacy value
+# so the workflow remains backward-compatible while targeting the real API.
+TARGET_URL="${TARGET_URL/host.docker.internal/127.0.0.1}"
 REPORT_DIR="${DAST_REPORT_DIR:-artifacts/dast}"
 mkdir -p "$REPORT_DIR"
 
