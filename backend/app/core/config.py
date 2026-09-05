@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     tenant_resource_default_concurrency: int = 1
     tenant_resource_lease_seconds: int = 3600
 
+    # Data lifecycle: operational records default to one year and may be
+    # overridden through DATA_RETENTION_DAYS within the enforced safety bounds.
+    data_retention_days: int = 365
+
     cors_origins: List[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -63,6 +67,8 @@ class Settings(BaseSettings):
             raise ValueError("TENANT_RESOURCE_LEASE_SECONDS must be between 1 and 86400")
         if any(limit < 1 for limit in self.tenant_resource_concurrency.values()):
             raise ValueError("TENANT_RESOURCE_CONCURRENCY values must be positive")
+        if self.data_retention_days < 1 or self.data_retention_days > 3650:
+            raise ValueError("DATA_RETENTION_DAYS must be between 1 and 3650")
         if self.app_env.lower() in {"production", "prod"}:
             if self.debug:
                 raise ValueError("DEBUG must be false in production")
