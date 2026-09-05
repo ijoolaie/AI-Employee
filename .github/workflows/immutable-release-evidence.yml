@@ -50,8 +50,9 @@ jobs:
           import subprocess
           from pathlib import Path
 
+          sha = os.environ["GITHUB_SHA"]
           images = []
-          for name in ("ai-employee-api:${GITHUB_SHA}", "ai-employee-frontend:${GITHUB_SHA}"):
+          for name in (f"ai-employee-api:{sha}", f"ai-employee-frontend:{sha}"):
               raw = subprocess.check_output(["docker", "image", "inspect", name], text=True)
               item = json.loads(raw)[0]
               images.append({
@@ -73,7 +74,7 @@ jobs:
                   "run_id": os.environ["GITHUB_RUN_ID"],
                   "repository": os.environ["GITHUB_REPOSITORY"],
                   "ref": os.environ["GITHUB_REF"],
-                  "sha": os.environ["GITHUB_SHA"],
+                  "sha": sha,
                   "runner_os": os.environ["RUNNER_OS"],
                   "image_ids": [item["image_id"] for item in images],
               }, indent=2) + "\n", encoding="utf-8"
