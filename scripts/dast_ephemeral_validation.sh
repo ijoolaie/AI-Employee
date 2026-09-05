@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-TARGET_URL="${DAST_TARGET_URL:-http://host.docker.internal:18000/}"
+TARGET_URL="${DAST_TARGET_URL:-http://127.0.0.1:18000/}"
 REPORT_DIR="${DAST_REPORT_DIR:-artifacts/dast}"
 mkdir -p "$REPORT_DIR"
 
-# OWASP ZAP baseline performs a passive scan plus safe spidering. This is an
-# engineering gate against the ephemeral CI target, not a substitute for an
-# authenticated production scan or an independent penetration test.
+# OWASP ZAP runs in a disposable container. Use the runner's host network so
+# the scan reaches the API port published by Docker Compose on Linux CI.
+# This is an engineering gate against the ephemeral target, not a substitute
+# for an authenticated production scan or an independent penetration test.
 docker run --rm \
-  --add-host=host.docker.internal:host-gateway \
+  --network host \
+  --user 0:0 \
   -v "$PWD/$REPORT_DIR:/zap/wrk:rw" \
   zaproxy/zap-stable:latest \
   zap-baseline.py \
@@ -41,7 +43,7 @@ for alert in alerts:
     risk_counts[risk] = risk_counts.get(risk, 0) + 1
 
 summary = {
-    "target": "http://host.docker.internal:18000/",
+    "target": "http://127.0.0.1:18000/",
     "alert_count": len(alerts),
     "risk_counts": risk_counts,
 }
