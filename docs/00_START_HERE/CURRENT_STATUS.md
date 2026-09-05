@@ -1,13 +1,14 @@
 # Current Status
 
-**Last reconciled:** 2026-09-04  
+**Last reconciled:** 2026-09-05  
+**Engineering main baseline:** `44e1c0f339e2440bafe9f4e122d2b63dc2fc09c2`  
 **Status:** PHASE 11 COMPLETE / PHASE 12 IMPLEMENTED / PHASE 13 ENGINEERING COMPLETE / PHASE 14.1–14.16 ENGINEERING COMPLETE / STAGE 7 EXTERNAL-PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries. Business work uses shared execution contracts for Human, Agent and collaborative execution under common authorization, approval, tool, audit and evidence controls.
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.16 engineering implementation is complete. Production-like infrastructure validation is complete in CI. These are engineering/local evidence only and make no external production-certification claim.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Evidence Platform is implemented through P12.6. Phase 13 Agent Teams & Marketplace engineering implementation is complete. Phase 14.1 through 14.16 engineering implementation is complete. Production-like infrastructure validation is complete in CI. The tracked P1 engineering/productization gates and latest Stage 7 engineering contracts are also reconciled as complete/implemented where applicable. These are engineering/local evidence only and make no external production-certification claim.
 
 ## Remaining program
 
@@ -32,16 +33,20 @@ Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center & Eviden
 | P0 | Alert ownership & on-call escalation | Mixed |
 | P0 | Final external certification & customer acceptance (#210/#269) | External |
 
+Repository contracts for several Mixed items are complete, but their target-environment evidence is still required.
+
 ### P1 completeness
 
-- Data retention & lifecycle enforcement.
-- Human-in-the-loop TODO reconciliation in `backend/app/services/run_service.py`.
-- Documentation consolidation and evidence index.
-- Dedicated platform operations dashboard.
-- Customer usage, budget and cost controls.
-- Cost anomaly detection and forecasting.
+| ID | Work | Current state |
+|---|---|---|
+| 7.15 | Data retention & lifecycle enforcement | ENGINEERING IMPLEMENTED |
+| 7.16 | Human-in-the-loop TODO reconciliation | ENGINEERING COMPLETE |
+| 7.17 | Documentation consolidation & evidence index | ENGINEERING COMPLETE |
+| 7.18 | Platform operations dashboard | ENGINEERING COMPLETE |
+| 7.19 | Customer usage, budget & cost controls | ENGINEERING IMPLEMENTED |
+| 7.20 | Cost anomaly detection & forecasting | ENGINEERING IMPLEMENTED |
 
-The complete register is `docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md`.
+Target verification and operational acceptance remain external where the gap register says so.
 
 ## Engineering checkpoints
 
@@ -51,7 +56,15 @@ The complete register is `docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md`.
 - Stage 4 / #288: complete; security/privacy regression, dependency audit and CodeQL evidence reconciled.
 - Stage 5 / #289: complete; unit economics, budget and worker-sizing decision support implemented.
 - Stage 6 / #290: complete; tenant-scoped Human + Agent workspace read model implemented.
-- Infrastructure validation / #315: merged at `93c717969a192ae5b90b909c2c4e8aaa89bea50a`; CI run `33884955068` passed production-like Compose lifecycle, persistence and isolated PostgreSQL backup/restore.
+- Infrastructure validation / #315: CI run `33884955068` passed production-like Compose lifecycle, persistence and isolated PostgreSQL backup/restore.
+- #320: immutable-release build evidence captured in CI; external registry digest/signing remains pending.
+- #323: HA/failure-recovery engineering rehearsal complete; target failover/RTO/RPO evidence remains external.
+- #324: SLO/error-budget engineering contract complete; live target measurement remains external.
+- #325: provider integration preflight complete; live provider validation remains external.
+- #327: alert ownership/routing contract complete; live paging/on-call remains external.
+- #329: runtime isolation/RBAC CI gate complete; external actor-matrix certification remains pending.
+- #330: production network hardening contract complete; deployed perimeter evidence remains external.
+- #331: production secret-management contract complete; external manager/rotation/recovery evidence remains pending.
 
 ## Evidence boundary
 
@@ -59,7 +72,7 @@ CI, repository tests, browser acceptance, local Docker, GitHub-hosted production
 
 ## Current mainline
 
-`93c717969a192ae5b90b909c2c4e8aaa89bea50a` is the infrastructure-validation merge baseline; subsequent commits reconcile canonical documentation. The accepted production identity must be frozen later as part of Stage 7.1.
+`44e1c0f339e2440bafe9f4e122d2b63dc2fc09c2` is the current engineering main baseline. It is **not** an accepted production identity. The production identity must be frozen later as part of Stage 7.1 and then used consistently for all external acceptance evidence.
 
 ## Security rule
 
