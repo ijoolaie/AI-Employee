@@ -1,6 +1,6 @@
 import json
 
-from app.memory.auto_extract import _parse_candidates, auto_memory_settings
+from app.memory.auto_extract import _parse_candidates, _rules_from_settings, auto_memory_settings
 
 
 def test_auto_memory_settings_requires_explicit_opt_in():
@@ -9,6 +9,16 @@ def test_auto_memory_settings_requires_explicit_opt_in():
     assert cfg["enabled"] is True
     assert cfg["max_candidates"] == 5
     assert cfg["min_importance"] == 3
+
+
+def test_normalized_settings_preserve_explicit_opt_in():
+    cfg = auto_memory_settings({"memory": {"enabled": True, "auto_extract": True}})
+    rules = _rules_from_settings(cfg)
+    assert rules["memory"]["enabled"] is True
+    assert rules["memory"]["auto_extract"] is True
+    assert rules["memory"]["max_candidates"] == cfg["max_candidates"]
+    assert rules["memory"]["min_importance"] == cfg["min_importance"]
+    assert rules["memory"]["dedup_threshold"] == cfg["dedup_threshold"]
 
 
 def test_parse_candidates_accepts_json_fence_and_filters_noise():
