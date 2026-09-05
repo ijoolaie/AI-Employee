@@ -5,7 +5,6 @@ import calendar
 import math
 import uuid
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
