@@ -15,24 +15,17 @@ from app.models.tool_approval import ToolApprovalRequest
 from app.services import audit_service
 
 
-def requires_approval(*, tool) -> bool:
-    """Return the registry tool's durable approval policy.
+def requires_approval(*, tool, tenant_id: uuid.UUID | None = None, employee_id: uuid.UUID | None = None) -> bool:
+    """Return the registered tool's approval policy.
 
-    Approval policy belongs to the registered tool definition. Keeping this
-    helper in the approval service gives the execution path a single explicit
-    policy boundary while remaining compatible with lightweight test tools.
+    Tenant/employee context is accepted at the execution boundary so policy
+    can become context-aware without changing callers. The current policy is
+    defined by the registered tool itself.
     """
     return bool(getattr(tool, "requires_approval", False))
 
 
-def validate_resume_approval(
-    approval: ToolApprovalRequest,
-    *,
-    tenant_id: uuid.UUID,
-    run_id: uuid.UUID,
-    tool_name: str,
-    tool_call_id: str,
-) -> None:
+def validate_resume_approval(approval: ToolApprovalRequest, *, tenant_id: uuid.UUID, run_id: uuid.UUID, tool_name: str, tool_call_id: str) -> None:
     """Fail closed unless an approval is current for this exact execution."""
     if approval.tenant_id != tenant_id or approval.run_id != run_id:
         raise ValidationAppError("Approval context does not match the Run tenant")
@@ -42,64 +35,22 @@ def validate_resume_approval(
         raise ValidationAppError("Approval does not match the requested tool call")
 
 
-async def create_request(
-    db: AsyncSession,
-    *,
-    run: Run,
-    tool_name: str,
-    tool_call_id: str,
-    arguments: dict,
-    continuation_messages: list[dict],
-    tenant_id: uuid.UUID | None = None,
-    iteration: int = 0,
-    requested_by: uuid.UUID | None = None,
-) -> ToolApprovalRequest:
+async def create_request(db: AsyncSession, *, run: Run, tool_name: str, tool_call_id: str, arguments: dict, continuation_messages: list[dict], tenant_id: uuid.UUID | None = None, iteration: int = 0, requested_by: uuid.UUID | None = None) -> ToolApprovalRequest:
     """Create or reuse the pending approval for one exact tool call."""
     effective_tenant_id = tenant_id or run.tenant_id
-    existing = await db.execute(
-        select(ToolApprovalRequest).where(
-            ToolApprovalRequest.run_id == run.id,
-            ToolApprovalRequest.tool_call_id == tool_call_id,
-            ToolApprovalRequest.status == "pending",
-        )
-    )
+    existing = await db.execute(select(ToolApprovalRequest).where(ToolApprovalRequest.run_id == run.id, ToolApprovalRequest.tool_call_id == tool_call_id, ToolApprovalRequest.status == "pending"))
     existing_request = existing.scalar_one_or_none()
     if existing_request is not None:
         return existing_request
-    approval = ToolApprovalRequest(
-        tenant_id=effective_tenant_id,
-        run_id=run.id,
-        tool_name=tool_name,
-        tool_call_id=tool_call_id,
-        arguments=arguments,
-        continuation_messages=continuation_messages,
-        iteration=iteration,
-        requested_by=requested_by,
-        status="pending",
-    )
+    approval = ToolApprovalRequest(tenant_id=effective_tenant_id, run_id=run.id, tool_name=tool_name, tool_call_id=tool_call_id, arguments=arguments, continuation_messages=continuation_messages, iteration=iteration, requested_by=requested_by, status="pending")
     db.add(approval)
     run.status = "waiting"
     await db.flush()
-    await audit_service.record(
-        db,
-        action="tool.approval_requested",
-        actor_type="system",
-        tenant_id=effective_tenant_id,
-        resource_type="run",
-        resource_id=run.id,
-        request_id=run.request_id,
-        metadata={
-            "approval_id": str(approval.id),
-            "tool": tool_name,
-            "tool_call_id": tool_call_id,
-        },
-    )
+    await audit_service.record(db, action="tool.approval_requested", actor_type="system", tenant_id=effective_tenant_id, resource_type="run", resource_id=run.id, request_id=run.request_id, metadata={"approval_id": str(approval.id), "tool": tool_name, "tool_call_id": tool_call_id})
     return approval
 
 
-async def list_requests(
-    db: AsyncSession, *, tenant_id: uuid.UUID, status: str | None = None
-):
+async def list_requests(db: AsyncSession, *, tenant_id: uuid.UUID, status: str | None = None):
     stmt = select(ToolApprovalRequest).where(ToolApprovalRequest.tenant_id == tenant_id)
     if status:
         stmt = stmt.where(ToolApprovalRequest.status == status)
@@ -107,18 +58,8 @@ async def list_requests(
     return list(result.scalars().all())
 
 
-async def _authorize_agent_decision(
-    db: AsyncSession,
-    *,
-    agent_id: uuid.UUID,
-    tenant_id: uuid.UUID,
-    approval: ToolApprovalRequest,
-) -> AgentInstance:
-    result = await db.execute(
-        select(AgentInstance)
-        .where(AgentInstance.id == agent_id, AgentInstance.tenant_id == tenant_id)
-        .with_for_update()
-    )
+async def _authorize_agent_decision(db: AsyncSession, *, agent_id: uuid.UUID, tenant_id: uuid.UUID, approval: ToolApprovalRequest) -> AgentInstance:
+    result = await db.execute(select(AgentInstance).where(AgentInstance.id == agent_id, AgentInstance.tenant_id == tenant_id).with_for_update())
     agent = result.scalar_one_or_none()
     if agent is None:
         raise NotFoundError("Approval agent not found")
@@ -136,48 +77,23 @@ async def _authorize_agent_decision(
     return agent
 
 
-async def decide(
-    db: AsyncSession,
-    *,
-    approval_id: uuid.UUID,
-    tenant_id: uuid.UUID,
-    decided_by: uuid.UUID,
-    decision: str,
-    reason: str | None,
-    actor_type: str = "user",
-) -> ToolApprovalRequest:
+async def decide(db: AsyncSession, *, approval_id: uuid.UUID, tenant_id: uuid.UUID, decided_by: uuid.UUID, decision: str, reason: str | None, actor_type: str = "user") -> ToolApprovalRequest:
     if decision not in {"approve", "reject"}:
         raise ConflictError("unsupported approval decision")
-    result = await db.execute(
-        select(ToolApprovalRequest)
-        .where(
-            ToolApprovalRequest.id == approval_id,
-            ToolApprovalRequest.tenant_id == tenant_id,
-        )
-        .with_for_update()
-    )
+    result = await db.execute(select(ToolApprovalRequest).where(ToolApprovalRequest.id == approval_id, ToolApprovalRequest.tenant_id == tenant_id).with_for_update())
     approval = result.scalar_one_or_none()
     if approval is None:
         raise NotFoundError("Approval request not found")
     if approval.status != "pending":
         raise ConflictError(f"Approval request already decided: {approval.status}")
     if actor_type == "agent":
-        agent = await _authorize_agent_decision(
-            db,
-            agent_id=decided_by,
-            tenant_id=tenant_id,
-            approval=approval,
-        )
+        agent = await _authorize_agent_decision(db, agent_id=decided_by, tenant_id=tenant_id, approval=approval)
         policy = agent.configuration.get("approval_delegation", {})
         if decision not in policy.get("decisions", ["approve", "reject"]):
             raise ConflictError("Agent is not authorized for this approval decision")
     elif actor_type != "user":
         raise ConflictError("unsupported approval actor")
-    run_result = await db.execute(
-        select(Run)
-        .where(Run.id == approval.run_id, Run.tenant_id == tenant_id)
-        .with_for_update()
-    )
+    run_result = await db.execute(select(Run).where(Run.id == approval.run_id, Run.tenant_id == tenant_id).with_for_update())
     run = run_result.scalar_one_or_none()
     if run is None:
         raise NotFoundError("Run not found for approval")
@@ -187,25 +103,7 @@ async def decide(
     approval.decided_at = datetime.now(timezone.utc)
     run.status = "pending" if approval.status == "approved" else "failed"
     if approval.status == "rejected":
-        run.error = {
-            "code": "TOOL_APPROVAL_REJECTED",
-            "message": reason or "Approval rejected.",
-        }
+        run.error = {"code": "TOOL_APPROVAL_REJECTED", "message": reason or "Approval rejected."}
     await db.flush()
-    await audit_service.record(
-        db,
-        action="tool.approval_decided",
-        actor_type=actor_type,
-        actor_id=decided_by,
-        tenant_id=tenant_id,
-        resource_type="run",
-        resource_id=run.id,
-        request_id=run.request_id,
-        metadata={
-            "approval_id": str(approval.id),
-            "tool": approval.tool_name,
-            "decision": approval.status,
-            "reason": reason,
-        },
-    )
+    await audit_service.record(db, action="tool.approval_decided", actor_type=actor_type, actor_id=decided_by, tenant_id=tenant_id, resource_type="run", resource_id=run.id, request_id=run.request_id, metadata={"approval_id": str(approval.id), "tool": approval.tool_name, "decision": approval.status, "reason": reason})
     return approval
