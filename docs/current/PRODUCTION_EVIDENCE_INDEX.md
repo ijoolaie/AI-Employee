@@ -17,7 +17,7 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Field | Value |
 |---|---|
 | Repository | `ijoolaie/AI-Employee` |
-| Main baseline at reconciliation | `f6fda6e051541cb6c33599ac1dd6a11903cc6fab` |
+| Main engineering baseline at reconciliation | `44e1c0f339e2440bafe9f4e122d2b63dc2fc09c2` |
 | Immutable production tag | **PENDING — external release freeze** |
 | Container image digests | **PENDING — no external image registry/release pipeline supplied** |
 | SBOM | **ENGINEERING-CAPTURED for API/frontend images; attach to immutable published release** |

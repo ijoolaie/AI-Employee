@@ -2,6 +2,7 @@
 
 **Prepared:** 2026-09-05  
 **Repository:** `ijoolaie/AI-Employee`  
+**Current engineering main baseline:** `44e1c0f339e2440bafe9f4e122d2b63dc2fc09c2`  
 **Purpose:** execute the remaining production/customer-readiness work without confusing repository evidence with real target-environment certification.
 
 ## Operating rule
@@ -98,7 +99,7 @@ Capture both positive and negative requests, tenant IDs, role/permission context
 
 ### DAST
 
-Run against the deployed application with authenticated and unauthenticated profiles as appropriate. Record scanner/version, target release, findings, severity, remediation and retest.
+A CI-only OWASP ZAP baseline scan is already implemented as engineering evidence. External closure still requires running-target DAST with authenticated/unauthenticated profiles as appropriate. Record scanner/version, target release, findings, severity, remediation and retest.
 
 ### Independent penetration test
 
@@ -117,9 +118,11 @@ Verify:
 - credential recovery/revocation;
 - no plaintext production secrets in repository, logs or artifacts.
 
-Record references and configuration fingerprints, never secret values.
+The repository network-hardening and secret-management contracts are engineering-complete; external perimeter, secret-manager, rotation and recovery evidence is still required. Record references and configuration fingerprints, never secret values.
 
 ## Phase I — HA, failure recovery and incident response
+
+Repository-level failure-recovery and incident-response engineering rehearsals are complete. External closure still requires controlled scenarios on the target architecture using the real recovery objectives and alerting path.
 
 Run controlled failure scenarios:
 
@@ -136,6 +139,8 @@ Then execute at least one incident-response exercise using the real alerting and
 
 ## Phase J — Alert ownership and on-call
 
+The repository routing contract is engineering-complete. External closure requires live monitoring and a tested owner/escalation path.
+
 For each production alert, record:
 
 - alert name and condition;
@@ -151,6 +156,8 @@ A passing alert rule without a tested owner/escalation path is not closure evide
 
 ## Phase K — P1 productization completion
 
+The repository P1 engineering gates are reconciled. Remaining work in this phase is target verification/operational adoption where explicitly required, not an unresolved repository TODO list.
+
 ### Data retention/lifecycle
 
 Map every retained data class to retention period, deletion/archive behavior, legal hold requirements where applicable, audit behavior and target verification.
@@ -159,7 +166,7 @@ The repository enforcement command is intentionally **dry-run by default**. Run 
 
 ### Human-in-the-loop TODO reconciliation
 
-The execution path already contains explicit approval state handling and approved-tool resumption. The remaining repository task is documentation cleanup so the service header no longer describes the feature as a future TODO.
+The approval-path documentation is reconciled: gated tool calls create an approval request and pause execution; explicit approval resumes the exact continuation; the worker re-checks authorization before continuing. There is no remaining claim in `run_service.py` that Human-in-the-loop is a future TODO.
 
 ### Documentation/evidence index
 
@@ -167,15 +174,15 @@ Keep `PRODUCTION_GAP_REGISTER_2026-09-04.md`, this execution pack, `PRODUCTION_E
 
 ### Platform operations dashboard
 
-Minimum operational view: service health, queue depth/age, run success/failure, provider failures, latency, capacity/admission pressure, backup state and active incidents.
+The existing `/admin/operations` surface is the current engineering operational view. Target alerting, incident widgets and production adoption remain external/operational verification as applicable.
 
 ### Customer usage/budget/cost controls
 
-Expose tenant-scoped usage, budget status, run limits and cost signals; define enforcement behavior and audit events. Platform-admin optimization data is not sufficient by itself.
+Customer usage exposes budget utilization, remaining quota, unit cost and optimization guidance. Target billing/operations validation remains external where applicable.
 
 ### Cost anomaly detection/forecasting
 
-Use deterministic baselines first: rolling usage/cost baseline, deviation threshold, projected period-end cost and alert/audit event. Forecasts must expose the period and assumptions so they are decision support rather than false precision.
+Deterministic tenant-scoped daily anomaly detection and month-end projection are implemented with tests. Forecasts must expose the period and assumptions so they are decision support rather than false precision.
 
 ## Final acceptance sequence
 
