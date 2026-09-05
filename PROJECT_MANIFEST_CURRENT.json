@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
   "status": "current_release_index",
-  "generated_at": "2026-09-04T16:56:00Z",
+  "generated_at": "2026-09-05T14:28:33Z",
   "current_certified_vendor_release": {
     "version": "v1.2.0",
     "release_truth": "docs/current/39_RELEASE_TRUTH_V1.2.0.md",
@@ -12,14 +12,15 @@
   "current_implementation_baseline": {
     "architecture": "V1.4",
     "operating_model": "V1.5 Human + Agent",
-    "engineering_baseline": "93c717969a192ae5b90b909c2c4e8aaa89bea50a",
+    "engineering_baseline": "44e1c0f339e2440bafe9f4e122d2b63dc2fc09c2",
+    "reconciled_on": "2026-09-05",
     "reconciliation": "docs/current/PRODUCTIZATION_ROADMAP.md"
   },
   "external_production": {
     "stage": "Stage 7 / Phase 14.10",
     "issues": [269, 210, 19],
     "status": "external_pending",
-    "note": "Controlled release and production-like CI validation are not external production or commercial go-live certification."
+    "note": "The current engineering baseline, controlled release evidence and production-like CI validation are not external production or commercial go-live certification."
   },
   "production_gap_register": "docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md",
   "migration_graph": {
