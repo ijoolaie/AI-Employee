@@ -6,9 +6,10 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.core.deps import AuditReadContext, DbSession
 from app.schemas.common import APIResponse
+from app.schemas.cost_anomaly import CostAnomalyForecastResponse
 from app.schemas.usage import UsageSummaryResponse
 from app.schemas.usage_optimization import UsageOptimizationResponse
-from app.services import optimization_service, usage_service
+from app.services import cost_anomaly_service, optimization_service, usage_service
 
 router = APIRouter(prefix="/usage", tags=["usage"])
 
@@ -37,3 +38,10 @@ async def get_usage_optimization(ctx: AuditReadContext, db: DbSession):
     """Return tenant-scoped monthly usage, budget state and optimization guidance."""
     data = await optimization_service.tenant_optimization_summary(db, tenant_id=ctx.tenant_id)
     return APIResponse(success=True, data=UsageOptimizationResponse.model_validate(data))
+
+
+@router.get("/cost-forecast", response_model=APIResponse[CostAnomalyForecastResponse])
+async def get_cost_forecast(ctx: AuditReadContext, db: DbSession):
+    """Return deterministic daily anomaly detection and month-end cost forecast."""
+    data = await cost_anomaly_service.tenant_cost_anomaly_forecast(db, tenant_id=ctx.tenant_id)
+    return APIResponse(success=True, data=CostAnomalyForecastResponse.model_validate(data))
