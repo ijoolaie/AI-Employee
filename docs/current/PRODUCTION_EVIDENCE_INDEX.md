@@ -49,6 +49,7 @@ The baseline above is a repository engineering identity, not a production certif
 | Incident-response drill contract | Phase 14 incident drill + CI evidence | ENGINEERING | Complete | live human/on-call drill still external |
 | Alert ownership/routing contract | `ops/alerting/alert-routing.yml` + validator | ENGINEERING | Complete | live paging/routing test still external |
 | Runtime isolation + RBAC contract | `backend/scripts/e2e_tenant_rbac_verify.py` + `.github/workflows/runtime-isolation-rbac-contract.yml` + `docs/current/PHASE_14_RUNTIME_ISOLATION_RBAC_ENGINEERING.md` | ENGINEERING | Complete | ephemeral real-stack CI; external actor matrix pending |
+| Production network hardening contract | `scripts/validate_production_network_hardening.py` + `.github/workflows/production-network-hardening.yml` + `docs/current/PHASE_14_PRODUCTION_NETWORK_HARDENING.md` | ENGINEERING | Complete | compose/private-network contract; deployed perimeter still external |
 | Real production deployment | `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` Phase B | EXTERNAL-PENDING | Blocked | requires operator-controlled target |
 | Real backup/restore/DR + RPO/RTO | Execution Pack Phase C | EXTERNAL-PENDING | Blocked | requires real infrastructure |
 | Production SLO/SLI/error budget | Execution Pack Phase D | EXTERNAL-PENDING | Blocked | requires real traffic/monitoring |
@@ -56,7 +57,7 @@ The baseline above is a repository engineering identity, not a production certif
 | Vendor → Reseller → Client runtime isolation | Execution Pack Phase F / issue #19 | EXTERNAL-PENDING | Blocked | requires deployed target and actor matrix |
 | DAST | Execution Pack Phase G | EXTERNAL-PENDING | Blocked | requires deployed target |
 | Independent penetration test | Execution Pack Phase G | EXTERNAL-PENDING | Blocked | requires independent tester |
-| Network hardening + secret lifecycle | Execution Pack Phase H | EXTERNAL-PENDING | Blocked | requires real network/secret manager |
+| Network hardening + secret lifecycle | Execution Pack Phase H | EXTERNAL-PENDING | Blocked | network contract is engineering-complete; deployed perimeter and secret manager remain external |
 | HA/failure recovery + incident drill | Execution Pack Phase I | EXTERNAL-PENDING | Blocked | requires real target and controlled failure permission |
 | Alert ownership/on-call test | Execution Pack Phase J | EXTERNAL-PENDING | Blocked | requires monitoring and named operators |
 | Customer acceptance | Execution Pack final sequence / issue #269 | EXTERNAL-PENDING | Blocked | requires customer acceptance owner and criteria |
@@ -72,6 +73,10 @@ PR #325 adds a deterministic preflight for Stripe and Shopify adapter/test/HTTPS
 ## Runtime isolation / RBAC limitations
 
 The dedicated CI gate executes the existing real-stack tenant/RBAC certification against an ephemeral Docker environment and is classified as ENGINEERING evidence. It verifies tenant context, cross-tenant rejection, same-tenant access, restricted permission denial, and knowledge isolation. It does **not** satisfy the external Vendor/Reseller/Customer actor matrix required by issue #19, nor does it prove production ingress/network isolation or external identity-provider behavior.
+
+## Network hardening limitations
+
+The network hardening contract prevents host-published production compose ports and requires all production services to remain on the private backend network, with loopback health checks and fail-closed rate limiting. It does **not** prove the deployed firewall/security groups, WAF/load balancer, TLS termination, DNS, management-plane restrictions, egress controls, or real network segmentation.
 
 ## Alerting / on-call limitations
 
