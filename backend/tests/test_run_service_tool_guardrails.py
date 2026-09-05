@@ -38,6 +38,8 @@ class _FakeDB:
             return _ScalarResult(self.version)
         if self.execute_count == 3:
             return _ScalarResult(None)
+        if self.execute_count == 4:
+            return _ScalarResult(self.run)
         raise AssertionError(f"Unexpected db.execute call #{self.execute_count}")
 
     async def flush(self):
@@ -148,9 +150,7 @@ async def test_execute_run_blocks_model_requested_tool_outside_employee_allowlis
     run, version = _make_run_and_version(["allowed_tool"])
     db = _FakeDB(run, version)
     registry = _FakeRegistry(["allowed_tool", "blocked_tool"])
-    gateway = _FakeGateway(
-        ToolCall(id="call-blocked", name="blocked_tool", arguments={})
-    )
+    gateway = _FakeGateway(ToolCall(id="call-blocked", name="blocked_tool", arguments={}))
 
     _patch_execution_dependencies(monkeypatch, registry, gateway)
 
@@ -159,7 +159,7 @@ async def test_execute_run_blocks_model_requested_tool_outside_employee_allowlis
 
     assert registry.execute_calls == []
     assert run.status == "failed"
-    assert run.error["message"].startswith("Tool is not allowed by Employee guardrails")
+    assert run.error_message.startswith("Tool is not allowed by Employee guardrails")
     assert db.rollback_count == 1
 
 
@@ -168,9 +168,7 @@ async def test_execute_run_passes_employee_allowlist_to_registry_execution(monke
     run, version = _make_run_and_version(["allowed_tool"])
     db = _FakeDB(run, version)
     registry = _FakeRegistry(["allowed_tool"])
-    gateway = _FakeGateway(
-        ToolCall(id="call-allowed", name="allowed_tool", arguments={"x": 1})
-    )
+    gateway = _FakeGateway(ToolCall(id="call-allowed", name="allowed_tool", arguments={"x": 1}))
 
     _patch_execution_dependencies(monkeypatch, registry, gateway)
 
@@ -189,9 +187,7 @@ async def test_execute_run_blocks_disallowed_tool_before_approval(monkeypatch):
     run, version = _make_run_and_version(["allowed_tool"])
     db = _FakeDB(run, version)
     registry = _FakeRegistry(["allowed_tool", "blocked_tool"], requires_approval=True)
-    gateway = _FakeGateway(
-        ToolCall(id="call-blocked-approval", name="blocked_tool", arguments={})
-    )
+    gateway = _FakeGateway(ToolCall(id="call-blocked-approval", name="blocked_tool", arguments={}))
     approval_calls = []
 
     async def fake_create_request(*args, **kwargs):
@@ -214,9 +210,7 @@ async def test_execute_run_allowed_approval_tool_pauses_without_execution(monkey
     run, version = _make_run_and_version(["approval_tool"])
     db = _FakeDB(run, version)
     registry = _FakeRegistry(["approval_tool"], requires_approval=True)
-    gateway = _FakeGateway(
-        ToolCall(id="call-approval", name="approval_tool", arguments={"x": 1})
-    )
+    gateway = _FakeGateway(ToolCall(id="call-approval", name="approval_tool", arguments={"x": 1}))
     approval_calls = []
 
     async def fake_create_request(*args, **kwargs):
