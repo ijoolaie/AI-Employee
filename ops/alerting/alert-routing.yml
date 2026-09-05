@@ -1,0 +1,23 @@
+version: 1
+# Repository contract only. Replace logical owners/channels with the target
+# monitoring and paging integration before production certification.
+external_production_certification_claimed: false
+routes:
+  - alert: api_readiness_loss
+    severity: SEV-1
+    owner: platform-on-call
+    escalation:
+      primary: platform-on-call
+      secondary: platform-lead
+      acknowledgement_sla_minutes: 10
+    channel: external-paging-target
+    incident_scenario: api-readiness-loss
+  - alert: worker_degradation
+    severity: SEV-2
+    owner: platform-on-call
+    escalation:
+      primary: platform-on-call
+      secondary: platform-lead
+      acknowledgement_sla_minutes: 30
+    channel: external-paging-target
+    incident_scenario: worker-degradation
