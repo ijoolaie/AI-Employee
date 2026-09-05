@@ -1,0 +1,89 @@
+name: Failure Recovery Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docker-compose.production.yml'
+      - 'scripts/production_failure_recovery_smoke.sh'
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/failure-recovery-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      APP_ENV: production
+      DEBUG: 'false'
+      SECRET_KEY: ci-only-production-secret-key-012345678901234567890123
+      RATE_LIMIT_ENABLED: 'true'
+      RATE_LIMIT_FAIL_CLOSED: 'true'
+      CORS_ORIGINS: 'https://app.example.com'
+      FRONTEND_BASE_URL: 'https://app.example.com'
+      FRONTEND_APP_URL: 'https://app.example.com'
+      DATABASE_URL: postgresql+asyncpg://prod:ci-password@postgres:5432/aiep
+      DATABASE_URL_SYNC: postgresql://prod:ci-password@postgres:5432/aiep
+      REDIS_URL: redis://:ci-password@redis:6379/0
+      CELERY_BROKER_URL: redis://:ci-password@redis:6379/1
+      CELERY_RESULT_BACKEND: redis://:ci-password@redis:6379/2
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate production compose
+        run: docker compose -f docker-compose.production.yml config >/tmp/production-compose.yml
+
+      - name: Build production application images
+        run: docker compose -f docker-compose.production.yml build api worker beat frontend
+
+      - name: Start dependencies
+        run: docker compose -f docker-compose.production.yml up -d postgres redis storage-init
+
+      - name: Wait for dependencies
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 60); do
+            postgres_status="$(docker compose -f docker-compose.production.yml exec -T postgres pg_isready -U prod -d aiep 2>/dev/null || true)"
+            redis_status="$(docker compose -f docker-compose.production.yml exec -T redis redis-cli -a ci-password ping 2>/dev/null || true)"
+            if echo "$postgres_status" | grep -q accepting && echo "$redis_status" | grep -q PONG; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+
+      - name: Migrate and start application
+        run: |
+          docker compose -f docker-compose.production.yml run --rm api alembic upgrade head
+          docker compose -f docker-compose.production.yml up -d api worker beat frontend
+
+      - name: Run failure recovery smoke
+        run: |
+          chmod +x scripts/production_failure_recovery_smoke.sh
+          COMPOSE_FILE=docker-compose.production.yml \
+          COMPOSE_PROJECT_NAME=aiep-recovery-smoke \
+          BASE_URL=http://127.0.0.1:18000 \
+          ./scripts/production_failure_recovery_smoke.sh
+
+      - name: Collect recovery evidence
+        if: always()
+        run: |
+          mkdir -p artifacts/failure-recovery
+          docker compose -f docker-compose.production.yml ps > artifacts/failure-recovery/services.txt || true
+          docker compose -f docker-compose.production.yml logs --no-color --tail=200 api worker beat postgres redis > artifacts/failure-recovery/services.log || true
+          sha256sum scripts/production_failure_recovery_smoke.sh > artifacts/failure-recovery/sha256.txt
+
+      - name: Upload recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-recovery-smoke
+          path: artifacts/failure-recovery/
+          retention-days: 14
+
+      - name: Teardown
+        if: always()
+        run: docker compose -f docker-compose.production.yml down -v --remove-orphans
