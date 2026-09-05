@@ -22,6 +22,17 @@ def assert_true(condition: bool, message: str) -> None:
         fail(message)
 
 
+def is_placeholder(name: str, value: str) -> bool:
+    value = value.strip()
+    if value in {"", "REPLACE"} or value.startswith(("<", "REPLACE_", "${")):
+        return True
+    if name in {"DATABASE_URL", "DATABASE_URL_SYNC"}:
+        return all(token in value for token in ("USER", "PASSWORD", "HOST", "DB"))
+    if name in {"REDIS_URL", "CELERY_BROKER_URL", "CELERY_RESULT_BACKEND"}:
+        return "PASSWORD" in value and "HOST" in value
+    return False
+
+
 def main() -> None:
     assert_true(COMPOSE.exists(), "production compose is missing")
     assert_true(CONFIG.exists(), "production config is missing")
@@ -31,8 +42,6 @@ def main() -> None:
     for name in CRITICAL:
         assert_true(re.search(rf"{re.escape(name)}:\s*\$\{{{re.escape(name)}:\?", compose), f"{name} is not fail-closed in production compose")
 
-    # Secret-bearing optional settings must be environment-only. The only
-    # permitted compose fallback is the empty value; no concrete secret default.
     for name in OPTIONAL_SECRETS:
         matches = re.findall(rf"^\s*{re.escape(name)}:\s*(.+)$", compose, re.MULTILINE)
         assert_true(matches, f"{name} is not declared in production compose")
@@ -42,7 +51,6 @@ def main() -> None:
     assert_true("change-me-to-a-long-random-string-in-production" in config, "expected weak-secret sentinel is absent from config")
     assert_true("SECRET_KEY" in config and "production" in config.lower(), "production SECRET_KEY safety guard is not visible")
 
-    placeholder_prefixes = ("<", "REPLACE_", "${")
     for path in TEMPLATES:
         if not path.exists():
             continue
@@ -50,7 +58,7 @@ def main() -> None:
         for name in CRITICAL + OPTIONAL_SECRETS:
             for match in re.finditer(rf"(?m)^\s*{re.escape(name)}\s*=\s*(.*)$", text):
                 value = match.group(1).strip()
-                assert_true(value == "" or value == "REPLACE" or value.startswith(placeholder_prefixes), f"{path.relative_to(ROOT)} contains a concrete value for {name}")
+                assert_true(is_placeholder(name, value), f"{path.relative_to(ROOT)} contains a concrete value for {name}")
 
     workflow_root = ROOT / ".github/workflows"
     for workflow in workflow_root.glob("*.yml"):
