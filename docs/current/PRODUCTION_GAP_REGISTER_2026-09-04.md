@@ -18,6 +18,13 @@ The current execution environment is limited to GitHub and the developer's local
 | 7.19 | Customer usage, budget & cost controls | **ENGINEERING IMPLEMENTED** — customer usage exposes budget utilization, remaining quota, unit cost and optimization guidance. |
 | 7.20 | Cost anomaly detection & forecasting | **ENGINEERING IMPLEMENTED** — deterministic tenant-scoped daily anomaly detection and month-end projection with tests. |
 
+## Recently reconciled engineering evidence
+
+- **SLO/error budget:** PR #324 establishes deterministic engineering objectives, synthetic observations, error-budget calculations and an explicit non-production certification boundary. Live SLO/SLI measurement remains external.
+- **Provider integration:** PR #325 establishes deterministic Stripe/Shopify integration preflight coverage and enumerates the live operations requiring external credentials/endpoints. Live provider authentication, transactions and webhook delivery remain external.
+- **Immutable release evidence:** PR #320 builds API/frontend images from the exact release SHA in CI, captures local image identities, generates CycloneDX SBOMs and records CI build metadata. External registry publication, signed attestations and production release acceptance remain external.
+- **Alert ownership/routing:** PR #327 establishes deterministic severity, primary/secondary ownership and acknowledgement targets for the incident scenarios. Live paging, staffed on-call coverage and human escalation remain external.
+
 ## Retention policy
 
 The default retention window is 365 days, bounded to 1–3650 days when explicitly configured. Audit logs and usage events older than the cutoff are removed for the selected tenant. Terminal employee-memory rows (`expired`, `deleted`, `superseded`) older than the cutoff are removed. Stale active file metadata is soft-deleted with `deleted_at`; physical object deletion remains the responsibility of the storage-provider lifecycle policy. See `docs/current/31_DATA_RETENTION_LIFECYCLE.md`.
@@ -28,7 +35,7 @@ A repeatable CI-only OWASP ZAP baseline scan is now implemented against the ephe
 
 ## What remains P0 / external
 
-1. Immutable production release identity with actual image digests, SBOM and provenance.
+1. Immutable production release publication with an external registry digest, signed SBOM/provenance and accepted production release identity.
 2. Deployment to a real production/staging target.
 3. Real backup/restore/DR with measured RPO/RTO.
 4. Production SLO/SLI and error-budget measurement.
