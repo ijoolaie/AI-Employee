@@ -17,11 +17,11 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Field | Value |
 |---|---|
 | Repository | `ijoolaie/AI-Employee` |
-| Main baseline at index creation | `62211f75dec6c060c2ab85ed980178c3deac1c93` |
+| Main baseline at reconciliation | `92dc2294cf386d0172f54d354981fce51a72b90c` |
 | Immutable production tag | **PENDING — external release freeze** |
 | Container image digests | **PENDING — no external image registry/release pipeline supplied** |
-| SBOM | **PENDING — attach to immutable release when published** |
-| Build provenance | **PENDING — attach to immutable release when published** |
+| SBOM | **ENGINEERING-CAPTURED for API/frontend images; attach to immutable published release** |
+| Build provenance | **ENGINEERING-CAPTURED CI build metadata; signed/verified external attestation pending** |
 
 The baseline above is a repository engineering identity, not a production certification identity.
 
@@ -41,7 +41,8 @@ The baseline above is a repository engineering identity, not a production certif
 | Usage/budget controls | `/api/v1/usage/optimization` + frontend usage surface | ENGINEERING | Complete | current main baseline |
 | Cost anomaly/forecast | `/api/v1/usage/cost-forecast` + deterministic anomaly tests | ENGINEERING | Complete | current main baseline |
 | Operations dashboard | Existing `/admin/operations` surface | ENGINEERING | Complete | current main baseline |
-| Release manifest generation | `scripts/production_release_manifest.sh` + `.github/workflows/release-manifest.yml` | ENGINEERING | Complete | source identity only |
+| Release manifest generation | `scripts/production_release_manifest.sh` + `.github/workflows/release-manifest.yml` | ENGINEERING | Complete | source identity |
+| Immutable release build evidence | PR #320 / `.github/workflows/immutable-release-evidence.yml` | ENGINEERING | Complete | exact CI release SHA; registry publication still pending |
 | SLO/error-budget contract | Phase 14 SLO validator + CI evidence | ENGINEERING | Complete | synthetic contract, not production measurement |
 | Provider integration preflight | Phase 14 provider validator + CI evidence | ENGINEERING | Complete | live provider validation pending |
 | HA/failure-recovery smoke | Phase 14 failure-recovery smoke + CI evidence | ENGINEERING | Complete | production HA/RTO/RPO still external |
@@ -61,7 +62,15 @@ The baseline above is a repository engineering identity, not a production certif
 
 ## Release-manifest limitations
 
-The current release-manifest workflow records source SHA/tag and dependency lockfile checksums without exposing secrets. It intentionally leaves container image digests, SBOM and provenance empty because no external image registry/build-attestation pipeline is currently available. Those fields must be populated before external certification; placeholders must not be interpreted as evidence.
+The immutable-release CI workflow builds API/frontend images from an exact release SHA, captures local image identities, generates CycloneDX SBOMs, and records CI build metadata. This is stronger engineering evidence than source-only manifest generation. It does **not** create an externally published registry digest, signed attestation, production deployment identity, or customer acceptance record. Those remain external gates.
+
+## Provider integration limitations
+
+PR #325 adds a deterministic preflight for Stripe and Shopify adapter/test/HTTPS surfaces and records the exact live operations that still require external validation. It does not authenticate to a provider, create a customer/payment resource, receive a provider webhook, or prove production behavior.
+
+## Alerting / on-call limitations
+
+PR #327 adds deterministic severity, ownership, secondary escalation and acknowledgement targets for the repository incident scenarios. The resulting contract is engineering evidence only. It does **not** prove live alert delivery, human acknowledgement, paging escalation, staffed coverage, or production incident response.
 
 ## Required external inputs
 
