@@ -7,6 +7,7 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, status
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
 
 from app.core.deps import DbSession, RunExecuteContext, RunReadContext
@@ -31,11 +32,13 @@ async def _employee_labels(
 
 
 def _to_response(run: Run, labels: dict[UUID, tuple[str, str]]) -> RunResponse:
-    """Build a stable wire representation for a persisted Run.
+    """Build a stable JSON-safe wire representation for a persisted Run.
 
-    PostgreSQL Numeric values are exposed by SQLAlchemy as Decimal instances;
-    converting the aggregate usage fields explicitly avoids response-model
-    failures across SQLAlchemy/Pydantic versions on the real-stack path.
+    PostgreSQL Numeric/JSON values can contain Decimal, UUID, datetime, Enum,
+    or other values that are valid Python objects but are not uniformly
+    serializable across the SQLAlchemy/Pydantic/FastAPI versions used by the
+    production-like certification stack. Normalize the persisted JSON fields
+    with FastAPI's canonical encoder before constructing the response model.
     """
     name, slug = labels.get(run.employee_id, (None, None))
     return RunResponse(
@@ -45,9 +48,9 @@ def _to_response(run: Run, labels: dict[UUID, tuple[str, str]]) -> RunResponse:
         employee_name=name,
         employee_slug=slug,
         status=str(run.status),
-        input_data=run.input_data or {},
-        output_data=run.output_data,
-        error=run.error,
+        input_data=jsonable_encoder(run.input_data or {}),
+        output_data=jsonable_encoder(run.output_data),
+        error=jsonable_encoder(run.error),
         total_tokens=int(run.total_tokens or 0),
         total_cost_usd=float(run.total_cost_usd or 0),
         started_at=run.started_at,
