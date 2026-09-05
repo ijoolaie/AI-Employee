@@ -1,0 +1,26 @@
+name: Production Network Hardening
+
+on:
+  pull_request:
+    paths:
+      - "docker-compose.production.yml"
+      - "scripts/validate_production_network_hardening.py"
+      - ".github/workflows/production-network-hardening.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  network-hardening:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate production network hardening contract
+        run: python scripts/validate_production_network_hardening.py
+
+      - name: Assert external boundary
+        run: |
+          test "$(python scripts/validate_production_network_hardening.py | grep '^production_certification_claimed=' | cut -d= -f2)" = "false"
