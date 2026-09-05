@@ -1,0 +1,136 @@
+name: Immutable Release Evidence
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  release-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact release
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          tags: ai-employee-api:${{ github.sha }}
+          load: true
+          provenance: false
+          sbom: false
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          tags: ai-employee-frontend:${{ github.sha }}
+          load: true
+          provenance: false
+          sbom: false
+
+      - name: Capture local image identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/release-evidence
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          images = []
+          for name in ("ai-employee-api:${GITHUB_SHA}", "ai-employee-frontend:${GITHUB_SHA}"):
+              raw = subprocess.check_output(["docker", "image", "inspect", name], text=True)
+              item = json.loads(raw)[0]
+              images.append({
+                  "name": name,
+                  "image_id": item["Id"],
+                  "created": item.get("Created"),
+                  "architecture": item.get("Architecture"),
+                  "os": item.get("Os"),
+              })
+
+          Path("artifacts/release-evidence/container-images.json").write_text(
+              json.dumps(images, indent=2) + "\n", encoding="utf-8"
+          )
+          Path("artifacts/release-evidence/provenance.json").write_text(
+              json.dumps({
+                  "schema": "ci-build-metadata/v1",
+                  "builder": "GitHub Actions",
+                  "workflow": os.environ["GITHUB_WORKFLOW"],
+                  "run_id": os.environ["GITHUB_RUN_ID"],
+                  "repository": os.environ["GITHUB_REPOSITORY"],
+                  "ref": os.environ["GITHUB_REF"],
+                  "sha": os.environ["GITHUB_SHA"],
+                  "runner_os": os.environ["RUNNER_OS"],
+                  "image_ids": [item["image_id"] for item in images],
+              }, indent=2) + "\n", encoding="utf-8"
+          )
+          print(json.dumps(images, indent=2))
+          PY
+
+      - name: Generate API image SBOM
+        uses: anchore/sbom-action@v0.20.6
+        with:
+          image: ai-employee-api:${{ github.sha }}
+          format: cyclonedx-json
+          output-file: artifacts/release-evidence/sbom-api.cdx.json
+          upload-artifact: false
+
+      - name: Generate frontend image SBOM
+        uses: anchore/sbom-action@v0.20.6
+        with:
+          image: ai-employee-frontend:${{ github.sha }}
+          format: cyclonedx-json
+          output-file: artifacts/release-evidence/sbom-frontend.cdx.json
+          upload-artifact: false
+
+      - name: Generate release manifest
+        shell: bash
+        env:
+          IMAGE_JSON_PATH: ${{ runner.temp }}/release-images.json
+          SBOM_JSON_PATH: ${{ runner.temp }}/release-sboms.json
+          PROVENANCE_JSON_PATH: ${{ runner.temp }}/release-provenance.json
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path("artifacts/release-evidence")
+          images = json.loads((root / "container-images.json").read_text())
+          sboms = [
+              {"path": "artifacts/release-evidence/sbom-api.cdx.json", "format": "cyclonedx-json"},
+              {"path": "artifacts/release-evidence/sbom-frontend.cdx.json", "format": "cyclonedx-json"},
+          ]
+          provenance = json.loads((root / "provenance.json").read_text())
+          Path(os.environ["IMAGE_JSON_PATH"]).write_text(json.dumps(images), encoding="utf-8")
+          Path(os.environ["SBOM_JSON_PATH"]).write_text(json.dumps(sboms), encoding="utf-8")
+          Path(os.environ["PROVENANCE_JSON_PATH"]).write_text(json.dumps(provenance), encoding="utf-8")
+          PY
+
+          export RELEASE_CONTAINER_IMAGES_JSON="$(cat "$IMAGE_JSON_PATH")"
+          export RELEASE_SBOM_JSON="$(cat "$SBOM_JSON_PATH")"
+          export RELEASE_PROVENANCE_JSON="$(cat "$PROVENANCE_JSON_PATH")"
+          bash scripts/production_release_manifest.sh artifacts/release-evidence/release-manifest.json
+
+      - name: Upload immutable release evidence
+        uses: actions/upload-artifact@v6
+        with:
+          name: immutable-release-evidence-${{ github.sha }}
+          path: artifacts/release-evidence/
+          if-no-files-found: error
+          retention-days: 30
