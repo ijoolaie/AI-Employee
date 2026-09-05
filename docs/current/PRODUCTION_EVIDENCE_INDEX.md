@@ -42,6 +42,11 @@ The baseline above is a repository engineering identity, not a production certif
 | Cost anomaly/forecast | `/api/v1/usage/cost-forecast` + deterministic anomaly tests | ENGINEERING | Complete | current main baseline |
 | Operations dashboard | Existing `/admin/operations` surface | ENGINEERING | Complete | current main baseline |
 | Release manifest generation | `scripts/production_release_manifest.sh` + `.github/workflows/release-manifest.yml` | ENGINEERING | Complete | source identity only |
+| SLO/error-budget contract | Phase 14 SLO validator + CI evidence | ENGINEERING | Complete | synthetic contract, not production measurement |
+| Provider integration preflight | Phase 14 provider validator + CI evidence | ENGINEERING | Complete | live provider validation pending |
+| HA/failure-recovery smoke | Phase 14 failure-recovery smoke + CI evidence | ENGINEERING | Complete | production HA/RTO/RPO still external |
+| Incident-response drill contract | Phase 14 incident drill + CI evidence | ENGINEERING | Complete | live human/on-call drill still external |
+| Alert ownership/routing contract | `ops/alerting/alert-routing.yml` + `scripts/validate_alert_ownership_routing.py` | ENGINEERING | Complete | live paging/routing test still external |
 | Real production deployment | `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` Phase B | EXTERNAL-PENDING | Blocked | requires operator-controlled target |
 | Real backup/restore/DR + RPO/RTO | Execution Pack Phase C | EXTERNAL-PENDING | Blocked | requires real infrastructure |
 | Production SLO/SLI/error budget | Execution Pack Phase D | EXTERNAL-PENDING | Blocked | requires real traffic/monitoring |

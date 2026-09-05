@@ -1,0 +1,32 @@
+name: Alert Ownership Routing Contract
+
+on:
+  pull_request:
+    paths:
+      - 'ops/alerting/alert-routing.yml'
+      - 'scripts/validate_alert_ownership_routing.py'
+      - '.github/workflows/alert-ownership-routing.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Validate routing contract
+        run: |
+          python -m pip install --disable-pip-version-check pyyaml
+          python scripts/validate_alert_ownership_routing.py
+          test "$(python -c 'import json; print(json.load(open("artifacts/alerting/alert-ownership-routing-evidence.json"))["production_certification_claimed"])')" = "False"
+      - name: Hash evidence
+        run: sha256sum artifacts/alerting/alert-ownership-routing-evidence.json
+      - name: Upload engineering evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: alert-ownership-routing-evidence
+          path: artifacts/alerting/alert-ownership-routing-evidence.json
+          retention-days: 14
