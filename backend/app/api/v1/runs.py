@@ -31,9 +31,29 @@ async def _employee_labels(
 
 
 def _to_response(run: Run, labels: dict[UUID, tuple[str, str]]) -> RunResponse:
+    """Build a stable wire representation for a persisted Run.
+
+    PostgreSQL Numeric values are exposed by SQLAlchemy as Decimal instances;
+    converting the aggregate usage fields explicitly avoids response-model
+    failures across SQLAlchemy/Pydantic versions on the real-stack path.
+    """
     name, slug = labels.get(run.employee_id, (None, None))
-    data = RunResponse.model_validate(run)
-    return data.model_copy(update={"employee_name": name, "employee_slug": slug})
+    return RunResponse(
+        id=run.id,
+        employee_id=run.employee_id,
+        employee_version_id=run.employee_version_id,
+        employee_name=name,
+        employee_slug=slug,
+        status=str(run.status),
+        input_data=run.input_data or {},
+        output_data=run.output_data,
+        error=run.error,
+        total_tokens=int(run.total_tokens or 0),
+        total_cost_usd=float(run.total_cost_usd or 0),
+        started_at=run.started_at,
+        completed_at=run.completed_at,
+        created_at=run.created_at,
+    )
 
 
 @router.post("", response_model=APIResponse[RunResponse], status_code=status.HTTP_201_CREATED)
