@@ -29,15 +29,19 @@ The current execution environment is limited to GitHub and the developer's local
 | 7.15 | P1 | Data retention & lifecycle enforcement | MIXED | Policy baseline exists; further code/verification can continue locally | Policy-to-code mapping plus target verification |
 | 7.16 | P1 | Human-in-the-loop TODO reconciliation | ENGINEERING | Approval state/resume path is implemented; service header was reconciled in this cycle | No stale future-TODO claim; tests/docs confirm implemented behavior |
 | 7.17 | P1 | Documentation consolidation & evidence index | ENGINEERING | Canonical docs reconciled; execution pack added | One synchronized evidence index |
-| 7.18 | P1 | Platform operations dashboard | ENGINEERING | Workspace read model exists; dedicated ops view remains | Health/queue/failure/capacity/backup/incident view |
-| 7.19 | P1 | Customer usage, budget & cost controls | MIXED | Platform-admin optimization and budget signals exist | Customer-facing controls plus target billing/ops validation |
-| 7.20 | P1 | Cost anomaly detection & forecasting | ENGINEERING | Optimization guidance exists; feature remains open | Deterministic anomaly/forecast signals, alerting and audit behavior |
+| 7.18 | P1 | Platform operations dashboard | ENGINEERING | Dedicated `/admin/operations` view exists with operational metrics and dead-letter visibility; broader backup/incident widgets remain external | Health/queue/failure/capacity view plus target operational evidence |
+| 7.19 | P1 | Customer usage, budget & cost controls | MIXED | Customer `/usage` now exposes plan budget utilization, remaining quota, unit cost and optimization guidance | Customer-facing controls plus target billing/ops validation |
+| 7.20 | P1 | Cost anomaly detection & forecasting | ENGINEERING | Tenant-scoped deterministic daily anomaly detection and month-end forecast implemented with tests | Anomaly/forecast signals, alerting and audit behavior |
 
 ## Completed in this execution cycle
 
 - Added `scripts/production_release_manifest.sh` to create a secret-safe release identity manifest containing Git SHA/tag, lockfile checksums and explicit placeholders for image/SBOM/provenance data that must be populated by the release pipeline.
 - Added `.github/workflows/release-manifest.yml` for tag/manual execution and artifact publication.
 - Reconciled the `run_service.py` Human-in-the-loop documentation so it describes the implemented approval/pause/resume behavior rather than a future TODO.
+- Added tenant-scoped `GET /api/v1/usage/optimization` with plan budget utilization, remaining quotas, unit economics and optimization guidance.
+- Added tenant-scoped `GET /api/v1/usage/cost-forecast` with deterministic daily anomaly detection and month-end cost projection.
+- Extended the customer Usage surface to display budget state, unit cost, anomaly signals and forecast values.
+- Confirmed the existing dedicated `/admin/operations` surface already provides platform operational metrics and dead-letter visibility; it remains engineering-level evidence and does not replace target alerting/incident controls.
 
 ## What is already covered
 
@@ -49,6 +53,7 @@ The current execution environment is limited to GitHub and the developer's local
 - Incident-response, backup/DR and security/compliance responsibilities are documented.
 - Capacity/cost decision-support signals are implemented.
 - V1.5 Human + Agent workspace read model is implemented.
+- Platform operations, customer budget/usage visibility and deterministic cost anomaly/forecasting are implemented at engineering level.
 
 ## Blocked by current environment
 
