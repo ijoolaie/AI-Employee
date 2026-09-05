@@ -52,9 +52,7 @@ jobs:
 
           images = []
           for name in ("ai-employee-api:${GITHUB_SHA}", "ai-employee-frontend:${GITHUB_SHA}"):
-              raw = subprocess.check_output(
-                  ["docker", "image", "inspect", name], text=True
-              )
+              raw = subprocess.check_output(["docker", "image", "inspect", name], text=True)
               item = json.loads(raw)[0]
               images.append({
                   "name": name,
@@ -102,9 +100,9 @@ jobs:
       - name: Generate release manifest
         shell: bash
         env:
-          RELEASE_CONTAINER_IMAGES_JSON: ${{ runner.temp }}/release-images.json
-          RELEASE_SBOM_JSON: ${{ runner.temp }}/release-sboms.json
-          RELEASE_PROVENANCE_JSON: ${{ runner.temp }}/release-provenance.json
+          IMAGE_JSON_PATH: ${{ runner.temp }}/release-images.json
+          SBOM_JSON_PATH: ${{ runner.temp }}/release-sboms.json
+          PROVENANCE_JSON_PATH: ${{ runner.temp }}/release-provenance.json
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -119,14 +117,14 @@ jobs:
               {"path": "artifacts/release-evidence/sbom-frontend.cdx.json", "format": "cyclonedx-json"},
           ]
           provenance = json.loads((root / "provenance.json").read_text())
-          Path(os.environ["RELEASE_CONTAINER_IMAGES_JSON"]).write_text(json.dumps(images), encoding="utf-8")
-          Path(os.environ["RELEASE_SBOM_JSON"]).write_text(json.dumps(sboms), encoding="utf-8")
-          Path(os.environ["RELEASE_PROVENANCE_JSON"]).write_text(json.dumps(provenance), encoding="utf-8")
+          Path(os.environ["IMAGE_JSON_PATH"]).write_text(json.dumps(images), encoding="utf-8")
+          Path(os.environ["SBOM_JSON_PATH"]).write_text(json.dumps(sboms), encoding="utf-8")
+          Path(os.environ["PROVENANCE_JSON_PATH"]).write_text(json.dumps(provenance), encoding="utf-8")
           PY
 
-          export RELEASE_CONTAINER_IMAGES_JSON="$(cat "$RELEASE_CONTAINER_IMAGES_JSON")"
-          export RELEASE_SBOM_JSON="$(cat "$RELEASE_SBOM_JSON")"
-          export RELEASE_PROVENANCE_JSON="$(cat "$RELEASE_PROVENANCE_JSON")"
+          export RELEASE_CONTAINER_IMAGES_JSON="$(cat "$IMAGE_JSON_PATH")"
+          export RELEASE_SBOM_JSON="$(cat "$SBOM_JSON_PATH")"
+          export RELEASE_PROVENANCE_JSON="$(cat "$PROVENANCE_JSON_PATH")"
           bash scripts/production_release_manifest.sh artifacts/release-evidence/release-manifest.json
 
       - name: Upload immutable release evidence
