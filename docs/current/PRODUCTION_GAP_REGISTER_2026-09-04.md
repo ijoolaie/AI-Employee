@@ -22,6 +22,10 @@ The current execution environment is limited to GitHub and the developer's local
 
 The default retention window is 365 days, bounded to 1–3650 days when explicitly configured. Audit logs and usage events older than the cutoff are removed for the selected tenant. Terminal employee-memory rows (`expired`, `deleted`, `superseded`) older than the cutoff are removed. Stale active file metadata is soft-deleted with `deleted_at`; physical object deletion remains the responsibility of the storage-provider lifecycle policy. See `docs/current/31_DATA_RETENTION_LIFECYCLE.md`.
 
+## DAST engineering evidence
+
+A repeatable CI-only OWASP ZAP baseline scan is now implemented against the ephemeral production-like API stack. The validation builds and starts the production compose topology, waits for the live API target, runs the baseline scan, and uploads JSON/HTML evidence as a short-retention workflow artifact. The successful validation is engineering evidence only; authenticated DAST against the deployed production/staging target and an independent penetration test remain external gates.
+
 ## What remains P0 / external
 
 1. Immutable production release identity with actual image digests, SBOM and provenance.
