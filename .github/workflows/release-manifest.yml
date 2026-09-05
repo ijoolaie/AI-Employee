@@ -1,0 +1,31 @@
+name: Release Manifest
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact release
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Generate release manifest
+        run: |
+          chmod +x scripts/production_release_manifest.sh
+          ./scripts/production_release_manifest.sh release-manifest.json
+
+      - name: Upload release manifest
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-manifest-${{ github.sha }}
+          path: release-manifest.json
+          if-no-files-found: error
