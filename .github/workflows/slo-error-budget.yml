@@ -1,0 +1,32 @@
+name: SLO Error Budget Contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/validate_slo_error_budget.py'
+      - '.github/workflows/slo-error-budget.yml'
+      - 'backend/app/core/metrics.py'
+      - 'docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate SLO contract
+        run: python3 scripts/validate_slo_error_budget.py
+      - name: Verify no production certification claim
+        run: grep -q '"production_certification_claimed": false' slo-error-budget-evidence.json
+      - name: Hash evidence
+        run: sha256sum slo-error-budget-evidence.json > slo-error-budget-evidence.sha256
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: slo-error-budget-engineering-evidence
+          path: |
+            slo-error-budget-evidence.json
+            slo-error-budget-evidence.sha256
+          retention-days: 14
