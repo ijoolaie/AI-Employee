@@ -28,6 +28,7 @@ class _FakeDB:
         self.run = run
         self.version = version
         self.execute_count = 0
+        self.rollback_count = 0
 
     async def execute(self, _statement):
         self.execute_count += 1
@@ -40,6 +41,13 @@ class _FakeDB:
         raise AssertionError(f"Unexpected db.execute call #{self.execute_count}")
 
     async def flush(self):
+        return None
+
+    async def rollback(self):
+        self.rollback_count += 1
+        return None
+
+    async def commit(self):
         return None
 
     def add(self, _value):
@@ -152,6 +160,7 @@ async def test_execute_run_blocks_model_requested_tool_outside_employee_allowlis
     assert registry.execute_calls == []
     assert run.status == "failed"
     assert run.error["message"].startswith("Tool is not allowed by Employee guardrails")
+    assert db.rollback_count == 1
 
 
 @pytest.mark.asyncio
