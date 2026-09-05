@@ -24,6 +24,8 @@ The current execution environment is limited to GitHub and the developer's local
 - **Provider integration:** PR #325 establishes deterministic Stripe/Shopify integration preflight coverage and enumerates the live operations requiring external credentials/endpoints. Live provider authentication, transactions and webhook delivery remain external.
 - **Immutable release evidence:** PR #320 builds API/frontend images from the exact release SHA in CI, captures local image identities, generates CycloneDX SBOMs and records CI build metadata. External registry publication, signed attestations and production release acceptance remain external.
 - **Alert ownership/routing:** PR #327 establishes deterministic severity, primary/secondary ownership and acknowledgement targets for the incident scenarios. Live paging, staffed on-call coverage and human escalation remain external.
+- **Runtime isolation/RBAC:** PR #329 establishes a dedicated real-stack CI gate for Vendor/Reseller/Customer tenant isolation, negative authorization paths and RBAC enforcement. External actor-matrix certification remains external.
+- **Production network hardening:** the new network-hardening contract validates that the production compose topology publishes no host ports, keeps services on the private backend network, uses loopback health checks, and enables fail-closed rate limiting. Real firewall/security-group/WAF/TLS/egress evidence remains external.
 
 ## Retention policy
 
