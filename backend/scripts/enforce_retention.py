@@ -20,7 +20,7 @@ from app.services.retention_service import DEFAULT_RETENTION_DAYS, enforce_reten
 
 async def main() -> None:
     settings = get_settings()
-    retention_days = int(getattr(settings, "DATA_RETENTION_DAYS", DEFAULT_RETENTION_DAYS))
+    retention_days = int(getattr(settings, "data_retention_days", DEFAULT_RETENTION_DAYS))
     async with AsyncSessionLocal() as db:
         result = await db.execute(select(Tenant.id).where(Tenant.status != "deleted"))
         tenant_ids = list(result.scalars().all())
