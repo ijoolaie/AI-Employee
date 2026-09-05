@@ -1,0 +1,37 @@
+name: Provider Integration Contract
+
+on:
+  pull_request:
+    paths:
+      - 'backend/app/services/stripe_service.py'
+      - 'backend/app/services/shopify_service.py'
+      - 'backend/app/core/config.py'
+      - 'backend/tests/test_*provider*.py'
+      - 'backend/tests/test_stripe_service.py'
+      - 'scripts/validate_provider_integration_contract.py'
+      - '.github/workflows/provider-integration-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provider-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate provider integration contract
+        run: python3 scripts/validate_provider_integration_contract.py
+      - name: Verify external boundary
+        run: |
+          test -f provider-integration-evidence.json
+          grep -q '"completed": false' provider-integration-evidence.json
+          grep -q '"production_certification_claimed": false' provider-integration-evidence.json
+      - name: Hash evidence
+        run: sha256sum provider-integration-evidence.json
+      - name: Upload contract evidence
+        uses: actions/upload-artifact@v7
+        with:
+          name: provider-integration-contract-evidence
+          path: provider-integration-evidence.json
+          retention-days: 14
