@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from sqlalchemy import delete, or_, select
+from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
@@ -64,9 +64,9 @@ async def enforce_retention(
             EmployeeMemory.tenant_id == tenant_id,
             or_(
                 EmployeeMemory.expires_at <= now,
-                (
-                    EmployeeMemory.created_at < cutoff
-                    & EmployeeMemory.status.in_(["expired", "deleted", "superseded"])
+                and_(
+                    EmployeeMemory.created_at < cutoff,
+                    EmployeeMemory.status.in_(["expired", "deleted", "superseded"]),
                 ),
             ),
         )
