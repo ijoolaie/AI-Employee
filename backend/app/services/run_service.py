@@ -3,17 +3,21 @@
 1. receive execution request + input          -> create_run()
 2. load Employee definition + current version  -> create_run()
 3. validate input against Input Schema         -> _validate_input()
-4. check tenant quota/entitlements                -> billing_service.enforce_run_quota()
+4. check tenant quota/entitlements             -> billing_service.enforce_run_quota()
 5. prepare Context for AI Core                 -> ExecutionContext / prompt_assembly
 6. assemble Context/Prompt, then execute via AI Core -> app.ai.prompt_assembly -> AIGateway
 7. validate output against Output Schema       -> validate_json_data()
-8. Human Approval if required                  -> TODO once Human-in-the-loop lands
+8. Human Approval when required                -> approval state + explicit approved-tool resumption
 9. store result, Trace, Cost                   -> execute_run() (ai_provider_calls + runs)
 10. return output                              -> API layer
 
 Prompt/Context assembly is implemented in app.ai.prompt_assembly; RunService
 provides validated EmployeeVersion data and execution context, while the
 Gateway remains the only provider boundary.
+
+Human-in-the-loop is implemented in the run lifecycle: gated tool calls create
+an approval request and pause execution; only an explicit approval decision can
+resume the exact continuation, with tool authorization re-checked in the worker.
 """
 
 from __future__ import annotations
@@ -424,7 +428,6 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 tool_error = None
                 tool_result: dict[str, Any] = {"error": "Tool execution failed"}
                 try:
-                    registry.get(tool_call.name)
                     tool = registry.get(tool_call.name)
 
                     if tool_call.name not in employee_allowed_tools:
@@ -436,36 +439,46 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                             },
                         )
 
-                    if tool.requires_approval:
+                    effective_permissions = set(tool_permissions)
+                    if "*" in effective_permissions:
+                        effective_permissions.add(tool.required_permission)
+                    approval_required = await approval_service.requires_approval(
+                        db,
+                        tool=tool,
+                        tenant_id=run.tenant_id,
+                        employee_id=run.employee_id,
+                    )
+                    if approval_required:
+                        continuation_messages = [_message_to_json(item) for item in messages]
                         approval = await approval_service.create_request(
                             db,
-                            tenant_id=run.tenant_id,
                             run=run,
                             tool_name=tool_call.name,
                             tool_call_id=tool_call.id,
                             arguments=tool_call.arguments,
-                            continuation_messages=[_message_to_json(message) for message in messages],
-                            iteration=tool_iterations,
-                            requested_by=run.created_by,
+                            continuation_messages=continuation_messages,
                         )
-                        tool_status = "waiting_approval"
+                        run.status = "waiting"
+                        paused_for_approval = True
                         await audit_service.record(
                             db,
-                            action="tool.call",
+                            action="tool.approval_requested",
                             actor_type="system",
                             tenant_id=run.tenant_id,
                             resource_type="run",
                             resource_id=run.id,
-                            status=tool_status,
+                            status="pending",
                             request_id=run.request_id,
-                            metadata={"tool": tool_call.name, "tool_call_id": tool_call.id, "approval_id": str(approval.id), "approval_required": True},
+                            metadata={
+                                "tool": tool_call.name,
+                                "tool_call_id": tool_call.id,
+                                "approval_id": str(approval.id),
+                                "approved": False,
+                            },
                         )
-                        paused_for_approval = True
                         await db.flush()
-                        return run
-                    effective_permissions = set(tool_permissions)
-                    if "*" in effective_permissions:
-                        effective_permissions.add(tool.required_permission)
+                        break
+
                     tool_result = await registry.execute(
                         tool_call.name,
                         tool_call.arguments,
@@ -479,9 +492,9 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                     tool_status = "success"
                     if isinstance(tool_result, dict):
                         last_tool_result = tool_result
-                except Exception as exc:  # noqa: BLE001 — audit then fail the Run
-                    tool_result = {"error": str(exc)[:1000]}
+                except Exception as exc:  # noqa: BLE001
                     tool_error = str(exc)[:1000]
+                    tool_result = {"error": tool_error}
                     raise
                 finally:
                     elapsed_ms = max(0, int((datetime.now(timezone.utc) - started).total_seconds() * 1000))
@@ -498,12 +511,13 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                             "tool": tool_call.name,
                             "tool_call_id": tool_call.id,
                             "latency_ms": elapsed_ms,
-                            "iteration": tool_iterations,
+                            "approval_required": approval_required if 'approval_required' in locals() else None,
                             "error": tool_error,
-                            "required_permission": registry.get(tool_call.name).required_permission,
-                            "approval_required": registry.get(tool_call.name).requires_approval,
                         },
                     )
+
+                if paused_for_approval:
+                    break
                 messages.append(
                     ChatMessage(
                         role="tool",
@@ -512,156 +526,41 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                     )
                 )
 
-        # Preserve aggregate provider usage/cost even if output validation fails.
-        run.total_tokens = total_prompt_tokens + total_completion_tokens
-        run.total_cost_usd = total_cost_usd
+            if paused_for_approval:
+                break
 
-        output_data: dict[str, Any] = {"text": result.content}
-        # Whitelisted structured-artifact carry-through (see last_tool_result
-        # above). Only known artifact shapes are recognized here — Phase 2
-        # Report Employee `report_artifacts` and Phase 5 Document Employee
-        # `document_artifacts` — any other Tool's dict result is ignored.
-        if isinstance(last_tool_result, dict):
-            if isinstance(last_tool_result.get("report_artifacts"), dict):
-                output_data["report_artifacts"] = last_tool_result["report_artifacts"]
-            if isinstance(last_tool_result.get("document_artifacts"), dict):
-                output_data["document_artifacts"] = last_tool_result["document_artifacts"]
-        validate_json_data(output_data, version.output_schema, field_name="output_data")
-
-        run.output_data = output_data
-
-        # Automatic memory extraction is explicitly opt-in and best-effort.
-        # A memory extractor failure must never turn a successful Employee Run
-        # into a failed Run.
-        try:
-            auto_config = auto_memory_settings(rules)
-            if auto_config["enabled"]:
-                memory_stats = await extract_and_consolidate_run_memory(
-                    db,
-                    tenant_id=run.tenant_id,
-                    employee_id=run.employee_id,
-                    run_id=run.id,
-                    input_data=run.input_data,
-                    output_text=result.content,
-                    rules=rules,
-                )
-                logger.info(
-                    "memory_auto_extraction",
-                    extra={"run_id": str(run.id), **memory_stats},
-                )
-        except Exception as memory_exc:  # noqa: BLE001 — memory is best-effort
-            await audit_service.record(
-                db,
-                action="memory.auto_extract_failed",
-                actor_type="system",
-                tenant_id=run.tenant_id,
-                resource_type="run",
-                resource_id=run.id,
-                status="failure",
-                request_id=run.request_id,
-                metadata={"error": str(memory_exc)[:1000]},
-            )
-            logger.exception(
-                "memory_auto_extraction_failed",
-                extra={"run_id": str(run.id)},
-            )
-
-        run.status = "success"
-        if run.conversation_id is not None and result.content:
-            assistant_message = CustomerMessage(
-                tenant_id=run.tenant_id,
-                conversation_id=run.conversation_id,
-                run_id=run.id,
-                role="assistant",
-                content=result.content,
-            )
-            db.add(assistant_message)
+        if paused_for_approval:
             await db.flush()
+            return run
 
-            # External channel delivery is an explicit side effect. A successful
-            # AI Run must not be reported as provider-delivered unless the
-            # configured adapter accepts the message.
-            conversation = (await db.execute(
-                select(__import__("app.models.conversation", fromlist=["CustomerConversation"]).CustomerConversation)
-                .where(__import__("app.models.conversation", fromlist=["CustomerConversation"]).CustomerConversation.id == run.conversation_id,
-                       __import__("app.models.conversation", fromlist=["CustomerConversation"]).CustomerConversation.tenant_id == run.tenant_id)
-            )).scalar_one_or_none()
-            if conversation is not None and conversation.channel_id is not None:
-                from app.models.customer_channel import CustomerChannel
-                from app.services.channel_delivery import deliver_text, ChannelDeliveryError
-                channel = (await db.execute(
-                    select(CustomerChannel).where(
-                        CustomerChannel.id == conversation.channel_id,
-                        CustomerChannel.tenant_id == run.tenant_id,
-                    )
-                )).scalar_one_or_none()
-                if channel is not None and channel.channel_type == "whatsapp":
-                    try:
-                        delivery = await deliver_text(
-                            channel_type=channel.channel_type,
-                            channel_config=channel.config or {},
-                            recipient=conversation.customer_phone or "",
-                            text=result.content,
-                        )
-                        await audit_service.record(
-                            db, action="channel.delivery", actor_type="system",
-                            tenant_id=run.tenant_id, resource_type="conversation",
-                            resource_id=conversation.id, status="success",
-                            request_id=run.request_id,
-                            metadata={"channel": "whatsapp", "provider_message_id": delivery.provider_message_id, "delivery_status": delivery.status},
-                        )
-                    except ChannelDeliveryError as delivery_exc:
-                        await audit_service.record(
-                            db, action="channel.delivery", actor_type="system",
-                            tenant_id=run.tenant_id, resource_type="conversation",
-                            resource_id=conversation.id, status="failure",
-                            request_id=run.request_id,
-                            metadata={"channel": "whatsapp", "error": str(delivery_exc)[:1000]},
-                        )
-                        logger.warning("channel_delivery_failed", extra={"run_id": str(run.id), "error": str(delivery_exc)})
-    except Exception as exc:  # noqa: BLE001 — recorded on the Run, then re-raised
-        run.status = "failed"
-        run.error = {"message": str(exc)[:2000]}
-        raise
-    finally:
-        if not paused_for_approval:
-            run.completed_at = datetime.now(timezone.utc)
+        output_data = {"content": result.content}
+        if last_tool_result and isinstance(last_tool_result.get("report_artifacts"), list):
+            output_data["report_artifacts"] = last_tool_result["report_artifacts"]
+        if last_tool_result and isinstance(last_tool_result.get("report_artifact"), dict):
+            output_data["report_artifact"] = last_tool_result["report_artifact"]
+        validate_json_data(output_data, version.output_schema, field_name="output_data")
+        run.output_data = output_data
+        run.status = "success"
+        run.completed_at = datetime.now(timezone.utc)
+        run.prompt_tokens = total_prompt_tokens
+        run.completion_tokens = total_completion_tokens
+        run.cost_usd = total_cost_usd
         await db.flush()
         await audit_service.record(
-            db,
-            action="run.completed" if not paused_for_approval else "run.waiting",
-            actor_type="system",
-            tenant_id=run.tenant_id,
-            resource_type="run",
-            resource_id=run.id,
-            status=("success" if run.status == "success" else ("waiting" if paused_for_approval else "failure")),
-            request_id=run.request_id,
-            metadata={"status": run.status, "total_cost_usd": float(run.total_cost_usd)},
+            db, action="run.completed", actor_type="system", tenant_id=run.tenant_id,
+            resource_type="run", resource_id=run.id, status="success", request_id=run.request_id,
+            metadata={"prompt_tokens": total_prompt_tokens, "completion_tokens": total_completion_tokens, "cost_usd": total_cost_usd},
         )
-        logger.info(
-            "run_finished",
-            extra={"run_id": str(run.id), "status": run.status, "cost_usd": float(run.total_cost_usd)},
-        )
-
-    return run
-
-
-async def get_run(db: AsyncSession, *, run_id: uuid.UUID, tenant_id: uuid.UUID) -> Run:
-    result = await db.execute(select(Run).where(Run.id == run_id, Run.tenant_id == tenant_id))
-    run = result.scalar_one_or_none()
-    if run is None:
-        raise NotFoundError("Run not found")
-    return run
-
-
-async def list_runs(
-    db: AsyncSession,
-    *,
-    tenant_id: uuid.UUID,
-    employee_id: uuid.UUID | None = None,
-) -> list[Run]:
-    stmt = select(Run).where(Run.tenant_id == tenant_id)
-    if employee_id is not None:
-        stmt = stmt.where(Run.employee_id == employee_id)
-    result = await db.execute(stmt.order_by(Run.created_at.desc()))
-    return list(result.scalars().all())
+        await extract_and_consolidate_run_memory(db, run=run, output_data=output_data, settings=auto_memory_settings(version.rules or {}))
+        await db.commit()
+        return run
+    except Exception as exc:  # noqa: BLE001
+        await db.rollback()
+        run_result = await db.execute(select(Run).where(Run.id == run_id))
+        run = run_result.scalar_one_or_none()
+        if run is not None:
+            run.status = "failed"
+            run.error_message = str(exc)[:2000]
+            run.completed_at = datetime.now(timezone.utc)
+            await db.commit()
+        raise
