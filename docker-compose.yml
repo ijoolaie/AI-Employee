@@ -33,7 +33,6 @@ x-worker-common: &worker-common
       condition: service_healthy
 
 services:
-  # Initialize the shared storage volume before any non-root app service starts.
   storage-init:
     image: alpine:3.20
     user: "0:0"
@@ -109,17 +108,14 @@ services:
       timeout: 5s
       retries: 20
 
-  # Execution workers never consume maintenance, outbox, email, or unrouted work.
   worker:
     <<: *worker-common
     command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info", "--concurrency=2", "--queues=execution"]
 
-  # Test execution is isolated because test runs can be long-lived and resource-heavy.
   worker-test-center:
     <<: *worker-common
     command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info", "--concurrency=2", "--queues=test_center"]
 
-  # Scheduling, expiry, timeout, and event dispatch are control-plane work only.
   worker-control:
     <<: *worker-common
     command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info", "--concurrency=2", "--queues=control"]
@@ -152,7 +148,12 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1)")]
+      test:
+        - CMD
+        - node
+        - -e
+        - >-
+          fetch("http://127.0.0.1:3000/login").then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))
       interval: 5s
       timeout: 5s
       start_period: 10s
