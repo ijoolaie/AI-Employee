@@ -1,0 +1,39 @@
+name: Incident Response Drill
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/incident_response_drill.sh'
+      - 'scripts/validate_incident_response_runbook.py'
+      - 'docs/current/PHASE_14_INCIDENT_RESPONSE.md'
+      - '.github/workflows/incident-response-drill.yml'
+  workflow_dispatch:
+
+jobs:
+  drill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Run incident runbook contract
+        run: python3 scripts/validate_incident_response_runbook.py
+
+      - name: Run deterministic incident response drill
+        run: |
+          chmod +x scripts/incident_response_drill.sh
+          ./scripts/incident_response_drill.sh
+
+      - name: Validate evidence boundary
+        run: |
+          test -f artifacts/incident-response-drill/drill-evidence.json
+          grep -q '"external_production_incident_claimed": false' artifacts/incident-response-drill/drill-evidence.json
+
+      - name: Upload drill evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: incident-response-drill-evidence
+          path: artifacts/incident-response-drill/
+          retention-days: 14
