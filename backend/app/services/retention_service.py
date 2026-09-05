@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
@@ -32,8 +32,9 @@ async def enforce_retention(
 
     Files are soft-deleted when stale; audit logs and usage events are hard
     deleted because they are append-only operational records subject to the
-    configured retention window. Memory entries use their explicit
-    ``expires_at`` lifecycle first and retention as a safety ceiling.
+    configured retention window. Memory entries honor an explicit
+    ``expires_at`` lifecycle first, while the retention window remains a
+    safety ceiling for terminal lifecycle states.
     """
     if retention_days < 1 or retention_days > 3650:
         raise ValueError("retention_days must be between 1 and 3650")
@@ -61,8 +62,13 @@ async def enforce_retention(
     memory_result = await db.execute(
         delete(EmployeeMemory).where(
             EmployeeMemory.tenant_id == tenant_id,
-            EmployeeMemory.created_at < cutoff,
-            EmployeeMemory.status.in_(["expired", "deleted", "superseded"]),
+            or_(
+                EmployeeMemory.expires_at <= now,
+                (
+                    EmployeeMemory.created_at < cutoff
+                    & EmployeeMemory.status.in_(["expired", "deleted", "superseded"])
+                ),
+            ),
         )
     )
     counts["memory_rows_deleted"] = memory_result.rowcount or 0
