@@ -1,9 +1,13 @@
 name: SLO Error Budget Contract
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - main
+    types:
+      - opened
+      - synchronize
+      - reopened
   workflow_dispatch:
 
 permissions:
@@ -15,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout base branch
         uses: actions/checkout@v4
 
       - name: Validate SLO contract
