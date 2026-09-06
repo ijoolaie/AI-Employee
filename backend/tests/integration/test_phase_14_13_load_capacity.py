@@ -149,6 +149,7 @@ def test_resource_capacity_and_crash_recovery(redis_client: Redis) -> None:
     active = 0
     maximum = 0
     admitted = 0
+    admission_gate = threading.Event()
 
     def worker() -> None:
         nonlocal active, maximum, admitted
@@ -159,7 +160,12 @@ def test_resource_capacity_and_crash_recovery(redis_client: Redis) -> None:
             active += 1
             admitted += 1
             maximum = max(maximum, active)
-        time.sleep(0.02)
+            if admitted == 4:
+                admission_gate.set()
+        # Keep the first four leases alive until all contenders have had a
+        # chance to attempt admission. This makes the cap assertion deterministic
+        # instead of allowing early releases to admit later workers in the burst.
+        admission_gate.wait(timeout=2.0)
         with lock:
             active -= 1
         limiter.release(lease)
