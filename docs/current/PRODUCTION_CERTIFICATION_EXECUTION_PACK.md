@@ -1,8 +1,9 @@
 # Production Certification Execution Pack
 
-**Prepared:** 2026-09-05  
+**Prepared:** 2026-09-06  
 **Repository:** `ijoolaie/AI-Employee`  
-**Current engineering main baseline:** `44e1c0f339e2440bafe9f4e122d2b63dc2fc09c2`  
+**Current engineering main baseline:** `e52ed83d903a0d6de2fd37d62db71278513a1e1f`  
+**Release candidate:** `v1.3.6` — External Production Certification Candidate  
 **Purpose:** execute the remaining production/customer-readiness work without confusing repository evidence with real target-environment certification.
 
 ## Operating rule
@@ -13,13 +14,13 @@ Use `docs/current/PRODUCTION_EVIDENCE_INDEX.md` as the traceability index. Every
 
 ## Phase A — Freeze the release
 
-1. Select the candidate commit from `main` after all engineering changes are merged.
-2. Create an immutable release tag.
-3. Record commit SHA, tag, container image digests, dependency lock identity, SBOM/provenance artifacts and configuration version.
-4. Do not mutate the accepted release after external evidence collection starts.
+1. Candidate release `v1.3.6` has been published as a prerelease against the current engineering `main` baseline.
+2. Candidate SHA: `e52ed83d903a0d6de2fd37d62db71278513a1e1f`.
+3. The GitHub release is still marked prerelease and is not yet an immutable production identity.
+4. External acceptance evidence must not be attributed to `v1.3.6` as production-certified until the release identity, artifact digests, provenance and external target deployment are accepted.
 5. If a remediation changes runtime behavior, create a new release identity and repeat affected evidence.
 
-**Evidence:** release record + SHA/tag + image digests + checksums + provenance.
+**Evidence:** current RC release record + SHA/tag. **Remaining:** immutable production identity + image digests + checksums + signed provenance.
 
 ## Phase B — Deploy the real production target
 
@@ -186,7 +187,7 @@ Deterministic tenant-scoped daily anomaly detection and month-end projection are
 
 ## Final acceptance sequence
 
-1. Immutable release frozen.
+1. Immutable production release identity accepted.
 2. Real target deployed.
 3. Backup/DR and measured RPO/RTO passed.
 4. SLO/SLI baseline established.
