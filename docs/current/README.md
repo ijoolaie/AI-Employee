@@ -4,21 +4,32 @@ This directory contains the maintained project documentation for the current `ma
 
 ## Source of truth
 
-1. `STATUS.md` — implementation and verification truth.
+1. `STATUS.md` — implementation, certification and deployment truth.
 2. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap and phase status.
 3. `../00_START_HERE/CURRENT_STATUS.md` — executive current-state summary.
 4. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
 5. `PHASE_14_EXTERNAL_PRODUCTION_EVIDENCE.md` — final external-production/customer-acceptance evidence gate.
-6. `49_CURRENT_STATE_RECONCILIATION_2026-08-31.md` — retained point-in-time reconciliation evidence.
-7. `50_PRODUCTION_CANDIDATE_READINESS_2026-08-31.md` — retained point-in-time production-candidate evidence.
+6. `PRODUCTION_GAP_REGISTER_2026-09-04.md` — current reconciled gap register.
+7. `49_CURRENT_STATE_RECONCILIATION_2026-08-31.md` — retained point-in-time reconciliation evidence.
+8. `50_PRODUCTION_CANDIDATE_READINESS_2026-08-31.md` — retained point-in-time candidate evidence; it does not override the current canonical status.
+
+## Current release position
+
+- Certified release candidate: **`v1.3.8`**.
+- Certified commit: **`fd1e74b6b4c1701f7443efc202bad161ff19618c`**.
+- Certification run: **`34052885700` — PASS**.
+- Tag identity: **VERIFIED**.
+- Production deployment: **PENDING REAL INFRASTRUCTURE**.
+- Deployment attempt `34060615390`: failed during SSH configuration before remote deployment.
+- Customer acceptance and live provider validation: **PENDING**.
 
 ## Current phase position
 
 - Phase 13 Agent Teams & Marketplace: **engineering complete**.
-- Phase 14.1–14.9: **engineering complete**.
-- Phase 14.10: **external-pending**.
+- Phase 14 engineering: **complete**.
+- Phase 14 external production/customer acceptance gate: **external-pending**.
 
-The active external-production work is tracked by issues #210, #19 and #269. No external certification or customer acceptance is inferred from repository/CI evidence.
+The active external-production work is tracked by issues #210, #19 and #269, with deployment checkpoint #343. No external certification or customer acceptance is inferred from repository/CI evidence.
 
 ## Document classes
 
@@ -29,7 +40,7 @@ The active external-production work is tracked by issues #210, #19 and #269. No 
 
 ## Naming convention
 
-- Stable documents use descriptive names without dates when they are continuously maintained.
+- Stable documents use descriptive names without dates when continuously maintained.
 - Point-in-time evidence uses `YYYY-MM-DD`.
 - Historical release/RC records keep their original identity and must not be presented as current status.
 
