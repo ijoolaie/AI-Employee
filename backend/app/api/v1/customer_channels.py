@@ -10,6 +10,11 @@ router = APIRouter(prefix="/customer-channels", tags=["customer-channels"])
 @router.post("", response_model=APIResponse[CustomerChannelResponse], status_code=status.HTTP_201_CREATED)
 async def create_channel(payload: CustomerChannelCreate, ctx: EmployeeWriteContext, db: DbSession):
     channel = await customer_channel_service.create_channel(db, tenant_id=ctx.tenant_id, employee_id=payload.employee_id, name=payload.name, channel_type=payload.channel_type, config=payload.config)
+    # Public consumers can use the returned key immediately. FastAPI yield
+    # dependencies finalize their transaction after the response lifecycle,
+    # so explicitly commit this publication before returning the key.
+    await db.commit()
+    await db.refresh(channel)
     return APIResponse(success=True, data=CustomerChannelResponse.model_validate(channel))
 
 @router.get("", response_model=APIResponse[list[CustomerChannelResponse]])
