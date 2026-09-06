@@ -16,7 +16,7 @@ from app.models.run import Run
 from app.schemas.common import APIResponse
 from app.schemas.run import RunCreate, RunResponse
 from app.schemas.trace import RunTraceResponse
-from app.services import run_service, trace_service
+from app.services import run_read_service, run_service, trace_service
 
 logger = logging.getLogger("app.api.runs")
 router = APIRouter(prefix="/runs", tags=["runs"])
@@ -87,7 +87,7 @@ async def list_runs(
     employee_id: UUID | None = None,
 ):
     """List runs for the caller's tenant. Optional `employee_id` filters to one employee."""
-    runs = await run_service.list_runs(
+    runs = await run_read_service.list_runs(
         db, tenant_id=ctx.tenant_id, employee_id=employee_id
     )
     labels = await _employee_labels(db, [r.employee_id for r in runs])
@@ -98,7 +98,7 @@ async def list_runs(
 
 @router.get("/{run_id}", response_model=APIResponse[RunResponse])
 async def get_run(run_id: UUID, ctx: RunReadContext, db: DbSession):
-    run = await run_service.get_run(db, run_id=run_id, tenant_id=ctx.tenant_id)
+    run = await run_read_service.get_run(db, run_id=run_id, tenant_id=ctx.tenant_id)
     labels = await _employee_labels(db, [run.employee_id])
     return APIResponse(success=True, data=_to_response(run, labels))
 
