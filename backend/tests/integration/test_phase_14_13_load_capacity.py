@@ -139,32 +139,36 @@ def test_scheduler_and_celery_routing_capacity(redis_client: Redis) -> None:
 
 def test_resource_capacity_and_crash_recovery(redis_client: Redis) -> None:
     """Concurrent admission stays within caps and expired leases recover capacity."""
+    # Keep the admission-burst lease longer than the coordination window so
+    # lease expiry cannot turn a single burst into multiple admission waves.
     limiter = TenantResourceLimiter(
         redis_client,
         {"tenant-a": 4},
         default_limit=2,
-        lease_seconds=1,
+        lease_seconds=5,
     )
     lock = threading.Lock()
     active = 0
     maximum = 0
     admitted = 0
+    attempts = 0
     admission_gate = threading.Event()
 
     def worker() -> None:
-        nonlocal active, maximum, admitted
+        nonlocal active, maximum, admitted, attempts
         lease = limiter.acquire("tenant-a")
+        with lock:
+            attempts += 1
+            if attempts == 32:
+                admission_gate.set()
         if lease is None:
             return
         with lock:
             active += 1
             admitted += 1
             maximum = max(maximum, active)
-            if admitted == 4:
-                admission_gate.set()
-        # Keep the first four leases alive until all contenders have had a
-        # chance to attempt admission. This makes the cap assertion deterministic
-        # instead of allowing early releases to admit later workers in the burst.
+        # Do not release any admitted lease until every contender has attempted
+        # admission. This makes the burst a single deterministic admission wave.
         admission_gate.wait(timeout=2.0)
         with lock:
             active -= 1
@@ -175,17 +179,27 @@ def test_resource_capacity_and_crash_recovery(redis_client: Redis) -> None:
 
     assert maximum <= 4
     assert admitted == 4
+    assert attempts == 32
 
-    abandoned = limiter.acquire("tenant-a")
+    # Exercise expiration separately with a short-lived limiter. Keeping this
+    # concern separate prevents the bounded-admission assertion from depending
+    # on wall-clock lease expiry while still proving abandoned capacity recovers.
+    recovery_limiter = TenantResourceLimiter(
+        redis_client,
+        {"tenant-a": 4},
+        default_limit=2,
+        lease_seconds=1,
+    )
+    abandoned = recovery_limiter.acquire("tenant-a")
     assert abandoned is not None
-    assert limiter.acquire("tenant-a") is not None
-    assert limiter.acquire("tenant-a") is not None
-    assert limiter.acquire("tenant-a") is not None
-    assert limiter.acquire("tenant-a") is None
+    assert recovery_limiter.acquire("tenant-a") is not None
+    assert recovery_limiter.acquire("tenant-a") is not None
+    assert recovery_limiter.acquire("tenant-a") is not None
+    assert recovery_limiter.acquire("tenant-a") is None
     time.sleep(1.1)
-    recovered = limiter.acquire("tenant-a")
+    recovered = recovery_limiter.acquire("tenant-a")
     assert recovered is not None
-    limiter.release(recovered)
+    recovery_limiter.release(recovered)
 
     evidence = {
         "scenario": "resource_capacity_and_crash_recovery",
