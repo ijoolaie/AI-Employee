@@ -1,6 +1,10 @@
-name: SLO Error Budget Contract (legacy manual)
+name: SLO Error Budget Contract
 
 on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 permissions:
@@ -12,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout base branch
+      - name: Checkout
         uses: actions/checkout@v4
       - name: Validate SLO contract
         run: python3 scripts/validate_slo_error_budget.py
