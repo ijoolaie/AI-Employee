@@ -32,6 +32,9 @@ class _Db:
     async def commit(self):
         self.committed = True
 
+    async def flush(self):
+        return None
+
 
 @asynccontextmanager
 async def _session(db):
@@ -45,6 +48,9 @@ def _run(run_id, tenant_id):
         employee_id=uuid4(),
         employee_version_id=uuid4(),
         input_data={},
+        prompt_tokens=0,
+        completion_tokens=0,
+        total_tokens=0,
     )
 
 
@@ -97,6 +103,7 @@ async def test_run_worker_passes_matching_tenant_to_run_service(monkeypatch):
 
     assert calls == [(db, run_id)]
     assert db.committed is True
+    assert run.total_tokens == run.prompt_tokens + run.completion_tokens
 
 
 @pytest.mark.asyncio
