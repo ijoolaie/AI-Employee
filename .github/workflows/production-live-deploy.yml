@@ -1,0 +1,166 @@
+name: Live Production Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_ref:
+        description: 'Release tag or commit SHA to deploy'
+        required: true
+        default: 'v1.3.6'
+      confirm:
+        description: 'Type DEPLOY to authorize production deployment'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-live-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ inputs.confirm == 'DEPLOY' }}
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    steps:
+      - name: Validate inputs
+        env:
+          RELEASE_REF: ${{ inputs.release_ref }}
+        run: |
+          set -euo pipefail
+          test -n "$RELEASE_REF"
+          case "$RELEASE_REF" in
+            v[0-9]*|[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F]*) ;;
+            *) echo 'release_ref must be a version tag or commit SHA'; exit 1 ;;
+          esac
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_KNOWN_HOSTS: ${{ secrets.PRODUCTION_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY"
+          test -n "$PRODUCTION_HOST"
+          test -n "$PRODUCTION_USER"
+          test -n "$PRODUCTION_KNOWN_HOSTS"
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$PRODUCTION_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+      - name: Deploy exact release to production host
+        env:
+          RELEASE_REF: ${{ inputs.release_ref }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_APP_DIR: ${{ secrets.PRODUCTION_APP_DIR }}
+          PRODUCTION_ENV_B64: ${{ secrets.PRODUCTION_ENV_B64 }}
+        run: |
+          set -euo pipefail
+          test -n "$PRODUCTION_APP_DIR"
+          test -n "$PRODUCTION_ENV_B64"
+          case "$PRODUCTION_APP_DIR" in
+            /*|*"'"*|*'"'*|*"\$"*|*"`"*) echo 'PRODUCTION_APP_DIR must be an absolute path without shell metacharacters'; exit 1 ;;
+            *) ;;
+          esac
+
+          SSH_TARGET="$PRODUCTION_USER@$PRODUCTION_HOST"
+          SSH_OPTS=(-o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+
+          ssh "${SSH_OPTS[@]}" "$SSH_TARGET" 'mkdir -p "$HOME/ai-employee-releases"'
+
+          # Stream only the encoded secret over SSH stdin. It is never placed in
+          # a remote command argument or process argument list.
+          printf '%s' "$PRODUCTION_ENV_B64" | base64 -d | \
+            ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "APP_DIR='$PRODUCTION_APP_DIR' bash -c 'set -euo pipefail; umask 077; mkdir -p \"\$APP_DIR\"; cat > \"\$APP_DIR/.env\"; chmod 600 \"\$APP_DIR/.env\"'"
+
+          ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "RELEASE_REF='$RELEASE_REF' APP_DIR='$PRODUCTION_APP_DIR' bash -s" <<'REMOTE'
+          set -euo pipefail
+          RELEASE_REF="$RELEASE_REF"
+          APP_DIR="$APP_DIR"
+          RELEASE_DIR="$HOME/ai-employee-releases/$RELEASE_REF"
+
+          command -v docker >/dev/null
+          docker compose version >/dev/null
+          command -v git >/dev/null
+
+          if [ ! -d "$RELEASE_DIR/.git" ]; then
+            git clone --depth 1 --branch "$RELEASE_REF" https://github.com/ijoolaie/AI-Employee.git "$RELEASE_DIR"
+          else
+            git -C "$RELEASE_DIR" fetch --depth 1 origin "$RELEASE_REF"
+            git -C "$RELEASE_DIR" checkout --detach FETCH_HEAD
+          fi
+
+          cd "$RELEASE_DIR"
+          test -f docker-compose.production.yml
+
+          docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml config --quiet
+          docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml up -d --build
+
+          docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml exec -T api alembic upgrade head
+
+          expected_services='postgres redis api worker beat frontend'
+          for i in $(seq 1 36); do
+            all_running=true
+            for service in $expected_services; do
+              if ! docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml ps --status running --services | grep -Fxq "$service"; then
+                all_running=false
+                break
+              fi
+            done
+
+            healthy_services=true
+            for service in postgres redis api frontend; do
+              if ! docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml ps --format json "$service" | grep -q '"Health":"healthy"'; then
+                healthy_services=false
+                break
+              fi
+            done
+
+            if [ "$all_running" = true ] && [ "$healthy_services" = true ]; then
+              break
+            fi
+            sleep 5
+          done
+
+          docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml ps
+
+          for service in $expected_services; do
+            docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml ps --status running --services | grep -Fxq "$service" || {
+              echo "service is not running: $service"
+              exit 1
+            }
+          done
+
+          for service in postgres redis api frontend; do
+            docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml ps --format json "$service" | grep -q '"Health":"healthy"' || {
+              echo "service is not healthy: $service"
+              exit 1
+            }
+          done
+
+          test -f "$APP_DIR/.env"
+          git rev-parse HEAD > "$APP_DIR/.deployed-commit"
+          printf '%s\n' "$RELEASE_REF" > "$APP_DIR/.deployed-release"
+          date -u +%Y-%m-%dT%H:%M:%SZ > "$APP_DIR/.deployed-at"
+          chmod 600 "$APP_DIR/.deployed-commit" "$APP_DIR/.deployed-release" "$APP_DIR/.deployed-at"
+          REMOTE
+
+      - name: Verify deployed identity
+        env:
+          RELEASE_REF: ${{ inputs.release_ref }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_APP_DIR: ${{ secrets.PRODUCTION_APP_DIR }}
+        run: |
+          set -euo pipefail
+          SSH_TARGET="$PRODUCTION_USER@$PRODUCTION_HOST"
+          SSH_OPTS=(-o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
+          ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "cd '$PRODUCTION_APP_DIR' && test \"\$(cat .deployed-release)\" = '$RELEASE_REF' && test -s .deployed-commit && git -C \"\$HOME/ai-employee-releases/$RELEASE_REF\" rev-parse HEAD && cat .deployed-at"
