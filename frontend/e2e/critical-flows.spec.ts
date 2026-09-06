@@ -98,7 +98,7 @@ test.describe("critical platform flows", () => {
     await page.getByLabel("Target workspace").fill("ops");
     await page.getByRole("button", { name: /Review & install/i }).click();
     await expect(page.getByRole("heading", { name: "Installation review" })).toBeVisible();
-    await expect(page.getByText("Customer acceptance").locator("..")).toContainText("Not implied");
+    await expect(page.getByText("Customer acceptance", { exact: true }).locator("..")).toContainText("Not implied");
     await page.getByRole("button", { name: /Install tenant-local copy/i }).click();
     await expect(page.getByText(/Installed install-e2e locally/i)).toBeVisible();
     await expect(page.getByText(/No AI Employee instance was provisioned/i)).toBeVisible();
@@ -143,6 +143,6 @@ test.describe("critical platform flows", () => {
     await page.getByRole("button", { name: /Review & install/i }).click();
     await page.getByRole("button", { name: /Install tenant-local copy/i }).click();
     await expect(page.getByText(/Permission denied/i)).toBeVisible();
-    await expect(page.getByText(/production deployment/i)).toBeVisible();
+    await expect(page.getByText("Production deployment", { exact: true })).toBeVisible();
   });
 });
