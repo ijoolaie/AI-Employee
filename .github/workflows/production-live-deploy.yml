@@ -76,14 +76,14 @@ jobs:
 
           ssh "${SSH_OPTS[@]}" "$SSH_TARGET" 'mkdir -p "$HOME/ai-employee-releases"'
 
-          # Transfer the environment through SSH stdin so the secret never appears
-          # in the remote command line or process arguments.
-          printf '%s' "$PRODUCTION_ENV_B64" | base64 -d | \
+          # Stream the encoded environment over SSH stdin so the secret never
+          # appears in the remote command line or process arguments.
+          printf '%s' "$PRODUCTION_ENV_B64" | \
             ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "APP_DIR='$PRODUCTION_APP_DIR' bash -s" <<'REMOTE_ENV'
           set -euo pipefail
           umask 077
           mkdir -p "$APP_DIR"
-          cat > "$APP_DIR/.env"
+          base64 -d > "$APP_DIR/.env"
           chmod 600 "$APP_DIR/.env"
           REMOTE_ENV
 
@@ -112,7 +112,7 @@ jobs:
 
           docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml exec -T api alembic upgrade head
 
-          expected_services='postgres redis storage-init api worker beat frontend'
+          expected_services='postgres redis api worker beat frontend'
           for i in $(seq 1 36); do
             all_running=true
             for service in $expected_services; do
@@ -138,7 +138,7 @@ jobs:
 
           docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml ps
 
-          for service in postgres redis api worker beat frontend; do
+          for service in $expected_services; do
             docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml ps --status running --services | grep -Fxq "$service" || {
               echo "service is not running: $service"
               exit 1
