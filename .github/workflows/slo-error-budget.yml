@@ -1,9 +1,7 @@
-# PR-target workflow: validate the SLO contract against the exact PR head.
 name: SLO Error Budget Contract
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
+  pull_request:
     branches:
       - main
   workflow_dispatch:
@@ -11,20 +9,14 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: slo-error-budget-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
   validate:
     name: Validate SLO error budget contract
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout PR head
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Validate SLO contract
         run: python3 scripts/validate_slo_error_budget.py
