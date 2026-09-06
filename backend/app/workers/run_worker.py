@@ -100,6 +100,17 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     lambda: run_service.execute_run(db, run_id=parsed_run_id),
                     retryable=False,
                 )
+
+                # execute_run records prompt/completion usage, while the Run
+                # read model also exposes the canonical aggregate total_tokens.
+                # Keep the denormalized aggregate synchronized after the real
+                # worker execution so API/UI consumers and certification see
+                # the same usage data as the provider-call ledger.
+                refreshed = await db.execute(select(Run).where(Run.id == parsed_run_id))
+                completed_run = refreshed.scalar_one_or_none()
+                if completed_run is not None:
+                    completed_run.total_tokens = int(completed_run.prompt_tokens or 0) + int(completed_run.completion_tokens or 0)
+                    await db.flush()
                 await db.commit()
             except Exception:
                 await db.commit()
