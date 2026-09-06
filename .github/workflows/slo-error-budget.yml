@@ -3,7 +3,7 @@ name: SLO Error Budget Contract
 on:
   push:
     branches:
-      - feat/production-deployment-runner
+      - main
   pull_request:
     branches:
       - main
@@ -24,7 +24,7 @@ jobs:
       - name: Validate SLO contract
         run: python3 scripts/validate_slo_error_budget.py
       - name: Verify no production certification claim
-        run: "grep -q '\"production_certification_claimed\": false' slo-error-budget-evidence.json"
+        run: grep -q '"production_certification_claimed": false' slo-error-budget-evidence.json
       - name: Hash evidence
         run: sha256sum slo-error-budget-evidence.json > slo-error-budget-evidence.sha256
       - name: Upload evidence
@@ -35,3 +35,5 @@ jobs:
             slo-error-budget-evidence.json
             slo-error-budget-evidence.sha256
           retention-days: 14
+
+# Canonical SLO workflow: keep manual dispatch available on the default branch.
