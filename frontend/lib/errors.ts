@@ -4,13 +4,14 @@ export function getErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const data = err.response?.data as
       | {
-          error?: { message?: string; code?: string };
+          error?: { message?: string; code?: string } | string;
           detail?: string | Array<{ msg?: string; message?: string }>;
           message?: string;
         }
       | undefined;
 
     // Our API envelope
+    if (typeof data?.error === "string") return data.error;
     if (data?.error?.message) return data.error.message;
 
     // FastAPI HTTPException detail (string)
