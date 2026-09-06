@@ -1,69 +1,52 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-05
-**Current engineering main baseline:** `44e1c0f339e2440bafe9f4e122d2b63dc2fc09c2`
+**Reconciled:** 2026-09-06  
+**Certified release candidate:** `v1.3.8`  
+**Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`
 
 ## Executive priority
 
-Phase 13 and Phase 14.1–14.16 engineering are complete. Production-like infrastructure validation is complete in CI. The repository has also completed the tracked P1 engineering/productization gates and the latest Stage 7 engineering contracts. The remaining program is **Stage 7 — External Production Certification & Customer Acceptance**.
+Application engineering and the production-like certification gate are complete for `v1.3.8`. The immediate priority is now **real production infrastructure**, followed by controlled deployment of the frozen release identity.
 
-The complete gap list is maintained in `docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md` and the ordered roadmap in `docs/current/PRODUCTIZATION_ROADMAP.md`.
+The previous deployment attempt (`34060615390`) failed at SSH configuration because the production Environment inputs were empty/missing. No remote deployment occurred.
 
-## P0 — certification blockers
+## P0 — external production gates
 
-1. **Immutable release & release identity** — freeze one exact SHA/tag and provenance.
-2. **External production deployment** — deploy that exact identity to the real target.
-3. **Real backup/restore & DR drill** — prove target RPO/RTO.
-4. **Production SLO/SLI & error budget** — measure against the target.
-5. **Live provider validation** — validate real AI/email/payment/storage/provider behavior and failure modes.
-6. **Vendor → Reseller → Client runtime isolation/RBAC** — complete real-stack evidence for #19.
-7. **DAST** — scan the deployed running stack, triage and retest.
-8. **Independent penetration test/security review** — obtain independent findings and disposition.
-9. **Production networking hardening** — prove TLS, ingress, firewall and network-policy evidence.
-10. **Secret management, rotation & recovery** — prove the external secret lifecycle.
-11. **High availability & failure recovery** — rehearse failure/failover against recovery objectives.
-12. **Incident-response drill** — execute a realistic incident scenario and capture lessons.
-13. **Alert ownership & on-call escalation** — prove routing, ownership and escalation.
-14. **Final external certification & customer acceptance** — ordered acceptance and final sign-off (#210/#269).
+1. **Provision a real production target** — VPS/cloud host, network, storage and DNS.
+2. **Configure protected production Environment inputs** — SSH key, host, user, app directory, production environment payload and known-hosts data.
+3. **Deploy exact `v1.3.8` identity** — `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
+4. **Verify deployed identity and service health** — confirm release, commit, migrations and all required services.
+5. **Real backup/restore & DR drill** — prove target RPO/RTO.
+6. **Production SLO/SLI & error budget** — measure the deployed target.
+7. **Live provider validation** — validate real AI/email/payment/storage/provider behavior and failure modes.
+8. **Vendor → Reseller → Client runtime isolation/RBAC** — complete real-stack evidence for #19.
+9. **DAST against deployed target** — authenticated scan, triage and retest.
+10. **Independent penetration test/security review** — obtain independent findings and disposition.
+11. **Production networking hardening** — prove TLS, ingress, firewall and network-policy evidence.
+12. **Secret management, rotation & recovery** — prove the external lifecycle.
+13. **HA/failure-recovery rehearsal** — rehearse target failure/failover against objectives.
+14. **Incident-response drill and on-call** — prove alert ownership, escalation and response.
+15. **Final external certification & customer acceptance** — reconcile all evidence to the exact release identity (#210/#269).
 
-All P0 items retain their external boundary even where repository engineering contracts are already complete.
+## P1 — productization / operational completeness
 
-## P1 — productization & operational completeness
+The previously tracked P1 engineering gates remain implemented/complete. Target-environment verification is now the main remaining boundary where applicable.
 
-The following P1 engineering gates are now reconciled as implemented/complete; target-environment verification remains external where applicable:
+## Certified release checkpoint
 
-15. **Data retention & lifecycle enforcement** — ENGINEERING IMPLEMENTED.
-16. **Human-in-the-loop TODO reconciliation** — ENGINEERING COMPLETE.
-17. **Documentation consolidation & evidence index** — ENGINEERING COMPLETE.
-18. **Platform operations dashboard** — ENGINEERING COMPLETE via the existing `/admin/operations` surface.
-19. **Customer usage, budget & cost controls** — ENGINEERING IMPLEMENTED.
-20. **Cost anomaly detection & forecasting** — ENGINEERING IMPLEMENTED.
-
-See the canonical gap register for exact evidence and remaining external boundaries.
-
-## Completed engineering stages and checkpoints
-
-- Stage 1 / #285 — certification-readiness and cross-platform hardening: complete.
-- Stage 2 / #286 — tenant-fair scheduling and resource isolation: complete.
-- Stage 3 / #287 — bounded load/stress/capacity validation: complete.
-- Stage 4 / #288 — security/privacy/compliance engineering: complete.
-- Stage 5 / #289 — capacity/cost/operational optimization: complete.
-- Stage 6 / #290 — V1.5 Human + Agent operating model: complete.
-- PR #315 — production-like infrastructure validation: merged; CI run `33884955068` passed.
-- PR #320 — immutable-release build evidence: engineering complete; external registry publication/signing remains pending.
-- PR #323 — HA/failure-recovery engineering rehearsal: complete; target HA/RTO/RPO evidence remains external.
-- PR #324 — SLO/error-budget engineering contract: complete; live measurement remains external.
-- PR #325 — provider integration preflight: complete; live provider validation remains external.
-- PR #327 — alert ownership/routing contract: complete; live paging/on-call remains external.
-- PR #329 — runtime isolation/RBAC CI gate: complete; external actor-matrix certification remains pending.
-- PR #330 — production network hardening contract: complete; deployed perimeter evidence remains external.
-- PR #331 — production secret-management contract: complete; external manager/rotation/recovery evidence remains pending.
+- Release: `v1.3.8`
+- Tag target: `fd1e74b6b4c1701f7443efc202bad161ff19618c`
+- Certification: Run `34052885700` — PASS
+- Marketplace critical Playwright flow: PASS
+- Deployment attempt: Run `34060615390` — failed at SSH setup before remote deployment
+- Deployment checkpoint: Issue #343
 
 ## Evidence rules
 
-- CI/internal load and security validation = engineering evidence.
-- Local real-stack validation = local evidence.
-- External production/customer acceptance = independent external evidence.
+- CI/internal validation = engineering/release evidence.
+- Production-like certification = certified release-candidate evidence.
+- Real production deployment = target evidence.
+- Customer acceptance = independent acceptance evidence.
 - Certification never transfers automatically across SHAs.
-- Never fabricate production configuration, customer acceptance, provider evidence or compliance certification.
-- P0 completion requires evidence attached to the exact immutable release identity intended for acceptance.
+- Never fabricate production configuration, credentials, provider evidence or compliance certification.
+- Never place secrets in GitHub issues, commits, documentation or chat.
