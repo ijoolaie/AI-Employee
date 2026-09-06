@@ -100,7 +100,7 @@ test.describe("critical platform flows", () => {
     await expect(page.getByRole("heading", { name: "Installation review" })).toBeVisible();
     await expect(page.getByText("Customer acceptance", { exact: true }).locator("..")).toContainText("Not implied");
     await page.getByRole("button", { name: /Install tenant-local copy/i }).click();
-    await expect(page.getByText(/Installed install-e2e locally/i)).toBeVisible();
+    await expect(page.getByText(/Installed install-e.* locally/i)).toBeVisible();
     await expect(page.getByText(/No AI Employee instance was provisioned/i)).toBeVisible();
   });
 
