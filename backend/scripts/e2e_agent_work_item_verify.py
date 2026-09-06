@@ -22,6 +22,7 @@ from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services import edition_service, license_service
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
+MAX_429_RETRIES = 3
 
 
 def request(method: str, path: str, payload: dict | None = None, token: str | None = None) -> tuple[int, object]:
@@ -29,20 +30,32 @@ def request(method: str, path: str, payload: dict | None = None, token: str | No
     headers = {"Accept": "application/json", "Content-Type": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-    req = Request(f"{BASE_URL}{path}", data=body, headers=headers, method=method)
-    try:
-        with urlopen(req, timeout=20) as response:
-            raw = response.read().decode()
-            return response.status, json.loads(raw) if raw else None
-    except HTTPError as exc:
-        raw = exc.read().decode()
+
+    for attempt in range(MAX_429_RETRIES + 1):
+        req = Request(f"{BASE_URL}{path}", data=body, headers=headers, method=method)
         try:
-            detail = json.loads(raw)
-        except json.JSONDecodeError:
-            detail = {"raw": raw}
-        raise AssertionError(f"{method} {path} returned HTTP {exc.code}: {detail}") from exc
-    except URLError as exc:
-        raise AssertionError(f"{method} {path} unavailable: {exc}") from exc
+            with urlopen(req, timeout=20) as response:
+                raw = response.read().decode()
+                return response.status, json.loads(raw) if raw else None
+        except HTTPError as exc:
+            raw = exc.read().decode()
+            try:
+                detail = json.loads(raw)
+            except json.JSONDecodeError:
+                detail = {"raw": raw}
+            if exc.code == 429 and attempt < MAX_429_RETRIES:
+                retry_after = exc.headers.get("Retry-After")
+                try:
+                    delay = max(1.0, min(10.0, float(retry_after))) if retry_after else 2.0
+                except (TypeError, ValueError):
+                    delay = 2.0
+                time.sleep(delay)
+                continue
+            raise AssertionError(f"{method} {path} returned HTTP {exc.code}: {detail}") from exc
+        except URLError as exc:
+            raise AssertionError(f"{method} {path} unavailable: {exc}") from exc
+
+    raise AssertionError(f"{method} {path} exhausted HTTP 429 retries")
 
 
 async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> None:
