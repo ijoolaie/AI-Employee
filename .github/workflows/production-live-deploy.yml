@@ -76,16 +76,10 @@ jobs:
 
           ssh "${SSH_OPTS[@]}" "$SSH_TARGET" 'mkdir -p "$HOME/ai-employee-releases"'
 
-          # Stream the encoded environment over SSH stdin so the secret never
-          # appears in the remote command line or process arguments.
-          printf '%s' "$PRODUCTION_ENV_B64" | \
-            ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "APP_DIR='$PRODUCTION_APP_DIR' bash -s" <<'REMOTE_ENV'
-          set -euo pipefail
-          umask 077
-          mkdir -p "$APP_DIR"
-          base64 -d > "$APP_DIR/.env"
-          chmod 600 "$APP_DIR/.env"
-          REMOTE_ENV
+          # Stream only the encoded secret over SSH stdin. It is never placed in
+          # a remote command argument or process argument list.
+          printf '%s' "$PRODUCTION_ENV_B64" | base64 -d | \
+            ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "APP_DIR='$PRODUCTION_APP_DIR' bash -c 'set -euo pipefail; umask 077; mkdir -p \"\$APP_DIR\"; cat > \"\$APP_DIR/.env\"; chmod 600 \"\$APP_DIR/.env\"'"
 
           ssh "${SSH_OPTS[@]}" "$SSH_TARGET" "RELEASE_REF='$RELEASE_REF' APP_DIR='$PRODUCTION_APP_DIR' bash -s" <<'REMOTE'
           set -euo pipefail
