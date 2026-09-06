@@ -30,3 +30,5 @@ jobs:
             slo-error-budget-evidence.json
             slo-error-budget-evidence.sha256
           retention-days: 14
+
+# Validation trigger: rerun the contract against the current PR state.
