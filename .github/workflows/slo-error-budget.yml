@@ -33,4 +33,4 @@ jobs:
             slo-error-budget-evidence.sha256
           retention-days: 14
 
-# Trigger validation on PR synchronize events.
+# PR validation trigger.
