@@ -33,4 +33,4 @@ jobs:
             slo-error-budget-evidence.sha256
           retention-days: 14
 
-# Final PR trigger marker.
+# Finalize PR event trigger validation.
