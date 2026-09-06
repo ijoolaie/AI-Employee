@@ -34,3 +34,4 @@ jobs:
           retention-days: 14
 
 # PR synchronize trigger verification.
+# The validation is intentionally read-only and makes no production claim.
