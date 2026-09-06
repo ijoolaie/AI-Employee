@@ -151,21 +151,24 @@ def test_resource_capacity_and_crash_recovery(redis_client: Redis) -> None:
     active = 0
     maximum = 0
     admitted = 0
+    attempts = 0
     admission_gate = threading.Event()
 
     def worker() -> None:
-        nonlocal active, maximum, admitted
+        nonlocal active, maximum, admitted, attempts
         lease = limiter.acquire("tenant-a")
+        with lock:
+            attempts += 1
+            if attempts == 32:
+                admission_gate.set()
         if lease is None:
             return
         with lock:
             active += 1
             admitted += 1
             maximum = max(maximum, active)
-            if admitted == 4:
-                admission_gate.set()
-        # Hold all admitted leases until the fourth admission is observed.
-        # This tests the configured cap, not lease expiration behavior.
+        # Do not release any admitted lease until every contender has attempted
+        # admission. This makes the burst a single deterministic admission wave.
         admission_gate.wait(timeout=2.0)
         with lock:
             active -= 1
@@ -176,6 +179,7 @@ def test_resource_capacity_and_crash_recovery(redis_client: Redis) -> None:
 
     assert maximum <= 4
     assert admitted == 4
+    assert attempts == 32
 
     # Exercise expiration separately with a short-lived limiter. Keeping this
     # concern separate prevents the bounded-admission assertion from depending
