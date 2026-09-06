@@ -1,6 +1,9 @@
 name: SLO Error Budget Contract
 
 on:
+  push:
+    branches:
+      - feat/production-deployment-runner
   pull_request:
     branches:
       - main
@@ -32,5 +35,3 @@ jobs:
             slo-error-budget-evidence.json
             slo-error-budget-evidence.sha256
           retention-days: 14
-
-# Finalize PR event trigger validation.
