@@ -57,6 +57,20 @@ def test_output_schema_validates_the_actual_run_output_shape():
         validate_json_data({"text": ""}, schema, field_name="output_data")
 
 
+def test_legacy_output_content_is_normalized_to_text():
+    schema = {
+        "type": "object",
+        "properties": {"text": {"type": "string", "minLength": 1}},
+        "required": ["text"],
+        "additionalProperties": False,
+    }
+    output = {"content": "Deterministic certification result"}
+
+    validate_json_data(output, schema, field_name="output_data")
+
+    assert output == {"text": "Deterministic certification result"}
+
+
 def test_empty_schema_remains_unconstrained():
     validate_json_data({"anything": [1, 2, 3]}, {}, field_name="input_data")
 
