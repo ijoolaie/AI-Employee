@@ -1,28 +1,36 @@
 # AI Employee Platform
 
-**Current implementation baseline:** `V1.4 ACTIVE EXECUTION BASELINE`
+**Current implementation baseline:** `V1.5 ACTIVE EXECUTION BASELINE`
 
-**Next architecture extension:** `V1.5 AGENTIC OPERATING MODEL`
+**Latest published release candidate:** `v1.3.8`
 
-**Latest published release:** `v1.3.0`
+**Certified release candidate:** `v1.3.8` → `fd1e74b6b4c1701f7443efc202bad161ff19618c`
 
-**Current certified controlled-deployment line:** `v1.2.0`
+**Production deployment:** **NOT DEPLOYED**
 
-**Explicit production-certified baseline:** `v1.2.1-final`
+**Deployment checkpoint:** Issue #343
 
 This repository is the vendor source of truth for the AI Employee Platform. The platform is **Agent-first, not Employee-first**: every supported business capability in Platform, Reseller and Client is designed to be executable by a Human, a specialized Agent, or both through the same WorkItem, authorization, tool, approval and audit contracts.
 
-## Start Here
+## Current release truth
 
-For the fastest and safest project orientation, read:
+- `v1.3.8` is a published GitHub prerelease / production candidate.
+- The `v1.3.8` tag resolves exactly to `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
+- Production certification run `34052885700` passed the complete certification suite, including backend, frontend, migrations, OCR, product gates and critical Playwright E2E.
+- A controlled production deployment was attempted with `v1.3.8` in run `34060615390` but stopped during SSH configuration because the required production Environment secrets were empty/missing.
+- No production host was changed by that failed run.
+- Production deployment therefore remains **PENDING INFRASTRUCTURE**.
+
+## Start Here
 
 1. `docs/00_START_HERE/PROJECT_OVERVIEW.md`
 2. `docs/00_START_HERE/CURRENT_STATUS.md`
 3. `docs/00_START_HERE/CURRENT_PRIORITIES.md`
 4. `docs/DOCUMENTATION_INDEX.md`
-5. `docs/current/PRODUCTIZATION_ROADMAP.md`
+5. `docs/releases/RELEASE_TRUTH_LEDGER.md`
+6. `docs/current/PRODUCTIZATION_ROADMAP.md`
 
-Do not infer current truth from historical versioned filenames. Git tags, release records and certification evidence are reconciled in `docs/releases/RELEASE_TRUTH_LEDGER.md`.
+Do not infer current truth from historical versioned filenames. Git tags, release records, certification evidence and deployment evidence are reconciled in `docs/releases/RELEASE_TRUTH_LEDGER.md`.
 
 ## Three workspaces
 
@@ -56,7 +64,7 @@ Agents are specialized workers, not merely renamed Employees. Existing Employee 
 
 ## Test Center
 
-**Platform, Reseller and Client all expose a first-class Test Center from the main dashboard.** It provides role-aware health, security, Agent, tool, workflow, handoff, approval, RAG, memory, integration, webhook, usage, billing/sandbox, worker, model and E2E tests with safe-mode controls and persisted evidence.
+Platform, Reseller and Client expose a first-class Test Center from the main dashboard. It provides role-aware health, security, Agent, tool, workflow, handoff, approval, RAG, memory, integration, webhook, usage, billing/sandbox, worker, model and E2E tests with safe-mode controls and persisted evidence.
 
 ## V1.5 execution sequence
 
@@ -81,10 +89,10 @@ Phase 14 Scale / Governance / Production
 - Phase 11 Unified Execution acceptance: **COMPLETE**.
 - Phase 12 Test Center P12.1-P12.6: **IMPLEMENTED / OPERATIONAL HARDENING**.
 - Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**.
-- Phase 14.1–14.9: **ENGINEERING COMPLETE**.
-- Phase 14.10 External Production / Customer Acceptance: **EXTERNAL-PENDING**.
-
-Phase 14 engineering covered queue/worker isolation, concurrency/backpressure, routing/scheduling, cost controls, SLO instrumentation, DR/backup/restore, security/compliance hardening, regression/release gates and incident response. The remaining Phase 14.10 gate requires independent external evidence; CI alone cannot establish production certification or customer acceptance.
+- Phase 14 engineering: **COMPLETE**.
+- Production certification candidate `v1.3.8`: **CERTIFIED**.
+- External production deployment: **PENDING REAL INFRASTRUCTURE**.
+- Customer acceptance / live provider validation: **PENDING**.
 
 ## Release rules
 
@@ -98,17 +106,9 @@ Phase 14 engineering covered queue/worker isolation, concurrency/backpressure, r
 - Reconcile every release tag to its underlying commit.
 - Never inherit certification or acceptance evidence across different SHAs.
 
-## Active external gates
+## Production deployment boundary
 
-- #210 — consolidated immutable release / external-production gate.
-- #19 — Vendor → Reseller → Client runtime isolation/RBAC evidence.
-- #269 — Phase 14.10 evidence package and acceptance decision boundary.
-
-These gates remain open until independent evidence is reconciled to one exact accepted release identity.
-
-## Migration note
-
-Do not destructively rename the existing Employee model. New execution capabilities should use the V1.5 Agent/WorkItem abstractions and compatibility adapters. Run `alembic upgrade head` and `alembic check`; never stamp a database merely to hide a migration mismatch.
+The repository contains a controlled `Live Production Deploy` workflow. It requires `release_ref`, explicit `DEPLOY` confirmation and a configured `production` Environment. The workflow requires real SSH/host/environment inputs and fails closed when they are absent. Do not fabricate production credentials or infrastructure evidence.
 
 ## License
 
