@@ -85,6 +85,26 @@ def validate_schema_definition(schema: dict[str, Any], *, field_name: str) -> No
         ) from exc
 
 
+def _normalize_run_output_contract(data: Any, schema: dict[str, Any]) -> None:
+    """Normalize the legacy ``content`` result key to the canonical ``text`` key.
+
+    Older Run execution code emitted ``{"content": ...}``, while the Employee
+    output contract is defined as ``{"text": ...}``. Keep this compatibility
+    shim narrowly scoped to persisted Run output so input validation and other
+    arbitrary JSON payloads are unaffected. The mapping is applied only when
+    the schema explicitly declares ``text`` and the runtime output contains
+    ``content`` but not ``text``.
+    """
+    if not isinstance(data, dict):
+        return
+    properties = schema.get("properties")
+    if not isinstance(properties, dict) or "text" not in properties:
+        return
+    if "text" in data or "content" not in data:
+        return
+    data["text"] = data.pop("content")
+
+
 def validate_json_data(
     data: Any,
     schema: dict[str, Any],
@@ -99,6 +119,8 @@ def validate_json_data(
     ``format`` assertions are enabled through jsonschema's FormatChecker.
     """
     validate_schema_definition(schema, field_name=f"{field_name}_schema")
+    if field_name == "output_data":
+        _normalize_run_output_contract(data, schema)
     validator = Draft202012Validator(schema, format_checker=_FORMAT_CHECKER)
     errors = sorted(
         validator.iter_errors(data),
