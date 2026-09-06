@@ -35,3 +35,5 @@ jobs:
             slo-error-budget-evidence.json
             slo-error-budget-evidence.sha256
           retention-days: 14
+
+# Canonical SLO workflow: keep manual dispatch available on the default branch.
