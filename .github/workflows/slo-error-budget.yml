@@ -1,3 +1,4 @@
+# PR-target workflow: validate the SLO contract against the exact PR head.
 name: SLO Error Budget Contract
 
 on:
