@@ -151,6 +151,11 @@ Add organization-level views for:
 - Security/risk status
 - Audit trail
 
+### 8.7 Engineering execution plan
+The Stage 8 design is now decomposed into an implementation sequence covering domain entities, lifecycle state machine, identity/RBAC, per-action tool authorization, agent-to-agent trust, approval engine, workforce orchestration, evaluation gates, memory isolation, usage/cost budgets, audit events, APIs, UI surfaces, security/E2E tests and final release evidence.
+
+Canonical execution plan: `docs/blueprint/STAGE_8_ENGINEERING_EXECUTION_PLAN.md`.
+
 ### Stage 8 exit criteria
 Stage 8 is complete only when the governance model, founding workforce, lifecycle, template/instance separation, evaluation gates, customer installation model and audit/approval controls are implemented and verified. It does not become a release merely because the documentation is written.
 
