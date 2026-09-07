@@ -38,6 +38,9 @@ from app.models.agent_definition import AgentDefinition
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_runtime_binding import AgentRuntimeBinding
+from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
+from app.models.agent_identity import AgentIdentity
+from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.test_definition import TestDefinition
 from app.models.test_run import TestRun, TestRunStatus
 from app.models.test_run_artifact import TestRunArtifact
@@ -58,6 +61,7 @@ __all__ = [
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "PasswordResetToken",
     "TenantEntitlement", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
     "AgentDefinition", "AgentTemplate", "AgentTemplateStatus", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding",
+    "AgentEvaluation", "AgentEvaluationStatus", "AgentIdentity", "AgentAccessReview", "AgentAccessReviewDecision",
     "TestDefinition", "TestRun", "TestRunStatus", "TestRunArtifact", "TeamDefinition", "TeamVersion",
     "TeamInstallation", "TeamEvaluation", "MarketplacePublication",
 ]
