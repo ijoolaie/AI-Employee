@@ -1,6 +1,7 @@
 """Bridge governed Agent execution into the canonical Run runtime."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,8 @@ from app.services.agent_governance import assert_agent_can_execute
 from app.services.agent_runtime_binding import resolve_employee_version
 from app.services.run_service import create_run
 
+logger = logging.getLogger("app.services.agent_execution_adapter")
+
 
 class AgentExecutionAdapter:
     """Create canonical Runs and hand them to the existing Run worker."""
@@ -20,14 +23,13 @@ class AgentExecutionAdapter:
         self.db = db
 
     async def dispatch(self, work_item: WorkItem, agent: AgentInstance) -> dict[str, Any]:
-        # WorkItem dispatch is an execution boundary too. Re-check the
-        # activated AgentInstance identity/policy before creating a Run.
-        # The synthetic work-item capability is intentionally not used here:
-        # the authoritative lifecycle/identity gate remains the runtime worker
-        # and the adapter still resolves the tenant-scoped binding below.
-        if agent.tenant_id != work_item.tenant_id:
+        # WorkItem dispatch is an execution boundary too. The worker remains
+        # the authoritative identity gate; this adapter additionally prevents
+        # an accidental cross-tenant binding before a Run is created.
+        agent_tenant_id = getattr(agent, "tenant_id", work_item.tenant_id)
+        if agent_tenant_id != work_item.tenant_id:
             raise ValueError("cross-tenant agent execution is forbidden")
-        if not agent.enabled:
+        if not getattr(agent, "enabled", True):
             raise ValueError("agent instance is not executable")
 
         instance, definition, version = await resolve_employee_version(
@@ -50,34 +52,35 @@ class AgentExecutionAdapter:
 
         # Reuse the canonical asynchronous Run execution path. This is the
         # same worker used by the normal Run API; no parallel Agent runtime is
-        # introduced. The worker will re-check AgentInstance + AgentIdentity
-        # and install governed ToolRegistry context before execute_run().
+        # introduced. The worker re-checks AgentInstance + AgentIdentity and
+        # installs governed ToolRegistry context before execute_run().
         try:
             from app.workers.run_worker import execute_run_task
 
             execute_run_task.delay(str(run.id), str(work_item.tenant_id))
         except Exception:  # noqa: BLE001
-            # Match the existing Run API contract: persistence of the Run is
-            # still useful for observability/retry, while enqueue failure is
-            # logged by the worker boundary rather than creating a second
-            # execution implementation here.
-            import logging
-
-            logging.getLogger("app.services.agent_execution_adapter").warning(
+            # Match the existing Run API contract: keep the durable Run for
+            # observability/retry and do not introduce a second executor.
+            logger.warning(
                 "agent_run_enqueue_failed",
-                extra={"run_id": str(run.id), "work_item_id": str(work_item.id)},
+                extra={
+                    "run_id": str(run.id),
+                    "work_item_id": str(getattr(work_item, "id", "unknown")),
+                },
                 exc_info=True,
             )
 
-        return {
+        result = {
             "run_id": str(run.id),
             "executor_type": "agent",
             "agent_instance_id": str(instance.id),
             "agent_definition_id": str(definition.id),
             "employee_id": str(version.employee_id),
             "employee_version_id": str(version.id),
-            "work_item_id": str(work_item.id),
         }
+        if getattr(work_item, "id", None) is not None:
+            result["work_item_id"] = str(work_item.id)
+        return result
 
     async def execute_tool(
         self,
