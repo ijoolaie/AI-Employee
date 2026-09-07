@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Play, RefreshCw, ShieldCheck } from "lucide-react";
 
@@ -36,13 +36,6 @@ export default function TestCenterPage() {
     refetchInterval: (query) => query.state.data && isActiveStatus(query.state.data.status) ? 1500 : false,
   });
   const artifactsQuery = useQuery({ queryKey: ["test-center", "artifacts", selectedRun?.id], queryFn: () => getTestRunArtifacts(selectedRun!.id), enabled: Boolean(selectedRun) });
-
-  useEffect(() => {
-    if (selectedRunQuery.data && selectedRunQuery.data.updated_at !== selectedRun?.updated_at) {
-      setSelectedRun(selectedRunQuery.data);
-      queryClient.setQueryData<TestRun[]>(["test-center", "runs", workspace, status], (current = []) => current.map((run) => run.id === selectedRunQuery.data!.id ? selectedRunQuery.data! : run));
-    }
-  }, [queryClient, selectedRun?.updated_at, selectedRunQuery.data, status, workspace]);
 
   const runMutation = useMutation({
     mutationFn: async (definition: { id: string; workspace_key: string | null }) => {

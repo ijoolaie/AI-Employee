@@ -47,26 +47,45 @@ export default function GovernancePage() {
   const [form, setForm] = useState({ title: "", rationale: "", requested_name: "", sponsor_user_id: "", risk_tier: "0" });
   const [evaluationForm, setEvaluationForm] = useState({ suite_id: "", status: "passed", score: "", evidence: "{}", notes: "" });
 
+  async function loadAllData() {
+    const [workforce, proposalItems] = await Promise.all([loadRegistry(), loadProposals()]);
+    if (can(PERMISSIONS.read)) {
+      const entries = await Promise.all(workforce.filter((item) => item.agent_template_id).map(async (item) => {
+        const id = item.agent_template_id as string;
+        try { return [id, await loadEvaluations(id)] as const; } catch { return [id, []] as const; }
+      }));
+      return { workforce, proposalItems, evaluations: Object.fromEntries(entries) };
+    }
+    return { workforce, proposalItems, evaluations: {} as Record<string, AgentEvaluation[]> };
+  }
+
   async function refresh() {
-    setLoading(true); setError(null);
+    setError(null);
     try {
-      const [workforce, proposalItems] = await Promise.all([loadRegistry(), loadProposals()]);
-      setRegistry(workforce); setProposals(proposalItems);
-      if (can(PERMISSIONS.read)) {
-        const entries = await Promise.all(workforce.filter((item) => item.agent_template_id).map(async (item) => {
-          const id = item.agent_template_id as string;
-          try { return [id, await loadEvaluations(id)] as const; } catch { return [id, []] as const; }
-        }));
-        setEvaluations(Object.fromEntries(entries));
-      } else setEvaluations({});
+      const { workforce, proposalItems, evaluations: evaluationItems } = await loadAllData();
+      setRegistry(workforce); setProposals(proposalItems); setEvaluations(evaluationItems);
     } catch (err) { setError(getErrorMessage(err)); } finally { setLoading(false); }
   }
-  useEffect(() => { void refresh(); }, [user?.id]);
+  useEffect(() => {
+    let cancelled = false;
+    async function loadInitialData() {
+      try {
+        const { workforce, proposalItems, evaluations: evaluationItems } = await loadAllData();
+        if (cancelled) return;
+        setRegistry(workforce); setProposals(proposalItems); setEvaluations(evaluationItems); setLoading(false);
+      } catch (err) {
+        if (cancelled) return;
+        setError(getErrorMessage(err)); setLoading(false);
+      }
+    }
+    void loadInitialData();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   async function action(path: string, key: string, body?: object) {
-    setBusy(key); setError(null);
+    setBusy(key); setError(null); setLoading(true);
     try { await api.post(path, body); await refresh(); return true; }
-    catch (err) { setError(getErrorMessage(err)); return false; }
+    catch (err) { setError(getErrorMessage(err)); setLoading(false); return false; }
     finally { setBusy(null); }
   }
   async function createProposal(event: FormEvent) {
