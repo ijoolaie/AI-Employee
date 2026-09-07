@@ -75,7 +75,7 @@ def _http(exc: Exception) -> HTTPException:
     text = str(exc)
     if "not found" in text.lower():
         return HTTPException(status_code=404, detail=text)
-    if "requires" in text.lower() or "must" in text.lower() or "lacks" in text.lower() or "not authorized" in text.lower():
+    if any(token in text.lower() for token in ("requires", "must", "lacks", "not authorized", "inactive", "expired")):
         return HTTPException(status_code=422, detail=text)
     return HTTPException(status_code=409, detail=text)
 
@@ -113,7 +113,11 @@ async def list_template_evaluations(
     ctx: TenantContext = Depends(require_permission("agent_template.read")),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(AgentEvaluation).where(AgentEvaluation.template_id if False else AgentEvaluation.agent_template_id == template_id, AgentEvaluation.tenant_id == ctx.tenant_id).order_by(AgentEvaluation.created_at.desc()))
+    result = await db.execute(
+        select(AgentEvaluation)
+        .where(AgentEvaluation.agent_template_id == template_id, AgentEvaluation.tenant_id == ctx.tenant_id)
+        .order_by(AgentEvaluation.created_at.desc())
+    )
     return [AgentEvaluationRead.model_validate(item, from_attributes=True) for item in result.scalars().all()]
 
 
