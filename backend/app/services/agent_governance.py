@@ -118,6 +118,7 @@ async def assert_agent_can_execute(db: AsyncSession, *, tenant_id: uuid.UUID, ag
         raise ValidationAppError("Agent identity is inactive or revoked")
     if identity.expires_at is not None and identity.expires_at <= now:
         identity.active = False
+        await db.flush()
         raise ValidationAppError("Agent identity has expired")
     policy = instance.permission_policy or {}
     allowed_tools = set(policy.get("allowed_tools") or policy.get("tools") or [])
@@ -126,3 +127,4 @@ async def assert_agent_can_execute(db: AsyncSession, *, tenant_id: uuid.UUID, ag
         raise ValidationAppError(f"Tool is not authorized for AgentInstance: {tool_name}", details={"tool": tool_name, "agent_instance_id": str(instance.id)})
     if required_permission not in permissions and "*" not in permissions:
         raise ValidationAppError(f"AgentInstance lacks required permission: {required_permission}", details={"tool": tool_name, "required_permission": required_permission})
+    return instance
