@@ -23,6 +23,7 @@ const groups = [
     { href: "/templates", label: "Employee Templates", icon: Sparkles },
     { href: "/workspace", label: "AI Workspace", icon: Sparkles },
     { href: "/chat", label: "AI Chat", icon: MessageCircle },
+    { href: "/governance", label: "Workforce Governance", icon: ShieldCheck },
     { href: "/knowledge", label: "Knowledge Base", icon: BookOpen },
     { href: "/memory", label: "Memory", icon: Brain },
   ]},
