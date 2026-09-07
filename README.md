@@ -6,7 +6,7 @@
 
 **Engineering phase:** Phase 14.1–14.16 complete where tracked; current program is in Production Hardening / Stage 7 External Production Certification
 
-**Current main:** `b117ac06047335f71583576be19c39c7bef4df01`
+**Current engineering mainline:** `main`
 
 **Production deployment:** **NOT DEPLOYED**
 
@@ -39,7 +39,7 @@ Canonical versioning rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
 The certified `v1.3.8` release identity remains frozen. `main` has since received separately verified dependency hardening through PR #353.
 
-Completed dependency-hardening PRs are #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353. Each was merged only after the required repository gates passed on the exact HEAD. The current mainline head is `b117ac06047335f71583576be19c39c7bef4df01`, and there is currently no open Dependabot dependency PR in this hardening queue.
+Completed dependency-hardening PRs are #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353. Each was merged only after the required repository gates passed on the exact HEAD. There is currently no open Dependabot dependency PR in this hardening queue.
 
 These engineering-mainline merges do **not** create a new certified release by themselves. `v1.3.8` remains the deployment identity until an intentional production-bound change is promoted into a new release and independently certified.
 
