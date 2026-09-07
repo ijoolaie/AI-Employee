@@ -115,6 +115,7 @@ async def provision_instance(
     sponsor_user_id: uuid.UUID,
     approved_by_user_id: uuid.UUID,
     configuration: dict | None = None,
+    activate: bool = True,
 ) -> AgentInstance:
     template = (await db.execute(select(AgentTemplate).where(
         AgentTemplate.id == template_id,
@@ -130,6 +131,7 @@ async def provision_instance(
     if policy.get("requires_ceo_approval", True) and sponsor_user_id == approved_by_user_id:
         raise ValidationAppError("Sponsor and approver must be independently attributable for governed installation")
 
+    initial_status = AgentInstanceStatus.ENABLED if activate else AgentInstanceStatus.SUSPENDED
     instance = AgentInstance(
         tenant_id=tenant_id,
         agent_definition_id=template.agent_definition_id,
@@ -140,8 +142,8 @@ async def provision_instance(
         permission_policy=template.permission_policy or {},
         approval_policy=template.approval_policy or {},
         risk_tier=template.risk_tier,
-        status=AgentInstanceStatus.ENABLED,
-        enabled=True,
+        status=initial_status,
+        enabled=activate,
     )
     db.add(instance)
     await db.flush()
