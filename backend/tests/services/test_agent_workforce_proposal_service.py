@@ -55,7 +55,7 @@ async def test_activation_requires_approved_access_review_and_independent_activa
     tenant_id = uuid4()
     requester, sponsor, board, ceo, activator = [uuid4() for _ in range(5)]
     proposal = SimpleNamespace(id=uuid4(), tenant_id=tenant_id, status=AgentWorkforceProposalStatus.PROVISIONED, provisioned_agent_instance_id=uuid4(), requester_user_id=requester, sponsor_user_id=sponsor, board_reviewed_by=board, ceo_approved_by=ceo)
-    instance = SimpleNamespace(status=AgentInstanceStatus.SUSPENDED, enabled=False)
+    instance = SimpleNamespace(id=proposal.provisioned_agent_instance_id, status=AgentInstanceStatus.SUSPENDED, enabled=False)
     identity = SimpleNamespace(id=uuid4())
     review = SimpleNamespace(id=uuid4())
 
