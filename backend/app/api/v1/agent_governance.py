@@ -85,7 +85,7 @@ def _http(exc: Exception) -> HTTPException:
 async def evaluate_template(
     template_id: UUID,
     payload: AgentEvaluationCreate,
-    ctx: TenantContext = Depends(require_permission("agent_template.create")),
+    ctx: TenantContext = Depends(require_permission("agent_template.evaluate")),
     db: AsyncSession = Depends(get_db),
 ):
     try:
