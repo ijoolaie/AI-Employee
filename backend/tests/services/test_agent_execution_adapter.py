@@ -26,7 +26,7 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
     instance = SimpleNamespace(id=agent_id)
     definition = SimpleNamespace(id=definition_id)
     version = SimpleNamespace(id=version_id, employee_id=employee_id)
-    run = SimpleNamespace(id=run_id)
+    run = SimpleNamespace(id=run_id, agent_instance_id=None)
 
     async def resolve(db, *, tenant_id, agent_instance_id):
         calls["resolve"] = (db, tenant_id, agent_instance_id)
@@ -39,7 +39,11 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
     monkeypatch.setattr(agent_execution_adapter, "resolve_employee_version", resolve)
     monkeypatch.setattr(agent_execution_adapter, "create_run", create)
 
-    db = object()
+    class _DB:
+        async def flush(self):
+            return None
+
+    db = _DB()
     result = await agent_execution_adapter.AgentExecutionAdapter(db).dispatch(work_item, agent)
 
     assert calls["resolve"] == (db, tenant_id, agent_id)
@@ -50,6 +54,7 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
         "input_data": {"task": "triage"},
         "created_by": requester_id,
     }
+    assert run.agent_instance_id == agent_id
     assert result == {
         "run_id": str(run_id),
         "executor_type": "agent",
