@@ -11,11 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import TenantContext, require_permission
+from app.models.agent_instance import AgentInstanceStatus
 from app.models.agent_template import AgentTemplate
 from app.services.agent_template_service import (
     create_template,
     provision_instance,
     publish_template,
+    transition_instance,
 )
 from app.services.audit_service import record
 
@@ -61,6 +63,11 @@ class AgentTemplateProvisionRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     sponsor_user_id: UUID
     configuration: dict = Field(default_factory=dict)
+
+
+class AgentInstanceLifecycleRequest(BaseModel):
+    target_status: AgentInstanceStatus
+    requested_by_user_id: UUID
 
 
 class AgentInstanceRead(BaseModel):
@@ -220,6 +227,43 @@ async def provision_agent_template(
             metadata={
                 "agent_template_id": str(template_id),
                 "sponsor_user_id": str(payload.sponsor_user_id),
+                "risk_tier": item.risk_tier,
+                "approval_required": True,
+            },
+        )
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        raise _http_error(exc) from exc
+    return AgentInstanceRead.model_validate(item, from_attributes=True)
+
+
+@router.post("/instances/{instance_id}/lifecycle", response_model=AgentInstanceRead)
+async def transition_agent_instance(
+    instance_id: UUID,
+    payload: AgentInstanceLifecycleRequest,
+    ctx: TenantContext = Depends(require_permission("agent_instance.lifecycle")),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        item = await transition_instance(
+            db,
+            tenant_id=ctx.tenant_id,
+            instance_id=instance_id,
+            target_status=payload.target_status,
+            requested_by_user_id=payload.requested_by_user_id,
+            approved_by_user_id=ctx.user_id,
+        )
+        await record(
+            db,
+            action="agent_instance.lifecycle_changed",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="agent_instance",
+            resource_id=item.id,
+            metadata={
+                "requested_by_user_id": str(payload.requested_by_user_id),
+                "target_status": item.status.value,
                 "risk_tier": item.risk_tier,
                 "approval_required": True,
             },
