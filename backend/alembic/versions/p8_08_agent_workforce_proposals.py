@@ -12,6 +12,14 @@ down_revision = "p8_07_gov_merge"
 branch_labels = None
 depends_on = None
 
+PERMISSIONS = (
+    ("agent_workforce.propose", "Submit governed Agent workforce proposals"),
+    ("agent_workforce.read", "Read governed Agent workforce proposals"),
+    ("agent_workforce.board_review", "Review Agent workforce proposals as the Board authority"),
+    ("agent_workforce.ceo_approve", "Approve Agent workforce proposals as the CEO authority"),
+    ("agent_workforce.provision", "Provision CEO-approved Agent workforce proposals"),
+)
+
 
 def upgrade() -> None:
     proposal_status = postgresql.ENUM(
@@ -45,8 +53,25 @@ def upgrade() -> None:
     op.create_index("ix_agent_workforce_proposals_tenant_status", "agent_workforce_proposals", ["tenant_id", "status"])
     op.create_index("ix_agent_workforce_proposals_tenant_template", "agent_workforce_proposals", ["tenant_id", "agent_template_id"])
 
+    for code, description in PERMISSIONS:
+        op.execute(sa.text(
+            "INSERT INTO permissions (id, code, description) VALUES (gen_random_uuid(), :code, :description) "
+            "ON CONFLICT (code) DO NOTHING"
+        ).bindparams(code=code, description=description))
+        op.execute(sa.text(
+            "INSERT INTO role_permissions (role_id, permission_id) "
+            "SELECT r.id, p.id FROM roles r CROSS JOIN permissions p "
+            "WHERE r.name = 'Admin' AND p.code = :code "
+            "ON CONFLICT DO NOTHING"
+        ).bindparams(code=code))
+
 
 def downgrade() -> None:
+    for code, _ in reversed(PERMISSIONS):
+        op.execute(sa.text(
+            "DELETE FROM role_permissions WHERE permission_id IN (SELECT id FROM permissions WHERE code = :code)"
+        ).bindparams(code=code))
+        op.execute(sa.text("DELETE FROM permissions WHERE code = :code").bindparams(code=code))
     op.drop_index("ix_agent_workforce_proposals_tenant_template", table_name="agent_workforce_proposals")
     op.drop_index("ix_agent_workforce_proposals_tenant_status", table_name="agent_workforce_proposals")
     op.drop_table("agent_workforce_proposals")
