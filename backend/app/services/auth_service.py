@@ -29,7 +29,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "team.execute", "team.evaluate", "marketplace.publish", "marketplace.read",
     "agent_template.create", "agent_template.read", "agent_template.evaluate", "agent_template.publish", "agent_template.install",
     "agent_instance.lifecycle",
-    "agent_workforce.propose", "agent_workforce.read", "agent_workforce.board_review", "agent_workforce.ceo_approve", "agent_workforce.provision",
+    "agent_workforce.propose", "agent_workforce.read", "agent_workforce.board_review", "agent_workforce.ceo_approve", "agent_workforce.provision", "agent_workforce.activate",
 )
 
 
@@ -89,7 +89,7 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
         await audit_service.record(db, action="auth.login", actor_type="user", tenant_id=tenant.id, status="failure", request_id=request_id_var.get(), metadata={"email": payload.email.lower(), "reason": "user_not_found_or_inactive"})
         raise UnauthorizedError("Invalid credentials")
     if not verify_password(payload.password, user.password_hash):
-        await audit_service.record(db, action="auth.login", actor_type="user", actor_id=user.id, tenant_id=tenant.id, status="failure", request_id=request_id_var.get(), metadata={"reason": "bad_password"})
+        await audit_service.record(db, action="auth.login", actor_type="user", tenant_id=tenant.id, actor_id=user.id, status="failure", request_id=request_id_var.get(), metadata={"reason": "bad_password"})
         raise UnauthorizedError("Invalid credentials")
     user.last_login_at = datetime.now(timezone.utc)
     await db.flush()
