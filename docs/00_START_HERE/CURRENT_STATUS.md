@@ -4,7 +4,7 @@
 **Certified release:** `v1.3.8`  
 **Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
 **Certification run:** `34052885700` — SUCCESS  
-**Current main:** `b117ac06047335f71583576be19c39c7bef4df01`  
+**Current engineering mainline:** `main`  
 **Status:** ENGINEERING HARDENING COMPLETE / RELEASE CERTIFIED / PRODUCTION INFRASTRUCTURE PENDING
 
 ## Executive truth
@@ -20,8 +20,6 @@ The `v1.3.8` tag has been independently reconciled to the same certified commit.
 After the frozen `v1.3.8` certification, `main` continued through controlled dependency hardening. These merges are engineering-mainline changes and **do not silently change the certified `v1.3.8` release identity**.
 
 The dependency-hardening queue covered PRs #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353. Each was merged only after the required repository gates passed on the exact HEAD. The latest completed dependency merge was PR #353 (lucide-react 0.469.0 → 1.41.0), and there is currently no open Dependabot dependency PR in this hardening queue.
-
-Current engineering `main` is `b117ac06047335f71583576be19c39c7bef4df01`.
 
 These mainline hardening changes should be treated as a separate engineering baseline. They are not retroactively certified as `v1.3.8`.
 
