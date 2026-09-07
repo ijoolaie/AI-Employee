@@ -15,6 +15,7 @@ from app.models.agent_access_review import AgentAccessReviewDecision
 from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
 from app.models.agent_identity import AgentIdentity
 from app.services.agent_governance import record_evaluation, review_access
+from app.services.agent_workforce_registry import list_workforce
 from app.services.audit_service import record
 
 router = APIRouter(prefix="/agent-governance", tags=["agent-governance"])
@@ -119,6 +120,15 @@ async def list_template_evaluations(
         .order_by(AgentEvaluation.created_at.desc())
     )
     return [AgentEvaluationRead.model_validate(item, from_attributes=True) for item in result.scalars().all()]
+
+
+@router.get("/workforce-registry")
+async def workforce_registry(
+    ctx: TenantContext = Depends(require_permission("agent_template.read")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return the tenant's governed Agent workforce as one auditable projection."""
+    return await list_workforce(db, tenant_id=ctx.tenant_id)
 
 
 @router.get("/identities/{identity_id}", response_model=AgentIdentityRead)
