@@ -4,8 +4,10 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+from contextlib import asynccontextmanager
+from contextvars import ContextVar
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, AsyncIterator
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,9 +20,35 @@ from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
 
 
+_agent_execution_context: ContextVar[tuple[uuid.UUID, uuid.UUID] | None] = ContextVar(
+    "agent_execution_context", default=None
+)
+
+
 def _hash_evidence(evidence: dict[str, Any]) -> str:
     payload = json.dumps(evidence, sort_keys=True, separators=(",", ":"), default=str).encode()
     return hashlib.sha256(payload).hexdigest()
+
+
+@asynccontextmanager
+async def governed_agent_execution(
+    *, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID
+) -> AsyncIterator[None]:
+    """Bind Agent identity to the current execution context.
+
+    ToolRegistry uses this context as a final, centralized authorization hook.
+    Context-local state prevents one concurrent tenant/agent execution from
+    leaking its governance identity into another task.
+    """
+    token = _agent_execution_context.set((tenant_id, agent_instance_id))
+    try:
+        yield
+    finally:
+        _agent_execution_context.reset(token)
+
+
+def current_agent_execution_context() -> tuple[uuid.UUID, uuid.UUID] | None:
+    return _agent_execution_context.get()
 
 
 async def record_evaluation(db: AsyncSession, *, tenant_id: uuid.UUID, template_id: uuid.UUID, suite_id: str, status: AgentEvaluationStatus, evidence: dict[str, Any], score: int | None, evaluator_user_id: uuid.UUID | None, notes: str | None = None) -> AgentEvaluation:
@@ -98,4 +126,3 @@ async def assert_agent_can_execute(db: AsyncSession, *, tenant_id: uuid.UUID, ag
         raise ValidationAppError(f"Tool is not authorized for AgentInstance: {tool_name}", details={"tool": tool_name, "agent_instance_id": str(instance.id)})
     if required_permission not in permissions and "*" not in permissions:
         raise ValidationAppError(f"AgentInstance lacks required permission: {required_permission}", details={"tool": tool_name, "required_permission": required_permission})
-    return instance
