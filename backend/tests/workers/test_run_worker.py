@@ -82,7 +82,7 @@ async def test_run_worker_fails_closed_on_tenant_mismatch(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_run_worker_passes_matching_tenant_to_run_service(monkeypatch):
+async def test_run_worker_preserves_non_agent_run_compatibility_and_attribution(monkeypatch):
     run_id = uuid4()
     tenant_id = uuid4()
     run = _run(run_id, tenant_id)
@@ -99,6 +99,33 @@ async def test_run_worker_passes_matching_tenant_to_run_service(monkeypatch):
     monkeypatch.setattr(run_worker, "span", _span)
     monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
     monkeypatch.setattr(run_worker.run_service, "execute_run", _execute)
+
+    await run_worker._run_async(str(run_id), str(tenant_id))
+
+    assert calls == [(db, run_id)]
+    assert run.agent_instance_id is None
+    assert db.committed is True
+    assert run.total_tokens == run.prompt_tokens + run.completion_tokens
+
+
+@pytest.mark.asyncio
+async def test_run_worker_passes_matching_tenant_to_run_service(monkeypatch):
+    run_id = uuid4()
+    tenant_id = uuid4()
+    run = _run(run_id, tenant_id)
+    db = _Db(run, SimpleNamespace(rules={}))
+    calls = []
+
+    async def _execute(db_arg, *, run_id):
+        calls.append((db_arg, run_id))
+
+    async def _memory(*_args, **_kwargs):
+        return []
+
+    monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(run_worker, "span", _span)
+    monkeypatch.setattr(run_worker.run_service, "execute_run", _execute)
+    monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
 
     await run_worker._run_async(str(run_id), str(tenant_id))
 
@@ -123,7 +150,6 @@ async def test_run_worker_commits_failure_before_reraising(monkeypatch):
     monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
     monkeypatch.setattr(run_worker, "span", _span)
     monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
-    monkeypatch.setattr(run_worker.run_service, "execute_run", _execute)
 
     with pytest.raises(RuntimeError, match="execution failed"):
         await run_worker._run_async(str(run_id), str(tenant_id))
