@@ -9,6 +9,8 @@ const sidebar = read("components/layout/sidebar.tsx");
 
 const required = [
   "/agent-governance/workforce-registry",
+  "/agent-governance/templates/${templateId}/evaluations",
+  "/agent-governance/templates/${templateId}/evaluate",
   "/agent-workforce/proposals",
   "/board-decision",
   "/ceo-decision",
@@ -19,7 +21,18 @@ const required = [
 for (const token of required) {
   if (!page.includes(token)) throw new Error(`governance page missing ${token}`);
 }
-for (const token of ["Workforce Registry", "Proposal Queue", "Submit workforce proposal", "Approve access"]) {
+for (const token of [
+  "Workforce Registry",
+  "Proposal Queue",
+  "Submit workforce proposal",
+  "Approve access",
+  "Evaluation evidence",
+  "Record evaluation",
+  "agent_workforce.board_review",
+  "agent_workforce.ceo_approve",
+  "agent_workforce.provision",
+  "agent_workforce.activate",
+]) {
   if (!page.includes(token)) throw new Error(`governance UI missing ${token}`);
 }
 if (!sidebar.includes('href: "/governance"')) throw new Error("governance navigation missing");
