@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -18,7 +19,6 @@ from app.models.employee import EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services import run_service
-from app.services.agent_governance import assert_agent_can_execute
 from app.services.tenant_resource_limiter import (
     TenantResourceUnavailableError,
     acquire_tenant_resource,
@@ -44,38 +44,29 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             if run is None:
                 raise NotFoundError("Run not found")
             if run.tenant_id != parsed_tenant_id:
-                raise ValidationAppError(
-                    "Worker tenant context does not match Run tenant",
-                    details={"run_id": run_id},
-                )
+                raise ValidationAppError("Worker tenant context does not match Run tenant", details={"run_id": run_id})
 
             version_result = await db.execute(select(EmployeeVersion).where(EmployeeVersion.id == run.employee_version_id))
             version = version_result.scalar_one_or_none()
             if version is None:
                 raise NotFoundError("Employee version not found for this Run")
 
-            # Agent-originated Runs have a first-class identity. Re-check it in
-            # the worker, not only at API/dispatch time, because the identity
-            # may have been revoked or the instance retired after enqueue.
+            # Agent-originated Runs are re-authorized at the worker boundary.
+            # This closes the revoke/retire-after-enqueue race.
+            identity: AgentIdentity | None = None
             if run.agent_instance_id is not None:
-                identity_result = await db.execute(
-                    select(AgentIdentity).where(
-                        AgentIdentity.agent_instance_id == run.agent_instance_id,
-                        AgentIdentity.tenant_id == run.tenant_id,
+                identity = (
+                    await db.execute(
+                        select(AgentIdentity).where(
+                            AgentIdentity.agent_instance_id == run.agent_instance_id,
+                            AgentIdentity.tenant_id == run.tenant_id,
+                        )
                     )
-                )
-                identity = identity_result.scalar_one_or_none()
+                ).scalar_one_or_none()
                 if identity is None:
                     raise ValidationAppError("Agent Run has no identity")
-                # Use the centralized policy boundary for lifecycle + identity
-                # checks. A synthetic no-op tool name is intentionally avoided;
-                # the governance service exposes lifecycle/identity checks here.
-                instance_result = await db.execute(select(AgentIdentity).where(AgentIdentity.id == identity.id))
-                if instance_result.scalar_one_or_none() is None:
-                    raise ValidationAppError("Agent identity could not be resolved")
                 if not identity.active or identity.revoked_at is not None:
                     raise ValidationAppError("Agent Run identity is revoked or inactive")
-                from datetime import datetime, timezone
                 if identity.expires_at is not None and identity.expires_at <= datetime.now(timezone.utc):
                     identity.active = False
                     await db.flush()
@@ -115,17 +106,14 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     "memory_count": len(runtime_memory),
                     "memory_employee_version_id": str(run.employee_version_id),
                     "agent_instance_id": str(run.agent_instance_id) if run.agent_instance_id else None,
-                    "agent_identity_id": str(identity.id) if run.agent_instance_id is not None else None,
+                    "agent_identity_id": str(identity.id) if identity is not None else None,
                 },
             )
             contract.validate()
             runtime = AgentRuntime(contract)
 
             try:
-                await runtime.execute(
-                    lambda: run_service.execute_run(db, run_id=parsed_run_id),
-                    retryable=False,
-                )
+                await runtime.execute(lambda: run_service.execute_run(db, run_id=parsed_run_id), retryable=False)
                 refreshed = await db.execute(select(Run).where(Run.id == parsed_run_id))
                 completed_run = refreshed.scalar_one_or_none()
                 if completed_run is not None:
