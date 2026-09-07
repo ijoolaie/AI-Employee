@@ -2,7 +2,7 @@
 
 **Prepared:** 2026-09-08  
 **Repository:** `ijoolaie/AI-Employee`  
-**Current engineering/documentation main baseline:** `d9b51b4c8ef334dfbbff85e01194c53626aa4678`  
+**Engineering/documentation baseline:** current `main`  
 **Certified release:** `v1.3.8` — exact certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
 **Certification run:** `34052885700` — SUCCESS  
 **Purpose:** execute the remaining production/customer-readiness work without confusing repository evidence with real target-environment certification.
@@ -17,7 +17,7 @@ Use `docs/current/PRODUCTION_EVIDENCE_INDEX.md` as the traceability index. Every
 
 `v1.3.8` is the current certified and frozen deployment identity. The `main` branch has continued with separately verified dependency hardening after that certification; those changes are **not automatically part of `v1.3.8`** and must not be described as such.
 
-The current main baseline is `d9b51b4c8ef334dfbbff85e01194c53626aa4678`. Completed dependency hardening includes PRs #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353, each merged only after the required repository gates passed on the exact HEAD. No open Dependabot dependency PR remains in the current hardening queue.
+Completed dependency hardening includes PRs #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353, each merged only after the required repository gates passed on the exact HEAD. No open Dependabot dependency PR remains in the current hardening queue.
 
 If a future change is intended for production deployment, it must either remain explicitly a mainline engineering change or be promoted through a new release identity. Do not move the `v1.3.8` tag or inherit its certification evidence onto another SHA.
 
