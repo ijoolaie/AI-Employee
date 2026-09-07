@@ -1,4 +1,4 @@
-"""Tenant-scoped deployment of an AgentDefinition."""
+"""Tenant-scoped deployment of a governed AgentDefinition/AgentTemplate."""
 from __future__ import annotations
 
 import enum
@@ -16,6 +16,8 @@ class AgentInstanceStatus(str, enum.Enum):
     ENABLED = "enabled"
     DISABLED = "disabled"
     DRAINING = "draining"
+    SUSPENDED = "suspended"
+    RETIRED = "retired"
 
 
 class AgentInstance(Base):
@@ -25,8 +27,13 @@ class AgentInstance(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     agent_definition_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_definitions.id"), nullable=False)
+    agent_template_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_templates.id"), nullable=True, index=True)
+    sponsor_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     configuration: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    permission_policy: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    approval_policy: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    risk_tier: Mapped[int] = mapped_column(Integer, nullable=False, default=0, insert_default=0)
     status: Mapped[AgentInstanceStatus] = mapped_column(
         Enum(
             AgentInstanceStatus,
