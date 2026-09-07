@@ -1,33 +1,42 @@
-"""Bridge specialized Agent execution into the existing Employee/Run runtime."""
+"""Bridge governed Agent execution into the canonical Run runtime."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.ai.tool_registry import registry
 from app.models.agent_instance import AgentInstance
 from app.models.work_item import WorkItem
+from app.services.agent_governance import assert_agent_can_execute
 from app.services.agent_runtime_binding import resolve_employee_version
 from app.services.run_service import create_run
 
+logger = logging.getLogger("app.services.agent_execution_adapter")
+
 
 class AgentExecutionAdapter:
-    """Create a canonical Run for an Agent WorkItem.
-
-    This adapter intentionally creates the Run but does not execute the model
-    inline. The existing Run worker remains the single execution boundary.
-    """
+    """Create canonical Runs and hand them to the existing Run worker."""
 
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def dispatch(self, work_item: WorkItem, agent: AgentInstance) -> dict[str, Any]:
+        # WorkItem dispatch is an execution boundary too. The worker remains
+        # the authoritative identity gate; this adapter additionally prevents
+        # an accidental cross-tenant binding before a Run is created.
+        agent_tenant_id = getattr(agent, "tenant_id", work_item.tenant_id)
+        if agent_tenant_id != work_item.tenant_id:
+            raise ValueError("cross-tenant agent execution is forbidden")
+        if not getattr(agent, "enabled", True):
+            raise ValueError("agent instance is not executable")
+
         instance, definition, version = await resolve_employee_version(
             self.db,
             tenant_id=work_item.tenant_id,
             agent_instance_id=agent.id,
         )
-
         run = await create_run(
             self.db,
             tenant_id=work_item.tenant_id,
@@ -36,8 +45,32 @@ class AgentExecutionAdapter:
             input_data=work_item.input_data or {},
             created_by=work_item.requester_id,
         )
+        # agent_instance_id is deliberately persisted on the canonical Run;
+        # the worker therefore has an authoritative identity to re-check.
+        run.agent_instance_id = instance.id
+        await self.db.flush()
 
-        return {
+        # Reuse the canonical asynchronous Run execution path. This is the
+        # same worker used by the normal Run API; no parallel Agent runtime is
+        # introduced. The worker re-checks AgentInstance + AgentIdentity and
+        # installs governed ToolRegistry context before execute_run().
+        try:
+            from app.workers.run_worker import execute_run_task
+
+            execute_run_task.delay(str(run.id), str(work_item.tenant_id))
+        except Exception:  # noqa: BLE001
+            # Match the existing Run API contract: keep the durable Run for
+            # observability/retry and do not introduce a second executor.
+            logger.warning(
+                "agent_run_enqueue_failed",
+                extra={
+                    "run_id": str(run.id),
+                    "work_item_id": str(getattr(work_item, "id", "unknown")),
+                },
+                exc_info=True,
+            )
+
+        result = {
             "run_id": str(run.id),
             "executor_type": "agent",
             "agent_instance_id": str(instance.id),
@@ -45,3 +78,33 @@ class AgentExecutionAdapter:
             "employee_id": str(version.employee_id),
             "employee_version_id": str(version.id),
         }
+        if getattr(work_item, "id", None) is not None:
+            result["work_item_id"] = str(work_item.id)
+        return result
+
+    async def execute_tool(
+        self,
+        *,
+        agent: AgentInstance,
+        tool_name: str,
+        arguments: dict[str, Any],
+        approval_granted: bool = False,
+    ) -> Any:
+        """Execute a Tool only after AgentInstance identity/policy checks."""
+        tool = registry.get(tool_name)
+        await assert_agent_can_execute(
+            self.db,
+            tenant_id=agent.tenant_id,
+            agent_instance_id=agent.id,
+            tool_name=tool_name,
+            required_permission=tool.required_permission,
+        )
+        return await registry.execute(
+            tool_name,
+            arguments,
+            permissions=set((agent.permission_policy or {}).get("permissions") or []),
+            approval_granted=approval_granted,
+            allowed_tools=set((agent.permission_policy or {}).get("allowed_tools") or (agent.permission_policy or {}).get("tools") or []),
+            db=self.db,
+            tenant_id=agent.tenant_id,
+        )

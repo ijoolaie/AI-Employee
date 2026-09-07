@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "test": "node scripts/test-frontend-contract.mjs",
+    "test": "node scripts/test-frontend-contract.mjs && node scripts/test-governance-contract.mjs",
     "test:watch": "vitest",
     "test:unit": "vitest run"
   },
