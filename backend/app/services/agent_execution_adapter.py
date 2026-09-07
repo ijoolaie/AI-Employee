@@ -1,4 +1,4 @@
-"""Bridge specialized Agent execution into the existing Employee/Run runtime."""
+"""Bridge governed Agent execution into the canonical Run runtime."""
 from __future__ import annotations
 
 from typing import Any
@@ -14,7 +14,7 @@ from app.services.run_service import create_run
 
 
 class AgentExecutionAdapter:
-    """Create canonical Runs and enforce AgentInstance execution authority."""
+    """Create canonical Runs and preserve Agent identity through execution."""
 
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -33,6 +33,10 @@ class AgentExecutionAdapter:
             input_data=work_item.input_data or {},
             created_by=work_item.requester_id,
         )
+        # agent_instance_id is deliberately persisted on the canonical Run;
+        # the worker therefore has an authoritative identity to re-check.
+        run.agent_instance_id = instance.id
+        await self.db.flush()
         return {
             "run_id": str(run.id),
             "executor_type": "agent",
