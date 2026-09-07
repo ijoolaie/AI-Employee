@@ -43,8 +43,8 @@ A controlled deployment was attempted using `v1.3.8`:
 - Result: **FAILED BEFORE REMOTE DEPLOYMENT**
 - Failed step: `Configure SSH`
 - Cause: required production Environment inputs were empty/missing.
-- `Deploy exact release to production host`: **SKIPPED`
-- `Verify deployed identity`: **SKIPPED`
+- `Deploy exact release to production host`: **SKIPPED**
+- `Verify deployed identity`: **SKIPPED**
 - Production host mutation: **NONE**
 
 Required real infrastructure inputs are not currently available. They must not be fabricated.
