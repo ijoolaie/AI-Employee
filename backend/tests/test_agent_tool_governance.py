@@ -58,6 +58,72 @@ async def test_registry_boundary_authorizes_agent_before_original_execute(monkey
 
 
 @pytest.mark.asyncio
+async def test_registry_boundary_denies_unauthorized_tool_before_execution(monkeypatch) -> None:
+    tenant_id = uuid4()
+    instance_id = uuid4()
+    calls = []
+
+    async def original(name, arguments, **kwargs):
+        calls.append((name, arguments, kwargs))
+        return {"ok": True}
+
+    async def deny(*_args, **_kwargs):
+        raise ValidationAppError("Tool is not authorized for AgentInstance: calculator")
+
+    monkeypatch.setattr(registry, "execute", original)
+    monkeypatch.setattr(agent_tool_governance, "_INSTALLED", False)
+    monkeypatch.setattr(agent_tool_governance, "assert_agent_can_execute", deny)
+    agent_tool_governance.install()
+
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id,
+        agent_instance_id=instance_id,
+    ):
+        with pytest.raises(ValidationAppError, match="not authorized"):
+            await registry.execute(
+                "calculator",
+                {"expression": "1+1"},
+                db=object(),
+                tenant_id=tenant_id,
+            )
+
+    assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_registry_boundary_denies_missing_permission_before_execution(monkeypatch) -> None:
+    tenant_id = uuid4()
+    instance_id = uuid4()
+    calls = []
+
+    async def original(name, arguments, **kwargs):
+        calls.append((name, arguments, kwargs))
+        return {"ok": True}
+
+    async def deny(*_args, **_kwargs):
+        raise ValidationAppError("AgentInstance lacks required permission: run.execute")
+
+    monkeypatch.setattr(registry, "execute", original)
+    monkeypatch.setattr(agent_tool_governance, "_INSTALLED", False)
+    monkeypatch.setattr(agent_tool_governance, "assert_agent_can_execute", deny)
+    agent_tool_governance.install()
+
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id,
+        agent_instance_id=instance_id,
+    ):
+        with pytest.raises(ValidationAppError, match="lacks required permission"):
+            await registry.execute(
+                "calculator",
+                {"expression": "1+1"},
+                db=object(),
+                tenant_id=tenant_id,
+            )
+
+    assert calls == []
+
+
+@pytest.mark.asyncio
 async def test_registry_boundary_rejects_cross_tenant_context(monkeypatch) -> None:
     tenant_id = uuid4()
     other_tenant_id = uuid4()
