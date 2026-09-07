@@ -35,6 +35,10 @@ for (const token of [
 ]) {
   if (!page.includes(token)) throw new Error(`governance UI missing ${token}`);
 }
+if (!page.includes("{ approve: true }")) throw new Error("Board/CEO approval payload must use approve=true");
+if (!page.includes("{ approve: false }")) throw new Error("Board rejection payload must use approve=false");
+if (!page.includes("proposal.provisioned_agent_instance_id")) throw new Error("proposal activation binding missing");
+if (!page.includes("?.identity_id")) throw new Error("proposal access review must resolve AgentIdentity id");
 if (!sidebar.includes('href: "/governance"')) throw new Error("governance navigation missing");
 if (!sidebar.includes("Workforce Governance")) throw new Error("governance navigation label missing");
 console.log("Governance UI contract: PASS");
