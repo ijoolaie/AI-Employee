@@ -2,7 +2,7 @@
 
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
 
@@ -10,23 +10,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const [ready, setReady] = useState(false);
+  const hydrated = useSyncExternalStore(
+    (onChange) => useAuthStore.persist.onFinishHydration(() => onChange()),
+    () => useAuthStore.persist.hasHydrated(),
+    () => false,
+  );
 
   useEffect(() => {
-    const unsub = useAuthStore.persist.onFinishHydration(() => {
-      if (!isAuthenticated()) router.replace("/login");
-      else if (!useAuthStore.getState().user?.is_platform_admin) router.replace("/dashboard");
-      else setReady(true);
-    });
-    if (useAuthStore.persist.hasHydrated()) {
-      if (!isAuthenticated()) router.replace("/login");
-      else if (!user?.is_platform_admin) router.replace("/dashboard");
-      else setReady(true);
-    }
-    return unsub;
-  }, [isAuthenticated, router, user]);
+    if (!hydrated) return;
+    if (!isAuthenticated()) router.replace("/login");
+    else if (!user?.is_platform_admin) router.replace("/dashboard");
+  }, [hydrated, isAuthenticated, router, user]);
 
-  if (!ready) return <Spinner className="min-h-screen" />;
+  if (!hydrated || !isAuthenticated() || !user?.is_platform_admin) return <Spinner className="min-h-screen" />;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">

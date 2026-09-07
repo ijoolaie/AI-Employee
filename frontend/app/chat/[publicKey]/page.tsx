@@ -1,28 +1,46 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createPublicConversation, getPublicChannel, getPublicConversation, getErrorMessage, sendPublicMessage } from "@/lib/api";
 import type { PublicConversation } from "@/types";
 import { Bot, Send } from "lucide-react";
 
+const CHAT_STORAGE_EVENT = "aiep-chat-storage";
+function subscribeChatStorage(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener(CHAT_STORAGE_EVENT, callback);
+  return () => { window.removeEventListener("storage", callback); window.removeEventListener(CHAT_STORAGE_EVENT, callback); };
+}
+
 export default function PublicChatPage({ params }: { params: Promise<{ publicKey: string }> }) {
   const { publicKey } = use(params);
   const channel = useQuery({ queryKey: ["public-channel", publicKey], queryFn: () => getPublicChannel(publicKey) });
-  const [conversation, setConversation] = useState<PublicConversation | null>(null);
+  const getStoredChat = useCallback(() => typeof window === "undefined" ? null : window.localStorage.getItem(`aiep-chat-${publicKey}`), [publicKey]);
+  const storedChat = useSyncExternalStore(subscribeChatStorage, getStoredChat, () => null);
+  const savedChat = useMemo(() => {
+    if (!storedChat) return null;
+    try { return JSON.parse(storedChat) as { id: string; token: string }; } catch { return null; }
+  }, [storedChat]);
+  const conversationQuery = useQuery({
+    queryKey: ["public-conversation", savedChat?.id, savedChat?.token],
+    queryFn: () => getPublicConversation(savedChat!.id, savedChat!.token),
+    enabled: Boolean(savedChat),
+    refetchInterval: savedChat ? 1200 : false,
+  });
+  const conversation = conversationQuery.data as PublicConversation | undefined;
+  const token = savedChat?.token ?? null;
   const [message, setMessage] = useState("");
-  const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem(`aiep-chat-${publicKey}`);
-    if (!saved) return;
-    try { const parsed = JSON.parse(saved) as { id: string; token: string }; setToken(parsed.token); getPublicConversation(parsed.id, parsed.token).then(setConversation).catch(() => window.localStorage.removeItem(`aiep-chat-${publicKey}`)); } catch { /* ignore corrupt local state */ }
-  }, [publicKey]);
 
   const start = useMutation({
     mutationFn: () => createPublicConversation(publicKey),
-    onSuccess: (data) => { const t = data.customer_token ?? ""; setToken(t); setConversation(data); window.localStorage.setItem(`aiep-chat-${publicKey}`, JSON.stringify({ id: data.id, token: t })); },
+    onSuccess: (data) => {
+      const t = data.customer_token ?? "";
+      window.localStorage.setItem(`aiep-chat-${publicKey}`, JSON.stringify({ id: data.id, token: t }));
+      window.dispatchEvent(new Event(CHAT_STORAGE_EVENT));
+      setError(null);
+    },
     onError: (e) => setError(getErrorMessage(e)),
   });
 
@@ -31,13 +49,6 @@ export default function PublicChatPage({ params }: { params: Promise<{ publicKey
     onSuccess: () => setMessage(""),
     onError: (e) => setError(getErrorMessage(e)),
   });
-
-  const conversationId = conversation?.id;
-  useEffect(() => {
-    if (!conversationId || !token) return;
-    const timer = window.setInterval(async () => { try { setConversation(await getPublicConversation(conversationId, token)); } catch { /* transient polling failure */ } }, 1200);
-    return () => window.clearInterval(timer);
-  }, [conversationId, token]);
 
   if (channel.isLoading) return <main className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500">Loading assistant…</main>;
   if (channel.error || !channel.data) return <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-sm text-red-600">This assistant link is not available.</main>;
