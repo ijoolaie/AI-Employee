@@ -47,21 +47,40 @@ export default function GovernancePage() {
   const [form, setForm] = useState({ title: "", rationale: "", requested_name: "", sponsor_user_id: "", risk_tier: "0" });
   const [evaluationForm, setEvaluationForm] = useState({ suite_id: "", status: "passed", score: "", evidence: "{}", notes: "" });
 
+  async function loadAllData() {
+    const [workforce, proposalItems] = await Promise.all([loadRegistry(), loadProposals()]);
+    if (can(PERMISSIONS.read)) {
+      const entries = await Promise.all(workforce.filter((item) => item.agent_template_id).map(async (item) => {
+        const id = item.agent_template_id as string;
+        try { return [id, await loadEvaluations(id)] as const; } catch { return [id, []] as const; }
+      }));
+      return { workforce, proposalItems, evaluations: Object.fromEntries(entries) };
+    }
+    return { workforce, proposalItems, evaluations: {} as Record<string, AgentEvaluation[]> };
+  }
+
   async function refresh() {
     setError(null);
     try {
-      const [workforce, proposalItems] = await Promise.all([loadRegistry(), loadProposals()]);
-      setRegistry(workforce); setProposals(proposalItems);
-      if (can(PERMISSIONS.read)) {
-        const entries = await Promise.all(workforce.filter((item) => item.agent_template_id).map(async (item) => {
-          const id = item.agent_template_id as string;
-          try { return [id, await loadEvaluations(id)] as const; } catch { return [id, []] as const; }
-        }));
-        setEvaluations(Object.fromEntries(entries));
-      } else setEvaluations({});
+      const { workforce, proposalItems, evaluations: evaluationItems } = await loadAllData();
+      setRegistry(workforce); setProposals(proposalItems); setEvaluations(evaluationItems);
     } catch (err) { setError(getErrorMessage(err)); } finally { setLoading(false); }
   }
-  useEffect(() => { void refresh(); }, [user?.id]);
+  useEffect(() => {
+    let cancelled = false;
+    async function loadInitialData() {
+      try {
+        const { workforce, proposalItems, evaluations: evaluationItems } = await loadAllData();
+        if (cancelled) return;
+        setRegistry(workforce); setProposals(proposalItems); setEvaluations(evaluationItems); setLoading(false);
+      } catch (err) {
+        if (cancelled) return;
+        setError(getErrorMessage(err)); setLoading(false);
+      }
+    }
+    void loadInitialData();
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   async function action(path: string, key: string, body?: object) {
     setBusy(key); setError(null); setLoading(true);
@@ -85,7 +104,7 @@ export default function GovernancePage() {
   const status = (value: string) => <Badge status={value.toLowerCase().includes("approved") || value === "ENABLED" || value === "approved" || value === "passed" ? "active" : value.toLowerCase().includes("rejected") || value === "REVOKED" || value === "failed" ? "inactive" : "pending"}>{value.replaceAll("_", " ")}</Badge>;
 
   return <>
-    <Header title="Workforce Governance" description="Governed AI workforce, identity controls, evaluations, and approval lifecycle" actions={<div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => { setLoading(true); void refresh(); }} disabled={loading}><RefreshCw className="h-4 w-4" />Refresh</Button>{can(PERMISSIONS.propose) && <Button size="sm" onClick={() => setShowCreate((v) => !v)}><Plus className="h-4 w-4" />New proposal</Button>}</div>} />
+    <Header title="Workforce Governance" description="Governed AI workforce, identity controls, evaluations, and approval lifecycle" actions={<div className="flex gap-2"><Button size="sm" variant="outline" onClick={() => void refresh()} disabled={loading}><RefreshCw className="h-4 w-4" />Refresh</Button>{can(PERMISSIONS.propose) && <Button size="sm" onClick={() => setShowCreate((v) => !v)}><Plus className="h-4 w-4" />New proposal</Button>}</div>} />
     <div className="space-y-6 p-6">
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       {showCreate && can(PERMISSIONS.propose) && <form onSubmit={createProposal} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center gap-2"><ShieldCheck className="h-5 w-5" /><h2 className="font-semibold">Submit workforce proposal</h2></div><div className="grid gap-4 md:grid-cols-2"><input required placeholder="Proposal title" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" /><input required placeholder="Requested agent name" value={form.requested_name} onChange={(e) => setForm({ ...form, requested_name: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" /><input required placeholder="Sponsor user UUID" value={form.sponsor_user_id} onChange={(e) => setForm({ ...form, sponsor_user_id: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" /><select value={form.risk_tier} onChange={(e) => setForm({ ...form, risk_tier: e.target.value })} className="rounded-lg border px-3 py-2 text-sm"><option value="0">Risk tier 0</option><option value="1">Risk tier 1</option><option value="2">Risk tier 2</option><option value="3">Risk tier 3</option><option value="4">Risk tier 4</option></select><textarea required placeholder="Rationale" value={form.rationale} onChange={(e) => setForm({ ...form, rationale: e.target.value })} className="min-h-24 rounded-lg border px-3 py-2 text-sm md:col-span-2" /></div><div className="mt-4 flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button><Button type="submit" disabled={busy === "create"}>{busy === "create" ? "Submitting…" : "Submit proposal"}</Button></div></form>}
