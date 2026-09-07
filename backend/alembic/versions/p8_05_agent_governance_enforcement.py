@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column("suite_id", sa.String(120), nullable=False),
         sa.Column("status", evaluation_status, nullable=False),
         sa.Column("score", sa.Integer(), nullable=True),
-        sa.Column("evidence", postgresql.JSONB(), nullable=False, server_default="{}"),
+        sa.Column("evidence", sa.JSON(), nullable=False, server_default="{}"),
         sa.Column("evidence_hash", sa.String(128), nullable=True),
         sa.Column("evaluator_user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
