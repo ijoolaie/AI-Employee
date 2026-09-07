@@ -11,6 +11,7 @@ on:
       - 'docs/current/PHASE_14_INCIDENT_RESPONSE.md'
       - '.github/workflows/ci.yml'
       - '.github/workflows/release-artifact.yml'
+      - '.github/workflows/immutable-release-evidence.yml'
       - 'docker-compose*.yml'
   push:
     branches: [main]
@@ -22,6 +23,7 @@ on:
       - 'docs/current/PHASE_14_INCIDENT_RESPONSE.md'
       - '.github/workflows/ci.yml'
       - '.github/workflows/release-artifact.yml'
+      - '.github/workflows/immutable-release-evidence.yml'
       - 'docker-compose*.yml'
 
 concurrency:
