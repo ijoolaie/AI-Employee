@@ -47,6 +47,7 @@ def _run(run_id, tenant_id):
         tenant_id=tenant_id,
         employee_id=uuid4(),
         employee_version_id=uuid4(),
+        agent_instance_id=None,
         input_data={},
         prompt_tokens=0,
         completion_tokens=0,
