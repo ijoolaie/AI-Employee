@@ -5,13 +5,20 @@ This directory contains the maintained project documentation for the current `ma
 ## Source of truth
 
 1. `STATUS.md` — implementation, certification and deployment truth.
-2. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap and phase status.
+2. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap, external gates and future product stages.
 3. `../00_START_HERE/CURRENT_STATUS.md` — executive current-state summary.
 4. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
 5. `PHASE_14_EXTERNAL_PRODUCTION_EVIDENCE.md` — final external-production/customer-acceptance evidence gate.
 6. `PRODUCTION_GAP_REGISTER_2026-09-04.md` — current reconciled gap register.
 7. `49_CURRENT_STATE_RECONCILIATION_2026-08-31.md` — retained point-in-time reconciliation evidence.
 8. `50_PRODUCTION_CANDIDATE_READINESS_2026-08-31.md` — retained point-in-time candidate evidence; it does not override the current canonical status.
+
+## Versioning rule
+
+- Release identity and architecture baseline are independent.
+- `v1.3.8` is the current certified release candidate.
+- `V1.5 Agentic Operating Model` is the current architecture baseline, not a certified release.
+- Future product stages in `PRODUCTIZATION_ROADMAP.md` are planning targets until implementation and evidence exist.
 
 ## Current release position
 
@@ -30,19 +37,6 @@ This directory contains the maintained project documentation for the current `ma
 - Phase 14 external production/customer acceptance gate: **external-pending**.
 
 The active external-production work is tracked by issues #210, #19 and #269, with deployment checkpoint #343. No external certification or customer acceptance is inferred from repository/CI evidence.
-
-## Document classes
-
-- **Canonical/current:** maintained continuously; may be used for decisions.
-- **Evidence:** dated records of tests, certification, audits, or environment observations.
-- **Runbook/specification:** operational procedures or stable technical contracts.
-- **Historical:** retained for traceability but not authoritative for current status.
-
-## Naming convention
-
-- Stable documents use descriptive names without dates when continuously maintained.
-- Point-in-time evidence uses `YYYY-MM-DD`.
-- Historical release/RC records keep their original identity and must not be presented as current status.
 
 ## Rule
 
