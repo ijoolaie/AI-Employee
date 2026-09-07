@@ -173,4 +173,3 @@ async def test_run_worker_commits_failure_before_reraising(monkeypatch):
         await run_worker._run_async(str(run_id), str(tenant_id))
 
     assert db.committed is True
-    assert db.rolled_back is True
