@@ -1,9 +1,10 @@
 # Production Certification Execution Pack
 
-**Prepared:** 2026-09-06  
+**Prepared:** 2026-09-08  
 **Repository:** `ijoolaie/AI-Employee`  
-**Current engineering main baseline:** `e52ed83d903a0d6de2fd37d62db71278513a1e1f`  
-**Release candidate:** `v1.3.6` — External Production Certification Candidate  
+**Current engineering main baseline:** `b117ac06047335f71583576be19c39c7bef4df01`  
+**Certified release:** `v1.3.8` — exact certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
+**Certification run:** `34052885700` — SUCCESS  
 **Purpose:** execute the remaining production/customer-readiness work without confusing repository evidence with real target-environment certification.
 
 ## Operating rule
@@ -12,15 +13,25 @@ Every P0 item must be attached to one immutable release identity. CI, local Dock
 
 Use `docs/current/PRODUCTION_EVIDENCE_INDEX.md` as the traceability index. Every evidence row must identify its evidence class and exact release SHA/tag; pending external gates must remain explicitly pending.
 
-## Phase A — Freeze the release
+## Version boundary
 
-1. Candidate release `v1.3.6` has been published as a prerelease against the current engineering `main` baseline.
-2. Candidate SHA: `e52ed83d903a0d6de2fd37d62db71278513a1e1f`.
-3. The GitHub release is still marked prerelease and is not yet an immutable production identity.
-4. External acceptance evidence must not be attributed to `v1.3.6` as production-certified until the release identity, artifact digests, provenance and external target deployment are accepted.
-5. If a remediation changes runtime behavior, create a new release identity and repeat affected evidence.
+`v1.3.8` is the current certified and frozen deployment identity. The `main` branch has continued with separately verified dependency hardening after that certification; those changes are **not automatically part of `v1.3.8`** and must not be described as such.
 
-**Evidence:** current RC release record + SHA/tag. **Remaining:** immutable production identity + image digests + checksums + signed provenance.
+The current `main` baseline is `b117ac06047335f71583576be19c39c7bef4df01`. Completed dependency hardening includes PRs #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353, each merged only after the required repository gates passed on the exact HEAD. No open Dependabot dependency PR remains in the current hardening queue.
+
+If a future change is intended for production deployment, it must either remain explicitly a mainline engineering change or be promoted through a new release identity. Do not move the `v1.3.8` tag or inherit its certification evidence onto another SHA.
+
+## Phase A — Release identity and admission
+
+1. `v1.3.8` is the current certified release.
+2. Exact certified SHA: `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
+3. Certification run `34052885700` passed the required certification suite.
+4. The `v1.3.8` tag has been reconciled to the same exact certified SHA.
+5. The release identity is frozen for deployment purposes.
+6. Mainline dependency hardening after certification does not silently alter the release.
+
+**Exit:** the exact accepted release identity, artifact provenance/digests and rollback target are recorded.  
+**Current status:** release identity/certification **PASSED**; external deployment admission remains pending target infrastructure.
 
 ## Phase B — Deploy the real production target
 
@@ -184,6 +195,14 @@ Customer usage exposes budget utilization, remaining quota, unit cost and optimi
 ### Cost anomaly detection/forecasting
 
 Deterministic tenant-scoped daily anomaly detection and month-end projection are implemented with tests. Forecasts must expose the period and assumptions so they are decision support rather than false precision.
+
+## Local execution boundary before a production server
+
+The project may be run on a developer workstation for development, debugging, UI work, integration work and non-production validation. Local execution is **not** production certification and must not be used to claim live provider, DR, SLO, external security or customer-acceptance evidence.
+
+Use the repository's documented local Docker/development workflow and local-only credentials or test providers. Never copy production secrets into the repository or local artifacts. Keep the production deployment workflow fail-closed until a real target exists.
+
+A local environment can therefore be used as the temporary working environment while the project waits for production infrastructure.
 
 ## Final acceptance sequence
 
