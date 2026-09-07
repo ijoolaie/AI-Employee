@@ -3,6 +3,7 @@ from uuid import uuid4
 import pytest
 
 from app.ai.tool_registry import registry
+from app.core.exceptions import ValidationAppError
 from app.services import agent_tool_governance
 
 
@@ -75,7 +76,7 @@ async def test_registry_boundary_rejects_cross_tenant_context(monkeypatch) -> No
         tenant_id=tenant_id,
         agent_instance_id=instance_id,
     ):
-        with pytest.raises(Exception, match="tenant context mismatch"):
+        with pytest.raises(ValidationAppError, match="tenant context mismatch"):
             await registry.execute(
                 "calculator",
                 {"expression": "1+1"},
