@@ -149,3 +149,23 @@ async def provision_workforce_proposal(
         await db.rollback()
         raise _http(exc) from exc
     return WorkforceProposalRead.model_validate(item, from_attributes=True)
+
+
+@router.post("/proposals/{proposal_id}/activate", response_model=WorkforceProposalRead)
+async def activate_workforce_proposal(
+    proposal_id: UUID,
+    ctx: TenantContext = Depends(require_permission("agent_workforce.activate")),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        item = await proposal_service.activate_provisioned_proposal(
+            db,
+            tenant_id=ctx.tenant_id,
+            proposal_id=proposal_id,
+            activated_by_user_id=ctx.user_id,
+        )
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        raise _http(exc) from exc
+    return WorkforceProposalRead.model_validate(item, from_attributes=True)
