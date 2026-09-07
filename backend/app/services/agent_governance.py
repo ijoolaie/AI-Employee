@@ -34,12 +34,7 @@ def _hash_evidence(evidence: dict[str, Any]) -> str:
 async def governed_agent_execution(
     *, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID
 ) -> AsyncIterator[None]:
-    """Bind Agent identity to the current execution context.
-
-    ToolRegistry uses this context as a final, centralized authorization hook.
-    Context-local state prevents one concurrent tenant/agent execution from
-    leaking its governance identity into another task.
-    """
+    """Bind Agent identity to the current execution context."""
     token = _agent_execution_context.set((tenant_id, agent_instance_id))
     try:
         yield
@@ -84,6 +79,8 @@ async def create_identity(db: AsyncSession, *, tenant_id: uuid.UUID, agent_insta
     existing = (await db.execute(select(AgentIdentity).where(AgentIdentity.agent_instance_id == agent_instance_id, AgentIdentity.tenant_id == tenant_id))).scalar_one_or_none()
     if existing is not None:
         return existing
+    if not owner_user_id or not sponsor_user_id:
+        raise ValidationAppError("Agent identity requires an attributable owner and sponsor")
     identity = AgentIdentity(tenant_id=tenant_id, agent_instance_id=agent_instance_id, owner_user_id=owner_user_id, sponsor_user_id=sponsor_user_id, subject=f"agent:{tenant_id}:{agent_instance_id}", expires_at=expires_at, active=True)
     db.add(identity)
     await db.flush()
