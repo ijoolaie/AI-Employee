@@ -6,6 +6,8 @@
 
 **Engineering phase:** Phase 14.1–14.16 complete where tracked; current program is in Production Hardening / Stage 7 External Production Certification
 
+**Current main:** `b117ac06047335f71583576be19c39c7bef4df01`
+
 **Production deployment:** **NOT DEPLOYED**
 
 **Deployment checkpoint:** Issue #343
@@ -26,7 +28,7 @@ Canonical versioning rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
 ## Current release truth
 
-- `v1.3.8` is the current published GitHub prerelease / production candidate.
+- `v1.3.8` is the current certified and frozen production-candidate identity.
 - The `v1.3.8` tag resolves exactly to `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
 - Production certification run `34052885700` passed the complete certification suite, including backend, frontend, migrations, OCR, product gates and critical Playwright E2E.
 - A controlled production deployment was attempted with `v1.3.8` in run `34060615390` but stopped during SSH configuration because the required production Environment secrets were empty/missing.
@@ -35,17 +37,15 @@ Canonical versioning rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
 ## Mainline hardening truth
 
-The certified `v1.3.8` release identity remains frozen. `main` may continue to receive separately verified engineering hardening without silently changing that certification.
+The certified `v1.3.8` release identity remains frozen. `main` has since received separately verified dependency hardening through PR #353.
 
-The latest dependency-hardening merge is PR #349, which upgraded Next.js `15.5.21 → 16.3.4`. It passed all five required repository gates on exact HEAD before squash merge:
+Completed dependency-hardening PRs are #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353. Each was merged only after the required repository gates passed on the exact HEAD. The current mainline head is `b117ac06047335f71583576be19c39c7bef4df01`, and there is currently no open Dependabot dependency PR in this hardening queue.
 
-- CI #969 — SUCCESS
-- CodeQL #1182 — SUCCESS
-- Production Infrastructure Validation #243 — SUCCESS
-- HA Failure Recovery Validation #157 — SUCCESS
-- Ephemeral DAST Validation #208 — SUCCESS
+These engineering-mainline merges do **not** create a new certified release by themselves. `v1.3.8` remains the deployment identity until an intentional production-bound change is promoted into a new release and independently certified.
 
-PR #349 merged at `07f7fa2248cdf289c831a6ccbcf50736b20324fa`. This is mainline hardening evidence; it does not create a new certified release. Next.js 16.3.3/16.3.4 also includes important security fixes.
+## Release decision
+
+No new production release is required at the current boundary. The remaining blockers are external infrastructure and target-environment evidence. If a future production-bound code/configuration change is intentionally selected for deployment, create a new release with its own exact SHA and certification rather than moving or mutating `v1.3.8`.
 
 ## Start Here
 
@@ -56,6 +56,7 @@ PR #349 merged at `07f7fa2248cdf289c831a6ccbcf50736b20324fa`. This is mainline h
 5. `docs/DOCUMENTATION_INDEX.md`
 6. `docs/releases/RELEASE_TRUTH_LEDGER.md`
 7. `docs/current/PRODUCTIZATION_ROADMAP.md`
+8. `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
 
 Do not infer current truth from historical versioned filenames. Git tags, release records, certification evidence and deployment evidence are reconciled in `docs/releases/RELEASE_TRUTH_LEDGER.md`.
 
@@ -125,6 +126,12 @@ Phase 14 Scale / Governance / Production
 - Production certification candidate `v1.3.8`: **CERTIFIED**.
 - External production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance / live provider validation: **PENDING**.
+
+## Temporary local execution
+
+The project can be run on a developer workstation while a production server is unavailable. Local execution is appropriate for development, debugging, UI work, integration work and non-production validation.
+
+Local execution is not production certification. It must not be used to claim live provider validation, production SLO/SLI, real RPO/RTO, external security acceptance or customer acceptance. Use local/test credentials and providers only; never copy production secrets into source control or local artifacts.
 
 ## Release rules
 
