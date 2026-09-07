@@ -1,4 +1,4 @@
-"""Stage 8 evaluation evidence, agent identity and access reviews.
+"""Stage 8 evaluation evidence, agent identity, access reviews and Run binding.
 
 Revision ID: p8_05_agent_governance_enforcement
 Revises: p8_04_agent_governance
@@ -68,8 +68,15 @@ def upgrade() -> None:
     op.create_index("ix_agent_access_reviews_tenant_identity", "agent_access_reviews", ["tenant_id", "agent_identity_id"])
     op.create_index("ix_agent_access_reviews_due", "agent_access_reviews", ["tenant_id", "next_review_at"])
 
+    op.add_column("runs", sa.Column("agent_instance_id", postgresql.UUID(as_uuid=True), nullable=True))
+    op.create_foreign_key("fk_runs_agent_instance", "runs", "agent_instances", ["agent_instance_id"], ["id"], ondelete="RESTRICT")
+    op.create_index("ix_runs_agent_instance_id", "runs", ["agent_instance_id"])
+
 
 def downgrade() -> None:
+    op.drop_index("ix_runs_agent_instance_id", table_name="runs")
+    op.drop_constraint("fk_runs_agent_instance", "runs", type_="foreignkey")
+    op.drop_column("runs", "agent_instance_id")
     op.drop_index("ix_agent_access_reviews_due", table_name="agent_access_reviews")
     op.drop_index("ix_agent_access_reviews_tenant_identity", table_name="agent_access_reviews")
     op.drop_table("agent_access_reviews")
