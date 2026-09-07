@@ -167,8 +167,10 @@ async def test_run_worker_commits_failure_before_reraising(monkeypatch):
     monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
     monkeypatch.setattr(run_worker, "span", _span)
     monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
+    monkeypatch.setattr(run_worker.run_service, "execute_run", _execute)
 
     with pytest.raises(RuntimeError, match="execution failed"):
         await run_worker._run_async(str(run_id), str(tenant_id))
 
     assert db.committed is True
+    assert db.rolled_back is True
