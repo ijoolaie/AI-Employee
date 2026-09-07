@@ -53,6 +53,8 @@ def _run(run_id, tenant_id):
         completion_tokens=0,
         total_tokens=0,
         status="queued",
+        started_at=None,
+        completed_at=None,
     )
 
 
