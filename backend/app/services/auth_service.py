@@ -28,6 +28,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read", "team.install",
     "team.execute", "team.evaluate", "marketplace.publish", "marketplace.read",
     "agent_template.create", "agent_template.read", "agent_template.publish", "agent_template.install",
+    "agent_instance.lifecycle",
 )
 
 
