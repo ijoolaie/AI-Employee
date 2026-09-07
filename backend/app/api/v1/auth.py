@@ -51,8 +51,18 @@ async def refresh(payload: RefreshRequest, db: DbSession):
 
 @router.get("/me", response_model=APIResponse[MeResponse])
 async def me(ctx: CurrentContext):
+    permissions = sorted(
+        {
+            permission.code
+            for role in ctx.user.roles
+            if role.tenant_id == ctx.tenant_id
+            for permission in role.permissions
+        }
+    )
+    if ctx.user.is_superuser:
+        permissions.append("*")
     data = MeResponse(
-        user=UserResponse.model_validate(ctx.user),
+        user=UserResponse.model_validate(ctx.user).model_copy(update={"permissions": permissions}),
         tenant=TenantResponse.model_validate(ctx.tenant),
     )
     return APIResponse(success=True, data=data)
