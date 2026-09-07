@@ -11,6 +11,7 @@ from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.agent_definition import AgentDefinition
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
+from app.services.agent_governance import assert_publishable_with_evidence, create_identity
 
 
 async def create_template(
@@ -87,12 +88,18 @@ async def publish_template(
         raise NotFoundError("Agent template not found")
     if template.status not in {AgentTemplateStatus.DRAFT, AgentTemplateStatus.EVALUATING}:
         raise ConflictError("Agent template is not publishable from its current state")
-    if not template.evaluation_policy.get("passed", False):
-        raise ValidationAppError("Agent template evaluation must pass before publication")
     if not approved_by_user_id:
         raise ValidationAppError("CEO or designated approver is required for publication")
 
+    evidence = await assert_publishable_with_evidence(db, tenant_id=tenant_id, template_id=template.id)
     template.status = AgentTemplateStatus.PUBLISHED
+    template.evaluation_policy = {
+        **(template.evaluation_policy or {}),
+        "passed": True,
+        "latest_evaluation_id": str(evidence.id),
+        "evidence_hash": evidence.evidence_hash,
+        "suite_id": evidence.suite_id,
+    }
     template.published_at = datetime.now(timezone.utc)
     await db.flush()
     await db.refresh(template)
@@ -139,6 +146,13 @@ async def provision_instance(
     db.add(instance)
     await db.flush()
     await db.refresh(instance)
+    await create_identity(
+        db,
+        tenant_id=tenant_id,
+        agent_instance_id=instance.id,
+        owner_user_id=sponsor_user_id,
+        sponsor_user_id=sponsor_user_id,
+    )
     return instance
 
 
