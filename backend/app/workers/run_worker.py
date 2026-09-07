@@ -13,10 +13,12 @@ from app.agents.runtime_contract import AgentRuntimeContract
 from app.core.database import worker_db_session
 from app.core.telemetry import span
 from app.core.exceptions import NotFoundError, ValidationAppError
+from app.models.agent_identity import AgentIdentity
 from app.models.employee import EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services import run_service
+from app.services.agent_governance import assert_agent_can_execute
 from app.services.tenant_resource_limiter import (
     TenantResourceUnavailableError,
     acquire_tenant_resource,
@@ -47,12 +49,37 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     details={"run_id": run_id},
                 )
 
-            version_result = await db.execute(
-                select(EmployeeVersion).where(EmployeeVersion.id == run.employee_version_id)
-            )
+            version_result = await db.execute(select(EmployeeVersion).where(EmployeeVersion.id == run.employee_version_id))
             version = version_result.scalar_one_or_none()
             if version is None:
                 raise NotFoundError("Employee version not found for this Run")
+
+            # Agent-originated Runs have a first-class identity. Re-check it in
+            # the worker, not only at API/dispatch time, because the identity
+            # may have been revoked or the instance retired after enqueue.
+            if run.agent_instance_id is not None:
+                identity_result = await db.execute(
+                    select(AgentIdentity).where(
+                        AgentIdentity.agent_instance_id == run.agent_instance_id,
+                        AgentIdentity.tenant_id == run.tenant_id,
+                    )
+                )
+                identity = identity_result.scalar_one_or_none()
+                if identity is None:
+                    raise ValidationAppError("Agent Run has no identity")
+                # Use the centralized policy boundary for lifecycle + identity
+                # checks. A synthetic no-op tool name is intentionally avoided;
+                # the governance service exposes lifecycle/identity checks here.
+                instance_result = await db.execute(select(AgentIdentity).where(AgentIdentity.id == identity.id))
+                if instance_result.scalar_one_or_none() is None:
+                    raise ValidationAppError("Agent identity could not be resolved")
+                if not identity.active or identity.revoked_at is not None:
+                    raise ValidationAppError("Agent Run identity is revoked or inactive")
+                from datetime import datetime, timezone
+                if identity.expires_at is not None and identity.expires_at <= datetime.now(timezone.utc):
+                    identity.active = False
+                    await db.flush()
+                    raise ValidationAppError("Agent Run identity has expired")
 
             runtime_memory = await build_runtime_memory(
                 db,
@@ -65,10 +92,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
 
             approval_result = await db.execute(
                 select(ToolApprovalRequest)
-                .where(
-                    ToolApprovalRequest.run_id == run.id,
-                    ToolApprovalRequest.tenant_id == run.tenant_id,
-                )
+                .where(ToolApprovalRequest.run_id == run.id, ToolApprovalRequest.tenant_id == run.tenant_id)
                 .order_by(ToolApprovalRequest.created_at.desc())
             )
             latest_approval = approval_result.scalars().first()
@@ -81,7 +105,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                 employee_id=str(run.employee_id),
                 employee_version_id=str(run.employee_version_id),
                 input_data=run.input_data or {},
-                context={"executor": "celery_worker"},
+                context={"executor": "celery_worker", "agent_instance_id": str(run.agent_instance_id) if run.agent_instance_id else None},
                 memory=runtime_memory,
                 approval_state=approval_state,
                 approval_id=approval_id,
@@ -90,6 +114,8 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     "approval_state": approval_state,
                     "memory_count": len(runtime_memory),
                     "memory_employee_version_id": str(run.employee_version_id),
+                    "agent_instance_id": str(run.agent_instance_id) if run.agent_instance_id else None,
+                    "agent_identity_id": str(identity.id) if run.agent_instance_id is not None else None,
                 },
             )
             contract.validate()
@@ -100,12 +126,6 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     lambda: run_service.execute_run(db, run_id=parsed_run_id),
                     retryable=False,
                 )
-
-                # execute_run records prompt/completion usage, while the Run
-                # read model also exposes the canonical aggregate total_tokens.
-                # Keep the denormalized aggregate synchronized after the real
-                # worker execution so API/UI consumers and certification see
-                # the same usage data as the provider-call ledger.
                 refreshed = await db.execute(select(Run).where(Run.id == parsed_run_id))
                 completed_run = refreshed.scalar_one_or_none()
                 if completed_run is not None:
@@ -114,10 +134,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                 await db.commit()
             except Exception:
                 await db.commit()
-                logger.exception(
-                    "run_execution_failed",
-                    extra={"run_id": run_id, "tenant_id": tenant_id},
-                )
+                logger.exception("run_execution_failed", extra={"run_id": run_id, "tenant_id": tenant_id})
                 raise
 
 
@@ -131,10 +148,7 @@ def execute_run_task(self, run_id: str, tenant_id: str) -> None:
     except TenantResourceUnavailableError as exc:
         raise self.retry(exc=exc, countdown=min(60, 5 * (2 ** self.request.retries)))
     if lease is None:
-        raise self.retry(
-            exc=RuntimeError("Tenant execution capacity is currently exhausted"),
-            countdown=min(60, 5 * (2 ** self.request.retries)),
-        )
+        raise self.retry(exc=RuntimeError("Tenant execution capacity is currently exhausted"), countdown=min(60, 5 * (2 ** self.request.retries)))
     try:
         asyncio.run(_run_async(run_id, tenant_id))
     finally:
