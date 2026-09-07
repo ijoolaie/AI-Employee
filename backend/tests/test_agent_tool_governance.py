@@ -24,6 +24,7 @@ async def test_agent_tool_context_is_tenant_and_instance_scoped() -> None:
 async def test_registry_boundary_authorizes_agent_before_original_execute(monkeypatch) -> None:
     tenant_id = uuid4()
     instance_id = uuid4()
+    db = object()
     calls = []
     authorization = []
 
@@ -46,10 +47,40 @@ async def test_registry_boundary_authorizes_agent_before_original_execute(monkey
         result = await registry.execute(
             "calculator",
             {"expression": "1+1"},
-            db=object(),
+            db=db,
             tenant_id=tenant_id,
         )
 
     assert result == {"ok": True}
-    assert calls == [("calculator", {"expression": "1+1"}, {"db": calls[0][2]["db"], "tenant_id": tenant_id})]
+    assert calls == [("calculator", {"expression": "1+1"}, {"db": db, "tenant_id": tenant_id})]
     assert authorization == [(tenant_id, instance_id, "calculator", "run.execute")]
+
+
+@pytest.mark.asyncio
+async def test_registry_boundary_rejects_cross_tenant_context(monkeypatch) -> None:
+    tenant_id = uuid4()
+    other_tenant_id = uuid4()
+    instance_id = uuid4()
+    calls = []
+
+    async def original(name, arguments, **kwargs):
+        calls.append((name, arguments, kwargs))
+        return {"ok": True}
+
+    monkeypatch.setattr(registry, "execute", original)
+    monkeypatch.setattr(agent_tool_governance, "_INSTALLED", False)
+    agent_tool_governance.install()
+
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id,
+        agent_instance_id=instance_id,
+    ):
+        with pytest.raises(Exception, match="tenant context mismatch"):
+            await registry.execute(
+                "calculator",
+                {"expression": "1+1"},
+                db=object(),
+                tenant_id=other_tenant_id,
+            )
+
+    assert calls == []
