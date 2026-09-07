@@ -6,6 +6,7 @@ This is the top-level map for project documentation. Start here, then use the ca
 
 | Need | Canonical document |
 |---|---|
+| Version / release / architecture truth | `00_START_HERE/VERSIONING_TRUTH.md` |
 | Project overview | `00_START_HERE/PROJECT_OVERVIEW.md` |
 | Current state | `00_START_HERE/CURRENT_STATUS.md` |
 | What to do next | `00_START_HERE/CURRENT_PRIORITIES.md` |
@@ -18,20 +19,21 @@ This is the top-level map for project documentation. Start here, then use the ca
 | Implementation / verification | `current/STATUS.md` |
 | Delivery roadmap | `current/PRODUCTIZATION_ROADMAP.md` |
 | Current documentation set | `current/README.md` |
+| Code ↔ documentation traceability | `current/CODE_DOCUMENTATION_TRACEABILITY.md` |
+| Canonical vocabulary | `current/CANONICAL_VOCABULARY.md` |
 | Phase 14 DR / backup / restore | `current/PHASE_14_DR.md` |
 | Phase 14 security / compliance | `current/PHASE_14_SECURITY.md` |
 | Phase 14 incident response | `current/PHASE_14_INCIDENT_RESPONSE.md` |
 | Phase 14 external production evidence | `current/PHASE_14_EXTERNAL_PRODUCTION_EVIDENCE.md` |
 | Current-state reconciliation | `current/49_CURRENT_STATE_RECONCILIATION_2026-08-31.md` |
 | Production-candidate boundary | `current/50_PRODUCTION_CANDIDATE_READINESS_2026-08-31.md` |
-| Code ↔ documentation traceability | `current/CODE_DOCUMENTATION_TRACEABILITY.md` |
-| Canonical vocabulary | `current/CANONICAL_VOCABULARY.md` |
 
-The dated reconciliation and production-candidate documents are retained as point-in-time evidence. For present decisions, the undated canonical status/roadmap documents above take precedence.
+Dated reconciliation and production-candidate documents are retained as point-in-time evidence. For present decisions, the undated canonical status/roadmap documents take precedence.
 
 ## 3. Architecture
 
 - `blueprint/` — canonical architecture and operating-model documents.
+- `blueprint/V1.5_AGENTIC_OPERATING_MODEL.md` — current Agentic Operating Model architecture baseline.
 - `current/01_ARCHITECTURE_AND_MODULE_MAP.md` — implementation-oriented module map.
 
 ## 4. Operations and delivery
@@ -59,6 +61,14 @@ See `DOCUMENTATION_GOVERNANCE.md` for the truth hierarchy and documentation rule
 5. Historical records.
 
 A higher version number in an older file does not override current truth.
+
+### Version-axis rule
+
+- `vX.Y.Z` = immutable product release.
+- `VX.Y` = architecture generation/baseline.
+- `Phase N` = engineering workstream/gate.
+
+These axes may advance independently.
 
 ### Normalization rule
 
