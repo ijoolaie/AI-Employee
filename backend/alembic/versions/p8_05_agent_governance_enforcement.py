@@ -1,14 +1,14 @@
 """Stage 8 evaluation evidence, agent identity, access reviews and Run binding.
 
 Revision ID: p8_05_agent_governance_enforcement
-Revises: p8_04_agent_governance
+Revises: p8_06_agent_instance_lifecycle
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "p8_05_agent_governance_enforcement"
-down_revision = "p8_04_agent_governance"
+down_revision = "p8_06_agent_instance_lifecycle"
 branch_labels = None
 depends_on = None
 
