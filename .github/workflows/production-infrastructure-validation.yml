@@ -11,6 +11,7 @@ on:
       - 'scripts/production_infrastructure_validation.sh'
       - 'scripts/production_backup_restore_smoke.sh'
       - '.github/workflows/production-infrastructure-validation.yml'
+      - '.github/workflows/immutable-release-evidence.yml'
   push:
     branches: [main]
     paths:
@@ -21,6 +22,7 @@ on:
       - 'scripts/production_infrastructure_validation.sh'
       - 'scripts/production_backup_restore_smoke.sh'
       - '.github/workflows/production-infrastructure-validation.yml'
+      - '.github/workflows/immutable-release-evidence.yml'
   workflow_dispatch:
 
 concurrency:

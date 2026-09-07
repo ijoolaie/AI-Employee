@@ -10,6 +10,7 @@ on:
       - 'frontend/**'
       - 'scripts/ha_failure_recovery_smoke.sh'
       - '.github/workflows/ha-failure-recovery.yml'
+      - '.github/workflows/immutable-release-evidence.yml'
   workflow_dispatch:
 
 permissions:

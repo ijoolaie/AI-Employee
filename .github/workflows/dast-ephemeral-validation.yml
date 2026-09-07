@@ -10,6 +10,7 @@ on:
       - 'docker-compose.local-production.yml'
       - 'scripts/dast_ephemeral_validation.sh'
       - '.github/workflows/dast-ephemeral-validation.yml'
+      - '.github/workflows/immutable-release-evidence.yml'
   push:
     branches: [main]
     paths:
@@ -19,6 +20,7 @@ on:
       - 'docker-compose.local-production.yml'
       - 'scripts/dast_ephemeral_validation.sh'
       - '.github/workflows/dast-ephemeral-validation.yml'
+      - '.github/workflows/immutable-release-evidence.yml'
   workflow_dispatch:
 
 concurrency:
