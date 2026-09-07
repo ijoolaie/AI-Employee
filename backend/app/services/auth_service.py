@@ -29,6 +29,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "team.execute", "team.evaluate", "marketplace.publish", "marketplace.read",
     "agent_template.create", "agent_template.read", "agent_template.evaluate", "agent_template.publish", "agent_template.install",
     "agent_instance.lifecycle",
+    "agent_workforce.propose", "agent_workforce.read", "agent_workforce.board_review", "agent_workforce.ceo_approve", "agent_workforce.provision",
 )
 
 
