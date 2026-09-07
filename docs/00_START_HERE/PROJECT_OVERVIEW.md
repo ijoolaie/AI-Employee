@@ -6,6 +6,20 @@ AI Employee Platform is a **multi-tenant business operating platform** for Platf
 
 It is evolving from an Employee-centered implementation toward a **Human + Agent operating model**. Business work uses common execution contracts whether the executor is a Human, a specialized AI Agent, or a collaborative Human + Agent flow.
 
+## Versioning model
+
+The repository uses three independent version axes. They must not be treated as the same thing.
+
+| Axis | Meaning | Current truth |
+|---|---|---|
+| Release | Immutable product snapshot tied to an exact Git tag/SHA | `v1.3.8` / `fd1e74b6...` certified |
+| Architecture | Platform architecture and operating-model generation | V1.5 Agentic Operating Model |
+| Engineering phase | Delivery workstream / acceptance gate | Phase 14.1–14.9 complete; 14.10 external-pending |
+
+V1.5 is an **architecture/documentation baseline**, not a separately certified product release. Phase completion is engineering evidence, not release certification.
+
+Canonical rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
+
 ## Operating workspaces
 
 ```text
@@ -22,45 +36,67 @@ Tenant, role and authorization boundaries prevent downstream workspaces from imp
 
 Business work is represented through shared contracts for WorkItems and lifecycle, Human/Agent executors, authorization/RBAC, policy and approvals, scoped tools and credentials, audit/history, cancellation/retry and concurrency controls.
 
-Existing Employee entities remain compatibility structures while execution capabilities migrate toward AgentDefinition, AgentInstance and WorkItem abstractions.
+Existing Employee entities remain compatibility structures while the architecture migrates toward AgentDefinition, AgentInstance and WorkItem abstractions.
 
-## Test Center
+## Architecture status
 
-Phase 12 provides a first-class Test Center with tenant-scoped definitions and runs, workspace/RBAC enforcement, durable lifecycle and expiration, structured evidence, tenant-scoped artifacts, immutable verification export and authorized customer UI. Phase 12 is implemented through P12.6; runtime and external evidence remain separately classified.
+- **V1.4:** frozen architecture foundation.
+- **V1.5:** Human + Agent / Agentic Operating Model extension.
 
-## Phase 13 — Agent Teams & Marketplace
+The V1.5 blueprint defines the target execution model and security/governance contracts. It does not, by itself, certify every named capability as implemented.
+
+## Engineering status
+
+### Phase 12 — Test Center
+
+**Implemented / operational hardening.** Phase 12 provides tenant-scoped definitions and runs, workspace/RBAC enforcement, durable lifecycle and expiration, structured evidence, tenant-scoped artifacts, immutable verification export and authorized customer UI. Runtime and external evidence remain separately classified.
+
+### Phase 13 — Agent Teams & Marketplace
 
 **Engineering implementation complete.** Phase 13 includes tenant-scoped TeamDefinition and immutable TeamVersion, authorized tenant-local TeamInstallation, WorkItem-backed team execution, immutable TeamEvaluation evidence, Marketplace publication/discovery/import, tenant-local copies with provenance, authorized Marketplace UI and Playwright browser acceptance.
 
-The Marketplace contract explicitly separates **install**, **customer acceptance** and **production deployment**. The repository does not claim external production/customer acceptance from CI or browser acceptance alone.
+The Marketplace contract explicitly separates **install**, **customer acceptance** and **production deployment**.
 
-## Phase 14 — Scale, Governance & Production
+### Phase 14 — Scale, Governance & Production
 
 **Engineering workstreams 14.1–14.9 complete. Phase 14.10 external evidence pending.**
 
-Completed engineering baselines cover:
-
-- queue/worker isolation;
-- concurrency and backpressure hardening;
-- routing/scheduling;
-- tenant-scoped cost controls;
-- aggregate SLO/observability instrumentation;
-- backup/restore and recovery procedures;
-- security/compliance hardening and negative paths;
-- regression/release gates;
-- incident response and operational readiness.
+Completed engineering baselines cover queue/worker isolation, concurrency and backpressure hardening, routing/scheduling, tenant-scoped cost controls, aggregate SLO/observability instrumentation, backup/restore and recovery procedures, security/compliance hardening, regression/release gates, incident response and operational readiness.
 
 Phase 14.10 remains external-only: an exact immutable release must be independently validated for deployment, live providers, measured SLO/DR, security/compliance, Vendor → Reseller → Client acceptance and rollback readiness.
 
+## Current release truth
+
+- Certified release candidate: **`v1.3.8`**.
+- Certified commit: **`fd1e74b6b4c1701f7443efc202bad161ff19618c`**.
+- Certification run: **`34052885700` — PASS**.
+- Production deployment: **PENDING REAL INFRASTRUCTURE**.
+- Customer acceptance / live provider validation: **PENDING**.
+
 ## Where the project is now
 
-- V1.4: frozen architecture foundation.
-- V1.5: active Agentic Operating Model extension.
-- Phase 11 Unified Execution acceptance: **complete**.
-- Phase 12 Test Center P12.1-P12.6: **implemented / operational hardening**.
-- Phase 13 Agent Teams & Marketplace: **engineering complete**.
-- Phase 14.1–14.9: **engineering complete**.
-- Phase 14.10 External Production / Customer Acceptance: **external-pending**.
+```text
+RELEASE
+v1.3.8 (certified candidate)
+        │
+        │ exact release identity
+        ▼
+ARCHITECTURE
+V1.4 frozen foundation
+        │
+        ▼
+V1.5 Agentic Operating Model
+        │
+        ▼
+ENGINEERING
+Phase 11 → 12 → 13 → 14
+        │
+        ▼
+NEXT CERTIFIED RELEASE
+(to be created only after release gates pass)
+```
+
+This sequence is intentional: architecture and engineering may advance while the latest certified release remains v1.3.8.
 
 ## Evidence boundary
 
