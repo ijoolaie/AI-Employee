@@ -125,15 +125,7 @@ async def create_agent_template(
             install_policy=payload.install_policy,
             is_system_template=payload.is_system_template,
         )
-        await record(
-            db,
-            action="agent_template.created",
-            actor_id=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-            resource_type="agent_template",
-            resource_id=item.id,
-            metadata={"slug": item.slug, "version": item.version, "risk_tier": item.risk_tier},
-        )
+        await record(db, action="agent_template.created", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="agent_template", resource_id=item.id, metadata={"slug": item.slug, "version": item.version, "risk_tier": item.risk_tier})
         await db.commit()
     except Exception as exc:
         await db.rollback()
@@ -162,10 +154,7 @@ async def get_agent_template(
     ctx: TenantContext = Depends(require_permission("agent_template.read")),
     db: AsyncSession = Depends(get_db),
 ):
-    item = (await db.execute(select(AgentTemplate).where(
-        AgentTemplate.id == template_id,
-        AgentTemplate.tenant_id == ctx.tenant_id,
-    ))).scalar_one_or_none()
+    item = (await db.execute(select(AgentTemplate).where(AgentTemplate.id == template_id, AgentTemplate.tenant_id == ctx.tenant_id))).scalar_one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="Agent template not found")
     return _template(item)
@@ -178,21 +167,8 @@ async def publish_agent_template(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        item = await publish_template(
-            db,
-            tenant_id=ctx.tenant_id,
-            template_id=template_id,
-            approved_by_user_id=ctx.user_id,
-        )
-        await record(
-            db,
-            action="agent_template.published",
-            actor_id=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-            resource_type="agent_template",
-            resource_id=item.id,
-            metadata={"version": item.version, "risk_tier": item.risk_tier, "approval_required": True},
-        )
+        item = await publish_template(db, tenant_id=ctx.tenant_id, template_id=template_id, approved_by_user_id=ctx.user_id)
+        await record(db, action="agent_template.published", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="agent_template", resource_id=item.id, metadata={"version": item.version, "risk_tier": item.risk_tier, "approval_required": True})
         await db.commit()
     except Exception as exc:
         await db.rollback()
@@ -208,29 +184,8 @@ async def provision_agent_template(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        item = await provision_instance(
-            db,
-            tenant_id=ctx.tenant_id,
-            template_id=template_id,
-            name=payload.name,
-            sponsor_user_id=payload.sponsor_user_id,
-            approved_by_user_id=ctx.user_id,
-            configuration=payload.configuration,
-        )
-        await record(
-            db,
-            action="agent_instance.provisioned",
-            actor_id=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-            resource_type="agent_instance",
-            resource_id=item.id,
-            metadata={
-                "agent_template_id": str(template_id),
-                "sponsor_user_id": str(payload.sponsor_user_id),
-                "risk_tier": item.risk_tier,
-                "approval_required": True,
-            },
-        )
+        item = await provision_instance(db, tenant_id=ctx.tenant_id, template_id=template_id, name=payload.name, sponsor_user_id=payload.sponsor_user_id, approved_by_user_id=ctx.user_id, configuration=payload.configuration)
+        await record(db, action="agent_instance.provisioned", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="agent_instance", resource_id=item.id, metadata={"agent_template_id": str(template_id), "sponsor_user_id": str(payload.sponsor_user_id), "risk_tier": item.risk_tier, "approval_required": True})
         await db.commit()
     except Exception as exc:
         await db.rollback()
@@ -238,7 +193,7 @@ async def provision_agent_template(
     return AgentInstanceRead.model_validate(item, from_attributes=True)
 
 
-@router.post("/instances/{instance_id}/lifecycle", response_model=AgentInstanceRead)
+@router.post("/agent-instances/{instance_id}/lifecycle", response_model=AgentInstanceRead)
 async def transition_agent_instance(
     instance_id: UUID,
     payload: AgentInstanceLifecycleRequest,
@@ -246,28 +201,8 @@ async def transition_agent_instance(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        item = await transition_instance(
-            db,
-            tenant_id=ctx.tenant_id,
-            instance_id=instance_id,
-            target_status=payload.target_status,
-            requested_by_user_id=payload.requested_by_user_id,
-            approved_by_user_id=ctx.user_id,
-        )
-        await record(
-            db,
-            action="agent_instance.lifecycle_changed",
-            actor_id=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-            resource_type="agent_instance",
-            resource_id=item.id,
-            metadata={
-                "requested_by_user_id": str(payload.requested_by_user_id),
-                "target_status": item.status.value,
-                "risk_tier": item.risk_tier,
-                "approval_required": True,
-            },
-        )
+        item = await transition_instance(db, tenant_id=ctx.tenant_id, instance_id=instance_id, target_status=payload.target_status, requested_by_user_id=payload.requested_by_user_id, approved_by_user_id=ctx.user_id)
+        await record(db, action="agent_instance.lifecycle_changed", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="agent_instance", resource_id=item.id, metadata={"requested_by_user_id": str(payload.requested_by_user_id), "target_status": item.status.value, "risk_tier": item.risk_tier, "approval_required": True})
         await db.commit()
     except Exception as exc:
         await db.rollback()
