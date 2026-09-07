@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstanceStatus
 from app.models.agent_workforce_proposal import AgentWorkforceProposalStatus
 from app.services import agent_workforce_proposal_service as service
@@ -23,6 +24,17 @@ async def test_board_decision_requires_submitted_and_independent_reviewer(monkey
 
 
 @pytest.mark.asyncio
+async def test_board_reviewer_cannot_be_requester_or_sponsor(monkeypatch):
+    requester, sponsor = uuid4(), uuid4()
+    proposal = SimpleNamespace(id=uuid4(), status=AgentWorkforceProposalStatus.SUBMITTED, requester_user_id=requester, sponsor_user_id=sponsor)
+    monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
+    db = SimpleNamespace(flush=AsyncMock())
+    with pytest.raises(ValidationAppError, match="independent"):
+        await service.board_decide(db, tenant_id=uuid4(), proposal_id=proposal.id, reviewer_user_id=sponsor, approve=True)
+    db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
 async def test_ceo_decision_requires_board_approval_and_independent_authority(monkeypatch):
     requester, sponsor, board_reviewer, ceo = [uuid4() for _ in range(4)]
     proposal = SimpleNamespace(id=uuid4(), status=AgentWorkforceProposalStatus.BOARD_APPROVED, requester_user_id=requester, sponsor_user_id=sponsor, board_reviewed_by=board_reviewer, ceo_approved_by=None, ceo_decision_reason=None)
@@ -32,6 +44,17 @@ async def test_ceo_decision_requires_board_approval_and_independent_authority(mo
     result = await service.ceo_decide(db, tenant_id=uuid4(), proposal_id=proposal.id, approver_user_id=ceo, approve=True, reason="Approved")
     assert result.status == AgentWorkforceProposalStatus.CEO_APPROVED
     assert result.ceo_approved_by == ceo
+
+
+@pytest.mark.asyncio
+async def test_ceo_approver_cannot_be_board_reviewer_or_sponsor(monkeypatch):
+    requester, sponsor, board_reviewer = [uuid4() for _ in range(3)]
+    proposal = SimpleNamespace(id=uuid4(), status=AgentWorkforceProposalStatus.BOARD_APPROVED, requester_user_id=requester, sponsor_user_id=sponsor, board_reviewed_by=board_reviewer)
+    monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
+    db = SimpleNamespace(flush=AsyncMock())
+    with pytest.raises(ValidationAppError, match="independent"):
+        await service.ceo_decide(db, tenant_id=uuid4(), proposal_id=proposal.id, approver_user_id=board_reviewer, approve=True)
+    db.flush.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -71,3 +94,14 @@ async def test_activation_requires_approved_access_review_and_independent_activa
     assert instance.status == AgentInstanceStatus.ENABLED
     assert instance.enabled is True
     db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_activation_activator_cannot_be_ceo_or_sponsor(monkeypatch):
+    sponsor, ceo = uuid4(), uuid4()
+    proposal = SimpleNamespace(id=uuid4(), status=AgentWorkforceProposalStatus.PROVISIONED, provisioned_agent_instance_id=uuid4(), requester_user_id=uuid4(), sponsor_user_id=sponsor, board_reviewed_by=uuid4(), ceo_approved_by=ceo)
+    monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
+    db = SimpleNamespace(flush=AsyncMock())
+    with pytest.raises(ValidationAppError, match="independent"):
+        await service.activate_provisioned_proposal(db, tenant_id=uuid4(), proposal_id=proposal.id, activated_by_user_id=ceo)
+    db.flush.assert_not_awaited()
