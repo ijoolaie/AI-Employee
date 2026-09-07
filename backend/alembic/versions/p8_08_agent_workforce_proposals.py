@@ -18,6 +18,7 @@ PERMISSIONS = (
     ("agent_workforce.board_review", "Review Agent workforce proposals as the Board authority"),
     ("agent_workforce.ceo_approve", "Approve Agent workforce proposals as the CEO authority"),
     ("agent_workforce.provision", "Provision CEO-approved Agent workforce proposals"),
+    ("agent_workforce.activate", "Activate Agent workforce after approved access review"),
 )
 
 
