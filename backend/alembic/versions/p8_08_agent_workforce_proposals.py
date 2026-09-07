@@ -27,6 +27,7 @@ def upgrade() -> None:
         "submitted", "board_approved", "board_rejected", "ceo_approved",
         "ceo_rejected", "provisioned", "cancelled",
         name="agentworkforceproposalstatus",
+        create_type=False,
     )
     proposal_status.create(op.get_bind(), checkfirst=True)
     op.create_table(
@@ -42,11 +43,7 @@ def upgrade() -> None:
         sa.Column("sponsor_user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False),
         sa.Column("risk_tier", sa.Integer(), nullable=False),
         sa.Column("configuration", postgresql.JSONB(), nullable=False),
-        sa.Column(
-            "status",
-            proposal_status,
-            nullable=False,
-        ),
+        sa.Column("status", proposal_status, nullable=False),
         sa.Column("board_reviewed_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
         sa.Column("board_decision_reason", sa.Text(), nullable=True),
         sa.Column("ceo_approved_by", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=True),
