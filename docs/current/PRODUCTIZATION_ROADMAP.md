@@ -80,28 +80,42 @@ Define the organization-level model on top of V1.5:
 
 - Human Owner / CEO / Chairman as final authority.
 - AI Board as advisory/governance layer.
-- AI Internal Manager as operating coordinator.
+- AI Chief of Staff and AI Internal Manager as executive operating layer.
 - Explicit decision rights, approval thresholds and escalation paths.
 - Auditability of every organizational decision and delegation.
 
 ### 8.2 Founding AI workforce
-Create the initial first-party workforce as reusable role definitions and customer-facing templates:
+Create the initial first-party workforce as reusable role definitions and customer-facing templates. The detailed role catalog is maintained in `docs/blueprint/AI_COMPANY_FOUNDING_WORKFORCE.md`.
 
-- AI Coordinator
+Initial active candidates:
+
+- AI Chief of Staff / Coordinator
+- AI Internal Manager
+- AI Strategy Advisor
+- AI Technology Advisor / CTO
 - AI Software Developer
-- AI Graphic Designer
-- AI Accountant / Finance
+- AI QA Engineer
+- AI DevOps / Infrastructure Engineer
+- AI Network / Security Engineer
+- AI CISO / Security Manager
+- AI Finance / Accountant
+- AI Legal & Compliance Advisor
+- AI Marketing Manager
 - AI SEO Specialist
 - AI Content Writer
+- AI Graphic Designer
 - AI Sales Manager
-- AI Marketing Manager
+- AI Customer Success / Support Manager
+- AI Data & Analytics Specialist
+- AI Knowledge Manager
+- AI Corporate Secretary
 
-Additional roles are proposed by the AI Internal Manager, reviewed by the AI Board and approved by the CEO before activation.
+The broader catalog also defines specialized roles for cybersecurity, SOC, incident response, penetration testing, IAM, privacy, compliance, corporate protection/physical security, HR, legal, procurement, data, knowledge, operations, business continuity, R&D, trust & safety and other enterprise functions. Roles may remain dormant marketplace templates until justified by workload or customer demand.
 
 ### 8.3 Workforce lifecycle
 Formalize:
 
-`Need → Proposal → Board Review → CEO Approval → Template → Evaluation → Publication → Installation → AgentInstance → Active → Suspend/Retire`
+`Need → Proposal → Board Review → CEO Approval → Existing Template or New Role → Evaluation → Publication → Installation → AgentInstance → Active → Suspend/Retire`
 
 No autonomous role creation may bypass policy, evaluation or CEO authority.
 
@@ -110,13 +124,16 @@ Expose the same role definitions as installable customer templates, while keepin
 
 `AgentDefinition ≠ AgentTemplate ≠ AgentInstance`
 
-Templates are reusable products; instances are tenant-scoped deployments with their own configuration, credentials references, memory, usage and run history.
+Templates are reusable products; instances are tenant-scoped deployments with their own configuration, permissions, credential references, memory, usage and run history.
 
 ### 8.5 Team compositions
 Define reusable teams such as:
 
 - Marketing Team: Marketing Manager → SEO → Content → Graphic Designer → Analytics.
 - Software Team: Technology Manager → Developer → UI/UX → QA → DevOps.
+- Security Team: CISO → Security Engineer → SOC → Incident Response → IAM.
+- Finance Team: CFO → Accountant → Billing → Financial Analyst → Procurement.
+- Operations Team: COO → Operations Manager → Coordinator → Business Continuity → Vendor Operations.
 
 Team composition must remain policy-governed and tenant-scoped.
 
@@ -130,6 +147,8 @@ Add organization-level views for:
 - Delegation and handoffs
 - Cost and usage by employee/team
 - Workforce proposals
+- Agent registry and lifecycle
+- Security/risk status
 - Audit trail
 
 ### Stage 8 exit criteria
@@ -170,7 +189,7 @@ Stage 10 is a product vision, not a current implementation claim.
 
 ## Cross-cutting Definition of Done
 
-Every stage and work package must preserve tenant isolation, RBAC, equivalent Human/Agent authorization, policy-driven approvals, scoped credentials, auditability, safe test execution, secret exclusion, one authoritative Alembic graph, reproducible CI/release artifacts, explicit evidence boundaries and documentation reconciliation before closure.
+Every stage and work package must preserve tenant isolation, RBAC, equivalent Human/Agent authorization, policy-driven approvals, scoped credentials, auditable agent identity, safe test execution, secret exclusion, one authoritative Alembic graph, reproducible CI/release artifacts, explicit evidence boundaries and documentation reconciliation before closure.
 
 ## Evidence boundary
 
