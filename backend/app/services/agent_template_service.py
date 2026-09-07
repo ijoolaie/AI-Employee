@@ -20,6 +20,7 @@ async def create_template(
     agent_definition_id: uuid.UUID,
     slug: str,
     name: str,
+    description: str | None = None,
     version: int = 1,
     risk_tier: int = 0,
     capability_contract: dict | None = None,
@@ -38,6 +39,8 @@ async def create_template(
         raise NotFoundError("Agent definition not found for tenant")
     if not 0 <= risk_tier <= 4:
         raise ValidationAppError("risk_tier must be between 0 and 4")
+    if version < 1:
+        raise ValidationAppError("version must be at least 1")
 
     duplicate = (await db.execute(select(AgentTemplate).where(
         AgentTemplate.tenant_id == tenant_id,
@@ -52,6 +55,7 @@ async def create_template(
         agent_definition_id=definition.id,
         slug=slug,
         name=name,
+        description=description,
         version=version,
         risk_tier=risk_tier,
         capability_contract=capability_contract or {},
@@ -85,7 +89,7 @@ async def publish_template(
         raise ConflictError("Agent template is not publishable from its current state")
     if not template.evaluation_policy.get("passed", False):
         raise ValidationAppError("Agent template evaluation must pass before publication")
-    if approved_by_user_id is None:
+    if not approved_by_user_id:
         raise ValidationAppError("CEO or designated approver is required for publication")
 
     template.status = AgentTemplateStatus.PUBLISHED
