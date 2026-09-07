@@ -15,6 +15,7 @@ from app.core.database import worker_db_session
 from app.core.telemetry import span
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.agent_identity import AgentIdentity
+from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.employee import EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
@@ -55,10 +56,23 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             # This closes the revoke/retire-after-enqueue race.
             identity: AgentIdentity | None = None
             if run.agent_instance_id is not None:
+                instance = (
+                    await db.execute(
+                        select(AgentInstance).where(
+                            AgentInstance.id == run.agent_instance_id,
+                            AgentInstance.tenant_id == run.tenant_id,
+                        )
+                    )
+                ).scalar_one_or_none()
+                if instance is None:
+                    raise ValidationAppError("Agent Run references an unknown instance")
+                if instance.status != AgentInstanceStatus.ENABLED or not instance.enabled:
+                    raise ValidationAppError("Agent Run instance is not executable")
+
                 identity = (
                     await db.execute(
                         select(AgentIdentity).where(
-                            AgentIdentity.agent_instance_id == run.agent_instance_id,
+                            AgentIdentity.agent_instance_id == instance.id,
                             AgentIdentity.tenant_id == run.tenant_id,
                         )
                     )
