@@ -14,12 +14,22 @@ from app.services.run_service import create_run
 
 
 class AgentExecutionAdapter:
-    """Create canonical Runs and preserve Agent identity through execution."""
+    """Create canonical Runs and hand them to the existing Run worker."""
 
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
     async def dispatch(self, work_item: WorkItem, agent: AgentInstance) -> dict[str, Any]:
+        # WorkItem dispatch is an execution boundary too. Re-check the
+        # activated AgentInstance identity/policy before creating a Run.
+        # The synthetic work-item capability is intentionally not used here:
+        # the authoritative lifecycle/identity gate remains the runtime worker
+        # and the adapter still resolves the tenant-scoped binding below.
+        if agent.tenant_id != work_item.tenant_id:
+            raise ValueError("cross-tenant agent execution is forbidden")
+        if not agent.enabled:
+            raise ValueError("agent instance is not executable")
+
         instance, definition, version = await resolve_employee_version(
             self.db,
             tenant_id=work_item.tenant_id,
@@ -37,6 +47,28 @@ class AgentExecutionAdapter:
         # the worker therefore has an authoritative identity to re-check.
         run.agent_instance_id = instance.id
         await self.db.flush()
+
+        # Reuse the canonical asynchronous Run execution path. This is the
+        # same worker used by the normal Run API; no parallel Agent runtime is
+        # introduced. The worker will re-check AgentInstance + AgentIdentity
+        # and install governed ToolRegistry context before execute_run().
+        try:
+            from app.workers.run_worker import execute_run_task
+
+            execute_run_task.delay(str(run.id), str(work_item.tenant_id))
+        except Exception:  # noqa: BLE001
+            # Match the existing Run API contract: persistence of the Run is
+            # still useful for observability/retry, while enqueue failure is
+            # logged by the worker boundary rather than creating a second
+            # execution implementation here.
+            import logging
+
+            logging.getLogger("app.services.agent_execution_adapter").warning(
+                "agent_run_enqueue_failed",
+                extra={"run_id": str(run.id), "work_item_id": str(work_item.id)},
+                exc_info=True,
+            )
+
         return {
             "run_id": str(run.id),
             "executor_type": "agent",
@@ -44,6 +76,7 @@ class AgentExecutionAdapter:
             "agent_definition_id": str(definition.id),
             "employee_id": str(version.employee_id),
             "employee_version_id": str(version.id),
+            "work_item_id": str(work_item.id),
         }
 
     async def execute_tool(
