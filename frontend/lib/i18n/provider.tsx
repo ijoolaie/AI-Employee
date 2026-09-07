@@ -18,9 +18,10 @@ function getLocaleSnapshot(): Locale {
   if (typeof window === "undefined") return "en";
   return window.localStorage.getItem("aiep.locale") === "fa" ? "fa" : "en";
 }
+function getServerLocaleSnapshot(): Locale { return "en"; }
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const locale = useSyncExternalStore(subscribeLocale, getLocaleSnapshot, () => "en");
+  const locale = useSyncExternalStore(subscribeLocale, getLocaleSnapshot, getServerLocaleSnapshot);
 
   useEffect(() => {
     document.documentElement.lang = locale;
