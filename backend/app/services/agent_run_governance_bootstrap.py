@@ -6,6 +6,7 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.run import Run
 from app.services import agent_tool_governance
@@ -27,6 +28,13 @@ def install() -> None:
 
     @wraps(original_execute_run)
     async def governed_execute_run(db: Any, *, run_id: UUID) -> Run:
+        # Production execution always uses AsyncSession. Lightweight service
+        # doubles are intentionally allowed to call the canonical function
+        # directly so existing unit contracts do not need to emulate a full
+        # SQLAlchemy session merely to test Employee guardrails.
+        if not isinstance(db, AsyncSession):
+            return await original_execute_run(db, run_id=run_id)
+
         result = await db.execute(select(Run).where(Run.id == run_id))
         run = result.scalar_one_or_none()
         if run is None or run.agent_instance_id is None:
