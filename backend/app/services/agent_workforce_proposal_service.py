@@ -7,8 +7,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
+from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.agent_definition import AgentDefinition
-from app.models.agent_instance import AgentInstance
+from app.models.agent_instance import AgentInstance, AgentInstanceStatus
+from app.models.agent_identity import AgentIdentity
 from app.models.agent_template import AgentTemplate
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalStatus
 from app.services.agent_template_service import provision_instance
@@ -142,11 +144,54 @@ async def provision_approved_proposal(
         sponsor_user_id=proposal.sponsor_user_id,
         approved_by_user_id=proposal.ceo_approved_by,
         configuration=proposal.configuration,
+        activate=False,
     )
     proposal.provisioned_agent_instance_id = instance.id
     proposal.status = AgentWorkforceProposalStatus.PROVISIONED
     await db.flush()
-    await record(db, action="agent_workforce.proposal.provisioned", actor_id=proposal.ceo_approved_by, tenant_id=tenant_id, resource_type="agent_workforce_proposal", resource_id=proposal.id, metadata={"agent_instance_id": str(instance.id)})
+    await record(db, action="agent_workforce.proposal.provisioned", actor_id=proposal.ceo_approved_by, tenant_id=tenant_id, resource_type="agent_workforce_proposal", resource_id=proposal.id, metadata={"agent_instance_id": str(instance.id), "activation": "blocked_pending_access_review"})
+    return proposal
+
+
+async def activate_provisioned_proposal(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    proposal_id: uuid.UUID,
+    activated_by_user_id: uuid.UUID,
+) -> AgentWorkforceProposal:
+    proposal = await _get_locked(db, tenant_id, proposal_id)
+    if proposal.status != AgentWorkforceProposalStatus.PROVISIONED:
+        raise ConflictError("Only provisioned workforce proposals may be activated")
+    if not proposal.provisioned_agent_instance_id:
+        raise ValidationAppError("Provisioned workforce proposal has no AgentInstance")
+    if activated_by_user_id in {proposal.requester_user_id, proposal.sponsor_user_id, proposal.board_reviewed_by, proposal.ceo_approved_by}:
+        raise ValidationAppError("Activation reviewer must be independent from proposal authorities")
+
+    instance = (await db.execute(select(AgentInstance).where(
+        AgentInstance.id == proposal.provisioned_agent_instance_id,
+        AgentInstance.tenant_id == tenant_id,
+    ).with_for_update())).scalar_one_or_none()
+    identity = (await db.execute(select(AgentIdentity).where(
+        AgentIdentity.agent_instance_id == proposal.provisioned_agent_instance_id,
+        AgentIdentity.tenant_id == tenant_id,
+    ))).scalar_one_or_none()
+    if instance is None or identity is None:
+        raise NotFoundError("Provisioned AgentInstance identity state not found")
+    if instance.status != AgentInstanceStatus.SUSPENDED:
+        raise ConflictError("AgentInstance is not awaiting access-review activation")
+    review = (await db.execute(select(AgentAccessReview).where(
+        AgentAccessReview.agent_identity_id == identity.id,
+        AgentAccessReview.tenant_id == tenant_id,
+        AgentAccessReview.decision == AgentAccessReviewDecision.APPROVED,
+    ).order_by(AgentAccessReview.reviewed_at.desc()).limit(1))).scalar_one_or_none()
+    if review is None:
+        raise ValidationAppError("An approved access review is required before activation")
+
+    instance.status = AgentInstanceStatus.ENABLED
+    instance.enabled = True
+    await db.flush()
+    await record(db, action="agent_workforce.proposal.activated", actor_id=activated_by_user_id, tenant_id=tenant_id, resource_type="agent_workforce_proposal", resource_id=proposal.id, metadata={"agent_instance_id": str(instance.id), "access_review_id": str(review.id)})
     return proposal
 
 
