@@ -9,7 +9,8 @@ const sidebar = read("components/layout/sidebar.tsx");
 
 const required = [
   "/agent-governance/workforce-registry",
-  "/agent-governance/templates/${templateId}/evaluations",
+  "/agent-governance/templates/",
+  "/evaluations`)).data",
   "/agent-governance/templates/${templateId}/evaluate",
   "/agent-workforce/proposals",
   "/board-decision",
