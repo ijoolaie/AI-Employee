@@ -52,7 +52,7 @@ def upgrade() -> None:
     op.add_column("agent_instances", sa.Column("approval_policy", postgresql.JSONB(), nullable=False, server_default="{}"))
     op.add_column("agent_instances", sa.Column("risk_tier", sa.Integer(), nullable=False, server_default="0"))
     op.create_foreign_key(
-        "fk_agent_instances_template",
+        None,
         "agent_instances",
         "agent_templates",
         ["agent_template_id"],
@@ -60,25 +60,25 @@ def upgrade() -> None:
         ondelete="RESTRICT",
     )
     op.create_foreign_key(
-        "fk_agent_instances_sponsor_user",
+        None,
         "agent_instances",
         "users",
         ["sponsor_user_id"],
         ["id"],
         ondelete="RESTRICT",
     )
-    op.create_index("ix_agent_instances_agent_template", "agent_instances", ["agent_template_id"])
-    op.create_index("ix_agent_instances_sponsor", "agent_instances", ["sponsor_user_id"])
+    op.create_index("ix_agent_instances_agent_template_id", "agent_instances", ["agent_template_id"])
+    op.create_index("ix_agent_instances_sponsor_user_id", "agent_instances", ["sponsor_user_id"])
 
     op.execute(sa.text("ALTER TYPE agentinstancestatus ADD VALUE IF NOT EXISTS 'suspended'"))
     op.execute(sa.text("ALTER TYPE agentinstancestatus ADD VALUE IF NOT EXISTS 'retired'"))
 
 
 def downgrade() -> None:
-    op.drop_index("ix_agent_instances_sponsor", table_name="agent_instances")
-    op.drop_index("ix_agent_instances_agent_template", table_name="agent_instances")
-    op.drop_constraint("fk_agent_instances_sponsor_user", "agent_instances", type_="foreignkey")
-    op.drop_constraint("fk_agent_instances_template", "agent_instances", type_="foreignkey")
+    op.drop_index("ix_agent_instances_sponsor_user_id", table_name="agent_instances")
+    op.drop_index("ix_agent_instances_agent_template_id", table_name="agent_instances")
+    op.drop_constraint("agent_instances_sponsor_user_id_fkey", "agent_instances", type_="foreignkey")
+    op.drop_constraint("agent_instances_agent_template_id_fkey", "agent_instances", type_="foreignkey")
     op.drop_column("agent_instances", "risk_tier")
     op.drop_column("agent_instances", "approval_policy")
     op.drop_column("agent_instances", "permission_policy")
