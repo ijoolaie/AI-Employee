@@ -4,7 +4,7 @@
 
 **Architecture baseline:** `V1.5 Agentic Operating Model` — documentation/architecture baseline, **not a separately certified release**
 
-**Engineering phase:** Phase 14.1–14.9 complete; Phase 14.10 external production/customer acceptance pending
+**Engineering phase:** Phase 14.1–14.16 complete where tracked; current program is in Production Hardening / Stage 7 External Production Certification
 
 **Production deployment:** **NOT DEPLOYED**
 
@@ -32,6 +32,20 @@ Canonical versioning rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 - A controlled production deployment was attempted with `v1.3.8` in run `34060615390` but stopped during SSH configuration because the required production Environment secrets were empty/missing.
 - No production host was changed by that failed run.
 - Production deployment therefore remains **PENDING INFRASTRUCTURE**.
+
+## Mainline hardening truth
+
+The certified `v1.3.8` release identity remains frozen. `main` may continue to receive separately verified engineering hardening without silently changing that certification.
+
+The latest dependency-hardening merge is PR #349, which upgraded Next.js `15.5.21 → 16.3.4`. It passed all five required repository gates on exact HEAD before squash merge:
+
+- CI #969 — SUCCESS
+- CodeQL #1182 — SUCCESS
+- Production Infrastructure Validation #243 — SUCCESS
+- HA Failure Recovery Validation #157 — SUCCESS
+- Ephemeral DAST Validation #208 — SUCCESS
+
+PR #349 merged at `07f7fa2248cdf289c831a6ccbcf50736b20324fa`. This is mainline hardening evidence; it does not create a new certified release. Next.js 16.3.3/16.3.4 also includes important security fixes.
 
 ## Start Here
 
@@ -106,8 +120,8 @@ Phase 14 Scale / Governance / Production
 - Phase 11 Unified Execution acceptance: **COMPLETE**.
 - Phase 12 Test Center P12.1-P12.6: **IMPLEMENTED / OPERATIONAL HARDENING**.
 - Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**.
-- Phase 14.1–14.9: **ENGINEERING COMPLETE**.
-- Phase 14.10 External Production / Customer Acceptance: **EXTERNAL-PENDING**.
+- Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**.
+- Current program stage: **Production Hardening / Stage 7 External Production Certification & Customer Acceptance**.
 - Production certification candidate `v1.3.8`: **CERTIFIED**.
 - External production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance / live provider validation: **PENDING**.
