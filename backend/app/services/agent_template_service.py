@@ -140,3 +140,51 @@ async def provision_instance(
     await db.flush()
     await db.refresh(instance)
     return instance
+
+
+_ALLOWED_LIFECYCLE_TRANSITIONS: dict[AgentInstanceStatus, set[AgentInstanceStatus]] = {
+    AgentInstanceStatus.ENABLED: {AgentInstanceStatus.DRAINING, AgentInstanceStatus.SUSPENDED, AgentInstanceStatus.RETIRED},
+    AgentInstanceStatus.DRAINING: {AgentInstanceStatus.ENABLED, AgentInstanceStatus.SUSPENDED, AgentInstanceStatus.RETIRED},
+    AgentInstanceStatus.SUSPENDED: {AgentInstanceStatus.ENABLED, AgentInstanceStatus.RETIRED},
+    AgentInstanceStatus.DISABLED: {AgentInstanceStatus.ENABLED, AgentInstanceStatus.RETIRED},
+    AgentInstanceStatus.RETIRED: set(),
+}
+
+
+async def transition_instance(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    instance_id: uuid.UUID,
+    target_status: AgentInstanceStatus,
+    requested_by_user_id: uuid.UUID,
+    approved_by_user_id: uuid.UUID,
+) -> AgentInstance:
+    instance = (await db.execute(select(AgentInstance).where(
+        AgentInstance.id == instance_id,
+        AgentInstance.tenant_id == tenant_id,
+    ))).scalar_one_or_none()
+    if instance is None:
+        raise NotFoundError("Agent instance not found")
+    if target_status == instance.status:
+        return instance
+    if target_status not in _ALLOWED_LIFECYCLE_TRANSITIONS.get(instance.status, set()):
+        raise ConflictError(f"Invalid agent instance lifecycle transition: {instance.status.value} -> {target_status.value}")
+    if not requested_by_user_id or not approved_by_user_id:
+        raise ValidationAppError("Lifecycle requester and approver are required")
+
+    approval_policy = instance.approval_policy or {}
+    requires_approval = bool(approval_policy.get("requires_ceo_approval", False)) or instance.risk_tier >= 3 or target_status in {
+        AgentInstanceStatus.SUSPENDED,
+        AgentInstanceStatus.RETIRED,
+    }
+    if requires_approval and requested_by_user_id == approved_by_user_id:
+        raise ValidationAppError("Requester and approver must be independently attributable for governed lifecycle changes")
+
+    instance.status = target_status
+    instance.enabled = target_status in {AgentInstanceStatus.ENABLED, AgentInstanceStatus.DRAINING}
+    if target_status == AgentInstanceStatus.RETIRED:
+        instance.enabled = False
+    await db.flush()
+    await db.refresh(instance)
+    return instance
