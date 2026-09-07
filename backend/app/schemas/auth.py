@@ -36,6 +36,7 @@ class UserResponse(BaseModel):
     tenant_id: UUID
     is_active: bool
     is_platform_admin: bool
+    permissions: list[str] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 
