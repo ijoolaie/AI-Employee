@@ -1,11 +1,14 @@
 # Current Project Status
 
-**Baseline:** V1.5  
-**Status date:** 2026-09-06  
+**Architecture baseline:** V1.5 Agentic Operating Model  
+**Release baseline:** `v1.3.8`  
+**Status date:** 2026-09-07  
 **Certified release candidate:** `v1.3.8`  
 **Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
 **Certification run:** `34052885700` — SUCCESS  
 **Production deployment:** PENDING REAL INFRASTRUCTURE
+
+The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number.
 
 ## Executive status
 
