@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -56,7 +57,7 @@ async def test_agent_credential_access_requires_policy(monkeypatch):
         await credential_service.resolve_credential(Db(), tenant_id=tenant_id, credential_id=credential_id, agent_instance_id=agent_id, run_id=run_id)
 
 @pytest.mark.asyncio
-async def test_shopify_legacy_plaintext_access_token_is_rejected(monkeypatch):
+async def test_shopify_legacy_plaintext_access_token_is_rejected():
     from app.services import shopify_service
     integration = SimpleNamespace(tenant_id=uuid4(), config={"shop_domain": "example.myshopify.com", "access_token": "legacy-secret"})
     class Db: pass
