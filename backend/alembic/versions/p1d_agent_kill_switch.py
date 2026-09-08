@@ -28,8 +28,8 @@ def upgrade() -> None:
         sa.Column("asserted_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("correlation_id", sa.String(length=128), nullable=False),
-        sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["agent_instance_id"], ["agent_instances.id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["agent_instance_id"], ["agent_instances.id"], ondelete="SET NULL"),
         sa.ForeignKeyConstraint(["asserted_by"], ["users.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
