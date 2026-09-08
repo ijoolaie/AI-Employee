@@ -1,4 +1,3 @@
-from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -9,7 +8,7 @@ from app.services import agent_kill_switch_service
 
 
 @pytest.mark.asyncio
-async def test_active_agent_kill_switch_blocks_execution(monkeypatch):
+async def test_active_agent_kill_switch_blocks_execution():
     tenant_id, agent_id = uuid4(), uuid4()
     switch = AgentKillSwitch(
         id=uuid4(), tenant_id=tenant_id, agent_instance_id=agent_id,
@@ -34,7 +33,7 @@ async def test_active_agent_kill_switch_blocks_execution(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_kill_switch_scope_precedence_is_fail_closed(monkeypatch):
+async def test_kill_switch_scope_precedence_is_fail_closed():
     tenant_id, agent_id = uuid4(), uuid4()
     calls = []
 
@@ -83,7 +82,7 @@ async def test_agent_kill_switch_rejects_cross_tenant_target():
 
 
 @pytest.mark.asyncio
-async def test_agent_kill_switch_assertion_serializes_before_check(monkeypatch):
+async def test_agent_kill_switch_assertion_serializes_before_check():
     tenant_id, agent_id = uuid4(), uuid4()
     existing = AgentKillSwitch(
         id=uuid4(), tenant_id=tenant_id, agent_instance_id=agent_id,
@@ -110,5 +109,7 @@ async def test_agent_kill_switch_assertion_serializes_before_check(monkeypatch):
         agent_instance_id=agent_id,
     )
     assert result is existing
-    assert len(statements) == 2
+    assert len(statements) == 3
     assert "pg_advisory_xact_lock" in statements[0]
+    assert "agent_instances" in statements[1]
+    assert "FOR UPDATE" in statements[2]
