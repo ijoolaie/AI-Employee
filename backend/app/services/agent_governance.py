@@ -18,6 +18,7 @@ from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
+from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 
 
 _agent_execution_context: ContextVar[tuple[uuid.UUID, uuid.UUID] | None] = ContextVar(
@@ -104,24 +105,15 @@ async def review_access(db: AsyncSession, *, tenant_id: uuid.UUID, identity_id: 
 
 
 async def assert_agent_can_execute(db: AsyncSession, *, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID, tool_name: str, required_permission: str, now: datetime | None = None) -> AgentInstance:
-    now = now or datetime.now(timezone.utc)
-    instance = (await db.execute(select(AgentInstance).where(AgentInstance.id == agent_instance_id, AgentInstance.tenant_id == tenant_id))).scalar_one_or_none()
-    if instance is None:
-        raise NotFoundError("Agent instance not found for tenant")
-    if instance.status != AgentInstanceStatus.ENABLED or not instance.enabled:
-        raise ValidationAppError("Agent instance is not executable")
-    identity = (await db.execute(select(AgentIdentity).where(AgentIdentity.agent_instance_id == instance.id, AgentIdentity.tenant_id == tenant_id))).scalar_one_or_none()
-    if identity is None or not identity.active or identity.revoked_at is not None:
-        raise ValidationAppError("Agent identity is inactive or revoked")
-    if identity.expires_at is not None and identity.expires_at <= now:
-        identity.active = False
-        await db.flush()
-        raise ValidationAppError("Agent identity has expired")
-    policy = instance.permission_policy or {}
-    allowed_tools = set(policy.get("allowed_tools") or policy.get("tools") or [])
-    permissions = set(policy.get("permissions") or [])
-    if tool_name not in allowed_tools and "*" not in allowed_tools:
-        raise ValidationAppError(f"Tool is not authorized for AgentInstance: {tool_name}", details={"tool": tool_name, "agent_instance_id": str(instance.id)})
-    if required_permission not in permissions and "*" not in permissions:
-        raise ValidationAppError(f"AgentInstance lacks required permission: {required_permission}", details={"tool": tool_name, "required_permission": required_permission})
-    return instance
+    """Authorize a tool invocation through the central policy decision kernel."""
+    return await assert_authorized(
+        db,
+        PolicyRequest(
+            tenant_id=tenant_id,
+            agent_instance_id=agent_instance_id,
+            action="tool.execute",
+            tool_name=tool_name,
+            required_permission=required_permission,
+            now=now,
+        ),
+    )
