@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.core.exceptions import ValidationAppError
+from app.core.exceptions import ConflictError, ValidationAppError
 from app.models.agent_kill_switch import AgentKillScope, AgentKillSwitch
 from app.services import agent_kill_switch_service
 
@@ -115,3 +115,64 @@ async def test_agent_kill_switch_assertion_serializes_before_check():
     assert "agent_instances" in statements[0]
     assert "pg_advisory_xact_lock" in statements[1]
     assert "FOR UPDATE" in statements[2]
+
+
+@pytest.mark.asyncio
+async def test_revoke_kill_enforces_tenant_ownership():
+    tenant_id, other_tenant = uuid4(), uuid4()
+    switch = AgentKillSwitch(
+        id=uuid4(), tenant_id=tenant_id, scope=AgentKillScope.TENANT,
+        active=True, reason="incident", correlation_id="corr-4",
+    )
+
+    class Result:
+        def scalar_one_or_none(self):
+            return switch
+
+    class Db:
+        async def execute(self, statement):
+            return Result()
+
+    with pytest.raises(ValidationAppError, match="tenant mismatch"):
+        await agent_kill_switch_service.revoke_kill(
+            Db(), kill_switch_id=switch.id, actor_id=uuid4(), tenant_id=other_tenant,
+        )
+    assert switch.active is True
+
+
+@pytest.mark.asyncio
+async def test_revoke_kill_is_idempotent_for_inactive_switch():
+    switch = AgentKillSwitch(
+        id=uuid4(), tenant_id=uuid4(), scope=AgentKillScope.AGENT,
+        active=False, reason="incident", correlation_id="corr-5",
+    )
+
+    class Result:
+        def scalar_one_or_none(self):
+            return switch
+
+    class Db:
+        async def execute(self, statement):
+            return Result()
+
+    result = await agent_kill_switch_service.revoke_kill(
+        Db(), kill_switch_id=switch.id, actor_id=uuid4(), tenant_id=switch.tenant_id,
+    )
+    assert result is switch
+    assert switch.revoked_at is None
+
+
+@pytest.mark.asyncio
+async def test_revoke_kill_reports_missing_switch():
+    class Result:
+        def scalar_one_or_none(self):
+            return None
+
+    class Db:
+        async def execute(self, statement):
+            return Result()
+
+    with pytest.raises(ConflictError, match="Kill switch not found"):
+        await agent_kill_switch_service.revoke_kill(
+            Db(), kill_switch_id=uuid4(), actor_id=uuid4(), tenant_id=uuid4(),
+        )

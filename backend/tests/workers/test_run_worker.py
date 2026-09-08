@@ -7,6 +7,7 @@ from uuid import uuid4
 import pytest
 
 from app.core.exceptions import ValidationAppError
+from app.models.agent_instance import AgentInstanceStatus
 from app.workers import run_worker
 
 
@@ -16,9 +17,11 @@ def _span(*_args, **_kwargs):
 
 
 class _Db:
-    def __init__(self, run, version):
+    def __init__(self, run, version, instance=None, identity=None):
         self.run = run
         self.version = version
+        self.instance = instance
+        self.identity = identity
         self.committed = False
         self.rolled_back = False
 
@@ -26,6 +29,10 @@ class _Db:
         text = str(query)
         if "employee_versions" in text:
             return SimpleNamespace(scalar_one_or_none=lambda: self.version)
+        if "agent_instances" in text:
+            return SimpleNamespace(scalar_one_or_none=lambda: self.instance)
+        if "agent_identities" in text:
+            return SimpleNamespace(scalar_one_or_none=lambda: self.identity)
         if "tool_approval_requests" in text:
             return SimpleNamespace(scalars=lambda: SimpleNamespace(first=lambda: None))
         return SimpleNamespace(scalar_one_or_none=lambda: self.run)
@@ -72,6 +79,26 @@ def _employee_version():
     )
 
 
+def _agent_instance(tenant_id, agent_instance_id):
+    return SimpleNamespace(
+        id=agent_instance_id,
+        tenant_id=tenant_id,
+        status=AgentInstanceStatus.ENABLED,
+        enabled=True,
+    )
+
+
+def _agent_identity(tenant_id, agent_instance_id):
+    return SimpleNamespace(
+        id=uuid4(),
+        tenant_id=tenant_id,
+        agent_instance_id=agent_instance_id,
+        active=True,
+        revoked_at=None,
+        expires_at=None,
+    )
+
+
 def test_execute_run_task_requires_tenant_context():
     with pytest.raises(ValidationAppError):
         run_worker.execute_run_task(str(uuid4()), "")
@@ -104,7 +131,9 @@ async def test_run_worker_blocks_queued_agent_run_when_kill_switch_is_active(mon
     tenant_id = uuid4()
     agent_instance_id = uuid4()
     run = _run(run_id, tenant_id, agent_instance_id=agent_instance_id)
-    db = _Db(run, _employee_version())
+    instance = _agent_instance(tenant_id, agent_instance_id)
+    identity = _agent_identity(tenant_id, agent_instance_id)
+    db = _Db(run, _employee_version(), instance, identity)
 
     async def _kill_switch(*_args, **_kwargs):
         raise ValidationAppError("Agent execution revoked by emergency kill switch")
