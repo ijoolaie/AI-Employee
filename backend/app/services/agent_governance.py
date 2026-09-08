@@ -21,7 +21,7 @@ from app.models.agent_template import AgentTemplate, AgentTemplateStatus
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 
 
-_agent_execution_context: ContextVar[tuple[uuid.UUID, uuid.UUID] | None] = ContextVar(
+_agent_execution_context: ContextVar[tuple[uuid.UUID, uuid.UUID, uuid.UUID | None, uuid.UUID | None, uuid.UUID | None] | None] = ContextVar(
     "agent_execution_context", default=None
 )
 
@@ -33,17 +33,24 @@ def _hash_evidence(evidence: dict[str, Any]) -> str:
 
 @asynccontextmanager
 async def governed_agent_execution(
-    *, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID
+    *,
+    tenant_id: uuid.UUID,
+    agent_instance_id: uuid.UUID,
+    run_id: uuid.UUID | None = None,
+    employee_id: uuid.UUID | None = None,
+    employee_version_id: uuid.UUID | None = None,
 ) -> AsyncIterator[None]:
-    """Bind Agent identity to the current execution context."""
-    token = _agent_execution_context.set((tenant_id, agent_instance_id))
+    """Bind Agent identity and optional Run/Employee scope to the execution context."""
+    token = _agent_execution_context.set(
+        (tenant_id, agent_instance_id, run_id, employee_id, employee_version_id)
+    )
     try:
         yield
     finally:
         _agent_execution_context.reset(token)
 
 
-def current_agent_execution_context() -> tuple[uuid.UUID, uuid.UUID] | None:
+def current_agent_execution_context() -> tuple[uuid.UUID, uuid.UUID, uuid.UUID | None, uuid.UUID | None, uuid.UUID | None] | None:
     return _agent_execution_context.get()
 
 
