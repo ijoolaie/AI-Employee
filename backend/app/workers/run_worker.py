@@ -74,7 +74,8 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                             AgentIdentity.agent_instance_id == instance.id,
                             AgentIdentity.tenant_id == run.tenant_id,
                         )
-                    ).scalar_one_or_none()
+                    )
+                ).scalar_one_or_none()
                 if identity is None:
                     raise ValidationAppError("Agent Run has no identity")
                 if not identity.active or identity.revoked_at is not None:
