@@ -8,7 +8,6 @@ from typing import Any, AsyncIterator
 from uuid import UUID
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.tool_registry import registry
 from app.core.exceptions import ValidationAppError
@@ -38,7 +37,7 @@ async def agent_tool_context(
 
 
 async def _has_authoritative_approval(
-    db: AsyncSession,
+    db: Any,
     *,
     tenant_id: UUID,
     run_id: UUID,
@@ -61,9 +60,7 @@ async def _has_authoritative_approval(
         )
     )
     matches = [item for item in result.scalars().all() if item.arguments == arguments]
-    if len(matches) != 1:
-        return False
-    return True
+    return len(matches) == 1
 
 
 def install() -> None:
@@ -82,7 +79,7 @@ def install() -> None:
 
         db = kwargs.get("db")
         tenant_id, agent_instance_id, run_id = context
-        if db is None or not isinstance(db, AsyncSession):
+        if db is None:
             raise ValidationAppError("Agent tool execution requires an active database context")
         if kwargs.get("tenant_id") != tenant_id:
             raise ValidationAppError("Agent tool execution tenant context mismatch")
