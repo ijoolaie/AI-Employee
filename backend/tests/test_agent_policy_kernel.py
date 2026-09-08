@@ -16,12 +16,16 @@ class FakeResult:
         if self.value is None: raise AssertionError("expected a value")
         return self.value
     def scalars(self): return self
+    def first(self): return self.value
     def all(self): return self.value if isinstance(self.value, list) else []
 
 
 class FakeDb:
     def __init__(self, *values): self.values, self.flushed = list(values), False
-    async def execute(self, _statement): return FakeResult(self.values.pop(0))
+    async def execute(self, statement):
+        if "agent_kill_switches" in str(statement):
+            return FakeResult(None)
+        return FakeResult(self.values.pop(0))
     async def flush(self): self.flushed = True
 
 

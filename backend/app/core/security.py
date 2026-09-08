@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+from uuid import UUID
 
 import base64
 import hashlib
@@ -36,9 +37,14 @@ def decrypt_secret(value: str) -> str:
     return _fernet().decrypt(value.encode()).decode()
 
 
+def _jwt_subject(value: str | UUID) -> str:
+    """Normalize UUID-backed identity values before placing them in JWT JSON."""
+    return str(value)
+
+
 def create_access_token(
-    subject: str,
-    tenant_id: str,
+    subject: str | UUID,
+    tenant_id: str | UUID,
     extra_claims: Optional[dict[str, Any]] = None,
 ) -> str:
     expire = datetime.now(timezone.utc) + timedelta(
@@ -46,8 +52,8 @@ def create_access_token(
     )
     now = datetime.now(timezone.utc)
     payload: dict[str, Any] = {
-        "sub": subject,
-        "tenant_id": tenant_id,
+        "sub": _jwt_subject(subject),
+        "tenant_id": _jwt_subject(tenant_id),
         "type": "access",
         "exp": expire,
         "iat": now,
@@ -57,12 +63,12 @@ def create_access_token(
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 
-def create_refresh_token(subject: str, tenant_id: str, auth_token_version: int = 0) -> str:
+def create_refresh_token(subject: str | UUID, tenant_id: str | UUID, auth_token_version: int = 0) -> str:
     expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
     now = datetime.now(timezone.utc)
     payload = {
-        "sub": subject,
-        "tenant_id": tenant_id,
+        "sub": _jwt_subject(subject),
+        "tenant_id": _jwt_subject(tenant_id),
         "type": "refresh",
         "exp": expire,
         "iat": now,

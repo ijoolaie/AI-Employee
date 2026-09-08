@@ -15,11 +15,16 @@ from app.models.work_item import ExecutorType, WorkItemStatus
 class FakeResult:
     def __init__(self, value): self.value = value
     def scalar_one_or_none(self): return self.value
+    def scalars(self): return self
+    def first(self): return self.value
 
 
 class FakeDb:
     def __init__(self, *values): self.values = list(values)
-    async def execute(self, _statement): return FakeResult(self.values.pop(0))
+    async def execute(self, statement):
+        if "agent_kill_switches" in str(statement):
+            return FakeResult(None)
+        return FakeResult(self.values.pop(0))
     async def flush(self): pass
 
 
