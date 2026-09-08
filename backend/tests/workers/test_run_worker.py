@@ -45,13 +45,13 @@ async def _session(db):
     yield db
 
 
-def _run(run_id, tenant_id):
+def _run(run_id, tenant_id, *, agent_instance_id=None):
     return SimpleNamespace(
         id=run_id,
         tenant_id=tenant_id,
         employee_id=uuid4(),
         employee_version_id=uuid4(),
-        agent_instance_id=None,
+        agent_instance_id=agent_instance_id,
         created_by=None,
         input_data={},
         prompt_tokens=0,
@@ -94,6 +94,31 @@ async def test_run_worker_fails_closed_on_tenant_mismatch(monkeypatch):
 
     with pytest.raises(ValidationAppError):
         await run_worker._run_async(str(run_id), str(supplied_tenant))
+
+    assert db.committed is False
+
+
+@pytest.mark.asyncio
+async def test_run_worker_blocks_queued_agent_run_when_kill_switch_is_active(monkeypatch):
+    run_id = uuid4()
+    tenant_id = uuid4()
+    agent_instance_id = uuid4()
+    run = _run(run_id, tenant_id, agent_instance_id=agent_instance_id)
+    db = _Db(run, _employee_version())
+
+    async def _kill_switch(*_args, **_kwargs):
+        raise ValidationAppError("Agent execution revoked by emergency kill switch")
+
+    async def _memory(*_args, **_kwargs):
+        raise AssertionError("memory must not be accessed after kill switch assertion")
+
+    monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(run_worker, "span", _span)
+    monkeypatch.setattr(run_worker, "assert_not_killed", _kill_switch)
+    monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
+
+    with pytest.raises(ValidationAppError, match="emergency kill switch"):
+        await run_worker._run_async(str(run_id), str(tenant_id))
 
     assert db.committed is False
 
