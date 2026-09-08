@@ -14,6 +14,7 @@ from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.tool_approval import ToolApprovalRequest
+from app.services.agent_delegation_service import validate_delegation
 
 
 POLICY_VERSION = "agent-policy-v1"
@@ -38,6 +39,7 @@ class PolicyRequest:
     run_id: UUID | None = None
     tool_call_id: str | None = None
     approval_request_id: UUID | None = None
+    delegation_id: UUID | None = None
     arguments: dict[str, Any] | None = None
     approval_granted: bool = False
     requires_approval: bool = False
@@ -113,6 +115,22 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
         await db.flush()
         return result(PolicyDecision.DENY, "agent_identity_expired")
 
+    if request.delegation_id is not None:
+        try:
+            await validate_delegation(
+                db,
+                tenant_id=request.tenant_id,
+                delegation_id=request.delegation_id,
+                delegate_agent_instance_id=instance.id,
+                action=request.action,
+                tool_name=request.tool_name,
+                now=now,
+            )
+        except ValidationAppError:
+            return result(PolicyDecision.DENY, "delegation_invalid")
+    elif request.context.get("delegated_from"):
+        return result(PolicyDecision.DENY, "delegation_proof_required")
+
     if request.action == "tool.execute" and not request.tool_name:
         return result(PolicyDecision.DENY, "tool_name_required")
 
@@ -131,8 +149,6 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
         )
 
     if request.requires_approval:
-        # Approval is an authorization artifact, not caller-controlled state.
-        # Bind it to tenant + run + tool + tool-call + exact arguments.
         if not request.run_id or not request.tool_call_id or not request.approval_request_id:
             return result(PolicyDecision.REQUIRE_APPROVAL, "approval_context_required")
         approval = (
