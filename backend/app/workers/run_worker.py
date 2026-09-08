@@ -53,8 +53,6 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             if version is None:
                 raise NotFoundError("Employee version not found for this Run")
 
-            # Agent-originated Runs are re-authorized at the worker boundary.
-            # This closes the revoke/retire-after-enqueue race.
             identity: AgentIdentity | None = None
             if run.agent_instance_id is not None:
                 instance = (
@@ -76,8 +74,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                             AgentIdentity.agent_instance_id == instance.id,
                             AgentIdentity.tenant_id == run.tenant_id,
                         )
-                    )
-                ).scalar_one_or_none()
+                    ).scalar_one_or_none()
                 if identity is None:
                     raise ValidationAppError("Agent Run has no identity")
                 if not identity.active or identity.revoked_at is not None:
@@ -100,6 +97,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                         tenant_id=run.tenant_id,
                         employee_id=run.employee_id,
                         employee_version_id=run.employee_version_id,
+                        run_id=run.id,
                         input_data=run.input_data or {},
                         rules=version.rules or {},
                     )
@@ -109,6 +107,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     tenant_id=run.tenant_id,
                     employee_id=run.employee_id,
                     employee_version_id=run.employee_version_id,
+                    run_id=run.id,
                     input_data=run.input_data or {},
                     rules=version.rules or {},
                 )
