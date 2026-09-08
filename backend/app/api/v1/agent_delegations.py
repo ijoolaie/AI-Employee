@@ -10,8 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.deps import get_current_context, require_permission
-from app.services.agent_delegation_service import create_delegated_work_item
+from app.models.agent_delegation import AgentDelegation
 from app.services import audit_service
+from app.services.agent_delegation_service import create_delegated_work_item
 
 router = APIRouter(prefix="/agent-delegations", tags=["agent-delegations"])
 
@@ -75,7 +76,9 @@ async def delegate_agent(
             metadata={"source_work_item_id": str(source_work_item_id), "delegate_agent_instance_id": str(payload.delegate_agent_instance_id)},
         )
         await db.commit()
-        delegation = await db.get(__import__("app.models.agent_delegation", fromlist=["AgentDelegation"]).AgentDelegation, delegation_id)
+        delegation = await db.get(AgentDelegation, delegation_id)
+        if delegation is None:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="delegation was not persisted")
         return AgentDelegationResponse(
             delegation_id=delegation_id,
             work_item_id=child.id,
@@ -85,8 +88,9 @@ async def delegate_agent(
             expires_at=delegation.expires_at,
             scopes=delegation.scopes,
         )
+    except HTTPException:
+        await db.rollback()
+        raise
     except Exception as exc:
         await db.rollback()
-        if isinstance(exc, HTTPException):
-            raise
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
