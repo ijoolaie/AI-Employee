@@ -16,7 +16,7 @@ from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
 from app.models.agent_identity import AgentIdentity
-from app.models.agent_instance import AgentInstance, AgentInstanceStatus
+from app.models.agent_instance import AgentInstance
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 
@@ -32,9 +32,7 @@ def _hash_evidence(evidence: dict[str, Any]) -> str:
 
 
 @asynccontextmanager
-async def governed_agent_execution(
-    *, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID
-) -> AsyncIterator[None]:
+async def governed_agent_execution(*, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID) -> AsyncIterator[None]:
     """Bind Agent identity to the current execution context."""
     token = _agent_execution_context.set((tenant_id, agent_instance_id))
     try:
@@ -104,7 +102,7 @@ async def review_access(db: AsyncSession, *, tenant_id: uuid.UUID, identity_id: 
     return review
 
 
-async def assert_agent_can_execute(db: AsyncSession, *, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID, tool_name: str, required_permission: str, now: datetime | None = None) -> AgentInstance:
+async def assert_agent_can_execute(db: AsyncSession, *, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID, tool_name: str, required_permission: str, now: datetime | None = None, approval_granted: bool = False, requires_approval: bool = False) -> AgentInstance:
     """Authorize a tool invocation through the central policy decision kernel."""
     return await assert_authorized(
         db,
@@ -115,5 +113,7 @@ async def assert_agent_can_execute(db: AsyncSession, *, tenant_id: uuid.UUID, ag
             tool_name=tool_name,
             required_permission=required_permission,
             now=now,
+            approval_granted=approval_granted,
+            requires_approval=requires_approval,
         ),
     )
