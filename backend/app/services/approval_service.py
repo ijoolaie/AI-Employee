@@ -16,12 +16,7 @@ from app.services import audit_service
 
 
 async def requires_approval(db: AsyncSession | None = None, *, tool, tenant_id: uuid.UUID | None = None, employee_id: uuid.UUID | None = None) -> bool:
-    """Return the registered tool's approval policy.
-
-    The execution boundary supplies the database plus tenant/employee context so
-    approval policy can become context-aware without changing callers. The
-    current policy is defined by the registered tool itself.
-    """
+    """Return the registered tool's approval policy."""
     return bool(getattr(tool, "requires_approval", False))
 
 
@@ -91,7 +86,13 @@ async def decide(db: AsyncSession, *, approval_id: uuid.UUID, tenant_id: uuid.UU
         policy = agent.configuration.get("approval_delegation", {})
         if decision not in policy.get("decisions", ["approve", "reject"]):
             raise ConflictError("Agent is not authorized for this approval decision")
-    elif actor_type != "user":
+    elif actor_type == "user":
+        # Separation of duties: the principal that requested a gated action
+        # cannot approve that same request. A missing requester is allowed for
+        # legacy/system-created requests, but explicit self-approval is denied.
+        if approval.requested_by is not None and approval.requested_by == decided_by:
+            raise ConflictError("Approval requester cannot approve their own request")
+    else:
         raise ConflictError("unsupported approval actor")
     run_result = await db.execute(select(Run).where(Run.id == approval.run_id, Run.tenant_id == tenant_id).with_for_update())
     run = run_result.scalar_one_or_none()
