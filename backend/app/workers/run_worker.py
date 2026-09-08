@@ -20,6 +20,7 @@ from app.models.employee import EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services import run_service
+from app.services.agent_governance import governed_agent_execution
 from app.services.tenant_resource_limiter import (
     TenantResourceUnavailableError,
     acquire_tenant_resource,
@@ -86,14 +87,31 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     await db.flush()
                     raise ValidationAppError("Agent Run identity has expired")
 
-            runtime_memory = await build_runtime_memory(
-                db,
-                tenant_id=run.tenant_id,
-                employee_id=run.employee_id,
-                employee_version_id=run.employee_version_id,
-                input_data=run.input_data or {},
-                rules=version.rules or {},
-            )
+            if run.agent_instance_id is not None:
+                async with governed_agent_execution(
+                    tenant_id=run.tenant_id,
+                    agent_instance_id=run.agent_instance_id,
+                    run_id=run.id,
+                    employee_id=run.employee_id,
+                    employee_version_id=run.employee_version_id,
+                ):
+                    runtime_memory = await build_runtime_memory(
+                        db,
+                        tenant_id=run.tenant_id,
+                        employee_id=run.employee_id,
+                        employee_version_id=run.employee_version_id,
+                        input_data=run.input_data or {},
+                        rules=version.rules or {},
+                    )
+            else:
+                runtime_memory = await build_runtime_memory(
+                    db,
+                    tenant_id=run.tenant_id,
+                    employee_id=run.employee_id,
+                    employee_version_id=run.employee_version_id,
+                    input_data=run.input_data or {},
+                    rules=version.rules or {},
+                )
 
             approval_result = await db.execute(
                 select(ToolApprovalRequest)
