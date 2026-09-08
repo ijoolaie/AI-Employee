@@ -48,11 +48,13 @@ class AgentKillSwitch(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    # Keep historical kill-switch records after tenant/Agent deletion. Immutable
+    # auditability is more important than cascading away emergency evidence.
     tenant_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True
     )
     agent_instance_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="CASCADE"), nullable=True
+        UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="SET NULL"), nullable=True
     )
     scope: Mapped[AgentKillScope] = mapped_column(
         Enum(
