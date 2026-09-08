@@ -10,6 +10,7 @@ from app.models.employee import Employee
 from app.models.memory import EmployeeMemory
 from app.rag.service import embed_texts, cosine_similarity
 from app.services import audit_service
+from app.services.agent_governance import current_agent_execution_context
 
 _MEMORY_TYPES = {"fact", "preference", "instruction", "summary"}
 _MEMORY_STATUSES = {"active", "superseded", "expired", "deleted", "conflict"}
@@ -24,12 +25,29 @@ def _active_clause(now: datetime):
     return (EmployeeMemory.status == "active") & ((EmployeeMemory.expires_at.is_(None)) | (EmployeeMemory.expires_at > now))
 
 
+def _assert_agent_memory_scope(*, tenant_id: uuid.UUID, employee_id: uuid.UUID, employee_version_id: uuid.UUID | None = None, run_id: uuid.UUID | None = None) -> None:
+    """Fail closed when an Agent attempts to access memory outside its Run scope."""
+    context = current_agent_execution_context()
+    if context is None:
+        return
+    context_tenant, _agent_id, context_run, context_employee, context_version = context
+    if context_tenant != tenant_id:
+        raise ValidationAppError("Agent memory access crossed tenant boundary")
+    if context_run is not None and run_id is not None and context_run != run_id:
+        raise ValidationAppError("Agent memory access crossed Run boundary")
+    if context_employee is not None and context_employee != employee_id:
+        raise ValidationAppError("Agent memory access crossed Employee boundary")
+    if context_version is not None and employee_version_id is not None and context_version != employee_version_id:
+        raise ValidationAppError("Agent memory access crossed EmployeeVersion boundary")
+
+
 async def create_memory(
     db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID, content: str,
     memory_type: str = "fact", importance: int = 3, source_run_id: uuid.UUID | None = None,
     metadata: dict | None = None, expires_at: datetime | None = None,
     actor_id: uuid.UUID | None = None, supersede_memory_id: uuid.UUID | None = None,
 ) -> EmployeeMemory:
+    _assert_agent_memory_scope(tenant_id=tenant_id, employee_id=employee_id, run_id=source_run_id)
     employee = (await db.execute(select(Employee).where(Employee.id == employee_id, or_(Employee.tenant_id == tenant_id, Employee.tenant_id.is_(None))))).scalar_one_or_none()
     if employee is None:
         raise NotFoundError("Employee not found")
@@ -93,9 +111,10 @@ async def expire_due_memories(db: AsyncSession, *, tenant_id: uuid.UUID | None =
     return len(memories)
 
 
-async def search_memory(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID, query: str, top_k: int = 5, min_score: float = 0.35) -> list[dict]:
+async def search_memory(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID, query: str, top_k: int = 5, min_score: float = 0.35, employee_version_id: uuid.UUID | None = None, run_id: uuid.UUID | None = None) -> list[dict]:
     if not query.strip():
         raise ValidationAppError("Memory query must not be empty")
+    _assert_agent_memory_scope(tenant_id=tenant_id, employee_id=employee_id, employee_version_id=employee_version_id, run_id=run_id)
     await expire_due_memories(db, tenant_id=tenant_id)
     query_embedding = (await embed_texts([query]))[0]
     now = datetime.now(timezone.utc)
@@ -113,6 +132,7 @@ async def delete_memory(db: AsyncSession, *, tenant_id: uuid.UUID, memory_id: uu
     memory = (await db.execute(select(EmployeeMemory).where(EmployeeMemory.id == memory_id, EmployeeMemory.tenant_id == tenant_id))).scalar_one_or_none()
     if memory is None:
         raise NotFoundError("Memory not found")
+    _assert_agent_memory_scope(tenant_id=tenant_id, employee_id=memory.employee_id)
     memory.status = "deleted"
     await db.flush()
     await audit_service.record(db, action="memory.deleted", actor_type="user", actor_id=actor_id, tenant_id=tenant_id, resource_type="employee_memory", resource_id=memory.id, request_id=request_id_var.get(), metadata={"employee_id": str(memory.employee_id), "version": memory.version})
