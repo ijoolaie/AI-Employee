@@ -15,6 +15,7 @@ from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.tool_approval import ToolApprovalRequest
 from app.services.agent_delegation_service import validate_delegation
+from app.services.agent_kill_switch_service import assert_not_killed
 
 
 POLICY_VERSION = "agent-policy-v1"
@@ -95,6 +96,15 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             metadata=metadata,
         )
 
+    try:
+        await assert_not_killed(
+            db,
+            tenant_id=request.tenant_id,
+            agent_instance_id=instance.id,
+        )
+    except ValidationAppError:
+        return result(PolicyDecision.DENY, "agent_emergency_kill_switch_active")
+
     if instance.status != AgentInstanceStatus.ENABLED or not instance.enabled:
         return result(PolicyDecision.DENY, "agent_instance_not_executable")
 
@@ -142,11 +152,7 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
         return result(PolicyDecision.DENY, "tool_not_authorized", allowed_tools=sorted(allowed_tools))
 
     if request.required_permission is not None and request.required_permission not in permissions and "*" not in permissions:
-        return result(
-            PolicyDecision.DENY,
-            "permission_not_granted",
-            required_permission=request.required_permission,
-        )
+        return result(PolicyDecision.DENY, "permission_not_granted", required_permission=request.required_permission)
 
     if request.requires_approval:
         if not request.run_id or not request.tool_call_id or not request.approval_request_id:
@@ -182,22 +188,12 @@ async def assert_authorized(db: AsyncSession, request: PolicyRequest) -> AgentIn
     if decision.decision == PolicyDecision.REQUIRE_APPROVAL:
         raise ValidationAppError(
             f"Human approval required for Agent action: {decision.reason}",
-            details={
-                "action": request.action,
-                "tool": request.tool_name,
-                "policy_version": decision.policy_version,
-                "reason": decision.reason,
-            },
+            details={"action": request.action, "tool": request.tool_name, "policy_version": decision.policy_version, "reason": decision.reason},
         )
     if not decision.allowed:
         raise ValidationAppError(
             f"Agent action denied by policy: {decision.reason}",
-            details={
-                "action": request.action,
-                "tool": request.tool_name,
-                "policy_version": decision.policy_version,
-                "reason": decision.reason,
-            },
+            details={"action": request.action, "tool": request.tool_name, "policy_version": decision.policy_version, "reason": decision.reason},
         )
     return (
         await db.execute(
