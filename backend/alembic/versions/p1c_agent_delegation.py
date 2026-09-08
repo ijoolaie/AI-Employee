@@ -39,14 +39,32 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_agent_delegations_tenant_status", "agent_delegations", ["tenant_id", "status"])
+    op.create_index("ix_agent_delegations_status", "agent_delegations", ["status"])
     op.create_index("ix_agent_delegations_target", "agent_delegations", ["tenant_id", "delegate_agent_instance_id"])
     op.create_index("ix_agent_delegations_source", "agent_delegations", ["tenant_id", "delegator_agent_instance_id"])
     op.create_index("ix_agent_delegations_correlation_id", "agent_delegations", ["correlation_id"])
 
+    # p0e created the ledger envelope against the historical schema with a
+    # stricter nullability. The ORM intentionally permits NULL for pre-ledger
+    # historical rows, so reconcile that contract at the next migration edge.
+    op.alter_column(
+        "audit_logs",
+        "ledger_scope",
+        existing_type=sa.String(length=80),
+        nullable=True,
+    )
+
 
 def downgrade() -> None:
+    op.alter_column(
+        "audit_logs",
+        "ledger_scope",
+        existing_type=sa.String(length=80),
+        nullable=False,
+    )
     op.drop_index("ix_agent_delegations_correlation_id", table_name="agent_delegations")
     op.drop_index("ix_agent_delegations_source", table_name="agent_delegations")
     op.drop_index("ix_agent_delegations_target", table_name="agent_delegations")
+    op.drop_index("ix_agent_delegations_status", table_name="agent_delegations")
     op.drop_index("ix_agent_delegations_tenant_status", table_name="agent_delegations")
     op.drop_table("agent_delegations")
