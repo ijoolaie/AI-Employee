@@ -30,7 +30,7 @@ class Db:
 @pytest.mark.asyncio
 async def test_approval_decision_approve_moves_run_to_pending_and_audits(monkeypatch):
     tenant_id, approval_id, run_id, user_id = uuid4(), uuid4(), uuid4(), uuid4()
-    approval = SimpleNamespace(id=approval_id, tenant_id=tenant_id, run_id=run_id, tool_name="crm.lookup", status="pending", decided_by=None, decision_reason=None, decided_at=None)
+    approval = SimpleNamespace(id=approval_id, tenant_id=tenant_id, run_id=run_id, tool_name="crm.lookup", status="pending", decided_by=None, decision_reason=None, decided_at=None, requested_by=uuid4())
     run = SimpleNamespace(id=run_id, tenant_id=tenant_id, status="waiting", error=None, request_id="req-11")
     audit = []
 
@@ -48,9 +48,21 @@ async def test_approval_decision_approve_moves_run_to_pending_and_audits(monkeyp
 
 
 @pytest.mark.asyncio
+async def test_requester_cannot_self_approve(monkeypatch):
+    tenant_id, approval_id, run_id, user_id = uuid4(), uuid4(), uuid4(), uuid4()
+    approval = SimpleNamespace(id=approval_id, tenant_id=tenant_id, run_id=run_id, tool_name="create_order", status="pending", decided_by=None, decision_reason=None, decided_at=None, requested_by=user_id)
+    run = SimpleNamespace(id=run_id, tenant_id=tenant_id, status="waiting", error=None, request_id="req-self")
+
+    with pytest.raises(ConflictError, match="cannot approve their own request"):
+        await approval_service.decide(Db(approval, run), approval_id=approval_id, tenant_id=tenant_id, decided_by=user_id, decision="approve", reason="", actor_type="user")
+    assert approval.status == "pending"
+    assert run.status == "waiting"
+
+
+@pytest.mark.asyncio
 async def test_approval_decision_rejects_and_records_failure(monkeypatch):
     tenant_id = uuid4()
-    approval = SimpleNamespace(id=uuid4(), tenant_id=tenant_id, run_id=uuid4(), tool_name="payments.refund", status="pending", decided_by=None, decision_reason=None, decided_at=None)
+    approval = SimpleNamespace(id=uuid4(), tenant_id=tenant_id, run_id=uuid4(), tool_name="payments.refund", status="pending", decided_by=None, decision_reason=None, decided_at=None, requested_by=uuid4())
     run = SimpleNamespace(id=approval.run_id, tenant_id=tenant_id, status="waiting", error=None, request_id=None)
 
     async def record(*args, **kwargs):
