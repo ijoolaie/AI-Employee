@@ -110,6 +110,6 @@ async def test_agent_kill_switch_assertion_serializes_before_check():
     )
     assert result is existing
     assert len(statements) == 3
-    assert "pg_advisory_xact_lock" in statements[0]
-    assert "agent_instances" in statements[1]
+    assert "agent_instances" in statements[0]
+    assert "pg_advisory_xact_lock" in statements[1]
     assert "FOR UPDATE" in statements[2]
