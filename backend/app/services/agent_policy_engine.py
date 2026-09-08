@@ -181,7 +181,7 @@ async def assert_authorized(db: AsyncSession, request: PolicyRequest) -> AgentIn
     decision = await authorize(db, request)
     if decision.decision == PolicyDecision.REQUIRE_APPROVAL:
         raise ValidationAppError(
-            "Human approval required for Agent action",
+            f"Human approval required for Agent action: {decision.reason}",
             details={
                 "action": request.action,
                 "tool": request.tool_name,
@@ -191,7 +191,7 @@ async def assert_authorized(db: AsyncSession, request: PolicyRequest) -> AgentIn
         )
     if not decision.allowed:
         raise ValidationAppError(
-            "Agent action denied by policy",
+            f"Agent action denied by policy: {decision.reason}",
             details={
                 "action": request.action,
                 "tool": request.tool_name,
