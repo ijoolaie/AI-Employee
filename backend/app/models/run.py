@@ -17,9 +17,6 @@ class Run(Base):
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
     employee_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False, index=True)
     employee_version_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("employee_versions.id"), nullable=False)
-    # Non-null only for Agent-originated Runs. This keeps ordinary Employee
-    # Runs backward compatible while making Agent identity part of the
-    # canonical execution record.
     agent_instance_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="RESTRICT"), nullable=True, index=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     conversation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("customer_conversations.id", ondelete="SET NULL"), nullable=True, index=True)
@@ -34,6 +31,32 @@ class Run(Base):
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+
+    @property
+    def prompt_tokens(self) -> int:
+        return int(getattr(self, "_prompt_tokens", 0))
+
+    @prompt_tokens.setter
+    def prompt_tokens(self, value: int) -> None:
+        self._prompt_tokens = int(value)
+        self.total_tokens = self.prompt_tokens + self.completion_tokens
+
+    @property
+    def completion_tokens(self) -> int:
+        return int(getattr(self, "_completion_tokens", 0))
+
+    @completion_tokens.setter
+    def completion_tokens(self, value: int) -> None:
+        self._completion_tokens = int(value)
+        self.total_tokens = self.prompt_tokens + self.completion_tokens
+
+    @property
+    def cost_usd(self) -> float:
+        return float(self.total_cost_usd or 0)
+
+    @cost_usd.setter
+    def cost_usd(self, value: float) -> None:
+        self.total_cost_usd = value
 
     @property
     def error_message(self) -> str | None:
