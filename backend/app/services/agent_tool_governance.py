@@ -20,7 +20,7 @@ _INSTALLED = False
 
 @asynccontextmanager
 async def agent_tool_context(*, tenant_id: UUID, agent_instance_id: UUID) -> AsyncIterator[None]:
-    """Bind the Agent identity to all ToolRegistry calls in this task context."""
+    """Bind Agent identity to all ToolRegistry calls in this task context."""
     token = _AGENT_CONTEXT.set((tenant_id, agent_instance_id))
     try:
         yield
@@ -56,6 +56,8 @@ def install() -> None:
             agent_instance_id=agent_instance_id,
             tool_name=name,
             required_permission=tool.required_permission,
+            approval_granted=bool(kwargs.get("approval_granted", False)),
+            requires_approval=tool.requires_approval,
         )
         return await original_execute(name, arguments, **kwargs)
 
