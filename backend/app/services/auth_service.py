@@ -99,7 +99,15 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
 
 def issue_tokens(user: User) -> TokenResponse:
     return TokenResponse(
-        access_token=create_access_token(user.id, user.tenant_id, user.auth_token_version),
-        refresh_token=create_refresh_token(user.id, user.tenant_id, user.auth_token_version),
+        access_token=create_access_token(
+            subject=user.id,
+            tenant_id=user.tenant_id,
+            extra_claims={"auth_token_version": user.auth_token_version},
+        ),
+        refresh_token=create_refresh_token(
+            subject=user.id,
+            tenant_id=user.tenant_id,
+            auth_token_version=user.auth_token_version,
+        ),
         token_type="bearer",
     )
