@@ -116,6 +116,9 @@ async def test_gateway_records_live_latency_and_gateway_cost(monkeypatch):
                 def scalar_one_or_none(self):
                     return None
 
+                def one_or_none(self):
+                    return None
+
             return EmptyResult()
 
         async def flush(self):

@@ -121,6 +121,11 @@ async def assert_agent_can_execute(
     now: datetime | None = None,
     approval_granted: bool = False,
     requires_approval: bool = False,
+    run_id: uuid.UUID | None = None,
+    tool_call_id: str | None = None,
+    approval_request_id: uuid.UUID | None = None,
+    arguments: dict[str, Any] | None = None,
+    delegation_id: uuid.UUID | None = None,
 ) -> AgentInstance:
     """Authorize a tool invocation through the central policy decision kernel."""
     return await assert_authorized(
@@ -134,5 +139,10 @@ async def assert_agent_can_execute(
             now=now,
             approval_granted=approval_granted,
             requires_approval=requires_approval,
+            run_id=run_id,
+            tool_call_id=tool_call_id,
+            approval_request_id=approval_request_id,
+            arguments=arguments,
+            delegation_id=delegation_id,
         ),
     )

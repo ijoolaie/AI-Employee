@@ -69,6 +69,8 @@ class UnifiedExecutionService:
             raise ExecutionError("work item is not delegable")
         if target_id == actor_id and target_type is work_item.executor_type:
             raise ExecutionError("work item cannot be delegated to itself")
+        if work_item.executor_type is ExecutorType.AGENT and target_type is ExecutorType.AGENT:
+            raise ExecutionError("Agent-to-Agent delegation requires a governed delegation authority")
         parent_context = dict(work_item.policy_context or {})
         child_context = dict(parent_context)
         child_context["delegated_from"] = str(work_item.id)

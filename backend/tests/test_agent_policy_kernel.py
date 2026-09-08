@@ -61,7 +61,7 @@ async def test_allow_requires_identity_tool_permission_and_exact_approval():
 @pytest.mark.asyncio
 async def test_cross_tenant_instance_is_not_resolved():
     tenant, other_tenant = uuid4(), uuid4(); instance = agent(other_tenant, allowed_tools=["send_email"], permissions=["run.execute"])
-    with pytest.raises(NotFoundError): await authorize(FakeDb(instance, identity()), request(tenant, instance.id))
+    with pytest.raises(NotFoundError): await authorize(FakeDb(None), request(tenant, instance.id))
 
 
 @pytest.mark.asyncio

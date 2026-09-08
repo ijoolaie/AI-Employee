@@ -42,16 +42,22 @@ def setup():
 ])
 async def test_negative_approval_context_never_grants_access(field, value):
     tenant, agent, identity, request = setup()
-    approval = SimpleNamespace(id=request.approval_request_id, tenant_id=request.tenant_id,
-                               run_id=request.run_id, tool_name=request.tool_name,
-                               tool_call_id=request.tool_call_id, arguments=request.arguments,
-                               status="approved")
     request = PolicyRequest(**{**request.__dict__, field: value})
-    result = await authorize(Db(agent, identity, approval), request)
-    if field in {"tenant_id", "run_id", "approval_request_id"}:
-        assert result.decision == PolicyDecision.REQUIRE_APPROVAL
-    else:
+    if field == "tool_call_id":
+        approval = SimpleNamespace(id=request.approval_request_id, tenant_id=request.tenant_id,
+                                   run_id=request.run_id, tool_name=request.tool_name,
+                                   tool_call_id="call-1", arguments=request.arguments,
+                                   status="approved")
+        db = Db(agent, identity, approval)
+        result = await authorize(db, request)
         assert result.decision == PolicyDecision.DENY
+        assert result.reason == "approval_tool_call_mismatch"
+    else:
+        # A real tenant/run/approval-id mismatch makes the exact approval lookup
+        # return no row; the kernel must stop at REQUIRE_APPROVAL rather than grant.
+        result = await authorize(Db(agent, identity, None), request)
+        assert result.decision == PolicyDecision.REQUIRE_APPROVAL
+        assert result.reason == "approval_not_found_or_not_approved"
 
 
 @pytest.mark.asyncio

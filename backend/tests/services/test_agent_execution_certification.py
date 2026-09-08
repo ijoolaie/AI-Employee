@@ -40,7 +40,7 @@ async def test_suspended_agent_cannot_execute():
     )
     identity = SimpleNamespace(active=True, revoked_at=None, expires_at=None)
 
-    with pytest.raises(ValidationAppError, match="not executable"):
+    with pytest.raises(ValidationAppError, match="agent_instance_not_executable"):
         await assert_agent_can_execute(
             _GovernanceDB(instance, identity),
             tenant_id=tenant_id,
@@ -62,7 +62,7 @@ async def test_revoked_agent_identity_cannot_execute():
     )
     identity = SimpleNamespace(active=False, revoked_at=datetime.now(timezone.utc), expires_at=None)
 
-    with pytest.raises(ValidationAppError, match="inactive or revoked"):
+    with pytest.raises(ValidationAppError, match="agent_identity_revoked"):
         await assert_agent_can_execute(
             _GovernanceDB(instance, identity),
             tenant_id=tenant_id,
