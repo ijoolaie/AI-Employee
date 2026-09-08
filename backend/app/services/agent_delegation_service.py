@@ -119,6 +119,7 @@ async def authorize_delegation(
 async def create_delegated_work_item(
     db: AsyncSession,
     *,
+    tenant_id: UUID,
     source_work_item_id: UUID,
     delegator_agent_instance_id: UUID,
     delegate_agent_instance_id: UUID,
@@ -131,12 +132,12 @@ async def create_delegated_work_item(
     max_chain_depth: int = DEFAULT_MAX_CHAIN_DEPTH,
 ) -> WorkItem:
     """Atomically establish delegation authority and bind it to the child WorkItem."""
-    source = (await db.execute(select(WorkItem).where(WorkItem.id == source_work_item_id))).scalar_one_or_none()
+    source = (await db.execute(select(WorkItem).where(WorkItem.id == source_work_item_id, WorkItem.tenant_id == tenant_id))).scalar_one_or_none()
     if source is None:
-        raise NotFoundError("Source work item not found")
+        raise NotFoundError("Source work item not found for tenant")
     delegation = await authorize_delegation(
         db,
-        tenant_id=source.tenant_id,
+        tenant_id=tenant_id,
         delegator_agent_instance_id=delegator_agent_instance_id,
         delegate_agent_instance_id=delegate_agent_instance_id,
         source_work_item_id=source.id,
