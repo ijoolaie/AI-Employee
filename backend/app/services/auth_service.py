@@ -28,7 +28,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read", "team.install",
     "team.execute", "team.evaluate", "marketplace.publish", "marketplace.read",
     "agent_template.create", "agent_template.read", "agent_template.evaluate", "agent_template.publish", "agent_template.install",
-    "agent_instance.lifecycle",
+    "agent_instance.lifecycle", "agent.emergency_kill",
     "agent_workforce.propose", "agent_workforce.read", "agent_workforce.board_review", "agent_workforce.ceo_approve", "agent_workforce.provision", "agent_workforce.activate",
 )
 
@@ -98,24 +98,8 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
 
 
 def issue_tokens(user: User) -> TokenResponse:
-    access = create_access_token(subject=str(user.id), tenant_id=str(user.tenant_id), extra_claims={"auth_token_version": user.auth_token_version})
-    refresh = create_refresh_token(subject=str(user.id), tenant_id=str(user.tenant_id), auth_token_version=user.auth_token_version)
-    return TokenResponse(access_token=access, refresh_token=refresh)
-
-
-async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenResponse:
-    try:
-        payload = decode_token(refresh_token)
-        if payload.get("type") != "refresh":
-            raise UnauthorizedError("Invalid token type")
-        user_id = payload.get("sub")
-        tenant_id = payload.get("tenant_id")
-    except jwt.InvalidTokenError:
-        raise UnauthorizedError("Invalid refresh token")
-    user_result = await db.execute(select(User).where(User.id == user_id))
-    user = user_result.scalar_one_or_none()
-    if user is None or not user.is_active or str(user.tenant_id) != str(tenant_id):
-        raise UnauthorizedError("Invalid refresh token")
-    if payload.get("auth_token_version") != user.auth_token_version:
-        raise UnauthorizedError("Session invalidated; please sign in again")
-    return issue_tokens(user)
+    return TokenResponse(
+        access_token=create_access_token(user.id, user.tenant_id, user.auth_token_version),
+        refresh_token=create_refresh_token(user.id, user.tenant_id, user.auth_token_version),
+        token_type="bearer",
+    )
