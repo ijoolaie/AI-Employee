@@ -36,7 +36,11 @@ def upgrade() -> None:
     )
     op.create_index("ix_credentials_tenant_status", "credentials", ["tenant_id", "status"])
     op.create_index("ix_credentials_tenant_provider", "credentials", ["tenant_id", "provider"])
-    op.execute("INSERT INTO permissions (id, name) VALUES (gen_random_uuid(), 'credential.read') ON CONFLICT (name) DO NOTHING")
+    op.execute(sa.text("""
+        INSERT INTO permissions (id, code, description)
+        VALUES (gen_random_uuid(), 'credential.read', 'Resolve encrypted provider credentials at governed side-effect boundaries')
+        ON CONFLICT (code) DO NOTHING
+    """))
 
 
 def downgrade() -> None:
