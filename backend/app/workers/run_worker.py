@@ -21,6 +21,7 @@ from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services import run_service
 from app.services.agent_governance import governed_agent_execution
+from app.services.agent_kill_switch_service import assert_not_killed
 from app.services.tenant_resource_limiter import (
     TenantResourceUnavailableError,
     acquire_tenant_resource,
@@ -84,6 +85,15 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     identity.active = False
                     await db.flush()
                     raise ValidationAppError("Agent Run identity has expired")
+
+                # Kill-switch state is checked at queue consumption, before any
+                # runtime work can produce a side effect. The policy kernel also
+                # checks it again at the individual side-effect boundary.
+                await assert_not_killed(
+                    db,
+                    tenant_id=run.tenant_id,
+                    agent_instance_id=run.agent_instance_id,
+                )
 
             if run.agent_instance_id is not None:
                 async with governed_agent_execution(
