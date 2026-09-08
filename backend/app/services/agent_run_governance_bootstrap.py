@@ -43,6 +43,7 @@ def install() -> None:
         async with agent_tool_governance.agent_tool_context(
             tenant_id=run.tenant_id,
             agent_instance_id=run.agent_instance_id,
+            run_id=run.id,
         ):
             return await original_execute_run(db, run_id=run_id)
 
