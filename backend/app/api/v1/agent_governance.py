@@ -1,4 +1,4 @@
-"""Stage 8 evaluation evidence and AgentIdentity access-review endpoints."""
+"""Stage 8 evaluation evidence and governed Agent control-plane endpoints."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -14,7 +14,9 @@ from app.core.deps import TenantContext, require_permission
 from app.models.agent_access_review import AgentAccessReviewDecision
 from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
 from app.models.agent_identity import AgentIdentity
+from app.models.agent_kill_switch import AgentKillScope, AgentKillSwitch
 from app.services.agent_governance import record_evaluation, review_access
+from app.services.agent_kill_switch_service import assert_kill, revoke_kill
 from app.services.agent_workforce_registry import list_workforce
 from app.services.audit_service import record
 
@@ -72,11 +74,30 @@ class AgentIdentityRead(BaseModel):
     active: bool
 
 
+class AgentKillSwitchCreate(BaseModel):
+    scope: AgentKillScope
+    reason: str = Field(min_length=1, max_length=500)
+    agent_instance_id: UUID | None = None
+
+
+class AgentKillSwitchRead(BaseModel):
+    id: UUID
+    tenant_id: UUID | None
+    agent_instance_id: UUID | None
+    scope: AgentKillScope
+    active: bool
+    reason: str
+    asserted_by: UUID | None
+    asserted_at: datetime
+    revoked_at: datetime | None
+    correlation_id: str
+
+
 def _http(exc: Exception) -> HTTPException:
     text = str(exc)
     if "not found" in text.lower():
         return HTTPException(status_code=404, detail=text)
-    if any(token in text.lower() for token in ("requires", "must", "lacks", "not authorized", "inactive", "expired")):
+    if any(token in text.lower() for token in ("requires", "must", "lacks", "not authorized", "inactive", "expired", "cannot")):
         return HTTPException(status_code=422, detail=text)
     return HTTPException(status_code=409, detail=text)
 
@@ -166,3 +187,63 @@ async def access_review(
         await db.rollback()
         raise _http(exc) from exc
     return AgentAccessReviewRead.model_validate(item, from_attributes=True)
+
+
+@router.post("/kill-switches", response_model=AgentKillSwitchRead, status_code=status.HTTP_201_CREATED)
+async def create_kill_switch(
+    payload: AgentKillSwitchCreate,
+    ctx: TenantContext = Depends(require_permission("agent.emergency_kill")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Assert a tenant or Agent emergency kill switch; global scope is system-only."""
+    if payload.scope == AgentKillScope.GLOBAL:
+        raise HTTPException(status_code=403, detail="Global emergency kill switch is system-operator only")
+    try:
+        item = await assert_kill(
+            db,
+            scope=payload.scope,
+            reason=payload.reason,
+            asserted_by=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            agent_instance_id=payload.agent_instance_id,
+        )
+        await db.commit()
+        await db.refresh(item)
+    except Exception as exc:
+        await db.rollback()
+        raise _http(exc) from exc
+    return AgentKillSwitchRead.model_validate(item, from_attributes=True)
+
+
+@router.get("/kill-switches", response_model=list[AgentKillSwitchRead])
+async def list_kill_switches(
+    ctx: TenantContext = Depends(require_permission("agent.emergency_kill")),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(AgentKillSwitch)
+        .where(AgentKillSwitch.tenant_id == ctx.tenant_id)
+        .order_by(AgentKillSwitch.asserted_at.desc())
+    )
+    return [AgentKillSwitchRead.model_validate(item, from_attributes=True) for item in result.scalars().all()]
+
+
+@router.post("/kill-switches/{kill_switch_id}/revoke", response_model=AgentKillSwitchRead)
+async def revoke_kill_switch(
+    kill_switch_id: UUID,
+    ctx: TenantContext = Depends(require_permission("agent.emergency_kill")),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        item = await revoke_kill(
+            db,
+            kill_switch_id=kill_switch_id,
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+        )
+        await db.commit()
+        await db.refresh(item)
+    except Exception as exc:
+        await db.rollback()
+        raise _http(exc) from exc
+    return AgentKillSwitchRead.model_validate(item, from_attributes=True)
