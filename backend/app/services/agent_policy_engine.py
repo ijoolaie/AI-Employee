@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
+from app.models.tool_approval import ToolApprovalRequest
 
 
 POLICY_VERSION = "agent-policy-v1"
@@ -34,6 +35,10 @@ class PolicyRequest:
     resource_type: str | None = None
     resource_id: str | None = None
     work_item_id: UUID | None = None
+    run_id: UUID | None = None
+    tool_call_id: str | None = None
+    approval_request_id: UUID | None = None
+    arguments: dict[str, Any] | None = None
     approval_granted: bool = False
     requires_approval: bool = False
     now: datetime | None = None
@@ -108,8 +113,6 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
         await db.flush()
         return result(PolicyDecision.DENY, "agent_identity_expired")
 
-    # Any execution action must identify the concrete tool. This prevents a
-    # generic action from becoming an authorization bypass as the kernel grows.
     if request.action == "tool.execute" and not request.tool_name:
         return result(PolicyDecision.DENY, "tool_name_required")
 
@@ -127,8 +130,32 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             required_permission=request.required_permission,
         )
 
-    if request.requires_approval and not request.approval_granted:
-        return result(PolicyDecision.REQUIRE_APPROVAL, "human_approval_required")
+    if request.requires_approval:
+        # Approval is an authorization artifact, not caller-controlled state.
+        # Bind it to tenant + run + tool + tool-call + exact arguments.
+        if not request.run_id or not request.tool_call_id or not request.approval_request_id:
+            return result(PolicyDecision.REQUIRE_APPROVAL, "approval_context_required")
+        approval = (
+            await db.execute(
+                select(ToolApprovalRequest).where(
+                    ToolApprovalRequest.id == request.approval_request_id,
+                    ToolApprovalRequest.tenant_id == request.tenant_id,
+                    ToolApprovalRequest.run_id == request.run_id,
+                    ToolApprovalRequest.tool_name == request.tool_name,
+                    ToolApprovalRequest.status == "approved",
+                )
+            )
+        ).scalar_one_or_none()
+        if approval is None:
+            return result(PolicyDecision.REQUIRE_APPROVAL, "approval_not_found_or_not_approved")
+        if str(getattr(approval, "tool_call_id", "")) != str(request.tool_call_id):
+            return result(PolicyDecision.DENY, "approval_tool_call_mismatch")
+        if request.arguments is not None and approval.arguments != request.arguments:
+            return result(PolicyDecision.DENY, "approval_arguments_mismatch")
+        return result(PolicyDecision.ALLOW, "policy_allow_approved")
+
+    if request.approval_granted or request.approval_request_id or request.tool_call_id:
+        return result(PolicyDecision.DENY, "unexpected_approval_context")
 
     return result(PolicyDecision.ALLOW, "policy_allow")
 
