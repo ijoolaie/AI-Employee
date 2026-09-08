@@ -23,6 +23,7 @@ from app.models.customer_channel import CustomerChannel
 from app.models.conversation import CustomerConversation, CustomerMessage
 from app.models.product import Product
 from app.models.commerce_integration import CommerceIntegration
+from app.models.credential import Credential
 from app.models.onboarding import OnboardingProgress
 from app.models.customer import Customer
 from app.models.api_key import APIKey
@@ -60,7 +61,7 @@ __all__ = [
     "WorkflowRun", "WorkflowStepRun", "WorkflowParallelBranchRun", "WorkflowEventTrigger",
     "WorkflowEventDelivery", "WorkflowSchedule", "WorkflowApproval", "OutboxMessage", "Feedback",
     "BillingPlan", "Subscription", "BillingEvent", "PaymentRefund", "UsageEvent", "BusinessInvoice", "CustomerChannel",
-    "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "OnboardingProgress",
+    "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "Credential", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "PasswordResetToken",
     "TenantEntitlement", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
     "AgentDefinition", "AgentTemplate", "AgentTemplateStatus", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding",
