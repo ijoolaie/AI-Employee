@@ -39,9 +39,11 @@ def upgrade() -> None:
     op.create_index("uq_agent_kill_switch_global_active", "agent_kill_switches", ["scope"], unique=True, postgresql_where=sa.text("scope = 'global' AND active = true"))
     op.create_index("uq_agent_kill_switch_tenant_active", "agent_kill_switches", ["scope", "tenant_id"], unique=True, postgresql_where=sa.text("scope = 'tenant' AND active = true"))
     op.create_index("uq_agent_kill_switch_agent_active", "agent_kill_switches", ["scope", "tenant_id", "agent_instance_id"], unique=True, postgresql_where=sa.text("scope = 'agent' AND active = true"))
+    op.execute(sa.text("INSERT INTO permissions (id, code, description) VALUES (gen_random_uuid(), 'agent.emergency_kill', 'Assert and revoke tenant or Agent emergency execution kill switches') ON CONFLICT (code) DO NOTHING"))
 
 
 def downgrade() -> None:
+    op.execute(sa.text("DELETE FROM permissions WHERE code = 'agent.emergency_kill'"))
     op.drop_index("uq_agent_kill_switch_agent_active", table_name="agent_kill_switches")
     op.drop_index("uq_agent_kill_switch_tenant_active", table_name="agent_kill_switches")
     op.drop_index("uq_agent_kill_switch_global_active", table_name="agent_kill_switches")
