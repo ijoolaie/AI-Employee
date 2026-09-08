@@ -136,9 +136,7 @@ async def list_template_evaluations(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(AgentEvaluation)
-        .where(AgentEvaluation.agent_template_id == template_id, AgentEvaluation.tenant_id == ctx.tenant_id)
-        .order_by(AgentEvaluation.created_at.desc())
+        select(AgentEvaluation).where(AgentEvaluation.agent_template_id == template_id, AgentEvaluation.tenant_id == ctx.tenant_id).order_by(AgentEvaluation.created_at.desc())
     )
     return [AgentEvaluationRead.model_validate(item, from_attributes=True) for item in result.scalars().all()]
 
@@ -181,6 +179,7 @@ async def access_review(
             next_review_at=payload.next_review_at,
             reason=payload.reason,
         )
+        await record(db, action="agent_identity.access_reviewed", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="agent_identity", resource_id=identity_id, metadata={"review_id": str(item.id), "decision": item.decision.value, "next_review_at": item.next_review_at.isoformat() if item.next_review_at else None})
         await db.commit()
     except Exception as exc:
         await db.rollback()
@@ -194,18 +193,13 @@ async def create_kill_switch(
     ctx: TenantContext = Depends(require_permission("agent.emergency_kill")),
     db: AsyncSession = Depends(get_db),
 ):
+    """Assert a tenant or Agent emergency kill switch; global scope is system-only."""
     if payload.scope == AgentKillScope.GLOBAL:
         raise HTTPException(status_code=403, detail="Global emergency kill switch is system-operator only")
     try:
-        item = await assert_kill(
-            db,
-            tenant_id=ctx.tenant_id,
-            agent_instance_id=payload.agent_instance_id,
-            scope=payload.scope,
-            reason=payload.reason,
-            asserted_by=ctx.user_id,
-        )
+        item = await assert_kill(db, scope=payload.scope, reason=payload.reason, asserted_by=ctx.user_id, tenant_id=ctx.tenant_id, agent_instance_id=payload.agent_instance_id)
         await db.commit()
+        await db.refresh(item)
     except Exception as exc:
         await db.rollback()
         raise _http(exc) from exc
@@ -217,11 +211,7 @@ async def list_kill_switches(
     ctx: TenantContext = Depends(require_permission("agent.emergency_kill")),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(AgentKillSwitch)
-        .where(AgentKillSwitch.tenant_id == ctx.tenant_id)
-        .order_by(AgentKillSwitch.asserted_at.desc())
-    )
+    result = await db.execute(select(AgentKillSwitch).where(AgentKillSwitch.tenant_id == ctx.tenant_id).order_by(AgentKillSwitch.asserted_at.desc()))
     return [AgentKillSwitchRead.model_validate(item, from_attributes=True) for item in result.scalars().all()]
 
 
@@ -232,8 +222,9 @@ async def revoke_kill_switch(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        item = await revoke_kill(db, tenant_id=ctx.tenant_id, kill_switch_id=kill_switch_id, revoked_by=ctx.user_id)
+        item = await revoke_kill(db, kill_switch_id=kill_switch_id, actor_id=ctx.user_id, tenant_id=ctx.tenant_id)
         await db.commit()
+        await db.refresh(item)
     except Exception as exc:
         await db.rollback()
         raise _http(exc) from exc
