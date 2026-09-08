@@ -12,11 +12,16 @@ class Result:
     def __init__(self, value): self.value = value
     def scalar_one_or_none(self): return self.value
     def scalar_one(self): return self.value
+    def scalars(self): return self
+    def first(self): return self.value
 
 
 class Db:
     def __init__(self, *values): self.values = list(values)
-    async def execute(self, _statement): return Result(self.values.pop(0))
+    async def execute(self, statement):
+        if "agent_kill_switches" in str(statement):
+            return Result(None)
+        return Result(self.values.pop(0))
     async def flush(self): pass
 
 
@@ -53,8 +58,6 @@ async def test_negative_approval_context_never_grants_access(field, value):
         assert result.decision == PolicyDecision.DENY
         assert result.reason == "approval_tool_call_mismatch"
     else:
-        # A real tenant/run/approval-id mismatch makes the exact approval lookup
-        # return no row; the kernel must stop at REQUIRE_APPROVAL rather than grant.
         result = await authorize(Db(agent, identity, None), request)
         assert result.decision == PolicyDecision.REQUIRE_APPROVAL
         assert result.reason == "approval_not_found_or_not_approved"
