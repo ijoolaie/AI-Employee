@@ -6,6 +6,11 @@ on:
     paths:
       - 'docs/releases/v1.4.0-rc.1.md'
       - '.github/workflows/release-candidate-gates.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/releases/**'
+      - '.github/workflows/release-candidate-gates.yml'
 
 permissions:
   actions: write
@@ -19,16 +24,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run production-infrastructure-validation.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.head_ref }}"
+          gh workflow run production-infrastructure-validation.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.ref_name }}"
 
       - name: Dispatch HA failure recovery validation
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run ha-failure-recovery.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.head_ref }}"
+          gh workflow run ha-failure-recovery.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.ref_name }}"
 
       - name: Dispatch ephemeral DAST validation
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run dast-ephemeral-validation.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.head_ref }}"
+          gh workflow run dast-ephemeral-validation.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.ref_name }}"
