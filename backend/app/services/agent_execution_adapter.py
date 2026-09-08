@@ -45,22 +45,14 @@ class AgentExecutionAdapter:
             input_data=work_item.input_data or {},
             created_by=work_item.requester_id,
         )
-        # agent_instance_id is deliberately persisted on the canonical Run;
-        # the worker therefore has an authoritative identity to re-check.
         run.agent_instance_id = instance.id
         await self.db.flush()
 
-        # Reuse the canonical asynchronous Run execution path. This is the
-        # same worker used by the normal Run API; no parallel Agent runtime is
-        # introduced. The worker re-checks AgentInstance + AgentIdentity and
-        # installs governed ToolRegistry context before execute_run().
         try:
             from app.workers.run_worker import execute_run_task
 
             execute_run_task.delay(str(run.id), str(work_item.tenant_id))
         except Exception:  # noqa: BLE001
-            # Match the existing Run API contract: keep the durable Run for
-            # observability/retry and do not introduce a second executor.
             logger.warning(
                 "agent_run_enqueue_failed",
                 extra={
@@ -90,7 +82,7 @@ class AgentExecutionAdapter:
         arguments: dict[str, Any],
         approval_granted: bool = False,
     ) -> Any:
-        """Execute a Tool only after AgentInstance identity/policy checks."""
+        """Execute a Tool only after the central policy decision allows it."""
         tool = registry.get(tool_name)
         await assert_agent_can_execute(
             self.db,
@@ -98,6 +90,8 @@ class AgentExecutionAdapter:
             agent_instance_id=agent.id,
             tool_name=tool_name,
             required_permission=tool.required_permission,
+            approval_granted=approval_granted,
+            requires_approval=tool.requires_approval,
         )
         return await registry.execute(
             tool_name,
