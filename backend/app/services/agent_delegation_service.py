@@ -1,7 +1,7 @@
 """Fail-closed Agent-to-Agent delegation authorization."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -12,7 +12,7 @@ from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.agent_delegation import AgentDelegation
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
-from app.models.work_item import ExecutorType, WorkItem
+from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services import audit_service
 
 DEFAULT_MAX_CHAIN_DEPTH = 3
@@ -75,6 +75,8 @@ async def authorize_delegation(
 
     requested_actions = set(scopes.get("actions") or [])
     requested_tools = set(scopes.get("tools") or [])
+    if not requested_actions and not requested_tools:
+        raise ValidationAppError("Delegation must grant an explicit non-empty scope")
     delegator_actions, delegator_tools = _scopes(delegator)
     delegate_actions, delegate_tools = _scopes(delegate)
     if not _contains(delegator_actions, requested_actions) or not _contains(delegator_tools, requested_tools):
@@ -112,6 +114,62 @@ async def authorize_delegation(
         metadata={"delegate_agent_instance_id": str(delegate.id), "source_work_item_id": str(source.id), "scopes": delegation.scopes, "chain_depth": depth, "expires_at": expires_at.isoformat()},
     )
     return delegation
+
+
+async def create_delegated_work_item(
+    db: AsyncSession,
+    *,
+    source_work_item_id: UUID,
+    delegator_agent_instance_id: UUID,
+    delegate_agent_instance_id: UUID,
+    scopes: dict[str, Any],
+    expires_at: datetime,
+    title: str | None = None,
+    description: str | None = None,
+    context: dict[str, Any] | None = None,
+    artifacts: list[dict[str, Any]] | None = None,
+    max_chain_depth: int = DEFAULT_MAX_CHAIN_DEPTH,
+) -> WorkItem:
+    """Atomically establish delegation authority and bind it to the child WorkItem."""
+    source = (await db.execute(select(WorkItem).where(WorkItem.id == source_work_item_id))).scalar_one_or_none()
+    if source is None:
+        raise NotFoundError("Source work item not found")
+    delegation = await authorize_delegation(
+        db,
+        tenant_id=source.tenant_id,
+        delegator_agent_instance_id=delegator_agent_instance_id,
+        delegate_agent_instance_id=delegate_agent_instance_id,
+        source_work_item_id=source.id,
+        scopes=scopes,
+        expires_at=expires_at,
+        max_chain_depth=max_chain_depth,
+    )
+    parent_context = dict(source.policy_context or {})
+    child_context = dict(parent_context)
+    child_context.update({"delegated_from": str(source.id), "delegation_id": str(delegation.id), "delegation_depth": delegation.chain_depth})
+    if context:
+        child_context["delegation_context"] = context
+    if artifacts:
+        child_context["delegation_artifacts"] = artifacts
+    child = WorkItem(
+        tenant_id=source.tenant_id,
+        title=title or source.title,
+        description=description if description is not None else source.description,
+        status=WorkItemStatus.WAITING_APPROVAL if parent_context.get("requires_approval") else WorkItemStatus.ASSIGNED,
+        priority=source.priority,
+        requester_id=source.requester_id,
+        executor_type=ExecutorType.AGENT,
+        executor_id=delegate_agent_instance_id,
+        input_data={**(source.input_data or {}), "delegated_context": context or {}, "delegated_artifacts": artifacts or []},
+        policy_context=child_context,
+        idempotency_key=f"agent-delegation:{delegation.id}",
+        parent_work_item_id=source.id,
+    )
+    db.add(child)
+    await db.flush()
+    delegation.delegated_work_item_id = child.id
+    await db.flush()
+    return child
 
 
 async def validate_delegation(
