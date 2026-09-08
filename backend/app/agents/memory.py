@@ -24,16 +24,11 @@ async def build_runtime_memory(
     tenant_id: UUID,
     employee_id: UUID,
     employee_version_id: UUID,
+    run_id: UUID | None = None,
     input_data: dict[str, Any],
     rules: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    """Retrieve a bounded, tenant-safe memory snapshot for one run.
-
-    The storage service performs the authoritative tenant + Employee filter.
-    This boundary additionally binds the snapshot to the exact EmployeeVersion
-    carried by the AgentRuntimeContract and strips fields that are not useful
-    to the model-facing context (notably embeddings and internal metadata).
-    """
+    """Retrieve a bounded, tenant-safe memory snapshot for one run."""
     config = memory_settings(rules)
     if not config["enabled"]:
         return []
@@ -43,6 +38,8 @@ async def build_runtime_memory(
         db,
         tenant_id=tenant_id,
         employee_id=employee_id,
+        employee_version_id=employee_version_id,
+        run_id=run_id,
         query=query,
         top_k=min(config["top_k"], MAX_RUNTIME_MEMORIES),
         min_score=config["min_score"],
