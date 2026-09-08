@@ -53,6 +53,7 @@ async def delegate_agent(
     try:
         child = await create_delegated_work_item(
             db,
+            tenant_id=current_user.tenant_id,
             source_work_item_id=source_work_item_id,
             delegator_agent_instance_id=payload.delegator_agent_instance_id,
             delegate_agent_instance_id=payload.delegate_agent_instance_id,
