@@ -4,10 +4,11 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, ValidationAppError
+from app.models.agent_instance import AgentInstance
 from app.models.agent_kill_switch import AgentKillScope, AgentKillSwitch
 from app.services import audit_service
 
@@ -58,6 +59,24 @@ async def assert_kill(
         raise ValidationAppError("Tenant kill switch requires exactly one tenant")
     if scope == AgentKillScope.AGENT and (tenant_id is None or agent_instance_id is None):
         raise ValidationAppError("Agent kill switch requires tenant and Agent instance")
+
+    if scope == AgentKillScope.AGENT:
+        instance = (
+            await db.execute(
+                select(AgentInstance).where(
+                    AgentInstance.id == agent_instance_id,
+                    AgentInstance.tenant_id == tenant_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if instance is None:
+            raise ValidationAppError("Agent kill switch target does not belong to tenant")
+
+    # Serialize assertions for the same logical scope. The partial unique indexes
+    # remain the database backstop, while the transaction advisory lock removes the
+    # check-then-insert race that otherwise surfaces as an IntegrityError.
+    lock_key = f"agent-kill:{scope.value}:{tenant_id or '-'}:{agent_instance_id or '-'}"
+    await db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:lock_key))").bindparams(lock_key=lock_key))
 
     existing = (await db.execute(
         select(AgentKillSwitch).where(
