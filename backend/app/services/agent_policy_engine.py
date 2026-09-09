@@ -112,9 +112,8 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
         return result(PolicyDecision.DENY, "agent_instance_not_executable")
 
     # Governed Stage 8 instances carry the CEO-approved authority fingerprint
-    # in their immutable provisioning configuration. Recompute it at every
-    # execution boundary so post-activation drift cannot silently expand or
-    # otherwise change execution authority.
+    # in their provisioning configuration. Recompute it at every execution
+    # boundary so post-activation drift cannot silently change authority.
     template_id = getattr(instance, "agent_template_id", None)
     if template_id is not None:
         template = (
@@ -137,11 +136,11 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             tenant_id=request.tenant_id,
             template_id=template.id,
             template_version=template.version,
-            agent_definition_id=template.agent_definition_id,
-            risk_tier=template.risk_tier,
+            agent_definition_id=instance.agent_definition_id,
+            risk_tier=instance.risk_tier,
             capability_contract=template.capability_contract,
-            permission_policy=template.permission_policy,
-            approval_policy=template.approval_policy,
+            permission_policy=instance.permission_policy,
+            approval_policy=instance.approval_policy,
             install_policy=template.install_policy,
             configuration=configuration,
             max_concurrency=instance.max_concurrency,
