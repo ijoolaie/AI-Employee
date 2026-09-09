@@ -16,7 +16,7 @@ from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
 from app.models.agent_identity import AgentIdentity
-from app.models.agent_instance import AgentInstance
+from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
 from app.services.agent_evaluation import EVALUATION_CONTRACT_VERSION
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
@@ -169,6 +169,16 @@ async def review_access(db: AsyncSession, *, tenant_id: uuid.UUID, identity_id: 
         raise NotFoundError("Agent identity not found")
     if reviewer_user_id in {identity.owner_user_id, identity.sponsor_user_id}:
         raise ValidationAppError("Access reviewer must be independent from the agent owner and sponsor")
+
+    instance = (await db.execute(select(AgentInstance).where(
+        AgentInstance.id == identity.agent_instance_id,
+        AgentInstance.tenant_id == tenant_id,
+    ).with_for_update())).scalar_one_or_none()
+    if instance is None:
+        raise NotFoundError("Agent instance not found for identity")
+    if decision == AgentAccessReviewDecision.APPROVED and instance.status != AgentInstanceStatus.SUSPENDED:
+        raise ConflictError("Approved access review cannot grant execution authority to an active AgentInstance; use governed workforce activation")
+
     review = AgentAccessReview(tenant_id=tenant_id, agent_identity_id=identity.id, reviewer_user_id=reviewer_user_id, decision=decision, next_review_at=next_review_at, reason=reason)
     db.add(review)
     identity.active = decision == AgentAccessReviewDecision.APPROVED
