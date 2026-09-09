@@ -136,16 +136,14 @@ async def list_template_evaluations(
     db: AsyncSession = Depends(get_db),
 ):
     result = await db.execute(
-        select(AgentEvaluation)
-        .where(AgentEvaluation.agent_template_id == template_id, AgentEvaluation.tenant_id == ctx.tenant_id)
-        .order_by(AgentEvaluation.created_at.desc())
+        select(AgentEvaluation).where(AgentEvaluation.agent_template_id == template_id, AgentEvaluation.tenant_id == ctx.tenant_id).order_by(AgentEvaluation.created_at.desc())
     )
     return [AgentEvaluationRead.model_validate(item, from_attributes=True) for item in result.scalars().all()]
 
 
 @router.get("/workforce-registry")
 async def workforce_registry(
-    ctx: TenantContext = Depends(require_permission("agent_template.read")),
+    ctx: TenantContext = Depends(require_permission("agent_workforce.read")),
     db: AsyncSession = Depends(get_db),
 ):
     """Return the tenant's governed Agent workforce as one auditable projection."""
@@ -199,14 +197,7 @@ async def create_kill_switch(
     if payload.scope == AgentKillScope.GLOBAL:
         raise HTTPException(status_code=403, detail="Global emergency kill switch is system-operator only")
     try:
-        item = await assert_kill(
-            db,
-            scope=payload.scope,
-            reason=payload.reason,
-            asserted_by=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-            agent_instance_id=payload.agent_instance_id,
-        )
+        item = await assert_kill(db, scope=payload.scope, reason=payload.reason, asserted_by=ctx.user_id, tenant_id=ctx.tenant_id, agent_instance_id=payload.agent_instance_id)
         await db.commit()
         await db.refresh(item)
     except Exception as exc:
@@ -220,11 +211,7 @@ async def list_kill_switches(
     ctx: TenantContext = Depends(require_permission("agent.emergency_kill")),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(AgentKillSwitch)
-        .where(AgentKillSwitch.tenant_id == ctx.tenant_id)
-        .order_by(AgentKillSwitch.asserted_at.desc())
-    )
+    result = await db.execute(select(AgentKillSwitch).where(AgentKillSwitch.tenant_id == ctx.tenant_id).order_by(AgentKillSwitch.asserted_at.desc()))
     return [AgentKillSwitchRead.model_validate(item, from_attributes=True) for item in result.scalars().all()]
 
 
@@ -235,12 +222,7 @@ async def revoke_kill_switch(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        item = await revoke_kill(
-            db,
-            kill_switch_id=kill_switch_id,
-            actor_id=ctx.user_id,
-            tenant_id=ctx.tenant_id,
-        )
+        item = await revoke_kill(db, kill_switch_id=kill_switch_id, actor_id=ctx.user_id, tenant_id=ctx.tenant_id)
         await db.commit()
         await db.refresh(item)
     except Exception as exc:

@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.core.deps import TenantContext, require_permission
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalStatus
 from app.services import agent_workforce_proposal_service as proposal_service
+from app.services.agent_workforce_manager import get_agent_capacity
 
 router = APIRouter(prefix="/agent-workforce", tags=["agent-workforce"])
 
@@ -64,6 +65,18 @@ def _http(exc: Exception) -> HTTPException:
     return HTTPException(status_code=409, detail=text)
 
 
+@router.get("/instances/{agent_instance_id}/capacity")
+async def agent_capacity(
+    agent_instance_id: UUID,
+    ctx: TenantContext = Depends(require_permission("agent_workforce.read")),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        return await get_agent_capacity(db, tenant_id=ctx.tenant_id, agent_instance_id=agent_instance_id)
+    except Exception as exc:
+        raise _http(exc) from exc
+
+
 @router.post("/proposals", response_model=WorkforceProposalRead, status_code=status.HTTP_201_CREATED)
 async def create_workforce_proposal(
     payload: WorkforceProposalCreate,
@@ -105,12 +118,7 @@ async def list_workforce_proposals(
 
 
 @router.post("/proposals/{proposal_id}/board-decision", response_model=WorkforceProposalRead)
-async def board_decision(
-    proposal_id: UUID,
-    payload: WorkforceDecision,
-    ctx: TenantContext = Depends(require_permission("agent_workforce.board_review")),
-    db: AsyncSession = Depends(get_db),
-):
+async def board_decision(proposal_id: UUID, payload: WorkforceDecision, ctx: TenantContext = Depends(require_permission("agent_workforce.board_review")), db: AsyncSession = Depends(get_db)):
     try:
         item = await proposal_service.board_decide(db, tenant_id=ctx.tenant_id, proposal_id=proposal_id, reviewer_user_id=ctx.user_id, approve=payload.approve, reason=payload.reason)
         await db.commit()
@@ -121,12 +129,7 @@ async def board_decision(
 
 
 @router.post("/proposals/{proposal_id}/ceo-decision", response_model=WorkforceProposalRead)
-async def ceo_decision(
-    proposal_id: UUID,
-    payload: WorkforceDecision,
-    ctx: TenantContext = Depends(require_permission("agent_workforce.ceo_approve")),
-    db: AsyncSession = Depends(get_db),
-):
+async def ceo_decision(proposal_id: UUID, payload: WorkforceDecision, ctx: TenantContext = Depends(require_permission("agent_workforce.ceo_approve")), db: AsyncSession = Depends(get_db)):
     try:
         item = await proposal_service.ceo_decide(db, tenant_id=ctx.tenant_id, proposal_id=proposal_id, approver_user_id=ctx.user_id, approve=payload.approve, reason=payload.reason)
         await db.commit()
@@ -137,11 +140,7 @@ async def ceo_decision(
 
 
 @router.post("/proposals/{proposal_id}/provision", response_model=WorkforceProposalRead)
-async def provision_workforce_proposal(
-    proposal_id: UUID,
-    ctx: TenantContext = Depends(require_permission("agent_workforce.provision")),
-    db: AsyncSession = Depends(get_db),
-):
+async def provision_workforce_proposal(proposal_id: UUID, ctx: TenantContext = Depends(require_permission("agent_workforce.provision")), db: AsyncSession = Depends(get_db)):
     try:
         item = await proposal_service.provision_approved_proposal(db, tenant_id=ctx.tenant_id, proposal_id=proposal_id)
         await db.commit()
@@ -152,18 +151,9 @@ async def provision_workforce_proposal(
 
 
 @router.post("/proposals/{proposal_id}/activate", response_model=WorkforceProposalRead)
-async def activate_workforce_proposal(
-    proposal_id: UUID,
-    ctx: TenantContext = Depends(require_permission("agent_workforce.activate")),
-    db: AsyncSession = Depends(get_db),
-):
+async def activate_workforce_proposal(proposal_id: UUID, ctx: TenantContext = Depends(require_permission("agent_workforce.activate")), db: AsyncSession = Depends(get_db)):
     try:
-        item = await proposal_service.activate_provisioned_proposal(
-            db,
-            tenant_id=ctx.tenant_id,
-            proposal_id=proposal_id,
-            activated_by_user_id=ctx.user_id,
-        )
+        item = await proposal_service.activate_provisioned_proposal(db, tenant_id=ctx.tenant_id, proposal_id=proposal_id, activated_by_user_id=ctx.user_id)
         await db.commit()
     except Exception as exc:
         await db.rollback()

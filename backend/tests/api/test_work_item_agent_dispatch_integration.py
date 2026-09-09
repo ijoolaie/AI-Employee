@@ -6,10 +6,14 @@ import pytest
 
 from app.api.v1 import work_items
 from app.models.work_item import ExecutorType, WorkItemStatus
+from app.services.unified_execution import ExecutionError
 
 
 class FakeDB:
     async def commit(self):
+        return None
+
+    async def rollback(self):
         return None
 
     async def get(self, model, object_id):
@@ -74,33 +78,17 @@ async def test_agent_dispatch_wires_adapter_into_execution_service(monkeypatch):
 @pytest.mark.asyncio
 async def test_agent_assignment_rejects_cross_tenant_agent_before_execution(monkeypatch):
     tenant_id = uuid4()
-    other_tenant_id = uuid4()
     work_item_id = uuid4()
     agent_id = uuid4()
     db = FakeDB()
-    calls = {"service": 0}
+    calls = {"service": 0, "args": None}
 
-    work_item = SimpleNamespace(
-        id=work_item_id,
-        tenant_id=tenant_id,
-        executor_type=ExecutorType.AGENT,
-        status=WorkItemStatus.READY,
-    )
-    foreign_agent = SimpleNamespace(id=agent_id, tenant_id=other_tenant_id)
+    async def fake_assign_work_item(db_value, *, tenant_id, work_item_id, agent_instance_id):
+        calls["args"] = (db_value, tenant_id, work_item_id, agent_instance_id)
+        calls["service"] += 1
+        raise ExecutionError("agent instance not found")
 
-    async def fake_get_work_item(db_value, item_id, requested_tenant_id):
-        return work_item
-
-    async def fake_get(model, object_id):
-        return foreign_agent
-
-    class ForbiddenService:
-        def __init__(self, *_args, **_kwargs):
-            calls["service"] += 1
-
-    db.get = fake_get
-    monkeypatch.setattr(work_items, "_get_work_item", fake_get_work_item)
-    monkeypatch.setattr(work_items, "UnifiedExecutionService", ForbiddenService)
+    monkeypatch.setattr(work_items, "assign_agent_work_item", fake_assign_work_item)
 
     with pytest.raises(work_items.HTTPException) as exc:
         await work_items.assign_agent(
@@ -111,4 +99,5 @@ async def test_agent_assignment_rejects_cross_tenant_agent_before_execution(monk
         )
 
     assert exc.value.status_code == 404
-    assert calls["service"] == 0
+    assert calls["service"] == 1
+    assert calls["args"] == (db, tenant_id, work_item_id, agent_id)
