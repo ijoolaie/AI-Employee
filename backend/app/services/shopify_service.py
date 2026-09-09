@@ -153,6 +153,14 @@ def verify_webhook(raw_body: bytes, hmac_header: str | None) -> bool:
     if not secret or not hmac_header: return False
     digest = base64.b64encode(hmac.new(secret.encode(), raw_body, hashlib.sha256).digest()).decode(); return hmac.compare_digest(digest, hmac_header)
 
+def normalize_shop_domain(shop_domain: str | None) -> str:
+    return str(shop_domain or "").strip().lower().replace("https://", "").replace("http://", "").rstrip("/")
+
+def webhook_matches_integration(integration: CommerceIntegration, shop_domain: str | None) -> bool:
+    configured = normalize_shop_domain((integration.config or {}).get("shop_domain"))
+    incoming = normalize_shop_domain(shop_domain)
+    return bool(configured and incoming and hmac.compare_digest(configured, incoming))
+
 async def record_webhook(db, integration, webhook_id, topic, payload):
     existing = (await db.execute(select(ShopifyWebhookEvent).where(ShopifyWebhookEvent.integration_id == integration.id, ShopifyWebhookEvent.webhook_id == webhook_id))).scalar_one_or_none()
     if existing: return False
