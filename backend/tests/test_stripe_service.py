@@ -111,13 +111,15 @@ def test_checkout_requires_explicit_idempotency_key():
 @pytest.mark.asyncio
 async def test_customer_creation_passes_stable_tenant_idempotency_key():
     tenant_id = uuid.UUID("00000000-0000-0000-0000-000000000123")
+    sub = Subscription(provider_customer_id=None)
+    locked_result = SimpleNamespace(scalar_one=lambda: sub)
+    tenant_result = SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(name="Acme"))
     db = SimpleNamespace(
-        execute=AsyncMock(return_value=SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(name="Acme"))),
+        execute=AsyncMock(side_effect=[locked_result, tenant_result]),
         flush=AsyncMock(),
     )
     customer_create = Mock(return_value=SimpleNamespace(id="cus_test_123"))
     stripe = SimpleNamespace(Customer=SimpleNamespace(create=customer_create))
-    sub = Subscription(provider_customer_id=None)
 
     customer_id = await stripe_service._get_or_create_stripe_customer(
         db, stripe, tenant_id=tenant_id, sub=sub, user_email="test@example.test"
@@ -137,8 +139,17 @@ async def test_customer_creation_passes_stable_tenant_idempotency_key():
 @pytest.mark.asyncio
 async def test_customer_creation_uses_same_provider_key_on_retry():
     tenant_id = uuid.UUID("00000000-0000-0000-0000-000000000123")
+    first_sub = Subscription(provider_customer_id=None)
+    second_sub = Subscription(provider_customer_id=None)
     db = SimpleNamespace(
-        execute=AsyncMock(return_value=SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(name="Acme"))),
+        execute=AsyncMock(
+            side_effect=[
+                SimpleNamespace(scalar_one=lambda: first_sub),
+                SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(name="Acme")),
+                SimpleNamespace(scalar_one=lambda: second_sub),
+                SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(name="Acme")),
+            ]
+        ),
         flush=AsyncMock(),
     )
     seen_keys = []
@@ -148,8 +159,6 @@ async def test_customer_creation_uses_same_provider_key_on_retry():
         return SimpleNamespace(id="cus_deterministic")
 
     stripe = SimpleNamespace(Customer=SimpleNamespace(create=create_customer))
-    first_sub = Subscription(provider_customer_id=None)
-    second_sub = Subscription(provider_customer_id=None)
 
     first = await stripe_service._get_or_create_stripe_customer(
         db, stripe, tenant_id=tenant_id, sub=first_sub, user_email="test@example.test"
