@@ -34,15 +34,31 @@ async def agent_tool_context(
 
 
 async def _resolve_approval(db: Any, *, tenant_id: UUID, run_id: UUID, tool_name: str, arguments: dict[str, Any]) -> ToolApprovalRequest | None:
-    """Resolve exactly one approved request matching the execution payload."""
-    result = await db.execute(select(ToolApprovalRequest).where(
-        ToolApprovalRequest.tenant_id == tenant_id,
-        ToolApprovalRequest.run_id == run_id,
-        ToolApprovalRequest.tool_name == tool_name,
-        ToolApprovalRequest.status == "approved",
-    ))
+    """Atomically claim exactly one approved request for one tool invocation.
+
+    The row lock closes the replay race between concurrent workers. Approval is
+    marked consumed before the side effect starts, so one human decision cannot
+    authorize a second execution. A failed side effect requires a fresh
+    approval; transactional callers may still roll the claim back with their
+    transaction.
+    """
+    result = await db.execute(
+        select(ToolApprovalRequest)
+        .where(
+            ToolApprovalRequest.tenant_id == tenant_id,
+            ToolApprovalRequest.run_id == run_id,
+            ToolApprovalRequest.tool_name == tool_name,
+            ToolApprovalRequest.status == "approved",
+        )
+        .with_for_update()
+    )
     matches = [item for item in result.scalars().all() if item.arguments == arguments]
-    return matches[0] if len(matches) == 1 else None
+    if len(matches) != 1:
+        return None
+    approval = matches[0]
+    approval.status = "consumed"
+    await db.flush()
+    return approval
 
 
 def install() -> None:
