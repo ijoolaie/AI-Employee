@@ -115,8 +115,18 @@ async def provision_instance(
     sponsor_user_id: uuid.UUID,
     approved_by_user_id: uuid.UUID,
     configuration: dict | None = None,
-    activate: bool = True,
+    activate: bool = False,
 ) -> AgentInstance:
+    """Provision an instance without granting execution authority.
+
+    Activation is a separate governed operation and must follow the
+    workforce proposal + access-review path. Keeping this boundary closed
+    prevents a direct template-install call from creating an executable
+    AgentInstance.
+    """
+    if activate:
+        raise ValidationAppError("AgentInstance activation requires the governed workforce activation path")
+
     template = (await db.execute(select(AgentTemplate).where(
         AgentTemplate.id == template_id,
         AgentTemplate.tenant_id == tenant_id,
@@ -131,7 +141,6 @@ async def provision_instance(
     if policy.get("requires_ceo_approval", True) and sponsor_user_id == approved_by_user_id:
         raise ValidationAppError("Sponsor and approver must be independently attributable for governed installation")
 
-    initial_status = AgentInstanceStatus.ENABLED if activate else AgentInstanceStatus.SUSPENDED
     instance = AgentInstance(
         tenant_id=tenant_id,
         agent_definition_id=template.agent_definition_id,
@@ -142,8 +151,8 @@ async def provision_instance(
         permission_policy=template.permission_policy or {},
         approval_policy=template.approval_policy or {},
         risk_tier=template.risk_tier,
-        status=initial_status,
-        enabled=activate,
+        status=AgentInstanceStatus.SUSPENDED,
+        enabled=False,
     )
     db.add(instance)
     await db.flush()
