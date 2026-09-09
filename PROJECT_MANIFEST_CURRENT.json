@@ -1,19 +1,19 @@
 {
   "schema_version": 3,
   "status": "current_release_index",
-  "generated_at": "2026-09-05T14:28:33Z",
+  "generated_at": "2026-09-09T08:56:00Z",
   "current_certified_vendor_release": {
-    "version": "v1.2.0",
-    "release_truth": "docs/current/39_RELEASE_TRUTH_V1.2.0.md",
-    "release_workflow_run": "32738347495",
-    "runtime_artifact": "ai-employee-v1.2.0-runtime",
-    "editions_artifact": "ai-employee-v1.2.0-editions"
+    "version": "v1.3.8",
+    "release_truth": "docs/current/39_RELEASE_TRUTH_V1.3.8.md",
+    "release_workflow_run": "34052885700",
+    "runtime_artifact": "ai-employee-v1.3.8-runtime",
+    "editions_artifact": "ai-employee-v1.3.8-editions"
   },
   "current_implementation_baseline": {
-    "architecture": "V1.4",
+    "architecture": "V1.5 Agentic Operating Model",
     "operating_model": "V1.5 Human + Agent",
-    "engineering_baseline": "44e1c0f339e2440bafe9f4e122d2b63dc2fc09c2",
-    "reconciled_on": "2026-09-05",
+    "engineering_baseline": "c50e7bbb492563a9d55e7b289b75c2280345412e",
+    "reconciled_on": "2026-09-09",
     "reconciliation": "docs/current/PRODUCTIZATION_ROADMAP.md"
   },
   "external_production": {
@@ -32,8 +32,7 @@
     "docs/PRODUCTION_HANDOFF_v1.3.0.md"
   ],
   "authority_order": [
-    "docs/current/39_RELEASE_TRUTH_V1.2.0.md",
-    "docs/current/44_VERSION_RELEASE_RECONCILIATION_2026-08-27.md",
+    "docs/current/39_RELEASE_TRUTH_V1.3.8.md",
     "docs/current/PRODUCTIZATION_ROADMAP.md",
     "docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md",
     "docs/00_START_HERE/CURRENT_STATUS.md"
