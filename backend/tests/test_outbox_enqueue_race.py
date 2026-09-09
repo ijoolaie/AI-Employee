@@ -14,6 +14,7 @@ async def test_enqueue_recovers_from_concurrent_dedupe_violation():
     tenant_id = uuid.uuid4()
     winner = OutboxMessage(tenant_id=tenant_id, kind="test", payload={"ok": True}, dedupe_key="race-1")
     lookup_count = 0
+    flush_count = 0
 
     class Result:
         def scalar_one_or_none(self):
@@ -36,6 +37,8 @@ async def test_enqueue_recovers_from_concurrent_dedupe_violation():
             return Result()
 
         async def flush(self):
+            nonlocal flush_count
+            flush_count += 1
             raise IntegrityError("insert", {}, Exception("duplicate"))
 
         def begin_nested(self):
@@ -51,3 +54,4 @@ async def test_enqueue_recovers_from_concurrent_dedupe_violation():
 
     assert result is winner
     assert lookup_count == 2
+    assert flush_count == 1
