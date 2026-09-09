@@ -50,6 +50,11 @@ async def get_integration(db, tenant_id, integration_id):
     if not row or row.provider != "shopify": raise ValidationAppError("Shopify integration not found")
     return row
 
+async def _lock_integration(db: AsyncSession, tenant_id, integration_id):
+    row = (await db.execute(select(CommerceIntegration).where(CommerceIntegration.id == integration_id, CommerceIntegration.tenant_id == tenant_id).with_for_update())).scalar_one_or_none()
+    if not row or row.provider != "shopify": raise ValidationAppError("Shopify integration not found")
+    return row
+
 async def test_connection(db, tenant_id, integration_id):
     integration = await get_integration(db, tenant_id, integration_id)
     data = await _graphql(db, integration, "query { shop { id name myshopifyDomain primaryDomain { url } } }")
@@ -72,7 +77,7 @@ ORDERS_Q='''query Orders($first:Int!,$after:String){ orders(first:$first,after:$
 CUSTOMERS_Q='''query Customers($first:Int!,$after:String){ customers(first:$first,after:$after){ nodes { id firstName lastName email phone } pageInfo { hasNextPage endCursor } } }'''
 
 async def sync_products(db, tenant_id, integration_id):
-    integration = await get_integration(db, tenant_id, integration_id); products = await _paginate(db, integration, PRODUCTS_Q, "products"); created = updated = 0
+    integration = await _lock_integration(db, tenant_id, integration_id); products = await _paginate(db, integration, PRODUCTS_Q, "products"); created = updated = 0
     for remote in products:
         variants = (remote.get("variants") or {}).get("nodes") or []; variant = variants[0] if variants else {}
         existing = (await db.execute(select(Product).where(Product.tenant_id == tenant_id, Product.attributes["shopify_product_id"].as_string() == str(remote.get("id"))))).scalar_one_or_none()
@@ -85,7 +90,7 @@ async def sync_products(db, tenant_id, integration_id):
     return {"provider": "shopify", "products_seen": len(products), "created": created, "updated": updated}
 
 async def sync_customers(db, tenant_id, integration_id):
-    integration = await get_integration(db, tenant_id, integration_id); rows = await _paginate(db, integration, CUSTOMERS_Q, "customers"); created = updated = 0
+    integration = await _lock_integration(db, tenant_id, integration_id); rows = await _paginate(db, integration, CUSTOMERS_Q, "customers"); created = updated = 0
     for c in rows:
         key = str(c.get("id")); row = (await db.execute(select(Customer).where(Customer.tenant_id == tenant_id, Customer.external_key == key))).scalar_one_or_none(); name = " ".join(filter(None, [c.get("firstName"), c.get("lastName")])) or None
         if row: row.name = name; row.email = c.get("email"); row.phone = c.get("phone"); row.last_channel = "shopify"; updated += 1
@@ -93,7 +98,7 @@ async def sync_customers(db, tenant_id, integration_id):
     await db.flush(); return {"customers_seen": len(rows), "created": created, "updated": updated}
 
 async def sync_orders(db, tenant_id, integration_id):
-    integration = await get_integration(db, tenant_id, integration_id); orders = await _paginate(db, integration, ORDERS_Q, "orders"); created = updated = 0
+    integration = await _lock_integration(db, tenant_id, integration_id); orders = await _paginate(db, integration, ORDERS_Q, "orders"); created = updated = 0
     for remote in orders:
         rid = str(remote.get("id")); existing = (await db.execute(select(BusinessOrder).where(BusinessOrder.tenant_id == tenant_id, BusinessOrder.metadata_["shopify_order_id"].as_string() == rid))).scalar_one_or_none()
         c = remote.get("customer") or {}; key = str(c.get("id") or f"shopify-order:{rid}"); customer = (await db.execute(select(Customer).where(Customer.tenant_id == tenant_id, Customer.external_key == key))).scalar_one_or_none()
