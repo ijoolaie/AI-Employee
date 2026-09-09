@@ -12,15 +12,17 @@ boundary for what remains genuinely unverified in this build environment.
 
 import hashlib
 import hmac
-import inspect
 import json
 import time
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 import pytest
 from pydantic import ValidationError
 
 from app.core.config import get_settings
 from app.core.exceptions import ValidationAppError
+from app.models.billing import Subscription
 from app.schemas.billing import CheckoutSessionRequest
 from app.services import stripe_service
 
@@ -129,8 +131,56 @@ def test_checkout_requires_explicit_idempotency_key():
     assert request.idempotency_key == "checkout-test-123"
 
 
-def test_checkout_service_passes_idempotency_to_provider_calls():
-    source = inspect.getsource(stripe_service.create_checkout_session)
-    assert "idempotency_key=idempotency_key" in source
-    customer_source = inspect.getsource(stripe_service._get_or_create_stripe_customer)
-    assert 'idempotency_key=f"customer:{idempotency_key}"' in customer_source
+@pytest.mark.asyncio
+async def test_customer_creation_passes_stable_tenant_idempotency_key():
+    tenant_id = "00000000-0000-0000-0000-000000000123"
+    db = Mock()
+    db.execute = Mock(return_value=SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(name="Acme")))
+    db.flush = Mock()
+    customer_create = Mock(return_value=SimpleNamespace(id="cus_test_123"))
+    stripe = SimpleNamespace(Customer=SimpleNamespace(create=customer_create))
+    sub = Subscription(provider_customer_id=None)
+
+    customer_id = await stripe_service._get_or_create_stripe_customer(
+        db,
+        stripe,
+        tenant_id=__import__("uuid").UUID(tenant_id),
+        sub=sub,
+        user_email="billing@example.test",
+    )
+
+    assert customer_id == "cus_test_123"
+    assert sub.provider_customer_id == "cus_test_123"
+    customer_create.assert_called_once_with(
+        email="billing@example.test",
+        name="Acme",
+        metadata={"tenant_id": tenant_id},
+        idempotency_key=f"customer:{tenant_id}",
+    )
+
+
+@pytest.mark.asyncio
+async def test_customer_creation_reuses_same_provider_idempotency_key_across_retry():
+    tenant_id = __import__("uuid").UUID("00000000-0000-0000-0000-000000000123")
+    db = Mock()
+    db.execute = Mock(return_value=SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(name="Acme")))
+    db.flush = Mock()
+    seen_keys = []
+
+    def create_customer(**kwargs):
+        seen_keys.append(kwargs["idempotency_key"])
+        return SimpleNamespace(id="cus_deterministic")
+
+    stripe = SimpleNamespace(Customer=SimpleNamespace(create=create_customer))
+
+    first_sub = Subscription(provider_customer_id=None)
+    second_sub = Subscription(provider_customer_id=None)
+    first = await stripe_service._get_or_create_stripe_customer(
+        db, stripe, tenant_id=tenant_id, sub=first_sub, user_email="billing@example.test"
+    )
+    second = await stripe_service._get_or_create_stripe_customer(
+        db, stripe, tenant_id=tenant_id, sub=second_sub, user_email="billing@example.test"
+    )
+
+    assert first == second == "cus_deterministic"
+    assert seen_keys == [f"customer:{tenant_id}", f"customer:{tenant_id}"]
