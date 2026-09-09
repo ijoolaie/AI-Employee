@@ -13,6 +13,7 @@ from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_template import AgentTemplate
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalStatus
+from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.services.agent_template_service import provision_instance
 from app.services.audit_service import record
 
@@ -116,6 +117,40 @@ async def ceo_decide(
         raise ConflictError("CEO decision requires prior Board approval")
     if approver_user_id in {proposal.requester_user_id, proposal.sponsor_user_id, proposal.board_reviewed_by}:
         raise ValidationAppError("CEO approver must be independent from requester, sponsor and Board reviewer")
+
+    if approve:
+        if not proposal.agent_template_id:
+            raise ValidationAppError("Approved workforce proposal is missing its AgentTemplate")
+        template = (await db.execute(select(AgentTemplate).where(
+            AgentTemplate.id == proposal.agent_template_id,
+            AgentTemplate.tenant_id == tenant_id,
+        ))).scalar_one_or_none()
+        if template is None:
+            raise NotFoundError("Agent template not found for tenant")
+        if template.status.value != "published":
+            raise ValidationAppError("CEO approval requires a currently published AgentTemplate")
+        if proposal.agent_definition_id != template.agent_definition_id or proposal.risk_tier != template.risk_tier:
+            raise ConflictError("Workforce proposal no longer matches its AgentTemplate")
+
+        configuration = proposal.configuration or {}
+        proposal.configuration = {
+            **configuration,
+            FINGERPRINT_KEY: execution_authority_fingerprint(
+                tenant_id=tenant_id,
+                template_id=template.id,
+                template_version=template.version,
+                agent_definition_id=template.agent_definition_id,
+                risk_tier=template.risk_tier,
+                capability_contract=template.capability_contract,
+                permission_policy=template.permission_policy,
+                approval_policy=template.approval_policy,
+                install_policy=template.install_policy,
+                configuration=configuration,
+                max_concurrency=int(configuration.get("max_concurrency", 1)),
+                budget_policy=configuration.get("budget_policy", {}),
+            ),
+        }
+
     proposal.ceo_approved_by = approver_user_id if approve else None
     proposal.ceo_decision_reason = reason
     proposal.status = AgentWorkforceProposalStatus.CEO_APPROVED if approve else AgentWorkforceProposalStatus.CEO_REJECTED
@@ -180,6 +215,42 @@ async def activate_provisioned_proposal(
         raise NotFoundError("Provisioned AgentInstance identity state not found")
     if instance.status != AgentInstanceStatus.SUSPENDED:
         raise ConflictError("AgentInstance is not awaiting access-review activation")
+
+    if not proposal.ceo_approved_by:
+        raise ValidationAppError("Activation requires an active CEO governance decision")
+    approved_fingerprint = (proposal.configuration or {}).get(FINGERPRINT_KEY)
+    if not approved_fingerprint:
+        raise ValidationAppError("Workforce proposal has no governance freshness proof")
+
+    template = (await db.execute(select(AgentTemplate).where(
+        AgentTemplate.id == proposal.agent_template_id,
+        AgentTemplate.tenant_id == tenant_id,
+    ))).scalar_one_or_none()
+    if template is None:
+        raise NotFoundError("Agent template not found for tenant")
+    if template.status.value != "published":
+        raise ConflictError("AgentTemplate changed state after governance approval")
+    if proposal.agent_definition_id != template.agent_definition_id or proposal.risk_tier != template.risk_tier:
+        raise ConflictError("Workforce governance decision is stale: template binding changed")
+
+    configuration = proposal.configuration or {}
+    current_fingerprint = execution_authority_fingerprint(
+        tenant_id=tenant_id,
+        template_id=template.id,
+        template_version=template.version,
+        agent_definition_id=template.agent_definition_id,
+        risk_tier=template.risk_tier,
+        capability_contract=template.capability_contract,
+        permission_policy=template.permission_policy,
+        approval_policy=template.approval_policy,
+        install_policy=template.install_policy,
+        configuration={key: value for key, value in configuration.items() if key != FINGERPRINT_KEY},
+        max_concurrency=instance.max_concurrency,
+        budget_policy=instance.budget_policy,
+    )
+    if current_fingerprint != approved_fingerprint:
+        raise ConflictError("Workforce governance decision is stale: execution authority changed after approval")
+
     review = (await db.execute(select(AgentAccessReview).where(
         AgentAccessReview.agent_identity_id == identity.id,
         AgentAccessReview.tenant_id == tenant_id,
@@ -191,7 +262,7 @@ async def activate_provisioned_proposal(
     instance.status = AgentInstanceStatus.ENABLED
     instance.enabled = True
     await db.flush()
-    await record(db, action="agent_workforce.proposal.activated", actor_id=activated_by_user_id, tenant_id=tenant_id, resource_type="agent_workforce_proposal", resource_id=proposal.id, metadata={"agent_instance_id": str(instance.id), "access_review_id": str(review.id)})
+    await record(db, action="agent_workforce.proposal.activated", actor_id=activated_by_user_id, tenant_id=tenant_id, resource_type="agent_workforce_proposal", resource_id=proposal.id, metadata={"agent_instance_id": str(instance.id), "access_review_id": str(review.id), "governance_fingerprint": approved_fingerprint})
     return proposal
 
 
