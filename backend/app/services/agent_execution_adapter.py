@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.ai.tool_registry import registry
 from app.models.agent_instance import AgentInstance
 from app.models.work_item import WorkItem
+from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 from app.services.agent_governance import assert_agent_can_execute
 from app.services.agent_runtime_binding import resolve_employee_version
 from app.services.run_service import create_run
@@ -34,13 +35,13 @@ class AgentExecutionAdapter:
         # before provider/tool execution; this first check prevents a revoked,
         # killed, expired, or drifted Agent from creating a new executable Run
         # after WorkItem dispatch has already committed RUNNING state.
-        await assert_agent_can_execute(
+        await assert_authorized(
             self.db,
-            tenant_id=work_item.tenant_id,
-            agent_instance_id=agent.id,
-            tool_name="__agent_run__",
-            required_permission="run.execute",
-            run_id=None,
+            PolicyRequest(
+                tenant_id=work_item.tenant_id,
+                agent_instance_id=agent.id,
+                action="run.execute",
+            ),
         )
 
         instance, definition, version = await resolve_employee_version(
