@@ -53,7 +53,13 @@ def _plan_code_for_price_id(price_id: str) -> str | None:
 
 
 async def _get_or_create_stripe_customer(
-    db: AsyncSession, stripe, *, tenant_id: uuid.UUID, sub: Subscription, user_email: str | None
+    db: AsyncSession,
+    stripe,
+    *,
+    tenant_id: uuid.UUID,
+    sub: Subscription,
+    user_email: str | None,
+    idempotency_key: str,
 ) -> str:
     if sub.provider_customer_id:
         return sub.provider_customer_id
@@ -63,6 +69,7 @@ async def _get_or_create_stripe_customer(
         email=user_email,
         name=tenant.name if tenant else None,
         metadata={"tenant_id": str(tenant_id)},
+        idempotency_key=f"customer:{idempotency_key}",
     )
     sub.provider_customer_id = customer.id
     await db.flush()
@@ -70,8 +77,19 @@ async def _get_or_create_stripe_customer(
 
 
 async def create_checkout_session(
-    db: AsyncSession, *, tenant_id: uuid.UUID, user_id: uuid.UUID, plan_code: str
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    user_id: uuid.UUID,
+    plan_code: str,
+    idempotency_key: str,
 ) -> str:
+    """Create a Stripe Checkout Session with caller-supplied idempotency.
+
+    The same key must be reused by the caller when retrying an ambiguous
+    request. Stripe then returns the original result instead of creating a
+    second Checkout Session after a timeout/crash.
+    """
     stripe = _client()
     settings = get_settings()
     price_id = settings.stripe_price_map.get(plan_code)
@@ -88,7 +106,12 @@ async def create_checkout_session(
     sub = await billing_service.ensure_subscription(db, tenant_id=tenant_id)
     user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
     customer_id = await _get_or_create_stripe_customer(
-        db, stripe, tenant_id=tenant_id, sub=sub, user_email=user.email if user else None
+        db,
+        stripe,
+        tenant_id=tenant_id,
+        sub=sub,
+        user_email=user.email if user else None,
+        idempotency_key=idempotency_key,
     )
     trial_days = 0
     if sub.status == "trialing" and sub.trial_ends_at:
@@ -103,6 +126,7 @@ async def create_checkout_session(
         client_reference_id=str(tenant_id),
         metadata={"tenant_id": str(tenant_id), "plan_code": plan_code},
         subscription_data={"metadata": {"tenant_id": str(tenant_id), "plan_code": plan_code}, "trial_period_days": trial_days},
+        idempotency_key=idempotency_key,
     )
     return session.url
 
