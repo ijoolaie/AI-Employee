@@ -1,7 +1,7 @@
 """Production-oriented Shopify GraphQL connector with governed credentials."""
 from __future__ import annotations
-import base64, hashlib, hmac, secrets, uuid
-from datetime import date, datetime, timezone
+import base64, hashlib, hmac, uuid
+from datetime import date
 from decimal import Decimal
 from typing import Any
 from urllib.parse import urlencode
@@ -117,20 +117,6 @@ def build_install_url(shop: str, state: str) -> str:
     settings = get_settings(); shop = shop.strip().replace("https://", "").rstrip("/"); params = {"client_id": settings.shopify_client_id, "scope": settings.shopify_scopes, "redirect_uri": settings.shopify_redirect_uri, "state": state}
     return f"https://{shop}/admin/oauth/authorize?{urlencode(params)}"
 
-def make_state(tenant_id: uuid.UUID) -> str:
-    settings = get_settings(); raw = f"{tenant_id}:{int(datetime.now(timezone.utc).timestamp())}:{secrets.token_urlsafe(12)}"; sig = hmac.new(settings.secret_key.encode(), raw.encode(), hashlib.sha256).hexdigest(); return base64.urlsafe_b64encode(f"{raw}:{sig}".encode()).decode()
-
-def parse_state(state: str) -> uuid.UUID:
-    settings = get_settings()
-    try:
-        raw = base64.urlsafe_b64decode(state.encode()).decode(); tenant, ts, nonce, sig = raw.rsplit(":", 3)
-        if abs(int(datetime.now(timezone.utc).timestamp()) - int(ts)) > 600: raise ValidationAppError("Expired Shopify OAuth state")
-        signed = f"{tenant}:{ts}:{nonce}"; expected = hmac.new(settings.secret_key.encode(), signed.encode(), hashlib.sha256).hexdigest()
-    except ValidationAppError: raise
-    except Exception as exc: raise ValidationAppError("Invalid Shopify OAuth state") from exc
-    if not hmac.compare_digest(sig, expected): raise ValidationAppError("Invalid Shopify OAuth state")
-    return uuid.UUID(tenant)
-
 async def exchange_code(shop: str, code: str):
     settings = get_settings()
     if not settings.shopify_client_id or not settings.shopify_client_secret: raise ValidationAppError("Shopify OAuth is not configured")
@@ -141,11 +127,22 @@ async def exchange_code(shop: str, code: str):
 
 async def register_webhooks(db, integration: CommerceIntegration):
     settings = get_settings(); callback = f"{settings.shopify_redirect_uri.split('/api/v1/commerce-integrations/shopify/callback')[0]}/api/v1/commerce-integrations/shopify/webhooks/{integration.id}"
-    mutation = """mutation CreateWebhook($topic: WebhookSubscriptionTopic!, $callbackUrl: URL!) { webhookSubscriptionCreate(topic: $topic, webhookSubscription: {callbackUrl: $callbackUrl, format: JSON}) { webhookSubscription { id topic } userErrors { field message } } }"""
-    topics = ["PRODUCTS_CREATE", "PRODUCTS_UPDATE", "PRODUCTS_DELETE", "ORDERS_CREATE", "ORDERS_UPDATED", "CUSTOMERS_CREATE", "CUSTOMERS_UPDATE", "INVENTORY_LEVELS_UPDATE"]; results = []
+    query = """query ExistingWebhooks($topic: WebhookSubscriptionTopic!) { webhookSubscriptions(first: 100, topics: [$topic]) { nodes { id topic uri } } }"""
+    mutation = """mutation CreateWebhook($topic: WebhookSubscriptionTopic!, $callbackUrl: URL!) { webhookSubscriptionCreate(topic: $topic, webhookSubscription: {callbackUrl: $callbackUrl, format: JSON}) { webhookSubscription { id topic uri } userErrors { field message } } }"""
+    topics = ["PRODUCTS_CREATE", "PRODUCTS_UPDATE", "PRODUCTS_DELETE", "ORDERS_CREATE", "ORDERS_UPDATED", "CUSTOMERS_CREATE", "CUSTOMERS_UPDATE", "INVENTORY_LEVELS_UPDATE"]
+    results = []
     for topic in topics:
-        try: data = await _graphql(db, integration, mutation, {"topic": topic, "callbackUrl": callback}); results.append(data.get("webhookSubscriptionCreate") or {})
-        except Exception as exc: results.append({"topic": topic, "error": str(exc)})
+        try:
+            existing = await _graphql(db, integration, query, {"topic": topic})
+            nodes = ((existing.get("webhookSubscriptions") or {}).get("nodes") or [])
+            duplicate = next((node for node in nodes if node.get("uri") == callback), None)
+            if duplicate:
+                results.append({"topic": topic, "status": "already_registered", "id": duplicate.get("id"), "uri": duplicate.get("uri")})
+                continue
+            data = await _graphql(db, integration, mutation, {"topic": topic, "callbackUrl": callback})
+            results.append(data.get("webhookSubscriptionCreate") or {})
+        except Exception as exc:
+            results.append({"topic": topic, "error": str(exc)})
     integration.config = {**(integration.config or {}), "webhook_callback": callback, "webhooks_registered": results}; return results
 
 def verify_webhook(raw_body: bytes, hmac_header: str | None) -> bool:
