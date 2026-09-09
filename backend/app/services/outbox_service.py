@@ -26,9 +26,6 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
         ctx_tenant, agent_instance_id, run_id, tool_name = context
         if tenant_id != ctx_tenant:
             raise ValueError("Agent outbox tenant context mismatch")
-        # This binding is durable evidence of which governed Agent execution
-        # authorized the deferred side effect. The worker revalidates current
-        # authority immediately before the external side effect.
         persisted_payload["_agent_governance"] = {
             "tenant_id": str(ctx_tenant),
             "agent_instance_id": str(agent_instance_id),
@@ -45,11 +42,23 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
 
 async def claim(db: AsyncSession, *, limit: int = 50) -> list[OutboxMessage]:
     now = datetime.now(timezone.utc)
+    # A stale SMTP delivery has an unknown external outcome: the provider may
+    # already have accepted the message even though the worker disappeared.
+    # Never automatically reclaim email.send rows, otherwise a worker crash
+    # after SMTP acceptance can produce a duplicate email. The email worker
+    # durably marks the row "uncertain" before the external side effect.
+    claimable = (
+        (OutboxMessage.status == "pending") & (OutboxMessage.available_at <= now)
+    ) | (
+        (OutboxMessage.status == "processing")
+        & (OutboxMessage.available_at <= now - timedelta(minutes=5))
+        & (OutboxMessage.kind != "email.send")
+    )
     result = await db.execute(
         select(OutboxMessage)
-        .where(((OutboxMessage.status == "pending") & (OutboxMessage.available_at <= now)) |
-               ((OutboxMessage.status == "processing") & (OutboxMessage.available_at <= now - timedelta(minutes=5))))
-        .with_for_update(skip_locked=True).limit(limit)
+        .where(claimable)
+        .with_for_update(skip_locked=True)
+        .limit(limit)
     )
     rows = list(result.scalars().all())
     for row in rows:
