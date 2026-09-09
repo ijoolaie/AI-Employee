@@ -6,7 +6,7 @@ from app.core.config import get_settings
 from app.core.deps import CurrentContext, DbSession
 from app.schemas.common import APIResponse
 from app.schemas.commerce_integration import CommerceIntegrationCreate, CommerceIntegrationResponse
-from app.services import commerce_integration_service, shopify_service
+from app.services import commerce_integration_service, shopify_service, shopify_oauth_state
 from app.services.credential_service import credential_ref, revoke_credential, store_credential
 from app.models.commerce_integration import CommerceIntegration
 from sqlalchemy import select
@@ -24,15 +24,16 @@ async def create_integration(payload: CommerceIntegrationCreate, ctx: CurrentCon
     return APIResponse(success=True, data=CommerceIntegrationResponse.model_validate(commerce_integration_service.public_config(row)))
 
 @router.get("/shopify/install")
-async def shopify_install(shop: str, ctx: CurrentContext):
+async def shopify_install(shop: str, ctx: CurrentContext, db: DbSession):
     settings = get_settings()
     if not settings.shopify_client_id or not settings.shopify_client_secret: raise HTTPException(status_code=503, detail="Shopify OAuth is not configured")
-    state = shopify_service.make_state(ctx.tenant_id)
+    state = await shopify_oauth_state.issue_state(db, ctx.tenant_id, shop)
+    await db.commit()
     return RedirectResponse(shopify_service.build_install_url(shop, state), status_code=302)
 
 @router.get("/shopify/callback")
 async def shopify_callback(shop: str, code: str, state: str, db: DbSession):
-    tenant_id = shopify_service.parse_state(state)
+    tenant_id = await shopify_oauth_state.consume_state(db, state, shop)
     token = await shopify_service.exchange_code(shop, code)
     access_token = token.get("access_token")
     if not access_token: raise HTTPException(status_code=502, detail="Shopify OAuth response did not contain an access token")
