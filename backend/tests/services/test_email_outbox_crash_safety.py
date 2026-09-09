@@ -20,6 +20,13 @@ class _Result:
     def all(self):
         return self._rows
 
+    def scalar_one_or_none(self):
+        if not self._rows:
+            return None
+        if len(self._rows) > 1:
+            raise AssertionError("expected at most one row")
+        return self._rows[0]
+
 
 class _DB:
     def __init__(self, rows):
@@ -96,6 +103,46 @@ async def test_claim_excludes_stale_email_delivery_from_recovery_predicate():
 
 
 @pytest.mark.asyncio
+async def test_email_delivery_select_serializes_concurrent_workers(monkeypatch):
+    row = SimpleNamespace(
+        id=uuid4(),
+        status="processing",
+        attempts=1,
+        payload={"to": ["user@example.test"], "subject": "Hello", "body": "Body"},
+        tenant_id=None,
+        last_error=None,
+    )
+    db = _DB([row])
+
+    async def authorize(*args, **kwargs):
+        return None
+
+    async def mark_dispatched(*args, **kwargs):
+        raise AssertionError("SMTP should not be reached by this structural test")
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorize)
+    monkeypatch.setattr(email_worker, "smtplib", SimpleNamespace())
+    monkeypatch.setattr(outbox_service, "mark_dispatched", mark_dispatched)
+
+    # Force the worker through the locked row and make the side-effect path
+    # fail before SMTP; the important invariant is that the SELECT itself is
+    # row-locking, preventing two workers from entering the pre-side-effect
+    # state transition concurrently.
+    class _ExpectedSMTPFailure:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("test stop before SMTP")
+
+    email_worker.smtplib.SMTP = _ExpectedSMTPFailure
+    await email_worker._send(str(row.id))
+
+    assert db.statement._for_update_arg is not None
+    assert row.status == "uncertain"
+    assert db.commits >= 2
+
+
+@pytest.mark.asyncio
 async def test_email_side_effect_failure_remains_uncertain(monkeypatch):
     row = SimpleNamespace(
         id=uuid4(),
@@ -105,15 +152,11 @@ async def test_email_side_effect_failure_remains_uncertain(monkeypatch):
         tenant_id=None,
         last_error=None,
     )
-    db = SimpleNamespace(row=row, commits=0)
-
-    async def get(model, object_id):
-        return row
+    db = _DB([row])
 
     async def commit():
         db.commits += 1
 
-    db.get = get
     db.commit = commit
 
     async def authorize(*args, **kwargs):
