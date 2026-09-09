@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.ai.tool_registry import registry
 from app.models.agent_instance import AgentInstance
 from app.models.work_item import WorkItem
+from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 from app.services.agent_governance import assert_agent_can_execute
 from app.services.agent_runtime_binding import resolve_employee_version
 from app.services.run_service import create_run
@@ -28,6 +29,20 @@ class AgentExecutionAdapter:
             raise ValueError("cross-tenant agent execution is forbidden")
         if not getattr(agent, "enabled", True):
             raise ValueError("agent instance is not executable")
+
+        # Re-establish current Agent authority at the WorkItem -> Run
+        # hand-off. The Run worker performs a second authorization immediately
+        # before provider/tool execution; this first check prevents a revoked,
+        # killed, expired, or drifted Agent from creating a new executable Run
+        # after WorkItem dispatch has already committed RUNNING state.
+        await assert_authorized(
+            self.db,
+            PolicyRequest(
+                tenant_id=work_item.tenant_id,
+                agent_instance_id=agent.id,
+                action="run.execute",
+            ),
+        )
 
         instance, definition, version = await resolve_employee_version(
             self.db,
