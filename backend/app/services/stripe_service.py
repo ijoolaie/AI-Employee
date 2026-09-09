@@ -64,14 +64,31 @@ async def _get_or_create_stripe_customer(
         return sub.provider_customer_id
 
     tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
+    tenant_ref = str(tenant_id)
+
+    # Stripe Customer Search provides durable reconciliation after the
+    # provider idempotency key has expired, but is eventually consistent.
+    search = getattr(stripe.Customer, "search", None)
+    if search is not None:
+        matches = search(
+            query=f"metadata['tenant_id']:'{tenant_ref}'",
+            limit=2,
+        )
+        customers = list(getattr(matches, "data", []) or [])
+        if len(customers) > 1:
+            raise ConflictError("Multiple Stripe customers are associated with this tenant")
+        if len(customers) == 1:
+            sub.provider_customer_id = customers[0].id
+            await db.flush()
+            return customers[0].id
+
     customer = stripe.Customer.create(
         email=user_email,
         name=tenant.name if tenant else None,
-        metadata={"tenant_id": str(tenant_id)},
+        metadata={"tenant_id": tenant_ref},
         # Customer identity belongs to the tenant, not to an individual
         # checkout attempt. This remains stable across retries with a new
-        # checkout idempotency key and closes the DB-write/Stripe-call crash
-        # window that could otherwise create duplicate Customers.
+        # checkout idempotency key.
         idempotency_key=f"customer:{tenant_id}",
     )
     sub.provider_customer_id = customer.id
