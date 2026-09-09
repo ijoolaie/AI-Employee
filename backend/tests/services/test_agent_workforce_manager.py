@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstanceStatus
 from app.models.work_item import ExecutorType, WorkItemStatus
 from app.services import agent_workforce_manager as manager
@@ -16,6 +17,12 @@ class ScalarResult:
 
     def scalar_one_or_none(self):
         return self.value
+
+    def scalars(self):
+        return self
+
+    def first(self):
+        return None
 
 
 class Db:
@@ -32,6 +39,11 @@ class Db:
 
     async def scalar(self, stmt):
         return self.active
+
+
+@pytest.fixture(autouse=True)
+def allow_kill_switch_check(monkeypatch):
+    monkeypatch.setattr(manager, "assert_not_killed", AsyncMock())
 
 
 @pytest.mark.asyncio
@@ -91,3 +103,23 @@ async def test_assign_work_item_is_idempotent_for_same_agent():
 
     assert result is item
     db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_assign_work_item_fails_closed_when_kill_switch_is_active(monkeypatch):
+    tenant_id, agent_id, item_id = uuid4(), uuid4(), uuid4()
+    db = Db(agent=None, item=None, active=0)
+
+    async def deny(*args, **kwargs):
+        raise ValidationAppError("Agent execution revoked by emergency kill switch")
+
+    monkeypatch.setattr(manager, "assert_not_killed", deny)
+
+    with pytest.raises(ValidationAppError, match="emergency kill switch"):
+        await manager.assign_work_item(
+            db,
+            tenant_id=tenant_id,
+            work_item_id=item_id,
+            agent_instance_id=agent_id,
+        )
+    assert db.calls == 0
