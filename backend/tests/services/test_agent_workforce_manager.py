@@ -1,12 +1,19 @@
+from __future__ import annotations
+
+import asyncio
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
+from sqlalchemy import func, select
 
+from app.core.database import AsyncSessionLocal
 from app.core.exceptions import ValidationAppError
-from app.models.agent_instance import AgentInstanceStatus
-from app.models.work_item import ExecutorType, WorkItemStatus
+from app.models.agent_definition import AgentDefinition
+from app.models.agent_instance import AgentInstance, AgentInstanceStatus
+from app.models.tenant import Tenant
+from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services import agent_workforce_manager as manager
 from app.services.unified_execution import ExecutionError
 
@@ -123,3 +130,120 @@ async def test_assign_work_item_fails_closed_when_kill_switch_is_active(monkeypa
             agent_instance_id=agent_id,
         )
     assert db.calls == 0
+
+
+@pytest.mark.asyncio
+async def test_concurrent_agent_assignments_are_serialized_by_agent_row_lock():
+    """Two real PostgreSQL transactions cannot both consume one Agent slot."""
+    suffix = uuid4().hex
+    tenant_id = uuid4()
+    definition_id = uuid4()
+    agent_id = uuid4()
+    item_ids = (uuid4(), uuid4())
+
+    async with AsyncSessionLocal() as db:
+        tenant = Tenant(
+            id=tenant_id,
+            name=f"Workforce concurrency {suffix}",
+            slug=f"workforce-concurrency-{suffix}",
+            status="active",
+        )
+        definition = AgentDefinition(
+            id=definition_id,
+            tenant_id=tenant_id,
+            slug=f"workforce-concurrency-{suffix}",
+            name="Workforce concurrency test definition",
+            capabilities=[],
+            allowed_tools=[],
+            model_policy={},
+            input_schema={},
+            output_schema={},
+            policy_requirements={},
+            enabled=True,
+        )
+        agent = AgentInstance(
+            id=agent_id,
+            tenant_id=tenant_id,
+            agent_definition_id=definition_id,
+            name="Workforce concurrency test agent",
+            configuration={},
+            permission_policy={},
+            approval_policy={},
+            max_concurrency=1,
+            budget_policy={},
+            enabled=True,
+            status=AgentInstanceStatus.ENABLED,
+        )
+        items = [
+            WorkItem(
+                id=item_id,
+                tenant_id=tenant_id,
+                title=f"Concurrent assignment {index}",
+                status=WorkItemStatus.READY,
+                executor_type=None,
+                executor_id=None,
+                input_data={},
+                policy_context={},
+                idempotency_key=f"workforce-concurrency-{suffix}-{index}",
+            )
+            for index, item_id in enumerate(item_ids)
+        ]
+        db.add(tenant)
+        await db.flush()
+        db.add_all([definition, agent, *items])
+        await db.commit()
+
+    async def assign(item_id):
+        async with AsyncSessionLocal() as db:
+            try:
+                item = await manager.assign_work_item(
+                    db,
+                    tenant_id=tenant_id,
+                    work_item_id=item_id,
+                    agent_instance_id=agent_id,
+                )
+                await db.commit()
+                return item.status
+            except Exception as exc:
+                await db.rollback()
+                return exc
+
+    results = await asyncio.gather(*(assign(item_id) for item_id in item_ids))
+
+    assert sum(result is WorkItemStatus.ASSIGNED for result in results) == 1
+    failures = [result for result in results if isinstance(result, ExecutionError)]
+    assert len(failures) == 1
+    assert "concurrency limit reached" in str(failures[0])
+
+    async with AsyncSessionLocal() as db:
+        agent_row = await db.get(AgentInstance, agent_id)
+        assigned_count = await db.scalar(
+            select(func.count(WorkItem.id)).where(
+                WorkItem.tenant_id == tenant_id,
+                WorkItem.executor_type == ExecutorType.AGENT,
+                WorkItem.executor_id == agent_id,
+                WorkItem.status.in_(manager.ACTIVE_WORK_ITEM_STATUSES),
+            )
+        )
+        assert agent_row is not None
+        assert assigned_count == 1
+
+        for item_id in item_ids:
+            item = await db.get(WorkItem, item_id)
+            assert item is not None
+            assert item.status in {WorkItemStatus.READY, WorkItemStatus.ASSIGNED}
+            await db.delete(item)
+        await db.flush()
+
+        await db.delete(agent_row)
+        await db.flush()
+
+        definition_row = await db.get(AgentDefinition, definition_id)
+        assert definition_row is not None
+        await db.delete(definition_row)
+        await db.flush()
+
+        tenant_row = await db.get(Tenant, tenant_id)
+        assert tenant_row is not None
+        await db.delete(tenant_row)
+        await db.commit()
