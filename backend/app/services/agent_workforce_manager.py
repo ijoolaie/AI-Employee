@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
+from app.services.agent_kill_switch_service import assert_not_killed
 from app.services.unified_execution import ExecutionError
 
 
@@ -62,7 +63,13 @@ async def assign_work_item(
     work_item_id: uuid.UUID,
     agent_instance_id: uuid.UUID,
 ) -> WorkItem:
-    """Atomically assign a WorkItem while enforcing Agent concurrency."""
+    """Atomically assign a WorkItem while enforcing Agent concurrency and kill switches."""
+    await assert_not_killed(
+        db,
+        tenant_id=tenant_id,
+        agent_instance_id=agent_instance_id,
+    )
+
     agent_stmt = (
         select(AgentInstance)
         .where(
