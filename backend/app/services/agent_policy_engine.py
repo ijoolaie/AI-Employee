@@ -132,7 +132,6 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             .where(
                 AgentAccessReview.agent_identity_id == identity.id,
                 AgentAccessReview.tenant_id == request.tenant_id,
-                AgentAccessReview.decision == AgentAccessReviewDecision.APPROVED,
             )
             .order_by(AgentAccessReview.reviewed_at.desc(), AgentAccessReview.id.desc())
             .limit(1)
@@ -142,6 +141,10 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
         identity.active = False
         await db.flush()
         return result(PolicyDecision.DENY, "agent_access_review_missing")
+    if access_review.decision != AgentAccessReviewDecision.APPROVED:
+        identity.active = False
+        await db.flush()
+        return result(PolicyDecision.DENY, "agent_access_review_not_approved")
     if access_review.next_review_at is not None and access_review.next_review_at <= now:
         identity.active = False
         await db.flush()

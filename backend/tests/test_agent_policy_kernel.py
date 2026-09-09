@@ -133,9 +133,29 @@ async def test_missing_access_review_is_denied_and_deactivated():
 
 
 @pytest.mark.asyncio
+async def test_non_approved_latest_access_review_is_denied_and_deactivated():
+    tenant = uuid4(); instance = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"]); active = identity()
+    revoked_review = SimpleNamespace(
+        id=uuid4(),
+        decision=AgentAccessReviewDecision.REVOKED,
+        reviewed_at=datetime.now(timezone.utc),
+        next_review_at=None,
+    )
+    db = FakeDb(instance, active, access_review=revoked_review)
+    result = await authorize(db, request(tenant, instance.id))
+    assert result.decision == PolicyDecision.DENY and result.reason == "agent_access_review_not_approved"
+    assert active.active is False and db.flushed is True
+
+
+@pytest.mark.asyncio
 async def test_expired_access_review_is_denied_and_deactivated():
     tenant = uuid4(); instance = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"]); active = identity()
-    review = SimpleNamespace(next_review_at=datetime.now(timezone.utc) - timedelta(seconds=1))
+    review = SimpleNamespace(
+        id=uuid4(),
+        decision=AgentAccessReviewDecision.APPROVED,
+        reviewed_at=datetime.now(timezone.utc),
+        next_review_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+    )
     db = FakeDb(instance, active, access_review=review)
     result = await authorize(db, request(tenant, instance.id))
     assert result.decision == PolicyDecision.DENY and result.reason == "agent_access_review_expired"

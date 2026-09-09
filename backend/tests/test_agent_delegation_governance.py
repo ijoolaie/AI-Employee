@@ -6,6 +6,7 @@ import pytest
 
 from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstanceStatus
+from app.models.agent_access_review import AgentAccessReviewDecision
 from app.services import agent_policy_engine
 from app.services.agent_policy_engine import PolicyDecision, PolicyRequest, authorize
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
@@ -40,7 +41,8 @@ def identity():
 
 
 def access_review():
-    return SimpleNamespace(id=uuid4(), reviewed_at=datetime.now(timezone.utc), next_review_at=None)
+    return SimpleNamespace(id=uuid4(), decision=AgentAccessReviewDecision.APPROVED,
+                           reviewed_at=datetime.now(timezone.utc), next_review_at=None)
 
 
 @pytest.mark.asyncio
