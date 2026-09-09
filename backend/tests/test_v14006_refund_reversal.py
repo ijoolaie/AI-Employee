@@ -37,6 +37,14 @@ class _Result:
         return self.value
 
 
+class _Nested:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
 class _DB:
     def __init__(self, results):
         self.results = list(results)
@@ -47,6 +55,9 @@ class _DB:
 
     def add(self, value):
         self.added.append(value)
+
+    def begin_nested(self):
+        return _Nested()
 
     async def flush(self):
         return None

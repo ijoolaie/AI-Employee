@@ -7,6 +7,7 @@ from typing import Any
 from urllib.parse import urlencode
 import httpx
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.exceptions import ValidationAppError
@@ -175,4 +176,13 @@ def webhook_matches_integration(integration: CommerceIntegration, shop_domain: s
 async def record_webhook(db, integration, webhook_id, topic, payload):
     existing = (await db.execute(select(ShopifyWebhookEvent).where(ShopifyWebhookEvent.integration_id == integration.id, ShopifyWebhookEvent.webhook_id == webhook_id))).scalar_one_or_none()
     if existing: return False
-    db.add(ShopifyWebhookEvent(tenant_id=integration.tenant_id, integration_id=integration.id, webhook_id=webhook_id, topic=topic, payload=payload, status="received")); await db.flush(); return True
+    try:
+        async with db.begin_nested():
+            db.add(ShopifyWebhookEvent(tenant_id=integration.tenant_id, integration_id=integration.id, webhook_id=webhook_id, topic=topic, payload=payload, status="received"))
+            await db.flush()
+    except IntegrityError:
+        existing = (await db.execute(select(ShopifyWebhookEvent).where(ShopifyWebhookEvent.integration_id == integration.id, ShopifyWebhookEvent.webhook_id == webhook_id))).scalar_one_or_none()
+        if existing is None:
+            raise
+        return False
+    return True
