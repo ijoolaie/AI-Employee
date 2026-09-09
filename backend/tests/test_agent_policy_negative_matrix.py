@@ -29,7 +29,7 @@ def setup():
     tenant = uuid4()
     agent = SimpleNamespace(id=uuid4(), tenant_id=tenant, enabled=True, status=AgentInstanceStatus.ENABLED,
                             permission_policy={"allowed_tools": ["send_email"], "permissions": ["run.execute"]})
-    identity = SimpleNamespace(active=True, revoked_at=None, expires_at=None)
+    identity = SimpleNamespace(id=uuid4(), active=True, revoked_at=None, expires_at=None)
     request = PolicyRequest(tenant_id=tenant, agent_instance_id=agent.id, action="tool.execute",
                             tool_name="send_email", required_permission="run.execute",
                             run_id=uuid4(), tool_call_id="call-1", approval_request_id=uuid4(),
