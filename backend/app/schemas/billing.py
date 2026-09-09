@@ -42,6 +42,7 @@ class BillingEventRequest(BaseModel):
 
 class CheckoutSessionRequest(BaseModel):
     plan_code: str = Field(min_length=2, max_length=40)
+    idempotency_key: str = Field(min_length=1, max_length=255)
 
 class CheckoutSessionResponse(BaseModel):
     checkout_url: str
