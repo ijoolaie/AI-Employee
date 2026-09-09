@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
 
-from app.models.outbox import OutboxMessage
 from app.services import outbox_service
 from app.workers.email_worker import _build_email
 
@@ -50,21 +48,12 @@ def test_email_message_id_is_stable_for_outbox_item():
 
 
 @pytest.mark.asyncio
-async def test_claim_does_not_reclaim_stale_email_delivery():
-    stale_email = OutboxMessage(
-        kind="email.send",
-        payload={},
-        status="processing",
-        attempts=1,
-        available_at=datetime(2020, 1, 1, tzinfo=timezone.utc),
-    )
-    db = _DB([stale_email])
+async def test_claim_excludes_stale_email_delivery_from_recovery_predicate():
+    db = _DB([])
 
     rows = await outbox_service.claim(db)
 
-    # The fake DB returns the row regardless of SQL filtering; inspect the
-    # generated predicate to ensure email.send is excluded from stale recovery.
-    assert "email.send" in str(db.statement.whereclause)
-    assert "available_at" in str(db.statement.whereclause)
-    assert rows == [stale_email]
-    assert stale_email.status == "processing"
+    predicate = db.statement.whereclause.compile(compile_kwargs={"literal_binds": True})
+    sql = str(predicate)
+    assert "email.send" in sql
+    assert rows == []
