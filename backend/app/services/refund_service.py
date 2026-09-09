@@ -4,6 +4,7 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -106,15 +107,19 @@ async def request_refund(
             )
         )
     ).scalar_one_or_none()
-    if existing is not None:
+
+    def assert_same_request(row: PaymentRefund) -> None:
         same_request = (
-            existing.operation == operation
-            and existing.provider_payment_intent_id == payment_intent_id
-            and existing.amount_cents == amount_cents
-            and existing.currency.lower() == currency.lower()
+            row.operation == operation
+            and row.provider_payment_intent_id == payment_intent_id
+            and row.amount_cents == amount_cents
+            and row.currency.lower() == currency.lower()
         )
         if not same_request:
             raise ConflictError("Idempotency key already belongs to a different refund request")
+
+    if existing is not None:
+        assert_same_request(existing)
         if existing.status != "failed":
             return existing
 
@@ -138,8 +143,27 @@ async def request_refund(
     row.status = "pending"
     row.failure_reason = None
     if existing is None:
-        db.add(row)
-    await db.flush()
+        try:
+            async with db.begin_nested():
+                db.add(row)
+                await db.flush()
+        except IntegrityError:
+            existing = (
+                await db.execute(
+                    select(PaymentRefund).where(
+                        PaymentRefund.tenant_id == tenant_id,
+                        PaymentRefund.idempotency_key == idempotency_key,
+                    )
+                )
+            ).scalar_one_or_none()
+            if existing is None:
+                raise
+            assert_same_request(existing)
+            if existing.status != "failed":
+                return existing
+            row = existing
+    else:
+        await db.flush()
 
     try:
         if operation == "refund":
@@ -186,8 +210,8 @@ async def get_refund(db: AsyncSession, *, tenant_id: uuid.UUID, refund_id: uuid.
                 PaymentRefund.id == refund_id,
                 PaymentRefund.tenant_id == tenant_id,
             )
-        )
-    ).scalar_one_or_none()
+        ).scalar_one_or_none()
+    )
     if row is None:
         raise NotFoundError("Refund or reversal not found")
     return row
