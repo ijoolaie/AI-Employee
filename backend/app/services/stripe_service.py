@@ -60,8 +60,17 @@ async def _get_or_create_stripe_customer(
     sub: Subscription,
     user_email: str | None,
 ) -> str:
-    if sub.provider_customer_id:
-        return sub.provider_customer_id
+    # Stripe Search is eventually consistent and the provider idempotency key
+    # can expire. Serialize identity resolution on the durable Subscription row
+    # so concurrent workers cannot both observe a missing local customer and
+    # race into provider-side creation/reconciliation.
+    locked_sub = (
+        await db.execute(
+            select(Subscription).where(Subscription.id == sub.id).with_for_update()
+        )
+    ).scalar_one()
+    if locked_sub.provider_customer_id:
+        return locked_sub.provider_customer_id
 
     tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
     tenant_ref = str(tenant_id)
@@ -78,7 +87,7 @@ async def _get_or_create_stripe_customer(
         if len(customers) > 1:
             raise ConflictError("Multiple Stripe customers are associated with this tenant")
         if len(customers) == 1:
-            sub.provider_customer_id = customers[0].id
+            locked_sub.provider_customer_id = customers[0].id
             await db.flush()
             return customers[0].id
 
@@ -91,7 +100,7 @@ async def _get_or_create_stripe_customer(
         # checkout idempotency key.
         idempotency_key=f"customer:{tenant_id}",
     )
-    sub.provider_customer_id = customer.id
+    locked_sub.provider_customer_id = customer.id
     await db.flush()
     return customer.id
 
