@@ -137,10 +137,12 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             template_id=template.id,
             template_version=template.version,
             agent_definition_id=instance.agent_definition_id,
-            risk_tier=instance.risk_tier,
+            # Older lightweight policy-kernel fixtures do not model every
+            # persisted AgentInstance field; real governed instances always do.
+            risk_tier=getattr(instance, "risk_tier", template.risk_tier),
             capability_contract=template.capability_contract,
             permission_policy=instance.permission_policy,
-            approval_policy=instance.approval_policy,
+            approval_policy=getattr(instance, "approval_policy", template.approval_policy),
             install_policy=template.install_policy,
             configuration=configuration,
             max_concurrency=instance.max_concurrency,
