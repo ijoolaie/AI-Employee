@@ -131,6 +131,10 @@ async def register_webhooks(db, integration: CommerceIntegration):
     mutation = """mutation CreateWebhook($topic: WebhookSubscriptionTopic!, $callbackUrl: URL!) { webhookSubscriptionCreate(topic: $topic, webhookSubscription: {callbackUrl: $callbackUrl, format: JSON}) { webhookSubscription { id topic uri } userErrors { field message } } }"""
     topics = ["PRODUCTS_CREATE", "PRODUCTS_UPDATE", "PRODUCTS_DELETE", "ORDERS_CREATE", "ORDERS_UPDATED", "CUSTOMERS_CREATE", "CUSTOMERS_UPDATE", "INVENTORY_LEVELS_UPDATE"]
     results = []
+    lock_result = await db.execute(select(CommerceIntegration).where(CommerceIntegration.id == integration.id).with_for_update())
+    locked_integration = lock_result.scalar_one_or_none()
+    if not locked_integration: raise ValidationAppError("Shopify integration not found")
+    integration = locked_integration
     for topic in topics:
         try:
             existing = await _graphql(db, integration, query, {"topic": topic})
@@ -140,7 +144,12 @@ async def register_webhooks(db, integration: CommerceIntegration):
                 results.append({"topic": topic, "status": "already_registered", "id": duplicate.get("id"), "uri": duplicate.get("uri")})
                 continue
             data = await _graphql(db, integration, mutation, {"topic": topic, "callbackUrl": callback})
-            results.append(data.get("webhookSubscriptionCreate") or {})
+            created = data.get("webhookSubscriptionCreate") or {}
+            errors = created.get("userErrors") or []
+            if errors:
+                results.append({"topic": topic, "status": "provider_rejected", "userErrors": errors})
+            else:
+                results.append(created)
         except Exception as exc:
             results.append({"topic": topic, "error": str(exc)})
     integration.config = {**(integration.config or {}), "webhook_callback": callback, "webhooks_registered": results}; return results
