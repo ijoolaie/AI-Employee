@@ -7,6 +7,7 @@ from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
@@ -27,8 +28,19 @@ PLAN_SEEDS = (
 async def ensure_plans(db: AsyncSession) -> None:
     for seed in PLAN_SEEDS:
         existing = (await db.execute(select(BillingPlan).where(BillingPlan.code == seed["code"]))).scalar_one_or_none()
-        if existing is None:
-            db.add(BillingPlan(**seed))
+        if existing is not None:
+            continue
+        try:
+            # Keep the uniqueness race inside a SAVEPOINT so a concurrent
+            # initializer can lose the INSERT without invalidating its outer
+            # transaction. The winner's row is then re-read below.
+            async with db.begin_nested():
+                db.add(BillingPlan(**seed))
+                await db.flush()
+        except IntegrityError:
+            existing = (await db.execute(select(BillingPlan).where(BillingPlan.code == seed["code"]))).scalar_one_or_none()
+            if existing is None:
+                raise
     await db.flush()
 
 
@@ -91,14 +103,25 @@ async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subs
     sub = result.scalar_one_or_none()
     if sub:
         return await process_subscription_lifecycle(db, subscription=sub)
+
     await ensure_plans(db)
     plan = (await db.execute(select(BillingPlan).where(BillingPlan.code == "starter"))).scalar_one()
     now = datetime.now(timezone.utc)
     trial_ends = now + timedelta(days=14)
-    sub = Subscription(tenant_id=tenant_id, plan_id=plan.id, status="trialing", provider="manual", current_period_start=_period_start(now), current_period_end=_period_end(now), trial_ends_at=trial_ends)
-    db.add(sub)
-    await db.flush()
-    return sub
+    candidate = Subscription(tenant_id=tenant_id, plan_id=plan.id, status="trialing", provider="manual", current_period_start=_period_start(now), current_period_end=_period_end(now), trial_ends_at=trial_ends)
+    try:
+        # Subscription.tenant_id is unique. Use a SAVEPOINT so a concurrent
+        # initializer can lose this INSERT and safely re-read the winner.
+        async with db.begin_nested():
+            db.add(candidate)
+            await db.flush()
+        return candidate
+    except IntegrityError:
+        result = await db.execute(select(Subscription).where(Subscription.tenant_id == tenant_id))
+        sub = result.scalar_one_or_none()
+        if sub is None:
+            raise
+        return await process_subscription_lifecycle(db, subscription=sub)
 
 
 async def get_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subscription:
