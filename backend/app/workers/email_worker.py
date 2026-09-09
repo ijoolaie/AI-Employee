@@ -64,15 +64,17 @@ async def _send(outbox_id: str) -> None:
             return
         settings = get_settings()
         payload = row.payload
+        side_effect_started = False
         try:
             await _authorize_deferred_agent_side_effect(db, row)
 
-            # Once SMTP is attempted, the external outcome cannot be made
-            # atomic with the DB commit. Persist an explicit uncertain state
-            # first. A worker crash after SMTP acceptance therefore cannot be
-            # mistaken for a safe-to-retry failure.
+            # The external SMTP outcome cannot be made atomic with the DB.
+            # Commit an explicit uncertain state before the side effect so a
+            # worker crash after SMTP acceptance cannot cause an automatic
+            # duplicate delivery.
             row.status = "uncertain"
             await db.commit()
+            side_effect_started = True
 
             msg = _build_email(payload, str(row.id), settings)
             with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as smtp:
@@ -85,8 +87,15 @@ async def _send(outbox_id: str) -> None:
             from app.services.outbox_service import mark_dispatched
             await mark_dispatched(db, row)
         except Exception as exc:
-            from app.services.outbox_service import mark_retry
-            await mark_retry(db, row, str(exc), delay_seconds=min(300, 10 * max(1, row.attempts)))
+            if side_effect_started:
+                # The provider may have accepted the message even when the
+                # client observed an exception. Never convert that uncertainty
+                # into an automatic retry.
+                row.status = "uncertain"
+                row.last_error = str(exc)[:4000]
+            else:
+                from app.services.outbox_service import mark_retry
+                await mark_retry(db, row, str(exc), delay_seconds=min(300, 10 * max(1, row.attempts)))
         await db.commit()
 
 
