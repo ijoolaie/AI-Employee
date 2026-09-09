@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.outbox import OutboxMessage
 
+
 async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid.UUID | None = None,
                   dedupe_key: str | None = None, available_at: datetime | None = None) -> OutboxMessage:
     if dedupe_key:
@@ -13,11 +14,34 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
         found = existing.scalar_one_or_none()
         if found is not None:
             return found
-    message = OutboxMessage(tenant_id=tenant_id, kind=kind, payload=payload, status="pending", attempts=0,
+
+    persisted_payload = dict(payload)
+    try:
+        from app.services.agent_tool_governance import current_agent_tool_context
+
+        context = current_agent_tool_context()
+    except (ImportError, RuntimeError):
+        context = None
+    if context is not None:
+        ctx_tenant, agent_instance_id, run_id, tool_name = context
+        if tenant_id != ctx_tenant:
+            raise ValueError("Agent outbox tenant context mismatch")
+        # This binding is durable evidence of which governed Agent execution
+        # authorized the deferred side effect. The worker revalidates current
+        # authority immediately before the external side effect.
+        persisted_payload["_agent_governance"] = {
+            "tenant_id": str(ctx_tenant),
+            "agent_instance_id": str(agent_instance_id),
+            "run_id": str(run_id),
+            "tool_name": tool_name,
+        }
+
+    message = OutboxMessage(tenant_id=tenant_id, kind=kind, payload=persisted_payload, status="pending", attempts=0,
                             dedupe_key=dedupe_key, available_at=available_at or datetime.now(timezone.utc))
     db.add(message)
     await db.flush()
     return message
+
 
 async def claim(db: AsyncSession, *, limit: int = 50) -> list[OutboxMessage]:
     now = datetime.now(timezone.utc)
@@ -34,11 +58,13 @@ async def claim(db: AsyncSession, *, limit: int = 50) -> list[OutboxMessage]:
     await db.flush()
     return rows
 
+
 async def mark_dispatched(db: AsyncSession, message: OutboxMessage) -> None:
     message.status = "dispatched"
     message.dispatched_at = datetime.now(timezone.utc)
     message.last_error = None
     await db.flush()
+
 
 async def mark_retry(db: AsyncSession, message: OutboxMessage, error: str, delay_seconds: int = 10) -> None:
     from app.core.config import get_settings
@@ -51,6 +77,7 @@ async def mark_retry(db: AsyncSession, message: OutboxMessage, error: str, delay
         message.status = "pending"
         message.available_at = datetime.now(timezone.utc) + timedelta(seconds=max(1, delay_seconds))
     await db.flush()
+
 
 async def replay(db: AsyncSession, message: OutboxMessage) -> OutboxMessage:
     message.status = "pending"
