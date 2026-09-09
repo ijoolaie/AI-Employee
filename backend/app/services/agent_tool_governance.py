@@ -18,7 +18,20 @@ from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 _AGENT_CONTEXT: ContextVar[tuple[UUID, UUID, UUID] | None] = ContextVar(
     "agent_tool_governance_context", default=None
 )
+_CURRENT_TOOL: ContextVar[str | None] = ContextVar(
+    "agent_tool_governance_current_tool", default=None
+)
 _INSTALLED = False
+
+
+def current_agent_tool_context() -> tuple[UUID, UUID, UUID, str] | None:
+    """Return the active Agent execution binding for deferred side effects."""
+    context = _AGENT_CONTEXT.get()
+    tool_name = _CURRENT_TOOL.get()
+    if context is None or tool_name is None:
+        return None
+    tenant_id, agent_instance_id, run_id = context
+    return tenant_id, agent_instance_id, run_id, tool_name
 
 
 @asynccontextmanager
@@ -121,7 +134,11 @@ def install() -> None:
         if approval is not None:
             await _consume_approval(db, approval)
         kwargs["approval_granted"] = approval is not None
-        return await original_execute(name, arguments, **kwargs)
+        tool_token = _CURRENT_TOOL.set(name)
+        try:
+            return await original_execute(name, arguments, **kwargs)
+        finally:
+            _CURRENT_TOOL.reset(tool_token)
 
     registry.execute = governed_execute  # type: ignore[method-assign]
     _INSTALLED = True
