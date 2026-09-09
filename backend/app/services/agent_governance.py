@@ -18,6 +18,7 @@ from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
+from app.services.agent_evaluation import EVALUATION_CONTRACT_VERSION
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 
 
@@ -54,7 +55,18 @@ def current_agent_execution_context() -> tuple[uuid.UUID, uuid.UUID, uuid.UUID |
     return _agent_execution_context.get()
 
 
-async def record_evaluation(db: AsyncSession, *, tenant_id: uuid.UUID, template_id: uuid.UUID, suite_id: str, status: AgentEvaluationStatus, evidence: dict[str, Any], score: int | None, evaluator_user_id: uuid.UUID | None, notes: str | None = None) -> AgentEvaluation:
+async def record_evaluation(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    template_id: uuid.UUID,
+    suite_id: str,
+    status: AgentEvaluationStatus,
+    evidence: dict[str, Any],
+    score: int | None,
+    evaluator_user_id: uuid.UUID | None,
+    notes: str | None = None,
+) -> AgentEvaluation:
     template = (await db.execute(select(AgentTemplate).where(AgentTemplate.id == template_id, AgentTemplate.tenant_id == tenant_id))).scalar_one_or_none()
     if template is None:
         raise NotFoundError("Agent template not found")
@@ -62,24 +74,79 @@ async def record_evaluation(db: AsyncSession, *, tenant_id: uuid.UUID, template_
         raise ConflictError("Published or retired templates cannot receive new evaluation evidence")
     if score is not None and not 0 <= score <= 100:
         raise ValidationAppError("Evaluation score must be between 0 and 100")
-    evaluation = AgentEvaluation(tenant_id=tenant_id, agent_template_id=template.id, suite_id=suite_id, status=status, score=score, evidence=evidence, evidence_hash=_hash_evidence(evidence), evaluator_user_id=evaluator_user_id, notes=notes)
+
+    policy = template.evaluation_policy or {}
+    required_suite_id = policy.get("required_suite_id") or policy.get("suite_id")
+    if required_suite_id and suite_id != required_suite_id:
+        raise ValidationAppError("Evaluation suite does not match the template evaluation policy")
+    minimum_score = policy.get("minimum_score")
+    if status == AgentEvaluationStatus.PASSED and minimum_score is not None:
+        if score is None or score < int(minimum_score):
+            raise ValidationAppError("Passed evaluation does not meet the template minimum score")
+    required_contract = policy.get("required_contract_version")
+    contract_version = evidence.get("contract_version") or EVALUATION_CONTRACT_VERSION
+    if required_contract and contract_version != required_contract:
+        raise ValidationAppError("Evaluation evidence contract version does not match the template policy")
+
+    evaluation = AgentEvaluation(
+        tenant_id=tenant_id,
+        agent_template_id=template.id,
+        suite_id=suite_id,
+        status=status,
+        score=score,
+        evidence={**evidence, "contract_version": contract_version},
+        evaluator_user_id=evaluator_user_id,
+        notes=notes,
+    )
+    evaluation.evidence_hash = _hash_evidence(evaluation.evidence)
     db.add(evaluation)
+    await db.flush()
+
     template.status = AgentTemplateStatus.EVALUATING
-    template.evaluation_policy = {**(template.evaluation_policy or {}), "latest_evaluation_id": str(evaluation.id), "passed": status == AgentEvaluationStatus.PASSED, "suite_id": suite_id, "score": score, "evidence_hash": evaluation.evidence_hash}
+    template.evaluation_policy = {
+        **policy,
+        "last_evaluation": {
+            "id": str(evaluation.id),
+            "passed": status == AgentEvaluationStatus.PASSED,
+            "suite_id": suite_id,
+            "score": score,
+            "evidence_hash": evaluation.evidence_hash,
+            "contract_version": contract_version,
+        },
+    }
     await db.flush()
     await db.refresh(evaluation)
     return evaluation
 
 
 async def latest_evaluation(db: AsyncSession, *, tenant_id: uuid.UUID, template_id: uuid.UUID) -> AgentEvaluation | None:
-    result = await db.execute(select(AgentEvaluation).where(AgentEvaluation.tenant_id == tenant_id, AgentEvaluation.agent_template_id == template_id).order_by(AgentEvaluation.created_at.desc()).limit(1))
+    result = await db.execute(
+        select(AgentEvaluation)
+        .where(AgentEvaluation.tenant_id == tenant_id, AgentEvaluation.agent_template_id == template_id)
+        .order_by(AgentEvaluation.created_at.desc(), AgentEvaluation.id.desc())
+        .limit(1)
+    )
     return result.scalar_one_or_none()
 
 
 async def assert_publishable_with_evidence(db: AsyncSession, *, tenant_id: uuid.UUID, template_id: uuid.UUID) -> AgentEvaluation:
+    template = (await db.execute(select(AgentTemplate).where(AgentTemplate.id == template_id, AgentTemplate.tenant_id == tenant_id))).scalar_one_or_none()
+    if template is None:
+        raise NotFoundError("Agent template not found")
     evidence = await latest_evaluation(db, tenant_id=tenant_id, template_id=template_id)
     if evidence is None or evidence.status != AgentEvaluationStatus.PASSED:
         raise ValidationAppError("Agent template requires its latest evaluation evidence to be passed before publication")
+
+    policy = template.evaluation_policy or {}
+    required_suite_id = policy.get("required_suite_id") or policy.get("suite_id")
+    if required_suite_id and evidence.suite_id != required_suite_id:
+        raise ValidationAppError("Latest evaluation suite does not satisfy the template evaluation policy")
+    minimum_score = policy.get("minimum_score")
+    if minimum_score is not None and (evidence.score is None or evidence.score < int(minimum_score)):
+        raise ValidationAppError("Latest evaluation score does not satisfy the template minimum score")
+    required_contract = policy.get("required_contract_version")
+    if required_contract and evidence.evidence.get("contract_version") != required_contract:
+        raise ValidationAppError("Latest evaluation contract version does not satisfy the template policy")
     return evidence
 
 

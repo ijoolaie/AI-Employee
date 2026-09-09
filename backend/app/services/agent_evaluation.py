@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
+EVALUATION_CONTRACT_VERSION = "14.0.0"
 _FORBIDDEN_KEY_PARTS = (
     "prompt",
     "memory",
@@ -29,7 +30,7 @@ class EvaluationResult:
     passed: bool
     score: float
     reasons: tuple[str, ...]
-    contract_version: str = "13.6.1"
+    contract_version: str = EVALUATION_CONTRACT_VERSION
 
 
 def _canonical(value: Any) -> str:
@@ -49,6 +50,36 @@ def _contains_forbidden_key(value: Any) -> bool:
     return False
 
 
+def _criterion_result(
+    *,
+    criterion: dict[str, Any],
+    result: dict[str, Any],
+    evidence: dict[str, Any],
+    approval_state: str,
+) -> tuple[bool, str]:
+    kind = criterion.get("kind") or criterion.get("type")
+    if kind == "equals":
+        expected = criterion.get("value")
+        passed = _canonical(result) == _canonical(expected)
+        return passed, "equals criterion failed"
+    if kind == "required_keys":
+        keys = criterion.get("keys", [])
+        missing = [key for key in keys if key not in result]
+        return not missing, f"missing required result key: {missing[0]}" if missing else ""
+    if kind == "forbidden_keys":
+        keys = criterion.get("keys", [])
+        present = [key for key in keys if key in result]
+        return not present, f"forbidden result key present: {present[0]}" if present else ""
+    if kind == "approval_required":
+        passed = approval_state == "approved"
+        return passed, "required approval was not approved"
+    if kind == "evidence_keys":
+        keys = criterion.get("keys", [])
+        missing = [key for key in keys if key not in evidence]
+        return not missing, f"missing required evidence key: {missing[0]}" if missing else ""
+    return False, f"unsupported evaluation criterion: {kind}"
+
+
 def evaluate_run(
     *,
     expected: dict[str, Any],
@@ -59,15 +90,9 @@ def evaluate_run(
 ) -> EvaluationResult:
     """Evaluate a completed Test Center run without executing arbitrary code.
 
-    Supported deterministic expectations:
-    - ``equals``: exact JSON equality against the result payload.
-    - ``required_keys``: keys that must exist in the result payload.
-    - ``forbidden_keys``: keys that must not exist in the result payload.
-    - ``approval_required``: requires the recorded approval state to be approved.
-    - ``evidence_keys``: evidence fields that must be present.
-
-    The evaluator never consumes prompts, memory text, embeddings, secrets, tool
-    arguments, authorization material, or failure-detail payloads.
+    Legacy expectations remain supported. New suites may use ``criteria`` with
+    ``weight`` values and an optional ``threshold`` in [0, 1]. Every criterion
+    must be deterministic and side-effect free.
     """
     reasons: list[str] = []
     if run_status not in {"passed", "failed", "cancelled", "expired"}:
@@ -95,5 +120,33 @@ def evaluate_run(
         if key not in evidence:
             reasons.append(f"missing required evidence key: {key}")
 
+    criteria = expected.get("criteria", [])
+    if criteria:
+        total_weight = 0.0
+        weighted_score = 0.0
+        for criterion in criteria:
+            weight = float(criterion.get("weight", 1.0))
+            if weight <= 0:
+                reasons.append("evaluation criterion weight must be positive")
+                continue
+            passed, reason = _criterion_result(
+                criterion=criterion,
+                result=result,
+                evidence=evidence,
+                approval_state=approval_state,
+            )
+            total_weight += weight
+            weighted_score += weight if passed else 0.0
+            if not passed and reason:
+                reasons.append(reason)
+        score = weighted_score / total_weight if total_weight else 0.0
+        threshold = float(expected.get("threshold", 1.0))
+        if not 0.0 <= threshold <= 1.0:
+            reasons.append("evaluation threshold must be between 0 and 1")
+        elif score < threshold:
+            reasons.append(f"evaluation score {score:.4f} is below threshold {threshold:.4f}")
+    else:
+        score = 1.0 if not reasons else 0.0
+
     passed = not reasons
-    return EvaluationResult(passed=passed, score=1.0 if passed else 0.0, reasons=tuple(reasons))
+    return EvaluationResult(passed=passed, score=score, reasons=tuple(reasons))
