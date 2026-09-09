@@ -9,7 +9,6 @@ from uuid import UUID
 from app.core.config import get_settings
 from app.core.database import worker_db_session
 from app.core.exceptions import ValidationAppError
-from app.core.security import ensure_uuid
 from app.models.outbox import OutboxMessage
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 from app.workers.celery_app import celery_app
@@ -28,9 +27,9 @@ async def _authorize_deferred_agent_side_effect(db, row: OutboxMessage) -> None:
     if not isinstance(proof, dict):
         raise ValidationAppError("Malformed Agent outbox governance binding")
     try:
-        tenant_id = ensure_uuid(proof["tenant_id"])
-        agent_instance_id = ensure_uuid(proof["agent_instance_id"])
-        run_id = ensure_uuid(proof["run_id"])
+        tenant_id = UUID(str(proof["tenant_id"]))
+        agent_instance_id = UUID(str(proof["agent_instance_id"]))
+        run_id = UUID(str(proof["run_id"]))
         tool_name = str(proof["tool_name"])
     except (KeyError, TypeError, ValueError) as exc:
         raise ValidationAppError("Malformed Agent outbox governance binding") from exc
@@ -46,9 +45,6 @@ async def _authorize_deferred_agent_side_effect(db, row: OutboxMessage) -> None:
             tool_name=tool_name,
             required_permission="run.execute",
             run_id=run_id,
-            # The human approval was consumed when the tool call was admitted;
-            # worker-side authorization therefore revalidates current authority
-            # without attempting to replay the one-shot approval.
         ),
     )
 
