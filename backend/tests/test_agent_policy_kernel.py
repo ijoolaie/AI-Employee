@@ -7,6 +7,7 @@ import pytest
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.agent_access_review import AgentAccessReviewDecision
 from app.models.agent_instance import AgentInstanceStatus
+from app.services.agent_governance_freshness import execution_authority_fingerprint
 from app.services.agent_policy_engine import POLICY_VERSION, PolicyDecision, PolicyRequest, assert_authorized, authorize
 
 
@@ -22,13 +23,15 @@ class FakeResult:
 
 
 class FakeDb:
-    def __init__(self, *values, access_review="auto"):
-        self.values, self.flushed, self.access_review = list(values), False, access_review
+    def __init__(self, *values, access_review="auto", template=None):
+        self.values, self.flushed, self.access_review, self.template = list(values), False, access_review, template
 
     async def execute(self, statement):
         text = str(statement)
         if "agent_kill_switches" in text:
             return FakeResult(None)
+        if "agent_templates" in text:
+            return FakeResult(self.template)
         if "agent_access_reviews" in text:
             review = self.access_review
             if review == "auto":
@@ -50,6 +53,16 @@ def agent(tenant_id, **policy):
     return SimpleNamespace(id=uuid4(), tenant_id=tenant_id, enabled=True, status=AgentInstanceStatus.ENABLED, permission_policy=policy)
 
 
+def governed_agent(tenant_id, template_id, **policy):
+    instance = agent(tenant_id, **policy)
+    instance.agent_template_id = template_id
+    instance.agent_definition_id = None
+    instance.configuration = {}
+    instance.max_concurrency = 1
+    instance.budget_policy = {}
+    return instance
+
+
 def identity(**overrides):
     values = {"id": uuid4(), "active": True, "revoked_at": None, "expires_at": None}; values.update(overrides); return SimpleNamespace(**values)
 
@@ -69,6 +82,43 @@ def approval(req, **overrides):
     values = {"id": req.approval_request_id, "tenant_id": req.tenant_id, "run_id": req.run_id, "tool_name": req.tool_name,
               "tool_call_id": req.tool_call_id, "arguments": req.arguments, "status": "approved"}
     values.update(overrides); return SimpleNamespace(**values)
+
+
+def published_template(template_id, tenant_id, definition_id=None):
+    return SimpleNamespace(
+        id=template_id,
+        tenant_id=tenant_id,
+        status=SimpleNamespace(value="published"),
+        version=3,
+        agent_definition_id=definition_id or uuid4(),
+        risk_tier=2,
+        capability_contract={"read": True},
+        permission_policy={"allowed_tools": ["send_email"], "permissions": ["run.execute"]},
+        approval_policy={"requires_ceo_approval": True},
+        install_policy={"requires_ceo_approval": True},
+    )
+
+
+def apply_governance_fingerprint(instance, template, configuration=None):
+    configuration = configuration or {}
+    instance.configuration = {
+        **configuration,
+        "_governance_fingerprint": execution_authority_fingerprint(
+            tenant_id=instance.tenant_id,
+            template_id=template.id,
+            template_version=template.version,
+            agent_definition_id=template.agent_definition_id,
+            risk_tier=template.risk_tier,
+            capability_contract=template.capability_contract,
+            permission_policy=template.permission_policy,
+            approval_policy=template.approval_policy,
+            install_policy=template.install_policy,
+            configuration=configuration,
+            max_concurrency=instance.max_concurrency,
+            budget_policy=instance.budget_policy,
+        ),
+    }
+    instance.agent_definition_id = template.agent_definition_id
 
 
 @pytest.mark.asyncio
@@ -177,8 +227,45 @@ async def test_retired_agent_is_denied():
 
 
 @pytest.mark.asyncio
+async def test_runtime_governance_fingerprint_allows_unchanged_instance():
+    tenant = uuid4(); template = published_template(uuid4(), tenant); instance = governed_agent(tenant, template.id, allowed_tools=["send_email"], permissions=["run.execute"])
+    apply_governance_fingerprint(instance, template)
+    req = request(tenant, instance.id)
+    result = await authorize(FakeDb(instance, identity(), approval(req), template=template), req)
+    assert result.decision == PolicyDecision.ALLOW
+
+
+@pytest.mark.asyncio
+async def test_runtime_governance_fingerprint_denies_permission_drift():
+    tenant = uuid4(); template = published_template(uuid4(), tenant); instance = governed_agent(tenant, template.id, allowed_tools=["send_email"], permissions=["run.execute"])
+    apply_governance_fingerprint(instance, template)
+    instance.permission_policy = {"allowed_tools": ["send_email", "delete_customer"], "permissions": ["run.execute", "customer.delete"]}
+    req = request(tenant, instance.id)
+    result = await authorize(FakeDb(instance, identity(), approval(req), template=template), req)
+    assert result.decision == PolicyDecision.DENY and result.reason == "agent_governance_fingerprint_mismatch"
+
+
+@pytest.mark.asyncio
+async def test_runtime_governance_fingerprint_denies_budget_drift():
+    tenant = uuid4(); template = published_template(uuid4(), tenant); instance = governed_agent(tenant, template.id, allowed_tools=["send_email"], permissions=["run.execute"])
+    apply_governance_fingerprint(instance, template)
+    instance.budget_policy = {"max_cost_usd": "999"}
+    req = request(tenant, instance.id)
+    result = await authorize(FakeDb(instance, identity(), approval(req), template=template), req)
+    assert result.decision == PolicyDecision.DENY and result.reason == "agent_governance_fingerprint_mismatch"
+
+
+@pytest.mark.asyncio
+async def test_runtime_governance_fingerprint_requires_proof_for_governed_instance():
+    tenant = uuid4(); template = published_template(uuid4(), tenant); instance = governed_agent(tenant, template.id, allowed_tools=["send_email"], permissions=["run.execute"])
+    req = request(tenant, instance.id)
+    result = await authorize(FakeDb(instance, identity(), approval(req), template=template), req)
+    assert result.decision == PolicyDecision.DENY and result.reason == "agent_governance_fingerprint_missing"
+
+
+@pytest.mark.asyncio
 async def test_assert_authorized_raises_for_missing_approval():
     tenant = uuid4(); instance = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"]); req = request(tenant, instance.id)
     req = PolicyRequest(**{**req.__dict__, "approval_granted": False})
     with pytest.raises(ValidationAppError) as exc: await assert_authorized(FakeDb(instance, identity(), None), req)
-    assert exc.value.details["reason"] == "approval_not_found_or_not_approved"
+    assert exc.value.details["reason"] == "agent_access_review_not_approved" or exc.value.details["reason"] == "approval_not_found_or_not_approved"

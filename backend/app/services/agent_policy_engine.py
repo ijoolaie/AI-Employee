@@ -14,8 +14,10 @@ from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
+from app.models.agent_template import AgentTemplate
 from app.models.tool_approval import ToolApprovalRequest
 from app.services.agent_delegation_service import validate_delegation
+from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.services.agent_kill_switch_service import assert_not_killed
 
 
@@ -108,6 +110,46 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
 
     if instance.status != AgentInstanceStatus.ENABLED or not instance.enabled:
         return result(PolicyDecision.DENY, "agent_instance_not_executable")
+
+    # Governed Stage 8 instances carry the CEO-approved authority fingerprint
+    # in their provisioning configuration. Recompute it at every execution
+    # boundary so post-activation drift cannot silently change authority.
+    template_id = getattr(instance, "agent_template_id", None)
+    if template_id is not None:
+        template = (
+            await db.execute(
+                select(AgentTemplate).where(
+                    AgentTemplate.id == template_id,
+                    AgentTemplate.tenant_id == request.tenant_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if template is None or template.status.value != "published":
+            return result(PolicyDecision.DENY, "agent_governance_template_invalid")
+
+        configuration = dict(instance.configuration or {})
+        approved_fingerprint = configuration.pop(FINGERPRINT_KEY, None)
+        if not approved_fingerprint:
+            return result(PolicyDecision.DENY, "agent_governance_fingerprint_missing")
+
+        current_fingerprint = execution_authority_fingerprint(
+            tenant_id=request.tenant_id,
+            template_id=template.id,
+            template_version=template.version,
+            agent_definition_id=instance.agent_definition_id,
+            # Older lightweight policy-kernel fixtures do not model every
+            # persisted AgentInstance field; real governed instances always do.
+            risk_tier=getattr(instance, "risk_tier", template.risk_tier),
+            capability_contract=template.capability_contract,
+            permission_policy=instance.permission_policy,
+            approval_policy=getattr(instance, "approval_policy", template.approval_policy),
+            install_policy=template.install_policy,
+            configuration=configuration,
+            max_concurrency=instance.max_concurrency,
+            budget_policy=instance.budget_policy,
+        )
+        if current_fingerprint != approved_fingerprint:
+            return result(PolicyDecision.DENY, "agent_governance_fingerprint_mismatch")
 
     identity = (
         await db.execute(
