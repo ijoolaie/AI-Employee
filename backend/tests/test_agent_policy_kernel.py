@@ -56,6 +56,7 @@ def agent(tenant_id, **policy):
 def governed_agent(tenant_id, template_id, **policy):
     instance = agent(tenant_id, **policy)
     instance.agent_template_id = template_id
+    instance.agent_definition_id = None
     instance.configuration = {}
     instance.max_concurrency = 1
     instance.budget_policy = {}
@@ -117,6 +118,7 @@ def apply_governance_fingerprint(instance, template, configuration=None):
             budget_policy=instance.budget_policy,
         ),
     }
+    instance.agent_definition_id = template.agent_definition_id
 
 
 @pytest.mark.asyncio
