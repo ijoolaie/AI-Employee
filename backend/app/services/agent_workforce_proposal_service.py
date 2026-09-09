@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -258,6 +259,11 @@ async def activate_provisioned_proposal(
     ).order_by(AgentAccessReview.reviewed_at.desc()).limit(1))).scalar_one_or_none()
     if review is None:
         raise ValidationAppError("An approved access review is required before activation")
+    now = datetime.now(timezone.utc)
+    if review.reviewed_at < instance.created_at:
+        raise ConflictError("Access review is stale: it predates AgentInstance provisioning")
+    if review.next_review_at is not None and review.next_review_at <= now:
+        raise ConflictError("Access review is expired and must be renewed before activation")
 
     instance.status = AgentInstanceStatus.ENABLED
     instance.enabled = True
