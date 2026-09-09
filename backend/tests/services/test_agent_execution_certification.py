@@ -77,8 +77,11 @@ async def test_cross_tenant_work_item_is_rejected_before_run_creation(monkeypatc
     tenant_a = uuid4(); tenant_b = uuid4()
     agent = SimpleNamespace(id=uuid4(), tenant_id=tenant_b, enabled=True)
     work_item = SimpleNamespace(tenant_id=tenant_a, input_data={}, requester_id=uuid4())
+    async def authorize(*_args, **_kwargs):
+        raise AssertionError("authorization must not run for a cross-tenant dispatch")
     async def resolve(*_args, **_kwargs):
         raise AssertionError("cross-tenant assignment must be rejected before resolver/Run")
+    monkeypatch.setattr(agent_execution_adapter, "assert_authorized", authorize)
     monkeypatch.setattr(agent_execution_adapter, "resolve_employee_version", resolve)
     with pytest.raises(ValueError, match="cross-tenant"):
         await agent_execution_adapter.AgentExecutionAdapter(object()).dispatch(work_item, agent)
@@ -90,10 +93,12 @@ async def test_successful_agent_work_item_creates_agent_attributed_run(monkeypat
     work_item = SimpleNamespace(id=uuid4(), tenant_id=tenant_id, input_data={"task": "triage"}, requester_id=requester_id)
     agent = SimpleNamespace(id=agent_id, tenant_id=tenant_id, enabled=True)
     instance = SimpleNamespace(id=agent_id); definition = SimpleNamespace(id=definition_id); version = SimpleNamespace(id=version_id, employee_id=employee_id); run = SimpleNamespace(id=run_id, agent_instance_id=None)
+    async def authorize(*_args, **_kwargs): calls["authorized"] = True
     async def resolve(db, *, tenant_id, agent_instance_id): calls["resolve"] = (db, tenant_id, agent_instance_id); return instance, definition, version
     async def create(db, **kwargs): calls["create"] = (db, kwargs); return run
     class _DB:
         async def flush(self): calls["flushed"] = True
+    monkeypatch.setattr(agent_execution_adapter, "assert_authorized", authorize)
     monkeypatch.setattr(agent_execution_adapter, "resolve_employee_version", resolve)
     monkeypatch.setattr(agent_execution_adapter, "create_run", create)
     monkeypatch.setattr(agent_execution_adapter, "execute_run_task", None, raising=False)
@@ -101,6 +106,7 @@ async def test_successful_agent_work_item_creates_agent_attributed_run(monkeypat
     class _Task: delay = staticmethod(_enqueue)
     monkeypatch.setattr(agent_execution_adapter, "execute_run_task", _Task(), raising=False)
     result = await agent_execution_adapter.AgentExecutionAdapter(_DB()).dispatch(work_item, agent)
+    assert calls["authorized"] is True
     assert run.agent_instance_id == agent_id
     assert calls["flushed"] is True
     assert result["executor_type"] == "agent"
