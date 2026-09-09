@@ -50,7 +50,11 @@ async def cancel(payload: CancelRequest, ctx: CurrentContext, db: DbSession):
 @router.post("/checkout", response_model=APIResponse[CheckoutSessionResponse])
 async def create_checkout(payload: CheckoutSessionRequest, ctx: CurrentContext, db: DbSession):
     url = await stripe_service.create_checkout_session(
-        db, tenant_id=ctx.tenant_id, user_id=ctx.user_id, plan_code=payload.plan_code
+        db,
+        tenant_id=ctx.tenant_id,
+        user_id=ctx.user_id,
+        plan_code=payload.plan_code,
+        idempotency_key=payload.idempotency_key,
     )
     await db.commit()
     return APIResponse(success=True, data=CheckoutSessionResponse(checkout_url=url))
