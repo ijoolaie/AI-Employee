@@ -81,12 +81,10 @@ async def test_agent_assignment_rejects_cross_tenant_agent_before_execution(monk
     work_item_id = uuid4()
     agent_id = uuid4()
     db = FakeDB()
-    calls = {"service": 0}
+    calls = {"service": 0, "args": None}
 
-    async def fake_assign_work_item(*, tenant_id, work_item_id, agent_instance_id, db):
-        assert tenant_id is not None
-        assert work_item_id == work_item_id
-        assert agent_instance_id == agent_id
+    async def fake_assign_work_item(db_value, *, tenant_id, work_item_id, agent_instance_id):
+        calls["args"] = (db_value, tenant_id, work_item_id, agent_instance_id)
         calls["service"] += 1
         raise ExecutionError("agent instance not found")
 
@@ -102,3 +100,4 @@ async def test_agent_assignment_rejects_cross_tenant_agent_before_execution(monk
 
     assert exc.value.status_code == 404
     assert calls["service"] == 1
+    assert calls["args"] == (db, tenant_id, work_item_id, agent_id)
