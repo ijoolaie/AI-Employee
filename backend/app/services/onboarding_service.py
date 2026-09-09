@@ -1,13 +1,25 @@
 import uuid
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.onboarding import OnboardingProgress
 
 async def get_or_create(db: AsyncSession, tenant_id: uuid.UUID):
     row = (await db.execute(select(OnboardingProgress).where(OnboardingProgress.tenant_id == tenant_id))).scalar_one_or_none()
-    if row: return row
-    row = OnboardingProgress(tenant_id=tenant_id)
-    db.add(row); await db.flush(); await db.refresh(row)
+    if row:
+        return row
+    candidate = OnboardingProgress(tenant_id=tenant_id)
+    try:
+        async with db.begin_nested():
+            db.add(candidate)
+            await db.flush()
+    except IntegrityError:
+        row = (await db.execute(select(OnboardingProgress).where(OnboardingProgress.tenant_id == tenant_id))).scalar_one_or_none()
+        if row is None:
+            raise
+    else:
+        row = candidate
+    await db.refresh(row)
     return row
 
 async def update(db: AsyncSession, tenant_id: uuid.UUID, step: int, business_type: str | None, data: dict, complete_step: bool):
