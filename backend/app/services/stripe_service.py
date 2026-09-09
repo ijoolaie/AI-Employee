@@ -69,7 +69,11 @@ async def _get_or_create_stripe_customer(
         email=user_email,
         name=tenant.name if tenant else None,
         metadata={"tenant_id": str(tenant_id)},
-        idempotency_key=f"customer:{idempotency_key}",
+        # Customer identity belongs to the tenant, not to an individual
+        # checkout attempt. This remains stable across retries with a new
+        # checkout idempotency key and closes the DB-write/Stripe-call crash
+        # window that could otherwise create duplicate Customers.
+        idempotency_key=f"customer:{tenant_id}",
     )
     sub.provider_customer_id = customer.id
     await db.flush()
