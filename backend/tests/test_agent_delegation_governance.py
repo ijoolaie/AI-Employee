@@ -36,7 +36,7 @@ def agent(tenant_id, agent_id=None, **policy):
 
 
 def identity():
-    return SimpleNamespace(active=True, revoked_at=None, expires_at=None)
+    return SimpleNamespace(id=uuid4(), active=True, revoked_at=None, expires_at=None)
 
 
 @pytest.mark.asyncio
