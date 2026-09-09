@@ -31,7 +31,7 @@ class _DB:
 
 
 @pytest.mark.asyncio
-async def test_approved_agent_tool_request_is_consumed_before_execution():
+async def test_approved_request_remains_approved_for_policy_resolution():
     tenant_id = uuid4()
     run_id = uuid4()
     approval = SimpleNamespace(
@@ -44,15 +44,19 @@ async def test_approved_agent_tool_request_is_consumed_before_execution():
     )
     db = _DB(approval)
 
-    claimed = await agent_tool_governance._resolve_approval(
+    resolved = await agent_tool_governance._resolve_approval(
         db,
         tenant_id=tenant_id,
         run_id=run_id,
         tool_name="send_email",
-        arguments={"to": ["user@example.com"]},
+        arguments=approval.arguments,
     )
 
-    assert claimed is approval
+    assert resolved is approval
+    assert approval.status == "approved"
+    assert db.flush_count == 0
+
+    await agent_tool_governance._consume_approval(db, approval)
     assert approval.status == "consumed"
     assert db.flush_count == 1
 
@@ -72,10 +76,19 @@ async def test_consumed_agent_tool_request_cannot_be_replayed():
     db = _DB(approval)
 
     first = await agent_tool_governance._resolve_approval(
-        db, tenant_id=tenant_id, run_id=run_id, tool_name="send_email", arguments=approval.arguments
+        db,
+        tenant_id=tenant_id,
+        run_id=run_id,
+        tool_name="send_email",
+        arguments=approval.arguments,
     )
+    await agent_tool_governance._consume_approval(db, first)
     second = await agent_tool_governance._resolve_approval(
-        db, tenant_id=tenant_id, run_id=run_id, tool_name="send_email", arguments=approval.arguments
+        db,
+        tenant_id=tenant_id,
+        run_id=run_id,
+        tool_name="send_email",
+        arguments=approval.arguments,
     )
 
     assert first is approval
