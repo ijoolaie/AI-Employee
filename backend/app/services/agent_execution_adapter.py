@@ -65,6 +65,12 @@ class AgentExecutionAdapter:
 
             execute_run_task.delay(str(run.id), str(work_item.tenant_id))
         except Exception:  # noqa: BLE001
+            # Do not report a successful dispatch when the durable Run was
+            # created but the worker hand-off failed. Marking the Run failed
+            # makes the WorkItem retry path explicit and prevents an orphaned
+            # pending Run from being mistaken for an executable queued job.
+            run.status = "failed"
+            await self.db.flush()
             logger.warning(
                 "agent_run_enqueue_failed",
                 extra={
@@ -73,6 +79,7 @@ class AgentExecutionAdapter:
                 },
                 exc_info=True,
             )
+            raise
 
         result = {
             "run_id": str(run.id),
