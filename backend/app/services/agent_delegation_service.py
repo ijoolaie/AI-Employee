@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError, ValidationAppError
+from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.agent_delegation import AgentDelegation
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
@@ -183,7 +184,7 @@ async def validate_delegation(
     tool_name: str | None = None,
     now: datetime | None = None,
 ) -> AgentDelegation:
-    """Validate an unforgeable delegation proof at the policy boundary."""
+    """Validate delegation proof and current governance state at execution time."""
     current = now or datetime.now(timezone.utc)
     delegation = (await db.execute(select(AgentDelegation).where(AgentDelegation.id == delegation_id, AgentDelegation.tenant_id == tenant_id))).scalar_one_or_none()
     if delegation is None:
@@ -196,6 +197,38 @@ async def validate_delegation(
         raise ValidationAppError("Delegation has expired")
     if delegation.chain_depth > delegation.max_chain_depth:
         raise ValidationAppError("Delegation chain depth exceeded")
+
+    agent_ids = [delegation.delegator_agent_instance_id, delegation.delegate_agent_instance_id]
+    agents = (await db.execute(select(AgentInstance).where(AgentInstance.tenant_id == tenant_id, AgentInstance.id.in_(agent_ids)))).scalars().all()
+    by_id = {agent.id: agent for agent in agents}
+    for agent_id in agent_ids:
+        agent = by_id.get(agent_id)
+        if agent is None or not agent.enabled or agent.status is not AgentInstanceStatus.ENABLED:
+            raise ValidationAppError("Delegation requires currently enabled Agent instances")
+
+    identities = (await db.execute(select(AgentIdentity).where(AgentIdentity.tenant_id == tenant_id, AgentIdentity.agent_instance_id.in_(agent_ids)))).scalars().all()
+    identity_by_agent = {identity.agent_instance_id: identity for identity in identities}
+    for agent_id in agent_ids:
+        identity = identity_by_agent.get(agent_id)
+        if identity is None or not identity.active or identity.revoked_at is not None:
+            raise ValidationAppError("Delegation requires currently active Agent identities")
+        if identity.expires_at is not None and identity.expires_at <= current:
+            raise ValidationAppError("Delegation identity has expired")
+
+        latest_review = (await db.execute(
+            select(AgentAccessReview)
+            .where(
+                AgentAccessReview.agent_identity_id == identity.id,
+                AgentAccessReview.tenant_id == tenant_id,
+            )
+            .order_by(AgentAccessReview.reviewed_at.desc(), AgentAccessReview.id.desc())
+            .limit(1)
+        )).scalar_one_or_none()
+        if latest_review is None or latest_review.decision is not AgentAccessReviewDecision.APPROVED:
+            raise ValidationAppError("Delegation requires the latest Access Review to be approved")
+        if latest_review.next_review_at is not None and latest_review.next_review_at <= current:
+            raise ValidationAppError("Delegation requires a non-expired Access Review")
+
     scopes = delegation.scopes or {}
     actions = set(scopes.get("actions") or [])
     tools = set(scopes.get("tools") or [])
