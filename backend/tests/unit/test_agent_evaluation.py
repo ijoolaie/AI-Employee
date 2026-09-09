@@ -1,4 +1,4 @@
-from app.services.agent_evaluation import evaluate_run
+from app.services.agent_evaluation import EVALUATION_CONTRACT_VERSION, evaluate_run
 
 
 def test_evaluation_is_deterministic_and_exact():
@@ -18,6 +18,7 @@ def test_evaluation_is_deterministic_and_exact():
     assert first == second
     assert first.passed is True
     assert first.score == 1.0
+    assert first.contract_version == EVALUATION_CONTRACT_VERSION
 
 
 def test_evaluation_rejects_result_mismatch_and_missing_evidence():
@@ -71,3 +72,47 @@ def test_non_terminal_run_cannot_pass_evaluation():
     )
     assert outcome.passed is False
     assert "evaluation requires a terminal run" in outcome.reasons
+
+
+def test_weighted_evaluation_applies_threshold_deterministically():
+    outcome = evaluate_run(
+        expected={
+            "criteria": [
+                {"kind": "required_keys", "keys": ["status"], "weight": 1},
+                {"kind": "equals", "value": {"status": "ok"}, "weight": 3},
+            ],
+            "threshold": 0.75,
+        },
+        result={"status": "ok"},
+        evidence={},
+        run_status="passed",
+    )
+    assert outcome.passed is True
+    assert outcome.score == 1.0
+
+
+def test_weighted_evaluation_fails_below_threshold_and_rejects_invalid_weight():
+    outcome = evaluate_run(
+        expected={
+            "criteria": [
+                {"kind": "required_keys", "keys": ["missing"], "weight": 1},
+                {"kind": "equals", "value": {"status": "ok"}, "weight": 3},
+            ],
+            "threshold": 1.0,
+        },
+        result={"status": "ok"},
+        evidence={},
+        run_status="passed",
+    )
+    assert outcome.passed is False
+    assert outcome.score == 0.75
+    assert any("below threshold" in reason for reason in outcome.reasons)
+
+    invalid = evaluate_run(
+        expected={"criteria": [{"kind": "equals", "value": {}, "weight": 0}]},
+        result={},
+        evidence={},
+        run_status="passed",
+    )
+    assert invalid.passed is False
+    assert "evaluation criterion weight must be positive" in invalid.reasons
