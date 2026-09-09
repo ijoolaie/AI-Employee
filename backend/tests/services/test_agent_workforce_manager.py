@@ -188,7 +188,9 @@ async def test_concurrent_agent_assignments_are_serialized_by_agent_row_lock():
             )
             for index, item_id in enumerate(item_ids)
         ]
-        db.add_all([tenant, definition, agent, *items])
+        db.add(tenant)
+        await db.flush()
+        db.add_all([definition, agent, *items])
         await db.commit()
 
     async def assign(item_id):
