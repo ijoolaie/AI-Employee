@@ -10,9 +10,23 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.run import Run
 from app.services import agent_tool_governance
+from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 
 
 _INSTALLED = False
+
+
+async def authorize_agent_run(db: AsyncSession, run: Run) -> None:
+    """Re-establish current Agent authority before any Run work starts."""
+    await assert_authorized(
+        db,
+        PolicyRequest(
+            tenant_id=run.tenant_id,
+            agent_instance_id=run.agent_instance_id,
+            action="run.execute",
+            run_id=run.id,
+        ),
+    )
 
 
 def install() -> None:
@@ -39,6 +53,12 @@ def install() -> None:
         run = result.scalar_one_or_none()
         if run is None or run.agent_instance_id is None:
             return await original_execute_run(db, run_id=run_id)
+
+        # Agent authorization must be re-established at the worker execution
+        # boundary, not only when the WorkItem is dispatched. This closes the
+        # revoke/disable/kill-switch race where a queued Run could otherwise
+        # reach the AI provider after its authority changed.
+        await authorize_agent_run(db, run)
 
         async with agent_tool_governance.agent_tool_context(
             tenant_id=run.tenant_id,
