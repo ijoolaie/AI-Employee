@@ -57,6 +57,11 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
 
 async def claim(db: AsyncSession, *, limit: int = 50) -> list[OutboxMessage]:
     now = datetime.now(timezone.utc)
+    # A stale SMTP delivery has an unknown external outcome: the provider may
+    # already have accepted the message even though the worker disappeared.
+    # Never automatically reclaim email.send rows, otherwise a worker crash
+    # after SMTP acceptance can produce a duplicate email. The email worker
+    # durably marks the row "uncertain" before the external side effect.
     claimable = (
         (OutboxMessage.status == "pending") & (OutboxMessage.available_at <= now)
     ) | (
