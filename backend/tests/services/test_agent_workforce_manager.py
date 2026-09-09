@@ -233,10 +233,16 @@ async def test_concurrent_agent_assignments_are_serialized_by_agent_row_lock():
             assert item is not None
             assert item.status in {WorkItemStatus.READY, WorkItemStatus.ASSIGNED}
             await db.delete(item)
+        await db.flush()
+
         await db.delete(agent_row)
+        await db.flush()
+
         definition_row = await db.get(AgentDefinition, definition_id)
         assert definition_row is not None
         await db.delete(definition_row)
+        await db.flush()
+
         tenant_row = await db.get(Tenant, tenant_id)
         assert tenant_row is not None
         await db.delete(tenant_row)
