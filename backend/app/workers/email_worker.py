@@ -6,6 +6,8 @@ import smtplib
 from email.message import EmailMessage
 from uuid import UUID
 
+from sqlalchemy import select
+
 from app.core.config import get_settings
 from app.core.database import worker_db_session
 from app.core.exceptions import ValidationAppError
@@ -57,7 +59,13 @@ def _build_email(payload: dict, outbox_id: str, settings) -> EmailMessage:
 
 async def _send(outbox_id: str) -> None:
     async with worker_db_session() as db:
-        row = await db.get(OutboxMessage, outbox_id)
+        # Serialize delivery attempts for this durable item. Without the row
+        # lock, two workers can both observe "processing" before either one
+        # commits "uncertain", then both perform the irreversible SMTP send.
+        result = await db.execute(
+            select(OutboxMessage).where(OutboxMessage.id == outbox_id).with_for_update()
+        )
+        row = result.scalar_one_or_none()
         if row is None or row.status in {"dispatched", "dead", "uncertain"}:
             return
         if row.status not in {"processing", "pending"}:
