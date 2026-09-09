@@ -1,7 +1,8 @@
 import uuid
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
-from unittest.mock import AsyncMock, SimpleNamespace
 
 from app.core.exceptions import ValidationAppError
 from app.services import agent_template_service as service
