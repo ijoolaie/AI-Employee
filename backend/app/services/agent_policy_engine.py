@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError, ValidationAppError
+from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.tool_approval import ToolApprovalRequest
@@ -124,6 +125,27 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
         identity.active = False
         await db.flush()
         return result(PolicyDecision.DENY, "agent_identity_expired")
+
+    access_review = (
+        await db.execute(
+            select(AgentAccessReview)
+            .where(
+                AgentAccessReview.agent_identity_id == identity.id,
+                AgentAccessReview.tenant_id == request.tenant_id,
+                AgentAccessReview.decision == AgentAccessReviewDecision.APPROVED,
+            )
+            .order_by(AgentAccessReview.reviewed_at.desc(), AgentAccessReview.id.desc())
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if access_review is None:
+        identity.active = False
+        await db.flush()
+        return result(PolicyDecision.DENY, "agent_access_review_missing")
+    if access_review.next_review_at is not None and access_review.next_review_at <= now:
+        identity.active = False
+        await db.flush()
+        return result(PolicyDecision.DENY, "agent_access_review_expired")
 
     if request.delegation_id is not None:
         try:

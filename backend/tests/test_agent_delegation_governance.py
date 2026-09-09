@@ -36,7 +36,11 @@ def agent(tenant_id, agent_id=None, **policy):
 
 
 def identity():
-    return SimpleNamespace(active=True, revoked_at=None, expires_at=None)
+    return SimpleNamespace(id=uuid4(), active=True, revoked_at=None, expires_at=None)
+
+
+def access_review():
+    return SimpleNamespace(id=uuid4(), reviewed_at=datetime.now(timezone.utc), next_review_at=None)
 
 
 @pytest.mark.asyncio
@@ -50,7 +54,7 @@ async def test_delegated_tool_requires_a_valid_delegation_proof(monkeypatch):
     async def reject(*_args, **_kwargs):
         raise ValidationAppError("invalid")
     monkeypatch.setattr(agent_policy_engine, "validate_delegation", reject)
-    result = await authorize(FakeDb(target, identity()), req)
+    result = await authorize(FakeDb(target, identity(), access_review()), req)
     assert result.decision is PolicyDecision.DENY
     assert result.reason == "delegation_invalid"
 
@@ -65,7 +69,7 @@ async def test_delegated_tool_is_allowed_only_when_scope_proof_valid(monkeypatch
     )
     async def accept(*_args, **_kwargs): return SimpleNamespace(id=req.delegation_id)
     monkeypatch.setattr(agent_policy_engine, "validate_delegation", accept)
-    result = await authorize(FakeDb(target, identity()), req)
+    result = await authorize(FakeDb(target, identity(), access_review()), req)
     assert result.decision is PolicyDecision.ALLOW
 
 

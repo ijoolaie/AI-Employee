@@ -5,6 +5,7 @@ from uuid import uuid4
 import pytest
 
 from app.core.exceptions import NotFoundError, ValidationAppError
+from app.models.agent_access_review import AgentAccessReviewDecision
 from app.models.agent_instance import AgentInstanceStatus
 from app.services.agent_policy_engine import POLICY_VERSION, PolicyDecision, PolicyRequest, assert_authorized, authorize
 
@@ -21,11 +22,27 @@ class FakeResult:
 
 
 class FakeDb:
-    def __init__(self, *values): self.values, self.flushed = list(values), False
+    def __init__(self, *values, access_review="auto"):
+        self.values, self.flushed, self.access_review = list(values), False, access_review
+
     async def execute(self, statement):
-        if "agent_kill_switches" in str(statement):
+        text = str(statement)
+        if "agent_kill_switches" in text:
             return FakeResult(None)
+        if "agent_access_reviews" in text:
+            review = self.access_review
+            if review == "auto":
+                review = SimpleNamespace(
+                    id=uuid4(),
+                    agent_identity_id=None,
+                    tenant_id=None,
+                    decision=AgentAccessReviewDecision.APPROVED,
+                    reviewed_at=datetime.now(timezone.utc),
+                    next_review_at=None,
+                )
+            return FakeResult(review)
         return FakeResult(self.values.pop(0))
+
     async def flush(self): self.flushed = True
 
 
@@ -34,7 +51,7 @@ def agent(tenant_id, **policy):
 
 
 def identity(**overrides):
-    values = {"active": True, "revoked_at": None, "expires_at": None}; values.update(overrides); return SimpleNamespace(**values)
+    values = {"id": uuid4(), "active": True, "revoked_at": None, "expires_at": None}; values.update(overrides); return SimpleNamespace(**values)
 
 
 def request(tenant_id, agent_id, **overrides):
@@ -55,7 +72,7 @@ def approval(req, **overrides):
 
 
 @pytest.mark.asyncio
-async def test_allow_requires_identity_tool_permission_and_exact_approval():
+async def test_allow_requires_identity_access_review_tool_permission_and_exact_approval():
     tenant = uuid4(); instance = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"]); req = request(tenant, instance.id)
     result = await authorize(FakeDb(instance, identity(), approval(req)), req)
     assert result.decision == PolicyDecision.ALLOW
@@ -104,6 +121,25 @@ async def test_expired_identity_is_denied_and_deactivated():
     tenant = uuid4(); instance = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"]); expired = identity(expires_at=datetime.now(timezone.utc) - timedelta(seconds=1))
     db = FakeDb(instance, expired); result = await authorize(db, request(tenant, instance.id))
     assert result.decision == PolicyDecision.DENY and result.reason == "agent_identity_expired"; assert expired.active is False and db.flushed is True
+
+
+@pytest.mark.asyncio
+async def test_missing_access_review_is_denied_and_deactivated():
+    tenant = uuid4(); instance = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"]); active = identity()
+    db = FakeDb(instance, active, access_review=None)
+    result = await authorize(db, request(tenant, instance.id))
+    assert result.decision == PolicyDecision.DENY and result.reason == "agent_access_review_missing"
+    assert active.active is False and db.flushed is True
+
+
+@pytest.mark.asyncio
+async def test_expired_access_review_is_denied_and_deactivated():
+    tenant = uuid4(); instance = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"]); active = identity()
+    review = SimpleNamespace(next_review_at=datetime.now(timezone.utc) - timedelta(seconds=1))
+    db = FakeDb(instance, active, access_review=review)
+    result = await authorize(db, request(tenant, instance.id))
+    assert result.decision == PolicyDecision.DENY and result.reason == "agent_access_review_expired"
+    assert active.active is False and db.flushed is True
 
 
 @pytest.mark.asyncio
