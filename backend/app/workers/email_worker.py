@@ -1,12 +1,57 @@
 """SMTP worker consuming durable email outbox messages."""
 from __future__ import annotations
+
 import asyncio
 import smtplib
 from email.message import EmailMessage
+from uuid import UUID
+
 from app.core.config import get_settings
 from app.core.database import worker_db_session
+from app.core.exceptions import ValidationAppError
+from app.core.security import ensure_uuid
 from app.models.outbox import OutboxMessage
+from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 from app.workers.celery_app import celery_app
+
+
+async def _authorize_deferred_agent_side_effect(db, row: OutboxMessage) -> None:
+    """Revalidate current Agent authority immediately before SMTP execution.
+
+    System-generated email rows have no Agent binding and retain their existing
+    behavior. Agent-generated rows fail closed if the durable binding is absent,
+    malformed, cross-tenant, or no longer authorized.
+    """
+    proof = (row.payload or {}).get("_agent_governance")
+    if proof is None:
+        return
+    if not isinstance(proof, dict):
+        raise ValidationAppError("Malformed Agent outbox governance binding")
+    try:
+        tenant_id = ensure_uuid(proof["tenant_id"])
+        agent_instance_id = ensure_uuid(proof["agent_instance_id"])
+        run_id = ensure_uuid(proof["run_id"])
+        tool_name = str(proof["tool_name"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValidationAppError("Malformed Agent outbox governance binding") from exc
+    if tenant_id != row.tenant_id or not tool_name:
+        raise ValidationAppError("Agent outbox governance binding mismatch")
+
+    await assert_authorized(
+        db,
+        PolicyRequest(
+            tenant_id=tenant_id,
+            agent_instance_id=agent_instance_id,
+            action="tool.execute",
+            tool_name=tool_name,
+            required_permission="run.execute",
+            run_id=run_id,
+            # The human approval was consumed when the tool call was admitted;
+            # worker-side authorization therefore revalidates current authority
+            # without attempting to replay the one-shot approval.
+        ),
+    )
+
 
 async def _send(outbox_id: str) -> None:
     async with worker_db_session() as db:
@@ -15,12 +60,13 @@ async def _send(outbox_id: str) -> None:
             return
         settings = get_settings()
         payload = row.payload
-        msg = EmailMessage()
-        msg["From"] = settings.smtp_from_email
-        msg["To"] = ", ".join(payload["to"])
-        msg["Subject"] = payload["subject"]
-        msg.set_content(payload["body"])
         try:
+            await _authorize_deferred_agent_side_effect(db, row)
+            msg = EmailMessage()
+            msg["From"] = settings.smtp_from_email
+            msg["To"] = ", ".join(payload["to"])
+            msg["Subject"] = payload["subject"]
+            msg.set_content(payload["body"])
             with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as smtp:
                 if settings.smtp_use_starttls:
                     smtp.starttls()
@@ -33,6 +79,7 @@ async def _send(outbox_id: str) -> None:
             from app.services.outbox_service import mark_retry
             await mark_retry(db, row, str(exc), delay_seconds=min(300, 10 * max(1, row.attempts)))
         await db.commit()
+
 
 @celery_app.task(name="email.send")
 def send_email_task(outbox_id: str) -> None:
