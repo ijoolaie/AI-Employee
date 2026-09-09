@@ -29,6 +29,20 @@ class AgentExecutionAdapter:
         if not getattr(agent, "enabled", True):
             raise ValueError("agent instance is not executable")
 
+        # Re-establish current Agent authority at the WorkItem -> Run
+        # hand-off. The Run worker performs a second authorization immediately
+        # before provider/tool execution; this first check prevents a revoked,
+        # killed, expired, or drifted Agent from creating a new executable Run
+        # after WorkItem dispatch has already committed RUNNING state.
+        await assert_agent_can_execute(
+            self.db,
+            tenant_id=work_item.tenant_id,
+            agent_instance_id=agent.id,
+            tool_name="__agent_run__",
+            required_permission="run.execute",
+            run_id=None,
+        )
+
         instance, definition, version = await resolve_employee_version(
             self.db,
             tenant_id=work_item.tenant_id,
