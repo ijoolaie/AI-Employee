@@ -71,11 +71,13 @@ async def reconcile(integration_id: UUID, ctx: CurrentContext, db: DbSession):
     result = await shopify_service.reconcile(db, ctx.tenant_id, integration_id); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/shopify/webhooks/{integration_id}")
-async def shopify_webhook(integration_id: UUID, request: Request, db: DbSession, x_shopify_hmac_sha256: str | None = Header(default=None, alias="X-Shopify-Hmac-Sha256"), x_shopify_webhook_id: str | None = Header(default=None, alias="X-Shopify-Webhook-Id"), x_shopify_topic: str | None = Header(default=None, alias="X-Shopify-Topic")):
+async def shopify_webhook(integration_id: UUID, request: Request, db: DbSession, x_shopify_hmac_sha256: str | None = Header(default=None, alias="X-Shopify-Hmac-Sha256"), x_shopify_webhook_id: str | None = Header(default=None, alias="X-Shopify-Webhook-Id"), x_shopify_topic: str | None = Header(default=None, alias="X-Shopify-Topic"), x_shopify_shop_domain: str | None = Header(default=None, alias="X-Shopify-Shop-Domain")):
     body = await request.body()
     if not shopify_service.verify_webhook(body, x_shopify_hmac_sha256): raise HTTPException(status_code=401, detail="Invalid Shopify webhook signature")
     integration = (await db.execute(select(CommerceIntegration).where(CommerceIntegration.id == integration_id))).scalar_one_or_none()
     if not integration or integration.provider != "shopify": raise HTTPException(status_code=404, detail="Integration not found")
+    if not shopify_service.webhook_matches_integration(integration, x_shopify_shop_domain):
+        raise HTTPException(status_code=403, detail="Shopify webhook integration mismatch")
     try: payload = json.loads(body.decode() or "{}")
     except Exception: payload = {}
     webhook_id = x_shopify_webhook_id or "unknown"
