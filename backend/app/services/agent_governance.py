@@ -84,7 +84,7 @@ async def record_evaluation(
         if score is None or score < int(minimum_score):
             raise ValidationAppError("Passed evaluation does not meet the template minimum score")
     required_contract = policy.get("required_contract_version")
-    contract_version = evidence.get("contract_version")
+    contract_version = evidence.get("contract_version") or EVALUATION_CONTRACT_VERSION
     if required_contract and contract_version != required_contract:
         raise ValidationAppError("Evaluation evidence contract version does not match the template policy")
 
@@ -94,13 +94,14 @@ async def record_evaluation(
         suite_id=suite_id,
         status=status,
         score=score,
-        evidence={**evidence, "contract_version": contract_version or EVALUATION_CONTRACT_VERSION},
-        evidence_hash=None,
+        evidence={**evidence, "contract_version": contract_version},
         evaluator_user_id=evaluator_user_id,
         notes=notes,
     )
     evaluation.evidence_hash = _hash_evidence(evaluation.evidence)
     db.add(evaluation)
+    await db.flush()
+
     template.status = AgentTemplateStatus.EVALUATING
     template.evaluation_policy = {
         **policy,
@@ -110,7 +111,7 @@ async def record_evaluation(
             "suite_id": suite_id,
             "score": score,
             "evidence_hash": evaluation.evidence_hash,
-            "contract_version": evaluation.evidence["contract_version"],
+            "contract_version": contract_version,
         },
     }
     await db.flush()
