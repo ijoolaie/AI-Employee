@@ -1,5 +1,6 @@
 import uuid
 from sqlalchemy import select, or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.customer import Customer
 from app.core.exceptions import NotFoundError
@@ -7,9 +8,18 @@ from app.core.exceptions import NotFoundError
 async def upsert_customer(db: AsyncSession, *, tenant_id: uuid.UUID, external_key: str, name=None, email=None, phone=None, channel=None) -> Customer:
     customer = (await db.execute(select(Customer).where(Customer.tenant_id == tenant_id, Customer.external_key == external_key))).scalar_one_or_none()
     if not customer:
-        customer = Customer(tenant_id=tenant_id, external_key=external_key, name=name, email=email, phone=phone, last_channel=channel)
-        db.add(customer)
-    else:
+        candidate = Customer(tenant_id=tenant_id, external_key=external_key, name=name, email=email, phone=phone, last_channel=channel)
+        try:
+            async with db.begin_nested():
+                db.add(candidate)
+                await db.flush()
+        except IntegrityError:
+            customer = (await db.execute(select(Customer).where(Customer.tenant_id == tenant_id, Customer.external_key == external_key))).scalar_one_or_none()
+            if customer is None:
+                raise
+        else:
+            customer = candidate
+    if customer:
         if name: customer.name = name
         if email: customer.email = email
         if phone: customer.phone = phone
