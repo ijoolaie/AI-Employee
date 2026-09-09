@@ -141,16 +141,19 @@ async def provision_instance(
     if policy.get("requires_ceo_approval", True) and sponsor_user_id == approved_by_user_id:
         raise ValidationAppError("Sponsor and approver must be independently attributable for governed installation")
 
+    requested_configuration = configuration or {}
     instance = AgentInstance(
         tenant_id=tenant_id,
         agent_definition_id=template.agent_definition_id,
         agent_template_id=template.id,
         sponsor_user_id=sponsor_user_id,
         name=name,
-        configuration=configuration or {},
+        configuration=requested_configuration,
         permission_policy=template.permission_policy or {},
         approval_policy=template.approval_policy or {},
         risk_tier=template.risk_tier,
+        max_concurrency=int(requested_configuration.get("max_concurrency", 1)),
+        budget_policy=requested_configuration.get("budget_policy", {}),
         status=AgentInstanceStatus.SUSPENDED,
         enabled=False,
     )
@@ -185,6 +188,14 @@ async def transition_instance(
     requested_by_user_id: uuid.UUID,
     approved_by_user_id: uuid.UUID,
 ) -> AgentInstance:
+    # ENABLED is an execution-authority grant. It must never be reachable
+    # through the generic lifecycle endpoint because that path has no proof
+    # that the current governance decision is approved, fresh and bound to
+    # the exact execution configuration. The governed workforce activation
+    # service is the only code path allowed to grant this authority.
+    if target_status == AgentInstanceStatus.ENABLED:
+        raise ValidationAppError("AgentInstance activation requires a fresh governed workforce decision")
+
     instance = (await db.execute(select(AgentInstance).where(
         AgentInstance.id == instance_id,
         AgentInstance.tenant_id == tenant_id,
