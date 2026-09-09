@@ -22,7 +22,7 @@ class ToolApprovalRequest(Base):
     continuation_messages: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     iteration: Mapped[int] = mapped_column(nullable=False, default=0)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
-    # pending | approved | rejected
+    # pending | approved | consumed | rejected
     requested_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     decided_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     decision_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
