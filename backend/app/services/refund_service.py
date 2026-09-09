@@ -210,8 +210,8 @@ async def get_refund(db: AsyncSession, *, tenant_id: uuid.UUID, refund_id: uuid.
                 PaymentRefund.id == refund_id,
                 PaymentRefund.tenant_id == tenant_id,
             )
-        ).scalar_one_or_none()
-    )
+        )
+    ).scalar_one_or_none()
     if row is None:
         raise NotFoundError("Refund or reversal not found")
     return row
