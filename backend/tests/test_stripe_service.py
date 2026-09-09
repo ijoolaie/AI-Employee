@@ -1,26 +1,19 @@
-"""Phase 6 — Stripe adapter unit tests.
-
-These exercise real cryptographic signature verification (via the actual
-Stripe SDK's HMAC-SHA256 webhook scheme, not a mock) offline — no network
-call to api.stripe.com is made or needed for signature verification itself,
-since it's a local HMAC check against STRIPE_WEBHOOK_SECRET. This is
-distinct from create_checkout_session/create_portal_session, which DO make
-real Stripe API calls and are NOT exercised here — see
-documents/64_PHASE_6_STRIPE_INTEGRATION_AS_BUILT_v0.6.0.md verification
-boundary for what remains genuinely unverified in this build environment.
-"""
+"""Phase 6 — Stripe adapter unit tests."""
 
 import hashlib
 import hmac
-import inspect
 import json
 import time
+import uuid
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from pydantic import ValidationError
 
 from app.core.config import get_settings
 from app.core.exceptions import ValidationAppError
+from app.models.billing import Subscription
 from app.schemas.billing import CheckoutSessionRequest
 from app.services import stripe_service
 
@@ -37,21 +30,7 @@ def _sign(payload: bytes, secret: str, timestamp: int | None = None) -> str:
 
 def _event_payload(event_id: str = "evt_test1", event_type: str = "checkout.session.completed") -> bytes:
     return json.dumps(
-        {
-            "id": event_id,
-            "object": "event",
-            "type": event_type,
-            "data": {
-                "object": {
-                    "id": "cs_test1",
-                    "object": "checkout.session",
-                    "client_reference_id": None,
-                    "metadata": {},
-                    "customer": None,
-                    "subscription": None,
-                }
-            },
-        }
+        {"id": event_id, "object": "event", "type": event_type, "data": {"object": {"id": "cs_test1", "object": "checkout.session", "client_reference_id": None, "metadata": {}, "customer": None, "subscription": None}}}
     ).encode()
 
 
@@ -129,8 +108,55 @@ def test_checkout_requires_explicit_idempotency_key():
     assert request.idempotency_key == "checkout-test-123"
 
 
-def test_checkout_service_passes_idempotency_to_provider_calls():
-    source = inspect.getsource(stripe_service.create_checkout_session)
-    assert "idempotency_key=idempotency_key" in source
-    customer_source = inspect.getsource(stripe_service._get_or_create_stripe_customer)
-    assert 'idempotency_key=f"customer:{idempotency_key}"' in customer_source
+@pytest.mark.asyncio
+async def test_customer_creation_passes_stable_tenant_idempotency_key():
+    tenant_id = uuid.UUID("00000000-0000-0000-0000-000000000123")
+    db = SimpleNamespace(
+        execute=AsyncMock(return_value=SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(name="Acme"))),
+        flush=AsyncMock(),
+    )
+    customer_create = Mock(return_value=SimpleNamespace(id="cus_test_123"))
+    stripe = SimpleNamespace(Customer=SimpleNamespace(create=customer_create))
+    sub = Subscription(provider_customer_id=None)
+
+    customer_id = await stripe_service._get_or_create_stripe_customer(
+        db, stripe, tenant_id=tenant_id, sub=sub, user_email="test@example.test"
+    )
+
+    assert customer_id == "cus_test_123"
+    assert sub.provider_customer_id == "cus_test_123"
+    customer_create.assert_called_once_with(
+        email="test@example.test",
+        name="Acme",
+        metadata={"tenant_id": str(tenant_id)},
+        idempotency_key=f"customer:{tenant_id}",
+    )
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_customer_creation_uses_same_provider_key_on_retry():
+    tenant_id = uuid.UUID("00000000-0000-0000-0000-000000000123")
+    db = SimpleNamespace(
+        execute=AsyncMock(return_value=SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(name="Acme"))),
+        flush=AsyncMock(),
+    )
+    seen_keys = []
+
+    def create_customer(**kwargs):
+        seen_keys.append(kwargs["idempotency_key"])
+        return SimpleNamespace(id="cus_deterministic")
+
+    stripe = SimpleNamespace(Customer=SimpleNamespace(create=create_customer))
+    first_sub = Subscription(provider_customer_id=None)
+    second_sub = Subscription(provider_customer_id=None)
+
+    first = await stripe_service._get_or_create_stripe_customer(
+        db, stripe, tenant_id=tenant_id, sub=first_sub, user_email="test@example.test"
+    )
+    second = await stripe_service._get_or_create_stripe_customer(
+        db, stripe, tenant_id=tenant_id, sub=second_sub, user_email="test@example.test"
+    )
+
+    assert first == second == "cus_deterministic"
+    assert seen_keys == [f"customer:{tenant_id}", f"customer:{tenant_id}"]
