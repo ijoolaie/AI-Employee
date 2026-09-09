@@ -12,13 +12,16 @@ boundary for what remains genuinely unverified in this build environment.
 
 import hashlib
 import hmac
+import inspect
 import json
 import time
 
 import pytest
+from pydantic import ValidationError
 
 from app.core.config import get_settings
 from app.core.exceptions import ValidationAppError
+from app.schemas.billing import CheckoutSessionRequest
 from app.services import stripe_service
 
 
@@ -117,3 +120,17 @@ def test_plan_code_for_price_id_maps_known_price():
 
 def test_plan_code_for_price_id_returns_none_for_unknown_price():
     assert stripe_service._plan_code_for_price_id("price_does_not_exist") is None
+
+
+def test_checkout_requires_explicit_idempotency_key():
+    with pytest.raises(ValidationError):
+        CheckoutSessionRequest(plan_code="business")
+    request = CheckoutSessionRequest(plan_code="business", idempotency_key="checkout-test-123")
+    assert request.idempotency_key == "checkout-test-123"
+
+
+def test_checkout_service_passes_idempotency_to_provider_calls():
+    source = inspect.getsource(stripe_service.create_checkout_session)
+    assert "idempotency_key=idempotency_key" in source
+    customer_source = inspect.getsource(stripe_service._get_or_create_stripe_customer)
+    assert 'idempotency_key=f"customer:{idempotency_key}"' in customer_source
