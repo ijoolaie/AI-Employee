@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -119,9 +120,10 @@ async def test_activation_requires_approved_access_review_and_fresh_decision(mon
         agent_template_id=template_id, agent_definition_id=definition_id, risk_tier=2,
         configuration={**configuration, FINGERPRINT_KEY: fingerprint},
     )
-    instance = SimpleNamespace(id=proposal.provisioned_agent_instance_id, status=AgentInstanceStatus.SUSPENDED, enabled=False, max_concurrency=1, budget_policy=configuration["budget_policy"])
+    created_at = datetime.now(timezone.utc) - timedelta(minutes=10)
+    instance = SimpleNamespace(id=proposal.provisioned_agent_instance_id, status=AgentInstanceStatus.SUSPENDED, enabled=False, max_concurrency=1, budget_policy=configuration["budget_policy"], created_at=created_at)
     identity = SimpleNamespace(id=uuid4())
-    review = SimpleNamespace(id=uuid4())
+    review = SimpleNamespace(id=uuid4(), reviewed_at=created_at + timedelta(minutes=1), next_review_at=datetime.now(timezone.utc) + timedelta(hours=1))
     db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(instance), Result(identity), Result(template), Result(review)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
     monkeypatch.setattr(service, "record", AsyncMock())
@@ -157,11 +159,44 @@ async def test_activation_rejects_stale_template_change(monkeypatch):
         agent_template_id=template_id, agent_definition_id=definition_id, risk_tier=1,
         configuration={**approved_configuration, FINGERPRINT_KEY: fingerprint},
     )
-    instance = SimpleNamespace(id=proposal.provisioned_agent_instance_id, status=AgentInstanceStatus.SUSPENDED, enabled=False, max_concurrency=1, budget_policy={})
+    created_at = datetime.now(timezone.utc) - timedelta(minutes=10)
+    instance = SimpleNamespace(id=proposal.provisioned_agent_instance_id, status=AgentInstanceStatus.SUSPENDED, enabled=False, max_concurrency=1, budget_policy={}, created_at=created_at)
     identity = SimpleNamespace(id=uuid4())
     db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(instance), Result(identity), Result(stale_template)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
     with pytest.raises(ConflictError, match="stale"):
+        await service.activate_provisioned_proposal(db, tenant_id=tenant_id, proposal_id=proposal.id, activated_by_user_id=activator)
+    db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_activation_rejects_expired_access_review(monkeypatch):
+    tenant_id = uuid4()
+    requester, sponsor, board, ceo, activator = [uuid4() for _ in range(5)]
+    template_id, definition_id = uuid4(), uuid4()
+    configuration = {"max_concurrency": 1, "budget_policy": {}}
+    template = SimpleNamespace(
+        id=template_id, status=SimpleNamespace(value="published"), agent_definition_id=definition_id,
+        version=1, risk_tier=1, capability_contract={}, permission_policy={}, approval_policy={}, install_policy={},
+    )
+    fingerprint = execution_authority_fingerprint(
+        tenant_id=tenant_id, template_id=template_id, template_version=1, agent_definition_id=definition_id,
+        risk_tier=1, capability_contract={}, permission_policy={}, approval_policy={}, install_policy={},
+        configuration=configuration, max_concurrency=1, budget_policy={},
+    )
+    proposal = SimpleNamespace(
+        id=uuid4(), status=AgentWorkforceProposalStatus.PROVISIONED, provisioned_agent_instance_id=uuid4(),
+        requester_user_id=requester, sponsor_user_id=sponsor, board_reviewed_by=board, ceo_approved_by=ceo,
+        agent_template_id=template_id, agent_definition_id=definition_id, risk_tier=1,
+        configuration={**configuration, FINGERPRINT_KEY: fingerprint},
+    )
+    created_at = datetime.now(timezone.utc) - timedelta(minutes=10)
+    instance = SimpleNamespace(id=proposal.provisioned_agent_instance_id, status=AgentInstanceStatus.SUSPENDED, enabled=False, max_concurrency=1, budget_policy={}, created_at=created_at)
+    identity = SimpleNamespace(id=uuid4())
+    review = SimpleNamespace(id=uuid4(), reviewed_at=created_at + timedelta(minutes=1), next_review_at=datetime.now(timezone.utc) - timedelta(minutes=1))
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(instance), Result(identity), Result(template), Result(review)]), flush=AsyncMock())
+    monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
+    with pytest.raises(ConflictError, match="expired"):
         await service.activate_provisioned_proposal(db, tenant_id=tenant_id, proposal_id=proposal.id, activated_by_user_id=activator)
     db.flush.assert_not_awaited()
 
