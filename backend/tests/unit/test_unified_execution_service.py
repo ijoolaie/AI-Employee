@@ -12,6 +12,7 @@ class DispatchDb:
     def __init__(self, work_item, agent=None):
         self.work_item = work_item
         self.agent = agent
+        self.commit_count = 0
 
     async def execute(self, *_args):
         return SimpleNamespace(scalar_one_or_none=lambda: self.work_item)
@@ -23,6 +24,7 @@ class DispatchDb:
         return None
 
     async def commit(self):
+        self.commit_count += 1
         return None
 
 
@@ -55,7 +57,8 @@ def agent(tenant_id):
 async def test_assign_human_and_dispatch():
     tenant_id = uuid4()
     item = work_item(tenant_id)
-    service = UnifiedExecutionService(DispatchDb(item), human_executor=HumanRuntime())
+    db = DispatchDb(item)
+    service = UnifiedExecutionService(db, human_executor=HumanRuntime())
 
     service.assign_human(item, uuid4())
     result = await service.dispatch(item)
@@ -63,6 +66,7 @@ async def test_assign_human_and_dispatch():
     assert result.dispatched is True
     assert item.executor_type is ExecutorType.HUMAN
     assert item.status is WorkItemStatus.RUNNING
+    assert db.commit_count == 1
 
 
 @pytest.mark.asyncio
@@ -90,11 +94,12 @@ async def test_approval_gate_prevents_dispatch():
 
 
 @pytest.mark.asyncio
-async def test_agent_dispatch_is_tenant_scoped():
+async def test_agent_dispatch_is_tenant_scoped_and_does_not_precommit():
     tenant_id = uuid4()
     item = work_item(tenant_id)
     runtime_agent = agent(tenant_id)
-    service = UnifiedExecutionService(DispatchDb(item, runtime_agent), agent_executor=AgentRuntime())
+    db = DispatchDb(item, runtime_agent)
+    service = UnifiedExecutionService(db, agent_executor=AgentRuntime())
 
     await service.assign_agent(item, runtime_agent)
     result = await service.dispatch(item)
@@ -102,3 +107,4 @@ async def test_agent_dispatch_is_tenant_scoped():
     assert result.dispatched is True
     assert item.status is WorkItemStatus.RUNNING
     assert item.output_data["executor"] == "agent"
+    assert db.commit_count == 0
