@@ -6,7 +6,7 @@
 
 **Engineering phase:** Phase 14.1–14.16 complete where tracked; current program is in Production Hardening / Stage 7 External Production Certification
 
-**Current engineering mainline:** `main` at `049a9465ebed25300dba67f9e98f76265a719f53`
+**Current engineering mainline:** `main` at `d7c0c088b0a79e75c9ba20daf782913968e6b4ca`
 
 **Production deployment:** **NOT DEPLOYED**
 
@@ -37,7 +37,7 @@ Canonical versioning rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
 ## Mainline hardening truth
 
-`main` is ahead of the certified `v1.3.8` release. The current mainline head is `049a9465ebed25300dba67f9e98f76265a719f53` and contains post-release security/reliability hardening through PR #455.
+`main` is ahead of the certified `v1.3.8` release. The current mainline head is `d7c0c088b0a79e75c9ba20daf782913968e6b4ca` and contains post-release security/reliability hardening through PR #459.
 
 Recent hardening includes:
 
@@ -48,6 +48,9 @@ Recent hardening includes:
 - PR #453 — `billing.manage` enforcement for subscription and Stripe billing mutations.
 - PR #454 — transactional tenant-Run boundary for registered side-effect tools.
 - PR #455 — database serialization of all production Run execution to close the pending-state idempotency race.
+- PR #456 — release-documentation reconciliation and release-candidate downstream-gate enforcement.
+- PR #457 — SHA-pinned production certification identity and exact-SHA checkout enforcement.
+- PR #459 — remediation of the `sharp` 0.35.3 dependency vulnerability; frontend is now pinned to patched `sharp` 0.35.4 with a regenerated lockfile.
 
 These changes are engineering-mainline evidence and are **not certified under the `v1.3.8` release identity**. A future production-bound release must be independently certified against its exact SHA.
 
