@@ -1,7 +1,9 @@
 name: _sync-frontend-lock
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - docs/reconcile-mainline-after-sharp
 
 permissions:
   contents: write
