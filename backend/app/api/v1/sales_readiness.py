@@ -1,6 +1,14 @@
 from uuid import UUID
 from fastapi import APIRouter
-from app.core.deps import CurrentContext, DbSession, EmployeeGuardrailsReadContext, EmployeeGuardrailsWriteContext, PrivacyCustomerExportContext, PrivacyCustomerDeleteContext
+from app.core.deps import (
+    CurrentContext,
+    DbSession,
+    EmployeeGuardrailsReadContext,
+    EmployeeGuardrailsWriteContext,
+    PrivacyCustomerExportContext,
+    PrivacyCustomerDeleteContext,
+    TeamInstallContext,
+)
 from app.schemas.common import APIResponse
 from app.schemas.sales_readiness import EmployeeTemplate, GuardrailsResponse, GuardrailsUpdate, AnalyticsResponse, PrivacyExport
 from app.services import sales_readiness_service
@@ -8,11 +16,11 @@ from app.services import sales_readiness_service
 router=APIRouter(tags=["sales-readiness"])
 
 @router.get("/employee-templates", response_model=APIResponse[list[EmployeeTemplate]])
-async def templates(ctx: CurrentContext):
+async def templates(ctx: TeamInstallContext):
     return APIResponse(success=True,data=[EmployeeTemplate(**x) for x in sales_readiness_service.list_templates()])
 
 @router.post("/employee-templates/{code}/install", response_model=APIResponse[dict])
-async def install_template(code: str, ctx: CurrentContext, db: DbSession):
+async def install_template(code: str, ctx: TeamInstallContext, db: DbSession):
     e=await sales_readiness_service.create_from_template(db,tenant_id=ctx.tenant_id,actor_id=ctx.user_id,code=code)
     return APIResponse(success=True,data={"id":str(e.id),"name":e.name,"slug":e.slug})
 
