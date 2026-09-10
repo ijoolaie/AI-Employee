@@ -1,21 +1,30 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-07  
-**Release baseline:** `v1.3.8`  
+**Reconciled:** 2026-09-10  
+**Certified release:** `v1.3.8`  
 **Architecture baseline:** `V1.5 Agentic Operating Model`  
-**Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`
+**Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
+**Current engineering mainline:** `decde0ad333ba972a79053b3da6489f92a2648de`
 
 ## Executive priority
 
-The project now has one clear roadmap with independent Release, Architecture and Engineering axes. The immediate priority remains **real production infrastructure and external acceptance of the frozen `v1.3.8` release**.
+The project has three independent axes: Release, Architecture and Engineering. The current certified release remains frozen at `v1.3.8`; the engineering mainline has advanced substantially beyond that release through governance, concurrency, idempotency and RAG hardening.
 
-V1.5 is the architecture baseline, not a release. Future AI workforce/company-model work is tracked separately in Stage 8+ of `docs/current/PRODUCTIZATION_ROADMAP.md` and must not be represented as implemented until built and verified.
+The immediate engineering priority is to finish the remaining real hardening findings and perform the systematic execution/side-effect boundary audit. In parallel, the external production program remains blocked on real infrastructure and acceptance evidence.
+
+## P0 — current engineering hardening
+
+1. Complete PR #423 — NULL-safe TeamInstallation scope uniqueness.
+2. Re-run the complete required gate topology on every changed HEAD and merge only with green exact-head evidence.
+3. Audit runtime adapters, WorkItem/Run transitions, tool execution, credentials, outbox/provider side effects and mutable authority surfaces for remaining TOCTOU, idempotency and governance gaps.
+4. Reconcile canonical documentation and evidence indexes to the exact current mainline SHA after each release-boundary change.
+5. Promote the hardened mainline to a new immutable release candidate only after the audit exit criteria are satisfied.
 
 ## P0 — external production gates
 
 1. Provision a real production target — VPS/cloud host, network, storage and DNS.
 2. Configure protected production Environment inputs.
-3. Deploy exact `v1.3.8` identity — `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
+3. Deploy an exact certified release identity.
 4. Verify deployed identity and service health.
 5. Real backup/restore & DR drill.
 6. Production SLO/SLI & error budget.
@@ -31,30 +40,20 @@ V1.5 is the architecture baseline, not a release. Future AI workforce/company-mo
 
 ## P1 — productization / operational completeness
 
-The previously tracked P1 engineering gates remain implemented/complete where stated by the roadmap. Target-environment verification remains external where applicable.
+The tracked P1 engineering gates remain implemented/complete where the roadmap says so. Target-environment verification remains external where applicable.
 
-## Next product frontier — Stage 8
+## Stage 8 engineering frontier
 
-Once the external production boundary is addressed, the next product work is the **AI Company Operating Model Foundation**:
-
-1. Human CEO/Chairman authority model.
-2. AI Board governance and decision rights.
-3. AI Internal Manager.
-4. Founding AI workforce and customer-facing templates.
-5. Workforce lifecycle and CEO approval gate.
-6. AgentDefinition / AgentTemplate / AgentInstance separation.
-7. Reusable AI teams.
-8. Workforce governance UX, evaluation and audit.
-
-This is intentionally a future product stage, not a current release claim.
+The governed workforce foundation is implemented on mainline, including AgentInstance lifecycle controls, Access Review freshness, delegation freshness and execution-time authority fingerprinting. The next gate is complete coverage of every execution and side-effect boundary, followed by workforce product surfaces, evaluation gates and final release evidence.
 
 ## Certified release checkpoint
 
 - Release: `v1.3.8`
-- Tag target: `fd1e74b6b4c1701f7443efc202bad161ff19618c`
+- Certified commit: `fd1e74b6b4c1701f7443efc202bad161ff19618c`
 - Certification: Run `34052885700` — PASS
 - Deployment attempt: Run `34060615390` — failed at SSH setup before remote deployment
 - Deployment checkpoint: Issue #343
+- Current mainline: `decde0ad333ba972a79053b3da6489f92a2648de` — **not certified**
 
 ## Evidence rules
 
