@@ -1,14 +1,14 @@
 """Stage 8 workforce governance foundation for AgentTemplate and governed instances.
 
 Revision ID: p8_04_agent_governance
-Revises: v14006merge
+Revises: p8_03_agent_binding
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "p8_04_agent_governance"
-down_revision = "v14006merge"
+down_revision = "p8_03_agent_binding"
 branch_labels = None
 depends_on = None
 

@@ -3,7 +3,7 @@ import json
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from app.core.config import get_settings
-from app.core.deps import CurrentContext, DbSession
+from app.core.deps import CommerceIntegrationContext, DbSession
 from app.schemas.common import APIResponse
 from app.schemas.commerce_integration import CommerceIntegrationCreate, CommerceIntegrationResponse
 from app.services import commerce_integration_service, shopify_service, shopify_oauth_state
@@ -14,17 +14,17 @@ from sqlalchemy import select
 router = APIRouter(prefix="/commerce-integrations", tags=["commerce-integrations"])
 
 @router.get("", response_model=APIResponse[list[CommerceIntegrationResponse]])
-async def list_integrations(ctx: CurrentContext, db: DbSession):
+async def list_integrations(ctx: CommerceIntegrationContext, db: DbSession):
     rows = await commerce_integration_service.list_integrations(db, ctx.tenant_id)
     return APIResponse(success=True, data=[CommerceIntegrationResponse.model_validate(commerce_integration_service.public_config(x)) for x in rows])
 
 @router.post("", response_model=APIResponse[CommerceIntegrationResponse], status_code=201)
-async def create_integration(payload: CommerceIntegrationCreate, ctx: CurrentContext, db: DbSession):
+async def create_integration(payload: CommerceIntegrationCreate, ctx: CommerceIntegrationContext, db: DbSession):
     row = await commerce_integration_service.create_integration(db, ctx.tenant_id, payload.provider, payload.name, payload.config)
     return APIResponse(success=True, data=CommerceIntegrationResponse.model_validate(commerce_integration_service.public_config(row)))
 
 @router.get("/shopify/install")
-async def shopify_install(shop: str, ctx: CurrentContext, db: DbSession):
+async def shopify_install(shop: str, ctx: CommerceIntegrationContext, db: DbSession):
     settings = get_settings()
     if not settings.shopify_client_id or not settings.shopify_client_secret: raise HTTPException(status_code=503, detail="Shopify OAuth is not configured")
     state = await shopify_oauth_state.issue_state(db, ctx.tenant_id, shop)
@@ -56,19 +56,19 @@ async def shopify_callback(shop: str, code: str, state: str, db: DbSession):
     return RedirectResponse(f"{get_settings().frontend_app_url}/integrations?shopify=connected", status_code=302)
 
 @router.post("/{integration_id}/test", response_model=APIResponse[dict])
-async def test_integration(integration_id: UUID, ctx: CurrentContext, db: DbSession):
+async def test_integration(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
     result = await shopify_service.test_connection(db, ctx.tenant_id, integration_id); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/{integration_id}/sync/products", response_model=APIResponse[dict])
-async def sync_products(integration_id: UUID, ctx: CurrentContext, db: DbSession):
+async def sync_products(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
     result = await shopify_service.sync_products(db, ctx.tenant_id, integration_id); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/{integration_id}/sync/orders", response_model=APIResponse[dict])
-async def sync_orders(integration_id: UUID, ctx: CurrentContext, db: DbSession):
+async def sync_orders(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
     result = await shopify_service.sync_orders(db, ctx.tenant_id, integration_id); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/{integration_id}/reconcile", response_model=APIResponse[dict])
-async def reconcile(integration_id: UUID, ctx: CurrentContext, db: DbSession):
+async def reconcile(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
     result = await shopify_service.reconcile(db, ctx.tenant_id, integration_id); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/shopify/webhooks/{integration_id}")
