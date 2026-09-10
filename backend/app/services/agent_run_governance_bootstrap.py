@@ -49,14 +49,12 @@ def install() -> None:
         if not isinstance(db, AsyncSession):
             return await original_execute_run(db, run_id=run_id)
 
-        # Serialize Agent Run execution at the database boundary. The previous
-        # idempotency check in RunService was only observational: two workers
-        # could both read a pending Run before either committed `running` and
-        # both proceed to the model/tool execution path. Locking the Run here
-        # makes the state check + authority check + execution one serialized
-        # transaction. A redelivered task waits for the first worker, then sees
-        # the terminal/running state and is rejected by RunService's idempotency
-        # guard instead of replaying side effects.
+        # Serialize every production Run execution admission at the database
+        # boundary, including non-Agent Runs. The status-based idempotency
+        # guard is only safe when the initial read is serialized against a
+        # concurrent delivery. The lock is held by this transaction through
+        # canonical execution; a redelivery waits for the first worker and
+        # then observes the committed terminal/running state.
         result = await db.execute(
             select(Run).where(Run.id == run_id).with_for_update()
         )
