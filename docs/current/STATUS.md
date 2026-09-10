@@ -1,31 +1,46 @@
 # Current Project Status
 
 **Architecture baseline:** V1.5 Agentic Operating Model  
-**Release baseline:** `v1.3.8`  
-**Status date:** 2026-09-07  
+**Certified release baseline:** `v1.3.8`  
+**Certified release commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
+**Mainline engineering head:** `049a9465ebed25300dba67f9e98f76265a719f53`  
+**Status date:** 2026-09-10  
 **Certified release candidate:** `v1.3.8`  
-**Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
 **Certification run:** `34052885700` — SUCCESS  
 **Production deployment:** PENDING REAL INFRASTRUCTURE
 
-The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number.
+The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.3.8` release remains immutable; `main` is ahead of that release and contains subsequent security/reliability hardening that is not certified under the `v1.3.8` identity.
 
 ## Executive status
 
-Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. Phase 14 engineering is **COMPLETE**.
+Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. Phase 14 engineering is **COMPLETE WHERE TRACKED**.
 
-The production-like certification suite has passed for the exact `v1.3.8` release identity. The release tag is reconciled to the certified commit. The remaining work is now the external operational boundary: real production infrastructure, controlled deployment, live providers, target operations/security evidence and customer acceptance.
+The production-like certification suite has passed for the exact `v1.3.8` release identity. Subsequent mainline hardening has now closed additional P1 authorization and execution-boundary findings. Those changes require a new immutable release identity and fresh SHA-pinned certification before they can be represented as certified production-release evidence.
+
+## Mainline hardening after v1.3.8
+
+The current `main` head is `049a9465ebed25300dba67f9e98f76265a719f53`.
+
+The post-`v1.3.8` hardening sequence includes:
+
+- PR #449 — endpoint-level RBAC for Customers, Invoices, Products, Orders and Sales mutations.
+- PR #450 — explicit RBAC for API-key read/create/revoke operations.
+- PR #451 — `team.install` enforcement for workforce employee-template management.
+- PR #452 — tenant-user RBAC for Inbox conversation reads and mutations.
+- PR #453 — `billing.manage` enforcement for subscription and Stripe billing mutations.
+- PR #454 — transactional tenant-Run boundary for all registered side-effect tools, closing the direct side-effect bypass.
+- PR #455 — database serialization of all production Run execution, closing the pending-state idempotency race for non-Agent Runs as well as Agent Runs.
+
+These changes are part of the engineering mainline but are **not certified by the `v1.3.8` certification run**. Certification evidence must be regenerated against the exact release SHA selected for promotion.
 
 ## Release and deployment status
 
 | Item | Status | Evidence |
 |---|---|---|
 | `v1.3.8` tag | VERIFIED | Tag resolves to `fd1e74b...` |
-| Production-like certification | PASSED | Run `34052885700` |
-| Backend / frontend / migration gates | PASSED | Certification Run `34052885700` |
-| OCR runtime + extraction | PASSED | Certification Run `34052885700` |
-| Product gates | PASSED | Certification Run `34052885700` |
-| Critical frontend Playwright | PASSED | Certification Run `34052885700` |
+| `v1.3.8` production-like certification | PASSED | Run `34052885700` |
+| Mainline hardening | COMPLETE THROUGH PR #455 | Main `049a9465...` |
+| New release certification for mainline | NOT YET RUN | Must bind to exact release SHA |
 | Controlled production deploy | FAILED BEFORE REMOTE DEPLOYMENT | Run `34060615390` |
 | Production host changed by failed run | NO EVIDENCE / NOT REACHED | SSH configuration failed first |
 
@@ -33,7 +48,7 @@ The production-like certification suite has passed for the exact `v1.3.8` releas
 
 | ID | Work | Status |
 |---|---|---|
-| 7.1 | Immutable release & release identity | **READY — v1.3.8 frozen** |
+| 7.1 | Immutable release & release identity | **v1.3.8 FROZEN; NEXT RELEASE CANDIDATE NOT YET CERTIFIED** |
 | 7.2 | External production infrastructure deployment | **PENDING REAL INFRASTRUCTURE** |
 | 7.3 | Real backup/restore & DR with RPO/RTO | PENDING |
 | 7.4 | Production SLO/SLI & error budget | PENDING |
@@ -48,19 +63,17 @@ The production-like certification suite has passed for the exact `v1.3.8` releas
 | 7.13 | Alert ownership/on-call escalation | PENDING live paging/on-call |
 | 7.14 | Final external certification & customer acceptance | PENDING |
 
-## P1 productization / operational completeness
-
-Previously tracked P1 engineering gates remain implemented/complete. Target-environment verification remains external where applicable.
-
 ## Evidence boundary
 
 Repository tests, PR CI, CodeQL, local Docker, GitHub-hosted production-like validation, synthetic load/security evidence, simulated providers and local RBAC acceptance are supporting engineering/release evidence only. They do not substitute for live production deployment, live provider evidence, measured production SLO/DR, independent security/compliance review or customer acceptance.
 
-Certification never transfers automatically across SHAs.
+Certification never transfers automatically across SHAs. The `v1.3.8` certification run therefore does not certify `049a9465ebed25300dba67f9e98f76265a719f53`.
 
 ## Current frontier
 
-The next concrete blocker is infrastructure, not application code. The deployment workflow is fail-closed and requires real production Environment inputs. The failed deployment run demonstrated that those inputs are currently unavailable; no fake values should be introduced.
+Application hardening through PR #455 is complete on the current mainline. The next engineering release step is to select the production-bound mainline SHA, create an immutable release candidate from that exact SHA, and run the full SHA-pinned certification topology. After certification, the remaining blockers are external infrastructure and target-environment evidence.
+
+The controlled deployment workflow remains fail-closed and requires real production Environment inputs. No fake values should be introduced.
 
 ## Security rule
 
