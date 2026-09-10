@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-06  
+**Last reconciled:** 2026-09-10  
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -13,33 +13,59 @@
 
 These states are independent and must not be inferred from release names.
 
-## Current release identity
+## Current release identities
 
-| Release | Commit | Tag | Certification | Deployment | External acceptance |
+| Release / candidate | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
-| `v1.3.8` | `fd1e74b6b4c1701f7443efc202bad161ff19618c` | VERIFIED | **CERTIFIED** — Run `34052885700` | **NOT DEPLOYED** — Run `34060615390` failed at SSH configuration before remote deployment | Pending |
+| `v1.3.8` | `fd1e74b6b4c1701f7443efc202bad161ff19618c` | VERIFIED | **CERTIFIED** — Run `34052885700` | **NOT DEPLOYED** — Run `34060615390` failed before remote deployment | Pending |
+| `v1.4.0-rc.1` | `b2e2517ce0a38dc4fecd97c047328f703bdd7de6` | Candidate under validation | **NOT CERTIFIED** — Run `34497132748` has 1 failed Product Gate | Not eligible for deployment certification | Pending |
+
+## v1.4.0-rc.1 certification reconciliation
+
+The current engineering mainline is `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`, submitted to Production Certification as `v1.4.0-rc.1`.
+
+Production Certification Run `34497132748`, job `102938351658`, completed with one failed Product Gate:
+
+**`Unified WorkItem Agent real-stack`**
+
+The gate reaches the commercial-license fixture pass and then reports `UNIFIED AGENT WORKITEM REAL-STACK CERTIFICATION FAIL:` with an empty assertion message.
+
+The Human WorkItem real-stack gate and the other Product Gates pass. The remaining Agent gate is therefore the current release blocker.
+
+The required investigation path is:
+
+```text
+Agent WorkItem
+  → assignment
+  → AgentExecutionAdapter
+  → Run creation
+  → queue dispatch
+  → Run execution
+  → governance/license checks
+  → terminal state
+  → certification assertion
+```
+
+A generic retry is not sufficient evidence of resolution. After correction, the complete required engineering gates must pass on the exact corrected HEAD and Production Certification must be rerun against that exact SHA.
 
 ## v1.3.8 reconciliation
 
 The `v1.3.8` Git tag resolves directly to commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
 
-Production certification Run `34052885700` completed successfully. The run passed backend compilation/linting/tests, migration validation, frontend contract/unit/build checks, production-like OCR runtime and extraction, backend dependency E2E, product gates and critical frontend Playwright E2E.
+Production certification Run `34052885700` completed successfully. The run passed the release certification suite.
 
-A controlled live deployment was then attempted in Run `34060615390` using `release_ref=v1.3.8` and explicit `DEPLOY` confirmation. The job failed in `Configure SSH` because `PRODUCTION_SSH_PRIVATE_KEY`, `PRODUCTION_HOST`, `PRODUCTION_USER` and `PRODUCTION_KNOWN_HOSTS` were empty/missing. The actual deployment step and deployed-identity verification were skipped. Therefore there is no production deployment evidence from that run and no claim of host mutation.
-
-## Historical release context
-
-Older release records remain historical and do not override the current v1.3.8 truth. In particular, previous claims around `v1.2.0`, `v1.2.1-final`, `v1.2.2` and `v1.3.0` must be interpreted according to their original evidence boundaries. They are not the current deployment identity.
+A controlled deployment was attempted in Run `34060615390`, but the workflow failed before remote deployment because required protected production configuration was unavailable. The actual deployment step and deployed-identity verification were skipped. There is therefore no production deployment evidence from that run.
 
 ## Current interpretation
 
-- Latest published release candidate: **v1.3.8**.
-- Current certified release candidate: **v1.3.8 / `fd1e74b6...`**.
+- Latest certified release: **v1.3.8 / `fd1e74b6...`**.
+- Current release candidate: **v1.4.0-rc.1 / `b2e2517...`**.
+- Current RC certification: **BLOCKED — one Product Gate failed**.
 - Production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance: **PENDING**.
 - Live provider validation: **PENDING**.
 - Real target DR/SLO/security/perimeter evidence: **PENDING**.
 
-## Next audit / action
+## Next action
 
-Provision and configure a real production target, populate the protected `production` Environment without exposing secret values, rerun the controlled deployment for `v1.3.8`, and reconcile the resulting deployed commit and health evidence here. Do not mark `DEPLOYED` or `EXTERNALLY_ACCEPTED` from naming, workflow creation or certification alone.
+Resolve the `Unified WorkItem Agent real-stack` blocker, rerun the required exact-SHA gates, and then rerun Production Certification against the resulting exact SHA. Only a zero-failure certification run may advance the candidate toward deployment.
