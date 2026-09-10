@@ -35,34 +35,43 @@ class _Nested:
 
 
 class _FakeDB:
-    def __init__(self, file_obj, winner):
+    def __init__(self, file_obj, winner, *, document_exists=False):
         self.file_obj = file_obj
         self.winner = winner
+        self.document_exists = document_exists
         self.added = []
         self.events = []
-        self._doc_lookup_count = 0
+        self.execute_count = 0
+        self.flush_count = 0
 
     async def execute(self, statement):
+        self.execute_count += 1
         if getattr(statement, "_for_update_arg", None) is not None:
             self.events.append("lock")
             return _Result(one=self.winner)
-        if "file_object" in statement.column_descriptions[0]["entity"].__name__.lower():
+        if self.execute_count == 1:
             self.events.append("file")
             return _Result(one_or_none=self.file_obj)
-        if self._doc_lookup_count == 0:
-            self._doc_lookup_count += 1
+        if self.execute_count == 2:
+            if self.document_exists:
+                self.events.append("doc-hit")
+                return _Result(one_or_none=self.winner)
             self.events.append("doc-miss")
             return _Result(one_or_none=None)
-        self.events.append("doc-recovery")
-        return _Result(one_or_none=self.winner)
+        if self.execute_count == 3 and not self.document_exists:
+            self.events.append("doc-recovery")
+            return _Result(one_or_none=self.winner)
+        self.events.append("delete")
+        return _Result()
 
     def add(self, item):
         self.added.append(item)
         self.events.append("add")
 
     async def flush(self):
+        self.flush_count += 1
         self.events.append("flush")
-        if self.events.count("flush") == 1:
+        if self.flush_count == 1 and not self.document_exists:
             raise IntegrityError("insert", {}, Exception("duplicate"))
 
     def begin_nested(self):
@@ -92,11 +101,6 @@ async def test_index_file_recovers_concurrent_document_creation_and_locks_winner
         return [[1.0] for _ in texts]
 
     monkeypatch.setattr(service, "embed_texts", embeddings)
-    monkeypatch.setattr(
-        service.audit_service if hasattr(service, "audit_service") else __import__("app.services.audit_service", fromlist=["record"]),
-        "record",
-        lambda *args, **kwargs: None,
-    )
 
     class _Audit:
         async def record(self, *args, **kwargs):
@@ -114,10 +118,9 @@ async def test_index_file_recovers_concurrent_document_creation_and_locks_winner
     assert result is winner
     assert winner.status == "indexed"
     assert winner.chunk_count == 1
-    assert "doc-miss" in db.events
-    assert "doc-recovery" in db.events
-    assert "lock" in db.events
+    assert db.events.index("doc-miss") < db.events.index("doc-recovery")
     assert db.events.index("lock") < db.events.index("add")
+    assert db.added and all(isinstance(item, object) for item in db.added)
 
 
 @pytest.mark.asyncio
@@ -130,8 +133,7 @@ async def test_index_file_locks_existing_document_before_replacing_chunks(monkey
         {"id": file_id, "tenant_id": tenant_id, "status": "active", "filename": "note.txt"},
     )()
     document = KnowledgeDocument(tenant_id=tenant_id, file_id=file_id, status="indexed")
-    db = _FakeDB(file_obj, document)
-    db._doc_lookup_count = 1
+    db = _FakeDB(file_obj, document, document_exists=True)
 
     monkeypatch.setattr(service, "extract_text", lambda _: "content")
     monkeypatch.setattr(service, "chunk_text", lambda _: ["content"])
@@ -156,4 +158,5 @@ async def test_index_file_locks_existing_document_before_replacing_chunks(monkey
 
     assert result is document
     assert document.status == "indexed"
+    assert db.events.index("lock") < db.events.index("delete")
     assert db.events.index("lock") < db.events.index("add")
