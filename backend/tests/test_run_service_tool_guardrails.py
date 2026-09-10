@@ -23,12 +23,22 @@ class _ScalarResult:
         return self.value
 
 
+class _FakeSavepoint:
+    def __init__(self):
+        self.rollback_count = 0
+
+    async def rollback(self):
+        self.rollback_count += 1
+        return None
+
+
 class _FakeDB:
     def __init__(self, run, version):
         self.run = run
         self.version = version
         self.execute_count = 0
         self.rollback_count = 0
+        self.savepoint = _FakeSavepoint()
 
     async def execute(self, _statement):
         self.execute_count += 1
@@ -44,6 +54,9 @@ class _FakeDB:
 
     async def flush(self):
         return None
+
+    async def begin_nested(self):
+        return self.savepoint
 
     async def rollback(self):
         self.rollback_count += 1
@@ -160,7 +173,8 @@ async def test_execute_run_blocks_model_requested_tool_outside_employee_allowlis
     assert registry.execute_calls == []
     assert run.status == "failed"
     assert run.error_message.startswith("Tool is not allowed by Employee guardrails")
-    assert db.rollback_count == 1
+    assert db.rollback_count == 0
+    assert db.savepoint.rollback_count == 1
 
 
 @pytest.mark.asyncio
