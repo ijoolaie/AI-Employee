@@ -57,12 +57,16 @@ async def resolve_credential(
     run_id: uuid.UUID | None = None,
     tool_name: str = "credential.vault",
 ) -> str:
+    # Hold the credential row lock for the surrounding transaction. Outbound
+    # adapters resolve the secret and then perform an irreversible provider
+    # request; keeping this lock prevents a concurrent revoke from committing
+    # in the gap between the revocation check and that side effect.
     credential = (
         await db.execute(
             select(Credential).where(
                 Credential.id == credential_id,
                 Credential.tenant_id == tenant_id,
-            )
+            ).with_for_update()
         )
     ).scalar_one_or_none()
     if credential is None:
