@@ -6,6 +6,7 @@ from uuid import UUID
 import jwt
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,22 +34,50 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
 )
 
 
+async def _create_tenant(db: AsyncSession, payload: RegisterRequest) -> Tenant:
+    """Create a tenant while preserving the unique-slug conflict boundary."""
+    tenant = Tenant(name=payload.tenant_name, slug=payload.tenant_slug, status="active", settings={})
+    try:
+        async with db.begin_nested():
+            db.add(tenant)
+            await db.flush()
+    except IntegrityError as exc:
+        raise ConflictError("Tenant slug already exists") from exc
+    return tenant
+
+
+async def _get_or_create_permission(db: AsyncSession, code: str) -> Permission:
+    """Resolve a globally unique permission without a SELECT→INSERT race."""
+    result = await db.execute(select(Permission).where(Permission.code == code))
+    permission = result.scalar_one_or_none()
+    if permission is not None:
+        return permission
+    await db.execute(
+        insert(Permission)
+        .values(code=code, description=f"Core permission: {code}")
+        .on_conflict_do_nothing(index_elements=[Permission.code])
+    )
+    return (await db.execute(select(Permission).where(Permission.code == code))).scalar_one()
+
+
 async def _assign_tenant_admin_role(db: AsyncSession, user: User, tenant_id: UUID) -> Role:
     """Create/resolve the tenant Admin role and assign it to the first user."""
     result = await db.execute(select(Role).where(Role.tenant_id == tenant_id, Role.name == "Admin"))
     role = result.scalar_one_or_none()
     if role is None:
         role = Role(tenant_id=tenant_id, name="Admin", description="Tenant administrator with full Core permissions")
-        db.add(role)
-        await db.flush()
+        try:
+            async with db.begin_nested():
+                db.add(role)
+                await db.flush()
+        except IntegrityError:
+            role = (await db.execute(select(Role).where(Role.tenant_id == tenant_id, Role.name == "Admin"))).scalar_one()
     result = await db.execute(select(Permission).where(Permission.code.in_(DEFAULT_TENANT_ADMIN_PERMISSIONS)))
     permissions = {p.code: p for p in result.scalars().all()}
     for code in DEFAULT_TENANT_ADMIN_PERMISSIONS:
         permission = permissions.get(code)
         if permission is None:
-            permission = Permission(code=code, description=f"Core permission: {code}")
-            db.add(permission)
-            await db.flush()
+            permission = await _get_or_create_permission(db, code)
         await db.execute(insert(role_permissions).values(role_id=role.id, permission_id=permission.id).on_conflict_do_nothing())
     await db.execute(insert(user_roles).values(user_id=user.id, role_id=role.id).on_conflict_do_nothing())
     await db.flush()
@@ -59,9 +88,7 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     existing_slug = await db.execute(select(Tenant).where(Tenant.slug == payload.tenant_slug))
     if existing_slug.scalar_one_or_none():
         raise ConflictError("Tenant slug already exists")
-    tenant = Tenant(name=payload.tenant_name, slug=payload.tenant_slug, status="active", settings={})
-    db.add(tenant)
-    await db.flush()
+    tenant = await _create_tenant(db, payload)
     normalized_email = payload.email.lower()
     existing_user = await db.execute(select(User).where(User.email == normalized_email, User.tenant_id == tenant.id))
     if existing_user.scalar_one_or_none():
@@ -93,7 +120,7 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
         raise UnauthorizedError("Invalid credentials")
     user.last_login_at = datetime.now(timezone.utc)
     await db.flush()
-    await audit_service.record(db, action="auth.login", actor_type="user", actor_id=user.id, tenant_id=tenant.id, status="success", request_id=request_id_var.get())
+    await audit_service.record(db, action="auth.login", actor_type="user", tenant_id=tenant.id, actor_id=user.id, status="success", request_id=request_id_var.get())
     return user
 
 
