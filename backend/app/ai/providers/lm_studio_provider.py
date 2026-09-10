@@ -15,6 +15,10 @@ from app.core.config import get_settings
 
 class LMStudioProvider:
     name = "lm_studio"
+    # The OpenAI-compatible local endpoint is not assumed to provide durable
+    # idempotency or reconciliation semantics.
+    supports_idempotency = False
+    supports_reconciliation = False
 
     def __init__(self, base_url: str | None = None, api_key: str | None = None):
         settings = get_settings()
