@@ -53,6 +53,19 @@ def register_tenant(suffix: str, label: str) -> str:
     return token
 
 
+def read_dashboard_when_ready(token: str, *, minimum_employees: int) -> dict:
+    """Wait for the API transaction finalizer to make a just-created fixture visible."""
+    last_data: dict = {}
+    for _ in range(10):
+        status, response = request("GET", "/customer-dashboard", token=token)
+        assert status == 200, f"customer dashboard expected 200, got {status}: {response}"
+        last_data = response.get("data") or {}
+        if last_data.get("employee_count", 0) >= minimum_employees:
+            return last_data
+        time.sleep(0.25)
+    raise AssertionError(last_data)
+
+
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     token_a = register_tenant(suffix, "A")
@@ -74,10 +87,7 @@ def main() -> int:
     assert employee_id, f"tenant A employee create missing id: {created}"
     print("REPORTS TENANT A SEED RESOURCE PASS")
 
-    status, dashboard_a = request("GET", "/customer-dashboard", token=token_a)
-    assert status == 200, f"tenant A dashboard expected 200, got {status}: {dashboard_a}"
-    data_a = dashboard_a.get("data") or {}
-    assert data_a.get("employee_count", 0) >= 1, data_a
+    data_a = read_dashboard_when_ready(token_a, minimum_employees=1)
     print("REPORTS TENANT A DASHBOARD SEES OWN RESOURCE PASS")
 
     status, dashboard_b = request("GET", "/customer-dashboard", token=token_b)
