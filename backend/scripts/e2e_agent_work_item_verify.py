@@ -126,18 +126,31 @@ async def create_agent_work_item(tenant_id: uuid.UUID, agent_id: uuid.UUID, suff
 
 
 async def verify_runtime(work_item_id: uuid.UUID, tenant_id: uuid.UUID, agent_id: uuid.UUID, version_id: uuid.UUID) -> None:
-    async with AsyncSessionLocal() as db:
-        item = await db.get(WorkItem, work_item_id)
-        assert item is not None
-        assert item.status is WorkItemStatus.RUNNING
-        assert item.output_data and item.output_data["executor_type"] == "agent"
-        assert item.output_data["agent_instance_id"] == str(agent_id)
-        assert item.output_data["employee_version_id"] == str(version_id)
-        run_id = uuid.UUID(str(item.output_data["run_id"]))
-        run = await db.get(Run, run_id)
-        assert run is not None
-        assert run.tenant_id == tenant_id
-        assert run.employee_version_id == version_id
+    """Verify the durable WorkItem/Run binding after the dispatch transaction commits."""
+    last_state: dict[str, object] = {}
+    for _ in range(20):
+        async with AsyncSessionLocal() as db:
+            item = await db.get(WorkItem, work_item_id)
+            if item is not None:
+                last_state = {"status": item.status.value, "output_data": item.output_data}
+                if item.status is WorkItemStatus.RUNNING and item.output_data and item.output_data.get("executor_type") == "agent":
+                    if item.output_data.get("agent_instance_id") != str(agent_id):
+                        raise AssertionError(f"agent instance mismatch: {last_state}")
+                    if item.output_data.get("employee_version_id") != str(version_id):
+                        raise AssertionError(f"employee version mismatch: {last_state}")
+                    run_id = uuid.UUID(str(item.output_data["run_id"]))
+                    run = await db.get(Run, run_id)
+                    if run is None:
+                        raise AssertionError(f"run not visible yet: {last_state}")
+                    if run.tenant_id != tenant_id:
+                        raise AssertionError(f"run tenant mismatch: {run.tenant_id} != {tenant_id}")
+                    if run.employee_version_id != version_id:
+                        raise AssertionError(f"run employee version mismatch: {run.employee_version_id} != {version_id}")
+                    return
+                if item.status is WorkItemStatus.FAILED:
+                    raise AssertionError(f"agent WorkItem failed: {last_state}")
+        time.sleep(0.25)
+    raise AssertionError(f"agent runtime binding not visible after dispatch: {last_state}")
 
 
 def main() -> int:
