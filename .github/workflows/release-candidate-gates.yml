@@ -24,7 +24,8 @@ jobs:
       - name: Dispatch and wait for required validation workflows
         env:
           GH_TOKEN: ${{ github.token }}
-          TARGET_SHA: ${{ github.sha }}
+          TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TARGET_REF: ${{ github.head_ref || github.ref_name }}
         shell: bash
         run: |
           set -euo pipefail
@@ -33,8 +34,8 @@ jobs:
             local workflow="$1"
             local label="$2"
 
-            echo "Dispatching ${label} (${workflow}) for ${TARGET_SHA}"
-            gh workflow run "${workflow}" --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
+            echo "Dispatching ${label} (${workflow}) for ${TARGET_SHA} on ${TARGET_REF}"
+            gh workflow run "${workflow}" --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
 
             local run_id=""
             for _ in $(seq 1 30); do
