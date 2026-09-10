@@ -66,7 +66,7 @@ class _FakeDB:
 
     def add(self, item):
         self.added.append(item)
-        self.events.append("add")
+        self.events.append("add-chunk" if isinstance(item, KnowledgeChunk) else "add-document")
 
     async def flush(self):
         self.flush_count += 1
@@ -115,7 +115,8 @@ async def test_index_file_recovers_concurrent_document_creation_and_locks_winner
     assert winner.status == "indexed"
     assert winner.chunk_count == 1
     assert db.events.index("doc-miss") < db.events.index("doc-recovery")
-    assert db.events.index("lock") < db.events.index("add")
+    assert db.events.index("lock") < db.events.index("delete")
+    assert db.events.index("lock") < db.events.index("add-chunk")
     assert any(isinstance(item, KnowledgeChunk) for item in db.added)
 
 
@@ -147,4 +148,4 @@ async def test_index_file_locks_existing_document_before_replacing_chunks(monkey
     assert result is document
     assert document.status == "indexed"
     assert db.events.index("lock") < db.events.index("delete")
-    assert db.events.index("lock") < db.events.index("add")
+    assert db.events.index("lock") < db.events.index("add-chunk")
