@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.outbox import OutboxMessage
 
@@ -35,6 +36,20 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
 
     message = OutboxMessage(tenant_id=tenant_id, kind=kind, payload=persisted_payload, status="pending", attempts=0,
                             dedupe_key=dedupe_key, available_at=available_at or datetime.now(timezone.utc))
+    if dedupe_key:
+        try:
+            async with db.begin_nested():
+                db.add(message)
+                await db.flush()
+        except IntegrityError:
+            found = (await db.execute(
+                select(OutboxMessage).where(OutboxMessage.dedupe_key == dedupe_key)
+            )).scalar_one_or_none()
+            if found is None:
+                raise
+            return found
+        return message
+
     db.add(message)
     await db.flush()
     return message
