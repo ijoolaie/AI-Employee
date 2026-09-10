@@ -19,21 +19,55 @@ permissions:
 jobs:
   dispatch-required-gates:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
-      - name: Dispatch production infrastructure validation
+      - name: Dispatch and wait for required validation workflows
         env:
           GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          TARGET_REF: ${{ github.head_ref || github.ref_name }}
+        shell: bash
         run: |
-          gh workflow run production-infrastructure-validation.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.ref_name }}"
+          set -euo pipefail
 
-      - name: Dispatch HA failure recovery validation
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh workflow run ha-failure-recovery.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.ref_name }}"
+          run_gate() {
+            local workflow="$1"
+            local label="$2"
 
-      - name: Dispatch ephemeral DAST validation
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh workflow run dast-ephemeral-validation.yml --repo "$GITHUB_REPOSITORY" --ref "${{ github.ref_name }}"
+            echo "Dispatching ${label} (${workflow}) for ${TARGET_SHA} on ${TARGET_REF}"
+            gh workflow run "${workflow}" --repo "$GITHUB_REPOSITORY" --ref "$TARGET_REF"
+
+            local run_id=""
+            for _ in $(seq 1 30); do
+              run_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$workflow" --limit 20 --json databaseId,headSha,status --jq ".[] | select(.headSha == \"${TARGET_SHA}\") | .databaseId" | head -n1 || true)"
+              if [[ -n "$run_id" ]]; then
+                break
+              fi
+              sleep 2
+            done
+
+            if [[ -z "$run_id" ]]; then
+              echo "No ${label} workflow run appeared for ${TARGET_SHA}"
+              return 1
+            fi
+
+            echo "Tracking ${label} run ${run_id}"
+            for _ in $(seq 1 210); do
+              status="$(gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json status --jq '.status')"
+              conclusion="$(gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json conclusion --jq '.conclusion // empty')"
+              echo "${label}: status=${status} conclusion=${conclusion}"
+
+              if [[ "$status" == completed ]]; then
+                [[ "$conclusion" == success ]]
+                return
+              fi
+              sleep 10
+            done
+
+            echo "${label} did not complete within the release-candidate gate timeout"
+            return 1
+          }
+
+          run_gate production-infrastructure-validation.yml "Production Infrastructure Validation"
+          run_gate ha-failure-recovery.yml "HA Failure Recovery Validation"
+          run_gate dast-ephemeral-validation.yml "Ephemeral DAST Validation"

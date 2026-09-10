@@ -1,12 +1,12 @@
 # AI Employee Platform
 
-**Release baseline:** `v1.3.8` — certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`
+**Certified release baseline:** `v1.3.8` — certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`
 
 **Architecture baseline:** `V1.5 Agentic Operating Model` — documentation/architecture baseline, **not a separately certified release**
 
 **Engineering phase:** Phase 14.1–14.16 complete where tracked; current program is in Production Hardening / Stage 7 External Production Certification
 
-**Current engineering mainline:** `main`
+**Current engineering mainline:** `main` at `049a9465ebed25300dba67f9e98f76265a719f53`
 
 **Production deployment:** **NOT DEPLOYED**
 
@@ -18,7 +18,7 @@ This repository is the vendor source of truth for the AI Employee Platform. The 
 
 The project intentionally tracks three independent axes:
 
-- **Release:** immutable product snapshot (`v1.3.8` is the current certified release candidate).
+- **Release:** immutable certified product snapshot (`v1.3.8` is the current certified release).
 - **Architecture:** platform design generation (`V1.5` is the current Agentic Operating Model baseline).
 - **Engineering phase:** implementation workstream and acceptance gate (`Phase 11` through `Phase 14`).
 
@@ -37,15 +37,23 @@ Canonical versioning rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
 ## Mainline hardening truth
 
-The certified `v1.3.8` release identity remains frozen. `main` has since received separately verified dependency hardening through PR #353.
+`main` is ahead of the certified `v1.3.8` release. The current mainline head is `049a9465ebed25300dba67f9e98f76265a719f53` and contains post-release security/reliability hardening through PR #455.
 
-Completed dependency-hardening PRs are #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353. Each was merged only after the required repository gates passed on the exact HEAD. There is currently no open Dependabot dependency PR in this hardening queue.
+Recent hardening includes:
 
-These engineering-mainline merges do **not** create a new certified release by themselves. `v1.3.8` remains the deployment identity until an intentional production-bound change is promoted into a new release and independently certified.
+- PR #449 — endpoint-level RBAC for Customers, Invoices, Products, Orders and Sales mutations.
+- PR #450 — explicit RBAC for API-key read/create/revoke operations.
+- PR #451 — `team.install` enforcement for workforce employee-template management.
+- PR #452 — tenant-user RBAC for Inbox conversation reads and mutations.
+- PR #453 — `billing.manage` enforcement for subscription and Stripe billing mutations.
+- PR #454 — transactional tenant-Run boundary for registered side-effect tools.
+- PR #455 — database serialization of all production Run execution to close the pending-state idempotency race.
+
+These changes are engineering-mainline evidence and are **not certified under the `v1.3.8` release identity**. A future production-bound release must be independently certified against its exact SHA.
 
 ## Release decision
 
-No new production release is required at the current boundary. The remaining blockers are external infrastructure and target-environment evidence. If a future production-bound code/configuration change is intentionally selected for deployment, create a new release with its own exact SHA and certification rather than moving or mutating `v1.3.8`.
+`v1.3.8` remains immutable and historically certified. The next release should be created intentionally from the selected hardened mainline SHA, then independently certified. Do not move the `v1.3.8` tag or inherit its certification evidence across SHAs.
 
 ## Start Here
 
