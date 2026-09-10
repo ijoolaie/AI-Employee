@@ -10,7 +10,17 @@ reproducible even after the Employee is edited (§4, §5 step 2).
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -54,12 +64,18 @@ class EmployeeVersion(Base):
 
     Only one version per Employee may have is_current=True at a time; Runs
     always store the resolved employee_version_id, never "the current one",
-    so Replay/Trace stay meaningful after future edits.
+    so Replay/Trace stay meaningful after future edits (§4, §5).
     """
 
     __tablename__ = "employee_versions"
     __table_args__ = (
         UniqueConstraint("employee_id", "version_number", name="uq_employee_version_number"),
+        Index(
+            "uq_employee_single_current_version",
+            "employee_id",
+            unique=True,
+            postgresql_where=text("is_current = true"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

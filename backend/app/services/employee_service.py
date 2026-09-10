@@ -139,6 +139,11 @@ async def publish_new_version(
         tenant_id=tenant_id,
     )
 
+    # Serialize version-number allocation and current-version transition on
+    # the already-resolved Employee row. This preserves get_employee() as the
+    # tenant/system-employee authorization seam.
+    await db.refresh(employee, with_for_update=True)
+
     last_version_result = await db.execute(
         select(EmployeeVersion)
         .where(EmployeeVersion.employee_id == employee.id)
