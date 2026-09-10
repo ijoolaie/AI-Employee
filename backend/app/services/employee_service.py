@@ -139,18 +139,10 @@ async def publish_new_version(
         tenant_id=tenant_id,
     )
 
-    # Lock the resolved Employee row before allocating the next version number
-    # or changing the current-version flag. Keep get_employee() as the
-    # tenant/system-employee authorization seam used by callers and tests.
-    locked_employee_result = await db.execute(
-        select(Employee)
-        .where(Employee.id == employee.id)
-        .with_for_update()
-    )
-    locked_employee = locked_employee_result.scalar_one_or_none()
-    if locked_employee is None:
-        raise NotFoundError("Employee not found")
-    employee = locked_employee
+    # Serialize version-number allocation and current-version transition on
+    # the already-resolved Employee row. This preserves get_employee() as the
+    # tenant/system-employee authorization seam.
+    await db.refresh(employee, with_for_update=True)
 
     last_version_result = await db.execute(
         select(EmployeeVersion)
