@@ -11,6 +11,10 @@ from app.ai.schemas import ChatRequest, ChatResult
 
 class DeterministicProvider:
     name = "deterministic"
+    # Certification provider has no external exactly-once or reconciliation
+    # boundary; the gateway's durable fence remains authoritative.
+    supports_idempotency = False
+    supports_reconciliation = False
 
     async def chat(self, request: ChatRequest) -> ChatResult:
         user_messages = [m.content for m in request.messages if m.role == "user" and m.content]
