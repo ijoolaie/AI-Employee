@@ -5,7 +5,7 @@ import uuid
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models.knowledge import KnowledgeDocument
+from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
 from app.rag import service
 
 
@@ -102,25 +102,17 @@ async def test_index_file_recovers_concurrent_document_creation_and_locks_winner
 
     monkeypatch.setattr(service, "embed_texts", embeddings)
 
-    class _Audit:
-        async def record(self, *args, **kwargs):
-            return None
+    import app.services.audit_service as audit_service
+    monkeypatch.setattr(audit_service, "record", lambda *args, **kwargs: None)
 
-    monkeypatch.setattr(service, "audit_service", _Audit(), raising=False)
-
-    result = await service.index_file(
-        db,
-        tenant_id=tenant_id,
-        file_id=file_id,
-        actor_id=uuid.uuid4(),
-    )
+    result = await service.index_file(db, tenant_id=tenant_id, file_id=file_id, actor_id=uuid.uuid4())
 
     assert result is winner
     assert winner.status == "indexed"
     assert winner.chunk_count == 1
     assert db.events.index("doc-miss") < db.events.index("doc-recovery")
     assert db.events.index("lock") < db.events.index("add")
-    assert db.added and all(isinstance(item, object) for item in db.added)
+    assert any(isinstance(item, KnowledgeChunk) for item in db.added)
 
 
 @pytest.mark.asyncio
@@ -143,18 +135,10 @@ async def test_index_file_locks_existing_document_before_replacing_chunks(monkey
 
     monkeypatch.setattr(service, "embed_texts", embeddings)
 
-    class _Audit:
-        async def record(self, *args, **kwargs):
-            return None
+    import app.services.audit_service as audit_service
+    monkeypatch.setattr(audit_service, "record", lambda *args, **kwargs: None)
 
-    monkeypatch.setattr(service, "audit_service", _Audit(), raising=False)
-
-    result = await service.index_file(
-        db,
-        tenant_id=tenant_id,
-        file_id=file_id,
-        actor_id=uuid.uuid4(),
-    )
+    result = await service.index_file(db, tenant_id=tenant_id, file_id=file_id, actor_id=uuid.uuid4())
 
     assert result is document
     assert document.status == "indexed"
