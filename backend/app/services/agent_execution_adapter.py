@@ -13,6 +13,7 @@ from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 from app.services.agent_governance import assert_agent_can_execute
 from app.services.agent_runtime_binding import resolve_employee_version
 from app.services.run_service import create_run
+from app.services import outbox_service
 
 logger = logging.getLogger("app.services.agent_execution_adapter")
 
@@ -60,26 +61,16 @@ class AgentExecutionAdapter:
         run.agent_instance_id = instance.id
         await self.db.flush()
 
-        try:
-            from app.workers.run_worker import execute_run_task
-
-            execute_run_task.delay(str(run.id), str(work_item.tenant_id))
-        except Exception:  # noqa: BLE001
-            # Do not report a successful dispatch when the durable Run was
-            # created but the worker hand-off failed. Marking the Run failed
-            # makes the WorkItem retry path explicit and prevents an orphaned
-            # pending Run from being mistaken for an executable queued job.
-            run.status = "failed"
-            await self.db.flush()
-            logger.warning(
-                "agent_run_enqueue_failed",
-                extra={
-                    "run_id": str(run.id),
-                    "work_item_id": str(getattr(work_item, "id", "unknown")),
-                },
-                exc_info=True,
-            )
-            raise
+        # Persist the queue hand-off in the same transaction as the WorkItem
+        # and Run. The outbox dispatcher can safely redeliver this message;
+        # canonical Run execution is idempotent and admission-serialized.
+        await outbox_service.enqueue(
+            self.db,
+            kind="agent.run.execute",
+            tenant_id=work_item.tenant_id,
+            payload={"run_id": str(run.id), "tenant_id": str(work_item.tenant_id)},
+            dedupe_key=f"agent.run.execute:{run.id}",
+        )
 
         result = {
             "run_id": str(run.id),
