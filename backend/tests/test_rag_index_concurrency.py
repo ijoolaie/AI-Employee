@@ -82,6 +82,10 @@ class _FakeDB:
         self.events.append("refresh")
 
 
+async def _noop_audit(*args, **kwargs):
+    return None
+
+
 @pytest.mark.asyncio
 async def test_index_file_recovers_concurrent_document_creation_and_locks_winner(monkeypatch):
     tenant_id = uuid.uuid4()
@@ -103,7 +107,7 @@ async def test_index_file_recovers_concurrent_document_creation_and_locks_winner
     monkeypatch.setattr(service, "embed_texts", embeddings)
 
     import app.services.audit_service as audit_service
-    monkeypatch.setattr(audit_service, "record", lambda *args, **kwargs: None)
+    monkeypatch.setattr(audit_service, "record", _noop_audit)
 
     result = await service.index_file(db, tenant_id=tenant_id, file_id=file_id, actor_id=uuid.uuid4())
 
@@ -136,7 +140,7 @@ async def test_index_file_locks_existing_document_before_replacing_chunks(monkey
     monkeypatch.setattr(service, "embed_texts", embeddings)
 
     import app.services.audit_service as audit_service
-    monkeypatch.setattr(audit_service, "record", lambda *args, **kwargs: None)
+    monkeypatch.setattr(audit_service, "record", _noop_audit)
 
     result = await service.index_file(db, tenant_id=tenant_id, file_id=file_id, actor_id=uuid.uuid4())
 
