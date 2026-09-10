@@ -91,7 +91,12 @@ def install() -> None:
 
     @wraps(original_execute)
     async def governed_execute(name: str, arguments: dict[str, Any], **kwargs: Any) -> Any:
+        tool = registry.get(name)
         context = _AGENT_CONTEXT.get()
+        if tool.side_effects and (kwargs.get("db") is None or kwargs.get("tenant_id") is None):
+            raise ValidationAppError(
+                f"{name} requires an active tenant Run context for side effects"
+            )
         if context is None:
             return await original_execute(name, arguments, **kwargs)
         db = kwargs.get("db")
@@ -100,7 +105,6 @@ def install() -> None:
             raise ValidationAppError("Agent tool execution requires an active database context")
         if kwargs.get("tenant_id") != tenant_id:
             raise ValidationAppError("Agent tool execution tenant context mismatch")
-        tool = registry.get(name)
         approval = None
         if tool.requires_approval:
             approval = await _resolve_approval(
