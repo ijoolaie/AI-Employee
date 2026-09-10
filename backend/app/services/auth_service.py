@@ -6,6 +6,7 @@ from uuid import UUID
 import jwt
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,16 +40,21 @@ async def _assign_tenant_admin_role(db: AsyncSession, user: User, tenant_id: UUI
     role = result.scalar_one_or_none()
     if role is None:
         role = Role(tenant_id=tenant_id, name="Admin", description="Tenant administrator with full Core permissions")
-        db.add(role)
-        await db.flush()
+        try:
+            async with db.begin_nested():
+                db.add(role)
+                await db.flush()
+        except IntegrityError:
+            role = (await db.execute(select(Role).where(Role.tenant_id == tenant_id, Role.name == "Admin"))).scalar_one()
     result = await db.execute(select(Permission).where(Permission.code.in_(DEFAULT_TENANT_ADMIN_PERMISSIONS)))
     permissions = {p.code: p for p in result.scalars().all()}
     for code in DEFAULT_TENANT_ADMIN_PERMISSIONS:
         permission = permissions.get(code)
         if permission is None:
-            permission = Permission(code=code, description=f"Core permission: {code}")
-            db.add(permission)
-            await db.flush()
+            await db.execute(
+                insert(Permission).values(code=code, description=f"Core permission: {code}").on_conflict_do_nothing(index_elements=[Permission.code])
+            )
+            permission = (await db.execute(select(Permission).where(Permission.code == code))).scalar_one()
         await db.execute(insert(role_permissions).values(role_id=role.id, permission_id=permission.id).on_conflict_do_nothing())
     await db.execute(insert(user_roles).values(user_id=user.id, role_id=role.id).on_conflict_do_nothing())
     await db.flush()
@@ -60,8 +66,12 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     if existing_slug.scalar_one_or_none():
         raise ConflictError("Tenant slug already exists")
     tenant = Tenant(name=payload.tenant_name, slug=payload.tenant_slug, status="active", settings={})
-    db.add(tenant)
-    await db.flush()
+    try:
+        async with db.begin_nested():
+            db.add(tenant)
+            await db.flush()
+    except IntegrityError as exc:
+        raise ConflictError("Tenant slug already exists") from exc
     normalized_email = payload.email.lower()
     existing_user = await db.execute(select(User).where(User.email == normalized_email, User.tenant_id == tenant.id))
     if existing_user.scalar_one_or_none():
@@ -93,7 +103,7 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
         raise UnauthorizedError("Invalid credentials")
     user.last_login_at = datetime.now(timezone.utc)
     await db.flush()
-    await audit_service.record(db, action="auth.login", actor_type="user", actor_id=user.id, tenant_id=tenant.id, status="success", request_id=request_id_var.get())
+    await audit_service.record(db, action="auth.login", actor_type="user", tenant_id=tenant.id, actor_id=user.id, status="success", request_id=request_id_var.get())
     return user
 
 
