@@ -124,6 +124,38 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
     return user
 
 
+async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenResponse:
+    """Validate a refresh JWT against its current user and tenant state."""
+    try:
+        payload = decode_token(refresh_token)
+    except jwt.PyJWTError as exc:
+        raise UnauthorizedError("Invalid refresh token") from exc
+
+    if payload.get("type") != "refresh":
+        raise UnauthorizedError("Invalid refresh token")
+
+    try:
+        user_id = UUID(str(payload["sub"]))
+        tenant_id = UUID(str(payload["tenant_id"]))
+        token_version = int(payload["auth_token_version"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise UnauthorizedError("Invalid refresh token") from exc
+
+    result = await db.execute(
+        select(User).join(Tenant, Tenant.id == User.tenant_id).where(
+            User.id == user_id,
+            User.tenant_id == tenant_id,
+            User.is_active.is_(True),
+            Tenant.status == "active",
+        )
+    )
+    user = result.scalar_one_or_none()
+    if user is None or user.auth_token_version != token_version:
+        raise UnauthorizedError("Invalid refresh token")
+
+    return issue_tokens(user)
+
+
 def issue_tokens(user: User) -> TokenResponse:
     return TokenResponse(
         access_token=create_access_token(
