@@ -1,7 +1,7 @@
 # Versioning Truth
 
-**Status:** CANONICAL
-**Reconciled:** 2026-09-07
+**Status:** CANONICAL  
+**Reconciled:** 2026-09-10
 
 This document defines the three independent version axes used by the AI Employee Platform. They must never be treated as interchangeable.
 
@@ -17,7 +17,7 @@ A **Release** is an immutable product snapshot identified by a Git tag and an ex
 - Production deployment: **PENDING REAL INFRASTRUCTURE**
 - Customer acceptance / live provider validation: **PENDING**
 
-`v1.3.8` is therefore the current release baseline. A higher architecture version does not make a higher release version implicitly certified or deployable.
+`v1.3.8` is therefore the current certified release baseline. The current engineering mainline is newer and is **not certified**.
 
 ## 2. Architecture version
 
@@ -38,15 +38,24 @@ Canonical document:
 
 An **Engineering Phase** records implementation work and acceptance gates. Phases are not release numbers and do not automatically change the current release identity.
 
-Current phase truth:
+### Current phase truth
 
 - Phase 11 Unified Execution acceptance: **COMPLETE**
 - Phase 12 Test Center P12.1–P12.6: **IMPLEMENTED / OPERATIONAL HARDENING**
 - Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**
-- Phase 14.1–14.9: **ENGINEERING COMPLETE**
-- Phase 14.10 external production/customer acceptance: **EXTERNAL-PENDING**
+- Phase 14.1–14.16: **ENGINEERING COMPLETE for tracked implementation**
+- Stage 7 / Phase 14.10 external production/customer acceptance: **EXTERNAL-PENDING**
+- Stage 8 governed workforce foundation: **ENGINEERING ACTIVE on mainline / NOT A RELEASE**
 
-## 4. How the three axes relate
+## 4. Current engineering baseline
+
+The current `main` baseline is:
+
+`decde0ad333ba972a79053b3da6489f92a2648de`
+
+Since `v1.3.8`, mainline hardening has included governance, provider idempotency, database concurrency, outbox, billing, onboarding, RAG indexing and TeamInstallation scope work. These changes require fresh release certification before they can be represented as certified.
+
+## 5. How the three axes relate
 
 ```text
 RELEASE
@@ -65,13 +74,16 @@ V1.5 Agentic Operating Model
         ▼
 Future architecture extensions
 
-ENGINEERING PHASE
+ENGINEERING
 Phase 11 ─► Phase 12 ─► Phase 13 ─► Phase 14
+                                      │
+                                      ▼
+                         Stage 8 governance hardening
 ```
 
 These axes may advance at different times. That is expected.
 
-## 5. Evidence rules
+## 6. Evidence rules
 
 1. A blueprint does not prove implementation.
 2. An engineering phase does not create a release.
@@ -80,8 +92,9 @@ These axes may advance at different times. That is expected.
 5. Certification evidence is bound to the exact commit SHA.
 6. No evidence may be inherited from another SHA without explicit revalidation.
 7. Historical documents remain traceable but cannot override this canonical truth.
+8. The current engineering SHA must be distinguished from the current certified release SHA.
 
-## 6. Naming rule for future documents
+## 7. Naming rule for future documents
 
 Use these terms precisely:
 
@@ -94,7 +107,7 @@ Use these terms precisely:
 
 Do not write phrases such as `V1.5 release`, `Phase 14 release`, or `v1.3.8 architecture` unless the context explicitly requires them.
 
-## 7. Source-of-truth order
+## 8. Source-of-truth order
 
 For release truth use:
 
@@ -110,8 +123,9 @@ For architecture truth use:
 
 For engineering status use:
 
-1. `docs/current/STATUS.md`
-2. phase-specific evidence
-3. verified CI/test evidence
+1. `docs/00_START_HERE/CURRENT_STATUS.md`
+2. `docs/current/STATUS.md`
+3. phase-specific evidence
+4. verified CI/test evidence
 
 If documents disagree, reconcile the canonical document; do not create another parallel status file.
