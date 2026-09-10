@@ -148,6 +148,7 @@ WorkflowApprovalDecideContext = Annotated[TenantContext, Depends(require_permiss
 WorkflowEventReadContext = Annotated[TenantContext, Depends(require_permission("workflow.event.read"))]
 WorkflowEventWriteContext = Annotated[TenantContext, Depends(require_permission("workflow.event.write"))]
 BillingRefundContext = Annotated[TenantContext, Depends(require_permission("billing.refund"))]
+BillingManageContext = Annotated[TenantContext, Depends(require_permission("billing.manage"))]
 CommerceIntegrationContext = Annotated[TenantContext, Depends(require_permission("commerce.integration.manage"))]
 OrdersReadContext = Annotated[TenantContext, Depends(require_permission("orders.read"))]
 OrdersCreateContext = Annotated[TenantContext, Depends(require_permission("orders.create"))]
