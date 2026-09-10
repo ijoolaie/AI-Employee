@@ -46,18 +46,120 @@ Recent hardening includes:
 - PR #451 — `team.install` enforcement for workforce employee-template management.
 - PR #452 — tenant-user RBAC for Inbox conversation reads and mutations.
 - PR #453 — `billing.manage` enforcement for subscription and Stripe billing mutations.
-- PR #454 — transactional tenant-Run boundary for all registered side-effect tools, closing the direct side-effect bypass.
-- PR #455 — database serialization of all production Run execution, closing the pending-state idempotency race for non-Agent Runs as well as Agent Runs.
+- PR #454 — transactional tenant-Run boundary for registered side-effect tools.
+- PR #455 — database serialization of all production Run execution to close the pending-state idempotency race.
 - PR #456 — release-documentation reconciliation and release-candidate downstream-gate enforcement.
 - PR #457 — SHA-pinned production certification identity and exact-SHA checkout enforcement.
 - PR #459 — remediation of the `sharp` 0.35.3 dependency vulnerability; frontend is now pinned to patched `sharp` 0.35.4 with a regenerated lockfile.
 
-These changes are engineering evidence on `main`; they do **not** retroactively change the certified `v1.3.8` artifact. A new release identity must be selected and certified against its exact immutable SHA before promotion.
+These changes are engineering-mainline evidence and are **not certified under the `v1.3.8` release identity**. A future production-bound release must be independently certified against its exact SHA.
 
-## Current certification boundary
+## Release decision
 
-The next release candidate must use an immutable commit SHA and a release identity, and production certification must verify that the checked-out commit exactly matches the supplied SHA. The current `production-certification.yml` workflow enforces this contract for manual certification and preserves tag-based certification for release tags.
+`v1.3.8` remains immutable and historically certified. The next release should be created intentionally from the selected hardened mainline SHA, then independently certified. Do not move the `v1.3.8` tag or inherit its certification evidence across SHAs.
 
-Repository-level CI, production-like infrastructure validation, HA recovery rehearsal and ephemeral DAST are engineering gates. They are not substitutes for real target-environment deployment, live provider validation, external security review, or customer acceptance.
+## Start Here
 
-**Current state:** engineering mainline is hardened through PR #459; `v1.3.8` remains the latest certified release; a new immutable mainline release candidate is **not yet certified**.
+1. `docs/00_START_HERE/VERSIONING_TRUTH.md`
+2. `docs/00_START_HERE/PROJECT_OVERVIEW.md`
+3. `docs/00_START_HERE/CURRENT_STATUS.md`
+4. `docs/00_START_HERE/CURRENT_PRIORITIES.md`
+5. `docs/DOCUMENTATION_INDEX.md`
+6. `docs/releases/RELEASE_TRUTH_LEDGER.md`
+7. `docs/current/PRODUCTIZATION_ROADMAP.md`
+8. `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
+
+Do not infer current truth from historical versioned filenames. Git tags, release records, certification evidence and deployment evidence are reconciled in `docs/releases/RELEASE_TRUTH_LEDGER.md`.
+
+## Three workspaces
+
+```text
+Platform
+   |
+   +--> Reseller
+   |      |
+   |      +--> Client
+   |
+   +--> Internal Platform Operations
+```
+
+Each workspace has role-specific UX and tools. No downstream workspace receives implicit control-plane access to the workspace above it.
+
+## Human + Agent execution
+
+```text
+WorkItem
+   |
+   +--> Human
+   |
+   +--> Agent
+   |
+   +--> Human + Agent
+   |
+   +--> Auto
+```
+
+Agents are specialized workers, not merely renamed Employees. Existing Employee entities remain compatibility structures while execution migrates toward `AgentDefinition`, `AgentInstance` and `WorkItem` abstractions.
+
+## Test Center
+
+Platform, Reseller and Client expose a first-class Test Center from the main dashboard. It provides role-aware health, security, Agent, tool, workflow, handoff, approval, RAG, memory, integration, webhook, usage, billing/sandbox, worker, model and E2E tests with safe-mode controls and persisted evidence.
+
+## V1.5 engineering sequence
+
+V1.5 is the **architecture/operating-model baseline**. The engineering phases below are delivery phases under that architecture; they are not release numbers.
+
+```text
+Phase 8  Unified Execution Foundation
+   ↓
+Phase 9  Platform Command Center
+   ↓
+Phase 10 Reseller Operations
+   ↓
+Phase 11 Client Business Workspace
+   ↓
+Phase 12 Test Center & Evidence
+   ↓
+Phase 13 Agent Teams / Marketplace
+   ↓
+Phase 14 Scale / Governance / Production
+```
+
+## Current position
+
+- Architecture V1.4: **FROZEN FOUNDATION**.
+- Architecture V1.5: **ACTIVE DOCUMENTATION / OPERATING-MODEL BASELINE**.
+- Phase 11 Unified Execution acceptance: **COMPLETE**.
+- Phase 12 Test Center P12.1-P12.6: **IMPLEMENTED / OPERATIONAL HARDENING**.
+- Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**.
+- Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**.
+- Current program stage: **Production Hardening / Stage 7 External Production Certification & Customer Acceptance**.
+- Production certification candidate `v1.3.8`: **CERTIFIED**.
+- External production deployment: **PENDING REAL INFRASTRUCTURE**.
+- Customer acceptance / live provider validation: **PENDING**.
+
+## Temporary local execution
+
+The project can be run on a developer workstation while a production server is unavailable. Local execution is appropriate for development, debugging, UI work, integration work and non-production validation.
+
+Local execution is not production certification. It must not be used to claim live provider validation, production SLO/SLI, real RPO/RTO, external security acceptance or customer acceptance. Use local/test credentials and providers only; never copy production secrets into source control or local artifacts.
+
+## Release rules
+
+- Keep `main` as vendor source of truth.
+- Never mutate a published release for one reseller/client.
+- Keep secrets and tenant data outside source/artifacts.
+- Preserve tenant isolation and RBAC for both humans and agents.
+- Every privileged action is auditable.
+- CI/repository evidence is not production evidence.
+- Maintain one authoritative Alembic graph.
+- Reconcile every release tag to its underlying commit.
+- Never inherit certification or acceptance evidence across different SHAs.
+
+## Production deployment boundary
+
+The repository contains a controlled `Live Production Deploy` workflow. It requires `release_ref`, explicit `DEPLOY` confirmation and a configured `production` Environment. The workflow requires real SSH/host/environment inputs and fails closed when they are absent. Do not fabricate production credentials or infrastructure evidence.
+
+## License
+
+The repository includes an Apache-2.0 `LICENSE` file. See `LICENSE` for the governing terms.
