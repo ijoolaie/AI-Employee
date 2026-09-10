@@ -62,3 +62,23 @@ These changes are part of the engineering mainline but are **not certified by th
 | 7.8 | Independent penetration test/security review | PENDING |
 | 7.9 | Production networking hardening | PENDING target perimeter evidence |
 | 7.10 | Secret management/rotation/recovery | PENDING target lifecycle evidence |
+| 7.11 | HA/failure-recovery rehearsal | PENDING target rehearsal |
+| 7.12 | Incident-response drill | PENDING live operational drill |
+| 7.13 | Alert ownership/on-call escalation | PENDING live paging/on-call |
+| 7.14 | Final external certification & customer acceptance | PENDING |
+
+## Evidence boundary
+
+Repository tests, PR CI, CodeQL, local Docker, GitHub-hosted production-like validation, synthetic load/security evidence, simulated providers and local RBAC acceptance are supporting engineering/release evidence only. They do not substitute for live production deployment, live provider evidence, measured production SLO/DR, independent security/compliance review or customer acceptance.
+
+Certification never transfers automatically across SHAs. The `v1.3.8` certification run therefore does not certify `d7c0c088b0a79e75c9ba20daf782913968e6b4ca`.
+
+## Current frontier
+
+Application and dependency hardening through PR #459 is complete on the current mainline. The next engineering release step is to select the production-bound mainline SHA, create an immutable release candidate from that exact SHA, and run the full SHA-pinned certification topology. After certification, the remaining blockers are external infrastructure and target-environment evidence.
+
+The controlled deployment workflow remains fail-closed and requires real production Environment inputs. No fake values should be introduced.
+
+## Security rule
+
+Do not commit production hosts, private keys, registry credentials, webhook secrets, payment secrets, customer data or environment-specific access tokens. Missing required production inputs must fail closed.
