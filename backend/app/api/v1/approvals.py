@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from app.core.deps import ApprovalDecideContext, ApprovalReadContext, DbSession
 from app.schemas.approval import ApprovalDecision, ToolApprovalResponse
 from app.schemas.common import APIResponse
-from app.services import approval_service
+from app.services import approval_service, outbox_service
 
 router = APIRouter(prefix="/approvals", tags=["approvals"])
 
@@ -29,6 +29,21 @@ async def decide_approval(approval_id: UUID, payload: ApprovalDecision, ctx: App
         reason=payload.reason,
     )
     if approval.status == "approved":
-        from app.workers.run_worker import execute_run_task
-        execute_run_task.delay(str(approval.run_id), str(ctx.tenant_id))
+        # The approval decision and its resume signal must become visible as
+        # one transaction. Direct Celery enqueue here races the endpoint's
+        # dependency-managed commit: a fast worker can consume the task while
+        # the approval is still pending, observe Run.status=waiting, and exit
+        # without scheduling another execution. Persist the resume through the
+        # transactional outbox so it cannot be claimed before this transaction
+        # commits, and deterministic dedupe makes retries harmless.
+        await outbox_service.enqueue(
+            db,
+            kind="agent.run.execute",
+            tenant_id=ctx.tenant_id,
+            payload={
+                "run_id": str(approval.run_id),
+                "tenant_id": str(ctx.tenant_id),
+            },
+            dedupe_key=f"agent.run.execute:approval:{approval.id}",
+        )
     return APIResponse(success=True, data=ToolApprovalResponse.model_validate(approval))
