@@ -54,14 +54,7 @@ async def _resolve_approval(
     tool_name: str,
     arguments: dict[str, Any],
 ) -> ToolApprovalRequest | None:
-    """Lock and resolve exactly one approved request for one invocation.
-
-    The row lock is held by the caller's transaction while the canonical policy
-    decision and execution proceed. The approval is consumed only after policy
-    authorization succeeds, so the policy kernel still observes the approved
-    state. Because the row remains locked until the surrounding transaction
-    completes, concurrent workers cannot claim the same approval.
-    """
+    """Lock and resolve exactly one approved request for one invocation."""
     result = await db.execute(
         select(ToolApprovalRequest)
         .where(
@@ -93,23 +86,31 @@ def install() -> None:
     async def governed_execute(name: str, arguments: dict[str, Any], **kwargs: Any) -> Any:
         tool = registry.get(name)
         context = _AGENT_CONTEXT.get()
-        if tool.side_effects and (kwargs.get("db") is None or kwargs.get("tenant_id") is None):
+        db = kwargs.get("db")
+        tenant_id = kwargs.get("tenant_id")
+
+        # Let the canonical registry preserve its existing approval rejection.
+        # An unapproved mandatory side-effect tool never reaches its handler.
+        if tool.side_effects and db is None and tenant_id is None and not kwargs.get("approval_granted", False):
+            return await original_execute(name, arguments, **kwargs)
+
+        # Approved side effects without a tenant transaction are forbidden.
+        if tool.side_effects and (db is None or tenant_id is None):
             raise ValidationAppError(
                 f"{name} requires an active tenant Run context for side effects"
             )
         if context is None:
             return await original_execute(name, arguments, **kwargs)
-        db = kwargs.get("db")
-        tenant_id, agent_instance_id, run_id = context
         if db is None:
             raise ValidationAppError("Agent tool execution requires an active database context")
-        if kwargs.get("tenant_id") != tenant_id:
+        bound_tenant_id, agent_instance_id, run_id = context
+        if tenant_id != bound_tenant_id:
             raise ValidationAppError("Agent tool execution tenant context mismatch")
         approval = None
         if tool.requires_approval:
             approval = await _resolve_approval(
                 db,
-                tenant_id=tenant_id,
+                tenant_id=bound_tenant_id,
                 run_id=run_id,
                 tool_name=name,
                 arguments=arguments,
@@ -122,7 +123,7 @@ def install() -> None:
         await assert_authorized(
             db,
             PolicyRequest(
-                tenant_id=tenant_id,
+                tenant_id=bound_tenant_id,
                 agent_instance_id=agent_instance_id,
                 action="tool.execute",
                 tool_name=name,
