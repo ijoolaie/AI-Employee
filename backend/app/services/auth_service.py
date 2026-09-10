@@ -34,6 +34,32 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
 )
 
 
+async def _create_tenant(db: AsyncSession, payload: RegisterRequest) -> Tenant:
+    """Create a tenant while preserving the unique-slug conflict boundary."""
+    tenant = Tenant(name=payload.tenant_name, slug=payload.tenant_slug, status="active", settings={})
+    try:
+        async with db.begin_nested():
+            db.add(tenant)
+            await db.flush()
+    except IntegrityError as exc:
+        raise ConflictError("Tenant slug already exists") from exc
+    return tenant
+
+
+async def _get_or_create_permission(db: AsyncSession, code: str) -> Permission:
+    """Resolve a globally unique permission without a SELECT→INSERT race."""
+    result = await db.execute(select(Permission).where(Permission.code == code))
+    permission = result.scalar_one_or_none()
+    if permission is not None:
+        return permission
+    await db.execute(
+        insert(Permission)
+        .values(code=code, description=f"Core permission: {code}")
+        .on_conflict_do_nothing(index_elements=[Permission.code])
+    )
+    return (await db.execute(select(Permission).where(Permission.code == code))).scalar_one()
+
+
 async def _assign_tenant_admin_role(db: AsyncSession, user: User, tenant_id: UUID) -> Role:
     """Create/resolve the tenant Admin role and assign it to the first user."""
     result = await db.execute(select(Role).where(Role.tenant_id == tenant_id, Role.name == "Admin"))
@@ -51,10 +77,7 @@ async def _assign_tenant_admin_role(db: AsyncSession, user: User, tenant_id: UUI
     for code in DEFAULT_TENANT_ADMIN_PERMISSIONS:
         permission = permissions.get(code)
         if permission is None:
-            await db.execute(
-                insert(Permission).values(code=code, description=f"Core permission: {code}").on_conflict_do_nothing(index_elements=[Permission.code])
-            )
-            permission = (await db.execute(select(Permission).where(Permission.code == code))).scalar_one()
+            permission = await _get_or_create_permission(db, code)
         await db.execute(insert(role_permissions).values(role_id=role.id, permission_id=permission.id).on_conflict_do_nothing())
     await db.execute(insert(user_roles).values(user_id=user.id, role_id=role.id).on_conflict_do_nothing())
     await db.flush()
@@ -65,13 +88,7 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     existing_slug = await db.execute(select(Tenant).where(Tenant.slug == payload.tenant_slug))
     if existing_slug.scalar_one_or_none():
         raise ConflictError("Tenant slug already exists")
-    tenant = Tenant(name=payload.tenant_name, slug=payload.tenant_slug, status="active", settings={})
-    try:
-        async with db.begin_nested():
-            db.add(tenant)
-            await db.flush()
-    except IntegrityError as exc:
-        raise ConflictError("Tenant slug already exists") from exc
+    tenant = await _create_tenant(db, payload)
     normalized_email = payload.email.lower()
     existing_user = await db.execute(select(User).where(User.email == normalized_email, User.tenant_id == tenant.id))
     if existing_user.scalar_one_or_none():
