@@ -111,6 +111,10 @@ async def test_gateway_records_live_latency_and_gateway_cost(monkeypatch):
         async def get(self, model, key):
             return next((item for item in self.items if getattr(item, "id", None) == key), None)
 
+        @asynccontextmanager
+        async def begin_nested(self):
+            yield
+
     audit_calls = []
 
     async def fake_audit_record(*args, **kwargs):
