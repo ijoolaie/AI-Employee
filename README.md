@@ -6,7 +6,9 @@
 
 **Engineering phase:** Phase 14.1–14.16 complete where tracked; current program is in Production Hardening / Stage 7 External Production Certification
 
-**Current engineering mainline:** `main` at `d7c0c088b0a79e75c9ba20daf782913968e6b4ca`
+**Current engineering mainline:** `main` at `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`
+
+**Current release candidate under validation:** `v1.4.0-rc.1` at exact SHA `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`
 
 **Production deployment:** **NOT DEPLOYED**
 
@@ -18,7 +20,7 @@ This repository is the vendor source of truth for the AI Employee Platform. The 
 
 The project intentionally tracks three independent axes:
 
-- **Release:** immutable certified product snapshot (`v1.3.8` is the current certified release).
+- **Release:** immutable certified product snapshot (`v1.3.8` is the latest certified release).
 - **Architecture:** platform design generation (`V1.5` is the current Agentic Operating Model baseline).
 - **Engineering phase:** implementation workstream and acceptance gate (`Phase 11` through `Phase 14`).
 
@@ -28,16 +30,16 @@ Canonical versioning rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
 ## Current release truth
 
-- `v1.3.8` is the current certified and frozen production-candidate identity.
+- `v1.3.8` remains the latest certified and frozen release identity.
 - The `v1.3.8` tag resolves exactly to `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
-- Production certification run `34052885700` passed the complete certification suite, including backend, frontend, migrations, OCR, product gates and critical Playwright E2E.
-- A controlled production deployment was attempted with `v1.3.8` in run `34060615390` but stopped during SSH configuration because the required production Environment secrets were empty/missing.
-- No production host was changed by that failed run.
-- Production deployment therefore remains **PENDING INFRASTRUCTURE**.
+- Production certification run `34052885700` passed the complete certification suite for `v1.3.8`.
+- The newer mainline candidate `v1.4.0-rc.1` is **NOT CERTIFIED**. Its latest Production Certification run is blocked by one failed Product Gate: `Unified WorkItem Agent real-stack`.
+- The failing Agent gate currently emits an empty assertion message after the commercial-license fixture passes; this remains a release blocker requiring root-cause correction and fresh exact-SHA certification.
+- Production deployment remains **PENDING REAL INFRASTRUCTURE**.
 
 ## Mainline hardening truth
 
-`main` is ahead of the certified `v1.3.8` release. The current mainline head is `d7c0c088b0a79e75c9ba20daf782913968e6b4ca` and contains post-release security/reliability hardening through PR #459.
+`main` is ahead of the certified `v1.3.8` release. Current mainline is `b2e2517ce0a38dc4fecd97c047328f703bdd7de6` and contains post-release governance, reliability, RBAC, release-gate and security hardening through PR #461.
 
 Recent hardening includes:
 
@@ -51,12 +53,34 @@ Recent hardening includes:
 - PR #456 — release-documentation reconciliation and release-candidate downstream-gate enforcement.
 - PR #457 — SHA-pinned production certification identity and exact-SHA checkout enforcement.
 - PR #459 — remediation of the `sharp` 0.35.3 dependency vulnerability; frontend is now pinned to patched `sharp` 0.35.4 with a regenerated lockfile.
+- PR #460 — documentation/dependency synchronization after the `sharp` remediation.
+- PR #461 — restoration of authentication refresh-token handling and stabilization of Reports/Analytics and Agent WorkItem real-stack certification paths.
 
-These changes are engineering-mainline evidence and are **not certified under the `v1.3.8` release identity**. A future production-bound release must be independently certified against its exact SHA.
+These changes are engineering-mainline evidence and are **not certified under the `v1.3.8` release identity**. The `v1.4.0-rc.1` candidate must receive fresh certification against its exact SHA after all remaining gates pass.
+
+## Current certification blocker
+
+The latest certification target is:
+
+`b2e2517ce0a38dc4fecd97c047328f703bdd7de6`
+
+Release version: `v1.4.0-rc.1`
+
+All Product Gates passed except:
+
+`Unified WorkItem Agent real-stack`
+
+The Human WorkItem real-stack gate passes. The Agent gate reaches:
+
+`UNIFIED AGENT WORKITEM COMMERCIAL LICENSE FIXTURE PASS`
+
+then fails with an empty assertion message. This is the immediate P0 release blocker. The next action is to trace the full Agent WorkItem execution path rather than treating the failure as a generic retry:
+
+`Agent WorkItem → assignment → AgentExecutionAdapter → Run creation → queue dispatch → Run execution → governance/license checks → terminal state → certification assertion`
 
 ## Release decision
 
-`v1.3.8` remains immutable and historically certified. The next release should be created intentionally from the selected hardened mainline SHA, then independently certified. Do not move the `v1.3.8` tag or inherit its certification evidence across SHAs.
+`v1.3.8` remains immutable and historically certified. `v1.4.0-rc.1` is a release candidate under validation, **not certified**. Do not move the `v1.3.8` tag or inherit its certification evidence across SHAs.
 
 ## Start Here
 
@@ -135,6 +159,7 @@ Phase 14 Scale / Governance / Production
 - Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**.
 - Current program stage: **Production Hardening / Stage 7 External Production Certification & Customer Acceptance**.
 - Production certification candidate `v1.3.8`: **CERTIFIED**.
+- `v1.4.0-rc.1` at `b2e2517...`: **CERTIFICATION BLOCKED — 1 PRODUCT GATE FAILED**.
 - External production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance / live provider validation: **PENDING**.
 
