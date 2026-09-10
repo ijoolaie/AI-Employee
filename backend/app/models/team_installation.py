@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -24,25 +24,25 @@ class TeamInstallation(Base):
             "uq_team_installations_tenant_version_workspace_null",
             "tenant_id", "team_version_id",
             unique=True,
-            postgresql_where=workspace_key.is_(None),
+            postgresql_where=text("workspace_key IS NULL"),
         ),
         Index(
             "uq_team_installations_tenant_version_workspace",
             "tenant_id", "team_version_id", "workspace_key",
             unique=True,
-            postgresql_where=workspace_key.is_not(None),
+            postgresql_where=text("workspace_key IS NOT NULL"),
         ),
         Index(
             "uq_team_installations_tenant_publication_workspace_null",
             "tenant_id", "source_publication_id",
             unique=True,
-            postgresql_where=source_publication_id.is_not(None) & workspace_key.is_(None),
+            postgresql_where=text("source_publication_id IS NOT NULL AND workspace_key IS NULL"),
         ),
         Index(
             "uq_team_installations_tenant_publication_workspace",
             "tenant_id", "source_publication_id", "workspace_key",
             unique=True,
-            postgresql_where=source_publication_id.is_not(None) & workspace_key.is_not(None),
+            postgresql_where=text("source_publication_id IS NOT NULL AND workspace_key IS NOT NULL"),
         ),
     )
 
