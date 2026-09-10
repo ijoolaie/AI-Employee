@@ -10,10 +10,15 @@ from app.services import refund_service
 
 
 class _Nested:
+    def __init__(self, db):
+        self.db = db
+
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
+        if exc_type is not None and self.db.added:
+            self.db.added.pop()
         return False
 
 
@@ -37,7 +42,7 @@ class _RaceDb:
         return _Result(None if self.executes == 1 else self.winner)
 
     def begin_nested(self):
-        return _Nested()
+        return _Nested(self)
 
     def add(self, row):
         self.added.append(row)
