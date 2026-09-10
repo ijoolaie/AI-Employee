@@ -21,6 +21,7 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
         tenant_id=tenant_id,
         input_data={"task": "triage"},
         requester_id=requester_id,
+        id=uuid4(),
     )
     agent = SimpleNamespace(id=agent_id)
     instance = SimpleNamespace(id=agent_id)
@@ -39,9 +40,14 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
         calls["create"] = (db, kwargs)
         return run
 
+    async def enqueue(db, **kwargs):
+        calls["enqueue"] = (db, kwargs)
+        return SimpleNamespace()
+
     monkeypatch.setattr(agent_execution_adapter, "assert_authorized", authorize)
     monkeypatch.setattr(agent_execution_adapter, "resolve_employee_version", resolve)
     monkeypatch.setattr(agent_execution_adapter, "create_run", create)
+    monkeypatch.setattr(agent_execution_adapter.outbox_service, "enqueue", enqueue)
 
     class _DB:
         async def flush(self):
@@ -62,6 +68,12 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
         "input_data": {"task": "triage"},
         "created_by": requester_id,
     }
+    assert calls["enqueue"][1] == {
+        "kind": "agent.run.execute",
+        "tenant_id": tenant_id,
+        "payload": {"run_id": str(run_id), "tenant_id": str(tenant_id)},
+        "dedupe_key": f"agent.run.execute:{run_id}",
+    }
     assert run.agent_instance_id == agent_id
     assert result == {
         "run_id": str(run_id),
@@ -70,6 +82,7 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
         "agent_definition_id": str(definition_id),
         "employee_id": str(employee_id),
         "employee_version_id": str(version_id),
+        "work_item_id": str(work_item.id),
     }
 
 

@@ -96,19 +96,20 @@ async def test_successful_agent_work_item_creates_agent_attributed_run(monkeypat
     async def authorize(*_args, **_kwargs): calls["authorized"] = True
     async def resolve(db, *, tenant_id, agent_instance_id): calls["resolve"] = (db, tenant_id, agent_instance_id); return instance, definition, version
     async def create(db, **kwargs): calls["create"] = (db, kwargs); return run
+    async def enqueue(db, **kwargs): calls["enqueue"] = (db, kwargs)
     class _DB:
         async def flush(self): calls["flushed"] = True
     monkeypatch.setattr(agent_execution_adapter, "assert_authorized", authorize)
     monkeypatch.setattr(agent_execution_adapter, "resolve_employee_version", resolve)
     monkeypatch.setattr(agent_execution_adapter, "create_run", create)
-    monkeypatch.setattr(agent_execution_adapter, "execute_run_task", None, raising=False)
-    async def _enqueue(*_args, **_kwargs): calls["enqueued"] = True
-    class _Task: delay = staticmethod(_enqueue)
-    monkeypatch.setattr(agent_execution_adapter, "execute_run_task", _Task(), raising=False)
+    monkeypatch.setattr(agent_execution_adapter.outbox_service, "enqueue", enqueue)
     result = await agent_execution_adapter.AgentExecutionAdapter(_DB()).dispatch(work_item, agent)
     assert calls["authorized"] is True
     assert run.agent_instance_id == agent_id
     assert calls["flushed"] is True
+    assert calls["enqueue"][1]["kind"] == "agent.run.execute"
+    assert calls["enqueue"][1]["payload"] == {"run_id": str(run_id), "tenant_id": str(tenant_id)}
+    assert calls["enqueue"][1]["dedupe_key"] == f"agent.run.execute:{run_id}"
     assert result["executor_type"] == "agent"
     assert result["agent_instance_id"] == str(agent_id)
     assert result["run_id"] == str(run_id)

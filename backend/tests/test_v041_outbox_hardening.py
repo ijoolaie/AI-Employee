@@ -16,3 +16,11 @@ def test_non_email_outbox_dispatch_marks_dispatched():
     source = (ROOT / "app/workers/outbox_worker.py").read_text()
     assert "await outbox_service.mark_dispatched(db, row)" in source
     assert 'current_span.set_attribute("outbox.status", "dispatched")' in source
+
+
+def test_agent_run_outbox_dispatches_existing_run_task():
+    source = (ROOT / "app/workers/outbox_worker.py").read_text()
+    assert 'row.kind == "agent.run.execute"' in source
+    assert "execute_run_task.delay(" in source
+    assert 'row.payload["run_id"]' in source
+    assert 'row.payload["tenant_id"]' in source

@@ -140,7 +140,13 @@ class UnifiedExecutionService:
             return ExecutionResult(work_item, False)
         work_item.status = WorkItemStatus.RUNNING
         await self.db.flush()
-        await self.db.commit()
+        # Human execution deliberately commits the RUNNING claim before invoking
+        # the external human runtime. Agent execution is different: the Run and
+        # transactional-outbox handoff must commit atomically with the WorkItem
+        # state, otherwise a crash here can strand a WorkItem in RUNNING with no
+        # durable Run or queue handoff.
+        if work_item.executor_type is not ExecutorType.AGENT:
+            await self.db.commit()
         started = self.telemetry.started()
         correlation_id = str(work_item.id)
         self.telemetry.emit(ExecutionEvent(tenant_id=work_item.tenant_id, work_item_id=work_item.id, event="started", correlation_id=correlation_id))
@@ -206,8 +212,6 @@ class UnifiedExecutionService:
 
     def fail_human(self, work_item: WorkItem, *, executor_id: uuid.UUID, output: dict[str, Any] | None = None) -> WorkItem:
         if work_item.executor_type is not ExecutorType.HUMAN:
-            raise ExecutionError("work item is not assigned to a human")
-        if work_item.executor_id != executor_id:
             raise ExecutionError("human executor does not own work item")
         if work_item.status not in {WorkItemStatus.ASSIGNED, WorkItemStatus.RUNNING}:
             raise ExecutionError("work item is not active")

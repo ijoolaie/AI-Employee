@@ -32,6 +32,12 @@ async def _dispatch_async(limit: int = 50) -> int:
                     elif row.kind == "workflow.parallel_branch":
                         from app.workers.workflow_worker import execute_parallel_branch_task
                         execute_parallel_branch_task.delay(row.payload["branch_id"])
+                    elif row.kind == "agent.run.execute":
+                        from app.workers.run_worker import execute_run_task
+                        execute_run_task.delay(
+                            row.payload["run_id"],
+                            row.payload["tenant_id"],
+                        )
                     elif row.kind == "email.send":
                         from app.workers.email_worker import send_email_task
                         send_email_task.delay(str(row.id))
