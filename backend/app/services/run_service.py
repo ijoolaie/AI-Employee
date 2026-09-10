@@ -207,6 +207,12 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
 
     gateway = AIGateway()
     paused_for_approval = False
+    # Keep the Run admission transaction (and therefore the FOR UPDATE lock
+    # acquired by the governance wrapper) alive while provider/tool execution
+    # can fail. The previous full rollback released that lock before the
+    # terminal `failed` state was persisted, allowing a concurrent redelivery
+    # to observe `pending` and enter execution a second time.
+    execution_savepoint = await db.begin_nested()
     try:
         rules = version.rules or {}
         rag_config = rag_settings(rules)
@@ -555,7 +561,10 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
         await db.commit()
         return run
     except Exception as exc:  # noqa: BLE001
-        await db.rollback()
+        # Roll back only execution-local work. The admission transaction stays
+        # open, so the FOR UPDATE lock remains held until `failed` is persisted
+        # below and committed. This closes the failure/re-delivery TOCTOU window.
+        await execution_savepoint.rollback()
         run_result = await db.execute(select(Run).where(Run.id == run_id))
         run = run_result.scalar_one_or_none()
         if run is not None:
