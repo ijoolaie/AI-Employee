@@ -25,6 +25,36 @@ async def require_tenant_admin(ctx: CurrentContext):
         raise HTTPException(status_code=403, detail="Tenant administrator access required")
     return ctx
 
+
+def _effective_permission_codes(ctx: CurrentContext) -> set[str]:
+    if ctx.user.is_superuser:
+        return set()
+    return {
+        permission.code
+        for role in ctx.user.roles
+        if role.tenant_id == ctx.tenant_id
+        for permission in role.permissions
+    }
+
+
+async def _load_assignable_roles(payload: UserRolesUpdate, ctx: CurrentContext, db: DbSession) -> list[Role]:
+    roles_result = await db.execute(
+        select(Role).options(selectinload(Role.permissions)).where(
+            Role.id.in_(payload.role_ids),
+            ((Role.tenant_id == ctx.tenant_id) | (Role.tenant_id.is_(None))),
+        )
+    )
+    roles = roles_result.scalars().all()
+    if len(roles) != len(set(payload.role_ids)):
+        raise HTTPException(status_code=400, detail="One or more roles are invalid for this tenant")
+    if ctx.user.is_superuser:
+        return roles
+    actor_permissions = _effective_permission_codes(ctx)
+    requested_permissions = {permission.code for role in roles for permission in role.permissions}
+    if not requested_permissions.issubset(actor_permissions):
+        raise HTTPException(status_code=403, detail="Cannot assign roles with permissions exceeding your authority")
+    return roles
+
 @router.get("/users", response_model=APIResponse[list[UserSummary]])
 async def list_users(ctx: CurrentContext, db: DbSession):
     await require_tenant_admin(ctx)
@@ -57,9 +87,7 @@ async def update_user_roles(user_id: UUID, payload: UserRolesUpdate, ctx: Curren
     result = await db.execute(select(User).options(selectinload(User.roles)).where(User.id == user_id, User.tenant_id == ctx.tenant_id))
     user = result.scalar_one_or_none()
     if user is None: raise HTTPException(status_code=404, detail="User not found")
-    roles_result = await db.execute(select(Role).where(Role.id.in_(payload.role_ids), ((Role.tenant_id == ctx.tenant_id) | (Role.tenant_id.is_(None)))))
-    roles = roles_result.scalars().all()
-    if len(roles) != len(set(payload.role_ids)): raise HTTPException(status_code=400, detail="One or more roles are invalid for this tenant")
+    roles = await _load_assignable_roles(payload, ctx, db)
     user.roles = roles
     await db.commit(); await db.refresh(user)
     return APIResponse(success=True, data=UserSummary(id=user.id,email=user.email,full_name=user.full_name,is_active=user.is_active,roles=[r.name for r in user.roles if r.tenant_id == ctx.tenant_id]))
