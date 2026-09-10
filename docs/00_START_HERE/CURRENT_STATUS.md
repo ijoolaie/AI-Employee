@@ -1,48 +1,88 @@
 # Current Status
 
-**Last reconciled:** 2026-09-09  
-**Certified release:** `v1.3.8`  
+**Last reconciled:** 2026-09-10  
+**Latest certified release:** `v1.3.8`  
 **Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
 **Certification run:** `34052885700` — SUCCESS  
 **Current engineering mainline:** `main`  
-**Current engineering baseline:** `c50e7bbb492563a9d55e7b289b75c2280345412e`  
-**Status:** GOVERNED WORKFORCE HARDENING COMPLETE / RELEASE CERTIFIED / PRODUCTION INFRASTRUCTURE PENDING
+**Current mainline SHA:** `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`  
+**Current release candidate:** `v1.4.0-rc.1`  
+**Release candidate SHA:** `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`  
+**Current status:** RELEASE CANDIDATE VALIDATION BLOCKED / ONE PRODUCT GATE REMAINING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries.
 
-The certified release `v1.3.8` remains frozen at its exact certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`. Certification run `34052885700` passed the repository's release certification gates. Certification does not transfer to later mainline revisions.
+The certified release `v1.3.8` remains frozen at its exact certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`. Certification does not transfer to later mainline revisions.
 
-## Current engineering mainline
+The current mainline is `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`. It contains the post-`v1.3.8` hardening sequence through PR #461 and is being validated as `v1.4.0-rc.1`.
 
-After `v1.3.8`, mainline hardening continued through controlled PRs. Governance hardening has now closed the identified AgentInstance activation, governance-freshness, access-review, delegation-freshness and runtime-authority-fingerprint gaps.
+## Mainline hardening through PR #461
 
-Key merged governance hardening:
-- PR #374 — kill-switch enforcement at WorkItem admission.
-- PR #375 — PostgreSQL-serialized AgentInstance concurrency admission.
-- PR #376 — direct AgentInstance activation bypass blocked.
-- PR #378 — governance fingerprint freshness at activation.
-- PR #379 — Access Review freshness at activation.
-- PR #380 — Access Review reactivation bypass blocked.
-- PR #381 — Access Review freshness enforced at execution.
-- PR #382 — latest Access Review decision required at execution.
-- PR #383 — delegation freshness enforced at execution.
-- PR #384 — governance authority fingerprint enforced at execution.
+Key merged hardening includes:
+- PR #449 — endpoint-level RBAC for Customers, Invoices, Products, Orders and Sales mutations.
+- PR #450 — explicit RBAC for API-key read/create/revoke operations.
+- PR #451 — `team.install` enforcement for workforce employee-template management.
+- PR #452 — tenant-user RBAC for Inbox conversation reads and mutations.
+- PR #453 — `billing.manage` enforcement for subscription and Stripe billing mutations.
+- PR #454 — transactional tenant-Run boundary for registered side-effect tools.
+- PR #455 — database serialization of all production Run execution to close the pending-state idempotency race.
+- PR #456 — release-documentation reconciliation and release-candidate downstream-gate enforcement.
+- PR #457 — SHA-pinned production certification identity and exact-SHA checkout enforcement.
+- PR #459 — remediation of the `sharp` 0.35.3 dependency vulnerability.
+- PR #460 — documentation/dependency synchronization after the `sharp` remediation.
+- PR #461 — authentication refresh-token restoration and stabilization of Reports/Analytics and Agent WorkItem certification paths.
 
-PR #384 was squash-merged into `main` as `c50e7bbb492563a9d55e7b289b75c2280345412e`. Its required pre-merge CI/security/architecture gates were green on exact HEAD `750596d29bf2482bdd7f2b08f04c0ed49778fe0b`.
+## Latest production certification
 
-The runtime policy boundary now fails closed when governed execution authority is missing or has drifted from the approved governance fingerprint. The certified `v1.3.8` release remains unchanged.
+The latest Production Certification target is:
+
+- Release version: `v1.4.0-rc.1`
+- Exact SHA: `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`
+- Workflow run: `34497132748`
+- Certification job: `102938351658`
+
+The run completed with **one failed Product Gate**.
+
+### Product Gate status
+
+Passed:
+- Auth P0
+- Tenant Isolation + RBAC P0
+- Conversation Tenant Isolation P0
+- Employee → Run → AI → Result
+- Files → Knowledge → Memory
+- Admin / Developer API Keys
+- Workflow → Approval → Schedule
+- Orders → Sales → Invoice → Billing
+- Reports / Analytics Tenant Isolation
+- Unified WorkItem Human real-stack
+
+Failed:
+- **Unified WorkItem Agent real-stack**
+
+The Agent gate reaches:
+
+`UNIFIED AGENT WORKITEM COMMERCIAL LICENSE FIXTURE PASS`
+
+and then fails with:
+
+`UNIFIED AGENT WORKITEM REAL-STACK CERTIFICATION FAIL:`
+
+with an empty assertion message. Therefore the exact failing state/assertion still requires root-cause inspection.
 
 ## Release decision
 
-`v1.3.8` remains the latest certified production candidate. The current mainline is a newer engineering baseline and must not be represented as certified.
+`v1.3.8` remains the latest certified release and is immutable.
 
-A new release should be cut only when the post-`v1.3.8` governance/runtime hardening is intentionally promoted to a release candidate. That release must receive its own exact SHA and fresh certification.
+`v1.4.0-rc.1` is **NOT CERTIFIED**. It is blocked by the single remaining Agent WorkItem real-stack Product Gate. No certification evidence from `v1.3.8` may be inherited by this newer SHA.
+
+The next engineering priority is to identify and correct the actual Agent WorkItem real-stack failure, run the full required CI/security/architecture gates on the exact corrected HEAD, merge only after all required gates pass, and then rerun Production Certification against the resulting exact SHA.
 
 ## Production deployment status
 
-A controlled deployment was attempted using `v1.3.8`:
+A controlled deployment was previously attempted using `v1.3.8`:
 - Workflow run: `34060615390`
 - Job: `101560362909`
 - Result: **FAILED BEFORE REMOTE DEPLOYMENT**
@@ -51,26 +91,22 @@ A controlled deployment was attempted using `v1.3.8`:
 - Remote deploy and deployed-identity verification were skipped.
 - Production host mutation: **NONE**.
 
-## Current gates
+## External production gates
 
-| Gate | Status | Evidence |
-|---|---|---|
-| Engineering implementation | COMPLETE | Current mainline `c50e7bbb...` |
-| Governance runtime hardening | COMPLETE | PRs #374, #375, #376, #378–#384 |
-| Production-like certification | PASSED | Run `34052885700` for `v1.3.8` |
-| `v1.3.8` tag identity | VERIFIED | Tag → `fd1e74b...` |
-| Production deployment | PENDING INFRASTRUCTURE | Run `34060615390` |
-| Live provider validation | PENDING | Requires real provider credentials/endpoints |
-| Real backup/restore & DR | PENDING | Requires target environment |
-| Production SLO/SLI | PENDING | Requires deployed target |
-| External security review | PENDING | Requires independent review |
-| Customer acceptance | PENDING | Requires real customer environment/evidence |
+These remain pending and are not established by the current production-like certification:
 
-## Roadmap position
-
-The repository has crossed from application feature construction into **governance hardening and production-certification preparation**. Stage 7 remains the active external program stage. Stage 8 workforce governance engineering is active on mainline but is not a release identity.
-
-The next engineering priority is a systematic audit of execution and side-effect boundaries: runtime adapters, tool execution, WorkItem/run transitions, credential use, external side effects and any remaining mutable authority surfaces.
+- real production infrastructure;
+- deployed-identity verification;
+- live provider validation;
+- real backup/restore and DR;
+- production SLO/SLI and error budget;
+- external Vendor → Reseller → Client acceptance;
+- DAST against the deployed target where applicable;
+- independent security review;
+- production networking and secret-management evidence;
+- HA/failure recovery in the target environment;
+- incident response/on-call evidence;
+- final external certification and customer acceptance.
 
 ## Evidence boundary
 
