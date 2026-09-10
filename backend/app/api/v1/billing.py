@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.core.deps import BillingRefundContext, CurrentContext, DbSession
+from app.core.deps import BillingManageContext, BillingRefundContext, CurrentContext, DbSession
 from app.core.logging import request_id_var
 from app.schemas.common import APIResponse
 from app.schemas.billing import PlanResponse, SubscriptionResponse, SubscribeRequest, CancelRequest, CheckoutSessionRequest, CheckoutSessionResponse, PortalSessionResponse, RefundRequest, RefundResponse
@@ -36,19 +36,19 @@ async def entitlements(ctx: CurrentContext, db: DbSession):
     return APIResponse(success=True, data={"usage": usage, "trial_ends_at": sub.trial_ends_at, "status": sub.status, "plan": PlanResponse.model_validate(sub.plan, from_attributes=True).model_dump()})
 
 @router.post("/subscription", response_model=APIResponse[SubscriptionResponse])
-async def subscribe(payload: SubscribeRequest, ctx: CurrentContext, db: DbSession):
+async def subscribe(payload: SubscribeRequest, ctx: BillingManageContext, db: DbSession):
     sub = await billing_service.change_plan(db, tenant_id=ctx.tenant_id, plan_code=payload.plan_code, actor_id=ctx.user_id)
     await db.commit(); await db.refresh(sub, ["plan"])
     return APIResponse(success=True, data=_sub_response(sub))
 
 @router.post("/subscription/cancel", response_model=APIResponse[SubscriptionResponse])
-async def cancel(payload: CancelRequest, ctx: CurrentContext, db: DbSession):
+async def cancel(payload: CancelRequest, ctx: BillingManageContext, db: DbSession):
     sub = await billing_service.cancel_subscription(db, tenant_id=ctx.tenant_id, at_period_end=payload.at_period_end)
     await db.commit(); await db.refresh(sub, ["plan"])
     return APIResponse(success=True, data=_sub_response(sub))
 
 @router.post("/checkout", response_model=APIResponse[CheckoutSessionResponse])
-async def create_checkout(payload: CheckoutSessionRequest, ctx: CurrentContext, db: DbSession):
+async def create_checkout(payload: CheckoutSessionRequest, ctx: BillingManageContext, db: DbSession):
     url = await stripe_service.create_checkout_session(
         db,
         tenant_id=ctx.tenant_id,
@@ -60,7 +60,7 @@ async def create_checkout(payload: CheckoutSessionRequest, ctx: CurrentContext, 
     return APIResponse(success=True, data=CheckoutSessionResponse(checkout_url=url))
 
 @router.post("/portal", response_model=APIResponse[PortalSessionResponse])
-async def create_portal(ctx: CurrentContext, db: DbSession):
+async def create_portal(ctx: BillingManageContext, db: DbSession):
     url = await stripe_service.create_portal_session(db, tenant_id=ctx.tenant_id)
     await db.commit()
     return APIResponse(success=True, data=PortalSessionResponse(portal_url=url))
