@@ -5,9 +5,22 @@ from types import SimpleNamespace
 
 import pytest
 
+from app.ai.providers.anthropic_provider import AnthropicProvider
+from app.ai.providers.deterministic_provider import DeterministicProvider
 from app.ai.providers.lm_studio_provider import LMStudioProvider
 from app.ai.providers.registry import get_default_provider
 from app.ai.schemas import ChatMessage, ChatRequest
+
+
+def test_provider_execution_capabilities_are_explicit_and_fail_closed():
+    providers = [
+        AnthropicProvider(api_key="test-key"),
+        DeterministicProvider(),
+        LMStudioProvider(base_url="http://127.0.0.1:1234/v1", api_key=None),
+    ]
+    for provider in providers:
+        assert provider.supports_idempotency is False
+        assert provider.supports_reconciliation is False
 
 
 def test_registry_defaults_to_lm_studio(monkeypatch):
