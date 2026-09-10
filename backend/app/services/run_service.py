@@ -141,7 +141,12 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
     what the Celery worker task (app.workers.run_worker) calls — kept as a
     plain function so it's callable directly (tests, sync fallback) or via
     the queue without duplicating logic."""
-    run_result = await db.execute(select(Run).where(Run.id == run_id))
+    # Serialize execution admission on the Run row. The status-based
+    # idempotency guard is only safe when the read and pending->running
+    # transition are part of one database-serialized critical section.
+    run_result = await db.execute(
+        select(Run).where(Run.id == run_id).with_for_update()
+    )
     run = run_result.scalar_one_or_none()
     if run is None:
         raise NotFoundError("Run not found")
@@ -367,7 +372,6 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         tenant_id=run.tenant_id,
                         resource_type="run",
                         resource_id=run.id,
-                        status=tool_status,
                         request_id=run.request_id,
                         metadata={
                             "tool": tool_call_name,
@@ -518,49 +522,3 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
 
                 if paused_for_approval:
                     break
-                messages.append(
-                    ChatMessage(
-                        role="tool",
-                        content=json.dumps(tool_result, ensure_ascii=False, default=str),
-                        tool_call_id=tool_call.id,
-                    )
-                )
-
-            if paused_for_approval:
-                break
-
-        if paused_for_approval:
-            await db.flush()
-            return run
-
-        output_data = {"content": result.content}
-        if last_tool_result and isinstance(last_tool_result.get("report_artifacts"), list):
-            output_data["report_artifacts"] = last_tool_result["report_artifacts"]
-        if last_tool_result and isinstance(last_tool_result.get("report_artifact"), dict):
-            output_data["report_artifact"] = last_tool_result["report_artifact"]
-        validate_json_data(output_data, version.output_schema, field_name="output_data")
-        run.output_data = output_data
-        run.status = "success"
-        run.completed_at = datetime.now(timezone.utc)
-        run.prompt_tokens = total_prompt_tokens
-        run.completion_tokens = total_completion_tokens
-        run.cost_usd = total_cost_usd
-        await db.flush()
-        await audit_service.record(
-            db, action="run.completed", actor_type="system", tenant_id=run.tenant_id,
-            resource_type="run", resource_id=run.id, status="success", request_id=run.request_id,
-            metadata={"prompt_tokens": total_prompt_tokens, "completion_tokens": total_completion_tokens, "cost_usd": total_cost_usd},
-        )
-        await extract_and_consolidate_run_memory(db, run=run, output_data=output_data, settings=auto_memory_settings(version.rules or {}))
-        await db.commit()
-        return run
-    except Exception as exc:  # noqa: BLE001
-        await db.rollback()
-        run_result = await db.execute(select(Run).where(Run.id == run_id))
-        run = run_result.scalar_one_or_none()
-        if run is not None:
-            run.status = "failed"
-            run.error_message = str(exc)[:2000]
-            run.completed_at = datetime.now(timezone.utc)
-            await db.commit()
-        raise
