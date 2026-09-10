@@ -1,6 +1,7 @@
 """Provider interface. New providers implement this and register in
 app.ai.providers.registry — the Gateway never imports a concrete provider
-directly (10_AI_Core §3.1: "یکسان‌سازی رابط", Provider-Agnostic)."""
+directly (10_AI_Core §3.1: "یکسان‌سازی رابط", Provider-Agnostic).
+"""
 
 from __future__ import annotations
 
@@ -11,6 +12,10 @@ from app.ai.schemas import ChatRequest, ChatResult
 
 class AIProvider(Protocol):
     name: str
+    # These capabilities are deliberately explicit. A provider must not be
+    # assumed to deduplicate or reconcile an ambiguous external request.
+    supports_idempotency: bool
+    supports_reconciliation: bool
 
     async def chat(self, request: ChatRequest) -> ChatResult:
         ...
