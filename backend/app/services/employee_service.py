@@ -152,9 +152,6 @@ async def publish_new_version(
         raise NotFoundError("Employee not found")
     employee = locked_employee
 
-    if not employee.is_active:
-        raise ValidationAppError("Employee is inactive")
-
     last_version_result = await db.execute(
         select(EmployeeVersion)
         .where(EmployeeVersion.employee_id == employee.id)
