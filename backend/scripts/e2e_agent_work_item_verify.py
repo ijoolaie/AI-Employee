@@ -7,19 +7,26 @@ import os
 import sys
 import time
 import uuid
+from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from sqlalchemy import select, text
 
 from app.core.database import AsyncSessionLocal
+from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.agent_definition import AgentDefinition
+from app.models.agent_identity import AgentIdentity
+from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_runtime_binding import AgentRuntimeBinding
+from app.models.agent_template import AgentTemplate, AgentTemplateStatus
 from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.tenant import Tenant
+from app.models.user import User
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services import edition_service, license_service
+from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 MAX_429_RETRIES = 3
@@ -110,9 +117,92 @@ async def create_agent_stack(tenant_id: uuid.UUID, suffix: str) -> tuple[uuid.UU
         definition = AgentDefinition(tenant_id=tenant_id, slug=f"cert-agent-definition-{suffix}", name="Agent Certification Definition", capabilities=["execution"], allowed_tools=[], model_policy={}, input_schema={}, output_schema={}, policy_requirements={}, enabled=True)
         db.add_all([version, definition])
         await db.flush()
-        db.add(AgentRuntimeBinding(tenant_id=tenant_id, agent_definition_id=definition.id, employee_version_id=version.id, is_active=True))
+
+        owner = (await db.execute(select(User).where(User.tenant_id == tenant_id, User.is_active.is_(True)).order_by(User.created_at.asc()).limit(1))).scalar_one_or_none()
+        if owner is None:
+            raise AssertionError(f"Certification owner user not found for tenant: {tenant_id}")
+        reviewer = User(
+            tenant_id=tenant_id,
+            email=f"agent-cert-reviewer-{suffix}@example.invalid",
+            password_hash="certification-fixture",
+            full_name="Agent Certification Independent Reviewer",
+            is_active=True,
+        )
+        db.add(reviewer)
+        await db.flush()
+
+        template = AgentTemplate(
+            tenant_id=tenant_id,
+            agent_definition_id=definition.id,
+            slug=f"cert-agent-template-{suffix}",
+            name="Agent Certification Template",
+            version=1,
+            status=AgentTemplateStatus.PUBLISHED,
+            risk_tier=0,
+            capability_contract={"execution": True},
+            permission_policy={"permissions": ["run.execute"], "allowed_tools": []},
+            approval_policy={},
+            evaluation_policy={"certification_fixture": True},
+            install_policy={},
+            published_at=datetime.now(timezone.utc),
+        )
+        db.add(template)
+        await db.flush()
+
+        configuration: dict = {}
+        fingerprint = execution_authority_fingerprint(
+            tenant_id=tenant_id,
+            template_id=template.id,
+            template_version=template.version,
+            agent_definition_id=definition.id,
+            risk_tier=template.risk_tier,
+            capability_contract=template.capability_contract,
+            permission_policy=template.permission_policy,
+            approval_policy=template.approval_policy,
+            install_policy=template.install_policy,
+            configuration=configuration,
+            max_concurrency=1,
+            budget_policy={},
+        )
         agent_id = uuid.uuid4()
-        await db.execute(text("INSERT INTO agent_instances (id, tenant_id, agent_definition_id, name, configuration, status, max_concurrency, budget_policy, enabled) VALUES (:id, :tenant_id, :definition_id, :name, '{}'::jsonb, 'enabled', 1, '{}'::jsonb, true)"), {"id": agent_id, "tenant_id": tenant_id, "definition_id": definition.id, "name": "Agent Certification Instance"})
+        db.add(
+            AgentIdentity(
+                tenant_id=tenant_id,
+                agent_instance_id=agent_id,
+                owner_user_id=owner.id,
+                sponsor_user_id=owner.id,
+                subject=f"agent:{tenant_id}:{agent_id}",
+                active=True,
+            )
+        )
+        instance = AgentInstance(
+            id=agent_id,
+            tenant_id=tenant_id,
+            agent_definition_id=definition.id,
+            agent_template_id=template.id,
+            sponsor_user_id=owner.id,
+            name="Agent Certification Instance",
+            configuration={**configuration, FINGERPRINT_KEY: fingerprint},
+            permission_policy=template.permission_policy,
+            approval_policy=template.approval_policy,
+            risk_tier=template.risk_tier,
+            status=AgentInstanceStatus.ENABLED,
+            max_concurrency=1,
+            budget_policy={},
+            enabled=True,
+        )
+        db.add(instance)
+        await db.flush()
+        db.add(
+            AgentAccessReview(
+                tenant_id=tenant_id,
+                agent_identity_id=(await db.execute(select(AgentIdentity).where(AgentIdentity.agent_instance_id == agent_id, AgentIdentity.tenant_id == tenant_id))).scalar_one().id,
+                reviewer_user_id=reviewer.id,
+                decision=AgentAccessReviewDecision.APPROVED,
+                reason="Production certification governed-runtime fixture",
+            )
+        )
+        db.add(AgentRuntimeBinding(tenant_id=tenant_id, agent_definition_id=definition.id, employee_version_id=version.id, is_active=True))
         await db.commit()
         return agent_id, version.id
 
