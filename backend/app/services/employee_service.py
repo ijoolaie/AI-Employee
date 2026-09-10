@@ -120,6 +120,11 @@ async def publish_new_version(
 ) -> EmployeeVersion:
     """Every meaningful change to Prompt/Tools/Schema is a new version;
     old versions are kept for history and Replay (11_Employee_Framework §4).
+
+    The Employee row is locked before reading the latest version. This makes
+    version-number allocation and the current-version transition deterministic
+    for concurrent publishers; the database partial unique index remains the
+    final invariant guard.
     """
     validate_schema_definition(input_schema, field_name="input_schema")
     validate_schema_definition(output_schema, field_name="output_schema")
@@ -133,11 +138,16 @@ async def publish_new_version(
             details={"unknown_tools": unknown_tools},
         )
 
-    employee = await get_employee(
-        db,
-        employee_id=employee_id,
-        tenant_id=tenant_id,
+    employee_result = await db.execute(
+        select(Employee)
+        .where(Employee.id == employee_id, Employee.tenant_id == tenant_id)
+        .with_for_update()
     )
+    employee = employee_result.scalar_one_or_none()
+    if employee is None:
+        raise NotFoundError("Employee not found")
+    if not employee.is_active:
+        raise ValidationAppError("Employee is inactive")
 
     last_version_result = await db.execute(
         select(EmployeeVersion)
@@ -175,10 +185,10 @@ async def publish_new_version(
         actor_type="user" if actor_id else "system",
         actor_id=actor_id,
         tenant_id=employee.tenant_id,
-        resource_type="employee",
-        resource_id=employee.id,
+        resource_type="employee_version",
+        resource_id=new_version.id,
         request_id=request_id_var.get(),
-        metadata={"version_number": next_number},
+        metadata={"version_number": next_number, "employee_id": str(employee.id)},
     )
 
     return new_version
@@ -225,7 +235,7 @@ async def list_employees(
     tenant_id: uuid.UUID | None,
 ) -> list[Employee]:
     """System Employees (tenant_id NULL) + this tenant's Custom Employees
-    (11_Employee_Framework ?6)."""
+    (11_Employee_Framework §6)."""
     result = await db.execute(
         select(Employee)
         .where(
