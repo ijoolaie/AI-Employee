@@ -1,6 +1,6 @@
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
-from app.core.deps import CurrentContext, DbSession
+from app.core.deps import APIKeysCreateContext, APIKeysReadContext, APIKeysRevokeContext, DbSession, TenantContext
 from app.models.api_key import APIKey
 from app.schemas.api_key import APIKeyCreate, APIKeyCreated, APIKeyResponse
 from app.schemas.common import APIResponse
@@ -14,7 +14,7 @@ def _response(row: APIKey) -> APIKeyResponse:
     return APIKeyResponse.model_validate(row)
 
 
-def _owner_permissions(ctx: CurrentContext) -> set[str]:
+def _owner_permissions(ctx: TenantContext) -> set[str]:
     return {
         permission.code
         for role in ctx.user.roles
@@ -24,13 +24,13 @@ def _owner_permissions(ctx: CurrentContext) -> set[str]:
 
 
 @router.get("", response_model=APIResponse[list[APIKeyResponse]])
-async def list_api_keys(ctx: CurrentContext, db: DbSession):
+async def list_api_keys(ctx: APIKeysReadContext, db: DbSession):
     rows = await api_key_service.list_keys(db, tenant_id=ctx.tenant_id)
     return APIResponse(success=True, data=[_response(r) for r in rows])
 
 
 @router.post("", response_model=APIResponse[APIKeyCreated], status_code=status.HTTP_201_CREATED)
-async def create_api_key(payload: APIKeyCreate, ctx: CurrentContext, db: DbSession):
+async def create_api_key(payload: APIKeyCreate, ctx: APIKeysCreateContext, db: DbSession):
     owner_permissions = _owner_permissions(ctx)
     if payload.scopes is None:
         # New keys default to the owner's current permissions, producing an
@@ -59,7 +59,7 @@ async def create_api_key(payload: APIKeyCreate, ctx: CurrentContext, db: DbSessi
 
 
 @router.post("/{key_id}/revoke", response_model=APIResponse[APIKeyResponse])
-async def revoke_api_key(key_id: UUID, ctx: CurrentContext, db: DbSession):
+async def revoke_api_key(key_id: UUID, ctx: APIKeysRevokeContext, db: DbSession):
     row = await api_key_service.revoke_key(db, tenant_id=ctx.tenant_id, key_id=key_id)
     if row is None:
         raise HTTPException(status_code=404, detail="API key not found")
