@@ -2,19 +2,24 @@
 
 **Architecture baseline:** V1.5 Agentic Operating Model  
 **Release baseline:** `v1.3.8`  
-**Status date:** 2026-09-07  
+**Status date:** 2026-09-10  
 **Certified release candidate:** `v1.3.8`  
 **Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
 **Certification run:** `34052885700` — SUCCESS  
+**Current engineering mainline:** `decde0ad333ba972a79053b3da6489f92a2648de`  
 **Production deployment:** PENDING REAL INFRASTRUCTURE
 
 The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number.
 
 ## Executive status
 
-Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. Phase 14 engineering is **COMPLETE**.
+Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. Phase 14 engineering is **COMPLETE for the tracked implementation**.
 
-The production-like certification suite has passed for the exact `v1.3.8` release identity. The release tag is reconciled to the certified commit. The remaining work is now the external operational boundary: real production infrastructure, controlled deployment, live providers, target operations/security evidence and customer acceptance.
+The production-like certification suite passed for the exact `v1.3.8` release identity. Since that release, mainline has received additional governance, concurrency, idempotency and RAG hardening through controlled PRs. Those post-release changes are not certified until a new exact release SHA is created and certified.
+
+## Current mainline hardening
+
+Merged post-`v1.3.8` hardening includes PRs #398, #401, #403–#406, #408–#409, #411, #413, #415, #417, #419 and #421. The current open hardening item is PR #423 for NULL-safe TeamInstallation uniqueness.
 
 ## Release and deployment status
 
@@ -27,7 +32,7 @@ The production-like certification suite has passed for the exact `v1.3.8` releas
 | Product gates | PASSED | Certification Run `34052885700` |
 | Critical frontend Playwright | PASSED | Certification Run `34052885700` |
 | Controlled production deploy | FAILED BEFORE REMOTE DEPLOYMENT | Run `34060615390` |
-| Production host changed by failed run | NO EVIDENCE / NOT REACHED | SSH configuration failed first |
+| Production host changed by failed run | NO | SSH configuration failed before remote deployment |
 
 ## Remaining P0 external gates
 
@@ -52,15 +57,15 @@ The production-like certification suite has passed for the exact `v1.3.8` releas
 
 Previously tracked P1 engineering gates remain implemented/complete. Target-environment verification remains external where applicable.
 
+## Current frontier
+
+The immediate engineering frontier is **final hardening and execution-boundary audit**, not a claim of production certification. The external frontier remains the real production target and its acceptance evidence.
+
 ## Evidence boundary
 
 Repository tests, PR CI, CodeQL, local Docker, GitHub-hosted production-like validation, synthetic load/security evidence, simulated providers and local RBAC acceptance are supporting engineering/release evidence only. They do not substitute for live production deployment, live provider evidence, measured production SLO/DR, independent security/compliance review or customer acceptance.
 
 Certification never transfers automatically across SHAs.
-
-## Current frontier
-
-The next concrete blocker is infrastructure, not application code. The deployment workflow is fail-closed and requires real production Environment inputs. The failed deployment run demonstrated that those inputs are currently unavailable; no fake values should be introduced.
 
 ## Security rule
 
