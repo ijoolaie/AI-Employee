@@ -1,7 +1,7 @@
 # Versioning Truth
 
 **Status:** CANONICAL
-**Reconciled:** 2026-09-07
+**Reconciled:** 2026-09-10
 
 This document defines the three independent version axes used by the AI Employee Platform. They must never be treated as interchangeable.
 
@@ -11,13 +11,16 @@ A **Release** is an immutable product snapshot identified by a Git tag and an ex
 
 ### Current release truth
 
-- Certified release candidate: **`v1.3.8`**
+- Latest certified release: **`v1.3.8`**
 - Certified commit: **`fd1e74b6b4c1701f7443efc202bad161ff19618c`**
 - Certification run: **`34052885700` — PASS**
+- Current release candidate: **`v1.4.0-rc.1`**
+- Release-candidate SHA: **`b2e2517ce0a38dc4fecd97c047328f703bdd7de6`**
+- `v1.4.0-rc.1` certification: **BLOCKED — one Product Gate failed**
 - Production deployment: **PENDING REAL INFRASTRUCTURE**
 - Customer acceptance / live provider validation: **PENDING**
 
-`v1.3.8` is therefore the current release baseline. A higher architecture version does not make a higher release version implicitly certified or deployable.
+`v1.3.8` remains the current certified release baseline. `v1.4.0-rc.1` is a candidate under validation, not a certified release.
 
 ## 2. Architecture version
 
@@ -43,18 +46,19 @@ Current phase truth:
 - Phase 11 Unified Execution acceptance: **COMPLETE**
 - Phase 12 Test Center P12.1–P12.6: **IMPLEMENTED / OPERATIONAL HARDENING**
 - Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**
-- Phase 14.1–14.9: **ENGINEERING COMPLETE**
-- Phase 14.10 external production/customer acceptance: **EXTERNAL-PENDING**
+- Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**
+- Stage 7: **ACTIVE — RELEASE CERTIFICATION / EXTERNAL PRODUCTION PREPARATION**
 
 ## 4. How the three axes relate
 
 ```text
 RELEASE
-v1.3.8 ───────────────────────────────► next certified release
-   │
-   │ exact SHA: fd1e74b6...
-   │
-   └── certification / deployment / acceptance evidence
+v1.3.8 ─────────────► v1.4.0-rc.1 ─────────────► next certified release
+   │                       │
+   │ exact SHA             │ exact SHA
+   │ fd1e74b6...            │ b2e2517c...
+   │                       │
+   └─ CERTIFIED             └─ BLOCKED: 1 Product Gate
 
 ARCHITECTURE
 V1.4 frozen foundation
@@ -66,7 +70,7 @@ V1.5 Agentic Operating Model
 Future architecture extensions
 
 ENGINEERING PHASE
-Phase 11 ─► Phase 12 ─► Phase 13 ─► Phase 14
+Phase 11 ─► Phase 12 ─► Phase 13 ─► Phase 14 ─► Stage 7 external certification
 ```
 
 These axes may advance at different times. That is expected.
@@ -110,8 +114,9 @@ For architecture truth use:
 
 For engineering status use:
 
-1. `docs/current/STATUS.md`
-2. phase-specific evidence
-3. verified CI/test evidence
+1. `docs/00_START_HERE/CURRENT_STATUS.md`
+2. `docs/current/STATUS.md` where present
+3. phase-specific evidence
+4. verified CI/test evidence
 
 If documents disagree, reconcile the canonical document; do not create another parallel status file.
