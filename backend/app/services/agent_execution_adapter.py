@@ -50,39 +50,45 @@ class AgentExecutionAdapter:
             tenant_id=work_item.tenant_id,
             agent_instance_id=agent.id,
         )
-        run = await create_run(
-            self.db,
-            tenant_id=work_item.tenant_id,
-            employee_id=version.employee_id,
-            employee_version_id=version.id,
-            input_data=work_item.input_data or {},
-            created_by=work_item.requester_id,
-        )
-        run.agent_instance_id = instance.id
-        await self.db.flush()
 
-        # Persist the queue hand-off in the same transaction as the WorkItem
-        # and Run. The outbox dispatcher can safely redeliver this message;
-        # canonical Run execution is idempotent and admission-serialized.
-        await outbox_service.enqueue(
-            self.db,
-            kind="agent.run.execute",
-            tenant_id=work_item.tenant_id,
-            payload={"run_id": str(run.id), "tenant_id": str(work_item.tenant_id)},
-            dedupe_key=f"agent.run.execute:{run.id}",
-        )
+        # The WorkItem dispatcher intentionally keeps its transaction open for
+        # the agent hand-off. Protect the Run + outbox pair with a savepoint so
+        # an enqueue failure cannot escape through the dispatcher error path
+        # and later commit a pending Run without a durable execution signal.
+        async with self.db.begin_nested():
+            run = await create_run(
+                self.db,
+                tenant_id=work_item.tenant_id,
+                employee_id=version.employee_id,
+                employee_version_id=version.id,
+                input_data=work_item.input_data or {},
+                created_by=work_item.requester_id,
+            )
+            run.agent_instance_id = instance.id
+            await self.db.flush()
 
-        result = {
-            "run_id": str(run.id),
-            "executor_type": "agent",
-            "agent_instance_id": str(instance.id),
-            "agent_definition_id": str(definition.id),
-            "employee_id": str(version.employee_id),
-            "employee_version_id": str(version.id),
-        }
-        if getattr(work_item, "id", None) is not None:
-            result["work_item_id"] = str(work_item.id)
-        return result
+            # Persist the queue hand-off in the same outer transaction as the
+            # WorkItem and Run. The savepoint additionally guarantees that a
+            # failure before the outer commit removes the newly-created Run.
+            await outbox_service.enqueue(
+                self.db,
+                kind="agent.run.execute",
+                tenant_id=work_item.tenant_id,
+                payload={"run_id": str(run.id), "tenant_id": str(work_item.tenant_id)},
+                dedupe_key=f"agent.run.execute:{run.id}",
+            )
+
+            result = {
+                "run_id": str(run.id),
+                "executor_type": "agent",
+                "agent_instance_id": str(instance.id),
+                "agent_definition_id": str(definition.id),
+                "employee_id": str(version.employee_id),
+                "employee_version_id": str(version.id),
+            }
+            if getattr(work_item, "id", None) is not None:
+                result["work_item_id"] = str(work_item.id)
+            return result
 
     async def execute_tool(
         self,

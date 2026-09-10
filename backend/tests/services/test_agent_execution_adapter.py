@@ -6,6 +6,22 @@ import pytest
 from app.services import agent_execution_adapter
 
 
+class _Savepoint:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+class _DB:
+    async def flush(self):
+        return None
+
+    def begin_nested(self):
+        return _Savepoint()
+
+
 @pytest.mark.asyncio
 async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypatch):
     tenant_id = uuid4()
@@ -49,10 +65,6 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
     monkeypatch.setattr(agent_execution_adapter, "create_run", create)
     monkeypatch.setattr(agent_execution_adapter.outbox_service, "enqueue", enqueue)
 
-    class _DB:
-        async def flush(self):
-            return None
-
     db = _DB()
     result = await agent_execution_adapter.AgentExecutionAdapter(db).dispatch(work_item, agent)
 
@@ -84,6 +96,43 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
         "employee_version_id": str(version_id),
         "work_item_id": str(work_item.id),
     }
+
+
+@pytest.mark.asyncio
+async def test_agent_adapter_rolls_back_run_when_outbox_enqueue_fails(monkeypatch):
+    tenant_id = uuid4()
+    agent_id = uuid4()
+    run_id = uuid4()
+    calls = []
+
+    async def authorize(*_args, **_kwargs):
+        return None
+
+    async def resolve(*_args, **_kwargs):
+        return SimpleNamespace(id=agent_id), SimpleNamespace(id=uuid4()), SimpleNamespace(
+            id=uuid4(), employee_id=uuid4()
+        )
+
+    async def create(*_args, **_kwargs):
+        calls.append("create")
+        return SimpleNamespace(id=run_id, agent_instance_id=None)
+
+    async def enqueue(*_args, **_kwargs):
+        calls.append("enqueue")
+        raise RuntimeError("outbox unavailable")
+
+    monkeypatch.setattr(agent_execution_adapter, "assert_authorized", authorize)
+    monkeypatch.setattr(agent_execution_adapter, "resolve_employee_version", resolve)
+    monkeypatch.setattr(agent_execution_adapter, "create_run", create)
+    monkeypatch.setattr(agent_execution_adapter.outbox_service, "enqueue", enqueue)
+
+    work_item = SimpleNamespace(tenant_id=tenant_id, input_data={}, requester_id=None, id=uuid4())
+    agent = SimpleNamespace(id=agent_id)
+
+    with pytest.raises(RuntimeError, match="outbox unavailable"):
+        await agent_execution_adapter.AgentExecutionAdapter(_DB()).dispatch(work_item, agent)
+
+    assert calls == ["create", "enqueue"]
 
 
 @pytest.mark.asyncio

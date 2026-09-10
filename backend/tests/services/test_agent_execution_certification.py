@@ -12,6 +12,14 @@ from app.services.agent_governance import assert_agent_can_execute
 from app.services import agent_execution_adapter
 
 
+class _Savepoint:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
 class _GovernanceDB:
     def __init__(self, instance, identity):
         self.instance = instance
@@ -99,6 +107,7 @@ async def test_successful_agent_work_item_creates_agent_attributed_run(monkeypat
     async def enqueue(db, **kwargs): calls["enqueue"] = (db, kwargs)
     class _DB:
         async def flush(self): calls["flushed"] = True
+        def begin_nested(self): return _Savepoint()
     monkeypatch.setattr(agent_execution_adapter, "assert_authorized", authorize)
     monkeypatch.setattr(agent_execution_adapter, "resolve_employee_version", resolve)
     monkeypatch.setattr(agent_execution_adapter, "create_run", create)
