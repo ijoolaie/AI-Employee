@@ -37,6 +37,16 @@ def _effective_permission_codes(ctx: CurrentContext) -> set[str]:
     }
 
 
+def _assert_roles_within_authority(ctx: CurrentContext, roles: list[Role]) -> None:
+    """Reject any role set that would grant permissions the actor lacks."""
+    if ctx.user.is_superuser:
+        return
+    actor_permissions = _effective_permission_codes(ctx)
+    requested_permissions = {permission.code for role in roles for permission in role.permissions}
+    if not requested_permissions.issubset(actor_permissions):
+        raise HTTPException(status_code=403, detail="Cannot assign roles with permissions exceeding your authority")
+
+
 async def _load_assignable_roles(payload: UserRolesUpdate, ctx: CurrentContext, db: DbSession) -> list[Role]:
     roles_result = await db.execute(
         select(Role).options(selectinload(Role.permissions)).where(
@@ -47,12 +57,7 @@ async def _load_assignable_roles(payload: UserRolesUpdate, ctx: CurrentContext, 
     roles = roles_result.scalars().all()
     if len(roles) != len(set(payload.role_ids)):
         raise HTTPException(status_code=400, detail="One or more roles are invalid for this tenant")
-    if ctx.user.is_superuser:
-        return roles
-    actor_permissions = _effective_permission_codes(ctx)
-    requested_permissions = {permission.code for role in roles for permission in role.permissions}
-    if not requested_permissions.issubset(actor_permissions):
-        raise HTTPException(status_code=403, detail="Cannot assign roles with permissions exceeding your authority")
+    _assert_roles_within_authority(ctx, roles)
     return roles
 
 @router.get("/users", response_model=APIResponse[list[UserSummary]])
