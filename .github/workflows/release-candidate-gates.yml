@@ -54,7 +54,7 @@ jobs:
             echo "Tracking ${label} run ${run_id}"
             for _ in $(seq 1 210); do
               status="$(gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json status --jq '.status')"
-              conclusion="$(gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json conclusion --jq '.conclusion // \"\"')"
+              conclusion="$(gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --json conclusion --jq '.conclusion // empty')"
               echo "${label}: status=${status} conclusion=${conclusion}"
 
               if [[ "$status" == completed ]]; then
