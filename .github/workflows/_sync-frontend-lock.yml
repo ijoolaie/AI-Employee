@@ -1,20 +1,20 @@
 name: _sync-frontend-lock
 
 on:
-  push:
-    branches:
-      - docs/reconcile-mainline-after-sharp
+  pull_request:
+    types: [synchronize, opened, reopened]
 
 permissions:
   contents: write
 
 jobs:
   sync:
+    if: github.event.pull_request.head.repo.full_name == github.repository && !contains(github.event.pull_request.head.sha, 'sync')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: docs/reconcile-mainline-after-sharp
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
@@ -29,4 +29,4 @@ jobs:
           git add frontend/package-lock.json
           git diff --cached --quiet && exit 0
           git commit -m "build: sync frontend lockfile"
-          git push origin HEAD:docs/reconcile-mainline-after-sharp
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
