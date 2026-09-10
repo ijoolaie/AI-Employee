@@ -9,6 +9,7 @@ from pathlib import Path
 
 import httpx
 from sqlalchemy import delete, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -93,16 +94,37 @@ async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UU
     chunks = chunk_text(text)
     if not chunks:
         raise ValidationAppError("File contains no extractable text")
+
     doc_result = await db.execute(select(KnowledgeDocument).where(KnowledgeDocument.tenant_id == tenant_id, KnowledgeDocument.file_id == file_id))
     document = doc_result.scalar_one_or_none()
     if document is None:
-        document = KnowledgeDocument(tenant_id=tenant_id, file_id=file_id, status="pending")
-        db.add(document)
-        await db.flush()
-    else:
-        await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.document_id == document.id))
-        document.status = "pending"
-        document.error_message = None
+        candidate = KnowledgeDocument(tenant_id=tenant_id, file_id=file_id, status="pending")
+        try:
+            async with db.begin_nested():
+                db.add(candidate)
+                await db.flush()
+        except IntegrityError:
+            winner_result = await db.execute(
+                select(KnowledgeDocument).where(
+                    KnowledgeDocument.tenant_id == tenant_id,
+                    KnowledgeDocument.file_id == file_id,
+                )
+            )
+            document = winner_result.scalar_one_or_none()
+            if document is None:
+                raise
+        else:
+            document = candidate
+
+    locked_result = await db.execute(
+        select(KnowledgeDocument)
+        .where(KnowledgeDocument.id == document.id)
+        .with_for_update()
+    )
+    document = locked_result.scalar_one()
+    await db.execute(delete(KnowledgeChunk).where(KnowledgeChunk.document_id == document.id))
+    document.status = "pending"
+    document.error_message = None
     try:
         embeddings: list[list[float]] = []
         batch_size = 32
