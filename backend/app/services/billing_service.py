@@ -31,9 +31,6 @@ async def ensure_plans(db: AsyncSession) -> None:
         if existing is not None:
             continue
         try:
-            # Keep the uniqueness race inside a SAVEPOINT so a concurrent
-            # initializer can lose the INSERT without invalidating its outer
-            # transaction. The winner's row is then re-read below.
             async with db.begin_nested():
                 db.add(BillingPlan(**seed))
                 await db.flush()
@@ -110,8 +107,6 @@ async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subs
     trial_ends = now + timedelta(days=14)
     candidate = Subscription(tenant_id=tenant_id, plan_id=plan.id, status="trialing", provider="manual", current_period_start=_period_start(now), current_period_end=_period_end(now), trial_ends_at=trial_ends)
     try:
-        # Subscription.tenant_id is unique. Use a SAVEPOINT so a concurrent
-        # initializer can lose this INSERT and safely re-read the winner.
         async with db.begin_nested():
             db.add(candidate)
             await db.flush()
@@ -174,9 +169,21 @@ async def record_event(db: AsyncSession, *, tenant_id: uuid.UUID | None, provide
     existing = (await db.execute(select(BillingEvent).where(BillingEvent.provider == provider, BillingEvent.provider_event_id == provider_event_id))).scalar_one_or_none()
     if existing:
         return existing
-    event = BillingEvent(tenant_id=tenant_id, provider=provider, provider_event_id=provider_event_id, event_type=event_type, payload=payload, status="processed")
-    db.add(event)
-    await db.flush()
+
+    candidate = BillingEvent(tenant_id=tenant_id, provider=provider, provider_event_id=provider_event_id, event_type=event_type, payload=payload, status="processed")
+    try:
+        # BillingEvent(provider, provider_event_id) is unique. Keep the race
+        # inside a SAVEPOINT so the losing webhook can re-read the winner.
+        async with db.begin_nested():
+            db.add(candidate)
+            await db.flush()
+    except IntegrityError:
+        existing = (await db.execute(select(BillingEvent).where(BillingEvent.provider == provider, BillingEvent.provider_event_id == provider_event_id))).scalar_one_or_none()
+        if existing is None:
+            raise
+        return existing
+
+    event = candidate
     if tenant_id:
         sub = await ensure_subscription(db, tenant_id=tenant_id)
         if plan_code:
