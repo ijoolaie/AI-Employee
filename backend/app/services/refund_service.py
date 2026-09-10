@@ -65,7 +65,7 @@ async def _record_lifecycle_event(
         "failure_reason": row.failure_reason,
     }
     if event is None:
-        event = BillingEvent(
+        candidate = BillingEvent(
             tenant_id=row.tenant_id,
             provider="stripe",
             provider_event_id=provider_event_id,
@@ -73,12 +73,28 @@ async def _record_lifecycle_event(
             payload=payload,
             status=status,
         )
-        db.add(event)
-    else:
+        try:
+            async with db.begin_nested():
+                db.add(candidate)
+                await db.flush()
+        except IntegrityError:
+            event = (
+                await db.execute(
+                    select(BillingEvent).where(
+                        BillingEvent.provider == "stripe",
+                        BillingEvent.provider_event_id == provider_event_id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if event is None:
+                raise
+        else:
+            event = candidate
+    if event is not None:
         event.tenant_id = row.tenant_id
         event.payload = payload
         event.status = status
-    await db.flush()
+        await db.flush()
 
 
 async def request_refund(
