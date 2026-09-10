@@ -1,11 +1,11 @@
 """Cancel pending Agent Runs when their WorkItem is cancelled.
 Revision ID: c4d5e6f7a8b9
-Revises: 0a1b2c3d4e5f
+Revises: 0a1b2c3d4e5f, v14013billingmanagementrbac
 """
 from alembic import op
 
 revision = "c4d5e6f7a8b9"
-down_revision = "0a1b2c3d4e5f"
+down_revision = ("0a1b2c3d4e5f", "v14013billingmanagementrbac")
 branch_labels = None
 depends_on = None
 
