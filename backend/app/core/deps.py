@@ -167,3 +167,6 @@ ProductCreateContext = Annotated[TenantContext, Depends(require_permission("prod
 ProductInventoryUpdateContext = Annotated[TenantContext, Depends(require_permission("products.inventory_update"))]
 TeamInstallContext = Annotated[TenantContext, Depends(require_permission("team.install"))]
 TeamExecuteContext = Annotated[TenantContext, Depends(require_permission("team.execute"))]
+APIKeysReadContext = Annotated[TenantContext, Depends(require_permission("api_keys.read"))]
+APIKeysCreateContext = Annotated[TenantContext, Depends(require_permission("api_keys.create"))]
+APIKeysRevokeContext = Annotated[TenantContext, Depends(require_permission("api_keys.revoke"))]
