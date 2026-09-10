@@ -37,7 +37,11 @@ async def _run_async(workflow_run_id: str, tenant_id: str) -> None:
                 if current_span is not None:
                     current_span.set_attribute("workflow.status", status)
             except Exception:
-                await db.rollback()
+                # execute_workflow() persists a terminal failed state before
+                # raising. Keep that state durable; rolling it back would leave
+                # the WorkflowRun apparently active and invite Celery to replay
+                # already-completed external effects.
+                await db.commit()
                 WORKFLOW_RUNS.labels("error").inc()
                 WORKFLOW_LATENCY.observe(perf_counter() - started)
                 logger.exception(
@@ -49,7 +53,14 @@ async def _run_async(workflow_run_id: str, tenant_id: str) -> None:
 
 @celery_app.task(name="workflow.execute", bind=True, max_retries=3, default_retry_delay=10)
 def execute_workflow_task(self, workflow_run_id: str, tenant_id: str) -> None:
-    """Execute a Workflow Run only while its tenant owns a resource lease."""
+    """Execute a Workflow Run while retaining retry only for admission capacity.
+
+    Once execution starts, an exception is not automatically replayed. Workflow
+    steps can cross external side-effect boundaries, so Celery-level retries
+    after an execution exception are unsafe unless every downstream action has
+    an independently durable idempotency fence. Capacity exhaustion is handled
+    before execution and remains retryable.
+    """
     if not tenant_id:
         raise ValueError("tenant_id is required for workflow.execute")
     try:
@@ -62,10 +73,7 @@ def execute_workflow_task(self, workflow_run_id: str, tenant_id: str) -> None:
             countdown=min(60, 5 * (2 ** self.request.retries)),
         )
     try:
-        try:
-            asyncio.run(_run_async(workflow_run_id, tenant_id))
-        except Exception as exc:
-            raise self.retry(exc=exc, countdown=min(300, 5 * (2 ** self.request.retries)))
+        asyncio.run(_run_async(workflow_run_id, tenant_id))
     finally:
         release_tenant_resource(lease)
 
@@ -80,4 +88,8 @@ def execute_parallel_branch_task(self, branch_id: str) -> None:
     try:
         asyncio.run(_parallel_branch_async(branch_id))
     except Exception as exc:
-        raise self.retry(exc=exc, countdown=min(300, 5 * (2 ** self.request.retries)))
+        # Parallel branches have the same external-effect ambiguity as the
+        # parent workflow. Do not blindly replay a branch after its execution
+        # boundary may already have been crossed.
+        logger.exception("workflow_parallel_branch_failed", extra={"branch_id": branch_id})
+        raise
