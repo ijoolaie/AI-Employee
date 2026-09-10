@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,13 +20,29 @@ class TeamInstallation(Base):
 
     __tablename__ = "team_installations"
     __table_args__ = (
-        UniqueConstraint(
-            "tenant_id", "team_version_id", "workspace_key",
-            name="uq_team_installations_tenant_version_workspace",
+        Index(
+            "uq_team_installations_tenant_version_workspace_null",
+            "tenant_id", "team_version_id",
+            unique=True,
+            postgresql_where=text("workspace_key IS NULL"),
         ),
-        UniqueConstraint(
+        Index(
+            "uq_team_installations_tenant_version_workspace",
+            "tenant_id", "team_version_id", "workspace_key",
+            unique=True,
+            postgresql_where=text("workspace_key IS NOT NULL"),
+        ),
+        Index(
+            "uq_team_installations_tenant_publication_workspace_null",
+            "tenant_id", "source_publication_id",
+            unique=True,
+            postgresql_where=text("source_publication_id IS NOT NULL AND workspace_key IS NULL"),
+        ),
+        Index(
+            "uq_team_installations_tenant_publication_workspace",
             "tenant_id", "source_publication_id", "workspace_key",
-            name="uq_team_installations_tenant_publication_workspace",
+            unique=True,
+            postgresql_where=text("source_publication_id IS NOT NULL AND workspace_key IS NOT NULL"),
         ),
     )
 
