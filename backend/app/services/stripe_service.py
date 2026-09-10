@@ -34,6 +34,15 @@ class StripeNotConfiguredError(ValidationAppError):
         )
 
 
+STRIPE_SUBSCRIPTION_LIFECYCLE_EVENTS = {
+    "checkout.session.completed",
+    "customer.subscription.created",
+    "customer.subscription.updated",
+    "customer.subscription.deleted",
+    "invoice.payment_failed",
+}
+
+
 def _client():
     settings = get_settings()
     if not settings.stripe_enabled:
@@ -218,8 +227,57 @@ async def create_reversal(*, payment_intent_id: str, idempotency_key: str) -> di
     return {"id": payment_intent.id, "status": payment_intent.status}
 
 
+async def _latest_lifecycle_event_created(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+) -> int:
+    """Return the newest persisted Stripe lifecycle event creation time.
+
+    The existing BillingEvent schema predates Stripe ordering protection and
+    does not have a dedicated provider-created column. New Stripe events store
+    the immutable provider `created` timestamp in the payload. Older rows have
+    no timestamp and are ignored for ordering comparisons.
+    """
+    result = await db.execute(
+        select(BillingEvent.payload).where(
+            BillingEvent.provider == "stripe",
+            BillingEvent.tenant_id == tenant_id,
+            BillingEvent.event_type.in_(STRIPE_SUBSCRIPTION_LIFECYCLE_EVENTS),
+        )
+    )
+    latest = 0
+    for payload in result.scalars().all():
+        try:
+            latest = max(latest, int((payload or {}).get("stripe_event_created_at") or 0))
+        except (TypeError, ValueError):
+            continue
+    return latest
+
+
+async def _lock_subscription_for_lifecycle(
+    db: AsyncSession,
+    *,
+    subscription_id: uuid.UUID,
+    event_created_at: int,
+) -> tuple[Subscription, bool]:
+    """Lock subscription state and reject an older provider lifecycle event."""
+    sub = (
+        await db.execute(
+            select(Subscription).where(Subscription.id == subscription_id).with_for_update()
+        )
+    ).scalar_one()
+    latest = await _latest_lifecycle_event_created(db, tenant_id=sub.tenant_id)
+    return sub, bool(event_created_at and latest >= event_created_at)
+
+
 async def apply_webhook_event(db: AsyncSession, event) -> dict:
-    """Translate verified Stripe events into provider-neutral billing state."""
+    """Translate verified Stripe events into provider-neutral billing state.
+
+    Stripe does not guarantee webhook delivery order. Subscription state is
+    therefore serialized on the Subscription row and older lifecycle events
+    are recorded but are not allowed to regress newer provider state.
+    """
     provider_event_id = event["id"]
     existing = (
         await db.execute(
@@ -239,10 +297,12 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
 
     event_type = event["type"]
     data = event["data"]["object"]
+    event_created_at = int(event.get("created") or 0)
 
     tenant_id: uuid.UUID | None = None
     plan_code: str | None = None
     status: str | None = None
+    stale = False
 
     if event_type == "checkout.session.completed":
         tenant_ref = data.get("client_reference_id") or (data.get("metadata") or {}).get("tenant_id")
@@ -252,13 +312,17 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
         status = "active"
         if tenant_id is not None:
             sub = await billing_service.ensure_subscription(db, tenant_id=tenant_id)
-            sub.provider = "stripe"
-            if data.get("customer"):
-                sub.provider_customer_id = data["customer"]
-            if data.get("subscription"):
-                sub.provider_subscription_id = data["subscription"]
-            sub.trial_ends_at = None
-            await db.flush()
+            sub, stale = await _lock_subscription_for_lifecycle(
+                db, subscription_id=sub.id, event_created_at=event_created_at
+            )
+            if not stale:
+                sub.provider = "stripe"
+                if data.get("customer"):
+                    sub.provider_customer_id = data["customer"]
+                if data.get("subscription"):
+                    sub.provider_subscription_id = data["subscription"]
+                sub.trial_ends_at = None
+                await db.flush()
 
     elif event_type in ("customer.subscription.updated", "customer.subscription.created"):
         stripe_sub_id = data.get("id")
@@ -282,19 +346,23 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
                 plan_code = _plan_code_for_price_id(price_id)
         if tenant_id is not None:
             sub = await billing_service.ensure_subscription(db, tenant_id=tenant_id)
-            sub.provider = "stripe"
-            sub.provider_subscription_id = stripe_sub_id
-            if data.get("customer"):
-                sub.provider_customer_id = data["customer"]
-            period_start = data.get("current_period_start")
-            period_end = data.get("current_period_end")
-            if period_start:
-                sub.current_period_start = datetime.fromtimestamp(period_start, tz=timezone.utc)
-            if period_end:
-                sub.current_period_end = datetime.fromtimestamp(period_end, tz=timezone.utc)
-            trial_end = data.get("trial_end")
-            sub.trial_ends_at = datetime.fromtimestamp(trial_end, tz=timezone.utc) if trial_end else None
-            await db.flush()
+            sub, stale = await _lock_subscription_for_lifecycle(
+                db, subscription_id=sub.id, event_created_at=event_created_at
+            )
+            if not stale:
+                sub.provider = "stripe"
+                sub.provider_subscription_id = stripe_sub_id
+                if data.get("customer"):
+                    sub.provider_customer_id = data["customer"]
+                period_start = data.get("current_period_start")
+                period_end = data.get("current_period_end")
+                if period_start:
+                    sub.current_period_start = datetime.fromtimestamp(period_start, tz=timezone.utc)
+                if period_end:
+                    sub.current_period_end = datetime.fromtimestamp(period_end, tz=timezone.utc)
+                trial_end = data.get("trial_end")
+                sub.trial_ends_at = datetime.fromtimestamp(trial_end, tz=timezone.utc) if trial_end else None
+                await db.flush()
 
     elif event_type == "customer.subscription.deleted":
         stripe_sub_id = data.get("id")
@@ -304,6 +372,9 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
         if existing is not None:
             tenant_id = existing.tenant_id
             status = "canceled"
+            _, stale = await _lock_subscription_for_lifecycle(
+                db, subscription_id=existing.id, event_created_at=event_created_at
+            )
 
     elif event_type == "invoice.payment_failed":
         stripe_sub_id = data.get("subscription")
@@ -313,6 +384,9 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
         if existing is not None:
             tenant_id = existing.tenant_id
             status = "past_due"
+            _, stale = await _lock_subscription_for_lifecycle(
+                db, subscription_id=existing.id, event_created_at=event_created_at
+            )
 
     elif event_type in {"refund.created", "refund.updated", "charge.refunded"}:
         from app.services.refund_service import reconcile_stripe_refund_event
@@ -329,8 +403,13 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
         provider="stripe",
         provider_event_id=provider_event_id,
         event_type=event_type,
-        payload={"id": data.get("id"), "object": data.get("object")},
-        plan_code=plan_code,
-        status=status,
+        payload={
+            "id": data.get("id"),
+            "object": data.get("object"),
+            "stripe_event_created_at": event_created_at or None,
+            "stale_lifecycle_event": stale,
+        },
+        plan_code=None if stale else plan_code,
+        status=None if stale else status,
     )
-    return {"event_id": str(billing_event.id), "stripe_event_id": provider_event_id, "event_type": event_type, "duplicate": False}
+    return {"event_id": str(billing_event.id), "stripe_event_id": provider_event_id, "event_type": event_type, "duplicate": False, "stale": stale}
