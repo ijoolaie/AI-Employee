@@ -39,7 +39,7 @@ class MarketplaceService:
 
     @classmethod
     def _assert_no_embedded_secrets(cls, value: object, *, path: str = "policy") -> None:
-        """Reject secret-bearing policy payloads instead of copying them cross-tenant."""
+        """Reject secret-bearing payloads instead of copying them cross-tenant."""
         if isinstance(value, Mapping):
             for key, child in value.items():
                 normalized = str(key).strip().lower().replace("-", "_")
@@ -179,6 +179,10 @@ class MarketplaceService:
         for source_id in source_ids:
             source_agent = source_agents[source_id]
             self._assert_no_embedded_secrets(source_agent.model_policy or {}, path="model_policy")
+            self._assert_no_embedded_secrets(source_agent.allowed_tools or [], path="allowed_tools")
+            self._assert_no_embedded_secrets(source_agent.input_schema or {}, path="input_schema")
+            self._assert_no_embedded_secrets(source_agent.output_schema or {}, path="output_schema")
+            self._assert_no_embedded_secrets(source_agent.policy_requirements or {}, path="policy_requirements")
             slug_base = f"{source_agent.slug}-marketplace-{scope_suffix}"
             slug = slug_base[:120]
             imported_agent = AgentDefinition(
@@ -198,6 +202,12 @@ class MarketplaceService:
             self.db.add(imported_agent)
             await self.db.flush()
             imported_agent_ids.append(str(imported_agent.id))
+
+        self._assert_no_embedded_secrets(source_version.roles or {}, path="roles")
+        self._assert_no_embedded_secrets(source_version.execution_policy or {}, path="execution_policy")
+        self._assert_no_embedded_secrets(source_version.allowed_tools or [], path="team_allowed_tools")
+        self._assert_no_embedded_secrets(source_version.input_schema or {}, path="team_input_schema")
+        self._assert_no_embedded_secrets(source_version.output_schema or {}, path="team_output_schema")
 
         team_slug = f"{source_team.slug}-marketplace-{scope_suffix}"[:120]
         imported_team = TeamDefinition(

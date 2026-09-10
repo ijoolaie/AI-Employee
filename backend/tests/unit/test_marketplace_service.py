@@ -176,6 +176,55 @@ async def test_import_rejects_embedded_secret_policy():
 
 
 @pytest.mark.asyncio
+async def test_import_rejects_secret_bearing_team_metadata():
+    source_tenant = uuid4()
+    target_tenant = uuid4()
+    source_agent_id = uuid4()
+    publication_id = uuid4()
+    source_version = SimpleNamespace(
+        id=uuid4(), version=1, member_agent_definition_ids=[source_agent_id],
+        roles={"lead": "agent"},
+        execution_policy={"provider": {"token": "do-not-copy"}},
+        allowed_tools=[], input_schema={}, output_schema={},
+    )
+    source_team = SimpleNamespace(id=uuid4(), tenant_id=source_tenant, enabled=True, slug="secure-team", name="Secure", description=None)
+    publication = SimpleNamespace(id=publication_id, owner_tenant_id=source_tenant, team_version_id=source_version.id, visibility="public", status="published")
+    source_agent = SimpleNamespace(
+        id=source_agent_id, tenant_id=source_tenant, slug="secure-agent", name="Secure", description=None,
+        version=1, capabilities=[], allowed_tools=[], model_policy={}, input_schema={}, output_schema={},
+        policy_requirements={}, enabled=True,
+    )
+    db = FakeSession([Result(row=(publication, source_version, source_team)), Result(scalar=None), Result(items=[source_agent])])
+
+    with pytest.raises(MarketplaceError, match="execution_policy.provider.token"):
+        await MarketplaceService(db).import_publication(
+            tenant_id=target_tenant, publication_id=publication_id, actor_id=uuid4(), workspace_key="secure-team",
+        )
+
+
+@pytest.mark.asyncio
+async def test_import_rejects_secret_bearing_agent_metadata():
+    source_tenant = uuid4()
+    target_tenant = uuid4()
+    source_agent_id = uuid4()
+    publication_id = uuid4()
+    source_version = SimpleNamespace(id=uuid4(), version=1, member_agent_definition_ids=[source_agent_id], roles={}, execution_policy={}, allowed_tools=[], input_schema={}, output_schema={})
+    source_team = SimpleNamespace(id=uuid4(), tenant_id=source_tenant, enabled=True, slug="secure-team", name="Secure", description=None)
+    publication = SimpleNamespace(id=publication_id, owner_tenant_id=source_tenant, team_version_id=source_version.id, visibility="public", status="published")
+    source_agent = SimpleNamespace(
+        id=source_agent_id, tenant_id=source_tenant, slug="secure-agent", name="Secure", description=None,
+        version=1, capabilities=[], allowed_tools=[], model_policy={}, input_schema={}, output_schema={},
+        policy_requirements={"credential_ref": "cred:do-not-copy"}, enabled=True,
+    )
+    db = FakeSession([Result(row=(publication, source_version, source_team)), Result(scalar=None), Result(items=[source_agent])])
+
+    with pytest.raises(MarketplaceError, match="policy_requirements.credential_ref"):
+        await MarketplaceService(db).import_publication(
+            tenant_id=target_tenant, publication_id=publication_id, actor_id=uuid4(), workspace_key="secure-agent",
+        )
+
+
+@pytest.mark.asyncio
 async def test_import_rejects_duplicate_publication_scope():
     target_tenant = uuid4()
     publication_id = uuid4()
