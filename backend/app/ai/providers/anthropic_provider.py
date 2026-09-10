@@ -33,6 +33,10 @@ _DEFAULT_PRICING = (3.0, 15.0)
 
 class AnthropicProvider:
     name = "anthropic"
+    # Anthropic Messages is not treated as client-idempotent here: no
+    # documented exactly-once/reconciliation contract is assumed.
+    supports_idempotency = False
+    supports_reconciliation = False
 
     def __init__(self, api_key: str | None = None):
         self.api_key = api_key or settings.anthropic_api_key

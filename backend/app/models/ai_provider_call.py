@@ -1,11 +1,8 @@
-"""AI Gateway call log.
+"""AI Gateway provider-call accounting and crash-recovery fence.
 
-Per 10_AI_Core §3.1: the Gateway "ثبت latency، tokens و cost برای هر
-فراخوانی" (records latency, tokens, cost for every call). This table is
-that record. It is the data source for:
-  - Trace / Replay of a Run (each row links to run_id)
-  - The Cost Dashboard (docs v1.2 §3.5, Phase 2) — a UI is added later,
-    but the underlying rows must exist from the first real AI call.
+Each row is the durable logical-call record used for usage/cost reporting and
+for refusing blind replay after a worker dies around the external provider
+boundary.
 """
 
 import uuid
@@ -40,10 +37,9 @@ class AIProviderCall(Base):
     latency_ms: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="success")
-    # "success" | "error" | "timeout"
+    # "in_flight" | "unknown" | "success" | "error" | "timeout"
     error_message: Mapped[str | None] = mapped_column(String(1000), nullable=True)
 
-    # Prompt version used, for Prompt Versioning traceability (10_AI_Core §3.3)
     prompt_version: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     request_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
