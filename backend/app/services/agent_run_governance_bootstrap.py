@@ -49,19 +49,22 @@ def install() -> None:
         if not isinstance(db, AsyncSession):
             return await original_execute_run(db, run_id=run_id)
 
-        # Serialize Agent Run execution at the database boundary. The previous
-        # idempotency check in RunService was only observational: two workers
-        # could both read a pending Run before either committed `running` and
-        # both proceed to the model/tool execution path. Locking the Run here
-        # makes the state check + authority check + execution one serialized
-        # transaction. A redelivered task waits for the first worker, then sees
-        # the terminal/running state and is rejected by RunService's idempotency
-        # guard instead of replaying side effects.
+        # Serialize every production Run execution at the database boundary.
+        # The idempotency check in RunService is observational unless the state
+        # read is serialized: two workers could otherwise both read a pending
+        # Run before either commits `running` and both proceed to provider/tool
+        # execution. Locking here makes the state check and execution one
+        # serialized transaction. A redelivery waits for the first worker,
+        # then sees the terminal/running state and is rejected by RunService's
+        # idempotency guard instead of replaying side effects.
         result = await db.execute(
             select(Run).where(Run.id == run_id).with_for_update()
         )
         run = result.scalar_one_or_none()
-        if run is None or run.agent_instance_id is None:
+        if run is None:
+            return await original_execute_run(db, run_id=run_id)
+
+        if run.agent_instance_id is None:
             return await original_execute_run(db, run_id=run_id)
 
         # Agent authorization must be re-established at the worker execution
