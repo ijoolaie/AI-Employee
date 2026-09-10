@@ -32,28 +32,77 @@ async def create_employee(
     rules: dict[str, Any],
     actor_id: uuid.UUID | None,
 ) -> Employee:
-    unknown_tools = sorted(set(allowed_tools) - {tool.name for tool in registry.list()})
+    # Fail closed: validate tools before any quota/database work.
+    unknown_tools = sorted(
+        set(allowed_tools) - {tool.name for tool in registry.list()}
+    )
     if unknown_tools:
-        raise ValidationAppError("Employee references unregistered tools", details={"unknown_tools": unknown_tools})
+        raise ValidationAppError(
+            "Employee references unregistered tools",
+            details={"unknown_tools": unknown_tools},
+        )
+
     if tenant_id is not None:
         await billing_service.enforce_employee_quota(db, tenant_id=tenant_id)
+
     validate_schema_definition(input_schema, field_name="input_schema")
     validate_schema_definition(output_schema, field_name="output_schema")
-    existing = await db.execute(select(Employee).where(Employee.tenant_id == tenant_id, Employee.slug == slug))
+
+    existing = await db.execute(
+        select(Employee).where(
+            Employee.tenant_id == tenant_id,
+            Employee.slug == slug,
+        )
+    )
     if existing.scalar_one_or_none():
-        raise ValidationAppError(f"Employee with slug '{slug}' already exists for this tenant")
-    employee = Employee(id=uuid.uuid4(), tenant_id=tenant_id, slug=slug, name=name, kind=kind, is_active=True)
+        raise ValidationAppError(
+            f"Employee with slug '{slug}' already exists for this tenant"
+        )
+
+    employee = Employee(
+        id=uuid.uuid4(),
+        tenant_id=tenant_id,
+        slug=slug,
+        name=name,
+        kind=kind,
+        is_active=True,
+    )
     add_result = db.add(employee)
     if inspect.isawaitable(add_result):
         await add_result
+
     await db.flush()
-    version = EmployeeVersion(id=uuid.uuid4(), employee_id=employee.id, version_number=1, is_current=True, input_schema=input_schema, output_schema=output_schema, prompt_template=prompt_template, allowed_tools=allowed_tools, rules=rules)
+
+    version = EmployeeVersion(
+        id=uuid.uuid4(),
+        employee_id=employee.id,
+        version_number=1,
+        is_current=True,
+        input_schema=input_schema,
+        output_schema=output_schema,
+        prompt_template=prompt_template,
+        allowed_tools=allowed_tools,
+        rules=rules,
+    )
     add_result = db.add(version)
     if inspect.isawaitable(add_result):
         await add_result
+
     await db.flush()
     await db.refresh(employee)
-    await audit_service.record(db, action="employee.created", actor_type="user" if actor_id else "system", actor_id=actor_id, tenant_id=tenant_id, resource_type="employee", resource_id=employee.id, request_id=request_id_var.get(), metadata={"slug": slug, "version_number": 1})
+
+    await audit_service.record(
+        db,
+        action="employee.created",
+        actor_type="user" if actor_id else "system",
+        actor_id=actor_id,
+        tenant_id=tenant_id,
+        resource_type="employee",
+        resource_id=employee.id,
+        request_id=request_id_var.get(),
+        metadata={"slug": slug, "version_number": 1},
+    )
+
     return employee
 
 
@@ -69,22 +118,40 @@ async def publish_new_version(
     rules: dict[str, Any],
     actor_id: uuid.UUID | None,
 ) -> EmployeeVersion:
-    """Publish a new immutable version while serializing concurrent publishers."""
+    """Every meaningful change to Prompt/Tools/Schema is a new version;
+    old versions are kept for history and Replay (11_Employee_Framework §4).
+    """
     validate_schema_definition(input_schema, field_name="input_schema")
     validate_schema_definition(output_schema, field_name="output_schema")
-    unknown_tools = sorted(set(allowed_tools) - {tool.name for tool in registry.list()})
-    if unknown_tools:
-        raise ValidationAppError("Employee references unregistered tools", details={"unknown_tools": unknown_tools})
 
-    # Serialize version-number allocation and the current-version transition.
-    employee_result = await db.execute(
+    unknown_tools = sorted(
+        set(allowed_tools) - {tool.name for tool in registry.list()}
+    )
+    if unknown_tools:
+        raise ValidationAppError(
+            "Employee references unregistered tools",
+            details={"unknown_tools": unknown_tools},
+        )
+
+    employee = await get_employee(
+        db,
+        employee_id=employee_id,
+        tenant_id=tenant_id,
+    )
+
+    # Lock the resolved Employee row before allocating the next version number
+    # or changing the current-version flag. Keep get_employee() as the
+    # tenant/system-employee authorization seam used by callers and tests.
+    locked_employee_result = await db.execute(
         select(Employee)
-        .where(Employee.id == employee_id, Employee.tenant_id == tenant_id)
+        .where(Employee.id == employee.id)
         .with_for_update()
     )
-    employee = employee_result.scalar_one_or_none()
-    if employee is None:
+    locked_employee = locked_employee_result.scalar_one_or_none()
+    if locked_employee is None:
         raise NotFoundError("Employee not found")
+    employee = locked_employee
+
     if not employee.is_active:
         raise ValidationAppError("Employee is inactive")
 
@@ -96,36 +163,91 @@ async def publish_new_version(
     )
     last_version = last_version_result.scalar_one_or_none()
     next_number = (last_version.version_number if last_version else 0) + 1
+
     if last_version is not None:
         last_version.is_current = False
 
-    new_version = EmployeeVersion(id=uuid.uuid4(), employee_id=employee.id, version_number=next_number, is_current=True, input_schema=input_schema, output_schema=output_schema, prompt_template=prompt_template, allowed_tools=allowed_tools, rules=rules)
+    new_version = EmployeeVersion(
+        id=uuid.uuid4(),
+        employee_id=employee.id,
+        version_number=next_number,
+        is_current=True,
+        input_schema=input_schema,
+        output_schema=output_schema,
+        prompt_template=prompt_template,
+        allowed_tools=allowed_tools,
+        rules=rules,
+    )
     add_result = db.add(new_version)
     if inspect.isawaitable(add_result):
         await add_result
+
     await db.flush()
     await db.refresh(new_version)
-    await audit_service.record(db, action="employee.version_published", actor_type="user" if actor_id else "system", actor_id=actor_id, tenant_id=employee.tenant_id, resource_type="employee", resource_id=employee.id, request_id=request_id_var.get(), metadata={"version_number": next_number})
+
+    await audit_service.record(
+        db,
+        action="employee.version_published",
+        actor_type="user" if actor_id else "system",
+        actor_id=actor_id,
+        tenant_id=employee.tenant_id,
+        resource_type="employee",
+        resource_id=employee.id,
+        request_id=request_id_var.get(),
+        metadata={"version_number": next_number},
+    )
+
     return new_version
 
 
-async def get_employee(db: AsyncSession, *, employee_id: uuid.UUID, tenant_id: uuid.UUID | None) -> Employee:
-    result = await db.execute(select(Employee).where(Employee.id == employee_id, (Employee.tenant_id == tenant_id) | (Employee.tenant_id.is_(None))))
+async def get_employee(
+    db: AsyncSession,
+    *,
+    employee_id: uuid.UUID,
+    tenant_id: uuid.UUID | None,
+) -> Employee:
+    result = await db.execute(
+        select(Employee).where(
+            Employee.id == employee_id,
+            (Employee.tenant_id == tenant_id) | (Employee.tenant_id.is_(None)),
+        )
+    )
     employee = result.scalar_one_or_none()
+
     if employee is None:
         raise NotFoundError("Employee not found")
+
     return employee
 
 
-async def get_current_version(db: AsyncSession, *, employee_id: uuid.UUID) -> EmployeeVersion:
-    result = await db.execute(select(EmployeeVersion).where(EmployeeVersion.employee_id == employee_id, EmployeeVersion.is_current.is_(True)))
+async def get_current_version(
+    db: AsyncSession, *, employee_id: uuid.UUID
+) -> EmployeeVersion:
+    result = await db.execute(
+        select(EmployeeVersion).where(
+            EmployeeVersion.employee_id == employee_id,
+            EmployeeVersion.is_current.is_(True),
+        )
+    )
     version = result.scalar_one_or_none()
     if version is None:
         raise NotFoundError("Employee has no current version")
     return version
 
 
-async def list_employees(db: AsyncSession, *, tenant_id: uuid.UUID | None) -> list[Employee]:
-    """System Employees (tenant_id NULL) + this tenant's Custom Employees."""
-    result = await db.execute(select(Employee).where(Employee.is_active.is_(True), (Employee.tenant_id == tenant_id) | (Employee.tenant_id.is_(None))).order_by(Employee.created_at))
+async def list_employees(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID | None,
+) -> list[Employee]:
+    """System Employees (tenant_id NULL) + this tenant's Custom Employees
+    (11_Employee_Framework ?6)."""
+    result = await db.execute(
+        select(Employee)
+        .where(
+            Employee.is_active.is_(True),
+            (Employee.tenant_id == tenant_id) | (Employee.tenant_id.is_(None)),
+        )
+        .order_by(Employee.created_at)
+    )
     return list(result.scalars().all())
