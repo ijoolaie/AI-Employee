@@ -87,7 +87,7 @@ def main() -> int:
     assert employee_id, f"tenant A employee create missing id: {created}"
     print("REPORTS TENANT A SEED RESOURCE PASS")
 
-    data_a = read_dashboard_when_ready(token_a, minimum_employees=1)
+    read_dashboard_when_ready(token_a, minimum_employees=1)
     print("REPORTS TENANT A DASHBOARD SEES OWN RESOURCE PASS")
 
     status, dashboard_b = request("GET", "/customer-dashboard", token=token_b)
