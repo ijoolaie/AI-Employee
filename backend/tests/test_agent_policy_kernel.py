@@ -44,6 +44,10 @@ class FakeDb:
                     next_review_at=None,
                 )
             return FakeResult(review)
+        if "agent_identities" in text:
+            return FakeResult(self.values[1] if len(self.values) > 1 else None)
+        if "agent_instances" in text:
+            return FakeResult(self.values[0] if self.values else None)
         return FakeResult(self.values.pop(0))
 
     async def flush(self): self.flushed = True
