@@ -17,7 +17,7 @@ jobs:
           from pathlib import Path
           p = Path('backend/app/services/workflow_service.py')
           s = p.read_text()
-          old = '                if not all(b.status == "success" for b in branches): step.status = "waiting_parallel"; await db.flush(); return\n'
+          old = '                if not all(b.status == "success" for b in branches): step.status = "waiting_parallel"; await db.flush(); return run\n'
           new = '                if not all(b.status == "success" for b in branches):\n                    step.status = "waiting_parallel"\n                    run.execution_lease_id = None\n                    run.execution_lease_expires_at = None\n                    run.execution_heartbeat_at = None\n                    await db.flush()\n                    return run\n'
           assert old in s
           p.write_text(s.replace(old, new, 1))
