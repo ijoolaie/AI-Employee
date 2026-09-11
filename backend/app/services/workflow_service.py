@@ -193,7 +193,6 @@ async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflo
         version = await get_current_version(db, workflow_id=workflow.id)
     contract = dict(version.execution_contract or {})
     if contract.get("legacy"):
-        # Materialize a run-local contract without mutating the immutable version.
         snap = await _snapshot_steps(db, tenant_id=tenant_id, steps=version.config.get("steps", []))
         contract = _execution_contract(version_number=version.version_number, steps=snap, max_runtime_seconds=version.config.get("max_runtime_seconds"), legacy=True)
     max_runtime = version.config.get("max_runtime_seconds")
@@ -216,77 +215,27 @@ async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflo
 
 
 async def replay_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id: uuid.UUID, source_run_id: uuid.UUID, created_by: uuid.UUID, idempotency_key: str | None = None) -> WorkflowRun:
-    """Create a replay using the exact immutable contract of the source run.
-
-    Older RC8 runs may not have copied the contract into ``context`` even
-    though their WorkflowVersion already contains the immutable execution
-    contract. In that case we recover the contract from that exact version
-    instead of resolving the workflow's current version. If neither location
-    contains a non-legacy contract, replay is rejected because doing anything
-    else could execute different Employee versions.
-    """
+    """Create a replay using the exact immutable contract of the source run."""
     source = await get_workflow_run(db, workflow_run_id=source_run_id, tenant_id=tenant_id)
     if source.workflow_id != workflow_id:
         raise NotFoundError("Workflow run not found")
-
-    # IMPORTANT: never use the workflow's current version for replay.
-    # Replay must remain pinned to the version that produced the source run.
-    version_result = await db.execute(
-        select(WorkflowVersion).where(
-            WorkflowVersion.id == source.workflow_version_id,
-            WorkflowVersion.workflow_id == workflow_id,
-        )
-    )
+    version_result = await db.execute(select(WorkflowVersion).where(WorkflowVersion.id == source.workflow_version_id, WorkflowVersion.workflow_id == workflow_id))
     source_version = version_result.scalar_one_or_none()
     if source_version is None:
         raise NotFoundError("Source workflow version not found")
-
     source_context = dict(source.context or {})
     source_workflow_state = dict(source_context.get("_workflow") or {})
-
-    # Prefer the run-local snapshot. This is the strongest guarantee because
-    # it is the exact contract captured when the run was created.
     source_contract = dict(source_workflow_state.get("execution_contract") or {})
-
-    # Backward-compatible recovery for runs created before the run-local
-    # contract was persisted. The WorkflowVersion itself is immutable and is
-    # therefore safe to use as the replay source.
     if not source_contract:
         source_contract = dict(source_version.execution_contract or {})
-
     if not source_contract:
-        raise ValidationAppError(
-            "Source run has no immutable execution contract and cannot be replayed safely"
-        )
-
-    # A legacy contract explicitly means that the version does not contain
-    # immutable EmployeeVersion references. Do not silently re-snapshot it
-    # during replay because that would change execution semantics.
+        raise ValidationAppError("Source run has no immutable execution contract and cannot be replayed safely")
     if source_contract.get("legacy"):
-        raise ValidationAppError(
-            "Source workflow version has a legacy execution contract and cannot be replayed safely"
-        )
-
+        raise ValidationAppError("Source workflow version has a legacy execution contract and cannot be replayed safely")
     contract_steps = source_contract.get("steps")
     if not isinstance(contract_steps, list) or not contract_steps:
-        raise ValidationAppError(
-            "Source workflow version has an invalid immutable execution contract"
-        )
-
-    # Replay is pinned to the exact WorkflowVersion used by the source run.
-    # create_workflow_run normally copies that version's contract; we then
-    # overwrite the run-local snapshot with the source contract to guarantee
-    # that replay uses the same contract even for repaired/older runs.
-    run = await create_workflow_run(
-        db,
-        tenant_id=tenant_id,
-        workflow_id=workflow_id,
-        workflow_version_id=source.workflow_version_id,
-        input_data=dict(source_context.get("input") or {}),
-        created_by=created_by,
-        idempotency_key=idempotency_key,
-    )
-
+        raise ValidationAppError("Source workflow version has an invalid immutable execution contract")
+    run = await create_workflow_run(db, tenant_id=tenant_id, workflow_id=workflow_id, workflow_version_id=source.workflow_version_id, input_data=dict(source_context.get("input") or {}), created_by=created_by, idempotency_key=idempotency_key)
     state = dict(run.context or {})
     wf = dict(state.get("_workflow") or {})
     wf["replay_of_run_id"] = str(source.id)
@@ -297,22 +246,7 @@ async def replay_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflo
     state["_workflow"] = wf
     run.context = state
     flag_modified(run, "context")
-
-    await audit_service.record(
-        db,
-        action="workflow.run.replayed",
-        actor_id=created_by,
-        tenant_id=tenant_id,
-        resource_type="workflow_run",
-        resource_id=run.id,
-        request_id=request_id_var.get(),
-        metadata={
-            "source_run_id": str(source.id),
-            "workflow_version_id": str(source.workflow_version_id),
-            "workflow_version": source_version.version_number,
-            "content_hash": source_version.content_hash,
-        },
-    )
+    await audit_service.record(db, action="workflow.run.replayed", actor_id=created_by, tenant_id=tenant_id, resource_type="workflow_run", resource_id=run.id, request_id=request_id_var.get(), metadata={"source_run_id": str(source.id), "workflow_version_id": str(source.workflow_version_id), "workflow_version": source_version.version_number, "content_hash": source_version.content_hash})
     return run
 
 
@@ -352,18 +286,15 @@ async def _execute_parallel_branch(branch_id: uuid.UUID) -> None:
                     step_input = dict((parent.context or {}).get("input", {}))
                 max_attempts = int(definition.get("retry_max", 0)) + 1
                 child = None
-                for attempt in range(1, max_attempts + 1):
-                    try:
-                        child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
-                        await run_service.execute_run(db, run_id=child.id)
-                        if child.status != "success":
-                            raise RuntimeError(f"Employee Run ended with status {child.status}")
-                        break
-                    except Exception:
-                        if attempt >= max_attempts:
-                            raise
-                        await db.flush()
-                        await asyncio.sleep(min(30, 2 ** (attempt - 1)))
+                try:
+                    child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
+                    await run_service.execute_run(db, run_id=child.id)
+                    if child.status != "success":
+                        raise RuntimeError(f"Employee Run ended with status {child.status}")
+                except Exception as exc:
+                    if max_attempts > 1:
+                        raise ValidationAppError("WORKFLOW_CHILD_RETRY_UNSAFE: parallel branch child retry would create a fresh Run without a durable child identity fence.") from exc
+                    raise
                 outputs[definition.get("output_key") or definition["key"]] = child.output_data or {}
             branch.status = "success"; branch.output_data = outputs; branch.completed_at = datetime.now(timezone.utc)
             await _enqueue_resume(db, parent, reason=f"parallel_branch:{branch.branch_key}")
@@ -394,132 +325,56 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
         return run
     now = datetime.now(timezone.utc)
     if run.deadline_at and run.deadline_at <= now:
-        run.status = "timed_out"
-        run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}
-        run.completed_at = now
-        await db.flush()
-        await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": run.deadline_at.isoformat()})
-        return run
+        run.status = "timed_out"; run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}; run.completed_at = now; await db.flush(); await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": run.deadline_at.isoformat()}); return run
     run.status = "running"
-    if run.started_at is None:
-        run.started_at = datetime.now(timezone.utc)
+    if run.started_at is None: run.started_at = datetime.now(timezone.utc)
     await db.flush()
     try:
         for position in range(start_position, len(steps)):
             fresh = await db.execute(select(WorkflowRun.status, WorkflowRun.deadline_at).where(WorkflowRun.id == run.id))
             fresh_status, fresh_deadline = fresh.one()
-            if fresh_status == "cancelled":
-                run.status = "cancelled"
-                return run
+            if fresh_status == "cancelled": run.status = "cancelled"; return run
             if fresh_deadline and fresh_deadline <= datetime.now(timezone.utc):
-                run.status = "timed_out"
-                run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}
-                run.completed_at = datetime.now(timezone.utc)
-                await db.flush()
-                await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": fresh_deadline.isoformat()})
-                return run
+                run.status = "timed_out"; run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}; run.completed_at = datetime.now(timezone.utc); await db.flush(); await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": fresh_deadline.isoformat()}); return run
             definition = steps[position]
             step_key = definition["key"]
             existing_result = await db.execute(select(WorkflowStepRun).where(WorkflowStepRun.workflow_run_id == run.id, WorkflowStepRun.step_key == step_key))
             step = existing_result.scalar_one_or_none()
             if step is None:
-                step = WorkflowStepRun(workflow_run_id=run.id, step_key=step_key, step_type=definition.get("type", "employee"), position=position, status="running", input_data={})
-                db.add(step)
-                await db.flush()
-                WORKFLOW_STEPS.labels(step.step_type, "started").inc()
+                step = WorkflowStepRun(workflow_run_id=run.id, step_key=step_key, step_type=definition.get("type", "employee"), position=position, status="running", input_data={}); db.add(step); await db.flush(); WORKFLOW_STEPS.labels(step.step_type, "started").inc()
             elif step.status in {"success", "skipped"}:
-                context["_workflow"] = {**context.get("_workflow", {}), "next_position": position + 1}
-                flag_modified(run, "context")
-                continue
+                context["_workflow"] = {**context.get("_workflow", {}), "next_position": position + 1}; flag_modified(run, "context"); continue
             elif step.status == "retry_wait":
-                if step.next_retry_at and step.next_retry_at > datetime.now(timezone.utc):
-                    return run
-                step.status = "running"
-                step.next_retry_at = None
-                WORKFLOW_STEPS.labels(step.step_type, "retry_started").inc()
-                await db.flush()
-
-            # Parallel fan-out: branches are durable records dispatched through the outbox.
+                if step.next_retry_at and step.next_retry_at > datetime.now(timezone.utc): return run
+                step.status = "running"; step.next_retry_at = None; WORKFLOW_STEPS.labels(step.step_type, "retry_started").inc(); await db.flush()
             if definition.get("type") == "parallel":
-                branch_result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.workflow_step_run_id == step.id))
-                branches = list(branch_result.scalars().all())
+                branch_result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.workflow_step_run_id == step.id)); branches = list(branch_result.scalars().all())
                 if not branches:
-                    for branch_def in definition.get("branches", []):
-                        branch = WorkflowParallelBranchRun(workflow_run_id=run.id, workflow_step_run_id=step.id, branch_key=branch_def["key"], config={"steps": branch_def.get("steps", [])}, status="pending")
-                        db.add(branch)
-                    step.status = "waiting_parallel"
-                    await db.flush()
-                    branch_result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.workflow_step_run_id == step.id))
-                    branches = list(branch_result.scalars().all())
-                    for branch in branches:
-                        await outbox_service.enqueue(db, kind="workflow.parallel_branch", tenant_id=run.tenant_id, payload={"branch_id": str(branch.id)}, dedupe_key=f"workflow.parallel_branch:{branch.id}")
-                    await db.flush()
-                    return run
+                    for branch_def in definition.get("branches", []): db.add(WorkflowParallelBranchRun(workflow_run_id=run.id, workflow_step_run_id=step.id, branch_key=branch_def["key"], config={"steps": branch_def.get("steps", [])}, status="pending"))
+                    step.status = "waiting_parallel"; await db.flush(); branch_result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.workflow_step_run_id == step.id)); branches = list(branch_result.scalars().all())
+                    for branch in branches: await outbox_service.enqueue(db, kind="workflow.parallel_branch", tenant_id=run.tenant_id, payload={"branch_id": str(branch.id)}, dedupe_key=f"workflow.parallel_branch:{branch.id}")
+                    await db.flush(); return run
                 if any(b.status == "failed" for b in branches):
-                    step.status = "failed"; step.error = {"code": "PARALLEL_BRANCH_FAILED", "message": "One or more parallel branches failed."}; step.completed_at = datetime.now(timezone.utc)
-                    run.status = "failed"; run.error = {"step": step_key, **step.error}; raise ValidationAppError(step.error["message"])
-                if not all(b.status == "success" for b in branches):
-                    step.status = "waiting_parallel"; await db.flush(); return run
-                parallel_output = {b.branch_key: (b.output_data or {}) for b in branches}
-                step.status = "success"; step.output_data = parallel_output; step.completed_at = datetime.now(timezone.utc)
-                context["steps"][step_key] = parallel_output
+                    step.status = "failed"; step.error = {"code": "PARALLEL_BRANCH_FAILED", "message": "One or more parallel branches failed."}; step.completed_at = datetime.now(timezone.utc); run.status = "failed"; run.error = {"step": step_key, **step.error}; raise ValidationAppError(step.error["message"])
+                if not all(b.status == "success" for b in branches): step.status = "waiting_parallel"; await db.flush(); return run
+                parallel_output = {b.branch_key: (b.output_data or {}) for b in branches}; step.status = "success"; step.output_data = parallel_output; step.completed_at = datetime.now(timezone.utc); context["steps"][step_key] = parallel_output
                 if definition.get("output_key"): context[definition["output_key"]] = parallel_output
-                context["_workflow"] = {**context.get("_workflow", {}), "next_position": position + 1}
-                flag_modified(run, "context"); await db.flush(); continue
-
-            # Durable human approval: never block a worker; persist state and return.
+                context["_workflow"] = {**context.get("_workflow", {}), "next_position": position + 1}; flag_modified(run, "context"); await db.flush(); continue
             if definition.get("type") == "approval":
-                approval_result = await db.execute(select(WorkflowApproval).where(WorkflowApproval.workflow_step_run_id == step.id).with_for_update())
-                approval = approval_result.scalar_one_or_none()
+                approval_result = await db.execute(select(WorkflowApproval).where(WorkflowApproval.workflow_step_run_id == step.id).with_for_update()); approval = approval_result.scalar_one_or_none()
                 if approval is None:
-                    timeout_seconds = int(definition.get("timeout_seconds", 86400))
-                    approval = WorkflowApproval(tenant_id=run.tenant_id, workflow_run_id=run.id, workflow_step_run_id=step.id, step_key=step_key, status="pending", requested_by=run.created_by, metadata={"message": definition.get("message", "Approval required"), "metadata": definition.get("metadata", {})}, expires_at=datetime.now(timezone.utc) + timedelta(seconds=max(1, timeout_seconds)))
-                    db.add(approval)
-                    step.status = "waiting"
-                    run.status = "waiting_approval"
-                    context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}
-                    flag_modified(run, "context")
-                    await db.flush()
-                    await audit_service.record(db, action="workflow.approval.requested", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_approval", resource_id=approval.id, request_id=request_id_var.get(), metadata={"workflow_run_id": str(run.id), "step_key": step_key, "expires_at": approval.expires_at.isoformat()})
-                    return run
-                if approval.status == "pending":
-                    run.status = "waiting_approval"
-                    context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}
-                    flag_modified(run, "context")
-                    await db.flush()
-                    return run
+                    timeout_seconds = int(definition.get("timeout_seconds", 86400)); approval = WorkflowApproval(tenant_id=run.tenant_id, workflow_run_id=run.id, workflow_step_run_id=step.id, step_key=step_key, status="pending", requested_by=run.created_by, metadata={"message": definition.get("message", "Approval required"), "metadata": definition.get("metadata", {})}, expires_at=datetime.now(timezone.utc) + timedelta(seconds=max(1, timeout_seconds))); db.add(approval); step.status = "waiting"; run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); await db.flush(); await audit_service.record(db, action="workflow.approval.requested", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_approval", resource_id=approval.id, request_id=request_id_var.get(), metadata={"workflow_run_id": str(run.id), "step_key": step_key, "expires_at": approval.expires_at.isoformat()}); return run
+                if approval.status == "pending": run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); await db.flush(); return run
                 if approval.status == "rejected":
-                    step.status = "failed"
-                    step.error = {"code": "WORKFLOW_APPROVAL_REJECTED", "message": approval.decision_reason or "Human approval rejected the workflow step."}
-                    step.completed_at = datetime.now(timezone.utc)
-                    run.status = "failed"
-                    run.error = {"step": step_key, **step.error}
-                    raise ValidationAppError(step.error["message"])
-                step.status = "success"
-                step.output_data = {"approved": True, "decided_by": str(approval.decided_by) if approval.decided_by else None, "reason": approval.decision_reason}
-                step.completed_at = datetime.now(timezone.utc)
-                context["steps"][step_key] = step.output_data
-                context["_workflow"] = {"next_position": position + 1}
-                flag_modified(run, "context")
-                await db.flush()
-                continue
-
+                    step.status = "failed"; step.error = {"code": "WORKFLOW_APPROVAL_REJECTED", "message": approval.decision_reason or "Human approval rejected the workflow step."}; step.completed_at = datetime.now(timezone.utc); run.status = "failed"; run.error = {"step": step_key, **step.error}; raise ValidationAppError(step.error["message"])
+                step.status = "success"; step.output_data = {"approved": True, "decided_by": str(approval.decided_by) if approval.decided_by else None, "reason": approval.decision_reason}; step.completed_at = datetime.now(timezone.utc); context["steps"][step_key] = step.output_data; context["_workflow"] = {"next_position": position + 1}; flag_modified(run, "context"); await db.flush(); continue
             if definition.get("condition_ref"):
-                prior = context.get("steps", {}).get(definition["condition_ref"], {})
-                expected = bool(definition.get("condition_value", True))
+                prior = context.get("steps", {}).get(definition["condition_ref"], {}); expected = bool(definition.get("condition_value", True))
                 if bool(prior.get("passed")) is not expected:
-                    step.status = "skipped"; step.output_data = {"skipped_by": definition["condition_ref"]}; step.completed_at = datetime.now(timezone.utc)
-                    context["steps"][step_key] = step.output_data; context["_workflow"] = {"next_position": position + 1}; flag_modified(run, "context"); await db.flush(); continue
-            # An empty condition object is the default produced by the API schema
-            # for ordinary steps. It must mean "no condition", not a condition
-            # with an empty context path (which would raise Unsupported context path).
+                    step.status = "skipped"; step.output_data = {"skipped_by": definition["condition_ref"]}; step.completed_at = datetime.now(timezone.utc); context["steps"][step_key] = step.output_data; context["_workflow"] = {"next_position": position + 1}; flag_modified(run, "context"); await db.flush(); continue
             if definition.get("condition"):
-                condition_result = evaluate_condition(definition["condition"], context)
-                expected = bool(definition.get("condition_value", True)); passed = condition_result is expected
-                step.output_data = {"result": condition_result, "passed": passed}; step.status = "success" if passed else "skipped"; step.completed_at = datetime.now(timezone.utc)
-                context["steps"][step_key] = step.output_data; context["_workflow"] = {"next_position": position + 1}; flag_modified(run, "context"); await db.flush(); continue
-            if definition.get("type") == "condition":
-                raise ValidationAppError("condition step requires condition definition")
+                condition_result = evaluate_condition(definition["condition"], context); expected = bool(definition.get("condition_value", True)); passed = condition_result is expected; step.output_data = {"result": condition_result, "passed": passed}; step.status = "success" if passed else "skipped"; step.completed_at = datetime.now(timezone.utc); context["steps"][step_key] = step.output_data; context["_workflow"] = {"next_position": position + 1}; flag_modified(run, "context"); await db.flush(); continue
+            if definition.get("type") == "condition": raise ValidationAppError("condition step requires condition definition")
             step_input = _resolve_mapping(definition.get("input_mapping", {}), context)
             if not step_input and position == 0: step_input = dict(context.get("input", {}))
             step.input_data = step_input
@@ -529,78 +384,53 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
             attempt = max(1, int(step.attempt or 1))
             if step.employee_run_id:
                 existing_child = await db.get(Run, step.employee_run_id)
-                if existing_child is not None and existing_child.status == "success":
+                if existing_child is None:
+                    step.status = "failed"
+                    step.error = {"code": "WORKFLOW_CHILD_RETRY_UNSAFE", "message": "Linked employee Run is missing; refusing to create a replacement Run."}
+                    step.completed_at = datetime.now(timezone.utc)
+                    raise ValidationAppError(step.error["message"])
+                if existing_child.status == "success":
                     child = existing_child
+                else:
+                    step.status = "failed"
+                    step.error = {"code": "WORKFLOW_CHILD_RETRY_UNSAFE", "message": f"Linked employee Run ended with status {existing_child.status}; refusing to create a replacement Run after execution may have crossed a side-effect boundary."}
+                    step.completed_at = datetime.now(timezone.utc)
+                    raise ValidationAppError(step.error["message"])
             if child is None:
                 try:
                     child = await run_service.create_run(db, tenant_id=run.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=run.created_by)
                     step.employee_run_id = child.id
                     await run_service.execute_run(db, run_id=child.id)
-                    if child.status != "success":
-                        raise RuntimeError(f"Employee Run ended with status {child.status}")
+                    if child.status != "success": raise RuntimeError(f"Employee Run ended with status {child.status}")
                 except Exception as exc:
                     step.last_error = {"message": str(exc)[:1000], "attempt": attempt}
                     if attempt < max_attempts:
-                        step.attempt = attempt + 1
-                        step.status = "retry_wait"
-                        delay = min(300, backoff_base * (2 ** (attempt - 1)))
-                        step.next_retry_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
-                        await _enqueue_resume(db, run, reason=f"retry:{step_key}:{attempt + 1}", delay_seconds=delay)
-                        await db.flush()
-                        return run
+                        step.attempt = attempt + 1; step.status = "retry_wait"; delay = min(300, backoff_base * (2 ** (attempt - 1))); step.next_retry_at = datetime.now(timezone.utc) + timedelta(seconds=delay); await _enqueue_resume(db, run, reason=f"retry:{step_key}:{attempt + 1}", delay_seconds=delay); await db.flush(); return run
                     raise
             assert child is not None
-            output = child.output_data or {}
-            step.output_data = output; step.status = "success"; step.completed_at = datetime.now(timezone.utc)
-            context["steps"][step_key] = output
+            output = child.output_data or {}; step.output_data = output; step.status = "success"; step.completed_at = datetime.now(timezone.utc); context["steps"][step_key] = output
             if definition.get("output_key"): context[definition["output_key"]] = output
-            context["_workflow"] = {"next_position": position + 1}
-            flag_modified(run, "context")
-            await db.flush()
+            context["_workflow"] = {"next_position": position + 1}; flag_modified(run, "context"); await db.flush()
         fresh = await db.execute(select(WorkflowRun.status).where(WorkflowRun.id == run.id))
-        if fresh.scalar_one() == "cancelled":
-            run.status = "cancelled"
-            return run
-        run.context = context
-        run.output_data = context.get("steps", {})
-        run.status = "success"
-        run.completed_at = datetime.now(timezone.utc)
-        await db.flush()
-        await audit_service.record(db, action="workflow.run.completed", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="success", request_id=request_id_var.get(), metadata={"status": run.status})
-        return run
+        if fresh.scalar_one() == "cancelled": run.status = "cancelled"; return run
+        run.context = context; run.output_data = context.get("steps", {}); run.status = "success"; run.completed_at = datetime.now(timezone.utc); await db.flush(); await audit_service.record(db, action="workflow.run.completed", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="success", request_id=request_id_var.get(), metadata={"status": run.status}); return run
     except Exception:
         if run.status != "waiting_approval":
-            run.status = "failed"
-            run.completed_at = datetime.now(timezone.utc)
-            await db.flush()
-            await audit_service.record(db, action="workflow.run.completed", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"status": run.status})
+            run.status = "failed"; run.completed_at = datetime.now(timezone.utc); await db.flush(); await audit_service.record(db, action="workflow.run.completed", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"status": run.status})
         raise
 
 
 async def get_workflow_run(db: AsyncSession, *, workflow_run_id: uuid.UUID, tenant_id: uuid.UUID) -> WorkflowRun:
-    result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == workflow_run_id, WorkflowRun.tenant_id == tenant_id))
-    run = result.scalar_one_or_none()
-    if run is None:
-        raise NotFoundError("Workflow run not found")
+    result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == workflow_run_id, WorkflowRun.tenant_id == tenant_id)); run = result.scalar_one_or_none()
+    if run is None: raise NotFoundError("Workflow run not found")
     return run
 
 
 async def cancel_workflow_run(db: AsyncSession, *, workflow_run_id: uuid.UUID, tenant_id: uuid.UUID, cancelled_by: uuid.UUID, reason: str | None = None) -> WorkflowRun:
-    result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == workflow_run_id, WorkflowRun.tenant_id == tenant_id).with_for_update())
-    run = result.scalar_one_or_none()
-    if run is None:
-        raise NotFoundError("Workflow run not found")
-    if run.status in {"success", "failed", "cancelled", "timed_out"}:
-        raise ValidationAppError(f"Workflow run is already terminal: {run.status}")
-    now = datetime.now(timezone.utc)
-    run.status = "cancelled"
-    run.cancelled_at = now
-    run.cancel_reason = reason
-    run.completed_at = now
-    run.error = {"code": "WORKFLOW_CANCELLED", "message": reason or "Workflow run cancelled by user."}
-    await db.flush()
-    await audit_service.record(db, action="workflow.run.cancelled", actor_type="user", actor_id=cancelled_by, tenant_id=tenant_id, resource_type="workflow_run", resource_id=run.id, status="success", request_id=request_id_var.get(), metadata={"reason": reason})
-    return run
+    result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == workflow_run_id, WorkflowRun.tenant_id == tenant_id).with_for_update()); run = result.scalar_one_or_none()
+    if run is None: raise NotFoundError("Workflow run not found")
+    if run.status in {"success", "failed", "cancelled", "timed_out"}: raise ValidationAppError(f"Workflow run is already terminal: {run.status}")
+    now = datetime.now(timezone.utc); run.status = "cancelled"; run.cancelled_at = now; run.cancel_reason = reason; run.completed_at = now; run.error = {"code": "WORKFLOW_CANCELLED", "message": reason or "Workflow run cancelled by user."}; await db.flush(); await audit_service.record(db, action="workflow.run.cancelled", actor_type="user", actor_id=cancelled_by, tenant_id=tenant_id, resource_type="workflow_run", resource_id=run.id, status="success", request_id=request_id_var.get(), metadata={"reason": reason}); return run
 
 
 async def list_workflows(db, *, tenant_id):
