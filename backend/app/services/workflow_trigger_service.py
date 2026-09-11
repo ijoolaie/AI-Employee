@@ -123,7 +123,7 @@ async def receive_event(db: AsyncSession, *, trigger: WorkflowEventTrigger, even
 
 
 async def dispatch_event(db: AsyncSession, *, delivery_id: uuid.UUID) -> WorkflowEventDelivery:
-    result = await db.execute(select(WorkflowEventDelivery).where(WorkflowEventDelivery.id == delivery_id))
+    result = await db.execute(select(WorkflowEventDelivery).where(WorkflowEventDelivery.id == delivery_id).with_for_update())
     delivery = result.scalar_one_or_none()
     if delivery is None: raise NotFoundError("Workflow event delivery not found")
     if delivery.workflow_run_id is not None and delivery.status == "dispatched": return delivery
