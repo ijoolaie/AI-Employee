@@ -1,0 +1,141 @@
+name: Apply workflow child retry hardening
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.head_ref == 'hardening/workflow-child-retry-fail-closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 1
+      - name: Patch workflow retry boundaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('backend/app/services/workflow_service.py')
+          s = p.read_text()
+
+          old_seq = '''            child = None
+            attempt = max(1, int(step.attempt or 1))
+            if step.employee_run_id:
+                existing_child = await db.get(Run, step.employee_run_id)
+                if existing_child is not None and existing_child.status == "success":
+                    child = existing_child
+            if child is None:
+                try:
+                    child = await run_service.create_run(db, tenant_id=run.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=run.created_by)
+                    step.employee_run_id = child.id
+                    await run_service.execute_run(db, run_id=child.id)
+                    if child.status != "success":
+                        raise RuntimeError(f"Employee Run ended with status {child.status}")
+                except Exception as exc:
+                    step.last_error = {"message": str(exc)[:1000], "attempt": attempt}
+                    if attempt < max_attempts:
+                        step.attempt = attempt + 1
+                        step.status = "retry_wait"
+                        delay = min(300, backoff_base * (2 ** (attempt - 1)))
+                        step.next_retry_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
+                        await _enqueue_resume(db, run, reason=f"retry:{step_key}:{attempt + 1}", delay_seconds=delay)
+                        await db.flush()
+                        return run
+                    raise
+'''
+          new_seq = '''            child = None
+            attempt = max(1, int(step.attempt or 1))
+            if step.employee_run_id:
+                existing_child = await db.get(Run, step.employee_run_id)
+                if existing_child is None:
+                    step.status = "failed"
+                    step.error = {"code": "WORKFLOW_CHILD_RETRY_UNSAFE", "message": "Linked employee Run is missing; refusing to create a replacement Run."}
+                    step.completed_at = datetime.now(timezone.utc)
+                    raise ValidationAppError(step.error["message"])
+                if existing_child.status == "success":
+                    child = existing_child
+                else:
+                    step.status = "failed"
+                    step.error = {
+                        "code": "WORKFLOW_CHILD_RETRY_UNSAFE",
+                        "message": f"Linked employee Run ended with status {existing_child.status}; refusing to create a replacement Run after execution may have crossed a side-effect boundary.",
+                    }
+                    step.completed_at = datetime.now(timezone.utc)
+                    raise ValidationAppError(step.error["message"])
+            if child is None:
+                try:
+                    child = await run_service.create_run(db, tenant_id=run.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=run.created_by)
+                    step.employee_run_id = child.id
+                    await run_service.execute_run(db, run_id=child.id)
+                    if child.status != "success":
+                        raise RuntimeError(f"Employee Run ended with status {child.status}")
+                except Exception as exc:
+                    step.last_error = {"message": str(exc)[:1000], "attempt": attempt}
+                    if attempt < max_attempts:
+                        step.attempt = attempt + 1
+                        step.status = "retry_wait"
+                        delay = min(300, backoff_base * (2 ** (attempt - 1)))
+                        step.next_retry_at = datetime.now(timezone.utc) + timedelta(seconds=delay)
+                        await _enqueue_resume(db, run, reason=f"retry:{step_key}:{attempt + 1}", delay_seconds=delay)
+                        await db.flush()
+                        return run
+                    raise
+'''
+          if old_seq not in s:
+              raise SystemExit('sequential retry block not found')
+          s = s.replace(old_seq, new_seq, 1)
+
+          old_parallel = '''                max_attempts = int(definition.get("retry_max", 0)) + 1
+                child = None
+                for attempt in range(1, max_attempts + 1):
+                    try:
+                        child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
+                        await run_service.execute_run(db, run_id=child.id)
+                        if child.status != "success":
+                            raise RuntimeError(f"Employee Run ended with status {child.status}")
+                        break
+                    except Exception:
+                        if attempt >= max_attempts:
+                            raise
+                        await db.flush()
+                        await asyncio.sleep(min(30, 2 ** (attempt - 1)))
+'''
+          new_parallel = '''                max_attempts = int(definition.get("retry_max", 0)) + 1
+                child = None
+                try:
+                    child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
+                    await run_service.execute_run(db, run_id=child.id)
+                    if child.status != "success":
+                        raise RuntimeError(f"Employee Run ended with status {child.status}")
+                except Exception as exc:
+                    if max_attempts > 1:
+                        raise ValidationAppError(
+                            "WORKFLOW_CHILD_RETRY_UNSAFE: parallel branch child retry would create a fresh Run without a durable child identity fence."
+                        ) from exc
+                    raise
+'''
+          if old_parallel not in s:
+              raise SystemExit('parallel retry block not found')
+          s = s.replace(old_parallel, new_parallel, 1)
+          p.write_text(s)
+
+          test = Path('backend/tests/test_workflow_child_retry_safety.py')
+          test.write_text('''from pathlib import Path\n\n\nSOURCE = Path(__file__).parents[1] / "app/services/workflow_service.py"\n\n\ndef test_sequential_child_retry_fails_closed_after_linked_run_exists() -> None:\n    source = SOURCE.read_text()\n    section = source.split("            child = None", 1)[1].split("            assert child is not None", 1)[0]\n    assert "WORKFLOW_CHILD_RETRY_UNSAFE" in section\n    assert "Linked employee Run ended with status" in section\n    assert "step.employee_run_id = child.id" in section\n\n\ndef test_parallel_child_retry_does_not_create_fresh_runs() -> None:\n    source = SOURCE.read_text()\n    section = source.split("                max_attempts = int(definition.get(\\"retry_max\\", 0)) + 1", 1)[1]\n    section = section.split("                outputs[definition.get(\\"output_key\\")", 1)[0]\n    assert "WORKFLOW_CHILD_RETRY_UNSAFE" in section\n    assert "for attempt in range(1, max_attempts + 1)" not in section\n    assert section.count("run_service.create_run") == 1\n''')
+          PY
+      - name: Remove one-shot patch workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/app/services/workflow_service.py backend/tests/test_workflow_child_retry_safety.py
+          git rm .github/workflows/_apply_child_retry_hardening.yml
+          git commit -m 'fix: fail closed on unsafe workflow child retries'
+          git push origin HEAD:${{ github.head_ref }}
