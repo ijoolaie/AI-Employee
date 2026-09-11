@@ -85,9 +85,27 @@ async def _timeout_workflow_runs_async() -> int:
     from sqlalchemy import select
     from app.models.workflow import WorkflowRun, WorkflowStepRun
     from app.services import audit_service
+    from app.services.workflow_execution_lease import recover_workflow_execution_lease
+    from app.services.outbox_service import enqueue
     now = datetime.now(timezone.utc)
     count = 0
+    recovered = 0
     async with worker_db_session() as db:
+        stale = await db.execute(
+            select(WorkflowRun).where(
+                WorkflowRun.status == "running",
+                WorkflowRun.deadline_at.is_not(None),
+                WorkflowRun.deadline_at > now,
+                WorkflowRun.execution_lease_id.is_not(None),
+                WorkflowRun.execution_lease_expires_at.is_not(None),
+                WorkflowRun.execution_lease_expires_at <= now,
+            ).with_for_update(skip_locked=True)
+        )
+        for run in stale.scalars().all():
+            await recover_workflow_execution_lease(db, workflow_run_id=run.id)
+            await enqueue(db, kind="workflow.execute", tenant_id=run.tenant_id, payload={"workflow_run_id": str(run.id)}, dedupe_key=f"workflow.execute:{run.id}:lease-recovery")
+            recovered += 1
+        await db.flush()
         result = await db.execute(
             select(WorkflowRun).where(
                 WorkflowRun.deadline_at.is_not(None),
@@ -108,4 +126,4 @@ async def _timeout_workflow_runs_async() -> int:
             await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", metadata={"deadline_at": run.deadline_at.isoformat()})
             count += 1
         await db.commit()
-    return count
+    return count + recovered
