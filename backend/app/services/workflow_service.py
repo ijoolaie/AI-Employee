@@ -424,7 +424,13 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                     await db.flush(); return run
                 if any(b.status == "failed" for b in branches):
                     step.status = "failed"; step.error = {"code": "PARALLEL_BRANCH_FAILED", "message": "One or more parallel branches failed."}; step.completed_at = datetime.now(timezone.utc); run.status = "failed"; run.error = {"step": step_key, **step.error}; raise ValidationAppError(step.error["message"])
-                if not all(b.status == "success" for b in branches): step.status = "waiting_parallel"; await db.flush(); return run
+                if not all(b.status == "success" for b in branches):
+                    step.status = "waiting_parallel"
+                    run.execution_lease_id = None
+                    run.execution_lease_expires_at = None
+                    run.execution_heartbeat_at = None
+                    await db.flush()
+                    return run
                 parallel_output = {b.branch_key: (b.output_data or {}) for b in branches}; step.status = "success"; step.output_data = parallel_output; step.completed_at = datetime.now(timezone.utc); context["steps"][step_key] = parallel_output
                 if definition.get("output_key"): context[definition["output_key"]] = parallel_output
                 context["_workflow"] = {**context.get("_workflow", {}), "next_position": position + 1}; flag_modified(run, "context"); await db.flush(); continue
