@@ -10,7 +10,7 @@ from app.core.exceptions import ValidationAppError
 
 
 async def acquire_workflow_execution_lease(db: AsyncSession, *, workflow_run_id: uuid.UUID, allow_recovery: bool = False) -> uuid.UUID:
-    """Acquire a lease for a pending run, or recover an expired running lease."""
+    """Acquire a lease for a pending/waiting run, or recover an expired running lease."""
     now = datetime.now(timezone.utc)
     result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == workflow_run_id).with_for_update())
     run = result.scalar_one_or_none()
@@ -25,7 +25,7 @@ async def acquire_workflow_execution_lease(db: AsyncSession, *, workflow_run_id:
     run.execution_lease_id = lease_id
     run.execution_heartbeat_at = now
     run.execution_lease_expires_at = now + WORKFLOW_EXECUTION_LEASE_DURATION
-    if run.status == "pending":
+    if run.status in {"pending", "waiting_approval"}:
         run.status = "running"
     await db.flush()
     return lease_id
