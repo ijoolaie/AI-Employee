@@ -34,3 +34,11 @@ def test_recovery_requires_expired_lease_and_reuses_same_workflow_run():
     assert "execution_lease_expires_at" in lease_source
     assert "WorkflowRun.id == workflow_run_id" in lease_source
     assert "allow_recovery=True" in source
+
+
+def test_waiting_states_release_execution_lease_and_approval_can_reacquire():
+    source = _source()
+    lease_source = _lease_source()
+    assert source.count("run.execution_lease_id = None") >= 2
+    assert "run.status in {\"pending\", \"waiting_approval\"}" in lease_source
+    assert "run.status = \"running\"" in lease_source
