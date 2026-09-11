@@ -13,6 +13,33 @@ from app.models.agent_kill_switch import AgentKillScope, AgentKillSwitch
 from app.services import audit_service
 
 
+def _scope_lock_key(scope: AgentKillScope, *, tenant_id: uuid.UUID | None = None, agent_instance_id: uuid.UUID | None = None) -> str:
+    return f"agent-kill:{scope.value}:{tenant_id or '-'}:{agent_instance_id or '-'}"
+
+
+async def _lock_execution_kill_scopes(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    agent_instance_id: uuid.UUID,
+) -> None:
+    """Serialize execution with global/tenant/agent kill-switch assertions.
+
+    Execution authorization must remain valid through the irreversible side
+    effect, not merely at the instant the policy query runs. The three
+    transaction advisory locks also cover the no-row-yet-exists case where a
+    concurrent kill-switch assertion would otherwise be able to insert between
+    the authorization check and the side effect.
+    """
+    keys = (
+        _scope_lock_key(AgentKillScope.GLOBAL),
+        _scope_lock_key(AgentKillScope.TENANT, tenant_id=tenant_id),
+        _scope_lock_key(AgentKillScope.AGENT, tenant_id=tenant_id, agent_instance_id=agent_instance_id),
+    )
+    for lock_key in keys:
+        await db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:lock_key))").bindparams(lock_key=lock_key))
+
+
 async def assert_not_killed(
     db: AsyncSession,
     *,
@@ -20,6 +47,11 @@ async def assert_not_killed(
     agent_instance_id: uuid.UUID,
 ) -> None:
     """Reject execution when any active global, tenant, or agent kill switch applies."""
+    await _lock_execution_kill_scopes(
+        db,
+        tenant_id=tenant_id,
+        agent_instance_id=agent_instance_id,
+    )
     result = await db.execute(
         select(AgentKillSwitch)
         .where(
@@ -31,6 +63,7 @@ async def assert_not_killed(
             ),
         )
         .order_by(AgentKillSwitch.asserted_at.desc())
+        .with_for_update()
     )
     switch = result.scalars().first()
     if switch is None:
@@ -75,7 +108,7 @@ async def assert_kill(
     # Serialize assertions for the same logical scope. The partial unique indexes
     # remain the database backstop, while the transaction advisory lock removes the
     # check-then-insert race that otherwise surfaces as an IntegrityError.
-    lock_key = f"agent-kill:{scope.value}:{tenant_id or '-'}:{agent_instance_id or '-'}"
+    lock_key = _scope_lock_key(scope, tenant_id=tenant_id, agent_instance_id=agent_instance_id)
     await db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:lock_key))").bindparams(lock_key=lock_key))
 
     existing = (await db.execute(
