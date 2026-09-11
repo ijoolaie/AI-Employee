@@ -313,7 +313,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID) -> None:
             raise
 
 
-async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> WorkflowRun:
+async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, execution_lease_id: uuid.UUID | None = None) -> WorkflowRun:
     result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == workflow_run_id).with_for_update())
     run = result.scalar_one_or_none()
     if run is None:
@@ -333,9 +333,11 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
     now = datetime.now(timezone.utc)
     if run.deadline_at and run.deadline_at <= now:
         run.status = "timed_out"; run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}; run.completed_at = now; await db.flush(); await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": run.deadline_at.isoformat()}); return run
-    if run.status == "running":
-        if run.deadline_at is None or not run.execution_lease_expires_at or run.execution_lease_expires_at <= now:
-            lease_id = await acquire_workflow_execution_lease(db, workflow_run_id=run.id, allow_recovery=bool(run.deadline_at))
+    if execution_lease_id is not None:
+        lease_id = execution_lease_id
+    elif run.status == "running":
+        if run.deadline_at is not None and run.execution_lease_expires_at and run.execution_lease_expires_at <= now:
+            lease_id = await acquire_workflow_execution_lease(db, workflow_run_id=run.id, allow_recovery=True)
         else:
             raise ValidationAppError("WORKFLOW_EXECUTION_LEASE_LOST")
     else:
@@ -418,6 +420,8 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
                 try:
                     child = await run_service.create_run(db, tenant_id=run.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=run.created_by)
                     step.employee_run_id = child.id
+                    await db.commit()
+                    await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
                     await run_service.execute_run(db, run_id=child.id)
                     if child.status != "success": raise RuntimeError(f"Employee Run ended with status {child.status}")
                 except Exception as exc:
