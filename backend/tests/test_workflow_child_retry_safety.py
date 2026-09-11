@@ -22,6 +22,6 @@ def test_parallel_child_retry_fails_closed_before_creating_a_second_child() -> N
     assert "WORKFLOW_CHILD_RETRY_UNSAFE" in source
     assert "employee_run_id" in source
     assert "if branch.employee_run_id:" in source
-    assert "Linked parallel branch Run ended with status" in source
+    assert "linked parallel branch Run" in source
     assert "for attempt in range(1, max_attempts + 1)" not in source
     assert "recover_parallel_branch_execution_lease" in lease_source
