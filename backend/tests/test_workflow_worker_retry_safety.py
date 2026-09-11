@@ -6,7 +6,7 @@ def test_workflow_execution_exceptions_are_not_celery_retried() -> None:
         Path(__file__).parents[1] / "app/workers/workflow_worker.py"
     ).read_text()
 
-    assert "execute_workflow() persists a terminal failed state" in source
+    assert "WORKFLOW_EXECUTION_LEASE_LOST" in source
     assert "await db.commit()" in source
     execution_section = source.split("asyncio.run(_run_async", 1)[1]
     assert "raise self.retry(exc=exc" not in execution_section
