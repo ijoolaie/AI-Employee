@@ -19,7 +19,7 @@ from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.employee import EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
-from app.services import run_service
+from app.services.run_execution_fence import execute_run_locked
 from app.services.agent_governance import governed_agent_execution
 from app.services.agent_kill_switch_service import assert_not_killed
 from app.services.tenant_resource_limiter import (
@@ -86,9 +86,6 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     await db.flush()
                     raise ValidationAppError("Agent Run identity has expired")
 
-                # Kill-switch state is checked at queue consumption, before any
-                # runtime work can produce a side effect. The policy kernel also
-                # checks it again at the individual side-effect boundary.
                 await assert_not_killed(
                     db,
                     tenant_id=run.tenant_id,
@@ -155,7 +152,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             runtime = AgentRuntime(contract)
 
             try:
-                await runtime.execute(lambda: run_service.execute_run(db, run_id=parsed_run_id), retryable=False)
+                await runtime.execute(lambda: execute_run_locked(db, run_id=parsed_run_id), retryable=False)
                 refreshed = await db.execute(select(Run).where(Run.id == parsed_run_id))
                 completed_run = refreshed.scalar_one_or_none()
                 if completed_run is not None:
@@ -181,5 +178,9 @@ def execute_run_task(self, run_id: str, tenant_id: str) -> None:
         raise self.retry(exc=RuntimeError("Tenant execution capacity is currently exhausted"), countdown=min(60, 5 * (2 ** self.request.retries)))
     try:
         asyncio.run(_run_async(run_id, tenant_id))
+    except Exception as exc:
+        if self.request.retries >= self.max_retries:
+            raise
+        raise self.retry(exc=exc, countdown=min(60, 5 * (2 ** self.request.retries)))
     finally:
         release_tenant_resource(lease)
