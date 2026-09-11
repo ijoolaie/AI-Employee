@@ -126,10 +126,6 @@ async def test_email_delivery_select_serializes_concurrent_workers(monkeypatch):
     monkeypatch.setattr(email_worker, "smtplib", SimpleNamespace())
     monkeypatch.setattr(outbox_service, "mark_dispatched", mark_dispatched)
 
-    # Force the worker through the locked row and make the side-effect path
-    # fail before SMTP; the important invariant is that the SELECT itself is
-    # row-locking, preventing two workers from entering the pre-side-effect
-    # state transition concurrently.
     class _ExpectedSMTPFailure:
         def __init__(self, *args, **kwargs):
             raise RuntimeError("test stop before SMTP")
@@ -139,6 +135,65 @@ async def test_email_delivery_select_serializes_concurrent_workers(monkeypatch):
 
     assert db.statement._for_update_arg is not None
     assert row.status == "uncertain"
+    assert db.commits >= 2
+
+
+@pytest.mark.asyncio
+async def test_governed_email_revalidates_after_uncertain_commit(monkeypatch):
+    tenant_id = uuid4()
+    agent_instance_id = uuid4()
+    run_id = uuid4()
+    row = SimpleNamespace(
+        id=uuid4(),
+        status="processing",
+        attempts=1,
+        payload={
+            "to": ["user@example.test"],
+            "subject": "Hello",
+            "body": "Body",
+            "_agent_governance": {
+                "tenant_id": str(tenant_id),
+                "agent_instance_id": str(agent_instance_id),
+                "run_id": str(run_id),
+                "tool_name": "email.send",
+            },
+        },
+        tenant_id=tenant_id,
+        last_error=None,
+    )
+    db = _DB([row])
+    authorization_calls = 0
+
+    async def authorize(*args, **kwargs):
+        nonlocal authorization_calls
+        authorization_calls += 1
+
+    async def mark_dispatched(*args, **kwargs):
+        row.status = "dispatched"
+
+    class _AcceptedSMTP:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def send_message(self, msg):
+            return None
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorize)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _AcceptedSMTP)
+    monkeypatch.setattr(outbox_service, "mark_dispatched", mark_dispatched)
+
+    await email_worker._send(str(row.id))
+
+    assert authorization_calls == 2
+    assert row.status == "dispatched"
     assert db.commits >= 2
 
 
