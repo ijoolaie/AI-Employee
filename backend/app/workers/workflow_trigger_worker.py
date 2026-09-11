@@ -102,8 +102,8 @@ async def _timeout_workflow_runs_async() -> int:
             ).with_for_update(skip_locked=True)
         )
         for run in stale.scalars().all():
-            await recover_workflow_execution_lease(db, workflow_run_id=run.id)
-            await enqueue(db, kind="workflow.execute", tenant_id=run.tenant_id, payload={"workflow_run_id": str(run.id)}, dedupe_key=f"workflow.execute:{run.id}:lease-recovery")
+            lease_id = await recover_workflow_execution_lease(db, workflow_run_id=run.id)
+            await enqueue(db, kind="workflow.execute", tenant_id=run.tenant_id, payload={"workflow_run_id": str(run.id)}, dedupe_key=f"workflow.execute:{run.id}:lease-recovery:{lease_id}")
             recovered += 1
         await db.flush()
         result = await db.execute(
