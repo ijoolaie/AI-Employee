@@ -267,7 +267,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID) -> None:
     async with worker_db_session() as db:
         result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
         branch = result.scalar_one_or_none()
-        if branch is None or branch.status == "success":
+        if branch is None or branch.status in {"success", "running"}:
             return
         parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id).with_for_update())
         parent = parent_result.scalar_one_or_none()
@@ -321,7 +321,7 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
     context = run.context or {"input": {}, "steps": {}}
     context.setdefault("steps", {})
     start_position = int(context.get("_workflow", {}).get("next_position", 0))
-    if run.status not in {"pending", "running", "waiting_approval"}:
+    if run.status not in {"pending", "waiting_approval"}:
         return run
     now = datetime.now(timezone.utc)
     if run.deadline_at and run.deadline_at <= now:
