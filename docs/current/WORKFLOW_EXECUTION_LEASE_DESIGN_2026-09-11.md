@@ -16,6 +16,7 @@ A `running` WorkflowRun is **not retryable by status alone**. Recovery must tran
 - Lease acquisition/recovery uses a conditional database update under row lock.
 - A worker must present the lease identity at every workflow execution boundary.
 - A stale worker whose lease no longer matches must stop before creating another child Run or invoking an external provider.
+- The worker heartbeat runs independently of the long-running execution transaction so a valid owner can renew during provider calls.
 
 ## Recovery invariants
 
