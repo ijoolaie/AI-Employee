@@ -1,14 +1,13 @@
 # Current Status
 
-**Last reconciled:** 2026-09-10  
+**Last reconciled:** 2026-09-11  
 **Latest certified release:** `v1.3.8`  
 **Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
 **Certification run:** `34052885700` — SUCCESS  
 **Current engineering mainline:** `main`  
-**Current mainline SHA:** `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`  
-**Current release candidate:** `v1.4.0-rc.1`  
-**Release candidate SHA:** `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`  
-**Current status:** RELEASE CANDIDATE VALIDATION BLOCKED / ONE PRODUCT GATE REMAINING
+**Current mainline SHA:** `649f8ceaedb35c4f9e61a56faaf5c58956821c1d`  
+**Current release candidate:** none currently certified  
+**Current status:** PRODUCTION HARDENING / SYSTEMATIC EXECUTION-BOUNDARY AUDIT
 
 ## Executive truth
 
@@ -16,69 +15,36 @@ The AI Employee Platform is a multi-tenant business operating platform evolving 
 
 The certified release `v1.3.8` remains frozen at its exact certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`. Certification does not transfer to later mainline revisions.
 
-The current mainline is `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`. It contains the post-`v1.3.8` hardening sequence through PR #461 and is being validated as `v1.4.0-rc.1`.
+Mainline has moved beyond the stale `v1.4.0-rc.1` documentation state. PRs #462 through #479 have added execution-boundary hardening, including Run serialization, WorkItem/Run crash-safety, workflow retry fences, workflow re-entry fencing, event-dispatch locking and workflow terminal-state/post-timeout fencing.
 
-## Mainline hardening through PR #461
+## Latest hardening sequence
 
-Key merged hardening includes:
-- PR #449 — endpoint-level RBAC for Customers, Invoices, Products, Orders and Sales mutations.
-- PR #450 — explicit RBAC for API-key read/create/revoke operations.
-- PR #451 — `team.install` enforcement for workforce employee-template management.
-- PR #452 — tenant-user RBAC for Inbox conversation reads and mutations.
-- PR #453 — `billing.manage` enforcement for subscription and Stripe billing mutations.
-- PR #454 — transactional tenant-Run boundary for registered side-effect tools.
-- PR #455 — database serialization of all production Run execution to close the pending-state idempotency race.
-- PR #456 — release-documentation reconciliation and release-candidate downstream-gate enforcement.
-- PR #457 — SHA-pinned production certification identity and exact-SHA checkout enforcement.
-- PR #459 — remediation of the `sharp` 0.35.3 dependency vulnerability.
-- PR #460 — documentation/dependency synchronization after the `sharp` remediation.
-- PR #461 — authentication refresh-token restoration and stabilization of Reports/Analytics and Agent WorkItem certification paths.
+Key merged hardening after the previous documentation checkpoint includes:
+- PR #462 — downstream hardening following the release-candidate stabilization sequence.
+- PR #464 — crash-safe Agent WorkItem → Run handoff.
+- PR #465 — approval-resume enqueue race closed through the outbox path.
+- PR #466 — atomic Run creation/outbox failure boundary hardened with a nested savepoint.
+- PR #467 — WorkItem cancellation fenced against executable pending/waiting Agent Runs at the database boundary.
+- PR #468 — workflow execution replay after side effects prevented.
+- PR #470 — unsafe workflow child retries fail closed; no blind child recreation.
+- PR #473 — workflow re-entry after a child commit fenced.
+- PR #475 — concurrent workflow event dispatch fenced with row locking.
+- PR #477 — workflow terminal states made immutable at the database boundary.
+- PR #479 — workflow execution fenced after timeout/cancellation/terminal state wins between child commits.
 
-## Latest production certification
+## Current execution-boundary audit
 
-The latest Production Certification target is:
+The current mainline is hardened against several duplicate-side-effect and terminal-state races, but **stale `running` ownership remains an explicit open design boundary**.
 
-- Release version: `v1.4.0-rc.1`
-- Exact SHA: `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`
-- Workflow run: `34497132748`
-- Certification job: `102938351658`
+Issue #480 tracks the next P1: design a durable execution lease/recovery mechanism for stale `WorkflowRun` and `Run` records without making `running` blindly retryable. Any recovery must transfer ownership with a durable fence so an old worker cannot continue side effects, preserve existing provider durable-call fences and child Run identity, and avoid creating a replacement execution merely because a worker disappeared.
 
-The run completed with **one failed Product Gate**.
+This is intentionally separate from PR #479: PR #479 prevents continued workflow advancement after a parent timeout/cancellation/terminal transition; it does not make crashed `running` executions safely recoverable.
 
-### Product Gate status
+## Certification boundary
 
-Passed:
-- Auth P0
-- Tenant Isolation + RBAC P0
-- Conversation Tenant Isolation P0
-- Employee → Run → AI → Result
-- Files → Knowledge → Memory
-- Admin / Developer API Keys
-- Workflow → Approval → Schedule
-- Orders → Sales → Invoice → Billing
-- Reports / Analytics Tenant Isolation
-- Unified WorkItem Human real-stack
+`v1.3.8` remains the latest certified release. The previous `v1.4.0-rc.1` Product Certification attempt (`34497132748`) is historical evidence only and is not a certification of current mainline.
 
-Failed:
-- **Unified WorkItem Agent real-stack**
-
-The Agent gate reaches:
-
-`UNIFIED AGENT WORKITEM COMMERCIAL LICENSE FIXTURE PASS`
-
-and then fails with:
-
-`UNIFIED AGENT WORKITEM REAL-STACK CERTIFICATION FAIL:`
-
-with an empty assertion message. Therefore the exact failing state/assertion still requires root-cause inspection.
-
-## Release decision
-
-`v1.3.8` remains the latest certified release and is immutable.
-
-`v1.4.0-rc.1` is **NOT CERTIFIED**. It is blocked by the single remaining Agent WorkItem real-stack Product Gate. No certification evidence from `v1.3.8` may be inherited by this newer SHA.
-
-The next engineering priority is to identify and correct the actual Agent WorkItem real-stack failure, run the full required CI/security/architecture gates on the exact corrected HEAD, merge only after all required gates pass, and then rerun Production Certification against the resulting exact SHA.
+The current mainline SHA `649f8ceaedb35c4f9e61a56faaf5c58956821c1d` has passed the required PR gates for PR #479, including Architecture Guard, CI, CodeQL, Runtime Isolation/RBAC, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST, plus the additional production observability/rollback/security workflows observed on that PR head. A fresh Production Certification has **not** yet been run for this merged SHA; therefore mainline is **not certified**.
 
 ## Production deployment status
 
@@ -93,7 +59,7 @@ A controlled deployment was previously attempted using `v1.3.8`:
 
 ## External production gates
 
-These remain pending and are not established by the current production-like certification:
+These remain pending and are not established by repository/production-like certification:
 
 - real production infrastructure;
 - deployed-identity verification;
