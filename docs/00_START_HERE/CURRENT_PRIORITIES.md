@@ -3,23 +3,22 @@
 **Reconciled:** 2026-09-11  
 **Latest certified release:** `v1.3.8`  
 **Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
-**Current mainline:** `649f8ceaedb35c4f9e61a56faaf5c58956821c1d`  
+**Current mainline:** `30ed658ae05a116a4e3d2ce3622330aa58dd347c`  
 **Current status:** PRODUCTION HARDENING / SYSTEMATIC EXECUTION-BOUNDARY AUDIT
 
 ## Executive priority
 
-The old `v1.4.0-rc.1` blocker is historical. Current work has moved to execution-boundary correctness after PRs #462–#479. Mainline is not certified because no fresh Production Certification has been run against the current exact SHA.
+The historical `v1.4.0-rc.1` blocker is closed as a current planning item. PR #487 has now closed the concurrent `pending` Run admission race. Work continues as a systematic audit of Celery redelivery/retry, deferred side effects and authorization boundaries. Mainline is not certified because no fresh Production Certification has been run against the current exact SHA.
 
-## P1 — next correctness boundary
+## P1 — next correctness boundaries
 
-1. Design a durable lease/fencing model for stale `running` `WorkflowRun` and `Run` ownership (Issue #480).
-2. Preserve fail-closed semantics: a redelivered worker must not blindly replay `running` execution.
-3. Make ownership transfer explicit and durable so an old worker cannot continue side effects after recovery.
-4. Preserve provider durable-call fences and existing child Run identity; never create a replacement execution solely because a worker disappeared.
-5. Define bounded recovery policy for workflows without `deadline_at`/runtime limits.
-6. Add deterministic crash/recovery tests covering worker death before and after child/provider side-effect boundaries.
-7. Run all required gates on the exact corrected HEAD and merge only when green.
-8. Rerun Production Certification on the exact resulting SHA before declaring a new release certified.
+1. Audit Celery retry/redelivery semantics across Run, Workflow, Test Center and control workers; reject unsafe automatic replay after an irreversible side effect.
+2. Audit Transactional Outbox dispatch/recovery for lost dispatch, duplicate enqueue, stale processing and manual replay hazards.
+3. Audit Tenant/RBAC and Agent governance immediately before deferred side effects; authorization must be evaluated against current durable state.
+4. Identify remaining stale-state/crash windows that can create duplicate, lost or unauthorized side effects.
+5. Add deterministic crash/concurrency tests for every confirmed P1 boundary.
+6. Run all required gates on each corrected HEAD and merge only when green.
+7. After the hardening set stabilizes, run Production Certification against the exact resulting SHA before declaring a release certified.
 
 ## Completed hardening checkpoint
 
@@ -33,13 +32,16 @@ The old `v1.4.0-rc.1` blocker is historical. Current work has moved to execution
 - PR #475 — concurrent workflow event dispatch fenced.
 - PR #477 — workflow terminal states made immutable.
 - PR #479 — post-timeout/terminal workflow advancement fenced.
+- PR #482 — durable WorkflowRun execution lease and bounded recovery.
+- PR #486 — durable parallel-branch execution lease/recovery and optimistic ownership fencing.
+- PR #487 — concurrent Run execution admission serialized with a database row lock.
 
 ## Certification checkpoint
 
 - Latest certified release: `v1.3.8`
 - Certified commit: `fd1e74b6b4c1701f7443efc202bad161ff19618c`
-- Previous RC certification: `34497132748` — historical, failed one Agent WorkItem Product Gate
-- Current mainline: `649f8ceaedb35c4f9e61a56faaf5c58956821c1d`
+- Current mainline: `30ed658ae05a116a4e3d2ce3622330aa58dd347c`
+- PR #487: merged; PR validation passed before merge.
 - Fresh Production Certification for current mainline: **PENDING**
 
 ## P2 — external production gates
