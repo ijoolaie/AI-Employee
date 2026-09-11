@@ -21,5 +21,7 @@ def test_parallel_branch_does_not_reexecute_a_running_branch_after_nested_child_
     assert "acquire_parallel_branch_execution_lease" in source
     assert "assert_parallel_branch_execution_lease" in source
     assert "employee_run_id" in model_source
+    assert "execution_lease_version" in model_source
+    assert '"version_id_col": execution_lease_version' in model_source
     assert "if branch.status == \"running\":" in lease_source
     assert "Parallel branch execution lease is still owned" in lease_source
