@@ -279,6 +279,12 @@ async def _execute_parallel_branch(branch_id: uuid.UUID) -> None:
         outputs = {}
         try:
             for definition in branch.config.get("steps", []):
+                parent_state = await db.execute(select(WorkflowRun.status, WorkflowRun.deadline_at).where(WorkflowRun.id == parent.id))
+                parent_status, parent_deadline = parent_state.one()
+                if parent_status != "running":
+                    return
+                if parent_deadline and parent_deadline <= datetime.now(timezone.utc):
+                    return
                 if definition.get("type", "employee") != "employee":
                     raise ValidationAppError("Parallel branch supports employee steps only")
                 step_input = _resolve_mapping(definition.get("input_mapping", {}), parent.context or {})
@@ -333,7 +339,8 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
         for position in range(start_position, len(steps)):
             fresh = await db.execute(select(WorkflowRun.status, WorkflowRun.deadline_at).where(WorkflowRun.id == run.id))
             fresh_status, fresh_deadline = fresh.one()
-            if fresh_status == "cancelled": run.status = "cancelled"; return run
+            if fresh_status != "running":
+                return run
             if fresh_deadline and fresh_deadline <= datetime.now(timezone.utc):
                 run.status = "timed_out"; run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}; run.completed_at = datetime.now(timezone.utc); await db.flush(); await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": fresh_deadline.isoformat()}); return run
             definition = steps[position]
