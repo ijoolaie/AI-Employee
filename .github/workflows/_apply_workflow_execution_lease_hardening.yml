@@ -1,0 +1,36 @@
+name: apply-workflow-execution-lease-hardening
+on:
+  push:
+    branches: [hardening/workflow-execution-lease-boundary]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply targeted hardening
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/services/workflow_service.py')
+          s = p.read_text()
+          old = 'if branch is None or branch.status == "success":\n            return'
+          new = 'if branch is None or branch.status in {"success", "running"}:\n            return'
+          assert old in s, 'parallel branch guard not found'
+          s = s.replace(old, new, 1)
+          old = 'if run.status not in {"pending", "running", "waiting_approval"}:\n        return run'
+          new = 'if run.status not in {"pending", "waiting_approval"}:\n        return run'
+          assert old in s, 'workflow running guard not found'
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          t = Path('backend/tests/test_workflow_execution_concurrency_safety.py')
+          t.write_text('''from pathlib import Path\n\nSOURCE = Path(__file__).parents[1] / "app/services/workflow_service.py"\n\n\ndef test_workflow_does_not_reenter_a_running_parent_after_nested_child_commit():\n    source = SOURCE.read_text()\n    assert 'if run.status not in {"pending", "waiting_approval"}:' in source\n    assert 'if run.status not in {"pending", "running", "waiting_approval"}:' not in source\n\n\ndef test_parallel_branch_does_not_reexecute_a_running_branch_after_nested_child_commit():\n    source = SOURCE.read_text()\n    assert 'if branch is None or branch.status in {"success", "running"}:' in source\n''')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add backend/app/services/workflow_service.py backend/tests/test_workflow_execution_concurrency_safety.py
+          git commit -m "fix: fail closed on workflow execution reentry" || exit 0
+          git push
