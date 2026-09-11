@@ -169,7 +169,7 @@ async def test_run_worker_preserves_non_agent_run_compatibility_and_attribution(
     monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
     monkeypatch.setattr(run_worker, "span", _span)
     monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
-    monkeypatch.setattr(run_worker.run_service, "execute_run", _execute)
+    monkeypatch.setattr(run_worker, "execute_run_locked", _execute)
 
     await run_worker._run_async(str(run_id), str(tenant_id))
 
@@ -195,7 +195,7 @@ async def test_run_worker_passes_matching_tenant_to_run_service(monkeypatch):
 
     monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
     monkeypatch.setattr(run_worker, "span", _span)
-    monkeypatch.setattr(run_worker.run_service, "execute_run", _execute)
+    monkeypatch.setattr(run_worker, "execute_run_locked", _execute)
     monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
 
     await run_worker._run_async(str(run_id), str(tenant_id))
@@ -221,7 +221,7 @@ async def test_run_worker_commits_failure_before_reraising(monkeypatch):
     monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
     monkeypatch.setattr(run_worker, "span", _span)
     monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
-    monkeypatch.setattr(run_worker.run_service, "execute_run", _execute)
+    monkeypatch.setattr(run_worker, "execute_run_locked", _execute)
 
     with pytest.raises(RuntimeError, match="execution failed"):
         await run_worker._run_async(str(run_id), str(tenant_id))
