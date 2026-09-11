@@ -5,7 +5,7 @@
 **Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
 **Certification run:** `34052885700` — SUCCESS  
 **Current engineering mainline:** `main`  
-**Current mainline SHA:** `649f8ceaedb35c4f9e61a56faaf5c58956821c1d`  
+**Current mainline SHA:** `30ed658ae05a116a4e3d2ce3622330aa58dd347c`  
 **Current release candidate:** none currently certified  
 **Current status:** PRODUCTION HARDENING / SYSTEMATIC EXECUTION-BOUNDARY AUDIT
 
@@ -15,12 +15,11 @@ The AI Employee Platform is a multi-tenant business operating platform evolving 
 
 The certified release `v1.3.8` remains frozen at its exact certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`. Certification does not transfer to later mainline revisions.
 
-Mainline has moved beyond the stale `v1.4.0-rc.1` documentation state. PRs #462 through #479 have added execution-boundary hardening, including Run serialization, WorkItem/Run crash-safety, workflow retry fences, workflow re-entry fencing, event-dispatch locking and workflow terminal-state/post-timeout fencing.
+Mainline has moved beyond the historical `v1.4.0-rc.1` documentation state. PRs #462 through #487 have added execution-boundary hardening, including WorkItem/Run crash-safety, workflow retry/re-entry/terminal-state/timeout fences, workflow and parallel-branch execution leases, and concurrent Run admission serialization.
 
 ## Latest hardening sequence
 
-Key merged hardening after the previous documentation checkpoint includes:
-- PR #462 — downstream hardening following the release-candidate stabilization sequence.
+Key merged hardening includes:
 - PR #464 — crash-safe Agent WorkItem → Run handoff.
 - PR #465 — approval-resume enqueue race closed through the outbox path.
 - PR #466 — atomic Run creation/outbox failure boundary hardened with a nested savepoint.
@@ -30,21 +29,29 @@ Key merged hardening after the previous documentation checkpoint includes:
 - PR #473 — workflow re-entry after a child commit fenced.
 - PR #475 — concurrent workflow event dispatch fenced with row locking.
 - PR #477 — workflow terminal states made immutable at the database boundary.
-- PR #479 — workflow execution fenced after timeout/cancellation/terminal state wins between child commits.
+- PR #479 — workflow advancement fenced after timeout/cancellation/terminal state wins between child commits.
+- PR #482 — durable WorkflowRun execution lease, heartbeat, ownership fencing and bounded recovery.
+- PR #486 — durable parallel-branch execution lease, child Run identity/step position and optimistic lease-version fencing.
+- PR #487 — concurrent Celery Run execution admission serialized with a `SELECT ... FOR UPDATE` Run-row fence.
 
 ## Current execution-boundary audit
 
-The current mainline is hardened against several duplicate-side-effect and terminal-state races, but **stale `running` ownership remains an explicit open design boundary**.
+The previously identified concurrent `pending` Run admission race is closed by PR #487. The worker now acquires the Run row lock before entering the canonical RunService execution path, so duplicate Celery deliveries cannot concurrently pass the `pending` idempotency guard.
 
-Issue #480 tracks the next P1: design a durable execution lease/recovery mechanism for stale `WorkflowRun` and `Run` records without making `running` blindly retryable. Any recovery must transfer ownership with a durable fence so an old worker cannot continue side effects, preserve existing provider durable-call fences and child Run identity, and avoid creating a replacement execution merely because a worker disappeared.
+The remaining audit focus is now broader Celery redelivery/retry behavior and side-effect boundaries outside the already-hardened Run/Workflow paths. Review must preserve fail-closed semantics and durable ownership/fencing rather than relying on process-local state.
 
-This is intentionally separate from PR #479: PR #479 prevents continued workflow advancement after a parent timeout/cancellation/terminal transition; it does not make crashed `running` executions safely recoverable.
+Current audit targets:
+1. Celery retry/redelivery semantics across execution, workflow, test-center and control workers.
+2. Transactional Outbox dispatch/recovery and dedupe boundaries.
+3. Tenant/RBAC authorization immediately before deferred side effects.
+4. Remaining stale-state or crash windows that can produce duplicate, lost or unauthorized side effects.
+5. Deterministic tests for every newly confirmed P1 boundary.
 
 ## Certification boundary
 
 `v1.3.8` remains the latest certified release. The previous `v1.4.0-rc.1` Product Certification attempt (`34497132748`) is historical evidence only and is not a certification of current mainline.
 
-The current mainline SHA `649f8ceaedb35c4f9e61a56faaf5c58956821c1d` has passed the required PR gates for PR #479, including Architecture Guard, CI, CodeQL, Runtime Isolation/RBAC, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST, plus the additional production observability/rollback/security workflows observed on that PR head. A fresh Production Certification has **not** yet been run for this merged SHA; therefore mainline is **not certified**.
+The current mainline SHA `30ed658ae05a116a4e3d2ce3622330aa58dd347c` includes PR #487 after squash merge. PR-level validation for #487 passed before merge. A fresh Production Certification has **not** yet been run for this merged SHA; therefore mainline is **not certified**.
 
 ## Production deployment status
 
