@@ -75,8 +75,8 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                             AgentIdentity.agent_instance_id == instance.id,
                             AgentIdentity.tenant_id == run.tenant_id,
                         )
-                    ).scalar_one_or_none()
-                )
+                    )
+                ).scalar_one_or_none()
                 if identity is None:
                     raise ValidationAppError("Agent Run has no identity")
                 if not identity.active or identity.revoked_at is not None:
@@ -178,5 +178,9 @@ def execute_run_task(self, run_id: str, tenant_id: str) -> None:
         raise self.retry(exc=RuntimeError("Tenant execution capacity is currently exhausted"), countdown=min(60, 5 * (2 ** self.request.retries)))
     try:
         asyncio.run(_run_async(run_id, tenant_id))
+    except Exception as exc:
+        if self.request.retries >= self.max_retries:
+            raise
+        raise self.retry(exc=exc, countdown=min(60, 5 * (2 ** self.request.retries)))
     finally:
-        release_tenant_resource(lease)
+        release_tenant_resource(tenant_id, lease)
