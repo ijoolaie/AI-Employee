@@ -58,6 +58,31 @@ async def test_kill_switch_scope_precedence_is_fail_closed():
 
 
 @pytest.mark.asyncio
+async def test_assert_not_killed_serializes_all_kill_switch_scopes_before_check():
+    tenant_id, agent_id = uuid4(), uuid4()
+    statements = []
+
+    class Scalars:
+        def first(self):
+            return None
+
+    class Result:
+        def scalars(self):
+            return Scalars()
+
+    class Db:
+        async def execute(self, statement):
+            statements.append(str(statement))
+            return Result()
+
+    await agent_kill_switch_service.assert_not_killed(Db(), tenant_id=tenant_id, agent_instance_id=agent_id)
+
+    assert len(statements) == 4
+    assert all("pg_advisory_xact_lock" in statement for statement in statements[:3])
+    assert "FOR UPDATE" in statements[3]
+
+
+@pytest.mark.asyncio
 async def test_agent_kill_switch_rejects_cross_tenant_target():
     tenant_id, other_tenant = uuid4(), uuid4()
     agent_id = uuid4()
