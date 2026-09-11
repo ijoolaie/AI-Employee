@@ -1,0 +1,31 @@
+name: apply-event-dispatch-fence
+on:
+  push:
+    branches: [hardening/workflow-event-dispatch-fence]
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply targeted hardening
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/services/workflow_trigger_service.py')
+          s = p.read_text()
+          old = 'result = await db.execute(select(WorkflowEventDelivery).where(WorkflowEventDelivery.id == delivery_id))\n    delivery = result.scalar_one_or_none()'
+          new = 'result = await db.execute(select(WorkflowEventDelivery).where(WorkflowEventDelivery.id == delivery_id).with_for_update())\n    delivery = result.scalar_one_or_none()'
+          assert old in s, 'delivery query not found'
+          p.write_text(s.replace(old, new, 1))
+          t = Path('backend/tests/test_workflow_event_dispatch_concurrency.py')
+          t.write_text('''from pathlib import Path\n\nSOURCE = Path(__file__).parents[1] / "app/services/workflow_trigger_service.py"\n\n\ndef test_event_dispatch_locks_delivery_before_creating_workflow_run():\n    source = SOURCE.read_text()\n    assert 'select(WorkflowEventDelivery).where(WorkflowEventDelivery.id == delivery_id).with_for_update()' in source\n    assert 'select(WorkflowEventDelivery).where(WorkflowEventDelivery.id == delivery_id))' not in source\n''')
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add backend/app/services/workflow_trigger_service.py backend/tests/test_workflow_event_dispatch_concurrency.py
+          git commit -m "fix: fence concurrent workflow event dispatch" || exit 0
+          git push
