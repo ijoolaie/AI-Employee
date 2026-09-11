@@ -183,4 +183,4 @@ def execute_run_task(self, run_id: str, tenant_id: str) -> None:
             raise
         raise self.retry(exc=exc, countdown=min(60, 5 * (2 ** self.request.retries)))
     finally:
-        release_tenant_resource(tenant_id, lease)
+        release_tenant_resource(lease)
