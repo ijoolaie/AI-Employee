@@ -19,6 +19,7 @@ from app.models.workflow_approval import WorkflowApproval
 from app.services import audit_service, employee_service, run_service, outbox_service, billing_service
 from app.services.workflow_conditions import evaluate_condition
 from app.core.metrics import WORKFLOW_STEPS
+from app.services.workflow_execution_lease import acquire_workflow_execution_lease, assert_workflow_execution_lease, heartbeat_workflow_execution_lease
 
 
 def _resolve_mapping(mapping: dict[str, str], context: dict[str, Any]) -> dict[str, Any]:
@@ -312,7 +313,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID) -> None:
             raise
 
 
-async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> WorkflowRun:
+async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, execution_lease_id: uuid.UUID | None = None) -> WorkflowRun:
     result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == workflow_run_id).with_for_update())
     run = result.scalar_one_or_none()
     if run is None:
@@ -327,22 +328,34 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
     context = run.context or {"input": {}, "steps": {}}
     context.setdefault("steps", {})
     start_position = int(context.get("_workflow", {}).get("next_position", 0))
-    if run.status not in {"pending", "waiting_approval"}:
+    if run.status not in {"pending", "waiting_approval", "running"}:
         return run
     now = datetime.now(timezone.utc)
     if run.deadline_at and run.deadline_at <= now:
         run.status = "timed_out"; run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}; run.completed_at = now; await db.flush(); await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": run.deadline_at.isoformat()}); return run
-    run.status = "running"
+    if execution_lease_id is not None:
+        lease_id = execution_lease_id
+    elif run.status == "running":
+        if run.deadline_at is not None and run.execution_lease_expires_at and run.execution_lease_expires_at <= now:
+            lease_id = await acquire_workflow_execution_lease(db, workflow_run_id=run.id, allow_recovery=True)
+        else:
+            raise ValidationAppError("WORKFLOW_EXECUTION_LEASE_LOST")
+    else:
+        lease_id = await acquire_workflow_execution_lease(db, workflow_run_id=run.id)
+    run = await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
     if run.started_at is None: run.started_at = datetime.now(timezone.utc)
     await db.flush()
     try:
         for position in range(start_position, len(steps)):
+            await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
+            await heartbeat_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
             fresh = await db.execute(select(WorkflowRun.status, WorkflowRun.deadline_at).where(WorkflowRun.id == run.id))
             fresh_status, fresh_deadline = fresh.one()
             if fresh_status != "running":
                 return run
             if fresh_deadline and fresh_deadline <= datetime.now(timezone.utc):
                 run.status = "timed_out"; run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}; run.completed_at = datetime.now(timezone.utc); await db.flush(); await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": fresh_deadline.isoformat()}); return run
+            await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
             definition = steps[position]
             step_key = definition["key"]
             existing_result = await db.execute(select(WorkflowStepRun).where(WorkflowStepRun.workflow_run_id == run.id, WorkflowStepRun.step_key == step_key))
@@ -360,6 +373,7 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
                     for branch_def in definition.get("branches", []): db.add(WorkflowParallelBranchRun(workflow_run_id=run.id, workflow_step_run_id=step.id, branch_key=branch_def["key"], config={"steps": branch_def.get("steps", [])}, status="pending"))
                     step.status = "waiting_parallel"; await db.flush(); branch_result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.workflow_step_run_id == step.id)); branches = list(branch_result.scalars().all())
                     for branch in branches: await outbox_service.enqueue(db, kind="workflow.parallel_branch", tenant_id=run.tenant_id, payload={"branch_id": str(branch.id)}, dedupe_key=f"workflow.parallel_branch:{branch.id}")
+                    run.execution_lease_id = None; run.execution_lease_expires_at = None; run.execution_heartbeat_at = None
                     await db.flush(); return run
                 if any(b.status == "failed" for b in branches):
                     step.status = "failed"; step.error = {"code": "PARALLEL_BRANCH_FAILED", "message": "One or more parallel branches failed."}; step.completed_at = datetime.now(timezone.utc); run.status = "failed"; run.error = {"step": step_key, **step.error}; raise ValidationAppError(step.error["message"])
@@ -370,8 +384,8 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
             if definition.get("type") == "approval":
                 approval_result = await db.execute(select(WorkflowApproval).where(WorkflowApproval.workflow_step_run_id == step.id).with_for_update()); approval = approval_result.scalar_one_or_none()
                 if approval is None:
-                    timeout_seconds = int(definition.get("timeout_seconds", 86400)); approval = WorkflowApproval(tenant_id=run.tenant_id, workflow_run_id=run.id, workflow_step_run_id=step.id, step_key=step_key, status="pending", requested_by=run.created_by, metadata={"message": definition.get("message", "Approval required"), "metadata": definition.get("metadata", {})}, expires_at=datetime.now(timezone.utc) + timedelta(seconds=max(1, timeout_seconds))); db.add(approval); step.status = "waiting"; run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); await db.flush(); await audit_service.record(db, action="workflow.approval.requested", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_approval", resource_id=approval.id, request_id=request_id_var.get(), metadata={"workflow_run_id": str(run.id), "step_key": step_key, "expires_at": approval.expires_at.isoformat()}); return run
-                if approval.status == "pending": run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); await db.flush(); return run
+                    timeout_seconds = int(definition.get("timeout_seconds", 86400)); approval = WorkflowApproval(tenant_id=run.tenant_id, workflow_run_id=run.id, workflow_step_run_id=step.id, step_key=step_key, status="pending", requested_by=run.created_by, metadata={"message": definition.get("message", "Approval required"), "metadata": definition.get("metadata", {})}, expires_at=datetime.now(timezone.utc) + timedelta(seconds=max(1, timeout_seconds))); db.add(approval); step.status = "waiting"; run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); run.execution_lease_id = None; run.execution_lease_expires_at = None; run.execution_heartbeat_at = None; await db.flush(); await audit_service.record(db, action="workflow.approval.requested", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_approval", resource_id=approval.id, request_id=request_id_var.get(), metadata={"workflow_run_id": str(run.id), "step_key": step_key, "expires_at": approval.expires_at.isoformat()}); return run
+                if approval.status == "pending": run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); run.execution_lease_id = None; run.execution_lease_expires_at = None; run.execution_heartbeat_at = None; await db.flush(); return run
                 if approval.status == "rejected":
                     step.status = "failed"; step.error = {"code": "WORKFLOW_APPROVAL_REJECTED", "message": approval.decision_reason or "Human approval rejected the workflow step."}; step.completed_at = datetime.now(timezone.utc); run.status = "failed"; run.error = {"step": step_key, **step.error}; raise ValidationAppError(step.error["message"])
                 step.status = "success"; step.output_data = {"approved": True, "decided_by": str(approval.decided_by) if approval.decided_by else None, "reason": approval.decision_reason}; step.completed_at = datetime.now(timezone.utc); context["steps"][step_key] = step.output_data; context["_workflow"] = {"next_position": position + 1}; flag_modified(run, "context"); await db.flush(); continue
@@ -407,6 +421,8 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
                 try:
                     child = await run_service.create_run(db, tenant_id=run.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=run.created_by)
                     step.employee_run_id = child.id
+                    await db.commit()
+                    await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
                     await run_service.execute_run(db, run_id=child.id)
                     if child.status != "success": raise RuntimeError(f"Employee Run ended with status {child.status}")
                 except Exception as exc:
