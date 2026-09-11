@@ -84,6 +84,15 @@ async def _send(outbox_id: str) -> None:
             await db.commit()
             side_effect_started = True
 
+            # The commit above releases transaction-scoped advisory locks.
+            # Re-enter a fresh transaction, revalidate Agent authority (which
+            # reacquires the same kill-switch scope locks), and hold that lock
+            # across the irreversible SMTP call. This makes the kill switch
+            # and the side effect share one transaction-level linearization
+            # point: a kill assertion that wins the lock prevents the send;
+            # a send that wins the lock is allowed to complete before the kill.
+            await _authorize_deferred_agent_side_effect(db, row)
+
             msg = _build_email(payload, str(row.id), settings)
             with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as smtp:
                 if settings.smtp_use_starttls:
