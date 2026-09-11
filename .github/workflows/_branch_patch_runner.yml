@@ -1,0 +1,41 @@
+name: temporary branch patch runner
+on:
+  push:
+    branches:
+      - fix/parallel-branch-terminal-fence
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.ref == 'refs/heads/fix/parallel-branch-terminal-fence'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch branch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/services/workflow_service.py')
+          s = p.read_text()
+          old = '                if not all(b.status == "success" for b in branches): step.status = "waiting_parallel"; await db.flush(); return\n'
+          new = '                if not all(b.status == "success" for b in branches):\n                    step.status = "waiting_parallel"\n                    run.execution_lease_id = None\n                    run.execution_lease_expires_at = None\n                    run.execution_heartbeat_at = None\n                    await db.flush()\n                    return run\n'
+          assert old in s
+          p.write_text(s.replace(old, new, 1))
+          test = Path('backend/tests/test_v032_parallel_branch_execution_lease.py')
+          t = test.read_text()
+          marker = '\n\ndef test_parallel_branch_recovery_is_bounded_by_parent_deadline():\n'
+          addition = '''\n\ndef test_parallel_waiting_state_releases_parent_execution_lease():\n    source = _service_source()\n    marker = 'if not all(b.status == "success" for b in branches):'\n    pos = source.index(marker, source.index('async def execute_workflow'))\n    tail = source[pos:pos + 500]\n    assert 'run.execution_lease_id = None' in tail\n    assert 'run.execution_lease_expires_at = None' in tail\n    assert 'run.execution_heartbeat_at = None' in tail\n'''
+          assert marker in t
+          test.write_text(t.replace(marker, addition + marker, 1))
+          Path('.github/workflows/parallel-waiting-lease-fix.yml').unlink(missing_ok=True)
+          Path('.github/workflows/parallel-branch-terminal-fence-patch.yml').unlink(missing_ok=True)
+          Path('.github/workflows/_branch_patch_runner.yml').unlink(missing_ok=True)
+          PY
+      - name: Commit branch patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add backend/app/services/workflow_service.py backend/tests/test_v032_parallel_branch_execution_lease.py .github/workflows/parallel-waiting-lease-fix.yml .github/workflows/parallel-branch-terminal-fence-patch.yml .github/workflows/_branch_patch_runner.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'P1: release workflow lease while waiting for parallel branches'
+          git push origin HEAD:fix/parallel-branch-terminal-fence
