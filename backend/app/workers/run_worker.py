@@ -19,7 +19,6 @@ from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.employee import EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
-from app.services import run_service
 from app.services.run_execution_fence import execute_run_locked
 from app.services.agent_governance import governed_agent_execution
 from app.services.agent_kill_switch_service import assert_not_killed
@@ -76,8 +75,8 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                             AgentIdentity.agent_instance_id == instance.id,
                             AgentIdentity.tenant_id == run.tenant_id,
                         )
-                    )
-                ).scalar_one_or_none()
+                    ).scalar_one_or_none()
+                )
                 if identity is None:
                     raise ValidationAppError("Agent Run has no identity")
                 if not identity.active or identity.revoked_at is not None:
@@ -87,9 +86,6 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     await db.flush()
                     raise ValidationAppError("Agent Run identity has expired")
 
-                # Kill-switch state is checked at queue consumption, before any
-                # runtime work can produce a side effect. The policy kernel also
-                # checks it again at the individual side-effect boundary.
                 await assert_not_killed(
                     db,
                     tenant_id=run.tenant_id,
