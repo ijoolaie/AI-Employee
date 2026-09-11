@@ -21,8 +21,13 @@ class Result:
 class Db:
     def __init__(self, *values): self.values = list(values)
     async def execute(self, statement):
-        if "agent_kill_switches" in str(statement):
+        text = str(statement)
+        if "agent_kill_switches" in text:
             return Result(None)
+        if "agent_identities" in text:
+            return Result(self.values[1] if len(self.values) > 1 else None)
+        if "agent_instances" in text:
+            return Result(self.values[0] if self.values else None)
         return Result(self.values.pop(0))
     async def flush(self): pass
 
