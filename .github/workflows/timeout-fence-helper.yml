@@ -1,8 +1,7 @@
 name: timeout-fence-helper
 on:
-  push:
-    branches:
-      - fix/workflow-timeout-terminal-fence
+  pull_request:
+    types: [opened, synchronize]
 jobs:
   patch:
     runs-on: ubuntu-latest
@@ -52,5 +51,5 @@ jobs:
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add backend/app/services/workflow_service.py
-          git commit -m "fix: fence workflow timeout terminal transition"
+          git diff --cached --quiet || git commit -m "fix: fence workflow timeout terminal transition"
           git push
