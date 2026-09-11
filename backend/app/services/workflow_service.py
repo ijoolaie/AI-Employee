@@ -19,6 +19,7 @@ from app.models.workflow_approval import WorkflowApproval
 from app.services import audit_service, employee_service, run_service, outbox_service, billing_service
 from app.services.workflow_conditions import evaluate_condition
 from app.core.metrics import WORKFLOW_STEPS
+from app.services.workflow_execution_lease import acquire_workflow_execution_lease, assert_workflow_execution_lease, heartbeat_workflow_execution_lease
 
 
 def _resolve_mapping(mapping: dict[str, str], context: dict[str, Any]) -> dict[str, Any]:
@@ -327,22 +328,32 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> W
     context = run.context or {"input": {}, "steps": {}}
     context.setdefault("steps", {})
     start_position = int(context.get("_workflow", {}).get("next_position", 0))
-    if run.status not in {"pending", "waiting_approval"}:
+    if run.status not in {"pending", "waiting_approval", "running"}:
         return run
     now = datetime.now(timezone.utc)
     if run.deadline_at and run.deadline_at <= now:
         run.status = "timed_out"; run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}; run.completed_at = now; await db.flush(); await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": run.deadline_at.isoformat()}); return run
-    run.status = "running"
+    if run.status == "running":
+        if run.deadline_at is None or not run.execution_lease_expires_at or run.execution_lease_expires_at <= now:
+            lease_id = await acquire_workflow_execution_lease(db, workflow_run_id=run.id, allow_recovery=bool(run.deadline_at))
+        else:
+            raise ValidationAppError("WORKFLOW_EXECUTION_LEASE_LOST")
+    else:
+        lease_id = await acquire_workflow_execution_lease(db, workflow_run_id=run.id)
+    run = await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
     if run.started_at is None: run.started_at = datetime.now(timezone.utc)
     await db.flush()
     try:
         for position in range(start_position, len(steps)):
+            await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
+            await heartbeat_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
             fresh = await db.execute(select(WorkflowRun.status, WorkflowRun.deadline_at).where(WorkflowRun.id == run.id))
             fresh_status, fresh_deadline = fresh.one()
             if fresh_status != "running":
                 return run
             if fresh_deadline and fresh_deadline <= datetime.now(timezone.utc):
                 run.status = "timed_out"; run.error = {"code": "WORKFLOW_TIMEOUT", "message": "Workflow run exceeded its configured runtime."}; run.completed_at = datetime.now(timezone.utc); await db.flush(); await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"deadline_at": fresh_deadline.isoformat()}); return run
+            await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
             definition = steps[position]
             step_key = definition["key"]
             existing_result = await db.execute(select(WorkflowStepRun).where(WorkflowStepRun.workflow_run_id == run.id, WorkflowStepRun.step_key == step_key))
