@@ -29,3 +29,4 @@ jobs:
           git add backend/app/services/workflow_trigger_service.py backend/tests/test_workflow_event_dispatch_concurrency.py
           git commit -m "fix: fence concurrent workflow event dispatch" || exit 0
           git push
+      # Trigger this workflow from a follow-up push after installation.
