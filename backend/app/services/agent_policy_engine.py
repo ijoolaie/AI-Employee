@@ -73,12 +73,32 @@ class PolicyResult:
 async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
     """Evaluate one Agent action deterministically and fail closed."""
     now = request.now or datetime.now(timezone.utc)
+
+    # Identity authority and Agent lifecycle are execution-critical state. Lock
+    # them in a deterministic order and retain the locks for the caller's
+    # transaction so revocation/suspension cannot commit between authorization
+    # and an irreversible governed side effect.
+    identity = (
+        await db.execute(
+            select(AgentIdentity)
+            .where(
+                AgentIdentity.agent_instance_id == request.agent_instance_id,
+                AgentIdentity.tenant_id == request.tenant_id,
+            )
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
+    if identity is None:
+        raise NotFoundError("Agent identity not found for tenant")
+
     instance = (
         await db.execute(
-            select(AgentInstance).where(
+            select(AgentInstance)
+            .where(
                 AgentInstance.id == request.agent_instance_id,
                 AgentInstance.tenant_id == request.tenant_id,
             )
+            .with_for_update()
         )
     ).scalar_one_or_none()
     if instance is None:
@@ -111,9 +131,6 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
     if instance.status != AgentInstanceStatus.ENABLED or not instance.enabled:
         return result(PolicyDecision.DENY, "agent_instance_not_executable")
 
-    # Governed Stage 8 instances carry the CEO-approved authority fingerprint
-    # in their provisioning configuration. Recompute it at every execution
-    # boundary so post-activation drift cannot silently change authority.
     template_id = getattr(instance, "agent_template_id", None)
     if template_id is not None:
         template = (
@@ -137,8 +154,6 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             template_id=template.id,
             template_version=template.version,
             agent_definition_id=instance.agent_definition_id,
-            # Older lightweight policy-kernel fixtures do not model every
-            # persisted AgentInstance field; real governed instances always do.
             risk_tier=getattr(instance, "risk_tier", template.risk_tier),
             capability_contract=template.capability_contract,
             permission_policy=instance.permission_policy,
@@ -151,16 +166,6 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
         if current_fingerprint != approved_fingerprint:
             return result(PolicyDecision.DENY, "agent_governance_fingerprint_mismatch")
 
-    identity = (
-        await db.execute(
-            select(AgentIdentity).where(
-                AgentIdentity.agent_instance_id == instance.id,
-                AgentIdentity.tenant_id == request.tenant_id,
-            )
-        )
-    ).scalar_one_or_none()
-    if identity is None:
-        return result(PolicyDecision.DENY, "agent_identity_missing")
     if not identity.active or identity.revoked_at is not None:
         return result(PolicyDecision.DENY, "agent_identity_revoked")
     if identity.expires_at is not None and identity.expires_at <= now:
