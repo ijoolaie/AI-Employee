@@ -37,7 +37,7 @@ async def _lock_execution_kill_scopes(
         _scope_lock_key(AgentKillScope.AGENT, tenant_id=tenant_id, agent_instance_id=agent_instance_id),
     )
     for lock_key in keys:
-        await db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:lock_key))").bindparams(lock_key=lock_key))
+        await db.execute(text("SELECT pg_advisory_xact_lock(hashtext(:lock_key)) /* agent_kill_switches */").bindparams(lock_key=lock_key))
 
 
 async def assert_not_killed(
