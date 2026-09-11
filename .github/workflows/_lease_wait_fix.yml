@@ -1,0 +1,42 @@
+name: Temporary Lease Wait-State Patcher
+on:
+  push:
+    branches:
+      - fix/workflow-execution-lease-fencing
+jobs:
+  patch:
+    if: github.actor == 'ijoolaie'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Patch lease release at workflow wait boundaries
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/services/workflow_service.py')
+          s = p.read_text()
+          old = 'step.status = "waiting_parallel"; await db.flush(); branch_result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.workflow_step_run_id == step.id)); branches = list(branch_result.scalars().all())\n                    for branch in branches: await outbox_service.enqueue(db, kind="workflow.parallel_branch", tenant_id=run.tenant_id, payload={"branch_id": str(branch.id)}, dedupe_key=f"workflow.parallel_branch:{branch.id}")\n                    await db.flush(); return run'
+          new = 'step.status = "waiting_parallel"; await db.flush(); branch_result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.workflow_step_run_id == step.id)); branches = list(branch_result.scalars().all())\n                    for branch in branches: await outbox_service.enqueue(db, kind="workflow.parallel_branch", tenant_id=run.tenant_id, payload={"branch_id": str(branch.id)}, dedupe_key=f"workflow.parallel_branch:{branch.id}")\n                    run.execution_lease_id = None; run.execution_lease_expires_at = None; run.execution_heartbeat_at = None\n                    await db.flush(); return run'
+          if old not in s: raise SystemExit('parallel wait pattern not found')
+          s = s.replace(old, new, 1)
+          old = 'step.status = "waiting"; run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); await db.flush(); await audit_service.record(db, action="workflow.approval.requested", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_approval", resource_id=approval.id, request_id=request_id_var.get(), metadata={"workflow_run_id": str(run.id), "step_key": step_key, "expires_at": approval.expires_at.isoformat()}); return run'
+          new = 'step.status = "waiting"; run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); run.execution_lease_id = None; run.execution_lease_expires_at = None; run.execution_heartbeat_at = None; await db.flush(); await audit_service.record(db, action="workflow.approval.requested", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_approval", resource_id=approval.id, request_id=request_id_var.get(), metadata={"workflow_run_id": str(run.id), "step_key": step_key, "expires_at": approval.expires_at.isoformat()}); return run'
+          if old not in s: raise SystemExit('approval create pattern not found')
+          s = s.replace(old, new, 1)
+          old = 'if approval.status == "pending": run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); await db.flush(); return run'
+          new = 'if approval.status == "pending": run.status = "waiting_approval"; context["_workflow"] = {"next_position": position, "waiting_approval_id": str(approval.id)}; flag_modified(run, "context"); run.execution_lease_id = None; run.execution_lease_expires_at = None; run.execution_heartbeat_at = None; await db.flush(); return run'
+          if old not in s: raise SystemExit('approval pending pattern not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+      - name: Commit and remove patcher
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backend/app/services/workflow_service.py
+          git commit -m 'fix: release workflow lease while waiting'
+          git rm .github/workflows/_lease_wait_fix.yml
+          git commit -m 'chore: remove temporary lease wait-state patcher'
+          git push
