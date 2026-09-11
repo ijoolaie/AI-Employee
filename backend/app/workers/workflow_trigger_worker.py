@@ -90,6 +90,7 @@ async def _timeout_workflow_runs_async() -> int:
     now = datetime.now(timezone.utc)
     count = 0
     recovered = 0
+    branch_recovered = 0
     async with worker_db_session() as db:
         stale = await db.execute(
             select(WorkflowRun).where(
@@ -105,6 +106,23 @@ async def _timeout_workflow_runs_async() -> int:
             lease_id = await recover_workflow_execution_lease(db, workflow_run_id=run.id)
             await enqueue(db, kind="workflow.execute", tenant_id=run.tenant_id, payload={"workflow_run_id": str(run.id)}, dedupe_key=f"workflow.execute:{run.id}:lease-recovery:{lease_id}")
             recovered += 1
+        from app.models.workflow import WorkflowParallelBranchRun
+        from app.services.workflow_execution_lease import recover_parallel_branch_execution_lease
+        branch_stale = await db.execute(
+            select(WorkflowParallelBranchRun).join(WorkflowRun, WorkflowRun.id == WorkflowParallelBranchRun.workflow_run_id).where(
+                WorkflowParallelBranchRun.status == "running",
+                WorkflowParallelBranchRun.execution_lease_id.is_not(None),
+                WorkflowParallelBranchRun.execution_lease_expires_at.is_not(None),
+                WorkflowParallelBranchRun.execution_lease_expires_at <= now,
+                WorkflowRun.deadline_at.is_not(None),
+                WorkflowRun.deadline_at > now,
+                WorkflowRun.status == "running",
+            ).with_for_update(skip_locked=True)
+        )
+        for branch in branch_stale.scalars().all():
+            lease_id = await recover_parallel_branch_execution_lease(db, branch_id=branch.id)
+            await enqueue(db, kind="workflow.parallel_branch", tenant_id=branch.workflow_run_id and (await db.get(WorkflowRun, branch.workflow_run_id)).tenant_id, payload={"branch_id": str(branch.id)}, dedupe_key=f"workflow.parallel_branch:{branch.id}:lease-recovery:{lease_id}")
+            branch_recovered += 1
         await db.flush()
         result = await db.execute(
             select(WorkflowRun).where(
@@ -126,4 +144,4 @@ async def _timeout_workflow_runs_async() -> int:
             await audit_service.record(db, action="workflow.run.timed_out", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", metadata={"deadline_at": run.deadline_at.isoformat()})
             count += 1
         await db.commit()
-    return count + recovered
+    return count + recovered + branch_recovered

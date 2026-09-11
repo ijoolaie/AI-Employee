@@ -263,54 +263,101 @@ async def _enqueue_resume(db: AsyncSession, run: WorkflowRun, *, reason: str, de
     await outbox_service.enqueue(db, kind="workflow.execute", tenant_id=run.tenant_id, payload={"workflow_run_id": str(run.id), "reason": reason, "generation": generation}, dedupe_key=f"workflow.execute:{run.id}:{generation}", available_at=available_at)
 
 
-async def _execute_parallel_branch(branch_id: uuid.UUID) -> None:
+async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uuid.UUID | None = None) -> None:
     from app.core.database import worker_db_session
+    from app.services.workflow_execution_lease import (
+        acquire_parallel_branch_execution_lease,
+        assert_parallel_branch_execution_lease,
+        heartbeat_parallel_branch_execution_lease,
+    )
     async with worker_db_session() as db:
+        lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(db, branch_id=branch_id)
         result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
         branch = result.scalar_one_or_none()
-        if branch is None or branch.status in {"success", "running"}:
-            return
+        if branch is None:
+            raise ValidationAppError("Parallel branch not found")
         parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id).with_for_update())
         parent = parent_result.scalar_one_or_none()
         if parent is None or parent.status in {"cancelled", "timed_out", "failed", "success"}:
             branch.status = "cancelled" if parent and parent.status == "cancelled" else "failed"
+            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
             await db.commit(); return
-        branch.status = "running"; branch.started_at = branch.started_at or datetime.now(timezone.utc)
-        await db.flush()
-        outputs = {}
+        await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
+        heartbeat_lost = asyncio.Event()
+        async def heartbeat_loop() -> None:
+            try:
+                while True:
+                    await asyncio.sleep(20)
+                    async with worker_db_session() as heartbeat_db:
+                        try:
+                            await heartbeat_parallel_branch_execution_lease(heartbeat_db, branch_id=branch.id, lease_id=lease_id)
+                            await heartbeat_db.commit()
+                        except Exception:
+                            await heartbeat_db.rollback(); heartbeat_lost.set(); return
+            except asyncio.CancelledError:
+                raise
+        heartbeat_task = asyncio.create_task(heartbeat_loop())
         try:
-            for definition in branch.config.get("steps", []):
+            outputs = dict(branch.output_data or {})
+            definitions = branch.config.get("steps", [])
+            while branch.current_step_position < len(definitions):
+                await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
+                if heartbeat_lost.is_set():
+                    raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
                 parent_state = await db.execute(select(WorkflowRun.status, WorkflowRun.deadline_at).where(WorkflowRun.id == parent.id))
                 parent_status, parent_deadline = parent_state.one()
                 if parent_status != "running":
                     return
                 if parent_deadline and parent_deadline <= datetime.now(timezone.utc):
                     return
+                position = branch.current_step_position
+                definition = definitions[position]
                 if definition.get("type", "employee") != "employee":
                     raise ValidationAppError("Parallel branch supports employee steps only")
                 step_input = _resolve_mapping(definition.get("input_mapping", {}), parent.context or {})
                 if not step_input:
                     step_input = dict((parent.context or {}).get("input", {}))
-                max_attempts = int(definition.get("retry_max", 0)) + 1
                 child = None
-                try:
+                if branch.employee_run_id:
+                    child = await db.get(Run, branch.employee_run_id)
+                    if child is None:
+                        raise ValidationAppError("WORKFLOW_CHILD_RETRY_UNSAFE: linked parallel branch Run is missing")
+                    if child.status != "success":
+                        raise ValidationAppError(f"WORKFLOW_CHILD_RETRY_UNSAFE: linked parallel branch Run ended with status {child.status}")
+                else:
                     child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
+                    branch.employee_run_id = child.id
+                    await db.commit()
+                    await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
+                    if heartbeat_lost.is_set():
+                        raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
                     await run_service.execute_run(db, run_id=child.id)
                     if child.status != "success":
                         raise RuntimeError(f"Employee Run ended with status {child.status}")
-                except Exception as exc:
-                    if max_attempts > 1:
-                        raise ValidationAppError("WORKFLOW_CHILD_RETRY_UNSAFE: parallel branch child retry would create a fresh Run without a durable child identity fence.") from exc
-                    raise
                 outputs[definition.get("output_key") or definition["key"]] = child.output_data or {}
-            branch.status = "success"; branch.output_data = outputs; branch.completed_at = datetime.now(timezone.utc)
-            await _enqueue_resume(db, parent, reason=f"parallel_branch:{branch.branch_key}")
-            await db.commit()
+                branch.output_data = outputs
+                branch.current_step_position = position + 1
+                branch.employee_run_id = None
+                await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
+                await db.flush()
+                if branch.current_step_position >= len(definitions):
+                    branch.status = "success"
+                    branch.completed_at = datetime.now(timezone.utc)
+                    branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                    await _enqueue_resume(db, parent, reason=f"parallel_branch:{branch.branch_key}")
+                await db.commit()
+            if branch.status == "success":
+                return
         except Exception as exc:
-            branch.status = "failed"; branch.error = {"code": "PARALLEL_BRANCH_FAILED", "message": str(exc)[:1000]}; branch.completed_at = datetime.now(timezone.utc)
+            branch.status = "failed"
+            branch.error = {"code": "PARALLEL_BRANCH_FAILED", "message": str(exc)[:1000]}
+            branch.completed_at = datetime.now(timezone.utc)
+            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
             await _enqueue_resume(db, parent, reason=f"parallel_branch_failed:{branch.branch_key}")
             await db.commit()
             raise
+        finally:
+            heartbeat_task.cancel(); await asyncio.gather(heartbeat_task, return_exceptions=True)
 
 
 async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, execution_lease_id: uuid.UUID | None = None) -> WorkflowRun:
@@ -377,7 +424,13 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                     await db.flush(); return run
                 if any(b.status == "failed" for b in branches):
                     step.status = "failed"; step.error = {"code": "PARALLEL_BRANCH_FAILED", "message": "One or more parallel branches failed."}; step.completed_at = datetime.now(timezone.utc); run.status = "failed"; run.error = {"step": step_key, **step.error}; raise ValidationAppError(step.error["message"])
-                if not all(b.status == "success" for b in branches): step.status = "waiting_parallel"; await db.flush(); return run
+                if not all(b.status == "success" for b in branches):
+                    step.status = "waiting_parallel"
+                    run.execution_lease_id = None
+                    run.execution_lease_expires_at = None
+                    run.execution_heartbeat_at = None
+                    await db.flush()
+                    return run
                 parallel_output = {b.branch_key: (b.output_data or {}) for b in branches}; step.status = "success"; step.output_data = parallel_output; step.completed_at = datetime.now(timezone.utc); context["steps"][step_key] = parallel_output
                 if definition.get("output_key"): context[definition["output_key"]] = parallel_output
                 context["_workflow"] = {**context.get("_workflow", {}), "next_position": position + 1}; flag_modified(run, "context"); await db.flush(); continue

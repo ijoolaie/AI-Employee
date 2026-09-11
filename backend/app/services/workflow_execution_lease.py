@@ -1,10 +1,10 @@
-"""Durable WorkflowRun execution ownership and fencing helpers."""
+"""Durable WorkflowRun and parallel-branch execution ownership helpers."""
 from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.workflow import WorkflowRun
+from app.models.workflow import WorkflowRun, WorkflowParallelBranchRun
 from app.models.workflow_execution_lease import WORKFLOW_EXECUTION_LEASE_DURATION
 from app.core.exceptions import ValidationAppError
 
@@ -54,3 +54,60 @@ async def heartbeat_workflow_execution_lease(db: AsyncSession, *, workflow_run_i
 async def recover_workflow_execution_lease(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> uuid.UUID:
     """Transfer only an expired running lease; never create a replacement run."""
     return await acquire_workflow_execution_lease(db, workflow_run_id=workflow_run_id, allow_recovery=True)
+
+
+async def acquire_parallel_branch_execution_lease(db: AsyncSession, *, branch_id: uuid.UUID, allow_recovery: bool = False) -> uuid.UUID:
+    """Acquire independent branch ownership without serializing sibling branches."""
+    now = datetime.now(timezone.utc)
+    result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
+    branch = result.scalar_one_or_none()
+    if branch is None:
+        raise ValidationAppError("Parallel branch not found")
+    if branch.status in {"success", "failed", "cancelled"}:
+        raise ValidationAppError("Parallel branch is terminal")
+    if branch.status == "running":
+        if not allow_recovery or not branch.execution_lease_expires_at or branch.execution_lease_expires_at > now:
+            raise ValidationAppError("Parallel branch execution lease is still owned")
+    lease_id = uuid.uuid4()
+    branch.execution_lease_id = lease_id
+    branch.execution_heartbeat_at = now
+    branch.execution_lease_expires_at = now + WORKFLOW_EXECUTION_LEASE_DURATION
+    branch.status = "running"
+    branch.started_at = branch.started_at or now
+    await db.flush()
+    return lease_id
+
+
+async def assert_parallel_branch_execution_lease(db: AsyncSession, *, branch_id: uuid.UUID, lease_id: uuid.UUID) -> WorkflowParallelBranchRun:
+    result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id))
+    branch = result.scalar_one_or_none()
+    if branch is None:
+        raise ValidationAppError("Parallel branch not found")
+    now = datetime.now(timezone.utc)
+    fresh_lease_id = branch.execution_lease_id
+    if branch.status != "running" or fresh_lease_id != lease_id or not branch.execution_lease_expires_at or branch.execution_lease_expires_at <= now:
+        raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
+    return branch
+
+
+async def heartbeat_parallel_branch_execution_lease(db: AsyncSession, *, branch_id: uuid.UUID, lease_id: uuid.UUID) -> None:
+    now = datetime.now(timezone.utc)
+    updated = await db.execute(update(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id, WorkflowParallelBranchRun.status == "running", WorkflowParallelBranchRun.execution_lease_id == lease_id, WorkflowParallelBranchRun.execution_lease_expires_at > now).values(execution_heartbeat_at=now, execution_lease_expires_at=now + WORKFLOW_EXECUTION_LEASE_DURATION))
+    if updated.rowcount != 1:
+        raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
+
+
+async def recover_parallel_branch_execution_lease(db: AsyncSession, *, branch_id: uuid.UUID) -> uuid.UUID:
+    """Recover only when the parent workflow has a bounded, unexpired deadline."""
+    branch_result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
+    branch = branch_result.scalar_one_or_none()
+    if branch is None:
+        raise ValidationAppError("Parallel branch not found")
+    parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id).with_for_update())
+    parent = parent_result.scalar_one_or_none()
+    now = datetime.now(timezone.utc)
+    if parent is None or parent.status in {"success", "failed", "cancelled", "timed_out"}:
+        raise ValidationAppError("Parent workflow is not recoverable")
+    if parent.deadline_at is None or parent.deadline_at <= now:
+        raise ValidationAppError("Parallel branch automatic recovery requires a bounded workflow deadline")
+    return await acquire_parallel_branch_execution_lease(db, branch_id=branch_id, allow_recovery=True)
