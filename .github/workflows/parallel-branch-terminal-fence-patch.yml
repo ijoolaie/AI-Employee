@@ -1,0 +1,42 @@
+name: one-shot parallel branch terminal fence patch
+on:
+  push:
+    branches:
+      - fix/parallel-branch-terminal-fence
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply stale-worker fencing
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('backend/app/services/workflow_service.py')
+          s = p.read_text()
+          old = '''        if parent is None or parent.status in {"cancelled", "timed_out", "failed", "success"}:\n            branch.status = "cancelled" if parent and parent.status == "cancelled" else "failed"\n            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None\n            await db.commit(); return\n'''
+          new = '''        if parent is None or parent.status in {"cancelled", "timed_out", "failed", "success"}:\n            branch.status = "cancelled" if parent and parent.status == "cancelled" else "failed"\n            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None\n            await db.commit(); return\n'''
+          assert old in s
+          # Parent terminal observation is already protected by the branch row lock held by this transaction.\n          # The critical stale-worker fence is in the exception path below.\n          old_exc = '''        except Exception as exc:\n            branch.status = "failed"\n            branch.error = {"code": "PARALLEL_BRANCH_FAILED", "message": str(exc)[:1000]}\n            branch.completed_at = datetime.now(timezone.utc)\n            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None\n            await _enqueue_resume(db, parent, reason=f"parallel_branch_failed:{branch.branch_key}")\n            await db.commit()\n            raise\n'''
+          new_exc = '''        except Exception as exc:\n            # Never let a stale worker mutate branch state after lease ownership transfers.\n            # The branch row is already locked by this transaction, so a successful assertion\n            # fences the terminal mutation until commit; a lost lease must rollback without\n            # writing failure state or enqueueing a resume.\n            try:\n                await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)\n            except Exception:\n                await db.rollback()\n                raise\n            branch.status = "failed"\n            branch.error = {"code": "PARALLEL_BRANCH_FAILED", "message": str(exc)[:1000]}\n            branch.completed_at = datetime.now(timezone.utc)\n            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None\n            await _enqueue_resume(db, parent, reason=f"parallel_branch_failed:{branch.branch_key}")\n            await db.commit()\n            raise\n'''
+          assert old_exc in s
+          p.write_text(s.replace(old_exc, new_exc, 1))
+
+          test = Path('backend/tests/test_v032_parallel_branch_execution_lease.py')
+          test.write_text('''"""Contract tests for parallel branch lease fencing."""\nfrom pathlib import Path\n\n\ndef _service_source() -> str:\n    return (Path(__file__).resolve().parents[1] / "app" / "services" / "workflow_service.py").read_text()\n\n\ndef _lease_source() -> str:\n    return (Path(__file__).resolve().parents[1] / "app" / "services" / "workflow_execution_lease.py").read_text()\n\n\ndef test_parallel_branch_has_durable_lease_and_child_identity():\n    source = _service_source()\n    lease = _lease_source()\n    assert "acquire_parallel_branch_execution_lease" in source\n    assert "assert_parallel_branch_execution_lease" in source\n    assert "heartbeat_parallel_branch_execution_lease" in source\n    assert "employee_run_id" in source\n    assert "current_step_position" in source\n    assert "WORKFLOW_BRANCH_EXECUTION_LEASE_LOST" in lease\n\n\ndef test_stale_parallel_branch_worker_must_rollback_without_terminal_mutation():\n    source = _service_source()\n    marker = 'except Exception as exc:'\n    pos = source.index(marker, source.index('async def _execute_parallel_branch'))\n    tail = source[pos:pos + 1600]\n    assert 'assert_parallel_branch_execution_lease' in tail\n    assert 'await db.rollback()' in tail\n\n\ndef test_parallel_branch_recovery_is_bounded_by_parent_deadline():\n    lease = _lease_source()\n    assert 'parent.deadline_at is None or parent.deadline_at <= now' in lease\n    assert 'allow_recovery=True' in lease\n''')
+
+          helper = Path('.github/workflows/parallel-branch-terminal-fence-patch.yml')
+          helper.unlink()
+          PY
+      - name: Commit patched implementation
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add backend/app/services/workflow_service.py backend/tests/test_v032_parallel_branch_execution_lease.py .github/workflows/parallel-branch-terminal-fence-patch.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'P1: fence stale parallel branch terminal mutation'
+          git push origin HEAD:fix/parallel-branch-terminal-fence
