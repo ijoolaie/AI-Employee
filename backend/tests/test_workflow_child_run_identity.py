@@ -26,19 +26,42 @@ def test_parallel_identity_is_scoped_to_branch_and_step():
     ]
 
 
-def test_migration_persists_durable_child_identity():
+def test_migration_persists_durable_child_identity_on_current_head():
     source = MIGRATION.read_text()
+    assert "revision = \"f1a2b3c4d5e6\"" in source
+    assert "down_revision = \"f8a9b0c1d2e3\"" in source
     assert "workflow_step_run_id" in source
     assert "workflow_parallel_branch_run_id" in source
     assert "workflow_parallel_branch_step_key" in source
     assert "uq_runs_workflow_parallel_branch_step_identity" in source
 
 
-def test_workflow_links_child_before_execution_commit():
+def test_workflow_persists_identity_before_execution_commit():
     source = WORKFLOW.read_text()
-    assert "child.workflow_step_run_id = step.id" in source
-    assert "child.workflow_parallel_branch_run_id = branch.id" in source
-    assert "child.workflow_parallel_branch_step_key = str(definition[\"key\"])" in source
+    serial_identity = 'child.workflow_step_run_id = step.id'
+    parallel_identity = 'child.workflow_parallel_branch_run_id = branch.id'
+    parallel_key = 'child.workflow_parallel_branch_step_key = str(definition["key"])'
+    assert serial_identity in source
+    assert parallel_identity in source
+    assert parallel_key in source
+
+    parallel_start = source.index(parallel_identity)
+    parallel_key_pos = source.index(parallel_key, parallel_start)
+    parallel_commit = source.index("await db.commit()", parallel_key_pos)
+    parallel_execute = source.index("await run_service.execute_run(db, run_id=child.id)", parallel_commit)
+    assert parallel_key_pos < parallel_commit < parallel_execute
+
+    serial_start = source.index(serial_identity)
+    serial_commit = source.index("await db.commit()", serial_start)
+    serial_execute = source.index("await run_service.execute_run(db, run_id=child.id)", serial_commit)
+    assert serial_start < serial_commit < serial_execute
+
+
+def test_parallel_recovery_identity_is_branch_and_step_specific():
+    source = WORKFLOW.read_text()
+    lookup = "select(Run).where(\n                            Run.workflow_parallel_branch_run_id == branch.id,\n                            Run.workflow_parallel_branch_step_key == str(definition[\"key\"]),\n                        )"
+    assert lookup in source
+    assert "child_A != child_B" not in source
 
 
 def test_workflow_resolves_durable_child_before_replacement():
