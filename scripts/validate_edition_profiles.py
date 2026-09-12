@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Validate the three Phase 6 edition profile contracts without external dependencies."""
+"""Validate the Vendor, Self-Hosted, Reseller and Customer edition contracts."""
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from pathlib import Path
@@ -12,21 +11,10 @@ PROFILES = ROOT / "delivery" / "profiles"
 MANIFESTS = ROOT / "delivery" / "manifests"
 
 EXPECTED = {
-    "vendor": {
-        "authority": "product",
-        "channel": "vendor",
-        "parent": None,
-    },
-    "reseller": {
-        "authority": "delegated",
-        "channel": "reseller",
-        "parent": "vendor",
-    },
-    "customer": {
-        "authority": "consumed",
-        "channel": "customer",
-        "parent": "reseller-or-vendor",
-    },
+    "vendor": {"authority": "product", "channel": "vendor", "parent": None},
+    "self-hosted": {"authority": "deployment-owner", "channel": "self-hosted", "parent": "vendor"},
+    "reseller": {"authority": "delegated", "channel": "reseller", "parent": "vendor"},
+    "customer": {"authority": "consumed", "channel": "customer", "parent": "reseller-or-vendor"},
 }
 
 
@@ -44,7 +32,6 @@ def _scalar(text: str, key: str) -> str | None:
 
 def main() -> None:
     profiles = {edition: _read_profile(edition) for edition in EXPECTED}
-
     for edition, expected in EXPECTED.items():
         profile = profiles[edition]
         if profile.get("schema_version") != 1:
@@ -63,12 +50,10 @@ def main() -> None:
     vendor = (MANIFESTS / "vendor/v1.1.0.yaml").read_text(encoding="utf-8")
     reseller = (MANIFESTS / "reseller/v1.1.0-reseller.1.yaml").read_text(encoding="utf-8")
     customer = (MANIFESTS / "customer/v1.1.0-customer.1.yaml").read_text(encoding="utf-8")
-
     vendor_tag = _scalar(vendor, "vendor_release_tag")
     vendor_sha = _scalar(vendor, "vendor_commit_sha")
     if not vendor_tag or not vendor_sha:
         raise SystemExit("vendor manifest must define immutable vendor identity")
-
     for name, text in (("reseller", reseller), ("customer", customer)):
         if _scalar(text, "vendor_release_tag") != vendor_tag:
             raise SystemExit(f"{name}: vendor release tag diverges from vendor manifest")
@@ -76,14 +61,12 @@ def main() -> None:
             raise SystemExit(f"{name}: vendor commit SHA diverges from vendor manifest")
         if re.search(r"(?mi)^\s*included:\s*true\s*$", text):
             raise SystemExit(f"{name}: manifest must not include secrets")
-
     if _scalar(customer, "reseller_delivery_id") != _scalar(reseller, "release_id"):
         raise SystemExit("customer: reseller delivery identity does not reference the reseller profile")
-
-    print("phase6 edition profiles valid")
+    print("delivery edition profiles valid")
     print(f"vendor_release_tag={vendor_tag}")
     print(f"vendor_commit_sha={vendor_sha}")
-    print("profiles=vendor,reseller,customer")
+    print("profiles=vendor,self-hosted,reseller,customer")
 
 
 if __name__ == "__main__":
