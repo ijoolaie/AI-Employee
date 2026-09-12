@@ -165,16 +165,6 @@ async def create_agent_stack(tenant_id: uuid.UUID, suffix: str) -> tuple[uuid.UU
             budget_policy={},
         )
         agent_id = uuid.uuid4()
-        db.add(
-            AgentIdentity(
-                tenant_id=tenant_id,
-                agent_instance_id=agent_id,
-                owner_user_id=owner.id,
-                sponsor_user_id=owner.id,
-                subject=f"agent:{tenant_id}:{agent_id}",
-                active=True,
-            )
-        )
         instance = AgentInstance(
             id=agent_id,
             tenant_id=tenant_id,
@@ -194,9 +184,21 @@ async def create_agent_stack(tenant_id: uuid.UUID, suffix: str) -> tuple[uuid.UU
         db.add(instance)
         await db.flush()
         db.add(
+            AgentIdentity(
+                tenant_id=tenant_id,
+                agent_instance_id=agent_id,
+                owner_user_id=owner.id,
+                sponsor_user_id=owner.id,
+                subject=f"agent:{tenant_id}:{agent_id}",
+                active=True,
+            )
+        )
+        await db.flush()
+        identity = (await db.execute(select(AgentIdentity).where(AgentIdentity.agent_instance_id == agent_id, AgentIdentity.tenant_id == tenant_id))).scalar_one()
+        db.add(
             AgentAccessReview(
                 tenant_id=tenant_id,
-                agent_identity_id=(await db.execute(select(AgentIdentity).where(AgentIdentity.agent_instance_id == agent_id, AgentIdentity.tenant_id == tenant_id))).scalar_one().id,
+                agent_identity_id=identity.id,
                 reviewer_user_id=reviewer.id,
                 decision=AgentAccessReviewDecision.APPROVED,
                 reason="Production certification governed-runtime fixture",
