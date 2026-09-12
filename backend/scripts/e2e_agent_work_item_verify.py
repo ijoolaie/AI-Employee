@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from sqlalchemy import select, text
+from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
@@ -103,8 +103,8 @@ async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> 
             feature_codes=["employee.run"],
             metadata={"certification_fixture": True, "purpose": "production-certification", "vendor_tenant_id": str(vendor.id)},
         )
-        assert license_row.status == "active", license_row
-        assert "employee.run" in (license_row.feature_codes or []), license_row
+        assert license_row.status == "active", f"license fixture status={license_row.status!r}"
+        assert "employee.run" in (license_row.feature_codes or []), f"license features={license_row.feature_codes!r}"
         await db.commit()
 
 
@@ -248,29 +248,40 @@ async def verify_runtime(work_item_id: uuid.UUID, tenant_id: uuid.UUID, agent_id
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     status, registered = request("POST", "/auth/register", {"tenant_name": f"Agent WorkItem Acceptance {suffix}", "tenant_slug": f"cert-agent-work-item-{suffix}", "email": f"i.joolaie+agent-{suffix}@gmail.com", "password": "CertAgentWorkItem-2026!", "full_name": "Agent WorkItem Acceptance User"})
-    assert status == 201, registered
+    assert status == 201, f"registration status={status}: {registered}"
     token = (registered.get("data") or {}).get("access_token")
-    assert token
+    assert token, f"registration missing access token: {registered}"
     status, me = request("GET", "/auth/me", token=token)
-    assert status == 200, me
+    assert status == 200, f"auth/me status={status}: {me}"
     tenant_id = uuid.UUID(str(((me.get("data") or {}).get("tenant") or {}).get("id")))
     asyncio.run(provision_certification_license(tenant_id, suffix))
     print("UNIFIED AGENT WORKITEM COMMERCIAL LICENSE FIXTURE PASS")
+
     agent_id, version_id = asyncio.run(create_agent_stack(tenant_id, suffix))
+    print("UNIFIED AGENT WORKITEM STACK FIXTURE PASS")
     work_item_id = asyncio.run(create_agent_work_item(tenant_id, agent_id, suffix))
+    print(f"UNIFIED AGENT WORKITEM CREATED PASS work_item={work_item_id}")
+
     status, assigned = request("POST", f"/work-items/{work_item_id}/assign/agent", {"agent_instance_id": str(agent_id)}, token=token)
-    assert status == 200, assigned
-    assert assigned["status"] == "assigned"
+    assert status == 200, f"agent assignment status={status}: {assigned}"
+    assert assigned.get("status") == "assigned", f"agent assignment returned unexpected status: {assigned}"
+    print("UNIFIED AGENT WORKITEM ASSIGN PASS")
+
     status, dispatched = request("POST", f"/work-items/{work_item_id}/dispatch", token=token)
-    assert status == 200, dispatched
-    assert dispatched["status"] == "running"
-    assert dispatched["dispatched"] is True
+    assert status == 200, f"agent dispatch status={status}: {dispatched}"
+    assert dispatched.get("status") == "running", f"agent dispatch returned unexpected status: {dispatched}"
+    assert dispatched.get("dispatched") is True, f"agent dispatch did not report dispatched=true: {dispatched}"
+    print("UNIFIED AGENT WORKITEM DISPATCH PASS")
+
     asyncio.run(verify_runtime(work_item_id, tenant_id, agent_id, version_id))
+    print("UNIFIED AGENT WORKITEM RUNTIME BINDING + RUN CORRELATION PASS")
+
     status, history = request("GET", f"/work-items/{work_item_id}/history", token=token)
-    assert status == 200, history
+    assert status == 200, f"work item history status={status}: {history}"
     actions = {entry["action"] for entry in history}
-    assert "work_item.assigned" in actions
-    assert "work_item.dispatched" in actions
+    assert "work_item.assigned" in actions, f"missing work_item.assigned audit: {history}"
+    assert "work_item.dispatched" in actions, f"missing work_item.dispatched audit: {history}"
+    print("UNIFIED AGENT WORKITEM AUDIT PASS")
     print("UNIFIED AGENT WORKITEM REAL-STACK ASSIGN + DISPATCH + RUNTIME BINDING + RUN CORRELATION PASS")
     return 0
 
