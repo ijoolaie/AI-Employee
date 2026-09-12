@@ -16,7 +16,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: release-artifact-${{ github.ref }}
@@ -89,7 +89,7 @@ jobs:
           git show "${notes_tool_commit}:scripts/generate_release_notes.py" > /tmp/generate_release_notes.py
           python /tmp/generate_release_notes.py "${{ steps.release.outputs.version }}"
 
-      - name: Build Vendor, Reseller and Customer packages
+      - name: Build Vendor, Self-Hosted, Reseller and Customer packages
         run: |
           python scripts/build_edition_packages.py \
             "${{ steps.release.outputs.version }}" \
@@ -100,7 +100,7 @@ jobs:
         working-directory: dist/release
         run: sha256sum -c SHA256SUMS
 
-      - name: Verify Vendor, Reseller and Customer packages
+      - name: Verify four edition packages
         run: python scripts/validate_edition_packages.py "dist/editions/${{ steps.release.outputs.version }}"
 
       - name: Upload base runtime package
@@ -114,10 +114,32 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Upload three edition packages
+      - name: Upload four edition packages
         uses: actions/upload-artifact@v4
         with:
           name: ai-employee-${{ steps.release.outputs.version }}-editions
           path: dist/editions/${{ steps.release.outputs.version }}/
           if-no-files-found: error
           retention-days: 90
+
+      - name: Publish release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.release.outputs.version }}"
+          release_dir="dist/editions/${version}"
+          mapfile -t edition_assets < <(find "$release_dir" -mindepth 2 -maxdepth 2 -type f -name '*.tar.gz' | sort)
+          [[ "${#edition_assets[@]}" -eq 4 ]] || { echo "expected four edition archives, found ${#edition_assets[@]}"; exit 1; }
+          if ! gh release view "$version" >/dev/null 2>&1; then
+            gh release create "$version" \
+              --title "$version" \
+              --notes-file "dist/release/RELEASE_NOTES.md"
+          fi
+          gh release upload "$version" \
+            "${edition_assets[@]}" \
+            "$release_dir/EDITION-RELEASE-MANIFEST.json" \
+            dist/release/*.tar.gz \
+            dist/release/SHA256SUMS \
+            --clobber
