@@ -325,9 +325,25 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                     if child.status != "success":
                         raise ValidationAppError(f"WORKFLOW_CHILD_RETRY_UNSAFE: linked parallel branch Run ended with status {child.status}")
                 else:
-                    child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
-                    child.workflow_parallel_branch_run_id = branch.id
-                    branch.employee_run_id = child.id
+                    durable_result = await db.execute(
+                        select(Run).where(
+                            Run.workflow_parallel_branch_run_id == branch.id,
+                            Run.workflow_parallel_branch_step_key == str(definition["key"]),
+                        )
+                    )
+                    durable_child = durable_result.scalar_one_or_none()
+                    if durable_child is not None:
+                        if durable_child.status != "success":
+                            raise ValidationAppError(
+                                f"WORKFLOW_CHILD_RETRY_UNSAFE: durable parallel branch Run ended with status {durable_child.status}"
+                            )
+                        child = durable_child
+                        branch.employee_run_id = durable_child.id
+                    else:
+                        child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
+                        child.workflow_parallel_branch_run_id = branch.id
+                        child.workflow_parallel_branch_step_key = str(definition["key"])
+                        branch.employee_run_id = child.id
                     await db.flush()
                     await db.commit()
                     await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
