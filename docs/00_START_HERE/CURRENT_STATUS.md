@@ -1,21 +1,19 @@
 # Current Status
 
-**Last reconciled:** 2026-09-11  
-**Latest certified release:** `v1.3.8`  
-**Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
-**Certification run:** `34052885700` — SUCCESS  
+**Last reconciled:** 2026-09-12  
+**Latest certified release candidate:** `v1.4.0-rc.4`  
+**Certified commit:** `4cadd2df003d72de43546466a47e2c66062002c6`  
+**Certification run:** `34693535048` — SUCCESS  
+**Certification job:** `103552962717` — SUCCESS  
 **Current engineering mainline:** `main`  
-**Current mainline SHA:** `30ed658ae05a116a4e3d2ce3622330aa58dd347c`  
-**Current release candidate:** none currently certified  
-**Current status:** PRODUCTION HARDENING / SYSTEMATIC EXECUTION-BOUNDARY AUDIT
+**Current mainline SHA:** `4cadd2df003d72de43546466a47e2c66062002c6`  
+**Current status:** RELEASE-CANDIDATE CERTIFIED / EXTERNAL PRODUCTION GATES PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries.
 
-The certified release `v1.3.8` remains frozen at its exact certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`. Certification does not transfer to later mainline revisions.
-
-Mainline has moved beyond the historical `v1.4.0-rc.1` documentation state. PRs #462 through #487 have added execution-boundary hardening, including WorkItem/Run crash-safety, workflow retry/re-entry/terminal-state/timeout fences, workflow and parallel-branch execution leases, and concurrent Run admission serialization.
+The previous certified production release `v1.3.8` remains frozen at its exact certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`. A later exact-SHA Production Certification has now passed for `v1.4.0-rc.4` at `4cadd2df003d72de43546466a47e2c66062002c6`. Certification is bound to the exact SHA and does not transfer to other revisions.
 
 ## Latest hardening sequence
 
@@ -33,25 +31,21 @@ Key merged hardening includes:
 - PR #482 — durable WorkflowRun execution lease, heartbeat, ownership fencing and bounded recovery.
 - PR #486 — durable parallel-branch execution lease, child Run identity/step position and optimistic lease-version fencing.
 - PR #487 — concurrent Celery Run execution admission serialized with a `SELECT ... FOR UPDATE` Run-row fence.
+- PR #499 — SQLAlchemy workflow child-identity FK DDL cycle warning eliminated with `use_alter=True`, without weakening FK integrity or changing durable child-run identity semantics.
 
 ## Current execution-boundary audit
 
-The previously identified concurrent `pending` Run admission race is closed by PR #487. The worker now acquires the Run row lock before entering the canonical RunService execution path, so duplicate Celery deliveries cannot concurrently pass the `pending` idempotency guard.
+The concurrent `pending` Run admission race is closed by PR #487, and the workflow FK metadata cycle warning is closed by PR #499. The current certified candidate has passed the full Production Certification suite on its exact SHA.
 
-The remaining audit focus is now broader Celery redelivery/retry behavior and side-effect boundaries outside the already-hardened Run/Workflow paths. Review must preserve fail-closed semantics and durable ownership/fencing rather than relying on process-local state.
-
-Current audit targets:
-1. Celery retry/redelivery semantics across execution, workflow, test-center and control workers.
-2. Transactional Outbox dispatch/recovery and dedupe boundaries.
-3. Tenant/RBAC authorization immediately before deferred side effects.
-4. Remaining stale-state or crash windows that can produce duplicate, lost or unauthorized side effects.
-5. Deterministic tests for every newly confirmed P1 boundary.
+The next engineering focus is now the external production boundary rather than inventing duplicate repository work: real deployment identity, live providers, measured production SLO/SLI, real backup/restore and DR, external actor-matrix isolation/RBAC, deployed-target DAST, independent security review, production networking/secrets, HA/failure recovery, incident response, on-call routing and ordered Vendor → Reseller → Client acceptance.
 
 ## Certification boundary
 
-`v1.3.8` remains the latest certified release. The previous `v1.4.0-rc.1` Product Certification attempt (`34497132748`) is historical evidence only and is not a certification of current mainline.
+Production Certification Run `34693535048` passed for exact commit `4cadd2df003d72de43546466a47e2c66062002c6` with release identity `v1.4.0-rc.4`.
 
-The current mainline SHA `30ed658ae05a116a4e3d2ce3622330aa58dd347c` includes PR #487 after squash merge. PR-level validation for #487 passed before merge. A fresh Production Certification has **not** yet been run for this merged SHA; therefore mainline is **not certified**.
+The certification evidence includes exact-SHA identity, backend/frontend validation, migrations, production-like infrastructure/readiness, OCR runtime/extraction, product gates with zero failures, and Playwright E2E. The certification is release-candidate engineering/release evidence; it is **not** external production deployment or customer acceptance.
+
+Post-merge CI evidence also includes successful runs for SLO Contract Manual v2 (`34693267741`), Delivery Manifest Bundle (`34693267680`) and Production Compose Validation (`34693267659`) on the certified mainline SHA.
 
 ## Production deployment status
 
@@ -64,22 +58,23 @@ A controlled deployment was previously attempted using `v1.3.8`:
 - Remote deploy and deployed-identity verification were skipped.
 - Production host mutation: **NONE**.
 
+There is still no verified external deployment of `4cadd2df003d72de43546466a47e2c66062002c6` recorded in the repository evidence.
+
 ## External production gates
 
 These remain pending and are not established by repository/production-like certification:
 
-- real production infrastructure;
-- deployed-identity verification;
+- real production infrastructure and deployed-identity verification;
 - live provider validation;
-- real backup/restore and DR;
-- production SLO/SLI and error budget;
-- external Vendor → Reseller → Client acceptance;
+- real backup/restore and DR with measured RPO/RTO;
+- production SLO/SLI and error budget measurement;
+- external Vendor → Reseller → Client runtime isolation/RBAC acceptance;
 - DAST against the deployed target where applicable;
-- independent security review;
+- independent penetration testing/security review;
 - production networking and secret-management evidence;
 - HA/failure recovery in the target environment;
-- incident response/on-call evidence;
-- final external certification and customer acceptance.
+- incident-response drill and alert ownership/on-call evidence;
+- final external certification and customer acceptance (#210/#269).
 
 ## Evidence boundary
 
