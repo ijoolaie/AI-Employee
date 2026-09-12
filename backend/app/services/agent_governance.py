@@ -143,7 +143,7 @@ async def assert_publishable_with_evidence(db: AsyncSession, *, tenant_id: uuid.
         raise ValidationAppError("Latest evaluation suite does not satisfy the template evaluation policy")
     minimum_score = policy.get("minimum_score")
     if minimum_score is not None and (evidence.score is None or evidence.score < int(minimum_score)):
-        raise ValidationAppError("Latest evaluation score does not satisfy the template minimum score")
+        raise ValidationAppError("Latest evaluation score does not satisfy the template policy")
     required_contract = policy.get("required_contract_version")
     if required_contract and evidence.evidence.get("contract_version") != required_contract:
         raise ValidationAppError("Latest evaluation contract version does not satisfy the template policy")
@@ -164,16 +164,26 @@ async def create_identity(db: AsyncSession, *, tenant_id: uuid.UUID, agent_insta
 
 
 async def review_access(db: AsyncSession, *, tenant_id: uuid.UUID, identity_id: uuid.UUID, reviewer_user_id: uuid.UUID, decision: AgentAccessReviewDecision, next_review_at: datetime | None, reason: str | None) -> AgentAccessReview:
-    identity = (await db.execute(select(AgentIdentity).where(AgentIdentity.id == identity_id, AgentIdentity.tenant_id == tenant_id))).scalar_one_or_none()
+    # Match authorize(): identity first, instance second. Both locks are held
+    # through commit so an access review cannot revoke authority mid-side-effect.
+    identity = (await db.execute(
+        select(AgentIdentity)
+        .where(AgentIdentity.id == identity_id, AgentIdentity.tenant_id == tenant_id)
+        .with_for_update()
+    )).scalar_one_or_none()
     if identity is None:
         raise NotFoundError("Agent identity not found")
     if reviewer_user_id in {identity.owner_user_id, identity.sponsor_user_id}:
         raise ValidationAppError("Access reviewer must be independent from the agent owner and sponsor")
 
-    instance = (await db.execute(select(AgentInstance).where(
-        AgentInstance.id == identity.agent_instance_id,
-        AgentInstance.tenant_id == tenant_id,
-    ).with_for_update())).scalar_one_or_none()
+    instance = (await db.execute(
+        select(AgentInstance)
+        .where(
+            AgentInstance.id == identity.agent_instance_id,
+            AgentInstance.tenant_id == tenant_id,
+        )
+        .with_for_update()
+    )).scalar_one_or_none()
     if instance is None:
         raise NotFoundError("Agent instance not found for identity")
     if decision == AgentAccessReviewDecision.APPROVED and instance.status != AgentInstanceStatus.SUSPENDED:

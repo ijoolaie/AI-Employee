@@ -25,17 +25,24 @@ class FakeResult:
 class FakeDb:
     def __init__(self, *values): self.values = list(values)
     async def execute(self, statement):
-        if "agent_kill_switches" in str(statement):
+        text = str(statement)
+        if "agent_kill_switches" in text:
             return FakeResult(None)
+        if "agent_access_reviews" in text:
+            return FakeResult(self.values[2] if len(self.values) > 2 else None)
+        if "tool_approval_requests" in text:
+            return FakeResult(self.values[3] if len(self.values) > 3 else None)
+        if "agent_identities" in text:
+            return FakeResult(self.values[1] if len(self.values) > 1 else None)
+        if "agent_instances" in text:
+            return FakeResult(self.values[0] if self.values else None)
         return FakeResult(self.values.pop(0))
     async def flush(self): pass
 
 
 def agent(tenant_id, agent_id=None, **policy):
-    return SimpleNamespace(
-        id=agent_id or uuid4(), tenant_id=tenant_id, enabled=True,
-        status=AgentInstanceStatus.ENABLED, permission_policy=policy,
-    )
+    return SimpleNamespace(id=agent_id or uuid4(), tenant_id=tenant_id, enabled=True,
+                           status=AgentInstanceStatus.ENABLED, permission_policy=policy)
 
 
 def identity():
@@ -50,13 +57,9 @@ def access_review():
 @pytest.mark.asyncio
 async def test_delegated_tool_requires_a_valid_delegation_proof(monkeypatch):
     tenant = uuid4(); target = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"])
-    req = PolicyRequest(
-        tenant_id=tenant, agent_instance_id=target.id, action="tool.execute",
-        tool_name="send_email", required_permission="run.execute",
-        delegation_id=uuid4(),
-    )
-    async def reject(*_args, **_kwargs):
-        raise ValidationAppError("invalid")
+    req = PolicyRequest(tenant_id=tenant, agent_instance_id=target.id, action="tool.execute",
+                        tool_name="send_email", required_permission="run.execute", delegation_id=uuid4())
+    async def reject(*_args, **_kwargs): raise ValidationAppError("invalid")
     monkeypatch.setattr(agent_policy_engine, "validate_delegation", reject)
     result = await authorize(FakeDb(target, identity(), access_review()), req)
     assert result.decision is PolicyDecision.DENY
@@ -66,11 +69,8 @@ async def test_delegated_tool_requires_a_valid_delegation_proof(monkeypatch):
 @pytest.mark.asyncio
 async def test_delegated_tool_is_allowed_only_when_scope_proof_valid(monkeypatch):
     tenant = uuid4(); target = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"])
-    req = PolicyRequest(
-        tenant_id=tenant, agent_instance_id=target.id, action="tool.execute",
-        tool_name="send_email", required_permission="run.execute",
-        delegation_id=uuid4(),
-    )
+    req = PolicyRequest(tenant_id=tenant, agent_instance_id=target.id, action="tool.execute",
+                        tool_name="send_email", required_permission="run.execute", delegation_id=uuid4())
     async def accept(*_args, **_kwargs): return SimpleNamespace(id=req.delegation_id)
     monkeypatch.setattr(agent_policy_engine, "validate_delegation", accept)
     result = await authorize(FakeDb(target, identity(), access_review()), req)
@@ -78,12 +78,10 @@ async def test_delegated_tool_is_allowed_only_when_scope_proof_valid(monkeypatch
 
 
 def work_item(agent_id, tenant_id):
-    return SimpleNamespace(
-        id=uuid4(), tenant_id=tenant_id, title="parent", description=None,
-        status=WorkItemStatus.RUNNING, priority=0, requester_id=None,
-        executor_type=ExecutorType.AGENT, executor_id=agent_id,
-        input_data={}, output_data={}, policy_context={},
-    )
+    return SimpleNamespace(id=uuid4(), tenant_id=tenant_id, title="parent", description=None,
+                           status=WorkItemStatus.RUNNING, priority=0, requester_id=None,
+                           executor_type=ExecutorType.AGENT, executor_id=agent_id,
+                           input_data={}, output_data={}, policy_context={},)
 
 
 def test_direct_agent_to_agent_delegate_is_blocked():
@@ -97,58 +95,44 @@ class DelegationDb:
     def __init__(self, delegation, agents, identities, reviews):
         self.values = [delegation, agents, identities, *reviews]
 
-    async def execute(self, _statement):
-        return FakeResult(self.values.pop(0))
+    async def execute(self, _statement): return FakeResult(self.values.pop(0))
 
 
 def delegation_record(tenant_id, delegator_id, delegate_id, expires_at):
-    return SimpleNamespace(
-        id=uuid4(), tenant_id=tenant_id, delegator_agent_instance_id=delegator_id,
-        delegate_agent_instance_id=delegate_id, status="active", expires_at=expires_at,
-        chain_depth=1, max_chain_depth=3,
-        scopes={"actions": ["run.execute"], "tools": []},
-    )
+    return SimpleNamespace(id=uuid4(), tenant_id=tenant_id, delegator_agent_instance_id=delegator_id,
+                           delegate_agent_instance_id=delegate_id, status="active", expires_at=expires_at,
+                           chain_depth=1, max_chain_depth=3, scopes={"actions": ["run.execute"], "tools": []})
 
 
 @pytest.mark.asyncio
 async def test_delegation_is_denied_when_delegate_access_review_is_revoked():
-    tenant = uuid4()
-    delegator = agent(tenant, permissions=["run.execute"])
-    delegate = agent(tenant, permissions=["run.execute"])
+    tenant = uuid4(); delegator = agent(tenant, permissions=["run.execute"]); delegate = agent(tenant, permissions=["run.execute"])
     delegation = delegation_record(tenant, delegator.id, delegate.id, datetime.now(timezone.utc) + timedelta(hours=1))
     delegator_identity = identity(); delegator_identity.agent_instance_id = delegator.id
     delegate_identity = identity(); delegate_identity.agent_instance_id = delegate.id
-    approved = access_review()
-    revoked = access_review(); revoked.decision = AgentAccessReviewDecision.REVOKED
+    approved = access_review(); revoked = access_review(); revoked.decision = AgentAccessReviewDecision.REVOKED
     db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [approved, revoked])
-
     with pytest.raises(ValidationAppError, match="latest Access Review"):
         await validate_delegation(db, tenant_id=tenant, delegation_id=delegation.id, delegate_agent_instance_id=delegate.id)
 
 
 @pytest.mark.asyncio
 async def test_delegation_is_denied_when_delegator_identity_is_revoked():
-    tenant = uuid4()
-    delegator = agent(tenant, permissions=["run.execute"])
-    delegate = agent(tenant, permissions=["run.execute"])
+    tenant = uuid4(); delegator = agent(tenant, permissions=["run.execute"]); delegate = agent(tenant, permissions=["run.execute"])
     delegation = delegation_record(tenant, delegator.id, delegate.id, datetime.now(timezone.utc) + timedelta(hours=1))
     delegator_identity = identity(); delegator_identity.agent_instance_id = delegator.id; delegator_identity.active = False
     delegate_identity = identity(); delegate_identity.agent_instance_id = delegate.id
     db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [])
-
     with pytest.raises(ValidationAppError, match="currently active Agent identities"):
         await validate_delegation(db, tenant_id=tenant, delegation_id=delegation.id, delegate_agent_instance_id=delegate.id)
 
 
 @pytest.mark.asyncio
 async def test_delegation_is_denied_when_delegator_identity_is_expired():
-    tenant = uuid4()
-    delegator = agent(tenant, permissions=["run.execute"])
-    delegate = agent(tenant, permissions=["run.execute"])
+    tenant = uuid4(); delegator = agent(tenant, permissions=["run.execute"]); delegate = agent(tenant, permissions=["run.execute"])
     delegation = delegation_record(tenant, delegator.id, delegate.id, datetime.now(timezone.utc) + timedelta(hours=1))
     delegator_identity = identity(); delegator_identity.agent_instance_id = delegator.id; delegator_identity.expires_at = datetime.now(timezone.utc) - timedelta(minutes=1)
     delegate_identity = identity(); delegate_identity.agent_instance_id = delegate.id
     db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [])
-
     with pytest.raises(ValidationAppError, match="identity has expired"):
         await validate_delegation(db, tenant_id=tenant, delegation_id=delegation.id, delegate_agent_instance_id=delegate.id)
