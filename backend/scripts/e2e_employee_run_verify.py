@@ -118,6 +118,18 @@ async def provision_certification_license(tenant_id: uuid.UUID, suffix: str) -> 
         await db.commit()
 
 
+def wait_for_employee_visibility(employee_id: str, token: str) -> dict:
+    """Wait for the API transaction finalizer before publishing version 2."""
+    last_response: dict = {}
+    for _ in range(10):
+        status, response = request("GET", f"/employees/{employee_id}", token=token)
+        if status == 200:
+            return response
+        last_response = {"status": status, "response": response}
+        time.sleep(0.25)
+    raise AssertionError(f"employee fixture not visible after create: {last_response}")
+
+
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     tenant_slug = f"cert-product-{suffix}"
@@ -165,6 +177,8 @@ def main() -> int:
     assert employee_id, f"employee create missing id: {created}"
     assert employee.get("slug") == employee_payload["slug"], created
     print("PRODUCT ACCEPTANCE EMPLOYEE CREATE PASS")
+
+    wait_for_employee_visibility(employee_id, access_token)
 
     version_payload = {
         "input_schema": employee_payload["input_schema"],
