@@ -94,7 +94,15 @@ async def assign_work_item(
         raise ExecutionError("work item not found")
     if item.status in {WorkItemStatus.SUCCEEDED, WorkItemStatus.CANCELLED}:
         raise ExecutionError("terminal work items cannot be assigned")
-    if item.executor_type is ExecutorType.AGENT and item.executor_id == agent_instance_id:
+
+    # A READY item may already carry the requested executor as an initial routing
+    # hint. It still needs the ASSIGNED transition. Idempotency only applies once
+    # the assignment state has actually been committed.
+    if (
+        item.status in ACTIVE_WORK_ITEM_STATUSES
+        and item.executor_type is ExecutorType.AGENT
+        and item.executor_id == agent_instance_id
+    ):
         return item
 
     active = await db.scalar(

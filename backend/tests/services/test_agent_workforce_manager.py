@@ -94,6 +94,33 @@ async def test_assign_work_item_accepts_slot_and_binds_tenant_scoped_agent():
 
 
 @pytest.mark.asyncio
+async def test_assign_work_item_transitions_ready_item_pre_routed_to_same_agent():
+    tenant_id, agent_id, item_id = uuid4(), uuid4(), uuid4()
+    agent = SimpleNamespace(
+        id=agent_id, tenant_id=tenant_id, enabled=True,
+        status=AgentInstanceStatus.ENABLED, max_concurrency=1,
+    )
+    item = SimpleNamespace(
+        id=item_id, tenant_id=tenant_id, status=WorkItemStatus.READY,
+        executor_type=ExecutorType.AGENT, executor_id=agent_id,
+    )
+    db = Db(agent, item, active=0)
+
+    result = await manager.assign_work_item(
+        db,
+        tenant_id=tenant_id,
+        work_item_id=item_id,
+        agent_instance_id=agent_id,
+    )
+
+    assert result is item
+    assert item.status is WorkItemStatus.ASSIGNED
+    assert item.executor_type is ExecutorType.AGENT
+    assert item.executor_id == agent_id
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_assign_work_item_is_idempotent_for_same_agent():
     tenant_id, agent_id, item_id = uuid4(), uuid4(), uuid4()
     agent = SimpleNamespace(
