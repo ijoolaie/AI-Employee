@@ -24,6 +24,10 @@ class Db:
         text = str(statement)
         if "agent_kill_switches" in text:
             return Result(None)
+        if "agent_access_reviews" in text:
+            return Result(self.values[2] if len(self.values) > 2 else None)
+        if "tool_approval_requests" in text:
+            return Result(self.values[3] if len(self.values) > 3 else None)
         if "agent_identities" in text:
             return Result(self.values[1] if len(self.values) > 1 else None)
         if "agent_instances" in text:
