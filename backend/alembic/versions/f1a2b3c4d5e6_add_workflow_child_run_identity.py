@@ -1,13 +1,13 @@
 """Persist durable workflow child Run ownership identity.
 
 Revision ID: f1a2b3c4d5e6
-Revises: f8a9b0c1d2e3
+Revises: f9a0b1c2d3e4
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = "f1a2b3c4d5e6"
-down_revision = "f8a9b0c1d2e3"
+down_revision = "f9a0b1c2d3e4"
 branch_labels = None
 depends_on = None
 
