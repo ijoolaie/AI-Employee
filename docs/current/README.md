@@ -1,43 +1,48 @@
 # Current Documentation
 
-This directory contains the maintained project documentation for the current `main` implementation line.
+This directory contains maintained documentation for the current `main` implementation line.
 
 ## Source of truth
 
-1. `STATUS.md` — implementation, certification and deployment truth.
-2. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap, external gates and future product stages.
-3. `../00_START_HERE/CURRENT_STATUS.md` — executive current-state summary.
-4. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
-5. `PHASE_14_EXTERNAL_PRODUCTION_EVIDENCE.md` — final external-production/customer-acceptance evidence gate.
-6. `PRODUCTION_GAP_REGISTER_2026-09-04.md` — current reconciled gap register.
-7. `49_CURRENT_STATE_RECONCILIATION_2026-08-31.md` — retained point-in-time reconciliation evidence.
-8. `50_PRODUCTION_CANDIDATE_READINESS_2026-08-31.md` — retained point-in-time candidate evidence; it does not override the current canonical status.
-
-## Versioning rule
-
-- Release identity and architecture baseline are independent.
-- `v1.3.8` is the current certified release candidate.
-- `V1.5 Agentic Operating Model` is the current architecture baseline, not a certified release.
-- Future product stages in `PRODUCTIZATION_ROADMAP.md` are planning targets until implementation and evidence exist.
+1. `../00_START_HERE/VERSIONING_TRUTH.md` — release/architecture/phase truth.
+2. `../00_START_HERE/CURRENT_STATUS.md` — executive current state.
+3. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
+4. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap and current Agent capability phases.
+5. `PRODUCTION_SERVER_BASELINE.md` — recommended external production infrastructure baseline.
+6. `PRODUCTION_EVIDENCE_INDEX.md` — external evidence boundary.
+7. `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` — exact-SHA certification procedure.
 
 ## Current release position
 
-- Certified release candidate: **`v1.3.8`**.
-- Certified commit: **`fd1e74b6b4c1701f7443efc202bad161ff19618c`**.
-- Certification run: **`34052885700` — PASS**.
-- Tag identity: **VERIFIED**.
-- Production deployment: **PENDING REAL INFRASTRUCTURE**.
-- Deployment attempt `34060615390`: failed during SSH configuration before remote deployment.
-- Customer acceptance and live provider validation: **PENDING**.
+- Published release: **`v1.4.1`**.
+- Release SHA: **`f7f5062feb125c7ca50263f74a0e40bc4abfa591`**.
+- Exact-SHA Production Certification: **SUCCESS**, run `34696339261`.
+- External production deployment: **NOT VERIFIED**.
+- Live provider validation and customer acceptance: **PENDING**.
 
-## Current phase position
+## Current engineering position
 
-- Phase 13 Agent Teams & Marketplace: **engineering complete**.
-- Phase 14 engineering: **complete**.
-- Phase 14 external production/customer acceptance gate: **external-pending**.
+- Phase 11: complete.
+- Phase 12: operationally hardened.
+- Phase 13: engineering complete.
+- Phase 14.1–14.16: engineering complete where tracked.
+- Stage 7: external production execution/certification pending.
+- Stage 8: governed Agent workforce engineering active.
 
-The active external-production work is tracked by issues #210, #19 and #269, with deployment checkpoint #343. No external certification or customer acceptance is inferred from repository/CI evidence.
+## Active Agent capability phases
+
+1. Tool Calling contract and E2E.
+2. Structured Arguments / JSON Schema fail-closed validation.
+3. Multi-step execution with bounded loops.
+4. Real-provider validation, starting with LM Studio.
+5. Exact-SHA release gate for any promoted code.
+
+## Infrastructure baseline
+
+Recommended initial production target: **8 vCPU / 16 GB RAM / 150–200 GB NVMe/SSD / Ubuntu 24.04 LTS**, with fixed/public IP, TLS ingress, hardened firewall, encrypted off-host backups and centralized observability.
+
+See `PRODUCTION_SERVER_BASELINE.md` for staging and growth tiers, topology, secrets, backup/restore and evidence requirements.
 
 ## Rule
 
-Do not create another status, roadmap, or release-truth document when an existing canonical document can be updated. Create a dated evidence record only when a point-in-time audit or certification needs independent traceability.
+Do not create another status, roadmap or release-truth document when an existing canonical document can be updated. Current documents must distinguish engineering evidence from real external production evidence.
