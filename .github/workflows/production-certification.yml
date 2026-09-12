@@ -181,6 +181,42 @@ jobs:
         env:
           BASE_URL: http://127.0.0.1:3000
         run: npx playwright test
+      - name: Emit immutable certification evidence manifest
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_sha="$(git rev-parse HEAD)"
+          timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          cat > certification-evidence.json <<EOF
+          {
+            "schema_version": 1,
+            "evidence_type": "production-certification",
+            "production_deployment_claimed": false,
+            "release_version": "${RELEASE_VERSION}",
+            "target_sha": "${TARGET_SHA}",
+            "checked_out_sha": "${actual_sha}",
+            "workflow_run_id": "${GITHUB_RUN_ID}",
+            "workflow_ref": "${GITHUB_WORKFLOW_REF}",
+            "repository": "${GITHUB_REPOSITORY}",
+            "generated_at_utc": "${timestamp}",
+            "product_gate_failures": 0,
+            "certification_result": "PASS"
+          }
+          EOF
+          sha256sum certification-evidence.json > certification-evidence.json.sha256
+          cat certification-evidence.json
+          cat certification-evidence.json.sha256
+      - name: Upload immutable certification evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-certification-evidence-${{ env.RELEASE_VERSION }}-${{ env.TARGET_SHA }}
+          path: |
+            certification-evidence.json
+            certification-evidence.json.sha256
+          retention-days: 90
+          if-no-files-found: error
       - name: Dump logs on failure
         if: ${{ failure() }}
         run: docker compose logs --no-color
