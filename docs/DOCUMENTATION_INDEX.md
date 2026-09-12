@@ -1,6 +1,6 @@
 # Documentation Index
 
-This is the top-level map for project documentation. Start here, then use the canonical documents below.
+This is the top-level map for current project documentation.
 
 ## 1. Start here
 
@@ -19,57 +19,48 @@ This is the top-level map for project documentation. Start here, then use the ca
 | Implementation / verification | `current/STATUS.md` |
 | Delivery roadmap | `current/PRODUCTIZATION_ROADMAP.md` |
 | Current documentation set | `current/README.md` |
+| Production server sizing/baseline | `current/PRODUCTION_SERVER_BASELINE.md` |
+| Production evidence | `current/PRODUCTION_EVIDENCE_INDEX.md` |
+| Production certification execution | `current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` |
 | Code ↔ documentation traceability | `current/CODE_DOCUMENTATION_TRACEABILITY.md` |
 | Canonical vocabulary | `current/CANONICAL_VOCABULARY.md` |
-| Phase 14 DR / backup / restore | `current/PHASE_14_DR.md` |
-| Phase 14 security / compliance | `current/PHASE_14_SECURITY.md` |
-| Phase 14 incident response | `current/PHASE_14_INCIDENT_RESPONSE.md` |
-| Phase 14 external production evidence | `current/PHASE_14_EXTERNAL_PRODUCTION_EVIDENCE.md` |
-| Current-state reconciliation | `current/49_CURRENT_STATE_RECONCILIATION_2026-08-31.md` |
-| Production-candidate boundary | `current/50_PRODUCTION_CANDIDATE_READINESS_2026-08-31.md` |
 
-Dated reconciliation and production-candidate documents are retained as point-in-time evidence. For present decisions, the undated canonical status/roadmap documents take precedence.
+## 3. Agent / workforce architecture
 
-## 3. Architecture
-
-- `blueprint/` — canonical architecture and operating-model documents.
-- `blueprint/V1.5_AGENTIC_OPERATING_MODEL.md` — current Agentic Operating Model architecture baseline.
-- `current/01_ARCHITECTURE_AND_MODULE_MAP.md` — implementation-oriented module map.
+- `blueprint/V1.5_AGENTIC_OPERATING_MODEL.md` — Agentic Operating Model baseline.
+- `blueprint/STAGE_8_ENGINEERING_EXECUTION_PLAN.md` — governed workforce implementation plan.
+- `current/PRODUCTIZATION_ROADMAP.md` — current Agent capability phases: Tool Calling, Structured Arguments, Multi-step, Provider Validation and Release Gate.
 
 ## 4. Operations and delivery
 
 - `operations/` — operational runbooks and procedures.
 - `releases/` — release records and release-specific evidence.
-- `current/36_PHASE6E_PRODUCTION_DELIVERY_RUNBOOK.md` — Phase 6E delivery procedure.
-- `current/11_DELIVERY_PACKAGE_SPEC.md` — delivery package contract.
+- `current/PRODUCTION_SERVER_BASELINE.md` — recommended host, topology, secrets, backup and production evidence baseline.
 
 ## 5. Historical evidence
 
-- `archive/` — superseded plans, dated audits, release snapshots, and historical evidence.
-- Historical documents must remain traceable but must not override current status.
+- `archive/` — superseded plans, dated audits, release snapshots and historical evidence.
+- Historical documents remain traceable but do not override current canonical status.
 
 ## 6. Governance
 
-See `DOCUMENTATION_GOVERNANCE.md` for the truth hierarchy and documentation rules.
+See `DOCUMENTATION_GOVERNANCE.md` for truth hierarchy and reconciliation rules.
 
 ### Truth hierarchy
 
 1. Current status.
-2. Explicit canonical architecture/release documents.
+2. Canonical architecture/release documents.
 3. Verified evidence.
 4. Planning documents.
 5. Historical records.
-
-A higher version number in an older file does not override current truth.
 
 ### Version-axis rule
 
 - `vX.Y.Z` = immutable product release.
 - `VX.Y` = architecture generation/baseline.
 - `Phase N` = engineering workstream/gate.
-
-These axes may advance independently.
+- `Stage N` = program/product stage.
 
 ### Normalization rule
 
-Do not create parallel status/roadmap/release-truth documents. Update the canonical document when the information is current; create a dated evidence record only when independent historical traceability is required.
+Do not create parallel status/roadmap/release-truth documents. Update the canonical document when information becomes current; create a dated evidence record only when independent historical traceability is required.
