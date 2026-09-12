@@ -29,7 +29,7 @@ def test_parallel_identity_is_scoped_to_branch_and_step():
 def test_migration_persists_durable_child_identity_on_current_head():
     source = MIGRATION.read_text()
     assert "revision = \"f1a2b3c4d5e6\"" in source
-    assert "down_revision = \"f8a9b0c1d2e3\"" in source
+    assert "down_revision = \"f9a0b1c2d3e4\"" in source
     assert "workflow_step_run_id" in source
     assert "workflow_parallel_branch_run_id" in source
     assert "workflow_parallel_branch_step_key" in source
