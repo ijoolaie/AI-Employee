@@ -27,14 +27,10 @@ def test_parallel_identity_is_scoped_to_branch_and_step():
 
 
 def test_workflow_child_fks_use_alter_ddl_to_break_metadata_cycle():
-    step_fk = Run.__table__.c.workflow_step_run_id.foreign_keys.pop()
-    branch_fk = Run.__table__.c.workflow_parallel_branch_run_id.foreign_keys.pop()
-    try:
-        assert step_fk.use_alter is True
-        assert branch_fk.use_alter is True
-    finally:
-        Run.__table__.c.workflow_step_run_id.foreign_keys.add(step_fk)
-        Run.__table__.c.workflow_parallel_branch_run_id.foreign_keys.add(branch_fk)
+    step_fk = next(iter(Run.__table__.c.workflow_step_run_id.foreign_keys))
+    branch_fk = next(iter(Run.__table__.c.workflow_parallel_branch_run_id.foreign_keys))
+    assert step_fk.use_alter is True
+    assert branch_fk.use_alter is True
 
 
 def test_migration_persists_durable_child_identity_on_current_head():
