@@ -1,28 +1,26 @@
 # AI Employee Platform
 
-**Certified release baseline:** `v1.3.8` — certified commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`
+**Latest exact-SHA certified release candidate:** `v1.4.0-rc.4` — certified commit `4cadd2df003d72de43546466a47e2c66062002c6`
 
-**Architecture baseline:** `V1.5 Agentic Operating Model` — documentation/architecture baseline, **not a separately certified release**
+**Certification:** Production Certification Run `34693535048` — SUCCESS; Product Gates: 0 failures
 
-**Engineering phase:** Phase 14.1–14.16 complete where tracked; current program is in Production Hardening / Stage 7 External Production Certification
+**Architecture baseline:** `V1.5 Agentic Operating Model` — architecture/operating-model baseline, **not a separately certified release**
 
-**Current engineering mainline:** `main` at `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`
+**Engineering phase:** Phase 14.1–14.16 tracked engineering complete; current program is **Stage 7 External Production Certification** plus Stage 8 workforce-governance engineering
 
-**Current release candidate under validation:** `v1.4.0-rc.1` at exact SHA `b2e2517ce0a38dc4fecd97c047328f703bdd7de6`
+**Current mainline:** `main` contains documentation reconciliation commits after the certified candidate SHA; therefore the current HEAD is **not automatically certified** and must receive fresh exact-SHA certification before final release promotion.
 
-**Production deployment:** **NOT DEPLOYED**
+**Production deployment:** **NOT VERIFIED / PENDING REAL INFRASTRUCTURE**
 
-**Deployment checkpoint:** Issue #343
-
-This repository is the vendor source of truth for the AI Employee Platform. The platform is evolving from an Employee-centered implementation toward a **Human + Agent operating model**: supported business work can be executed by a Human, a specialized Agent, or both through shared authorization, tool, approval, audit and lifecycle contracts.
+This repository is the vendor source of truth for the AI Employee Platform. The platform is evolving toward a **Human + Agent operating model**: supported business work can be executed by a Human, a specialized Agent, or both through shared authorization, tool, approval, audit and lifecycle contracts.
 
 ## Versioning truth
 
 The project intentionally tracks three independent axes:
 
-- **Release:** immutable certified product snapshot (`v1.3.8` is the latest certified release).
-- **Architecture:** platform design generation (`V1.5` is the current Agentic Operating Model baseline).
-- **Engineering phase:** implementation workstream and acceptance gate (`Phase 11` through `Phase 14`).
+- **Release:** immutable certified product snapshot. `v1.4.0-rc.4` is the latest exact-SHA certified candidate; `v1.3.8` remains the latest historically frozen production release.
+- **Architecture:** platform design generation. `V1.5` is the current Agentic Operating Model baseline.
+- **Engineering phase:** implementation workstream and acceptance gate.
 
 These are not interchangeable. A higher architecture version does not imply a higher certified release, and a completed engineering phase does not automatically create a release.
 
@@ -30,57 +28,50 @@ Canonical versioning rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
 ## Current release truth
 
-- `v1.3.8` remains the latest certified and frozen release identity.
-- The `v1.3.8` tag resolves exactly to `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
-- Production certification run `34052885700` passed the complete certification suite for `v1.3.8`.
-- The newer mainline candidate `v1.4.0-rc.1` is **NOT CERTIFIED**. Its latest Production Certification run is blocked by one failed Product Gate: `Unified WorkItem Agent real-stack`.
-- The failing Agent gate currently emits an empty assertion message after the commercial-license fixture passes; this remains a release blocker requiring root-cause correction and fresh exact-SHA certification.
-- Production deployment remains **PENDING REAL INFRASTRUCTURE**.
+- `v1.4.0-rc.4` at `4cadd2df003d72de43546466a47e2c66062002c6` passed Production Certification Run `34693535048`.
+- Product Gates in that certification run: **0 failures**.
+- The certification is bound to that exact SHA only.
+- Documentation reconciliation commits after that SHA do not inherit the certification automatically.
+- `v1.3.8` remains historically certified and frozen at `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
+- No verified external deployment of `v1.4.0-rc.4` is recorded.
 
 ## Mainline hardening truth
 
-`main` is ahead of the certified `v1.3.8` release. Current mainline is `b2e2517ce0a38dc4fecd97c047328f703bdd7de6` and contains post-release governance, reliability, RBAC, release-gate and security hardening through PR #461.
+Recent execution/governance hardening includes:
 
-Recent hardening includes:
+- PR #464 — crash-safe Agent WorkItem → Run handoff.
+- PR #465 — approval-resume enqueue race closed through outbox.
+- PR #466 — Run creation/outbox failure boundary hardened with nested savepoint.
+- PR #467 — WorkItem cancellation fenced at the DB boundary.
+- PR #468 — workflow replay after side effects prevented.
+- PR #470 — unsafe workflow child retries fail closed.
+- PR #473 — workflow re-entry after child commit fenced.
+- PR #475 — concurrent workflow event dispatch fenced.
+- PR #477 — workflow terminal states made immutable.
+- PR #479 — post-timeout/terminal workflow advancement fenced.
+- PR #482 — durable WorkflowRun execution lease and bounded recovery.
+- PR #486 — durable parallel-branch execution lease/recovery and optimistic ownership fencing.
+- PR #487 — concurrent Run execution admission serialized with a database row lock.
+- PR #499 — SQLAlchemy workflow child-identity FK DDL cycle warning eliminated with `use_alter=True`, preserving FK integrity and durable child-run identity semantics.
 
-- PR #449 — endpoint-level RBAC for Customers, Invoices, Products, Orders and Sales mutations.
-- PR #450 — explicit RBAC for API-key read/create/revoke operations.
-- PR #451 — `team.install` enforcement for workforce employee-template management.
-- PR #452 — tenant-user RBAC for Inbox conversation reads and mutations.
-- PR #453 — `billing.manage` enforcement for subscription and Stripe billing mutations.
-- PR #454 — transactional tenant-Run boundary for registered side-effect tools.
-- PR #455 — database serialization of all production Run execution to close the pending-state idempotency race.
-- PR #456 — release-documentation reconciliation and release-candidate downstream-gate enforcement.
-- PR #457 — SHA-pinned production certification identity and exact-SHA checkout enforcement.
-- PR #459 — remediation of the `sharp` 0.35.3 dependency vulnerability; frontend is now pinned to patched `sharp` 0.35.4 with a regenerated lockfile.
-- PR #460 — documentation/dependency synchronization after the `sharp` remediation.
-- PR #461 — restoration of authentication refresh-token handling and stabilization of Reports/Analytics and Agent WorkItem real-stack certification paths.
+These are engineering/release hardening records. They do not by themselves establish external production certification.
 
-These changes are engineering-mainline evidence and are **not certified under the `v1.3.8` release identity**. The `v1.4.0-rc.1` candidate must receive fresh certification against its exact SHA after all remaining gates pass.
+## Current P0 boundary
 
-## Current certification blocker
+The remaining P0 work is external rather than a missing repository feature:
 
-The latest certification target is:
+1. Real production target and immutable deployed identity.
+2. Real backup/restore/DR with measured RPO/RTO.
+3. Production SLO/SLI and error-budget measurement.
+4. Live provider validation.
+5. Vendor → Reseller → Client runtime isolation/RBAC on the deployed target.
+6. Authenticated deployed-target DAST where applicable.
+7. Independent penetration testing/security review.
+8. Production networking and secret-management lifecycle evidence.
+9. HA/failure recovery, incident response and on-call rehearsal on target.
+10. Ordered Vendor → Reseller → Client acceptance and final external certification (#210/#269).
 
-`b2e2517ce0a38dc4fecd97c047328f703bdd7de6`
-
-Release version: `v1.4.0-rc.1`
-
-All Product Gates passed except:
-
-`Unified WorkItem Agent real-stack`
-
-The Human WorkItem real-stack gate passes. The Agent gate reaches:
-
-`UNIFIED AGENT WORKITEM COMMERCIAL LICENSE FIXTURE PASS`
-
-then fails with an empty assertion message. This is the immediate P0 release blocker. The next action is to trace the full Agent WorkItem execution path rather than treating the failure as a generic retry:
-
-`Agent WorkItem → assignment → AgentExecutionAdapter → Run creation → queue dispatch → Run execution → governance/license checks → terminal state → certification assertion`
-
-## Release decision
-
-`v1.3.8` remains immutable and historically certified. `v1.4.0-rc.1` is a release candidate under validation, **not certified**. Do not move the `v1.3.8` tag or inherit its certification evidence across SHAs.
+Repository CI, production-like infrastructure validation, simulated providers and synthetic tests remain supporting engineering evidence only.
 
 ## Start Here
 
@@ -91,9 +82,10 @@ then fails with an empty assertion message. This is the immediate P0 release blo
 5. `docs/DOCUMENTATION_INDEX.md`
 6. `docs/releases/RELEASE_TRUTH_LEDGER.md`
 7. `docs/current/PRODUCTIZATION_ROADMAP.md`
-8. `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
+8. `docs/current/PRODUCTION_EVIDENCE_INDEX.md`
+9. `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
 
-Do not infer current truth from historical versioned filenames. Git tags, release records, certification evidence and deployment evidence are reconciled in `docs/releases/RELEASE_TRUTH_LEDGER.md`.
+Do not infer current truth from historical versioned filenames. Git tags, release records, certification evidence and deployment evidence are reconciled in the release truth ledger.
 
 ## Three workspaces
 
@@ -152,14 +144,13 @@ Phase 14 Scale / Governance / Production
 ## Current position
 
 - Architecture V1.4: **FROZEN FOUNDATION**.
-- Architecture V1.5: **ACTIVE DOCUMENTATION / OPERATING-MODEL BASELINE**.
+- Architecture V1.5: **ACTIVE OPERATING-MODEL BASELINE**.
 - Phase 11 Unified Execution acceptance: **COMPLETE**.
-- Phase 12 Test Center P12.1-P12.6: **IMPLEMENTED / OPERATIONAL HARDENING**.
+- Phase 12 Test Center: **IMPLEMENTED / OPERATIONAL HARDENING**.
 - Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**.
 - Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**.
-- Current program stage: **Production Hardening / Stage 7 External Production Certification & Customer Acceptance**.
-- Production certification candidate `v1.3.8`: **CERTIFIED**.
-- `v1.4.0-rc.1` at `b2e2517...`: **CERTIFICATION BLOCKED — 1 PRODUCT GATE FAILED**.
+- Latest exact-SHA certified candidate: **`v1.4.0-rc.4` / `4cadd2df...`**.
+- Current documentation-reconciled mainline: **fresh certification required before release promotion**.
 - External production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance / live provider validation: **PENDING**.
 
