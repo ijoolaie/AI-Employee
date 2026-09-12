@@ -1,26 +1,46 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-11  
-**Latest certified release:** `v1.3.8`  
-**Certified commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
-**Current mainline:** `30ed658ae05a116a4e3d2ce3622330aa58dd347c`  
-**Current status:** PRODUCTION HARDENING / SYSTEMATIC EXECUTION-BOUNDARY AUDIT
+**Reconciled:** 2026-09-12  
+**Latest certified release candidate:** `v1.4.0-rc.4`  
+**Certified commit:** `4cadd2df003d72de43546466a47e2c66062002c6`  
+**Certification run:** `34693535048` — SUCCESS  
+**Current mainline after documentation reconciliation:** `main` at the latest documentation commit  
+**Current status:** EXTERNAL PRODUCTION GATES PENDING / DOCUMENTATION RECONCILED
 
 ## Executive priority
 
-The historical `v1.4.0-rc.1` blocker is closed as a current planning item. PR #487 has now closed the concurrent `pending` Run admission race. Work continues as a systematic audit of Celery redelivery/retry, deferred side effects and authorization boundaries. Mainline is not certified because no fresh Production Certification has been run against the current exact SHA.
+The exact `v1.4.0-rc.4` candidate at `4cadd2df003d72de43546466a47e2c66062002c6` passed Production Certification. Documentation reconciliation performed after that certification is intentionally recorded as a later mainline revision; certification does **not** transfer automatically to the post-certification documentation commits. Before any release promotion, run Production Certification again against the exact final release SHA.
 
-## P1 — next correctness boundaries
+PR #499 closed the SQLAlchemy workflow FK metadata cycle warning without weakening FK integrity. The repository-level hardening checkpoint is therefore reconciled. The next program frontier is the P0 external production boundary.
 
-1. Audit Celery retry/redelivery semantics across Run, Workflow, Test Center and control workers; reject unsafe automatic replay after an irreversible side effect.
-2. Audit Transactional Outbox dispatch/recovery for lost dispatch, duplicate enqueue, stale processing and manual replay hazards.
-3. Audit Tenant/RBAC and Agent governance immediately before deferred side effects; authorization must be evaluated against current durable state.
-4. Identify remaining stale-state/crash windows that can create duplicate, lost or unauthorized side effects.
-5. Add deterministic crash/concurrency tests for every confirmed P1 boundary.
-6. Run all required gates on each corrected HEAD and merge only when green.
-7. After the hardening set stabilizes, run Production Certification against the exact resulting SHA before declaring a release certified.
+## P0 — external production gates
 
-## Completed hardening checkpoint
+1. Provision and verify a real production target and immutable deployed identity.
+2. Perform real backup/restore/DR and measure RPO/RTO.
+3. Measure production SLO/SLI and error budget against real traffic.
+4. Validate live provider integrations using production-safe credentials.
+5. Certify Vendor → Reseller → Client runtime isolation/RBAC on the deployed target.
+6. Execute DAST against the authenticated deployed target where applicable.
+7. Obtain independent penetration-test/security-review evidence.
+8. Verify production networking, TLS/ingress, perimeter and egress controls.
+9. Verify external secret-manager lifecycle, rotation, revocation and recovery.
+10. Rehearse HA/failure recovery against target RTO/RPO.
+11. Execute incident-response and alert/on-call drills with named operators.
+12. Complete ordered Vendor → Reseller → Client acceptance and final external certification (#210/#269).
+
+## P1 — repository/productization status
+
+The previously tracked P1 engineering/productization items are reconciled as complete or implemented:
+- Data retention & lifecycle enforcement — engineering implemented; target lifecycle verification remains external.
+- Human-in-the-loop reconciliation — engineering complete.
+- Documentation consolidation & evidence index — this reconciliation pass complete.
+- Platform operations dashboard — engineering implemented.
+- Customer usage, budget & cost controls — engineering implemented; target billing/operations validation remains external.
+- Cost anomaly detection & forecasting — engineering implemented.
+
+No duplicate P1 implementation should be created unless a new concrete gap is found.
+
+## Completed execution-boundary hardening checkpoint
 
 - PR #464 — crash-safe Agent WorkItem → Run handoff.
 - PR #465 — approval-resume enqueue race closed through outbox.
@@ -35,18 +55,15 @@ The historical `v1.4.0-rc.1` blocker is closed as a current planning item. PR #4
 - PR #482 — durable WorkflowRun execution lease and bounded recovery.
 - PR #486 — durable parallel-branch execution lease/recovery and optimistic ownership fencing.
 - PR #487 — concurrent Run execution admission serialized with a database row lock.
+- PR #499 — SQLAlchemy workflow child-identity FK DDL cycle warning eliminated with `use_alter=True`.
 
 ## Certification checkpoint
 
-- Latest certified release: `v1.3.8`
-- Certified commit: `fd1e74b6b4c1701f7443efc202bad161ff19618c`
-- Current mainline: `30ed658ae05a116a4e3d2ce3622330aa58dd347c`
-- PR #487: merged; PR validation passed before merge.
-- Fresh Production Certification for current mainline: **PENDING**
-
-## P2 — external production gates
-
-After release certification is complete, the remaining external boundary still requires real production infrastructure, deployed-identity verification, live provider validation, backup/restore and DR, production SLO/SLI, external Vendor → Reseller → Client acceptance, independent security review, production networking/secret management, HA/failure recovery and incident-response evidence.
+- Latest exact-SHA certified candidate: `v1.4.0-rc.4`
+- Certified SHA: `4cadd2df003d72de43546466a47e2c66062002c6`
+- Certification run: `34693535048` — SUCCESS
+- Product Gates: 0 failures
+- Post-certification documentation reconciliation: intentionally later commits; fresh certification required for the final release SHA.
 
 ## Evidence rules
 
