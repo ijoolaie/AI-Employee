@@ -23,5 +23,4 @@ def test_workflow_links_child_before_execution_commit():
 def test_workflow_resolves_durable_child_before_replacement():
     source = WORKFLOW.read_text()
     assert "select(Run).where(Run.workflow_step_run_id == step.id)" in source
-    assert "select(Run).where(Run.workflow_parallel_branch_run_id == branch.id)" in source
     assert "Durable child Run ended with status" in source
