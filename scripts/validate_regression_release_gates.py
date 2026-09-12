@@ -34,7 +34,7 @@ def main() -> None:
         "Verify checked-out commit identity",
         "release_commit=$checked_out_sha",
         "Verify base package checksum",
-        "Verify Vendor, Reseller and Customer packages",
+        "Verify four edition packages",
         "if-no-files-found: error",
     )
 
