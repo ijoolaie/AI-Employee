@@ -1,28 +1,40 @@
 {
   "schema_version": 3,
   "status": "current_release_index",
-  "generated_at": "2026-09-09T08:56:00Z",
-  "current_certified_vendor_release": {
+  "generated_at": "2026-09-12T12:30:20Z",
+  "latest_certified_release_candidate": {
+    "version": "v1.4.0-rc.4",
+    "certified_sha": "4cadd2df003d72de43546466a47e2c66062002c6",
+    "certification_run": "34693535048",
+    "certification_status": "success",
+    "product_gate_failures": 0,
+    "certification_scope": "exact_sha_engineering_release_evidence",
+    "external_deployment": "not_verified"
+  },
+  "historical_certified_vendor_release": {
     "version": "v1.3.8",
     "release_truth": "docs/current/39_RELEASE_TRUTH_V1.3.8.md",
     "release_workflow_run": "34052885700",
-    "runtime_artifact": "ai-employee-v1.3.8-runtime",
-    "editions_artifact": "ai-employee-v1.3.8-editions"
+    "certified_sha": "fd1e74b6b4c1701f7443efc202bad161ff19618c",
+    "deployment_attempt": "34060615390",
+    "deployment_status": "failed_before_remote_deployment"
   },
   "current_implementation_baseline": {
     "architecture": "V1.5 Agentic Operating Model",
     "operating_model": "V1.5 Human + Agent",
-    "engineering_baseline": "c50e7bbb492563a9d55e7b289b75c2280345412e",
-    "reconciled_on": "2026-09-09",
+    "latest_pre_certification_engineering_sha": "4cadd2df003d72de43546466a47e2c66062002c6",
+    "post_certification_status": "documentation_reconciliation_commits_landed; fresh_exact_sha_certification_required_for_final_release",
+    "reconciled_on": "2026-09-12",
     "reconciliation": "docs/current/PRODUCTIZATION_ROADMAP.md"
   },
   "external_production": {
     "stage": "Stage 7 / Phase 14.10",
     "issues": [269, 210, 19],
     "status": "external_pending",
-    "note": "The current engineering baseline, controlled release evidence and production-like CI validation are not external production or commercial go-live certification."
+    "note": "Repository certification and production-like CI do not establish external production deployment, live provider validation, measured production SLO/RPO/RTO, independent security review or customer acceptance."
   },
   "production_gap_register": "docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md",
+  "production_evidence_index": "docs/current/PRODUCTION_EVIDENCE_INDEX.md",
   "migration_graph": {
     "expected_single_head": "v14006merge",
     "reconciliation_migration": "backend/alembic/versions/v14006_merge_vendor_identity_and_usage.py"
@@ -32,9 +44,11 @@
     "docs/PRODUCTION_HANDOFF_v1.3.0.md"
   ],
   "authority_order": [
-    "docs/current/39_RELEASE_TRUTH_V1.3.8.md",
+    "docs/releases/RELEASE_TRUTH_LEDGER.md",
+    "docs/current/PRODUCTION_EVIDENCE_INDEX.md",
     "docs/current/PRODUCTIZATION_ROADMAP.md",
     "docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md",
-    "docs/00_START_HERE/CURRENT_STATUS.md"
+    "docs/00_START_HERE/CURRENT_STATUS.md",
+    "docs/00_START_HERE/CURRENT_PRIORITIES.md"
   ]
 }
