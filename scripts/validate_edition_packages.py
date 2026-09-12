@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate generated Vendor, Reseller and Customer edition packages."""
+"""Validate generated Vendor, Self-Hosted, Reseller and Customer packages."""
 from __future__ import annotations
 
 import argparse
@@ -8,7 +8,7 @@ import json
 import tarfile
 from pathlib import Path
 
-EXPECTED = {"vendor", "reseller", "customer"}
+EXPECTED = {"vendor", "self-hosted", "reseller", "customer"}
 SECRET_NAMES = {".env", ".env.local", ".env.production", ".env.production.local"}
 
 
@@ -36,7 +36,6 @@ def _validate_archive(path: Path, *, edition: str, release_tag: str, commit_sha:
             raise SystemExit(f"{edition}: expected exactly one edition manifest and profile")
         manifest = json.load(tar.extractfile(manifest_members[0]))
         profile = json.load(tar.extractfile(profile_members[0]))
-
     if manifest.get("edition") != edition:
         raise SystemExit(f"{edition}: embedded manifest edition mismatch")
     if manifest.get("vendor", {}).get("release_tag") != release_tag:
@@ -57,7 +56,6 @@ def main() -> None:
     manifest_path = root / "EDITION-RELEASE-MANIFEST.json"
     if not manifest_path.exists():
         raise SystemExit(f"missing edition release manifest: {manifest_path}")
-
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
     if data.get("schema_version") != 1:
         raise SystemExit("unsupported edition release manifest schema")
@@ -68,9 +66,10 @@ def main() -> None:
         raise SystemExit("invalid vendor release tag")
     if not isinstance(commit_sha, str) or len(commit_sha) != 40 or any(c not in "0123456789abcdef" for c in commit_sha.lower()):
         raise SystemExit("invalid vendor commit SHA")
+    if data.get("editions") != ["vendor", "self-hosted", "reseller", "customer"]:
+        raise SystemExit("edition manifest must declare vendor, self-hosted, reseller and customer in canonical order")
     if not isinstance(artifacts, list) or {item.get("edition") for item in artifacts} != EXPECTED:
-        raise SystemExit("edition manifest must contain exactly vendor, reseller and customer artifacts")
-
+        raise SystemExit("edition manifest must contain exactly vendor, self-hosted, reseller and customer artifacts")
     for item in artifacts:
         edition = item["edition"]
         artifact = item["artifact"]
@@ -83,11 +82,10 @@ def main() -> None:
         if digest != item.get("sha256"):
             raise SystemExit(f"{edition}: checksum mismatch")
         _validate_archive(path, edition=edition, release_tag=release_tag, commit_sha=commit_sha)
-
     print("phase6 edition packages valid")
     print(f"vendor_release_tag={release_tag}")
     print(f"vendor_commit_sha={commit_sha}")
-    print("artifacts=vendor,reseller,customer")
+    print("artifacts=vendor,self-hosted,reseller,customer")
 
 
 if __name__ == "__main__":
