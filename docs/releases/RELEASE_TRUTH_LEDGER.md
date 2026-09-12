@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-12  
+**Last reconciled:** 2026-09-12
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -17,32 +17,45 @@ These states are independent and must not be inferred from release names.
 
 | Release / candidate | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
-| `v1.4.0-rc.4` | `4cadd2df003d72de43546466a47e2c66062002c6` | Candidate identity; no external production tag asserted | **CERTIFIED** — Run `34693535048` | **NOT DEPLOYED / no evidence** | Pending |
+| `v1.4.1` | `f7f5062feb125c7ca50263f74a0e40bc4abfa591` | VERIFIED | **CERTIFIED** — Run `34696339261` | **NOT VERIFIED / no evidence** | Pending |
+| `v1.4.0-rc.4` | `4cadd2df003d72de43546466a47e2c66062002c6` | Historical candidate | **CERTIFIED** — Run `34693535048` | No evidence | Pending |
 | `v1.3.8` | `fd1e74b6b4c1701f7443efc202bad161ff19618c` | VERIFIED | **CERTIFIED** — Run `34052885700` | **NOT DEPLOYED** — Run `34060615390` failed before remote deployment | Pending |
-| `v1.4.0-rc.1` | `b2e2517ce0a38dc4fecd97c047328f703bdd7de6` | Historical candidate | **NOT CERTIFIED** — Run `34497132748` had 1 failed Product Gate | Not eligible for deployment certification | Pending |
-| current `main` | Documentation reconciliation commits after `4cadd2df003d72de43546466a47e2c66062002c6` | Not a release | **NOT CERTIFIED** — fresh certification required for final release promotion | Not eligible | Pending |
+| `v1.4.0-rc.1` | `b2e2517ce0a38dc4fecd97c047328f703bdd7de6` | Historical candidate | **NOT CERTIFIED** — Run `34497132748` had 1 failed Product Gate | Not eligible | Pending |
+| current `main` | Later documentation reconciliation commits after `v1.4.1` | Not a release | **NOT CERTIFIED** — fresh certification required if promoted | Not eligible | Pending |
 
-## Latest certification checkpoint
+## v1.4.1 certification checkpoint
 
-Production Certification Run `34693535048` passed for exact SHA `4cadd2df003d72de43546466a47e2c66062002c6` with release identity `v1.4.0-rc.4`. Product Gates reported zero failures and the production-like certification suite completed successfully.
+Production Certification Run `34696339261` passed for exact SHA `f7f5062feb125c7ca50263f74a0e40bc4abfa591`, with certification job `103560364112`. The release workflow subsequently published tag `v1.4.1` and its edition/runtime release assets.
 
-The certification covers the exact candidate SHA only. Documentation reconciliation commits made afterward are intentionally not attributed to that certification. A final release created from the reconciled mainline must receive a fresh exact-SHA certification.
+Certification and release evidence attach to that exact SHA. Subsequent documentation commits are not automatically certified.
 
-## Post-certification repository hardening/documentation reconciliation
+## v1.4.1 delivery checkpoint
 
-PR #499 was merged before the certified candidate and removed the SQLAlchemy workflow child-identity FK metadata cycle warning using `use_alter=True`, preserving FK targets, `ondelete="SET NULL"`, uniqueness constraints and durable child-run identity semantics.
+PR #501 delivered the Self-Hosted edition and four edition profiles/packages. The final release contains customer, reseller, self-hosted and vendor packages, runtime, `EDITION-RELEASE-MANIFEST.json` and `SHA256SUMS`.
 
-Following certification, the canonical status, priorities, production-readiness, gap-register and evidence-index documents were reconciled to the current evidence boundary. These documentation-only commits are not a new release and do not inherit the prior certification automatically.
+The release is an engineering/release-certified snapshot. No external production deployment or customer acceptance is inferred from the published assets.
 
-## v1.3.8 reconciliation
+## Agent capability workstream
 
-The `v1.3.8` Git tag resolves directly to commit `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
+The next engineering phases are:
 
-Production certification Run `34052885700` completed successfully. A controlled deployment was attempted in Run `34060615390`, but the workflow failed before remote deployment because required protected production configuration was unavailable. The actual deployment step and deployed-identity verification were skipped. There is therefore no production deployment evidence from that run.
+1. Tool Calling contract + E2E.
+2. Structured Arguments / JSON Schema fail-closed validation.
+3. Multi-step bounded execution.
+4. Real provider validation, starting with LM Studio.
+5. Exact-SHA release gate for promoted code.
+
+These phases are engineering work, not release identities and not external production certification.
+
+## Production infrastructure baseline
+
+Recommended initial external target is 8 vCPU / 16 GB RAM / 150–200 GB NVMe/SSD on Ubuntu 24.04 LTS, with TLS ingress, hardened firewall, encrypted off-host backups and centralized observability. See `docs/current/PRODUCTION_SERVER_BASELINE.md`.
+
+No server provisioning is implied by this recommendation.
 
 ## External production boundary
 
-The following remain open regardless of the `v1.4.0-rc.4` certification:
+The following remain open regardless of `v1.4.1` certification:
 
 - real production target and deployed-identity verification;
 - live provider validation;
@@ -52,20 +65,18 @@ The following remain open regardless of the `v1.4.0-rc.4` certification:
 - deployed-target DAST;
 - independent penetration test/security review;
 - production networking and secret-management lifecycle evidence;
-- HA/failure recovery and incident-response rehearsal on target;
+- HA/failure recovery and incident-response rehearsal;
 - staffed alert ownership/on-call evidence;
 - final external certification and customer acceptance (#210/#269).
 
 ## Current interpretation
 
-- Latest exact-SHA certified candidate: **v1.4.0-rc.4 / `4cadd2df...`**.
-- Current mainline: **later documentation-reconciled commits — not certified**.
-- Historical certified production release: **v1.3.8 / `fd1e74b6...`**.
+- Latest published and exact-SHA certified release: **v1.4.1 / `f7f5062f...`**.
+- Current `main`: **documentation reconciliation after v1.4.1 — not certified as a new release**.
 - Production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance: **PENDING**.
 - Live provider validation: **PENDING**.
-- Real target DR/SLO/security/perimeter evidence: **PENDING**.
 
 ## Next action
 
-Keep the evidence boundary exact: do not claim external deployment from repository evidence. Before promoting a release, freeze one immutable final SHA, run the complete Production Certification against that exact SHA, then execute the external Stage 7 sequence and attach every external record to that same release identity.
+Preserve the exact-SHA boundary. For external production, deploy only a frozen certified release identity and attach deployment, DR, SLO, security and acceptance evidence to that same SHA. For Agent capability code promoted into a future release, freeze the final SHA and run fresh certification before release publication.
