@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Build Vendor, Reseller and Customer delivery packages from one source tree.
-
-The builder deliberately keeps one runtime source and varies only the delivery
-profile/manifest. It never packages local secrets and every profile records the
-same vendor release identity.
-"""
+"""Build Vendor, Self-Hosted, Reseller and Customer delivery packages."""
 from __future__ import annotations
 
 import argparse
@@ -25,7 +20,7 @@ INCLUDE_PATHS = (
     "frontend",
     "docker-compose.production.yml",
 )
-PROFILES = ("vendor", "reseller", "customer")
+PROFILES = ("vendor", "self-hosted", "reseller", "customer")
 SECRET_NAMES = {".env", ".env.local", ".env.production", ".env.production.local"}
 
 
@@ -59,46 +54,23 @@ def _copy_tree(relative: str, destination: Path) -> list[str]:
     return copied
 
 
-def _profile_manifest(
-    edition: str,
-    *,
-    release_tag: str,
-    commit_sha: str,
-    revision: str,
-    reseller_id: str,
-    customer_id: str,
-) -> dict:
+def _profile_manifest(edition: str, *, release_tag: str, commit_sha: str, revision: str, reseller_id: str, customer_id: str) -> dict:
     base = {
         "schema_version": 1,
         "edition": edition,
-        "vendor": {
-            "product": "AI-Employee",
-            "release_tag": release_tag,
-            "commit_sha": commit_sha,
-        },
-        "profile": {
-            "name": edition,
-            "revision": revision,
-            "release_channel": edition,
-        },
-        "deployment": {
-            "environment": "production",
-            "image_policy": "immutable-digest",
-        },
+        "vendor": {"product": "AI-Employee", "release_tag": release_tag, "commit_sha": commit_sha},
+        "profile": {"name": edition, "revision": revision, "release_channel": edition},
+        "deployment": {"environment": "production", "image_policy": "immutable-digest"},
         "secrets": {"policy": "external-secret-store", "included": False},
     }
     if edition == "vendor":
-        base["reseller"] = None
-        base["customer"] = None
-        base["authority"] = "product"
+        base.update({"reseller": None, "customer": None, "authority": "product"})
+    elif edition == "self-hosted":
+        base.update({"reseller": None, "customer": None, "authority": "deployment-owner"})
     elif edition == "reseller":
-        base["reseller"] = {"id": reseller_id, "delivery_revision": revision}
-        base["customer"] = None
-        base["authority"] = "delegated"
+        base.update({"reseller": {"id": reseller_id, "delivery_revision": revision}, "customer": None, "authority": "delegated"})
     else:
-        base["reseller"] = {"id": reseller_id if reseller_id else None, "delivery_revision": "external-or-null"}
-        base["customer"] = {"id": customer_id, "deployment_revision": revision}
-        base["authority"] = "consumed"
+        base.update({"reseller": {"id": reseller_id or None, "delivery_revision": "external-or-null"}, "customer": {"id": customer_id, "deployment_revision": revision}, "authority": "consumed"})
     return base
 
 
@@ -106,9 +78,8 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("release_tag")
     parser.add_argument("commit_sha")
-    parser.add_argument("--vendor-revision", default="1")
-    parser.add_argument("--reseller-revision", default="1")
-    parser.add_argument("--customer-revision", default="1")
+    for edition in PROFILES:
+        parser.add_argument(f"--{edition}-revision", default="1")
     parser.add_argument("--reseller-id", default="RESELLER-EXAMPLE-001")
     parser.add_argument("--customer-id", default="CUSTOMER-EXAMPLE-001")
     parser.add_argument("--out", default=str(DEFAULT_OUT))
@@ -124,11 +95,7 @@ def main() -> None:
         shutil.rmtree(out)
     out.mkdir(parents=True, exist_ok=True)
 
-    revisions = {
-        "vendor": args.vendor_revision,
-        "reseller": args.reseller_revision,
-        "customer": args.customer_revision,
-    }
+    revisions = {edition: getattr(args, f"{edition.replace('-', '_')}_revision") for edition in PROFILES}
     artifacts: list[dict] = []
 
     for edition in PROFILES:
@@ -136,50 +103,19 @@ def main() -> None:
         profile_root.mkdir(parents=True)
         for relative in INCLUDE_PATHS:
             _copy_tree(relative, profile_root)
-
         (profile_root / "delivery" / "profile").mkdir(parents=True, exist_ok=True)
         profile = json.loads((ROOT / "delivery" / "profiles" / edition / "profile.json").read_text(encoding="utf-8"))
-        (profile_root / "delivery" / "profile" / "PROFILE.json").write_text(
-            json.dumps(profile, indent=2) + "\n", encoding="utf-8"
-        )
-        manifest = _profile_manifest(
-            edition,
-            release_tag=args.release_tag,
-            commit_sha=args.commit_sha,
-            revision=revisions[edition],
-            reseller_id=args.reseller_id,
-            customer_id=args.customer_id,
-        )
-        (profile_root / "delivery" / "profile" / "EDITION-MANIFEST.json").write_text(
-            json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
-        )
-
+        (profile_root / "delivery" / "profile" / "PROFILE.json").write_text(json.dumps(profile, indent=2) + "\n", encoding="utf-8")
+        manifest = _profile_manifest(edition, release_tag=args.release_tag, commit_sha=args.commit_sha, revision=revisions[edition], reseller_id=args.reseller_id, customer_id=args.customer_id)
+        (profile_root / "delivery" / "profile" / "EDITION-MANIFEST.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         archive = profile_root / f"ai-employee-{args.release_tag}-{edition}.{revisions[edition]}.tar.gz"
         with tarfile.open(archive, "w:gz") as tar:
             for path in sorted(profile_root.rglob("*")):
                 if path.is_file() and path != archive:
-                    tar.add(
-                        path,
-                        arcname=f"ai-employee-{args.release_tag}-{edition}.{revisions[edition]}/{path.relative_to(profile_root)}",
-                    )
-        artifacts.append({
-            "edition": edition,
-            "revision": revisions[edition],
-            "artifact": archive.name,
-            "sha256": _sha256(archive),
-            "source_commit_sha": args.commit_sha,
-            "path": f"{edition}/{archive.name}",
-        })
+                    tar.add(path, arcname=f"ai-employee-{args.release_tag}-{edition}.{revisions[edition]}/{path.relative_to(profile_root)}")
+        artifacts.append({"edition": edition, "revision": revisions[edition], "artifact": archive.name, "sha256": _sha256(archive), "source_commit_sha": args.commit_sha, "path": f"{edition}/{archive.name}"})
 
-    (out / "EDITION-RELEASE-MANIFEST.json").write_text(
-        json.dumps({
-            "schema_version": 1,
-            "vendor_release_tag": args.release_tag,
-            "vendor_commit_sha": args.commit_sha,
-            "artifacts": artifacts,
-        }, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    (out / "EDITION-RELEASE-MANIFEST.json").write_text(json.dumps({"schema_version": 1, "vendor_release_tag": args.release_tag, "vendor_commit_sha": args.commit_sha, "editions": list(PROFILES), "artifacts": artifacts}, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(artifacts, indent=2))
 
 
