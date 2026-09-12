@@ -1,77 +1,81 @@
 # AI Employee Platform
 
-**Latest exact-SHA certified release candidate:** `v1.4.0-rc.4` — certified commit `4cadd2df003d72de43546466a47e2c66062002c6`
+**Latest published release:** `v1.4.1` — exact release SHA `f7f5062feb125c7ca50263f74a0e40bc4abfa591`
 
-**Certification:** Production Certification Run `34693535048` — SUCCESS; Product Gates: 0 failures
+**Exact-SHA Production Certification:** Run `34696339261` — SUCCESS; certification is bound to the release SHA only.
 
-**Architecture baseline:** `V1.5 Agentic Operating Model` — architecture/operating-model baseline, **not a separately certified release**
+**Architecture baseline:** `V1.5 Agentic Operating Model` — architecture/operating-model baseline, not a release.
 
-**Engineering phase:** Phase 14.1–14.16 tracked engineering complete; current program is **Stage 7 External Production Certification** plus Stage 8 workforce-governance engineering
-
-**Current mainline:** `main` contains documentation reconciliation commits after the certified candidate SHA; therefore the current HEAD is **not automatically certified** and must receive fresh exact-SHA certification before final release promotion.
+**Current engineering program:** Stage 7 External Production Execution + Stage 8 Governed Agent Workforce Engineering.
 
 **Production deployment:** **NOT VERIFIED / PENDING REAL INFRASTRUCTURE**
 
-This repository is the vendor source of truth for the AI Employee Platform. The platform is evolving toward a **Human + Agent operating model**: supported business work can be executed by a Human, a specialized Agent, or both through shared authorization, tool, approval, audit and lifecycle contracts.
+This repository is the vendor source of truth for the AI Employee Platform. The platform is evolving toward a **Human + Agent operating model** with shared authorization, tools, approvals, audit and lifecycle controls.
 
 ## Versioning truth
 
-The project intentionally tracks three independent axes:
+- **Release:** immutable product snapshot. Current: `v1.4.1`.
+- **Architecture:** current baseline: `V1.5`.
+- **Engineering stage:** Stage 7 external production execution and Stage 8 governed Agent workforce engineering.
 
-- **Release:** immutable certified product snapshot. `v1.4.0-rc.4` is the latest exact-SHA certified candidate; `v1.3.8` remains the latest historically frozen production release.
-- **Architecture:** platform design generation. `V1.5` is the current Agentic Operating Model baseline.
-- **Engineering phase:** implementation workstream and acceptance gate.
+See `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
-These are not interchangeable. A higher architecture version does not imply a higher certified release, and a completed engineering phase does not automatically create a release.
+## v1.4.1 release truth
 
-Canonical versioning rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
+- Tag: `v1.4.1`
+- SHA: `f7f5062feb125c7ca50263f74a0e40bc4abfa591`
+- Certification run: `34696339261` — SUCCESS
+- PR #501: Self-Hosted edition and release assets — merged
+- External production deployment: not verified
+- Live provider validation/customer acceptance: pending
 
-## Current release truth
+Historical `v1.3.8` remains frozen at `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
 
-- `v1.4.0-rc.4` at `4cadd2df003d72de43546466a47e2c66062002c6` passed Production Certification Run `34693535048`.
-- Product Gates in that certification run: **0 failures**.
-- The certification is bound to that exact SHA only.
-- Documentation reconciliation commits after that SHA do not inherit the certification automatically.
-- `v1.3.8` remains historically certified and frozen at `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
-- No verified external deployment of `v1.4.0-rc.4` is recorded.
+## Current Agent capability workstream
 
-## Mainline hardening truth
+The existing architecture already contains the core mechanics for:
 
-Recent execution/governance hardening includes:
+1. **Tool Calling** — tool schemas, allow-listed registry, tool execution and result handoff.
+2. **Structured Arguments** — JSON-schema-defined tool arguments and registry validation.
+3. **Multi-step** — bounded model → tool → result → model execution cycles.
 
-- PR #464 — crash-safe Agent WorkItem → Run handoff.
-- PR #465 — approval-resume enqueue race closed through outbox.
-- PR #466 — Run creation/outbox failure boundary hardened with nested savepoint.
-- PR #467 — WorkItem cancellation fenced at the DB boundary.
-- PR #468 — workflow replay after side effects prevented.
-- PR #470 — unsafe workflow child retries fail closed.
-- PR #473 — workflow re-entry after child commit fenced.
-- PR #475 — concurrent workflow event dispatch fenced.
-- PR #477 — workflow terminal states made immutable.
-- PR #479 — post-timeout/terminal workflow advancement fenced.
-- PR #482 — durable WorkflowRun execution lease and bounded recovery.
-- PR #486 — durable parallel-branch execution lease/recovery and optimistic ownership fencing.
-- PR #487 — concurrent Run execution admission serialized with a database row lock.
-- PR #499 — SQLAlchemy workflow child-identity FK DDL cycle warning eliminated with `use_alter=True`, preserving FK integrity and durable child-run identity semantics.
+The next engineering work is explicit acceptance and hardening, not rebuilding these capabilities from zero:
 
-These are engineering/release hardening records. They do not by themselves establish external production certification.
+```text
+Agent-1  Tool Calling Contract + E2E
+   ↓
+Agent-2  Structured Arguments / Fail-Closed Validation
+   ↓
+Agent-3  Multi-step / Bounded Execution
+   ↓
+Agent-4  Real Provider Validation (LM Studio first)
+   ↓
+Agent-5  Exact-SHA Release Gate
+```
 
-## Current P0 boundary
+This workstream is separate from Stage 7 external production certification.
 
-The remaining P0 work is external rather than a missing repository feature:
+## Production server baseline
 
-1. Real production target and immutable deployed identity.
-2. Real backup/restore/DR with measured RPO/RTO.
-3. Production SLO/SLI and error-budget measurement.
-4. Live provider validation.
-5. Vendor → Reseller → Client runtime isolation/RBAC on the deployed target.
-6. Authenticated deployed-target DAST where applicable.
-7. Independent penetration testing/security review.
-8. Production networking and secret-management lifecycle evidence.
-9. HA/failure recovery, incident response and on-call rehearsal on target.
-10. Ordered Vendor → Reseller → Client acceptance and final external certification (#210/#269).
+Recommended initial production target:
 
-Repository CI, production-like infrastructure validation, simulated providers and synthetic tests remain supporting engineering evidence only.
+- **8 vCPU / 16 GB RAM / 150–200 GB NVMe/SSD**
+- Ubuntu 24.04 LTS
+- fixed/public IP with hardened firewall and TLS ingress
+- encrypted off-host backups
+- centralized logs, metrics and alerting
+
+Staging: 4 vCPU / 8 GB / 100 GB. Growth: 12–16 vCPU / 32 GB / 250 GB+.
+
+GPU is not required when using a remote model provider; it becomes relevant for intentional local model inference or GPU OCR.
+
+See `docs/current/PRODUCTION_SERVER_BASELINE.md`.
+
+## External production boundary
+
+Still pending target-specific evidence for real deployment, backup/restore and measured RPO/RTO, production SLO/SLI, live providers, Vendor → Reseller → Client isolation/RBAC, DAST/security review, networking/secrets, HA/recovery, incident response/on-call and final external certification/customer acceptance (#210/#269).
+
+CI, production-like infrastructure and simulated providers are engineering/release evidence only.
 
 ## Start Here
 
@@ -80,102 +84,19 @@ Repository CI, production-like infrastructure validation, simulated providers an
 3. `docs/00_START_HERE/CURRENT_STATUS.md`
 4. `docs/00_START_HERE/CURRENT_PRIORITIES.md`
 5. `docs/DOCUMENTATION_INDEX.md`
-6. `docs/releases/RELEASE_TRUTH_LEDGER.md`
-7. `docs/current/PRODUCTIZATION_ROADMAP.md`
+6. `docs/current/PRODUCTIZATION_ROADMAP.md`
+7. `docs/current/PRODUCTION_SERVER_BASELINE.md`
 8. `docs/current/PRODUCTION_EVIDENCE_INDEX.md`
 9. `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
-
-Do not infer current truth from historical versioned filenames. Git tags, release records, certification evidence and deployment evidence are reconciled in the release truth ledger.
-
-## Three workspaces
-
-```text
-Platform
-   |
-   +--> Reseller
-   |      |
-   |      +--> Client
-   |
-   +--> Internal Platform Operations
-```
-
-Each workspace has role-specific UX and tools. No downstream workspace receives implicit control-plane access to the workspace above it.
-
-## Human + Agent execution
-
-```text
-WorkItem
-   |
-   +--> Human
-   |
-   +--> Agent
-   |
-   +--> Human + Agent
-   |
-   +--> Auto
-```
-
-Agents are specialized workers, not merely renamed Employees. Existing Employee entities remain compatibility structures while execution migrates toward `AgentDefinition`, `AgentInstance` and `WorkItem` abstractions.
-
-## Test Center
-
-Platform, Reseller and Client expose a first-class Test Center from the main dashboard. It provides role-aware health, security, Agent, tool, workflow, handoff, approval, RAG, memory, integration, webhook, usage, billing/sandbox, worker, model and E2E tests with safe-mode controls and persisted evidence.
-
-## V1.5 engineering sequence
-
-V1.5 is the **architecture/operating-model baseline**. The engineering phases below are delivery phases under that architecture; they are not release numbers.
-
-```text
-Phase 8  Unified Execution Foundation
-   ↓
-Phase 9  Platform Command Center
-   ↓
-Phase 10 Reseller Operations
-   ↓
-Phase 11 Client Business Workspace
-   ↓
-Phase 12 Test Center & Evidence
-   ↓
-Phase 13 Agent Teams / Marketplace
-   ↓
-Phase 14 Scale / Governance / Production
-```
-
-## Current position
-
-- Architecture V1.4: **FROZEN FOUNDATION**.
-- Architecture V1.5: **ACTIVE OPERATING-MODEL BASELINE**.
-- Phase 11 Unified Execution acceptance: **COMPLETE**.
-- Phase 12 Test Center: **IMPLEMENTED / OPERATIONAL HARDENING**.
-- Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**.
-- Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**.
-- Latest exact-SHA certified candidate: **`v1.4.0-rc.4` / `4cadd2df...`**.
-- Current documentation-reconciled mainline: **fresh certification required before release promotion**.
-- External production deployment: **PENDING REAL INFRASTRUCTURE**.
-- Customer acceptance / live provider validation: **PENDING**.
-
-## Temporary local execution
-
-The project can be run on a developer workstation while a production server is unavailable. Local execution is appropriate for development, debugging, UI work, integration work and non-production validation.
-
-Local execution is not production certification. It must not be used to claim live provider validation, production SLO/SLI, real RPO/RTO, external security acceptance or customer acceptance. Use local/test credentials and providers only; never copy production secrets into source control or local artifacts.
 
 ## Release rules
 
 - Keep `main` as vendor source of truth.
 - Never mutate a published release for one reseller/client.
 - Keep secrets and tenant data outside source/artifacts.
-- Preserve tenant isolation and RBAC for both humans and agents.
+- Preserve tenant isolation and RBAC for humans and agents.
 - Every privileged action is auditable.
-- CI/repository evidence is not production evidence.
-- Maintain one authoritative Alembic graph.
-- Reconcile every release tag to its underlying commit.
-- Never inherit certification or acceptance evidence across different SHAs.
+- Certification never transfers automatically across SHAs.
+- Production claims require target-specific evidence.
 
-## Production deployment boundary
-
-The repository contains a controlled `Live Production Deploy` workflow. It requires `release_ref`, explicit `DEPLOY` confirmation and a configured `production` Environment. The workflow requires real SSH/host/environment inputs and fails closed when they are absent. Do not fabricate production credentials or infrastructure evidence.
-
-## License
-
-The repository includes an Apache-2.0 `LICENSE` file. See `LICENSE` for the governing terms.
+The repository includes an Apache-2.0 `LICENSE` file.
