@@ -1,61 +1,47 @@
 # AI Employee Platform — Productization & Delivery Roadmap
 
-## Roadmap truth — 2026-09-09
+## Roadmap truth — 2026-09-12
 
-This roadmap uses three independent axes and must not mix them:
+This roadmap keeps three independent axes separate:
 
-- **Release:** the currently certified release candidate is `v1.3.8` at `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
-- **Architecture:** `V1.5 Agentic Operating Model` is the active architecture baseline. It is **not** a separately certified release.
-- **Engineering phase:** Phase 11–14.x describes implementation work and evidence maturity; phase completion does not create a release automatically.
+- **Release:** latest exact-SHA certified release candidate is `v1.4.0-rc.4` at `4cadd2df003d72de43546466a47e2c66062002c6`, certified by Production Certification Run `34693535048`.
+- **Architecture:** `V1.5 Agentic Operating Model` remains the active architecture baseline. It is not itself a release identity.
+- **Engineering phase:** Phase 11–14.x and Stage 8 describe implementation/evidence maturity; phase completion does not create a release automatically.
 
-The roadmap therefore does **not** treat V1.5 as a product release. The frozen `v1.3.8` release remains the release identity until a later release is explicitly certified.
+Documentation reconciliation commits landed after the certified candidate SHA. Therefore the current mainline is not implicitly certified; a final release SHA must be frozen and certified again before promotion.
 
 ## Current position
 
-Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center is implemented with operational hardening. Phase 13 Agent Teams & Marketplace engineering is complete. Phase 14.1–14.16 engineering is complete where tracked.
+Phase 11 Unified Execution acceptance is complete. Phase 12 Test Center is implemented with operational hardening. Phase 13 Agent Teams & Marketplace engineering is complete. Phase 14.1–14.16 tracked engineering work is complete/reconciled.
 
-The application/product engineering frontier is now complete for the tracked implementation. The immediate frontier is **Production Hardening and Stage 7 External Production Certification & Customer Acceptance**. Dependency hardening is active in parallel; it must not be confused with live production certification.
+The execution-boundary hardening sequence through PR #499 is reconciled. The immediate program frontier is now **P0 external production execution and certification**, with Stage 8 workforce governance continuing as a separate engineering/product track.
 
-### Governance hardening checkpoint — Stage 8 implementation
+### Latest execution-boundary checkpoint
 
-Stage 8 is no longer only a planned design exercise. The governed workforce foundation has been implemented on mainline through a controlled sequence of PRs:
+Key merged hardening includes:
 
-- PR #374 — kill-switch enforcement at WorkItem admission.
-- PR #375 — PostgreSQL-serialized AgentInstance concurrency admission.
-- PR #376 — direct AgentInstance activation bypass blocked.
-- PR #378 — governance fingerprint freshness at activation.
-- PR #379 — Access Review freshness at activation.
-- PR #380 — Access Review reactivation bypass blocked.
-- PR #381 — Access Review freshness enforced at execution.
-- PR #382 — latest Access Review decision required at execution.
-- PR #383 — delegation freshness enforced at execution.
-- PR #384 — governance authority fingerprint enforced at execution.
-
-PR #384 was squash-merged into `main` as `c50e7bbb492563a9d55e7b289b75c2280345412e` after its required pre-merge gates passed on exact HEAD `750596d29bf2482bdd7f2b08f04c0ed49778fe0b`.
-
-The current engineering baseline therefore has execution-time governance freshness for AgentIdentity, Access Review, delegation and the approved governance fingerprint. The implementation must still undergo the next systematic audit of execution and side-effect boundaries before a new release identity is created.
-
-This checkpoint is **engineering evidence**, not certification of the current mainline. The certified release remains `v1.3.8` at its exact SHA.
-
-### Latest dependency hardening checkpoint
-
-PR #349 upgraded Next.js `15.5.21 → 16.3.4` and was merged at `07f7fa2248cdf289c831a6ccbcf50736b20324fa` only after all five required gates passed on exact HEAD `437dd2e75304a831697086db3073b85909b85f2d`:
-
-- CI #969 — SUCCESS
-- CodeQL #1182 — SUCCESS
-- Production Infrastructure Validation #243 — SUCCESS
-- HA Failure Recovery Validation #157 — SUCCESS
-- Ephemeral DAST Validation #208 — SUCCESS
-
-This is **mainline hardening evidence**, not a new certified release. `v1.3.8` remains certified only at its own exact SHA.
+- PR #464 — crash-safe Agent WorkItem → Run handoff.
+- PR #465 — approval-resume enqueue race closed through outbox.
+- PR #466 — atomic Run creation/outbox failure boundary hardened with nested savepoint.
+- PR #467 — WorkItem cancellation fenced at the DB boundary.
+- PR #468 — workflow replay after side effects prevented.
+- PR #470 — unsafe workflow child retries fail closed.
+- PR #473 — workflow re-entry after child commit fenced.
+- PR #475 — concurrent workflow event dispatch fenced.
+- PR #477 — workflow terminal states made immutable.
+- PR #479 — post-timeout/terminal workflow advancement fenced.
+- PR #482 — durable WorkflowRun execution lease, heartbeat, ownership fencing and bounded recovery.
+- PR #486 — durable parallel-branch execution lease/recovery and optimistic ownership fencing.
+- PR #487 — concurrent Run execution admission serialized with a database row lock.
+- PR #499 — SQLAlchemy workflow child-identity FK DDL cycle warning eliminated with `use_alter=True`, without weakening FK integrity or changing durable child-run identity semantics.
 
 ## Stage 1–6 — completed engineering foundations
 
 ### Stage 1 — Phase 14.11: Certification Readiness & Cross-Platform Hardening
-**Issue #285 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
+**Issue #285 — ENGINEERING COMPLETE / RECONCILED**
 
 ### Stage 2 — Phase 14.12: Tenant-Fair Scheduling & Resource Isolation
-**Issue #286 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
+**Issue #286 — ENGINEERING COMPLETE / RECONCILED**
 
 ### Stage 3 — Phase 14.13: Load, Stress & Capacity Validation
 **Issue #287 — ENGINEERING COMPLETE / EVIDENCE RECONCILED**
@@ -64,178 +50,86 @@ This is **mainline hardening evidence**, not a new certified release. `v1.3.8` r
 **Issue #288 — ENGINEERING COMPLETE / EVIDENCE RECONCILED**
 
 ### Stage 5 — Phase 14.15: Capacity, Cost & Operational Optimization
-**Issue #289 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
+**Issue #289 — ENGINEERING COMPLETE / RECONCILED**
 
 ### Stage 6 — Phase 14.16: V1.5 Human + Agent Operating Model
-**Issue #290 — ENGINEERING COMPLETE / DOCUMENTATION RECONCILED**
-
-PR #312 merged at `7657b4244a47af95960e5854fa52f92a0dbe618b`. The tenant-scoped workspace read model combines WorkItems, pending workflow/tool approvals and Human/Agent executor queue counts while preserving authorization and mutation boundaries.
+**Issue #290 — ENGINEERING COMPLETE / RECONCILED**
 
 ## Stage 7 — External Production Certification & Customer Acceptance
 **Issues #269 / #210 / #19 — FINAL / EXTERNAL-PENDING**
 
-**Current roadmap position: Stage 7 remains the active external program stage.** The repository implementation is engineering-complete for the tracked product scope, while Stage 7 remains open because production acceptance requires evidence from a real external target. Governance hardening is being completed in parallel without transferring the `v1.3.8` certification identity.
+Stage 7 is the active external program stage. The repository has an exact-SHA certified candidate, but there is still no verified external deployment of that candidate.
 
 | Priority | Work package | Class | Status / exit evidence |
 |---|---|---|---|
-| P0 | 7.1 Immutable release & release identity | MIXED | `v1.3.8` frozen; exact SHA/certification evidence reconciled |
+| P0 | 7.1 Immutable release & release identity | MIXED | `v1.4.0-rc.4` certified at exact SHA; final release freeze pending |
 | P0 | 7.2 External production infrastructure deployment | EXTERNAL | **PENDING real infrastructure** |
-| P0 | 7.3 Real backup/restore & disaster-recovery drill | EXTERNAL | PENDING target evidence |
-| P0 | 7.4 Production SLO, SLIs & error budget | MIXED | PENDING measured target evidence |
+| P0 | 7.3 Real backup/restore & disaster recovery | EXTERNAL | PENDING target evidence and measured RPO/RTO |
+| P0 | 7.4 Production SLO, SLIs & error budget | MIXED | Engineering contract complete; measured target evidence pending |
 | P0 | 7.5 Live provider integration validation | EXTERNAL | PENDING live providers |
-| P0 | 7.6 Vendor → Reseller → Client runtime isolation/RBAC certification | EXTERNAL | PENDING real-stack actor evidence |
-| P0 | 7.7 Dynamic application security testing (DAST) | MIXED | PENDING deployed target |
+| P0 | 7.6 Vendor → Reseller → Client runtime isolation/RBAC | EXTERNAL | CI gate complete; external actor evidence pending |
+| P0 | 7.7 Dynamic application security testing (DAST) | MIXED | CI baseline complete; deployed authenticated scan pending |
 | P0 | 7.8 Independent penetration test / security review | EXTERNAL | PENDING independent review |
-| P0 | 7.9 Production networking hardening | MIXED | PENDING target perimeter evidence |
-| P0 | 7.10 Secret management, rotation & recovery | MIXED | PENDING external lifecycle evidence |
-| P0 | 7.11 High availability & failure-recovery rehearsal | MIXED | PENDING target rehearsal |
-| P0 | 7.12 Incident-response drill | MIXED | PENDING live drill |
-| P0 | 7.13 Alert ownership & on-call escalation | MIXED | PENDING staffed operational evidence |
-| P0 | 7.14 Final external certification & customer acceptance | EXTERNAL | PENDING #210/#269 |
+| P0 | 7.9 Production networking hardening | MIXED | Engineering contract complete; target perimeter evidence pending |
+| P0 | 7.10 Secret management, rotation & recovery | MIXED | Engineering contract complete; target lifecycle evidence pending |
+| P0 | 7.11 High availability & failure recovery | MIXED | Engineering rehearsal complete; target rehearsal pending |
+| P0 | 7.12 Incident-response drill | MIXED | Engineering simulation complete; live drill pending |
+| P0 | 7.13 Alert ownership & on-call escalation | MIXED | Routing contract complete; live paging evidence pending |
+| P0 | 7.14 Final external certification & customer acceptance | EXTERNAL | Pending #210/#269 |
 | P1 | 7.15 Data retention & lifecycle enforcement | MIXED | Engineering implemented; target verification pending |
-| P1 | 7.16 Human-in-the-loop reconciliation | ENGINEERING | Reconciled |
-| P1 | 7.17 Documentation consolidation & evidence index | ENGINEERING | Reconciled |
+| P1 | 7.16 Human-in-the-loop reconciliation | ENGINEERING | Complete |
+| P1 | 7.17 Documentation consolidation & evidence index | ENGINEERING | Reconciled 2026-09-12 |
 | P1 | 7.18 Platform operations dashboard | ENGINEERING | Implemented |
 | P1 | 7.19 Customer usage, budget & cost controls | MIXED | Engineering implemented; target validation pending |
 | P1 | 7.20 Cost anomaly detection & forecasting | ENGINEERING | Implemented |
 
 ### Stage 7 sequencing rule
 
-P0 items are release/certification blockers. P1 items are productization/operational completeness items. No P0 external gate may be represented as complete from repository evidence alone. Customer acceptance cannot be declared while required P0 evidence is missing.
+P0 items are release/certification blockers. No P0 external gate may be represented as complete from repository evidence alone. All external records must bind to one exact immutable release SHA/tag and its artifact identity. Customer acceptance cannot be declared while required P0 evidence is missing.
 
 ## Stage 8 — AI Company Operating Model Foundation
 **Class: PRODUCT / ARCHITECTURE — ENGINEERING ACTIVE / NOT A RELEASE**
 
-Stage 8 is now an active engineering workstream rather than a purely planned stage. Its governed workforce foundation is present on mainline, but the stage remains open until the remaining execution-boundary audit, workforce product surfaces, evaluation gates and release evidence are complete.
+The governed workforce foundation is implemented on mainline. The active engineering gate is systematic enforcement across execution and side-effect boundaries, including runtime adapters, tool execution, WorkItem/Run transitions, credential use, external side effects and mutable authority surfaces.
 
-This stage must not be mislabeled as V1.6/V1.7/etc. until implementation and release policy establish the actual release identity.
-
-### 8.1 Workforce governance model
-Define the organization-level model on top of V1.5:
+The Stage 8 model preserves:
 
 - Human Owner / CEO / Chairman as final authority.
 - AI Board as advisory/governance layer.
 - AI Chief of Staff and AI Internal Manager as executive operating layer.
-- Explicit decision rights, approval thresholds and escalation paths.
-- Auditability of every organizational decision and delegation.
-
-**Engineering checkpoint:** governance decision chain, AgentInstance lifecycle controls, Access Review freshness, delegation freshness and execution-time authority fingerprinting are implemented on mainline. Remaining work is systematic coverage of every execution/side-effect boundary.
-
-### 8.2 Founding AI workforce
-Create the initial first-party workforce as reusable role definitions and customer-facing templates. The detailed role catalog is maintained in `docs/blueprint/AI_COMPANY_FOUNDING_WORKFORCE.md`.
-
-Initial active candidates:
-
-- AI Chief of Staff / Coordinator
-- AI Internal Manager
-- AI Strategy Advisor
-- AI Technology Advisor / CTO
-- AI Software Developer
-- AI QA Engineer
-- AI DevOps / Infrastructure Engineer
-- AI Network / Security Engineer
-- AI CISO / Security Manager
-- AI Finance / Accountant
-- AI Legal & Compliance Advisor
-- AI Marketing Manager
-- AI SEO Specialist
-- AI Content Writer
-- AI Graphic Designer
-- AI Sales Manager
-- AI Customer Success / Support Manager
-- AI Data & Analytics Specialist
-- AI Knowledge Manager
-- AI Corporate Secretary
-
-The broader catalog also defines specialized roles for cybersecurity, SOC, incident response, penetration testing, IAM, privacy, compliance, corporate protection/physical security, HR, legal, procurement, data, knowledge, operations, business continuity, R&D, trust & safety and other enterprise functions. Roles may remain dormant marketplace templates until justified by workload or customer demand.
-
-### 8.3 Workforce lifecycle
-Formalize:
-
-`Need → Proposal → Board Review → CEO Approval → Existing Template or New Role → Evaluation → Publication → Installation → AgentInstance → Active → Suspend/Retire`
-
-No autonomous role creation may bypass policy, evaluation or CEO authority.
-
-### 8.4 Customer workforce marketplace
-Expose the same role definitions as installable customer templates, while keeping:
-
-`AgentDefinition ≠ AgentTemplate ≠ AgentInstance`
-
-Templates are reusable products; instances are tenant-scoped deployments with their own configuration, permissions, credential references, memory, usage and run history.
-
-### 8.5 Team compositions
-Define reusable teams such as:
-
-- Marketing Team: Marketing Manager → SEO → Content → Graphic Designer → Analytics.
-- Software Team: Technology Manager → Developer → UI/UX → QA → DevOps.
-- Security Team: CISO → Security Engineer → SOC → Incident Response → IAM.
-- Finance Team: CFO → Accountant → Billing → Financial Analyst → Procurement.
-- Operations Team: COO → Operations Manager → Coordinator → Business Continuity → Vendor Operations.
-
-Team composition must remain policy-governed and tenant-scoped.
-
-### 8.6 AI Company governance UX
-Add organization-level views for:
-
-- Board decisions
-- Workforce roster
-- Agent/team health
-- Pending approvals
-- Delegation and handoffs
-- Cost and usage by employee/team
-- Workforce proposals
-- Agent registry and lifecycle
-- Security/risk status
-- Audit trail
-
-### 8.7 Engineering execution plan
-The Stage 8 design is now decomposed into an implementation sequence covering domain entities, lifecycle state machine, identity/RBAC, per-action tool authorization, agent-to-agent trust, approval engine, workforce orchestration, evaluation gates, memory isolation, usage/cost budgets, audit events, APIs, UI surfaces, security/E2E tests and final release evidence.
+- Governed AgentInstance lifecycle and Access Review freshness.
+- Delegation freshness and execution-time authority fingerprinting.
+- Tenant-scoped templates/instances and auditable decisions.
 
 Canonical execution plan: `docs/blueprint/STAGE_8_ENGINEERING_EXECUTION_PLAN.md`.
 
-**Next Stage 8 engineering gate:** audit every execution and side-effect boundary for governance-proof enforcement, including runtime adapters, tool execution, WorkItem/run transitions, credential use, external side effects and mutable authority surfaces. Only after that audit should the post-`v1.3.8` mainline be promoted into a new release candidate.
+Stage 8 remains an engineering/product track and must not be mislabeled as a new release until implementation and release policy establish the release identity.
 
 ## Stage 9 — Autonomous Workforce Optimization
-**Class: PRODUCT / RESEARCH — future**
+**Class: PRODUCT / RESEARCH — FUTURE**
 
-After Stage 8 is operational, the platform may introduce controlled optimization:
-
-- workload balancing;
-- capability-based routing;
-- model selection by task/risk/cost;
-- agent performance evaluation;
-- version fitness and rollback;
-- workforce capacity planning;
-- controlled proposals for new roles and team restructuring.
-
-Human governance remains above autonomous optimization.
+Controlled workload balancing, capability routing, model selection by task/risk/cost, agent evaluation, version fitness/rollback and workforce capacity planning may follow once Stage 8 is operational. Human governance remains above autonomous optimization.
 
 ## Stage 10 — AI Company Operating System
-**Class: LONG-TERM PRODUCT VISION — future**
+**Class: LONG-TERM PRODUCT VISION — FUTURE**
 
-The long-term product direction is an AI Company Operating System: a multi-tenant platform in which humans define authority and accountability while specialized agents execute governed business work.
-
-Potential capabilities include:
-
-- organization-wide command center;
-- constitutional/policy layer;
-- autonomous but interruptible workflows;
-- agent/version registry;
-- workforce analytics;
-- cross-team orchestration;
-- commercial template marketplace;
-- tenant-safe autonomous operations.
-
-Stage 10 is a product vision, not a current implementation claim.
+The long-term direction is an AI Company Operating System with organization-wide command, policy, governed autonomous workflows, agent/version registry, workforce analytics, cross-team orchestration and tenant-safe operations. This is a product vision, not a current implementation claim.
 
 ## Cross-cutting Definition of Done
 
-Every stage and work package must preserve tenant isolation, RBAC, equivalent Human/Agent authorization, policy-driven approvals, scoped credentials, auditable agent identity, safe test execution, secret exclusion, one authoritative Alembic graph, reproducible CI/release artifacts, explicit evidence boundaries and documentation reconciliation before closure.
+Every stage must preserve tenant isolation, RBAC, equivalent Human/Agent authorization, policy-driven approvals, scoped credentials, auditable agent identity, safe test execution, secret exclusion, one authoritative Alembic graph, reproducible CI/release artifacts, explicit evidence boundaries and documentation reconciliation before closure.
 
 ## Evidence boundary
 
-Repository tests, PR CI, CodeQL, local Docker, GitHub-hosted production-like validation, bounded synthetic load, local RBAC acceptance and simulated providers are engineering/release evidence only. They do not substitute for live production deployment, live provider evidence, measured production SLO/DR, independent security/compliance review or customer acceptance.
+Repository tests, PR CI, CodeQL, local Docker, GitHub-hosted production-like validation, synthetic load, local RBAC acceptance and simulated providers are engineering/release evidence only. They do not substitute for live production deployment, live provider evidence, measured production SLO/DR, independent security/compliance review or customer acceptance.
 
 Certification never transfers automatically across SHAs.
 
-The canonical gap register is `docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md`.
+Canonical companion records:
+- `docs/00_START_HERE/CURRENT_STATUS.md`
+- `docs/00_START_HERE/CURRENT_PRIORITIES.md`
+- `docs/current/09_PRODUCTION_READINESS_STATUS.md`
+- `docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md`
+- `docs/current/PRODUCTION_EVIDENCE_INDEX.md`
+- `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
+- `docs/releases/RELEASE_TRUTH_LEDGER.md`
