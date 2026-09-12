@@ -339,19 +339,21 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                             )
                         child = durable_child
                         branch.employee_run_id = durable_child.id
+                        await db.flush()
+                        await db.commit()
                     else:
                         child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
                         child.workflow_parallel_branch_run_id = branch.id
                         child.workflow_parallel_branch_step_key = str(definition["key"])
                         branch.employee_run_id = child.id
-                    await db.flush()
-                    await db.commit()
-                    await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
-                    if heartbeat_lost.is_set():
-                        raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
-                    await run_service.execute_run(db, run_id=child.id)
-                    if child.status != "success":
-                        raise RuntimeError(f"Employee Run ended with status {child.status}")
+                        await db.flush()
+                        await db.commit()
+                        await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
+                        if heartbeat_lost.is_set():
+                            raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
+                        await run_service.execute_run(db, run_id=child.id)
+                        if child.status != "success":
+                            raise RuntimeError(f"Employee Run ended with status {child.status}")
                 outputs[definition.get("output_key") or definition["key"]] = child.output_data or {}
                 branch.output_data = outputs
                 branch.current_step_position = position + 1
