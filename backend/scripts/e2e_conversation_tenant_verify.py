@@ -44,6 +44,18 @@ def register(suffix: str, label: str) -> tuple[str, str]:
     return slug, token
 
 
+def wait_for_employee_visibility(employee_id: str, token: str) -> dict:
+    """Wait for the API transaction finalizer before creating a dependent channel."""
+    last_response: dict = {}
+    for _ in range(10):
+        status, response = request("GET", f"/employees/{employee_id}", token=token)
+        if status == 200:
+            return response
+        last_response = {"status": status, "response": response}
+        time.sleep(0.25)
+    raise AssertionError(f"employee fixture not visible after create: {last_response}")
+
+
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     tenant_a, token_a = register(suffix, "a")
@@ -55,6 +67,7 @@ def main() -> int:
     assert_status(status, 201, "tenant A employee", employee)
     employee_id = (employee.get("data") or {}).get("id")
     assert employee_id
+    wait_for_employee_visibility(employee_id, token_a)
     status, channel = request("POST", "/customer-channels", {"employee_id": employee_id, "name": "Conversation Certification Widget", "channel_type": "web_widget", "config": {}}, token=token_a)
     assert_status(status, 201, "tenant A channel", channel)
     public_key = (channel.get("data") or {}).get("public_key")
@@ -85,9 +98,12 @@ def main() -> int:
     status, employee_b = request("POST", "/employees", {"slug": f"conv-cert-employee-b-{suffix}", "name": "Conversation B Employee", "kind": "custom", "input_schema": {}, "output_schema": {}, "prompt_template": "Return the input unchanged.", "allowed_tools": [], "rules": {}}, token=token_b)
     assert_status(status, 201, "tenant B employee", employee_b)
     employee_b_id = (employee_b.get("data") or {}).get("id")
+    assert employee_b_id
+    wait_for_employee_visibility(employee_b_id, token_b)
     status, channel_b = request("POST", "/customer-channels", {"employee_id": employee_b_id, "name": "Conversation B Widget", "channel_type": "web_widget", "config": {}}, token=token_b)
     assert_status(status, 201, "tenant B channel", channel_b)
     public_key_b = (channel_b.get("data") or {}).get("public_key")
+    assert public_key_b
     status, conv_b = request("POST", f"/public/chat/channels/{public_key_b}/conversations", {"customer_name": "Tenant B Customer", "customer_email": f"b-{suffix}@example.com"})
     assert_status(status, 200, "tenant B public conversation", conv_b)
     customer_token_b = (conv_b.get("data") or {}).get("customer_token")
