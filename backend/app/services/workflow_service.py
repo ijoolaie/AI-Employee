@@ -325,15 +325,35 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                     if child.status != "success":
                         raise ValidationAppError(f"WORKFLOW_CHILD_RETRY_UNSAFE: linked parallel branch Run ended with status {child.status}")
                 else:
-                    child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
-                    branch.employee_run_id = child.id
-                    await db.commit()
-                    await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
-                    if heartbeat_lost.is_set():
-                        raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
-                    await run_service.execute_run(db, run_id=child.id)
-                    if child.status != "success":
-                        raise RuntimeError(f"Employee Run ended with status {child.status}")
+                    durable_result = await db.execute(
+                        select(Run).where(
+                            Run.workflow_parallel_branch_run_id == branch.id,
+                            Run.workflow_parallel_branch_step_key == str(definition["key"]),
+                        )
+                    )
+                    durable_child = durable_result.scalar_one_or_none()
+                    if durable_child is not None:
+                        if durable_child.status != "success":
+                            raise ValidationAppError(
+                                f"WORKFLOW_CHILD_RETRY_UNSAFE: durable parallel branch Run ended with status {durable_child.status}"
+                            )
+                        child = durable_child
+                        branch.employee_run_id = durable_child.id
+                        await db.flush()
+                        await db.commit()
+                    else:
+                        child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
+                        child.workflow_parallel_branch_run_id = branch.id
+                        child.workflow_parallel_branch_step_key = str(definition["key"])
+                        branch.employee_run_id = child.id
+                        await db.flush()
+                        await db.commit()
+                        await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
+                        if heartbeat_lost.is_set():
+                            raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
+                        await run_service.execute_run(db, run_id=child.id)
+                        if child.status != "success":
+                            raise RuntimeError(f"Employee Run ended with status {child.status}")
                 outputs[definition.get("output_key") or definition["key"]] = child.output_data or {}
                 branch.output_data = outputs
                 branch.current_step_position = position + 1
@@ -463,6 +483,11 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                     step.error = {"code": "WORKFLOW_CHILD_RETRY_UNSAFE", "message": "Linked employee Run is missing; refusing to create a replacement Run."}
                     step.completed_at = datetime.now(timezone.utc)
                     raise ValidationAppError(step.error["message"])
+                if existing_child.workflow_step_run_id != step.id:
+                    step.status = "failed"
+                    step.error = {"code": "WORKFLOW_CHILD_RETRY_UNSAFE", "message": "Linked employee Run has no matching durable workflow-step identity; refusing replay."}
+                    step.completed_at = datetime.now(timezone.utc)
+                    raise ValidationAppError(step.error["message"])
                 if existing_child.status == "success":
                     child = existing_child
                 else:
@@ -471,9 +496,23 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                     step.completed_at = datetime.now(timezone.utc)
                     raise ValidationAppError(step.error["message"])
             if child is None:
+                durable_result = await db.execute(select(Run).where(Run.workflow_step_run_id == step.id))
+                durable_child = durable_result.scalar_one_or_none()
+                if durable_child is not None:
+                    if durable_child.status == "success":
+                        step.employee_run_id = durable_child.id
+                        child = durable_child
+                    else:
+                        step.status = "failed"
+                        step.error = {"code": "WORKFLOW_CHILD_RETRY_UNSAFE", "message": f"Durable child Run ended with status {durable_child.status}; refusing replacement."}
+                        step.completed_at = datetime.now(timezone.utc)
+                        raise ValidationAppError(step.error["message"])
+            if child is None:
                 try:
                     child = await run_service.create_run(db, tenant_id=run.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=run.created_by)
+                    child.workflow_step_run_id = step.id
                     step.employee_run_id = child.id
+                    await db.flush()
                     await db.commit()
                     await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
                     await run_service.execute_run(db, run_id=child.id)
