@@ -1,76 +1,56 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-12  
-**Latest certified release candidate:** `v1.4.0-rc.4`  
-**Certified commit:** `4cadd2df003d72de43546466a47e2c66062002c6`  
-**Certification run:** `34693535048` — SUCCESS  
-**Current mainline after documentation reconciliation:** `main` at the latest documentation commit  
-**Current status:** EXTERNAL PRODUCTION GATES PENDING / DOCUMENTATION RECONCILED
+**Reconciled:** 2026-09-12
+**Current release:** `v1.4.1`
+**Release SHA:** `f7f5062feb125c7ca50263f74a0e40bc4abfa591`
+**Certification run:** `34696339261` — SUCCESS
+**Current status:** AGENT CAPABILITY HARDENING + EXTERNAL PRODUCTION EXECUTION
 
-## Executive priority
+## Priority order
 
-The exact `v1.4.0-rc.4` candidate at `4cadd2df003d72de43546466a47e2c66062002c6` passed Production Certification. Documentation reconciliation performed after that certification is intentionally recorded as a later mainline revision; certification does **not** transfer automatically to the post-certification documentation commits. Before any release promotion, run Production Certification again against the exact final release SHA.
+### P0 — External production boundary
 
-PR #499 closed the SQLAlchemy workflow FK metadata cycle warning without weakening FK integrity. The repository-level hardening checkpoint is therefore reconciled. The next program frontier is the P0 external production boundary.
+1. Provision and verify the real production target.
+2. Bind deployment to an immutable release SHA/tag.
+3. Perform real backup/restore/DR and measure RPO/RTO.
+4. Measure production SLO/SLI and error budget.
+5. Validate live providers with production-safe credentials.
+6. Certify Vendor → Reseller → Client isolation/RBAC on the deployed target.
+7. Execute authenticated DAST where applicable.
+8. Obtain independent security review / penetration-test evidence.
+9. Verify production networking, TLS, egress and secret lifecycle.
+10. Rehearse HA/failure recovery and incident response/on-call.
+11. Complete ordered external certification and customer acceptance (#210/#269).
 
-## P0 — external production gates
+### P1 — Agent capability hardening
 
-1. Provision and verify a real production target and immutable deployed identity.
-2. Perform real backup/restore/DR and measure RPO/RTO.
-3. Measure production SLO/SLI and error budget against real traffic.
-4. Validate live provider integrations using production-safe credentials.
-5. Certify Vendor → Reseller → Client runtime isolation/RBAC on the deployed target.
-6. Execute DAST against the authenticated deployed target where applicable.
-7. Obtain independent penetration-test/security-review evidence.
-8. Verify production networking, TLS/ingress, perimeter and egress controls.
-9. Verify external secret-manager lifecycle, rotation, revocation and recovery.
-10. Rehearse HA/failure recovery against target RTO/RPO.
-11. Execute incident-response and alert/on-call drills with named operators.
-12. Complete ordered Vendor → Reseller → Client acceptance and final external certification (#210/#269).
+The existing runtime already contains the core mechanics for tool calling, structured tool schemas/arguments and bounded multi-step execution. Do not rebuild these capabilities unnecessarily. Convert them into explicit acceptance gates:
 
-## P1 — repository/productization status
+1. **Tool Calling** — prove provider-neutral model → tool → result → final-answer flow and allow-list enforcement.
+2. **Structured Arguments** — validate JSON Schema before side effects; reject unknown tools, malformed IDs, non-object arguments, missing required fields, extra fields and wrong types.
+3. **Multi-step** — prove sequential Tool A → Tool B → final answer, with hard iteration/step bounds and loop safety.
+4. **Provider validation** — exercise LM Studio first; validate cloud providers only when intentionally configured.
+5. **Release gate** — any code changes promoted into a release require fresh exact-SHA CI/certification.
 
-The previously tracked P1 engineering/productization items are reconciled as complete or implemented:
-- Data retention & lifecycle enforcement — engineering implemented; target lifecycle verification remains external.
-- Human-in-the-loop reconciliation — engineering complete.
-- Documentation consolidation & evidence index — this reconciliation pass complete.
-- Platform operations dashboard — engineering implemented.
-- Customer usage, budget & cost controls — engineering implemented; target billing/operations validation remains external.
-- Cost anomaly detection & forecasting — engineering implemented.
+### Infrastructure baseline
 
-No duplicate P1 implementation should be created unless a new concrete gap is found.
+Use `docs/current/PRODUCTION_SERVER_BASELINE.md` as the canonical host/deployment sizing reference:
 
-## Completed execution-boundary hardening checkpoint
+- staging: 4 vCPU / 8 GB / 100 GB;
+- recommended initial production: 8 vCPU / 16 GB / 150–200 GB NVMe/SSD;
+- growth tier: 12–16 vCPU / 32 GB / 250 GB+;
+- Ubuntu 24.04 LTS;
+- fixed/public IP, TLS ingress, hardened firewall;
+- encrypted off-host backups;
+- centralized monitoring and alerting.
 
-- PR #464 — crash-safe Agent WorkItem → Run handoff.
-- PR #465 — approval-resume enqueue race closed through outbox.
-- PR #466 — Run creation/outbox failure boundary hardened with nested savepoint.
-- PR #467 — WorkItem cancellation fenced at the DB boundary.
-- PR #468 — workflow replay after side effects prevented.
-- PR #470 — unsafe workflow child retries fail closed.
-- PR #473 — workflow re-entry after child commit fenced.
-- PR #475 — concurrent workflow event dispatch fenced.
-- PR #477 — workflow terminal states made immutable.
-- PR #479 — post-timeout/terminal workflow advancement fenced.
-- PR #482 — durable WorkflowRun execution lease and bounded recovery.
-- PR #486 — durable parallel-branch execution lease/recovery and optimistic ownership fencing.
-- PR #487 — concurrent Run execution admission serialized with a database row lock.
-- PR #499 — SQLAlchemy workflow child-identity FK DDL cycle warning eliminated with `use_alter=True`.
-
-## Certification checkpoint
-
-- Latest exact-SHA certified candidate: `v1.4.0-rc.4`
-- Certified SHA: `4cadd2df003d72de43546466a47e2c66062002c6`
-- Certification run: `34693535048` — SUCCESS
-- Product Gates: 0 failures
-- Post-certification documentation reconciliation: intentionally later commits; fresh certification required for the final release SHA.
+These are recommendations, not evidence of a provisioned server.
 
 ## Evidence rules
 
-- CI/internal validation = engineering/release evidence.
-- Production-like certification = exact-SHA release-candidate evidence.
-- Real production deployment = target evidence.
+- CI/internal validation = engineering evidence.
+- Exact-SHA Production Certification = release evidence.
+- Real deployment = target evidence.
 - Customer acceptance = independent acceptance evidence.
-- Certification never transfers automatically across SHAs.
-- Never fabricate production configuration, credentials, provider evidence or compliance certification.
-- Never place secrets in GitHub issues, commits, documentation or chat.
+- No evidence transfers automatically across SHAs.
+- Never fabricate infrastructure, provider, security, DR or acceptance evidence.
