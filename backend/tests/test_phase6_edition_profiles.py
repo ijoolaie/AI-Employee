@@ -5,12 +5,13 @@ from pathlib import Path
 ROOT = Path(__file__).parents[2]
 EXPECTED = {
     "vendor": ("vendor", "product", None),
+    "self-hosted": ("self-hosted", "deployment-owner", "vendor"),
     "reseller": ("reseller", "delegated", "vendor"),
     "customer": ("customer", "consumed", "reseller-or-vendor"),
 }
 
 
-def test_all_three_edition_profiles_exist_and_have_distinct_contracts():
+def test_all_four_edition_profiles_exist_and_have_distinct_contracts():
     for edition, (channel, authority, parent) in EXPECTED.items():
         path = ROOT / "delivery" / "profiles" / edition / "profile.json"
         assert path.exists(), path
@@ -23,7 +24,7 @@ def test_all_three_edition_profiles_exist_and_have_distinct_contracts():
         assert profile["secret_policy"] != "included"
 
 
-def test_vendor_is_the_only_product_authority():
+def test_vendor_self_hosted_reseller_customer_have_distinct_authorities():
     profiles = {
         edition: json.loads(
             (ROOT / "delivery" / "profiles" / edition / "profile.json").read_text(encoding="utf-8")
@@ -31,6 +32,7 @@ def test_vendor_is_the_only_product_authority():
         for edition in EXPECTED
     }
     assert profiles["vendor"]["authority"] == "product"
+    assert profiles["self-hosted"]["authority"] == "deployment-owner"
     assert profiles["reseller"]["authority"] == "delegated"
     assert profiles["customer"]["authority"] == "consumed"
 
