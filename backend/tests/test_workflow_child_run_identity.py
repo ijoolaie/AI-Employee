@@ -26,6 +26,13 @@ def test_parallel_identity_is_scoped_to_branch_and_step():
     ]
 
 
+def test_workflow_child_fks_use_alter_ddl_to_break_metadata_cycle():
+    step_fk = next(iter(Run.__table__.c.workflow_step_run_id.foreign_keys))
+    branch_fk = next(iter(Run.__table__.c.workflow_parallel_branch_run_id.foreign_keys))
+    assert step_fk.use_alter is True
+    assert branch_fk.use_alter is True
+
+
 def test_migration_persists_durable_child_identity_on_current_head():
     source = MIGRATION.read_text()
     assert "revision = \"f1a2b3c4d5e6\"" in source

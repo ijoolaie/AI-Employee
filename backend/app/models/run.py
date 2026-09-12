@@ -20,8 +20,11 @@ class Run(Base):
     agent_instance_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="RESTRICT"), nullable=True, index=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     conversation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("customer_conversations.id", ondelete="SET NULL"), nullable=True, index=True)
-    workflow_step_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("workflow_step_runs.id", ondelete="SET NULL"), nullable=True, index=True)
-    workflow_parallel_branch_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("workflow_parallel_branch_runs.id", ondelete="SET NULL"), nullable=True, index=True)
+    # These two FKs intentionally use ALTER-time DDL so SQLAlchemy can topologically
+    # order the mutually dependent workflow run/step/branch tables without a cycle warning.
+    # This changes only ORM DDL ordering; FK integrity and runtime semantics are unchanged.
+    workflow_step_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("workflow_step_runs.id", ondelete="SET NULL", use_alter=True), nullable=True, index=True)
+    workflow_parallel_branch_run_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("workflow_parallel_branch_runs.id", ondelete="SET NULL", use_alter=True), nullable=True, index=True)
     workflow_parallel_branch_step_key: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
 
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
