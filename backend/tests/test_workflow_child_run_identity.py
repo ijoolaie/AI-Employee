@@ -61,7 +61,8 @@ def test_parallel_recovery_identity_is_branch_and_step_specific():
     source = WORKFLOW.read_text()
     lookup = "select(Run).where(\n                            Run.workflow_parallel_branch_run_id == branch.id,\n                            Run.workflow_parallel_branch_step_key == str(definition[\"key\"]),\n                        )"
     assert lookup in source
-    assert "child_A != child_B" not in source
+    assert "branch.current_step_position = position + 1" in source
+    assert "branch.employee_run_id = None" in source
 
 
 def test_workflow_resolves_durable_child_before_replacement():
