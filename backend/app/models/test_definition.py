@@ -13,6 +13,7 @@ from app.core.database import Base
 
 
 class TestDefinition(Base):
+    __test__ = False
     __tablename__ = "test_definitions"
     __table_args__ = (
         UniqueConstraint("tenant_id", "code", name="uq_test_definitions_tenant_code"),
@@ -21,9 +22,7 @@ class TestDefinition(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
-    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     code: Mapped[str] = mapped_column(String(120), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     test_type: Mapped[str] = mapped_column(String(50), nullable=False, default="acceptance")
