@@ -15,23 +15,42 @@ from app.models.tool_approval import ToolApprovalRequest
 from app.services import audit_service
 
 
+_ALLOWED_TRANSITIONS = {
+    "pending": {"approved", "rejected", "expired", "revoked"},
+    "approved": {"consumed", "revoked"},
+    "consumed": set(),
+    "expired": set(),
+    "revoked": set(),
+    "rejected": set(),
+}
+
+
 async def requires_approval(db: AsyncSession | None = None, *, tool, tenant_id: uuid.UUID | None = None, employee_id: uuid.UUID | None = None) -> bool:
-    """Return the registered tool's approval policy."""
     return bool(getattr(tool, "requires_approval", False))
 
 
 def validate_resume_approval(approval: ToolApprovalRequest, *, tenant_id: uuid.UUID, run_id: uuid.UUID, tool_name: str, tool_call_id: str) -> None:
-    """Fail closed unless an approval is current for this exact execution."""
+    now = datetime.now(timezone.utc)
     if approval.tenant_id != tenant_id or approval.run_id != run_id:
         raise ValidationAppError("Approval context does not match the Run tenant")
     if approval.status != "approved":
         raise ValidationAppError("Approval is not currently granted")
+    if approval.expires_at is not None and approval.expires_at <= now:
+        raise ValidationAppError("Approval has expired")
+    if approval.revoked_at is not None:
+        raise ValidationAppError("Approval has been revoked")
     if approval.tool_name != tool_name or approval.tool_call_id != tool_call_id:
         raise ValidationAppError("Approval does not match the requested tool call")
 
 
+def _transition(approval: ToolApprovalRequest, new_status: str) -> None:
+    allowed = _ALLOWED_TRANSITIONS.get(approval.status, set())
+    if new_status not in allowed:
+        raise ConflictError(f"invalid approval transition: {approval.status} -> {new_status}")
+    approval.status = new_status
+
+
 async def create_request(db: AsyncSession, *, run: Run, tool_name: str, tool_call_id: str, arguments: dict, continuation_messages: list[dict], tenant_id: uuid.UUID | None = None, iteration: int = 0, requested_by: uuid.UUID | None = None) -> ToolApprovalRequest:
-    """Create or reuse the pending approval for one exact tool call."""
     effective_tenant_id = tenant_id or run.tenant_id
     existing = await db.execute(select(ToolApprovalRequest).where(ToolApprovalRequest.run_id == run.id, ToolApprovalRequest.tool_call_id == tool_call_id, ToolApprovalRequest.status == "pending"))
     existing_request = existing.scalar_one_or_none()
@@ -66,9 +85,6 @@ async def _authorize_agent_decision(db: AsyncSession, *, agent_id: uuid.UUID, te
     allowed_tools = policy.get("tools")
     if allowed_tools is not None and approval.tool_name not in allowed_tools:
         raise ConflictError("Agent is not authorized for this approval tool")
-    allowed_decisions = policy.get("decisions", ["approve", "reject"])
-    if not isinstance(allowed_decisions, list):
-        raise ConflictError("Invalid agent approval policy")
     return agent
 
 
@@ -79,26 +95,17 @@ async def decide(db: AsyncSession, *, approval_id: uuid.UUID, tenant_id: uuid.UU
     approval = result.scalar_one_or_none()
     if approval is None:
         raise NotFoundError("Approval request not found")
-    if approval.status != "pending":
-        raise ConflictError(f"Approval request already decided: {approval.status}")
+    if actor_type == "user" and approval.requested_by is not None and approval.requested_by == decided_by:
+        raise ConflictError("Approval requester cannot approve their own request")
     if actor_type == "agent":
-        agent = await _authorize_agent_decision(db, agent_id=decided_by, tenant_id=tenant_id, approval=approval)
-        policy = agent.configuration.get("approval_delegation", {})
-        if decision not in policy.get("decisions", ["approve", "reject"]):
-            raise ConflictError("Agent is not authorized for this approval decision")
-    elif actor_type == "user":
-        # Separation of duties: the principal that requested a gated action
-        # cannot approve that same request. A missing requester is allowed for
-        # legacy/system-created requests, but explicit self-approval is denied.
-        if approval.requested_by is not None and approval.requested_by == decided_by:
-            raise ConflictError("Approval requester cannot approve their own request")
-    else:
+        await _authorize_agent_decision(db, agent_id=decided_by, tenant_id=tenant_id, approval=approval)
+    elif actor_type != "user":
         raise ConflictError("unsupported approval actor")
     run_result = await db.execute(select(Run).where(Run.id == approval.run_id, Run.tenant_id == tenant_id).with_for_update())
     run = run_result.scalar_one_or_none()
     if run is None:
         raise NotFoundError("Run not found for approval")
-    approval.status = "approved" if decision == "approve" else "rejected"
+    _transition(approval, "approved" if decision == "approve" else "rejected")
     approval.decided_by = decided_by
     approval.decision_reason = reason
     approval.decided_at = datetime.now(timezone.utc)
@@ -106,5 +113,5 @@ async def decide(db: AsyncSession, *, approval_id: uuid.UUID, tenant_id: uuid.UU
     if approval.status == "rejected":
         run.error = {"code": "TOOL_APPROVAL_REJECTED", "message": reason or "Approval rejected."}
     await db.flush()
-    await audit_service.record(db, action="tool.approval_decided", actor_type=actor_type, actor_id=decided_by, tenant_id=tenant_id, resource_type="run", resource_id=run.id, request_id=run.request_id, metadata={"approval_id": str(approval.id), "tool": approval.tool_name, "decision": approval.status, "reason": reason})
+    await audit_service.record(db, action="tool.approval_decided", actor_type=actor_type, actor_id=decided_by, tenant_id=tenant_id, resource_type="run", resource_id=run.id, request_id=run.request_id, metadata={"approval_id": str(approval.id), "tool": approval.tool_name, "decision": approval.status})
     return approval
