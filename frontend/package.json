@@ -23,7 +23,7 @@
     "@hookform/resolvers": "^3.9.1",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.6.0",
-    "zod": "^4.5.4",
+    "zod": "^4.6.2",
     "lucide-react": "^1.41.0",
     "date-fns": "^4.1.0"
   },
