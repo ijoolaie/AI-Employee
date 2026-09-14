@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import delete, select
 
 from app.core.database import AsyncSessionLocal
@@ -14,7 +15,7 @@ from app.models.test_run import TestRun, TestRunStatus
 from app.services.test_center import TestCenterError, TestCenterService
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_center_setup():
     async with AsyncSessionLocal() as db:
         tenant_a = Tenant(name="TC Tenant A", slug=f"tc-a-{uuid4().hex}", status="active")
@@ -94,9 +95,7 @@ async def test_concurrent_start_has_single_winner_via_postgresql_row_lock(test_c
 
     async def first_worker():
         async with AsyncSessionLocal() as db:
-            started = await TestCenterService(db).start_run(
-                run_id=run_id, tenant_id=data["tenant_a"]
-            )
+            started = await TestCenterService(db).start_run(run_id=run_id, tenant_id=data["tenant_a"])
             assert started.status is TestRunStatus.RUNNING
             first_started.set()
             await asyncio.sleep(0.2)
@@ -106,9 +105,7 @@ async def test_concurrent_start_has_single_winner_via_postgresql_row_lock(test_c
         await first_started.wait()
         async with AsyncSessionLocal() as db:
             with pytest.raises(TestCenterError, match="only queued"):
-                await TestCenterService(db).start_run(
-                    run_id=run_id, tenant_id=data["tenant_a"]
-                )
+                await TestCenterService(db).start_run(run_id=run_id, tenant_id=data["tenant_a"])
             await db.rollback()
 
     await asyncio.gather(first_worker(), second_worker())
@@ -142,19 +139,10 @@ async def test_expired_transition_is_persisted_and_blocks_finish(test_center_set
         await db.commit()
 
     async with AsyncSessionLocal() as db:
-        expired = await TestCenterService(db).expire_run(
-            run_id=run_id,
-            tenant_id=data["tenant_a"],
-            timeout_seconds=60,
-            now=datetime.now(timezone.utc),
-        )
+        expired = await TestCenterService(db).expire_run(run_id=run_id, tenant_id=data["tenant_a"], timeout_seconds=60, now=datetime.now(timezone.utc))
         assert expired.status is TestRunStatus.EXPIRED
         await db.commit()
 
     async with AsyncSessionLocal() as db:
         with pytest.raises(TestCenterError, match="only running"):
-            await TestCenterService(db).finish_run(
-                run_id=run_id,
-                tenant_id=data["tenant_a"],
-                passed=True,
-            )
+            await TestCenterService(db).finish_run(run_id=run_id, tenant_id=data["tenant_a"], passed=True)
