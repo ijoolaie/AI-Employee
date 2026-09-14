@@ -1,6 +1,7 @@
 import uuid
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,7 +12,7 @@ from app.models.user import User
 from app.services.auth_service import hash_password
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def security_setup():
     async with AsyncSessionLocal() as db:
         tenant_a = Tenant(
@@ -27,8 +28,6 @@ async def security_setup():
         db.add_all([tenant_a, tenant_b])
         await db.flush()
 
-        # Permission codes are globally unique, so never use a fixed value
-        # that may already exist in the development database.
         permission = Permission(
             code=f"workflow.read.test.{uuid.uuid4().hex}",
             description="Security integration test permission",
@@ -71,7 +70,6 @@ async def security_setup():
 
         db.add_all([user_a, user_b])
         await db.flush()
-
         await db.commit()
 
         return {
@@ -87,33 +85,19 @@ async def security_setup():
 
 @pytest.mark.asyncio
 async def test_tenant_a_token_cannot_impersonate_tenant_b(security_setup):
-    """
-    Verify that a user's tenant identity cannot be switched to another tenant.
-
-    This test intentionally checks the database ownership boundary directly.
-    The application must derive tenant context from the authenticated user,
-    rather than trusting a client-provided tenant_id.
-    """
     data = security_setup
-
     user_a = data["user_a"]
     tenant_a = data["tenant_a"]
     tenant_b = data["tenant_b"]
 
     assert user_a.tenant_id == tenant_a.id
     assert user_a.tenant_id != tenant_b.id
-
-    # A Tenant-A user must never be treated as a Tenant-B user.
     assert user_a.tenant_id == tenant_a.id
 
 
 @pytest.mark.asyncio
 async def test_foreign_tenant_role_cannot_grant_permission(security_setup):
-    """
-    A role belonging to Tenant B must not be usable as a Tenant A role.
-    """
     data = security_setup
-
     tenant_a = data["tenant_a"]
     tenant_b = data["tenant_b"]
     role_a = data["role_a"]
@@ -123,14 +107,11 @@ async def test_foreign_tenant_role_cannot_grant_permission(security_setup):
     assert role_a.tenant_id == tenant_a.id
     assert role_b.tenant_id == tenant_b.id
 
-    # Permission is attached only to Tenant A's role.
     result = await _get_role_permission_links(role_a.id, permission.id)
     assert result is True
 
     result = await _get_role_permission_links(role_b.id, permission.id)
     assert result is False
-
-    # Most importantly, Tenant B's role cannot become a Tenant A role.
     assert role_b.tenant_id != tenant_a.id
 
 
