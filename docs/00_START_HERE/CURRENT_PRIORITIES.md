@@ -1,10 +1,10 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-12
+**Reconciled:** 2026-09-14
 **Current release:** `v1.4.1`
 **Release SHA:** `f7f5062feb125c7ca50263f74a0e40bc4abfa591`
 **Certification run:** `34696339261` — SUCCESS
-**Current status:** AGENT CAPABILITY HARDENING + EXTERNAL PRODUCTION EXECUTION
+**Current status:** AGENT CAPABILITY HARDENING + STAGE 8 GOVERNANCE + EXTERNAL PRODUCTION EXECUTION
 
 ## Priority order
 
@@ -31,6 +31,22 @@ The existing runtime already contains the core mechanics for tool calling, struc
 3. **Multi-step** — prove sequential Tool A → Tool B → final answer, with hard iteration/step bounds and loop safety.
 4. **Provider validation** — exercise LM Studio first; validate cloud providers only when intentionally configured.
 5. **Release gate** — any code changes promoted into a release require fresh exact-SHA CI/certification.
+
+### P1.5 — Stage 8 Governed Agent Workforce Engineering
+
+Current checkpoint:
+
+- Agent governance foundation, lifecycle controls and permission boundaries are implemented.
+- Workflow state-machine enforcement hardening has passed repository validation.
+- Current local validation evidence: `759 passed`.
+- Pytest warning cleanup reduced remaining warnings to zero after test configuration reconciliation.
+
+Required next steps:
+
+1. Continue auditing lifecycle transitions against governance rules.
+2. Ensure every agent action has identity, authorization and audit evidence boundaries.
+3. Add missing acceptance contracts before promoting additional autonomous capabilities.
+4. Keep engineering evidence separate from production certification evidence.
 
 ### Infrastructure baseline
 
