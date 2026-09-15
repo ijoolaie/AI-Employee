@@ -1,6 +1,6 @@
 # Stage 8 Governance Audit Checklist
 
-**Date:** 2026-09-14
+**Date:** 2026-09-15
 
 ## Purpose
 
@@ -12,12 +12,14 @@ This checklist tracks reconciliation between Stage 8 design requirements, reposi
 - [x] Workflow state-machine enforcement branch validated locally.
 - [x] Test warning cleanup completed through pytest configuration reconciliation.
 - [x] Engineering evidence is separated from production certification evidence.
+- [x] Workflow enforcement implementation evidence recorded in Stage 8 implementation status.
 
 ## Governance boundary audit
 
 ### Lifecycle
 
 - [x] Lifecycle transition enforcement exists and has validation coverage.
+- [x] Agent governance foundation migrations and API surfaces are present.
 - [ ] Full AgentInstance lifecycle evidence mapped to exact implementation files.
 - [ ] Retirement/replacement governance evidence completed.
 
@@ -43,6 +45,16 @@ This checklist tracks reconciliation between Stage 8 design requirements, reposi
 - [ ] Usage attribution mapped to tenant/agent/work item.
 - [ ] Budget enforcement acceptance tests completed.
 - [ ] Runaway execution protection evidence completed.
+
+## Reconciliation result
+
+Implemented foundation areas must not be reported as fully certified capabilities until code, automated validation and operational evidence are linked together.
+
+Current state:
+
+- Workflow state governance: implementation validated.
+- Test Center foundation: implementation validated.
+- Agent governance foundation: implementation present, certification evidence pending.
 
 ## Next engineering sequence
 
