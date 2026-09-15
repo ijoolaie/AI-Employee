@@ -19,6 +19,7 @@ from app.models.tool_approval import ToolApprovalRequest
 from app.services.agent_delegation_service import validate_delegation
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.services.agent_kill_switch_service import assert_not_killed
+from app.services.agent_policy_audit import record_policy_decision_audit
 
 
 POLICY_VERSION = "agent-policy-v1"
@@ -104,8 +105,8 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
     if instance is None:
         raise NotFoundError("Agent instance not found for tenant")
 
-    def result(decision: PolicyDecision, reason: str, **metadata: Any) -> PolicyResult:
-        return PolicyResult(
+    async def result(decision: PolicyDecision, reason: str, **metadata: Any) -> PolicyResult:
+        policy_result = PolicyResult(
             decision=decision,
             policy_version=POLICY_VERSION,
             reason=reason,
@@ -119,6 +120,13 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             metadata=metadata,
         )
 
+        await record_policy_decision_audit(
+            db,
+            policy_result,
+        )
+
+        return policy_result
+
     try:
         await assert_not_killed(
             db,
@@ -126,10 +134,10 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             agent_instance_id=instance.id,
         )
     except ValidationAppError:
-        return result(PolicyDecision.DENY, "agent_emergency_kill_switch_active")
+        return await result(PolicyDecision.DENY, "agent_emergency_kill_switch_active")
 
     if instance.status != AgentInstanceStatus.ENABLED or not instance.enabled:
-        return result(PolicyDecision.DENY, "agent_instance_not_executable")
+        return await result(PolicyDecision.DENY, "agent_instance_not_executable")
 
     template_id = getattr(instance, "agent_template_id", None)
     if template_id is not None:
@@ -142,12 +150,12 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             )
         ).scalar_one_or_none()
         if template is None or template.status.value != "published":
-            return result(PolicyDecision.DENY, "agent_governance_template_invalid")
+            return await result(PolicyDecision.DENY, "agent_governance_template_invalid")
 
         configuration = dict(instance.configuration or {})
         approved_fingerprint = configuration.pop(FINGERPRINT_KEY, None)
         if not approved_fingerprint:
-            return result(PolicyDecision.DENY, "agent_governance_fingerprint_missing")
+            return await result(PolicyDecision.DENY, "agent_governance_fingerprint_missing")
 
         current_fingerprint = execution_authority_fingerprint(
             tenant_id=request.tenant_id,
@@ -164,14 +172,14 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             budget_policy=instance.budget_policy,
         )
         if current_fingerprint != approved_fingerprint:
-            return result(PolicyDecision.DENY, "agent_governance_fingerprint_mismatch")
+            return await result(PolicyDecision.DENY, "agent_governance_fingerprint_mismatch")
 
     if not identity.active or identity.revoked_at is not None:
-        return result(PolicyDecision.DENY, "agent_identity_revoked")
+        return await result(PolicyDecision.DENY, "agent_identity_revoked")
     if identity.expires_at is not None and identity.expires_at <= now:
         identity.active = False
         await db.flush()
-        return result(PolicyDecision.DENY, "agent_identity_expired")
+        return await result(PolicyDecision.DENY, "agent_identity_expired")
 
     access_review = (
         await db.execute(
@@ -187,15 +195,15 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
     if access_review is None:
         identity.active = False
         await db.flush()
-        return result(PolicyDecision.DENY, "agent_access_review_missing")
+        return await result(PolicyDecision.DENY, "agent_access_review_missing")
     if access_review.decision != AgentAccessReviewDecision.APPROVED:
         identity.active = False
         await db.flush()
-        return result(PolicyDecision.DENY, "agent_access_review_not_approved")
+        return await result(PolicyDecision.DENY, "agent_access_review_not_approved")
     if access_review.next_review_at is not None and access_review.next_review_at <= now:
         identity.active = False
         await db.flush()
-        return result(PolicyDecision.DENY, "agent_access_review_expired")
+        return await result(PolicyDecision.DENY, "agent_access_review_expired")
 
     if request.delegation_id is not None:
         try:
@@ -209,26 +217,26 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
                 now=now,
             )
         except ValidationAppError:
-            return result(PolicyDecision.DENY, "delegation_invalid")
+            return await result(PolicyDecision.DENY, "delegation_invalid")
     elif request.context.get("delegated_from"):
-        return result(PolicyDecision.DENY, "delegation_proof_required")
+        return await result(PolicyDecision.DENY, "delegation_proof_required")
 
     if request.action == "tool.execute" and not request.tool_name:
-        return result(PolicyDecision.DENY, "tool_name_required")
+        return await result(PolicyDecision.DENY, "tool_name_required")
 
     policy = instance.permission_policy or {}
     allowed_tools = set(policy.get("allowed_tools") or policy.get("tools") or [])
     permissions = set(policy.get("permissions") or [])
 
     if request.tool_name is not None and request.tool_name not in allowed_tools and "*" not in allowed_tools:
-        return result(PolicyDecision.DENY, "tool_not_authorized", allowed_tools=sorted(allowed_tools))
+        return await result(PolicyDecision.DENY, "tool_not_authorized", allowed_tools=sorted(allowed_tools))
 
     if request.required_permission is not None and request.required_permission not in permissions and "*" not in permissions:
-        return result(PolicyDecision.DENY, "permission_not_granted", required_permission=request.required_permission)
+        return await result(PolicyDecision.DENY, "permission_not_granted", required_permission=request.required_permission)
 
     if request.requires_approval:
         if not request.run_id or not request.tool_call_id or not request.approval_request_id:
-            return result(PolicyDecision.REQUIRE_APPROVAL, "approval_context_required")
+            return await result(PolicyDecision.REQUIRE_APPROVAL, "approval_context_required")
         approval = (
             await db.execute(
                 select(ToolApprovalRequest).where(
@@ -241,17 +249,17 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             )
         ).scalar_one_or_none()
         if approval is None:
-            return result(PolicyDecision.REQUIRE_APPROVAL, "approval_not_found_or_not_approved")
+            return await result(PolicyDecision.REQUIRE_APPROVAL, "approval_not_found_or_not_approved")
         if str(getattr(approval, "tool_call_id", "")) != str(request.tool_call_id):
-            return result(PolicyDecision.DENY, "approval_tool_call_mismatch")
+            return await result(PolicyDecision.DENY, "approval_tool_call_mismatch")
         if request.arguments is not None and approval.arguments != request.arguments:
-            return result(PolicyDecision.DENY, "approval_arguments_mismatch")
-        return result(PolicyDecision.ALLOW, "policy_allow_approved")
+            return await result(PolicyDecision.DENY, "approval_arguments_mismatch")
+        return await result(PolicyDecision.ALLOW, "policy_allow_approved")
 
     if request.approval_granted or request.approval_request_id or request.tool_call_id:
-        return result(PolicyDecision.DENY, "unexpected_approval_context")
+        return await result(PolicyDecision.DENY, "unexpected_approval_context")
 
-    return result(PolicyDecision.ALLOW, "policy_allow")
+    return await result(PolicyDecision.ALLOW, "policy_allow")
 
 
 async def assert_authorized(db: AsyncSession, request: PolicyRequest) -> AgentInstance:
