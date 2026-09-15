@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -50,16 +49,20 @@ def request(tenant_id, agent_id):
     )
 
 
-@pytest.mark.asyncio
-async def test_policy_decision_records_audit(monkeypatch):
-    tenant = uuid4()
-    instance = SimpleNamespace(
+def make_agent(tenant):
+    return SimpleNamespace(
         id=uuid4(),
         tenant_id=tenant,
         enabled=True,
         status=AgentInstanceStatus.ENABLED,
         permission_policy={"allowed_tools": ["send_email"], "permissions": []},
     )
+
+
+@pytest.mark.asyncio
+async def test_policy_decision_records_audit(monkeypatch):
+    tenant = uuid4()
+    instance = make_agent(tenant)
     identity = SimpleNamespace(id=uuid4(), active=True, revoked_at=None, expires_at=None)
     captured = []
 
@@ -76,15 +79,9 @@ async def test_policy_decision_records_audit(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_audit_failure_does_not_change_policy_result(monkeypatch):
+async def test_audit_failure_is_isolated(monkeypatch):
     tenant = uuid4()
-    instance = SimpleNamespace(
-        id=uuid4(),
-        tenant_id=tenant,
-        enabled=True,
-        status=AgentInstanceStatus.ENABLED,
-        permission_policy={"allowed_tools": ["send_email"], "permissions": []},
-    )
+    instance = make_agent(tenant)
     identity = SimpleNamespace(id=uuid4(), active=True, revoked_at=None, expires_at=None)
 
     async def failing_audit(db, decision):
@@ -92,5 +89,6 @@ async def test_audit_failure_does_not_change_policy_result(monkeypatch):
 
     monkeypatch.setattr(agent_policy_engine, "record_policy_decision_audit", failing_audit)
 
-    with pytest.raises(RuntimeError):
-        await authorize(FakeDb(instance, identity), request(tenant, instance.id))
+    result = await authorize(FakeDb(instance, identity), request(tenant, instance.id))
+
+    assert result.decision == PolicyDecision.ALLOW
