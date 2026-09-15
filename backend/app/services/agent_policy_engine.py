@@ -117,7 +117,14 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             required_permission=request.required_permission,
             resource_type=request.resource_type,
             resource_id=request.resource_id,
-            metadata=metadata,
+            metadata={
+                "work_item_id": str(request.work_item_id) if request.work_item_id else None,
+                "run_id": str(request.run_id) if request.run_id else None,
+                "tool_call_id": request.tool_call_id,
+                "approval_request_id": str(request.approval_request_id) if request.approval_request_id else None,
+                "delegation_id": str(request.delegation_id) if request.delegation_id else None,
+                **metadata,
+            },
         )
 
         await record_policy_decision_audit(
