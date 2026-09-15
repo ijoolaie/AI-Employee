@@ -4,8 +4,7 @@ from uuid import uuid4
 import pytest
 
 from app.models.agent_instance import AgentInstanceStatus
-from app.models.agent_policy_engine import PolicyDecision
-from app.services.agent_policy_engine import PolicyRequest, authorize
+from app.services.agent_policy_engine import PolicyDecision, PolicyRequest, authorize
 
 
 class FakeResult:
