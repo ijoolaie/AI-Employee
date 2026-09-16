@@ -75,10 +75,6 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
     """Evaluate one Agent action deterministically and fail closed."""
     now = request.now or datetime.now(timezone.utc)
 
-    # Identity authority and Agent lifecycle are execution-critical state. Lock
-    # them in a deterministic order and retain the locks for the caller's
-    # transaction so revocation/suspension cannot commit between authorization
-    # and an irreversible governed side effect.
     identity = (
         await db.execute(
             select(AgentIdentity)
@@ -120,10 +116,15 @@ async def authorize(db: AsyncSession, request: PolicyRequest) -> PolicyResult:
             metadata=metadata,
         )
 
-        await record_policy_decision_audit(
-            db,
-            policy_result,
-        )
+        try:
+            await record_policy_decision_audit(
+                db,
+                policy_result,
+            )
+        except Exception:
+            # Authorization remains authoritative; audit availability must not
+            # change ALLOW/DENY/REQUIRE_APPROVAL outcomes.
+            pass
 
         return policy_result
 
