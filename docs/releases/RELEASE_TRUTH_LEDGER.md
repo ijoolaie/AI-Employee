@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-12
+**Last reconciled:** 2026-09-16
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -21,13 +21,13 @@ These states are independent and must not be inferred from release names.
 | `v1.4.0-rc.4` | `4cadd2df003d72de43546466a47e2c66062002c6` | Historical candidate | **CERTIFIED** — Run `34693535048` | No evidence | Pending |
 | `v1.3.8` | `fd1e74b6b4c1701f7443efc202bad161ff19618c` | VERIFIED | **CERTIFIED** — Run `34052885700` | **NOT DEPLOYED** — Run `34060615390` failed before remote deployment | Pending |
 | `v1.4.0-rc.1` | `b2e2517ce0a38dc4fecd97c047328f703bdd7de6` | Historical candidate | **NOT CERTIFIED** — Run `34497132748` had 1 failed Product Gate | Not eligible | Pending |
-| current `main` | Later documentation reconciliation commits after `v1.4.1` | Not a release | **NOT CERTIFIED** — fresh certification required if promoted | Not eligible | Pending |
+| current `main` | `1c8c3ee2fc933148f90e967e18167fe602d0ad00` plus subsequent documentation reconciliation commits | Not a release | **NOT CERTIFIED** — fresh certification required if promoted | Not eligible | Pending |
 
 ## v1.4.1 certification checkpoint
 
 Production Certification Run `34696339261` passed for exact SHA `f7f5062feb125c7ca50263f74a0e40bc4abfa591`, with certification job `103560364112`. The release workflow subsequently published tag `v1.4.1` and its edition/runtime release assets.
 
-Certification and release evidence attach to that exact SHA. Subsequent documentation commits are not automatically certified.
+Certification and release evidence attach to that exact SHA. Subsequent engineering and documentation commits are not automatically certified.
 
 ## v1.4.1 delivery checkpoint
 
@@ -35,17 +35,23 @@ PR #501 delivered the Self-Hosted edition and four edition profiles/packages. Th
 
 The release is an engineering/release-certified snapshot. No external production deployment or customer acceptance is inferred from the published assets.
 
-## Agent capability workstream
+## Current Agent engineering checkpoint
 
-The next engineering phases are:
+The current mainline after v1.4.1 includes:
+
+- PR #514 — policy decision audit bridge;
+- PR #516 — governed AgentInstance replacement workflow;
+- PR #517 — principal identity propagation through workflow child runs.
+
+Local repository validation on 2026-09-16 passed **775 tests**. This validates the current engineering tree only; it does not certify the current mainline as a release.
+
+The Agent capability workstream remains:
 
 1. Tool Calling contract + E2E.
 2. Structured Arguments / JSON Schema fail-closed validation.
 3. Multi-step bounded execution.
 4. Real provider validation, starting with LM Studio.
 5. Exact-SHA release gate for promoted code.
-
-These phases are engineering work, not release identities and not external production certification.
 
 ## Production infrastructure baseline
 
@@ -72,7 +78,7 @@ The following remain open regardless of `v1.4.1` certification:
 ## Current interpretation
 
 - Latest published and exact-SHA certified release: **v1.4.1 / `f7f5062f...`**.
-- Current `main`: **documentation reconciliation after v1.4.1 — not certified as a new release**.
+- Current engineering mainline: **`1c8c3ee...` plus documentation reconciliation commits — not certified as a new release**.
 - Production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance: **PENDING**.
 - Live provider validation: **PENDING**.
