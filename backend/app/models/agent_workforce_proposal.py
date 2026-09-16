@@ -22,11 +22,17 @@ class AgentWorkforceProposalStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
+class AgentWorkforceProposalKind(str, enum.Enum):
+    STAFFING = "staffing"
+    REPLACEMENT = "replacement"
+
+
 class AgentWorkforceProposal(Base):
     __tablename__ = "agent_workforce_proposals"
     __table_args__ = (
         Index("ix_agent_workforce_proposals_tenant_status", "tenant_id", "status"),
         Index("ix_agent_workforce_proposals_tenant_template", "tenant_id", "agent_template_id"),
+        Index("ix_agent_workforce_proposals_tenant_replacement", "tenant_id", "replacement_for_agent_instance_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -40,6 +46,16 @@ class AgentWorkforceProposal(Base):
     sponsor_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     risk_tier: Mapped[int] = mapped_column(nullable=False, default=0)
     configuration: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    kind: Mapped[AgentWorkforceProposalKind] = mapped_column(
+        Enum(AgentWorkforceProposalKind, values_callable=lambda enum_type: [item.value for item in enum_type]),
+        nullable=False,
+        default=AgentWorkforceProposalKind.STAFFING,
+    )
+    replacement_for_agent_instance_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="RESTRICT"), nullable=True
+    )
+    replacement_cutover_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    replacement_retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     status: Mapped[AgentWorkforceProposalStatus] = mapped_column(
         Enum(AgentWorkforceProposalStatus, values_callable=lambda enum_type: [item.value for item in enum_type]),
         nullable=False,
