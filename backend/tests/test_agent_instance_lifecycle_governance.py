@@ -5,7 +5,7 @@ from app.models.agent_instance import AgentInstanceStatus
 from app.services.agent_template_service import _ALLOWED_LIFECYCLE_TRANSITIONS
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_agent_instance_lifecycle_states_are_explicit() -> None:
