@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, Agent version fitness, promotion evidence, governed promotion, governed rollback planning, and capacity forecasting implemented**
+**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, Agent version fitness, promotion evidence, governed promotion, governed rollback planning, capacity forecasting, and governed workforce scaling implemented**
 
 Stage 9 builds on the governed execution substrate completed and evidenced in Stage 8. The implemented slices add deterministic optimization primitives and bounded lifecycle control without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
 
@@ -48,15 +48,9 @@ This increment persists recommendation evidence only. It does not assign WorkIte
 
 `backend/app/services/agent_fitness.py` derives a bounded fitness signal from durable tenant-scoped `Run`, `AIProviderCall`, and per-Run `Feedback` records already persisted by the platform.
 
-The signal contains:
+The signal contains success rate, optional normalized feedback score, latency score, cost score, an explainable composite fitness value, and an explicit contract version.
 
-- success rate;
-- optional normalized feedback score;
-- latency score derived from provider-call latency;
-- cost score derived from recorded Run cost;
-- an explainable composite fitness value and explicit contract version.
-
-`GET /api/v1/admin/agent-fitness` exposes the read-only signal to the existing platform-admin boundary. The service does not mutate Agent, Run, budget, approval, policy, or lifecycle state. Missing feedback is treated as missing evidence rather than a zero rating.
+`GET /api/v1/admin/agent-fitness` exposes the read-only signal to the existing platform-admin boundary. Missing feedback is treated as missing evidence rather than a zero rating.
 
 ### 6. Agent version fitness
 
@@ -64,7 +58,7 @@ The signal contains:
 
 `GET /api/v1/admin/agent-version-fitness` exposes the read-only version-level signal, including template identity/version, participating instance count, sample count, component scores, composite fitness, time window, and contract version.
 
-The version fitness slice is measurement only. It does not promote, demote, retire, mutate, assign, or change any AgentTemplate/AgentInstance state, and it does not bypass policy, approval, budget, identity, or lifecycle controls.
+The version fitness slice is measurement only. It does not promote, demote, retire, mutate, assign, or change any AgentTemplate/AgentInstance state.
 
 ### 7. Promotion evidence
 
@@ -72,26 +66,19 @@ The version fitness slice is measurement only. It does not promote, demote, reti
 
 `GET /api/v1/admin/agent-promotion-evidence` exposes the evidence behind the existing platform-admin governance boundary.
 
-This increment is evidence-only. It does not publish, promote, demote, retire, assign, mutate, or authorize lifecycle changes. Comparability is deliberately explicit when there is no measured prior version.
+This increment is evidence-only. It does not authorize lifecycle changes.
 
 ### 8. Governed promotion
 
-`backend/app/services/agent_promotion.py` adds the first bounded Stage 9 lifecycle control. A candidate can only be promoted when:
+`backend/app/services/agent_promotion.py` adds the first bounded Stage 9 lifecycle control. A candidate can only be promoted when candidate-vs-prior evidence is available and comparable, the candidate is in an eligible draft/evaluating state, the existing Stage 8 evaluation/policy evidence gate passes, and requester/approver are independently attributable.
 
-- candidate-vs-prior-version evidence is available and comparable;
-- the candidate is in an eligible draft/evaluating lifecycle state;
-- the existing Stage 8 evaluation/policy evidence gate passes;
-- requester and approver are independently attributable.
-
-`POST /api/v1/agent-templates/{template_id}/promote` records the governed promotion through the existing audit service and reuses the existing `publish_template()` governance path rather than creating a parallel authorization mechanism. The optimization signal never grants authority by itself.
+`POST /api/v1/agent-templates/{template_id}/promote` reuses the existing `publish_template()` governance path and audit service rather than creating a parallel authorization mechanism.
 
 ### 9. Governed rollback planning
 
 `backend/app/services/agent_rollback.py` adds a governed rollback entry point for an existing AgentInstance. It deterministically selects the immediately prior **published** version of the same AgentTemplate slug and AgentDefinition, then creates a normal workforce replacement proposal targeting that version.
 
-`POST /api/v1/agent-workforce/replacements/rollback` requires an independently attributable requester and sponsor. Creating the rollback proposal does **not** mutate the active AgentInstance, change execution authority, or bypass the existing Board/CEO/access-review/fingerprint controls. The existing replacement `prepare-cutover` and `cutover` path remains the only execution path; cutover drains the predecessor, requires zero active WorkItems, activates the replacement through the existing governance checks, and only then retires the predecessor.
-
-This preserves the Stage 8 governance hierarchy: rollback intent is explicit, target selection is deterministic, and execution remains behind the established workforce replacement controls.
+`POST /api/v1/agent-workforce/replacements/rollback` requires an independently attributable requester and sponsor. Proposal creation does not mutate the active AgentInstance or change execution authority. The existing replacement `prepare-cutover` and `cutover` path remains the only execution path.
 
 ### 10. Workforce capacity forecasting
 
@@ -99,35 +86,39 @@ This preserves the Stage 8 governance hierarchy: rollback intent is explicit, ta
 
 `GET /api/v1/admin/capacity-forecast` exposes projected arrivals, required concurrency, utilization, projected backlog, descriptive sensitivity bounds, evidence completeness, and the forecast contract version.
 
-The forecast is deliberately evidence-only. Missing service-time telemetry is not imputed as zero, and forecast pressure never changes `max_concurrency`, enables/disables Agents, provisions workforce, assigns WorkItems, or triggers scaling. Any future scaling action must remain a separate governed control-loop increment.
+The forecast is evidence-only. Missing service-time telemetry is not imputed as zero, and forecast pressure cannot change `max_concurrency`, enable/disable Agents, provision workforce, or assign WorkItems.
 
-### 11. Acceptance evidence
+### 11. Governed workforce scaling control loop
 
-`backend/tests/services/test_agent_optimization.py` covers capability/capacity/risk filtering, deterministic tie-breaking, model cost/risk bounds, contract metadata, and fail-closed behavior.
+`backend/app/services/governed_scaling.py` converts complete capacity-forecast evidence into a bounded workforce scaling proposal when projected demand actually exceeds available capacity.
 
-`backend/tests/services/test_workload_balancing.py` covers queue-pressure calculation, threshold suppression, deterministic capacity selection, disabled-Agent filtering, persisted snapshot creation, and bounded history queries.
+The control loop:
 
-`backend/tests/services/test_agent_fitness.py` covers bounded composite scoring, feedback handling, and empty-sample fail-closed behavior.
+- fails closed on incomplete forecast evidence;
+- requires a real tenant-scoped published AgentTemplate;
+- binds the proposal risk tier to the selected template;
+- caps requested additional concurrency;
+- requires independently attributable requester and sponsor;
+- creates the existing governed workforce proposal rather than provisioning or enabling an Agent directly.
 
-`backend/tests/services/test_agent_version_fitness.py` covers reuse of the bounded scoring contract, window bounds, and read-only contract semantics.
+Provisioning, access review, activation, concurrency, audit, and execution remain behind the existing workforce governance path. The optimizer never directly creates an AgentInstance, enables it, assigns WorkItems, or grants execution authority.
 
-`backend/tests/services/test_agent_promotion_evidence.py` covers nearest-prior comparison, missing-baseline comparability, window bounds, and absence of lifecycle commands.
+## Acceptance evidence
 
-`backend/tests/services/test_agent_promotion.py` covers independent attribution, missing evidence fail-closed behavior, and reuse of the governed evaluation/publish path.
+The Stage 9 service tests cover optimization routing/model selection, workload balancing and persisted evidence, telemetry-backed fitness, version fitness, promotion evidence, governed promotion, governed rollback, capacity forecasting, and governed scaling control-loop invariants.
 
-`backend/tests/services/test_agent_rollback.py` covers independent attribution, missing prior published version fail-closed behavior, deterministic prior-version selection, and reuse of the existing workforce replacement governance path.
+The governed scaling acceptance tests specifically cover independent sponsor attribution, incomplete-evidence fail-closed behavior, reuse of the existing workforce proposal path, and rejection when projected capacity is not overloaded.
 
-`backend/tests/services/test_capacity_forecasting.py` covers bounded windows, duration-based concurrency calculation, incomplete evidence handling, and read-only semantics.
+PR #528 was merged to `main` at commit `7275f6efbb4b3502b242586f506c93d8c431763e`. Its post-fix CI and security/architecture/runtime gates completed successfully before merge.
 
 ## Explicitly not claimed yet
 
-The following remain subsequent Stage 9 increments:
+The following remain subsequent Stage 9/release work:
 
-- autonomous scaling/rebalancing execution behind governance controls;
-- provider-specific model catalog/telemetry integration beyond the existing provider-call records;
-- production certification of any promoted code.
+- production certification of the promoted code through the release-grade certification workflow;
+- provider-specific model catalog/telemetry integration beyond the existing provider-call records.
 
-Human governance remains above optimization. Optimization recommendations cannot authorize an action that the Stage 8 policy kernel would deny.
+Human governance remains above optimization. Optimization recommendations and control loops cannot authorize an action that the Stage 8 policy kernel would deny.
 
 ## Exit direction
 
