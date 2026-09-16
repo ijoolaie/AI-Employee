@@ -2,9 +2,9 @@
 
 ## Current status
 
-**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, Agent version fitness, and promotion evidence implemented**
+**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, Agent version fitness, promotion evidence, and governed promotion implemented**
 
-Stage 9 builds on the governed execution substrate completed and evidenced in Stage 8. The implemented slices add deterministic optimization primitives without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
+Stage 9 builds on the governed execution substrate completed and evidenced in Stage 8. The implemented slices add deterministic optimization primitives and bounded lifecycle control without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
 
 ## Implemented slices
 
@@ -74,7 +74,18 @@ The version fitness slice is measurement only. It does not promote, demote, reti
 
 This increment is evidence-only. It does not publish, promote, demote, retire, assign, mutate, or authorize lifecycle changes. Comparability is deliberately explicit when there is no measured prior version.
 
-### 8. Acceptance evidence
+### 8. Governed promotion
+
+`backend/app/services/agent_promotion.py` adds the first bounded Stage 9 lifecycle control. A candidate can only be promoted when:
+
+- candidate-vs-prior-version evidence is available and comparable;
+- the candidate is in an eligible draft/evaluating lifecycle state;
+- the existing Stage 8 evaluation/policy evidence gate passes;
+- requester and approver are independently attributable.
+
+`POST /api/v1/agent-templates/{template_id}/promote` records the governed promotion through the existing audit service and reuses the existing `publish_template()` governance path rather than creating a parallel authorization mechanism. The optimization signal never grants authority by itself.
+
+### 9. Acceptance evidence
 
 `backend/tests/services/test_agent_optimization.py` covers capability/capacity/risk filtering, deterministic tie-breaking, model cost/risk bounds, contract metadata, and fail-closed behavior.
 
@@ -86,11 +97,12 @@ This increment is evidence-only. It does not publish, promote, demote, retire, a
 
 `backend/tests/services/test_agent_promotion_evidence.py` covers nearest-prior comparison, missing-baseline comparability, window bounds, and absence of lifecycle commands.
 
+`backend/tests/services/test_agent_promotion.py` covers independent attribution, missing evidence fail-closed behavior, and reuse of the governed evaluation/publish path.
+
 ## Explicitly not claimed yet
 
 The following remain subsequent Stage 9 increments:
 
-- governed promotion workflow;
 - governed rollback workflow;
 - workforce capacity forecasting;
 - autonomous scaling/rebalancing execution behind governance controls;
