@@ -2,11 +2,11 @@
 
 ## Current status
 
-**Status: ACTIVE — optimization foundation implemented**
+**Status: ACTIVE — optimization foundation and queue-aware balancing implemented**
 
-Stage 9 begins from the governed execution substrate completed and evidenced in Stage 8. This slice deliberately adds a deterministic optimization kernel rather than allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
+Stage 9 begins from the governed execution substrate completed and evidenced in Stage 8. The implemented slices add deterministic optimization primitives without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
 
-## Implemented in this slice
+## Implemented slices
 
 ### 1. Capability-aware routing
 
@@ -24,19 +24,29 @@ Tie-breaking is deterministic using fitness, remaining capacity, capability cove
 
 This is a recommendation boundary. It does not change provider configuration, budgets, Agent lifecycle, permissions, or approval policy.
 
-### 3. Fail-closed behavior
+### 3. Queue-aware workload balancing
 
-No eligible Agent returns no decision. If a model is required and no model satisfies the policy, optimization also returns no decision. Existing execution services remain the authority for authorization and side effects.
+`backend/app/services/workload_balancing.py` adds a deterministic recommendation layer that:
+
+- calculates normalized queue pressure from ready-item depth, available capacity, and oldest-ready age;
+- filters out Agents that are not accepting work or have no available slots;
+- selects a target deterministically using available slots, active load, and stable Agent instance ID;
+- fails closed when no eligible capacity exists;
+- emits an explicit recommendation-only contract and rationale.
+
+The recommendation consumes authoritative queue/load snapshots but does not mutate WorkItems or Agent state. Persistence and execution of rebalancing remain separate governance-controlled increments.
 
 ### 4. Acceptance evidence
 
 `backend/tests/services/test_agent_optimization.py` covers capability/capacity/risk filtering, deterministic tie-breaking, model cost/risk bounds, contract metadata, and fail-closed behavior.
 
+`backend/tests/services/test_workload_balancing.py` covers queue-pressure calculation, threshold suppression, deterministic capacity selection, disabled-Agent filtering, and fail-closed behavior.
+
 ## Explicitly not claimed yet
 
 The following remain subsequent Stage 9 increments:
 
-- persisted workload-balancing state and queue-aware rebalancing;
+- persisted workload-balancing state and queue assignment history;
 - production telemetry-backed fitness computation;
 - Agent version fitness, promotion, and rollback workflow;
 - workforce capacity forecasting;
