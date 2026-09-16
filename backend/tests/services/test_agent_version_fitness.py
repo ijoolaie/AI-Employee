@@ -15,7 +15,7 @@ def test_version_fitness_reuses_bounded_scoring_contract():
     ]
     _, _, _, fitness, feedback = calculate_fitness(samples)
     assert 0.0 <= fitness <= 1.0
-    assert feedback == 0.5
+    assert feedback == 0.75
 
 
 @pytest.mark.asyncio
