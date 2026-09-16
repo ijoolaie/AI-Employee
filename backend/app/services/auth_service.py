@@ -30,7 +30,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "team.execute", "team.evaluate", "marketplace.publish", "marketplace.read",
     "agent_template.create", "agent_template.read", "agent_template.evaluate", "agent_template.publish", "agent_template.install",
     "agent_instance.lifecycle", "agent.emergency_kill",
-    "agent_workforce.propose", "agent_workforce.read", "agent_workforce.board_review", "agent_workforce.ceo_approve", "agent_workforce.provision", "agent_workforce.activate",
+    "agent_workforce.propose", "agent_workforce.read", "agent_workforce.board_review", "agent_workforce.ceo_approve", "agent_workforce.provision", "agent_workforce.activate", "agent_workforce.replace",
 )
 
 
@@ -101,7 +101,7 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     await db.refresh(user)
     await billing_service.ensure_subscription(db, tenant_id=tenant.id)
     await audit_service.record(db, action="rbac.role_assigned", actor_type="user", actor_id=user.id, tenant_id=tenant.id, resource_type="role", resource_id=role.id, request_id=request_id_var.get(), metadata={"role": "Admin", "user_id": str(user.id)})
-    await audit_service.record(db, action="tenant.registered", actor_type="user", actor_id=user.id, tenant_id=tenant.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"tenant_slug": tenant.slug, "user_email": user.email})
+    await audit_service.record(db, action="tenant.registered", actor_type="user", tenant_id=tenant.id, actor_id=user.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"tenant_slug": tenant.slug, "user_email": user.email})
     return tenant, user
 
 

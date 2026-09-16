@@ -43,7 +43,7 @@ from app.models.agent_runtime_binding import AgentRuntimeBinding
 from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
-from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalStatus
+from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalKind, AgentWorkforceProposalStatus
 from app.models.agent_delegation import AgentDelegation
 from app.models.agent_kill_switch import AgentKillScope, AgentKillSwitch
 from app.models.test_definition import TestDefinition
@@ -67,7 +67,7 @@ __all__ = [
     "TenantEntitlement", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
     "AgentDefinition", "AgentTemplate", "AgentTemplateStatus", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding",
     "AgentEvaluation", "AgentEvaluationStatus", "AgentIdentity", "AgentAccessReview", "AgentAccessReviewDecision",
-    "AgentWorkforceProposal", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",
+    "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",
     "TestDefinition", "TestRun", "TestRunStatus", "TestRunArtifact", "TeamDefinition", "TeamVersion",
     "TeamInstallation", "TeamEvaluation", "MarketplacePublication",
 ]
