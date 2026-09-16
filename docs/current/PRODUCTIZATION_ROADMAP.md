@@ -1,18 +1,22 @@
 # AI Employee Platform — Productization & Delivery Roadmap
 
-## Roadmap truth — 2026-09-12
+## Roadmap truth — 2026-09-16
 
 Three axes remain independent:
 
 - **Release:** `v1.4.1` at exact SHA `f7f5062feb125c7ca50263f74a0e40bc4abfa591`, certified by Production Certification Run `34696339261`.
 - **Architecture:** `V1.5 Agentic Operating Model`.
-- **Engineering:** Stage 7 external production execution and Stage 8 governed Agent workforce engineering.
+- **Engineering:** Stage 7 external production execution and Stage 8 governed Agent workforce engineering/evidence.
 
-`v1.4.1` is engineering-certified/released. External production deployment and customer acceptance are still pending.
+`v1.4.1` is the latest published exact-SHA certified release. Current `main` has subsequent engineering commits and is not automatically certified as a new release.
 
 ## Current position
 
 Phase 11 Unified Execution is complete. Phase 12 Test Center is operationally hardened. Phase 13 Agent Teams & Marketplace is engineering complete. Phase 14.1–14.16 tracked engineering is complete/reconciled. PR #501 delivered the Self-Hosted edition and v1.4.1 release assets.
+
+Current `main` also contains the latest Stage 8 governance hardening: PR #514 (policy decision audit bridge), PR #516 (governed AgentInstance replacement workflow) and PR #517 (principal identity propagation through workflow child runs).
+
+Local backend validation on 2026-09-16: **775 passed**; focused Agent/Workflow selection: **229 passed, 546 deselected**.
 
 ## Stage 7 — External Production Certification & Customer Acceptance
 
@@ -45,11 +49,30 @@ Canonical baseline: `docs/current/PRODUCTION_SERVER_BASELINE.md`.
 
 ## Stage 8 — AI Company Operating Model Foundation
 
-**Class:** PRODUCT / ARCHITECTURE — **ENGINEERING ACTIVE / NOT A RELEASE**
+**Class:** PRODUCT / ARCHITECTURE — **ENGINEERING FOUNDATION IMPLEMENTED / ACCEPTANCE-EVIDENCE ACTIVE / NOT A RELEASE**
 
-The governed workforce foundation is implemented on mainline. The current focus is systematic execution-boundary enforcement and explicit acceptance of Agent capabilities.
+The governed workforce foundation is now substantially implemented on mainline. Recent hardening has closed several gaps that were still listed as open in earlier audit documents.
 
-### Stage 8 Agent capability execution phases
+### Confirmed implementation advances
+
+- **PR #514:** policy decisions are connected to the audit bridge with execution-trace metadata.
+- **PR #516:** AgentInstance replacement is a distinct governed workflow with lineage, permission, cutover preparation and predecessor retirement controls.
+- **PR #517:** workflow child runs preserve the parent AgentInstance principal identity evidence.
+- Repository validation on 2026-09-16: **775 passed**.
+
+### Remaining Stage 8 acceptance/evidence work
+
+Stage 8 is not yet declared fully complete/certified because the blueprint requires implementation, automated validation, operational evidence and documentation traceability together.
+
+1. Complete principal identity evidence across every protected agent action.
+2. Complete tool allow-list, side-effect and high-risk approval-binding evidence.
+3. Complete agent-to-agent trust end-to-end acceptance and audit evidence.
+4. Complete risk-tier and evaluation/publication gate evidence.
+5. Complete usage attribution, hard budget-stop and runaway-execution evidence where gaps remain.
+6. Reconcile all exit criteria to exact implementation/test commit SHAs.
+7. Run fresh exact-SHA certification before promoting Agent capability code into a release.
+
+### Agent capability execution phases
 
 #### Agent-1 — Tool Calling Contract
 
@@ -96,7 +119,19 @@ Any code change in the Agent capability workstream that is promoted into a relea
 
 ## Stage 9 — Autonomous Workforce Optimization
 
-Future controlled workload balancing, capability routing, model selection by task/risk/cost, agent evaluation, version fitness/rollback and workforce capacity planning. Human governance remains above autonomous optimization.
+Stage 9 should build optimization above the now-governed execution substrate, not repeat Stage 8 foundation work.
+
+Future controlled capabilities include:
+
+- capability-aware workload routing;
+- model selection by task, risk and cost;
+- agent evaluation and measurable fitness signals;
+- version fitness, promotion and rollback;
+- predictive workforce capacity planning;
+- governed autonomous scaling and workload rebalancing;
+- optimization feedback loops with human governance above the optimizer.
+
+**Stage 9 entry rule:** derive implementation scope from the final Stage 8 exit audit and actual optimizer gaps. Do not treat already-implemented lifecycle, identity, replacement, tool-policy or bounded-execution primitives as missing work.
 
 ## Stage 10 — AI Company Operating System
 
@@ -120,5 +155,7 @@ Certification never transfers automatically across SHAs.
 - `docs/current/PRODUCTION_SERVER_BASELINE.md`
 - `docs/current/PRODUCTION_EVIDENCE_INDEX.md`
 - `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
+- `docs/current/STAGE_8_IMPLEMENTATION_STATUS.md`
+- `docs/engineering/STAGE_8_GOVERNANCE_AUDIT_CHECKLIST.md`
 - `docs/blueprint/STAGE_8_ENGINEERING_EXECUTION_PLAN.md`
 - `docs/releases/RELEASE_TRUTH_LEDGER.md`
