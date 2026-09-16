@@ -14,6 +14,12 @@ class FakeResult:
     def scalar_one_or_none(self):
         return self.value
 
+    def scalars(self):
+        return self
+
+    def first(self):
+        return self.value
+
 
 class FakeDb:
     def __init__(self, identity):
