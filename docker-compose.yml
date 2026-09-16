@@ -12,6 +12,7 @@ x-worker-common: &worker-common
     DEBUG: "false"
     SECRET_KEY: "e2e-only-change-me"
     CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
+    RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-120}
     AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-deterministic}
     LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
     AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
@@ -33,7 +34,6 @@ x-worker-common: &worker-common
       condition: service_healthy
 
 services:
-  # Initialize the shared storage volume before any non-root app service starts.
   storage-init:
     image: alpine:3.20
     user: "0:0"
@@ -81,6 +81,7 @@ services:
       DEBUG: "false"
       SECRET_KEY: "e2e-only-change-me"
       CORS_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000","http://172.18.0.1:3000","http://host.docker.internal:3000"]'
+      RATE_LIMIT_REQUESTS: ${RATE_LIMIT_REQUESTS:-120}
       AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-deterministic}
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
       AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
@@ -114,17 +115,14 @@ services:
       retries: 20
       start_period: 10s
 
-  # Execution workers never consume maintenance, outbox, email, or unrouted work.
   worker:
     <<: *worker-common
     command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info", "--concurrency=2", "--queues=execution"]
 
-  # Test execution is isolated because test runs can be long-lived and resource-heavy.
   worker-test-center:
     <<: *worker-common
     command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info", "--concurrency=2", "--queues=test_center"]
 
-  # Scheduling, expiry, timeout, and event dispatch are control-plane work only.
   worker-control:
     <<: *worker-common
     command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=info", "--concurrency=2", "--queues=control"]
