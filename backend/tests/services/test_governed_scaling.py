@@ -12,6 +12,14 @@ def _published_template():
     return SimpleNamespace(status=SimpleNamespace(value="published"), risk_tier=0)
 
 
+def _db_for_template():
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(
+        scalar_one_or_none=lambda: _published_template()
+    )
+    return db
+
+
 @pytest.mark.asyncio
 async def test_scaling_proposal_requires_independent_sponsor():
     with pytest.raises(ValidationAppError, match="independently attributable"):
@@ -35,8 +43,7 @@ async def test_scaling_proposal_fails_closed_without_complete_evidence(monkeypat
         projected_backlog=2,
     )
     monkeypatch.setattr(governed_scaling, "capacity_forecast", AsyncMock(return_value=forecast))
-    db = AsyncMock()
-    db.execute.return_value.scalar_one_or_none.return_value = _published_template()
+    db = _db_for_template()
 
     with pytest.raises(ValidationAppError, match="complete capacity evidence"):
         await governed_scaling.create_scaling_proposal(
@@ -62,8 +69,7 @@ async def test_scaling_proposal_creates_existing_governed_workforce_proposal(mon
     monkeypatch.setattr(governed_scaling, "capacity_forecast", AsyncMock(return_value=forecast))
     monkeypatch.setattr(governed_scaling, "create_proposal", create)
 
-    db = AsyncMock()
-    db.execute.return_value.scalar_one_or_none.return_value = _published_template()
+    db = _db_for_template()
     proposal, returned_forecast = await governed_scaling.create_scaling_proposal(
         db,
         tenant_id=uuid.uuid4(),
@@ -94,8 +100,7 @@ async def test_scaling_proposal_rejects_non_overloaded_capacity(monkeypatch):
         projected_backlog=0,
     )
     monkeypatch.setattr(governed_scaling, "capacity_forecast", AsyncMock(return_value=forecast))
-    db = AsyncMock()
-    db.execute.return_value.scalar_one_or_none.return_value = _published_template()
+    db = _db_for_template()
 
     with pytest.raises(ValidationAppError, match="scaling need"):
         await governed_scaling.create_scaling_proposal(
