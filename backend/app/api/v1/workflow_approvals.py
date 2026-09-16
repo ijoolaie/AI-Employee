@@ -54,7 +54,10 @@ async def decide_workflow_approval(approval_id: UUID, payload: WorkflowApprovalD
         run.status = "failed"
         run.error = step.error
     else:
-        transition_step(step, "waiting")
+        # The workflow executor owns the waiting -> success transition after
+        # it observes the durable approved decision. Re-applying "waiting"
+        # here is an invalid self-transition and prevents the decision from
+        # being committed/resumed on the real stack.
         run.status = "pending"
     await audit_service.record(db, action="workflow.approval.decided", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="workflow_approval", resource_id=approval.id, request_id=None, metadata={"workflow_run_id":str(run.id),"step_key":approval.step_key,"decision":approval.status})
     if approval.status == "approved":
