@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, and Agent version fitness implemented**
+**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, Agent version fitness, and promotion evidence implemented**
 
 Stage 9 builds on the governed execution substrate completed and evidenced in Stage 8. The implemented slices add deterministic optimization primitives without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
 
@@ -66,7 +66,15 @@ The signal contains:
 
 The version fitness slice is measurement only. It does not promote, demote, retire, mutate, assign, or change any AgentTemplate/AgentInstance state, and it does not bypass policy, approval, budget, identity, or lifecycle controls.
 
-### 7. Acceptance evidence
+### 7. Promotion evidence
+
+`backend/app/services/agent_promotion_evidence.py` builds a neutral candidate-vs-nearest-prior-version comparison using the same tenant-scoped fitness contract. Evidence includes candidate/baseline identity, sample counts, fitness values, fitness delta, comparability, evidence window, and contract version.
+
+`GET /api/v1/admin/agent-promotion-evidence` exposes the evidence behind the existing platform-admin governance boundary.
+
+This increment is evidence-only. It does not publish, promote, demote, retire, assign, mutate, or authorize lifecycle changes. Comparability is deliberately explicit when there is no measured prior version.
+
+### 8. Acceptance evidence
 
 `backend/tests/services/test_agent_optimization.py` covers capability/capacity/risk filtering, deterministic tie-breaking, model cost/risk bounds, contract metadata, and fail-closed behavior.
 
@@ -76,11 +84,13 @@ The version fitness slice is measurement only. It does not promote, demote, reti
 
 `backend/tests/services/test_agent_version_fitness.py` covers reuse of the bounded scoring contract, window bounds, and read-only contract semantics.
 
+`backend/tests/services/test_agent_promotion_evidence.py` covers nearest-prior comparison, missing-baseline comparability, window bounds, and absence of lifecycle commands.
+
 ## Explicitly not claimed yet
 
 The following remain subsequent Stage 9 increments:
 
-- promotion evidence and governed promotion workflow;
+- governed promotion workflow;
 - governed rollback workflow;
 - workforce capacity forecasting;
 - autonomous scaling/rebalancing execution behind governance controls;
