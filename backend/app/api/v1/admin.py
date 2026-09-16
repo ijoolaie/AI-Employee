@@ -1,10 +1,13 @@
 from typing import Annotated
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.deps import DbSession, TenantContext, get_current_context
 from app.schemas.admin import AdminDashboardResponse, AdminTenantListResponse, AdminOptimizationResponse
+from app.schemas.agent_fitness import AgentFitnessResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
-from app.services import admin_service, feedback_service, billing_service, optimization_service
+from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -48,3 +51,20 @@ async def get_optimization_summary(ctx: PlatformAdminContext, db: DbSession):
     """Return measured monthly unit economics and budget/optimization signals."""
     data = await optimization_service.tenant_optimization_summary(db, tenant_id=ctx.tenant.id)
     return APIResponse(success=True, data=AdminOptimizationResponse.model_validate(data))
+
+
+@router.get("/agent-fitness", response_model=APIResponse[list[AgentFitnessResponse]])
+async def get_agent_fitness(
+    ctx: PlatformAdminContext,
+    db: DbSession,
+    agent_instance_id: UUID | None = Query(default=None),
+    window_days: int = Query(default=30, ge=1, le=90),
+):
+    """Return read-only telemetry-backed Agent fitness for the tenant."""
+    data = await agent_fitness.agent_fitness_summary(
+        db,
+        tenant_id=ctx.tenant.id,
+        agent_instance_id=agent_instance_id,
+        window_days=window_days,
+    )
+    return APIResponse(success=True, data=[AgentFitnessResponse.model_validate(item) for item in data])
