@@ -4,6 +4,7 @@ import uuid
 
 import pytest
 
+from app.core.exceptions import ConflictError, ValidationAppError
 from app.models.agent_template import AgentTemplateStatus
 from app.services.agent_promotion import promote_agent_template
 
@@ -13,7 +14,7 @@ async def test_promotion_requires_independent_requester_and_approver():
     db = AsyncMock()
     user_id = uuid.uuid4()
 
-    with pytest.raises(ValueError, match="independent"):
+    with pytest.raises(ValidationAppError, match="independent"):
         await promote_agent_template(
             db,
             tenant_id=uuid.uuid4(),
@@ -31,7 +32,7 @@ async def test_promotion_requires_comparable_evidence(monkeypatch):
     db = AsyncMock()
     monkeypatch.setattr(service, "agent_promotion_evidence_summary", AsyncMock(return_value=[]))
 
-    with pytest.raises(Exception, match="evidence is unavailable"):
+    with pytest.raises(ConflictError, match="evidence is unavailable"):
         await promote_agent_template(
             db,
             tenant_id=uuid.uuid4(),
