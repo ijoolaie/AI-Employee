@@ -12,6 +12,7 @@ from app.core.database import get_db
 from app.core.deps import TenantContext, require_permission
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalKind, AgentWorkforceProposalStatus
 from app.services import agent_workforce_replacement_service as replacement_service
+from app.services.agent_rollback import create_rollback_proposal
 
 router = APIRouter(prefix="/agent-workforce/replacements", tags=["agent-workforce-replacements"])
 
@@ -24,6 +25,15 @@ class ReplacementProposalCreate(BaseModel):
     requested_name: str = Field(min_length=1, max_length=255)
     sponsor_user_id: UUID
     risk_tier: int = Field(ge=0, le=4)
+    configuration: dict = Field(default_factory=dict)
+
+
+class RollbackProposalCreate(BaseModel):
+    agent_instance_id: UUID
+    title: str = Field(min_length=1, max_length=255)
+    rationale: str = Field(min_length=1, max_length=8000)
+    requested_name: str = Field(min_length=1, max_length=255)
+    sponsor_user_id: UUID
     configuration: dict = Field(default_factory=dict)
 
 
@@ -76,6 +86,32 @@ async def create_replacement(
             rationale=payload.rationale,
             requested_name=payload.requested_name,
             risk_tier=payload.risk_tier,
+            configuration=payload.configuration,
+        )
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        raise _http(exc) from exc
+    return _read(item)
+
+
+@router.post("/rollback", response_model=ReplacementProposalRead, status_code=status.HTTP_201_CREATED)
+async def create_rollback(
+    payload: RollbackProposalCreate,
+    ctx: TenantContext = Depends(require_permission("agent_workforce.replace")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a governed rollback proposal without changing execution state."""
+    try:
+        item = await create_rollback_proposal(
+            db,
+            tenant_id=ctx.tenant_id,
+            requester_user_id=ctx.user_id,
+            sponsor_user_id=payload.sponsor_user_id,
+            agent_instance_id=payload.agent_instance_id,
+            title=payload.title,
+            rationale=payload.rationale,
+            requested_name=payload.requested_name,
             configuration=payload.configuration,
         )
         await db.commit()
