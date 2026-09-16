@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, Agent version fitness, promotion evidence, governed promotion, and governed rollback planning implemented**
+**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, Agent version fitness, promotion evidence, governed promotion, governed rollback planning, and capacity forecasting implemented**
 
 Stage 9 builds on the governed execution substrate completed and evidenced in Stage 8. The implemented slices add deterministic optimization primitives and bounded lifecycle control without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
 
@@ -93,7 +93,15 @@ This increment is evidence-only. It does not publish, promote, demote, retire, a
 
 This preserves the Stage 8 governance hierarchy: rollback intent is explicit, target selection is deterministic, and execution remains behind the established workforce replacement controls.
 
-### 10. Acceptance evidence
+### 10. Workforce capacity forecasting
+
+`backend/app/services/capacity_forecasting.py` provides a read-only forecast over a bounded historical window and future horizon. It combines tenant-scoped WorkItem arrival volume, completed Agent Run duration telemetry, current READY/active workload, and enabled Agent max-concurrency capacity.
+
+`GET /api/v1/admin/capacity-forecast` exposes projected arrivals, required concurrency, utilization, projected backlog, descriptive sensitivity bounds, evidence completeness, and the forecast contract version.
+
+The forecast is deliberately evidence-only. Missing service-time telemetry is not imputed as zero, and forecast pressure never changes `max_concurrency`, enables/disables Agents, provisions workforce, assigns WorkItems, or triggers scaling. Any future scaling action must remain a separate governed control-loop increment.
+
+### 11. Acceptance evidence
 
 `backend/tests/services/test_agent_optimization.py` covers capability/capacity/risk filtering, deterministic tie-breaking, model cost/risk bounds, contract metadata, and fail-closed behavior.
 
@@ -109,11 +117,12 @@ This preserves the Stage 8 governance hierarchy: rollback intent is explicit, ta
 
 `backend/tests/services/test_agent_rollback.py` covers independent attribution, missing prior published version fail-closed behavior, deterministic prior-version selection, and reuse of the existing workforce replacement governance path.
 
+`backend/tests/services/test_capacity_forecasting.py` covers bounded windows, duration-based concurrency calculation, incomplete evidence handling, and read-only semantics.
+
 ## Explicitly not claimed yet
 
 The following remain subsequent Stage 9 increments:
 
-- workforce capacity forecasting;
 - autonomous scaling/rebalancing execution behind governance controls;
 - provider-specific model catalog/telemetry integration beyond the existing provider-call records;
 - production certification of any promoted code.
