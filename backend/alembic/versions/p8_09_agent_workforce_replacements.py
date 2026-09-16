@@ -1,0 +1,68 @@
+"""Add governed AgentInstance replacement lineage to workforce proposals.
+
+Revision ID: p8_09_agent_workforce_replacement
+Revises: p0eimmutableaudit
+"""
+from alembic import op
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+
+revision = "p8_09_agent_workforce_replacement"
+down_revision = "p0eimmutableaudit"
+branch_labels = None
+depends_on = None
+
+
+def upgrade() -> None:
+    proposal_kind = postgresql.ENUM(
+        "staffing",
+        "replacement",
+        name="agentworkforceproposalkind",
+        create_type=False,
+    )
+    proposal_kind.create(op.get_bind(), checkfirst=True)
+
+    op.add_column(
+        "agent_workforce_proposals",
+        sa.Column(
+            "kind",
+            proposal_kind,
+            nullable=False,
+            server_default="staffing",
+        ),
+    )
+    op.add_column(
+        "agent_workforce_proposals",
+        sa.Column(
+            "replacement_for_agent_instance_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("agent_instances.id", ondelete="RESTRICT"),
+            nullable=True,
+        ),
+    )
+    op.add_column(
+        "agent_workforce_proposals",
+        sa.Column("replacement_cutover_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.add_column(
+        "agent_workforce_proposals",
+        sa.Column("replacement_retired_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.create_index(
+        "ix_agent_workforce_proposals_tenant_replacement",
+        "agent_workforce_proposals",
+        ["tenant_id", "replacement_for_agent_instance_id"],
+    )
+    op.alter_column("agent_workforce_proposals", "kind", server_default=None)
+
+
+def downgrade() -> None:
+    op.drop_index(
+        "ix_agent_workforce_proposals_tenant_replacement",
+        table_name="agent_workforce_proposals",
+    )
+    op.drop_column("agent_workforce_proposals", "replacement_retired_at")
+    op.drop_column("agent_workforce_proposals", "replacement_cutover_at")
+    op.drop_column("agent_workforce_proposals", "replacement_for_agent_instance_id")
+    op.drop_column("agent_workforce_proposals", "kind")
+    sa.Enum(name="agentworkforceproposalkind").drop(op.get_bind(), checkfirst=True)
