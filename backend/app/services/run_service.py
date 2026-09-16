@@ -133,7 +133,11 @@ async def create_run(
         resource_type="run",
         resource_id=run.id,
         request_id=request_id_var.get(),
-        metadata={"employee_id": str(employee.id), "employee_version": version.version_number},
+        metadata={
+            "employee_id": str(employee.id),
+            "employee_version": version.version_number,
+            "agent_instance_id": str(agent_instance_id) if agent_instance_id else None,
+        },
     )
     return run
 
