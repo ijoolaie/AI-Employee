@@ -101,7 +101,7 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     await db.refresh(user)
     await billing_service.ensure_subscription(db, tenant_id=tenant.id)
     await audit_service.record(db, action="rbac.role_assigned", actor_type="user", actor_id=user.id, tenant_id=tenant.id, resource_type="role", resource_id=role.id, request_id=request_id_var.get(), metadata={"role": "Admin", "user_id": str(user.id)})
-    await audit_service.record(db, action="tenant.registered", actor_type="user", actor_id=user.id, tenant_id=tenant.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"tenant_slug": tenant.slug, "user_email": user.email})
+    await audit_service.record(db, action="tenant.registered", actor_type="user", tenant_id=tenant.id, actor_id=user.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"tenant_slug": tenant.slug, "user_email": user.email})
     return tenant, user
 
 
@@ -118,14 +118,55 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
     if not verify_password(payload.password, user.password_hash):
         await audit_service.record(db, action="auth.login", actor_type="user", tenant_id=tenant.id, actor_id=user.id, status="failure", request_id=request_id_var.get(), metadata={"reason": "bad_password"})
         raise UnauthorizedError("Invalid credentials")
+    user.last_login_at = datetime.now(timezone.utc)
+    await db.flush()
+    await audit_service.record(db, action="auth.login", actor_type="user", tenant_id=tenant.id, actor_id=user.id, status="success", request_id=request_id_var.get())
     return user
 
 
-async def issue_tokens(db: AsyncSession, user: User) -> TokenResponse:
-    access = create_access_token(str(user.id), str(user.tenant_id))
-    refresh = create_refresh_token(str(user.id), str(user.tenant_id))
-    return TokenResponse(access_token=access, refresh_token=refresh, token_type="bearer")
+async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenResponse:
+    """Validate a refresh JWT against its current user and tenant state."""
+    try:
+        payload = decode_token(refresh_token)
+    except jwt.PyJWTError as exc:
+        raise UnauthorizedError("Invalid refresh token") from exc
+
+    if payload.get("type") != "refresh":
+        raise UnauthorizedError("Invalid refresh token")
+
+    try:
+        user_id = UUID(str(payload["sub"]))
+        tenant_id = UUID(str(payload["tenant_id"]))
+        token_version = int(payload["auth_token_version"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise UnauthorizedError("Invalid refresh token") from exc
+
+    result = await db.execute(
+        select(User).join(Tenant, Tenant.id == User.tenant_id).where(
+            User.id == user_id,
+            User.tenant_id == tenant_id,
+            User.is_active.is_(True),
+            Tenant.status == "active",
+        )
+    )
+    user = result.scalar_one_or_none()
+    if user is None or user.auth_token_version != token_version:
+        raise UnauthorizedError("Invalid refresh token")
+
+    return issue_tokens(user)
 
 
-def decode_access_token(token: str) -> dict:
-    return decode_token(token)
+def issue_tokens(user: User) -> TokenResponse:
+    return TokenResponse(
+        access_token=create_access_token(
+            subject=user.id,
+            tenant_id=user.tenant_id,
+            extra_claims={"auth_token_version": user.auth_token_version},
+        ),
+        refresh_token=create_refresh_token(
+            subject=user.id,
+            tenant_id=user.tenant_id,
+            auth_token_version=user.auth_token_version,
+        ),
+        token_type="bearer",
+    )
