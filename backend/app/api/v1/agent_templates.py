@@ -13,6 +13,7 @@ from app.core.database import get_db
 from app.core.deps import TenantContext, require_permission
 from app.models.agent_instance import AgentInstanceStatus
 from app.models.agent_template import AgentTemplate
+from app.services.agent_promotion import promote_agent_template
 from app.services.agent_template_service import (
     create_template,
     provision_instance,
@@ -63,6 +64,10 @@ class AgentTemplateProvisionRequest(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     sponsor_user_id: UUID
     configuration: dict = Field(default_factory=dict)
+
+
+class AgentTemplatePromotionRequest(BaseModel):
+    requested_by_user_id: UUID
 
 
 class AgentInstanceLifecycleRequest(BaseModel):
@@ -169,6 +174,44 @@ async def publish_agent_template(
     try:
         item = await publish_template(db, tenant_id=ctx.tenant_id, template_id=template_id, approved_by_user_id=ctx.user_id)
         await record(db, action="agent_template.published", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="agent_template", resource_id=item.id, metadata={"version": item.version, "risk_tier": item.risk_tier, "approval_required": True})
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        raise _http_error(exc) from exc
+    return _template(item)
+
+
+@router.post("/{template_id}/promote", response_model=AgentTemplateRead)
+async def promote_agent_template_endpoint(
+    template_id: UUID,
+    payload: AgentTemplatePromotionRequest,
+    ctx: TenantContext = Depends(require_permission("agent_template.publish")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Promote a measured candidate only through explicit independent approval."""
+    try:
+        item = await promote_agent_template(
+            db,
+            tenant_id=ctx.tenant_id,
+            template_id=template_id,
+            requested_by_user_id=payload.requested_by_user_id,
+            approved_by_user_id=ctx.user_id,
+        )
+        await record(
+            db,
+            action="agent_template.promoted",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="agent_template",
+            resource_id=item.id,
+            metadata={
+                "version": item.version,
+                "risk_tier": item.risk_tier,
+                "requested_by_user_id": str(payload.requested_by_user_id),
+                "approval_required": True,
+                "evidence_required": True,
+            },
+        )
         await db.commit()
     except Exception as exc:
         await db.rollback()
