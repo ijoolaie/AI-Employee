@@ -134,10 +134,13 @@ async def capacity_forecast(
     projected_arrivals = demand_per_day * horizon_days
     required_concurrency = demand_per_day * average_duration / 86400.0
     utilization = required_concurrency / total_capacity if total_capacity else 0.0
-    projected_backlog = max(0.0, ready_count + projected_arrivals - max(total_capacity, 0) * horizon_days)
+    if average_duration > 0:
+        projected_service_capacity = total_capacity * horizon_days * 86400.0 / average_duration
+    else:
+        projected_service_capacity = 0.0
+    projected_backlog = max(0.0, ready_count + projected_arrivals - projected_service_capacity)
 
-    # Bounds are deliberately descriptive rather than confidence intervals: the
-    # observed daily arrival rate is represented by a conservative min/max band.
+    # These are descriptive sensitivity bounds, not statistical confidence intervals.
     lower_arrivals = max(0.0, demand_per_day * 0.5)
     upper_arrivals = demand_per_day * 1.5
     lower_required = lower_arrivals * average_duration / 86400.0
