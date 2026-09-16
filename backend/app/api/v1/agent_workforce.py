@@ -36,7 +36,7 @@ class GovernedScalingCreate(BaseModel):
     requested_name_prefix: str = Field(min_length=1, max_length=200)
     window_days: int = Field(default=30, ge=1, le=90)
     horizon_days: int = Field(default=7, ge=1, le=30)
-    max_additional_instances: int = Field(default=1, ge=1, le=4)
+    max_additional_concurrency: int = Field(default=1, ge=1, le=4)
 
 
 class WorkforceDecision(BaseModel):
@@ -130,7 +130,7 @@ async def create_governed_scaling_proposal(
             requested_name_prefix=payload.requested_name_prefix,
             window_days=payload.window_days,
             horizon_days=payload.horizon_days,
-            max_additional_instances=payload.max_additional_instances,
+            max_additional_concurrency=payload.max_additional_concurrency,
         )
         await db.commit()
     except Exception as exc:
