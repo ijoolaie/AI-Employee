@@ -5,10 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.deps import DbSession, TenantContext, get_current_context
 from app.schemas.admin import AdminDashboardResponse, AdminTenantListResponse, AdminOptimizationResponse
 from app.schemas.agent_fitness import AgentFitnessResponse
+from app.schemas.agent_version_fitness import AgentVersionFitnessResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
 from app.schemas.workload_balance import WorkloadBalanceEventResponse
-from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, workload_balance_history
+from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_version_fitness, workload_balance_history
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -69,6 +70,23 @@ async def get_agent_fitness(
         window_days=window_days,
     )
     return APIResponse(success=True, data=[AgentFitnessResponse.model_validate(item) for item in data])
+
+
+@router.get("/agent-version-fitness", response_model=APIResponse[list[AgentVersionFitnessResponse]])
+async def get_agent_version_fitness(
+    ctx: PlatformAdminContext,
+    db: DbSession,
+    agent_template_id: UUID | None = Query(default=None),
+    window_days: int = Query(default=30, ge=1, le=90),
+):
+    """Return read-only fitness aggregated by tenant-scoped AgentTemplate version."""
+    data = await agent_version_fitness.agent_version_fitness_summary(
+        db,
+        tenant_id=ctx.tenant.id,
+        agent_template_id=agent_template_id,
+        window_days=window_days,
+    )
+    return APIResponse(success=True, data=[AgentVersionFitnessResponse.model_validate(item) for item in data])
 
 
 @router.get("/workload-balance/history", response_model=APIResponse[list[WorkloadBalanceEventResponse]])

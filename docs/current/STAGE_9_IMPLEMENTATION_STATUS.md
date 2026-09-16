@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, and telemetry-backed fitness implemented**
+**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, and Agent version fitness implemented**
 
 Stage 9 builds on the governed execution substrate completed and evidenced in Stage 8. The implemented slices add deterministic optimization primitives without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
 
@@ -58,7 +58,15 @@ The signal contains:
 
 `GET /api/v1/admin/agent-fitness` exposes the read-only signal to the existing platform-admin boundary. The service does not mutate Agent, Run, budget, approval, policy, or lifecycle state. Missing feedback is treated as missing evidence rather than a zero rating.
 
-### 6. Acceptance evidence
+### 6. Agent version fitness
+
+`backend/app/services/agent_version_fitness.py` aggregates the same bounded telemetry scoring contract by tenant-scoped `AgentTemplate` version through the existing `AgentInstance -> AgentTemplate` binding.
+
+`GET /api/v1/admin/agent-version-fitness` exposes the read-only version-level signal, including template identity/version, participating instance count, sample count, component scores, composite fitness, time window, and contract version.
+
+The version fitness slice is measurement only. It does not promote, demote, retire, mutate, assign, or change any AgentTemplate/AgentInstance state, and it does not bypass policy, approval, budget, identity, or lifecycle controls.
+
+### 7. Acceptance evidence
 
 `backend/tests/services/test_agent_optimization.py` covers capability/capacity/risk filtering, deterministic tie-breaking, model cost/risk bounds, contract metadata, and fail-closed behavior.
 
@@ -66,11 +74,14 @@ The signal contains:
 
 `backend/tests/services/test_agent_fitness.py` covers bounded composite scoring, feedback handling, and empty-sample fail-closed behavior.
 
+`backend/tests/services/test_agent_version_fitness.py` covers reuse of the bounded scoring contract, window bounds, and read-only contract semantics.
+
 ## Explicitly not claimed yet
 
 The following remain subsequent Stage 9 increments:
 
-- Agent version fitness, promotion, and rollback workflow;
+- promotion evidence and governed promotion workflow;
+- governed rollback workflow;
 - workforce capacity forecasting;
 - autonomous scaling/rebalancing execution behind governance controls;
 - provider-specific model catalog/telemetry integration beyond the existing provider-call records;
