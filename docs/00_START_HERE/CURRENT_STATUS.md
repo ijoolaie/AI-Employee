@@ -5,7 +5,7 @@
 **Release commit:** `dba0bb672deb1236b6724bb8851526e656f47967`
 **Exact-SHA Production Certification:** Run `35108008066` — PASS
 **Certification job:** `104834133092` — PASS
-**Current implementation mainline:** documentation reconciliation after certified `v1.4.2` SHA
+**Current implementation mainline:** documentation/engineering reconciliation after certified `v1.4.2` SHA
 **Current status:** STAGE 9 RELEASE-CERTIFIED / COMMERCIAL READINESS & EXTERNAL PRODUCTION GATES PENDING
 
 ## Executive truth
@@ -55,11 +55,11 @@ Completed slices are documented in `docs/current/STAGE_9_IMPLEMENTATION_STATUS.m
 
 The architecture remains governed: optimization recommendations and control loops cannot bypass identity, policy, approval, budget, lifecycle, concurrency, audit or execution controls.
 
-## Stage 8 position
+## Governance hardening reconciliation
 
-Stage 8 governed workforce foundations are the substrate on which Stage 9 operates. Earlier Stage 8 audit records should not be read as saying that PRs #514, #516 and #517 are absent; those implementation advances are part of the current certified lineage.
+The policy decision evidence trail tracked by #513 is now engineering-complete. PR #531 was merged as `5e0f27063a8945a752414bd161e5873f189e1288` after successful PR CI and repository security/governance validation. The change isolates audit-bridge failures from authorization outcomes and covers ALLOW, DENY and REQUIRE_APPROVAL regression paths.
 
-Remaining Stage 8 work, where applicable, is acceptance/evidence reconciliation rather than reimplementation of already-merged primitives.
+This merged mainline change is **not automatically part of the already-published `v1.4.2` release** because certification is exact-SHA bound. If the fix is required for an external deployment, select and certify a release identity that actually contains it rather than transferring evidence across SHAs.
 
 ## Commercial Readiness & External Production
 
@@ -72,12 +72,13 @@ The project has now moved from **engineering completion** into a dedicated **Com
 - workflow, billing, WorkItem and core business flows covered by certification;
 - Stage 9 governed optimization slices;
 - exact-SHA production-like certification;
-- immutable release identity and release artifacts.
+- immutable release identity and release artifacts;
+- policy-audit failure isolation on the current post-v1.4.2 mainline.
 
 ### What is still required before unrestricted commercial go-live
 
 - real production target provisioned and documented;
-- exact certified release deployed to that target;
+- exact accepted release deployed to that target;
 - production TLS/networking/egress/firewall verification;
 - production secret-manager lifecycle and credential rotation;
 - live provider validation with production-safe credentials;
@@ -126,12 +127,17 @@ Certification never transfers automatically across SHAs.
 
 ## Immediate next phase
 
-1. Build the Commercial Readiness audit and blocker register.
-2. Resolve all 🔴 blockers and 🟠 launch requirements.
-3. Provision and harden the production-like target.
-4. Deploy the exact certified release and capture immutable deployment evidence.
-5. Execute security, provider, observability, backup/restore, DR and failure-recovery validation.
-6. Complete external acceptance evidence.
-7. Reconcile the evidence ledger and explicitly authorize or defer commercial go-live.
+1. Freeze the external-deployment release identity; do not silently substitute post-release `main` commits.
+2. Provision and harden the real/approved production target.
+3. Create a target-specific secrets and provider inventory without storing secrets in GitHub/docs/chat.
+4. Deploy the exact accepted SHA and capture deployment/image/migration identity.
+5. Establish SLI/SLO/error-budget measurement and alert routing.
+6. Execute backup/restore and measured RPO/RTO validation.
+7. Validate live providers and billing/integration webhooks where applicable.
+8. Execute Vendor → Reseller → Client runtime isolation/RBAC acceptance.
+9. Run authenticated DAST, independent security review and controlled HA/failure-recovery rehearsal.
+10. Execute incident-response/on-call and rollback drills.
+11. Complete ordered external acceptance and reconcile all exceptions.
+12. Run the final commercial go-live gate.
 
 Broad feature expansion is not the default next step. New feature work should only be opened when the readiness audit identifies a real launch-blocking product requirement.
