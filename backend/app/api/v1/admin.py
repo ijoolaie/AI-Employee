@@ -1,4 +1,6 @@
 from typing import Annotated
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.deps import DbSession, TenantContext, get_current_context
 from app.schemas.admin import AdminDashboardResponse, AdminTenantListResponse, AdminOptimizationResponse
@@ -55,17 +57,14 @@ async def get_optimization_summary(ctx: PlatformAdminContext, db: DbSession):
 async def get_agent_fitness(
     ctx: PlatformAdminContext,
     db: DbSession,
-    agent_instance_id: str | None = Query(default=None),
+    agent_instance_id: UUID | None = Query(default=None),
     window_days: int = Query(default=30, ge=1, le=90),
 ):
     """Return read-only telemetry-backed Agent fitness for the tenant."""
-    from uuid import UUID
-
-    parsed_agent_id = UUID(agent_instance_id) if agent_instance_id else None
     data = await agent_fitness.agent_fitness_summary(
         db,
         tenant_id=ctx.tenant.id,
-        agent_instance_id=parsed_agent_id,
+        agent_instance_id=agent_instance_id,
         window_days=window_days,
     )
     return APIResponse(success=True, data=[AgentFitnessResponse.model_validate(item) for item in data])
