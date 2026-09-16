@@ -38,6 +38,11 @@ jobs:
       SECRET_KEY: ci-certification-secret
       APP_ENV: test
       CI: true
+      # The certification suite intentionally runs many isolated E2E gates from
+      # one runner IP. Keep rate limiting enabled, but give the certification
+      # harness its own sufficiently large request budget so independent gates
+      # cannot consume one another's shared IP bucket.
+      RATE_LIMIT_REQUESTS: 1000
     steps:
       - name: Checkout exact certification SHA
         uses: actions/checkout@v7
