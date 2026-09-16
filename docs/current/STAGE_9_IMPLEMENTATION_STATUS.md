@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, Agent version fitness, promotion evidence, and governed promotion implemented**
+**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, telemetry-backed fitness, Agent version fitness, promotion evidence, governed promotion, and governed rollback planning implemented**
 
 Stage 9 builds on the governed execution substrate completed and evidenced in Stage 8. The implemented slices add deterministic optimization primitives and bounded lifecycle control without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
 
@@ -85,7 +85,15 @@ This increment is evidence-only. It does not publish, promote, demote, retire, a
 
 `POST /api/v1/agent-templates/{template_id}/promote` records the governed promotion through the existing audit service and reuses the existing `publish_template()` governance path rather than creating a parallel authorization mechanism. The optimization signal never grants authority by itself.
 
-### 9. Acceptance evidence
+### 9. Governed rollback planning
+
+`backend/app/services/agent_rollback.py` adds a governed rollback entry point for an existing AgentInstance. It deterministically selects the immediately prior **published** version of the same AgentTemplate slug and AgentDefinition, then creates a normal workforce replacement proposal targeting that version.
+
+`POST /api/v1/agent-workforce/replacements/rollback` requires an independently attributable requester and sponsor. Creating the rollback proposal does **not** mutate the active AgentInstance, change execution authority, or bypass the existing Board/CEO/access-review/fingerprint controls. The existing replacement `prepare-cutover` and `cutover` path remains the only execution path; cutover drains the predecessor, requires zero active WorkItems, activates the replacement through the existing governance checks, and only then retires the predecessor.
+
+This preserves the Stage 8 governance hierarchy: rollback intent is explicit, target selection is deterministic, and execution remains behind the established workforce replacement controls.
+
+### 10. Acceptance evidence
 
 `backend/tests/services/test_agent_optimization.py` covers capability/capacity/risk filtering, deterministic tie-breaking, model cost/risk bounds, contract metadata, and fail-closed behavior.
 
@@ -99,11 +107,12 @@ This increment is evidence-only. It does not publish, promote, demote, retire, a
 
 `backend/tests/services/test_agent_promotion.py` covers independent attribution, missing evidence fail-closed behavior, and reuse of the governed evaluation/publish path.
 
+`backend/tests/services/test_agent_rollback.py` covers independent attribution, missing prior published version fail-closed behavior, deterministic prior-version selection, and reuse of the existing workforce replacement governance path.
+
 ## Explicitly not claimed yet
 
 The following remain subsequent Stage 9 increments:
 
-- governed rollback workflow;
 - workforce capacity forecasting;
 - autonomous scaling/rebalancing execution behind governance controls;
 - provider-specific model catalog/telemetry integration beyond the existing provider-call records;
