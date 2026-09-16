@@ -96,6 +96,7 @@ async def create_run(
     input_data: dict[str, Any],
     created_by: uuid.UUID | None,
     employee_version_id: uuid.UUID | None = None,
+    agent_instance_id: uuid.UUID | None = None,
 ) -> Run:
     employee = await employee_service.get_employee(db, employee_id=employee_id, tenant_id=tenant_id)
     if employee_version_id is not None:
@@ -113,6 +114,7 @@ async def create_run(
         tenant_id=tenant_id,
         employee_id=employee.id,
         employee_version_id=version.id,
+        agent_instance_id=agent_instance_id,
         created_by=created_by,
         status="pending",
         input_data=input_data,

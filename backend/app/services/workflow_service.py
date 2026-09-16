@@ -342,7 +342,19 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         await db.flush()
                         await db.commit()
                     else:
-                        child = await run_service.create_run(db, tenant_id=parent.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=parent.created_by)
+                        child = await run_service.create_run(
+                            db,
+                            tenant_id=parent.tenant_id,
+                            employee_id=uuid.UUID(str(definition["employee_id"])),
+                            employee_version_id=(
+                                uuid.UUID(str(definition["employee_version_id"]))
+                                if definition.get("employee_version_id")
+                                else None
+                            ),
+                            input_data=step_input,
+                            created_by=parent.created_by,
+                            agent_instance_id=parent.agent_instance_id,
+                        )
                         child.workflow_parallel_branch_run_id = branch.id
                         child.workflow_parallel_branch_step_key = str(definition["key"])
                         branch.employee_run_id = child.id
@@ -509,7 +521,15 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                         raise ValidationAppError(step.error["message"])
             if child is None:
                 try:
-                    child = await run_service.create_run(db, tenant_id=run.tenant_id, employee_id=uuid.UUID(str(definition["employee_id"])), employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, input_data=step_input, created_by=run.created_by)
+                    child = await run_service.create_run(
+                        db, 
+                        tenant_id=run.tenant_id, 
+                        employee_id=uuid.UUID(str(definition["employee_id"])), 
+                        employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, 
+                        input_data=step_input, 
+                        created_by=run.created_by,
+                        agent_instance_id=run.agent_instance_id,
+                    )
                     child.workflow_step_run_id = step.id
                     step.employee_run_id = child.id
                     await db.flush()
