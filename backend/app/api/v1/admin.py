@@ -7,10 +7,11 @@ from app.schemas.admin import AdminDashboardResponse, AdminTenantListResponse, A
 from app.schemas.agent_fitness import AgentFitnessResponse
 from app.schemas.agent_promotion_evidence import AgentPromotionEvidenceResponse
 from app.schemas.agent_version_fitness import AgentVersionFitnessResponse
+from app.schemas.capacity_forecast import CapacityForecastResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
 from app.schemas.workload_balance import WorkloadBalanceEventResponse
-from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history
+from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -122,3 +123,20 @@ async def get_workload_balance_history(
         target_agent_instance_id=target_agent_instance_id,
     )
     return APIResponse(success=True, data=[WorkloadBalanceEventResponse.model_validate(event) for event in events])
+
+
+@router.get("/capacity-forecast", response_model=APIResponse[CapacityForecastResponse])
+async def get_capacity_forecast(
+    ctx: PlatformAdminContext,
+    db: DbSession,
+    window_days: int = Query(default=30, ge=1, le=90),
+    horizon_days: int = Query(default=7, ge=1, le=30),
+):
+    """Return read-only workforce capacity demand forecasting evidence."""
+    data = await capacity_forecasting.capacity_forecast(
+        db,
+        tenant_id=ctx.tenant.id,
+        window_days=window_days,
+        horizon_days=horizon_days,
+    )
+    return APIResponse(success=True, data=CapacityForecastResponse.model_validate(data))
