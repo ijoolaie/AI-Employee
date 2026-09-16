@@ -54,7 +54,7 @@ def _bounded(value: float) -> float:
 
 
 def calculate_fitness(samples: Iterable[FitnessSample]) -> tuple[float, float, float, float, float | None]:
-    """Return success, feedback, latency, cost and composite fitness scores.
+    """Return success, latency, cost, fitness and feedback scores.
 
     The components are normalized to [0, 1]. Missing feedback is excluded from
     the feedback average rather than treated as a negative signal.
@@ -114,6 +114,7 @@ async def agent_fitness_summary(
         Run.agent_instance_id.is_not(None),
         Run.created_at >= window_start,
         Run.created_at <= window_end,
+        Run.status.in_(["success", "failed", "cancelled"]),
     )
     if agent_instance_id is not None:
         run_query = run_query.where(Run.agent_instance_id == agent_instance_id)
@@ -122,8 +123,23 @@ async def agent_fitness_summary(
         return []
 
     run_ids = [run.id for run in runs]
-    call_rows = list((await db.execute(select(AIProviderCall).where(AIProviderCall.tenant_id == tenant_id, AIProviderCall.run_id.in_(run_ids)))).scalars().all())
-    feedback_rows = list((await db.execute(select(Feedback).where(Feedback.tenant_id == tenant_id, Feedback.run_id.in_(run_ids), Feedback.category == "run")))).scalars().all())
+    call_rows = list(
+        (await db.execute(
+            select(AIProviderCall).where(
+                AIProviderCall.tenant_id == tenant_id,
+                AIProviderCall.run_id.in_(run_ids),
+            )
+        )).scalars().all()
+    )
+    feedback_rows = list(
+        (await db.execute(
+            select(Feedback).where(
+                Feedback.tenant_id == tenant_id,
+                Feedback.run_id.in_(run_ids),
+                Feedback.category == "run",
+            )
+        )).scalars().all()
+    )
 
     latency_by_run: dict[uuid.UUID, float] = {}
     for call in call_rows:
