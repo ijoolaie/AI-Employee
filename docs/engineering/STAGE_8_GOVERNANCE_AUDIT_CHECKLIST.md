@@ -1,22 +1,25 @@
 # Stage 8 Governance Audit Checklist
 
-**Date:** 2026-09-15
+**Date:** 2026-09-16
+**Audit baseline:** `main` at `1c8c3ee2fc933148f90e967e18167fe602d0ad00`
 
 ## Purpose
 
-This checklist tracks reconciliation between Stage 8 design requirements, repository implementation, tests and evidence.
+This checklist tracks reconciliation between Stage 8 design requirements, repository implementation, automated validation and evidence. It supersedes the earlier 2026-09-15 checkpoint where replacement governance and workflow principal propagation were still listed as open implementation gaps.
 
-## Current verified evidence
+## Current verified repository evidence
 
-- [x] Repository validation completed: `759 passed`.
-- [x] Workflow state-machine enforcement branch validated locally.
-- [x] Test warning cleanup completed through pytest configuration reconciliation.
-- [x] Engineering evidence is separated from production certification evidence.
-- [x] Workflow enforcement implementation evidence recorded in Stage 8 implementation status.
+- [x] Backend validation suite completed: **775 passed**.
+- [x] Agent/workflow focused validation completed: **229 passed, 546 deselected**.
+- [x] Workflow state-machine enforcement is implemented and validated.
 - [x] AgentInstance lifecycle states are explicitly modeled and transition enforcement is implemented.
 - [x] AgentInstance retirement is terminal and direct activation is blocked from the generic lifecycle path.
 - [x] AgentInstance lifecycle API records actor/requester attribution in `agent_instance.lifecycle_changed` audit events.
-- [x] Agent identity is first-class and tenant-scoped; independent access-review enforcement exists.
+- [x] Agent identity is first-class and tenant-scoped; access-review enforcement exists.
+- [x] Policy decisions are connected to the audit bridge (PR #514).
+- [x] Governed AgentInstance replacement workflow is implemented and tested (PR #516).
+- [x] AgentInstance principal identity is preserved through workflow child-run creation (PR #517).
+- [x] Engineering evidence remains separate from release/external production evidence.
 
 ## Governance boundary audit
 
@@ -24,62 +27,69 @@ This checklist tracks reconciliation between Stage 8 design requirements, reposi
 
 - [x] Lifecycle transition enforcement exists and has validation coverage.
 - [x] Agent governance foundation migrations and API surfaces are present.
-- [x] Full AgentInstance lifecycle evidence mapped to exact implementation files.
-- [x] Retirement governance evidence completed for the current lifecycle model: retirement is terminal and disables execution.
-- [ ] Replacement governance evidence completed. Replacement remains a certification gap until a distinct governed replacement workflow is implemented and tested.
+- [x] Full AgentInstance lifecycle evidence is mapped to implementation files.
+- [x] Retirement governance is terminal and disables execution.
+- [x] Replacement is a distinct governed workflow with explicit lineage and cutover controls.
 
 ### Identity and authorization
 
-- [ ] Every protected agent action has explicit principal identity evidence.
-- [x] Authorization decision records are mapped to execution trace metadata by the policy audit bridge.
-- [ ] Agent-to-agent trust boundary acceptance tests completed.
+- [x] AgentIdentity is a first-class tenant-scoped principal.
+- [x] Policy decisions are mapped to execution-trace metadata by the policy audit bridge.
+- [x] Workflow child runs preserve the parent `agent_instance_id` evidence boundary.
+- [ ] Every protected agent action has independently reconciled principal identity evidence.
+- [ ] Agent-to-agent trust boundary acceptance tests are complete.
 
 ### Tool governance
 
-- [ ] Tool allow-list enforcement evidence collected.
-- [ ] Side-effecting actions require policy evaluation.
-- [ ] High-risk tool actions have approval binding.
+- [ ] Complete evidence package for tool allow-list enforcement across all protected execution paths.
+- [ ] Complete evidence package proving every side-effecting action receives policy evaluation.
+- [ ] Complete end-to-end approval binding evidence for high-risk tool actions.
 
 ### Auditability
 
-- [ ] Every execution path has correlation and actor attribution evidence.
-- [ ] Audit records are append-oriented and protected from ordinary mutation.
+- [ ] Every execution path has complete correlation and actor/principal attribution evidence.
+- [ ] Audit records are demonstrated append-oriented and protected from ordinary agent mutation across the full Stage 8 surface.
 
 ### Economics and safety
 
-- [ ] Usage attribution mapped to tenant/agent/work item.
-- [ ] Budget enforcement acceptance tests completed.
-- [ ] Runaway execution protection evidence completed.
+- [ ] Usage attribution is reconciled to tenant/agent/work item across all execution paths.
+- [ ] Hard budget enforcement acceptance tests are complete for all required scopes.
+- [ ] Runaway execution protection evidence is complete for the governed autonomous surface.
 
-## AgentInstance lifecycle evidence mapping
+### Evaluation and publication
 
-| Requirement | Implementation evidence | Validation evidence | Status |
-|---|---|---|---|
-| Explicit lifecycle states | `backend/app/models/agent_instance.py` → `AgentInstanceStatus` | `backend/tests/test_agent_instance_lifecycle_governance.py` | Verified |
-| Fail-closed transitions | `backend/app/services/agent_template_service.py` → `_ALLOWED_LIFECYCLE_TRANSITIONS` | `backend/tests/test_agent_instance_lifecycle_governance.py` | Verified |
-| Governed mutation | `backend/app/services/agent_template_service.py` → `transition_instance` | `backend/tests/services/test_agent_template_service.py` | Verified |
-| Direct activation blocked | `transition_instance` rejects `ENABLED` | `backend/tests/services/test_agent_template_service.py` | Verified |
-| Lifecycle audit attribution | `backend/app/api/v1/agent_templates.py` → `agent_instance.lifecycle_changed` | API contract/source evidence | Verified |
-| First-class identity | `backend/app/models/agent_identity.py` | `backend/tests/test_agent_governance_enforcement.py` | Verified |
-| Independent access review | `backend/app/services/agent_governance.py` → `review_access` | `backend/tests/test_agent_governance_enforcement.py` | Verified |
-| Terminal retirement | `RETIRED` has no outgoing transitions; execution disabled | `backend/tests/test_agent_instance_lifecycle_governance.py` | Verified |
-| Replacement workflow | No distinct replacement operation currently exists | No acceptance test | Open gap |
+- [ ] Evaluation gates are demonstrated to block unsafe publication for every required risk tier.
+- [ ] Publication/version lineage evidence is reconciled to the exact implementation SHA.
+
+## Evidence mapping updates
+
+| Requirement | Current evidence | Status |
+|---|---|---|
+| Explicit lifecycle states | `backend/app/models/agent_instance.py` → `AgentInstanceStatus` | Verified |
+| Fail-closed transitions | `backend/app/services/agent_template_service.py` → `_ALLOWED_LIFECYCLE_TRANSITIONS` | Verified |
+| Governed lifecycle mutation | `transition_instance` + lifecycle tests | Verified |
+| Terminal retirement | `RETIRED` has no outgoing transitions; execution disabled | Verified |
+| Replacement workflow | `backend/app/services/agent_workforce_replacement_service.py`; replacement API; PR #516 | Implemented / tests passed |
+| Lifecycle audit attribution | `agent_instance.lifecycle_changed` audit event | Verified |
+| First-class identity | `backend/app/models/agent_identity.py` | Verified |
+| Policy decision audit | `agent_policy_engine.authorize` → policy audit bridge; PR #514 | Implemented / tests present |
+| Workflow principal propagation | `Run.agent_instance_id` preserved for child runs; PR #517 | Implemented / tests passed |
+| Agent-to-agent trust | Delegation/policy primitives exist | Acceptance evidence open |
+| Tool governance | Registry/policy controls exist | Evidence reconciliation open |
+| Usage/budget controls | Usage/cost infrastructure exists | Acceptance evidence open |
 
 ## Reconciliation result
 
-Implemented foundation areas must not be reported as fully certified capabilities until code, automated validation and operational evidence are linked together.
+The previous checklist status is now stale in three important places: replacement governance is no longer an implementation gap; workflow child principal propagation is implemented; and the repository validation baseline is 775 passing rather than 759.
 
-Current state:
-
-- Workflow state governance: implementation validated.
-- Test Center foundation: implementation validated.
-- Agent governance foundation: implementation present, lifecycle evidence mapped, certification evidence pending.
+Stage 8 is therefore best described as **governed workforce foundation implemented with remaining acceptance/evidence gaps**, not as an unimplemented foundation and not yet as fully certified Stage 8.
 
 ## Next engineering sequence
 
-1. Complete principal identity evidence for every protected agent action.
-2. Audit existing tool governance and approval-binding paths against the governance checklist.
-3. Define and implement a distinct governed replacement workflow before claiming replacement governance.
-4. Add missing acceptance tests only where a real enforcement gap exists.
-5. Update implementation evidence with exact commit SHAs.
-6. Keep production claims blocked until deployment evidence exists.
+1. Finish principal-identity evidence reconciliation across every protected execution path.
+2. Audit tool allow-list, side-effect and approval-binding paths against the governance checklist.
+3. Finish agent-to-agent trust acceptance tests and audit evidence.
+4. Close risk-tier, evaluation-gate, usage/budget and runaway-execution evidence gaps.
+5. Update exact-commit traceability.
+6. Run fresh exact-SHA release certification before promoting Agent capability code.
+7. Keep Stage 7 production claims blocked until real deployment evidence exists.
