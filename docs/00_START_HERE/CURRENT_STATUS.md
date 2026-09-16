@@ -1,69 +1,82 @@
 # Current Status
 
 **Last reconciled:** 2026-09-16
-**Latest published release:** `v1.4.1`
-**Release commit:** `f7f5062feb125c7ca50263f74a0e40bc4abfa591`
-**Exact-SHA Production Certification:** Run `34696339261` — SUCCESS
-**Current implementation audit baseline:** `1c8c3ee2fc933148f90e967e18167fe602d0ad00`
-**Current `main`:** implementation baseline above plus documentation-only reconciliation commits
-**Current status:** ENGINEERING MAINLINE ADVANCED / RELEASE CERTIFICATION BOUND TO v1.4.1 / EXTERNAL PRODUCTION GATES PENDING
+**Latest published release:** `v1.4.2`
+**Release commit:** `dba0bb672deb1236b6724bb8851526e656f47967`
+**Exact-SHA Production Certification:** Run `35108008066` — PASS
+**Certification job:** `104834133092` — PASS
+**Current implementation mainline:** documentation reconciliation after certified `v1.4.2` SHA
+**Current status:** STAGE 9 RELEASE-CERTIFIED / EXTERNAL PRODUCTION GATES PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries.
 
-`v1.4.1` remains the latest published exact-SHA certified release. Its certification is bound to `f7f5062...` only. Current `main` contains subsequent Agent governance engineering changes plus documentation reconciliation commits and is **not** a newly certified release.
+`v1.4.2` is the latest published release and its exact-SHA Production Certification passed for `dba0bb672deb1236b6724bb8851526e656f47967`. The release contains the completed current Stage 9 optimization/governance slices. The Git tag and GitHub Release are both published.
 
-There is still no verified external production deployment of `v1.4.1` recorded in repository evidence.
+The certified release does **not** constitute evidence of external production deployment. No verified external production deployment is recorded here.
 
-## Current engineering validation
+## Production certification — v1.4.2
 
-On 2026-09-16, the local backend suite was re-run from the repository root with PostgreSQL available:
+Production Certification Run `35108008066` passed for exact SHA `dba0bb672deb1236b6724bb8851526e656f47967`.
 
-- `pytest backend/tests -k "agent or workflow"` → **229 passed, 546 deselected**.
-- `pytest backend/tests` → **775 passed**.
+Certified gates included:
 
-The concurrency test that initially failed because PostgreSQL was unavailable passed after the repository PostgreSQL service was started. This is repository engineering evidence, not external production evidence.
+- exact-SHA checkout verification;
+- backend compile and Ruff;
+- **811 backend tests passed**;
+- frontend contract/unit/build validation;
+- DB migration and single Alembic head;
+- OCR + Persian `fas`;
+- backend dependency E2E;
+- Auth P0;
+- Tenant Isolation + RBAC P0;
+- Conversation Isolation P0;
+- Employee → Run → AI → Result;
+- Files → Knowledge → Memory;
+- Admin / Developer API Keys;
+- Workflow → Approval → Schedule;
+- Orders → Sales → Invoice → Billing;
+- Reports / Analytics Isolation;
+- Unified WorkItem Human and Agent;
+- frontend Playwright: **6 passed**;
+- immutable evidence manifest and evidence artifact upload;
+- **Product Gate Failures: 0**.
 
-## Latest Stage 8 hardening
+Evidence artifact: `production-certification-evidence-v1.4.2-dba0bb672deb1236b6724bb8851526e656f47967` (artifact `10450993330`).
 
-The implementation audit baseline includes the following merged governance work:
+A non-gating fixture-cleanup DBAPIError was observed in the Tenant/RBAC area; the certification result remained PASS and Product Gate Failures remained 0. This is recorded as a non-gating certification note, not as a claim of perfectly clean cleanup logs.
 
-- **PR #514** — policy decisions are connected to the audit bridge and execution-trace metadata.
-- **PR #516** — governed AgentInstance replacement workflow with explicit replacement proposals, cutover preparation, predecessor draining, lineage and governed cutover.
-- **PR #517** — principal identity evidence is preserved through workflow child-run creation; merged as implementation baseline `1c8c3ee...`.
+## Stage 9 position
 
-These changes supersede the earlier Stage 8 audit records that still described replacement and workflow principal propagation as open gaps.
+Stage 9 is **implemented for the current planned slices and release-certified in v1.4.2**.
+
+Completed slices are documented in `docs/current/STAGE_9_IMPLEMENTATION_STATUS.md` and include workload balancing, persisted balancing evidence, Agent/version fitness, promotion evidence, governed promotion, governed rollback planning, capacity forecasting and governed workforce scaling.
+
+The architecture remains governed: optimization recommendations and control loops cannot bypass identity, policy, approval, budget, lifecycle, concurrency, audit or execution controls.
 
 ## Stage 8 position
 
-Stage 8 is **not yet declared fully complete/certified**. The repository now has a substantially stronger governed workforce foundation, but the Stage 8 blueprint requires implementation, automated validation, operational evidence and documentation traceability together.
+Stage 8 governed workforce foundations are the substrate on which Stage 9 operates. Earlier Stage 8 audit records should not be read as saying that PRs #514, #516 and #517 are absent; those implementation advances are part of the current certified lineage.
 
-The remaining Stage 8 engineering/evidence focus is now narrower:
+Remaining Stage 8 work, where applicable, is acceptance/evidence reconciliation rather than reimplementation of already-merged primitives.
 
-- complete principal identity evidence across all protected execution paths, not only workflow child propagation;
-- complete tool allow-list / side-effect / approval-binding evidence against the governance checklist;
-- complete agent-to-agent trust acceptance evidence;
-- complete usage attribution, budget enforcement and runaway-execution evidence where not already covered;
-- reconcile exact commit evidence and release-candidate certification for promoted Agent capability code.
+## Release v1.4.2 checkpoint
 
-## v1.4.1 release checkpoint
-
-- PR #501 — Self-Hosted edition and release asset publication — merged.
-- Release tag: `v1.4.1`.
-- Release target SHA: `f7f5062feb125c7ca50263f74a0e40bc4abfa591`.
-- Certification run: `34696339261` — SUCCESS.
-- Certification job: `103560364112` — SUCCESS.
-- Four edition packages plus runtime, manifest and SHA256SUMS were published.
+- Release tag: `v1.4.2`.
+- Release target SHA: `dba0bb672deb1236b6724bb8851526e656f47967`.
+- Production Certification Run: `35108008066` — PASS.
+- Certification job: `104834133092` — PASS.
+- GitHub Release: published, not draft, not prerelease.
+- Five edition packages plus `EDITION-RELEASE-MANIFEST.json` and `SHA256SUMS` are published.
+- Exact release asset SHA256 values are recorded in the release evidence/ledger.
 - External deployment, live-provider acceptance and customer acceptance remain pending.
 
-## Current Agent capability workstream
+## Workflow approval certification fix
 
-The architecture already contains the core mechanics for Tool Calling, structured tool arguments/schemas and bounded multi-step execution. The active work is to prove these capabilities with explicit acceptance contracts, provider-neutral safety boundaries and real-provider validation rather than reimplementing the runtime from scratch.
+PR #530 fixed the release certification blocker where the approval path attempted an invalid `waiting -> waiting` transition. The approved path now leaves the step in `waiting`, sets the run pending and enqueues resume; the executor owns the durable `waiting -> success` transition. Rejection still transitions `waiting -> failed`.
 
-## Stage 7 external boundary
-
-The following remain external-only gates: real production deployment, measured production SLO/SLI and error budget, backup/restore/DR RPO/RTO, live provider validation, deployed-target isolation/RBAC, DAST and independent security review, networking/TLS/secret lifecycle, HA/failure recovery, incident/on-call rehearsal and final customer acceptance.
+PR #530 merged at `dba0bb672deb1236b6724bb8851526e656f47967` after all 9 PR workflows succeeded.
 
 ## Evidence boundary
 
