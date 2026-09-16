@@ -1,14 +1,14 @@
 """Add governed AgentInstance replacement lineage to workforce proposals.
 
 Revision ID: p8_09_agent_workforce_replacement
-Revises: p0eimmutableaudit
+Revises: p0eimmutableaudit, f1a2b3c4d5e6
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "p8_09_agent_workforce_replacement"
-down_revision = "p0eimmutableaudit"
+down_revision = ("p0eimmutableaudit", "f1a2b3c4d5e6")
 branch_labels = None
 depends_on = None
 
