@@ -14,6 +14,7 @@ from app.core.deps import TenantContext, require_permission
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalStatus
 from app.services import agent_workforce_proposal_service as proposal_service
 from app.services.agent_workforce_manager import get_agent_capacity
+from app.services.governed_scaling import create_scaling_proposal
 
 router = APIRouter(prefix="/agent-workforce", tags=["agent-workforce"])
 
@@ -27,6 +28,15 @@ class WorkforceProposalCreate(BaseModel):
     agent_definition_id: UUID | None = None
     risk_tier: int = Field(default=0, ge=0, le=4)
     configuration: dict = Field(default_factory=dict)
+
+
+class GovernedScalingCreate(BaseModel):
+    sponsor_user_id: UUID
+    agent_template_id: UUID
+    requested_name_prefix: str = Field(min_length=1, max_length=200)
+    window_days: int = Field(default=30, ge=1, le=90)
+    horizon_days: int = Field(default=7, ge=1, le=30)
+    max_additional_concurrency: int = Field(default=1, ge=1, le=4)
 
 
 class WorkforceDecision(BaseModel):
@@ -96,6 +106,31 @@ async def create_workforce_proposal(
             agent_definition_id=payload.agent_definition_id,
             risk_tier=payload.risk_tier,
             configuration=payload.configuration,
+        )
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        raise _http(exc) from exc
+    return WorkforceProposalRead.model_validate(item, from_attributes=True)
+
+
+@router.post("/scaling-proposals", response_model=WorkforceProposalRead, status_code=status.HTTP_201_CREATED)
+async def create_governed_scaling_proposal(
+    payload: GovernedScalingCreate,
+    ctx: TenantContext = Depends(require_permission("agent_workforce.propose")),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        item, _forecast = await create_scaling_proposal(
+            db,
+            tenant_id=ctx.tenant_id,
+            requester_user_id=ctx.user_id,
+            sponsor_user_id=payload.sponsor_user_id,
+            agent_template_id=payload.agent_template_id,
+            requested_name_prefix=payload.requested_name_prefix,
+            window_days=payload.window_days,
+            horizon_days=payload.horizon_days,
+            max_additional_concurrency=payload.max_additional_concurrency,
         )
         await db.commit()
     except Exception as exc:
