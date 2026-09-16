@@ -6,7 +6,7 @@
 **Exact-SHA Production Certification:** Run `35108008066` — PASS
 **Certification job:** `104834133092` — PASS
 **Current implementation mainline:** documentation reconciliation after certified `v1.4.2` SHA
-**Current status:** STAGE 9 RELEASE-CERTIFIED / EXTERNAL PRODUCTION GATES PENDING
+**Current status:** STAGE 9 RELEASE-CERTIFIED / COMMERCIAL READINESS & EXTERNAL PRODUCTION GATES PENDING
 
 ## Executive truth
 
@@ -61,6 +61,46 @@ Stage 8 governed workforce foundations are the substrate on which Stage 9 operat
 
 Remaining Stage 8 work, where applicable, is acceptance/evidence reconciliation rather than reimplementation of already-merged primitives.
 
+## Commercial Readiness & External Production
+
+The project has now moved from **engineering completion** into a dedicated **Commercial Readiness & External Production** phase.
+
+### What is already evidenced
+
+- engineering/product core through the certified release;
+- multi-tenancy, RBAC and governed Agent execution gates;
+- workflow, billing, WorkItem and core business flows covered by certification;
+- Stage 9 governed optimization slices;
+- exact-SHA production-like certification;
+- immutable release identity and release artifacts.
+
+### What is still required before unrestricted commercial go-live
+
+- real production target provisioned and documented;
+- exact certified release deployed to that target;
+- production TLS/networking/egress/firewall verification;
+- production secret-manager lifecycle and credential rotation;
+- live provider validation with production-safe credentials;
+- measured SLI/SLO and error-budget baseline;
+- real backup/restore validation and measured RPO/RTO;
+- authenticated DAST and independent security/pentest review;
+- HA and failure-recovery rehearsal;
+- staffed incident response/on-call and alert escalation;
+- Vendor → Reseller → Client isolation/RBAC acceptance on the deployed target;
+- customer/partner acceptance evidence where applicable;
+- final exception/risk disposition and explicit commercial go-live authorization.
+
+These are external operational/acceptance gates, not a claim that the current codebase lacks the corresponding engineering primitives.
+
+## Readiness classification
+
+Use the following classification consistently in future audits:
+
+- **🔴 Blocker:** prevents external production/commercial launch.
+- **🟠 Required before launch:** evidence or operational work required before launch.
+- **🟡 Launch follow-up:** bounded post-launch work only with explicit owner, scope and risk acceptance.
+- **🟢 Ready / evidenced:** current evidence exists and is tied to the relevant release/target.
+
 ## Release v1.4.2 checkpoint
 
 - Release tag: `v1.4.2`.
@@ -83,3 +123,15 @@ PR #530 merged at `dba0bb672deb1236b6724bb8851526e656f47967` after all 9 PR work
 CI, repository tests, production-like validation and simulated providers establish engineering/release evidence. They do not establish live production deployment, measured production SLO/DR, independent security review or customer acceptance.
 
 Certification never transfers automatically across SHAs.
+
+## Immediate next phase
+
+1. Build the Commercial Readiness audit and blocker register.
+2. Resolve all 🔴 blockers and 🟠 launch requirements.
+3. Provision and harden the production-like target.
+4. Deploy the exact certified release and capture immutable deployment evidence.
+5. Execute security, provider, observability, backup/restore, DR and failure-recovery validation.
+6. Complete external acceptance evidence.
+7. Reconcile the evidence ledger and explicitly authorize or defer commercial go-live.
+
+Broad feature expansion is not the default next step. New feature work should only be opened when the readiness audit identifies a real launch-blocking product requirement.
