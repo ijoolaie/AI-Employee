@@ -7,7 +7,8 @@ from app.schemas.admin import AdminDashboardResponse, AdminTenantListResponse, A
 from app.schemas.agent_fitness import AgentFitnessResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
-from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness
+from app.schemas.workload_balance import WorkloadBalanceEventResponse
+from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, workload_balance_history
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -68,3 +69,20 @@ async def get_agent_fitness(
         window_days=window_days,
     )
     return APIResponse(success=True, data=[AgentFitnessResponse.model_validate(item) for item in data])
+
+
+@router.get("/workload-balance/history", response_model=APIResponse[list[WorkloadBalanceEventResponse]])
+async def get_workload_balance_history(
+    ctx: PlatformAdminContext,
+    db: DbSession,
+    limit: int = Query(default=50, ge=1, le=200),
+    target_agent_instance_id: UUID | None = Query(default=None),
+):
+    """Return tenant-scoped persisted workload-balancing recommendation evidence."""
+    events = await workload_balance_history.list_balance_history(
+        db,
+        tenant_id=ctx.tenant.id,
+        limit=limit,
+        target_agent_instance_id=target_agent_instance_id,
+    )
+    return APIResponse(success=True, data=[WorkloadBalanceEventResponse.model_validate(event) for event in events])
