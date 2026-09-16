@@ -1,10 +1,11 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-14
-**Current release:** `v1.4.1`
+**Reconciled:** 2026-09-16
+**Latest published release:** `v1.4.1`
 **Release SHA:** `f7f5062feb125c7ca50263f74a0e40bc4abfa591`
 **Certification run:** `34696339261` — SUCCESS
-**Current status:** AGENT CAPABILITY HARDENING + STAGE 8 GOVERNANCE + EXTERNAL PRODUCTION EXECUTION
+**Current engineering mainline:** `1c8c3ee2fc933148f90e967e18167fe602d0ad00`
+**Current status:** STAGE 8 GOVERNANCE/EVIDENCE HARDENING + EXTERNAL PRODUCTION EXECUTION
 
 ## Priority order
 
@@ -22,9 +23,22 @@
 10. Rehearse HA/failure recovery and incident response/on-call.
 11. Complete ordered external certification and customer acceptance (#210/#269).
 
-### P1 — Agent capability hardening
+### P1 — Stage 8 governance evidence
 
-The existing runtime already contains the core mechanics for tool calling, structured tool schemas/arguments and bounded multi-step execution. Do not rebuild these capabilities unnecessarily. Convert them into explicit acceptance gates:
+The governed Agent workforce foundation is implemented further than the older Stage 8 audit records indicated. PR #514 connected policy decisions to the audit bridge; PR #516 implemented governed AgentInstance replacement; PR #517 preserved AgentInstance identity through workflow child runs.
+
+The remaining work is acceptance/evidence driven rather than a blanket rebuild:
+
+1. Complete principal identity evidence for every protected agent execution path.
+2. Complete tool allow-list, side-effect and approval-binding acceptance evidence.
+3. Complete agent-to-agent trust acceptance tests and audit evidence.
+4. Complete usage attribution, hard budget enforcement and runaway-execution acceptance evidence where gaps remain.
+5. Reconcile each Stage 8 exit criterion to exact implementation files, tests and commit SHAs.
+6. Run a fresh release-candidate certification before promoting Agent capability code into a release.
+
+### P1.5 — Agent capability acceptance
+
+The runtime already contains the core mechanics for tool calling, structured tool schemas/arguments and bounded multi-step execution. Do not reimplement these capabilities unnecessarily.
 
 1. **Tool Calling** — prove provider-neutral model → tool → result → final-answer flow and allow-list enforcement.
 2. **Structured Arguments** — validate JSON Schema before side effects; reject unknown tools, malformed IDs, non-object arguments, missing required fields, extra fields and wrong types.
@@ -32,21 +46,19 @@ The existing runtime already contains the core mechanics for tool calling, struc
 4. **Provider validation** — exercise LM Studio first; validate cloud providers only when intentionally configured.
 5. **Release gate** — any code changes promoted into a release require fresh exact-SHA CI/certification.
 
-### P1.5 — Stage 8 Governed Agent Workforce Engineering
+### P2 — Stage 9 preparation
 
-Current checkpoint:
+Do not treat Stage 9 as another pass of foundational CRUD/governance implementation. Its frontier is optimization above the now-governed execution substrate:
 
-- Agent governance foundation, lifecycle controls and permission boundaries are implemented.
-- Workflow state-machine enforcement hardening has passed repository validation.
-- Current local validation evidence: `759 passed`.
-- Pytest warning cleanup reduced remaining warnings to zero after test configuration reconciliation.
+- capability-aware workload routing;
+- task/risk/cost-aware model selection;
+- measurable agent fitness/evaluation signals;
+- version fitness, promotion and rollback evidence;
+- predictive workforce capacity planning;
+- governed autonomous scaling and rebalancing;
+- optimization feedback loops with human governance above the optimizer.
 
-Required next steps:
-
-1. Continue auditing lifecycle transitions against governance rules.
-2. Ensure every agent action has identity, authorization and audit evidence boundaries.
-3. Add missing acceptance contracts before promoting additional autonomous capabilities.
-4. Keep engineering evidence separate from production certification evidence.
+Stage 9 should start only from gaps that remain after the Stage 8 exit audit, not from assumptions that already-implemented Stage 8 primitives are missing.
 
 ### Infrastructure baseline
 
