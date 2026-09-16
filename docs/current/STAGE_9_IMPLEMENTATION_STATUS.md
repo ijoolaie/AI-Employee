@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Status: ACTIVE — optimization foundation, queue-aware balancing, and telemetry-backed fitness implemented**
+**Status: ACTIVE — optimization foundation, queue-aware balancing, persisted balancing evidence, and telemetry-backed fitness implemented**
 
 Stage 9 builds on the governed execution substrate completed and evidenced in Stage 8. The implemented slices add deterministic optimization primitives without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, or budget controls.
 
@@ -36,7 +36,15 @@ This is a recommendation boundary. It does not change provider configuration, bu
 
 The recommendation consumes authoritative queue/load snapshots but does not mutate WorkItems or Agent state.
 
-### 4. Telemetry-backed Agent fitness
+### 4. Persisted workload-balancing evidence
+
+`backend/app/models/workload_balance_event.py` and migration `p810workloadbalance` persist tenant-scoped recommendation snapshots containing queue depth, oldest-ready age, available capacity, pressure, target Agent, rationale, candidate count, and contract version.
+
+`backend/app/services/workload_balance_history.py` provides the persistence and tenant-scoped history query boundary. `GET /api/v1/admin/workload-balance/history` exposes read-only history behind the existing platform-admin governance boundary.
+
+This increment persists recommendation evidence only. It does not assign WorkItems, mutate Agent state, bypass policy/approval/budget controls, or introduce an autonomous control loop.
+
+### 5. Telemetry-backed Agent fitness
 
 `backend/app/services/agent_fitness.py` derives a bounded fitness signal from durable tenant-scoped `Run`, `AIProviderCall`, and per-Run `Feedback` records already persisted by the platform.
 
@@ -50,11 +58,11 @@ The signal contains:
 
 `GET /api/v1/admin/agent-fitness` exposes the read-only signal to the existing platform-admin boundary. The service does not mutate Agent, Run, budget, approval, policy, or lifecycle state. Missing feedback is treated as missing evidence rather than a zero rating.
 
-### 5. Acceptance evidence
+### 6. Acceptance evidence
 
 `backend/tests/services/test_agent_optimization.py` covers capability/capacity/risk filtering, deterministic tie-breaking, model cost/risk bounds, contract metadata, and fail-closed behavior.
 
-`backend/tests/services/test_workload_balancing.py` covers queue-pressure calculation, threshold suppression, deterministic capacity selection, disabled-Agent filtering, and fail-closed behavior.
+`backend/tests/services/test_workload_balancing.py` covers queue-pressure calculation, threshold suppression, deterministic capacity selection, disabled-Agent filtering, persisted snapshot creation, and bounded history queries.
 
 `backend/tests/services/test_agent_fitness.py` covers bounded composite scoring, feedback handling, and empty-sample fail-closed behavior.
 
@@ -62,7 +70,6 @@ The signal contains:
 
 The following remain subsequent Stage 9 increments:
 
-- persisted workload-balancing state and queue assignment history;
 - Agent version fitness, promotion, and rollback workflow;
 - workforce capacity forecasting;
 - autonomous scaling/rebalancing execution behind governance controls;
