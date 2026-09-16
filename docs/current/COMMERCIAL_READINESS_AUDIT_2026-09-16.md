@@ -26,7 +26,7 @@ Evidence does not transfer automatically between SHAs.
 | CR-02 | Frontend/customer UX | Engineering | 🟢 | v1.4.2 certification + Playwright | Target/browser acceptance as applicable | No | Yes |
 | CR-03 | Auth/RBAC/tenant isolation | Mixed | 🟠 | Certified engineering gates | Real Vendor → Reseller → Client actor matrix | No unless target test finds defect | Yes |
 | CR-04 | Agent governance | Mixed | 🟠 | Certified governance/control-loop evidence | External runtime acceptance and operational evidence | No currently | Yes |
-| CR-05 | Policy decision audit bridge | Engineering | 🔴→🟠 | Implementation exists; audit exposed a failure-isolation test gap | PR #531 CI/merge; then close #513 only after verification | Yes | No |
+| CR-05 | Policy decision audit bridge | Engineering | 🟢 | PR #531 merged as `5e0f27063a8945a752414bd161e5873f189e1288`; successful PR CI/security/governance gates; audit-failure isolation + ALLOW/DENY/REQUIRE_APPROVAL regression coverage | No remaining repository blocker identified; retain target verification as part of external audit evidence | No currently | Yes for target evidence |
 | CR-06 | Database/migrations | Release/Target | 🟠 | Certification migration checks passed | Real target migration identity and rollback/recovery evidence | No | Yes |
 | CR-07 | Backup/restore | Target | 🔴 | Production-like backup/restore exists as engineering evidence | Real encrypted off-host backup + isolated restore | No | Yes |
 | CR-08 | DR/RPO/RTO | Target | 🔴 | Design/execution contract exists | Measured target RPO/RTO drill | No | Yes |
@@ -48,26 +48,21 @@ Evidence does not transfer automatically between SHAs.
 | CR-24 | Vendor/Reseller acceptance | Acceptance | 🔴 | Engineering isolation contract | Ordered real-target acceptance | No | Yes |
 | CR-25 | Commercial go-live | Final gate | 🔴 | Not authorized | All P0 external evidence + exception disposition | No | Yes |
 
-## Immediate execution order
+## Repository engineering track — reconciled
 
-### Track A — repository engineering blocker
+The previous repository blocker was the policy-audit failure-isolation gap tracked by #513. PR #531 has now been merged as `5e0f27063a8945a752414bd161e5873f189e1288`. Its PR head passed CI plus the repository security/governance validation workflows, and #513 was closed as completed. No evidence from that change is transferred to the certified `v1.4.2` release unless the exact release SHA contains the change; the current `main` lineage is therefore tracked separately from the already-published release.
 
-1. Run CI for PR #531.
-2. If CI passes, merge PR #531 through the normal governed PR path.
-3. Re-verify issue #513 acceptance criteria against the merged SHA.
-4. Close #513 only when all criteria are directly evidenced.
-
-### Track B — external production
+## External production track — next execution
 
 1. Provision target according to `PRODUCTION_SERVER_BASELINE.md`.
 2. Create target-specific secret/credential inventory without putting values in GitHub.
-3. Deploy exactly `v1.4.2` / `dba0bb672deb1236b6724bb8851526e656f47967`.
+3. Select and freeze the exact release identity for external deployment; if the selected identity is `v1.4.2`, deploy `dba0bb672deb1236b6724bb8851526e656f47967` and do not substitute later `main` commits.
 4. Capture deployment identity, image digests and migration identity.
 5. Establish monitoring and SLO/SLI measurement.
 6. Execute backup/restore and measure RPO/RTO.
 7. Validate live providers.
 8. Execute Vendor → Reseller → Client actor matrix.
-9. Run authenticated DAST.
+9. Run authenticated DAST against the running target.
 10. Run independent security review.
 11. Rehearse HA/failure recovery and rollback.
 12. Execute incident-response/on-call drill.
