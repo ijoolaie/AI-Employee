@@ -14,6 +14,38 @@ Three axes remain independent:
 
 Phase 11 Unified Execution is complete. Phase 12 Test Center is operationally hardened. Phase 13 Agent Teams & Marketplace is engineering complete. Phase 14.1–14.16 tracked engineering is complete/reconciled. PRs #521–#530 completed the current Stage 9 implementation/release-certification sequence, with PR #530 fixing the workflow approval certification blocker.
 
+The project has now entered a dedicated **Commercial Readiness & External Production** phase. The default next work is evidence, deployment, security and operational validation—not broad feature expansion.
+
+## Commercial Readiness Gate
+
+### Objective
+
+Prove that the certified product can be operated safely, observably and recoverably in a real production environment and can pass the required partner/customer acceptance gates.
+
+### Required gate sequence
+
+1. **Readiness audit** — inspect application, security, database, deployment, secrets, monitoring, DR, providers, billing, Agent governance, tenant isolation and customer UX/support readiness.
+2. **Blocker register** — classify every finding as 🔴 Blocker, 🟠 Required before launch, 🟡 Launch follow-up, or 🟢 Ready/evidenced.
+3. **Production target** — provision and harden the actual target; record infrastructure identity and configuration evidence.
+4. **Exact release deployment** — deploy the certified release identity and preserve immutable deployment evidence.
+5. **Security/network validation** — verify TLS, ingress/egress, firewall, secret lifecycle, credential rotation and relevant attack surfaces.
+6. **Data protection** — validate backup integrity, restore procedure and migration/recovery behavior.
+7. **DR measurement** — perform real recovery drills and record measured RPO/RTO.
+8. **Observability** — measure SLI/SLO and error-budget behavior under representative production conditions.
+9. **Provider validation** — validate intentionally configured live providers using production-safe credentials and record target-specific evidence.
+10. **Tenant/RBAC acceptance** — validate Vendor → Reseller → Client isolation and authorization on the deployed target.
+11. **Security testing** — authenticated DAST and independent security/pentest review; disposition findings.
+12. **HA/failure recovery** — rehearse dependency/service failures and document recovery behavior.
+13. **Operations** — verify alerting, escalation, staffed on-call and incident response.
+14. **External acceptance** — complete Vendor, Reseller and Customer acceptance where applicable.
+15. **Go-live decision** — reconcile all exceptions and explicitly authorize commercial publication.
+
+### Commercial gate rule
+
+`Engineering Ready ≠ Release Certified ≠ Production Deployed ≠ Commercially Accepted`
+
+A passing repository certification is necessary but does not prove real deployment, live-provider behavior, measured SLO/DR, independent security review or customer acceptance.
+
 ## Stage 7 — External Production Certification & Customer Acceptance
 
 **Issues:** #210 / #269 / #19 — **ACTIVE / EXTERNAL-PENDING**
@@ -42,6 +74,8 @@ Canonical baseline: `docs/current/PRODUCTION_SERVER_BASELINE.md`.
 - Ubuntu 24.04 LTS, fixed/public IP, TLS ingress, hardened firewall, encrypted off-host backups and centralized observability.
 - Kubernetes is not required for the first external target; a hardened Docker-based deployment is sufficient when recovery and security controls are verified.
 - GPU is optional for remote-provider inference and mainly relevant to local model inference/GPU OCR.
+
+These sizing values are recommendations, not evidence that infrastructure has been provisioned.
 
 ## Stage 8 — AI Company Operating Model Foundation
 
