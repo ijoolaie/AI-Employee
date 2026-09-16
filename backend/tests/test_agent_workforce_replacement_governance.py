@@ -48,7 +48,9 @@ def test_replacement_api_is_registered_and_permission_gated() -> None:
     replacement_api = (BACKEND_ROOT / "app" / "api" / "v1" / "agent_workforce_replacements.py").read_text(encoding="utf-8")
     migration = next((BACKEND_ROOT / "alembic" / "versions").glob("p8_09_agent_workforce_replacements.py"))
     migration_source = migration.read_text(encoding="utf-8")
+    auth_source = (BACKEND_ROOT / "app" / "services" / "auth_service.py").read_text(encoding="utf-8")
     assert "agent_workforce_replacements" in router
     assert 'prefix="/agent-workforce/replacements"' in replacement_api
     assert 'require_permission("agent_workforce.replace")' in replacement_api
     assert '"agent_workforce.replace"' in migration_source
+    assert '"agent_workforce.replace"' in auth_source
