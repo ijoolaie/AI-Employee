@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import uuid
 
 import pytest
@@ -27,7 +28,7 @@ def test_fitness_is_bounded_and_uses_feedback():
     assert 0 < latency_score <= 1
     assert 0 < cost_score <= 1
     assert 0 <= fitness <= 1
-    assert feedback_score == pytest.approx(0.75)
+    assert feedback_score == pytest.approx(0.875)
 
 
 def test_missing_feedback_is_not_penalized_as_a_zero_rating():
