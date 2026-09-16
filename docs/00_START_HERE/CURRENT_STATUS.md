@@ -4,14 +4,15 @@
 **Latest published release:** `v1.4.1`
 **Release commit:** `f7f5062feb125c7ca50263f74a0e40bc4abfa591`
 **Exact-SHA Production Certification:** Run `34696339261` — SUCCESS
-**Current engineering mainline:** `main` at `1c8c3ee2fc933148f90e967e18167fe602d0ad00`
+**Current implementation audit baseline:** `1c8c3ee2fc933148f90e967e18167fe602d0ad00`
+**Current `main`:** implementation baseline above plus documentation-only reconciliation commits
 **Current status:** ENGINEERING MAINLINE ADVANCED / RELEASE CERTIFICATION BOUND TO v1.4.1 / EXTERNAL PRODUCTION GATES PENDING
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a **Human + Agent operating model**. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries.
 
-`v1.4.1` remains the latest published exact-SHA certified release. Its certification is bound to `f7f5062...` only. Current `main` has subsequent Agent governance engineering commits and is **not** a newly certified release.
+`v1.4.1` remains the latest published exact-SHA certified release. Its certification is bound to `f7f5062...` only. Current `main` contains subsequent Agent governance engineering changes plus documentation reconciliation commits and is **not** a newly certified release.
 
 There is still no verified external production deployment of `v1.4.1` recorded in repository evidence.
 
@@ -26,11 +27,11 @@ The concurrency test that initially failed because PostgreSQL was unavailable pa
 
 ## Latest Stage 8 hardening
 
-The mainline now includes the following merged governance work:
+The implementation audit baseline includes the following merged governance work:
 
 - **PR #514** — policy decisions are connected to the audit bridge and execution-trace metadata.
 - **PR #516** — governed AgentInstance replacement workflow with explicit replacement proposals, cutover preparation, predecessor draining, lineage and governed cutover.
-- **PR #517** — principal identity evidence is preserved through workflow child-run creation; merged as the current mainline commit `1c8c3ee...`.
+- **PR #517** — principal identity evidence is preserved through workflow child-run creation; merged as implementation baseline `1c8c3ee...`.
 
 These changes supersede the earlier Stage 8 audit records that still described replacement and workflow principal propagation as open gaps.
 
