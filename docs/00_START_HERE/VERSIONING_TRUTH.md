@@ -11,18 +11,20 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 ### Current release truth
 
-- Latest published release: **`v1.4.1`**
-- Release commit: **`f7f5062feb125c7ca50263f74a0e40bc4abfa591`**
-- `v1.4.1` release assets: **published and verified**.
-- `v1.4.1` exact-SHA Production Certification: **PASS** on certification run `34696339261`.
-- `v1.4.1` external production deployment: **NOT VERIFIED**.
+- Latest published release: **`v1.4.2`**
+- Release commit: **`dba0bb672deb1236b6724bb8851526e656f47967`**
+- `v1.4.2` Git tag: **VERIFIED**, annotated tag resolving to the release commit.
+- `v1.4.2` GitHub Release: **PUBLISHED**, not draft, not prerelease.
+- `v1.4.2` release assets: **published and verified**.
+- `v1.4.2` exact-SHA Production Certification: **PASS** on run `35108008066`, job `104834133092`.
+- `v1.4.2` external production deployment: **NOT VERIFIED**.
 - Customer acceptance / live provider validation: **PENDING**.
 
-`v1.4.1` is the current engineering-certified release snapshot. It must not be described as externally production-certified until target-specific evidence exists.
+`v1.4.2` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
 Historical certified release `v1.3.8` remains frozen and traceable at `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
 
-Current `main` is at/after `1c8c3ee2fc933148f90e967e18167fe602d0ad00` and is **not** a newly certified release. Fresh certification is required before promotion of these later engineering changes.
+The current `main` may contain documentation reconciliation commits after the certified release SHA. Those commits are not automatically covered by `v1.4.2` certification; any future code promotion requires a new exact-SHA certification.
 
 ## 2. Architecture version
 
@@ -49,11 +51,30 @@ Current phase truth:
 - Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**
 - Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**
 - Stage 7: **ACTIVE — EXTERNAL PRODUCTION EXECUTION / CERTIFICATION**
-- Stage 8: **ACTIVE — GOVERNED AGENT WORKFORCE FOUNDATION IMPLEMENTED; ACCEPTANCE/EVIDENCE HARDENING REMAINS**
+- Stage 8: **GOVERNED AGENT WORKFORCE FOUNDATION IMPLEMENTED; ACCEPTANCE/EVIDENCE RECONCILIATION CONTINUES WHERE REQUIRED**
+- Stage 9: **CURRENT PLANNED SLICES IMPLEMENTED AND RELEASE-CERTIFIED IN `v1.4.2`**
 
-## 4. New Agent capability workstream
+## 4. Stage 9 optimization workstream
 
-The focused Agent capability gate is intentionally separate from external production deployment. The capabilities are:
+Stage 9 is the optimization layer above the governed execution substrate. The current certified slices are:
+
+1. Capability-aware workload routing.
+2. Task/risk/cost-aware model selection.
+3. Queue-aware workload balancing.
+4. Persisted workload-balancing evidence.
+5. Telemetry-backed Agent fitness.
+6. Agent version fitness.
+7. Promotion evidence.
+8. Governed promotion.
+9. Governed rollback planning.
+10. Workforce capacity forecasting.
+11. Governed workforce scaling control loop.
+
+Optimization remains subordinate to identity, policy, approval, budget, lifecycle, concurrency, audit and execution controls.
+
+## 5. Agent capability workstream
+
+The focused Agent capability gate remains separate from external production deployment. The capabilities are:
 
 1. **Tool Calling** — model/tool execution contract, allow-listed registry and execution guardrails.
 2. **Structured Arguments** — JSON-schema-defined arguments, provider-neutral validation and fail-closed behavior before side effects.
@@ -61,16 +82,16 @@ The focused Agent capability gate is intentionally separate from external produc
 4. **Provider validation** — real-provider validation, starting with LM Studio.
 5. **Release gate** — fresh exact-SHA certification for Agent capability code promoted into a release.
 
-These capabilities are substantially present in the current architecture; the active work is acceptance testing and hardening rather than rebuilding the stack from zero.
+These capabilities are substantially present in the architecture; active work should focus on acceptance evidence and hardening rather than rebuilding the stack from zero.
 
-## 5. How the axes relate
+## 6. How the axes relate
 
 ```text
 RELEASE
-v1.3.8 ─────────► v1.4.0 candidate ─────────► v1.4.1
- frozen            certified candidate          current certified release
-                                                   |
-                                                   +-- external production: pending
+v1.3.8 ─────────► v1.4.1 ─────────► v1.4.2
+ historical        prior certified    current certified
+                                        |
+                                        +-- external production: pending
 
 ARCHITECTURE
 V1.4 frozen foundation
@@ -80,12 +101,13 @@ V1.5 Agentic Operating Model
 
 ENGINEERING
 Phase 11 → 12 → 13 → 14.x → Stage 7 external execution
-                              └→ Stage 8 governed workforce / Agent capabilities
+                              └→ Stage 8 governed workforce foundation
+                                  └→ Stage 9 optimization/control loops
 ```
 
 These axes may advance independently.
 
-## 6. Evidence rules
+## 7. Evidence rules
 
 1. A blueprint does not prove implementation.
 2. An engineering phase does not create a release.
@@ -95,7 +117,7 @@ These axes may advance independently.
 6. No evidence transfers automatically across SHAs.
 7. Historical documents remain traceable but cannot override current canonical truth.
 
-## 7. Naming rule
+## 8. Naming rule
 
 - `vX.Y.Z` → immutable product release.
 - `VX.Y` → architecture baseline/generation.
@@ -105,7 +127,7 @@ These axes may advance independently.
 - `CERTIFIED` → exact-SHA certification evidence exists.
 - `PRODUCTION VERIFIED` → independently verified deployment evidence exists.
 
-## 8. Source-of-truth order
+## 9. Source-of-truth order
 
 For release truth:
 1. `docs/releases/RELEASE_TRUTH_LEDGER.md`
