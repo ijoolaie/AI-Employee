@@ -12,6 +12,8 @@ down_revision = "p0eimmutableaudit"
 branch_labels = None
 depends_on = None
 
+PERMISSION = ("agent_workforce.replace", "Manage governed AgentInstance replacement cutovers")
+
 
 def upgrade() -> None:
     proposal_kind = postgresql.ENUM(
@@ -55,8 +57,25 @@ def upgrade() -> None:
     )
     op.alter_column("agent_workforce_proposals", "kind", server_default=None)
 
+    code, description = PERMISSION
+    op.execute(sa.text(
+        "INSERT INTO permissions (id, code, description) VALUES (gen_random_uuid(), :code, :description) "
+        "ON CONFLICT (code) DO NOTHING"
+    ).bindparams(code=code, description=description))
+    op.execute(sa.text(
+        "INSERT INTO role_permissions (role_id, permission_id) "
+        "SELECT r.id, p.id FROM roles r CROSS JOIN permissions p "
+        "WHERE r.name = 'Admin' AND p.code = :code "
+        "ON CONFLICT DO NOTHING"
+    ).bindparams(code=code))
+
 
 def downgrade() -> None:
+    code, _ = PERMISSION
+    op.execute(sa.text(
+        "DELETE FROM role_permissions WHERE permission_id IN (SELECT id FROM permissions WHERE code = :code)"
+    ).bindparams(code=code))
+    op.execute(sa.text("DELETE FROM permissions WHERE code = :code").bindparams(code=code))
     op.drop_index(
         "ix_agent_workforce_proposals_tenant_replacement",
         table_name="agent_workforce_proposals",
