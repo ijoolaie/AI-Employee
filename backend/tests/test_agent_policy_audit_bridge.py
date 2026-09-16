@@ -3,9 +3,9 @@ from uuid import uuid4
 
 import pytest
 
+from app.models.agent_access_review import AgentAccessReviewDecision
 from app.models.agent_instance import AgentInstanceStatus
 from app.services import agent_policy_engine
-from app.models.agent_access_review import AgentAccessReviewDecision
 from app.services.agent_policy_engine import (
     PolicyDecision,
     PolicyRequest,
@@ -63,16 +63,40 @@ class FakeDb:
         pass
 
 
-def request(tenant, agent):
-    return PolicyRequest(
+def make_context():
+    tenant = uuid4()
+    instance = SimpleNamespace(
+        id=uuid4(),
         tenant_id=tenant,
-        agent_instance_id=agent,
-        action="tool.execute",
-        tool_name="send_email",
-        required_permission=None,
-        requires_approval=False,
-        context={},
+        enabled=True,
+        status=AgentInstanceStatus.ENABLED,
+        permission_policy={
+            "allowed_tools": ["send_email"],
+            "permissions": [],
+        },
     )
+    identity = SimpleNamespace(
+        id=uuid4(),
+        active=True,
+        revoked_at=None,
+        expires_at=None,
+    )
+    return tenant, instance, identity
+
+
+def request(tenant, agent, **overrides):
+    values = {
+        "tenant_id": tenant,
+        "agent_instance_id": agent,
+        "action": "tool.execute",
+        "tool_name": "send_email",
+        "required_permission": None,
+        "requires_approval": False,
+        "context": {},
+    }
+    values.update(overrides)
+    return PolicyRequest(**values)
+
 
 @pytest.fixture
 def no_kill_switch(monkeypatch):
@@ -85,31 +109,13 @@ def no_kill_switch(monkeypatch):
         fake_assert_not_killed,
     )
 
+
 @pytest.mark.asyncio
 async def test_policy_decision_calls_audit_bridge(
     monkeypatch,
     no_kill_switch,
 ):
-    tenant = uuid4()
-
-    instance = SimpleNamespace(
-        id=uuid4(),
-        tenant_id=tenant,
-        enabled=True,
-        status=AgentInstanceStatus.ENABLED,
-        permission_policy={
-            "allowed_tools": ["send_email"],
-            "permissions": [],
-        },
-    )
-
-    identity = SimpleNamespace(
-        id=uuid4(),
-        active=True,
-        revoked_at=None,
-        expires_at=None,
-    )
-
+    tenant, instance, identity = make_context()
     captured = []
 
     async def fake_audit(db, decision):
@@ -126,9 +132,6 @@ async def test_policy_decision_calls_audit_bridge(
         request(tenant, instance.id),
     )
 
-    print(result.decision, result.reason)
-    print(result.metadata)
-
     assert result.decision == PolicyDecision.ALLOW
     assert len(captured) == 1
     assert captured[0].action == "tool.execute"
@@ -139,25 +142,7 @@ async def test_audit_bridge_failure_does_not_change_policy_behavior(
     monkeypatch,
     no_kill_switch,
 ):
-    tenant = uuid4()
-
-    instance = SimpleNamespace(
-        id=uuid4(),
-        tenant_id=tenant,
-        enabled=True,
-        status=AgentInstanceStatus.ENABLED,
-        permission_policy={
-            "allowed_tools": ["send_email"],
-            "permissions": [],
-        },
-    )
-
-    identity = SimpleNamespace(
-        id=uuid4(),
-        active=True,
-        revoked_at=None,
-        expires_at=None,
-    )
+    tenant, instance, identity = make_context()
 
     async def failing_audit(db, decision):
         raise RuntimeError("audit unavailable")
@@ -168,8 +153,54 @@ async def test_audit_bridge_failure_does_not_change_policy_behavior(
         failing_audit,
     )
 
-    with pytest.raises(RuntimeError):
-        await authorize(
-            FakeDb(instance, identity),
-            request(tenant, instance.id),
-        )
+    result = await authorize(
+        FakeDb(instance, identity),
+        request(tenant, instance.id),
+    )
+
+    assert result.decision == PolicyDecision.ALLOW
+    assert result.reason == "policy_allow"
+
+
+@pytest.mark.asyncio
+async def test_policy_audit_bridge_covers_allow_deny_and_require_approval(
+    monkeypatch,
+    no_kill_switch,
+):
+    captured = []
+
+    async def fake_audit(db, decision):
+        captured.append(decision)
+
+    monkeypatch.setattr(
+        agent_policy_engine,
+        "record_policy_decision_audit",
+        fake_audit,
+    )
+
+    tenant, instance, identity = make_context()
+    allowed = await authorize(
+        FakeDb(instance, identity),
+        request(tenant, instance.id),
+    )
+
+    tenant, instance, identity = make_context()
+    denied = await authorize(
+        FakeDb(instance, identity),
+        request(tenant, instance.id, tool_name="delete_everything"),
+    )
+
+    tenant, instance, identity = make_context()
+    approval_required = await authorize(
+        FakeDb(instance, identity),
+        request(tenant, instance.id, requires_approval=True),
+    )
+
+    assert allowed.decision == PolicyDecision.ALLOW
+    assert denied.decision == PolicyDecision.DENY
+    assert approval_required.decision == PolicyDecision.REQUIRE_APPROVAL
+    assert [item.decision for item in captured] == [
+        PolicyDecision.ALLOW,
+        PolicyDecision.DENY,
+        PolicyDecision.REQUIRE_APPROVAL,
+    ]
