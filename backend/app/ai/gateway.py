@@ -81,7 +81,16 @@ async def _finalize_durable_call(
     tenant_id: uuid.UUID, run_id: uuid.UUID, call_metadata: dict,
     latency_ms: int,
 ) -> float:
-    """Commit provider accounting independently of the Run transaction."""
+    """Commit provider accounting independently of the Run transaction.
+
+    Audit-ledger writes intentionally do NOT happen in this independent
+    transaction. The Run transaction may already hold the tenant-scoped audit
+    advisory lock from a preceding tool call. Writing the same audit ledger
+    here would block this transaction until the Run transaction commits, while
+    the Run transaction is waiting for this durable finalization to return.
+    The success audit is therefore recorded by the caller's Run transaction
+    after this durable accounting transaction commits.
+    """
     cost = provider.estimate_cost_usd(model, result.prompt_tokens, result.completion_tokens)
     async with AsyncSessionLocal() as durable_db:
         call_log = await durable_db.get(AIProviderCall, call_id)
@@ -109,25 +118,6 @@ async def _finalize_durable_call(
             source_type="ai_provider_call",
             source_id=str(call_id),
             metadata={"provider": provider.name, "model": model, "status": "success"},
-        )
-        await audit_service.record(
-            durable_db,
-            action="ai.provider_call",
-            actor_type="system",
-            tenant_id=tenant_id,
-            resource_type="run",
-            resource_id=run_id,
-            status="success",
-            request_id=request_id,
-            metadata={
-                "provider": provider.name,
-                "model": model,
-                "cost_usd": cost,
-                "latency_ms": latency_ms,
-                "prompt_tokens": result.prompt_tokens,
-                "completion_tokens": result.completion_tokens,
-                **call_metadata,
-            },
         )
         await durable_db.commit()
     return cost
@@ -236,6 +226,26 @@ class AIGateway:
                         budget_run.total_cost_usd = Decimal(str(budget_run.total_cost_usd or 0)) + Decimal(str(cost))
                         budget_run.total_tokens = int(budget_run.total_tokens or 0) + result.prompt_tokens + result.completion_tokens
                         await db.flush()
+                    await audit_service.record(
+                        db,
+                        action="ai.provider_call",
+                        actor_type="system",
+                        tenant_id=tenant_id,
+                        resource_type="run",
+                        resource_id=run_id,
+                        status="success",
+                        request_id=req_id,
+                        metadata={
+                            "provider": self.provider.name,
+                            "model": request.model,
+                            "cost_usd": cost,
+                            "latency_ms": latency_ms,
+                            "prompt_tokens": result.prompt_tokens,
+                            "completion_tokens": result.completion_tokens,
+                            "budget_reservation_usd": float(budget_reservation),
+                            **metadata,
+                        },
+                    )
                 else:
                     call_log = AIProviderCall(
                         tenant_id=tenant_id, run_id=run_id, provider=self.provider.name,
