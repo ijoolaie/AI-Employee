@@ -7,12 +7,15 @@ COMPOSE=(docker compose --env-file "$ENV_FILE" -f docker-compose.production.yml 
 ARTIFACT_DIR="${HA_ARTIFACT_DIR:-artifacts/ha}"
 mkdir -p "$ARTIFACT_DIR"
 
-# Load the variables needed by the smoke checks. Strip an optional UTF-8 BOM
-# so Windows-authored .env files can be sourced safely from Git Bash.
-if [[ -f "$ENV_FILE" ]]; then
-  set -a
-  source <(sed '1s/^\xEF\xBB\xBF//' "$ENV_FILE")
-  set +a
+# CI already exports the required settings. Only source the dotenv file when
+# those settings are absent; sourcing JSON values such as CORS_ORIGINS through
+# Bash would strip their inner quotes and turn valid JSON into invalid input.
+if [[ -z "${REDIS_PASSWORD:-}" || -z "${POSTGRES_USER:-}" || -z "${POSTGRES_DB:-}" ]]; then
+  if [[ -f "$ENV_FILE" ]]; then
+    set -a
+    source <(sed '1s/^\xEF\xBB\xBF//' "$ENV_FILE")
+    set +a
+  fi
 fi
 
 : "${REDIS_PASSWORD:?REDIS_PASSWORD must be set by $ENV_FILE or the environment}"
@@ -22,11 +25,32 @@ fi
 # Keep one clean, auditable evidence run per invocation.
 : > "$ARTIFACT_DIR/recovery-evidence.txt"
 : > "$ARTIFACT_DIR/alembic-current.txt"
+: > "$ARTIFACT_DIR/outbox-table.txt"
 
 wait_http() {
   local url="$1"
   for _ in $(seq 1 30); do
     if curl -fsS --max-time 3 "$url" >/dev/null; then return 0; fi
+    sleep 2
+  done
+  return 1
+}
+
+wait_postgres() {
+  for _ in $(seq 1 30); do
+    if "${COMPOSE[@]}" exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
+wait_redis() {
+  for _ in $(seq 1 30); do
+    if "${COMPOSE[@]}" exec -T redis redis-cli -a "$REDIS_PASSWORD" ping 2>/dev/null | grep -q PONG; then
+      return 0
+    fi
     sleep 2
   done
   return 1
@@ -38,6 +62,26 @@ record "HA_FAILURE_RECOVERY_SMOKE=START"
 record "COMMIT_SHA=${GITHUB_SHA:-unknown}"
 record "STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+# Bootstrap the dedicated smoke database before any application worker/beat
+# can query it. This prevents a fresh PostgreSQL volume from racing Celery's
+# outbox dispatcher before migrations create outbox_messages and other tables.
+"${COMPOSE[@]}" stop api worker beat frontend >/dev/null 2>&1 || true
+"${COMPOSE[@]}" up -d postgres redis storage-init
+wait_postgres
+wait_redis
+record "DEPENDENCY_BOOTSTRAP=PASS"
+
+"${COMPOSE[@]}" run --rm --no-deps api alembic upgrade head
+record "ALEMBIC_UPGRADE_HEAD=PASS"
+
+# Explicitly verify the table involved in the observed failure before any
+# Celery worker/beat can start. This turns the previous race into a hard,
+# inspectable smoke assertion.
+"${COMPOSE[@]}" exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT to_regclass('public.outbox_messages');" | tee "$ARTIFACT_DIR/outbox-table.txt"
+grep -qx 'outbox_messages' "$ARTIFACT_DIR/outbox-table.txt"
+record "OUTBOX_TABLE_PRESENT=PASS"
+
+"${COMPOSE[@]}" up -d api worker beat frontend
 wait_http "http://127.0.0.1:18000/health"
 record "INITIAL_API_HEALTH=PASS"
 
@@ -50,18 +94,12 @@ record "API_RESTART_RECOVERY=PASS"
 record "WORKER_BEAT_RESTART=PASS"
 
 "${COMPOSE[@]}" restart redis
-for _ in $(seq 1 30); do
-  if "${COMPOSE[@]}" exec -T redis redis-cli -a "$REDIS_PASSWORD" ping 2>/dev/null | grep -q PONG; then break; fi
-  sleep 2
-done
+wait_redis
 wait_http "http://127.0.0.1:18000/health/dependencies"
 record "REDIS_RESTART_RECOVERY=PASS"
 
 "${COMPOSE[@]}" restart postgres
-for _ in $(seq 1 30); do
-  if "${COMPOSE[@]}" exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; then break; fi
-  sleep 2
-done
+wait_postgres
 wait_http "http://127.0.0.1:18000/health/dependencies"
 "${COMPOSE[@]}" exec -T api alembic current 2>&1 | tee "$ARTIFACT_DIR/alembic-current.txt"
 test -s "$ARTIFACT_DIR/alembic-current.txt"

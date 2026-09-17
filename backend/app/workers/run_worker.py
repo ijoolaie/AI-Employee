@@ -20,6 +20,7 @@ from app.models.employee import EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services.run_execution_fence import execute_run_locked
+from app.services.run_recovery import recover_stale_run_execution
 from app.services.agent_governance import governed_agent_execution
 from app.services.agent_kill_switch_service import assert_not_killed
 from app.services.tenant_resource_limiter import (
@@ -48,6 +49,15 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                 raise NotFoundError("Run not found")
             if run.tenant_id != parsed_tenant_id:
                 raise ValidationAppError("Worker tenant context does not match Run tenant", details={"run_id": run_id})
+
+            # A late Celery redelivery can arrive after the original worker has
+            # died. Do not replay an external provider call for a stale `running`
+            # Run. Instead, reconcile the durable in-flight fence to `unknown`
+            # and fail closed. Fresh runs continue through the normal runtime.
+            if await recover_stale_run_execution(db, run=run):
+                await db.commit()
+                logger.error("run_execution_recovered_as_ambiguous", extra={"run_id": run_id, "tenant_id": tenant_id})
+                return
 
             version_result = await db.execute(select(EmployeeVersion).where(EmployeeVersion.id == run.employee_version_id))
             version = version_result.scalar_one_or_none()

@@ -20,6 +20,7 @@ celery_app = Celery(
     backend=settings.celery_result_backend,
     include=[
         "app.workers.run_worker",
+        "app.workers.run_recovery_worker",
         "app.workers.workflow_worker",
         "app.workers.workflow_trigger_worker",
         "app.workers.outbox_worker",
@@ -33,6 +34,7 @@ SCHEDULE_INTERVALS = {
     "workflow_schedule_tick_seconds": 30.0,
     "workflow_approval_expiry_seconds": 30.0,
     "workflow_timeout_sweep_seconds": 30.0,
+    "run_stale_sweep_seconds": 30.0,
     "test_center_expiration_sweep_seconds": 30.0,
     "outbox_dispatch_seconds": 5.0,
 }
@@ -43,9 +45,9 @@ CONTROL_QUEUE = "control"
 OUTBOX_QUEUE = "outbox"
 EMAIL_QUEUE = "email"
 UNROUTED_QUEUE = "unrouted"
-
 TASK_ROUTES = {
     "run.execute": {"queue": EXECUTION_QUEUE},
+    "run.stale_sweep": {"queue": EXECUTION_QUEUE},
     "workflow.execute": {"queue": EXECUTION_QUEUE},
     "workflow.parallel_branch": {"queue": EXECUTION_QUEUE},
     "test_center.execute_run": {"queue": TEST_CENTER_QUEUE},
@@ -129,11 +131,18 @@ celery_app.conf.update(
             "task": "workflow.timeout_sweep",
             "schedule": SCHEDULE_INTERVALS["workflow_timeout_sweep_seconds"],
         },
+        "run-stale-sweep": {
+            "task": "run.stale_sweep",
+            "schedule": SCHEDULE_INTERVALS["run_stale_sweep_seconds"],
+        },
         "test-center-expiration-sweep": {
             "task": "test_center.expiration_sweep",
             "schedule": SCHEDULE_INTERVALS["test_center_expiration_sweep_seconds"],
         },
-        "outbox-dispatch": {"task": "outbox.dispatch", "schedule": SCHEDULE_INTERVALS["outbox_dispatch_seconds"]},
+        "outbox-dispatch": {
+            "task": "outbox.dispatch",
+            "schedule": SCHEDULE_INTERVALS["outbox_dispatch_seconds"],
+        },
     },
 )
 
