@@ -5,7 +5,7 @@
 **Certified SHA:** `4b84b2ed2da628794ccfdc402e965daa06b641e`  
 **Production Certification:** Run `35115616081` — PASS  
 **Product Gate failures:** 0  
-**Current mainline post-certification:** Public Chat tenant propagation merged as PR #534, merge commit `5375da607b0ebc7dbc9ba0a97ae6322079cf5298`  
+**Current mainline post-certification:** Public Chat tenant propagation merged as PR #534, merge commit `5375da607b0ebc7dbc9ba0a97ae6322079cf5298`; HA recovery evidence fix merged as PR #535, squash merge commit `2f7bdd9c2015ed963a9978be9f096a57ffbebd07`  
 **Audit status:** EXTERNAL PRODUCTION PENDING
 
 ## Purpose
@@ -39,7 +39,7 @@ Evidence does not transfer automatically between SHAs.
 | CR-14 | Billing/payment/integrations | Target | 🔴 | Core flows certified | Live provider/webhook/payment validation where enabled | Maybe | Yes |
 | CR-15 | DAST | Security/Target | 🟠 | Ephemeral DAST CI PASS; authenticated target findings still require disposition/retest | Authenticated running-target DAST + disposition/retest | Maybe | Yes |
 | CR-16 | Independent pentest | Acceptance | 🔴 | No independent external evidence | Independent security review and remediation disposition | Maybe | Yes |
-| CR-17 | HA/failure recovery | Target | 🟠 | Local failure/recovery smoke PASS + CI HA validation PASS | Real-target controlled failure rehearsal | No currently | Yes |
+| CR-17 | HA/failure recovery | Target | 🟠 | Local failure/recovery smoke PASS + CI HA validation PASS; PR #535 made HA evidence deterministic and was fully CI-validated | Real-target controlled failure rehearsal | No currently | Yes |
 | CR-18 | Incident response | Acceptance | 🔴 | Engineering simulation | Real alert → escalation → recovery drill | No | Yes |
 | CR-19 | On-call ownership | Acceptance | 🔴 | Routing contract | Named primary/backup and tested paging path | No | Yes |
 | CR-20 | Data retention | Mixed | 🟠 | Retention service/tests implemented | Target deletion/archive/backup-lifecycle verification | No currently | Yes |
@@ -64,11 +64,26 @@ The repository and local real-stack evidence for this change are:
 
 This proves the Public Chat → tenant-aware Run → Celery execution path in the local real stack. It does **not** prove external production readiness, live-provider readiness, RPO/RTO, or commercial go-live.
 
+## HA failure/recovery evidence — reconciled
+
+PR #535 (`fix: make HA recovery smoke evidence deterministic`) has been merged into `main` as squash merge commit `2f7bdd9c2015ed963a9978be9f096a57ffbebd07`.
+
+The change makes the HA recovery smoke evidence deterministic by loading required credentials/configuration from `.env.production` while stripping an optional UTF-8 BOM, failing fast when required Redis/PostgreSQL variables are unavailable, truncating evidence files at the beginning of each invocation, and capturing Alembic output from both stdout and stderr with a non-empty evidence check.
+
+PR #535 passed all required validation workflows:
+
+- HA Failure Recovery Validation — PASS
+- CI — PASS
+- Architecture Guard — PASS
+- CodeQL — PASS
+
+The HA validation job completed the recovery rehearsal and uploaded recovery evidence successfully. This strengthens the engineering/local acceptance evidence for CR-17, but it remains insufficient for a real production-target HA rehearsal.
+
 ## Repository engineering track — reconciled
 
 The previous repository blocker was the policy-audit failure-isolation gap tracked by #513. PR #531 has now been merged as `5e0f27063a8945a752414bd161e5873f189e1288`. Its PR head passed CI plus the repository security/governance validation workflows, and #513 was closed as completed.
 
-The later Public Chat tenant propagation fix was merged as PR #534 after full CI/security validation and real local-stack certification. This change is now part of `main`, but the published v1.4.4 certification remains tied to its certified SHA. No later `main` commit should be described as part of the immutable v1.4.4 certification unless separately certified.
+The later Public Chat tenant propagation fix was merged as PR #534 after full CI/security validation and real local-stack certification. The HA recovery evidence fix was subsequently merged as PR #535 after full CI, architecture, CodeQL and HA validation. These changes are now part of `main`, but the published v1.4.4 certification remains tied to its certified SHA. No later `main` commit should be described as part of the immutable v1.4.4 certification unless separately certified.
 
 ## External production track — next execution
 
@@ -97,4 +112,4 @@ The later Public Chat tenant propagation fix was merged as PR #534 after full CI
 
 ## Current conclusion
 
-`v1.4.4` is release-certified and the Public Chat tenant propagation blocker is resolved on `main`, but the system is **not yet externally production-certified for unrestricted commercial go-live**. The dominant remaining work is target provisioning and independent operational/security/customer acceptance evidence, not broad feature expansion.
+`v1.4.4` is release-certified; the Public Chat tenant propagation blocker is resolved on `main`; and the HA failure/recovery evidence path is now deterministic and fully CI-validated. The system is **not yet externally production-certified for unrestricted commercial go-live**. The dominant remaining work is target provisioning and independent operational/security/customer acceptance evidence, not broad feature expansion.
