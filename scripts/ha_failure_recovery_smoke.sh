@@ -7,6 +7,22 @@ COMPOSE=(docker compose --env-file "$ENV_FILE" -f docker-compose.production.yml 
 ARTIFACT_DIR="${HA_ARTIFACT_DIR:-artifacts/ha}"
 mkdir -p "$ARTIFACT_DIR"
 
+# Load the variables needed by the smoke checks. Strip an optional UTF-8 BOM
+# so Windows-authored .env files can be sourced safely from Git Bash.
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  source <(sed '1s/^\xEF\xBB\xBF//' "$ENV_FILE")
+  set +a
+fi
+
+: "${REDIS_PASSWORD:?REDIS_PASSWORD must be set by $ENV_FILE or the environment}"
+: "${POSTGRES_USER:?POSTGRES_USER must be set by $ENV_FILE or the environment}"
+: "${POSTGRES_DB:?POSTGRES_DB must be set by $ENV_FILE or the environment}"
+
+# Keep one clean, auditable evidence run per invocation.
+: > "$ARTIFACT_DIR/recovery-evidence.txt"
+: > "$ARTIFACT_DIR/alembic-current.txt"
+
 wait_http() {
   local url="$1"
   for _ in $(seq 1 30); do
@@ -47,7 +63,9 @@ for _ in $(seq 1 30); do
   sleep 2
 done
 wait_http "http://127.0.0.1:18000/health/dependencies"
-"${COMPOSE[@]}" exec -T api alembic current | tee "$ARTIFACT_DIR/alembic-current.txt"
+"${COMPOSE[@]}" exec -T api alembic current 2>&1 | tee "$ARTIFACT_DIR/alembic-current.txt"
+test -s "$ARTIFACT_DIR/alembic-current.txt"
+record "ALEMBIC_CURRENT_CAPTURE=PASS"
 record "POSTGRES_RESTART_RECOVERY=PASS"
 record "COMPLETED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 record "HA_FAILURE_RECOVERY_SMOKE=PASS"
