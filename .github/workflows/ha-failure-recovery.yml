@@ -98,4 +98,6 @@ jobs:
 
       - name: Tear down
         if: always()
-        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" down --volumes --remove-orphans
+        run: |
+          # Retriggered after the CI JSON-env parsing fix; keep teardown explicit.
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" down --volumes --remove-orphans
