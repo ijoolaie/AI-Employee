@@ -60,13 +60,13 @@ jobs:
           REDIS_URL=redis://:ci-only-redis-password@redis:6379/0
           CELERY_BROKER_URL=redis://:ci-only-redis-password@redis:6379/1
           CELERY_RESULT_BACKEND=redis://:ci-only-redis-password@redis:6379/2
-          CORS_ORIGINS=["http://127.0.0.1:13000"]
+          CORS_ORIGINS='["http://127.0.0.1:13000"]'
           FRONTEND_BASE_URL=http://127.0.0.1:13000
           FRONTEND_APP_URL=http://127.0.0.1:13000
           NEXT_PUBLIC_API_URL=http://127.0.0.1:18000/api/v1
           LM_STUDIO_BASE_URL=https://ai.example.test/v1
-          SMTP_ALLOWED_RECIPIENT_DOMAINS=[]
-          STRIPE_PRICE_MAP={}
+          SMTP_ALLOWED_RECIPIENT_DOMAINS='[]'
+          STRIPE_PRICE_MAP='{}'
           EOF
 
       - name: Validate Compose
@@ -99,5 +99,5 @@ jobs:
       - name: Tear down
         if: always()
         run: |
-          # Retriggered after the CI JSON-env parsing fix; keep teardown explicit.
+          # Keep teardown explicit so every smoke run cleans its ephemeral stack.
           docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" down --volumes --remove-orphans
