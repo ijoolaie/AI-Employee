@@ -22,6 +22,7 @@ fi
 # Keep one clean, auditable evidence run per invocation.
 : > "$ARTIFACT_DIR/recovery-evidence.txt"
 : > "$ARTIFACT_DIR/alembic-current.txt"
+: > "$ARTIFACT_DIR/outbox-table.txt"
 
 wait_http() {
   local url="$1"
@@ -69,6 +70,13 @@ record "DEPENDENCY_BOOTSTRAP=PASS"
 
 "${COMPOSE[@]}" run --rm --no-deps api alembic upgrade head
 record "ALEMBIC_UPGRADE_HEAD=PASS"
+
+# Explicitly verify the table involved in the observed failure before any
+# Celery worker/beat can start. This turns the previous race into a hard,
+# inspectable smoke assertion.
+"${COMPOSE[@]}" exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "SELECT to_regclass('public.outbox_messages');" | tee "$ARTIFACT_DIR/outbox-table.txt"
+grep -qx 'outbox_messages' "$ARTIFACT_DIR/outbox-table.txt"
+record "OUTBOX_TABLE_PRESENT=PASS"
 
 "${COMPOSE[@]}" up -d api worker beat frontend
 wait_http "http://127.0.0.1:18000/health"
