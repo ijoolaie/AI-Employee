@@ -58,7 +58,7 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
     message.run_id = run.id
     try:
         from app.workers.run_worker import execute_run_task
-        execute_run_task.delay(str(run.id))
+        execute_run_task.delay(str(run.id), str(conversation.tenant_id))
     except Exception as exc:
         await db.rollback()
         raise RuntimeError("Run queue unavailable; retry message") from exc
