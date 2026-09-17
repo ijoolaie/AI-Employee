@@ -7,12 +7,15 @@ COMPOSE=(docker compose --env-file "$ENV_FILE" -f docker-compose.production.yml 
 ARTIFACT_DIR="${HA_ARTIFACT_DIR:-artifacts/ha}"
 mkdir -p "$ARTIFACT_DIR"
 
-# Load the variables needed by the smoke checks. Strip an optional UTF-8 BOM
-# so Windows-authored .env files can be sourced safely from Git Bash.
-if [[ -f "$ENV_FILE" ]]; then
-  set -a
-  source <(sed '1s/^\xEF\xBB\xBF//' "$ENV_FILE")
-  set +a
+# CI already exports the required settings. Only source the dotenv file when
+# those settings are absent; sourcing JSON values such as CORS_ORIGINS through
+# Bash would strip their inner quotes and turn valid JSON into invalid input.
+if [[ -z "${REDIS_PASSWORD:-}" || -z "${POSTGRES_USER:-}" || -z "${POSTGRES_DB:-}" ]]; then
+  if [[ -f "$ENV_FILE" ]]; then
+    set -a
+    source <(sed '1s/^\xEF\xBB\xBF//' "$ENV_FILE")
+    set +a
+  fi
 fi
 
 : "${REDIS_PASSWORD:?REDIS_PASSWORD must be set by $ENV_FILE or the environment}"
