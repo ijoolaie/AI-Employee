@@ -31,6 +31,12 @@ async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
     if run.status != "running" or run.started_at is None:
         return False
 
+    # Avoid a database round-trip for the overwhelmingly common fresh-run
+    # path. The lock below remains the authority for the actual transition.
+    now = datetime.now(timezone.utc)
+    if now - run.started_at <= timedelta(seconds=STALE_RUN_RECOVERY_SECONDS):
+        return False
+
     locked_result = await db.execute(
         select(Run).where(Run.id == run.id).with_for_update()
     )
