@@ -25,24 +25,30 @@ STALE_RUN_RECOVERY_SECONDS = 360
 async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
     """Fail closed on an abandoned running Run without replaying the provider.
 
-    Returns True when recovery was applied. The caller owns the surrounding
-    transaction and must commit the recovery before returning from the worker.
+    The Run row is locked before the recovery transition so duplicate Celery
+    redeliveries cannot both emit recovery transitions/audit entries.
     """
     if run.status != "running" or run.started_at is None:
         return False
 
-    now = datetime.now(timezone.utc)
-    if now - run.started_at <= timedelta(seconds=STALE_RUN_RECOVERY_SECONDS):
+    locked_result = await db.execute(
+        select(Run).where(Run.id == run.id).with_for_update()
+    )
+    locked_run = locked_result.scalar_one_or_none()
+    if locked_run is None or locked_run.status != "running" or locked_run.started_at is None:
         return False
 
-    logical_run_id = str(run.id)
+    now = datetime.now(timezone.utc)
+    if now - locked_run.started_at <= timedelta(seconds=STALE_RUN_RECOVERY_SECONDS):
+        return False
+
+    logical_run_id = str(locked_run.id)
     result = await db.execute(
         select(AIProviderCall).where(
             or_(
-                AIProviderCall.run_id == run.id,
+                AIProviderCall.run_id == locked_run.id,
                 AIProviderCall.raw_meta["logical_run_id"].astext == logical_run_id,
-            ),
-            AIProviderCall.status == "in_flight",
+            )
         )
     )
     calls = list(result.scalars().all())
@@ -54,34 +60,48 @@ async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
     )
 
     for call in calls:
-        call.status = "unknown"
-        call.error_message = error_message[:1000]
-        call.raw_meta = {
-            **(call.raw_meta or {}),
-            "ambiguous_provider_outcome": True,
-            "recovered_from_stale_worker": True,
-            "recovery_reason": reason,
-            "recovered_at": now.isoformat(),
-        }
+        if call.status == "in_flight":
+            call.status = "unknown"
+            call.error_message = error_message[:1000]
+            call.raw_meta = {
+                **(call.raw_meta or {}),
+                "ambiguous_provider_outcome": True,
+                "recovered_from_stale_worker": True,
+                "recovery_reason": reason,
+                "recovered_at": now.isoformat(),
+            }
 
-    run.status = "failed"
-    run.error_message = error_message[:2000]
-    run.completed_at = now
+    # Reconcile only from provider calls that are already durably finalized as
+    # successful. Unknown/in-flight outcomes are deliberately excluded.
+    successful_calls = [call for call in calls if call.status == "success"]
+    locked_run.total_tokens = sum(
+        int(call.prompt_tokens or 0) + int(call.completion_tokens or 0)
+        for call in successful_calls
+    )
+    locked_run.total_cost_usd = sum(
+        (call.cost_usd or 0) for call in successful_calls
+    )
+    locked_run.status = "failed"
+    locked_run.error_message = error_message[:2000]
+    locked_run.completed_at = now
 
     await audit_service.record(
         db,
         action="run.execution_recovered",
         actor_type="system",
-        tenant_id=run.tenant_id,
+        tenant_id=locked_run.tenant_id,
         resource_type="run",
-        resource_id=run.id,
+        resource_id=locked_run.id,
         status="failure",
-        request_id=run.request_id,
+        request_id=locked_run.request_id,
         metadata={
             "reason": reason,
-            "in_flight_call_count": len(calls),
+            "provider_call_count": len(calls),
+            "in_flight_call_count": sum(1 for call in calls if call.status == "unknown" and call.raw_meta and call.raw_meta.get("recovered_from_stale_worker")),
+            "successful_call_count": len(successful_calls),
             "replay_blocked": True,
             "recovery_window_seconds": STALE_RUN_RECOVERY_SECONDS,
+            "usage_reconciled_from_durable_provider_calls": True,
         },
     )
     await db.flush()
