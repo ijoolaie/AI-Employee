@@ -35,11 +35,17 @@ async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
         select(Run).where(Run.id == run.id).with_for_update()
     )
     locked_run = locked_result.scalar_one_or_none()
-    if locked_run is None or locked_run.status != "running" or locked_run.started_at is None:
+    if (
+        locked_run is None
+        or locked_run.status != "running"
+        or locked_run.started_at is None
+    ):
         return False
 
     now = datetime.now(timezone.utc)
-    if now - locked_run.started_at <= timedelta(seconds=STALE_RUN_RECOVERY_SECONDS):
+    if now - locked_run.started_at <= timedelta(
+        seconds=STALE_RUN_RECOVERY_SECONDS
+    ):
         return False
 
     logical_run_id = str(locked_run.id)
@@ -59,6 +65,7 @@ async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
         "is ambiguous; replay was intentionally blocked."
     )
 
+    recovered_unknown_count = 0
     for call in calls:
         if call.status == "in_flight":
             call.status = "unknown"
@@ -70,6 +77,7 @@ async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
                 "recovery_reason": reason,
                 "recovered_at": now.isoformat(),
             }
+            recovered_unknown_count += 1
 
     # Reconcile only from provider calls that are already durably finalized as
     # successful. Unknown/in-flight outcomes are deliberately excluded.
@@ -97,7 +105,7 @@ async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
         metadata={
             "reason": reason,
             "provider_call_count": len(calls),
-            "in_flight_call_count": sum(1 for call in calls if call.status == "unknown" and call.raw_meta and call.raw_meta.get("recovered_from_stale_worker")),
+            "in_flight_call_count": recovered_unknown_count,
             "successful_call_count": len(successful_calls),
             "replay_blocked": True,
             "recovery_window_seconds": STALE_RUN_RECOVERY_SECONDS,
