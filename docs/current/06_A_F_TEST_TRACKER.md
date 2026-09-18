@@ -14,7 +14,7 @@
 - [x] Version — automated coverage present
 - [x] Run — automated coverage present
 - [x] Worker — local Docker runtime observed healthy and Celery tasks succeeding
-- [ ] Trace — runtime verification pending
+- [x] Trace — local Docker runtime verification passed
 
 ## PHASE B — Execution Safety
 
@@ -60,6 +60,16 @@
 - [ ] Recovery — certification pending
 - [ ] Dead letters — certification pending
 - [ ] Observability — certification pending
+
+## Evidence completed in current test session
+
+### Phase A — Trace — 2026-09-18 runtime evidence
+
+- Trace runtime: **PASS**. Run `a94553e5-2702-4815-9278-afc81c2a71d1` returned a tenant-scoped durable trace with `status=success`, 5 events, 19 total tokens, and zero cost.
+- Trace event coverage: **PASS**. The trace contained `run.created`, `knowledge.retrieved`, `ai_provider_call`, `ai.provider_call`, and `run.completed`.
+- Tenant-scoping: **PASS**. Trace retrieval was performed with the run tenant and returned the expected run only.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
 
 ## Evidence completed in current test session
 
@@ -154,9 +164,8 @@ These are post-release productization/security evidence, not a new production-ce
 
 ## Next test order
 
-1. Continue Phase A runtime verification: Trace.
-2. Continue Phase D: Webhook → Replay.
-4. Run Phase E full-stack business acceptance.
-5. Run Phase F production certification.
+1. Continue Phase D: Webhook → Replay.
+2. Run Phase E full-stack business acceptance.
+3. Run Phase F production certification.
 
 **Rule:** Every completed test changes the corresponding `[ ]` to `[x]` here with the command/result recorded in the evidence section or a linked dated evidence document.
