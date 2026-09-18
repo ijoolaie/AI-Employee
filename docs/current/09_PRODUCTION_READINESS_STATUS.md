@@ -1,13 +1,22 @@
 # Production Readiness Status
 
-**Status date:** 2026-09-16  
+**Status date:** 2026-09-18  
 **Latest published release:** `v1.4.2`  
 **Exact certified release SHA:** `dba0bb672deb1236b6724bb8851526e656f47967`  
 **Production Certification run:** `35108008066` — PASS  
 **Certification job:** `104834133092` — PASS  
-**Current status:** RELEASE-CERTIFIED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
+**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 ENGINEERING CANDIDATE / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
 
 ## Current release and project boundary
+
+### Current engineering candidate — v1.4.5
+
+- Exact candidate SHA: `a9d5cdd`
+- Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
+- Working tree at certification: clean
+- Candidate is **not** externally certified and does not inherit `v1.4.2` certification.
+
+
 
 The repository has completed the current planned engineering hardening and `v1.4.2` passed the exact-SHA Production Certification suite. The certified release contains the current Stage 9 governed optimization/control-loop slices.
 
