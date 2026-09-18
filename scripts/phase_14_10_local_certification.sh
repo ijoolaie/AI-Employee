@@ -37,6 +37,20 @@ run_capture() {
   fi
 }
 
+# Resolve the host Python runtime without hard-coding a developer-specific path.
+# On Windows/WSL, cmd.exe resolves the Windows Python installation; on native
+# Linux/macOS, use python or python3 from PATH.
+if command -v cmd.exe >/dev/null 2>&1 && cmd.exe /c python --version >/dev/null 2>&1; then
+  PYTHON_CMD=(cmd.exe /c python)
+elif command -v python >/dev/null 2>&1 && python --version >/dev/null 2>&1; then
+  PYTHON_CMD=(python)
+elif command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1; then
+  PYTHON_CMD=(python3)
+else
+  echo "Python runtime not found. Install Python or make it available on PATH." >&2
+  exit 1
+fi
+
 GIT_SHA="$(git rev-parse HEAD)"
 GIT_REF="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || printf 'detached')"
 ARCHIVE_SHA256="$(git archive --format=tar "$GIT_SHA" | sha256sum | awk '{print $1}')"
@@ -64,7 +78,7 @@ if [[ ! -f "$ENV_FILE" ]]; then
 fi
 [[ -f "$LOCAL_OVERRIDE" ]] || { echo "Missing $LOCAL_OVERRIDE." >&2; exit 1; }
 
-run_capture production_completeness_audit python scripts/production_completeness_audit.py
+run_capture production_completeness_audit "${PYTHON_CMD[@]}" scripts/production_completeness_audit.py
 run_capture compose_config compose config --quiet
 # Validate the application settings before starting the full stack. This catches malformed
 # JSON-backed list/dict environment values early and records the failure without exposing secrets.
@@ -97,11 +111,11 @@ cat >"$OUT_DIR/EVIDENCE_INDEX.md" <<EOF
 
 - Certification class: **LOCAL_PRODUCTION_LIKE_ENGINEERING_EVIDENCE**
 - Formal Phase 14.10 status: **EXTERNAL-PENDING**
-- UTC execution time: \`$TIMESTAMP\`
-- Exact Git SHA: \`$GIT_SHA\`
-- Git ref: \`$GIT_REF\`
-- Git archive SHA256: \`$ARCHIVE_SHA256\`
-- Compose project: \`$COMPOSE_PROJECT_NAME\`
+- UTC execution time: `$TIMESTAMP`
+- Exact Git SHA: `$GIT_SHA`
+- Git ref: `$GIT_REF`
+- Git archive SHA256: `$ARCHIVE_SHA256`
+- Compose project: `$COMPOSE_PROJECT_NAME`
 
 ## Executed evidence
 

@@ -1,6 +1,6 @@
 # AI-Employee — A–F Test Tracker
 
-**Status date:** 2026-08-23
+**Status date:** 2026-09-18
 **Repository:** `ijoolaie/AI-Employee`
 **Purpose:** Single living tracker for the current test sequence. Update this document as evidence is completed; do not restart already-passed smoke/contract tests unless a regression requires it.
 
@@ -8,30 +8,30 @@
 
 - [x] Health — automated/runtime evidence present
 - [x] Dependencies — automated/runtime evidence present
-- [x] Auth — automated coverage present; full runtime certification remains pending
-- [x] Tenant isolation — automated coverage present; full runtime certification remains pending
+- [x] Auth — automated coverage and real-stack certification passed
+- [x] Tenant isolation — automated coverage and real-stack certification passed
 - [x] Employee — automated coverage present
 - [x] Version — automated coverage present
 - [x] Run — automated coverage present
 - [x] Worker — local Docker runtime observed healthy and Celery tasks succeeding
-- [ ] Trace — runtime verification pending
+- [x] Trace — local Docker runtime verification passed
 
 ## PHASE B — Execution Safety
 
 - [x] Guardrails — automated tests passed
 - [x] Tool permissions — automated tests passed
 - [x] Failure handling — automated coverage present
-- [ ] Retry — runtime verification pending
-- [ ] Timeout — runtime verification pending
-- [ ] Cancellation — runtime verification pending
+- [x] Retry — runtime fail-closed verification passed
+- [x] Timeout — runtime sweep verification passed
+- [x] Cancellation — runtime service verification passed
 
 ## PHASE C — AI
 
-- [ ] Real provider — local provider/runtime verification pending
+- [x] Real provider — local Docker runtime execution passed
 - [x] Token accounting — automated coverage present
 - [x] Cost accounting — automated coverage present
 - [x] Prompt assembly — automated coverage present
-- [ ] RAG — end-to-end runtime verification pending
+- [x] RAG — full end-to-end runtime verification passed
 
 ## PHASE D — Workflow
 
@@ -39,8 +39,8 @@
 - [x] Trigger — automated tests passed
 - [x] Schedule — automated tests passed
 - [x] Approval — automated tests passed
-- [ ] Webhook — runtime/API verification pending
-- [ ] Replay — runtime verification pending
+- [x] Webhook — runtime/API verification passed
+- [x] Replay — runtime verification passed
 
 ## PHASE E — Business
 
@@ -50,7 +50,7 @@
 - [x] Commerce — implementation/test coverage present
 - [x] Billing — implementation/test coverage present
 - [x] Analytics — implementation/test coverage present
-- [ ] Full-stack business acceptance — pending
+- [x] Full-stack business acceptance — five official real-stack acceptance gates passed on 2026-09-18
 
 ## PHASE F — Production Certification
 
@@ -63,29 +63,76 @@
 
 ## Evidence completed in current test session
 
+### Phase E — Full-stack business acceptance — 2026-09-18 runtime evidence
+
+- Conversation tenant isolation: **PASS**. `scripts/e2e_conversation_tenant_verify.py` passed public conversation creation/read, authenticated tenant-scoped listing, wrong-customer token rejection, cross-tenant public read rejection, and cross-tenant handoff rejection.
+- Employee → Run → AI → Result: **PASS**. `scripts/e2e_employee_run_verify.py` passed authentication, commercial-license fixture, employee creation/version/list-get, run creation, terminal result, and the complete Employee → Run → AI → Result flow.
+- Files → Knowledge → Memory: **PASS**. `scripts/e2e_files_knowledge_memory_verify.py` passed file upload/list/get/download, knowledge indexing/search, memory creation/search, and the aggregate product acceptance gate.
+- Admin / Developer: **PASS**. `scripts/e2e_admin_developer_verify.py` passed non-platform admin denial, developer API-key creation, secret redaction, and API-key revocation.
+- Workflow + Approval + Schedule: **PASS**. `scripts/e2e_workflow_approval_schedule_verify.py` passed workflow/version creation, approval create/approve, workflow resume completion, schedule next-run calculation, tenant-scoped schedule read, deactivation, and deletion.
+- Phase E aggregate full-stack business acceptance gate: **PASS**. All five official acceptance scripts completed successfully against the current local Docker stack.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
+
+### P0 — Tenant Isolation + RBAC + Immutable Audit Retention — 2026-09-18 runtime evidence
+
+- Real-stack tenant/RBAC certification: **PASS**. The certification script completed tenant registration, tenant-context isolation, cross-tenant employee/file/knowledge rejection, same-tenant access, RBAC read/write enforcement, and knowledge-search isolation successfully.
+- Aggregate gate: **PASS**. `TENANT ISOLATION + RBAC + KNOWLEDGE P0 REAL-STACK CERTIFICATION PASS`.
+- Certification fixture cleanup: **PASS**. The certification cleanup now deprovisions fixture tenants through the real lifecycle service instead of deleting tenant-owned data.
+- Retention verification: **PASS**. Four certification tenants were retained in PostgreSQL with `status=deprovisioned`; all associated users had `is_active=false`; each tenant retained audit rows including one `edition.deprovisioned` audit event.
+- Immutable audit retention gate: **PASS**. `ACTIVE_CERTIFICATION_TENANTS=0` and `IMMUTABLE_AUDIT_RETENTION_CHECK=PASS`.
+- Legacy certification fixtures from the earlier destructive-cleanup implementation were also deprovisioned and retained; no tenant DELETE was used for cleanup.
+- This evidence verifies local Docker/PostgreSQL runtime behavior and is not a GitHub Actions or production-deployment certification claim.
+
+### Phase D — Webhook + Replay — 2026-09-18 runtime evidence
+
+- Webhook HTTP runtime: **PASS**. Signed JSON webhook accepted with HTTP `202` and created a tenant-scoped delivery with `status=accepted`.
+- Webhook deduplication: **PASS**. Re-sending the same `X-Event-Id` returned the same delivery with `duplicate=true`; delivery count remained **1**.
+- Webhook dispatch: **PASS**. The durable delivery was processed by the worker and persisted as `dispatched` with `attempts=1` and a linked `WorkflowRun`.
+- Replay enqueue: **PASS**. Replaying the delivery was accepted and enqueued through the durable outbox path.
+- Replay runtime: **PASS**. Replay produced a second dispatched `WorkflowRun`; the delivery remained `dispatched` with `attempts=1`.
+- Fixture cleanup: **PASS**. Runtime fixtures were cleaned without deleting immutable `workflow_versions`; related deliveries/runs/step rows were removed and the test workflow/trigger were deactivated.
+- Phase D Webhook + Replay aggregate runtime gate: **PASS**.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
+
+### Phase A — Trace — 2026-09-18 runtime evidence
+
+- Trace runtime: **PASS**. Run `a94553e5-2702-4815-9278-afc81c2a71d1` returned a tenant-scoped durable trace with `status=success`, 5 events, 19 total tokens, and zero cost.
+- Trace event coverage: **PASS**. The trace contained `run.created`, `knowledge.retrieved`, `ai_provider_call`, `ai.provider_call`, and `run.completed`.
+- Tenant-scoping: **PASS**. Trace retrieval was performed with the run tenant and returned the expected run only.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
+
+## Evidence completed in current test session
+
+### Phase C — 2026-09-18 runtime evidence
+
+- Real provider runtime: **PASS**. Customer `a2a96af0-5f64-4dbc-8eec-f299d39b56e3` executed Employee Version `8d75b84f-be51-4f47-a8da-3cc4dc3588a5` successfully through the local runtime boundary; provider call persisted with `status=success`.
+- RAG indexing/retrieval: **PASS**. A tenant-scoped `phase-c-refund-policy.txt` knowledge fixture was indexed into 1 chunk using `deterministic-certification`; semantic search returned 1 result with score `0.361478`.
+- Full RAG E2E: **PASS**. Run `a94553e5-2702-4815-9278-afc81c2a71d1` completed with `status=success`; provider metadata recorded `rag_enabled=true` and `rag_result_count=1`.
+- Audit evidence: **PASS**. The run persisted `run.created`, `knowledge.retrieved`, `ai.provider_call`, and `run.completed`.
+- Phase C aggregate runtime gate: **PASS**.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
+
+### Phase B — 2026-09-17 runtime evidence
+
+- Retry fail-closed runtime: **PASS**. A linked failed employee Run raised `ValidationAppError` with the replacement-blocking message; child count remained **1** before and after execution; no replacement child was created; cleanup passed.
+- Timeout runtime: **PASS**. A synthetic expired running WorkflowRun was processed by the timeout sweep and persisted as `timed_out` with `WORKFLOW_TIMEOUT`; cleanup passed.
+- Cancellation runtime: **PASS**. A synthetic pending WorkflowRun was cancelled through `cancel_workflow_run` and persisted as `cancelled` with `WORKFLOW_CANCELLED`, cancellation reason, `cancelled_at`, and `completed_at`; cleanup passed.
+- Phase B aggregate runtime gate: **PASS**.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
+
 ### Backend — previously recorded evidence
 
 - `pytest -q /app/tests` → **194 passed, 1 warning**
 - `pytest -q /app/tests/test_workflow_foundation.py /app/tests/test_workflow_approval.py /app/tests/test_workflow_triggers.py` → **7 passed, 1 warning**
 - `pytest -q /app/tests/test_v033_execution_hardening.py /app/tests/test_v038_workflow_versioning_contract.py` → **8 passed**
+- Phase B focused retry/timeout/cancellation suites → **30 passed** across the recorded focused runs.
 
-The only warning reported by the full suite is the Python `crypt` deprecation emitted through Passlib; it is not currently a test failure.
-
-### Backend — 2026-08-23 local test session
-
-The project owner ran the following against the current local working tree from `D:\Work\Saas\AI-Employee`:
-
-- `python -m pytest .\backend\tests\test_employee_api.py -q` → **5 passed**
-- `python -m pytest .\backend\tests -q` → **206 passed**
-- After EmployeeVersioning compatibility/audit fixes:
-  - focused Employee suite (`test_employee_service.py`, `test_employee_versioning.py`, `test_employee_api.py`) → **13 passed**
-  - full backend suite → **212 passed in 7.89s**
-- `python -m py_compile .\backend\app\services\employee_service.py` → **PASS**
-- `python -m py_compile .\backend\app\api\v1\employees.py` → **PASS**
-
-The 2026-08-23 result is **local working-tree evidence**, not a new GitHub Actions certification result and not a new production-certification claim. The test transcript did not establish a commit SHA for the exact local state.
-
-The Employee Versioning work exercised and fixed compatibility around initial/current `EmployeeVersion` creation, sequential version publication, current-version switching, audit `resource_id`/metadata expectations, and async-compatible mocked `db.add()` handling. The resulting focused Employee suite and full backend suite are green.
+The known warning is the Python `crypt` deprecation emitted through Passlib; it is not currently a test failure.
 
 ### Docker runtime
 
@@ -124,7 +171,7 @@ Detailed evidence is recorded in `docs/current/08_POST_RELEASE_PRODUCTIZATION_TE
 - [x] Lifecycle actions remain auditable.
 - [x] PR #29, PR #30 and PR #31 changes are included in the current `main` lineage.
 
-These are **post-release productization/security evidence**, not a new production-certification claim.
+These are post-release productization/security evidence, not a new production-certification claim.
 
 ## What can be tested from GitHub
 
@@ -149,12 +196,6 @@ These are **post-release productization/security evidence**, not a new productio
 
 ## Next test order
 
-1. Run the corrected migration-head check locally.
-2. Continue Phase A runtime verification: Trace.
-3. Continue Phase B: Retry → Timeout → Cancellation.
-4. Continue Phase C: Real provider → RAG.
-5. Continue Phase D: Webhook → Replay.
-6. Run Phase E full-stack business acceptance.
-7. Run Phase F production certification.
+1. Run Phase F production certification.
 
 **Rule:** Every completed test changes the corresponding `[ ]` to `[x]` here with the command/result recorded in the evidence section or a linked dated evidence document.
