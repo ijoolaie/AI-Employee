@@ -1,6 +1,6 @@
 # AI-Employee — A–F Test Tracker
 
-**Status date:** 2026-08-23
+**Status date:** 2026-09-18
 **Repository:** `ijoolaie/AI-Employee`
 **Purpose:** Single living tracker for the current test sequence. Update this document as evidence is completed; do not restart already-passed smoke/contract tests unless a regression requires it.
 
@@ -21,9 +21,9 @@
 - [x] Guardrails — automated tests passed
 - [x] Tool permissions — automated tests passed
 - [x] Failure handling — automated coverage present
-- [ ] Retry — runtime verification pending
-- [ ] Timeout — runtime verification pending
-- [ ] Cancellation — runtime verification pending
+- [x] Retry — runtime fail-closed verification passed
+- [x] Timeout — runtime sweep verification passed
+- [x] Cancellation — runtime service verification passed
 
 ## PHASE C — AI
 
@@ -63,29 +63,23 @@
 
 ## Evidence completed in current test session
 
+### Phase B — 2026-09-17 runtime evidence
+
+- Retry fail-closed runtime: **PASS**. A linked failed employee Run raised `ValidationAppError` with the replacement-blocking message; child count remained **1** before and after execution; no replacement child was created; cleanup passed.
+- Timeout runtime: **PASS**. A synthetic expired running WorkflowRun was processed by the timeout sweep and persisted as `timed_out` with `WORKFLOW_TIMEOUT`; cleanup passed.
+- Cancellation runtime: **PASS**. A synthetic pending WorkflowRun was cancelled through `cancel_workflow_run` and persisted as `cancelled` with `WORKFLOW_CANCELLED`, cancellation reason, `cancelled_at`, and `completed_at`; cleanup passed.
+- Phase B aggregate runtime gate: **PASS**.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
+
 ### Backend — previously recorded evidence
 
 - `pytest -q /app/tests` → **194 passed, 1 warning**
 - `pytest -q /app/tests/test_workflow_foundation.py /app/tests/test_workflow_approval.py /app/tests/test_workflow_triggers.py` → **7 passed, 1 warning**
 - `pytest -q /app/tests/test_v033_execution_hardening.py /app/tests/test_v038_workflow_versioning_contract.py` → **8 passed**
+- Phase B focused retry/timeout/cancellation suites → **30 passed** across the recorded focused runs.
 
-The only warning reported by the full suite is the Python `crypt` deprecation emitted through Passlib; it is not currently a test failure.
-
-### Backend — 2026-08-23 local test session
-
-The project owner ran the following against the current local working tree from `D:\Work\Saas\AI-Employee`:
-
-- `python -m pytest .\backend\tests\test_employee_api.py -q` → **5 passed**
-- `python -m pytest .\backend\tests -q` → **206 passed**
-- After EmployeeVersioning compatibility/audit fixes:
-  - focused Employee suite (`test_employee_service.py`, `test_employee_versioning.py`, `test_employee_api.py`) → **13 passed**
-  - full backend suite → **212 passed in 7.89s**
-- `python -m py_compile .\backend\app\services\employee_service.py` → **PASS**
-- `python -m py_compile .\backend\app\api\v1\employees.py` → **PASS**
-
-The 2026-08-23 result is **local working-tree evidence**, not a new GitHub Actions certification result and not a new production-certification claim. The test transcript did not establish a commit SHA for the exact local state.
-
-The Employee Versioning work exercised and fixed compatibility around initial/current `EmployeeVersion` creation, sequential version publication, current-version switching, audit `resource_id`/metadata expectations, and async-compatible mocked `db.add()` handling. The resulting focused Employee suite and full backend suite are green.
+The known warning is the Python `crypt` deprecation emitted through Passlib; it is not currently a test failure.
 
 ### Docker runtime
 
@@ -124,7 +118,7 @@ Detailed evidence is recorded in `docs/current/08_POST_RELEASE_PRODUCTIZATION_TE
 - [x] Lifecycle actions remain auditable.
 - [x] PR #29, PR #30 and PR #31 changes are included in the current `main` lineage.
 
-These are **post-release productization/security evidence**, not a new production-certification claim.
+These are post-release productization/security evidence, not a new production-certification claim.
 
 ## What can be tested from GitHub
 
@@ -149,12 +143,10 @@ These are **post-release productization/security evidence**, not a new productio
 
 ## Next test order
 
-1. Run the corrected migration-head check locally.
-2. Continue Phase A runtime verification: Trace.
-3. Continue Phase B: Retry → Timeout → Cancellation.
-4. Continue Phase C: Real provider → RAG.
-5. Continue Phase D: Webhook → Replay.
-6. Run Phase E full-stack business acceptance.
-7. Run Phase F production certification.
+1. Continue Phase A runtime verification: Trace.
+2. Continue Phase C: Real provider → RAG.
+3. Continue Phase D: Webhook → Replay.
+4. Run Phase E full-stack business acceptance.
+5. Run Phase F production certification.
 
 **Rule:** Every completed test changes the corresponding `[ ]` to `[x]` here with the command/result recorded in the evidence section or a linked dated evidence document.
