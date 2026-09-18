@@ -5,38 +5,39 @@
 **Exact certified release SHA:** `dba0bb672deb1236b6724bb8851526e656f47967`  
 **Production Certification run:** `35108008066` — PASS  
 **Certification job:** `104834133092` — PASS  
-**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 ENGINEERING CANDIDATE / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
+**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 RC1 ENGINEERING-VALIDATED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
 
 ## Current release and project boundary
 
-### Current engineering candidate — v1.4.5
+### v1.4.5 RC1
 
-- Exact candidate SHA: `a9d5cdd`
+- RC branch: `release/v1.4.5-rc1`
+- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
+- Engineering candidate baseline: `a9d5cdd`
 - Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
-- Working tree at certification: clean
-- Candidate is **not** externally certified and does not inherit `v1.4.2` certification.
+- GitHub Actions RC1 engineering validation: **10/10 current release-critical workflows PASS**
+- RC1 is **not externally certified** and does not inherit `v1.4.2` certification.
 
-The repository has completed the current planned engineering hardening and `v1.4.2` passed the exact-SHA Production Certification suite. The certified release contains the current Stage 9 governed optimization/control-loop slices.
+The published `v1.4.2` certification remains bound to exact SHA `dba0bb672deb1236b6724bb8851526e656f47967`. Evidence does not transfer automatically across SHAs.
 
-The certification result is bound to exact SHA `dba0bb672deb1236b6724bb8851526e656f47967`. Documentation commits after that SHA are not automatically part of the certified release.
-
-No repository state alone establishes live production deployment, live provider operation, measured production SLO attainment, target RPO/RTO, independent penetration-test completion, customer acceptance or unrestricted commercial go-live.
+No repository state establishes live production deployment, live provider operation, measured production SLO attainment, target RPO/RTO, independent penetration-test completion, customer acceptance or unrestricted commercial go-live.
 
 ## Audit result
 
 ### 🟢 Release / engineering evidence
 
-- Backend and frontend certification passed.
+- Backend and frontend certification evidence exists.
 - Database migration and single-head checks passed.
 - Auth, RBAC and tenant-isolation product gates passed.
 - Conversation isolation passed.
 - Employee → Run → AI → Result passed.
 - Files → Knowledge → Memory passed.
-- Workflow → Approval → Schedule passed after PR #530.
+- Workflow → Approval → Schedule passed.
 - Orders → Sales → Invoice → Billing passed.
 - Unified WorkItem Human and Agent passed.
-- Stage 9 governed optimization is release-certified.
-- Production-like infrastructure, backup/restore and resilience contracts exist as engineering evidence.
+- Stage 9 governed optimization is release-certified in v1.4.2.
+- Local production-like infrastructure, backup/restore and resilience checks passed.
+- RC1 engineering workflows are green for exact SHA `097653...`.
 
 ### 🔴 External launch blockers
 
@@ -64,32 +65,6 @@ No repository state alone establishes live production deployment, live provider 
 - Customer support/operational ownership and acceptance criteria.
 - Final residual-risk and exception disposition.
 
-## Existing engineering contracts versus external proof
-
-The repository already contains engineering contracts for SLO/error budget, provider preflight, runtime isolation/RBAC, production network hardening, secret management, failure recovery, incident response and alert routing. Those contracts reduce implementation uncertainty but do not close the corresponding external gates until the real target is tested.
-
-## Open external program issues
-
-- **#210:** external production release/acceptance gate — pending.
-- **#269:** external certification/customer acceptance — pending.
-- **#19:** Vendor → Reseller → Client runtime isolation/RBAC external evidence — pending.
-
-Open Issues must be reconciled against this status; an issue should not be closed merely because engineering CI passes.
-
-## Issue hygiene note
-
-Some older issue/document bodies may reference historical release candidates such as `v1.4.0-rc.4` or `v1.4.0-rc.5`. Those references are historical unless explicitly updated. The authoritative current release identity is `v1.4.2` at SHA `dba0bb672deb1236b6724bb8851526e656f47967`.
-
-Issue #513 should not be treated as a current code blocker without re-verification: the current implementation already contains the Policy Engine → Audit Bridge evidence path. It is a documentation/issue-reconciliation candidate unless a fresh code audit identifies a missing acceptance criterion.
-
-## Commercial readiness rule
-
-Use four distinct states:
-
-`Engineering Ready → Release Certified → Production Deployed → Commercially Accepted`
-
-A project may move between these states only with evidence. No evidence transfers automatically across SHAs.
-
 ## Final acceptance sequence
 
 1. Freeze the final release SHA and record its exact Git identity.
@@ -107,7 +82,7 @@ A project may move between these states only with evidence. No evidence transfer
 13. Reconcile exceptions/residual risks.
 14. Run the final commercial go-live gate.
 
-Until that sequence is complete, the product should be described as **release-certified with external production/commercial gates pending**, not as externally production-certified.
+Until that sequence is complete, the product should be described as **engineering-validated RC1 with external production/commercial gates pending**, not as externally production-certified.
 
 ## Security rule
 
