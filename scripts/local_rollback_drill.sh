@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./lib/docker_compat.sh
+source "$SCRIPT_DIR/lib/docker_compat.sh"
+
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}"
 LOCAL_OVERRIDE="${LOCAL_OVERRIDE:-docker-compose.local-production.yml}"
 PROJECT_NAME="${COMPOSE_PROJECT_NAME:-ai-employee-production}"
@@ -10,7 +14,7 @@ ENV_FILE="${ENV_FILE:-.env.production}"
 [[ -f "$LOCAL_OVERRIDE" ]] || { echo "Missing $LOCAL_OVERRIDE." >&2; exit 1; }
 
 compose() {
-  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$PROJECT_NAME" "$@"
+  docker_compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$PROJECT_NAME" "$@"
 }
 
 compose config --quiet
