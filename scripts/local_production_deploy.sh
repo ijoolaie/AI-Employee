@@ -44,7 +44,8 @@ compose ps
 compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('LOCAL_PRODUCTION|readiness|PASS')"
 
 # The local-production override publishes the frontend container's port 3000
-# on host port 13000. Validate the published host endpoint, not the container port.
-curl --fail --silent --show-error http://127.0.0.1:13000/login >/dev/null
+# on the configured host port. Validate the published host endpoint.
+FRONTEND_PORT="${LOCAL_PRODUCTION_FRONTEND_PORT:-13000}"
+curl --fail --silent --show-error "http://127.0.0.1:${FRONTEND_PORT}/login" >/dev/null
 echo "LOCAL_PRODUCTION|frontend|PASS"
 echo "LOCAL_PRODUCTION|revision|$(git rev-parse HEAD)"

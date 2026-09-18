@@ -21,6 +21,11 @@ LOCAL_OVERRIDE="${LOCAL_OVERRIDE:-docker-compose.local-production.yml}"
 PROVIDER_HEALTHCHECK_URL="${PROVIDER_HEALTHCHECK_URL:-}"
 KEEP_STACK="${KEEP_STACK:-true}"
 
+export LOCAL_PRODUCTION_POSTGRES_PORT="${LOCAL_PRODUCTION_POSTGRES_PORT:-15433}"
+export LOCAL_PRODUCTION_REDIS_PORT="${LOCAL_PRODUCTION_REDIS_PORT:-16380}"
+export LOCAL_PRODUCTION_API_PORT="${LOCAL_PRODUCTION_API_PORT:-18001}"
+export LOCAL_PRODUCTION_FRONTEND_PORT="${LOCAL_PRODUCTION_FRONTEND_PORT:-13001}"
+
 mkdir -p "$OUT_DIR"
 
 compose() {
@@ -91,7 +96,8 @@ run_capture local_production_deploy env COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_N
 run_capture service_snapshot compose ps
 
 run_capture api_dependency_readiness compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('API_DEPENDENCY_READINESS|PASS')"
-run_capture frontend_login curl --fail --silent --show-error http://127.0.0.1:13000/login
+FRONTEND_PORT="${LOCAL_PRODUCTION_FRONTEND_PORT:-13001}"
+run_capture frontend_login curl --fail --silent --show-error "http://127.0.0.1:${FRONTEND_PORT}/login"
 run_capture backup_restore_smoke bash scripts/production_backup_restore_smoke.sh
 run_capture rollback_drill env COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" ENV_FILE="$ENV_FILE" bash scripts/local_rollback_drill.sh
 run_capture post_recovery_readiness compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('POST_RECOVERY_READINESS|PASS')"
@@ -115,11 +121,11 @@ cat >"$OUT_DIR/EVIDENCE_INDEX.md" <<EOF
 
 - Certification class: **LOCAL_PRODUCTION_LIKE_ENGINEERING_EVIDENCE**
 - Formal Phase 14.10 status: **EXTERNAL-PENDING**
-- UTC execution time: `$TIMESTAMP`
-- Exact Git SHA: `$GIT_SHA`
-- Git ref: `$GIT_REF`
-- Git archive SHA256: `$ARCHIVE_SHA256`
-- Compose project: `$COMPOSE_PROJECT_NAME`
+- UTC execution time: $TIMESTAMP
+- Exact Git SHA: $GIT_SHA
+- Git ref: $GIT_REF
+- Git archive SHA256: $ARCHIVE_SHA256
+- Compose project: $COMPOSE_PROJECT_NAME
 
 ## Executed evidence
 

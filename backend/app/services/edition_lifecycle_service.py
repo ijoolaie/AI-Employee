@@ -26,14 +26,92 @@ def validate_transition(current: str, target: str) -> None:
         STATUS_SUSPENDED: {STATUS_ACTIVE, STATUS_DEPROVISIONED},
         STATUS_DEPROVISIONED: set(),
     }
+
     if target not in allowed.get(current, set()):
-        raise HTTPException(status_code=409, detail=f"Invalid tenant lifecycle transition: {current} -> {target}")
+        raise HTTPException(
+            status_code=409,
+            detail=f"Invalid tenant lifecycle transition: {current} -> {target}",
+        )
 
 
 def validate_deprovision_children(children: list[Tenant]) -> None:
-    active_children = [child for child in children if child.status != STATUS_DEPROVISIONED]
+    active_children = [
+        child for child in children if child.status != STATUS_DEPROVISIONED
+    ]
+
     if active_children:
-        raise HTTPException(status_code=409, detail="Tenant cannot be deprovisioned while child tenants remain active")
+        raise HTTPException(
+            status_code=409,
+            detail="Tenant cannot be deprovisioned while child tenants remain active",
+        )
+
+
+async def transition_tenant_status(
+    db: AsyncSession,
+    *,
+    tenant: Tenant,
+    target_status: str,
+    actor_id: UUID | None,
+    audit_tenant_id: UUID | None = None,
+    audit_metadata: dict | None = None,
+) -> Tenant:
+    """Apply a validated lifecycle transition without deleting tenant data."""
+
+    previous_status = tenant.status
+    validate_transition(previous_status, target_status)
+
+    if target_status == STATUS_DEPROVISIONED:
+        children = list(
+            (
+                await db.execute(
+                    select(Tenant).where(Tenant.parent_tenant_id == tenant.id)
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        validate_deprovision_children(children)
+
+        users = list(
+            (
+                await db.execute(
+                    select(User).where(User.tenant_id == tenant.id)
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        for user in users:
+            user.is_active = False
+
+    tenant.status = target_status
+    await db.flush()
+
+    metadata = {
+        "tenant_id": str(tenant.id),
+        "tenant_kind": tenant.tenant_kind,
+        "previous_status": previous_status,
+        "target_status": target_status,
+    }
+
+    if audit_metadata:
+        metadata.update(audit_metadata)
+
+    await record_audit(
+        db,
+        tenant_id=audit_tenant_id or tenant.id,
+        actor_id=actor_id,
+        action=f"edition.{target_status}",
+        resource_type="tenant",
+        resource_id=str(tenant.id),
+        metadata=metadata,
+    )
+
+    await db.refresh(tenant)
+
+    return tenant
 
 
 async def set_child_tenant_status(
@@ -45,38 +123,25 @@ async def set_child_tenant_status(
     target_status: str,
     actor_id: UUID | None,
 ) -> Tenant:
-    child = (await db.execute(select(Tenant).where(Tenant.id == child_id))).scalar_one_or_none()
+    child = (
+        await db.execute(
+            select(Tenant).where(Tenant.id == child_id)
+        )
+    ).scalar_one_or_none()
+
     if child is None:
         raise HTTPException(status_code=404, detail="Tenant not found")
 
     assert_direct_child(parent, child, expected_kind)
-    previous_status = child.status
-    validate_transition(previous_status, target_status)
 
-    if target_status == STATUS_DEPROVISIONED:
-        children = list((await db.execute(select(Tenant).where(Tenant.parent_tenant_id == child.id))).scalars().all())
-        validate_deprovision_children(children)
-
-        users = list((await db.execute(select(User).where(User.tenant_id == child.id))).scalars().all())
-        for user in users:
-            user.is_active = False
-
-    child.status = target_status
-    await db.flush()
-
-    await record_audit(
+    return await transition_tenant_status(
         db,
-        tenant_id=parent.id,
+        tenant=child,
+        target_status=target_status,
         actor_id=actor_id,
-        action=f"edition.{target_status}",
-        resource_type="tenant",
-        resource_id=str(child.id),
-        metadata={
+        audit_tenant_id=parent.id,
+        audit_metadata={
             "child_tenant_id": str(child.id),
             "child_kind": child.tenant_kind,
-            "previous_status": previous_status,
-            "target_status": target_status,
         },
     )
-    await db.refresh(child)
-    return child

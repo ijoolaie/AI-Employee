@@ -7,12 +7,18 @@ source "$SCRIPT_DIR/lib/docker_compat.sh"
 
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}"
 LOCAL_OVERRIDE="${LOCAL_OVERRIDE:-docker-compose.local-production.yml}"
-PROJECT_NAME="${COMPOSE_PROJECT_NAME:-ai-employee-infra-validation}"
+PROJECT_NAME="${COMPOSE_PROJECT_NAME:-ai-employee-certification}"
 ENV_FILE="${ENV_FILE:-.env.production}"
 
 compose() {
   docker_compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$PROJECT_NAME" "$@"
 }
+
+POSTGRES_USER="$(compose exec -T postgres sh -c 'printf "%s" "$POSTGRES_USER"')"
+POSTGRES_DB="$(compose exec -T postgres sh -c 'printf "%s" "$POSTGRES_DB"')"
+
+: "${POSTGRES_USER:?Unable to resolve POSTGRES_USER from postgres container}"
+: "${POSTGRES_DB:?Unable to resolve POSTGRES_DB from postgres container}"
 
 backup_file="/tmp/ai-employee-backup-$$.dump"
 trap 'compose exec -T postgres rm -f "$backup_file" >/dev/null 2>&1 || true' EXIT
@@ -21,7 +27,6 @@ compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_
   -c "CREATE TABLE IF NOT EXISTS backup_restore_probe(id integer primary key, value text not null);" \
   -c "INSERT INTO backup_restore_probe(id,value) VALUES (1,'backup-restore-pass') ON CONFLICT (id) DO UPDATE SET value=EXCLUDED.value;"
 
-# Use PostgreSQL's real custom-format backup and restore tools inside the database container.
 compose exec -T postgres pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc -f "$backup_file"
 compose exec -T postgres pg_restore --list "$backup_file" >/dev/null
 
