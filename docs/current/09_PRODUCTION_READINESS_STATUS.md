@@ -16,8 +16,6 @@
 - Working tree at certification: clean
 - Candidate is **not** externally certified and does not inherit `v1.4.2` certification.
 
-
-
 The repository has completed the current planned engineering hardening and `v1.4.2` passed the exact-SHA Production Certification suite. The certified release contains the current Stage 9 governed optimization/control-loop slices.
 
 The certification result is bound to exact SHA `dba0bb672deb1236b6724bb8851526e656f47967`. Documentation commits after that SHA are not automatically part of the certified release.
@@ -44,7 +42,7 @@ No repository state alone establishes live production deployment, live provider 
 
 | Area | Status | Required evidence |
 |---|---|---|
-| Real production deployment | 🔴 | Exact certified release running on approved target |
+| Real production deployment | 🔴 | Exact frozen release identity running on approved target |
 | Backup/restore + DR | 🔴 | Real backup, isolated restore, measured RPO/RTO |
 | Production SLO/SLI | 🔴 | Real target measurements, alerts and error-budget baseline |
 | Live providers | 🔴 | Provider authentication, success/failure/retry/quota validation |
@@ -94,19 +92,20 @@ A project may move between these states only with evidence. No evidence transfer
 
 ## Final acceptance sequence
 
-1. Provision and harden approved production target.
-2. Deploy exact `v1.4.2` release identity.
-3. Validate backups/restore and measure RPO/RTO.
-4. Establish production SLO/SLI/error budget.
-5. Validate live providers.
-6. Certify deployed Vendor/Reseller/Client isolation and RBAC.
-7. Run DAST and independent security review.
-8. Verify network and secret lifecycle.
-9. Rehearse HA/failure recovery.
-10. Execute incident-response and on-call drill.
-11. Complete Vendor/Reseller/Customer acceptance.
-12. Reconcile exceptions/residual risks.
-13. Run final commercial go-live gate.
+1. Freeze the final release SHA and record its exact Git identity.
+2. Provision and harden the approved production target.
+3. Deploy that exact frozen release identity.
+4. Validate backups/restore and measure RPO/RTO.
+5. Establish production SLO/SLI/error budget.
+6. Validate live providers.
+7. Certify deployed Vendor/Reseller/Client isolation and RBAC.
+8. Run DAST and independent security review.
+9. Verify network and secret lifecycle.
+10. Rehearse HA/failure recovery.
+11. Execute incident-response and on-call drill.
+12. Complete Vendor/Reseller/Customer acceptance.
+13. Reconcile exceptions/residual risks.
+14. Run the final commercial go-live gate.
 
 Until that sequence is complete, the product should be described as **release-certified with external production/commercial gates pending**, not as externally production-certified.
 
