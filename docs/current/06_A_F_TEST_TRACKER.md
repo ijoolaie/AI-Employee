@@ -8,8 +8,8 @@
 
 - [x] Health — automated/runtime evidence present
 - [x] Dependencies — automated/runtime evidence present
-- [x] Auth — automated coverage present; full runtime certification remains pending
-- [x] Tenant isolation — automated coverage present; full runtime certification remains pending
+- [x] Auth — automated coverage and real-stack certification passed
+- [x] Tenant isolation — automated coverage and real-stack certification passed
 - [x] Employee — automated coverage present
 - [x] Version — automated coverage present
 - [x] Run — automated coverage present
@@ -63,6 +63,16 @@
 
 ## Evidence completed in current test session
 
+### P0 — Tenant Isolation + RBAC + Immutable Audit Retention — 2026-09-18 runtime evidence
+
+- Real-stack tenant/RBAC certification: **PASS**. The certification script completed tenant registration, tenant-context isolation, cross-tenant employee/file/knowledge rejection, same-tenant access, RBAC read/write enforcement, and knowledge-search isolation successfully.
+- Aggregate gate: **PASS**. `TENANT ISOLATION + RBAC + KNOWLEDGE P0 REAL-STACK CERTIFICATION PASS`.
+- Certification fixture cleanup: **PASS**. The certification cleanup now deprovisions fixture tenants through the real lifecycle service instead of deleting tenant-owned data.
+- Retention verification: **PASS**. Four certification tenants were retained in PostgreSQL with `status=deprovisioned`; all associated users had `is_active=false`; each tenant retained audit rows including one `edition.deprovisioned` audit event.
+- Immutable audit retention gate: **PASS**. `ACTIVE_CERTIFICATION_TENANTS=0` and `IMMUTABLE_AUDIT_RETENTION_CHECK=PASS`.
+- Legacy certification fixtures from the earlier destructive-cleanup implementation were also deprovisioned and retained; no tenant DELETE was used for cleanup.
+- This evidence verifies local Docker/PostgreSQL runtime behavior and is not a GitHub Actions or production-deployment certification claim.
+
 ### Phase D — Webhook + Replay — 2026-09-18 runtime evidence
 
 - Webhook HTTP runtime: **PASS**. Signed JSON webhook accepted with HTTP `202` and created a tenant-scoped delivery with `status=accepted`.
@@ -94,7 +104,6 @@ These are local Docker/PostgreSQL runtime observations, not GitHub Actions or pr
 - Phase C aggregate runtime gate: **PASS**.
 
 These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
-
 
 ### Phase B — 2026-09-17 runtime evidence
 
