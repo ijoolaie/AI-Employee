@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./lib/docker_compat.sh
+source "$SCRIPT_DIR/lib/docker_compat.sh"
+
 # Phase 14.10 local certification harness.
 # This produces reproducible engineering evidence against the exact checked-out SHA.
 # It intentionally does NOT claim external production certification or customer acceptance.
@@ -20,7 +24,7 @@ KEEP_STACK="${KEEP_STACK:-true}"
 mkdir -p "$OUT_DIR"
 
 compose() {
-  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$COMPOSE_PROJECT_NAME" "$@"
+  docker_compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$COMPOSE_PROJECT_NAME" "$@"
 }
 
 run_capture() {
