@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-16
+**Last reconciled:** 2026-09-18
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -14,6 +14,11 @@
 These states are independent and must not be inferred from release names.
 
 ## Current release identities
+
+| Engineering candidate | Commit | Tag | Certification | Deployment | External acceptance |
+|---|---|---|---|---|---|
+| `v1.4.5` candidate | `a9d5cdd` | Not published | **ENGINEERING ONLY** — local production-like certification PASS on 2026-09-18 | **NOT VERIFIED** | Pending |
+
 
 | Release / candidate | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
@@ -90,6 +95,9 @@ The following remain open regardless of `v1.4.2` certification:
 - final external certification and customer acceptance (#210/#269).
 
 ## Current interpretation
+
+- Current engineering candidate: **v1.4.5 / `a9d5cdd`** — local production-like certification passed, external certification pending.
+
 
 - Latest published and exact-SHA certified release: **v1.4.2 / `dba0bb672...`**.
 - Current engineering `main`: post-release documentation reconciliation; **not certified as a new release**.
