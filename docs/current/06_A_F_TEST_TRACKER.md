@@ -39,8 +39,8 @@
 - [x] Trigger — automated tests passed
 - [x] Schedule — automated tests passed
 - [x] Approval — automated tests passed
-- [ ] Webhook — runtime/API verification pending
-- [ ] Replay — runtime verification pending
+- [x] Webhook — runtime/API verification passed
+- [x] Replay — runtime verification passed
 
 ## PHASE E — Business
 
@@ -62,6 +62,18 @@
 - [ ] Observability — certification pending
 
 ## Evidence completed in current test session
+
+### Phase D — Webhook + Replay — 2026-09-18 runtime evidence
+
+- Webhook HTTP runtime: **PASS**. Signed JSON webhook accepted with HTTP `202` and created a tenant-scoped delivery with `status=accepted`.
+- Webhook deduplication: **PASS**. Re-sending the same `X-Event-Id` returned the same delivery with `duplicate=true`; delivery count remained **1**.
+- Webhook dispatch: **PASS**. The durable delivery was processed by the worker and persisted as `dispatched` with `attempts=1` and a linked `WorkflowRun`.
+- Replay enqueue: **PASS**. Replaying the delivery was accepted and enqueued through the durable outbox path.
+- Replay runtime: **PASS**. Replay produced a second dispatched `WorkflowRun`; the delivery remained `dispatched` with `attempts=1`.
+- Fixture cleanup: **PASS**. Runtime fixtures were cleaned without deleting immutable `workflow_versions`; related deliveries/runs/step rows were removed and the test workflow/trigger were deactivated.
+- Phase D Webhook + Replay aggregate runtime gate: **PASS**.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
 
 ### Phase A — Trace — 2026-09-18 runtime evidence
 
@@ -164,8 +176,7 @@ These are post-release productization/security evidence, not a new production-ce
 
 ## Next test order
 
-1. Continue Phase D: Webhook → Replay.
-2. Run Phase E full-stack business acceptance.
-3. Run Phase F production certification.
+1. Run Phase E full-stack business acceptance.
+2. Run Phase F production certification.
 
 **Rule:** Every completed test changes the corresponding `[ ]` to `[x]` here with the command/result recorded in the evidence section or a linked dated evidence document.
