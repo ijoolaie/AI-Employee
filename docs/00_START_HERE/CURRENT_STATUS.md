@@ -1,12 +1,16 @@
 # Current Status
 
-**Last reconciled:** 2026-09-16
+**Last reconciled:** 2026-09-18
 **Latest published release:** `v1.4.2`
 **Release commit:** `dba0bb672deb1236b6724bb8851526e656f47967`
 **Exact-SHA Production Certification:** Run `35108008066` — PASS
 **Certification job:** `104834133092` — PASS
 **Current implementation mainline:** documentation/engineering reconciliation after certified `v1.4.2` SHA
-**Current status:** STAGE 9 RELEASE-CERTIFIED / COMMERCIAL READINESS & EXTERNAL PRODUCTION GATES PENDING
+**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 ENGINEERING CANDIDATE / COMMERCIAL READINESS & EXTERNAL PRODUCTION GATES PENDING
+
+## Current engineering candidate — v1.4.5
+
+The current engineering candidate is commit `a9d5cdd`. The local production-like certification script completed with **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING** on 2026-09-18. This evidence covers the local engineering environment only and does not certify or deploy `v1.4.5` externally. The published `v1.4.2` certification remains bound to its original SHA.
 
 ## Executive truth
 
