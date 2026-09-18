@@ -27,11 +27,11 @@
 
 ## PHASE C — AI
 
-- [ ] Real provider — local provider/runtime verification pending
+- [x] Real provider — local Docker runtime execution passed
 - [x] Token accounting — automated coverage present
 - [x] Cost accounting — automated coverage present
 - [x] Prompt assembly — automated coverage present
-- [ ] RAG — end-to-end runtime verification pending
+- [x] RAG — full end-to-end runtime verification passed
 
 ## PHASE D — Workflow
 
@@ -62,6 +62,17 @@
 - [ ] Observability — certification pending
 
 ## Evidence completed in current test session
+
+### Phase C — 2026-09-18 runtime evidence
+
+- Real provider runtime: **PASS**. Customer `a2a96af0-5f64-4dbc-8eec-f299d39b56e3` executed Employee Version `8d75b84f-be51-4f47-a8da-3cc4dc3588a5` successfully through the local runtime boundary; provider call persisted with `status=success`.
+- RAG indexing/retrieval: **PASS**. A tenant-scoped `phase-c-refund-policy.txt` knowledge fixture was indexed into 1 chunk using `deterministic-certification`; semantic search returned 1 result with score `0.361478`.
+- Full RAG E2E: **PASS**. Run `a94553e5-2702-4815-9278-afc81c2a71d1` completed with `status=success`; provider metadata recorded `rag_enabled=true` and `rag_result_count=1`.
+- Audit evidence: **PASS**. The run persisted `run.created`, `knowledge.retrieved`, `ai.provider_call`, and `run.completed`.
+- Phase C aggregate runtime gate: **PASS**.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
+
 
 ### Phase B — 2026-09-17 runtime evidence
 
@@ -144,8 +155,7 @@ These are post-release productization/security evidence, not a new production-ce
 ## Next test order
 
 1. Continue Phase A runtime verification: Trace.
-2. Continue Phase C: Real provider → RAG.
-3. Continue Phase D: Webhook → Replay.
+2. Continue Phase D: Webhook → Replay.
 4. Run Phase E full-stack business acceptance.
 5. Run Phase F production certification.
 
