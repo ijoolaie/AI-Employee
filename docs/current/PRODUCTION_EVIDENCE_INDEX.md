@@ -1,6 +1,6 @@
 # Production Evidence Index
 
-**Reconciled:** 2026-09-16  
+**Reconciled:** 2026-09-18  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
@@ -25,6 +25,14 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | External production deployment | **PENDING** |
 | External image registry/deployed digest evidence | **PENDING** |
 | External signed provenance/attestation | **PENDING** |
+
+### Current engineering candidate
+
+- Candidate line: `v1.4.5` (engineering candidate; not yet published/certified)
+- Exact current candidate SHA: `a9d5cdd`
+- Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
+- Candidate external deployment/certification: **PENDING**
+- Do not transfer the `v1.4.2` certification onto `a9d5cdd`.
 
 ## Evidence matrix
 
@@ -87,7 +95,7 @@ No evidence transfers automatically across SHAs. Documentation cannot substitute
 
 ## Governing documents
 
-- `docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md`
+- `docs/current/PRODUCTION_GAP_REGISTER_2026-09-18.md`
 - `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
 - `docs/current/09_PRODUCTION_READINESS_STATUS.md`
 - `docs/00_START_HERE/CURRENT_PRIORITIES.md`
