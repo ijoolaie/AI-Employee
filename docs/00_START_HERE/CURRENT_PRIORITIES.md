@@ -1,11 +1,19 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-16
+**Reconciled:** 2026-09-18
 **Latest published release:** `v1.4.2`
 **Release SHA:** `dba0bb672deb1236b6724bb8851526e656f47967`
 **Production Certification:** Run `35108008066` — PASS
 **Current engineering mainline:** documentation reconciliation after certified `v1.4.2` SHA
-**Current status:** STAGE 9 RELEASE-CERTIFIED / COMMERCIAL READINESS & EXTERNAL PRODUCTION EXECUTION PENDING
+**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 ENGINEERING CANDIDATE / COMMERCIAL READINESS & EXTERNAL PRODUCTION EXECUTION PENDING
+
+## Current engineering baseline
+
+- Candidate: `v1.4.5`
+- Exact SHA: `a9d5cdd`
+- Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
+- Published/certified release: `v1.4.2`
+- Certification evidence does not transfer between these SHAs.
 
 ## Priority order
 
