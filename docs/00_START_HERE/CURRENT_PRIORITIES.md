@@ -1,26 +1,26 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-18
-**Latest published release:** `v1.4.2`
+**Reconciled:** 2026-09-19
+**Latest published release:** `v1.4.5`
 **Release SHA:** `dba0bb672deb1236b6724bb8851526e656f47967`
 **Production Certification:** Run `35108008066` — PASS
-**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 RC1 ENGINEERING-VALIDATED / COMMERCIAL READINESS & EXTERNAL PRODUCTION EXECUTION PENDING
+**Current status:** v1.4.5 ENGINEERING-VALIDATED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING / COMMERCIAL READINESS & EXTERNAL PRODUCTION EXECUTION PENDING
 
 ## Current engineering baseline
 
-- v1.4.5 engineering baseline: `a9d5cdd`
-- RC1 branch: `release/v1.4.5-rc1`
-- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
-- RC1 GitHub Actions engineering validation: **10/10 current release-critical workflows PASS**
+- v1.4.5 release: `cc94bc9536f4f95680bb7a183313914c116ffcf2`
+- release branch: `main`
+- Exact release SHA: `cc94bc9536f4f95680bb7a183313914c116ffcf2`
+- release GitHub Actions engineering validation: **10/10 release-critical workflows PASS**
 - Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
-- Published/certified release: `v1.4.2`
+- Latest published release: `v1.4.5`
 - Certification evidence does not transfer between these SHAs.
 
 ## Priority order
 
-### P0 — RC1 freeze and external production readiness
+### P0 — release freeze and external production readiness
 
-1. Preserve the exact RC1 SHA and release evidence.
+1. Preserve the exact release SHA and release evidence.
 2. Do not merge or retag until the final release identity is explicitly approved.
 3. If external deployment is authorized, provision the approved target and capture immutable deployment identity.
 4. Execute security/network/secret lifecycle validation.
