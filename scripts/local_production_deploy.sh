@@ -19,7 +19,13 @@ compose() {
 
 compose config --quiet
 compose build
-compose up -d
+
+# Bootstrap the database schema before any API, worker, beat, or frontend
+# container can become active. The migration runner starts only infrastructure
+# dependencies and fails hard if the schema cannot reach the single Alembic head.
+bash "$SCRIPT_DIR/production_migrate.sh"
+
+compose up -d api worker beat frontend
 
 echo "Waiting for production services..."
 for i in $(seq 1 36); do
