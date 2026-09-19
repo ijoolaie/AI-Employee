@@ -67,11 +67,11 @@ jobs:
           set -euo pipefail
           bash ./scripts/local_production_deploy.sh
 
-      - name: Run database migration and record head
+      - name: Verify database migration head
         run: |
           set -euo pipefail
-          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production exec -T api alembic upgrade head
           docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production exec -T api alembic current
+          docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p ai-employee-production exec -T api alembic check
 
       - name: Run backup restore smoke
         run: |
