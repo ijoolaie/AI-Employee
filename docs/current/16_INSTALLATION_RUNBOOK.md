@@ -32,25 +32,39 @@ docker compose --env-file .env -f docker-compose.production.yml config
 
 Do not continue if interpolation errors or missing required variables are reported.
 
-## 4. Start
+## 4. Build application images
 
 ```bash
-docker compose --env-file .env -f docker-compose.production.yml up -d --build
+docker compose --env-file .env -f docker-compose.production.yml build api worker beat frontend
 ```
 
-## 5. Verify health
+## 5. Bootstrap infrastructure and migrate
+
+Do **not** start API, worker, beat, or frontend before the database migration gate succeeds. Use the repository migration runner:
+
+```bash
+ENV_FILE=.env COMPOSE_FILE=docker-compose.production.yml bash scripts/production_migrate.sh
+```
+
+The runner starts only PostgreSQL, Redis, and storage initialization, waits for PostgreSQL, runs `alembic upgrade head`, verifies the current revision matches the single Alembic head, and runs `alembic check`.
+
+Record the reported migration head in the deployment record.
+
+## 6. Start application services
+
+```bash
+docker compose --env-file .env -f docker-compose.production.yml up -d api worker beat frontend
+```
+
+## 7. Verify health
 
 ```bash
 docker compose --env-file .env -f docker-compose.production.yml ps
-docker compose --env-file .env -f docker-compose.production.yml logs --tail=100 api
+docker compose --env-file .env -f docker-compose.production.yml logs --tail=100 api worker beat
 ```
 
-Confirm API, worker, beat, frontend, Postgres and Redis are healthy before acceptance.
+Confirm API, worker, beat, frontend, Postgres and Redis are healthy before acceptance. The migration gate must already have passed before background workers are allowed to start.
 
-## 6. Database migration
-
-Run the repository-approved Alembic migration procedure before opening customer traffic. Record the resulting migration head in the deployment record.
-
-## 7. Acceptance
+## 8. Acceptance
 
 Complete the Customer Acceptance Checklist and record release version, commit SHA, migration head, operator, date and exceptions.
