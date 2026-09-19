@@ -47,7 +47,7 @@ class AgentDelegationResponse(BaseModel):
 async def delegate_agent(
     source_work_item_id: UUID,
     payload: AgentDelegationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     current_user=Depends(get_current_context),
 ):
     try:

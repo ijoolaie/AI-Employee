@@ -111,7 +111,7 @@ def _http_error(exc: Exception) -> HTTPException:
 async def create_agent_template(
     payload: AgentTemplateCreate,
     ctx: TenantContext = Depends(require_permission("agent_template.create")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await create_template(
@@ -141,7 +141,7 @@ async def create_agent_template(
 @router.get("", response_model=list[AgentTemplateRead])
 async def list_agent_templates(
     ctx: TenantContext = Depends(require_permission("agent_template.read")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     template_status: str | None = Query(default=None, alias="status"),
     limit: int = Query(default=100, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -157,7 +157,7 @@ async def list_agent_templates(
 async def get_agent_template(
     template_id: UUID,
     ctx: TenantContext = Depends(require_permission("agent_template.read")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     item = (await db.execute(select(AgentTemplate).where(AgentTemplate.id == template_id, AgentTemplate.tenant_id == ctx.tenant_id))).scalar_one_or_none()
     if item is None:
@@ -169,7 +169,7 @@ async def get_agent_template(
 async def publish_agent_template(
     template_id: UUID,
     ctx: TenantContext = Depends(require_permission("agent_template.publish")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await publish_template(db, tenant_id=ctx.tenant_id, template_id=template_id, approved_by_user_id=ctx.user_id)
@@ -186,7 +186,7 @@ async def promote_agent_template_endpoint(
     template_id: UUID,
     payload: AgentTemplatePromotionRequest,
     ctx: TenantContext = Depends(require_permission("agent_template.publish")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     """Promote a measured candidate only through explicit independent approval."""
     try:
@@ -224,7 +224,7 @@ async def provision_agent_template(
     template_id: UUID,
     payload: AgentTemplateProvisionRequest,
     ctx: TenantContext = Depends(require_permission("agent_template.install")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await provision_instance(db, tenant_id=ctx.tenant_id, template_id=template_id, name=payload.name, sponsor_user_id=payload.sponsor_user_id, approved_by_user_id=ctx.user_id, configuration=payload.configuration)
@@ -241,7 +241,7 @@ async def transition_agent_instance(
     instance_id: UUID,
     payload: AgentInstanceLifecycleRequest,
     ctx: TenantContext = Depends(require_permission("agent_instance.lifecycle")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await transition_instance(db, tenant_id=ctx.tenant_id, instance_id=instance_id, target_status=payload.target_status, requested_by_user_id=payload.requested_by_user_id, approved_by_user_id=ctx.user_id)

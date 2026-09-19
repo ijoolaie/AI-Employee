@@ -131,6 +131,13 @@ def main() -> int:
     assert order["status"] == "draft" and order.get("invoice_id") == invoice_id, order
     print(f"ORDER CREATE/LINK-INVOICE PASS order={order_id}")
 
+    # The 201 response must not race the transaction commit. A client must be
+    # able to read the resource immediately after creation.
+    status, body = request("GET", f"/orders/{order_id}", token=token_a)
+    created_order = expect(status, 200, "order read-after-create", body)
+    assert created_order.get("id") == order_id and created_order.get("status") == "draft", created_order
+    print("ORDER READ-AFTER-CREATE PASS")
+
     status, body = request("POST", f"/orders/{order_id}/status", {"status": "confirmed"}, token_a)
     order = expect(status, 200, "order status", body)
     assert order["status"] == "confirmed", order

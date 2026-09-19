@@ -77,7 +77,7 @@ def _error(exc: MarketplaceError) -> HTTPException:
 async def publish_team_version(
     payload: MarketplacePublicationCreate,
     ctx: MarketplacePublishContext = Depends(require_permission("marketplace.publish")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         publication = await MarketplaceService(db).publish(
@@ -116,7 +116,7 @@ async def install_publication(
     publication_id: UUID,
     payload: MarketplaceInstallRequest,
     ctx: MarketplaceInstallContext = Depends(require_permission("marketplace.install")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         installation = await MarketplaceService(db).import_publication(
@@ -152,7 +152,7 @@ async def install_publication(
 @router.get("", response_model=list[MarketplacePublicationRead])
 async def list_publications(
     ctx: MarketplaceReadContext = Depends(require_permission("marketplace.read")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     visibility: str | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -170,7 +170,7 @@ async def list_publications(
 async def get_publication(
     publication_id: UUID,
     ctx: MarketplaceReadContext = Depends(require_permission("marketplace.read")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await MarketplaceService(db).get_for_tenant(tenant_id=ctx.tenant_id, publication_id=publication_id)

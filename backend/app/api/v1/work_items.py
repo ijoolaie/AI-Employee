@@ -132,7 +132,7 @@ def _dispatch_audit_action(result) -> str:
 async def list_work_items(
     status_filter: str | None = Query(default=None, alias="status"),
     limit: int = Query(default=100, ge=1, le=200),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     current_user=Depends(get_current_context),
 ):
     stmt = (
@@ -163,7 +163,7 @@ async def list_work_items(
 async def history(
     work_item_id: UUID,
     limit: int = Query(default=100, ge=1, le=200),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     current_user=Depends(get_current_context),
 ):
     await _get_work_item(db, work_item_id, current_user.tenant_id)
@@ -201,7 +201,7 @@ async def history(
 async def assign_human(
     work_item_id: UUID,
     payload: HumanAssignmentRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     current_user=Depends(get_current_context),
 ):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
@@ -245,7 +245,7 @@ async def assign_human(
 async def assign_agent(
     work_item_id: UUID,
     payload: AgentAssignmentRequest,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     current_user=Depends(get_current_context),
 ):
     try:
@@ -288,7 +288,7 @@ async def assign_agent(
 )
 async def dispatch(
     work_item_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     current_user=Depends(get_current_context),
 ):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id)
@@ -342,7 +342,7 @@ async def dispatch(
 )
 async def cancel(
     work_item_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     current_user=Depends(get_current_context),
 ):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id, for_update=True)
@@ -377,7 +377,7 @@ async def cancel(
 )
 async def retry(
     work_item_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     current_user=Depends(get_current_context),
 ):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id, for_update=True)

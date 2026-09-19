@@ -44,7 +44,7 @@ class TenantContext:
 async def get_current_context(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security_scheme)],
     api_key: Annotated[str | None, Depends(api_key_scheme)],
-    db: Annotated[AsyncSession, Depends(get_db)],
+    db: Annotated[AsyncSession, Depends(get_db, scope="function")],
 ) -> TenantContext:
     if api_key:
         key_row = await verify_key(db, api_key)
@@ -117,7 +117,7 @@ def require_permission(permission_code: str):
     return checker
 
 
-DbSession = Annotated[AsyncSession, Depends(get_db)]
+DbSession = Annotated[AsyncSession, Depends(get_db, scope="function")]
 CurrentContext = Annotated[TenantContext, Depends(get_current_context)]
 
 EmployeeReadContext = Annotated[TenantContext, Depends(require_permission("employee.read"))]

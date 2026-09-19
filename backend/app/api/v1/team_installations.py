@@ -46,7 +46,7 @@ def _error(exc: TeamInstallationError) -> HTTPException:
 async def install_team(
     payload: TeamInstallationCreate,
     ctx: TeamInstallContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     service = TeamInstallationService(db)
     try:
@@ -79,7 +79,7 @@ async def install_team(
 @router.get("", response_model=list[TeamInstallationSummary])
 async def list_installations(
     ctx: TeamInstallContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     workspace_key: str | None = Query(default=None, max_length=120),
     enabled: bool | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=200),
@@ -103,7 +103,7 @@ async def list_installations(
 async def get_installation(
     installation_id: UUID,
     ctx: TeamInstallContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await TeamInstallationService(db).get(

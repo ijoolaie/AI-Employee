@@ -17,7 +17,7 @@ router = APIRouter(prefix="/work-items", tags=["work-item-history"])
 @router.get("/{work_item_id}/history")
 async def history(
     work_item_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     current_user=Depends(get_current_user),
 ):
     item = await db.get(WorkItem, work_item_id)

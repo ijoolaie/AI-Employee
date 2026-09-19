@@ -72,7 +72,7 @@ def _read(item: AgentWorkforceProposal) -> ReplacementProposalRead:
 async def create_replacement(
     payload: ReplacementProposalCreate,
     ctx: TenantContext = Depends(require_permission("agent_workforce.replace")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await replacement_service.create_replacement_proposal(
@@ -99,7 +99,7 @@ async def create_replacement(
 async def create_rollback(
     payload: RollbackProposalCreate,
     ctx: TenantContext = Depends(require_permission("agent_workforce.replace")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     """Create a governed rollback proposal without changing execution state."""
     try:
@@ -125,7 +125,7 @@ async def create_rollback(
 async def prepare_cutover(
     proposal_id: UUID,
     ctx: TenantContext = Depends(require_permission("agent_workforce.replace")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await replacement_service.prepare_replacement_cutover(
@@ -145,7 +145,7 @@ async def prepare_cutover(
 async def cutover(
     proposal_id: UUID,
     ctx: TenantContext = Depends(require_permission("agent_workforce.replace")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await replacement_service.cutover_replacement(
