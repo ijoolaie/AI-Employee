@@ -1,19 +1,20 @@
 # Production & Productization Gap Register
 
-**Reconciled:** 2026-09-18  
+**Reconciled:** 2026-09-19  
 **Repository:** `ijoolaie/AI-Employee`
 
 ## Current release truth
 
-- Latest published release: `v1.4.2`
-- Exact certified release SHA: `dba0bb672deb1236b6724bb8851526e656f47967`
-- Production Certification run: `35108008066` — PASS
-- Certification job: `104834133092` — PASS
+- Latest published release: `v1.4.6`
+- Exact certified release SHA: `f3d60031332450ba616e2a1c705e85c0c2c5aefd`
+- Production Certification run: `35427967347` — PASS
+- Certification job: `105857140334` — PASS
 - Product Gate Failures: `0`
-- Evidence artifact: `production-certification-evidence-v1.4.2-dba0bb672deb1236b6724bb8851526e656f47967`
-- Artifact ID: `10450993330`
+- Evidence artifact: `production-certification-evidence-v1.4.6-f3d60031332450ba616e2a1c705e85c0c2c5aefd`
+- Artifact SHA256: `fc12afd3da164e1d1787bc11e2a39d3c3d019e84d3c9516ddf7819f79e905d4d`
+- External production deployment: **PENDING** (`production_deployment_claimed=false`)
 
-The repository certification is release evidence. It is not evidence of a real external production deployment.
+The repository certification is release evidence. `v1.4.6` passed the exact-tag Production Certification workflow, but this is not evidence of a real external production deployment.
 
 ## Audit conclusion
 
@@ -28,13 +29,13 @@ The engineering/product core is release-certified. The remaining launch blockers
 
 ## Current engineering candidate boundary
 
-The current branch contains engineering candidate `v1.4.5` at exact SHA `a9d5cdd`. Local production-like certification passed on 2026-09-18, including deploy, dependency readiness, frontend login, backup/restore smoke, rollback drill and post-recovery readiness. This is engineering evidence only. The published/certified release remains `v1.4.2`; its certification evidence must not be transferred to `a9d5cdd`.
+`v1.4.6` is the current immutable certified release at exact SHA `f3d60031332450ba616e2a1c705e85c0c2c5aefd`. The historical `v1.4.5` release remains immutable and is not treated as the current certified release.
 
 ## Commercial Readiness Audit v1
 
 | ID | Area | Classification | Current finding | What is required | Code change? |
 |---|---|---|---|---|---|
-| CR-01 | Release identity | 🟢 | `v1.4.2` exact SHA certified and published | Preserve SHA/tag/checksums as launch identity | No |
+| CR-01 | Release identity | 🟢 | `v1.4.6` exact SHA certified and published | Preserve SHA/tag/checksums as launch identity | No |
 | CR-02 | Backend | 🟢 | Certified by release certification | No additional launch code indicated | No |
 | CR-03 | Frontend | 🟢 | Certified by release certification | No additional launch code indicated | No |
 | CR-04 | DB/migrations | 🟢 | Migration and single-head checks passed | Validate again on target deployment | No |
@@ -72,7 +73,7 @@ These issues should be updated/reconciled as evidence is produced. Do not close 
 
 Engineering/release evidence includes:
 
-- exact-SHA Production Certification for `v1.4.2`;
+- exact-SHA Production Certification for `v1.4.6`;
 - backend/frontend/DB validation;
 - Auth/RBAC/tenant isolation product gates;
 - workflow, billing, WorkItem and core business flows;
@@ -96,7 +97,7 @@ Provision the approved target, DNS/TLS, ingress, PostgreSQL, Redis, object stora
 
 ### 2. Exact release deployment
 
-Deploy exactly `v1.4.2` / `dba0bb672deb1236b6724bb8851526e656f47967`, record deployment timestamp, image digests, migration revision and health checks.
+Deploy exactly `v1.4.6` / `f3d60031332450ba616e2a1c705e85c0c2c5aefd`, record deployment timestamp, image digests, migration revision and health checks.
 
 ### 3. Backup/DR
 
