@@ -59,7 +59,7 @@ def _error(exc: TeamEvaluationError) -> HTTPException:
 async def create_evaluation(
     payload: TeamEvaluationCreate,
     ctx: TenantContext = Depends(require_permission("team.evaluate")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await TeamEvaluationService(db).create(
@@ -94,7 +94,7 @@ async def create_evaluation(
 @router.get("", response_model=list[TeamEvaluationRead])
 async def list_evaluations(
     ctx: TenantContext = Depends(require_permission("team.evaluate")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     team_version_id: UUID | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -112,7 +112,7 @@ async def list_evaluations(
 async def get_evaluation(
     evaluation_id: UUID,
     ctx: TenantContext = Depends(require_permission("team.evaluate")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await TeamEvaluationService(db).get(tenant_id=ctx.tenant_id, evaluation_id=evaluation_id)
