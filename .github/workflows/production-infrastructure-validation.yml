@@ -103,8 +103,8 @@ jobs:
           docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" ps
           exit 1
 
-      - name: Run database migrations before API readiness gate
-        run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" run --rm --no-deps api alembic upgrade head
+      - name: Run deterministic database migration gate before API readiness
+        run: bash scripts/production_migrate.sh
 
       - name: Start API Worker Beat and Frontend
         run: docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" up -d api worker beat frontend
