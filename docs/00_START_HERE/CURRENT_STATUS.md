@@ -1,28 +1,28 @@
 # Current Status
 
-**Last reconciled:** 2026-09-18
-**Latest published release:** `v1.4.2`
+**Last reconciled:** 2026-09-19
+**Latest published release:** `v1.4.5`
 **Release commit:** `dba0bb672deb1236b6724bb8851526e656f47967`
 **Exact-SHA Production Certification:** Run `35108008066` — PASS
 **Certification job:** `104834133092` — PASS
-**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 RC1 ENGINEERING-VALIDATED / COMMERCIAL READINESS & EXTERNAL PRODUCTION GATES PENDING
+**Current status:** v1.4.5 ENGINEERING-VALIDATED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING / COMMERCIAL READINESS & EXTERNAL PRODUCTION GATES PENDING
 
-## Current v1.4.5 RC1
+## Current v1.4.5
 
-- RC branch: `release/v1.4.5-rc1`
-- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
-- Engineering candidate baseline: `a9d5cdd`
+- RC branch: `main`
+- Exact release SHA: `cc94bc9536f4f95680bb7a183313914c116ffcf2`
+- Engineering candidate baseline: `cc94bc9536f4f95680bb7a183313914c116ffcf2`
 - Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
-- GitHub Actions engineering validation: **10/10 current release-critical workflows PASS**
-- RC1 is not externally certified and does not inherit `v1.4.2` certification.
+- GitHub Actions engineering validation: **10/10 release-critical workflows PASS**
+- release is not externally certified and does not inherit `v1.4.2` certification.
 
-The `v1.4.2` certification remains bound to its exact SHA. The RC1 result is a new engineering validation against `097653...`.
+The prior `v1.4.2` certification remains bound to its exact SHA and does not transfer to `v1.4.5`. The release result is a new engineering validation against `cc94bc...`.
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a Human + Agent operating model. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries.
 
-The latest published and exact-SHA certified release remains `v1.4.2`. RC1 of `v1.4.5` has passed the current GitHub engineering gates, but no external production deployment, live-provider acceptance, measured production SLO/DR, independent security review or customer acceptance is recorded.
+The latest published release is `v1.4.5`, tagged at exact merge commit `cc94bc9536f4f95680bb7a183313914c116ffcf2`. It is engineering-validated, but not externally production-certified. release of `v1.4.5` has passed the current GitHub engineering gates, but no external production deployment, live-provider acceptance, measured production SLO/DR, independent security review or customer acceptance is recorded.
 
 ## Evidence boundary
 
@@ -32,7 +32,7 @@ Certification never transfers automatically across SHAs.
 
 ## Immediate next phase
 
-1. Freeze the final RC1 release identity if no further code changes are required.
+1. Freeze the final release release identity if no further code changes are required.
 2. If external deployment is authorized, provision and harden the approved target.
 3. Deploy the exact accepted SHA and capture deployment/image/migration identity.
 4. Establish SLI/SLO/error-budget measurement and alert routing.
