@@ -43,8 +43,6 @@ frontend/test-results/
 
 dist/
 
-# Local disaster-recovery database backups
-artifacts/dr/
 
-# Local Phase 14.10 certification evidence
-artifacts/phase-14-10-local-certification-*/
+# Local/generated certification and operational evidence
+artifacts/

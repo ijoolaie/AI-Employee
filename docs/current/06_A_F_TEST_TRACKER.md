@@ -8,8 +8,8 @@
 
 - [x] Health — automated/runtime evidence present
 - [x] Dependencies — automated/runtime evidence present
-- [x] Auth — automated coverage present; full runtime certification remains pending
-- [x] Tenant isolation — automated coverage present; full runtime certification remains pending
+- [x] Auth — automated coverage and real-stack certification passed
+- [x] Tenant isolation — automated coverage and real-stack certification passed
 - [x] Employee — automated coverage present
 - [x] Version — automated coverage present
 - [x] Run — automated coverage present
@@ -50,7 +50,7 @@
 - [x] Commerce — implementation/test coverage present
 - [x] Billing — implementation/test coverage present
 - [x] Analytics — implementation/test coverage present
-- [ ] Full-stack business acceptance — pending
+- [x] Full-stack business acceptance — five official real-stack acceptance gates passed on 2026-09-18
 
 ## PHASE F — Production Certification
 
@@ -62,6 +62,27 @@
 - [ ] Observability — certification pending
 
 ## Evidence completed in current test session
+
+### Phase E — Full-stack business acceptance — 2026-09-18 runtime evidence
+
+- Conversation tenant isolation: **PASS**. `scripts/e2e_conversation_tenant_verify.py` passed public conversation creation/read, authenticated tenant-scoped listing, wrong-customer token rejection, cross-tenant public read rejection, and cross-tenant handoff rejection.
+- Employee → Run → AI → Result: **PASS**. `scripts/e2e_employee_run_verify.py` passed authentication, commercial-license fixture, employee creation/version/list-get, run creation, terminal result, and the complete Employee → Run → AI → Result flow.
+- Files → Knowledge → Memory: **PASS**. `scripts/e2e_files_knowledge_memory_verify.py` passed file upload/list/get/download, knowledge indexing/search, memory creation/search, and the aggregate product acceptance gate.
+- Admin / Developer: **PASS**. `scripts/e2e_admin_developer_verify.py` passed non-platform admin denial, developer API-key creation, secret redaction, and API-key revocation.
+- Workflow + Approval + Schedule: **PASS**. `scripts/e2e_workflow_approval_schedule_verify.py` passed workflow/version creation, approval create/approve, workflow resume completion, schedule next-run calculation, tenant-scoped schedule read, deactivation, and deletion.
+- Phase E aggregate full-stack business acceptance gate: **PASS**. All five official acceptance scripts completed successfully against the current local Docker stack.
+
+These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
+
+### P0 — Tenant Isolation + RBAC + Immutable Audit Retention — 2026-09-18 runtime evidence
+
+- Real-stack tenant/RBAC certification: **PASS**. The certification script completed tenant registration, tenant-context isolation, cross-tenant employee/file/knowledge rejection, same-tenant access, RBAC read/write enforcement, and knowledge-search isolation successfully.
+- Aggregate gate: **PASS**. `TENANT ISOLATION + RBAC + KNOWLEDGE P0 REAL-STACK CERTIFICATION PASS`.
+- Certification fixture cleanup: **PASS**. The certification cleanup now deprovisions fixture tenants through the real lifecycle service instead of deleting tenant-owned data.
+- Retention verification: **PASS**. Four certification tenants were retained in PostgreSQL with `status=deprovisioned`; all associated users had `is_active=false`; each tenant retained audit rows including one `edition.deprovisioned` audit event.
+- Immutable audit retention gate: **PASS**. `ACTIVE_CERTIFICATION_TENANTS=0` and `IMMUTABLE_AUDIT_RETENTION_CHECK=PASS`.
+- Legacy certification fixtures from the earlier destructive-cleanup implementation were also deprovisioned and retained; no tenant DELETE was used for cleanup.
+- This evidence verifies local Docker/PostgreSQL runtime behavior and is not a GitHub Actions or production-deployment certification claim.
 
 ### Phase D — Webhook + Replay — 2026-09-18 runtime evidence
 
@@ -94,7 +115,6 @@ These are local Docker/PostgreSQL runtime observations, not GitHub Actions or pr
 - Phase C aggregate runtime gate: **PASS**.
 
 These are local Docker/PostgreSQL runtime observations, not GitHub Actions or production-certification evidence.
-
 
 ### Phase B — 2026-09-17 runtime evidence
 
@@ -176,7 +196,6 @@ These are post-release productization/security evidence, not a new production-ce
 
 ## Next test order
 
-1. Run Phase E full-stack business acceptance.
-2. Run Phase F production certification.
+1. Run Phase F production certification.
 
 **Rule:** Every completed test changes the corresponding `[ ]` to `[x]` here with the command/result recorded in the evidence section or a linked dated evidence document.

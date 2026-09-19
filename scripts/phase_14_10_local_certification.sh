@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./lib/docker_compat.sh
+source "$SCRIPT_DIR/lib/docker_compat.sh"
+
 # Phase 14.10 local certification harness.
 # This produces reproducible engineering evidence against the exact checked-out SHA.
 # It intentionally does NOT claim external production certification or customer acceptance.
@@ -17,10 +21,15 @@ LOCAL_OVERRIDE="${LOCAL_OVERRIDE:-docker-compose.local-production.yml}"
 PROVIDER_HEALTHCHECK_URL="${PROVIDER_HEALTHCHECK_URL:-}"
 KEEP_STACK="${KEEP_STACK:-true}"
 
+export LOCAL_PRODUCTION_POSTGRES_PORT="${LOCAL_PRODUCTION_POSTGRES_PORT:-15433}"
+export LOCAL_PRODUCTION_REDIS_PORT="${LOCAL_PRODUCTION_REDIS_PORT:-16380}"
+export LOCAL_PRODUCTION_API_PORT="${LOCAL_PRODUCTION_API_PORT:-18001}"
+export LOCAL_PRODUCTION_FRONTEND_PORT="${LOCAL_PRODUCTION_FRONTEND_PORT:-13001}"
+
 mkdir -p "$OUT_DIR"
 
 compose() {
-  docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$COMPOSE_PROJECT_NAME" "$@"
+  docker_compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$COMPOSE_PROJECT_NAME" "$@"
 }
 
 run_capture() {
@@ -36,6 +45,20 @@ run_capture() {
     return 1
   fi
 }
+
+# Resolve the host Python runtime without hard-coding a developer-specific path.
+# On Windows/WSL, cmd.exe resolves the Windows Python installation; on native
+# Linux/macOS, use python or python3 from PATH.
+if command -v cmd.exe >/dev/null 2>&1 && cmd.exe /c python --version >/dev/null 2>&1; then
+  PYTHON_CMD=(cmd.exe /c python)
+elif command -v python >/dev/null 2>&1 && python --version >/dev/null 2>&1; then
+  PYTHON_CMD=(python)
+elif command -v python3 >/dev/null 2>&1 && python3 --version >/dev/null 2>&1; then
+  PYTHON_CMD=(python3)
+else
+  echo "Python runtime not found. Install Python or make it available on PATH." >&2
+  exit 1
+fi
 
 GIT_SHA="$(git rev-parse HEAD)"
 GIT_REF="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || printf 'detached')"
@@ -64,7 +87,7 @@ if [[ ! -f "$ENV_FILE" ]]; then
 fi
 [[ -f "$LOCAL_OVERRIDE" ]] || { echo "Missing $LOCAL_OVERRIDE." >&2; exit 1; }
 
-run_capture production_completeness_audit python scripts/production_completeness_audit.py
+run_capture production_completeness_audit "${PYTHON_CMD[@]}" scripts/production_completeness_audit.py
 run_capture compose_config compose config --quiet
 # Validate the application settings before starting the full stack. This catches malformed
 # JSON-backed list/dict environment values early and records the failure without exposing secrets.
@@ -73,7 +96,8 @@ run_capture local_production_deploy env COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_N
 run_capture service_snapshot compose ps
 
 run_capture api_dependency_readiness compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('API_DEPENDENCY_READINESS|PASS')"
-run_capture frontend_login curl --fail --silent --show-error http://127.0.0.1:13000/login
+FRONTEND_PORT="${LOCAL_PRODUCTION_FRONTEND_PORT:-13001}"
+run_capture frontend_login curl --fail --silent --show-error "http://127.0.0.1:${FRONTEND_PORT}/login"
 run_capture backup_restore_smoke bash scripts/production_backup_restore_smoke.sh
 run_capture rollback_drill env COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" ENV_FILE="$ENV_FILE" bash scripts/local_rollback_drill.sh
 run_capture post_recovery_readiness compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('POST_RECOVERY_READINESS|PASS')"
@@ -97,11 +121,11 @@ cat >"$OUT_DIR/EVIDENCE_INDEX.md" <<EOF
 
 - Certification class: **LOCAL_PRODUCTION_LIKE_ENGINEERING_EVIDENCE**
 - Formal Phase 14.10 status: **EXTERNAL-PENDING**
-- UTC execution time: \`$TIMESTAMP\`
-- Exact Git SHA: \`$GIT_SHA\`
-- Git ref: \`$GIT_REF\`
-- Git archive SHA256: \`$ARCHIVE_SHA256\`
-- Compose project: \`$COMPOSE_PROJECT_NAME\`
+- UTC execution time: $TIMESTAMP
+- Exact Git SHA: $GIT_SHA
+- Git ref: $GIT_REF
+- Git archive SHA256: $ARCHIVE_SHA256
+- Compose project: $COMPOSE_PROJECT_NAME
 
 ## Executed evidence
 

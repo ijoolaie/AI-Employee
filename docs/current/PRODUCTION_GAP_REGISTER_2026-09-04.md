@@ -1,6 +1,6 @@
 # Production & Productization Gap Register
 
-**Reconciled:** 2026-09-16  
+**Reconciled:** 2026-09-18  
 **Repository:** `ijoolaie/AI-Employee`
 
 ## Current release truth
@@ -25,6 +25,10 @@ The engineering/product core is release-certified. The remaining launch blockers
 - **🟠 Required before launch:** operational/evidence requirement that must be completed before launch.
 - **🟡 Launch follow-up:** bounded post-launch item only with explicit owner, scope and risk acceptance.
 - **🟢 Ready / evidenced:** current evidence exists and is bound to the relevant release or engineering baseline.
+
+## Current engineering candidate boundary
+
+The current branch contains engineering candidate `v1.4.5` at exact SHA `a9d5cdd`. Local production-like certification passed on 2026-09-18, including deploy, dependency readiness, frontend login, backup/restore smoke, rollback drill and post-recovery readiness. This is engineering evidence only. The published/certified release remains `v1.4.2`; its certification evidence must not be transferred to `a9d5cdd`.
 
 ## Commercial Readiness Audit v1
 

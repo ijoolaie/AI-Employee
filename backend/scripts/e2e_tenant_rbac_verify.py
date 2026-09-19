@@ -9,15 +9,15 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from sqlalchemy import delete, exists, or_, select
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.sql.schema import Table
 
-from app.core.database import AsyncSessionLocal, Base
+from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
 from app.models.role import Permission, Role, role_permissions, user_roles
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.services import edition_lifecycle_service
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
@@ -102,79 +102,43 @@ async def create_restricted_member(tenant_slug: str, suffix: str) -> tuple[str, 
         return email, password
 
 
-def _tenant_cleanup_predicates(tenant_ids: list) -> dict[Table, object]:
-    """Build predicates for all rows owned by the supplied test tenants."""
-    tables = list(Base.metadata.sorted_tables)
-    tenant_table = Tenant.__table__
-    scoped_tables = {tenant_table}
-
-    changed = True
-    while changed:
-        changed = False
-        for table in tables:
-            if table in scoped_tables:
-                continue
-            if "tenant_id" in table.c or any(
-                fk.column.table in scoped_tables
-                for column in table.columns
-                for fk in column.foreign_keys
-            ):
-                scoped_tables.add(table)
-                changed = True
-
-    predicates: dict[Table, object] = {tenant_table: tenant_table.c.id.in_(tenant_ids)}
-    for table in tables:
-        if table is tenant_table:
-            continue
-
-        clauses: list[object] = []
-        if "tenant_id" in table.c:
-            clauses.append(table.c.tenant_id.in_(tenant_ids))
-
-        for constraint in table.foreign_key_constraints:
-            parent = constraint.referred_table
-            parent_predicate = predicates.get(parent)
-            if parent not in scoped_tables or parent_predicate is None:
-                continue
-            clauses.append(
-                exists(
-                    select(1)
-                    .select_from(parent)
-                    .where(
-                        parent_predicate,
-                        *[element.parent == element.column for element in constraint.elements],
-                    )
-                )
-            )
-
-        if clauses:
-            predicates[table] = or_(*clauses)
-
-    return predicates
-
 
 async def cleanup_test_tenants(slugs: list[str]) -> None:
-    """Delete only tenants created by this certification run.
+    """Deprovision certification tenants without deleting retained data.
 
-    The cleanup follows the real FK graph so dependent rows without their own
-    tenant_id (for example employee_versions and user_roles) are removed
-    before their tenant-owned parents. It runs from a finally block, so a
-    failed certification cannot leave another pair of tenants behind.
+    Certification fixtures are intentionally retained after the run so the
+    immutable audit ledger and tenant-owned records remain available for
+    audit, retention, and forensic verification. Deprovisioning disables
+    tenant access and deactivates all users.
     """
     if not slugs:
         return
 
     async with AsyncSessionLocal() as db:
-        result = await db.execute(select(Tenant.id).where(Tenant.slug.in_(slugs)))
-        tenant_ids = list(result.scalars().all())
-        if not tenant_ids:
+        result = await db.execute(
+            select(Tenant).where(Tenant.slug.in_(slugs))
+        )
+        tenants = list(result.scalars().all())
+
+        if not tenants:
             return
 
-        predicates = _tenant_cleanup_predicates(tenant_ids)
-        for table in reversed(Base.metadata.sorted_tables):
-            predicate = predicates.get(table)
-            if predicate is not None:
-                await db.execute(delete(table).where(predicate))
+        for tenant in tenants:
+            if tenant.status == edition_lifecycle_service.STATUS_DEPROVISIONED:
+                continue
+
+            await edition_lifecycle_service.transition_tenant_status(
+                db,
+                tenant=tenant,
+                target_status=edition_lifecycle_service.STATUS_DEPROVISIONED,
+                actor_id=None,
+                audit_tenant_id=tenant.id,
+                audit_metadata={
+                    "certification_fixture": True,
+                    "cleanup_mode": "deprovision",
+                },
+            )
+
         await db.commit()
 
 

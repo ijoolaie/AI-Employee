@@ -16,6 +16,7 @@ from app.workers.celery_app import (
 def test_all_registered_tasks_have_explicit_isolation_routes():
     expected = {
         "run.execute": EXECUTION_QUEUE,
+        "run.stale_sweep": EXECUTION_QUEUE,
         "workflow.execute": EXECUTION_QUEUE,
         "workflow.parallel_branch": EXECUTION_QUEUE,
         "test_center.execute_run": TEST_CENTER_QUEUE,

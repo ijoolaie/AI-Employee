@@ -1,13 +1,13 @@
 # Production Evidence Index
 
-**Reconciled:** 2026-09-16  
+**Reconciled:** 2026-09-18  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
 ## Evidence classification
 
-- **ENGINEERING** — repository, CI, local Docker, synthetic-load, simulated-provider, or test evidence. It demonstrates implementation/readiness but does not certify a real production target.
-- **EXTERNAL-PENDING** — evidence that can only be completed against a real deployment, real provider, real customer workflow, or independent external assessment.
+- **ENGINEERING** — repository, CI, local Docker, synthetic-load, simulated-provider, or test evidence.
+- **EXTERNAL-PENDING** — evidence requiring a real deployment, real provider, real customer workflow, or independent external assessment.
 - **EXTERNAL** — completed evidence captured against the accepted immutable release on a real target.
 
 No P0 external gate may be marked complete from ENGINEERING evidence alone.
@@ -26,32 +26,40 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | External image registry/deployed digest evidence | **PENDING** |
 | External signed provenance/attestation | **PENDING** |
 
+### Current v1.4.5 RC1 engineering identity
+
+- RC branch: `release/v1.4.5-rc1`
+- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
+- Engineering candidate baseline: `a9d5cdd`
+- RC1 GitHub Actions engineering validation: **10/10 current release-critical workflows PASS**
+- Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
+- RC1 external deployment/certification: **PENDING**
+- Do not transfer the `v1.4.2` certification onto RC1.
+
 ## Evidence matrix
 
 | Gate | Evidence | Class | Status |
 |---|---|---|---|
-| Exact-SHA Production Certification | Run `35108008066` | ENGINEERING | Complete |
-| Certification product gates | Run `35108008066` | ENGINEERING | Complete — 0 failures |
-| Backend/frontend/DB | Certification suite | ENGINEERING | Complete |
-| Auth/RBAC/tenant isolation | Certification product gates | ENGINEERING | Complete; external actor matrix pending |
-| Stage 9 governed optimization | `v1.4.2` certification | ENGINEERING | Complete |
-| Production-like infrastructure lifecycle | CI production Compose validation | ENGINEERING | Complete; real target pending |
+| v1.4.2 Exact-SHA Production Certification | Run `35108008066` | ENGINEERING | Complete |
+| v1.4.2 certification product gates | Run `35108008066` | ENGINEERING | Complete — 0 failures |
+| RC1 GitHub Actions engineering validation | SHA `097653...` | ENGINEERING | Complete — 10/10 PASS |
+| Backend/frontend/DB engineering | Certification + RC1 CI | ENGINEERING | Complete |
+| Auth/RBAC/tenant isolation | Real-stack + RC1 isolation gate | ENGINEERING | Complete; external actor matrix pending |
+| Production-like infrastructure lifecycle | RC1 infrastructure + local certification | ENGINEERING | Complete; real target pending |
 | Backup/restore rehearsal | Production-like PostgreSQL validation | ENGINEERING | Complete; real target RPO/RTO pending |
 | SLO/error-budget contract | SLO validator/manual | ENGINEERING | Complete; live measurement pending |
 | Provider integration preflight | Provider validator | ENGINEERING | Complete; live provider validation pending |
-| Runtime isolation/RBAC contract | Real-stack CI gate | ENGINEERING | Complete; external actor matrix pending |
+| Runtime isolation/RBAC contract | RC1 real-stack gate | ENGINEERING | Complete; external actor matrix pending |
 | Network hardening contract | Network validator/workflow | ENGINEERING | Complete; deployed perimeter pending |
 | Secret-management contract | Secret validator/workflow | ENGINEERING | Complete; external manager/rotation/recovery pending |
-| Failure-recovery/incident contracts | Engineering rehearsal | ENGINEERING | Complete; target rehearsal pending |
+| Failure-recovery/incident contracts | RC1 HA/rollback gates | ENGINEERING | Complete; target rehearsal pending |
 | Alert routing contract | `ops/alerting/alert-routing.yml` + validator | ENGINEERING | Complete; live paging test pending |
-| Data retention/lifecycle | Retention service/scripts/tests | ENGINEERING | Complete; target lifecycle verification pending |
-| Usage/budget/cost controls | Usage/forecast surfaces | ENGINEERING | Complete; target commercial validation pending |
 | Real production deployment | Execution Pack Phase B | EXTERNAL-PENDING | Blocked |
 | Real backup/restore/DR + RPO/RTO | Execution Pack Phase C | EXTERNAL-PENDING | Blocked |
 | Production SLO/SLI/error budget | Execution Pack Phase D | EXTERNAL-PENDING | Blocked |
 | Live provider validation | Execution Pack Phase E | EXTERNAL-PENDING | Blocked |
 | Vendor → Reseller → Client isolation | Execution Pack Phase F / #19 | EXTERNAL-PENDING | Blocked |
-| DAST | Execution Pack Phase G | EXTERNAL-PENDING | Blocked |
+| DAST on accepted target | Execution Pack Phase G | EXTERNAL-PENDING | Blocked |
 | Independent penetration test | Execution Pack Phase G | EXTERNAL-PENDING | Blocked |
 | Network hardening + secret lifecycle | Execution Pack Phase H | EXTERNAL-PENDING | Blocked |
 | HA/failure recovery + incident drill | Execution Pack Phase I | EXTERNAL-PENDING | Blocked |
@@ -60,36 +68,8 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Customer acceptance | Execution Pack final sequence / #269 | EXTERNAL-PENDING | Blocked |
 | Final commercial go-live authorization | Final gate | EXTERNAL-PENDING | Blocked by P0 evidence |
 
-## Required external inputs
-
-1. Operator-controlled staging/production target with compute, DNS/TLS and ingress access.
-2. PostgreSQL, Redis and object-storage access plus isolated restore target.
-3. Production-safe provider credentials delivered through the runtime secret-management mechanism; never commit or paste secret values.
-4. Approved external secret manager with rotation/revocation and recovery procedures.
-5. Monitoring/alerting access and named primary/backup on-call ownership.
-6. Permission to execute controlled backup/restore, failure, DR and secret-rotation scenarios.
-7. Independent security tester for the penetration assessment.
-8. Customer acceptance owner and written acceptance criteria.
-
 ## Release binding rule
 
-Every completed external evidence record must identify:
-
-- exact release tag;
-- exact release SHA;
-- deployment timestamp;
-- target/environment identifier;
-- relevant artifact/image digest;
-- operator/owner;
-- evidence artifact or log reference.
+Every completed external evidence record must identify exact release tag/SHA, deployment timestamp, target/environment, relevant artifact/image digest, operator/owner, and evidence artifact/log reference.
 
 No evidence transfers automatically across SHAs. Documentation cannot substitute for target evidence.
-
-## Governing documents
-
-- `docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md`
-- `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
-- `docs/current/09_PRODUCTION_READINESS_STATUS.md`
-- `docs/00_START_HERE/CURRENT_PRIORITIES.md`
-- `docs/00_START_HERE/CURRENT_STATUS.md`
-- `docs/releases/RELEASE_TRUTH_LEDGER.md`
