@@ -163,7 +163,7 @@ def _error(exc: TestCenterError) -> HTTPException:
 @router.get("/definitions", response_model=list[TestDefinitionSummary])
 async def list_definitions(
     ctx: RunReadContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     workspace_key: str | None = Query(default=None),
 ):
     stmt = select(TestDefinition).where(TestDefinition.tenant_id == ctx.tenant_id).order_by(TestDefinition.created_at.desc())
@@ -177,7 +177,7 @@ async def list_definitions(
 async def create_definition(
     payload: TestDefinitionCreate,
     ctx: RunExecuteContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     definition = TestDefinition(tenant_id=ctx.tenant_id, created_by=ctx.user_id, **payload.model_dump())
     db.add(definition)
@@ -204,7 +204,7 @@ async def create_definition(
 async def create_run(
     payload: TestRunCreate,
     ctx: RunExecuteContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     service = TestCenterService(db)
     try:
@@ -263,7 +263,7 @@ async def _history_response(
 @router.get("/runs", response_model=list[TestRunSummary])
 async def list_runs(
     ctx: RunReadContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     status_filter: str | None = Query(default=None, alias="status"),
     test_definition_id: UUID | None = Query(default=None),
     workspace_key: str | None = Query(default=None),
@@ -289,7 +289,7 @@ async def list_runs(
 @router.get("/history", response_model=list[TestRunSummary])
 async def run_history(
     ctx: RunReadContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
     status_filter: str | None = Query(default=None, alias="status"),
     test_definition_id: UUID | None = Query(default=None),
     workspace_key: str | None = Query(default=None),
@@ -314,7 +314,7 @@ async def run_history(
 
 
 @router.get("/runs/{run_id}", response_model=TestRunSummary)
-async def get_run(run_id: UUID, ctx: RunReadContext, db: AsyncSession = Depends(get_db)):
+async def get_run(run_id: UUID, ctx: RunReadContext, db: AsyncSession = Depends(get_db, scope="function")):
     run = (await db.execute(select(TestRun).where(TestRun.id == run_id, TestRun.tenant_id == ctx.tenant_id))).scalar_one_or_none()
     if run is None:
         raise HTTPException(status_code=404, detail="test run not found")
@@ -322,7 +322,7 @@ async def get_run(run_id: UUID, ctx: RunReadContext, db: AsyncSession = Depends(
 
 
 @router.post("/runs/{run_id}/start", response_model=TestRunSummary)
-async def start_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db)):
+async def start_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db, scope="function")):
     service = TestCenterService(db)
     try:
         run = await service.start_run(run_id=run_id, tenant_id=ctx.tenant_id)
@@ -336,7 +336,7 @@ async def start_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Dep
 
 
 @router.post("/runs/{run_id}/finish", response_model=TestRunSummary)
-async def finish_run(run_id: UUID, payload: TestRunFinish, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db)):
+async def finish_run(run_id: UUID, payload: TestRunFinish, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db, scope="function")):
     service = TestCenterService(db)
     try:
         run = await service.finish_run(run_id=run_id, tenant_id=ctx.tenant_id, **payload.model_dump())
@@ -353,7 +353,7 @@ async def expire_run(
     run_id: UUID,
     payload: TestRunExpire,
     ctx: RunExecuteContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     """Expire an active run only after its configured timeout has elapsed."""
     service = TestCenterService(db)
@@ -381,7 +381,7 @@ async def expire_run(
 
 
 @router.post("/runs/{run_id}/artifacts", response_model=TestRunArtifactSummary, status_code=status.HTTP_201_CREATED)
-async def add_artifact(run_id: UUID, payload: TestRunArtifactCreate, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db)):
+async def add_artifact(run_id: UUID, payload: TestRunArtifactCreate, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db, scope="function")):
     service = TestCenterService(db)
     try:
         artifact = await service.add_artifact(run_id=run_id, tenant_id=ctx.tenant_id, **payload.model_dump())
@@ -394,7 +394,7 @@ async def add_artifact(run_id: UUID, payload: TestRunArtifactCreate, ctx: RunExe
 
 
 @router.get("/runs/{run_id}/artifacts", response_model=list[TestRunArtifactSummary])
-async def list_artifacts(run_id: UUID, ctx: RunReadContext, db: AsyncSession = Depends(get_db)):
+async def list_artifacts(run_id: UUID, ctx: RunReadContext, db: AsyncSession = Depends(get_db, scope="function")):
     service = TestCenterService(db)
     try:
         artifacts = await service.list_artifacts(run_id=run_id, tenant_id=ctx.tenant_id)
@@ -404,7 +404,7 @@ async def list_artifacts(run_id: UUID, ctx: RunReadContext, db: AsyncSession = D
 
 
 @router.post("/runs/{run_id}/cancel", response_model=TestRunSummary)
-async def cancel_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db)):
+async def cancel_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db, scope="function")):
     service = TestCenterService(db)
     try:
         run = await service.cancel_run(run_id=run_id, tenant_id=ctx.tenant_id)
