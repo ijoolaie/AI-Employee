@@ -24,7 +24,7 @@ router = APIRouter(prefix="/test-center", tags=["test-center-verification"])
 async def export_verification_record(
     run_id: UUID,
     ctx: RunReadContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     """Export a tenant-scoped verification snapshot without changing the run."""
     service = TestCenterVerificationService(db)
