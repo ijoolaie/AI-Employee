@@ -10,12 +10,26 @@
 
 ## Upgrade
 
+Build the target application images without starting application services:
+
 ```bash
 docker compose --env-file .env -f docker-compose.production.yml pull
-docker compose --env-file .env -f docker-compose.production.yml up -d --build
+docker compose --env-file .env -f docker-compose.production.yml build api worker beat frontend
 ```
 
-Run the repository-approved Alembic migration command for the target release. Do not skip migrations or manually alter migration history.
+Run the repository-approved migration gate **before** starting API, worker, beat, or frontend:
+
+```bash
+ENV_FILE=.env COMPOSE_FILE=docker-compose.production.yml bash scripts/production_migrate.sh
+```
+
+Do not skip migrations or manually alter migration history. The migration runner fails if the database does not reach the single Alembic head or if `alembic check` reports schema drift.
+
+Only after the migration gate succeeds:
+
+```bash
+docker compose --env-file .env -f docker-compose.production.yml up -d api worker beat frontend
+```
 
 ## Verify
 
@@ -28,7 +42,7 @@ Verify API dependency health, frontend login, background worker health, schedule
 
 ## Failure
 
-Stop rollout if health checks, migrations, or acceptance checks fail. Preserve logs and deployment metadata. Do not attempt ad-hoc schema changes.
+Stop rollout if health checks, migrations, or acceptance checks fail. Preserve logs and deployment metadata. Do not attempt ad-hoc schema changes. If the migration gate fails, application services must remain stopped until the database compatibility issue is resolved.
 
 ## Completion record
 
