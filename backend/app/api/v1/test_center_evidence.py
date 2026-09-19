@@ -56,7 +56,7 @@ async def update_evidence_identity(
     run_id: UUID,
     payload: EvidenceIdentityUpdate,
     ctx: RunExecuteContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     service = TestCenterService(db)
     try:
@@ -99,7 +99,7 @@ async def add_artifact(
     run_id: UUID,
     payload: ArtifactCreate,
     ctx: RunExecuteContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     service = TestCenterService(db)
     try:
@@ -129,7 +129,7 @@ async def add_artifact(
 async def list_artifacts(
     run_id: UUID,
     ctx: RunReadContext,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     service = TestCenterService(db)
     try:
