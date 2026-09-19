@@ -1,6 +1,6 @@
 # Production Evidence Index
 
-**Reconciled:** 2026-09-18  
+**Reconciled:** 2026-09-19  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
@@ -17,7 +17,7 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Field | Value |
 |---|---|
 | Repository | `ijoolaie/AI-Employee` |
-| Latest published release | `v1.4.2` |
+| Latest published release | `v1.4.5` |
 | Exact certified release SHA | `dba0bb672deb1236b6724bb8851526e656f47967` |
 | Production Certification run | `35108008066` — PASS |
 | Certification job | `104834133092` — PASS |
@@ -26,33 +26,33 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | External image registry/deployed digest evidence | **PENDING** |
 | External signed provenance/attestation | **PENDING** |
 
-### Current v1.4.5 RC1 engineering identity
+### Current v1.4.5 engineering identity
 
-- RC branch: `release/v1.4.5-rc1`
-- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
-- Engineering candidate baseline: `a9d5cdd`
-- RC1 GitHub Actions engineering validation: **10/10 current release-critical workflows PASS**
+- RC branch: `main`
+- Exact release SHA: `cc94bc9536f4f95680bb7a183313914c116ffcf2`
+- Engineering candidate baseline: `cc94bc9536f4f95680bb7a183313914c116ffcf2`
+- release GitHub Actions engineering validation: **10/10 release-critical workflows PASS**
 - Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
-- RC1 external deployment/certification: **PENDING**
-- Do not transfer the `v1.4.2` certification onto RC1.
+- release external deployment/certification: **PENDING**
+- Do not transfer the `v1.4.2` certification onto release.
 
 ## Evidence matrix
 
 | Gate | Evidence | Class | Status |
 |---|---|---|---|
 | v1.4.2 Exact-SHA Production Certification | Run `35108008066` | ENGINEERING | Complete |
-| v1.4.2 certification product gates | Run `35108008066` | ENGINEERING | Complete — 0 failures |
-| RC1 GitHub Actions engineering validation | SHA `097653...` | ENGINEERING | Complete — 10/10 PASS |
-| Backend/frontend/DB engineering | Certification + RC1 CI | ENGINEERING | Complete |
-| Auth/RBAC/tenant isolation | Real-stack + RC1 isolation gate | ENGINEERING | Complete; external actor matrix pending |
-| Production-like infrastructure lifecycle | RC1 infrastructure + local certification | ENGINEERING | Complete; real target pending |
+| prior v1.4.2 certification product gates | Run `35108008066` | ENGINEERING | Complete — 0 failures |
+| release GitHub Actions engineering validation | SHA `cc94bc...` | ENGINEERING | Complete — 10/10 PASS |
+| Backend/frontend/DB engineering | Certification + release CI | ENGINEERING | Complete |
+| Auth/RBAC/tenant isolation | Real-stack + release isolation gate | ENGINEERING | Complete; external actor matrix pending |
+| Production-like infrastructure lifecycle | release infrastructure + local certification | ENGINEERING | Complete; real target pending |
 | Backup/restore rehearsal | Production-like PostgreSQL validation | ENGINEERING | Complete; real target RPO/RTO pending |
 | SLO/error-budget contract | SLO validator/manual | ENGINEERING | Complete; live measurement pending |
 | Provider integration preflight | Provider validator | ENGINEERING | Complete; live provider validation pending |
-| Runtime isolation/RBAC contract | RC1 real-stack gate | ENGINEERING | Complete; external actor matrix pending |
+| Runtime isolation/RBAC contract | release real-stack gate | ENGINEERING | Complete; external actor matrix pending |
 | Network hardening contract | Network validator/workflow | ENGINEERING | Complete; deployed perimeter pending |
 | Secret-management contract | Secret validator/workflow | ENGINEERING | Complete; external manager/rotation/recovery pending |
-| Failure-recovery/incident contracts | RC1 HA/rollback gates | ENGINEERING | Complete; target rehearsal pending |
+| Failure-recovery/incident contracts | release HA/rollback gates | ENGINEERING | Complete; target rehearsal pending |
 | Alert routing contract | `ops/alerting/alert-routing.yml` + validator | ENGINEERING | Complete; live paging test pending |
 | Real production deployment | Execution Pack Phase B | EXTERNAL-PENDING | Blocked |
 | Real backup/restore/DR + RPO/RTO | Execution Pack Phase C | EXTERNAL-PENDING | Blocked |
