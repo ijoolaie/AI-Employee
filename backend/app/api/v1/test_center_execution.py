@@ -25,7 +25,7 @@ class TestRunExecutionDispatch(BaseModel):
 
 
 @router.post("/runs/{run_id}/execute", response_model=TestRunExecutionDispatch, status_code=status.HTTP_202_ACCEPTED)
-async def execute_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db)):
+async def execute_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = Depends(get_db, scope="function")):
     run = (
         await db.execute(
             select(TestRun).where(TestRun.id == run_id, TestRun.tenant_id == ctx.tenant_id)
