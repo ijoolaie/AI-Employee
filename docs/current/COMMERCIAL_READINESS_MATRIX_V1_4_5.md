@@ -1,10 +1,10 @@
 # Commercial Readiness Matrix — v1.4.5 Candidate
 
-**Reconciled:** 2026-09-18
+**Reconciled:** 2026-09-19
 **Repository:** `ijoolaie/AI-Employee`
 **Engineering candidate:** `v1.4.5`
-**Exact candidate SHA:** `a9d5cdd`
-**Published certified release:** `v1.4.2`
+**Exact candidate SHA:** `cc94bc9536f4f95680bb7a183313914c116ffcf2`
+**Latest published release:** `v1.4.5`
 **v1.4.2 certified SHA:** `dba0bb672deb1236b6724bb8851526e656f47967`
 
 ## Release boundary
@@ -13,13 +13,13 @@ The `v1.4.5` candidate is an engineering candidate only. The local production-li
 
 `PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING`
 
-Certification evidence from `v1.4.2` must not be transferred to `a9d5cdd`.
+Certification evidence from `v1.4.2` must not be transferred to `cc94bc9536f4f95680bb7a183313914c116ffcf2`.
 
 ## Readiness matrix
 
 | Gate | Current evidence | Status | Blocks unrestricted commercial go-live? |
 |---|---|---|---|
-| Source / working tree integrity | Clean working tree; exact candidate SHA `a9d5cdd` | PASS — Engineering | No |
+| Source / working tree integrity | Clean working tree; exact candidate SHA `cc94bc9536f4f95680bb7a183313914c116ffcf2` | PASS — Engineering | No |
 | Backend/frontend/DB core | Existing certification and regression evidence | PASS — Engineering | No |
 | Tenant isolation / RBAC | Phase A/E + P0 real-stack evidence | PASS — Local Runtime | External target still required |
 | Immutable audit retention | P0 real-stack retention gate PASS | PASS — Local Runtime | External target still required |
@@ -42,7 +42,7 @@ Certification evidence from `v1.4.2` must not be transferred to `a9d5cdd`.
 | Customer acceptance | No external acceptance evidence | PENDING — External | Yes |
 | Commercial go-live authorization | Depends on all required external gates | PENDING | Yes |
 
-## Local certification evidence completed on 2026-09-18
+## Local certification evidence completed on 2026-09-19
 
 The production-like certification script reported PASS for:
 
