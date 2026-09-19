@@ -107,7 +107,7 @@ async def evaluate_template(
     template_id: UUID,
     payload: AgentEvaluationCreate,
     ctx: TenantContext = Depends(require_permission("agent_template.evaluate")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await record_evaluation(
@@ -133,7 +133,7 @@ async def evaluate_template(
 async def list_template_evaluations(
     template_id: UUID,
     ctx: TenantContext = Depends(require_permission("agent_template.read")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     result = await db.execute(
         select(AgentEvaluation).where(AgentEvaluation.agent_template_id == template_id, AgentEvaluation.tenant_id == ctx.tenant_id).order_by(AgentEvaluation.created_at.desc())
@@ -144,7 +144,7 @@ async def list_template_evaluations(
 @router.get("/workforce-registry")
 async def workforce_registry(
     ctx: TenantContext = Depends(require_permission("agent_workforce.read")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     """Return the tenant's governed Agent workforce as one auditable projection."""
     return await list_workforce(db, tenant_id=ctx.tenant_id)
@@ -154,7 +154,7 @@ async def workforce_registry(
 async def get_identity(
     identity_id: UUID,
     ctx: TenantContext = Depends(require_permission("agent_instance.lifecycle")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     item = (await db.execute(select(AgentIdentity).where(AgentIdentity.id == identity_id, AgentIdentity.tenant_id == ctx.tenant_id))).scalar_one_or_none()
     if item is None:
@@ -167,7 +167,7 @@ async def access_review(
     identity_id: UUID,
     payload: AgentAccessReviewCreate,
     ctx: TenantContext = Depends(require_permission("agent_instance.lifecycle")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await review_access(
@@ -191,7 +191,7 @@ async def access_review(
 async def create_kill_switch(
     payload: AgentKillSwitchCreate,
     ctx: TenantContext = Depends(require_permission("agent.emergency_kill")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     """Assert a tenant or Agent emergency kill switch; global scope is system-only."""
     if payload.scope == AgentKillScope.GLOBAL:
@@ -209,7 +209,7 @@ async def create_kill_switch(
 @router.get("/kill-switches", response_model=list[AgentKillSwitchRead])
 async def list_kill_switches(
     ctx: TenantContext = Depends(require_permission("agent.emergency_kill")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     result = await db.execute(select(AgentKillSwitch).where(AgentKillSwitch.tenant_id == ctx.tenant_id).order_by(AgentKillSwitch.asserted_at.desc()))
     return [AgentKillSwitchRead.model_validate(item, from_attributes=True) for item in result.scalars().all()]
@@ -219,7 +219,7 @@ async def list_kill_switches(
 async def revoke_kill_switch(
     kill_switch_id: UUID,
     ctx: TenantContext = Depends(require_permission("agent.emergency_kill")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await revoke_kill(db, kill_switch_id=kill_switch_id, actor_id=ctx.user_id, tenant_id=ctx.tenant_id)
