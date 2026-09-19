@@ -79,7 +79,7 @@ def _http(exc: Exception) -> HTTPException:
 async def agent_capacity(
     agent_instance_id: UUID,
     ctx: TenantContext = Depends(require_permission("agent_workforce.read")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         return await get_agent_capacity(db, tenant_id=ctx.tenant_id, agent_instance_id=agent_instance_id)
@@ -91,7 +91,7 @@ async def agent_capacity(
 async def create_workforce_proposal(
     payload: WorkforceProposalCreate,
     ctx: TenantContext = Depends(require_permission("agent_workforce.propose")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item = await proposal_service.create_proposal(
@@ -118,7 +118,7 @@ async def create_workforce_proposal(
 async def create_governed_scaling_proposal(
     payload: GovernedScalingCreate,
     ctx: TenantContext = Depends(require_permission("agent_workforce.propose")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     try:
         item, _forecast = await create_scaling_proposal(
@@ -143,7 +143,7 @@ async def create_governed_scaling_proposal(
 async def list_workforce_proposals(
     status_filter: AgentWorkforceProposalStatus | None = None,
     ctx: TenantContext = Depends(require_permission("agent_workforce.read")),
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db, scope="function"),
 ):
     stmt = select(AgentWorkforceProposal).where(AgentWorkforceProposal.tenant_id == ctx.tenant_id)
     if status_filter is not None:
@@ -153,7 +153,7 @@ async def list_workforce_proposals(
 
 
 @router.post("/proposals/{proposal_id}/board-decision", response_model=WorkforceProposalRead)
-async def board_decision(proposal_id: UUID, payload: WorkforceDecision, ctx: TenantContext = Depends(require_permission("agent_workforce.board_review")), db: AsyncSession = Depends(get_db)):
+async def board_decision(proposal_id: UUID, payload: WorkforceDecision, ctx: TenantContext = Depends(require_permission("agent_workforce.board_review")), db: AsyncSession = Depends(get_db, scope="function")):
     try:
         item = await proposal_service.board_decide(db, tenant_id=ctx.tenant_id, proposal_id=proposal_id, reviewer_user_id=ctx.user_id, approve=payload.approve, reason=payload.reason)
         await db.commit()
@@ -164,7 +164,7 @@ async def board_decision(proposal_id: UUID, payload: WorkforceDecision, ctx: Ten
 
 
 @router.post("/proposals/{proposal_id}/ceo-decision", response_model=WorkforceProposalRead)
-async def ceo_decision(proposal_id: UUID, payload: WorkforceDecision, ctx: TenantContext = Depends(require_permission("agent_workforce.ceo_approve")), db: AsyncSession = Depends(get_db)):
+async def ceo_decision(proposal_id: UUID, payload: WorkforceDecision, ctx: TenantContext = Depends(require_permission("agent_workforce.ceo_approve")), db: AsyncSession = Depends(get_db, scope="function")):
     try:
         item = await proposal_service.ceo_decide(db, tenant_id=ctx.tenant_id, proposal_id=proposal_id, approver_user_id=ctx.user_id, approve=payload.approve, reason=payload.reason)
         await db.commit()
@@ -175,7 +175,7 @@ async def ceo_decision(proposal_id: UUID, payload: WorkforceDecision, ctx: Tenan
 
 
 @router.post("/proposals/{proposal_id}/provision", response_model=WorkforceProposalRead)
-async def provision_workforce_proposal(proposal_id: UUID, ctx: TenantContext = Depends(require_permission("agent_workforce.provision")), db: AsyncSession = Depends(get_db)):
+async def provision_workforce_proposal(proposal_id: UUID, ctx: TenantContext = Depends(require_permission("agent_workforce.provision")), db: AsyncSession = Depends(get_db, scope="function")):
     try:
         item = await proposal_service.provision_approved_proposal(db, tenant_id=ctx.tenant_id, proposal_id=proposal_id)
         await db.commit()
@@ -186,7 +186,7 @@ async def provision_workforce_proposal(proposal_id: UUID, ctx: TenantContext = D
 
 
 @router.post("/proposals/{proposal_id}/activate", response_model=WorkforceProposalRead)
-async def activate_workforce_proposal(proposal_id: UUID, ctx: TenantContext = Depends(require_permission("agent_workforce.activate")), db: AsyncSession = Depends(get_db)):
+async def activate_workforce_proposal(proposal_id: UUID, ctx: TenantContext = Depends(require_permission("agent_workforce.activate")), db: AsyncSession = Depends(get_db, scope="function")):
     try:
         item = await proposal_service.activate_provisioned_proposal(db, tenant_id=ctx.tenant_id, proposal_id=proposal_id, activated_by_user_id=ctx.user_id)
         await db.commit()
