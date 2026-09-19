@@ -1,25 +1,38 @@
 # Current Project Status
 
 **Architecture baseline:** V1.5 Agentic Operating Model  
-**Certified release baseline:** `v1.3.8`  
-**Certified release commit:** `fd1e74b6b4c1701f7443efc202bad161ff19618c`  
-**Mainline engineering head:** `d7c0c088b0a79e75c9ba20daf782913968e6b4ca`  
-**Status date:** 2026-09-10  
-**Latest certified release:** `v1.3.8`  
-**Certification run:** `34052885700` — SUCCESS  
+**Certified release baseline:** `v1.4.6`  
+**Certified release commit:** `f3d60031332450ba616e2a1c705e85c0c2c5aefd`  
+**Mainline engineering head:** `f3d60031332450ba616e2a1c705e85c0c2c5aefd`  
+**Status date:** 2026-09-19  
+**Latest certified release:** `v1.4.6`  
+**Certification run:** `35427967347` — PASS (exact `v1.4.6` tag)  
 **Production deployment:** PENDING REAL INFRASTRUCTURE
 
-The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.3.8` release remains immutable; `main` is ahead of that release and contains subsequent security/reliability hardening that is not certified under the `v1.3.8` identity.
+The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.6` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten.
 
 ## Executive status
 
 Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. Phase 14 engineering is **COMPLETE WHERE TRACKED**.
 
-The production-like certification suite has passed for the exact `v1.3.8` release identity. Subsequent mainline hardening has now closed additional P1 authorization, execution-boundary, and dependency-security findings. Those changes require a new immutable release identity and fresh SHA-pinned certification before they can be represented as certified production-release evidence.
+The Production Certification suite passed for the exact `v1.4.6` release identity. Certification run `35427967347` checked out SHA `f3d60031332450ba616e2a1c705e85c0c2c5aefd`, recorded zero Product Gate failures, and produced the release evidence artifact. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
 
-## Mainline hardening after v1.3.8
+## v1.4.6 certification evidence
 
-The current `main` head is `d7c0c088b0a79e75c9ba20daf782913968e6b4ca`.
+The certified release SHA is `f3d60031332450ba616e2a1c705e85c0c2c5aefd`.
+
+- Release tag: `v1.4.6`
+- Production Certification run: `35427967347` — PASS
+- Certification job: `105857140334` — PASS
+- Product Gate Failures: `0`
+- Frontend Playwright: `6/6` PASS
+- Evidence artifact: `production-certification-evidence-v1.4.6-f3d60031332450ba616e2a1c705e85c0c2c5aefd`
+- Artifact SHA256: `fc12afd3da164e1d1787bc11e2a39d3c3d019e84d3c9516ddf7819f79e905d4d`
+- `production_deployment_claimed`: `false`
+
+The release is certified, while external production deployment remains pending.
+
+## Historical engineering hardening context
 
 The post-`v1.3.8` hardening sequence includes:
 
@@ -34,25 +47,25 @@ The post-`v1.3.8` hardening sequence includes:
 - PR #457 — SHA-pinned production certification identity and exact-SHA checkout enforcement.
 - PR #459 — remediation of the `sharp` 0.35.3 dependency vulnerability; frontend is now pinned to patched `sharp` 0.35.4 with a regenerated lockfile.
 
-These changes are part of the engineering mainline but are **not certified by the `v1.3.8` certification run**. Certification evidence must be regenerated against the exact release SHA selected for promotion.
+These changes led into the immutable `v1.4.6` release and were certified together under the exact release SHA above.
 
 ## Release and deployment status
 
 | Item | Status | Evidence |
 |---|---|---|
-| `v1.3.8` tag | VERIFIED | Tag resolves to `fd1e74b...` |
-| `v1.3.8` production-like certification | PASSED | Run `34052885700` |
-| Mainline hardening | COMPLETE THROUGH PR #459 | Main `d7c0c088...` |
+| `v1.4.6` tag | VERIFIED | Exact certified release tag |
+| `v1.4.6` Production Certification | PASSED | Run `35427967347`; 0 Product Gate failures |
+| Certified release SHA | VERIFIED | `f3d60031332450ba616e2a1c705e85c0c2c5aefd` |
 | Sharp dependency remediation | VERIFIED | `sharp` `0.35.4` in manifest and lockfile |
-| New release certification for mainline | NOT YET RUN | Must bind to exact release SHA |
-| Controlled production deploy | FAILED BEFORE REMOTE DEPLOYMENT | Run `34060615390` |
-| Production host changed by failed run | NO EVIDENCE / NOT REACHED | SSH configuration failed first |
+| Certification evidence artifact | VERIFIED | `production-certification-evidence-v1.4.6-f3d60031332450ba616e2a1c705e85c0c2c5aefd` |
+| External production deployment | PENDING | `production_deployment_claimed=false` |
+
 
 ## Remaining P0 external gates
 
 | ID | Work | Status |
 |---|---|---|
-| 7.1 | Immutable release & release identity | **v1.3.8 FROZEN; NEXT RELEASE CANDIDATE NOT YET CERTIFIED** |
+| 7.1 | Immutable release & release identity | **v1.4.6 CERTIFIED / FROZEN** |
 | 7.2 | External production infrastructure deployment | **PENDING REAL INFRASTRUCTURE** |
 | 7.3 | Real backup/restore & DR with RPO/RTO | PENDING |
 | 7.4 | Production SLO/SLI & error budget | PENDING |
@@ -71,11 +84,11 @@ These changes are part of the engineering mainline but are **not certified by th
 
 Repository tests, PR CI, CodeQL, local Docker, GitHub-hosted production-like validation, synthetic load/security evidence, simulated providers and local RBAC acceptance are supporting engineering/release evidence only. They do not substitute for live production deployment, live provider evidence, measured production SLO/DR, independent security/compliance review or customer acceptance.
 
-Certification never transfers automatically across SHAs. The `v1.3.8` certification run therefore does not certify `d7c0c088b0a79e75c9ba20daf782913968e6b4ca`.
+Certification never transfers automatically across SHAs. `v1.4.6` certification is bound specifically to `f3d60031332450ba616e2a1c705e85c0c2c5aefd`.
 
 ## Current frontier
 
-Application and dependency hardening through PR #459 is complete on the current mainline. The next engineering release step is to select the production-bound mainline SHA, create an immutable release candidate from that exact SHA, and run the full SHA-pinned certification topology. After certification, the remaining blockers are external infrastructure and target-environment evidence.
+The engineering/release certification frontier has been crossed: `v1.4.6` is an immutable, exact-SHA-certified release. The remaining blockers are external production infrastructure and target-environment evidence: deployment, real DR/RPO/RTO, live providers, target isolation/RBAC, DAST, independent security review, network/secrets lifecycle, HA/failure drills, on-call and customer acceptance.
 
 The controlled deployment workflow remains fail-closed and requires real production Environment inputs. No fake values should be introduced.
 
