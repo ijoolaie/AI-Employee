@@ -1,6 +1,6 @@
 # Production Evidence Index
 
-**Reconciled:** 2026-09-18  
+**Reconciled:** 2026-09-19  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
@@ -17,16 +17,27 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Field | Value |
 |---|---|
 | Repository | `ijoolaie/AI-Employee` |
-| Latest published release | `v1.4.2` |
-| Exact certified release SHA | `dba0bb672deb1236b6724bb8851526e656f47967` |
-| Production Certification run | `35108008066` — PASS |
-| Certification job | `104834133092` — PASS |
+| Latest published release | `v1.4.6` |
+| Exact certified release SHA | `f3d60031332450ba616e2a1c705e85c0c2c5aefd` |
+| Production Certification run | `35427967347` — PASS (exact `v1.4.6` tag) |
+| Certification job | `105857140334` — PASS |
 | Product Gate Failures | `0` |
 | External production deployment | **PENDING** |
 | External image registry/deployed digest evidence | **PENDING** |
 | External signed provenance/attestation | **PENDING** |
 
-### Current v1.4.5 RC1 engineering identity
+### Current v1.4.6 certified release identity
+
+- Release tag: `v1.4.6`
+- Exact certified SHA: `f3d60031332450ba616e2a1c705e85c0c2c5aefd`
+- Production Certification run: `35427967347` — PASS
+- Product Gate Failures: `0`
+- Evidence artifact: `production-certification-evidence-v1.4.6-f3d60031332450ba616e2a1c705e85c0c2c5aefd`
+- Artifact SHA256: `fc12afd3da164e1d1787bc11e2a39d3c3d019e84d3c9516ddf7819f79e905d4d`
+- External production deployment: **PENDING** (`production_deployment_claimed=false`)
+- Certification is bound only to the exact SHA above; it does not transfer to another SHA.
+
+### Historical v1.4.5 RC1 engineering identity
 
 - RC branch: `release/v1.4.5-rc1`
 - Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
@@ -34,15 +45,15 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 - RC1 GitHub Actions engineering validation: **10/10 current release-critical workflows PASS**
 - Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
 - RC1 external deployment/certification: **PENDING**
-- Do not transfer the `v1.4.2` certification onto RC1.
+- Do not transfer any historical certification onto RC1.
 
 ## Evidence matrix
 
 | Gate | Evidence | Class | Status |
 |---|---|---|---|
-| v1.4.2 Exact-SHA Production Certification | Run `35108008066` | ENGINEERING | Complete |
-| v1.4.2 certification product gates | Run `35108008066` | ENGINEERING | Complete — 0 failures |
-| RC1 GitHub Actions engineering validation | SHA `097653...` | ENGINEERING | Complete — 10/10 PASS |
+| v1.4.6 Exact-SHA Production Certification | Run `35427967347` | ENGINEERING | Complete — exact tag/SHA, 0 Product Gate failures |
+| v1.4.6 certification product gates | Run `35427967347` | ENGINEERING | Complete — 0 failures |
+| RC1 GitHub Actions engineering validation | SHA `097653...` | ENGINEERING | Historical — 10/10 PASS |
 | Backend/frontend/DB engineering | Certification + RC1 CI | ENGINEERING | Complete |
 | Auth/RBAC/tenant isolation | Real-stack + RC1 isolation gate | ENGINEERING | Complete; external actor matrix pending |
 | Production-like infrastructure lifecycle | RC1 infrastructure + local certification | ENGINEERING | Complete; real target pending |
