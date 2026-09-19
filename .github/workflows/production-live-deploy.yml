@@ -102,9 +102,14 @@ jobs:
           test -f docker-compose.production.yml
 
           docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml config --quiet
-          docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml up -d --build
+          docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml build api worker beat frontend
 
-          docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml exec -T api alembic upgrade head
+          # Migrate only infrastructure dependencies before any application
+          # service can start. The runner fails hard unless the database is at
+          # the single Alembic head.
+          ENV_FILE="$APP_DIR/.env" COMPOSE_FILE=docker-compose.production.yml bash scripts/production_migrate.sh
+
+          docker compose --env-file "$APP_DIR/.env" -f docker-compose.production.yml up -d api worker beat frontend
 
           expected_services='postgres redis api worker beat frontend'
           for i in $(seq 1 36); do
