@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-18
+**Last reconciled:** 2026-09-19
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -17,14 +17,14 @@ These states are independent and must not be inferred from release names.
 
 | Release / candidate | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
-| `v1.4.5 RC1` | `0976537441ebc2560624022bfaabb33096f5011c` | Not published | **ENGINEERING-VALIDATED** — 10/10 current RC1 workflows PASS; local production-like certification PASS | **NOT VERIFIED** | Pending |
-| `v1.4.5` engineering baseline | `a9d5cdd` | Not published | **ENGINEERING ONLY** — local production-like certification PASS on 2026-09-18 | **NOT VERIFIED** | Pending |
+| `v1.4.5` | `cc94bc9536f4f95680bb7a183313914c116ffcf2` | `v1.4.5` | **ENGINEERING-VALIDATED** — 10/10 current release workflows PASS; local production-like certification PASS | **NOT VERIFIED** | Pending |
+| `v1.4.5` engineering baseline | `cc94bc9536f4f95680bb7a183313914c116ffcf2` | `v1.4.5` | **ENGINEERING ONLY** — local production-like certification PASS on 2026-09-19 | **NOT VERIFIED** | Pending |
 | `v1.4.2` | `dba0bb672deb1236b6724bb8851526e656f47967` | VERIFIED | **CERTIFIED** — Run `35108008066` / Job `104834133092` | **NOT VERIFIED / no evidence** | Pending |
 | `v1.4.1` | `f7f5062feb125c7ca50263f74a0e40bc4abfa591` | VERIFIED | **CERTIFIED** — Run `34696339261` | **NOT VERIFIED / no evidence** | Pending |
 
-## RC1 checkpoint
+## release checkpoint
 
-RC1 exact SHA `0976537441ebc2560624022bfaabb33096f5011c` passed the current engineering validation set:
+release exact SHA `cc94bc9536f4f95680bb7a183313914c116ffcf2` passed the current engineering validation set:
 
 - CI;
 - CodeQL;
@@ -41,13 +41,13 @@ Result: **10/10 PASS**.
 
 This is engineering/release-candidate evidence. It is not external production certification.
 
-## v1.4.2 certification checkpoint
+## prior v1.4.2 certification checkpoint
 
 Production Certification Run `35108008066` passed for exact SHA `dba0bb672deb1236b6724bb8851526e656f47967`, with certification job `104834133092`.
 
 ## External production boundary
 
-The following remain open regardless of RC1 engineering validation:
+The following remain open regardless of release engineering validation:
 
 - real production target and deployed-identity verification;
 - live provider validation;
@@ -63,7 +63,7 @@ The following remain open regardless of RC1 engineering validation:
 
 ## Current interpretation
 
-- Current RC1: **v1.4.5 / `097653...` — engineering-validated, external certification pending.**
+- Current release: **v1.4.5 / `cc94bc...` — engineering-validated, external certification pending.**
 - Latest published and exact-SHA certified release: **v1.4.2 / `dba0bb...`**.
 - Production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance: **PENDING**.
@@ -71,4 +71,4 @@ The following remain open regardless of RC1 engineering validation:
 
 ## Next action
 
-Preserve the exact-SHA boundary. If RC1 is approved as the release identity, publish/tag exactly that SHA and run any required final release certification against the same immutable identity before external deployment. Do not transfer evidence from `a9d5cdd` or `v1.4.2` onto another SHA.
+Preserve the exact-SHA boundary. If release is approved as the release identity, publish/tag exactly that SHA and run any required final release certification against the same immutable identity before external deployment. Do not transfer evidence from `cc94bc9536f4f95680bb7a183313914c116ffcf2` or `v1.4.2` onto another SHA.
