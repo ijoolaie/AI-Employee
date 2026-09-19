@@ -1,22 +1,22 @@
 # Production Readiness Status
 
-**Status date:** 2026-09-18  
-**Latest published release:** `v1.4.2`  
+**Status date:** 2026-09-19  
+**Latest published release:** `v1.4.5`  
 **Exact certified release SHA:** `dba0bb672deb1236b6724bb8851526e656f47967`  
 **Production Certification run:** `35108008066` — PASS  
 **Certification job:** `104834133092` — PASS  
-**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 RC1 ENGINEERING-VALIDATED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
+**Current status:** v1.4.5 ENGINEERING-VALIDATED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
 
 ## Current release and project boundary
 
-### v1.4.5 RC1
+### v1.4.5
 
-- RC branch: `release/v1.4.5-rc1`
-- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
-- Engineering candidate baseline: `a9d5cdd`
+- RC branch: `main`
+- Exact release SHA: `cc94bc9536f4f95680bb7a183313914c116ffcf2`
+- Engineering candidate baseline: `cc94bc9536f4f95680bb7a183313914c116ffcf2`
 - Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
-- GitHub Actions RC1 engineering validation: **10/10 current release-critical workflows PASS**
-- RC1 is **not externally certified** and does not inherit `v1.4.2` certification.
+- GitHub Actions release engineering validation: **10/10 release-critical workflows PASS**
+- release is **not externally certified** and does not inherit `v1.4.2` certification.
 
 The published `v1.4.2` certification remains bound to exact SHA `dba0bb672deb1236b6724bb8851526e656f47967`. Evidence does not transfer automatically across SHAs.
 
@@ -37,7 +37,7 @@ No repository state establishes live production deployment, live provider operat
 - Unified WorkItem Human and Agent passed.
 - Stage 9 governed optimization is release-certified in v1.4.2.
 - Local production-like infrastructure, backup/restore and resilience checks passed.
-- RC1 engineering workflows are green for exact SHA `097653...`.
+- release engineering workflows are green for exact SHA `cc94bc...`.
 
 ### 🔴 External launch blockers
 
@@ -82,7 +82,7 @@ No repository state establishes live production deployment, live provider operat
 13. Reconcile exceptions/residual risks.
 14. Run the final commercial go-live gate.
 
-Until that sequence is complete, the product should be described as **engineering-validated RC1 with external production/commercial gates pending**, not as externally production-certified.
+Until that sequence is complete, the product should be described as **engineering-validated release with external production/commercial gates pending**, not as externally production-certified.
 
 ## Security rule
 
