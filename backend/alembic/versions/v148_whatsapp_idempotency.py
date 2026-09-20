@@ -28,7 +28,7 @@ def upgrade() -> None:
     op.create_index(
         "uq_customer_messages_provider_id",
         "customer_messages",
-        ["tenant_id", "conversation_id", "provider_message_id"],
+        ["tenant_id", "channel_id", "provider_message_id"],
         unique=True,
         postgresql_where=sa.text("provider_message_id IS NOT NULL"),
     )
