@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-18
+**Last reconciled:** 2026-09-20
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -9,45 +9,40 @@
 - **BUILT** — build/CI evidence exists for the exact release commit or artifact.
 - **CERTIFIED** — explicit certification evidence exists for the exact release commit.
 - **DEPLOYED** — verified deployment evidence exists for the exact release identity.
-- **EXTERNALLY_ACCEPTED** — independent Vendor/Reseller/Client acceptance evidence exists.
+- **EXTERNALLY_ACCEPTED** — independent Vendor/Reseller/Customer acceptance evidence exists.
 
 These states are independent and must not be inferred from release names.
 
 ## Current release identities
 
-| Release / candidate | Commit | Tag | Certification | Deployment | External acceptance |
+| Release | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
-| `v1.4.5 RC1` | `0976537441ebc2560624022bfaabb33096f5011c` | Not published | **ENGINEERING-VALIDATED** — 10/10 current RC1 workflows PASS; local production-like certification PASS | **NOT VERIFIED** | Pending |
-| `v1.4.5` engineering baseline | `a9d5cdd` | Not published | **ENGINEERING ONLY** — local production-like certification PASS on 2026-09-18 | **NOT VERIFIED** | Pending |
-| `v1.4.2` | `dba0bb672deb1236b6724bb8851526e656f47967` | VERIFIED | **CERTIFIED** — Run `35108008066` / Job `104834133092` | **NOT VERIFIED / no evidence** | Pending |
-| `v1.4.1` | `f7f5062feb125c7ca50263f74a0e40bc4abfa591` | VERIFIED | **CERTIFIED** — Run `34696339261` | **NOT VERIFIED / no evidence** | Pending |
+| `v1.4.7` | `48a6df0ea8a2fb0624e831fbdea55ee4548807f6` | VERIFIED | **CERTIFIED** — Run `35498984521` / Job `106047204166`; 0 Product Gate failures | **NOT VERIFIED** | Pending |
+| `v1.4.6` | `f3d60031332450ba616e2a1c705e85c0c2c5aefd` | VERIFIED | **CERTIFIED** — Run `35427967347` / Job `105857140334` | **NOT VERIFIED** | Pending |
+| `v1.4.5` | `cc94bc9536f4f95680bb7a183313914c116ffcf2` | VERIFIED | **FAILED PRODUCT CERTIFICATION** — historical immutable release | **NOT VERIFIED** | Not accepted |
+| `v1.4.2` | `dba0bb672deb1236b6724bb8851526e656f47967` | VERIFIED | **CERTIFIED** — Run `35108008066` / Job `104834133092` | **NOT VERIFIED** | Pending |
+| `v1.4.1` | `f7f5062feb125c7ca50263f74a0e40bc4abfa591` | VERIFIED | **CERTIFIED** — Run `34696339261` | **NOT VERIFIED** | Pending |
 
-## RC1 checkpoint
+## v1.4.7 checkpoint
 
-RC1 exact SHA `0976537441ebc2560624022bfaabb33096f5011c` passed the current engineering validation set:
+v1.4.7 passed exact-SHA Production Certification:
 
-- CI;
-- CodeQL;
-- Architecture Guard;
-- Runtime Isolation/RBAC;
-- HA Failure Recovery;
-- Ephemeral DAST;
-- Production Infrastructure;
-- Security/Privacy/Compliance;
-- Production Observability;
-- Production Rollback & Alerting.
+- target/checked-out SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`;
+- Product Gate failures: 0;
+- frontend Playwright: 6/6 PASS;
+- immutable evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`;
+- artifact digest: `sha256:86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`;
+- release assets include runtime and four edition packages plus manifest/checksums.
 
-Result: **10/10 PASS**.
+Production deployment was explicitly **not claimed** by the certification manifest.
 
-This is engineering/release-candidate evidence. It is not external production certification.
+## Historical candidate boundary
 
-## v1.4.2 certification checkpoint
-
-Production Certification Run `35108008066` passed for exact SHA `dba0bb672deb1236b6724bb8851526e656f47967`, with certification job `104834133092`.
+Earlier v1.4.5 RC1, v1.4.5 engineering baseline and v1.4.6 certification records remain useful historical evidence. They must not be presented as the current release checkpoint, and no certification is transferred from those SHAs to v1.4.7.
 
 ## External production boundary
 
-The following remain open regardless of RC1 engineering validation:
+The following remain open:
 
 - real production target and deployed-identity verification;
 - live provider validation;
@@ -61,14 +56,14 @@ The following remain open regardless of RC1 engineering validation:
 - staffed alert ownership/on-call evidence;
 - final external certification and customer acceptance.
 
+These are tracked by #210, #269 and #19.
+
 ## Current interpretation
 
-- Current RC1: **v1.4.5 / `097653...` — engineering-validated, external certification pending.**
-- Latest published and exact-SHA certified release: **v1.4.2 / `dba0bb...`**.
+- Current release: **v1.4.7 / `48a6df0...` — certified, not externally deployed.**
 - Production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance: **PENDING**.
 - Live provider validation: **PENDING**.
+- Commercial go-live: **PENDING external gates**.
 
-## Next action
-
-Preserve the exact-SHA boundary. If RC1 is approved as the release identity, publish/tag exactly that SHA and run any required final release certification against the same immutable identity before external deployment. Do not transfer evidence from `a9d5cdd` or `v1.4.2` onto another SHA.
+Do not retag, rewrite or reinterpret historical certified/failed releases.
