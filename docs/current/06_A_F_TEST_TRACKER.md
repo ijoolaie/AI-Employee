@@ -63,7 +63,7 @@
 
 **Phase F aggregate release-certification gate: PASS.** Production Certification run `35498984521` executed from the `v1.4.7` tag, checked out `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, recorded `0` Product Gate failures, and completed successfully. This is engineering/release certification evidence; external production deployment remains pending.
 
-## v1.4.8 WhatsApp concurrency hardening — 2026-09-20
+## v1.4.8 WhatsApp + Public Chat hardening — 2026-09-20
 
 - PR #550 WhatsApp idempotency/conversation race hardening: **MERGED**.
 - PR #551 real PostgreSQL concurrency coverage: **MERGED** as `542ed5f161d306ed2a3993995562b108961dc270`.
@@ -71,8 +71,11 @@
 - Same provider message concurrently: **PASS** — one conversation, one message, one Run admission.
 - Same sender with different provider IDs concurrently: **PASS** — one conversation, two messages, two independent Run admissions.
 - Production SAVEPOINT fix validated: uniqueness violations remain inside nested transactions, avoiding poisoned outer sessions under PostgreSQL concurrency.
-- Supporting gates for the validated PR head also passed: Architecture Guard, CodeQL, Runtime Isolation/RBAC, HA, DAST, Infrastructure, Observability, Rollback/Alerting.
-- v1.4.8 remains an engineering candidate and is not certified or tagged.
+- PR #552 Public Chat regression: **MERGED** as `84b0e9d50f25095e5a2e38d051754ed077509f4d`.
+- PR #552 head `2c775b633565dfdc60c4a6d5b950f98ac839aeec` passed CI #1582 plus Architecture Guard, CodeQL, Infrastructure, HA and DAST.
+- Public Chat same-customer multiple-conversation invariant: **PASS** — including concurrent starts against real PostgreSQL.
+- Supporting gates passed; v1.4.8 remains an engineering candidate and is not certified or tagged.
+- Remaining v1.4.8 boundary: Meta webhook replay/runtime verification, then exact-SHA Production Certification.
 
 ## Phase F — Exact-release Production Certification — 2026-09-20
 
