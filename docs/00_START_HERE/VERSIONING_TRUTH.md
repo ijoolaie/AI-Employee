@@ -1,7 +1,7 @@
 # Versioning Truth
 
 **Status:** CANONICAL
-**Reconciled:** 2026-09-16
+**Reconciled:** 2026-09-20
 
 This document defines the independent version axes used by the AI Employee Platform.
 
@@ -11,20 +11,21 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 ### Current release truth
 
-- Latest published release: **`v1.4.2`**
-- Release commit: **`dba0bb672deb1236b6724bb8851526e656f47967`**
-- `v1.4.2` Git tag: **VERIFIED**, annotated tag resolving to the release commit.
-- `v1.4.2` GitHub Release: **PUBLISHED**, not draft, not prerelease.
-- `v1.4.2` release assets: **published and verified**.
-- `v1.4.2` exact-SHA Production Certification: **PASS** on run `35108008066`, job `104834133092`.
-- `v1.4.2` external production deployment: **NOT VERIFIED**.
+- Latest published release: **`v1.4.7`**
+- Certified release commit: **`48a6df0ea8a2fb0624e831fbdea55ee4548807f6`**
+- `v1.4.7` Git tag: **VERIFIED**, annotated tag resolving to the certified release commit.
+- `v1.4.7` GitHub Release: **PUBLISHED**, not draft, not prerelease.
+- `v1.4.7` release assets: runtime package, four edition packages, edition manifest and SHA256SUMS.
+- `v1.4.7` exact-SHA Production Certification: **PASS** on run `35498984521`, job `106047204166`.
+- Product Gate failures: **0**.
+- `v1.4.7` external production deployment: **NOT VERIFIED / not claimed by certification**.
 - Customer acceptance / live provider validation: **PENDING**.
 
-`v1.4.2` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
+`v1.4.7` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
-Historical certified release `v1.3.8` remains frozen and traceable at `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
+Historical certified release `v1.4.6` remains frozen and traceable at `f3d60031332450ba616e2a1c705e85c0c2c5aefd`. Historical failed release `v1.4.5` remains immutable and is not the current release.
 
-The current `main` may contain documentation reconciliation commits after the certified release SHA. Those commits are not automatically covered by `v1.4.2` certification; any future code promotion requires a new exact-SHA certification.
+The current `main` may contain documentation reconciliation commits after the certified release SHA. Those commits are not automatically covered by `v1.4.7` certification; any future code promotion requires a new exact-SHA certification.
 
 ## 2. Architecture version
 
@@ -52,11 +53,11 @@ Current phase truth:
 - Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**
 - Stage 7: **ACTIVE — EXTERNAL PRODUCTION EXECUTION / CERTIFICATION**
 - Stage 8: **GOVERNED AGENT WORKFORCE FOUNDATION IMPLEMENTED; ACCEPTANCE/EVIDENCE RECONCILIATION CONTINUES WHERE REQUIRED**
-- Stage 9: **CURRENT PLANNED SLICES IMPLEMENTED AND RELEASE-CERTIFIED IN `v1.4.2`**
+- Stage 9: **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN THE CURRENT v1.4.7 RELEASE**
 
 ## 4. Stage 9 optimization workstream
 
-Stage 9 is the optimization layer above the governed execution substrate. The current certified slices are:
+Stage 9 is the optimization layer above the governed execution substrate. Its current planned slices were implemented and certified as part of the v1.4.2 release and remain included in the current v1.4.7 release:
 
 1. Capability-aware workload routing.
 2. Task/risk/cost-aware model selection.
@@ -88,10 +89,10 @@ These capabilities are substantially present in the architecture; active work sh
 
 ```text
 RELEASE
-v1.3.8 ─────────► v1.4.1 ─────────► v1.4.2
- historical        prior certified    current certified
-                                        |
-                                        +-- external production: pending
+v1.3.8 ─────► v1.4.2 ─────► v1.4.5 ─────► v1.4.6 ─────► v1.4.7
+ historical     certified      historical     certified      current certified
+                                                             |
+                                                             +-- external production: pending
 
 ARCHITECTURE
 V1.4 frozen foundation
