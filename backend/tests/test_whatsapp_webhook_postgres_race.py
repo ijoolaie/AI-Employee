@@ -39,6 +39,19 @@ async def whatsapp_race_setup():
         db.add(employee)
         await db.flush()
 
+        version = EmployeeVersion(
+            employee_id=employee.id,
+            version_number=1,
+            is_current=True,
+            input_schema={},
+            output_schema={},
+            prompt_template="",
+            allowed_tools=[],
+            rules={},
+        )
+        db.add(version)
+        await db.flush()
+
         channel = CustomerChannel(
             tenant_id=tenant.id,
             employee_id=employee.id,
@@ -54,6 +67,7 @@ async def whatsapp_race_setup():
         yield SimpleNamespace(
             tenant_id=tenant.id,
             employee_id=employee.id,
+            employee_version_id=version.id,
             channel_id=channel.id,
             from_phone=f"+9891{uuid.uuid4().int % 10_000_000:07d}",
         )
@@ -168,8 +182,23 @@ async def test_concurrent_same_sender_different_provider_ids_reuses_one_conversa
     data = whatsapp_race_setup
     run_ids = [uuid.uuid4() for _ in range(2)]
 
-    async def create_run(*args, **kwargs):
-        return SimpleNamespace(id=run_ids.pop(0), conversation_id=None)
+    async def create_run(
+        db, *, tenant_id, employee_id, input_data, created_by,
+        employee_version_id=None, agent_instance_id=None
+    ):
+        run = Run(
+            id=run_ids.pop(0),
+            tenant_id=tenant_id,
+            employee_id=employee_id,
+            employee_version_id=employee_version_id or data.employee_version_id,
+            agent_instance_id=agent_instance_id,
+            created_by=created_by,
+            status="pending",
+            input_data=input_data,
+        )
+        db.add(run)
+        await db.flush()
+        return run
 
     async def enqueue(*args, **kwargs):
         return SimpleNamespace(id=uuid.uuid4())
