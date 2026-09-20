@@ -18,6 +18,16 @@ Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.
 
 The Production Certification suite passed for the exact `v1.4.7` release identity. Certification run `35498984521` checked out SHA `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, recorded zero Product Gate failures, and produced the release evidence artifact. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
 
+## v1.4.8 engineering candidate
+
+- PR #550 — WhatsApp webhook idempotency and conversation race hardening: **MERGED**.
+- Merge SHA: `ea37b75d599761b91fed33e26ff13e552ae2b963`.
+- The implementation persists provider message IDs, adds channel-scoped WhatsApp conversation/message uniqueness, handles PostgreSQL admission races with SAVEPOINTs, and routes Run execution through the transactional outbox.
+- Final PR-head CI/architecture/security/runtime gates: **PASS**.
+- Release audit: `docs/current/V1.4.8_WHATSAPP_IDEMPOTENCY_RELEASE_AUDIT_2026-09-20.md`.
+- **Release status:** engineering candidate only; no `v1.4.8` tag or certification yet.
+- Required before certification: real PostgreSQL concurrent webhook race tests, Public Chat regression, Meta replay runtime verification, then exact-SHA Production Certification.
+
 ## v1.4.7 certification evidence
 
 The certified release SHA is `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`.
