@@ -391,10 +391,10 @@ async def test_public_chat_concurrent_starts_create_independent_conversations(
 
 @pytest.mark.asyncio
 async def test_meta_webhook_http_replay_is_idempotent(whatsapp_race_setup, monkeypatch):
-    """The Meta HTTP endpoint admits one provider message across a replay."""
+    """The Meta webhook handler admits one provider message across a replay."""
     data = whatsapp_race_setup
-    from fastapi.testclient import TestClient
-    from app.main import app
+    from app.api.v1.channel_webhooks import whatsapp_meta_inbound
+    from starlette.requests import Request
 
     run_id = uuid.uuid4()
 
@@ -407,7 +407,6 @@ async def test_meta_webhook_http_replay_is_idempotent(whatsapp_race_setup, monke
             tenant_id=tenant_id,
             employee_id=employee_id,
             employee_version_id=employee_version_id or data.employee_version_id,
-            agent_instance_id=agent_instance_id,
             created_by=created_by,
             status="pending",
             input_data=input_data,
@@ -462,22 +461,50 @@ async def test_meta_webhook_http_replay_is_idempotent(whatsapp_race_setup, monke
         secret.encode(), raw_body, hashlib.sha256
     ).hexdigest()
 
-    with TestClient(app) as client:
-        first = client.post(
-            f"/api/v1/webhooks/channels/whatsapp/meta/{data.channel_id}",
-            content=raw_body,
-            headers={"X-Hub-Signature-256": signature},
-        )
-        second = client.post(
-            f"/api/v1/webhooks/channels/whatsapp/meta/{data.channel_id}",
-            content=raw_body,
-            headers={"X-Hub-Signature-256": signature},
+    def request_for_body() -> Request:
+        delivered = False
+
+        async def receive():
+            nonlocal delivered
+            if delivered:
+                return {"type": "http.request", "body": b"", "more_body": False}
+            delivered = True
+            return {"type": "http.request", "body": raw_body, "more_body": False}
+
+        return Request(
+            {
+                "type": "http",
+                "method": "POST",
+                "path": f"/api/v1/webhooks/channels/whatsapp/meta/{data.channel_id}",
+                "headers": [
+                    (b"host", b"testserver"),
+                    (b"x-hub-signature-256", signature.encode()),
+                    (b"content-type", b"application/json"),
+                ],
+            },
+            receive=receive,
         )
 
-    assert first.status_code == 200
-    assert first.json() == {"success": True, "processed": 1, "duplicates": 0}
-    assert second.status_code == 200
-    assert second.json() == {"success": True, "processed": 0, "duplicates": 1}
+    async with AsyncSessionLocal() as db:
+        first = await whatsapp_meta_inbound(
+            data.channel_id,
+            request_for_body(),
+            db,
+            signature,
+        )
+        await db.commit()
+
+    async with AsyncSessionLocal() as db:
+        second = await whatsapp_meta_inbound(
+            data.channel_id,
+            request_for_body(),
+            db,
+            signature,
+        )
+        await db.commit()
+
+    assert first == {"success": True, "processed": 1, "duplicates": 0}
+    assert second == {"success": True, "processed": 0, "duplicates": 1}
 
     async with AsyncSessionLocal() as db:
         messages = list(
