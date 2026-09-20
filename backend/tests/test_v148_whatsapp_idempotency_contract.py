@@ -13,7 +13,7 @@ def test_v148_whatsapp_idempotency_contract():
     assert "provider_message_id" in model
     assert "uq_customer_conversations_external_key" in migration
     assert "uq_customer_messages_provider_id" in migration
-    assert "provider_message_id=message.get("message_id") or None" in webhook
+    assert 'provider_message_id=message.get("message_id") or None' in webhook
     assert "execute_run_task.delay(str(run.id), str(channel.tenant_id))" in webhook
 
 
