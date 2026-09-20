@@ -332,3 +332,58 @@ async def test_public_chat_allows_multiple_conversations_for_same_customer(
     assert first.id != second.id
     assert first_token != second_token
     assert {conversation.id for conversation in conversations} == {first.id, second.id}
+
+
+@pytest.mark.asyncio
+async def test_public_chat_concurrent_starts_create_independent_conversations(
+    whatsapp_race_setup,
+):
+    """Concurrent Public Chat starts for one customer remain separate sessions."""
+    data = whatsapp_race_setup
+
+    from app.services.customer_channel_service import create_conversation
+
+    async def create_one():
+        async with AsyncSessionLocal() as db:
+            channel = (
+                await db.execute(
+                    select(CustomerChannel).where(CustomerChannel.id == data.channel_id)
+                )
+            ).scalar_one()
+            conversation, token, _ = await create_conversation(
+                db,
+                public_key=channel.public_key,
+                customer_name="Concurrent Public Customer",
+                customer_email="concurrent@example.com",
+                customer_phone=None,
+            )
+            await db.commit()
+            return conversation.id, token
+
+    first, second = await asyncio.gather(create_one(), create_one())
+
+    async with AsyncSessionLocal() as db:
+        customer = (
+            await db.execute(
+                select(Customer).where(
+                    Customer.tenant_id == data.tenant_id,
+                    Customer.external_key == "concurrent@example.com",
+                )
+            )
+        ).scalar_one()
+        conversations = list(
+            (
+                await db.execute(
+                    select(CustomerConversation).where(
+                        CustomerConversation.tenant_id == data.tenant_id,
+                        CustomerConversation.customer_id == customer.id,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    assert first[0] != second[0]
+    assert first[1] != second[1]
+    assert len(conversations) == 2
