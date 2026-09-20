@@ -79,6 +79,7 @@ async def whatsapp_race_setup():
             delete(CustomerConversation).where(CustomerConversation.tenant_id == tenant.id)
         )
         await db.execute(delete(Customer).where(Customer.tenant_id == tenant.id))
+        await db.execute(delete(Run).where(Run.tenant_id == tenant.id))
         await db.execute(delete(CustomerChannel).where(CustomerChannel.id == channel.id))
         await db.execute(
             delete(EmployeeVersion).where(EmployeeVersion.employee_id == employee.id)
