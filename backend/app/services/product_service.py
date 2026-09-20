@@ -8,6 +8,9 @@ from app.core.exceptions import ConflictError
 from app.models.product import Product
 
 
+PRODUCT_SKU_INDEX_NAME = "uq_products_tenant_normalized_sku"
+
+
 def normalize_sku(sku: str | None) -> str | None:
     """Normalize optional SKU values to a stable tenant-scoped identity."""
     if sku is None:
@@ -47,6 +50,9 @@ async def create_product(db: AsyncSession, tenant_id: uuid.UUID, payload: dict):
             db.add(product)
             await db.flush()
     except IntegrityError as exc:
+        constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name != PRODUCT_SKU_INDEX_NAME:
+            raise
         raise ConflictError("Product SKU already exists in this tenant") from exc
 
     await db.refresh(product)
