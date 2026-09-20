@@ -387,3 +387,124 @@ async def test_public_chat_concurrent_starts_create_independent_conversations(
     assert first[0] != second[0]
     assert first[1] != second[1]
     assert len(conversations) == 2
+
+
+@pytest.mark.asyncio
+async def test_meta_webhook_http_replay_is_idempotent(whatsapp_race_setup, monkeypatch):
+    """The Meta HTTP endpoint admits one provider message across a replay."""
+    data = whatsapp_race_setup
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    run_id = uuid.uuid4()
+
+    async def create_run(
+        db, *, tenant_id, employee_id, input_data, created_by,
+        employee_version_id=None, agent_instance_id=None
+    ):
+        run = Run(
+            id=run_id,
+            tenant_id=tenant_id,
+            employee_id=employee_id,
+            employee_version_id=employee_version_id or data.employee_version_id,
+            agent_instance_id=agent_instance_id,
+            created_by=created_by,
+            status="pending",
+            input_data=input_data,
+        )
+        db.add(run)
+        await db.flush()
+        return run
+
+    async def enqueue(*args, **kwargs):
+        return SimpleNamespace(id=uuid.uuid4())
+
+    monkeypatch.setattr("app.services.run_service.create_run", create_run)
+    monkeypatch.setattr("app.api.v1.channel_webhooks.outbox_service.enqueue", enqueue)
+
+    secret = "meta-replay-test-secret"
+    async with AsyncSessionLocal() as db:
+        channel = (
+            await db.execute(
+                select(CustomerChannel).where(CustomerChannel.id == data.channel_id)
+            )
+        ).scalar_one()
+        channel.config = {"meta_app_secret": secret}
+        await db.commit()
+
+    import hashlib
+    import hmac
+    import json
+
+    payload = {
+        "object": "whatsapp_business_account",
+        "entry": [
+            {
+                "changes": [
+                    {
+                        "value": {
+                            "messages": [
+                                {
+                                    "id": "wamid-http-replay-1",
+                                    "from": data.from_phone,
+                                    "type": "text",
+                                    "text": {"body": "hello from Meta"},
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ],
+    }
+    raw_body = json.dumps(payload, separators=(",", ":")).encode()
+    signature = "sha256=" + hmac.new(
+        secret.encode(), raw_body, hashlib.sha256
+    ).hexdigest()
+
+    with TestClient(app) as client:
+        first = client.post(
+            f"/api/v1/webhooks/channels/whatsapp/meta/{data.channel_id}",
+            content=raw_body,
+            headers={"X-Hub-Signature-256": signature},
+        )
+        second = client.post(
+            f"/api/v1/webhooks/channels/whatsapp/meta/{data.channel_id}",
+            content=raw_body,
+            headers={"X-Hub-Signature-256": signature},
+        )
+
+    assert first.status_code == 200
+    assert first.json() == {"success": True, "processed": 1, "duplicates": 0}
+    assert second.status_code == 200
+    assert second.json() == {"success": True, "processed": 0, "duplicates": 1}
+
+    async with AsyncSessionLocal() as db:
+        messages = list(
+            (
+                await db.execute(
+                    select(CustomerMessage).where(
+                        CustomerMessage.channel_id == data.channel_id,
+                        CustomerMessage.provider_message_id == "wamid-http-replay-1",
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        runs = list(
+            (
+                await db.execute(
+                    select(Run).where(
+                        Run.tenant_id == data.tenant_id,
+                        Run.id == run_id,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    assert len(messages) == 1
+    assert len(runs) == 1
+    assert messages[0].run_id == run_id
