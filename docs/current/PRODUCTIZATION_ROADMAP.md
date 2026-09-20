@@ -1,20 +1,20 @@
 # AI Employee Platform — Productization & Delivery Roadmap
 
-## Roadmap truth — 2026-09-16
+## Roadmap truth — 2026-09-20
 
 Three axes remain independent:
 
-- **Release:** `v1.4.2` at exact SHA `dba0bb672deb1236b6724bb8851526e656f47967`, certified by Production Certification Run `35108008066`.
+- **Release:** `v1.4.7` at exact certified SHA `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, certified by Production Certification Run `35498984521`.
 - **Architecture:** `V1.5 Agentic Operating Model`.
 - **Engineering:** Stage 7 external production execution, Stage 8 governed Agent workforce foundation, and Stage 9 optimization/control loops.
 
-`v1.4.2` is the latest published exact-SHA certified release. Current `main` may contain documentation reconciliation commits after that SHA; those commits are not automatically certified as a new release.
+`v1.4.7` is the latest published exact-SHA certified release. Current `main` contains documentation reconciliation commits after the certified release SHA; those commits are not automatically certified as a new release.
 
 ## Current position
 
-Phase 11 Unified Execution is complete. Phase 12 Test Center is operationally hardened. Phase 13 Agent Teams & Marketplace is engineering complete. Phase 14.1–14.16 tracked engineering is complete/reconciled. PRs #521–#530 completed the current Stage 9 implementation/release-certification sequence, with PR #530 fixing the workflow approval certification blocker.
+Phase 11 Unified Execution is complete. Phase 12 Test Center is operationally hardened. Phase 13 Agent Teams & Marketplace is engineering complete. Phase 14.1–14.16 tracked engineering is complete/reconciled.
 
-The project has now entered a dedicated **Commercial Readiness & External Production** phase. The default next work is evidence, deployment, security and operational validation—not broad feature expansion.
+The project is now in a dedicated **Commercial Readiness & External Production** phase. The default next work is evidence, deployment, security and operational validation—not broad feature expansion.
 
 ## Commercial Readiness Gate
 
@@ -25,9 +25,9 @@ Prove that the certified product can be operated safely, observably and recovera
 ### Required gate sequence
 
 1. **Readiness audit** — inspect application, security, database, deployment, secrets, monitoring, DR, providers, billing, Agent governance, tenant isolation and customer UX/support readiness.
-2. **Blocker register** — classify every finding as 🔴 Blocker, 🟠 Required before launch, 🟡 Launch follow-up, or 🟢 Ready/evidenced.
+2. **Blocker register** — classify every finding as blocker, required-before-launch, follow-up, or ready/evidenced.
 3. **Production target** — provision and harden the actual target; record infrastructure identity and configuration evidence.
-4. **Exact release deployment** — deploy the certified release identity and preserve immutable deployment evidence.
+4. **Exact release deployment** — deploy the accepted v1.4.7 release identity and preserve immutable deployment evidence.
 5. **Security/network validation** — verify TLS, ingress/egress, firewall, secret lifecycle, credential rotation and relevant attack surfaces.
 6. **Data protection** — validate backup integrity, restore procedure and migration/recovery behavior.
 7. **DR measurement** — perform real recovery drills and record measured RPO/RTO.
@@ -52,7 +52,7 @@ A passing repository certification is necessary but does not prove real deployme
 
 | Priority | Work package | Status |
 |---|---|---|
-| P0 | Immutable release identity | `v1.4.2` published and exact-SHA certified |
+| P0 | Immutable release identity | `v1.4.7` published and exact-SHA certified |
 | P0 | External production deployment | Pending real infrastructure |
 | P0 | Backup/restore & DR | Pending target evidence and measured RPO/RTO |
 | P0 | Production SLO/SLI | Engineering contract exists; target measurement pending |
@@ -81,15 +81,13 @@ These sizing values are recommendations, not evidence that infrastructure has be
 
 **Class:** PRODUCT / ARCHITECTURE — **GOVERNED WORKFORCE FOUNDATION IMPLEMENTED; ACCEPTANCE/EVIDENCE RECONCILIATION WHERE REQUIRED; NOT A RELEASE IDENTITY**
 
-The governed workforce foundation is the substrate for Stage 9. PR #514 connected policy decisions to the audit bridge, PR #516 implemented governed AgentInstance replacement, and PR #517 preserved AgentInstance principal identity through workflow child runs.
-
-Do not reimplement these foundations merely because older audit documents still describe them as gaps. Reconcile remaining acceptance/evidence criteria against current code and tests.
+The governed workforce foundation is the substrate for Stage 9. Do not reimplement these foundations merely because older audit documents still describe them as gaps. Reconcile remaining acceptance/evidence criteria against current code and tests.
 
 ## Stage 9 — Autonomous Workforce Optimization
 
-**Class:** PRODUCT / ENGINEERING — **CURRENT PLANNED SLICES IMPLEMENTED AND RELEASE-CERTIFIED IN `v1.4.2`**
+**Class:** PRODUCT / ENGINEERING — **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN v1.4.7**
 
-The certified Stage 9 scope is:
+The planned Stage 9 slices were implemented and exact-SHA certified in v1.4.2 and remain part of the current v1.4.7 release:
 
 1. capability-aware workload routing;
 2. task/risk/cost-aware model selection;
@@ -108,18 +106,6 @@ The control architecture is deliberately bounded:
 `Forecast / Evidence → Governed Proposal → Existing Governance → Provision / Access Review / Activation`
 
 Optimization cannot directly bypass identity, policy, approval, budget, lifecycle, concurrency, audit or execution controls.
-
-### Stage 9 certification checkpoint
-
-- Release: `v1.4.2`
-- Exact SHA: `dba0bb672deb1236b6724bb8851526e656f47967`
-- Production Certification Run: `35108008066`
-- Certification Job: `104834133092`
-- Product Gate Failures: **0**
-- Evidence artifact: `production-certification-evidence-v1.4.2-dba0bb672deb1236b6724bb8851526e656f47967`
-- Artifact ID: `10450993330`
-
-A non-gating fixture-cleanup DBAPIError was observed in Tenant/RBAC certification logs. It did not produce a Product Gate failure and did not change the PASS result.
 
 ## Stage 10 — AI Company Operating System
 
