@@ -104,9 +104,9 @@ async def _enqueue_whatsapp_message(
             customer_id=customer.id,
             external_conversation_key=external_key,
         )
-        db.add(candidate)
         try:
             async with db.begin_nested():
+                db.add(candidate)
                 await db.flush()
             existing = candidate
         except IntegrityError:
@@ -132,9 +132,9 @@ async def _enqueue_whatsapp_message(
         role="user",
         content=text,
     )
-    db.add(message)
     try:
         async with db.begin_nested():
+            db.add(message)
             await db.flush()
     except IntegrityError:
         if provider_message_id:
