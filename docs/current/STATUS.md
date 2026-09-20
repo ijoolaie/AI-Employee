@@ -3,7 +3,7 @@
 **Architecture baseline:** V1.5 Agentic Operating Model  
 **Certified release baseline:** `v1.4.7`  
 **Certified release commit:** `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`  
-**Mainline engineering head:** `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`  
+**Mainline engineering head:** `8bb51f06fb14662c418390c801e2998c3f27ae91`  
 **Status date:** 2026-09-20  
 **Latest certified release:** `v1.4.7`  
 **Certification run:** `35498984521` — PASS (exact `v1.4.7` tag)  
