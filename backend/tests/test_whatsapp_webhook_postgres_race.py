@@ -5,6 +5,7 @@ import uuid
 from types import SimpleNamespace
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import delete, select
 
 from app.api.v1.channel_webhooks import _enqueue_whatsapp_message
@@ -56,17 +57,13 @@ async def whatsapp_race_setup():
             from_phone=f"+9891{uuid.uuid4().int % 10_000_000:07d}",
         )
 
-        # Test runs create no persisted Run because run_service.create_run is
-        # replaced with a deterministic in-test stub. Clean the durable rows.
         await db.execute(
             delete(CustomerMessage).where(CustomerMessage.tenant_id == tenant.id)
         )
         await db.execute(
             delete(CustomerConversation).where(CustomerConversation.tenant_id == tenant.id)
         )
-        await db.execute(
-            delete(Customer).where(Customer.tenant_id == tenant.id)
-        )
+        await db.execute(delete(Customer).where(Customer.tenant_id == tenant.id))
         await db.execute(delete(CustomerChannel).where(CustomerChannel.id == channel.id))
         await db.execute(delete(Employee).where(Employee.id == employee.id))
         await db.execute(delete(Tenant).where(Tenant.id == tenant.id))
@@ -89,22 +86,24 @@ async def test_concurrent_same_provider_message_creates_one_message_and_one_run(
     monkeypatch.setattr("app.services.run_service.create_run", create_run)
     monkeypatch.setattr("app.api.v1.channel_webhooks.outbox_service.enqueue", enqueue)
 
-    async def submit(run_number: int):
+    async def submit():
         async with AsyncSessionLocal() as db:
             channel = (
                 await db.execute(
                     select(CustomerChannel).where(CustomerChannel.id == data.channel_id)
                 )
             ).scalar_one()
-            return await _enqueue_whatsapp_message(
+            result = await _enqueue_whatsapp_message(
                 db,
                 channel,
                 from_phone=data.from_phone,
                 text="same provider message",
                 provider_message_id="wamid-race-1",
             )
+            await db.commit()
+            return result
 
-    first, second = await asyncio.gather(submit(1), submit(2))
+    first, second = await asyncio.gather(submit(), submit())
 
     async with AsyncSessionLocal() as db:
         conversations = list(
@@ -134,9 +133,7 @@ async def test_concurrent_same_provider_message_creates_one_message_and_one_run(
     assert len(conversations) == 1
     assert len(messages) == 1
     assert first[0].id == second[0].id
-    assert sorted([first[1], second[1]]) == sorted(
-        [messages[0].run_id, messages[0].run_id]
-    )
+    assert first[1] == second[1] == messages[0].run_id
     assert sorted([first[2], second[2]]) == [False, True]
 
 
@@ -163,13 +160,15 @@ async def test_concurrent_same_sender_different_provider_ids_reuses_one_conversa
                     select(CustomerChannel).where(CustomerChannel.id == data.channel_id)
                 )
             ).scalar_one()
-            return await _enqueue_whatsapp_message(
+            result = await _enqueue_whatsapp_message(
                 db,
                 channel,
                 from_phone=data.from_phone,
                 text=provider_id,
                 provider_message_id=provider_id,
             )
+            await db.commit()
+            return result
 
     first, second = await asyncio.gather(
         submit("wamid-race-a"),
