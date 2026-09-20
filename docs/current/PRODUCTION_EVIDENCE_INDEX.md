@@ -1,6 +1,6 @@
 # Production Evidence Index
 
-**Reconciled:** 2026-09-19  
+**Reconciled:** 2026-09-20  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
@@ -17,23 +17,23 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Field | Value |
 |---|---|
 | Repository | `ijoolaie/AI-Employee` |
-| Latest published release | `v1.4.6` |
-| Exact certified release SHA | `f3d60031332450ba616e2a1c705e85c0c2c5aefd` |
-| Production Certification run | `35427967347` — PASS (exact `v1.4.6` tag) |
-| Certification job | `105857140334` — PASS |
+| Latest published release | `v1.4.7` |
+| Exact certified release SHA | `48a6df0ea8a2fb0624e831fbdea55ee4548807f6` |
+| Production Certification run | `35498984521` — PASS (exact `v1.4.7` tag) |
+| Certification job | `106047204166` — PASS |
 | Product Gate Failures | `0` |
 | External production deployment | **PENDING** |
 | External image registry/deployed digest evidence | **PENDING** |
 | External signed provenance/attestation | **PENDING** |
 
-### Current v1.4.6 certified release identity
+### Current v1.4.7 certified release identity
 
-- Release tag: `v1.4.6`
-- Exact certified SHA: `f3d60031332450ba616e2a1c705e85c0c2c5aefd`
-- Production Certification run: `35427967347` — PASS
+- Release tag: `v1.4.7`
+- Exact certified SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Production Certification run: `35498984521` — PASS
 - Product Gate Failures: `0`
-- Evidence artifact: `production-certification-evidence-v1.4.6-f3d60031332450ba616e2a1c705e85c0c2c5aefd`
-- Artifact SHA256: `fc12afd3da164e1d1787bc11e2a39d3c3d019e84d3c9516ddf7819f79e905d4d`
+- Evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Artifact SHA256: `86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`
 - External production deployment: **PENDING** (`production_deployment_claimed=false`)
 - Certification is bound only to the exact SHA above; it does not transfer to another SHA.
 
@@ -51,8 +51,8 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 
 | Gate | Evidence | Class | Status |
 |---|---|---|---|
-| v1.4.6 Exact-SHA Production Certification | Run `35427967347` | ENGINEERING | Complete — exact tag/SHA, 0 Product Gate failures |
-| v1.4.6 certification product gates | Run `35427967347` | ENGINEERING | Complete — 0 failures |
+| v1.4.7 Exact-SHA Production Certification | Run `35498984521` | ENGINEERING | Complete — exact tag/SHA, 0 Product Gate failures |
+| v1.4.7 certification product gates | Run `35498984521` | ENGINEERING | Complete — 0 failures |
 | RC1 GitHub Actions engineering validation | SHA `097653...` | ENGINEERING | Historical — 10/10 PASS |
 | Backend/frontend/DB engineering | Certification + RC1 CI | ENGINEERING | Complete |
 | Auth/RBAC/tenant isolation | Real-stack + RC1 isolation gate | ENGINEERING | Complete; external actor matrix pending |
