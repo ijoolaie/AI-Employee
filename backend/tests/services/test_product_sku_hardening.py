@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -32,7 +33,8 @@ class _ProductDb:
 
     async def flush(self):
         if self.fail_flush:
-            raise IntegrityError("INSERT", {}, Exception("duplicate key"))
+            orig = SimpleNamespace(constraint_name=product_service.PRODUCT_SKU_INDEX_NAME)
+            raise IntegrityError("INSERT", {}, orig)
 
     async def refresh(self, row):
         self.refreshed.append(row)
