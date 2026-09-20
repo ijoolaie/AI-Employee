@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,7 +16,7 @@ class CustomerConversation(Base):
             "channel_id",
             "external_conversation_key",
             unique=True,
-            postgresql_where=external_conversation_key.is_not(None),
+            postgresql_where=text("external_conversation_key IS NOT NULL"),
         ),
     )
 
@@ -52,7 +52,7 @@ class CustomerMessage(Base):
             "channel_id",
             "provider_message_id",
             unique=True,
-            postgresql_where=provider_message_id.is_not(None),
+            postgresql_where=text("provider_message_id IS NOT NULL"),
         ),
     )
 
