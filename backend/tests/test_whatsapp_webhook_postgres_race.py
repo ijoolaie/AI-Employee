@@ -13,7 +13,8 @@ from app.core.database import AsyncSessionLocal
 from app.models.conversation import CustomerConversation, CustomerMessage
 from app.models.customer import Customer
 from app.models.customer_channel import CustomerChannel
-from app.models.employee import Employee
+from app.models.employee import Employee, EmployeeVersion
+from app.models.run import Run
 from app.models.tenant import Tenant
 
 
@@ -77,8 +78,31 @@ async def test_concurrent_same_provider_message_creates_one_message_and_one_run(
     data = whatsapp_race_setup
     run_ids = [uuid.uuid4() for _ in range(2)]
 
-    async def create_run(*args, **kwargs):
-        return SimpleNamespace(id=run_ids.pop(0), conversation_id=None)
+    async def create_run(
+        db, *, tenant_id, employee_id, input_data, created_by,
+        employee_version_id=None, agent_instance_id=None
+    ):
+        version = (
+            await db.execute(
+                select(EmployeeVersion).where(
+                    EmployeeVersion.employee_id == employee_id,
+                    EmployeeVersion.id == employee_version_id,
+                )
+            )
+        ).scalar_one()
+        run = Run(
+            id=run_ids.pop(0),
+            tenant_id=tenant_id,
+            employee_id=employee_id,
+            employee_version_id=version.id,
+            agent_instance_id=agent_instance_id,
+            created_by=created_by,
+            status="pending",
+            input_data=input_data,
+        )
+        db.add(run)
+        await db.flush()
+        return run
 
     async def enqueue(*args, **kwargs):
         return SimpleNamespace(id=uuid.uuid4())
