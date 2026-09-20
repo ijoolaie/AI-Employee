@@ -1,16 +1,34 @@
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text, Boolean, func, Index
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Numeric, String, Text, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
+
 from app.core.database import Base
+
 
 class Product(Base):
     __tablename__ = "products"
-    __table_args__ = (Index("ix_products_tenant_active", "tenant_id", "is_active"),)
+    __table_args__ = (
+        Index("ix_products_tenant_active", "tenant_id", "is_active"),
+        Index(
+            "uq_products_tenant_normalized_sku",
+            "tenant_id",
+            text("lower(btrim(sku))"),
+            unique=True,
+            postgresql_where=text("sku IS NOT NULL AND btrim(sku) <> ''"),
+        ),
+    )
+
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     sku: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -23,4 +41,9 @@ class Product(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     source: Mapped[str] = mapped_column(String(40), nullable=False, default="manual")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
