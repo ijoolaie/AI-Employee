@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,6 +10,16 @@ from app.core.database import Base
 
 class CustomerConversation(Base):
     __tablename__ = "customer_conversations"
+    __table_args__ = (
+        Index(
+            "uq_customer_conversations_external_key",
+            "channel_id",
+            "external_conversation_key",
+            unique=True,
+            postgresql_where=external_conversation_key.is_not(None),
+        ),
+    )
+
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
     employee_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("employees.id"), nullable=False, index=True)
@@ -35,6 +45,17 @@ class CustomerConversation(Base):
 
 class CustomerMessage(Base):
     __tablename__ = "customer_messages"
+    __table_args__ = (
+        Index(
+            "uq_customer_messages_provider_id",
+            "tenant_id",
+            "channel_id",
+            "provider_message_id",
+            unique=True,
+            postgresql_where=provider_message_id.is_not(None),
+        ),
+    )
+
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True)
     conversation_id: Mapped[uuid.UUID] = mapped_column(
