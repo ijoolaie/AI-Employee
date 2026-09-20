@@ -387,3 +387,151 @@ async def test_public_chat_concurrent_starts_create_independent_conversations(
     assert first[0] != second[0]
     assert first[1] != second[1]
     assert len(conversations) == 2
+
+
+@pytest.mark.asyncio
+async def test_meta_webhook_http_replay_is_idempotent(whatsapp_race_setup, monkeypatch):
+    """The Meta webhook handler admits one provider message across a replay."""
+    data = whatsapp_race_setup
+    from app.api.v1.channel_webhooks import whatsapp_meta_inbound
+    from starlette.requests import Request
+
+    run_id = uuid.uuid4()
+
+    async def create_run(
+        db, *, tenant_id, employee_id, input_data, created_by,
+        employee_version_id=None, agent_instance_id=None
+    ):
+        run = Run(
+            id=run_id,
+            tenant_id=tenant_id,
+            employee_id=employee_id,
+            employee_version_id=employee_version_id or data.employee_version_id,
+            created_by=created_by,
+            status="pending",
+            input_data=input_data,
+        )
+        db.add(run)
+        await db.flush()
+        return run
+
+    async def enqueue(*args, **kwargs):
+        return SimpleNamespace(id=uuid.uuid4())
+
+    monkeypatch.setattr("app.services.run_service.create_run", create_run)
+    monkeypatch.setattr("app.api.v1.channel_webhooks.outbox_service.enqueue", enqueue)
+
+    secret = "meta-replay-test-secret"
+    async with AsyncSessionLocal() as db:
+        channel = (
+            await db.execute(
+                select(CustomerChannel).where(CustomerChannel.id == data.channel_id)
+            )
+        ).scalar_one()
+        channel.config = {"meta_app_secret": secret}
+        await db.commit()
+
+    import hashlib
+    import hmac
+    import json
+
+    payload = {
+        "object": "whatsapp_business_account",
+        "entry": [
+            {
+                "changes": [
+                    {
+                        "value": {
+                            "messages": [
+                                {
+                                    "id": "wamid-http-replay-1",
+                                    "from": data.from_phone,
+                                    "type": "text",
+                                    "text": {"body": "hello from Meta"},
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ],
+    }
+    raw_body = json.dumps(payload, separators=(",", ":")).encode()
+    signature = "sha256=" + hmac.new(
+        secret.encode(), raw_body, hashlib.sha256
+    ).hexdigest()
+
+    def request_for_body() -> Request:
+        delivered = False
+
+        async def receive():
+            nonlocal delivered
+            if delivered:
+                return {"type": "http.request", "body": b"", "more_body": False}
+            delivered = True
+            return {"type": "http.request", "body": raw_body, "more_body": False}
+
+        return Request(
+            {
+                "type": "http",
+                "method": "POST",
+                "path": f"/api/v1/webhooks/channels/whatsapp/meta/{data.channel_id}",
+                "headers": [
+                    (b"host", b"testserver"),
+                    (b"x-hub-signature-256", signature.encode()),
+                    (b"content-type", b"application/json"),
+                ],
+            },
+            receive=receive,
+        )
+
+    async with AsyncSessionLocal() as db:
+        first = await whatsapp_meta_inbound(
+            data.channel_id,
+            request_for_body(),
+            db,
+            signature,
+        )
+        await db.commit()
+
+    async with AsyncSessionLocal() as db:
+        second = await whatsapp_meta_inbound(
+            data.channel_id,
+            request_for_body(),
+            db,
+            signature,
+        )
+        await db.commit()
+
+    assert first == {"success": True, "processed": 1, "duplicates": 0}
+    assert second == {"success": True, "processed": 0, "duplicates": 1}
+
+    async with AsyncSessionLocal() as db:
+        messages = list(
+            (
+                await db.execute(
+                    select(CustomerMessage).where(
+                        CustomerMessage.channel_id == data.channel_id,
+                        CustomerMessage.provider_message_id == "wamid-http-replay-1",
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        runs = list(
+            (
+                await db.execute(
+                    select(Run).where(
+                        Run.tenant_id == data.tenant_id,
+                        Run.id == run_id,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    assert len(messages) == 1
+    assert len(runs) == 1
+    assert messages[0].run_id == run_id
