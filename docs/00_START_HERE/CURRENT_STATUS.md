@@ -1,47 +1,65 @@
 # Current Status
 
-**Last reconciled:** 2026-09-18
-**Latest published release:** `v1.4.2`
-**Release commit:** `dba0bb672deb1236b6724bb8851526e656f47967`
-**Exact-SHA Production Certification:** Run `35108008066` — PASS
-**Certification job:** `104834133092` — PASS
-**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 RC1 ENGINEERING-VALIDATED / COMMERCIAL READINESS & EXTERNAL PRODUCTION GATES PENDING
+**Last reconciled:** 2026-09-20
+**Latest published release:** `v1.4.7`
+**Certified release SHA:** `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+**Exact-SHA Production Certification:** Run `35498984521` — PASS
+**Certification job:** `106047204166` — PASS
+**Product Gate failures:** `0`
+**Current status:** v1.4.7 RELEASE-CERTIFIED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
 
-## Current v1.4.5 RC1
+## Current release
 
-- RC branch: `release/v1.4.5-rc1`
-- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
-- Engineering candidate baseline: `a9d5cdd`
-- Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
-- GitHub Actions engineering validation: **10/10 current release-critical workflows PASS**
-- RC1 is not externally certified and does not inherit `v1.4.2` certification.
+- Release: `v1.4.7`
+- Exact certified SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Production Certification: PASS
+- Frontend Playwright: 6/6 PASS
+- Immutable certification evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Evidence digest: `sha256:86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`
+- Production deployment claimed by certification: **false**
+- Release assets: runtime package, four edition packages, edition manifest and SHA256SUMS published on the v1.4.7 GitHub release.
 
-The `v1.4.2` certification remains bound to its exact SHA. The RC1 result is a new engineering validation against `097653...`.
+Certification applies only to the exact certified SHA. Later commits on `main` do not inherit release certification.
 
 ## Executive truth
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a Human + Agent operating model. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries.
 
-The latest published and exact-SHA certified release remains `v1.4.2`. RC1 of `v1.4.5` has passed the current GitHub engineering gates, but no external production deployment, live-provider acceptance, measured production SLO/DR, independent security review or customer acceptance is recorded.
+The current engineering/release baseline is **v1.4.7 / `48a6df0...`**. Repository engineering, CI, production-like validation and exact-SHA Production Certification are complete for the tracked scope.
+
+No evidence currently establishes real production deployment, live-provider operation, measured production SLO/DR, independent security review, staffed production operations or customer acceptance.
 
 ## Evidence boundary
 
-CI, repository tests, local production-like validation and simulated providers establish engineering/release-candidate evidence. They do not establish live production deployment, measured production SLO/DR, independent security review or customer acceptance.
+CI, repository tests, local production-like validation, generated release artifacts and GitHub-hosted certification establish engineering/release evidence. They do not establish live production deployment, measured production SLO/DR, independent security review, customer acceptance or unrestricted commercial go-live.
 
 Certification never transfers automatically across SHAs.
 
-## Immediate next phase
+## Remaining external gates
 
-1. Freeze the final RC1 release identity if no further code changes are required.
-2. If external deployment is authorized, provision and harden the approved target.
-3. Deploy the exact accepted SHA and capture deployment/image/migration identity.
-4. Establish SLI/SLO/error-budget measurement and alert routing.
-5. Execute backup/restore and measured RPO/RTO validation.
-6. Validate live providers and billing/integration webhooks where applicable.
-7. Execute Vendor → Reseller → Client runtime isolation/RBAC acceptance.
-8. Run authenticated DAST, independent security review and controlled HA/failure-recovery rehearsal.
-9. Execute incident-response/on-call and rollback drills.
-10. Complete external acceptance and reconcile all exceptions.
-11. Run the final commercial go-live gate.
+1. Real production deployment and exact deployed-identity verification.
+2. Live provider/payment/integration validation where applicable.
+3. Production SLO/SLI and error-budget measurements.
+4. Real backup/restore and measured DR RPO/RTO.
+5. Vendor → Reseller → Client runtime isolation/RBAC evidence on the real target.
+6. Authenticated DAST against the running target.
+7. Independent penetration/security review.
+8. Production networking/TLS and secret-manager lifecycle evidence.
+9. HA/failure-recovery and rollback rehearsal.
+10. Incident-response and staffed on-call evidence.
+11. Vendor → Reseller → Customer acceptance in order.
+12. Final residual-risk disposition and commercial go-live gate.
 
-Broad feature expansion is not the default next step.
+These external gates are tracked by issues #210, #269 and #19.
+
+Broad feature expansion is not the default next step unless external validation identifies a concrete engineering defect.
+
+## Historical releases
+
+- `v1.4.6` remains immutable at its certified SHA `f3d6003...`.
+- Historical `v1.4.5` remains immutable and is not the current certified release.
+- Earlier RC/candidate documentation is historical evidence only.
+
+## Security rule
+
+No production host, private key, registry credential, webhook secret, payment secret, customer data or environment-specific access token belongs in Git history, GitHub issues, documentation or chat. Missing required production inputs must fail closed.
