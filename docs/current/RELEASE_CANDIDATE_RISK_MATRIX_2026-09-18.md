@@ -1,5 +1,11 @@
 # v1.4.5 Release Candidate Risk Matrix and Evidence Plan
 
+> **Historical v1.4.5 Release Candidate Risk Matrix and Evidence Plan — reconciled 2026-09-20.** This document is retained for historical traceability and is **not the current release/readiness source of truth**.
+>
+> Current release: **v1.4.7** / exact certified SHA `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`.
+> Current source of truth: `docs/releases/RELEASE_TRUTH_LEDGER.md`.
+
+
 ## Release identity
 
 - Engineering candidate baseline: `a9d5cdd`
