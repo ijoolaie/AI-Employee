@@ -43,11 +43,7 @@ async def _enqueue_whatsapp_message(
                 select(CustomerMessage)
                 .where(
                     CustomerMessage.tenant_id == channel.tenant_id,
-                    CustomerMessage.conversation_id.in_(
-                        select(CustomerConversation.id).where(
-                            CustomerConversation.channel_id == channel.id
-                        )
-                    ),
+                    CustomerMessage.channel_id == channel.id,
                     CustomerMessage.provider_message_id == provider_message_id,
                 )
             )
@@ -130,6 +126,7 @@ async def _enqueue_whatsapp_message(
     message = CustomerMessage(
         tenant_id=channel.tenant_id,
         conversation_id=existing.id,
+        channel_id=channel.id,
         provider_message_id=provider_message_id,
         role="user",
         content=text,
@@ -144,7 +141,7 @@ async def _enqueue_whatsapp_message(
                 await db.execute(
                     select(CustomerMessage).where(
                         CustomerMessage.tenant_id == channel.tenant_id,
-                        CustomerMessage.conversation_id == existing.id,
+                        CustomerMessage.channel_id == channel.id,
                         CustomerMessage.provider_message_id == provider_message_id,
                     )
                 )
