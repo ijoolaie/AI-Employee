@@ -16,6 +16,18 @@ def upgrade() -> None:
     )
     op.add_column(
         "customer_messages",
+        sa.Column("channel_id", sa.UUID(), nullable=True),
+    )
+    op.create_foreign_key(
+        "fk_customer_messages_channel_id",
+        "customer_messages",
+        "customer_channels",
+        ["channel_id"],
+        ["id"],
+        ondelete="SET NULL",
+    )
+    op.add_column(
+        "customer_messages",
         sa.Column("provider_message_id", sa.String(length=255), nullable=True),
     )
     op.create_index(
@@ -35,7 +47,13 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("uq_customer_messages_provider_id", table_name="customer_messages")\n    op.drop_constraint("fk_customer_messages_channel_id", "customer_messages", type_="foreignkey")
+    op.drop_index("uq_customer_messages_provider_id", table_name="customer_messages")
     op.drop_index("uq_customer_conversations_external_key", table_name="customer_conversations")
+    op.drop_constraint(
+        "fk_customer_messages_channel_id",
+        "customer_messages",
+        type_="foreignkey",
+    )
     op.drop_column("customer_messages", "provider_message_id")
+    op.drop_column("customer_messages", "channel_id")
     op.drop_column("customer_conversations", "external_conversation_key")
