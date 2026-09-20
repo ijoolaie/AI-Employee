@@ -1,7 +1,7 @@
 """Harden tenant-scoped product SKU uniqueness and normalization.
 
 Revision ID: v147productsku
-Revises: v14013billingmanagementrbac
+Revises: p810workloadbalance
 """
 from alembic import op
 import sqlalchemy as sa
