@@ -206,5 +206,6 @@ async def test_concurrent_same_sender_different_provider_ids_reuses_one_conversa
         "wamid-race-b",
     }
     assert first[0].id == second[0].id
+    assert first[1] != second[1]
     assert first[2] is False
     assert second[2] is False
