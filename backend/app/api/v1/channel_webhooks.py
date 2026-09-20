@@ -11,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.deps import DbSession
 from app.models.customer_channel import CustomerChannel
 from app.services import customer_channel_service
+from app.services import outbox_service
 from app.services import whatsapp_meta_service
 
 router = APIRouter(prefix="/webhooks/channels", tags=["channel-webhooks"])
@@ -168,9 +169,21 @@ async def _enqueue_whatsapp_message(
     message.run_id = run.id
 
     try:
-        from app.workers.run_worker import execute_run_task
-
-        execute_run_task.delay(str(run.id), str(channel.tenant_id))
+        # The API dependency commits after this handler returns. Queueing
+        # Celery directly here races that commit: a fast worker can consume a
+        # Run that is still invisible to its transaction. Persist the hand-off
+        # in the transactional outbox instead; the dispatcher can only claim
+        # it after this transaction commits.
+        await outbox_service.enqueue(
+            db,
+            kind="agent.run.execute",
+            tenant_id=channel.tenant_id,
+            payload={
+                "run_id": str(run.id),
+                "tenant_id": str(channel.tenant_id),
+            },
+            dedupe_key=f"agent.run.execute:whatsapp:{run.id}",
+        )
     except Exception as exc:
         await db.rollback()
         raise HTTPException(
