@@ -170,7 +170,7 @@ async def _enqueue_whatsapp_message(
     try:
         from app.workers.run_worker import execute_run_task
 
-        execute_run_task.delay(str(run.id))
+        execute_run_task.delay(str(run.id), str(channel.tenant_id))
     except Exception as exc:
         await db.rollback()
         raise HTTPException(
