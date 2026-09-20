@@ -17,6 +17,7 @@ from app.models.product import Product
 from app.models.business_order import BusinessOrder
 from app.models.shopify_webhook_event import ShopifyWebhookEvent
 from app.services.credential_service import resolve_credential
+from app.services.product_service import normalize_sku
 
 async def _cfg(db: AsyncSession, integration: CommerceIntegration):
     cfg = integration.config or {}
@@ -82,7 +83,7 @@ async def sync_products(db, tenant_id, integration_id):
     for remote in products:
         variants = (remote.get("variants") or {}).get("nodes") or []; variant = variants[0] if variants else {}
         existing = (await db.execute(select(Product).where(Product.tenant_id == tenant_id, Product.attributes["shopify_product_id"].as_string() == str(remote.get("id"))))).scalar_one_or_none()
-        data = {"sku": variant.get("sku") or f"shopify:{remote.get('id')}", "name": remote.get("title") or "Untitled product", "description": remote.get("descriptionHtml"), "category": remote.get("productType"), "price": Decimal(str(variant.get("price") or "0")), "currency": (integration.config or {}).get("currency", "EUR"), "inventory": int(variant.get("inventoryQuantity") or 0), "attributes": {"shopify_product_id": remote.get("id"), "shopify_variant_id": variant.get("id"), "source": "shopify"}, "images": [x.get("url") for x in ((remote.get("images") or {}).get("nodes") or []) if x.get("url")], "is_active": remote.get("status") == "ACTIVE", "source": "shopify"}
+        data = {"sku": normalize_sku(variant.get("sku") or f"shopify:{remote.get('id')}"), "name": remote.get("title") or "Untitled product", "description": remote.get("descriptionHtml"), "category": remote.get("productType"), "price": Decimal(str(variant.get("price") or "0")), "currency": (integration.config or {}).get("currency", "EUR"), "inventory": int(variant.get("inventoryQuantity") or 0), "attributes": {"shopify_product_id": remote.get("id"), "shopify_variant_id": variant.get("id"), "source": "shopify"}, "images": [x.get("url") for x in ((remote.get("images") or {}).get("nodes") or []) if x.get("url")], "is_active": remote.get("status") == "ACTIVE", "source": "shopify"}
         if existing:
             for k, v in data.items(): setattr(existing, k, v)
             updated += 1
