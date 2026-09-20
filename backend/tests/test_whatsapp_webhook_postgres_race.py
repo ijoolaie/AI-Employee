@@ -266,3 +266,69 @@ async def test_concurrent_same_sender_different_provider_ids_reuses_one_conversa
     assert first[1] != second[1]
     assert first[2] is False
     assert second[2] is False
+
+
+@pytest.mark.asyncio
+async def test_public_chat_allows_multiple_conversations_for_same_customer(
+    whatsapp_race_setup,
+):
+    """Public Chat must not inherit WhatsApp's one-conversation-per-sender key."""
+    data = whatsapp_race_setup
+
+    from app.services.customer_channel_service import create_conversation
+
+    async with AsyncSessionLocal() as db:
+        channel = (
+            await db.execute(
+                select(CustomerChannel).where(CustomerChannel.id == data.channel_id)
+            )
+        ).scalar_one()
+
+        first, first_token, _ = await create_conversation(
+            db,
+            public_key=channel.public_key,
+            customer_name="Public Chat Customer",
+            customer_email="same-customer@example.com",
+            customer_phone=None,
+        )
+        await db.commit()
+
+        second, second_token, _ = await create_conversation(
+            db,
+            public_key=channel.public_key,
+            customer_name="Public Chat Customer",
+            customer_email="same-customer@example.com",
+            customer_phone=None,
+        )
+        await db.commit()
+
+        customers = list(
+            (
+                await db.execute(
+                    select(Customer).where(
+                        Customer.tenant_id == data.tenant_id,
+                        Customer.external_key == "same-customer@example.com",
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+        conversations = list(
+            (
+                await db.execute(
+                    select(CustomerConversation).where(
+                        CustomerConversation.tenant_id == data.tenant_id,
+                        CustomerConversation.customer_id == customers[0].id,
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    assert len(customers) == 1
+    assert len(conversations) == 2
+    assert first.id != second.id
+    assert first_token != second_token
+    assert {conversation.id for conversation in conversations} == {first.id, second.id}
