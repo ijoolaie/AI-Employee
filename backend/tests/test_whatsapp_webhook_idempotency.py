@@ -94,3 +94,14 @@ def test_whatsapp_message_model_exposes_channel_scoped_provider_key():
 
     assert hasattr(CustomerMessage, "channel_id")
     assert hasattr(CustomerMessage, "provider_message_id")
+
+
+def test_whatsapp_run_dispatch_uses_transactional_outbox():
+    from pathlib import Path
+
+    source = (Path(__file__).parents[1] / "app/api/v1/channel_webhooks.py").read_text()
+
+    assert "await outbox_service.enqueue(" in source
+    assert 'kind="agent.run.execute"' in source
+    assert 'dedupe_key=f"agent.run.execute:whatsapp:{run.id}"' in source
+    assert "execute_run_task.delay" not in source
