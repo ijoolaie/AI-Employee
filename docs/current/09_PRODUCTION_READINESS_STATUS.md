@@ -1,52 +1,52 @@
 # Production Readiness Status
 
-**Status date:** 2026-09-18  
-**Latest published release:** `v1.4.2`  
-**Exact certified release SHA:** `dba0bb672deb1236b6724bb8851526e656f47967`  
-**Production Certification run:** `35108008066` — PASS  
-**Certification job:** `104834133092` — PASS  
-**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 RC1 ENGINEERING-VALIDATED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
+**Status date:** 2026-09-20
+**Latest published release:** `v1.4.7`
+**Exact certified release SHA:** `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+**Production Certification run:** `35498984521` — PASS
+**Certification job:** `106047204166` — PASS
+**Product Gate failures:** `0`
+**Current status:** ENGINEERING/RELEASE CERTIFIED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
 
-## Current release and project boundary
+## Current release boundary
 
-### v1.4.5 RC1
+### v1.4.7
 
-- RC branch: `release/v1.4.5-rc1`
-- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
-- Engineering candidate baseline: `a9d5cdd`
-- Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
-- GitHub Actions RC1 engineering validation: **10/10 current release-critical workflows PASS**
-- RC1 is **not externally certified** and does not inherit `v1.4.2` certification.
+- Exact certified SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Exact-SHA checkout/assertion: PASS
+- Backend/frontend/DB certification stages: PASS
+- Product Gates: 0 failures
+- Frontend Playwright: 6/6 PASS
+- Certification evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Production deployment claimed: **false**
 
-The published `v1.4.2` certification remains bound to exact SHA `dba0bb672deb1236b6724bb8851526e656f47967`. Evidence does not transfer automatically across SHAs.
+Certification applies only to the exact v1.4.7 SHA. Later commits do not inherit it.
 
-No repository state establishes live production deployment, live provider operation, measured production SLO attainment, target RPO/RTO, independent penetration-test completion, customer acceptance or unrestricted commercial go-live.
+## Engineering evidence complete
 
-## Audit result
+- Backend and frontend validation.
+- Database migration and single-head checks.
+- Auth, RBAC and tenant-isolation gates.
+- Conversation isolation.
+- Employee → Run → AI → Result.
+- Files → Knowledge → Memory.
+- Workflow → Approval → Schedule.
+- Orders → Sales → Invoice → Billing.
+- Unified WorkItem Human and Agent.
+- Production-like infrastructure/readiness.
+- OCR runtime/extraction.
+- Dependency E2E.
+- Product gates and frontend Playwright.
+- Release artifact generation and checksum validation.
 
-### 🟢 Release / engineering evidence
-
-- Backend and frontend certification evidence exists.
-- Database migration and single-head checks passed.
-- Auth, RBAC and tenant-isolation product gates passed.
-- Conversation isolation passed.
-- Employee → Run → AI → Result passed.
-- Files → Knowledge → Memory passed.
-- Workflow → Approval → Schedule passed.
-- Orders → Sales → Invoice → Billing passed.
-- Unified WorkItem Human and Agent passed.
-- Stage 9 governed optimization is release-certified in v1.4.2.
-- Local production-like infrastructure, backup/restore and resilience checks passed.
-- RC1 engineering workflows are green for exact SHA `097653...`.
-
-### 🔴 External launch blockers
+## External launch blockers
 
 | Area | Status | Required evidence |
 |---|---|---|
 | Real production deployment | 🔴 | Exact frozen release identity running on approved target |
 | Backup/restore + DR | 🔴 | Real backup, isolated restore, measured RPO/RTO |
 | Production SLO/SLI | 🔴 | Real target measurements, alerts and error-budget baseline |
-| Live providers | 🔴 | Provider authentication, success/failure/retry/quota validation |
+| Live providers | 🔴 | Provider authentication and success/failure/retry/quota validation |
 | Vendor → Reseller → Client isolation | 🔴 | Runtime actor matrix on deployed target |
 | DAST | 🔴 | Authenticated deployed-target scan + remediation/retest |
 | Independent security review | 🔴 | Independent pentest/security evidence |
@@ -58,31 +58,25 @@ No repository state establishes live production deployment, live provider operat
 | Vendor/Reseller acceptance | 🔴 | Completed acceptance evidence |
 | Customer acceptance | 🔴 | Completed launch-scope acceptance |
 
-### 🟠 Required before launch
-
-- Target data-retention/lifecycle verification.
-- Live billing/payment/provider transaction validation where applicable.
-- Customer support/operational ownership and acceptance criteria.
-- Final residual-risk and exception disposition.
-
 ## Final acceptance sequence
 
-1. Freeze the final release SHA and record its exact Git identity.
+1. Freeze/accept v1.4.7 for external deployment.
 2. Provision and harden the approved production target.
-3. Deploy that exact frozen release identity.
-4. Validate backups/restore and measure RPO/RTO.
-5. Establish production SLO/SLI/error budget.
+3. Deploy the exact frozen release identity.
+4. Verify deployment, image and migration identity/checksums.
+5. Validate networking and secret-management lifecycle.
 6. Validate live providers.
-7. Certify deployed Vendor/Reseller/Client isolation and RBAC.
-8. Run DAST and independent security review.
-9. Verify network and secret lifecycle.
-10. Rehearse HA/failure recovery.
-11. Execute incident-response and on-call drill.
-12. Complete Vendor/Reseller/Customer acceptance.
-13. Reconcile exceptions/residual risks.
-14. Run the final commercial go-live gate.
+7. Establish production SLI/SLO/error budget.
+8. Execute backup/restore and measure RPO/RTO.
+9. Certify deployed Vendor/Reseller/Client isolation and RBAC.
+10. Run DAST and independent security review.
+11. Rehearse HA/failure recovery and rollback.
+12. Execute incident-response/on-call drill.
+13. Complete Vendor/Reseller/Customer acceptance.
+14. Reconcile exceptions/residual risks.
+15. Run the final commercial go-live gate.
 
-Until that sequence is complete, the product should be described as **engineering-validated RC1 with external production/commercial gates pending**, not as externally production-certified.
+Until that sequence is complete, the product should be described as **engineering/release certified with external production/commercial gates pending**, not as externally production-certified.
 
 ## Security rule
 
