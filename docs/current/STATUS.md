@@ -3,8 +3,7 @@
 **Architecture baseline:** V1.5 Agentic Operating Model  
 **Certified release baseline:** `v1.4.7`  
 **Certified release commit:** `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`  
-**Mainline engineering head:** `132f683f0353c3b23f5d2514285ce43124db2966`
-**Mainline engineering head:** `1ed65f84cfb4e626a3617dc1889f8cf7745c1850`  
+**Mainline engineering head:** `84b0e9d50f25095e5a2e38d051754ed077509f4d`  
 **Status date:** 2026-09-20  
 **Latest certified release:** `v1.4.7`  
 **Certification run:** `35498984521` — PASS (exact `v1.4.7` tag)  
@@ -25,12 +24,14 @@ The Production Certification suite passed for the exact `v1.4.7` release identit
 - PR #551 — real PostgreSQL WhatsApp concurrency coverage: **MERGED**.
 - Merge SHA: `542ed5f161d306ed2a3993995562b108961dc270`.
 - PR #551 head `b96ed2477e48dcad29ea99fd9581c064048b79df` passed CI #1579 plus all supporting release/security/runtime gates.
+- PR #552 — Public Chat multiple-conversation regression coverage: **MERGED**.
+- Merge SHA: `84b0e9d50f25095e5a2e38d051754ed077509f4d`.
+- PR #552 head `2c775b633565dfdc60c4a6d5b950f98ac839aeec` passed CI #1582 and the observed Architecture Guard, CodeQL, Infrastructure, HA and DAST workflows.
 - The implementation persists provider message IDs, adds channel-scoped WhatsApp conversation/message uniqueness, handles PostgreSQL admission races with SAVEPOINTs, and routes Run execution through the transactional outbox.
-- Final PR-head CI/architecture/security/runtime gates: **PASS**.
-- Release audit: `docs/current/V1.4.8_WHATSAPP_IDEMPOTENCY_RELEASE_AUDIT_2026-09-20.md`.
+- Public Chat remains intentionally capable of creating multiple conversations for the same customer; PR #552 protects this invariant with real PostgreSQL regression tests, including concurrent starts.
 - **Release status:** engineering candidate only; no `v1.4.8` tag or certification yet.
-- Completed: real PostgreSQL concurrent webhook race tests (PR #551, CI #1579).
-- Required before certification: Public Chat regression, Meta replay runtime verification, then exact-SHA Production Certification.
+- Completed: real PostgreSQL concurrent webhook race tests and Public Chat regression.
+- Required before certification: Meta replay runtime verification, then exact-SHA Production Certification.
 
 ## v1.4.7 certification evidence
 
@@ -75,7 +76,6 @@ These changes led into the immutable `v1.4.7` release and were certified togethe
 | Certification evidence artifact | VERIFIED | `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6` |
 | External production deployment | PENDING | `production_deployment_claimed=false` |
 
-
 ## Remaining P0 external gates
 
 | ID | Work | Status |
@@ -103,7 +103,7 @@ Certification never transfers automatically across SHAs. `v1.4.7` certification 
 
 ## Current frontier
 
-The engineering/release certification frontier has been crossed: `v1.4.7` is an immutable, exact-SHA-certified release. The remaining blockers are external production infrastructure and target-environment evidence: deployment, real DR/RPO/RTO, live providers, target isolation/RBAC, DAST, independent security review, network/secrets lifecycle, HA/failure drills, on-call and customer acceptance.
+The engineering/release certification frontier has been crossed for `v1.4.7`: it is an immutable, exact-SHA-certified release. The `v1.4.8` engineering frontier is now narrowed to Meta webhook replay/runtime verification and exact-SHA certification, while the external production gates remain open.
 
 The controlled deployment workflow remains fail-closed and requires real production Environment inputs. No fake values should be introduced.
 
