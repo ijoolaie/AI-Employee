@@ -8,7 +8,7 @@ import sqlalchemy as sa
 
 
 revision = "v147productsku"
-down_revision = "v14013billingmanagementrbac"
+down_revision = "p810workloadbalance"
 branch_labels = None
 depends_on = None
 
@@ -36,14 +36,16 @@ def upgrade() -> None:
             """
         )
     )
-    op.create_index(
-        INDEX_NAME,
-        "products",
-        ["tenant_id", sa.text("lower(btrim(sku))")],
-        unique=True,
-        postgresql_where=sa.text("sku IS NOT NULL AND btrim(sku) <> ''"),
+    op.execute(
+        sa.text(
+            f"""
+            CREATE UNIQUE INDEX {INDEX_NAME}
+            ON products (tenant_id, lower(btrim(sku)))
+            WHERE sku IS NOT NULL AND btrim(sku) <> ''
+            """
+        )
     )
 
 
 def downgrade() -> None:
-    op.drop_index(INDEX_NAME, table_name="products")
+    op.execute(sa.text(f"DROP INDEX IF EXISTS {INDEX_NAME}"))
