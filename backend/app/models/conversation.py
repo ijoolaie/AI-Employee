@@ -40,6 +40,9 @@ class CustomerMessage(Base):
     conversation_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("customer_conversations.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    channel_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("customer_channels.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     run_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("runs.id", ondelete="SET NULL"), nullable=True, index=True
     )
