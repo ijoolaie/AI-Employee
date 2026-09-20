@@ -1,6 +1,6 @@
 # AI-Employee — A–F Test Tracker
 
-**Status date:** 2026-09-19
+**Status date:** 2026-09-20
 **Repository:** `ijoolaie/AI-Employee`
 **Purpose:** Single living tracker for the current test sequence. Update this document as evidence is completed; do not restart already-passed smoke/contract tests unless a regression requires it.
 
@@ -54,25 +54,25 @@
 
 ## PHASE F — Production Certification
 
-- [x] Security — Production Certification workflow passed on exact `v1.4.6` SHA; CI/CodeQL/DAST-related release gates passed
+- [x] Security — Production Certification workflow passed on exact `v1.4.7` SHA; CI/CodeQL/DAST-related release gates passed
 - [x] Tenant isolation — exact-release Product Gate passed
 - [x] Load — exact-release certification suite passed its load/performance gate
 - [x] Recovery — exact-release recovery/HA gates passed
 - [x] Dead letters — exact-release queue/dead-letter gate passed
 - [x] Observability — exact-release observability/SLO contract gate passed
 
-**Phase F aggregate release-certification gate: PASS.** Production Certification run `35427967347` executed from the `v1.4.6` tag, checked out `f3d60031332450ba616e2a1c705e85c0c2c5aefd`, recorded `0` Product Gate failures, and completed successfully. This is engineering/release certification evidence; external production deployment remains pending.
+**Phase F aggregate release-certification gate: PASS.** Production Certification run `35498984521` executed from the `v1.4.7` tag, checked out `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, recorded `0` Product Gate failures, and completed successfully. This is engineering/release certification evidence; external production deployment remains pending.
 
-## Phase F — Exact-release Production Certification — 2026-09-19
+## Phase F — Exact-release Production Certification — 2026-09-20
 
-- Release: `v1.4.6`
-- Exact certified SHA: `f3d60031332450ba616e2a1c705e85c0c2c5aefd`
-- Workflow run: `35427967347` — **PASS**
-- Certification job: `105857140334` — **PASS**
+- Release: `v1.4.7`
+- Exact certified SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Workflow run: `35498984521` — **PASS**
+- Certification job: `106047204166` — **PASS**
 - Product Gate Failures: `0`
 - Frontend Playwright: `6/6` PASS
-- Evidence artifact: `production-certification-evidence-v1.4.6-f3d60031332450ba616e2a1c705e85c0c2c5aefd`
-- Artifact SHA256: `fc12afd3da164e1d1787bc11e2a39d3c3d019e84d3c9516ddf7819f79e905d4d`
+- Evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Artifact SHA256: `86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`
 - External production deployment claim: **false / pending**
 
 This closes the repository-level Phase F release-certification gate. It does not close external production deployment, live-provider, measured production SLO/DR, independent security review, or customer-acceptance gates.
@@ -212,7 +212,7 @@ These are post-release productization/security evidence, not a new production-ce
 
 ## Next test order
 
-1. Execute the remaining external production-readiness sequence against the accepted `v1.4.6` release: real target deployment, backup/restore and RPO/RTO, live providers, Vendor → Reseller → Client runtime isolation/RBAC, deployed DAST, independent security review, network/secrets lifecycle, HA/failure recovery, incident response/on-call, and customer acceptance.
-2. Record every external evidence item against exact release SHA `f3d60031332450ba616e2a1c705e85c0c2c5aefd`.
+1. Execute the remaining external production-readiness sequence against the accepted `v1.4.7` release: real target deployment, backup/restore and RPO/RTO, live providers, Vendor → Reseller → Client runtime isolation/RBAC, deployed DAST, independent security review, network/secrets lifecycle, HA/failure recovery, incident response/on-call, and customer acceptance.
+2. Record every external evidence item against exact release SHA `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`.
 
 **Rule:** Every completed test changes the corresponding `[ ]` to `[x]` here with the command/result recorded in the evidence section or a linked dated evidence document.
