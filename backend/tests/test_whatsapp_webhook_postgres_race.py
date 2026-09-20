@@ -80,6 +80,9 @@ async def whatsapp_race_setup():
         )
         await db.execute(delete(Customer).where(Customer.tenant_id == tenant.id))
         await db.execute(delete(CustomerChannel).where(CustomerChannel.id == channel.id))
+        await db.execute(
+            delete(EmployeeVersion).where(EmployeeVersion.employee_id == employee.id)
+        )
         await db.execute(delete(Employee).where(Employee.id == employee.id))
         await db.execute(delete(Tenant).where(Tenant.id == tenant.id))
         await db.commit()
@@ -100,7 +103,7 @@ async def test_concurrent_same_provider_message_creates_one_message_and_one_run(
             await db.execute(
                 select(EmployeeVersion).where(
                     EmployeeVersion.employee_id == employee_id,
-                    EmployeeVersion.id == employee_version_id,
+                    EmployeeVersion.id == (employee_version_id or data.employee_version_id),
                 )
             )
         ).scalar_one()
