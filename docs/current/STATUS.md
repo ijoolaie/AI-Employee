@@ -22,11 +22,15 @@ The Production Certification suite passed for the exact `v1.4.7` release identit
 
 - PR #550 — WhatsApp webhook idempotency and conversation race hardening: **MERGED**.
 - Merge SHA: `ea37b75d599761b91fed33e26ff13e552ae2b963`.
+- PR #551 — real PostgreSQL WhatsApp concurrency coverage: **MERGED**.
+- Merge SHA: `542ed5f161d306ed2a3993995562b108961dc270`.
+- PR #551 head `b96ed2477e48dcad29ea99fd9581c064048b79df` passed CI #1579 plus all supporting release/security/runtime gates.
 - The implementation persists provider message IDs, adds channel-scoped WhatsApp conversation/message uniqueness, handles PostgreSQL admission races with SAVEPOINTs, and routes Run execution through the transactional outbox.
 - Final PR-head CI/architecture/security/runtime gates: **PASS**.
 - Release audit: `docs/current/V1.4.8_WHATSAPP_IDEMPOTENCY_RELEASE_AUDIT_2026-09-20.md`.
 - **Release status:** engineering candidate only; no `v1.4.8` tag or certification yet.
-- Required before certification: real PostgreSQL concurrent webhook race tests, Public Chat regression, Meta replay runtime verification, then exact-SHA Production Certification.
+- Completed: real PostgreSQL concurrent webhook race tests (PR #551, CI #1579).
+- Required before certification: Public Chat regression, Meta replay runtime verification, then exact-SHA Production Certification.
 
 ## v1.4.7 certification evidence
 
