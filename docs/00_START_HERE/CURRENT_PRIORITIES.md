@@ -1,37 +1,35 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-18
-**Latest published release:** `v1.4.2`
-**Release SHA:** `dba0bb672deb1236b6724bb8851526e656f47967`
-**Production Certification:** Run `35108008066` — PASS
-**Current status:** v1.4.2 RELEASE-CERTIFIED / v1.4.5 RC1 ENGINEERING-VALIDATED / COMMERCIAL READINESS & EXTERNAL PRODUCTION EXECUTION PENDING
-
-## Current engineering baseline
-
-- v1.4.5 engineering baseline: `a9d5cdd`
-- RC1 branch: `release/v1.4.5-rc1`
-- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
-- RC1 GitHub Actions engineering validation: **10/10 current release-critical workflows PASS**
-- Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
-- Published/certified release: `v1.4.2`
-- Certification evidence does not transfer between these SHAs.
+**Reconciled:** 2026-09-20
+**Current release:** `v1.4.7`
+**Certified SHA:** `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+**Production Certification:** Run `35498984521` — PASS / 0 Product Gate failures
+**Current status:** ENGINEERING/RELEASE CERTIFIED / EXTERNAL PRODUCTION EXECUTION PENDING
 
 ## Priority order
 
-### P0 — RC1 freeze and external production readiness
+### P0 — External production evidence
 
-1. Preserve the exact RC1 SHA and release evidence.
-2. Do not merge or retag until the final release identity is explicitly approved.
-3. If external deployment is authorized, provision the approved target and capture immutable deployment identity.
-4. Execute security/network/secret lifecycle validation.
-5. Execute backup/restore and measure RPO/RTO.
-6. Establish production SLI/SLO/error-budget measurements.
-7. Validate live providers.
-8. Certify Vendor → Reseller → Client isolation/RBAC on the deployed target.
-9. Run authenticated DAST and independent security review.
-10. Rehearse HA/failure recovery and incident response/on-call.
-11. Complete Vendor/Reseller/Customer acceptance.
-12. Reconcile residual risks and run the final commercial go-live gate.
+1. Deploy the exact accepted v1.4.7 release identity to the approved real target.
+2. Capture deployment, image and migration identity/checksums.
+3. Verify production networking, TLS, ingress/egress and secret-manager lifecycle.
+4. Validate live providers, billing and integrations where applicable.
+5. Establish production SLI/SLO/error-budget measurements and alerts.
+6. Execute real backup/restore and measure RPO/RTO.
+7. Execute Vendor → Reseller → Client actor-matrix isolation/RBAC validation.
+8. Run authenticated DAST against the deployed target.
+9. Complete independent security/pentest review.
+10. Rehearse HA/failure recovery and rollback.
+11. Execute incident-response and staffed on-call drill.
+12. Complete Vendor, then Reseller, then Customer acceptance.
+13. Reconcile residual risks and execute the final commercial go-live gate.
+
+### P1 — Target verification
+
+- Data retention/lifecycle verification on the real target.
+- Usage/quota/cost-control validation on the real target.
+- Customer support and operational ownership validation.
+- Any concrete engineering defects discovered during external validation.
 
 ### Evidence rules
 
@@ -45,5 +43,9 @@
 - No evidence transfers automatically across SHAs.
 - Documentation cannot substitute for missing operational evidence.
 - Never fabricate infrastructure, provider, security, DR or acceptance evidence.
+
+## Current engineering state
+
+The v1.4.7 release has already passed repository engineering gates and exact-SHA Production Certification. Do not restart completed test suites without a regression trigger.
 
 Broad feature expansion should remain paused unless the readiness audit identifies a genuine launch-blocking product requirement.
