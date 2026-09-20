@@ -35,7 +35,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("uq_customer_messages_provider_id", table_name="customer_messages")
+    op.drop_index("uq_customer_messages_provider_id", table_name="customer_messages")\n    op.drop_constraint("fk_customer_messages_channel_id", "customer_messages", type_="foreignkey")
     op.drop_index("uq_customer_conversations_external_key", table_name="customer_conversations")
     op.drop_column("customer_messages", "provider_message_id")
     op.drop_column("customer_conversations", "external_conversation_key")
