@@ -1,15 +1,15 @@
 # Production Certification Execution Pack
 
-**Prepared:** 2026-09-19
-**Reconciled:** 2026-09-19  
+**Prepared:** 2026-09-20
+**Reconciled:** 2026-09-20  
 **Repository:** `ijoolaie/AI-Employee`  
 **Engineering/documentation baseline:** current `main`  
-**Certified release:** `v1.4.6` — exact certified commit `f3d60031332450ba616e2a1c705e85c0c2c5aefd`  
-**Certification run:** `35427967347` — PASS (exact release tag)  
-**Certification job:** `105857140334` — PASS  
+**Certified release:** `v1.4.7` — exact certified commit `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`  
+**Certification run:** `35498984521` — PASS (exact release tag)  
+**Certification job:** `106047204166` — PASS  
 **Product Gate Failures:** `0`  
-**Evidence artifact:** `production-certification-evidence-v1.4.6-f3d60031332450ba616e2a1c705e85c0c2c5aefd`  
-**Artifact SHA256:** `fc12afd3da164e1d1787bc11e2a39d3c3d019e84d3c9516ddf7819f79e905d4d`  
+**Evidence artifact:** `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`  
+**Artifact SHA256:** `86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`  
 **External production deployment:** PENDING (`production_deployment_claimed=false`)  
 **Purpose:** execute the remaining production/customer-readiness work without confusing repository evidence with real target-environment certification.
 
@@ -21,18 +21,18 @@ Use `docs/current/PRODUCTION_EVIDENCE_INDEX.md` as the traceability index. Every
 
 ## Version boundary
 
-`v1.4.6` is the current certified and frozen release identity. Its tag points to the exact SHA certified by run `35427967347`. The historical `v1.4.5` release remains immutable and is not rewritten or treated as the current certified release.
+`v1.4.7` is the current certified and frozen release identity. Its tag points to the exact SHA certified by run `35498984521`. The historical `v1.4.5` release remains immutable and is not rewritten or treated as the current certified release.
 
 Completed dependency hardening includes PRs #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353, each merged only after the required repository gates passed on the exact HEAD. No open Dependabot dependency PR remains in the current hardening queue.
 
-If a future change is intended for production deployment, it must either remain explicitly a mainline engineering change or be promoted through a new release identity. Do not move the `v1.4.6` tag or inherit its certification evidence onto another SHA.
+If a future change is intended for production deployment, it must either remain explicitly a mainline engineering change or be promoted through a new release identity. Do not move the `v1.4.7` tag or inherit its certification evidence onto another SHA.
 
 ## Phase A — Release identity and admission
 
-1. `v1.4.6` is the current certified release.
-2. Exact certified SHA: `f3d60031332450ba616e2a1c705e85c0c2c5aefd`.
-3. Certification run `35427967347` passed the required certification suite with zero Product Gate failures.
-4. The `v1.4.6` tag has been reconciled to the same exact certified SHA.
+1. `v1.4.7` is the current certified release.
+2. Exact certified SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`.
+3. Certification run `35498984521` passed the required certification suite with zero Product Gate failures.
+4. The `v1.4.7` tag has been reconciled to the same exact certified SHA.
 5. The release identity is frozen for deployment purposes.
 6. Mainline dependency hardening after certification does not silently alter the release.
 
