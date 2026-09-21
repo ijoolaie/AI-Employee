@@ -74,14 +74,14 @@ export default function SalesPage() {
 }
 function Metric({ title, value }: { title: string; value: string }) { return <Card><CardContent className="pt-6"><p className="text-sm text-gray-500">{title}</p><p className="mt-2 text-xl font-semibold text-gray-900">{value}</p></CardContent></Card>; }
 
-function DealDetail({ dealQ, m, qc, onBack }: { dealQ: ReturnType<typeof useQuery<BusinessDeal>>; m: any; qc: ReturnType<typeof useQueryClient>; onBack: () => void }) {
+function DealDetail({ dealQ, m, qc, onBack }: { dealQ: any; m: any; qc: any; onBack: () => void }) {
   const deal = dealQ.data;
   const [stage, setStage] = useState<string | null>(null);
   const mutation = useMutation({
     mutationFn: (next: string) => updateDealStage(deal!.id, next),
     onSuccess: (updated) => { setStage(updated.stage); qc.setQueryData(["deal", deal!.id], updated); qc.invalidateQueries({ queryKey: ["deals"] }); qc.invalidateQueries({ queryKey: ["sales-pipeline"] }); qc.invalidateQueries({ queryKey: ["sales-forecast"] }); },
   });
-  const permissionDenied = getErrorMessage(dealQ.error || mutation.error).toLowerCase().includes("permission");
+  const permissionDenied = getErrorMessage((dealQ.error ?? mutation.error) as Error).toLowerCase().includes("permission");
   if (dealQ.isLoading) return <div className="flex justify-center py-16"><Spinner /></div>;
   if (dealQ.isError || !deal) return <Card><CardContent className="space-y-2 p-6"><p className="text-sm font-medium text-red-600">{permissionDenied ? m.permissionDenied : m.error}</p><p className="text-sm text-slate-500">{m.notFound}</p><button type="button" onClick={onBack} className="text-sm text-brand-700 hover:underline">{m.back}</button></CardContent></Card>;
   const selected = stage ?? deal.stage;
