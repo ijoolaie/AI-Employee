@@ -63,3 +63,19 @@ Workspace routing is enforced in the frontend layouts for user experience and ac
 - Treat AI employees as workforce resources alongside human employees, not as a developer-only feature.
 - Prefer operational summaries and next actions on dashboards over technical telemetry.
 - Preserve tenant boundaries in every cross-tenant support action and require explicit audited access when platform support needs to inspect a client.
+
+
+## Edition-aware Test Center boundary
+
+The Test Center follows the same workspace ownership model as the application.
+
+It is a shared platform capability, but **test visibility and required coverage are edition-specific**:
+
+- **Vendor**: platform/control-plane tests, reseller lifecycle, hierarchy, entitlements, global template governance, platform operations/security and approved audited support validation.
+- **Reseller**: reseller/service-management tests and directly managed customer operations that the reseller is authorized to perform.
+- **Customer**: customer business-workspace acceptance tests for the capabilities owned by the customer tenant.
+- **Shared**: authentication/session, tenant isolation/RBAC, audit, policy enforcement, safe execution and evidence integrity are validated at shared boundaries rather than duplicated for every edition.
+
+The UI must not expose a test definition merely because the backend route exists. Test definitions should be filtered by the actor's edition and authorized tenant/workspace scope. Backend authorization remains authoritative.
+
+The Test Center therefore does **not** require every edition to have tests for every application service. Product acceptance is measured against the capability inventory of that edition.

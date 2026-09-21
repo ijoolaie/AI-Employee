@@ -14,7 +14,25 @@ Three axes remain independent:
 
 Phase 11 Unified Execution is complete. Phase 12 Test Center is operationally hardened. Phase 13 Agent Teams & Marketplace is engineering complete. Phase 14.1–14.16 tracked engineering is complete/reconciled.
 
-The project is now in a dedicated **Commercial Readiness & External Production** phase. The default next work is evidence, deployment, security and operational validation—not broad feature expansion.
+The project is now in a dedicated **Product Completeness → Commercial Readiness & External Production** sequence. Product completeness is currently the launch-blocking engineering gate; after it passes, the default next work is evidence, deployment, security and operational validation.
+
+## Product Completeness Gate — added 2026-09-21
+
+Before the external production sequence proceeds, the application must pass a product-completeness gate.
+
+### Launch-blocking product requirements
+
+1. **Persian/English localization:** complete core customer-facing translation keys, locale-aware formatting and true RTL behavior. The current fa/en provider and small message catalog are infrastructure only; they do not constitute complete Persian support.
+2. **Employee Templates:** expand the current three-template catalog into a curated minimum commercial starter set with bilingual metadata, input/output contracts, tools, guardrails, dependencies, examples, versioning and safe installation/customization.
+3. **Operational lists and lifecycle:** inventory all major resource lists/details and implement the appropriate create/read/update/lifecycle actions. Do not add hard Delete indiscriminately; use archive/deactivate/cancel/revoke when audit or retention requires it.
+4. **Backend/frontend parity:** every customer-visible action must map to a supported, authorized backend operation; unsupported operations must not be presented as available.
+5. **Shared UX states:** standardize loading, empty, error, retry, success and permission-denied behavior.
+6. **Browser acceptance:** verify core customer workflows in both fa and en before cutting a new release candidate.
+7. **Edition-aware Test Center:** validate Vendor, Reseller and Customer capabilities according to ownership/scope; validate shared isolation/RBAC/execution controls once at the shared boundary; do not require every service in every edition.
+
+Canonical record: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
+
+This gate is a source-change gate. It does not modify or weaken the immutable v1.4.9 certification.
 
 ## Commercial Readiness Gate
 

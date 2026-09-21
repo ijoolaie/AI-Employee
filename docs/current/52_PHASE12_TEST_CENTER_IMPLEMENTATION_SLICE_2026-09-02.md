@@ -54,6 +54,49 @@ Each run must retain timestamps, actor/executor identity and correlation IDs.
 Produce an evidence record suitable for local delivery and future external
 acceptance workflows without claiming external acceptance.
 
+
+## Edition-aware test catalog
+
+The Test Center is a shared execution/evidence platform, but its **test catalog is not required to cover every application service for every edition**.
+
+Each definition should declare:
+
+- `edition`: `vendor`, `reseller`, `customer`, or `shared`;
+- `workspace_key`;
+- `service_group`;
+- `scope_type`: same-tenant, direct-child, or platform-control-plane;
+- prerequisites and expected result;
+- evidence requirements;
+- authorization/risk level.
+
+### Coverage contract
+
+**Vendor**
+- Test platform/control-plane services: reseller provisioning, hierarchy, entitlements, global template governance, platform audit/security, operations and approved support paths.
+- Do not require routine tests for customer CRM/orders/products or every customer-only service.
+
+**Reseller**
+- Test reseller operations and directly managed customer operations: customer provisioning, portfolio, delegated entitlements, reseller workforce/workflows, usage/health, support, audit/security and enabled commercial flows.
+- Do not require vendor control-plane tests or unrelated customer/reseller services.
+
+**Customer**
+- Test customer-owned business workflows: CRM/customers, products, orders/sales, human/AI employees, conversations/channels, knowledge/memory, workflows/approvals/schedules, files, analytics/reports and enabled integrations/security.
+- Do not require reseller portfolio, vendor control-plane or platform-wide configuration tests.
+
+### Shared foundation tests
+
+Authentication/session context, tenant isolation/RBAC, audit, approval/policy enforcement, safe execution and evidence integrity are shared foundations. They should be tested at the shared boundary and then supplemented by focused edition-specific positive/negative tests, rather than duplicated across every service.
+
+### Required boundary negatives
+
+The catalog must contain targeted negative tests for:
+
+- Vendor → Customer ordinary business access denied unless an explicit audited support path exists.
+- Reseller → Vendor and sibling/unrelated tenant access denied.
+- Customer → parent Reseller control plane and sibling/unrelated tenant access denied.
+
+These tests prove the edition boundary without forcing every edition to execute the full application service catalog.
+
 ## Non-Goals
 
 - No replacement of the existing certified acceptance suite.

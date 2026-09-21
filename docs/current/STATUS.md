@@ -83,12 +83,31 @@ Repository tests, PR CI, CodeQL, local Docker, GitHub-hosted production-like val
 
 Certification never transfers automatically across SHAs. `v1.4.7` certification is bound specifically to `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`.
 
+## Product completeness finding — 2026-09-21
+
+A readiness review identified product-level launch blockers that are distinct from repository certification:
+
+- **Persian/RTL:** i18n infrastructure exists, but the customer-facing product is not fully localized; major pages still contain hard-coded English UI.
+- **Employee Templates:** the backend catalog currently contains three starter templates and the UI provides list/install only. This is a foundation, not a complete commercial starter catalog.
+- **Lists / tables / CRUD:** operational resource surfaces require a systematic list/detail/action parity review. Hard delete is not the default; resource lifecycle must use archive/deactivate/cancel/revoke where retention or auditability requires it.
+
+Decision: these are genuine product requirements and must be closed before external commercial production deployment. They do not invalidate or mutate v1.4.9. Any source changes require a new candidate release and fresh exact-SHA certification.
+
+Canonical record: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
+
 ## Current frontier
 
 The `v1.4.9` implementation, exact-SHA certification and publication boundaries are complete. The release tag remains pinned to `f1ce20c010779f5273eb5d0051da24cdd57b33f6`. No post-certification source changes are part of the certified snapshot.
 
-The next frontier is external production execution and evidence, not another release certification cycle unless source changes or an external validation finding requires it.
+The immediate frontier is product completeness. After the product-completeness gate passes, resume external production execution and evidence. Source changes require a new release candidate and fresh certification.
 
 ## Security rule
 
 Do not commit production hosts, private keys, registry credentials, webhook secrets, payment secrets, customer data or environment-specific access tokens. Missing required production inputs must fail closed.
+
+
+### Edition-aware Test Center gate
+- Test Center acceptance is now scoped by Vendor / Reseller / Customer capability ownership.
+- Shared authentication, tenant isolation/RBAC, audit, policy, safe execution and evidence controls are tested at the shared boundary.
+- Edition-specific tests cover only authorized service groups; full service duplication across editions is explicitly not required.
+- Cross-edition negative authorization tests remain mandatory.
