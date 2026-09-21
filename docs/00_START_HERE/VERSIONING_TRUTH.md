@@ -1,7 +1,7 @@
 # Versioning Truth
 
 **Status:** CANONICAL
-**Reconciled:** 2026-09-20
+**Reconciled:** 2026-09-21
 
 This document defines the independent version axes used by the AI Employee Platform.
 
@@ -12,6 +12,7 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 ### Current release truth
 
 - Latest published release: **`v1.4.7`**
+- Latest certified engineering snapshot: **`v1.4.8` candidate SHA `4f7c4676850b546a1c6bdf219ab9401202302e2d`** — certification PASS, no tag/release
 - Certified release commit: **`48a6df0ea8a2fb0624e831fbdea55ee4548807f6`**
 - `v1.4.7` Git tag: **VERIFIED**, annotated tag resolving to the certified release commit.
 - `v1.4.7` GitHub Release: **PUBLISHED**, not draft, not prerelease.
@@ -25,7 +26,7 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 Historical certified release `v1.4.6` remains frozen and traceable at `f3d60031332450ba616e2a1c705e85c0c2c5aefd`. Historical failed release `v1.4.5` remains immutable and is not the current release.
 
-The current `main` may contain documentation reconciliation commits after the certified release SHA. Those commits are not automatically covered by `v1.4.7` certification; any future code promotion requires a new exact-SHA certification.
+Current `main` is `ee4c7c95d4fe8e48cc421579529033fb5389d32d`, newer than both the immutable `v1.4.7` release and the certified v1.4.8 engineering snapshot. Those newer commits are not automatically covered by either certification; any future code promotion requires fresh exact-SHA certification.
 
 ## 2. Architecture version
 

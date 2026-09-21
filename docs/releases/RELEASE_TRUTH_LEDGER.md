@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-20
+**Last reconciled:** 2026-09-21
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -18,6 +18,7 @@ These states are independent and must not be inferred from release names.
 | Release | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
 | `v1.4.7` | `48a6df0ea8a2fb0624e831fbdea55ee4548807f6` | VERIFIED | **CERTIFIED** — Run `35498984521` / Job `106047204166`; 0 Product Gate failures | **NOT VERIFIED** | Pending |
+| `v1.4.8` candidate | `4f7c4676850b546a1c6bdf219ab9401202302e2d` | **NOT TAGGED** | **CERTIFIED snapshot** — Run `35568392010` / Job `106234691683` | **NOT VERIFIED** | Pending |
 | `v1.4.6` | `f3d60031332450ba616e2a1c705e85c0c2c5aefd` | VERIFIED | **CERTIFIED** — Run `35427967347` / Job `105857140334` | **NOT VERIFIED** | Pending |
 | `v1.4.5` | `cc94bc9536f4f95680bb7a183313914c116ffcf2` | VERIFIED | **FAILED PRODUCT CERTIFICATION** — historical immutable release | **NOT VERIFIED** | Not accepted |
 | `v1.4.2` | `dba0bb672deb1236b6724bb8851526e656f47967` | VERIFIED | **CERTIFIED** — Run `35108008066` / Job `104834133092` | **NOT VERIFIED** | Pending |
@@ -60,7 +61,9 @@ These are tracked by #210, #269 and #19.
 
 ## Current interpretation
 
-- Current release: **v1.4.7 / `48a6df0...` — certified, not externally deployed.**
+- Current published release: **v1.4.7 / `48a6df0...` — certified, not externally deployed.**
+- v1.4.8 has a certified exact-SHA engineering snapshot but no published tag/release.
+- Current main `ee4c7c95...` is newer than that snapshot and is not certified.
 - Production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance: **PENDING**.
 - Live provider validation: **PENDING**.
