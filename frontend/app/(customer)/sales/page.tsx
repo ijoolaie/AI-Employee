@@ -51,10 +51,10 @@ export default function SalesPage() {
               <th className="px-4 py-3 font-medium">{m.titleColumn}</th><th className="px-4 py-3 font-medium">{m.customer}</th><th className="px-4 py-3 font-medium">{m.stage}</th><th className="px-4 py-3 font-medium">{m.amount}</th><th className="px-4 py-3 font-medium">{m.probability}</th><th className="px-4 py-3 font-medium">{m.actions}</th>
             </tr></thead><tbody>{deals.map((d: BusinessDeal) => <tr key={d.id} className="border-b border-gray-50">
               <td className="px-4 py-3 font-medium"><Link className="text-brand-700 hover:underline" href={"/sales/deals/" + d.id}>{d.title}</Link></td>
-              <td className="px-4 py-3 text-gray-700">{d.customer_name}</td><td className="px-4 py-3"><span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">{d.stage}</span></td>
+              <td className="px-4 py-3 text-gray-700">{d.customer_name}</td><td className="px-4 py-3"><span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">{m.stages[d.stage as keyof typeof m.stages]}</span></td>
               <td className="px-4 py-3 text-gray-800">{money(d.amount)} {d.currency}</td><td className="px-4 py-3 text-gray-600">{d.probability}%</td>
               <td className="px-4 py-3"><select className="rounded border border-gray-200 bg-white px-2 py-1 text-xs" value={d.stage} disabled={stageMut.isPending} onChange={e => stageMut.mutate({ id: d.id, stage: e.target.value })} aria-label={m.stage}>
-                {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
+                {STAGES.map(s => <option key={s} value={s}>{m.stages[s]}</option>)}
               </select></td>
             </tr>)}</tbody></table>
           </CardContent></Card>}
