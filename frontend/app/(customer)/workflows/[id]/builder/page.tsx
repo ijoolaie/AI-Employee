@@ -10,7 +10,7 @@ import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/provider";
 import {
   createWorkflowVersion,
   getErrorMessage,
