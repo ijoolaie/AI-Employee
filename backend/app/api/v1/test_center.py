@@ -16,7 +16,7 @@ from app.models.test_definition import TestDefinition
 from app.models.test_run import TestRun, TestRunStatus
 from app.models.test_run_artifact import TestRunArtifact
 from app.services.audit_service import record
-from app.services.test_center import TestCenterError, TestCenterService
+from app.services.test_center import TestCenterError, TestCenterService, definition_allowed_for_edition
 
 router = APIRouter(prefix="/test-center", tags=["test-center"])
 
@@ -187,7 +187,7 @@ async def create_definition(
     ctx: RunExecuteContext,
     db: AsyncSession = Depends(get_db, scope="function"),
 ):
-    values = payload.model_dump()\n    if values["edition"] not in {"shared", ctx.tenant.tenant_kind}:\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="test definition edition is outside the current tenant scope")\n    if values["scope_type"] == "platform_control_plane" and values["edition"] != "vendor":\n        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="platform control-plane tests are vendor-only")\n    definition = TestDefinition(tenant_id=ctx.tenant_id, created_by=ctx.user_id, **values)
+    values = payload.model_dump()\n    if not definition_allowed_for_edition(tenant_kind=ctx.tenant.tenant_kind, definition_edition=values["edition"]):\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="test definition edition is outside the current tenant scope")\n    if values["scope_type"] == "platform_control_plane" and values["edition"] != "vendor":\n        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="platform control-plane tests are vendor-only")\n    definition = TestDefinition(tenant_id=ctx.tenant_id, created_by=ctx.user_id, **values)
     db.add(definition)
     try:
         await db.flush()
