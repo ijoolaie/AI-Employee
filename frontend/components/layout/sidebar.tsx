@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
 
 const groups = [
-  { label: "Business", items: [
+  { key: "business", label: "Business", items: [
     { href: "/dashboard", key: "overview", icon: LayoutDashboard },
     { href: "/customers", key: "customers", icon: UserRound },
     { href: "/orders", key: "orders", icon: ShoppingCart },
@@ -17,7 +17,7 @@ const groups = [
     { href: "/analytics", key: "analytics", icon: BarChart3 },
     { href: "/reports", key: "reports", icon: FileText },
   ]},
-  { label: "People & AI", items: [
+  { key: "peopleAi", label: "People & AI", items: [
     { href: "/team", key: "team", icon: Users },
     { href: "/employees", key: "employees", icon: Bot },
     { href: "/templates", key: "templates", icon: Sparkles },
@@ -27,7 +27,7 @@ const groups = [
     { href: "/knowledge", key: "knowledge", icon: BookOpen },
     { href: "/memory", key: "memory", icon: Brain },
   ]},
-  { label: "Customer Operations", items: [
+  { key: "customerOperations", label: "Customer Operations", items: [
     { href: "/inbox", key: "inbox", icon: ListChecks },
     { href: "/conversations", key: "conversations", icon: MessageCircle },
     { href: "/channels", key: "channels", icon: Radio },
@@ -36,7 +36,7 @@ const groups = [
     { href: "/approvals", key: "approvals", icon: ShieldCheck },
     { href: "/schedules", key: "schedules", icon: CalendarClock },
   ]},
-  { label: "Finance & Platform", items: [
+  { key: "financePlatform", label: "Finance & Platform", items: [
     { href: "/billing", key: "billing", icon: CreditCard },
     { href: "/invoices", key: "invoices", icon: FileText },
     { href: "/usage", key: "usage", icon: BarChart3 },
@@ -45,14 +45,14 @@ const groups = [
     { href: "/runs", key: "runs", icon: Play },
     { href: "/traces", key: "traces", icon: Activity },
   ]},
-  { label: "Developer", items: [
+  { key: "developer", label: "Developer", items: [
     { href: "/developer", key: "developerConsole", icon: Code2 },
     { href: "/test-center", key: "testCenter", icon: FlaskConical },
     { href: "/marketplace", key: "marketplace", icon: Store },
     { href: "/api-keys", key: "apiKeys", icon: KeyRound },
     { href: "/webhooks", key: "webhooks", icon: Radio },
   ]},
-  { label: "Settings", items: [
+  { key: "settings", label: "Settings", items: [
     { href: "/settings", key: "settings", icon: Settings },
     { href: "/settings/security", key: "security", icon: KeyRound },
   ]},
