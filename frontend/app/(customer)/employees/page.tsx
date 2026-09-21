@@ -9,9 +9,12 @@ import { listEmployees, getErrorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Bot, Plus } from "lucide-react";
+import { useI18n } from "@/lib/i18n/provider";
 import Link from "next/link";
 
 export default function EmployeesPage() {
+  const { t } = useI18n();
+  const tx = t.employee;
   const { data, isLoading, error } = useQuery({
     queryKey: ["employees"],
     queryFn: listEmployees,
@@ -22,13 +25,13 @@ export default function EmployeesPage() {
   return (
     <>
       <Header
-        title="Employees"
-        description="AI roles available in your organization"
+        title={tx.title}
+        description={tx.description}
         actions={
           <Link href="/employees/new">
             <Button size="sm">
               <Plus className="h-4 w-4" />
-              New employee
+              {tx.newEmployee}
             </Button>
           </Link>
         }
@@ -43,13 +46,13 @@ export default function EmployeesPage() {
         {!isLoading && !error && employees.length === 0 && (
           <EmptyState
             icon={Bot}
-            title="No employees yet"
-            description="Create your first custom AI employee to start running tasks."
+            title={tx.noEmployees}
+            description={tx.noEmployeesDescription}
             action={
               <Link href="/employees/new">
                 <Button size="sm">
                   <Plus className="h-4 w-4" />
-                  Create employee
+                  {tx.createEmployee}
                 </Button>
               </Link>
             }
@@ -80,7 +83,7 @@ export default function EmployeesPage() {
                   {emp.kind}
                 </p>
                 <p className="mt-3 text-xs text-gray-400">
-                  Created {formatDate(emp.created_at)}
+                  {tx.created} {formatDate(emp.created_at)}
                 </p>
               </Link>
             ))}

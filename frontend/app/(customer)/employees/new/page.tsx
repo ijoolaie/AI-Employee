@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useI18n } from "@/lib/i18n/provider";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,6 +25,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function NewEmployeePage() {
+  const { t } = useI18n();
+  const tx = t.employee;
   const router = useRouter();
   const qc = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -64,15 +67,15 @@ export default function NewEmployeePage() {
   return (
     <>
       <Header
-        title="New employee"
-        description="Define a custom AI employee for your organization"
+        title={tx.newEmployee}
+        description={tx.description}
       />
       <div className="mx-auto max-w-xl p-6">
         <Card>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <Input
-                label="Name"
+                label={tx.name}
                 placeholder="Sales Report Analyst"
                 error={errors.name?.message}
                 {...register("name")}
@@ -85,11 +88,11 @@ export default function NewEmployeePage() {
                 {...register("slug")}
               />
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Allowed tools</label>
-                <p className="text-xs text-gray-500">Only tools explicitly selected here can be exposed to the AI during a Run.</p>
-                {toolsLoading && <div className="text-sm text-gray-500">Loading registered tools…</div>}
+                <label className="block text-sm font-medium text-gray-700">{tx.allowedTools}</label>
+                <p className="text-xs text-gray-500">{tx.allowedToolsDescription}</p>
+                {toolsLoading && <div className="text-sm text-gray-500">{tx.loading}</div>}
                 {!toolsLoading && availableTools.length === 0 && (
-                  <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">No registered tools available.</div>
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">{tx.noTools}</div>
                 )}
                 <div className="space-y-2">
                   {availableTools.map((tool) => (
@@ -111,7 +114,7 @@ export default function NewEmployeePage() {
 
               <div className="space-y-1.5">
                 <label className="block text-sm font-medium text-gray-700">
-                  Prompt template
+                  {tx.promptTemplate}
                 </label>
                 <textarea
                   className="min-h-[120px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
@@ -132,10 +135,10 @@ export default function NewEmployeePage() {
                   variant="outline"
                   onClick={() => router.back()}
                 >
-                  Cancel
+                  {tx.cancel}
                 </Button>
                 <Button type="submit" loading={isSubmitting}>
-                  Create employee
+                  {tx.createEmployee}
                 </Button>
               </div>
             </form>
