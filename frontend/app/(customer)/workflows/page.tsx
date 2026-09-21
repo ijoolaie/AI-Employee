@@ -10,356 +10,188 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { api, createWorkflow, getErrorMessage } from "@/lib/api";
+import { EmptyState } from "@/components/ui/empty-state";
+import { createWorkflow, getErrorMessage, api } from "@/lib/api";
+import { useI18n } from "@/lib/i18n/provider";
 import type { APIResponse, Workflow } from "@/types";
 
 async function listWorkflows() {
   const res = await api.get<APIResponse<Workflow[]>>("/workflows");
-
-  if (!res.data.success || !res.data.data) {
-    throw new Error("Unable to load workflows");
-  }
-
+  if (!res.data.success || !res.data.data) throw new Error("Unable to load workflows");
   return res.data.data;
 }
 
 function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 100);
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100);
+}
+
+function isPermissionError(error: unknown) {
+  return getErrorMessage(error).toLowerCase().includes("permission") ||
+    getErrorMessage(error).includes("403");
 }
 
 export default function WorkflowsPage() {
+  const { t } = useI18n();
+  const m = t.workflows;
   const qc = useQueryClient();
-
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
-  const [triggerType, setTriggerType] = useState<
-    "manual" | "schedule" | "event"
-  >("manual");
+  const [triggerType, setTriggerType] = useState<"manual" | "schedule" | "event">("manual");
   const [maxRuntime, setMaxRuntime] = useState("");
 
-  const q = useQuery({
-    queryKey: ["workflows"],
-    queryFn: listWorkflows,
-  });
+  const q = useQuery({ queryKey: ["workflows"], queryFn: listWorkflows });
 
   const createM = useMutation({
-    mutationFn: () =>
-      createWorkflow({
+    mutationFn: () => {
+      const runtime = maxRuntime.trim() ? Number(maxRuntime) : null;
+      if (!name.trim()) throw new Error(m.nameRequired);
+      if (!slug.trim()) throw new Error(m.slugRequired);
+      if (runtime !== null && (!Number.isInteger(runtime) || runtime < 1 || runtime > 2592000)) {
+        throw new Error(m.invalidRuntime);
+      }
+      return createWorkflow({
         name: name.trim(),
         slug: slug.trim(),
         trigger_type: triggerType,
-        max_runtime_seconds: maxRuntime
-          ? Number(maxRuntime)
-          : null,
-
-        // Backend requires at least one step.
-        // This temporary condition can be replaced in the Builder.
-        steps: [
-          {
-            key: "initial_step",
-            type: "condition",
-            retry_max: 0,
-            timeout_seconds: 86400,
-            condition_ref: "context.ready",
-            condition_value: true,
-            metadata: {},
-          },
-        ],
-      }),
-
+        max_runtime_seconds: runtime,
+        steps: [{
+          key: "initial_step",
+          type: "condition",
+          retry_max: 0,
+          timeout_seconds: 86400,
+          condition_ref: "context.ready",
+          condition_value: true,
+          metadata: {},
+        }],
+      });
+    },
     onSuccess: async (workflow) => {
       await qc.invalidateQueries({ queryKey: ["workflows"] });
-
       setShowCreate(false);
       setName("");
       setSlug("");
       setSlugTouched(false);
       setTriggerType("manual");
       setMaxRuntime("");
-
       window.location.href = `/workflows/${workflow.id}/builder`;
     },
   });
 
-  const canCreate =
-    name.trim().length >= 1 &&
-    slug.trim().length >= 1 &&
-    !createM.isPending;
-
-  const handleNameChange = (value: string) => {
-    setName(value);
-
-    if (!slugTouched) {
-      setSlug(slugify(value));
-    }
-  };
-
   const closeModal = () => {
     if (createM.isPending) return;
-
     setShowCreate(false);
     createM.reset();
   };
 
+  const openCreate = () => {
+    createM.reset();
+    setShowCreate(true);
+  };
+
   return (
     <>
-      <Header
-        title="Workflows"
-        description="Create, inspect and execute versioned workflows."
-      />
-
+      <Header title={m.title} description={m.description} />
       <div className="space-y-6 p-6">
-        {/* Page actions */}
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">
-              Workflow catalog
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-              Build automated processes using AI employees, conditions,
-              approvals and parallel branches.
-            </p>
+            <h2 className="text-lg font-semibold text-gray-900">{m.catalog}</h2>
+            <p className="mt-1 max-w-3xl text-sm text-gray-500">{m.catalogDescription}</p>
           </div>
-
-          <Button
-            onClick={() => {
-              createM.reset();
-              setShowCreate(true);
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            Create Workflow
+          <Button onClick={openCreate}>
+            <Plus className="h-4 w-4" /> {m.create}
           </Button>
         </div>
 
-        {/* Loading */}
-        {q.isLoading && (
+        {q.isLoading && <Card><CardContent className="flex justify-center py-12"><Spinner /></CardContent></Card>}
+
+        {q.error && (
           <Card>
-            <CardContent className="flex justify-center py-12">
-              <Spinner />
+            <CardContent className="space-y-3 p-6">
+              <p className="text-sm text-red-600">{isPermissionError(q.error) ? m.permissionDenied : m.error}</p>
+              <Button variant="secondary" onClick={() => q.refetch()}>{m.retry}</Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Error */}
-        {q.error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {getErrorMessage(q.error)}
-          </div>
-        )}
-
-        {/* Catalog */}
         {!q.isLoading && !q.error && (
-          <Card>
-            <CardContent className="p-0">
-              {q.data?.length ? (
+          q.data?.length ? (
+            <Card>
+              <CardContent className="p-0">
                 <div className="overflow-auto">
                   <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b text-left text-xs uppercase text-gray-500">
-                        <th className="px-5 py-3">Name</th>
-                        <th className="px-5 py-3">Slug</th>
-                        <th className="px-5 py-3">Status</th>
-                        <th className="px-5 py-3">Version</th>
-                        <th className="px-5 py-3">Builder</th>
-                      </tr>
-                    </thead>
-
+                    <thead><tr className="border-b text-left text-xs uppercase text-gray-500">
+                      <th className="px-5 py-3">{m.nameColumn}</th>
+                      <th className="px-5 py-3">{m.slug}</th>
+                      <th className="px-5 py-3">{m.status}</th>
+                      <th className="px-5 py-3">{m.version}</th>
+                      <th className="px-5 py-3">{m.builder}</th>
+                    </tr></thead>
                     <tbody>
                       {q.data.map((w) => (
-                        <tr
-                          key={w.id}
-                          className="border-b hover:bg-gray-50"
-                        >
+                        <tr key={w.id} className="border-b hover:bg-gray-50">
                           <td className="px-5 py-3">
-                            <Link
-                              className="font-medium text-brand-600 hover:underline"
-                              href={`/workflows/${w.id}`}
-                            >
-                              {w.name}
-                            </Link>
+                            <Link className="font-medium text-brand-600 hover:underline" href={`/workflows/${w.id}`}>{w.name}</Link>
                           </td>
-
-                          <td className="px-5 py-3 text-gray-600">
-                            {w.slug}
-                          </td>
-
+                          <td className="px-5 py-3 text-gray-600">{w.slug}</td>
+                          <td className="px-5 py-3">{w.is_active ? m.active : m.disabled}</td>
+                          <td className="px-5 py-3 text-gray-600">{w.current_version_id?.slice(0, 8) ?? m.noVersion}</td>
                           <td className="px-5 py-3">
-                            {w.is_active ? "Active" : "Disabled"}
-                          </td>
-
-                          <td className="px-5 py-3 text-gray-600">
-                            {w.current_version_id?.slice(0, 8) ?? "—"}
-                          </td>
-
-                          <td className="px-5 py-3">
-                            <Link
-                              className="text-brand-600 hover:underline"
-                              href={`/workflows/${w.id}/builder`}
-                            >
-                              Open builder
-                            </Link>
+                            <Link className="text-brand-600 hover:underline" href={`/workflows/${w.id}/builder`}>{m.openBuilder}</Link>
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
-                  <div className="mb-4 rounded-2xl bg-gray-100 p-4">
-                    <WorkflowIcon className="h-8 w-8 text-gray-500" />
-                  </div>
-
-                  <h3 className="text-base font-semibold text-gray-900">
-                    No workflows yet
-                  </h3>
-
-                  <p className="mt-2 max-w-md text-sm text-gray-500">
-                    Create your first workflow and start building an automated
-                    execution process.
-                  </p>
-
-                  <Button
-                    className="mt-5"
-                    onClick={() => {
-                      createM.reset();
-                      setShowCreate(true);
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Create Workflow
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <EmptyState icon={WorkflowIcon} title={m.emptyTitle} description={m.emptyDescription} action={<Button onClick={openCreate}><Plus className="h-4 w-4" /> {m.create}</Button>} />
+          )
         )}
       </div>
 
-      {/* Create Workflow Modal */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="create-workflow-title">
           <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl">
             <div className="border-b px-6 py-5">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Create Workflow
-              </h2>
-
-              <p className="mt-1 text-sm text-gray-500">
-                Create the workflow container, then design its execution path
-                in the Visual Builder.
-              </p>
+              <h2 id="create-workflow-title" className="text-lg font-semibold text-gray-900">{m.createTitle}</h2>
+              <p className="mt-1 text-sm text-gray-500">{m.createDescription}</p>
             </div>
-
             <div className="space-y-5 px-6 py-6">
               {createM.error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {getErrorMessage(createM.error)}
+                  {isPermissionError(createM.error) ? m.permissionDenied : getErrorMessage(createM.error) || m.createError}
                 </div>
               )}
-
-              {/* Name */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Workflow name
-                </label>
-
-                <Input
-                  value={name}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="Customer Support Automation"
-                  autoFocus
-                />
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">{m.name}</label>
+                <Input value={name} onChange={(e) => { setName(e.target.value); if (!slugTouched) setSlug(slugify(e.target.value)); }} placeholder={m.namePlaceholder} autoFocus />
               </div>
-
-              {/* Slug */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Slug
-                </label>
-
-                <Input
-                  value={slug}
-                  onChange={(e) => {
-                    setSlugTouched(true);
-                    setSlug(slugify(e.target.value));
-                  }}
-                  placeholder="customer-support-automation"
-                />
-
-                <p className="mt-1 text-xs text-gray-500">
-                  Used as the unique workflow identifier.
-                </p>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">{m.slug}</label>
+                <Input value={slug} onChange={(e) => { setSlugTouched(true); setSlug(slugify(e.target.value)); }} placeholder={m.slugPlaceholder} />
+                <p className="mt-1 text-xs text-gray-500">{m.slugHelp}</p>
               </div>
-
-              {/* Trigger */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Trigger
-                </label>
-
-                <select
-                  value={triggerType}
-                  onChange={(e) =>
-                    setTriggerType(
-                      e.target.value as
-                        | "manual"
-                        | "schedule"
-                        | "event"
-                    )
-                  }
-                  className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm"
-                >
-                  <option value="manual">Manual</option>
-                  <option value="schedule">Schedule</option>
-                  <option value="event">Event / Webhook</option>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">{m.trigger}</label>
+                <select value={triggerType} onChange={(e) => setTriggerType(e.target.value as typeof triggerType)} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm">
+                  <option value="manual">{m.manual}</option>
+                  <option value="schedule">{m.schedule}</option>
+                  <option value="event">{m.event}</option>
                 </select>
               </div>
-
-              {/* Max runtime */}
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Maximum runtime
-                  <span className="ml-1 font-normal text-gray-400">
-                    (optional, seconds)
-                  </span>
-                </label>
-
-                <Input
-                  type="number"
-                  min={1}
-                  max={2592000}
-                  value={maxRuntime}
-                  onChange={(e) => setMaxRuntime(e.target.value)}
-                  placeholder="86400"
-                />
+                <label className="mb-1.5 block text-sm font-medium text-gray-700">{m.maxRuntime} <span className="font-normal text-gray-400">{m.secondsOptional}</span></label>
+                <Input type="number" min={1} max={2592000} value={maxRuntime} onChange={(e) => setMaxRuntime(e.target.value)} placeholder={m.maxRuntimePlaceholder} />
               </div>
             </div>
-
-            {/* Footer */}
             <div className="flex justify-end gap-3 border-t bg-gray-50 px-6 py-4">
-              <Button
-                variant="secondary"
-                onClick={closeModal}
-                disabled={createM.isPending}
-              >
-                Cancel
-              </Button>
-
-              <Button
-                onClick={() => createM.mutate()}
-                disabled={!canCreate}
-                loading={createM.isPending}
-              >
-                Create Workflow
+              <Button variant="secondary" onClick={closeModal} disabled={createM.isPending}>{m.cancel}</Button>
+              <Button onClick={() => createM.mutate()} disabled={createM.isPending} loading={createM.isPending}>
+                {createM.isPending ? m.creating : m.create}
               </Button>
             </div>
           </div>
