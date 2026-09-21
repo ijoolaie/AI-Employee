@@ -63,7 +63,7 @@
 
 **Phase F aggregate release-certification gate: PASS.** Production Certification run `35498984521` executed from the `v1.4.7` tag, checked out `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, recorded `0` Product Gate failures, and completed successfully. This is engineering/release certification evidence; external production deployment remains pending.
 
-## v1.4.8 WhatsApp + Public Chat hardening — 2026-09-20
+## v1.4.8 WhatsApp + Public Chat hardening — 2026-09-21
 
 - PR #550 WhatsApp idempotency/conversation race hardening: **MERGED**.
 - PR #551 real PostgreSQL concurrency coverage: **MERGED** as `542ed5f161d306ed2a3993995562b108961dc270`.
