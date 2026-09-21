@@ -107,6 +107,11 @@ const commerce = {
     saveError: "Unable to save the product.",
     inventoryError: "Unable to update inventory.",
     permissionDenied: "You do not have permission to manage products.",
+    search: "Search",
+    searchPlaceholder: "Search products by name, SKU or category…",
+    retry: "Retry",
+    update: "Update",
+    actions: "Actions",
   },
   orders: {
     title: "Orders",
@@ -189,6 +194,11 @@ const commerceFa = {
     saveError: "ذخیره محصول انجام نشد.",
     inventoryError: "به‌روزرسانی موجودی انجام نشد.",
     permissionDenied: "شما اجازه مدیریت محصولات را ندارید.",
+    search: "جستجو",
+    searchPlaceholder: "جستجوی محصول بر اساس نام، SKU یا دسته‌بندی…",
+    retry: "تلاش مجدد",
+    update: "به‌روزرسانی",
+    actions: "عملیات",
   },
   orders: {
     title: "سفارش‌ها",
