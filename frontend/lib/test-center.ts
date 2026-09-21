@@ -6,6 +6,10 @@ type TestDefinition = {
   name: string;
   test_type: string;
   category: string;
+  edition: "shared" | "vendor" | "reseller" | "customer";
+  service_group: string;
+  scope_type: "same_tenant" | "direct_child" | "platform_control_plane";
+  risk_level: "low" | "medium" | "high" | "critical";
   description: string | null;
   workspace_key: string | null;
   prerequisites: Record<string, unknown>;
