@@ -11,21 +11,19 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 ### Current release truth
 
-- Latest published release: **`v1.4.8`**
-- Latest certified release: **`v1.4.8`**, exact certified SHA `4f7c4676850b546a1c6bdf219ab9401202302e2d`.
-- `v1.4.8` Git tag: **VERIFIED**, annotated tag resolving to the certified release commit.
-- `v1.4.8` GitHub Release: **PUBLISHED**, not draft, not prerelease.
-- `v1.4.8` release assets: runtime package, four edition packages, edition manifest and SHA256SUMS.
-- `v1.4.8` exact-SHA Production Certification: **PASS** on run `35568392010`, job `106234691683`.
-- Product Gate failures: **0**.
-- `v1.4.8` external production deployment: **NOT VERIFIED / not claimed by certification**.
+- Latest published release: **`v1.4.9`**
+- Latest certified release: **`v1.4.9`**, exact certified SHA `f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
+- `v1.4.9` Git tag: **VERIFIED**, resolving to the certified release commit.
+- `v1.4.9` GitHub Release: **PUBLISHED**, not draft, not prerelease.
+- `v1.4.9` exact-SHA Production Certification: **PASS** on run `35575615877`, job `106256713583`.
+- Evidence artifact: `production-certification-evidence-v1.4.9-f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
+- Evidence digest: `sha256:32962353a3511d7d5ae951eb6d0a44620a10211493730544342afe55f980a896`.
+- External production deployment: **NOT VERIFIED / not claimed by certification**.
 - Customer acceptance / live provider validation: **PENDING**.
 
-`v1.4.8` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
+`v1.4.9` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
-Historical certified release `v1.4.6` remains frozen and traceable at `f3d60031332450ba616e2a1c705e85c0c2c5aefd`. Historical failed release `v1.4.5` remains immutable and is not the current release.
-
-Current `main` is `b0b5c8492626901a72303ae0fe1bd99eeef6429d`, 19 commits ahead of the certified `v1.4.8` SHA. The post-v1.4.8 delta contains documentation reconciliation plus frontend dependency updates; it is not covered by v1.4.8 certification. The eventual `v1.4.9` candidate requires fresh exact-SHA certification.
+Current `main` equals the certified `v1.4.9` SHA. Any subsequent source commit will be outside the certified release snapshot and requires fresh certification before being represented as part of a certified release.
 
 ## 2. Architecture version
 

@@ -1,25 +1,35 @@
 # Current Project Status
 
 **Architecture baseline:** V1.5 Agentic Operating Model  
-**Certified release baseline:** `v1.4.8`  
-**Latest certified release:** `v1.4.8` — exact-SHA certification PASS  
-**Certified release commit:** `4f7c4676850b546a1c6bdf219ab9401202302e2d`  
-**Mainline engineering head:** `b0b5c8492626901a72303ae0fe1bd99eeef6429d`  
+**Certified release baseline:** `v1.4.9`  
+**Latest certified release:** `v1.4.9` — exact-SHA certification PASS  
+**Certified release commit:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`  
+**Mainline engineering head:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`  
 **Status date:** 2026-09-21  
-**Latest published release:** `v1.4.8`  
-**Latest certified release:** `v1.4.8`  
-**Certification run:** `35498984521` — PASS (exact `v1.4.7` tag)  
+**Latest published release:** `v1.4.9`  
+**Latest certified release:** `v1.4.9`  
+**Certification run:** `35575615877` — PASS (exact `v1.4.9` SHA)  
 **Production deployment:** PENDING REAL INFRASTRUCTURE
 
-The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.7` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten.
+The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.9` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten.
 
 ## Executive status
 
 Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. Phase 14 engineering is **COMPLETE WHERE TRACKED**.
 
-The Production Certification suite passed for the exact `v1.4.7` release identity. Certification run `35498984521` checked out SHA `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, recorded zero Product Gate failures, and produced the release evidence artifact. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
+The exact-SHA Production Certification suite passed for `v1.4.9`. Certification run `35575615877` checked out SHA `f1ce20c010779f5273eb5d0051da24cdd57b33f6`, recorded the required certification evidence, and completed successfully. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
 
-## v1.4.8 certified release
+## v1.4.9 certified and published release
+
+- **Release status:** **PUBLISHED** — exact certified SHA `f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
+- Exact-SHA Production Certification: **PASS**, run `35575615877`, job `106256713583`.
+- Evidence artifact: `production-certification-evidence-v1.4.9-f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
+- Evidence digest: `sha256:32962353a3511d7d5ae951eb6d0a44620a10211493730544342afe55f980a896`.
+- `v1.4.9` GitHub Release is published, not draft, not prerelease.
+- Release assets include customer, reseller, runtime, self-hosted and vendor packages plus edition manifest and SHA256SUMS.
+- `v1.4.9` tag resolves to the certified SHA and `main` currently points to the same SHA.
+
+## v1.4.8 historical certified release
 
 - PR #550 — WhatsApp webhook idempotency and conversation race hardening: **MERGED**.
 - Merge SHA: `ea37b75d599761b91fed33e26ff13e552ae2b963`.
@@ -38,21 +48,6 @@ The Production Certification suite passed for the exact `v1.4.7` release identit
 - Evidence artifact: `production-certification-evidence-v1.4.8-4f7c4676850b546a1c6bdf219ab9401202302e2d`.
 - Artifact digest: `sha256:d179fe603aac3460b0e751d7ad7957fad9c3f8dedf81ed8c4a9e9e608a78aa20`.
 - Certification does not transfer to current main `ee4c7c95...`.
-
-## v1.4.7 historical certification evidence
-
-The certified release SHA is `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`.
-
-- Release tag: `v1.4.7`
-- Production Certification run: `35498984521` — PASS
-- Certification job: `106047204166` — PASS
-- Product Gate Failures: `0`
-- Frontend Playwright: `6/6` PASS
-- Evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-- Artifact SHA256: `86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`
-- `production_deployment_claimed`: `false`
-
-The release is certified, while external production deployment remains pending.
 
 ## Historical engineering hardening context
 
@@ -75,30 +70,12 @@ These changes led into the immutable `v1.4.7` release and were certified togethe
 
 | Item | Status | Evidence |
 |---|---|---|
-| `v1.4.8` tag | VERIFIED | Exact certified release tag |
-| `v1.4.8` Production Certification | PASSED | Run `35568392010`; 0 Product Gate failures |
-| Certified release SHA | VERIFIED | `4f7c4676850b546a1c6bdf219ab9401202302e2d` |
-| `v1.4.8` Meta replay runtime coverage | PASSED | PR #553; six supporting gates passed |
-| External production deployment | PENDING | `production_deployment_claimed=false` |
-
-## Remaining P0 external gates
-
-| ID | Work | Status |
-|---|---|---|
-| 7.1 | Immutable release & release identity | **v1.4.7 CERTIFIED / FROZEN** |
-| 7.2 | External production infrastructure deployment | **PENDING REAL INFRASTRUCTURE** |
-| 7.3 | Real backup/restore & DR with RPO/RTO | PENDING |
-| 7.4 | Production SLO/SLI & error budget | PENDING |
-| 7.5 | Live provider integration validation | PENDING |
-| 7.6 | Vendor → Reseller → Client runtime isolation/RBAC | PENDING external actor evidence |
-| 7.7 | DAST against deployed target | PENDING |
-| 7.8 | Independent penetration test/security review | PENDING |
-| 7.9 | Production networking hardening | PENDING target perimeter evidence |
-| 7.10 | Secret management/rotation/recovery | PENDING target lifecycle evidence |
-| 7.11 | HA/failure-recovery rehearsal | PENDING target rehearsal |
-| 7.12 | Incident-response drill | PENDING live operational drill |
-| 7.13 | Alert ownership/on-call escalation | PENDING live paging/on-call |
-| 7.14 | Final external certification & customer acceptance | PENDING |
+| `v1.4.9` tag | VERIFIED | Exact certified release tag |
+| `v1.4.9` GitHub Release | PUBLISHED | Not draft, not prerelease |
+| `v1.4.9` Production Certification | PASSED | Run `35575615877` |
+| Certified release SHA | VERIFIED | `f1ce20c010779f5273eb5d0051da24cdd57b33f6` |
+| External production deployment | PENDING | Not claimed by certification |
+| Customer acceptance | PENDING | No external acceptance evidence |
 
 ## Evidence boundary
 
@@ -108,9 +85,9 @@ Certification never transfers automatically across SHAs. `v1.4.7` certification 
 
 ## Current frontier
 
-The v1.4.8 implementation-validation and exact-SHA certification boundaries are complete and the release is published at SHA `4f7c467...`. Current main `b0b5c849...` is 19 commits newer; the delta is documentation reconciliation plus frontend dependency updates and is not covered by v1.4.8 certification. The next release boundary is certification of the final v1.4.9 candidate SHA.
+The `v1.4.9` implementation, exact-SHA certification and publication boundaries are complete. The release tag remains pinned to `f1ce20c010779f5273eb5d0051da24cdd57b33f6`. No post-certification source changes are part of the certified snapshot.
 
-The controlled deployment workflow remains fail-closed and requires real production Environment inputs. No fake values should be introduced.
+The next frontier is external production execution and evidence, not another release certification cycle unless source changes or an external validation finding requires it.
 
 ## Security rule
 
