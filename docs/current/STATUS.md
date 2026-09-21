@@ -104,3 +104,10 @@ The immediate frontier is product completeness. After the product-completeness g
 ## Security rule
 
 Do not commit production hosts, private keys, registry credentials, webhook secrets, payment secrets, customer data or environment-specific access tokens. Missing required production inputs must fail closed.
+
+
+### Edition-aware Test Center gate
+- Test Center acceptance is now scoped by Vendor / Reseller / Customer capability ownership.
+- Shared authentication, tenant isolation/RBAC, audit, policy, safe execution and evidence controls are tested at the shared boundary.
+- Edition-specific tests cover only authorized service groups; full service duplication across editions is explicitly not required.
+- Cross-edition negative authorization tests remain mandatory.
