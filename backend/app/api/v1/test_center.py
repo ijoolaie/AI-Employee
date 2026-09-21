@@ -174,7 +174,11 @@ async def list_definitions(
     db: AsyncSession = Depends(get_db, scope="function"),
     workspace_key: str | None = Query(default=None),
 ):
-    stmt = select(TestDefinition).where(\n        TestDefinition.tenant_id == ctx.tenant_id,\n        TestDefinition.enabled.is_(True),\n        (TestDefinition.edition == "shared") | (TestDefinition.edition == ctx.tenant.tenant_kind),\n    ).order_by(TestDefinition.created_at.desc())
+    stmt = select(TestDefinition).where(
+        TestDefinition.tenant_id == ctx.tenant_id,
+        TestDefinition.enabled.is_(True),
+        (TestDefinition.edition == "shared") | (TestDefinition.edition == ctx.tenant.tenant_kind),
+    ).order_by(TestDefinition.created_at.desc())
     if workspace_key is not None:
         stmt = stmt.where(TestDefinition.workspace_key == workspace_key)
     result = await db.execute(stmt)
@@ -187,7 +191,12 @@ async def create_definition(
     ctx: RunExecuteContext,
     db: AsyncSession = Depends(get_db, scope="function"),
 ):
-    values = payload.model_dump()\n    if not definition_allowed_for_edition(tenant_kind=ctx.tenant.tenant_kind, definition_edition=values["edition"]):\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="test definition edition is outside the current tenant scope")\n    if values["scope_type"] == "platform_control_plane" and values["edition"] != "vendor":\n        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="platform control-plane tests are vendor-only")\n    definition = TestDefinition(tenant_id=ctx.tenant_id, created_by=ctx.user_id, **values)
+    values = payload.model_dump()
+    if not definition_allowed_for_edition(tenant_kind=ctx.tenant.tenant_kind, definition_edition=values["edition"]):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="test definition edition is outside the current tenant scope")
+    if values["scope_type"] == "platform_control_plane" and values["edition"] != "vendor":
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="platform control-plane tests are vendor-only")
+    definition = TestDefinition(tenant_id=ctx.tenant_id, created_by=ctx.user_id, **values)
     db.add(definition)
     try:
         await db.flush()
