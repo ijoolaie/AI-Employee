@@ -18,8 +18,9 @@ The release certification is complete, but the readiness audit identified custom
 4. Apply resource-specific lifecycle semantics: archive/deactivate/cancel/revoke instead of indiscriminate hard delete.
 5. Standardize loading, empty, error, retry, success and permission-denied states.
 6. Add browser-level product acceptance in both fa and en.
-7. Reconcile documentation and then create a new post-v1.4.9 candidate release.
-8. Re-run the required certification gates for the changed source.
+7. Make Test Center coverage edition-aware: Vendor/Reseller/Customer test only the capabilities they own, while shared isolation/RBAC/execution controls are tested at the shared boundary.
+8. Reconcile documentation and then create a new post-v1.4.9 candidate release.
+9. Re-run the required certification gates for the changed source.
 
 Canonical audit: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
