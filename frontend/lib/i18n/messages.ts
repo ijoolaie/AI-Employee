@@ -586,6 +586,36 @@ const schedulesFa = {
   retry: "تلاش مجدد",
 } as const;
 
+const inbox = {
+  title: "Unified Inbox",
+  description: "AI and human agents share one customer conversation workspace.",
+  conversations: "Conversations", anonymous: "Anonymous customer", noMessages: "No messages",
+  messagesCount: "messages", human: "HUMAN", customerConversation: "Customer conversation",
+  takeOver: "Take over", returnToAi: "Return to AI", selectConversation: "Select a conversation",
+  selectConversationDescription: "Choose a customer conversation to view its messages.",
+  noMessagesTitle: "No messages yet", noMessagesDescription: "This conversation does not contain any messages yet.",
+  humanReply: "Reply as a human agent…", takeOverToReply: "Take over to reply to the customer…", send: "Send",
+  error: "Unable to load conversations.", messageError: "Unable to load conversation messages.",
+  permissionDenied: "You do not have permission to view or manage the inbox.", retry: "Retry",
+  emptyTitle: "No customer conversations yet",
+  emptyDescription: "Customer conversations will appear here when customers contact your published channels.",
+} as const;
+
+const inboxFa = {
+  title: "صندوق ورودی یکپارچه",
+  description: "کارمندان هوش مصنوعی و انسانی در یک فضای کاری مشترک با مشتریان گفتگو می‌کنند.",
+  conversations: "گفتگوها", anonymous: "مشتری ناشناس", noMessages: "بدون پیام",
+  messagesCount: "پیام", human: "انسان", customerConversation: "گفتگوی مشتری",
+  takeOver: "در دست گرفتن گفتگو", returnToAi: "بازگرداندن به هوش مصنوعی",
+  selectConversation: "یک گفتگو را انتخاب کنید", selectConversationDescription: "برای مشاهده پیام‌ها، یک گفتگوی مشتری را انتخاب کنید.",
+  noMessagesTitle: "هنوز پیامی وجود ندارد", noMessagesDescription: "این گفتگو هنوز پیامی ندارد.",
+  humanReply: "پاسخ به عنوان کارمند انسانی…", takeOverToReply: "برای پاسخ به مشتری، گفتگو را در دست بگیرید…", send: "ارسال",
+  error: "بارگذاری گفتگوها انجام نشد.", messageError: "بارگذاری پیام‌های گفتگو انجام نشد.",
+  permissionDenied: "شما اجازه مشاهده یا مدیریت صندوق ورودی را ندارید.", retry: "تلاش مجدد",
+  emptyTitle: "هنوز گفتگوی مشتری وجود ندارد",
+  emptyDescription: "گفتگوهای مشتریان پس از ارتباط آن‌ها با کانال‌های منتشرشده اینجا نمایش داده می‌شوند.",
+} as const;
+
 const nav = {
   business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
@@ -686,6 +716,7 @@ export const messages = {
     tasks,
     approvals,
     schedules,
+    inbox,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -700,5 +731,6 @@ export const messages = {
     tasks: tasksFa,
     approvals: approvalsFa,
     schedules: schedulesFa,
+    inbox: inboxFa,
   },
 } as const;
