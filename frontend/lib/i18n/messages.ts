@@ -382,6 +382,28 @@ const workflowsFa = {
   createError: "ایجاد گردش‌کار انجام نشد.",
 } as const;
 
+const workflowDetail = {
+  title: "Workflow", currentVersion: "Current version", builder: "Visual Builder", run: "Run workflow", starting: "Starting…",
+  runHistory: "Run history", versions: "Workflow versions", selectedRun: "Selected run", observability: "Observability",
+  noRuns: "No workflow runs yet.", runColumn: "Run", version: "Version", status: "Status", created: "Created", actions: "Actions",
+  replay: "Replay", replayThis: "Replay this run", cancel: "Cancel", activate: "Activate", current: "Current",
+  loading: "Loading workflow…", error: "Unable to load workflow.", permissionDenied: "You do not have permission to view or manage this workflow.",
+  retry: "Retry", notFound: "Workflow was not found.", noVersion: "—", runError: "Unable to start or replay the workflow.",
+  activationError: "Unable to activate the workflow version.", cancelError: "Unable to cancel the workflow run.",
+  cancelledReason: "Cancelled from Workflow UI", deadline: "Deadline", id: "ID",
+} as const;
+
+const workflowDetailFa = {
+  title: "گردش‌کار", currentVersion: "نسخه فعلی", builder: "سازنده بصری", run: "اجرای گردش‌کار", starting: "در حال اجرا…",
+  runHistory: "تاریخچه اجرا", versions: "نسخه‌های گردش‌کار", selectedRun: "اجرای انتخاب‌شده", observability: "مشاهده‌پذیری",
+  noRuns: "هنوز اجرایی برای این گردش‌کار ثبت نشده است.", runColumn: "اجرا", version: "نسخه", status: "وضعیت", created: "ایجاد", actions: "عملیات",
+  replay: "اجرای مجدد", replayThis: "اجرای مجدد این اجرا", cancel: "لغو", activate: "فعال‌سازی", current: "فعلی",
+  loading: "در حال بارگذاری گردش‌کار…", error: "بارگذاری گردش‌کار انجام نشد.", permissionDenied: "شما اجازه مشاهده یا مدیریت این گردش‌کار را ندارید.",
+  retry: "تلاش مجدد", notFound: "گردش‌کار پیدا نشد.", noVersion: "—", runError: "شروع یا اجرای مجدد گردش‌کار انجام نشد.",
+  activationError: "فعال‌سازی نسخه گردش‌کار انجام نشد.", cancelError: "لغو اجرای گردش‌کار انجام نشد.", cancelledReason: "لغو از رابط کاربری گردش‌کار",
+  deadline: "مهلت", id: "شناسه",
+} as const;
+
 const nav = {
   business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
@@ -477,6 +499,7 @@ export const messages = {
     customers,
     commerce,
     workflows,
+    workflowDetail,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -486,5 +509,6 @@ export const messages = {
     customers: customersFa,
     commerce: commerceFa,
     workflows: workflowsFa,
+    workflowDetail: workflowDetailFa,
   },
 } as const;
