@@ -1,23 +1,22 @@
 # Current Status
 
-**Last reconciled:** 2026-09-20
-**Latest published release:** `v1.4.7`
-**Certified release SHA:** `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-**Exact-SHA Production Certification:** Run `35498984521` — PASS
-**Certification job:** `106047204166` — PASS
-**Product Gate failures:** `0`
-**Current status:** v1.4.7 RELEASE-CERTIFIED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
+**Last reconciled:** 2026-09-21
+**Latest published release:** `v1.4.9`
+**Certified release SHA:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`
+**Exact-SHA Production Certification:** Run `35575615877` — PASS
+**Certification job:** `106256713583` — PASS
+**Current status:** v1.4.9 RELEASE-CERTIFIED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
 
 ## Current release
 
-- Release: `v1.4.7`
-- Exact certified SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Release: `v1.4.9`
+- Exact certified SHA: `f1ce20c010779f5273eb5d0051da24cdd57b33f6`
 - Production Certification: PASS
-- Frontend Playwright: 6/6 PASS
-- Immutable certification evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-- Evidence digest: `sha256:86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`
+- Immutable certification evidence artifact: `production-certification-evidence-v1.4.9-f1ce20c010779f5273eb5d0051da24cdd57b33f6`
+- Evidence digest: `sha256:32962353a3511d7d5ae951eb6d0a44620a10211493730544342afe55f980a896`
 - Production deployment claimed by certification: **false**
-- Release assets: runtime package, four edition packages, edition manifest and SHA256SUMS published on the v1.4.7 GitHub release.
+- GitHub Release: **published, not draft, not prerelease**
+- Release assets: customer, reseller, runtime, self-hosted and vendor packages, edition manifest and SHA256SUMS.
 
 Certification applies only to the exact certified SHA. Later commits on `main` do not inherit release certification.
 
@@ -25,7 +24,7 @@ Certification applies only to the exact certified SHA. Later commits on `main` d
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a Human + Agent operating model. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries.
 
-The current engineering/release baseline is **v1.4.7 / `48a6df0...`**. Repository engineering, CI, production-like validation and exact-SHA Production Certification are complete for the tracked scope.
+The current engineering/release baseline is **v1.4.9 / `f1ce20c...`**. Repository engineering, CI, production-like validation and exact-SHA Production Certification are complete for the tracked release scope.
 
 No evidence currently establishes real production deployment, live-provider operation, measured production SLO/DR, independent security review, staffed production operations or customer acceptance.
 
@@ -50,9 +49,7 @@ Certification never transfers automatically across SHAs.
 11. Vendor → Reseller → Customer acceptance in order.
 12. Final residual-risk disposition and commercial go-live gate.
 
-These external gates are tracked by issues #210, #269 and #19.
-
-Broad feature expansion is not the default next step unless external validation identifies a concrete engineering defect.
+These external gates remain the next work frontier.
 
 ## Historical releases
 
