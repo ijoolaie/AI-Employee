@@ -14,7 +14,7 @@ const groups = [
     { href: "/reseller/team", label: "Human Employees", icon: Users },
     { href: "/reseller/ai-employees", label: "AI Employees", icon: Bot },
   ]},
-  { label: "Service Delivery", items: [
+  { label: "Service Delivery", items: [\n    { href: "/reseller/test-center", label: "Test Center", icon: ShieldCheck },
     { href: "/reseller/support", label: "Client Support", icon: LifeBuoy },
     { href: "/reseller/workflows", label: "Workflows", icon: Workflow },
     { href: "/reseller/usage", label: "Usage & Cost", icon: BarChart3 },
