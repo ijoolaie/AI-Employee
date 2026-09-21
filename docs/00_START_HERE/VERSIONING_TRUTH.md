@@ -11,22 +11,21 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 ### Current release truth
 
-- Latest published release: **`v1.4.7`**
-- Latest certified engineering snapshot: **`v1.4.8` candidate SHA `4f7c4676850b546a1c6bdf219ab9401202302e2d`** — certification PASS, no tag/release
-- Certified release commit: **`48a6df0ea8a2fb0624e831fbdea55ee4548807f6`**
-- `v1.4.7` Git tag: **VERIFIED**, annotated tag resolving to the certified release commit.
-- `v1.4.7` GitHub Release: **PUBLISHED**, not draft, not prerelease.
-- `v1.4.7` release assets: runtime package, four edition packages, edition manifest and SHA256SUMS.
-- `v1.4.7` exact-SHA Production Certification: **PASS** on run `35498984521`, job `106047204166`.
+- Latest published release: **`v1.4.8`**
+- Latest certified release: **`v1.4.8`**, exact certified SHA `4f7c4676850b546a1c6bdf219ab9401202302e2d`.
+- `v1.4.8` Git tag: **VERIFIED**, annotated tag resolving to the certified release commit.
+- `v1.4.8` GitHub Release: **PUBLISHED**, not draft, not prerelease.
+- `v1.4.8` release assets: runtime package, four edition packages, edition manifest and SHA256SUMS.
+- `v1.4.8` exact-SHA Production Certification: **PASS** on run `35568392010`, job `106234691683`.
 - Product Gate failures: **0**.
-- `v1.4.7` external production deployment: **NOT VERIFIED / not claimed by certification**.
+- `v1.4.8` external production deployment: **NOT VERIFIED / not claimed by certification**.
 - Customer acceptance / live provider validation: **PENDING**.
 
-`v1.4.7` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
+`v1.4.8` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
 Historical certified release `v1.4.6` remains frozen and traceable at `f3d60031332450ba616e2a1c705e85c0c2c5aefd`. Historical failed release `v1.4.5` remains immutable and is not the current release.
 
-Current `main` is `ee4c7c95d4fe8e48cc421579529033fb5389d32d`, newer than both the immutable `v1.4.7` release and the certified v1.4.8 engineering snapshot. Those newer commits are not automatically covered by either certification; any future code promotion requires fresh exact-SHA certification.
+Current `main` is `b0b5c8492626901a72303ae0fe1bd99eeef6429d`, 19 commits ahead of the certified `v1.4.8` SHA. The post-v1.4.8 delta contains documentation reconciliation plus frontend dependency updates; it is not covered by v1.4.8 certification. The eventual `v1.4.9` candidate requires fresh exact-SHA certification.
 
 ## 2. Architecture version
 
@@ -54,11 +53,11 @@ Current phase truth:
 - Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**
 - Stage 7: **ACTIVE — EXTERNAL PRODUCTION EXECUTION / CERTIFICATION**
 - Stage 8: **GOVERNED AGENT WORKFORCE FOUNDATION IMPLEMENTED; ACCEPTANCE/EVIDENCE RECONCILIATION CONTINUES WHERE REQUIRED**
-- Stage 9: **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN THE CURRENT v1.4.7 RELEASE**
+- Stage 9: **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN THE CURRENT v1.4.8 RELEASE**
 
 ## 4. Stage 9 optimization workstream
 
-Stage 9 is the optimization layer above the governed execution substrate. Its current planned slices were implemented and certified as part of the v1.4.2 release and remain included in the current v1.4.7 release:
+Stage 9 is the optimization layer above the governed execution substrate. Its current planned slices were implemented and certified as part of the v1.4.2 release and remain included in the current v1.4.8 release:
 
 1. Capability-aware workload routing.
 2. Task/risk/cost-aware model selection.
