@@ -39,3 +39,20 @@ At minimum, external certification must capture positive and negative evidence f
 | Customer administrator/operator | Own customer tenant only | Parent reseller control plane; sibling customer data; unrelated tenant data |
 
 The evidence must bind each result to the exact accepted release SHA/tag and retain request/response status plus tenant/actor identifiers without storing credentials or unnecessary personal data.
+
+
+## Product Test Scope by Edition
+
+Security isolation and product completeness are separate acceptance dimensions.
+
+The Test Center must verify the following actor boundaries without requiring every actor to exercise every service:
+
+| Actor | Required positive scope | Required negative scope |
+|---|---|---|
+| Vendor administrator | Own vendor control plane and explicitly authorized direct reseller administration | Customer business workspace by default; unrelated reseller; non-admin vendor |
+| Reseller administrator | Own reseller workspace and explicitly authorized direct-child customer operations | Vendor control plane; sibling/unrelated reseller/customer; capabilities not delegated |
+| Customer administrator/operator | Own customer workspace and its business capabilities | Parent reseller control plane; sibling customer; unrelated tenant |
+
+Shared tenant isolation/RBAC controls are tested at the authorization boundary. Edition-specific service tests then prove that an authorized actor can perform the capability they own. This avoids duplicating the entire service catalog for Vendor, Reseller and Customer.
+
+Test evidence must identify the edition, tenant, actor, workspace, service group and authorization outcome.
