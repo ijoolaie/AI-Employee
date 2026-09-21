@@ -124,6 +124,7 @@ const commerce = {
     error: "Unable to load orders.",
     updateError: "Unable to update order status.",
     permissionDenied: "You do not have permission to manage orders.",
+    statuses: { draft: "Draft", confirmed: "Confirmed", processing: "Processing", shipped: "Shipped", delivered: "Delivered", cancelled: "Cancelled" },
   },
   sales: {
     title: "Sales",
@@ -144,6 +145,7 @@ const commerce = {
     error: "Unable to load sales data.",
     updateError: "Unable to update deal stage.",
     permissionDenied: "You do not have permission to manage sales.",
+    stages: { lead: "Lead", qualified: "Qualified", proposal: "Proposal", negotiation: "Negotiation", won: "Won", lost: "Lost" },
   },
 } as const;
 
@@ -186,6 +188,7 @@ const commerceFa = {
     error: "بارگذاری سفارش‌ها ممکن نیست.",
     updateError: "به‌روزرسانی وضعیت سفارش انجام نشد.",
     permissionDenied: "شما اجازه مدیریت سفارش‌ها را ندارید.",
+    statuses: { draft: "پیش‌نویس", confirmed: "تأیید شده", processing: "در حال پردازش", shipped: "ارسال شده", delivered: "تحویل شده", cancelled: "لغو شده" },
   },
   sales: {
     title: "فروش",
@@ -206,6 +209,7 @@ const commerceFa = {
     error: "بارگذاری اطلاعات فروش ممکن نیست.",
     updateError: "به‌روزرسانی مرحله مذاکره انجام نشد.",
     permissionDenied: "شما اجازه مدیریت فروش را ندارید.",
+    stages: { lead: "سرنخ", qualified: "واجد شرایط", proposal: "پیشنهاد", negotiation: "مذاکره", won: "موفق", lost: "از دست رفته" },
   },
 } as const;
 
