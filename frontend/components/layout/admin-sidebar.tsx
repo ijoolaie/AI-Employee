@@ -16,7 +16,8 @@ const groups = [
   { label: "Internal Workforce", items: [
     { href: "/admin/ai-employees", label: "Internal AI Employees", icon: Bot },
   ]},
-  { label: "Engineering", items: [\n    { href: "/admin/test-center", label: "Test Center", icon: ClipboardCheck },
+  { label: "Engineering", items: [
+    { href: "/admin/test-center", label: "Test Center", icon: ClipboardCheck },
     { href: "/admin/validation", label: "Validation", icon: ClipboardCheck },
     { href: "/admin/providers", label: "AI Providers", icon: PlugZap },
   ]},
