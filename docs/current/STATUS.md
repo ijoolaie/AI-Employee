@@ -2,10 +2,12 @@
 
 **Architecture baseline:** V1.5 Agentic Operating Model  
 **Certified release baseline:** `v1.4.7`  
+**Latest certified engineering snapshot:** `v1.4.8` candidate SHA `4f7c4676850b546a1c6bdf219ab9401202302e2d` — exact-SHA certification PASS, not tagged  
 **Certified release commit:** `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`  
-**Mainline engineering head:** `4f7c4676850b546a1c6bdf219ab9401202302e2d`  
+**Mainline engineering head:** `ee4c7c95d4fe8e48cc421579529033fb5389d32d`  
 **Status date:** 2026-09-21  
-**Latest certified release:** `v1.4.7`  
+**Latest published release:** `v1.4.7`  
+**Latest certified snapshot:** `v1.4.8` candidate SHA `4f7c4676850b546a1c6bdf219ab9401202302e2d`  
 **Certification run:** `35498984521` — PASS (exact `v1.4.7` tag)  
 **Production deployment:** PENDING REAL INFRASTRUCTURE
 
@@ -17,7 +19,7 @@ Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.
 
 The Production Certification suite passed for the exact `v1.4.7` release identity. Certification run `35498984521` checked out SHA `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, recorded zero Product Gate failures, and produced the release evidence artifact. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
 
-## v1.4.8 engineering candidate
+## v1.4.8 engineering candidate — exact-SHA certification PASS
 
 - PR #550 — WhatsApp webhook idempotency and conversation race hardening: **MERGED**.
 - Merge SHA: `ea37b75d599761b91fed33e26ff13e552ae2b963`.
@@ -30,9 +32,12 @@ The Production Certification suite passed for the exact `v1.4.7` release identit
 - PR #553 merge SHA: `4f7c4676850b546a1c6bdf219ab9401202302e2d`.
 - PR #553 head passed all six observed workflows: CI #1585, Architecture Guard #1588, CodeQL #1970, Production Infrastructure Validation #848, HA Failure Recovery Validation #591, and Ephemeral DAST Validation #804.
 - The Meta replay test exercises the actual `whatsapp_meta_inbound` handler with a signed raw Meta payload and real PostgreSQL persistence, replaying the same provider message ID and verifying one message/Run admission.
-- **Release status:** engineering candidate only; no `v1.4.8` tag or certification yet.
+- **Release status:** engineering candidate only; no `v1.4.8` tag or published release.
 - Completed: PostgreSQL race coverage, Public Chat regression, and Meta replay/idempotency runtime handler verification.
-- Required next: exact-SHA Production Certification for the final v1.4.8 mainline SHA.
+- Exact-SHA Production Certification: **PASS** on `4f7c4676850b546a1c6bdf219ab9401202302e2d`, run `35568392010`, job `106234691683`.
+- Evidence artifact: `production-certification-evidence-v1.4.8-4f7c4676850b546a1c6bdf219ab9401202302e2d`.
+- Artifact digest: `sha256:d179fe603aac3460b0e751d7ad7957fad9c3f8dedf81ed8c4a9e9e608a78aa20`.
+- Certification does not transfer to current main `ee4c7c95...`.
 
 ## v1.4.7 certification evidence
 
@@ -73,7 +78,7 @@ These changes led into the immutable `v1.4.7` release and were certified togethe
 | `v1.4.7` tag | VERIFIED | Exact certified release tag |
 | `v1.4.7` Production Certification | PASSED | Run `35498984521`; 0 Product Gate failures |
 | Certified release SHA | VERIFIED | `48a6df0ea8a2fb0624e831fbdea55ee4548807f6` |
-| `v1.4.8` Meta replay runtime coverage | PASSED | PR #553 head `2ad5aa3...`; all six observed gates passed |
+| `v1.4.8` Meta replay runtime coverage | PASSED | PR #553; six supporting gates passed |
 | External production deployment | PENDING | `production_deployment_claimed=false` |
 
 ## Remaining P0 external gates
@@ -103,7 +108,7 @@ Certification never transfers automatically across SHAs. `v1.4.7` certification 
 
 ## Current frontier
 
-The engineering/release frontier for v1.4.8 has now crossed all currently identified WhatsApp implementation-validation boundaries: PostgreSQL concurrency, Public Chat regression, and signed Meta webhook replay/idempotency handler verification are complete. The next release boundary is exact-SHA Production Certification for the final mainline SHA.
+The v1.4.8 implementation-validation and exact-SHA certification boundaries are complete for SHA `4f7c467...`; however, no official `v1.4.8` tag/release was created. Current main `ee4c7c95...` is 13 commits newer and is not covered by that certification. The next release boundary is certification of the final v1.4.9 candidate SHA.
 
 The controlled deployment workflow remains fail-closed and requires real production Environment inputs. No fake values should be introduced.
 
