@@ -8,7 +8,7 @@ Three axes remain independent:
 - **Architecture:** `V1.5 Agentic Operating Model`.
 - **Engineering:** Stage 7 external production execution, Stage 8 governed Agent workforce foundation, and Stage 9 optimization/control loops.
 
-`v1.4.9` is the latest published exact-SHA certified release. Current `main` contains documentation reconciliation commits after the certified release SHA; those commits are not automatically certified as a new release.
+`v1.4.9` is the latest published exact-SHA certified release. Current `main` contains post-certification source and documentation changes after the certified release SHA; those changes are not automatically certified as a new release.
 
 ## Current position
 
@@ -28,7 +28,7 @@ Before the external production sequence proceeds, the application must pass a pr
 4. **Backend/frontend parity:** every customer-visible action must map to a supported, authorized backend operation; unsupported operations must not be presented as available.
 5. **Shared UX states:** standardize loading, empty, error, retry, success and permission-denied behavior.
 6. **Browser acceptance:** verify core customer workflows in both fa and en before cutting a new release candidate.
-7. **Edition-aware Test Center:** validate Vendor, Reseller and Customer capabilities according to ownership/scope; validate shared isolation/RBAC/execution controls once at the shared boundary; do not require every service in every edition.
+7. **Edition-aware Test Center — IMPLEMENTED:** validate Vendor, Reseller and Customer capabilities according to ownership/scope; validate shared isolation/RBAC/execution controls once at the shared boundary; do not require every service in every edition. Backend edition filtering plus `/admin/test-center`, `/reseller/test-center`, and `/test-center` surfaces are implemented and CI-validated.
 
 Canonical record: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
