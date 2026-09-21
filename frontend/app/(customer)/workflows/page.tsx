@@ -148,9 +148,7 @@ export default function WorkflowsPage() {
               </CardContent>
             </Card>
           ) : (
-            <EmptyState icon={WorkflowIcon} title={m.emptyTitle} description={m.emptyDescription}>
-              <Button onClick={openCreate}><Plus className="h-4 w-4" /> {m.create}</Button>
-            </EmptyState>
+            <EmptyState icon={WorkflowIcon} title={m.emptyTitle} description={m.emptyDescription} action={<Button onClick={openCreate}><Plus className="h-4 w-4" /> {m.create}</Button>} />
           )
         )}
       </div>
