@@ -8,7 +8,22 @@
 
 ## Priority order
 
-### P0 — External production evidence
+### P0 — Product completeness gate (must precede external commercial deployment)
+
+The release certification is complete, but the readiness audit identified customer-facing product completeness gaps that must be closed before commercial production deployment.
+
+1. Complete Persian/English localization across core customer-facing surfaces and verify true RTL behavior.
+2. Complete the curated Employee Template catalog and template installation/customization contract.
+3. Inventory operational lists/detail pages and close backend/frontend CRUD/lifecycle parity gaps.
+4. Apply resource-specific lifecycle semantics: archive/deactivate/cancel/revoke instead of indiscriminate hard delete.
+5. Standardize loading, empty, error, retry, success and permission-denied states.
+6. Add browser-level product acceptance in both fa and en.
+7. Reconcile documentation and then create a new post-v1.4.9 candidate release.
+8. Re-run the required certification gates for the changed source.
+
+Canonical audit: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
+
+### P1 — External production evidence
 
 1. Establish the approved real production target and capture its infrastructure identity.
 2. Deploy the exact `v1.4.9` release identity without retagging or modifying the certified snapshot.
@@ -25,7 +40,7 @@
 13. Complete Vendor, then Reseller, then Customer acceptance.
 14. Reconcile residual risks and execute the final commercial go-live gate.
 
-### P1 — Target verification
+### P2 — Target verification
 
 - Data retention/lifecycle verification on the real target.
 - Usage/quota/cost-control validation on the real target.
@@ -49,4 +64,4 @@
 
 The v1.4.9 release has passed repository engineering gates and exact-SHA Production Certification. Do not restart completed test suites without a regression trigger. Do not restart completed test suites without a regression trigger.
 
-Broad feature expansion should remain paused unless the readiness audit identifies a genuine launch-blocking product requirement.
+Broad feature expansion should remain paused. The product-completeness gate above is an explicit launch-blocking requirement identified by the readiness audit; external production evidence resumes after that gate is closed.
