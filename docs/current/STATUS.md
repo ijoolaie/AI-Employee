@@ -4,7 +4,7 @@
 **Certified release baseline:** `v1.4.9`  
 **Latest certified release:** `v1.4.9` — exact-SHA certification PASS  
 **Certified release commit:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`  
-**Mainline engineering head:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`  
+**Mainline engineering head:** `368073764d836eef8f50646ecd99c3e034f10b6f`  
 **Status date:** 2026-09-21  
 **Latest published release:** `v1.4.9`  
 **Latest certified release:** `v1.4.9`  
@@ -27,7 +27,7 @@ The exact-SHA Production Certification suite passed for `v1.4.9`. Certification 
 - Evidence digest: `sha256:32962353a3511d7d5ae951eb6d0a44620a10211493730544342afe55f980a896`.
 - `v1.4.9` GitHub Release is published, not draft, not prerelease.
 - Release assets include customer, reseller, runtime, self-hosted and vendor packages plus edition manifest and SHA256SUMS.
-- `v1.4.9` tag resolves to the certified SHA and `main` currently points to the same SHA.
+- `v1.4.9` tag remains pinned to the certified SHA; `main` now contains post-certification source changes and is not certified.
 
 ## v1.4.8 historical certified release
 
@@ -99,7 +99,7 @@ Canonical record: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
 The `v1.4.9` implementation, exact-SHA certification and publication boundaries are complete. The release tag remains pinned to `f1ce20c010779f5273eb5d0051da24cdd57b33f6`. No post-certification source changes are part of the certified snapshot.
 
-The immediate frontier is product completeness. After the product-completeness gate passes, resume external production execution and evidence. Source changes require a new release candidate and fresh certification.
+The immediate frontier remains product completeness. The edition-aware Test Center backend and Vendor/Reseller workspace surfaces are now implemented and CI-validated; remaining P0 product-completeness work includes localization, template catalog, operational lifecycle parity, shared UX states and fa/en browser acceptance. Source changes require a new release candidate and fresh certification.
 
 ## Security rule
 
@@ -107,7 +107,7 @@ Do not commit production hosts, private keys, registry credentials, webhook secr
 
 
 ### Edition-aware Test Center gate
-- Test Center acceptance is now scoped by Vendor / Reseller / Customer capability ownership.
+- Test Center acceptance is now scoped by Vendor / Reseller / Customer capability ownership and has edition-specific Vendor/Reseller/Customer UI entry points.
 - Shared authentication, tenant isolation/RBAC, audit, policy, safe execution and evidence controls are tested at the shared boundary.
 - Edition-specific tests cover only authorized service groups; full service duplication across editions is explicitly not required.
 - Cross-edition negative authorization tests remain mandatory.
