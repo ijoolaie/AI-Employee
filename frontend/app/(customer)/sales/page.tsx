@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Mail, Save } from "lucide-react";
 import Link from "next/link";
 
@@ -20,6 +21,7 @@ function money(v: string | number) { const n = typeof v === "string" ? Number(v)
 export default function SalesPage() {
   const qc = useQueryClient();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const dealId = searchParams.get("deal");
   const { t } = useI18n();
   const m = t.commerce.sales;
@@ -38,7 +40,7 @@ export default function SalesPage() {
     <>
       <Header title={dealId ? m.detailTitle : m.title} description={dealId ? (dealQ.data?.title ?? m.description) : m.description} />
       <div className="space-y-6 p-6">
-        {dealId ? <DealDetail dealQ={dealQ} m={m} qc={qc} onBack={() => { window.history.pushState({}, "", "/sales"); window.dispatchEvent(new PopStateEvent("popstate")); }} /> : <>
+        {dealId ? <DealDetail dealQ={dealQ} m={m} qc={qc} onBack={() => router.push("/sales")} /> : <>
         {permissionDenied && <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{m.permissionDenied}</div>}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {pipeQ.isLoading || forecastQ.isLoading ? <div className="col-span-full flex justify-center py-6"><Spinner /></div> :
@@ -72,7 +74,7 @@ export default function SalesPage() {
 }
 function Metric({ title, value }: { title: string; value: string }) { return <Card><CardContent className="pt-6"><p className="text-sm text-gray-500">{title}</p><p className="mt-2 text-xl font-semibold text-gray-900">{value}</p></CardContent></Card>; }
 
-function DealDetail({ dealQ, m, qc, onBack }: { dealQ: ReturnType<typeof useQuery<BusinessDeal>>; m: typeof import("@/lib/i18n/messages").messages["commerce"]["sales"]; qc: ReturnType<typeof useQueryClient>; onBack: () => void }) {
+function DealDetail({ dealQ, m, qc, onBack }: { dealQ: ReturnType<typeof useQuery<BusinessDeal>>; m: any; qc: ReturnType<typeof useQueryClient>; onBack: () => void }) {
   const deal = dealQ.data;
   const [stage, setStage] = useState<string | null>(null);
   const mutation = useMutation({
