@@ -404,6 +404,46 @@ const workflowDetailFa = {
   deadline: "مهلت", id: "شناسه",
 } as const;
 
+const workflowBuilder = {
+  title: "Visual Workflow Builder", description: "Design a versioned workflow.", back: "Back to workflow",
+  trigger: "Trigger", manual: "Manual", schedule: "Schedule", event: "Event / Webhook", activate: "Activate",
+  save: "Save new version", saving: "Saving…", saveSuccess: "New immutable workflow version created.",
+  loading: "Loading workflow builder…", error: "Unable to load workflow builder data.", retry: "Retry",
+  needsAttention: "Workflow needs attention", noEmployees: "No active AI Employees are available. Activate an AI Employee before adding an Employee node.",
+  nodes: "Nodes", canvas: "Execution canvas", properties: "Properties", dragHint: "Drag nodes to reorder the execution path. Every save creates an immutable backend version.",
+  loadCurrent: "Load current version into the canvas", addToStart: "Add a node to start building",
+  employee: "Employee", condition: "Condition", approval: "Approval", parallel: "Parallel",
+  employeeHint: "Run an AI employee", conditionHint: "Branch on context", approvalHint: "Pause for a human decision", parallelHint: "Fan out into branches",
+  stepKeyRequired: "Step {index}: step key is required.", employeeRequired: "Step {index} ({key}): select an employee.",
+  employeeUnavailable: "Step {index} ({key}): selected employee is not available.", retryInvalid: "Step {index}: retry attempts must be between 0 and 5.",
+  timeoutInvalid: "Step {index}: timeout must be at least 1 second.", selectEmployee: "Select an employee", branches: "{count} branch(es)",
+  humanApproval: "Human approval", contextCondition: "Context condition", duplicate: "Duplicate", moveUp: "Move up", moveDown: "Move down", delete: "Delete",
+  stepKey: "Step key", type: "Type", aiEmployee: "AI Employee", selectEmployeeOption: "Select an employee…", employeeRequiredInline: "An AI Employee is required before this workflow can be saved.",
+  message: "Message", messagePlaceholder: "What should the approver decide?", conditionReference: "Condition reference", conditionPlaceholder: "context.field", expectedTruthy: "Expected truthy",
+  retry: "Retry attempts", timeout: "Timeout (seconds)", parallelBranches: "Parallel branches", steps: "{count} step(s)", close: "Close", selectNode: "Select a node to edit its properties.",
+  versionHistory: "Version history", noVersions: "No workflow versions yet.", version: "Version", noHash: "no hash", current: "Current",
+} as const;
+
+const workflowBuilderFa = {
+  title: "سازنده بصری گردش‌کار", description: "یک گردش‌کار نسخه‌بندی‌شده طراحی کنید.", back: "بازگشت به گردش‌کار",
+  trigger: "محرک", manual: "دستی", schedule: "زمان‌بندی", event: "رویداد / وب‌هوک", activate: "فعال‌سازی",
+  save: "ذخیره نسخه جدید", saving: "در حال ذخیره…", saveSuccess: "نسخه غیرقابل‌تغییر گردش‌کار ایجاد شد.",
+  loading: "در حال بارگذاری سازنده گردش‌کار…", error: "بارگذاری اطلاعات سازنده گردش‌کار انجام نشد.", retry: "تلاش مجدد",
+  needsAttention: "گردش‌کار نیاز به اصلاح دارد", noEmployees: "هیچ کارمند هوش مصنوعی فعالی در دسترس نیست. پیش از افزودن گره کارمند، یک کارمند هوش مصنوعی را فعال کنید.",
+  nodes: "گره‌ها", canvas: "بوم اجرا", properties: "ویژگی‌ها", dragHint: "برای تغییر ترتیب مسیر اجرا، گره‌ها را بکشید. هر ذخیره یک نسخه غیرقابل‌تغییر در سرور ایجاد می‌کند.",
+  loadCurrent: "بارگذاری نسخه فعلی در بوم", addToStart: "برای شروع ساخت، یک گره اضافه کنید",
+  employee: "کارمند", condition: "شرط", approval: "تأیید", parallel: "موازی",
+  employeeHint: "اجرای یک کارمند هوش مصنوعی", conditionHint: "شاخه‌بندی بر اساس زمینه", approvalHint: "توقف برای تصمیم انسانی", parallelHint: "تقسیم اجرا به شاخه‌های موازی",
+  stepKeyRequired: "مرحله {index}: کلید مرحله الزامی است.", employeeRequired: "مرحله {index} ({key}): یک کارمند انتخاب کنید.",
+  employeeUnavailable: "مرحله {index} ({key}): کارمند انتخاب‌شده در دسترس نیست.", retryInvalid: "مرحله {index}: تعداد تلاش مجدد باید بین ۰ تا ۵ باشد.",
+  timeoutInvalid: "مرحله {index}: مهلت اجرا باید حداقل ۱ ثانیه باشد.", selectEmployee: "یک کارمند انتخاب کنید", branches: "{count} شاخه",
+  humanApproval: "تأیید انسانی", contextCondition: "شرط زمینه", duplicate: "تکثیر", moveUp: "انتقال به بالا", moveDown: "انتقال به پایین", delete: "حذف",
+  stepKey: "کلید مرحله", type: "نوع", aiEmployee: "کارمند هوش مصنوعی", selectEmployeeOption: "انتخاب کارمند…", employeeRequiredInline: "برای ذخیره گردش‌کار، انتخاب کارمند هوش مصنوعی الزامی است.",
+  message: "پیام", messagePlaceholder: "تأییدکننده باید درباره چه چیزی تصمیم بگیرد؟", conditionReference: "مرجع شرط", conditionPlaceholder: "context.field", expectedTruthy: "مقدار مورد انتظار صحیح باشد",
+  retry: "تلاش مجدد", timeout: "مهلت اجرا (ثانیه)", parallelBranches: "شاخه‌های موازی", steps: "{count} مرحله", close: "بستن", selectNode: "برای ویرایش ویژگی‌ها یک گره را انتخاب کنید.",
+  versionHistory: "تاریخچه نسخه‌ها", noVersions: "هنوز نسخه‌ای برای گردش‌کار وجود ندارد.", version: "نسخه", noHash: "بدون هش", current: "فعلی",
+} as const;
+
 const nav = {
   business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
@@ -500,6 +540,7 @@ export const messages = {
     commerce,
     workflows,
     workflowDetail,
+    workflowBuilder,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -510,5 +551,6 @@ export const messages = {
     commerce: commerceFa,
     workflows: workflowsFa,
     workflowDetail: workflowDetailFa,
+    workflowBuilder: workflowBuilderFa,
   },
 } as const;
