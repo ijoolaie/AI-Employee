@@ -3,14 +3,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Mail, Save } from "lucide-react";
+import { ArrowLeft, Mail, Save, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 import { Header } from "@/components/layout/header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
 import { getErrorMessage } from "@/lib/errors";
+import { formatDate } from "@/lib/utils";
 import { getDeal, getSalesForecast, getSalesPipeline, listDeals, updateDealStage } from "@/lib/api";
 import type { BusinessDeal } from "@/types";
 import { useI18n } from "@/lib/i18n/provider";
