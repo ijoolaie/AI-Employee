@@ -19,6 +19,7 @@ class TestDefinition(Base):
         UniqueConstraint("tenant_id", "code", name="uq_test_definitions_tenant_code"),
         Index("ix_test_definitions_tenant_workspace", "tenant_id", "workspace_key"),
         Index("ix_test_definitions_tenant_enabled", "tenant_id", "enabled"),
+        Index("ix_test_definitions_tenant_edition", "tenant_id", "edition"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -27,6 +28,10 @@ class TestDefinition(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     test_type: Mapped[str] = mapped_column(String(50), nullable=False, default="acceptance")
     category: Mapped[str] = mapped_column(String(80), nullable=False, default="backend")
+    edition: Mapped[str] = mapped_column(String(20), nullable=False, default="shared")
+    service_group: Mapped[str] = mapped_column(String(80), nullable=False, default="shared")
+    scope_type: Mapped[str] = mapped_column(String(40), nullable=False, default="same_tenant")
+    risk_level: Mapped[str] = mapped_column(String(20), nullable=False, default="low")
     description: Mapped[str | None] = mapped_column(Text)
     workspace_key: Mapped[str | None] = mapped_column(String(120), nullable=True)
     prerequisites: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
