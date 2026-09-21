@@ -306,6 +306,7 @@ export const messages = {
     nav,
     dashboard,
     customers,
+    commerce,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -313,5 +314,6 @@ export const messages = {
     nav: navFa,
     dashboard: dashboardFa,
     customers: customersFa,
+    commerce: commerceFa,
   },
 } as const;
