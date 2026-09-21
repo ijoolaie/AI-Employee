@@ -19,6 +19,14 @@ def test_fixture_shape_is_preserved_when_safe():
     assert _safe_fixtures({"customer_id": "demo", "quantity": 2}) == {"customer_id": "demo", "quantity": 2}
 
 
+def test_definition_edition_visibility_is_explicit():
+    assert definition_allowed_for_edition(tenant_kind="vendor", definition_edition="vendor")
+    assert definition_allowed_for_edition(tenant_kind="reseller", definition_edition="shared")
+    assert definition_allowed_for_edition(tenant_kind="customer", definition_edition="customer")
+    assert not definition_allowed_for_edition(tenant_kind="customer", definition_edition="vendor")
+    assert not definition_allowed_for_edition(tenant_kind="reseller", definition_edition="customer")
+
+
 class Result:
     def __init__(self, value):
         self.value = value
