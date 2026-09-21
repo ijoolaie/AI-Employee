@@ -5,16 +5,16 @@
 
 ## Current release truth
 
-- Latest published release: `v1.4.7`
-- Exact certified release SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-- Production Certification run: `35498984521` — PASS
-- Certification job: `106047204166` — PASS
+- Latest published release: `v1.4.9`
+- Exact certified release SHA: `f1ce20c010779f5273eb5d0051da24cdd57b33f6`
+- Production Certification run: `35575615877` — PASS
+- Certification job: `106256713583` — PASS
 - Product Gate Failures: `0`
-- Evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-- Artifact SHA256: `86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`
+- Evidence artifact: `production-certification-evidence-v1.4.9-f1ce20c010779f5273eb5d0051da24cdd57b33f6`
+- Artifact SHA256: `32962353a3511d7d5ae951eb6d0a44620a10211493730544342afe55f980a896`
 - External production deployment: **PENDING** (`production_deployment_claimed=false`)
 
-The repository certification is release evidence. `v1.4.7` passed the exact-tag Production Certification workflow, but this is not evidence of a real external production deployment.
+The repository certification is release evidence. `v1.4.9` passed the exact-tag Production Certification workflow, but this is not evidence of a real external production deployment.
 
 ## Audit conclusion
 
@@ -29,13 +29,13 @@ The engineering/product core is release-certified. The remaining launch blockers
 
 ## Current engineering candidate boundary
 
-`v1.4.7` is the current immutable certified release at exact SHA `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`. The historical `v1.4.5` release remains immutable and is not treated as the current certified release.
+`v1.4.9` is the current immutable certified release at exact SHA `f1ce20c010779f5273eb5d0051da24cdd57b33f6`. The historical `v1.4.5` release remains immutable and is not treated as the current certified release.
 
 ## Commercial Readiness Audit v1
 
 | ID | Area | Classification | Current finding | What is required | Code change? |
 |---|---|---|---|---|---|
-| CR-01 | Release identity | 🟢 | `v1.4.7` exact SHA certified and published | Preserve SHA/tag/checksums as launch identity | No |
+| CR-01 | Release identity | 🟢 | `v1.4.9` exact SHA certified and published | Preserve SHA/tag/checksums as launch identity | No |
 | CR-02 | Backend | 🟢 | Certified by release certification | No additional launch code indicated | No |
 | CR-03 | Frontend | 🟢 | Certified by release certification | No additional launch code indicated | No |
 | CR-04 | DB/migrations | 🟢 | Migration and single-head checks passed | Validate again on target deployment | No |
@@ -73,7 +73,7 @@ These issues should be updated/reconciled as evidence is produced. Do not close 
 
 Engineering/release evidence includes:
 
-- exact-SHA Production Certification for `v1.4.7`;
+- exact-SHA Production Certification for `v1.4.9`;
 - backend/frontend/DB validation;
 - Auth/RBAC/tenant isolation product gates;
 - workflow, billing, WorkItem and core business flows;
@@ -97,7 +97,7 @@ Provision the approved target, DNS/TLS, ingress, PostgreSQL, Redis, object stora
 
 ### 2. Exact release deployment
 
-Deploy exactly `v1.4.7` / `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, record deployment timestamp, image digests, migration revision and health checks.
+Deploy exactly `v1.4.9` / `f1ce20c010779f5273eb5d0051da24cdd57b33f6`, record deployment timestamp, image digests, migration revision and health checks.
 
 ### 3. Backup/DR
 
