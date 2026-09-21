@@ -444,6 +444,28 @@ const workflowBuilderFa = {
   versionHistory: "تاریخچه نسخه‌ها", noVersions: "هنوز نسخه‌ای برای گردش‌کار وجود ندارد.", version: "نسخه", noHash: "بدون هش", current: "فعلی",
 } as const;
 
+const tasks = {
+  title: "Tasks", description: "Operational task queue backed by WorkItems", noTasks: "No tasks yet", noTasksDescription: "Start a task from AI Chat or an employee.",
+  loading: "Loading tasks…", error: "Unable to load tasks.", permissionDenied: "You do not have permission to view or manage tasks.", retry: "Retry", notFound: "Task was not found.",
+  inProgress: "In progress", completedLifecycle: "Completed lifecycle", priority: "Priority", executor: "Executor", unassigned: "Unassigned", run: "Run", notStarted: "Not started",
+  task: "Task", detailDescription: "Canonical WorkItem execution detail", dispatch: "Dispatch", cancel: "Cancel", retryAction: "Retry", approval: "Approval",
+  approvalDescription: "Approval requests are scoped to the WorkItem's correlated Run.", noPendingApproval: "No pending approval for this execution.", approve: "Approve", reject: "Reject",
+  executionResult: "Execution result", executionResultDescription: "Current status and output returned by the canonical execution service.", noOutput: "No execution output has been recorded yet.",
+  executionHistory: "Execution history", executionHistoryDescription: "Canonical audit events for this WorkItem.", noHistory: "No execution history yet.", status: "Status", created: "Created",
+  actionFailed: "The requested task action failed.",
+} as const;
+
+const tasksFa = {
+  title: "وظایف", description: "صف وظایف عملیاتی مبتنی بر WorkItem", noTasks: "هنوز وظیفه‌ای وجود ندارد", noTasksDescription: "یک وظیفه را از گفتگوی هوش مصنوعی یا یک کارمند شروع کنید.",
+  loading: "در حال بارگذاری وظایف…", error: "بارگذاری وظایف انجام نشد.", permissionDenied: "شما اجازه مشاهده یا مدیریت وظایف را ندارید.", retry: "تلاش مجدد", notFound: "وظیفه پیدا نشد.",
+  inProgress: "در حال انجام", completedLifecycle: "چرخه تکمیل‌شده", priority: "اولویت", executor: "اجراکننده", unassigned: "تخصیص‌نیافته", run: "اجرا", notStarted: "شروع نشده",
+  task: "وظیفه", detailDescription: "جزئیات اجرای WorkItem مرجع", dispatch: "ارسال برای اجرا", cancel: "لغو", retryAction: "تلاش مجدد", approval: "تأیید",
+  approvalDescription: "درخواست‌های تأیید بر اساس Run مرتبط با WorkItem نمایش داده می‌شوند.", noPendingApproval: "تأیید در انتظاری برای این اجرا وجود ندارد.", approve: "تأیید", reject: "رد",
+  executionResult: "نتیجه اجرا", executionResultDescription: "وضعیت فعلی و خروجی سرویس مرجع اجرا.", noOutput: "هنوز خروجی اجرایی ثبت نشده است.",
+  executionHistory: "تاریخچه اجرا", executionHistoryDescription: "رویدادهای حسابرسی مرجع برای این WorkItem.", noHistory: "هنوز تاریخچه اجرایی ثبت نشده است.", status: "وضعیت", created: "ایجاد شده",
+  actionFailed: "عملیات درخواستی روی وظیفه انجام نشد.",
+} as const;
+
 const nav = {
   business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
@@ -541,6 +563,7 @@ export const messages = {
     workflows,
     workflowDetail,
     workflowBuilder,
+    tasks,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -552,5 +575,6 @@ export const messages = {
     workflows: workflowsFa,
     workflowDetail: workflowDetailFa,
     workflowBuilder: workflowBuilderFa,
+    tasks: tasksFa,
   },
 } as const;
