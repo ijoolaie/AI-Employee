@@ -7,7 +7,7 @@ from uuid import uuid4
 import pytest
 
 from app.models.test_run import TestRunStatus
-from app.services.test_center import TestCenterError, TestCenterService, _safe_fixtures
+from app.services.test_center import TestCenterError, TestCenterService, _safe_fixtures, definition_allowed_for_edition
 
 
 def test_secret_bearing_fixtures_are_rejected():
