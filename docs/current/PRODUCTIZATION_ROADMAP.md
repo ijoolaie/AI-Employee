@@ -28,6 +28,7 @@ Before the external production sequence proceeds, the application must pass a pr
 4. **Backend/frontend parity:** every customer-visible action must map to a supported, authorized backend operation; unsupported operations must not be presented as available.
 5. **Shared UX states:** standardize loading, empty, error, retry, success and permission-denied behavior.
 6. **Browser acceptance:** verify core customer workflows in both fa and en before cutting a new release candidate.
+7. **Edition-aware Test Center:** validate Vendor, Reseller and Customer capabilities according to ownership/scope; validate shared isolation/RBAC/execution controls once at the shared boundary; do not require every service in every edition.
 
 Canonical record: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
