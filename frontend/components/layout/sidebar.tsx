@@ -9,52 +9,52 @@ import { useI18n } from "@/lib/i18n/provider";
 
 const groups = [
   { label: "Business", items: [
-    { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-    { href: "/customers", label: "Customers", icon: UserRound },
-    { href: "/orders", label: "Orders", icon: ShoppingCart },
-    { href: "/products", label: "Products", icon: Package },
-    { href: "/sales", label: "Sales", icon: TrendingUp },
-    { href: "/analytics", label: "Analytics", icon: BarChart3 },
-    { href: "/reports", label: "Reports", icon: FileText },
+    { href: "/dashboard", key: "overview", icon: LayoutDashboard },
+    { href: "/customers", key: "customers", icon: UserRound },
+    { href: "/orders", key: "orders", icon: ShoppingCart },
+    { href: "/products", key: "products", icon: Package },
+    { href: "/sales", key: "sales", icon: TrendingUp },
+    { href: "/analytics", key: "analytics", icon: BarChart3 },
+    { href: "/reports", key: "reports", icon: FileText },
   ]},
   { label: "People & AI", items: [
-    { href: "/team", label: "Human Employees", icon: Users },
-    { href: "/employees", label: "AI Employees", icon: Bot },
-    { href: "/templates", label: "Employee Templates", icon: Sparkles },
-    { href: "/workspace", label: "AI Workspace", icon: Sparkles },
-    { href: "/chat", label: "AI Chat", icon: MessageCircle },
-    { href: "/governance", label: "Workforce Governance", icon: ShieldCheck },
-    { href: "/knowledge", label: "Knowledge Base", icon: BookOpen },
-    { href: "/memory", label: "Memory", icon: Brain },
+    { href: "/team", key: "team", icon: Users },
+    { href: "/employees", key: "employees", icon: Bot },
+    { href: "/templates", key: "templates", icon: Sparkles },
+    { href: "/workspace", key: "workspace", icon: Sparkles },
+    { href: "/chat", key: "chat", icon: MessageCircle },
+    { href: "/governance", key: "governance", icon: ShieldCheck },
+    { href: "/knowledge", key: "knowledge", icon: BookOpen },
+    { href: "/memory", key: "memory", icon: Brain },
   ]},
   { label: "Customer Operations", items: [
-    { href: "/inbox", label: "Unified Inbox", icon: ListChecks },
-    { href: "/conversations", label: "Conversations", icon: MessageCircle },
-    { href: "/channels", label: "Customer Channels", icon: Radio },
-    { href: "/workflows", label: "Workflows", icon: GitBranch },
-    { href: "/tasks", label: "Tasks", icon: ListChecks },
-    { href: "/approvals", label: "Approvals", icon: ShieldCheck },
-    { href: "/schedules", label: "Schedules", icon: CalendarClock },
+    { href: "/inbox", key: "inbox", icon: ListChecks },
+    { href: "/conversations", key: "conversations", icon: MessageCircle },
+    { href: "/channels", key: "channels", icon: Radio },
+    { href: "/workflows", key: "workflows", icon: GitBranch },
+    { href: "/tasks", key: "tasks", icon: ListChecks },
+    { href: "/approvals", key: "approvals", icon: ShieldCheck },
+    { href: "/schedules", key: "schedules", icon: CalendarClock },
   ]},
   { label: "Finance & Platform", items: [
-    { href: "/billing", label: "Billing", icon: CreditCard },
-    { href: "/invoices", label: "Invoices", icon: FileText },
-    { href: "/usage", label: "Usage & Cost", icon: BarChart3 },
-    { href: "/integrations", label: "Integrations", icon: PlugZap },
-    { href: "/files", label: "Files", icon: FileText },
-    { href: "/runs", label: "Runs", icon: Play },
-    { href: "/traces", label: "Trace Explorer", icon: Activity },
+    { href: "/billing", key: "billing", icon: CreditCard },
+    { href: "/invoices", key: "invoices", icon: FileText },
+    { href: "/usage", key: "usage", icon: BarChart3 },
+    { href: "/integrations", key: "integrations", icon: PlugZap },
+    { href: "/files", key: "files", icon: FileText },
+    { href: "/runs", key: "runs", icon: Play },
+    { href: "/traces", key: "traces", icon: Activity },
   ]},
   { label: "Developer", items: [
-    { href: "/developer", label: "Developer Console", icon: Code2 },
-    { href: "/test-center", label: "Test Center", icon: FlaskConical },
-    { href: "/marketplace", label: "Marketplace", icon: Store },
-    { href: "/api-keys", label: "API Keys", icon: KeyRound },
-    { href: "/webhooks", label: "Webhooks", icon: Radio },
+    { href: "/developer", key: "developerConsole", icon: Code2 },
+    { href: "/test-center", key: "testCenter", icon: FlaskConical },
+    { href: "/marketplace", key: "marketplace", icon: Store },
+    { href: "/api-keys", key: "apiKeys", icon: KeyRound },
+    { href: "/webhooks", key: "webhooks", icon: Radio },
   ]},
   { label: "Settings", items: [
-    { href: "/settings", label: "Settings", icon: Settings },
-    { href: "/settings/security", label: "Security / Password", icon: KeyRound },
+    { href: "/settings", key: "settings", icon: Settings },
+    { href: "/settings/security", key: "security", icon: KeyRound },
   ]},
 ];
 
@@ -63,6 +63,7 @@ export function Sidebar() {
   const router = useRouter();
   const { user, tenant, logout } = useAuthStore();
   const { locale, setLocale, t } = useI18n();
+  const n = t.nav;
 
   function handleLogout() {
     logout();
@@ -73,15 +74,15 @@ export function Sidebar() {
     <aside className="hidden h-screen w-72 shrink-0 flex-col border-r border-gray-200 bg-white md:flex">
       <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600"><Sparkles className="h-4 w-4 text-white" /></div>
-        <div className="min-w-0"><p className="truncate text-sm font-semibold text-gray-900">AI Employee</p><p className="truncate text-xs text-gray-500">{tenant?.name ?? "Business Workspace"}</p></div>
+        <div className="min-w-0"><p className="truncate text-sm font-semibold text-gray-900">AI Employee</p><p className="truncate text-xs text-gray-500">{tenant?.name ?? n.workspaceFallback}</p></div>
       </div>
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
-        {groups.map((group) => <div key={group.label}><p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{group.label}</p><div className="space-y-0.5">{group.items.map((item) => { const active = pathname === item.href || pathname.startsWith(item.href + "/"); return <Link key={item.href} href={item.href} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors", active ? "bg-brand-50 text-brand-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900")}><item.icon className="h-4 w-4 shrink-0" />{item.label}</Link>; })}</div></div>)}
+        {groups.map((group) => <div key={group.label}><p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">{(n as Record<string,string>)[group.key ?? group.label] ?? group.label}</p><div className="space-y-0.5">{group.items.map((item) => { const active = pathname === item.href || pathname.startsWith(item.href + "/"); return <Link key={item.href} href={item.href} className={cn("flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors", active ? "bg-brand-50 text-brand-700" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900")}><item.icon className="h-4 w-4 shrink-0" />{(n as Record<string,string>)[item.key] ?? item.key}</Link>; })}</div></div>)}
       </nav>
       <div className="border-t border-gray-100 px-3 py-3">
         <div className="mb-2 flex items-center justify-between px-3"><span className="text-xs text-gray-500">{t.common.language}</span><div className="flex rounded-md border border-gray-200 text-[11px]"><button onClick={() => setLocale("en")} className={cn("px-2 py-1", locale === "en" ? "bg-gray-100 font-semibold" : "")}>EN</button><button onClick={() => setLocale("fa")} className={cn("px-2 py-1", locale === "fa" ? "bg-gray-100 font-semibold" : "")}>فا</button></div></div>
         <div className="mb-2 truncate px-3 text-xs text-gray-500">{user?.full_name || user?.email}</div>
-        <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"><LogOut className="h-4 w-4" />Sign out</button>
+        <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"><LogOut className="h-4 w-4" />{t.common.signOut}</button>
       </div>
     </aside>
   );
