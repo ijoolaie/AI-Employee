@@ -85,6 +85,75 @@ Use this lifecycle policy:
 
 For each operational list, the UI should provide only actions supported by the backend and authorization model.
 
+
+## Edition-aware product and Test Center scope
+
+The product-completeness gate must be validated by **edition capability**, not by requiring every service to be exposed or tested for every actor.
+
+The rule is:
+
+> **Test the capabilities an edition is supposed to own; do not require every platform service in every workspace.**
+
+The Test Center itself remains a shared backend capability with tenant-bound authorization and evidence, but the test catalog and UI visibility must be edition-aware.
+
+### Required Test Center coverage by edition
+
+| Edition | Test focus | Representative service groups that must be covered | Explicitly out of scope for routine edition tests |
+|---|---|---|---|
+| Vendor | Platform/control-plane correctness | reseller provisioning, tenant hierarchy, entitlement delegation, platform configuration, global template governance, platform audit/security, support escalation to/from managed tenants, platform operations | customer CRM/orders/products as ordinary business workflows; unrelated reseller/customer business data; every customer-only service |
+| Reseller | Commercial/service-management correctness | customer provisioning, direct-child customer portfolio, delegated entitlements, reseller-owned employees/workflows, customer usage/health, support/escalation, reseller audit/security, reseller commercial/billing flows where enabled | vendor control-plane services, unrelated resellers, customer business data not required for the managed-client operation, every customer business module |
+| Customer | Business-workspace correctness | customers/CRM, products, orders/sales, human/AI employees, conversations/inbox/channels, knowledge/memory, workflows/approvals/schedules, files, analytics/reports, integrations/security, customer-local usage/billing where enabled | vendor platform controls, reseller portfolio management, other tenants, platform-wide configuration, global template governance |
+
+### Test selection policy
+
+The Test Center should classify definitions with at least:
+
+- `edition`: `vendor`, `reseller`, `customer`, or `shared`;
+- `workspace_key`: the concrete workspace/surface under test;
+- `service_group`: the business or platform capability being verified;
+- `scope_type`: same-tenant, direct-child, or platform control-plane;
+- `risk_level`: the reason the test is required;
+- `prerequisites` and `expected_result`;
+- `evidence_requirements`.
+
+A test definition must not silently imply access to services outside its edition boundary.
+
+### Shared versus edition-specific tests
+
+Some controls are shared foundations and should be tested once at the correct abstraction boundary rather than duplicated for all three editions:
+
+- authentication/session context;
+- tenant isolation and RBAC kernel;
+- audit emission;
+- approval/policy enforcement;
+- safe execution boundary;
+- evidence integrity;
+- common loading/error/permission behavior where implemented as shared components.
+
+Edition-specific tests then prove the business capability and scope on top of those shared foundations.
+
+### Minimum cross-edition negative coverage
+
+The edition-aware test plan must include boundary tests for:
+
+- Vendor → direct Reseller allowed; Vendor → Customer ordinary business access denied unless an explicit audited support path exists.
+- Reseller → direct Customer allowed only for capabilities delegated by the commercial/authorization model; Reseller → Vendor and sibling/unrelated tenants denied.
+- Customer → own tenant only; parent Reseller control-plane and sibling/unrelated tenant access denied.
+
+These are authorization tests, not a requirement to run the entire customer service catalog under every actor.
+
+### Test Center product rule
+
+The Test Center UI may expose a broader catalog to Vendor operators and a reduced catalog to Reseller/Customer users. This is intentional.
+
+- **Vendor Test Center:** platform and cross-edition governance tests plus approved support-validation tests.
+- **Reseller Test Center:** reseller-owned and direct-child customer service tests that the reseller is authorized to operate.
+- **Customer Test Center:** customer-owned business workflow tests and customer-local acceptance tests.
+- No edition receives test definitions that would require unauthorized access merely to execute or inspect the test.
+
+The existing Test Center tenant/workspace scoping remains mandatory; edition-aware filtering is an additional product rule, not a replacement for backend authorization.
+
+
 ## Required product-completeness gate
 
 Before external production deployment of a source-changed release:
@@ -101,7 +170,10 @@ Before external production deployment of a source-changed release:
 10. Add destructive-action confirmation and audit behavior.
 11. Add frontend and backend regression coverage for completed product flows.
 12. Run a browser-level product acceptance pass in both fa and en.
-13. Only then cut a new release candidate and rerun the required certification gates.
+
+14. Validate the Test Center with an edition-aware test catalog: shared controls are tested at shared boundaries, while Vendor/Reseller/Customer tests cover only the capabilities each edition owns.
+15. Verify negative cross-edition authorization paths without requiring every service to be exercised by every edition.
+16. Only then cut a new release candidate and rerun the required certification gates.
 
 ## Release boundary
 
@@ -125,4 +197,6 @@ The product is considered complete for this gate when:
 - destructive actions follow retention and audit rules;
 - frontend actions match actual backend capabilities and authorization;
 - browser-level acceptance passes in both locales;
+- Test Center definitions are scoped by edition/workspace/service group and do not require every service for every actor.
+- shared security/execution controls are tested once at the shared boundary, with edition-specific capability tests layered above them.
 - documentation, release identity and evidence are reconciled before commercial go-live.
