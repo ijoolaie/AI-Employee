@@ -162,10 +162,7 @@ const commerce = {
     actions: "Actions",
     emptyTitle: "No deals yet",
     emptyDescription: "Run the Sales Employee to create opportunities, or use the sales API.",
-    loading: "Loading sales…",
-    error: "Unable to load sales data.",
-    updateError: "Unable to update deal stage.",
-    permissionDenied: "You do not have permission to manage sales.",
+
     stages: { lead: "Lead", qualified: "Qualified", proposal: "Proposal", negotiation: "Negotiation", won: "Won", lost: "Lost" },
   },
 } as const;
@@ -247,10 +244,7 @@ const commerceFa = {
     actions: "عملیات",
     emptyTitle: "هنوز مذاکره‌ای وجود ندارد",
     emptyDescription: "برای ایجاد فرصت‌های فروش، کارمند فروش را اجرا کنید یا از API فروش استفاده کنید.",
-    loading: "در حال بارگذاری فروش…",
-    error: "بارگذاری اطلاعات فروش ممکن نیست.",
-    updateError: "به‌روزرسانی مرحله مذاکره انجام نشد.",
-    permissionDenied: "شما اجازه مدیریت فروش را ندارید.",
+
     stages: { lead: "سرنخ", qualified: "واجد شرایط", proposal: "پیشنهاد", negotiation: "مذاکره", won: "موفق", lost: "از دست رفته" },
   },
 } as const;
