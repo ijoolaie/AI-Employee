@@ -35,6 +35,11 @@ _MAX_FIXTURE_KEYS = 100
 _SHA256_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
+def definition_allowed_for_edition(*, tenant_kind: str, definition_edition: str) -> bool:
+    """Return whether a Test Center definition is visible to this tenant edition."""
+    return definition_edition == "shared" or definition_edition == tenant_kind
+
+
 def _safe_fixtures(fixtures: dict[str, Any] | None) -> dict[str, Any]:
     """Reject secret-bearing fixture keys instead of persisting credentials."""
     value = dict(fixtures or {})

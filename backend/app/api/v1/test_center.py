@@ -16,7 +16,7 @@ from app.models.test_definition import TestDefinition
 from app.models.test_run import TestRun, TestRunStatus
 from app.models.test_run_artifact import TestRunArtifact
 from app.services.audit_service import record
-from app.services.test_center import TestCenterError, TestCenterService
+from app.services.test_center import TestCenterError, TestCenterService, definition_allowed_for_edition
 
 router = APIRouter(prefix="/test-center", tags=["test-center"])
 
@@ -26,6 +26,10 @@ class TestDefinitionCreate(BaseModel):
     name: str = Field(min_length=1, max_length=255)
     test_type: str = Field(default="acceptance", max_length=50)
     category: str = Field(default="backend", max_length=80)
+    edition: str = Field(default="shared", pattern=r"^(shared|vendor|reseller|customer)$")
+    service_group: str = Field(default="shared", max_length=80)
+    scope_type: str = Field(default="same_tenant", pattern=r"^(same_tenant|direct_child|platform_control_plane)$")
+    risk_level: str = Field(default="low", pattern=r"^(low|medium|high|critical)$")
     description: str | None = None
     workspace_key: str | None = Field(default=None, max_length=120)
     prerequisites: dict = Field(default_factory=dict)
@@ -39,6 +43,10 @@ class TestDefinitionSummary(BaseModel):
     name: str
     test_type: str
     category: str
+    edition: str
+    service_group: str
+    scope_type: str
+    risk_level: str
     description: str | None
     workspace_key: str | None
     prerequisites: dict
@@ -166,7 +174,11 @@ async def list_definitions(
     db: AsyncSession = Depends(get_db, scope="function"),
     workspace_key: str | None = Query(default=None),
 ):
-    stmt = select(TestDefinition).where(TestDefinition.tenant_id == ctx.tenant_id).order_by(TestDefinition.created_at.desc())
+    stmt = select(TestDefinition).where(
+        TestDefinition.tenant_id == ctx.tenant_id,
+        TestDefinition.enabled.is_(True),
+        (TestDefinition.edition == "shared") | (TestDefinition.edition == ctx.tenant.tenant_kind),
+    ).order_by(TestDefinition.created_at.desc())
     if workspace_key is not None:
         stmt = stmt.where(TestDefinition.workspace_key == workspace_key)
     result = await db.execute(stmt)
@@ -179,7 +191,12 @@ async def create_definition(
     ctx: RunExecuteContext,
     db: AsyncSession = Depends(get_db, scope="function"),
 ):
-    definition = TestDefinition(tenant_id=ctx.tenant_id, created_by=ctx.user_id, **payload.model_dump())
+    values = payload.model_dump()
+    if not definition_allowed_for_edition(tenant_kind=ctx.tenant.tenant_kind, definition_edition=values["edition"]):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="test definition edition is outside the current tenant scope")
+    if values["scope_type"] == "platform_control_plane" and values["edition"] != "vendor":
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="platform control-plane tests are vendor-only")
+    definition = TestDefinition(tenant_id=ctx.tenant_id, created_by=ctx.user_id, **values)
     db.add(definition)
     try:
         await db.flush()
