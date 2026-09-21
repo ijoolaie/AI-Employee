@@ -78,6 +78,13 @@ const employeeFa = {
   chooseDataset: "ابتدا یک فایل CSV یا Excel انتخاب کنید.",
 } as const;
 
+const customers = {
+  title: "Customers", description: "Customer profiles connected to your AI Employees and channels.", searchPlaceholder: "Search name, email or phone…", directory: "Customer directory", anonymous: "Anonymous customer", empty: "No customers yet. Customers appear automatically when they start conversations.",
+} as const;
+const customersFa = {
+  title: "مشتریان", description: "پروفایل مشتریانی که به کارمندان هوش مصنوعی و کانال‌های شما متصل هستند.", searchPlaceholder: "جستجو بر اساس نام، ایمیل یا شماره تلفن…", directory: "فهرست مشتریان", anonymous: "مشتری ناشناس", empty: "هنوز مشتری‌ای وجود ندارد. مشتریان با شروع گفتگو به‌صورت خودکار ایجاد می‌شوند.",
+} as const;
+
 const nav = {
   business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
@@ -170,11 +177,13 @@ export const messages = {
     employee,
     nav,
     dashboard,
+    customers,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
     employee: employeeFa,
     nav: navFa,
     dashboard: dashboardFa,
+    customers: customersFa,
   },
 } as const;
