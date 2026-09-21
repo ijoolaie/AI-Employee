@@ -420,7 +420,7 @@ const workflowBuilder = {
   humanApproval: "Human approval", contextCondition: "Context condition", duplicate: "Duplicate", moveUp: "Move up", moveDown: "Move down", delete: "Delete",
   stepKey: "Step key", type: "Type", aiEmployee: "AI Employee", selectEmployeeOption: "Select an employee…", employeeRequiredInline: "An AI Employee is required before this workflow can be saved.",
   message: "Message", messagePlaceholder: "What should the approver decide?", conditionReference: "Condition reference", conditionPlaceholder: "context.field", expectedTruthy: "Expected truthy",
-  retry: "Retry attempts", timeout: "Timeout (seconds)", parallelBranches: "Parallel branches", steps: "{count} step(s)", close: "Close", selectNode: "Select a node to edit its properties.",
+  parallelBranches: "Parallel branches", steps: "{count} step(s)", close: "Close", selectNode: "Select a node to edit its properties.",
   versionHistory: "Version history", noVersions: "No workflow versions yet.", version: "Version", noHash: "no hash", current: "Current",
 } as const;
 
@@ -440,7 +440,7 @@ const workflowBuilderFa = {
   humanApproval: "تأیید انسانی", contextCondition: "شرط زمینه", duplicate: "تکثیر", moveUp: "انتقال به بالا", moveDown: "انتقال به پایین", delete: "حذف",
   stepKey: "کلید مرحله", type: "نوع", aiEmployee: "کارمند هوش مصنوعی", selectEmployeeOption: "انتخاب کارمند…", employeeRequiredInline: "برای ذخیره گردش‌کار، انتخاب کارمند هوش مصنوعی الزامی است.",
   message: "پیام", messagePlaceholder: "تأییدکننده باید درباره چه چیزی تصمیم بگیرد؟", conditionReference: "مرجع شرط", conditionPlaceholder: "context.field", expectedTruthy: "مقدار مورد انتظار صحیح باشد",
-  retry: "تلاش مجدد", timeout: "مهلت اجرا (ثانیه)", parallelBranches: "شاخه‌های موازی", steps: "{count} مرحله", close: "بستن", selectNode: "برای ویرایش ویژگی‌ها یک گره را انتخاب کنید.",
+  parallelBranches: "شاخه‌های موازی", steps: "{count} مرحله", close: "بستن", selectNode: "برای ویرایش ویژگی‌ها یک گره را انتخاب کنید.",
   versionHistory: "تاریخچه نسخه‌ها", noVersions: "هنوز نسخه‌ای برای گردش‌کار وجود ندارد.", version: "نسخه", noHash: "بدون هش", current: "فعلی",
 } as const;
 
