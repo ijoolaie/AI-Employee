@@ -45,10 +45,10 @@ export default function OrdersPage() {
               <th className="px-4 py-3 font-medium">{m.number}</th><th className="px-4 py-3 font-medium">{m.customer}</th><th className="px-4 py-3 font-medium">{m.status}</th><th className="px-4 py-3 font-medium">{m.totalAmount}</th><th className="px-4 py-3 font-medium">{m.date}</th><th className="px-4 py-3 font-medium">{m.actions}</th>
             </tr></thead><tbody>{orders.map((o: BusinessOrder) => <tr key={o.id} className="border-b border-gray-50">
               <td className="px-4 py-3 font-mono text-xs text-gray-900">{o.number}</td><td className="px-4 py-3 text-gray-800">{o.customer_name}</td>
-              <td className="px-4 py-3"><span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{o.status}</span></td>
+              <td className="px-4 py-3"><span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{m.statuses[o.status as keyof typeof m.statuses]}</span></td>
               <td className="px-4 py-3 text-gray-800">{money(o.total)} {o.currency}</td><td className="px-4 py-3 text-gray-500">{o.order_date}</td>
               <td className="px-4 py-3"><select className="rounded border border-gray-200 bg-white px-2 py-1 text-xs" value={o.status} disabled={statusMut.isPending} onChange={e => statusMut.mutate({ id: o.id, status: e.target.value })} aria-label={m.status}>
-                {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
+                {STATUSES.map(s => <option key={s} value={s}>{m.statuses[s]}</option>)}
               </select></td>
             </tr>)}</tbody></table>
           </CardContent></Card>}
