@@ -4,11 +4,11 @@
 
 Three axes remain independent:
 
-- **Release:** `v1.4.7` at exact certified SHA `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, certified by Production Certification Run `35498984521`.
+- **Release:** `v1.4.9` at exact certified SHA `f1ce20c010779f5273eb5d0051da24cdd57b33f6`, certified by Production Certification Run `35575615877`.
 - **Architecture:** `V1.5 Agentic Operating Model`.
 - **Engineering:** Stage 7 external production execution, Stage 8 governed Agent workforce foundation, and Stage 9 optimization/control loops.
 
-`v1.4.7` is the latest published exact-SHA certified release. Current `main` contains documentation reconciliation commits after the certified release SHA; those commits are not automatically certified as a new release.
+`v1.4.9` is the latest published exact-SHA certified release. Current `main` contains documentation reconciliation commits after the certified release SHA; those commits are not automatically certified as a new release.
 
 ## Current position
 
@@ -27,7 +27,7 @@ Prove that the certified product can be operated safely, observably and recovera
 1. **Readiness audit** — inspect application, security, database, deployment, secrets, monitoring, DR, providers, billing, Agent governance, tenant isolation and customer UX/support readiness.
 2. **Blocker register** — classify every finding as blocker, required-before-launch, follow-up, or ready/evidenced.
 3. **Production target** — provision and harden the actual target; record infrastructure identity and configuration evidence.
-4. **Exact release deployment** — deploy the accepted v1.4.7 release identity and preserve immutable deployment evidence.
+4. **Exact release deployment** — deploy the accepted v1.4.9 release identity and preserve immutable deployment evidence.
 5. **Security/network validation** — verify TLS, ingress/egress, firewall, secret lifecycle, credential rotation and relevant attack surfaces.
 6. **Data protection** — validate backup integrity, restore procedure and migration/recovery behavior.
 7. **DR measurement** — perform real recovery drills and record measured RPO/RTO.
@@ -52,7 +52,7 @@ A passing repository certification is necessary but does not prove real deployme
 
 | Priority | Work package | Status |
 |---|---|---|
-| P0 | Immutable release identity | `v1.4.7` published and exact-SHA certified |
+| P0 | Immutable release identity | `v1.4.9` published and exact-SHA certified |
 | P0 | External production deployment | Pending real infrastructure |
 | P0 | Backup/restore & DR | Pending target evidence and measured RPO/RTO |
 | P0 | Production SLO/SLI | Engineering contract exists; target measurement pending |
@@ -85,9 +85,9 @@ The governed workforce foundation is the substrate for Stage 9. Do not reimpleme
 
 ## Stage 9 — Autonomous Workforce Optimization
 
-**Class:** PRODUCT / ENGINEERING — **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN v1.4.7**
+**Class:** PRODUCT / ENGINEERING — **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN v1.4.9**
 
-The planned Stage 9 slices were implemented and exact-SHA certified in v1.4.2 and remain part of the current v1.4.7 release:
+The planned Stage 9 slices were implemented and exact-SHA certified in v1.4.2 and remain part of the current v1.4.9 release:
 
 1. capability-aware workload routing;
 2. task/risk/cost-aware model selection;
