@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createEmployee, getErrorMessage, listAvailableTools } from "@/lib/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-const schema = (tx: typeof messages) => z.object({
+const schema = (tx: typeof messages.en.employee) => z.object({
   name: z.string().min(2, tx.nameRequired),
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/, tx.slugFormat),
   prompt_template: z.string().optional(),
@@ -39,7 +39,7 @@ export default function NewEmployeePage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema(tx)),
   });
 
   async function onSubmit(data: FormData) {
@@ -74,14 +74,14 @@ export default function NewEmployeePage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <Input
                 label={tx.name}
-                placeholder="Sales Report Analyst"
+                placeholder={tx.namePlaceholder}
                 error={errors.name?.message}
                 {...register("name")}
               />
               <Input
-                label="Slug"
-                placeholder="sales-report-analyst"
-                hint="Unique identifier within your tenant"
+                label={tx.slug}
+                placeholder={tx.slugPlaceholder}
+                hint={tx.slugHint}
                 error={errors.slug?.message}
                 {...register("slug")}
               />
@@ -116,7 +116,7 @@ export default function NewEmployeePage() {
                 </label>
                 <textarea
                   className="min-h-[120px] w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                  placeholder="You are a sales analyst. Analyze the provided data and produce a clear summary..."
+                  placeholder={tx.promptPlaceholder}
                   {...register("prompt_template")}
                 />
               </div>
