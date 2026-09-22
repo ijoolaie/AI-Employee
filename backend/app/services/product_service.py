@@ -105,7 +105,8 @@ async def update_product(
         setattr(product, key, value)
 
     try:
-        await db.flush()
+        async with db.begin_nested():
+            await db.flush()
     except IntegrityError as exc:
         constraint_name = getattr(exc.orig, "constraint_name", None)
         if constraint_name != PRODUCT_SKU_INDEX_NAME:
