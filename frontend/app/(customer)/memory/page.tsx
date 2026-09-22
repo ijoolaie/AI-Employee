@@ -22,7 +22,7 @@ function isPermissionError(error: unknown) {
 }
 
 export default function MemoryPage() {
-  const { m } = useI18n();
+  const { t: m } = useI18n();
   const [employeeId, setEmployeeId] = useState("");
   const [content, setContent] = useState("");
   const [memoryType, setMemoryType] = useState<(typeof MEMORY_TYPES)[number]>("fact");
