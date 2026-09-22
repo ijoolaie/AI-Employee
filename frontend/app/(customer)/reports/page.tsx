@@ -5,6 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getCustomerDashboard, getUsageSummary, listRuns } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { BarChart3 } from "lucide-react";
@@ -18,7 +20,8 @@ export default function ReportsPage() {
   const runs = useQuery({ queryKey: ["reports-runs"], queryFn: () => listRuns() });
   const success = dash.data?.workflow_run_count ? Math.round((dash.data.successful_workflow_run_count / dash.data.workflow_run_count) * 100) : 0;
   return <><Header title={m.title} description={m.description} /><div className="space-y-6 p-6">
-    {(dash.isLoading || usage.isLoading || runs.isLoading) && <Spinner/>}{(dash.error || usage.error || runs.error) && <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><span>{m.loadError}</span><button className="font-medium underline" onClick={() => { void dash.refetch(); void usage.refetch(); void runs.refetch(); }}>{m.retry}</button></div>}
+    {(dash.isLoading || usage.isLoading || runs.isLoading) && <Spinner/>}{(dash.error || usage.error || runs.error) && <div role="alert" className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><span>{m.loadError}</span><Button variant="outline" onClick={() => { void dash.refetch(); void usage.refetch(); void runs.refetch(); }}>{m.retry}</Button></div>}
+    {!dash.isLoading && !usage.isLoading && !runs.isLoading && !dash.error && !usage.error && !runs.error && !(runs.data ?? []).length && <EmptyState title={m.noRuns} description={m.noRunsDescription} />}
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Metric label={m.aiEmployees} value={dash.data?.active_employee_count ?? 0}/>
       <Metric label={m.runs} value={dash.data?.workflow_run_count ?? 0}/>
