@@ -1122,6 +1122,8 @@ export const messages = {
     files,
     knowledge,
     memory,
+    runs,
+    traces,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -1142,5 +1144,7 @@ export const messages = {
     files: filesFa,
     knowledge: knowledgeFa,
     memory: memoryFa,
+    runs: runsFa,
+    traces: tracesFa,
   },
 } as const;
