@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 
 from app.models.test_run import TestRunStatus
-from app.services.test_center import TestCenterError, TestCenterService, _safe_fixtures
+from app.services.test_center import TestCenterError, TestCenterService, _safe_fixtures, definition_allowed_for_edition
 
 
 class Result:
@@ -84,3 +84,21 @@ async def test_test_center_rejects_cross_tenant_run_access():
         actor_id=uuid4(), correlation_id=uuid4(), status=TestRunStatus.QUEUED,
     )
     # The fake DB is intentionally statement-agnostic, so a real tenant filter\n    # must be simulated here by returning no run for the foreign-tenant lookup.\n    db = FakeDB(run=None)\n\n    with pytest.raises(TestCenterError, match="test run not found"):\n        await TestCenterService(db).start_run(run_id=run.id, tenant_id=uuid4())\n
+
+@pytest.mark.parametrize(
+    ("tenant_kind", "definition_edition", "allowed"),
+    [
+        ("vendor", "shared", True),
+        ("vendor", "vendor", True),
+        ("vendor", "customer", False),
+        ("reseller", "reseller", True),
+        ("reseller", "vendor", False),
+        ("customer", "customer", True),
+        ("customer", "reseller", False),
+    ],
+)
+def test_test_center_definition_edition_boundary(tenant_kind, definition_edition, allowed):
+    assert definition_allowed_for_edition(
+        tenant_kind=tenant_kind,
+        definition_edition=definition_edition,
+    ) is allowed
