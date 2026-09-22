@@ -234,7 +234,7 @@ export default function ApiConsolePage() {
                     <button
                       key={`${ep.method}-${ep.path}`}
                       onClick={() => selectEndpoint(g, e)}
-                      className={`flex w-full items-start gap-2 px-4 py-2.5 text-left text-sm transition hover:bg-gray-50 ${
+                      className={`flex w-full items-start gap-2 px-4 py-2.5 text-start text-sm transition hover:bg-gray-50 ${
                         g === groupIdx && e === endpointIdx ? "bg-brand-50" : ""
                       }`}
                     >
@@ -310,7 +310,7 @@ export default function ApiConsolePage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Terminal className="h-4 w-4" /> Response
+                  <Terminal className="h-4 w-4" /> {m.response}
                 </CardTitle>
                 <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
                   <Badge status={result.status >= 200 && result.status < 300 ? "completed" : "failed"} />
