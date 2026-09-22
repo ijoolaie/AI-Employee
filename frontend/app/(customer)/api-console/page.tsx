@@ -234,7 +234,7 @@ export default function ApiConsolePage() {
                     <button
                       key={`${ep.method}-${ep.path}`}
                       onClick={() => selectEndpoint(g, e)}
-                      className={`flex w-full items-start gap-2 px-4 py-2.5 text-left text-sm transition hover:bg-gray-50 ${
+                      className={`flex w-full items-start gap-2 px-4 py-2.5 text-start text-sm transition hover:bg-gray-50 ${
                         g === groupIdx && e === endpointIdx ? "bg-brand-50" : ""
                       }`}
                     >
