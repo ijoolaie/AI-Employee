@@ -12,12 +12,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Download, FileSpreadsheet, FileText, Star } from "lucide-react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n/provider";
-import { useI18n } from "@/lib/i18n/provider";
 
 export default function RunDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { t } = useI18n();
-  const tx = t.runs;
   const { t } = useI18n();
   const tx = t.runs;
 
