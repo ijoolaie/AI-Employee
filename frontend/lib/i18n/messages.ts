@@ -1207,6 +1207,15 @@ const dashboardFa = {
   activeTriggers: "محرک فعال",
 } as const;
 
+const developerSurfaces = {
+ apiConsole:{title:"API Console",description:"Browse tenant-scoped endpoints and call them live using your current session",endpoints:"Endpoints",send:"Send request",response:"Response",networkError:"network error",pathParams:"Path parameters",requestBody:"Request body",invalidJson:"Request body is not valid JSON.",fillParams:"Fill in path parameter(s)",apiKeys:"API Keys",apiKeysText:"For external/CI integrations, use a key from the API Keys page instead.",openapi:"The full machine-generated OpenAPI schema is served at"},
+ governance:{title:"Workforce Governance",description:"Governed AI workforce, identity controls, evaluations, and approval lifecycle",refresh:"Refresh",newProposal:"New proposal",submitProposal:"Submit workforce proposal",proposalTitle:"Proposal title",agentName:"Requested agent name",sponsor:"Sponsor user UUID",rationale:"Rationale",riskTier:"Risk tier",cancel:"Cancel",submit:"Submit proposal",submitting:"Submitting…",registry:"Workforce Registry",registryDescription:"Tenant-scoped projection of AgentDefinition → AgentTemplate → AgentInstance.",agents:"agents",noAgents:"No governed Agent instances yet.",risk:"Risk",identity:"Identity",active:"Active",notActive:"Not active",cost:"Attributed cost",concurrency:"Concurrency",tools:"Tools",none:"None",evaluation:"Evaluation evidence",noEvidence:"No evidence",recordEvaluation:"Record evaluation",suite:"Evaluation suite ID",score:"Score",evidence:"Evaluation evidence JSON",notes:"Notes",saveEvidence:"Save evidence",saving:"Saving…",proposalQueue:"Proposal Queue",queueDescription:"Requester → Board → CEO → Provision → Access Review → Activate.",proposals:"proposals",noProposals:"No workforce proposals.",boardApprove:"Board approve",reject:"Reject",ceoApprove:"CEO approve",provision:"Provision",accessReview:"Access review",activate:"Activate",reviewing:"Reviewing…",viewEvidence:"View evidence JSON",invalidEvidence:"Evaluation evidence must be valid JSON.",loadError:"Unable to load governance data.",retry:"Retry"}
+} as const;
+const developerSurfacesFa = {
+ apiConsole:{title:"کنسول API",description:"endpointهای محدود به تننت را ببینید و با نشست فعلی آن‌ها را اجرا کنید",endpoints:"Endpointها",send:"ارسال درخواست",response:"پاسخ",networkError:"خطای شبکه",pathParams:"پارامترهای مسیر",requestBody:"بدنه درخواست",invalidJson:"بدنه درخواست JSON معتبر نیست.",fillParams:"پارامترهای مسیر را تکمیل کنید",apiKeys:"کلیدهای API",apiKeysText:"برای یکپارچه‌سازی خارجی یا CI از صفحه کلیدهای API استفاده کنید.",openapi:"مشخصات کامل OpenAPI در این مسیر ارائه می‌شود"},
+ governance:{title:"حاکمیت نیروی کار",description:"مدیریت حاکم AI، کنترل هویت، ارزیابی‌ها و چرخه تأیید",refresh:"تازه‌سازی",newProposal:"پیشنهاد جدید",submitProposal:"ثبت پیشنهاد نیروی کار",proposalTitle:"عنوان پیشنهاد",agentName:"نام کارمند درخواستی",sponsor:"شناسه کاربر حامی",rationale:"منطق درخواست",riskTier:"سطح ریسک",cancel:"لغو",submit:"ثبت پیشنهاد",submitting:"در حال ثبت…",registry:"دفتر نیروی کار",registryDescription:"نمای محدود به تننت از AgentDefinition → AgentTemplate → AgentInstance.",agents:"کارمند",noAgents:"هنوز نمونه Agent حاکم‌شده‌ای وجود ندارد.",risk:"ریسک",identity:"هویت",active:"فعال",notActive:"فعال نیست",cost:"هزینه منتسب",concurrency:"همزمانی",tools:"ابزارها",none:"هیچ‌کدام",evaluation:"شواهد ارزیابی",noEvidence:"شواهدی وجود ندارد",recordEvaluation:"ثبت ارزیابی",suite:"شناسه مجموعه ارزیابی",score:"امتیاز",evidence:"JSON شواهد ارزیابی",notes:"یادداشت‌ها",saveEvidence:"ذخیره شواهد",saving:"در حال ذخیره…",proposalQueue:"صف پیشنهادها",queueDescription:"درخواست‌کننده → هیئت → مدیرعامل → تأمین → بررسی دسترسی → فعال‌سازی.",proposals:"پیشنهاد",noProposals:"پیشنهاد نیروی کاری وجود ندارد.",boardApprove:"تأیید هیئت",reject:"رد",ceoApprove:"تأیید مدیرعامل",provision:"تأمین",accessReview:"بررسی دسترسی",activate:"فعال‌سازی",reviewing:"در حال بررسی…",viewEvidence:"مشاهده JSON شواهد",invalidEvidence:"JSON شواهد ارزیابی معتبر نیست.",loadError:"بارگذاری داده‌های حاکمیت انجام نشد.",retry:"تلاش مجدد"}
+} as const;
+
 export const messages = {
   en: {
     common: { language: "Language", english: "English", persian: "Persian", signOut: "Sign out", platformAdmin: "Platform Admin" },
@@ -1245,6 +1254,7 @@ export const messages = {
     auditLogs,
     dealDetail,
     customerLegacy,
+    developerSurfaces,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -1283,5 +1293,6 @@ export const messages = {
     auditLogs: auditLogsFa,
     dealDetail: dealDetailFa,
     customerLegacy: customerLegacyFa,
+    developerSurfaces: developerSurfacesFa,
   },
 } as const;
