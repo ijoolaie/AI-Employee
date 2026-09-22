@@ -32,6 +32,17 @@ class BusinessInvoiceCreate(BaseModel):
     source_file_id: UUID | None = None
 
 
+class BusinessInvoiceUpdate(BaseModel):
+    customer_name: str | None = Field(default=None, min_length=1, max_length=255)
+    customer_email: str | None = None
+    currency: str | None = Field(default=None, min_length=3, max_length=8)
+    issue_date: date | None = None
+    due_date: date | None = None
+    tax_rate: Decimal | None = Field(default=None, ge=0, le=100)
+    line_items: list[InvoiceLineItem] | None = Field(default=None, min_length=1)
+    notes: str | None = None
+
+
 class BusinessInvoiceStatusUpdate(BaseModel):
     status: str = Field(pattern="^(draft|sent|paid|overdue|void)$")
 
