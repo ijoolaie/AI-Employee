@@ -11,7 +11,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/provider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-function localizedStatus(status: string, m: typeof import("@/lib/i18n/messages").messages.en.billing) {
+function localizedStatus(status: string, m: { trialing: string; activeStatus: string; canceled: string; pastDue: string }) {
   if (status === "trialing") return m.trialing;
   if (status === "active") return m.activeStatus;
   if (status === "canceled") return m.canceled;
