@@ -34,6 +34,17 @@ class BusinessOrderCreate(BaseModel):
     invoice_id: UUID | None = None
 
 
+class BusinessOrderUpdate(BaseModel):
+    customer_name: str | None = Field(default=None, min_length=1, max_length=255)
+    customer_email: str | None = None
+    currency: str | None = Field(default=None, min_length=3, max_length=8)
+    order_date: date | None = None
+    requested_delivery_date: date | None = None
+    tax_rate: Decimal | None = Field(default=None, ge=0, le=100)
+    line_items: list[OrderLineItem] | None = Field(default=None, min_length=1)
+    notes: str | None = None
+
+
 class BusinessOrderStatusUpdate(BaseModel):
     status: str = Field(
         pattern="^(draft|confirmed|processing|shipped|delivered|cancelled)$"
