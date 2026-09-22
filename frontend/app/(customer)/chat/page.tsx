@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n/provider";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
-import { createRun, getErrorMessage, getRun, listEmployees } from "@/lib/api";
+import { createRun, getRun, listEmployees } from "@/lib/api";
 import type { Run } from "@/types";
 import { Bot, Paperclip, Play, RefreshCw, Square } from "lucide-react";
 
@@ -52,9 +52,9 @@ export default function ChatPage() {
         <CardContent className="flex flex-1 flex-col">
           <div className="flex-1 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-5">
             {!run && <div className="flex h-full min-h-[360px] flex-col items-center justify-center text-center"><Bot className="h-10 w-10 text-brand-500" /><h2 className="mt-4 font-semibold text-gray-900">{m.emptyTitle}</h2><p className="mt-2 max-w-md text-sm text-gray-500">{m.emptyDescription}</p></div>}
-            {run && <div className="space-y-4"><div className="rounded-xl bg-white p-4 shadow-sm"><p className="text-xs font-medium uppercase tracking-wide text-gray-400">Run</p><p className="mt-1 font-mono text-xs text-gray-600">{run.id}</p><div className="mt-3 rounded-lg bg-gray-50 p-3 text-sm">{String(run.input_data?.message ?? "")}</div></div><div className="rounded-xl bg-brand-50 p-4"><p className="text-xs font-medium uppercase tracking-wide text-brand-700">{m.employeeOutput}</p><pre className="mt-2 whitespace-pre-wrap font-sans text-sm text-gray-800">{run.output_data ? JSON.stringify(run.output_data, null, 2) : busy ? m.working : run.error ? JSON.stringify(run.error, null, 2) : m.noOutput,}</pre></div></div>}
+            {run && <div className="space-y-4"><div className="rounded-xl bg-white p-4 shadow-sm"><p className="text-xs font-medium uppercase tracking-wide text-gray-400">Run</p><p className="mt-1 font-mono text-xs text-gray-600">{run.id}</p><div className="mt-3 rounded-lg bg-gray-50 p-3 text-sm">{String(run.input_data?.message ?? "")}</div></div><div className="rounded-xl bg-brand-50 p-4"><p className="text-xs font-medium uppercase tracking-wide text-brand-700">{m.employeeOutput}</p><pre className="mt-2 whitespace-pre-wrap font-sans text-sm text-gray-800">{run.output_data ? JSON.stringify(run.output_data, null, 2) : busy ? m.working : run.error ? JSON.stringify(run.error, null, 2) : m.noOutput}</pre></div></div>}
           </div>
-          <div className="mt-4 flex items-end gap-2"><button title={m.attachFile} className="mb-0.5 rounded-lg p-2 text-gray-400 hover:bg-gray-100"><Paperclip className="h-5 w-5" /></button><textarea value={message} onChange={(e) => setMessage(e.target.value)} disabled={busy} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (employeeId && message.trim()) execute.mutate(); } }} placeholder={m.taskPlaceholder} rows={3} className="min-h-20 flex-1 resize-none rounded-xl border border-gray-300 p-3 text-sm outline-none focus:border-brand-500" /><Button disabled={!employeeId || !message.trim() || execute.isPending || busy} onClick={() => execute.mutate()}><Play className="h-4 w-4" />{busy ? "Running" : "Run"}</Button></div>
+          <div className="mt-4 flex items-end gap-2"><button title={m.attachFile} className="mb-0.5 rounded-lg p-2 text-gray-400 hover:bg-gray-100"><Paperclip className="h-5 w-5" /></button><textarea value={message} onChange={(e) => setMessage(e.target.value)} disabled={busy} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (employeeId && message.trim()) execute.mutate(); } }} placeholder={m.taskPlaceholder} rows={3} className="min-h-20 flex-1 resize-none rounded-xl border border-gray-300 p-3 text-sm outline-none focus:border-brand-500" /><Button disabled={!employeeId || !message.trim() || execute.isPending || busy} onClick={() => execute.mutate()}><Play className="h-4 w-4" />{busy ? m.running : m.run}</Button></div>
           {execute.error && <p className="mt-2 text-sm text-red-600">{m.executionError}</p>}
         </CardContent>
       </Card>
