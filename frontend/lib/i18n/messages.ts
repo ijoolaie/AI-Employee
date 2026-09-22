@@ -957,6 +957,7 @@ const runs = {
   tokens: "Tokens",
   cost: "Cost",
   created: "Created",
+  detailTitle: "Run", refresh: "Refresh", notFound: "Run not found", humanApprovalRequired: "Human approval required", approvalText: "This Run is paused because an AI-requested Tool requires explicit human approval. Open Approvals to review it.", waitingWorker: "Waiting for the worker", queuedText: "The Run is queued. Make sure Redis and the Windows Celery worker are running.", failed: "Run failed", input: "Input", output: "Output", error: "Error", inProgress: "Run in progress…", noOutput: "No output produced.", reportDownloads: "Report Employee — downloads", downloadPdf: "Download PDF", downloadExcel: "Download Excel", chart: "Chart", documentDownloads: "Document Employee — downloads", downloadExtractedText: "Download extracted text", executionTrace: "Execution trace", noTrace: "No trace events recorded yet.", backToEmployee: "← Back to employee", started: "Started", completed: "Completed", thanks: "Thanks — your feedback was recorded.", feedbackTitle: "Was this report useful?", optionalComment: "Optional comment — what worked, what didn’t?", sendFeedback: "Send feedback", rate: "Rate",
 } as const;
 
 const runsFa = {
@@ -974,6 +975,7 @@ const runsFa = {
   tokens: "توکن",
   cost: "هزینه",
   created: "ایجاد شده",
+  detailTitle: "اجرا", refresh: "تازه‌سازی", notFound: "اجرا پیدا نشد", humanApprovalRequired: "نیازمند تأیید انسانی", approvalText: "این اجرا متوقف شده است چون یک ابزار درخواستی هوش مصنوعی به تأیید صریح انسانی نیاز دارد. برای بررسی آن به تأییدها بروید.", waitingWorker: "در انتظار Worker", queuedText: "اجرا در صف است. مطمئن شوید Redis و Worker سلری ویندوز در حال اجرا هستند.", failed: "اجرا ناموفق بود", input: "ورودی", output: "خروجی", error: "خطا", inProgress: "اجرا در حال انجام است…", noOutput: "خروجی‌ای تولید نشده است.", reportDownloads: "دانلودهای کارمند گزارش", downloadPdf: "دانلود PDF", downloadExcel: "دانلود Excel", chart: "نمودار", documentDownloads: "دانلودهای کارمند سند", downloadExtractedText: "دانلود متن استخراج‌شده", executionTrace: "رهگیری اجرا", noTrace: "هنوز رویداد رهگیری ثبت نشده است.", backToEmployee: "← بازگشت به کارمند", started: "شروع", completed: "پایان", thanks: "سپاس — بازخورد شما ثبت شد.", feedbackTitle: "آیا این گزارش مفید بود؟", optionalComment: "نظر اختیاری — چه چیزی خوب بود و چه چیزی نبود؟", sendFeedback: "ارسال بازخورد", rate: "امتیاز",
 } as const;
 
 const traces = {
