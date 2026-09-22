@@ -697,7 +697,6 @@ const channels = {
   openChat: "Open customer chat",
   close: "Close",
   aiEmployeeFallback: "AI Employee",
-  get aiEmployee() { return this.aiEmployeeFallback; },
 } as const;
 
 const channelsFa = {
