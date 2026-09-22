@@ -228,7 +228,7 @@ export default function ApiConsolePage() {
               {CATALOG.map((group, g) => (
                 <div key={group.name} className="border-b last:border-0">
                   <p className="bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {group.name}
+                    {m.catalogGroups[group.name as keyof typeof m.catalogGroups]}
                   </p>
                   {group.endpoints.map((ep, e) => (
                     <button
