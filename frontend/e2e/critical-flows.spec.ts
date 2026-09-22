@@ -165,4 +165,27 @@ test.describe("critical platform flows", () => {
     await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
   });
 
+  test("customer operational workspace routes retain locale and RTL shell", async ({ page }) => {
+    await page.addInitScript((state) => {
+      localStorage.setItem("aiep-auth", state);
+      localStorage.setItem("aiep.locale", "fa");
+    }, authState);
+
+    const routes = [
+      "/dashboard", "/customers", "/products", "/orders", "/sales",
+      "/analytics", "/reports", "/employees", "/templates", "/knowledge",
+      "/memory", "/inbox", "/conversations", "/channels", "/workflows",
+      "/tasks", "/approvals", "/schedules", "/files", "/runs",
+      "/traces", "/usage", "/integrations", "/billing", "/api-keys",
+      "/webhooks", "/settings", "/settings/security",
+    ];
+
+    for (const route of routes) {
+      await page.goto(route, { waitUntil: "domcontentloaded" });
+      await expect(page).toHaveURL(new RegExp(route.replace("/", "\\/")));
+      await expect(page.locator("html")).toHaveAttribute("lang", "fa");
+      await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    }
+  });
+
 });
