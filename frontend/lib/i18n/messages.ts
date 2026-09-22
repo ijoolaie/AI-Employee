@@ -847,6 +847,7 @@ export const messages = {
     schedules,
     inbox,
     conversations,
+    channels,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -863,5 +864,6 @@ export const messages = {
     schedules: schedulesFa,
     inbox: inboxFa,
     conversations: conversationsFa,
+    channels: channelsFa,
   },
 } as const;
