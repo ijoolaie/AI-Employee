@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { api } from "@/lib/api";
 import { getErrorMessage } from "@/lib/errors";
 import { Code2, Play, Terminal } from "lucide-react";
+import { useI18n } from "@/lib/i18n/provider";
 
 type Method = "GET" | "POST" | "PATCH" | "DELETE";
 
@@ -56,7 +57,7 @@ const CATALOG: EndpointGroup[] = [
     ],
   },
   {
-    name: "API Keys",
+    name: "{m.apiKeys}",
     endpoints: [
       { method: "GET", path: "/api-keys", summary: "List API keys" },
       { method: "POST", path: "/api-keys", summary: "Create a new API key", sampleBody: { name: "CI key" } },
@@ -143,6 +144,8 @@ function extractParams(path: string): string[] {
 }
 
 export default function ApiConsolePage() {
+  const { t } = useI18n();
+  const m = t.developerSurfaces.apiConsole;
   const [groupIdx, setGroupIdx] = useState(0);
   const [endpointIdx, setEndpointIdx] = useState(0);
   const endpoint = CATALOG[groupIdx].endpoints[endpointIdx];
@@ -172,7 +175,7 @@ export default function ApiConsolePage() {
     setResult(null);
     const missing = params.filter((p) => !paramValues[p]?.trim());
     if (missing.length) {
-      setError(`Fill in path parameter(s): ${missing.join(", ")}`);
+      setError(`${m.fillParams}: ${missing.join(", ")}`);
       setSending(false);
       return;
     }
@@ -184,7 +187,7 @@ export default function ApiConsolePage() {
       try {
         data = JSON.parse(bodyText);
       } catch {
-        setError("Request body is not valid JSON.");
+        setError(m.invalidJson);
         setSending(false);
         return;
       }
@@ -213,11 +216,11 @@ export default function ApiConsolePage() {
         title="API Console"
         description="Browse tenant-scoped endpoints and call them live using your current session"
       />
-      <div className="grid gap-6 p-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid gap-6 p-6 xl:grid-cols-[280px_minmax(0,1fr)]" dir="auto">
         <Card className="h-fit">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Code2 className="h-4 w-4" /> Endpoints
+              <Code2 className="h-4 w-4" /> {m.endpoints}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -311,7 +314,7 @@ export default function ApiConsolePage() {
                 </CardTitle>
                 <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
                   <Badge status={result.status >= 200 && result.status < 300 ? "completed" : "failed"} />
-                  <span>HTTP {result.status || "network error"}</span>
+                  <span>HTTP {result.status || "{m.networkError}"}</span>
                   <span>{result.ms} ms</span>
                 </div>
               </CardHeader>
@@ -329,7 +332,7 @@ export default function ApiConsolePage() {
             <a href="/api-keys" className="text-brand-600 hover:underline">
               API Keys
             </a>{" "}
-            page instead. The full machine-generated OpenAPI schema is served at{" "}
+            page instead. {m.openapi}{" "}
             <code className="rounded bg-gray-100 px-1 py-0.5">/api/v1/openapi.json</code>.
           </p>
         </div>
