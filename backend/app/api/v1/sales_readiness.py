@@ -10,7 +10,7 @@ from app.core.deps import (
     TeamInstallContext,
 )
 from app.schemas.common import APIResponse
-from app.schemas.sales_readiness import EmployeeTemplate, GuardrailsResponse, GuardrailsUpdate, AnalyticsResponse, PrivacyExport
+from app.schemas.sales_readiness import EmployeeTemplate, EmployeeTemplateInstall, GuardrailsResponse, GuardrailsUpdate, AnalyticsResponse, PrivacyExport
 from app.services import sales_readiness_service
 
 router=APIRouter(tags=["sales-readiness"])
@@ -20,8 +20,14 @@ async def templates(ctx: TeamInstallContext):
     return APIResponse(success=True,data=[EmployeeTemplate(**x) for x in sales_readiness_service.list_templates()])
 
 @router.post("/employee-templates/{code}/install", response_model=APIResponse[dict])
-async def install_template(code: str, ctx: TeamInstallContext, db: DbSession):
-    e=await sales_readiness_service.create_from_template(db,tenant_id=ctx.tenant_id,actor_id=ctx.user_id,code=code)
+async def install_template(code: str, payload: EmployeeTemplateInstall, ctx: TeamInstallContext, db: DbSession):
+    e=await sales_readiness_service.create_from_template(
+        db,
+        tenant_id=ctx.tenant_id,
+        actor_id=ctx.user_id,
+        code=code,
+        locale=payload.locale,
+    )
     return APIResponse(success=True,data={"id":str(e.id),"name":e.name,"slug":e.slug})
 
 @router.get("/employees/{employee_id}/guardrails", response_model=APIResponse[GuardrailsResponse])
