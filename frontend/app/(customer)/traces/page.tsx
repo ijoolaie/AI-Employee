@@ -4,27 +4,116 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
 import { getErrorMessage, getRunTrace, listRuns } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Brain, CheckCircle2, Clock3, Database, Hammer, MessageSquare, Search, Zap } from "lucide-react";
+import { useI18n } from "@/lib/i18n/provider";
+import { Activity, Brain, CheckCircle2, Clock3, Database, Hammer, MessageSquare, Search, Zap } from "lucide-react";
+
+function isPermissionError(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+  return message.includes("permission") || message.includes("403") || message.includes("forbidden");
+}
+
+function EventIcon({ type }: { type: string }) {
+  const Icon = type.includes("memory") ? Brain
+    : type.includes("tool") ? Hammer
+    : type.includes("llm") || type.includes("ai") ? MessageSquare
+    : type.includes("db") || type.includes("data") ? Database
+    : type.includes("search") ? Search
+    : type.includes("complete") || type.includes("success") ? CheckCircle2
+    : type.includes("wait") || type.includes("queue") ? Clock3
+    : type.includes("http") || type.includes("web") ? Zap
+    : Activity;
+  return <Icon className="h-4 w-4" />;
+}
 
 export default function TracesPage() {
+  const { t: m } = useI18n();
   const params = useSearchParams();
-  const runs = useQuery({ queryKey: ["runs", "trace-explorer"], queryFn: () => listRuns(), refetchInterval: 10000 });
+  const runs = useQuery({ queryKey: ["runs", "trace-explorer"], queryFn: () => listRuns() });
   const [selected, setSelected] = useState(params.get("run") || "");
   const selectedId = selected || runs.data?.[0]?.id || "";
-  const trace = useQuery({ queryKey: ["trace", selectedId], queryFn: () => getRunTrace(selectedId), enabled: !!selectedId, refetchInterval: 5000 });
-  const currentRun = useMemo(() => runs.data?.find(r => r.id === selectedId), [runs.data, selectedId]);
-  return <>
-    <Header title="Trace Explorer" description="Inspect planner, memory, tool and LLM execution events" />
-    <div className="grid gap-6 p-6 xl:grid-cols-[330px_minmax(0,1fr)]">
-      <Card className="h-fit"><CardHeader><CardTitle>Runs</CardTitle></CardHeader><CardContent className="p-0"><div className="max-h-[720px] overflow-y-auto divide-y">{runs.isLoading ? <div className="p-5"><Spinner/></div> : (runs.data ?? []).map(r => <button key={r.id} onClick={() => setSelected(r.id)} className={`w-full p-4 text-left transition hover:bg-gray-50 ${selectedId === r.id ? "bg-brand-50" : ""}`}><div className="flex items-center justify-between gap-2"><span className="font-mono text-xs text-gray-700">{r.id.slice(0,14)}…</span><Badge status={r.status}/></div><p className="mt-1 truncate text-sm font-medium text-gray-900">{r.employee_name || r.employee_slug || r.employee_id.slice(0,8)}</p><p className="mt-1 text-xs text-gray-500">{formatDate(r.created_at)} · {r.total_tokens.toLocaleString()} tokens</p></button>)}{!(runs.data ?? []).length && <p className="p-5 text-sm text-gray-500">No runs found.</p>}</div></CardContent></Card>
-      <div className="space-y-6">{trace.error && <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{getErrorMessage(trace.error)}</div>}{trace.isLoading && <Spinner/>}{trace.data && <><div className="grid gap-4 sm:grid-cols-4"><K label="Status" value={trace.data.status}/><K label="Events" value={trace.data.events.length}/><K label="Tokens" value={trace.data.total_tokens.toLocaleString()}/><K label="Cost" value={formatCurrency(trace.data.total_cost_usd)}/></div><Card><CardHeader><div><CardTitle>Execution timeline</CardTitle><p className="mt-1 text-xs text-gray-500">Run {trace.data.run_id}</p></div>{currentRun && <Badge status={currentRun.status}/>}</CardHeader><CardContent><div className="space-y-0">{trace.data.events.map((event, i) => <div key={`${event.timestamp}-${i}`} className="relative flex gap-4 pb-7 last:pb-0"><div className="relative flex w-8 shrink-0 justify-center"><div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-white text-brand-600"><EventIcon type={event.type}/></div>{i < trace.data.events.length - 1 && <div className="absolute top-8 h-full w-px bg-gray-200"/>}</div><div className="min-w-0 flex-1 rounded-xl border bg-white p-4 shadow-sm"><div className="flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><span className="font-medium text-gray-900">{event.action || event.type}</span>{event.status && <Badge status={event.status}/>}</div><span className="text-xs text-gray-400">{formatDate(event.timestamp)}</span></div><div className="mt-2 grid gap-2 text-xs text-gray-500 sm:grid-cols-4">{event.provider && <span>Provider: <b className="text-gray-700">{event.provider}</b></span>}{event.model && <span>Model: <b className="text-gray-700">{event.model}</b></span>}{event.latency_ms != null && <span>Latency: <b className="text-gray-700">{Math.round(event.latency_ms)} ms</b></span>}{(event.prompt_tokens != null || event.completion_tokens != null) && <span>Tokens: <b className="text-gray-700">{((event.prompt_tokens ?? 0)+(event.completion_tokens ?? 0)).toLocaleString()}</b></span>}</div>{event.error_message && <p className="mt-3 rounded-lg bg-red-50 p-2 text-xs text-red-700">{event.error_message}</p>}{event.metadata && <details className="mt-3"><summary className="cursor-pointer text-xs font-medium text-brand-600">Metadata</summary><pre className="mt-2 overflow-auto rounded-lg bg-gray-50 p-3 text-[11px] text-gray-600">{JSON.stringify(event.metadata,null,2)}</pre></details>}</div></div>)}</div></CardContent></Card></>}</div>
-    </div>
-  </>;
+  const trace = useQuery({
+    queryKey: ["trace", selectedId],
+    queryFn: () => getRunTrace(selectedId),
+    enabled: !!selectedId,
+    refetchInterval: 5000,
+  });
+  const currentRun = useMemo(() => runs.data?.find((r) => r.id === selectedId), [runs.data, selectedId]);
+  const permissionDenied = (runs.isError && isPermissionError(runs.error)) || (trace.isError && isPermissionError(trace.error));
+
+  return (
+    <>
+      <Header title={m.traces.title} description={m.traces.description} />
+      <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[330px_minmax(0,1fr)]" dir="auto">
+        <Card className="h-fit">
+          <CardHeader><CardTitle>{m.traces.runs}</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            {runs.isLoading ? <div className="p-5"><Spinner /></div>
+              : runs.isError ? <div className="space-y-3 p-5 text-sm text-red-600"><p>{getErrorMessage(runs.error)}</p><Button variant="outline" onClick={() => runs.refetch()}>{m.traces.retry}</Button></div>
+              : !(runs.data ?? []).length ? <EmptyState icon={Activity} title={m.traces.emptyTitle} description={m.traces.emptyDescription} />
+              : <div className="max-h-[720px] overflow-y-auto divide-y">
+                {(runs.data ?? []).map((run) => (
+                  <button key={run.id} onClick={() => setSelected(run.id)} className={`w-full p-4 text-start transition hover:bg-gray-50 ${selectedId === run.id ? "bg-brand-50" : ""}`}>
+                    <div className="flex items-center justify-between gap-2"><span className="font-mono text-xs text-gray-700">{run.id.slice(0, 14)}…</span><Badge status={run.status} /></div>
+                    <p className="mt-1 truncate text-sm font-medium text-gray-900">{run.employee_name || run.employee_slug || run.employee_id.slice(0, 8)}</p>
+                    <p className="mt-1 text-xs text-gray-500">{formatDate(run.created_at)} · {run.total_tokens.toLocaleString()} {m.traces.tokens}</p>
+                  </button>
+                ))}
+              </div>}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          {permissionDenied ? <EmptyState icon={Activity} title={m.traces.permissionDenied} description={m.traces.permissionDescription} />
+            : trace.isLoading ? <Spinner />
+            : trace.isError ? <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"><p>{getErrorMessage(trace.error)}</p><Button variant="outline" onClick={() => trace.refetch()}>{m.traces.retry}</Button></div>
+            : !trace.data ? <EmptyState icon={Activity} title={m.traces.selectRun} description={m.traces.selectRunDescription} />
+            : <>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Meta label={m.traces.status} value={<Badge status={trace.data.status} />} />
+                <Meta label={m.traces.events} value={trace.data.events.length.toLocaleString()} />
+                <Meta label={m.traces.tokens} value={trace.data.total_tokens.toLocaleString()} />
+                <Meta label={m.traces.cost} value={formatCurrency(trace.data.total_cost_usd)} />
+              </div>
+              <Card>
+                <CardHeader><CardTitle>{m.traces.timeline}</CardTitle></CardHeader>
+                <CardContent>
+                  {trace.data.events.length === 0 ? <EmptyState icon={Activity} title={m.traces.noEvents} description={m.traces.noEventsDescription} />
+                    : <div className="space-y-0">
+                      {trace.data.events.map((event, i) => (
+                        <div key={`${event.timestamp}-${i}`} className="relative flex gap-4 pb-7 last:pb-0">
+                          <div className="relative flex w-8 shrink-0 justify-center">
+                            <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full border bg-white text-brand-600"><EventIcon type={event.type} /></div>
+                            {i < trace.data.events.length - 1 && <div className="absolute top-8 h-full w-px bg-gray-200" />}
+                          </div>
+                          <div className="min-w-0 flex-1 rounded-xl border bg-white p-4 shadow-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2"><Badge status={event.status || event.type} /><span className="font-medium text-gray-900">{event.action || event.type}</span></div>
+                              <span className="text-xs text-gray-400">{formatDate(event.timestamp)}</span>
+                            </div>
+                            {event.provider && <p className="mt-1 text-xs text-gray-500">{event.provider}{event.model ? ` · ${event.model}` : ""}</p>}
+                            {(event.prompt_tokens !== undefined || event.completion_tokens !== undefined) && <p className="mt-1 text-xs text-gray-500">{event.prompt_tokens ?? 0} + {event.completion_tokens ?? 0} {m.traces.tokens}{event.latency_ms !== undefined ? ` · ${event.latency_ms} ms` : ""}{event.cost_usd !== undefined ? ` · ${formatCurrency(event.cost_usd)}` : ""}</p>}
+                            {event.error_message && <p className="mt-2 text-xs text-red-700">{event.error_message}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>}
+                </CardContent>
+              </Card>
+              {currentRun && <p className="text-sm text-gray-500">{m.traces.run}: {currentRun.id}</p>}
+            </>}
+        </div>
+      </div>
+    </>
+  );
 }
-function K({label,value}:{label:string;value:string|number}){return <Card><CardContent><p className="text-xs text-gray-500">{label}</p><p className="mt-1 text-lg font-semibold">{value}</p></CardContent></Card>}
-function EventIcon({type}:{type:string}){const t=type.toLowerCase(); if(t.includes("tool")) return <Hammer className="h-4 w-4"/>; if(t.includes("memory")) return <Brain className="h-4 w-4"/>; if(t.includes("llm")||t.includes("provider")) return <Zap className="h-4 w-4"/>; if(t.includes("rag")||t.includes("knowledge")) return <Search className="h-4 w-4"/>; if(t.includes("plan")) return <CheckCircle2 className="h-4 w-4"/>; if(t.includes("db")) return <Database className="h-4 w-4"/>; if(t.includes("prompt")) return <MessageSquare className="h-4 w-4"/>; return <Clock3 className="h-4 w-4"/>;}
+
+function Meta({ label, value }: { label: string; value: React.ReactNode }) {
+  return <Card><CardContent><p className="text-xs font-medium uppercase tracking-wide text-gray-400">{label}</p><div className="mt-1 text-sm font-medium text-gray-900">{value}</div></CardContent></Card>;
+}
