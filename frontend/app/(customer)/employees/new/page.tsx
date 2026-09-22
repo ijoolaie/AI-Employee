@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
+import { messages } from "@/lib/i18n/messages";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,12 +14,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createEmployee, getErrorMessage, listAvailableTools } from "@/lib/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-const schema = z.object({
-  name: z.string().min(2, "Name required"),
-  slug: z
-    .string()
-    .min(2)
-    .regex(/^[a-z0-9-]+$/, "Lowercase, numbers, hyphens only"),
+const schema = (tx: typeof messages) => z.object({
+  name: z.string().min(2, tx.nameRequired),
+  slug: z.string().min(2).regex(/^[a-z0-9-]+$/, tx.slugFormat),
   prompt_template: z.string().optional(),
 });
 
