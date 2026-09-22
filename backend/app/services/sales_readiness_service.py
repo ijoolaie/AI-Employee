@@ -202,7 +202,14 @@ def _tool_is_registered(name: str) -> bool:
         return False
     return True
 
-async def create_from_template(db: AsyncSession, *, tenant_id: uuid.UUID, actor_id: uuid.UUID, code: str) -> Employee:
+async def create_from_template(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    actor_id: uuid.UUID,
+    code: str,
+    locale: str = "en",
+) -> Employee:
     template = next((x for x in TEMPLATES if x["code"] == code), None)
     if not template:
         raise NotFoundError("Employee template not found")
@@ -211,7 +218,10 @@ async def create_from_template(db: AsyncSession, *, tenant_id: uuid.UUID, actor_
     existing = await db.execute(select(Employee).where(Employee.tenant_id==tenant_id, Employee.slug==slug))
     if existing.scalar_one_or_none():
         slug = f"{slug}-{str(uuid.uuid4())[:8]}"
-    return await employee_service.create_employee(db, tenant_id=tenant_id, slug=slug, name=template["name"], kind="custom", input_schema={}, output_schema={}, prompt_template=template["prompt_template"], allowed_tools=template["allowed_tools"], rules=template["rules"], actor_id=actor_id)
+    if locale not in {"en", "fa"}:
+        raise ValidationAppError("Unsupported template locale", details={"locale": locale})
+    name = template["name_fa"] if locale == "fa" else template["name"]
+    return await employee_service.create_employee(db, tenant_id=tenant_id, slug=slug, name=name, kind="custom", input_schema={}, output_schema={}, prompt_template=template["prompt_template"], allowed_tools=template["allowed_tools"], rules=template["rules"], actor_id=actor_id)
 
 async def get_guardrails(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID):
     employee = await employee_service.get_employee(db, employee_id=employee_id, tenant_id=tenant_id)
