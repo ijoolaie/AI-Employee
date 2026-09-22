@@ -12,8 +12,8 @@ import { getErrorMessage, listWorkflows, listWorkflowSchedules, createWorkflowSc
 import { useI18n } from "@/lib/i18n/provider";
 import type { WorkflowScheduleList } from "@/types";
 
-function formatDate(value: string | null) {
-  return value ? new Date(value).toLocaleString() : "—";
+function formatDate(value: string | null, locale: string) {
+  return value ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value)) : "—";
 }
 
 function isPermissionError(error: unknown) {
@@ -42,15 +42,10 @@ export default function SchedulesPage() {
     mutationFn: (s: WorkflowScheduleList) => updateWorkflowSchedule(s.id, { is_active: !s.is_active }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["workflow-schedules"] }),
   });
-  const deleteM = useMutation({
-    mutationFn: (id: string) => deleteWorkflowSchedule(id),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["workflow-schedules"] }),
-  });
-
   const workflows = useMemo(() => (workflowsQ.data ?? []).filter((w) => w.is_active), [workflowsQ.data]);
   const schedules = schedulesQ.data ?? [];
-  const actionError = createM.error ?? toggleM.error ?? deleteM.error;
-  const busy = createM.isPending || toggleM.isPending || deleteM.isPending;
+  const actionError = createM.error ?? toggleM.error;
+  const busy = createM.isPending || toggleM.isPending;
 
   const retrySchedules = () => { void schedulesQ.refetch(); };
   const retryWorkflows = () => { void workflowsQ.refetch(); };
@@ -103,7 +98,6 @@ export default function SchedulesPage() {
                     <td className="px-5 py-3 text-gray-600">{formatDate(s.next_run_at, locale)}</td><td className="px-5 py-3 text-gray-600">{formatDate(s.last_run_at, locale)}</td>
                     <td className="px-5 py-3"><div className="flex flex-wrap gap-3">
                       <button type="button" className="inline-flex items-center gap-1 text-brand-600 hover:underline disabled:opacity-50" onClick={() => toggleM.mutate(s)} disabled={busy}><span aria-hidden="true">{s.is_active ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}</span>{s.is_active ? m.pause : m.resume}</button>
-                      <button type="button" className="inline-flex items-center gap-1 text-red-600 hover:underline disabled:opacity-50" onClick={() => { if (window.confirm(m.confirmDelete)) deleteM.mutate(s.id); }} disabled={busy}><Trash2 className="h-3.5 w-3.5" />{m.delete}</button>
                     </div></td>
                   </tr>)}</tbody>
                 </table>
