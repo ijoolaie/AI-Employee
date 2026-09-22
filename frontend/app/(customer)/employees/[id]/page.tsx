@@ -14,13 +14,14 @@ import {
   getErrorMessage,
   listFiles,
   listRuns,
-  getEmployeeGuardrails, updateEmployeeGuardrails,
+  getEmployee{tx.guardrails}, updateEmployee{tx.guardrails},
 } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Play, Copy, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/lib/i18n/provider";
 
 export default function EmployeeDetailPage({
   params,
@@ -28,6 +29,8 @@ export default function EmployeeDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const { t } = useI18n();
+  const tx = t.employee;
   const router = useRouter();
   const qc = useQueryClient();
   const [inputJson, setInputJson] = useState("{}");
@@ -35,19 +38,19 @@ export default function EmployeeDetailPage({
   const [runError, setRunError] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("Website Sales Assistant");
   const [channelCreated, setChannelCreated] = useState<string | null>(null);
-  const [guardrailsJson, setGuardrailsJson] = useState("{}");
+  const [guardrailsJson, set{tx.guardrails}Json] = useState("{}");
 
   const empQ = useQuery({
     queryKey: ["employees", id],
     queryFn: () => getEmployee(id),
   });
-  const guardrailsQ = useQuery({ queryKey: ["guardrails", id], queryFn: () => getEmployeeGuardrails(id) });
+  const guardrailsQ = useQuery({ queryKey: ["guardrails", id], queryFn: () => getEmployee{tx.guardrails}(id) });
   const runsQ = useQuery({
     queryKey: ["runs", { employee_id: id }],
     queryFn: () => listRuns(id),
   });
   const channelsQ = useQuery({ queryKey: ["customer-channels", id], queryFn: () => listCustomerChannels(id) });
-  const guardrailMutation = useMutation({ mutationFn: () => updateEmployeeGuardrails(id, { rules: JSON.parse(guardrailsJson || "{}") }), onSuccess: () => guardrailsQ.refetch() });
+  const guardrailMutation = useMutation({ mutationFn: () => updateEmployee{tx.guardrails}(id, { rules: JSON.parse(guardrailsJson || "{}") }), onSuccess: () => guardrailsQ.refetch() });
   const channelMutation = useMutation({ mutationFn: () => createCustomerChannel({ employee_id: id, name: channelName }), onSuccess: (channel) => { setChannelCreated(channel.public_key); qc.invalidateQueries({ queryKey: ["customer-channels", id] }); } });
 
   // Phase 2/5: the Report Employee and Document Employee both take exactly
@@ -77,8 +80,8 @@ export default function EmployeeDetailPage({
       if (!selectedFileId) {
         setRunError(
           isDocumentEmployee
-            ? "Choose a PDF, image, or DOCX file to analyze first."
-            : "Choose a CSV/Excel file to analyze first."
+            ? "{tx.chooseDocument}"
+            : "{tx.chooseDataset}"
         );
         return;
       }
@@ -89,7 +92,7 @@ export default function EmployeeDetailPage({
     try {
       input_data = JSON.parse(inputJson || "{}");
     } catch {
-      setRunError("Input must be valid JSON");
+      setRunError("{tx.inputInvalidJson}");
       return;
     }
     runMutation.mutate({ employee_id: id, input_data });
@@ -99,7 +102,7 @@ export default function EmployeeDetailPage({
   if (empQ.error || !empQ.data) {
     return (
       <div className="p-6 text-sm text-red-600">
-        {getErrorMessage(empQ.error) || "Employee not found"}
+        {getErrorMessage(empQ.error)}
       </div>
     );
   }
@@ -112,46 +115,46 @@ export default function EmployeeDetailPage({
     <>
       <Header
         title={emp.name}
-        description={`Slug: ${emp.slug} · ${emp.kind}`}
+        description={`${tx.slugKind}: ${emp.slug} · ${emp.kind}`}
         actions={<Badge status={emp.is_active ? "active" : "inactive"} />}
       />
       <div className="space-y-6 p-6">
         <Card>
-          <CardHeader><CardTitle>Publish to your customers</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tx.publishCustomers}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-sm text-gray-600">Create a public web channel. Your customers can chat with this employee without logging into the AI Employee Platform.</p>
-            <div className="flex gap-2"><input value={channelName} onChange={(e) => setChannelName(e.target.value)} className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm" /><Button onClick={() => channelMutation.mutate()} loading={channelMutation.isPending}><MessageCircle className="h-4 w-4" />Publish</Button></div>
-            {channelCreated && <div className="rounded-lg border bg-slate-50 p-3 text-sm"><p className="font-medium">Customer chat URL</p><code className="mt-1 block break-all text-xs">{typeof window !== "undefined" ? window.location.origin : ""}/chat/{channelCreated}</code><button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/chat/${channelCreated}`)} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-600"><Copy className="h-3 w-3" />Copy URL</button><p className="mt-2 text-xs text-gray-500">Embed on a website with: <code>&lt;script src=&quot;{typeof window !== "undefined" ? window.location.origin : ""}/widget.js?channel={channelCreated}&quot;&gt;&lt;/script&gt;</code></p></div>}
+            <p className="text-sm text-gray-600">{tx.publishDescription}</p>
+            <div className="flex gap-2"><input value={channelName} onChange={(e) => setChannelName(e.target.value)} className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm" /><Button onClick={() => channelMutation.mutate()} loading={channelMutation.isPending}><MessageCircle className="h-4 w-4" />{tx.publish}</Button></div>
+            {channelCreated && <div className="rounded-lg border bg-slate-50 p-3 text-sm"><p className="font-medium">{tx.customerChatUrl}</p><code className="mt-1 block break-all text-xs">{typeof window !== "undefined" ? window.location.origin : ""}/chat/{channelCreated}</code><button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/chat/${channelCreated}`)} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-600"><Copy className="h-3 w-3" />{tx.copyUrl}</button><p className="mt-2 text-xs text-gray-500">{tx.copyEmbed}: <code>&lt;script src=&quot;{typeof window !== "undefined" ? window.location.origin : ""}/widget.js?channel={channelCreated}&quot;&gt;&lt;/script&gt;</code></p></div>}
             {channelsQ.data && channelsQ.data.length > 0 && <div className="space-y-2">{channelsQ.data.map((channel) => <div key={channel.id} className="rounded-lg border px-3 py-2 text-xs"><div className="flex justify-between"><span className="font-medium">{channel.name}</span><Badge status={channel.is_active ? "active" : "inactive"} /></div><code className="break-all text-gray-500">/chat/{channel.public_key}</code></div>)}</div>}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle>Guardrails</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{tx.guardrails}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-gray-600">Control risky actions, approvals and forbidden operations. Changes publish a new employee version.</p>
-            <textarea className="min-h-[140px] w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs" value={guardrailsJson === "{}" && guardrailsQ.data ? JSON.stringify(guardrailsQ.data.rules, null, 2) : guardrailsJson} onChange={e=>setGuardrailsJson(e.target.value)} />
-            <Button size="sm" onClick={()=>guardrailMutation.mutate()} loading={guardrailMutation.isPending}>Save guardrails</Button>
+            <p className="text-sm text-gray-600">{tx.guardrailsDescription}</p>
+            <textarea className="min-h-[140px] w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs" value={guardrailsJson === "{}" && guardrailsQ.data ? JSON.stringify(guardrailsQ.data.rules, null, 2) : guardrailsJson} onChange={e=>set{tx.guardrails}Json(e.target.value)} />
+            <Button size="sm" onClick={()=>guardrailMutation.mutate()} loading={guardrailMutation.isPending}>{tx.saveGuardrails}</Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Run this employee</CardTitle>
+            <CardTitle>{tx.runEmployee}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {usesFilePicker ? (
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  {isDocumentEmployee ? "Document file (PDF, image, or DOCX)" : "Dataset file (CSV or Excel)"}
+                  {isDocumentEmployee ? "{isDocumentEmployee ? tx.documentFile : tx.datasetFile}" : "{tx.datasetFile}"}
                 </label>
                 {filesQ.isLoading ? (
                   <Spinner />
                 ) : files.length === 0 ? (
                   <p className="text-sm text-gray-500">
-                    No files uploaded yet.{" "}
+                    {tx.noFiles}{" "}
                     <Link href="/files" className="text-brand-600 hover:underline">
-                      Upload one on the Files page
+                      {tx.uploadFirst}
                     </Link>{" "}
                     first.
                   </p>
@@ -161,7 +164,7 @@ export default function EmployeeDetailPage({
                     value={selectedFileId}
                     onChange={(e) => setSelectedFileId(e.target.value)}
                   >
-                    <option value="">Select a file…</option>
+                    <option value="">{tx.selectFile}</option>
                     {files.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.filename} ({formatDate(f.created_at)})
@@ -173,7 +176,7 @@ export default function EmployeeDetailPage({
             ) : (
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Input (JSON)
+                  {tx.inputJson}
                 </label>
                 <textarea
                   className="min-h-[100px] w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
@@ -193,31 +196,31 @@ export default function EmployeeDetailPage({
               size="sm"
             >
               <Play className="h-4 w-4" />
-              Start run
+              {tx.startRun}
             </Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Run history</CardTitle>
+            <CardTitle>{tx.runHistory}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             {runsQ.isLoading && <Spinner />}
             {!runsQ.isLoading && runs.length === 0 && (
               <p className="px-5 py-8 text-center text-sm text-gray-500">
-                No runs for this employee yet.
+                {tx.noRuns}
               </p>
             )}
             {runs.length > 0 && (
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
-                    <th className="px-5 py-3 font-medium">ID</th>
-                    <th className="px-5 py-3 font-medium">Status</th>
-                    <th className="px-5 py-3 font-medium">Tokens</th>
-                    <th className="px-5 py-3 font-medium">Cost</th>
-                    <th className="px-5 py-3 font-medium">Created</th>
+                    <th className="px-5 py-3 font-medium">{tx.id}</th>
+                    <th className="px-5 py-3 font-medium">{tx.status}</th>
+                    <th className="px-5 py-3 font-medium">{tx.tokens}</th>
+                    <th className="px-5 py-3 font-medium">{tx.cost}</th>
+                    <th className="px-5 py-3 font-medium">{tx.created}</th>
                   </tr>
                 </thead>
                 <tbody>
