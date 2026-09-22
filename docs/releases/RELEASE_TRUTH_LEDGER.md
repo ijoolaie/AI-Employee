@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-21
+**Last reconciled:** 2026-09-22
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -40,6 +40,10 @@ Production deployment was explicitly **not claimed** by the certification manife
 
 Earlier v1.4.5 RC1, v1.4.5 engineering baseline and v1.4.6 certification records remain useful historical evidence. They must not be presented as the current release checkpoint, and no certification is transferred from those SHAs to v1.4.7.
 
+## Post-certification mainline evidence
+
+PR #596 completed Customer Settings, Security and API Keys lifecycle work. Its final head `bc98dc14a83f22296c7c45aa6f42b3a9f5dbe94f` passed CI #1709, CodeQL #2112, Production Infrastructure #969, HA Failure Recovery #676 and Ephemeral DAST #925, then merged as `9024a66cbc49279f317d72cebc15f56dbad4a0c1`. These checks validate the mainline change; they do not transfer `v1.4.9` certification to the new commit.
+
 ## External production boundary
 
 The following remain open:
@@ -61,7 +65,7 @@ These are tracked by #210, #269 and #19.
 ## Current interpretation
 
 - Current published release: **v1.4.9 / `f1ce20c...` — certified, not externally deployed.**
-- Current `main`: **`f1ce20c010779f5273eb5d0051da24cdd57b33f6`**, same as the certified v1.4.9 tag.
+- Current `main`: **`9024a66cbc49279f317d72cebc15f56dbad4a0c1`**, post-certification mainline; it is not a certified release identity.
 - Production deployment: **PENDING REAL INFRASTRUCTURE**.
 - Customer acceptance: **PENDING**.
 - Live provider validation: **PENDING**.

@@ -4,8 +4,8 @@
 **Certified release baseline:** `v1.4.9`  
 **Latest certified release:** `v1.4.9` — exact-SHA certification PASS  
 **Certified release commit:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`  
-**Mainline engineering head:** `368073764d836eef8f50646ecd99c3e034f10b6f`  
-**Status date:** 2026-09-21  
+**Mainline engineering head:** `9024a66cbc49279f317d72cebc15f56dbad4a0c1`  
+**Status date:** 2026-09-22  
 **Latest published release:** `v1.4.9`  
 **Latest certified release:** `v1.4.9`  
 **Certification run:** `35575615877` — PASS (exact `v1.4.9` SHA)  
@@ -47,7 +47,7 @@ The exact-SHA Production Certification suite passed for `v1.4.9`. Certification 
 - Exact-SHA Production Certification: **PASS** on `4f7c4676850b546a1c6bdf219ab9401202302e2d`, run `35568392010`, job `106234691683`.
 - Evidence artifact: `production-certification-evidence-v1.4.8-4f7c4676850b546a1c6bdf219ab9401202302e2d`.
 - Artifact digest: `sha256:d179fe603aac3460b0e751d7ad7957fad9c3f8dedf81ed8c4a9e9e608a78aa20`.
-- Certification does not transfer to current main `ee4c7c95...`.
+- Certification does not transfer to current main `9024a66cbc49279f317d72cebc15f56dbad4a0c1`.
 
 ## Historical engineering hardening context
 
@@ -99,7 +99,7 @@ Canonical record: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
 The `v1.4.9` implementation, exact-SHA certification and publication boundaries are complete. The release tag remains pinned to `f1ce20c010779f5273eb5d0051da24cdd57b33f6`. No post-certification source changes are part of the certified snapshot.
 
-The immediate frontier remains product completeness. The edition-aware Test Center backend and Vendor/Reseller workspace surfaces are now implemented and CI-validated; remaining P0 product-completeness work includes localization, template catalog, operational lifecycle parity, shared UX states and fa/en browser acceptance. Source changes require a new release candidate and fresh certification.
+The immediate frontier remains product completeness. Customer workspace lifecycle work through Settings/Security/API Keys is now merged through PR #596, and the changed head `bc98dc14a83f22296c7c45aa6f42b3a9f5dbe94f` passed CI #1709, CodeQL #2112, Production Infrastructure #969, HA #676 and DAST #925. Remaining P0 product-completeness work includes localization, template catalog, operational lifecycle parity, shared UX states and fa/en browser acceptance. Source changes require a new release candidate and fresh exact-SHA certification.
 
 ## Security rule
 

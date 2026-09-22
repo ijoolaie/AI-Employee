@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-09-21
+**Last reconciled:** 2026-09-22
 **Latest published release:** `v1.4.9`
 **Certified release SHA:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`
 **Exact-SHA Production Certification:** Run `35575615877` — PASS
@@ -24,9 +24,16 @@ Certification applies only to the exact certified SHA. Later commits on `main` d
 
 The AI Employee Platform is a multi-tenant business operating platform evolving toward a Human + Agent operating model. Platform, Reseller and Client workspaces remain separated by tenant, role and authorization boundaries.
 
-The current engineering/release baseline is **v1.4.9 / `f1ce20c...`**. Repository engineering, CI, production-like validation and exact-SHA Production Certification are complete for the tracked release scope.
+The latest certified release remains **v1.4.9 / `f1ce20c...`**. The current engineering mainline is post-certification at `9024a66cbc49279f317d72cebc15f56dbad4a0c1`; it is not certified. Repository engineering, CI, production-like validation and exact-SHA Production Certification are complete for the tracked release scope.
 
 No evidence currently establishes real production deployment, live-provider operation, measured production SLO/DR, independent security review, staffed production operations or customer acceptance.
+
+## Current post-certification engineering evidence
+
+- PR #596 (`bc98dc14a83f22296c7c45aa6f42b3a9f5dbe94f`) completed Customer Settings, Security and API Keys lifecycle work.
+- Required gates passed on that exact head: CI #1709, CodeQL #2112, Production Infrastructure #969, HA Failure Recovery #676, Ephemeral DAST #925.
+- PR #596 merged as `9024a66cbc49279f317d72cebc15f56dbad4a0c1`.
+- This is current mainline engineering evidence only; it does not certify a new release.
 
 ## Evidence boundary
 

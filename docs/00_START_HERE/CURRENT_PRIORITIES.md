@@ -1,6 +1,6 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-21
+**Reconciled:** 2026-09-22
 **Current release:** `v1.4.9`
 **Certified SHA:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`
 **Production Certification:** Run `35575615877` — PASS
@@ -19,7 +19,7 @@ The release certification is complete, but the readiness audit identified custom
 5. Standardize loading, empty, error, retry, success and permission-denied states.
 6. Add browser-level product acceptance in both fa and en.
 7. **DONE:** Make Test Center coverage edition-aware: Vendor/Reseller/Customer test only the capabilities they own, while shared isolation/RBAC/execution controls are tested at the shared boundary. Vendor `/admin/test-center`, Reseller `/reseller/test-center`, and Customer `/test-center` are now available.
-8. Reconcile documentation and prepare the next post-v1.4.9 candidate release.
+8. Complete documentation reconciliation after the current customer-workspace slice; then prepare the next post-v1.4.9 candidate release.
 9. Re-run the required certification gates for the changed source.
 
 Canonical audit: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
@@ -63,6 +63,6 @@ Canonical audit: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
 ## Current engineering state
 
-The v1.4.9 release has passed repository engineering gates and exact-SHA Production Certification. Do not restart completed test suites without a regression trigger. Do not restart completed test suites without a regression trigger.
+The v1.4.9 release has passed repository engineering gates and exact-SHA Production Certification. Customer workspace implementation has now advanced through Settings/Security/API Keys on post-certification mainline, with all required PR gates green. Do not restart completed test suites without a regression trigger.
 
 Broad feature expansion should remain paused. The product-completeness gate above is an explicit launch-blocking requirement identified by the readiness audit; external production evidence resumes after that gate is closed.
