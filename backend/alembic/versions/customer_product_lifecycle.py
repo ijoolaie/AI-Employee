@@ -7,7 +7,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "customerproductlifecycle01"
-down_revision = "rc9merge04"
+down_revision = ("p0eimmutableaudit", "p5merge01")
 branch_labels = None
 depends_on = None
 
