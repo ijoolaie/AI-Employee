@@ -616,6 +616,44 @@ const inboxFa = {
   emptyDescription: "گفتگوهای مشتریان پس از ارتباط آن‌ها با کانال‌های منتشرشده اینجا نمایش داده می‌شوند.",
 } as const;
 
+const conversations = {
+  title: "Conversations",
+  description: "Monitor customer conversations created through your published AI channels.",
+  directory: "Customer conversation history",
+  customer: "Customer",
+  anonymous: "Anonymous customer",
+  status: "Status",
+  messages: "Messages",
+  lastMessage: "Last message",
+  updated: "Updated",
+  noLastMessage: "No message yet",
+  loading: "Loading conversations…",
+  error: "Unable to load customer conversations.",
+  permissionDenied: "You do not have permission to view customer conversations.",
+  retry: "Retry",
+  emptyTitle: "No customer conversations yet",
+  emptyDescription: "Conversations will appear here when customers start chatting through your published channels.",
+} as const;
+
+const conversationsFa = {
+  title: "گفتگوها",
+  description: "گفتگوهای مشتریان ایجادشده از طریق کانال‌های هوش مصنوعی منتشرشده را مشاهده کنید.",
+  directory: "تاریخچه گفتگوی مشتریان",
+  customer: "مشتری",
+  anonymous: "مشتری ناشناس",
+  status: "وضعیت",
+  messages: "پیام‌ها",
+  lastMessage: "آخرین پیام",
+  updated: "به‌روزرسانی",
+  noLastMessage: "هنوز پیامی وجود ندارد",
+  loading: "در حال بارگذاری گفتگوها…",
+  error: "بارگذاری گفتگوهای مشتریان انجام نشد.",
+  permissionDenied: "شما اجازه مشاهده گفتگوهای مشتریان را ندارید.",
+  retry: "تلاش مجدد",
+  emptyTitle: "هنوز گفتگوی مشتری وجود ندارد",
+  emptyDescription: "گفتگوها پس از شروع چت مشتریان از طریق کانال‌های منتشرشده اینجا نمایش داده می‌شوند.",
+} as const;
+
 const nav = {
   business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
