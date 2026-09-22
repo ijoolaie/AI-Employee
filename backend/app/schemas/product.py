@@ -16,16 +16,16 @@ class ProductCreate(BaseModel):
     images: list[str] = Field(default_factory=list)
 
 class ProductUpdate(BaseModel):
-    sku: str | null = Field(default=None, max_length=80)
-    name: str | null = Field(default=None, min_length=1, max_length=255)
-    description: str | null = None
-    category: str | null = Field(default=None, max_length=120)
-    price: Decimal | null = Field(default=None, ge=0)
-    currency: str | null = Field(default=None, min_length=3, max_length=8)
-    inventory: int | null = Field(default=None, ge=0)
-    attributes: dict[str, Any] | null = None
-    images: list[str] | null = None
-    is_active: bool | null = None
+    sku: str | None = Field(default=None, max_length=80)
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+    category: str | None = Field(default=None, max_length=120)
+    price: Decimal | None = Field(default=None, ge=0)
+    currency: str | None = Field(default=None, min_length=3, max_length=8)
+    inventory: int | None = Field(default=None, ge=0)
+    attributes: dict[str, Any] | None = None
+    images: list[str] | None = None
+    is_active: bool | None = None
 
 class ProductResponse(ProductCreate):
     model_config = ConfigDict(from_attributes=True)
