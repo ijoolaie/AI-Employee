@@ -9,6 +9,7 @@ import { api, getErrorMessage, getUsageSummary } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/provider";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { AlertTriangle, BarChart3 } from "lucide-react";
 
 interface UsageOptimization {
@@ -31,7 +32,13 @@ function isPermissionError(error: unknown) {
 export default function UsagePage() {
   const { t } = useI18n();
   const m = t.usage;
-  const usage = useQuery({ queryKey: ["usage-summary"], queryFn: () => getUsageSummary() });
+  const [fromAt, setFromAt] = useState("");
+  const [toAt, setToAt] = useState("");
+  const [appliedRange, setAppliedRange] = useState<{ from_at?: string; to_at?: string }>({});
+  const usage = useQuery({
+    queryKey: ["usage-summary", appliedRange],
+    queryFn: () => getUsageSummary(appliedRange),
+  });
   const optimization = useQuery({
     queryKey: ["usage-optimization"],
     queryFn: async () => (await api.get<{ success: boolean; data: UsageOptimization }>("/usage/optimization")).data.data!,
@@ -46,6 +53,23 @@ export default function UsagePage() {
   return <>
     <Header title={m.title} description={m.description} />
     <div className="space-y-6 p-6">
+      <Card>
+        <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-end sm:flex-wrap">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-gray-500">{m.dateFrom}</span>
+            <input type="date" value={fromAt} onChange={e => setFromAt(e.target.value)} className="rounded-lg border px-3 py-2 text-sm" />
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-gray-500">{m.dateTo}</span>
+            <input type="date" value={toAt} onChange={e => setToAt(e.target.value)} className="rounded-lg border px-3 py-2 text-sm" />
+          </label>
+          <Button disabled={!!fromAt && !!toAt && fromAt > toAt} onClick={() => setAppliedRange({
+            ...(fromAt ? { from_at: `${fromAt}T00:00:00` } : {}),
+            ...(toAt ? { to_at: `${toAt}T23:59:59` } : {}),
+          })}>{m.apply}</Button>
+          <Button variant="secondary" onClick={() => { setFromAt(""); setToAt(""); setAppliedRange({}); }}>{m.clear}</Button>
+        </CardContent>
+      </Card>
       {(usage.isLoading || optimization.isLoading || forecast.isLoading) && <div className="flex justify-center py-8" aria-label={m.loading}><Spinner /></div>}
       {allFailed && <div role="alert" className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         <p>{permission ? m.permissionDenied : m.loadError}</p><Button variant="secondary" onClick={retry}>{m.retry}</Button>
