@@ -1080,6 +1080,9 @@ const studioFa = {
   create: "ایجاد کارمند هوش مصنوعی", creating: "در حال ایجاد…", createdSuccess: "کارمند با موفقیت ایجاد شد."
 } as const;
 
+const testCenter = { title:"Test Center", description:"Run authorized tenant-scoped tests and inspect engineering evidence.", workspace:"Workspace", allWorkspaces:"All workspaces", status:"Status", allStatuses:"All statuses", queued:"Queued", running:"Running", passed:"Passed", failed:"Failed", cancelled:"Cancelled", expired:"Expired", availableTests:"Available tests", noDefinitions:"No test definitions", noDefinitionsDescription:"No enabled Test Center definitions are available for this workspace.", noDescription:"No description provided.", run:"Run", runHistory:"Run history", noRuns:"No test runs", noRunsDescription:"Run an available test to create the first evidence record.", dispatched:"Dispatched test run", toWorker:"to the worker", selectedRun:"Selected run", correlation:"Correlation", liveRefresh:"Live status refresh is active.", refresh:"Refresh", exportEvidence:"Export verification record", evidence:"Evidence", queuedAt:"Queued", started:"Started", finished:"Finished", executionError:"Execution error", result:"Result", artifacts:"Artifacts", noArtifacts:"No artifacts attached.", refreshed:"Selected run refreshed.", exported:"Verification record exported.", testRun:"Run", test:"Test", actions:"Actions", workspaceColumn:"Workspace", created:"Created" } as const;
+const testCenterFa = { title:"مرکز تست", description:"اجرای تست‌های مجاز و محدود به تننت و مشاهده شواهد مهندسی.", workspace:"فضای کاری", allWorkspaces:"همه فضاهای کاری", status:"وضعیت", allStatuses:"همه وضعیت‌ها", queued:"در صف", running:"در حال اجرا", passed:"موفق", failed:"ناموفق", cancelled:"لغوشده", expired:"منقضی", availableTests:"تست‌های در دسترس", noDefinitions:"تعریف تستی وجود ندارد", noDefinitionsDescription:"برای این فضای کاری هیچ تست فعال مرکز تستی در دسترس نیست.", noDescription:"توضیحی ثبت نشده است.", run:"اجرا", runHistory:"تاریخچه اجرا", noRuns:"اجرایی وجود ندارد", noRunsDescription:"یک تست در دسترس را اجرا کنید تا اولین رکورد شواهد ایجاد شود.", dispatched:"اجرای تست ارسال شد", toWorker:"به Worker", selectedRun:"اجرای انتخاب‌شده", correlation:"همبستگی", liveRefresh:"به‌روزرسانی زنده وضعیت فعال است.", refresh:"تازه‌سازی", exportEvidence:"خروجی رکورد تأیید", evidence:"شواهد", queuedAt:"در صف", started:"شروع", finished:"پایان", executionError:"خطای اجرا", result:"نتیجه", artifacts:"آرتیفکت‌ها", noArtifacts:"آرتیفکتی پیوست نشده است.", refreshed:"اجرای انتخاب‌شده تازه‌سازی شد.", exported:"رکورد تأیید خروجی گرفته شد.", testRun:"اجرا", test:"تست", actions:"عملیات", workspaceColumn:"فضای کاری", created:"ایجاد شده" } as const;
+
 const nav = {
   business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
@@ -1197,6 +1200,7 @@ export const messages = {
     apiKeys,
     chat,
     studio,
+    testCenter,
     reports,
   },
   fa: {
@@ -1229,6 +1233,7 @@ export const messages = {
     apiKeys: apiKeysFa,
     chat: chatFa,
     studio: studioFa,
+    testCenter: testCenterFa,
     reports: reportsFa,
   },
 } as const;
