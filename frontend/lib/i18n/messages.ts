@@ -942,6 +942,25 @@ const channelsFa = {
   aiEmployeeFallback: "کارمند هوش مصنوعی",
 } as const;
 
+const runDetail = {
+  run: "Run", refresh: "Refresh", humanApproval: "Human approval required", approvalText: "This Run is paused because an AI-requested Tool requires explicit human approval. Open Approvals to review it.",
+  waitingWorker: "Waiting for the worker", queuedText: "The Run is queued. Make sure Redis and the Windows Celery worker are running.",
+  failed: "Run failed", status: "Status", tokens: "Tokens", cost: "Cost", created: "Created", input: "Input", error: "Error", output: "Output",
+  inProgress: "Run in progress…", noOutput: "No output produced.", reportDownloads: "Report Employee — downloads", documentDownloads: "Document Employee — downloads",
+  downloadPdf: "Download PDF", downloadExcel: "Download Excel", chart: "Chart", downloadText: "Download extracted text", executionTrace: "Execution trace",
+  noTrace: "No trace events recorded yet.", backEmployee: "← Back to employee", started: "Started", completed: "Completed",
+  thanks: "Thanks — your feedback was recorded.", useful: "Was this report useful?", optionalComment: "Optional comment — what worked, what didn't?", sendFeedback: "Send feedback"
+} as const;
+const runDetailFa = {
+  run: "اجرا", refresh: "تازه‌سازی", humanApproval: "نیازمند تأیید انسانی", approvalText: "این اجرا به دلیل نیاز ابزار درخواست‌شده توسط هوش مصنوعی به تأیید صریح انسانی متوقف شده است. برای بررسی، تأییدها را باز کنید.",
+  waitingWorker: "در انتظار Worker", queuedText: "اجرا در صف است. مطمئن شوید Redis و Worker سلری ویندوز در حال اجرا هستند.",
+  failed: "اجرا ناموفق بود", status: "وضعیت", tokens: "توکن", cost: "هزینه", created: "ایجاد شده", input: "ورودی", error: "خطا", output: "خروجی",
+  inProgress: "اجرا در حال انجام است…", noOutput: "خروجی تولید نشده است.", reportDownloads: "دانلودهای کارمند گزارش‌ساز", documentDownloads: "دانلودهای کارمند سندساز",
+  downloadPdf: "دانلود PDF", downloadExcel: "دانلود Excel", chart: "نمودار", downloadText: "دانلود متن استخراج‌شده", executionTrace: "رهگیری اجرا",
+  noTrace: "هنوز رویداد رهگیری ثبت نشده است.", backEmployee: "← بازگشت به کارمند", started: "شروع", completed: "تکمیل",
+  thanks: "از شما متشکریم؛ بازخورد ثبت شد.", useful: "آیا این گزارش مفید بود؟", optionalComment: "نظر اختیاری — چه چیزی خوب بود و چه چیزی نبود؟", sendFeedback: "ارسال بازخورد"
+} as const;
+
 const runs = {
   title: "Runs",
   description: "Execution history across all AI Employees",
@@ -1259,6 +1278,7 @@ export const messages = {
     knowledge,
     memory,
     runs,
+    runDetail,
     traces,
     usage,
     integrations,
@@ -1299,6 +1319,7 @@ export const messages = {
     knowledge: knowledgeFa,
     memory: memoryFa,
     runs: runsFa,
+    runDetail: runDetailFa,
     traces: tracesFa,
     usage: usageFa,
     integrations: integrationsFa,
