@@ -4,7 +4,7 @@
 **Certified release baseline:** `v1.4.9`  
 **Latest certified release:** `v1.4.9` — exact-SHA certification PASS  
 **Certified release commit:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`  
-**Mainline engineering head:** `29b9d6829cc7f7d4078cd749691af30b20060848`  
+**Mainline engineering head:** `84ac45bac69be6133f01246fd4aca80dce10dc76`  
 **Status date:** 2026-09-22  
 **Latest published release:** `v1.4.9`  
 **Latest certified release:** `v1.4.9`  
@@ -87,11 +87,11 @@ Certification never transfers automatically across SHAs. `v1.4.7` certification 
 
 A readiness review identified product-level launch blockers that are distinct from repository certification:
 
-- **Persian/RTL:** core customer localization and true RTL infrastructure have been implemented and a Playwright fa/en direction-switch acceptance test is now present; a final hard-coded-string sweep and broad browser acceptance remain before claiming the entire customer product localized.
+- **Persian/RTL:** core customer localization and true RTL infrastructure have been implemented and a Playwright fa/en direction-switch acceptance test is now present; the broad customer browser acceptance matrix now covers the principal operational routes in both `en` and `fa`; the remaining work is the final static hard-coded-string sweep over any residual/non-core customer surfaces.
 - **Employee Templates:** the curated backend catalog now contains seven starter templates with bilingual metadata, contracts, dependencies, tool/rule metadata, compatibility and tenant-safe localized installation.
 - **Lists / tables / CRUD:** the main customer commerce/lifecycle slices have been advanced through Product, Customer, Order/Invoice and Schedule lifecycle work. Schedule deletion is no longer exposed in the customer UI; enable/disable is the supported lifecycle control.
 - **Edition-aware Test Center:** definition visibility and execution are both edition-bound, with Vendor/Reseller/Customer and negative-boundary unit coverage.
-- **Browser acceptance:** customer fa/en RTL switching is now covered in `frontend/e2e/critical-flows.spec.ts`; broader customer-surface acceptance remains pending.
+- **Browser acceptance:** `frontend/e2e/critical-flows.spec.ts` now covers the principal customer operational routes in both `en` and `fa`, asserting route resolution plus `lang`/`dir` for each locale.
 - **Analytics/reporting state parity:** Customer Analytics/Dashboard/Reports now have concrete retry/empty-state coverage, and shared date/currency formatting follows the active document/browser locale rather than a hard-coded `en-US` locale.
 - **Certification boundary:** these source changes are not covered by the immutable `v1.4.9` certification. A new release candidate and fresh certification are still required.eactivate/cancel/revoke where retention or auditability requires it.
 
@@ -103,7 +103,7 @@ Canonical record: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
 The `v1.4.9` implementation, exact-SHA certification and publication boundaries are complete. The release tag remains pinned to `f1ce20c010779f5273eb5d0051da24cdd57b33f6`. No post-certification source changes are part of the certified snapshot.
 
-The immediate frontier remains product completeness. Customer workspace lifecycle work through Settings/Security/API Keys is now merged through PR #596, and the changed head `bc98dc14a83f22296c7c45aa6f42b3a9f5dbe94f` passed CI #1709, CodeQL #2112, Production Infrastructure #969, HA #676 and DAST #925. Remaining P0 product-completeness work includes localization, template catalog, operational lifecycle parity, shared UX states and fa/en browser acceptance. Source changes require a new release candidate and fresh exact-SHA certification.
+The immediate frontier remains the final product-completeness audit. Employee Template Catalog, commerce/customer lifecycle parity, edition-aware Test Center, shared UX state hardening, governance localization cleanup, and bilingual customer operational browser acceptance are now merged. The remaining gate is the final static localization/lifecycle/parity sweep, followed by a new post-v1.4.9 release candidate and fresh exact-SHA certification. Source changes remain outside the immutable v1.4.9 certification.
 
 ## Security rule
 
