@@ -93,10 +93,10 @@ const employeeFa = {
 } as const;
 
 const customers = {
-  title: "Customers", description: "Customer profiles connected to your AI Employees and channels.", searchPlaceholder: "Search name, email or phone…", directory: "Customer directory", anonymous: "Anonymous customer", empty: "No customers yet. Customers appear automatically when they start conversations.",
+  title: "Customers", description: "Customer profiles connected to your AI Employees and channels.", searchPlaceholder: "Search name, email or phone…", directory: "Customer directory", anonymous: "Anonymous customer", empty: "No customers yet. Customers appear automatically when they start conversations.", edit: "Edit", editTitle: "Edit customer", name: "Name", email: "Email", phone: "Phone", notes: "Notes", tags: "Tags", save: "Save changes", cancel: "Cancel", active: "Active", inactive: "Inactive", status: "Status", updateError: "Unable to update customer.", permissionDenied: "You do not have permission to manage customers.", retry: "Retry",
 } as const;
 const customersFa = {
-  title: "مشتریان", description: "پروفایل مشتریانی که به کارمندان هوش مصنوعی و کانال‌های شما متصل هستند.", searchPlaceholder: "جستجو بر اساس نام، ایمیل یا شماره تلفن…", directory: "فهرست مشتریان", anonymous: "مشتری ناشناس", empty: "هنوز مشتری‌ای وجود ندارد. مشتریان با شروع گفتگو به‌صورت خودکار ایجاد می‌شوند.",
+  title: "مشتریان", description: "پروفایل مشتریانی که به کارمندان هوش مصنوعی و کانال‌های شما متصل هستند.", searchPlaceholder: "جستجو بر اساس نام، ایمیل یا شماره تلفن…", directory: "فهرست مشتریان", anonymous: "مشتری ناشناس", empty: "هنوز مشتری‌ای وجود ندارد. مشتریان با شروع گفتگو به‌صورت خودکار ایجاد می‌شوند.", edit: "ویرایش", editTitle: "ویرایش مشتری", name: "نام", email: "ایمیل", phone: "تلفن", notes: "یادداشت", tags: "برچسب‌ها", save: "ذخیره تغییرات", cancel: "لغو", active: "فعال", inactive: "غیرفعال", status: "وضعیت", updateError: "به‌روزرسانی مشتری انجام نشد.", permissionDenied: "شما اجازه مدیریت مشتریان را ندارید.", retry: "تلاش مجدد",
 } as const;
 
 const commerce = {
