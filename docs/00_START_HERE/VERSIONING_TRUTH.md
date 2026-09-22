@@ -1,7 +1,7 @@
 # Versioning Truth
 
 **Status:** CANONICAL
-**Reconciled:** 2026-09-21
+**Reconciled:** 2026-09-22
 
 This document defines the independent version axes used by the AI Employee Platform.
 
@@ -23,7 +23,7 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 `v1.4.9` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
-Current `main` equals the certified `v1.4.9` SHA. Any subsequent source commit will be outside the certified release snapshot and requires fresh certification before being represented as part of a certified release.
+Current `main` is post-certification and resolves to `9024a66cbc49279f317d72cebc15f56dbad4a0c1`. It contains subsequent source changes and is therefore outside the certified `v1.4.9` snapshot. A new release candidate must receive fresh exact-SHA certification.
 
 ## 2. Architecture version
 
@@ -51,7 +51,7 @@ Current phase truth:
 - Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**
 - Stage 7: **ACTIVE — EXTERNAL PRODUCTION EXECUTION / CERTIFICATION**
 - Stage 8: **GOVERNED AGENT WORKFORCE FOUNDATION IMPLEMENTED; ACCEPTANCE/EVIDENCE RECONCILIATION CONTINUES WHERE REQUIRED**
-- Stage 9: **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN THE CURRENT v1.4.8 RELEASE**
+- Stage 9: **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN THE CURRENT v1.4.9 RELEASE**
 
 ## 4. Stage 9 optimization workstream
 
@@ -87,8 +87,8 @@ These capabilities are substantially present in the architecture; active work sh
 
 ```text
 RELEASE
-v1.3.8 ─────► v1.4.2 ─────► v1.4.5 ─────► v1.4.6 ─────► v1.4.7
- historical     certified      historical     certified      current certified
+v1.3.8 ─────► v1.4.2 ─────► v1.4.5 ─────► v1.4.6 ─────► v1.4.7 ─────► v1.4.8 ─────► v1.4.9
+ historical     certified      current certified
                                                              |
                                                              +-- external production: pending
 
