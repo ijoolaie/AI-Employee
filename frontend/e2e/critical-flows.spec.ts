@@ -145,4 +145,24 @@ test.describe("critical platform flows", () => {
     await expect(page.getByText(/Permission denied/i)).toBeVisible();
     await expect(page.getByText("Production deployment", { exact: true })).toBeVisible();
   });
+  test("customer workspace switches between English and Persian RTL", async ({ page }) => {
+    await page.addInitScript((state) => {
+      localStorage.setItem("aiep-auth", state);
+      localStorage.setItem("aiep.locale", "en");
+    }, authState);
+
+    await page.goto("/dashboard");
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+    await expect(page.getByRole("button", { name: "فا" })).toBeVisible();
+
+    await page.getByRole("button", { name: "فا" }).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "fa");
+    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+
+    await page.getByRole("button", { name: "EN" }).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "en");
+    await expect(page.locator("html")).toHaveAttribute("dir", "ltr");
+  });
+
 });
