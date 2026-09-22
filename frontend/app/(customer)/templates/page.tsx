@@ -62,6 +62,10 @@ export default function TemplatesPage() {
           const name = locale === "fa" ? template.name_fa : template.name;
           const description = locale === "fa" ? template.description_fa : template.description;
           const purpose = locale === "fa" ? template.purpose_fa : template.purpose;
+          const category = locale === "fa" ? template.category_fa : template.category;
+          const inputContract = locale === "fa" ? template.input_contract_fa : template.input_contract;
+          const outputContract = locale === "fa" ? template.output_contract_fa : template.output_contract;
+          const dependencies = locale === "fa" ? template.dependencies_fa : template.dependencies;
           const example = locale === "fa" ? template.example_fa : template.example;
 
           return (
@@ -70,7 +74,7 @@ export default function TemplatesPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <CardTitle>{name}</CardTitle>
-                    <p className="mt-1 text-xs text-gray-500">{template.category}</p>
+                    <p className="mt-1 text-xs text-gray-500">{category}</p>
                   </div>
                   <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
                     v{template.version}
@@ -92,15 +96,15 @@ export default function TemplatesPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-700">{tx.templateDependencies}</p>
-                    <p className="mt-1">{template.dependencies.join(" · ") || "—"}</p>
+                    <p className="mt-1">{dependencies.join(" · ") || "—"}</p>
                   </div>
                   <div>
                     <p className="font-semibold text-gray-700">{tx.templateInput}</p>
-                    <p className="mt-1">{template.input_contract}</p>
+                    <p className="mt-1">{inputContract}</p>
                   </div>
                   <div>
                     <p className="font-semibold text-gray-700">{tx.templateOutput}</p>
-                    <p className="mt-1">{template.output_contract}</p>
+                    <p className="mt-1">{outputContract}</p>
                   </div>
                   <div>
                     <p className="font-semibold text-gray-700">{tx.templateExample}</p>
