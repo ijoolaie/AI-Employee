@@ -1244,6 +1244,7 @@ export const messages = {
     privacy,
     auditLogs,
     dealDetail,
+    customerLegacy,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -1281,5 +1282,6 @@ export const messages = {
     privacy: privacyFa,
     auditLogs: auditLogsFa,
     dealDetail: dealDetailFa,
+    customerLegacy: customerLegacyFa,
   },
 } as const;
