@@ -16,7 +16,7 @@ export default function TemplatesPage() {
   const qc = useQueryClient();
   const router = useRouter();
   const install = useMutation({
-    mutationFn: installEmployeeTemplate,
+    mutationFn: (code: string) => installEmployeeTemplate(code, locale),
     onSuccess: (employee) => {
       void qc.invalidateQueries({ queryKey: ["employees"] });
       router.push(`/employees/${employee.id}`);
