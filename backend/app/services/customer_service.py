@@ -4,9 +4,9 @@ from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import audit_service
 from app.core.exceptions import NotFoundError
 from app.models.customer import Customer
+from app.services import audit_service
 
 
 async def upsert_customer(
