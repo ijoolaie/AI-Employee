@@ -161,6 +161,39 @@ async def get_order(
 
 
 
+async def update_order(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    actor_id: uuid.UUID | None,
+    order_id: str,
+    **data: Any,
+) -> BusinessOrder:
+    order = await get_order(db, tenant_id=tenant_id, order_id=order_id)
+    if order.status != "draft":
+        raise ValidationAppError("Only draft orders can be edited")
+    if not data:
+        return order
+    if "line_items" in data:
+        if not data["line_items"]:
+            raise ValidationAppError("At least one line item is required")
+    line_items = data.pop("line_items", None)
+    tax_rate = data.pop("tax_rate", None)
+    if line_items is not None or tax_rate is not None:
+        rate = normalize_tax_rate(tax_rate if tax_rate is not None else order.tax_rate)
+        items = [item.model_dump() if hasattr(item, "model_dump") else item for item in (line_items or order.line_items)]
+        subtotal, tax_amount, total, normalized = _compute_totals(items, rate)
+        order.line_items = normalized
+        order.tax_rate = rate
+        order.subtotal, order.tax_amount, order.total = subtotal, tax_amount, total
+    for key, value in data.items():
+        if value is not None and key in {"customer_name", "customer_email", "currency", "order_date", "requested_delivery_date", "notes"}:
+            setattr(order, key, value if key != "currency" else str(value).upper()[:8])
+    await db.flush()
+    await audit_service.record(db, tenant_id=tenant_id, actor_id=actor_id, action="order.updated", resource_type="business_order", resource_id=str(order.id), metadata={"fields": sorted(data.keys()) + (["line_items", "tax_rate"] if line_items is not None or tax_rate is not None else [])})
+    return order
+
+
 async def find_order_for_customer(db: AsyncSession, *, tenant_id: uuid.UUID, order_id: str | None = None, order_number: str | None = None) -> BusinessOrder:
     stmt = select(BusinessOrder).where(BusinessOrder.tenant_id == tenant_id)
     if order_id:
