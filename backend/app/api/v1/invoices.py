@@ -8,6 +8,7 @@ from app.core.deps import DbSession, InvoiceCreateContext, InvoiceExportPdfConte
 from app.schemas.common import APIResponse
 from app.schemas.invoice import (
     BusinessInvoiceCreate,
+    BusinessInvoiceUpdate,
     BusinessInvoiceResponse,
     BusinessInvoiceStatusUpdate,
     InvoiceFinancialSummary,
@@ -69,6 +70,11 @@ async def create_invoice(payload: BusinessInvoiceCreate, ctx: InvoiceCreateConte
 
 
 @router.post("/{invoice_id}/status", response_model=APIResponse[BusinessInvoiceResponse])
+async def update_invoice(invoice_id: UUID, payload: BusinessInvoiceUpdate, ctx: InvoiceUpdateContext, db: DbSession):
+    inv = await invoice_service.update_invoice(db, tenant_id=ctx.tenant_id, actor_id=ctx.user.id, invoice_id=str(invoice_id), **payload.model_dump(exclude_unset=True))
+    return APIResponse(success=True, data=BusinessInvoiceResponse.model_validate(inv))
+
+
 async def update_status(
     invoice_id: UUID,
     payload: BusinessInvoiceStatusUpdate,
