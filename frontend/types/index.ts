@@ -634,9 +634,13 @@ export interface EmployeeTemplate {
   purpose: string;
   purpose_fa: string;
   category: string;
+  category_fa: string;
   input_contract: string;
+  input_contract_fa: string;
   output_contract: string;
+  output_contract_fa: string;
   dependencies: string[];
+  dependencies_fa: string[];
   example: string;
   example_fa: string;
   version: string;
