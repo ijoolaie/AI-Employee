@@ -20,3 +20,4 @@ class CustomerUpdate(BaseModel):
     phone: str | None = None
     tags: list[str] = Field(default_factory=list)
     notes: str | None = None
+    is_active: bool | None = None
