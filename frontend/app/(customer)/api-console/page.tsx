@@ -15,7 +15,7 @@ type Method = "GET" | "POST" | "PATCH" | "DELETE";
 interface EndpointDef {
   method: Method;
   path: string; // relative to /api/v1, e.g. /employees/{employee_id}
-  summary: string;
+  summary?: string;
   sampleBody?: Record<string, unknown>;
 }
 
@@ -29,98 +29,98 @@ interface EndpointGroup {
 // spec is always available at {API base}/openapi.json for external tooling.
 const CATALOG: EndpointGroup[] = [
   {
-    name: "Employees",
+    name: "employees",
     endpoints: [
-      { method: "GET", path: "/employees", summary: "List AI employees for the current tenant" },
-      { method: "GET", path: "/employees/available-tools", summary: "List tools an employee can be given" },
-      { method: "GET", path: "/employees/{employee_id}", summary: "Get a single employee" },
+      { method: "GET", path: "/employees" },
+      { method: "GET", path: "/employees/available-tools" },
+      { method: "GET", path: "/employees/{employee_id}" },
       {
         method: "POST",
         path: "/employees",
-        summary: "Create a new AI employee",
+        
         sampleBody: { name: "Support Agent", role: "customer_support", system_prompt: "You are a helpful support agent." },
       },
     ],
   },
   {
-    name: "Runs",
+    name: "runs",
     endpoints: [
-      { method: "GET", path: "/runs", summary: "List runs (optionally by employee)" },
-      { method: "GET", path: "/runs/{run_id}", summary: "Get a run" },
-      { method: "GET", path: "/runs/{run_id}/trace", summary: "Get the full execution trace for a run" },
+      { method: "GET", path: "/runs" },
+      { method: "GET", path: "/runs/{run_id}" },
+      { method: "GET", path: "/runs/{run_id}/trace" },
       {
         method: "POST",
         path: "/runs",
-        summary: "Create/execute a run",
+        
         sampleBody: { employee_id: "", input_data: { message: "Hello" } },
       },
     ],
   },
   {
-    name: "{m.apiKeys}",
+    name: "apiKeys",
     endpoints: [
-      { method: "GET", path: "/api-keys", summary: "List API keys" },
-      { method: "POST", path: "/api-keys", summary: "Create a new API key", sampleBody: { name: "CI key" } },
-      { method: "POST", path: "/api-keys/{key_id}/revoke", summary: "Revoke an API key" },
+      { method: "GET", path: "/api-keys" },
+      { method: "POST", path: "/api-keys",  sampleBody: { name: "CI key" } },
+      { method: "POST", path: "/api-keys/{key_id}/revoke" },
     ],
   },
   {
-    name: "Knowledge",
+    name: "knowledge",
     endpoints: [
       {
         method: "POST",
         path: "/knowledge/search",
-        summary: "Semantic search over indexed documents",
+        
         sampleBody: { query: "refund policy", limit: 5 },
       },
       {
         method: "POST",
         path: "/knowledge/index",
-        summary: "Index a document",
+        
         sampleBody: { title: "FAQ", content: "..." },
       },
     ],
   },
   {
-    name: "Workflows",
+    name: "workflows",
     endpoints: [
-      { method: "GET", path: "/workflows", summary: "List workflows" },
-      { method: "GET", path: "/workflows/{workflow_id}/runs", summary: "List runs for a workflow" },
-      { method: "GET", path: "/workflows/{workflow_id}/runs/{run_id}/observability", summary: "Observability for a workflow run" },
-      { method: "POST", path: "/workflows/{workflow_id}/runs", summary: "Start a workflow run", sampleBody: { input_data: {} } },
-      { method: "POST", path: "/workflows/{workflow_id}/runs/{run_id}/cancel", summary: "Cancel a workflow run" },
+      { method: "GET", path: "/workflows" },
+      { method: "GET", path: "/workflows/{workflow_id}/runs" },
+      { method: "GET", path: "/workflows/{workflow_id}/runs/{run_id}/observability" },
+      { method: "POST", path: "/workflows/{workflow_id}/runs",  sampleBody: { input_data: {} } },
+      { method: "POST", path: "/workflows/{workflow_id}/runs/{run_id}/cancel" },
     ],
   },
   {
-    name: "Operations",
+    name: "operations",
     endpoints: [
-      { method: "GET", path: "/operations/metrics", summary: "Outbox / workflow operational metrics" },
-      { method: "GET", path: "/operations/audit-logs", summary: "Tenant audit log events" },
-      { method: "GET", path: "/operations/dead-letters", summary: "List dead-lettered messages" },
-      { method: "POST", path: "/operations/dead-letters/{message_id}/replay", summary: "Replay a dead-lettered message" },
+      { method: "GET", path: "/operations/metrics" },
+      { method: "GET", path: "/operations/audit-logs" },
+      { method: "GET", path: "/operations/dead-letters" },
+      { method: "POST", path: "/operations/dead-letters/{message_id}/replay" },
     ],
   },
   {
-    name: "Billing",
+    name: "billing",
     endpoints: [
-      { method: "GET", path: "/billing/plans", summary: "List available plans" },
-      { method: "GET", path: "/billing/subscription", summary: "Current subscription" },
-      { method: "GET", path: "/billing/entitlements", summary: "Current plan entitlements" },
-      { method: "POST", path: "/billing/checkout", summary: "Create a Stripe checkout session" },
-      { method: "POST", path: "/billing/portal", summary: "Create a Stripe billing-portal session" },
+      { method: "GET", path: "/billing/plans" },
+      { method: "GET", path: "/billing/subscription" },
+      { method: "GET", path: "/billing/entitlements" },
+      { method: "POST", path: "/billing/checkout" },
+      { method: "POST", path: "/billing/portal" },
     ],
   },
   {
-    name: "Usage",
-    endpoints: [{ method: "GET", path: "/usage/summary", summary: "Token/run/cost usage summary" }],
+    name: "usage",
+    endpoints: [{ method: "GET", path: "/usage/summary" }],
   },
   {
-    name: "Commerce",
+    name: "commerce",
     endpoints: [
-      { method: "GET", path: "/customers", summary: "List CRM customers" },
-      { method: "GET", path: "/orders", summary: "List orders" },
-      { method: "GET", path: "/orders/summary", summary: "Order summary metrics" },
-      { method: "GET", path: "/products", summary: "List products" },
+      { method: "GET", path: "/customers" },
+      { method: "GET", path: "/orders" },
+      { method: "GET", path: "/orders/summary" },
+      { method: "GET", path: "/products" },
     ],
   },
 ];
@@ -228,7 +228,7 @@ export default function ApiConsolePage() {
               {CATALOG.map((group, g) => (
                 <div key={group.name} className="border-b last:border-0">
                   <p className="bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    {group.name}
+                    {m.catalogGroups[group.name as keyof typeof m.catalogGroups]}
                   </p>
                   {group.endpoints.map((ep, e) => (
                     <button
@@ -263,7 +263,7 @@ export default function ApiConsolePage() {
                 </span>
                 <span className="font-mono text-sm text-gray-900">/api/v1{endpoint.path}</span>
               </CardTitle>
-              <p className="mt-1 text-sm text-gray-500">{endpoint.summary}</p>
+              <p className="mt-1 text-sm text-gray-500">{m.catalogDescriptions[CATALOG[groupIdx].name as keyof typeof m.catalogDescriptions]}</p>
             </CardHeader>
             <CardContent className="space-y-4">
               {params.length > 0 && (
@@ -297,7 +297,7 @@ export default function ApiConsolePage() {
               )}
 
               <Button onClick={send} loading={sending} disabled={sending}>
-                <Play className="mr-1.5 h-4 w-4" /> {m.send}
+                <Play className="me-1.5 h-4 w-4" /> {m.send}
               </Button>
 
               {error && (

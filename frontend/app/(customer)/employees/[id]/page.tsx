@@ -213,7 +213,7 @@ export default function EmployeeDetailPage({
               </p>
             )}
             {runs.length > 0 && (
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-start text-sm">
                 <thead>
                   <tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
                     <th className="px-5 py-3 font-medium">{tx.id}</th>

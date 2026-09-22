@@ -121,7 +121,7 @@ export default function WorkflowsPage() {
               <CardContent className="p-0">
                 <div className="overflow-auto">
                   <table className="w-full text-sm">
-                    <thead><tr className="border-b text-left text-xs uppercase text-gray-500">
+                    <thead><tr className="border-b text-start text-xs uppercase text-gray-500">
                       <th className="px-5 py-3">{m.nameColumn}</th>
                       <th className="px-5 py-3">{m.slug}</th>
                       <th className="px-5 py-3">{m.status}</th>

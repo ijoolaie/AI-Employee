@@ -56,7 +56,7 @@ export default function SalesPage() {
           dealsQ.isError ? <p className="text-sm text-red-600">{permissionDenied ? m.permissionDenied : m.error}</p> :
           deals.length === 0 ? <EmptyState icon={TrendingUp} title={m.emptyTitle} description={m.emptyDescription} /> :
           <Card><CardContent className="overflow-x-auto p-0">
-            <table className="w-full text-left text-sm"><thead><tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
+            <table className="w-full text-start text-sm"><thead><tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
               <th className="px-4 py-3 font-medium">{m.titleColumn}</th><th className="px-4 py-3 font-medium">{m.customer}</th><th className="px-4 py-3 font-medium">{m.stage}</th><th className="px-4 py-3 font-medium">{m.amount}</th><th className="px-4 py-3 font-medium">{m.probability}</th><th className="px-4 py-3 font-medium">{m.actions}</th>
             </tr></thead><tbody>{deals.map((d: BusinessDeal) => <tr key={d.id} className="border-b border-gray-50">
               <td className="px-4 py-3 font-medium"><Link className="text-brand-700 hover:underline" href={"/sales?deal=" + encodeURIComponent(d.id)}>{d.title}</Link></td>

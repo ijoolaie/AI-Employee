@@ -36,7 +36,7 @@ export default function ApiKeysPage() {
           <input value={name} onChange={e => setName(e.target.value)} placeholder={m.namePlaceholder} className="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm" />
           <Button disabled={!name.trim() || create.isPending} onClick={() => create.mutate()}><KeyRound className="h-4 w-4" />{create.isPending ? m.creating : m.create}</Button>
           {create.error && <p className="text-sm text-red-600">{getErrorMessage(create.error)}</p>}
-          <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-500"><ShieldCheck className="mr-1 inline h-4 w-4" />{m.secretNote} <code>X-API-Key</code></div>
+          <div className="rounded-lg bg-gray-50 p-3 text-xs text-gray-500"><ShieldCheck className="me-1 inline h-4 w-4" />{m.secretNote} <code>X-API-Key</code></div>
         </CardContent></Card>
         <Card><CardHeader><CardTitle>{m.activeCredentials}</CardTitle></CardHeader><CardContent>
           {keys.isLoading ? <p className="text-sm text-gray-500">Loading…</p> : keys.error ? <div className="space-y-2"><p className="text-sm text-red-600">{getErrorMessage(keys.error) || m.loadError}</p><Button variant="secondary" size="sm" onClick={() => void keys.refetch()}>{m.retry}</Button></div> : (keys.data ?? []).length === 0 ? <p className="text-sm text-gray-500">{m.empty}</p> :

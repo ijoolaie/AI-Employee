@@ -116,7 +116,7 @@ export default function OrdersPage() {
         ) : (
           <Card>
             <CardContent className="overflow-x-auto p-0">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-start text-sm">
                 <thead><tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
                   <th className="px-4 py-3 font-medium">{m.number}</th>
                   <th className="px-4 py-3 font-medium">{m.customer}</th>
@@ -206,7 +206,7 @@ function OrderDetail({ orderQ, m, qc, onBack }: {
               <p className="text-xs font-medium text-slate-500">{m.lineItems}</p>
               <div className="mt-2 overflow-x-auto rounded border">
                 <table className="w-full text-sm">
-                  <thead><tr className="border-b text-left text-xs text-slate-500"><th className="px-3 py-2">{m.item}</th><th className="px-3 py-2">{m.quantity}</th><th className="px-3 py-2">{m.unitPrice}</th><th className="px-3 py-2">{m.amount}</th></tr></thead>
+                  <thead><tr className="border-b text-start text-xs text-slate-500"><th className="px-3 py-2">{m.item}</th><th className="px-3 py-2">{m.quantity}</th><th className="px-3 py-2">{m.unitPrice}</th><th className="px-3 py-2">{m.amount}</th></tr></thead>
                   <tbody>{order.line_items.map((item, index) => <tr key={item.sku ?? index} className="border-b last:border-0"><td className="px-3 py-2">{item.description}</td><td className="px-3 py-2">{item.quantity}</td><td className="px-3 py-2">{money(item.unit_price)}</td><td className="px-3 py-2">{item.amount == null ? "—" : money(item.amount)}</td></tr>)}</tbody>
                 </table>
               </div>
