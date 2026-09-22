@@ -1,13 +1,13 @@
 """Add product update RBAC permission.
 
 Revision ID: customerproductlifecycle01
-Revises: rc9merge04
+Revises: p5license02
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = "customerproductlifecycle01"
-down_revision = "p5merge01"
+down_revision = "p5license02"
 branch_labels = None
 depends_on = None
 
