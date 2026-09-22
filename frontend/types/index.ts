@@ -626,8 +626,25 @@ export interface InboxConversation extends CustomerConversationSummary { handoff
 export interface Customer { id:string; external_key:string; name:string|null; email:string|null; phone:string|null; tags:string[]; notes:string|null; last_channel:string|null; created_at:string; updated_at:string; }
 
 export interface EmployeeTemplate {
-  code: string; name: string; description: string; kind: string;
-  allowed_tools: string[]; rules: Record<string, unknown>; prompt_template: string;
+  code: string;
+  name: string;
+  name_fa: string;
+  description: string;
+  description_fa: string;
+  purpose: string;
+  purpose_fa: string;
+  category: string;
+  input_contract: string;
+  output_contract: string;
+  dependencies: string[];
+  example: string;
+  example_fa: string;
+  version: string;
+  min_platform_version: string;
+  kind: string;
+  allowed_tools: string[];
+  rules: Record<string, unknown>;
+  prompt_template: string;
 }
 export interface ROIAnalytics {
   conversations:number; ai_resolved:number; human_handoffs:number; runs:number; successful_runs:number;
