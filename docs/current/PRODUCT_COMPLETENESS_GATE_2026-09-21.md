@@ -40,13 +40,17 @@ The design document documents/22_I18n_Localization_v1.0.md already defines Persi
 
 ### Employee Templates
 
-The backend currently defines three templates:
+The backend now defines seven curated templates:
 
 - sales_assistant
 - support_agent
 - order_assistant
+- catalog_assistant
+- report_analyst
+- document_analyst
+- finance_assistant
 
-The public template API exposes list/install operations, and the customer template page renders cards with an install action.
+The template API exposes list/install operations with an explicit locale, and the customer template page renders a localized catalog with loading/error/retry handling, bilingual metadata, compatibility/dependency information and installation feedback.
 
 This is a valid foundation, but not a complete commercial employee catalog. The next implementation should define a curated minimum catalog, not an arbitrary large number of templates.
 
