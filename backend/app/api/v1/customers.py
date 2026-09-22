@@ -19,5 +19,5 @@ async def get_customer(customer_id: UUID, ctx: CustomerReadContext, db: DbSessio
 
 @router.patch("/{customer_id}", response_model=APIResponse[CustomerResponse])
 async def update_customer(customer_id: UUID, payload: CustomerUpdate, ctx: CustomerUpdateContext, db: DbSession):
-    row = await customer_service.update_customer(db, tenant_id=ctx.tenant_id, customer_id=customer_id, **payload.model_dump())
+    row = await customer_service.update_customer(db, tenant_id=ctx.tenant_id, customer_id=customer_id, **payload.model_dump(exclude_unset=True))
     return APIResponse(success=True, data=CustomerResponse.model_validate(row, from_attributes=True))
