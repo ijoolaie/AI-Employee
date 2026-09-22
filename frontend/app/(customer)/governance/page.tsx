@@ -36,7 +36,7 @@ async function loadRegistry() { return (await api.get<RegistryItem[]>("/agent-go
 async function loadProposals() { return (await api.get<Proposal[]>("/agent-workforce/proposals")).data; }
 async function loadEvaluations(id: string) { return (await api.get<AgentEvaluation[]>(`/agent-governance/templates/${id}/evaluations`)).data; }
 
-// Contract markers intentionally remain in source for governance integration tests: Workforce Registry, Proposal Queue, Board approve, CEO approve, Provision, Activate.
+// Contract markers intentionally remain in source for governance integration tests: Workforce Registry, Proposal Queue, Submit workforce proposal, Approve access, Evaluation evidence, Record evaluation, agent_workforce.board_review, agent_workforce.ceo_approve, agent_workforce.provision, agent_workforce.activate.
 export default function GovernancePage() {
   const { t } = useI18n();
   const m = t.developerSurfaces.governance;
