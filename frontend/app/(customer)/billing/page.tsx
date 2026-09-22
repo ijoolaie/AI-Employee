@@ -11,6 +11,13 @@ import { formatCurrency } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n/provider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+function localizedStatus(status: string, m: typeof import("@/lib/i18n/messages").messages.en.billing) {
+  if (status === "trialing") return m.trialing;
+  if (status === "active") return m.activeStatus;
+  if (status === "canceled") return m.canceled;
+  if (status === "past_due") return m.pastDue;
+  return status;
+}
 function isPermissionError(error: unknown) {
   const message = getErrorMessage(error).toLowerCase();
   return message.includes("permission") || message.includes("403") || message.includes("forbidden");
@@ -27,6 +34,7 @@ export default function BillingPage() {
   const choosePlan=(code:string)=>code==="starter"?change.mutate(code):checkout.mutate(code);
   const retry=()=>{void plans.refetch();void subscription.refetch();void entitlements.refetch();};
   const loadError=plans.error||subscription.error||entitlements.error;
+  const busy=change.isPending||cancel.isPending||checkout.isPending||portal.isPending;
   return <><Header title={m.title} description={m.description}/><div className="space-y-6 p-6">
     {loadError&&<div role="alert" className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"><p>{isPermissionError(loadError)?m.permissionDenied:m.loadError}</p><Button variant="secondary" onClick={retry}>{m.retry}</Button></div>}
     {plans.isLoading||subscription.isLoading||entitlements.isLoading?<div className="flex justify-center py-8" aria-label={m.loading}><Spinner/></div>:null}
@@ -40,7 +48,7 @@ export default function BillingPage() {
     </CardContent></Card>}
     {!subscription.error&&subscription.data&&<Card><CardHeader><CardTitle>{m.currentSubscription}</CardTitle></CardHeader><CardContent className="grid gap-4 text-sm md:grid-cols-4">
       <div><p className="text-gray-500">{m.plan}</p><p className="font-semibold text-gray-900">{subscription.data.plan.name}</p></div>
-      <div><p className="text-gray-500">{m.status}</p><p className="font-semibold text-gray-900">{subscription.data.status}</p></div>
+      <div><p className="text-gray-500">{m.status}</p><p className="font-semibold text-gray-900">{localizedStatus(subscription.data.status, m)}</p></div>
       <div><p className="text-gray-500">{m.monthlyPrice}</p><p className="font-semibold text-gray-900">{formatCurrency(Number(subscription.data.plan.monthly_price_usd))}</p></div>
       <div><p className="text-gray-500">{m.periodEnd}</p><p className="font-semibold text-gray-900">{new Date(subscription.data.current_period_end).toLocaleDateString()}</p></div>
     </CardContent></Card>}
@@ -49,7 +57,7 @@ export default function BillingPage() {
     !plans.error&&<div className="grid gap-4 md:grid-cols-3">{(plans.data??[]).map(plan=><Card key={plan.code} className={subscription.data?.plan.code===plan.code?"ring-2 ring-brand-500":""}>
       <CardHeader><CardTitle>{plan.name}</CardTitle><p className="text-2xl font-semibold">{formatCurrency(Number(plan.monthly_price_usd))}<span className="text-sm font-normal text-gray-500"> / {m.month}</span></p></CardHeader>
       <CardContent className="space-y-2 text-sm text-gray-600"><p>{plan.monthly_runs.toLocaleString()} {m.runsPerMonth}</p><p>{plan.monthly_tokens.toLocaleString()} {m.tokensPerMonth}</p><p>{m.upTo} {plan.max_employees} {m.employees}</p><p>{m.upTo} {plan.max_workflows} {m.workflows}</p>
-        <Button className="mt-3 w-full" disabled={change.isPending||checkout.isPending||subscription.data?.plan.code===plan.code} loading={(plan.code==="starter"?change.isPending:checkout.isPending)} onClick={()=>choosePlan(plan.code)}>
+        <Button className="mt-3 w-full" disabled={busy||subscription.data?.plan.code===plan.code} loading={(plan.code==="starter"?change.isPending:checkout.isPending)} onClick={()=>choosePlan(plan.code)}>
           {subscription.data?.plan.code===plan.code?m.currentPlan:plan.code==="starter"?m.choose.replace("{plan}",plan.name):m.subscribe.replace("{plan}",plan.name)}
         </Button>
       </CardContent>
