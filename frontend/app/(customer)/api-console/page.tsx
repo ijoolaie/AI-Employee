@@ -213,7 +213,7 @@ export default function ApiConsolePage() {
   return (
     <>
       <Header
-        title="API Console"
+        title={m.title}
         description="Browse tenant-scoped endpoints and call them live using your current session"
       />
       <div className="grid gap-6 p-6 xl:grid-cols-[280px_minmax(0,1fr)]" dir="auto">
@@ -285,7 +285,7 @@ export default function ApiConsolePage() {
 
               {["POST", "PATCH"].includes(endpoint.method) && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Request body (JSON)</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{m.requestBody} (JSON)</p>
                   <textarea
                     value={bodyText}
                     onChange={(e) => setBodyText(e.target.value)}
@@ -297,7 +297,7 @@ export default function ApiConsolePage() {
               )}
 
               <Button onClick={send} loading={sending} disabled={sending}>
-                <Play className="mr-1.5 h-4 w-4" /> Send request
+                <Play className="mr-1.5 h-4 w-4" /> {m.send}
               </Button>
 
               {error && (
@@ -314,7 +314,7 @@ export default function ApiConsolePage() {
                 </CardTitle>
                 <div className="mt-1 flex items-center gap-3 text-xs text-gray-500">
                   <Badge status={result.status >= 200 && result.status < 300 ? "completed" : "failed"} />
-                  <span>HTTP {result.status || "{m.networkError}"}</span>
+                  <span>HTTP {result.status || m.networkError}</span>
                   <span>{result.ms} ms</span>
                 </div>
               </CardHeader>
