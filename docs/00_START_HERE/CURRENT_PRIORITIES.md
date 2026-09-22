@@ -12,15 +12,15 @@
 
 The release certification is complete, but the readiness audit identified customer-facing product completeness gaps that must be closed before commercial production deployment.
 
-1. Complete Persian/English localization across core customer-facing surfaces and verify true RTL behavior.
+1. **NEAR-COMPLETE:** core Persian/English localization and true RTL behavior are implemented; finish the final static hard-coded-string sweep across residual/non-core customer surfaces.
 2. Complete the curated Employee Template catalog and template installation/customization contract.
 3. Inventory operational lists/detail pages and close backend/frontend CRUD/lifecycle parity gaps.
 4. Apply resource-specific lifecycle semantics: archive/deactivate/cancel/revoke instead of indiscriminate hard delete.
 5. Standardize loading, empty, error, retry, success and permission-denied states — substantially implemented across audited customer surfaces; continue the residual-surface sweep.
-6. **PARTIAL:** Browser-level fa/en acceptance now covers customer locale switching and true `lang`/`dir`; broaden it to critical customer operational surfaces before closing the gate.
+6. **DONE:** Browser-level acceptance now covers the principal customer operational surfaces in both `en` and `fa`, asserting route resolution and `lang`/`dir` for each locale.
 7. **DONE:** Make Test Center coverage edition-aware: Vendor/Reseller/Customer test only the capabilities they own, while shared isolation/RBAC/execution controls are tested at the shared boundary. Vendor `/admin/test-center`, Reseller `/reseller/test-center`, and Customer `/test-center` are now available.
 8. **DONE:** Reconcile the current product-completeness documentation with the merged customer-workspace work.
-9. Prepare the next post-v1.4.9 release candidate and run fresh certification after the remaining product-completeness acceptance scope is closed.
+9. Prepare the next post-v1.4.9 release candidate and run fresh certification after the final static localization/lifecycle/parity sweep is closed.
 
 Canonical audit: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
@@ -63,6 +63,6 @@ Canonical audit: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
 ## Current engineering state
 
-The v1.4.9 release has passed repository engineering gates and exact-SHA Production Certification. Post-certification mainline now includes Employee Template Catalog, Product/Customer/Order/Invoice lifecycle parity, edition-aware Test Center execution, non-destructive schedule lifecycle UI, customer fa/en RTL browser acceptance, and analytics/reporting state parity. PRs #607–#613 and #615 relevant to this slice passed the required gates before merge. Do not restart completed test suites without a regression trigger.
+The v1.4.9 release has passed repository engineering gates and exact-SHA Production Certification. Post-certification mainline now includes Employee Template Catalog, Product/Customer/Order/Invoice lifecycle parity, edition-aware Test Center execution, non-destructive schedule lifecycle UI, customer bilingual operational browser acceptance, governance localization cleanup, and analytics/reporting state parity. PRs #607–#619 relevant to this slice passed the required gates before merge. Do not restart completed test suites without a regression trigger.
 
 Broad feature expansion should remain paused. The product-completeness gate above is an explicit launch-blocking requirement identified by the readiness audit; external production evidence resumes after that gate is closed.

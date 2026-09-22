@@ -6,9 +6,9 @@ The v1.4.9 release is repository-certified, but certification validates the defi
 
 A product-completeness review was triggered by three concrete findings:
 
-1. Persian/RTL support exists only as a minimal i18n shell and is not a complete usable Persian product experience.
-2. Employee Templates exist, but the catalog is limited to three templates and the template flow is install-only; it does not yet constitute a sufficiently complete employee starter catalog for the intended business product.
-3. Several list/table surfaces and resource lifecycle actions need a systematic CRUD/lifecycle parity review; hard deletion must not be added indiscriminately where archive/deactivate/retention is safer.
+1. Persian/RTL support required a broad customer acceptance pass in addition to the i18n shell.
+2. Employee Templates needed a curated commercial starter catalog and complete installation metadata.
+3. Several list/table surfaces and resource lifecycle actions required a systematic CRUD/lifecycle parity review; hard deletion must not be added indiscriminately where archive/deactivate/retention is safer.
 
 ## Decision
 
@@ -173,11 +173,11 @@ Before external production deployment of a source-changed release:
 9. Standardize loading/empty/error/retry/success/permission-denied states.
 10. Add destructive-action confirmation and audit behavior.
 11. Add frontend and backend regression coverage for completed product flows.
-12. Run a browser-level product acceptance pass in both fa and en.
+12. Run a browser-level product acceptance pass in both fa and en. **DONE for the principal customer operational route matrix via `frontend/e2e/critical-flows.spec.ts`.**
 
 14. Validate the Test Center with an edition-aware test catalog: shared controls are tested at shared boundaries, while Vendor/Reseller/Customer tests cover only the capabilities each edition owns.
 15. Verify negative cross-edition authorization paths without requiring every service to be exercised by every edition.
-16. Only then cut a new release candidate and rerun the required certification gates.
+16. Only then cut a new release candidate and rerun the required certification gates. **CURRENT: final static localization/lifecycle/parity sweep remains before RC.**
 
 ## Release boundary
 
