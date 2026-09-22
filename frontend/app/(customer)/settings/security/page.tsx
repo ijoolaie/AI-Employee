@@ -21,7 +21,7 @@ export default function SecuritySettingsPage() {
     if(newPassword!==confirmPassword){setError(m.matchError);return;}
     setSaving(true);
     try{await changePassword({current_password:currentPassword,new_password:newPassword});setSuccess(true);}
-    catch(err){setError(getErrorMessage(err));} finally{setSaving(false);}
+    catch(err){setError(getErrorMessage(err) || m.updateError);} finally{setSaving(false);}
   }
   const type=showPasswords?"text":"password";
   return <><Header title={m.title} description={m.description}/><div className="mx-auto max-w-2xl p-6"><Card><CardHeader><CardTitle>{m.changePassword}</CardTitle><p className="text-sm text-gray-500">{m.changeDescription}</p></CardHeader><CardContent>
