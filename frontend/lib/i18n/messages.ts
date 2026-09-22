@@ -1227,6 +1227,7 @@ const dashboard = {
   activeSchedulesText: "active schedules",
   webhooks: "Webhooks",
   activeTriggers: "active triggers",
+  retry: "Retry",
 } as const;
 
 const dashboardFa = {
@@ -1261,6 +1262,7 @@ const dashboardFa = {
   activeSchedulesText: "زمان‌بندی فعال",
   webhooks: "وب‌هوک‌ها",
   activeTriggers: "محرک فعال",
+  retry: "تلاش مجدد",
 } as const;
 
 const analytics = {
