@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 from pydantic import BaseModel, Field
 
@@ -11,10 +11,29 @@ class GuardrailsUpdate(BaseModel):
     allowed_tools: list[str] | None = None
     rules: dict[str, Any] = Field(default_factory=dict)
 
+class EmployeeTemplateInstall(BaseModel):
+    locale: Literal["en", "fa"] = "en"
+
 class EmployeeTemplate(BaseModel):
     code: str
     name: str
+    name_fa: str
     description: str
+    description_fa: str
+    purpose: str
+    purpose_fa: str
+    category: str
+    category_fa: str
+    input_contract: str
+    input_contract_fa: str
+    output_contract: str
+    output_contract_fa: str
+    dependencies: list[str] = Field(default_factory=list)
+    dependencies_fa: list[str] = Field(default_factory=list)
+    example: str
+    example_fa: str
+    version: str
+    min_platform_version: str
     kind: str = "custom"
     allowed_tools: list[str] = Field(default_factory=list)
     rules: dict[str, Any] = Field(default_factory=dict)
