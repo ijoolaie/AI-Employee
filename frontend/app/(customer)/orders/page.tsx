@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { ShoppingCart, RefreshCw, ArrowLeft } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/utils";
-import { getOrder, getOrderSummary, listOrders, updateOrderStatus } from "@/lib/api";
+import { getOrder, getOrderSummary, listOrders, updateOrder, updateOrderStatus } from "@/lib/api";
 import type { BusinessOrder } from "@/types";
 import { useI18n } from "@/lib/i18n/provider";
 
@@ -162,6 +163,11 @@ function OrderDetail({ orderQ, m, qc, onBack }: {
   onBack: () => void;
 }) {
   const order = orderQ.data;
+  const [editing,setEditing]=useState(false);
+  const [name,setName]=useState("");
+  const [email,setEmail]=useState("");
+  const [notes,setNotes]=useState("");
+  const editMut=useMutation({mutationFn:()=>updateOrder(order!.id,{customer_name:name,customer_email:email||null,notes:notes||null}),onSuccess:(updated)=>{setEditing(false);qc.setQueryData(["order",updated.id],updated);qc.invalidateQueries({queryKey:["orders"]});qc.invalidateQueries({queryKey:["orders-summary"]});}});
   const statusMut = useMutation({
     mutationFn: (status: string) => updateOrderStatus(order!.id, status),
     onSuccess: (updated) => {
@@ -186,6 +192,8 @@ function OrderDetail({ orderQ, m, qc, onBack }: {
   return (
     <div className="space-y-5">
       <button type="button" onClick={onBack} className="inline-flex items-center gap-2 text-sm text-brand-700 hover:underline"><ArrowLeft className="h-4 w-4" />{m.back}</button>
+      <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={()=>{setName(order.customer_name);setEmail(order.customer_email??"");setNotes(order.notes??"");setEditing(true)}} disabled={order.status!=="draft"}>{m.edit}</Button></div>
+      {editing && order.status==="draft" && <Card><CardContent className="grid gap-3 p-5 sm:grid-cols-2"><label className="text-sm"><span>{m.customer}</span><input className="mt-1 w-full rounded border px-3 py-2" value={name} onChange={e=>setName(e.target.value)}/></label><label className="text-sm"><span>{m.email}</span><input className="mt-1 w-full rounded border px-3 py-2" value={email} onChange={e=>setEmail(e.target.value)}/></label><label className="text-sm sm:col-span-2"><span>{m.notes}</span><textarea className="mt-1 w-full rounded border px-3 py-2" value={notes} onChange={e=>setNotes(e.target.value)}/></label><div className="flex gap-2"><Button onClick={()=>editMut.mutate()} disabled={editMut.isPending}>{editMut.isPending?m.saving:m.save}</Button><Button variant="outline" onClick={()=>setEditing(false)}>{m.cancel}</Button></div></CardContent></Card>}
       <div className="grid gap-5 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader><CardTitle>{order.number}</CardTitle></CardHeader>
