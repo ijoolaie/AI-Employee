@@ -12,9 +12,12 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Download, FileSpreadsheet, FileText, Star } from "lucide-react";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n/provider";
+import { useI18n } from "@/lib/i18n/provider";
 
 export default function RunDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { t } = useI18n();
+  const m = t.runDetail;
   const { t } = useI18n();
   const tx = t.runs;
 
@@ -217,7 +220,7 @@ function RunFeedback({ runId, employeeId }: { runId: string; employeeId: string 
           <p className="text-sm text-red-600">{getErrorMessage(mutation.error)}</p>
         )}
         <Button size="sm" disabled={rating === 0} loading={mutation.isPending} onClick={() => mutation.mutate()}>
-          Send feedback
+          {m.sendFeedback}
         </Button>
       </CardContent>
     </Card>
