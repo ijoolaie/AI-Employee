@@ -37,7 +37,7 @@ const employee = {
   inputInvalidJson: "Input must be valid JSON",
   chooseDocument: "Choose a PDF, image, or DOCX file to analyze first.",
   chooseDataset: "Choose a CSV/Excel file to analyze first.",
-  copyEmbed: "Embed on a website with", existingChannels: "Published channels", retry: "Retry", guardrailsLoadError: "Unable to load guardrails.", guardrailsSaveError: "Unable to save guardrails.", publishError: "Unable to publish channel.", publishSuccess: "Channel published successfully.", runLoadError: "Unable to load run history.", runError: "Unable to start run.", details: "Details", status: "Status", tokens: "Tokens", cost: "Cost", id: "ID", active: "Active", inactive: "Inactive", slugKind: "Slug / kind", guardrailsInvalid: "Guardrails must be valid JSON.", notFound: "Employee not found.", first: "first."
+  copyEmbed: "Embed on a website with", existingChannels: "Published channels", retry: "Retry", guardrailsLoadError: "Unable to load guardrails.", guardrailsSaveError: "Unable to save guardrails.", publishError: "Unable to publish channel.", publishSuccess: "Channel published successfully.", runLoadError: "Unable to load run history.", runError: "Unable to start run.", details: "Details", status: "Status", tokens: "Tokens", cost: "Cost", id: "ID", active: "Active", inactive: "Inactive", slugKind: "Slug / kind", guardrailsInvalid: "Guardrails must be valid JSON.", notFound: "Employee not found.", first: "first.", retry: "Retry"
 
 } as const;
 
@@ -78,7 +78,7 @@ const employeeFa = {
   inputInvalidJson: "ورودی باید JSON معتبر باشد",
   chooseDocument: "ابتدا یک فایل PDF، تصویر یا DOCX انتخاب کنید.",
   chooseDataset: "ابتدا یک فایل CSV یا Excel انتخاب کنید.",
-  copyEmbed: "برای قراردادن در وب‌سایت", existingChannels: "کانال‌های منتشرشده", guardrailsLoadError: "بارگذاری قواعد حفاظتی انجام نشد.", guardrailsSaveError: "ذخیره قواعد حفاظتی انجام نشد.", publishError: "انتشار کانال انجام نشد.", publishSuccess: "کانال با موفقیت منتشر شد.", runLoadError: "بارگذاری تاریخچه اجرا انجام نشد.", runError: "شروع اجرا انجام نشد.", details: "جزئیات", status: "وضعیت", tokens: "توکن‌ها", cost: "هزینه", id: "شناسه", active: "فعال", inactive: "غیرفعال", slugKind: "شناسه / نوع", guardrailsInvalid: "قواعد حفاظتی باید JSON معتبر باشند.", notFound: "کارمند پیدا نشد.", first: "ابتدا."
+  copyEmbed: "برای قراردادن در وب‌سایت", existingChannels: "کانال‌های منتشرشده", guardrailsLoadError: "بارگذاری قواعد حفاظتی انجام نشد.", guardrailsSaveError: "ذخیره قواعد حفاظتی انجام نشد.", publishError: "انتشار کانال انجام نشد.", publishSuccess: "کانال با موفقیت منتشر شد.", runLoadError: "بارگذاری تاریخچه اجرا انجام نشد.", runError: "شروع اجرا انجام نشد.", details: "جزئیات", status: "وضعیت", tokens: "توکن‌ها", cost: "هزینه", id: "شناسه", active: "فعال", inactive: "غیرفعال", slugKind: "شناسه / نوع", guardrailsInvalid: "قواعد حفاظتی باید JSON معتبر باشند.", notFound: "کارمند پیدا نشد.", first: "ابتدا.", retry: "تلاش مجدد"
 } as const;
 
 const customers = {
