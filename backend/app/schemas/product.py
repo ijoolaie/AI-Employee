@@ -22,7 +22,6 @@ class ProductUpdate(BaseModel):
     category: str | None = Field(default=None, max_length=120)
     price: Decimal | None = Field(default=None, ge=0)
     currency: str | None = Field(default=None, min_length=3, max_length=8)
-    inventory: int | None = Field(default=None, ge=0)
     attributes: dict[str, Any] | None = None
     images: list[str] | None = None
     is_active: bool | None = None
