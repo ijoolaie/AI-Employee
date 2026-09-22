@@ -31,9 +31,9 @@ const CATALOG: EndpointGroup[] = [
   {
     name: "employees",
     endpoints: [
-      { method: "GET", path: "/employees", summary: "List AI employees for the current tenant" },
-      { method: "GET", path: "/employees/available-tools", summary: "List tools an employee can be given" },
-      { method: "GET", path: "/employees/{employee_id}", summary: "Get a single employee" },
+      { method: "GET", path: "/employees" },
+      { method: "GET", path: "/employees/available-tools" },
+      { method: "GET", path: "/employees/{employee_id}" },
       {
         method: "POST",
         path: "/employees",
@@ -45,9 +45,9 @@ const CATALOG: EndpointGroup[] = [
   {
     name: "runs",
     endpoints: [
-      { method: "GET", path: "/runs", summary: "List runs (optionally by employee)" },
-      { method: "GET", path: "/runs/{run_id}", summary: "Get a run" },
-      { method: "GET", path: "/runs/{run_id}/trace", summary: "Get the full execution trace for a run" },
+      { method: "GET", path: "/runs" },
+      { method: "GET", path: "/runs/{run_id}" },
+      { method: "GET", path: "/runs/{run_id}/trace" },
       {
         method: "POST",
         path: "/runs",
@@ -59,9 +59,9 @@ const CATALOG: EndpointGroup[] = [
   {
     name: "apiKeys",
     endpoints: [
-      { method: "GET", path: "/api-keys", summary: "List API keys" },
+      { method: "GET", path: "/api-keys" },
       { method: "POST", path: "/api-keys",  sampleBody: { name: "CI key" } },
-      { method: "POST", path: "/api-keys/{key_id}/revoke", summary: "Revoke an API key" },
+      { method: "POST", path: "/api-keys/{key_id}/revoke" },
     ],
   },
   {
@@ -84,43 +84,43 @@ const CATALOG: EndpointGroup[] = [
   {
     name: "workflows",
     endpoints: [
-      { method: "GET", path: "/workflows", summary: "List workflows" },
-      { method: "GET", path: "/workflows/{workflow_id}/runs", summary: "List runs for a workflow" },
-      { method: "GET", path: "/workflows/{workflow_id}/runs/{run_id}/observability", summary: "Observability for a workflow run" },
+      { method: "GET", path: "/workflows" },
+      { method: "GET", path: "/workflows/{workflow_id}/runs" },
+      { method: "GET", path: "/workflows/{workflow_id}/runs/{run_id}/observability" },
       { method: "POST", path: "/workflows/{workflow_id}/runs",  sampleBody: { input_data: {} } },
-      { method: "POST", path: "/workflows/{workflow_id}/runs/{run_id}/cancel", summary: "Cancel a workflow run" },
+      { method: "POST", path: "/workflows/{workflow_id}/runs/{run_id}/cancel" },
     ],
   },
   {
     name: "operations",
     endpoints: [
-      { method: "GET", path: "/operations/metrics", summary: "Outbox / workflow operational metrics" },
-      { method: "GET", path: "/operations/audit-logs", summary: "Tenant audit log events" },
-      { method: "GET", path: "/operations/dead-letters", summary: "List dead-lettered messages" },
-      { method: "POST", path: "/operations/dead-letters/{message_id}/replay", summary: "Replay a dead-lettered message" },
+      { method: "GET", path: "/operations/metrics" },
+      { method: "GET", path: "/operations/audit-logs" },
+      { method: "GET", path: "/operations/dead-letters" },
+      { method: "POST", path: "/operations/dead-letters/{message_id}/replay" },
     ],
   },
   {
     name: "billing",
     endpoints: [
-      { method: "GET", path: "/billing/plans", summary: "List available plans" },
-      { method: "GET", path: "/billing/subscription", summary: "Current subscription" },
-      { method: "GET", path: "/billing/entitlements", summary: "Current plan entitlements" },
-      { method: "POST", path: "/billing/checkout", summary: "Create a Stripe checkout session" },
-      { method: "POST", path: "/billing/portal", summary: "Create a Stripe billing-portal session" },
+      { method: "GET", path: "/billing/plans" },
+      { method: "GET", path: "/billing/subscription" },
+      { method: "GET", path: "/billing/entitlements" },
+      { method: "POST", path: "/billing/checkout" },
+      { method: "POST", path: "/billing/portal" },
     ],
   },
   {
     name: "usage",
-    endpoints: [{ method: "GET", path: "/usage/summary", summary: "Token/run/cost usage summary" }],
+    endpoints: [{ method: "GET", path: "/usage/summary" }],
   },
   {
     name: "commerce",
     endpoints: [
-      { method: "GET", path: "/customers", summary: "List CRM customers" },
-      { method: "GET", path: "/orders", summary: "List orders" },
-      { method: "GET", path: "/orders/summary", summary: "Order summary metrics" },
-      { method: "GET", path: "/products", summary: "List products" },
+      { method: "GET", path: "/customers" },
+      { method: "GET", path: "/orders" },
+      { method: "GET", path: "/orders/summary" },
+      { method: "GET", path: "/products" },
     ],
   },
 ];
