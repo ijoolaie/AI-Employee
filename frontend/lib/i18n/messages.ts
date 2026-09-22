@@ -78,6 +78,7 @@ const employeeFa = {
   inputInvalidJson: "ورودی باید JSON معتبر باشد",
   chooseDocument: "ابتدا یک فایل PDF، تصویر یا DOCX انتخاب کنید.",
   chooseDataset: "ابتدا یک فایل CSV یا Excel انتخاب کنید.",
+  copyEmbed: "برای قراردادن در وب‌سایت", existingChannels: "کانال‌های منتشرشده", guardrailsLoadError: "بارگذاری قواعد حفاظتی انجام نشد.", guardrailsSaveError: "ذخیره قواعد حفاظتی انجام نشد.", publishError: "انتشار کانال انجام نشد.", publishSuccess: "کانال با موفقیت منتشر شد.", runLoadError: "بارگذاری تاریخچه اجرا انجام نشد.", runError: "شروع اجرا انجام نشد.", details: "جزئیات", status: "وضعیت", tokens: "توکن‌ها", cost: "هزینه", created: "ایجاد شده", id: "شناسه", active: "فعال", inactive: "غیرفعال", slugKind: "شناسه / نوع", guardrailsInvalid: "قواعد حفاظتی باید JSON معتبر باشند.", notFound: "کارمند پیدا نشد.", first: "ابتدا."
 } as const;
 
 const customers = {
