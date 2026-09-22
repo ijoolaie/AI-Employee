@@ -1098,8 +1098,8 @@ const teamFa={title:"تیم و نقش‌ها",description:"مدیریت کارب
 
 const chat = { title: "AI Employee Chat", description: "Run an AI employee with memory, planning and approved tools.", employee: "Employee", selectEmployee: "Select an employee…", active: "Active", inactive: "Inactive", runtimeNote: "The runtime decides when to retrieve memory, create a plan and request tools. Side-effecting tools remain behind the approval boundary.", conversation: "Conversation", gatewayNote: "LM Studio is used through the existing AI Gateway.", emptyTitle: "What should your employee do?", emptyDescription: "Ask for a task. The execution result, tool activity and trace become available as the run progresses.", run: "Run", running: "Running", taskPlaceholder: "Describe the task…", employeeOutput: "Employee output", working: "Working… retrieving memory, planning and executing…", noOutput: "No output returned.", attachFile: "Attach file", runControls: "Run controls", status: "Status", noRun: "No run", tokens: "Tokens", cost: "Cost", openRun: "Open run details", openTrace: "Open trace", newTask: "New task", cancellationNote: "Cancellation is exposed for workflow runs; direct AI runs use the existing run lifecycle.", executionError: "Unable to execute the task." } as const;
 const chatFa = { title: "گفتگوی کارمند هوش مصنوعی", description: "اجرای کارمند هوش مصنوعی با حافظه، برنامه‌ریزی و ابزارهای تأییدشده.", employee: "کارمند", selectEmployee: "یک کارمند انتخاب کنید…", active: "فعال", inactive: "غیرفعال", runtimeNote: "موتور اجرا زمان بازیابی حافظه، ایجاد برنامه و درخواست ابزار را تعیین می‌کند. ابزارهای دارای اثر جانبی همچنان پشت مرز تأیید قرار دارند.", conversation: "گفتگو", gatewayNote: "LM Studio از طریق درگاه هوش مصنوعی موجود استفاده می‌شود.", emptyTitle: "کارمند شما چه کاری انجام دهد؟", emptyDescription: "یک کار را درخواست کنید؛ نتیجه اجرا، فعالیت ابزار و رهگیری هم‌زمان با پیشرفت اجرا در دسترس قرار می‌گیرند.", run: "اجرا", running: "در حال اجرا", taskPlaceholder: "وظیفه را توضیح دهید…", employeeOutput: "خروجی کارمند", working: "در حال اجرا… بازیابی حافظه، برنامه‌ریزی و اجرا…", noOutput: "خروجی‌ای برگردانده نشد.", attachFile: "پیوست فایل", runControls: "کنترل‌های اجرا", status: "وضعیت", noRun: "اجرایی وجود ندارد", tokens: "توکن‌ها", cost: "هزینه", openRun: "مشاهده جزئیات اجرا", openTrace: "مشاهده رهگیری", newTask: "وظیفه جدید", cancellationNote: "لغو برای اجراهای گردش‌کار ارائه شده است؛ اجراهای مستقیم هوش مصنوعی از چرخه عمر اجرای موجود استفاده می‌کنند.", executionError: "اجرای وظیفه انجام نشد." } as const;
-const reports = { title: "Reports", description: "Operational performance, reliability and AI cost summary", aiEmployees: "AI employees", runs: "Runs", successRate: "Success rate", aiCost: "AI cost", executionReport: "Execution report", totalTokens: "Total tokens", providerCalls: "Provider calls", averageLatency: "Average latency", failedCalls: "Failed calls", pendingApprovals: "Pending approvals", openAnalytics: "Open detailed analytics →", recentRuns: "Recent runs", loadError: "Unable to load reports.", retry: "Retry" } as const;
-const reportsFa = { title: "گزارش‌ها", description: "خلاصه عملکرد عملیاتی، قابلیت اطمینان و هزینه هوش مصنوعی", aiEmployees: "کارمندان هوش مصنوعی", runs: "اجراها", successRate: "نرخ موفقیت", aiCost: "هزینه هوش مصنوعی", executionReport: "گزارش اجرا", totalTokens: "کل توکن‌ها", providerCalls: "فراخوانی‌های ارائه‌دهنده", averageLatency: "میانگین تأخیر", failedCalls: "فراخوانی‌های ناموفق", pendingApprovals: "تأییدهای در انتظار", openAnalytics: "مشاهده تحلیل‌های کامل ←", recentRuns: "آخرین اجراها", loadError: "بارگذاری گزارش‌ها انجام نشد.", retry: "تلاش مجدد" } as const;
+const reports = { title: "Reports", description: "Operational performance, reliability and AI cost summary", aiEmployees: "AI employees", runs: "Runs", successRate: "Success rate", aiCost: "AI cost", executionReport: "Execution report", totalTokens: "Total tokens", providerCalls: "Provider calls", averageLatency: "Average latency", failedCalls: "Failed calls", pendingApprovals: "Pending approvals", openAnalytics: "Open detailed analytics →", recentRuns: "Recent runs", noRuns: "No runs yet.", loadError: "Unable to load reports.", retry: "Retry" } as const;
+const reportsFa = { title: "گزارش‌ها", description: "خلاصه عملکرد عملیاتی، قابلیت اطمینان و هزینه هوش مصنوعی", aiEmployees: "کارمندان هوش مصنوعی", runs: "اجراها", successRate: "نرخ موفقیت", aiCost: "هزینه هوش مصنوعی", executionReport: "گزارش اجرا", totalTokens: "کل توکن‌ها", providerCalls: "فراخوانی‌های ارائه‌دهنده", averageLatency: "میانگین تأخیر", failedCalls: "فراخوانی‌های ناموفق", pendingApprovals: "تأییدهای در انتظار", openAnalytics: "مشاهده تحلیل‌های کامل ←", recentRuns: "آخرین اجراها", noRuns: "هنوز اجرایی ثبت نشده است.", loadError: "بارگذاری گزارش‌ها انجام نشد.", retry: "تلاش مجدد" } as const;
 
 const studio = {
   title: "AI Studio", description: "Build AI employees with prompts, memory, tools and autonomy policies",
@@ -1227,6 +1227,7 @@ const dashboard = {
   activeSchedulesText: "active schedules",
   webhooks: "Webhooks",
   activeTriggers: "active triggers",
+  retry: "Retry",
 } as const;
 
 const dashboardFa = {
@@ -1261,13 +1262,14 @@ const dashboardFa = {
   activeSchedulesText: "زمان‌بندی فعال",
   webhooks: "وب‌هوک‌ها",
   activeTriggers: "محرک فعال",
+  retry: "تلاش مجدد",
 } as const;
 
 const analytics = {
   title: "Analytics & Operations", description: "Business KPIs, AI usage, reliability and cost attribution",
   conversations: "Conversations", influencedRevenue: "Influenced revenue", aiResolvedHint: "AI resolved", influencedOrdersHint: "AI-attributed orders",
   aiEmployees: "AI employees", total: "total", workflowRuns: "Workflow runs", active: "active", successRate: "Success rate", failed: "failed", aiCost: "AI cost", tokens: "tokens",
-  tokenActivity: "Token activity", last12Runs: "Last 12 loaded runs", noData: "No data", reliability: "Reliability", successfulWorkflowRuns: "Successful workflow runs",
+  tokenActivity: "Token activity", last12Runs: "Last 12 loaded runs", noData: "No data", retry: "Retry", reliability: "Reliability", successfulWorkflowRuns: "Successful workflow runs",
   providerCalls: "Provider calls", avgLatency: "Avg latency", pendingApprovals: "Pending approvals", operations: "Operations", activeSchedules: "Active schedules",
   activeWebhooks: "Active webhooks", failedAiCalls: "Failed AI calls", recentExecution: "Recent execution", viewAll: "View all →", noRuns: "No runs yet.", run: "Run"
 } as const;
@@ -1276,7 +1278,7 @@ const analyticsFa = {
   title: "تحلیل‌ها و عملیات", description: "شاخص‌های کسب‌وکار، مصرف هوش مصنوعی، قابلیت اطمینان و تخصیص هزینه",
   conversations: "گفتگوها", influencedRevenue: "درآمد تحت تأثیر", aiResolvedHint: "حل‌شده با هوش مصنوعی", influencedOrdersHint: "سفارش‌های منتسب به هوش مصنوعی",
   aiEmployees: "کارمندان هوش مصنوعی", total: "کل", workflowRuns: "اجراهای گردش‌کار", active: "فعال", successRate: "نرخ موفقیت", failed: "ناموفق", aiCost: "هزینه هوش مصنوعی", tokens: "توکن",
-  tokenActivity: "فعالیت توکن", last12Runs: "۱۲ اجرای بارگذاری‌شده اخیر", noData: "داده‌ای وجود ندارد", reliability: "قابلیت اطمینان", successfulWorkflowRuns: "اجراهای موفق گردش‌کار",
+  tokenActivity: "فعالیت توکن", last12Runs: "۱۲ اجرای بارگذاری‌شده اخیر", noData: "داده‌ای وجود ندارد", retry: "تلاش مجدد", reliability: "قابلیت اطمینان", successfulWorkflowRuns: "اجراهای موفق گردش‌کار",
   providerCalls: "فراخوانی‌های ارائه‌دهنده", avgLatency: "میانگین تأخیر", pendingApprovals: "تأییدهای در انتظار", operations: "عملیات", activeSchedules: "زمان‌بندی‌های فعال",
   activeWebhooks: "وب‌هوک‌های فعال", failedAiCalls: "فراخوانی‌های ناموفق هوش مصنوعی", recentExecution: "آخرین اجرا", viewAll: "مشاهده همه ←", noRuns: "هنوز اجرایی وجود ندارد.", run: "اجرا"
 } as const;
