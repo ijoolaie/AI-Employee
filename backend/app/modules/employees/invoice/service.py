@@ -164,6 +164,38 @@ async def create_invoice(
     return inv
 
 
+async def update_invoice(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    actor_id: uuid.UUID | None,
+    invoice_id: str,
+    **data: Any,
+) -> BusinessInvoice:
+    inv = await get_invoice(db, tenant_id=tenant_id, invoice_id=invoice_id)
+    if inv.status != "draft":
+        raise ValidationAppError("Only draft invoices can be edited")
+    if not data:
+        return inv
+    if "line_items" in data and not data["line_items"]:
+        raise ValidationAppError("At least one line item is required")
+    line_items = data.pop("line_items", None)
+    tax_rate = data.pop("tax_rate", None)
+    if line_items is not None or tax_rate is not None:
+        rate = normalize_tax_rate(tax_rate if tax_rate is not None else inv.tax_rate)
+        items = [item.model_dump() if hasattr(item, "model_dump") else item for item in (line_items or inv.line_items)]
+        subtotal, tax_amount, total, normalized = _compute_totals(items, rate)
+        inv.line_items = normalized
+        inv.tax_rate = rate
+        inv.subtotal, inv.tax_amount, inv.total = subtotal, tax_amount, total
+    for key, value in data.items():
+        if value is not None and key in {"customer_name", "customer_email", "currency", "issue_date", "due_date", "notes"}:
+            setattr(inv, key, value if key != "currency" else str(value).upper()[:8])
+    await db.flush()
+    await audit_service.record(db, tenant_id=tenant_id, actor_id=actor_id, action="invoice.updated", resource_type="business_invoice", resource_id=str(inv.id), metadata={"fields": sorted(data.keys()) + (["line_items", "tax_rate"] if line_items is not None or tax_rate is not None else [])})
+    return inv
+
+
 async def update_status(
     db: AsyncSession,
     *,
