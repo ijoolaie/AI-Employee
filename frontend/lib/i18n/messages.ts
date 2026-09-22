@@ -1206,6 +1206,24 @@ const dashboardFa = {
   activeTriggers: "محرک فعال",
 } as const;
 
+const analytics = {
+  title: "Analytics & Operations", description: "Business KPIs, AI usage, reliability and cost attribution",
+  conversations: "Conversations", influencedRevenue: "Influenced revenue", aiResolvedHint: "AI resolved", influencedOrdersHint: "AI-attributed orders",
+  aiEmployees: "AI employees", total: "total", workflowRuns: "Workflow runs", active: "active", successRate: "Success rate", failed: "failed", aiCost: "AI cost", tokens: "tokens",
+  tokenActivity: "Token activity", last12Runs: "Last 12 loaded runs", noData: "No data", reliability: "Reliability", successfulWorkflowRuns: "Successful workflow runs",
+  providerCalls: "Provider calls", avgLatency: "Avg latency", pendingApprovals: "Pending approvals", operations: "Operations", activeSchedules: "Active schedules",
+  activeWebhooks: "Active webhooks", failedAiCalls: "Failed AI calls", recentExecution: "Recent execution", viewAll: "View all →", noRuns: "No runs yet.", run: "Run"
+} as const;
+
+const analyticsFa = {
+  title: "تحلیل‌ها و عملیات", description: "شاخص‌های کسب‌وکار، مصرف هوش مصنوعی، قابلیت اطمینان و تخصیص هزینه",
+  conversations: "گفتگوها", influencedRevenue: "درآمد تحت تأثیر", aiResolvedHint: "حل‌شده با هوش مصنوعی", influencedOrdersHint: "سفارش‌های منتسب به هوش مصنوعی",
+  aiEmployees: "کارمندان هوش مصنوعی", total: "کل", workflowRuns: "اجراهای گردش‌کار", active: "فعال", successRate: "نرخ موفقیت", failed: "ناموفق", aiCost: "هزینه هوش مصنوعی", tokens: "توکن",
+  tokenActivity: "فعالیت توکن", last12Runs: "۱۲ اجرای بارگذاری‌شده اخیر", noData: "داده‌ای وجود ندارد", reliability: "قابلیت اطمینان", successfulWorkflowRuns: "اجراهای موفق گردش‌کار",
+  providerCalls: "فراخوانی‌های ارائه‌دهنده", avgLatency: "میانگین تأخیر", pendingApprovals: "تأییدهای در انتظار", operations: "عملیات", activeSchedules: "زمان‌بندی‌های فعال",
+  activeWebhooks: "وب‌هوک‌های فعال", failedAiCalls: "فراخوانی‌های ناموفق هوش مصنوعی", recentExecution: "آخرین اجرا", viewAll: "مشاهده همه ←", noRuns: "هنوز اجرایی وجود ندارد.", run: "اجرا"
+} as const;
+
 const developerSurfaces = {
  apiConsole:{title:"API Console",description:"Browse tenant-scoped endpoints and call them live using your current session",endpoints:"Endpoints",send:"Send request",response:"Response",networkError:"network error",pathParams:"Path parameters",requestBody:"Request body",invalidJson:"Request body is not valid JSON.",fillParams:"Fill in path parameter(s)",apiKeys:"API Keys",apiKeysText:"For external/CI integrations, use a key from the API Keys page instead.",openapi:"The full machine-generated OpenAPI schema is served at",valueFor:"value for",technical:"Requests use your current tenant session."},
  governance:{title:"Workforce Governance",description:"Governed AI workforce, identity controls, evaluations, and approval lifecycle",refresh:"Refresh",newProposal:"New proposal",submitProposal:"Submit workforce proposal",proposalTitle:"Proposal title",agentName:"Requested agent name",sponsor:"Sponsor user UUID",rationale:"Rationale",riskTier:"Risk tier",cancel:"Cancel",submit:"Submit proposal",submitting:"Submitting…",registry:"Workforce Registry",registryDescription:"Tenant-scoped projection of AgentDefinition → AgentTemplate → AgentInstance.",agents:"agents",noAgents:"No governed Agent instances yet.",risk:"Risk",identity:"Identity",active:"Active",notActive:"Not active",cost:"Attributed cost",concurrency:"Concurrency",tools:"Tools",none:"None",evaluation:"Evaluation evidence",noEvidence:"No evidence",recordEvaluation:"Record evaluation",suite:"Evaluation suite ID",score:"Score",evidence:"Evaluation evidence JSON",notes:"Notes",saveEvidence:"Save evidence",saving:"Saving…",proposalQueue:"Proposal Queue",queueDescription:"Requester → Board → CEO → Provision → Access Review → Activate.",proposals:"proposals",noProposals:"No workforce proposals.",boardApprove:"Board approve",reject:"Reject",ceoApprove:"CEO approve",provision:"Provision",accessReview:"Access review",activate:"Activate",reviewing:"Reviewing…",viewEvidence:"View evidence JSON",invalidEvidence:"Evaluation evidence must be valid JSON.",loadError:"Unable to load governance data.",retry:"Retry"},
@@ -1223,6 +1241,7 @@ export const messages = {
     employee,
     nav,
     dashboard,
+    analytics,
     customers,
     commerce,
     workflows,
@@ -1262,6 +1281,7 @@ export const messages = {
     employee: employeeFa,
     nav: navFa,
     dashboard: dashboardFa,
+    analytics: analyticsFa,
     customers: customersFa,
     commerce: commerceFa,
     workflows: workflowsFa,
