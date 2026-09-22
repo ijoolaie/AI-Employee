@@ -37,7 +37,7 @@ const employee = {
   inputInvalidJson: "Input must be valid JSON",
   chooseDocument: "Choose a PDF, image, or DOCX file to analyze first.",
   chooseDataset: "Choose a CSV/Excel file to analyze first.",
-  copyEmbed: "Embed on a website with", existingChannels: "Published channels", guardrailsLoadError: "Unable to load guardrails.", guardrailsSaveError: "Unable to save guardrails.", publishError: "Unable to publish channel.", publishSuccess: "Channel published successfully.", runLoadError: "Unable to load run history.", runError: "Unable to start run.", details: "Details", status: "Status", tokens: "Tokens", cost: "Cost", created: "Created", id: "ID", active: "Active", inactive: "Inactive", slugKind: "Slug / kind", guardrailsInvalid: "Guardrails must be valid JSON."
+  copyEmbed: "Embed on a website with", existingChannels: "Published channels", guardrailsLoadError: "Unable to load guardrails.", guardrailsSaveError: "Unable to save guardrails.", publishError: "Unable to publish channel.", publishSuccess: "Channel published successfully.", runLoadError: "Unable to load run history.", runError: "Unable to start run.", details: "Details", status: "Status", tokens: "Tokens", cost: "Cost", created: "Created", id: "ID", active: "Active", inactive: "Inactive", slugKind: "Slug / kind", guardrailsInvalid: "Guardrails must be valid JSON.", notFound: "Employee not found.", first: "first."
 
 } as const;
 
