@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getErrorMessage } from "@/lib/errors";
-import { listProducts, createProduct, updateProductInventory } from "@/lib/api";
+import { listProducts, createProduct, updateProduct, updateProductInventory } from "@/lib/api";
 import { Package, Plus, RefreshCw, Search } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n/provider";
@@ -20,6 +20,12 @@ export default function ProductsPage() {
   const [price, setPrice] = useState("0");
   const [inventory, setInventory] = useState("0");
   const [inventoryDrafts, setInventoryDrafts] = useState<Record<string, string>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editSku, setEditSku] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editPrice, setEditPrice] = useState("0");
+  const [editActive, setEditActive] = useState(true);
 
   const q = useQuery({
     queryKey: ["products", search],
@@ -38,6 +44,23 @@ export default function ProductsPage() {
       setName("");
       setPrice("0");
       setInventory("0");
+      qc.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+
+  const editMut = useMutation({
+    mutationFn: () => {
+      if (!editingId) throw new Error("No product selected");
+      return updateProduct(editingId, {
+        name: editName.trim(),
+        sku: editSku.trim() || null,
+        category: editCategory.trim() || null,
+        price: editPrice,
+        is_active: editActive,
+      });
+    },
+    onSuccess: () => {
+      setEditingId(null);
       qc.invalidateQueries({ queryKey: ["products"] });
     },
   });
@@ -71,6 +94,15 @@ export default function ProductsPage() {
     Number.isInteger(Number(inventory)) &&
     Number(inventory) >= 0 &&
     !createPermissionDenied;
+
+  const startEdit = (product: import("@/types").Product) => {
+    setEditingId(product.id);
+    setEditName(product.name);
+    setEditSku(product.sku ?? "");
+    setEditCategory(product.category ?? "");
+    setEditPrice(String(product.price));
+    setEditActive(product.is_active);
+  };
 
   const retryProducts = () => {
     void q.refetch();
@@ -202,6 +234,7 @@ export default function ProductsPage() {
                       <th className="px-5 py-3">{m.price}</th>
                       <th className="px-5 py-3">{m.inventory}</th>
                       <th className="px-5 py-3">{m.source}</th>
+                      <th className="px-5 py-3">{m.status}</th>
                       <th className="px-5 py-3">{m.actions}</th>
                     </tr>
                   </thead>
@@ -243,6 +276,7 @@ export default function ProductsPage() {
                             />
                           </td>
                           <td className="px-5 py-3 text-slate-500">{p.source}</td>
+                          <td className="px-5 py-3">{p.is_active ? m.active : m.inactive}</td>
                           <td className="px-5 py-3">
                             <Button
                               size="sm"

@@ -41,6 +41,7 @@ def test_product_routes_have_explicit_rbac_boundaries():
     expected = {
         products.list_products: "products.read",
         products.create_product: "products.create",
+        products.update_product: "products.update",
         products.update_inventory: "products.inventory_update",
     }
     assert {endpoint: _ctx_permission(endpoint) for endpoint in expected} == expected

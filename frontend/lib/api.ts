@@ -617,6 +617,10 @@ export async function listProducts(q?: string) {
 export async function createProduct(payload: Partial<import("@/types").Product>) {
   return unwrap(await api.post<APIResponse<import("@/types").Product>>("/products", payload));
 }
+export async function updateProduct(id: string, payload: Partial<import("@/types").Product>) {
+  return unwrap(await api.patch<APIResponse<import("@/types").Product>>(`/products/${id}`, payload));
+}
+
 export async function updateProductInventory(id: string, inventory: number) {
   return unwrap(await api.post<APIResponse<import("@/types").Product>>(`/products/${id}/inventory`, { inventory }));
 }

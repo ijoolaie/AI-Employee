@@ -1,8 +1,8 @@
 from uuid import UUID
-from fastapi import APIRouter, Query
-from app.core.deps import DbSession, ProductCreateContext, ProductInventoryUpdateContext, ProductReadContext
+from fastapi import APIRouter, HTTPException, Query
+from app.core.deps import DbSession, ProductCreateContext, ProductInventoryUpdateContext, ProductReadContext, ProductUpdateContext
 from app.schemas.common import APIResponse
-from app.schemas.product import ProductCreate, ProductInventoryUpdate, ProductResponse
+from app.schemas.product import ProductCreate, ProductInventoryUpdate, ProductResponse, ProductUpdate
 from app.services import product_service
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -17,10 +17,16 @@ async def create_product(payload: ProductCreate, ctx: ProductCreateContext, db: 
     row = await product_service.create_product(db, ctx.tenant_id, payload.model_dump())
     return APIResponse(success=True, data=ProductResponse.model_validate(row))
 
+@router.patch("/{product_id}", response_model=APIResponse[ProductResponse])
+async def update_product(product_id: UUID, payload: ProductUpdate, ctx: ProductUpdateContext, db: DbSession):
+    row = await product_service.update_product(db, ctx.tenant_id, product_id, payload.model_dump(exclude_unset=True))
+    if not row:
+        raise HTTPException(404, "Product not found")
+    return APIResponse(success=True, data=ProductResponse.model_validate(row))
+
 @router.post("/{product_id}/inventory", response_model=APIResponse[ProductResponse])
 async def update_inventory(product_id: UUID, payload: ProductInventoryUpdate, ctx: ProductInventoryUpdateContext, db: DbSession):
     row = await product_service.update_inventory(db, ctx.tenant_id, product_id, payload.inventory)
     if not row:
-        from fastapi import HTTPException
         raise HTTPException(404, "Product not found")
     return APIResponse(success=True, data=ProductResponse.model_validate(row))
