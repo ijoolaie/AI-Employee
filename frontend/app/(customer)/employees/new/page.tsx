@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { createEmployee, getErrorMessage, listAvailableTools } from "@/lib/api";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-const schema = (tx: typeof messages.en.employee) => z.object({
+const schema = (tx: typeof messages.en.employee | typeof messages.fa.employee) => z.object({
   name: z.string().min(2, tx.nameRequired),
   slug: z.string().min(2).regex(/^[a-z0-9-]+$/, tx.slugFormat),
   prompt_template: z.string().optional(),
