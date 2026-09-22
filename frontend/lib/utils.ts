@@ -13,8 +13,17 @@ export function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
+function currentLocale(): string {
+  if (typeof document !== "undefined") {
+    const locale = document.documentElement.lang;
+    if (locale) return locale;
+  }
+  if (typeof navigator !== "undefined" && navigator.language) return navigator.language;
+  return "en-US";
+}
+
 export function formatCurrency(usd: number): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat(currentLocale(), {
     style: "currency",
     currency: "USD",
     minimumFractionDigits: 4,
@@ -24,7 +33,7 @@ export function formatCurrency(usd: number): string {
 export function formatDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   try {
-    return new Intl.DateTimeFormat("en-US", {
+    return new Intl.DateTimeFormat(currentLocale(), {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(new Date(iso));
