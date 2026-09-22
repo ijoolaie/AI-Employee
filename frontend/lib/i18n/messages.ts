@@ -1080,6 +1080,31 @@ const studioFa = {
   create: "ایجاد کارمند هوش مصنوعی", creating: "در حال ایجاد…", createdSuccess: "کارمند با موفقیت ایجاد شد."
 } as const;
 
+const invoices = {
+  title:"Invoices", description:"Business invoices, payment status and PDF exports", total:"Total invoices", register:"Invoice register", number:"Number", customer:"Customer", status:"Status", totalLabel:"Total", due:"Due", issueDate:"Issue date", dueDate:"Due date", lineItems:"Line items", exportPdf:"Export PDF", exporting:"Exporting…", statusUpdated:"Status updated", pdfReady:"PDF ready", pdfExported:"PDF export completed", retry:"Retry", loadError:"Unable to load invoices."
+} as const;
+const invoicesFa = {
+  title:"فاکتورها", description:"فاکتورهای کسب‌وکار، وضعیت پرداخت و خروجی PDF", total:"کل فاکتورها", register:"دفتر فاکتورها", number:"شماره", customer:"مشتری", status:"وضعیت", totalLabel:"مبلغ کل", due:"سررسید", issueDate:"تاریخ صدور", dueDate:"تاریخ سررسید", lineItems:"اقلام فاکتور", exportPdf:"خروجی PDF", exporting:"در حال خروجی گرفتن…", statusUpdated:"وضعیت به‌روزرسانی شد", pdfReady:"PDF آماده است", pdfExported:"خروجی PDF تکمیل شد", retry:"تلاش مجدد", loadError:"بارگذاری فاکتورها انجام نشد."
+} as const;
+const privacy = {
+  title:"Privacy & GDPR", description:"Export or delete customer data within your tenant.", request:"Customer data request", customerId:"Customer ID", exportData:"Export data", deleteAnonymize:"Delete/anonymize", confirm:"Delete and anonymize this customer's personal data?", success:"Customer data anonymized and deletion recorded.", retry:"Retry", error:"Unable to complete the privacy request."
+} as const;
+const privacyFa = {
+  title:"حریم خصوصی و GDPR", description:"داده‌های مشتری را در تننت خود خروجی بگیرید یا حذف کنید.", request:"درخواست داده مشتری", customerId:"شناسه مشتری", exportData:"خروجی داده", deleteAnonymize:"حذف/ناشناس‌سازی", confirm:"داده‌های شخصی این مشتری حذف و ناشناس‌سازی شود؟", success:"داده‌های مشتری ناشناس‌سازی و ثبت شد.", retry:"تلاش مجدد", error:"انجام درخواست حریم خصوصی ممکن نشد."
+} as const;
+const auditLogs = {
+  title:"Logs", description:"Tenant-scoped audit and operational events", recent:"Recent events", time:"Time", action:"Action", status:"Status", request:"Request", empty:"No audit events found.", retry:"Retry", loadError:"Unable to load logs."
+} as const;
+const auditLogsFa = {
+  title:"لاگ‌ها", description:"رویدادهای حسابرسی و عملیاتی محدود به تننت", recent:"آخرین رویدادها", time:"زمان", action:"عملیات", status:"وضعیت", request:"درخواست", empty:"رویداد حسابرسی ثبت نشده است.", retry:"تلاش مجدد", loadError:"بارگذاری لاگ‌ها انجام نشد."
+} as const;
+const dealDetail = {
+  detail:"Deal detail", information:"Deal information", customer:"Customer", email:"Email", amount:"Amount", probability:"Probability", expectedClose:"Expected close", owner:"Owner", source:"Source", order:"Order", notes:"Notes", noNotes:"No notes recorded.", timeline:"Timeline", created:"Created", updated:"Updated", retry:"Retry", loadError:"Unable to load deal."
+} as const;
+const dealDetailFa = {
+  detail:"جزئیات معامله", information:"اطلاعات معامله", customer:"مشتری", email:"ایمیل", amount:"مبلغ", probability:"احتمال", expectedClose:"تاریخ احتمالی بسته‌شدن", owner:"مسئول", source:"منبع", order:"سفارش", notes:"یادداشت‌ها", noNotes:"یادداشتی ثبت نشده است.", timeline:"خط زمانی", created:"ایجاد شده", updated:"به‌روزرسانی شده", retry:"تلاش مجدد", loadError:"بارگذاری معامله انجام نشد."
+} as const;
+
 const testCenter = { title:"Test Center", description:"Run authorized tenant-scoped tests and inspect engineering evidence.", workspace:"Workspace", allWorkspaces:"All workspaces", status:"Status", allStatuses:"All statuses", queued:"Queued", running:"Running", passed:"Passed", failed:"Failed", cancelled:"Cancelled", expired:"Expired", availableTests:"Available tests", noDefinitions:"No test definitions", noDefinitionsDescription:"No enabled Test Center definitions are available for this workspace.", noDescription:"No description provided.", run:"Run", runHistory:"Run history", noRuns:"No test runs", noRunsDescription:"Run an available test to create the first evidence record.", dispatched:"Dispatched test run", toWorker:"to the worker", selectedRun:"Selected run", correlation:"Correlation", liveRefresh:"Live status refresh is active.", refresh:"Refresh", exportEvidence:"Export verification record", evidence:"Evidence", queuedAt:"Queued", started:"Started", finished:"Finished", executionError:"Execution error", result:"Result", artifacts:"Artifacts", noArtifacts:"No artifacts attached.", refreshed:"Selected run refreshed.", exported:"Verification record exported.", testRun:"Run", test:"Test", actions:"Actions", workspaceColumn:"Workspace", created:"Created" } as const;
 const testCenterFa = { title:"مرکز تست", description:"اجرای تست‌های مجاز و محدود به تننت و مشاهده شواهد مهندسی.", workspace:"فضای کاری", allWorkspaces:"همه فضاهای کاری", status:"وضعیت", allStatuses:"همه وضعیت‌ها", queued:"در صف", running:"در حال اجرا", passed:"موفق", failed:"ناموفق", cancelled:"لغوشده", expired:"منقضی", availableTests:"تست‌های در دسترس", noDefinitions:"تعریف تستی وجود ندارد", noDefinitionsDescription:"برای این فضای کاری هیچ تست فعال مرکز تستی در دسترس نیست.", noDescription:"توضیحی ثبت نشده است.", run:"اجرا", runHistory:"تاریخچه اجرا", noRuns:"اجرایی وجود ندارد", noRunsDescription:"یک تست در دسترس را اجرا کنید تا اولین رکورد شواهد ایجاد شود.", dispatched:"اجرای تست ارسال شد", toWorker:"به Worker", selectedRun:"اجرای انتخاب‌شده", correlation:"همبستگی", liveRefresh:"به‌روزرسانی زنده وضعیت فعال است.", refresh:"تازه‌سازی", exportEvidence:"خروجی رکورد تأیید", evidence:"شواهد", queuedAt:"در صف", started:"شروع", finished:"پایان", executionError:"خطای اجرا", result:"نتیجه", artifacts:"آرتیفکت‌ها", noArtifacts:"آرتیفکتی پیوست نشده است.", refreshed:"اجرای انتخاب‌شده تازه‌سازی شد.", exported:"رکورد تأیید خروجی گرفته شد.", testRun:"اجرا", test:"تست", actions:"عملیات", workspaceColumn:"فضای کاری", created:"ایجاد شده" } as const;
 
@@ -1202,6 +1227,10 @@ export const messages = {
     studio,
     testCenter,
     reports,
+    invoices,
+    privacy,
+    auditLogs,
+    dealDetail,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -1235,5 +1264,9 @@ export const messages = {
     studio: studioFa,
     testCenter: testCenterFa,
     reports: reportsFa,
+    invoices: invoicesFa,
+    privacy: privacyFa,
+    auditLogs: auditLogsFa,
+    dealDetail: dealDetailFa,
   },
 } as const;
