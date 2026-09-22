@@ -8,6 +8,7 @@ from app.core.deps import DbSession, OrdersCreateContext, OrdersInvoiceLinkConte
 from app.schemas.common import APIResponse
 from app.schemas.order import (
     BusinessOrderCreate,
+    BusinessOrderUpdate,
     BusinessOrderResponse,
     BusinessOrderStatusUpdate,
     OrderSummary,
@@ -55,6 +56,11 @@ async def create_order(payload: BusinessOrderCreate, ctx: OrdersCreateContext, d
 
 
 @router.post("/{order_id}/status", response_model=APIResponse[BusinessOrderResponse])
+async def update_order(order_id: UUID, payload: BusinessOrderUpdate, ctx: OrdersUpdateContext, db: DbSession):
+    order = await order_service.update_order(db, tenant_id=ctx.tenant_id, actor_id=ctx.user.id, order_id=str(order_id), **payload.model_dump(exclude_unset=True))
+    return APIResponse(success=True, data=BusinessOrderResponse.model_validate(order))
+
+
 async def update_status(order_id: UUID, payload: BusinessOrderStatusUpdate, ctx: OrdersUpdateContext, db: DbSession):
     order = await order_service.update_status(db, tenant_id=ctx.tenant_id, actor_id=ctx.user.id, order_id=str(order_id), status=payload.status)
     await db.refresh(order)
