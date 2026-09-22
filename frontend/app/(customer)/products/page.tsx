@@ -95,7 +95,7 @@ export default function ProductsPage() {
     Number(inventory) >= 0 &&
     !createPermissionDenied;
 
-  const startEdit = (product: (typeof q.data)[number]) => {\n    setEditingId(product.id);\n    setEditName(product.name);\n    setEditSku(product.sku ?? "");\n    setEditCategory(product.category ?? "");\n    setEditPrice(String(product.price));\n    setEditActive(product.is_active);\n  };\n\n  const retryProducts = () => {
+  const startEdit = (product: import("@/types").Product) => {\n    setEditingId(product.id);\n    setEditName(product.name);\n    setEditSku(product.sku ?? "");\n    setEditCategory(product.category ?? "");\n    setEditPrice(String(product.price));\n    setEditActive(product.is_active);\n  };\n\n  const retryProducts = () => {
     void q.refetch();
   };
 
