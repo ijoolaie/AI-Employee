@@ -665,8 +665,11 @@ export async function sendInboxMessage(id: string, content: string) { return unw
 export async function listEmployeeTemplates() {
   return unwrap(await api.get<APIResponse<import("@/types").EmployeeTemplate[]>>("/employee-templates"));
 }
-export async function installEmployeeTemplate(code: string) {
-  return unwrap(await api.post<APIResponse<{id:string;name:string;slug:string}>>(`/employee-templates/${code}/install`));
+export async function installEmployeeTemplate(code: string, locale: "en" | "fa" = "en") {
+  return unwrap(await api.post<APIResponse<{id:string;name:string;slug:string}>>(
+    `/employee-templates/${code}/install`,
+    { locale },
+  ));
 }
 export async function getROIAnalytics() {
   return unwrap(await api.get<APIResponse<import("@/types").ROIAnalytics>>("/analytics/roi"));
