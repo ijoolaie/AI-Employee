@@ -225,7 +225,7 @@ async def create_run(
 ):
     service = TestCenterService(db)
     try:
-        run = await service.create_run(tenant_id=ctx.tenant_id, actor_id=ctx.user_id, **payload.model_dump())
+        run = await service.create_run(tenant_id=ctx.tenant_id, actor_id=ctx.user_id, tenant_kind=ctx.tenant.tenant_kind, **payload.model_dump())
         await record(
             db,
             action="test_run.queued",
