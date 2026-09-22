@@ -165,6 +165,7 @@ InvoiceUpdateContext = Annotated[TenantContext, Depends(require_permission("invo
 InvoiceExportPdfContext = Annotated[TenantContext, Depends(require_permission("invoices.export_pdf"))]
 ProductReadContext = Annotated[TenantContext, Depends(require_permission("products.read"))]
 ProductCreateContext = Annotated[TenantContext, Depends(require_permission("products.create"))]
+ProductUpdateContext = Annotated[TenantContext, Depends(require_permission("products.update"))]
 ProductInventoryUpdateContext = Annotated[TenantContext, Depends(require_permission("products.inventory_update"))]
 TeamInstallContext = Annotated[TenantContext, Depends(require_permission("team.install"))]
 TeamExecuteContext = Annotated[TenantContext, Depends(require_permission("team.execute"))]
