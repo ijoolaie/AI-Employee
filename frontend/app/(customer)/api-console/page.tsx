@@ -214,7 +214,7 @@ export default function ApiConsolePage() {
     <>
       <Header
         title={m.title}
-        description="Browse tenant-scoped endpoints and call them live using your current session"
+        description={m.description}
       />
       <div className="grid gap-6 p-6 xl:grid-cols-[280px_minmax(0,1fr)]" dir="auto">
         <Card className="h-fit">
@@ -268,14 +268,14 @@ export default function ApiConsolePage() {
             <CardContent className="space-y-4">
               {params.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Path parameters</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{m.pathParams}</p>
                   {params.map((p) => (
                     <div key={p} className="flex items-center gap-3">
                       <label className="w-40 shrink-0 font-mono text-xs text-gray-600">{p}</label>
                       <input
                         value={paramValues[p] ?? ""}
                         onChange={(e) => setParamValues((prev) => ({ ...prev, [p]: e.target.value }))}
-                        placeholder={`value for ${p}`}
+                        placeholder={`${m.valueFor} ${p}`}
                         className="flex-1 rounded-lg border px-3 py-2 text-sm font-mono"
                       />
                     </div>
@@ -327,7 +327,7 @@ export default function ApiConsolePage() {
           )}
 
           <p className="text-xs text-gray-400">
-            Requests are sent with your current session credentials, scoped to this tenant. For external/CI
+            {m.technical} For external/CI
             integrations, use a key from the{" "}
             <a href="/api-keys" className="text-brand-600 hover:underline">
               API Keys
