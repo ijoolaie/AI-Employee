@@ -755,6 +755,7 @@ export const messages = {
     approvals,
     schedules,
     inbox,
+    conversations,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -770,5 +771,6 @@ export const messages = {
     approvals: approvalsFa,
     schedules: schedulesFa,
     inbox: inboxFa,
+    conversations: conversationsFa,
   },
 } as const;
