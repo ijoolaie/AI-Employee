@@ -116,7 +116,7 @@ export default function OrdersPage() {
         ) : (
           <Card>
             <CardContent className="overflow-x-auto p-0">
-              <table className="w-full text-left text-sm">
+              <table className="w-full text-start text-sm">
                 <thead><tr className="border-b border-gray-100 text-xs uppercase text-gray-500">
                   <th className="px-4 py-3 font-medium">{m.number}</th>
                   <th className="px-4 py-3 font-medium">{m.customer}</th>
