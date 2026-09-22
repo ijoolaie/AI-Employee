@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 from pydantic import BaseModel, Field
 
@@ -10,6 +10,9 @@ class GuardrailsResponse(BaseModel):
 class GuardrailsUpdate(BaseModel):
     allowed_tools: list[str] | None = None
     rules: dict[str, Any] = Field(default_factory=dict)
+
+class EmployeeTemplateInstall(BaseModel):
+    locale: Literal["en", "fa"] = "en"
 
 class EmployeeTemplate(BaseModel):
     code: str
