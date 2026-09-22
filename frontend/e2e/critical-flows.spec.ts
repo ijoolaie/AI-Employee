@@ -168,7 +168,6 @@ test.describe("critical platform flows", () => {
   test("customer operational workspace routes retain locale and RTL shell", async ({ page }) => {
     await page.addInitScript((state) => {
       localStorage.setItem("aiep-auth", state);
-      localStorage.setItem("aiep.locale", "fa");
     }, authState);
 
     const routes = [
@@ -180,11 +179,16 @@ test.describe("critical platform flows", () => {
       "/webhooks", "/settings", "/settings/security",
     ];
 
-    for (const route of routes) {
-      await page.goto(route, { waitUntil: "domcontentloaded" });
-      await expect(page).toHaveURL(new RegExp(route.replace("/", "\\/")));
-      await expect(page.locator("html")).toHaveAttribute("lang", "fa");
-      await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+    for (const locale of ["en", "fa"] as const) {
+      await page.evaluate((value) => localStorage.setItem("aiep.locale", value), locale);
+      await page.reload({ waitUntil: "domcontentloaded" });
+      for (const route of routes) {
+        await page.goto(route, { waitUntil: "domcontentloaded" });
+        await expect(page).toHaveURL(new RegExp(route.replace("/", "\\/")));
+        await expect(page.locator("html")).toHaveAttribute("lang", locale);
+        await expect(page.locator("html")).toHaveAttribute("dir", locale === "fa" ? "rtl" : "ltr");
+      }
     }
   });
 
