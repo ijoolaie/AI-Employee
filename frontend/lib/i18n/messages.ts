@@ -1146,6 +1146,9 @@ export const messages = {
     usage,
     integrations,
     billing,
+    settings,
+    security,
+    team,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -1171,5 +1174,8 @@ export const messages = {
     usage: usageFa,
     integrations: integrationsFa,
     billing: billingFa,
+    settings: settingsFa,
+    security: securityFa,
+    team: teamFa,
   },
 } as const;
