@@ -1,6 +1,6 @@
 # AI-Employee — A–F Test Tracker
 
-**Status date:** 2026-09-21
+**Status date:** 2026-09-22
 **Repository:** `ijoolaie/AI-Employee`
 **Purpose:** Single living tracker for the current test sequence. Update this document as evidence is completed; do not restart already-passed smoke/contract tests unless a regression requires it.
 
@@ -97,7 +97,14 @@ This closes the repository-level Phase F release-certification gate. It does not
 - Certification job: `106234691683` — **PASS**
 - Evidence artifact: `production-certification-evidence-v1.4.8-4f7c4676850b546a1c6bdf219ab9401202302e2d`
 - Artifact SHA256: `d179fe603aac3460b0e751d7ad7957fad9c3f8dedf81ed8c4a9e9e608a78aa20`
-- Certification is bound only to that exact SHA and does not certify current main `ee4c7c95...`.
+- Certification is bound only to that exact SHA and does not certify current main `9024a66cbc49279f317d72cebc15f56dbad4a0c1`.
+
+## Post-certification productization evidence — 2026-09-22
+
+- PR #596 Customer Settings / Security / API Keys lifecycle: **MERGED** as `9024a66cbc49279f317d72cebc15f56dbad4a0c1`.
+- Final PR head `bc98dc14a83f22296c7c45aa6f42b3a9f5dbe94f` passed CI #1709, CodeQL #2112, Production Infrastructure #969, HA Failure Recovery #676 and Ephemeral DAST #925.
+- Scope covered Customer Settings navigation, password-security error handling, and tenant-scoped API-key create/list/revoke UX with EN/FA, loading/error/retry/empty/success states, one-time secret display and RTL/responsive behavior.
+- This is mainline engineering/PR evidence and does not create a new exact-SHA release-certification claim.
 
 ## Evidence completed in current test session
 
@@ -234,7 +241,8 @@ These are post-release productization/security evidence, not a new production-ce
 
 ## Next test order
 
-1. Continue the external production-readiness sequence against the published certified `v1.4.7` release where applicable; separately prepare current main for fresh release certification. real target deployment, backup/restore and RPO/RTO, live providers, Vendor → Reseller → Client runtime isolation/RBAC, deployed DAST, independent security review, network/secrets lifecycle, HA/failure recovery, incident response/on-call, and customer acceptance.
-2. Audit current main `ee4c7c95...` and certify only the eventual release candidate SHA; never transfer certification across SHAs.
+1. Complete the remaining product-completeness gate on current main: Persian/English localization and RTL browser acceptance, curated Employee Templates, operational lifecycle parity, shared UX-state consistency, and documentation reconciliation.
+2. Prepare a new release candidate from the completed product-completeness scope and run fresh exact-SHA certification; never transfer certification across SHAs.
+3. Then continue external production-readiness: real target deployment, backup/restore and RPO/RTO, live providers, Vendor → Reseller → Client runtime isolation/RBAC, deployed DAST, independent security review, network/secrets lifecycle, HA/failure recovery, incident response/on-call, and customer acceptance.
 
 **Rule:** Every completed test changes the corresponding `[ ]` to `[x]` here with the command/result recorded in the evidence section or a linked dated evidence document.
