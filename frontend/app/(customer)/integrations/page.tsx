@@ -17,7 +17,7 @@ function isPermissionError(error: unknown) {
 }
 export default function IntegrationsPage() {
   const { t } = useI18n(); const m = t.integrations; const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["integrations"], queryFn: listCommerceIntegrations });
+  const q = useQuery({ queryKey: ["integrations"], queryFn: listCommerceIntegrations, refetchInterval: 15000 });
   const [shopDomain,setShopDomain]=useState(""); const [accessToken,setAccessToken]=useState(""); const [apiVersion,setApiVersion]=useState("2025-10");
   const [name,setName]=useState("My Shopify store"); const [oauthShop,setOauthShop]=useState(""); const [error,setError]=useState<string|null>(null); const [success,setSuccess]=useState<string|null>(null);
   const create=useMutation({mutationFn:()=>createCommerceIntegration({provider:"shopify",name,config:{shop_domain:shopDomain,access_token:accessToken,api_version:apiVersion,currency:"EUR"}}),onSuccess:()=>{setAccessToken("");setError(null);setSuccess(m.connectionSaved);void qc.invalidateQueries({queryKey:["integrations"]});},onError:e=>{setSuccess(null);setError(isPermissionError(e)?m.permissionDenied:getErrorMessage(e)||m.createError);}});
