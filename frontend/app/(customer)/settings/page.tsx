@@ -28,6 +28,7 @@ export default function SettingsPage() {
           <li><Link href="/knowledge" className="hover:underline">{m.knowledge}</Link></li>
           <li><Link href="/memory" className="hover:underline">{m.memory}</Link></li>
           <li><Link href="/team" className="hover:underline">{m.team}</Link></li>
+          <li><Link href="/api-keys" className="hover:underline">{m.apiKeys}</Link></li>
         </ul>
         <p className="pt-2 text-xs text-gray-400">{m.teamNote}</p>
       </CardContent></Card>
