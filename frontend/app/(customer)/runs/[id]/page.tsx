@@ -100,20 +100,20 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
                 {reportArtifacts.pdf_file_id && (
                   <Button size="sm" onClick={() => downloadFile(reportArtifacts.pdf_file_id as string, "report.pdf")}>
                     <FileText className="h-4 w-4" />
-                    Download PDF
+                    {tx.downloadPdf}
                   </Button>
                 )}
                 {reportArtifacts.excel_file_id && (
                   <Button size="sm" onClick={() => downloadFile(reportArtifacts.excel_file_id as string, "report.xlsx")}>
                     <FileSpreadsheet className="h-4 w-4" />
-                    Download Excel
+                    {tx.downloadExcel}
                   </Button>
                 )}
                 {Array.isArray(reportArtifacts.chart_file_ids) &&
                   (reportArtifacts.chart_file_ids as string[]).map((chartId, i) => (
                     <Button key={chartId} size="sm" onClick={() => downloadFile(chartId, `chart_${i + 1}.png`)}>
                       <Download className="h-4 w-4" />
-                      Chart {i + 1}
+                      {tx.chart} {i + 1}
                     </Button>
                   ))}
               </div>
@@ -133,7 +133,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
                   }
                 >
                   <FileText className="h-4 w-4" />
-                  Download extracted text
+                  {tx.downloadExtractedText}
                 </Button>
               </div>
             </CardContent>
@@ -175,6 +175,8 @@ function Meta({ label, value }: { label: string; value: React.ReactNode }) {
 // Phase 3 — Validation tooling: lets a real user record feedback on a
 // completed Run in-product, feeding app/(admin)/admin/validation.
 function RunFeedback({ runId, employeeId }: { runId: string; employeeId: string }) {
+  const { t } = useI18n();
+  const tx = t.runs;
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [sent, setSent] = useState(false);
