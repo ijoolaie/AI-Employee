@@ -14,7 +14,19 @@ class GuardrailsUpdate(BaseModel):
 class EmployeeTemplate(BaseModel):
     code: str
     name: str
+    name_fa: str
     description: str
+    description_fa: str
+    purpose: str
+    purpose_fa: str
+    category: str
+    input_contract: str
+    output_contract: str
+    dependencies: list[str] = Field(default_factory=list)
+    example: str
+    example_fa: str
+    version: str
+    min_platform_version: str
     kind: str = "custom"
     allowed_tools: list[str] = Field(default_factory=list)
     rules: dict[str, Any] = Field(default_factory=dict)
