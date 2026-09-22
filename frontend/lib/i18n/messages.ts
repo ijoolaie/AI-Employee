@@ -940,6 +940,82 @@ const channelsFa = {
   aiEmployeeFallback: "کارمند هوش مصنوعی",
 } as const;
 
+const runs = {
+  title: "Runs",
+  description: "Execution history across all AI Employees",
+  loading: "Loading runs…",
+  retry: "Retry",
+  permissionDenied: "Permission denied",
+  permissionDescription: "You do not have permission to view execution runs.",
+  emptyTitle: "No runs yet",
+  emptyDescription: "Runs will appear here after an AI Employee executes.",
+  runId: "Run ID",
+  employee: "Employee",
+  status: "Status",
+  tokens: "Tokens",
+  cost: "Cost",
+  created: "Created",
+} as const;
+
+const runsFa = {
+  title: "اجراها",
+  description: "تاریخچه اجرای همه کارمندان هوش مصنوعی",
+  loading: "در حال بارگذاری اجراها…",
+  retry: "تلاش مجدد",
+  permissionDenied: "دسترسی مجاز نیست",
+  permissionDescription: "شما اجازه مشاهده اجراهای عملیاتی را ندارید.",
+  emptyTitle: "هنوز اجرایی وجود ندارد",
+  emptyDescription: "پس از اجرای یک کارمند هوش مصنوعی، اجراها در اینجا نمایش داده می‌شوند.",
+  runId: "شناسه اجرا",
+  employee: "کارمند",
+  status: "وضعیت",
+  tokens: "توکن",
+  cost: "هزینه",
+  created: "ایجاد شده",
+} as const;
+
+const traces = {
+  title: "Trace Explorer",
+  description: "Inspect planner, memory, tool and AI execution events",
+  runs: "Runs",
+  retry: "Retry",
+  permissionDenied: "Permission denied",
+  permissionDescription: "You do not have permission to view execution traces.",
+  emptyTitle: "No runs found",
+  emptyDescription: "Execution traces will appear after runs are created.",
+  selectRun: "Select a run",
+  selectRunDescription: "Choose a run to inspect its execution timeline.",
+  status: "Status",
+  events: "Events",
+  tokens: "Tokens",
+  cost: "Cost",
+  timeline: "Execution timeline",
+  noEvents: "No trace events",
+  noEventsDescription: "This run has not recorded any trace events yet.",
+  run: "Run",
+} as const;
+
+const tracesFa = {
+  title: "رهگیری اجرا",
+  description: "رویدادهای برنامه‌ریزی، حافظه، ابزار و اجرای هوش مصنوعی را بررسی کنید",
+  runs: "اجراها",
+  retry: "تلاش مجدد",
+  permissionDenied: "دسترسی مجاز نیست",
+  permissionDescription: "شما اجازه مشاهده رهگیری‌های اجرا را ندارید.",
+  emptyTitle: "اجرایی پیدا نشد",
+  emptyDescription: "پس از ایجاد اجرا، رهگیری آن در اینجا نمایش داده می‌شود.",
+  selectRun: "یک اجرا انتخاب کنید",
+  selectRunDescription: "برای بررسی خط زمانی اجرا، یک اجرا را انتخاب کنید.",
+  status: "وضعیت",
+  events: "رویدادها",
+  tokens: "توکن",
+  cost: "هزینه",
+  timeline: "خط زمانی اجرا",
+  noEvents: "رویداد رهگیری وجود ندارد",
+  noEventsDescription: "هنوز رویداد رهگیری برای این اجرا ثبت نشده است.",
+  run: "اجرا",
+} as const;
+
 const nav = {
   business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
