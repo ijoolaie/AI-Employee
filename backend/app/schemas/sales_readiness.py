@@ -20,9 +20,13 @@ class EmployeeTemplate(BaseModel):
     purpose: str
     purpose_fa: str
     category: str
+    category_fa: str
     input_contract: str
+    input_contract_fa: str
     output_contract: str
+    output_contract_fa: str
     dependencies: list[str] = Field(default_factory=list)
+    dependencies_fa: list[str] = Field(default_factory=list)
     example: str
     example_fa: str
     version: str
