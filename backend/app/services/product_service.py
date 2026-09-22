@@ -79,3 +79,38 @@ async def update_inventory(
     await db.flush()
     await db.refresh(product)
     return product
+
+
+async def update_product(
+    db: AsyncSession,
+    tenant_id: uuid.UUID,
+    product_id: uuid.UUID,
+    payload: dict,
+):
+    product = (
+        await db.execute(
+            select(Product).where(
+                Product.id == product_id,
+                Product.tenant_id == tenant_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if not product:
+        return None
+
+    data = dict(payload)
+    if "sku" in data:
+        data["sku"] = normalize_sku(data["sku"])
+    for key, value in data.items():
+        setattr(product, key, value)
+
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name != PRODUCT_SKU_INDEX_NAME:
+            raise
+        raise ConflictError("Product SKU already exists in this tenant") from exc
+
+    await db.refresh(product)
+    return product
