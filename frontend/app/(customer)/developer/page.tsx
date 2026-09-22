@@ -13,7 +13,7 @@ import { useI18n } from "@/lib/i18n/provider";
 
 export default function DeveloperPage() {
   const { t } = useI18n();
-  const m = t.developerSurfaces.developer;
+  const m = t.developer;
   const queryClient = useQueryClient();
   const metrics = useQuery({ queryKey: ["developer", "metrics"], queryFn: getOperationsMetrics, refetchInterval: 10000 });
   const logs = useQuery({ queryKey: ["developer", "audit"], queryFn: () => getAuditLogs({ limit: 50 }), refetchInterval: 10000 });
