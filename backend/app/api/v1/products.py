@@ -1,5 +1,5 @@
 from uuid import UUID
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, HTTPException, Query
 from app.core.deps import DbSession, ProductCreateContext, ProductInventoryUpdateContext, ProductReadContext, ProductUpdateContext
 from app.schemas.common import APIResponse
 from app.schemas.product import ProductCreate, ProductInventoryUpdate, ProductResponse, ProductUpdate
@@ -21,7 +21,6 @@ async def create_product(payload: ProductCreate, ctx: ProductCreateContext, db: 
 async def update_product(product_id: UUID, payload: ProductUpdate, ctx: ProductUpdateContext, db: DbSession):
     row = await product_service.update_product(db, ctx.tenant_id, product_id, payload.model_dump(exclude_unset=True))
     if not row:
-        from fastapi import HTTPException
         raise HTTPException(404, "Product not found")
     return APIResponse(success=True, data=ProductResponse.model_validate(row))
 
