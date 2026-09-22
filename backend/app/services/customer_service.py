@@ -42,6 +42,17 @@ async def get_customer(db: AsyncSession, *, tenant_id: uuid.UUID, customer_id: u
 async def update_customer(db: AsyncSession, *, tenant_id: uuid.UUID, customer_id: uuid.UUID, **data):
     customer = await get_customer(db, tenant_id=tenant_id, customer_id=customer_id)
     for k, v in data.items():
-        if v is not None: setattr(customer, k, v)
-    await db.flush(); await db.refresh(customer)
+        if v is not None:
+            setattr(customer, k, v)
+    await db.flush()
+    await audit_service.record(
+        db,
+        tenant_id=tenant_id,
+        actor_id=None,
+        action="customer.updated",
+        resource_type="customer",
+        resource_id=str(customer.id),
+        metadata={"fields": sorted(data.keys())},
+    )
+    await db.refresh(customer)
     return customer
