@@ -4,14 +4,14 @@
 **Certified release baseline:** `v1.4.9`  
 **Latest certified release:** `v1.4.9` — exact-SHA certification PASS  
 **Certified release commit:** `f1ce20c010779f5273eb5d0051da24cdd57b33f6`  
-**Mainline engineering head:** `9024a66cbc49279f317d72cebc15f56dbad4a0c1`  
+**Mainline engineering head:** `00c65621505b959103314c20312f1715a98c54b6`  
 **Status date:** 2026-09-22  
 **Latest published release:** `v1.4.9`  
 **Latest certified release:** `v1.4.9`  
 **Certification run:** `35575615877` — PASS (exact `v1.4.9` SHA)  
 **Production deployment:** PENDING REAL INFRASTRUCTURE
 
-The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.9` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten.
+The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.9` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification product-completeness changes and is not itself certified.
 
 ## Executive status
 
@@ -87,9 +87,12 @@ Certification never transfers automatically across SHAs. `v1.4.7` certification 
 
 A readiness review identified product-level launch blockers that are distinct from repository certification:
 
-- **Persian/RTL:** i18n infrastructure exists, but the customer-facing product is not fully localized; major pages still contain hard-coded English UI.
-- **Employee Templates:** the backend catalog currently contains three starter templates and the UI provides list/install only. This is a foundation, not a complete commercial starter catalog.
-- **Lists / tables / CRUD:** operational resource surfaces require a systematic list/detail/action parity review. Hard delete is not the default; resource lifecycle must use archive/deactivate/cancel/revoke where retention or auditability requires it.
+- **Persian/RTL:** core customer localization and true RTL infrastructure have been implemented and a Playwright fa/en direction-switch acceptance test is now present; a final hard-coded-string sweep and broad browser acceptance remain before claiming the entire customer product localized.
+- **Employee Templates:** the curated backend catalog now contains seven starter templates with bilingual metadata, contracts, dependencies, tool/rule metadata, compatibility and tenant-safe localized installation.
+- **Lists / tables / CRUD:** the main customer commerce/lifecycle slices have been advanced through Product, Customer, Order/Invoice and schedule lifecycle work. Schedule deletion is no longer exposed in the customer UI; enable/disable is the supported lifecycle control.
+- **Edition-aware Test Center:** definition visibility and execution are both edition-bound, with Vendor/Reseller/Customer and negative-boundary unit coverage.
+- **Browser acceptance:** customer fa/en RTL switching is now covered in `frontend/e2e/critical-flows.spec.ts`; broader customer-surface acceptance remains pending.
+- **Certification boundary:** these source changes are not covered by the immutable `v1.4.9` certification. A new release candidate and fresh certification are still required.eactivate/cancel/revoke where retention or auditability requires it.
 
 Decision: these are genuine product requirements and must be closed before external commercial production deployment. They do not invalidate or mutate v1.4.9. Any source changes require a new candidate release and fresh exact-SHA certification.
 
