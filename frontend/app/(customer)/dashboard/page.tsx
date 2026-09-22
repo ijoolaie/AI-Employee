@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
 import { getCustomerDashboard, getErrorMessage } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
@@ -27,7 +28,7 @@ export default function DashboardPage() {
     />
     <div className="space-y-6 p-6">
       {q.isLoading && <Spinner />}
-      {q.error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{getErrorMessage(q.error)}</div>}
+      {q.error && <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"><span>{getErrorMessage(q.error)}</span><Button variant="outline" size="sm" onClick={() => void q.refetch()}>{tx.retry}</Button></div>}
       {data && <>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat icon={Bot} label={tx.employees} value={`${data.active_employee_count}/${data.employee_count}`} hint={tx.activeTotal} />
