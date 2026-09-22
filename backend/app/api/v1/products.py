@@ -28,6 +28,5 @@ async def update_product(product_id: UUID, payload: ProductUpdate, ctx: ProductU
 async def update_inventory(product_id: UUID, payload: ProductInventoryUpdate, ctx: ProductInventoryUpdateContext, db: DbSession):
     row = await product_service.update_inventory(db, ctx.tenant_id, product_id, payload.inventory)
     if not row:
-        from fastapi import HTTPException
         raise HTTPException(404, "Product not found")
     return APIResponse(success=True, data=ProductResponse.model_validate(row))
