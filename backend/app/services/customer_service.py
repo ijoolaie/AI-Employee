@@ -39,7 +39,7 @@ async def get_customer(db: AsyncSession, *, tenant_id: uuid.UUID, customer_id: u
     if not customer: raise NotFoundError("Customer not found")
     return customer
 
-async def update_customer(db: AsyncSession, *, tenant_id: uuid.UUID, customer_id: uuid.UUID, **data):
+async def update_customer(db: AsyncSession, *, tenant_id: uuid.UUID, customer_id: uuid.UUID, actor_id: uuid.UUID | None = None, **data):
     customer = await get_customer(db, tenant_id=tenant_id, customer_id=customer_id)
     for k, v in data.items():
         if v is not None:
@@ -48,7 +48,7 @@ async def update_customer(db: AsyncSession, *, tenant_id: uuid.UUID, customer_id
     await audit_service.record(
         db,
         tenant_id=tenant_id,
-        actor_id=None,
+        actor_id=actor_id,
         action="customer.updated",
         resource_type="customer",
         resource_id=str(customer.id),
