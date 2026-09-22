@@ -2,21 +2,109 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Spinner } from "@/components/ui/spinner";
-import { listCustomerConversations, getErrorMessage } from "@/lib/api";
+import { getErrorMessage, listCustomerConversations } from "@/lib/api";
+import { useI18n } from "@/lib/i18n/provider";
 import { formatDate } from "@/lib/utils";
 import { MessageCircle } from "lucide-react";
 
+function isPermissionError(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+  return message.includes("permission") || message.includes("403");
+}
+
 export default function ConversationsPage() {
-  const q = useQuery({ queryKey: ["customer-conversations"], queryFn: () => listCustomerConversations() });
-  return <>
-    <Header title="Customer Conversations" description="See how your customers are talking to your AI Employees." />
-    <div className="p-6"><Card><CardHeader><CardTitle>Recent customer conversations</CardTitle></CardHeader><CardContent className="p-0">
-      {q.isLoading && <div className="p-6"><Spinner /></div>}
-      {q.error && <p className="p-6 text-sm text-red-600">{getErrorMessage(q.error)}</p>}
-      {!q.isLoading && !q.error && (q.data ?? []).length === 0 && <div className="flex flex-col items-center gap-2 p-12 text-center"><MessageCircle className="h-8 w-8 text-gray-300" /><p className="text-sm font-medium text-gray-700">No customer conversations yet</p><p className="text-xs text-gray-500">Publish an Employee to a customer channel and share its chat link.</p></div>}
-      {(q.data ?? []).length > 0 && <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-xs uppercase text-gray-500"><th className="px-5 py-3">Customer</th><th className="px-5 py-3">Messages</th><th className="px-5 py-3">Last message</th><th className="px-5 py-3">Updated</th></tr></thead><tbody>{q.data!.map((c) => <tr key={c.id} className="border-b border-gray-50"><td className="px-5 py-3"><div className="font-medium">{c.customer_name || "Anonymous customer"}</div><div className="text-xs text-gray-400">{c.customer_email || c.customer_phone || c.id.slice(0, 8)}</div></td><td className="px-5 py-3">{c.message_count}</td><td className="max-w-md truncate px-5 py-3 text-gray-600">{c.last_message || "—"}</td><td className="px-5 py-3 text-gray-500">{formatDate(c.updated_at)}</td></tr>)}</tbody></table></div>}
-    </CardContent></Card></div>
-  </>;
+  const { t } = useI18n();
+  const m = t.conversations;
+  const q = useQuery({
+    queryKey: ["customer-conversations"],
+    queryFn: () => listCustomerConversations(),
+  });
+
+  const conversations = q.data ?? [];
+
+  return (
+    <>
+      <Header title={m.title} description={m.description} />
+      <div className="space-y-4 p-6">
+        {q.isLoading && (
+          <div className="flex justify-center py-12" aria-label={m.loading}>
+            <Spinner />
+          </div>
+        )}
+
+        {q.error && (
+          <div role="alert" className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm">
+            <p className="text-red-700">{isPermissionError(q.error) ? m.permissionDenied : m.error}</p>
+            <Button variant="secondary" onClick={() => q.refetch()}>{m.retry}</Button>
+          </div>
+        )}
+
+        {!q.isLoading && !q.error && conversations.length === 0 && (
+          <EmptyState
+            icon={MessageCircle}
+            title={m.emptyTitle}
+            description={m.emptyDescription}
+          />
+        )}
+
+        {!q.isLoading && !q.error && conversations.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{m.directory}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-start text-xs uppercase text-gray-500">
+                      <th className="px-5 py-3 text-start">{m.customer}</th>
+                      <th className="px-5 py-3 text-start">{m.status}</th>
+                      <th className="px-5 py-3 text-start">{m.messages}</th>
+                      <th className="px-5 py-3 text-start">{m.lastMessage}</th>
+                      <th className="px-5 py-3 text-start">{m.updated}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {conversations.map((conversation) => (
+                      <tr key={conversation.id} className="border-b border-gray-50 last:border-0">
+                        <td className="px-5 py-4">
+                          <div className="font-medium text-gray-900">
+                            {conversation.customer_name || m.anonymous}
+                          </div>
+                          <div className="mt-1 text-xs text-gray-400">
+                            {conversation.customer_email ||
+                              conversation.customer_phone ||
+                              conversation.id.slice(0, 8)}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <Badge status={conversation.status} />
+                        </td>
+                        <td className="px-5 py-4 whitespace-nowrap">
+                          {conversation.message_count}
+                        </td>
+                        <td className="max-w-md px-5 py-4 text-gray-600">
+                          <div className="truncate" title={conversation.last_message || undefined}>
+                            {conversation.last_message || m.noLastMessage}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 whitespace-nowrap text-gray-500">
+                          {formatDate(conversation.updated_at)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </>
+  );
 }
