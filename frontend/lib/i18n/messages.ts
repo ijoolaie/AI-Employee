@@ -37,6 +37,8 @@ const employee = {
   inputInvalidJson: "Input must be valid JSON",
   chooseDocument: "Choose a PDF, image, or DOCX file to analyze first.",
   chooseDataset: "Choose a CSV/Excel file to analyze first.",
+  copyEmbed: "Embed on a website with", existingChannels: "Published channels", guardrailsLoadError: "Unable to load guardrails.", guardrailsSaveError: "Unable to save guardrails.", publishError: "Unable to publish channel.", publishSuccess: "Channel published successfully.", runLoadError: "Unable to load run history.", runError: "Unable to start run.", details: "Details", status: "Status", tokens: "Tokens", cost: "Cost", created: "Created", id: "ID", active: "Active", inactive: "Inactive", slugKind: "Slug / kind", guardrailsInvalid: "Guardrails must be valid JSON."
+
 } as const;
 
 const employeeFa = {
@@ -1042,6 +1044,41 @@ const chatFa = { title: "گفتگوی کارمند هوش مصنوعی", descrip
 const reports = { title: "Reports", description: "Operational performance, reliability and AI cost summary", aiEmployees: "AI employees", runs: "Runs", successRate: "Success rate", aiCost: "AI cost", executionReport: "Execution report", totalTokens: "Total tokens", providerCalls: "Provider calls", averageLatency: "Average latency", failedCalls: "Failed calls", pendingApprovals: "Pending approvals", openAnalytics: "Open detailed analytics →", recentRuns: "Recent runs", loadError: "Unable to load reports.", retry: "Retry" } as const;
 const reportsFa = { title: "گزارش‌ها", description: "خلاصه عملکرد عملیاتی، قابلیت اطمینان و هزینه هوش مصنوعی", aiEmployees: "کارمندان هوش مصنوعی", runs: "اجراها", successRate: "نرخ موفقیت", aiCost: "هزینه هوش مصنوعی", executionReport: "گزارش اجرا", totalTokens: "کل توکن‌ها", providerCalls: "فراخوانی‌های ارائه‌دهنده", averageLatency: "میانگین تأخیر", failedCalls: "فراخوانی‌های ناموفق", pendingApprovals: "تأییدهای در انتظار", openAnalytics: "مشاهده تحلیل‌های کامل ←", recentRuns: "آخرین اجراها", loadError: "بارگذاری گزارش‌ها انجام نشد.", retry: "تلاش مجدد" } as const;
 
+const studio = {
+  title: "AI Studio", description: "Build AI employees with prompts, memory, tools and autonomy policies",
+  employeeDefinition: "Employee definition", systemPrompt: "System prompt", allowedTools: "Allowed tools", runtime: "Runtime",
+  runtimeDescription: "LM Studio through the AI Gateway. Memory and planning are configured below.",
+  name: "Name", namePlaceholder: "Invoice Assistant", slug: "Slug", slugPlaceholder: "invoice-assistant", kind: "Kind",
+  promptDefault: "You are a reliable AI employee. Complete the user's task accurately and explain important decisions.",
+  memoryAware: "Memory-aware", toolAware: "Tool-aware", tenantScoped: "Tenant scoped", sideEffect: "Side effect · approval boundary", safeTool: "Read-only / safe",
+  noTools: "No tools are currently exposed by the backend.", autonomyMemory: "Autonomy & memory",
+  autonomousPlanning: "Autonomous planning", autonomousPlanningDescription: "Allow the runtime to decompose tasks into executable steps.",
+  requirePlan: "Require a plan", requirePlanDescription: "Fail closed if planning cannot produce a valid plan.",
+  autoMemory: "Automatic memory extraction", autoMemoryDescription: "Persist useful facts and preferences from successful runs.",
+  maxPlanSteps: "Maximum plan steps", outputSchema: "Output schema", currentEmployees: "Current employees",
+  createFirst: "Create your first employee.", safetyBoundary: "Safety boundary", toolPermissions: "Tool permissions are selected per employee version.",
+  sideEffectPolicy: "Side-effecting tools remain subject to the backend approval policy.",
+  autonomyPolicy: "Autonomous planning cannot bypass RBAC or tenant isolation.",
+  create: "Create AI employee", creating: "Creating…", createdSuccess: "Employee created successfully."
+} as const;
+const studioFa = {
+  title: "استودیو هوش مصنوعی", description: "ساخت کارمندان هوش مصنوعی با پرامپت، حافظه، ابزارها و سیاست‌های خودکارسازی",
+  employeeDefinition: "تعریف کارمند", systemPrompt: "پرامپت سیستمی", allowedTools: "ابزارهای مجاز", runtime: "موتور اجرا",
+  runtimeDescription: "LM Studio از طریق درگاه هوش مصنوعی. حافظه و برنامه‌ریزی در ادامه پیکربندی می‌شوند.",
+  name: "نام", namePlaceholder: "دستیار فاکتور", slug: "نامک", slugPlaceholder: "invoice-assistant", kind: "نوع",
+  promptDefault: "شما یک کارمند هوش مصنوعی قابل اعتماد هستید. وظیفه کاربر را دقیق انجام دهید و تصمیم‌های مهم را توضیح دهید.",
+  memoryAware: "مبتنی بر حافظه", toolAware: "مبتنی بر ابزار", tenantScoped: "محدود به تننت", sideEffect: "دارای اثر جانبی · مرز تأیید", safeTool: "فقط خواندنی / ایمن",
+  noTools: "در حال حاضر ابزاری از backend در دسترس نیست.", autonomyMemory: "خودکارسازی و حافظه",
+  autonomousPlanning: "برنامه‌ریزی خودکار", autonomousPlanningDescription: "به موتور اجرا اجازه دهید وظایف را به مراحل قابل اجرا تقسیم کند.",
+  requirePlan: "نیاز به برنامه", requirePlanDescription: "اگر برنامه معتبر تولید نشود، اجرا متوقف می‌شود.",
+  autoMemory: "استخراج خودکار حافظه", autoMemoryDescription: "حقایق و ترجیحات مفید را از اجراهای موفق ذخیره کنید.",
+  maxPlanSteps: "حداکثر مراحل برنامه", outputSchema: "طرح خروجی", currentEmployees: "کارمندان فعلی",
+  createFirst: "اولین کارمند خود را ایجاد کنید.", safetyBoundary: "مرز ایمنی", toolPermissions: "مجوز ابزارها برای هر نسخه کارمند انتخاب می‌شوند.",
+  sideEffectPolicy: "ابزارهای دارای اثر جانبی همچنان تابع سیاست تأیید backend هستند.",
+  autonomyPolicy: "برنامه‌ریزی خودکار نمی‌تواند RBAC یا جداسازی تننت را دور بزند.",
+  create: "ایجاد کارمند هوش مصنوعی", creating: "در حال ایجاد…", createdSuccess: "کارمند با موفقیت ایجاد شد."
+} as const;
+
 const nav = {
   business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
@@ -1158,6 +1195,7 @@ export const messages = {
     team,
     apiKeys,
     chat,
+    studio,
     reports,
   },
   fa: {
@@ -1189,6 +1227,7 @@ export const messages = {
     team: teamFa,
     apiKeys: apiKeysFa,
     chat: chatFa,
+    studio: studioFa,
     reports: reportsFa,
   },
 } as const;
