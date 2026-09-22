@@ -233,7 +233,8 @@ export default function ProductsPage() {
                       <th className="px-5 py-3">{m.product}</th>
                       <th className="px-5 py-3">{m.price}</th>
                       <th className="px-5 py-3">{m.inventory}</th>
-                      <th className="px-5 py-3">{m.source}</th>\n                      <th className="px-5 py-3">{m.status}</th>
+                      <th className="px-5 py-3">{m.source}</th>
+                      <th className="px-5 py-3">{m.status}</th>
                       <th className="px-5 py-3">{m.actions}</th>
                     </tr>
                   </thead>
@@ -274,7 +275,8 @@ export default function ProductsPage() {
                               aria-label={m.inventory}
                             />
                           </td>
-                          <td className="px-5 py-3 text-slate-500">{p.source}</td>\n                          <td className="px-5 py-3">{p.is_active ? m.active : m.inactive}</td>
+                          <td className="px-5 py-3 text-slate-500">{p.source}</td>
+                          <td className="px-5 py-3">{p.is_active ? m.active : m.inactive}</td>
                           <td className="px-5 py-3">
                             <Button
                               size="sm"
