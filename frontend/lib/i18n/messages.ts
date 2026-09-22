@@ -1228,7 +1228,6 @@ const dashboard = {
   webhooks: "Webhooks",
   activeTriggers: "active triggers",
   retry: "Retry",
-  retry: "Retry",
 } as const;
 
 const dashboardFa = {
@@ -1263,7 +1262,6 @@ const dashboardFa = {
   activeSchedulesText: "زمان‌بندی فعال",
   webhooks: "وب‌هوک‌ها",
   activeTriggers: "محرک فعال",
-  retry: "تلاش مجدد",
   retry: "تلاش مجدد",
 } as const;
 
@@ -1276,189 +1274,11 @@ const analytics = {
   activeWebhooks: "Active webhooks", failedAiCalls: "Failed AI calls", recentExecution: "Recent execution", viewAll: "View all →", noRuns: "No runs yet.", run: "Run"
 } as const;
 
-const reports = { title: "Reports", description: "Operational performance, reliability and AI cost summary", aiEmployees: "AI employees", runs: "Runs", successRate: "Success rate", aiCost: "AI cost", executionReport: "Execution report", totalTokens: "Total tokens", providerCalls: "Provider calls", averageLatency: "Average latency", failedCalls: "Failed calls", pendingApprovals: "Pending approvals", openAnalytics: "Open detailed analytics →", recentRuns: "Recent runs", noRuns: "No runs yet.", loadError: "Unable to load reports.", retry: "Retry" } as const;
-const reportsFa = { title: "گزارش‌ها", description: "خلاصه عملکرد عملیاتی، قابلیت اطمینان و هزینه هوش مصنوعی", aiEmployees: "کارمندان هوش مصنوعی", runs: "اجراها", successRate: "نرخ موفقیت", aiCost: "هزینه هوش مصنوعی", executionReport: "گزارش اجرا", totalTokens: "کل توکن‌ها", providerCalls: "فراخوانی‌های ارائه‌دهنده", averageLatency: "میانگین تأخیر", failedCalls: "فراخوانی‌های ناموفق", pendingApprovals: "تأییدهای در انتظار", openAnalytics: "مشاهده تحلیل‌های کامل ←", recentRuns: "آخرین اجراها", noRuns: "هنوز اجرایی ثبت نشده است.", loadError: "بارگذاری گزارش‌ها انجام نشد.", retry: "تلاش مجدد" } as const;
-
-const studio = {
-  title: "AI Studio", description: "Build AI employees with prompts, memory, tools and autonomy policies",
-  employeeDefinition: "Employee definition", systemPrompt: "System prompt", allowedTools: "Allowed tools", runtime: "Runtime",
-  runtimeDescription: "LM Studio through the AI Gateway. Memory and planning are configured below.",
-  name: "Name", namePlaceholder: "Invoice Assistant", slug: "Slug", slugPlaceholder: "invoice-assistant", kind: "Kind",
-  promptDefault: "You are a reliable AI employee. Complete the user's task accurately and explain important decisions.",
-  memoryAware: "Memory-aware", toolAware: "Tool-aware", tenantScoped: "Tenant scoped", sideEffect: "Side effect · approval boundary", safeTool: "Read-only / safe",
-  noTools: "No tools are currently exposed by the backend.", autonomyMemory: "Autonomy & memory",
-  autonomousPlanning: "Autonomous planning", autonomousPlanningDescription: "Allow the runtime to decompose tasks into executable steps.",
-  requirePlan: "Require a plan", requirePlanDescription: "Fail closed if planning cannot produce a valid plan.",
-  autoMemory: "Automatic memory extraction", autoMemoryDescription: "Persist useful facts and preferences from successful runs.",
-  maxPlanSteps: "Maximum plan steps", outputSchema: "Output schema", currentEmployees: "Current employees",
-  createFirst: "Create your first employee.", safetyBoundary: "Safety boundary", toolPermissions: "Tool permissions are selected per employee version.",
-  sideEffectPolicy: "Side-effecting tools remain subject to the backend approval policy.",
-  autonomyPolicy: "Autonomous planning cannot bypass RBAC or tenant isolation.",
-  create: "Create AI employee", creating: "Creating…", createdSuccess: "Employee created successfully."
-} as const;
-const studioFa = {
-  title: "استودیو هوش مصنوعی", description: "ساخت کارمندان هوش مصنوعی با پرامپت، حافظه، ابزارها و سیاست‌های خودکارسازی",
-  employeeDefinition: "تعریف کارمند", systemPrompt: "پرامپت سیستمی", allowedTools: "ابزارهای مجاز", runtime: "موتور اجرا",
-  runtimeDescription: "LM Studio از طریق درگاه هوش مصنوعی. حافظه و برنامه‌ریزی در ادامه پیکربندی می‌شوند.",
-  name: "نام", namePlaceholder: "دستیار فاکتور", slug: "نامک", slugPlaceholder: "invoice-assistant", kind: "نوع",
-  promptDefault: "شما یک کارمند هوش مصنوعی قابل اعتماد هستید. وظیفه کاربر را دقیق انجام دهید و تصمیم‌های مهم را توضیح دهید.",
-  memoryAware: "مبتنی بر حافظه", toolAware: "مبتنی بر ابزار", tenantScoped: "محدود به تننت", sideEffect: "دارای اثر جانبی · مرز تأیید", safeTool: "فقط خواندنی / ایمن",
-  noTools: "در حال حاضر ابزاری از backend در دسترس نیست.", autonomyMemory: "خودکارسازی و حافظه",
-  autonomousPlanning: "برنامه‌ریزی خودکار", autonomousPlanningDescription: "به موتور اجرا اجازه دهید وظایف را به مراحل قابل اجرا تقسیم کند.",
-  requirePlan: "نیاز به برنامه", requirePlanDescription: "اگر برنامه معتبر تولید نشود، اجرا متوقف می‌شود.",
-  autoMemory: "استخراج خودکار حافظه", autoMemoryDescription: "حقایق و ترجیحات مفید را از اجراهای موفق ذخیره کنید.",
-  maxPlanSteps: "حداکثر مراحل برنامه", outputSchema: "طرح خروجی", currentEmployees: "کارمندان فعلی",
-  createFirst: "اولین کارمند خود را ایجاد کنید.", safetyBoundary: "مرز ایمنی", toolPermissions: "مجوز ابزارها برای هر نسخه کارمند انتخاب می‌شوند.",
-  sideEffectPolicy: "ابزارهای دارای اثر جانبی همچنان تابع سیاست تأیید backend هستند.",
-  autonomyPolicy: "برنامه‌ریزی خودکار نمی‌تواند RBAC یا جداسازی تننت را دور بزند.",
-  create: "ایجاد کارمند هوش مصنوعی", creating: "در حال ایجاد…", createdSuccess: "کارمند با موفقیت ایجاد شد."
-} as const;
-
-const invoices = {
-  title:"Invoices", description:"Business invoices, payment status and PDF exports", total:"Total invoices", register:"Invoice register", number:"Number", customer:"Customer", email:"Email", notes:"Notes", status:"Status", totalLabel:"Total", due:"Due", issueDate:"Issue date", dueDate:"Due date", lineItems:"Line items", item:"Item", quantity:"Quantity", unitPrice:"Unit price", amount:"Amount", edit:"Edit", save:"Save changes", saving:"Saving…", cancel:"Cancel", exportPdf:"Export PDF", exporting:"Exporting…", statusUpdated:"Status updated", pdfReady:"PDF ready", pdfExported:"PDF export completed", retry:"Retry", loadError:"Unable to load invoices."
-} as const;
-const invoicesFa = {
-  edit:"ویرایش", save:"ذخیره تغییرات", saving:"در حال ذخیره…", cancel:"لغو", email:"ایمیل", notes:"یادداشت‌ها", item:"قلم", quantity:"تعداد", unitPrice:"قیمت واحد", amount:"مبلغ", title:"فاکتورها", description:"فاکتورهای کسب‌وکار، وضعیت پرداخت و خروجی PDF", total:"کل فاکتورها", register:"دفتر فاکتورها", number:"شماره", customer:"مشتری", status:"وضعیت", totalLabel:"مبلغ کل", due:"سررسید", issueDate:"تاریخ صدور", dueDate:"تاریخ سررسید", lineItems:"اقلام فاکتور", exportPdf:"خروجی PDF", exporting:"در حال خروجی گرفتن…", statusUpdated:"وضعیت به‌روزرسانی شد", pdfReady:"PDF آماده است", pdfExported:"خروجی PDF تکمیل شد", retry:"تلاش مجدد", loadError:"بارگذاری فاکتورها انجام نشد."
-} as const;
-const privacy = {
-  title:"Privacy & GDPR", description:"Export or delete customer data within your tenant.", request:"Customer data request", customerId:"Customer ID", exportData:"Export data", deleteAnonymize:"Delete/anonymize", confirm:"Delete and anonymize this customer's personal data?", success:"Customer data anonymized and deletion recorded.", retry:"Retry", error:"Unable to complete the privacy request."
-} as const;
-const privacyFa = {
-  title:"حریم خصوصی و GDPR", description:"داده‌های مشتری را در تننت خود خروجی بگیرید یا حذف کنید.", request:"درخواست داده مشتری", customerId:"شناسه مشتری", exportData:"خروجی داده", deleteAnonymize:"حذف/ناشناس‌سازی", confirm:"داده‌های شخصی این مشتری حذف و ناشناس‌سازی شود؟", success:"داده‌های مشتری ناشناس‌سازی و ثبت شد.", retry:"تلاش مجدد", error:"انجام درخواست حریم خصوصی ممکن نشد."
-} as const;
-const auditLogs = {
-  title:"Logs", description:"Tenant-scoped audit and operational events", recent:"Recent events", time:"Time", action:"Action", status:"Status", request:"Request", empty:"No audit events found.", retry:"Retry", loadError:"Unable to load logs."
-} as const;
-const auditLogsFa = {
-  title:"لاگ‌ها", description:"رویدادهای حسابرسی و عملیاتی محدود به تننت", recent:"آخرین رویدادها", time:"زمان", action:"عملیات", status:"وضعیت", request:"درخواست", empty:"رویداد حسابرسی ثبت نشده است.", retry:"تلاش مجدد", loadError:"بارگذاری لاگ‌ها انجام نشد."
-} as const;
-const dealDetail = {
-  detail:"Deal detail", information:"Deal information", customer:"Customer", email:"Email", amount:"Amount", probability:"Probability", expectedClose:"Expected close", owner:"Owner", source:"Source", order:"Order", notes:"Notes", noNotes:"No notes recorded.", timeline:"Timeline", created:"Created", updated:"Updated", retry:"Retry", loadError:"Unable to load deal."
-} as const;
-const dealDetailFa = {
-  detail:"جزئیات معامله", information:"اطلاعات معامله", customer:"مشتری", email:"ایمیل", amount:"مبلغ", probability:"احتمال", expectedClose:"تاریخ احتمالی بسته‌شدن", owner:"مسئول", source:"منبع", order:"سفارش", notes:"یادداشت‌ها", noNotes:"یادداشتی ثبت نشده است.", timeline:"خط زمانی", created:"ایجاد شده", updated:"به‌روزرسانی شده", retry:"تلاش مجدد", loadError:"بارگذاری معامله انجام نشد."
-} as const;
-
-const customerLegacy = {
-  webhooks:{title:"Webhooks",description:"Manage workflow event triggers, secrets, delivery history and replay.",create:"Create webhook trigger",workflow:"Workflow",selectWorkflow:"Select workflow…",eventType:"Event type",createAction:"Create trigger",creating:"Creating…",triggers:"Triggers",deliveries:"Delivery history",selectTrigger:"Select a trigger to inspect deliveries.",noTriggers:"No webhook triggers found.",noDeliveries:"No deliveries found.",active:"Active",inactive:"Inactive",enable:"Enable",disable:"Disable",rotate:"Rotate secret",show:"Show",hide:"Hide",copy:"Copy",replay:"Replay",replaying:"Replaying…",secret:"Webhook secret",secretWarning:"Store this secret securely. It is shown only after creation or rotation.",endpoint:"Endpoint",loadError:"Unable to load webhook data.",retry:"Retry",event:"Event",status:"Status",created:"Created",secretRotated:"Secret rotated",actions:"Actions",eventId:"Event ID",attempts:"Attempts",received:"Received",run:"Run",rotateConfirm:"Rotate this webhook secret? Existing signatures will stop working.",replayConfirm:"Replay this delivery and create a new workflow run?"},
-  marketplace:{title:"Marketplace",description:"Discover published teams and install tenant-local copies.",boundary:"Authorized installation boundary",boundaryText:"Marketplace installation is permission-gated by the API and creates tenant-local definitions with publication provenance.",target:"Target workspace",workspacePlaceholder:"default workspace",workspaceNote:"The workspace key is tenant-local and is passed unchanged to the installation boundary.",published:"Published teams",noPublished:"No published teams",noPublishedDescription:"No public marketplace publications are currently available to this tenant.",review:"Review & install",reviewTitle:"Installation review",install:"Install",installing:"Installing…",installed:"Installation completed.",localOnly:"Installation creates a tenant-local copy.",loadError:"Unable to load marketplace publications.",retry:"Retry",publishedAt:"Published",publication:"Publication",close:"Close",customerAcceptance:"Customer acceptance",notImplied:"Not implied",productionDeployment:"Production deployment",trustBasis:"Trust basis",recordedEvidenceOnly:"Recorded evidence only",installBoundaryWarning:"Installing creates tenant-local definitions and provenance. It does not provision an AI Employee instance or deploy anything to production.",installTenantCopy:"Install tenant-local copy"},
-  onboarding:{loading:"Loading…",title:"Get your business live",description:"A guided setup from signup to a working AI Employee.",checklist:"Launch checklist",checklistDescription:"Complete the six steps once. You can return to any setup area later.",business:"Business",businessDesc:"Tell us what you sell.",brand:"Brand",brandDesc:"Set your store identity and tone.",products:"Products",productsDesc:"Add products or connect Shopify for live catalog and inventory.",employee:"Employee",employeeDesc:"Choose tools such as product search, inventory and order tracking.",channel:"Channel",channelDesc:"Publish website chat, WhatsApp or a public link.",launch:"Launch",launchDesc:"Run a live customer conversation and verify the commerce loop.",complete:"Complete step",completed:"Completed — mark again",retail:"Retail / Store",ecommerce:"E-commerce",services:"Services",restaurant:"Restaurant",other:"Other",connectShopify:"Connect Shopify",chooseTemplate:"Choose Template",configureEmployee:"Configure Employee",manageChannels:"Manage Channels",openInbox:"Open Inbox",viewRoi:"View ROI",ready:"Your business is ready to launch.",readyDescription:"Publish an Employee and connect a customer channel.",loadError:"Unable to load onboarding.",retry:"Retry"},
-  workspace:{title:"AI Workspace",description:"Build, publish and operate your AI Employees.",hero:"Your AI Employee workspace",heroText:"Configure an employee, connect its knowledge and tools, publish a customer channel, then monitor the conversations it handles.",create:"Create employee",open:"Open",employees:"AI Employees",employeesText:"Create, configure, version and publish your digital employees.",conversations:"Customer Conversations",conversationsText:"Review conversations between your customers and AI Employees.",knowledge:"Knowledge Base",knowledgeText:"Manage the information your employees use to answer customers.",memory:"Memory",memoryText:"Control employee memory and customer context.",workflows:"Workflows",workflowsText:"Automate multi-step sales and operational processes.",channels:"Customer Channels",channelsText:"Publish web chat and website widgets for your customers.",developer:"Developer",developerText:"Connect external systems, APIs and integrations."}
-} as const;
-const customerLegacyFa = {
-  webhooks:{title:"وب‌هوک‌ها",description:"مدیریت محرک‌های رویداد گردش‌کار، اسرار، تاریخچه ارسال و بازپخش.",create:"ایجاد محرک وب‌هوک",workflow:"گردش‌کار",selectWorkflow:"یک گردش‌کار انتخاب کنید…",eventType:"نوع رویداد",createAction:"ایجاد محرک",creating:"در حال ایجاد…",triggers:"محرک‌ها",deliveries:"تاریخچه ارسال",selectTrigger:"برای مشاهده ارسال‌ها یک محرک انتخاب کنید.",noTriggers:"محرک وب‌هوکی وجود ندارد.",noDeliveries:"ارسالی وجود ندارد.",active:"فعال",inactive:"غیرفعال",enable:"فعال‌سازی",disable:"غیرفعال‌سازی",rotate:"چرخش راز",show:"نمایش",hide:"مخفی کردن",copy:"کپی",replay:"بازپخش",replaying:"در حال بازپخش…",secret:"راز وب‌هوک",secretWarning:"این راز را امن نگه دارید. فقط پس از ایجاد یا چرخش نمایش داده می‌شود.",endpoint:"Endpoint",loadError:"بارگذاری داده‌های وب‌هوک انجام نشد.",retry:"تلاش مجدد",event:"رویداد",status:"وضعیت",created:"ایجاد شده",secretRotated:"چرخش راز",actions:"عملیات",eventId:"شناسه رویداد",attempts:"تلاش‌ها",received:"دریافت",run:"اجرا",rotateConfirm:"این راز وب‌هوک چرخانده شود؟ امضاهای قبلی دیگر کار نخواهند کرد.",replayConfirm:"این ارسال بازپخش و یک اجرای گردش‌کار جدید ایجاد شود؟"},
-  marketplace:{title:"بازار",description:"قالب‌های منتشرشده را کشف و نسخه محدود به تننت نصب کنید.",boundary:"مرز نصب مجاز",boundaryText:"نصب بازار توسط API مجوزدهی می‌شود و تعریف‌های محدود به تننت همراه با منشأ انتشار ایجاد می‌کند.",target:"فضای کاری مقصد",workspacePlaceholder:"فضای کاری پیش‌فرض",workspaceNote:"کلید فضای کاری محدود به تننت است و بدون تغییر به مرز نصب ارسال می‌شود.",published:"تیم‌های منتشرشده",noPublished:"تیم منتشرشده‌ای وجود ندارد",noPublishedDescription:"در حال حاضر انتشار عمومی بازار برای این تننت در دسترس نیست.",review:"بررسی و نصب",reviewTitle:"بررسی نصب",install:"نصب",installing:"در حال نصب…",installed:"نصب با موفقیت انجام شد.",localOnly:"نصب یک نسخه محدود به تننت ایجاد می‌کند.",loadError:"بارگذاری انتشارهای بازار انجام نشد.",retry:"تلاش مجدد",publishedAt:"منتشرشده",publication:"انتشار",close:"بستن",customerAcceptance:"پذیرش مشتری",notImplied:"به‌معنای آن نیست",productionDeployment:"استقرار تولید",trustBasis:"مبنای اعتماد",recordedEvidenceOnly:"فقط شواهد ثبت‌شده",installBoundaryWarning:"نصب، تعریف‌های محدود به تننت و منشأ آن‌ها را ایجاد می‌کند و نمونه کارمند هوش مصنوعی یا استقرار تولیدی ایجاد نمی‌کند.",installTenantCopy:"نصب نسخه محدود به تننت"},
-  onboarding:{loading:"در حال بارگذاری…",title:"کسب‌وکار خود را راه‌اندازی کنید",description:"راه‌اندازی هدایت‌شده از ثبت‌نام تا یک کارمند هوش مصنوعی عملیاتی.",checklist:"چک‌لیست راه‌اندازی",checklistDescription:"این شش مرحله را یک‌بار تکمیل کنید؛ بعداً می‌توانید به هر بخش برگردید.",business:"کسب‌وکار",businessDesc:"بگویید چه چیزی می‌فروشید.",brand:"برند",brandDesc:"هویت و لحن فروشگاه را تنظیم کنید.",products:"محصولات",productsDesc:"محصولات را اضافه کنید یا Shopify را برای کاتالوگ و موجودی زنده متصل کنید.",employee:"کارمند",employeeDesc:"ابزارهایی مانند جست‌وجوی محصول، موجودی و پیگیری سفارش را انتخاب کنید.",channel:"کانال",channelDesc:"گفتگوی وب، واتساپ یا لینک عمومی را منتشر کنید.",launch:"راه‌اندازی",launchDesc:"یک گفتگوی واقعی مشتری اجرا و چرخه تجارت را بررسی کنید.",complete:"تکمیل مرحله",completed:"تکمیل‌شده — دوباره علامت بزن",retail:"فروشگاه / خرده‌فروشی",ecommerce:"تجارت الکترونیک",services:"خدمات",restaurant:"رستوران",other:"سایر",connectShopify:"اتصال Shopify",chooseTemplate:"انتخاب قالب",configureEmployee:"پیکربندی کارمند",manageChannels:"مدیریت کانال‌ها",openInbox:"باز کردن صندوق ورودی",viewRoi:"مشاهده ROI",ready:"کسب‌وکار شما آماده راه‌اندازی است.",readyDescription:"یک کارمند را منتشر و یک کانال مشتری متصل کنید.",loadError:"بارگذاری راه‌اندازی انجام نشد.",retry:"تلاش مجدد"},
-  workspace:{title:"فضای کاری هوش مصنوعی",description:"کارمندان هوش مصنوعی خود را بسازید، منتشر و عملیاتی کنید.",hero:"فضای کاری کارمند هوش مصنوعی شما",heroText:"یک کارمند را پیکربندی کنید، دانش و ابزارهای آن را متصل کنید، یک کانال مشتری منتشر کنید و سپس گفتگوهای آن را پایش کنید.",create:"ایجاد کارمند",open:"باز کردن",employees:"کارمندان هوش مصنوعی",employeesText:"کارمندان دیجیتال خود را ایجاد، پیکربندی، نسخه‌بندی و منتشر کنید.",conversations:"گفتگوهای مشتری",conversationsText:"گفتگوهای میان مشتریان و کارمندان هوش مصنوعی را بررسی کنید.",knowledge:"پایگاه دانش",knowledgeText:"اطلاعاتی را که کارمندان برای پاسخ‌گویی به مشتریان استفاده می‌کنند مدیریت کنید.",memory:"حافظه",memoryText:"حافظه کارمند و زمینه مشتری را کنترل کنید.",workflows:"گردش‌کارها",workflowsText:"فرآیندهای چندمرحله‌ای فروش و عملیات را خودکار کنید.",channels:"کانال‌های مشتری",channelsText:"گفتگوی وب و ویجت‌های وب‌سایت را برای مشتریان منتشر کنید.",developer:"توسعه‌دهنده",developerText:"سیستم‌های خارجی، APIها و یکپارچه‌سازی‌ها را متصل کنید."}
-} as const;
-
-const testCenter = { title:"Test Center", description:"Run authorized tenant-scoped tests and inspect engineering evidence.", workspace:"Workspace", allWorkspaces:"All workspaces", status:"Status", allStatuses:"All statuses", queued:"Queued", running:"Running", passed:"Passed", failed:"Failed", cancelled:"Cancelled", expired:"Expired", availableTests:"Available tests", noDefinitions:"No test definitions", noDefinitionsDescription:"No enabled Test Center definitions are available for this workspace.", noDescription:"No description provided.", run:"Run", runHistory:"Run history", noRuns:"No test runs", noRunsDescription:"Run an available test to create the first evidence record.", dispatched:"Dispatched test run", toWorker:"to the worker", selectedRun:"Selected run", correlation:"Correlation", liveRefresh:"Live status refresh is active.", refresh:"Refresh", exportEvidence:"Export verification record", evidence:"Evidence", queuedAt:"Queued", started:"Started", finished:"Finished", executionError:"Execution error", result:"Result", artifacts:"Artifacts", noArtifacts:"No artifacts attached.", refreshed:"Selected run refreshed.", exported:"Verification record exported.", testRun:"Run", test:"Test", actions:"Actions", workspaceColumn:"Workspace", created:"Created" } as const;
-const testCenterFa = { title:"مرکز تست", description:"اجرای تست‌های مجاز و محدود به تننت و مشاهده شواهد مهندسی.", workspace:"فضای کاری", allWorkspaces:"همه فضاهای کاری", status:"وضعیت", allStatuses:"همه وضعیت‌ها", queued:"در صف", running:"در حال اجرا", passed:"موفق", failed:"ناموفق", cancelled:"لغوشده", expired:"منقضی", availableTests:"تست‌های در دسترس", noDefinitions:"تعریف تستی وجود ندارد", noDefinitionsDescription:"برای این فضای کاری هیچ تست فعال مرکز تستی در دسترس نیست.", noDescription:"توضیحی ثبت نشده است.", run:"اجرا", runHistory:"تاریخچه اجرا", noRuns:"اجرایی وجود ندارد", noRunsDescription:"یک تست در دسترس را اجرا کنید تا اولین رکورد شواهد ایجاد شود.", dispatched:"اجرای تست ارسال شد", toWorker:"به Worker", selectedRun:"اجرای انتخاب‌شده", correlation:"همبستگی", liveRefresh:"به‌روزرسانی زنده وضعیت فعال است.", refresh:"تازه‌سازی", exportEvidence:"خروجی رکورد تأیید", evidence:"شواهد", queuedAt:"در صف", started:"شروع", finished:"پایان", executionError:"خطای اجرا", result:"نتیجه", artifacts:"آرتیفکت‌ها", noArtifacts:"آرتیفکتی پیوست نشده است.", refreshed:"اجرای انتخاب‌شده تازه‌سازی شد.", exported:"رکورد تأیید خروجی گرفته شد.", testRun:"اجرا", test:"تست", actions:"عملیات", workspaceColumn:"فضای کاری", created:"ایجاد شده" } as const;
-
-const nav = {
-  business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
-  peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
-  customerOperations: "Customer Operations", inbox: "Unified Inbox", conversations: "Conversations", channels: "Customer Channels", workflows: "Workflows", tasks: "Tasks", approvals: "Approvals", schedules: "Schedules",
-  financePlatform: "Finance & Platform", billing: "Billing", invoices: "Invoices", usage: "Usage & Cost", integrations: "Integrations", files: "Files", runs: "Runs", traces: "Trace Explorer",
-  developer: "Developer", developerConsole: "Developer Console", testCenter: "Test Center", marketplace: "Marketplace", apiKeys: "API Keys", webhooks: "Webhooks",
-  settings: "Settings", security: "Security / Password", signOut: "Sign out", workspaceFallback: "Business Workspace",
-} as const;
-
-const navFa = {
-  business: "کسب‌وکار", overview: "نمای کلی", customers: "مشتریان", orders: "سفارش‌ها", products: "محصولات", sales: "فروش", analytics: "تحلیل‌ها", reports: "گزارش‌ها",
-  peopleAi: "افراد و هوش مصنوعی", team: "کارمندان انسانی", employees: "کارمندان هوش مصنوعی", templates: "قالب‌های کارمند", workspace: "فضای کاری هوش مصنوعی", chat: "گفتگوی هوش مصنوعی", governance: "حاکمیت نیروی کار", knowledge: "پایگاه دانش", memory: "حافظه",
-  customerOperations: "عملیات مشتری", inbox: "صندوق ورودی یکپارچه", conversations: "گفتگوها", channels: "کانال‌های مشتری", workflows: "گردش‌کارها", tasks: "وظایف", approvals: "تأییدها", schedules: "زمان‌بندی‌ها",
-  financePlatform: "مالی و پلتفرم", billing: "صورتحساب", invoices: "فاکتورها", usage: "مصرف و هزینه", integrations: "یکپارچه‌سازی‌ها", files: "فایل‌ها", runs: "اجراها", traces: "رهگیری اجرا",
-  developer: "توسعه‌دهنده", developerConsole: "کنسول توسعه‌دهنده", testCenter: "مرکز آزمون", marketplace: "بازار", apiKeys: "کلیدهای API", webhooks: "وب‌هوک‌ها",
-  settings: "تنظیمات", security: "امنیت / گذرواژه", signOut: "خروج", workspaceFallback: "فضای کاری کسب‌وکار",
-} as const;
-
-const dashboard = {
-  welcome: "Welcome",
-  operationsOverview: "operations overview",
-  employees: "Employees",
-  workflows: "Workflows",
-  workflowRuns: "Workflow runs",
-  activeTotal: "Active / total",
-  running: "running",
-  aiCost: "AI cost",
-  successRate: "Success rate",
-  failedRuns: "Failed runs",
-  pendingApprovals: "Pending approvals",
-  activeSchedules: "Active schedules",
-  recentWorkflowRuns: "Recent workflow runs",
-  viewAll: "View all",
-  noWorkflowRuns: "No workflow runs yet.",
-  run: "Run",
-  status: "Status",
-  cost: "Cost",
-  created: "Created",
-  aiHealth: "AI health",
-  providerCalls: "Provider calls",
-  providerSuccess: "Provider success",
-  averageLatency: "Average latency",
-  activeWebhooks: "Active webhooks",
-  openUsageDetails: "Open usage details →",
-  approvals: "Approvals",
-  approvalsAttention: "items need attention",
-  schedules: "Schedules",
-  activeSchedulesText: "active schedules",
-  webhooks: "Webhooks",
-  activeTriggers: "active triggers",
-  retry: "Retry",
-  retry: "Retry",
-} as const;
-
-const dashboardFa = {
-  welcome: "خوش آمدید",
-  operationsOverview: "نمای کلی عملیات",
-  employees: "کارمندان",
-  workflows: "گردش‌کارها",
-  workflowRuns: "اجراهای گردش‌کار",
-  activeTotal: "فعال / کل",
-  running: "در حال اجرا",
-  aiCost: "هزینه هوش مصنوعی",
-  successRate: "نرخ موفقیت",
-  failedRuns: "اجراهای ناموفق",
-  pendingApprovals: "تأییدهای در انتظار",
-  activeSchedules: "زمان‌بندی‌های فعال",
-  recentWorkflowRuns: "آخرین اجراهای گردش‌کار",
-  viewAll: "مشاهده همه",
-  noWorkflowRuns: "هنوز اجرایی برای گردش‌کار ثبت نشده است.",
-  run: "اجرا",
-  status: "وضعیت",
-  cost: "هزینه",
-  created: "ایجاد شده",
-  aiHealth: "سلامت هوش مصنوعی",
-  providerCalls: "فراخوانی‌های ارائه‌دهنده",
-  providerSuccess: "موفقیت ارائه‌دهنده",
-  averageLatency: "میانگین تأخیر",
-  activeWebhooks: "وب‌هوک‌های فعال",
-  openUsageDetails: "مشاهده جزئیات مصرف ←",
-  approvals: "تأییدها",
-  approvalsAttention: "مورد نیازمند توجه",
-  schedules: "زمان‌بندی‌ها",
-  activeSchedulesText: "زمان‌بندی فعال",
-  webhooks: "وب‌هوک‌ها",
-  activeTriggers: "محرک فعال",
-  retry: "تلاش مجدد",
-  retry: "تلاش مجدد",
-} as const;
-
-const analytics = {
-  title: "Analytics & Operations", description: "Business KPIs, AI usage, reliability and cost attribution",
-  conversations: "Conversations", influencedRevenue: "Influenced revenue", aiResolvedHint: "AI resolved", influencedOrdersHint: "AI-attributed orders",
-  aiEmployees: "AI employees", total: "total", workflowRuns: "Workflow runs", active: "active", successRate: "Success rate", failed: "failed", aiCost: "AI cost", tokens: "tokens",
-  tokenActivity: "Token activity", last12Runs: "Last 12 loaded runs", noData: "No data", reliability: "Reliability", successfulWorkflowRuns: "Successful workflow runs",
-  providerCalls: "Provider calls", avgLatency: "Avg latency", pendingApprovals: "Pending approvals", operations: "Operations", activeSchedules: "Active schedules",
-  activeWebhooks: "Active webhooks", failedAiCalls: "Failed AI calls", recentExecution: "Recent execution", viewAll: "View all →", noRuns: "No runs yet.", run: "Run"
-} as const;
-
 const analyticsFa = {
   title: "تحلیل‌ها و عملیات", description: "شاخص‌های کسب‌وکار، مصرف هوش مصنوعی، قابلیت اطمینان و تخصیص هزینه",
   conversations: "گفتگوها", influencedRevenue: "درآمد تحت تأثیر", aiResolvedHint: "حل‌شده با هوش مصنوعی", influencedOrdersHint: "سفارش‌های منتسب به هوش مصنوعی",
   aiEmployees: "کارمندان هوش مصنوعی", total: "کل", workflowRuns: "اجراهای گردش‌کار", active: "فعال", successRate: "نرخ موفقیت", failed: "ناموفق", aiCost: "هزینه هوش مصنوعی", tokens: "توکن",
-  tokenActivity: "فعالیت توکن", last12Runs: "۱۲ اجرای بارگذاری‌شده اخیر", noData: "داده‌ای وجود ندارد", reliability: "قابلیت اطمینان", successfulWorkflowRuns: "اجراهای موفق گردش‌کار",
+  tokenActivity: "فعالیت توکن", last12Runs: "۱۲ اجرای بارگذاری‌شده اخیر", noData: "داده‌ای وجود ندارد", retry: "تلاش مجدد", reliability: "قابلیت اطمینان", successfulWorkflowRuns: "اجراهای موفق گردش‌کار",
   providerCalls: "فراخوانی‌های ارائه‌دهنده", avgLatency: "میانگین تأخیر", pendingApprovals: "تأییدهای در انتظار", operations: "عملیات", activeSchedules: "زمان‌بندی‌های فعال",
   activeWebhooks: "وب‌هوک‌های فعال", failedAiCalls: "فراخوانی‌های ناموفق هوش مصنوعی", recentExecution: "آخرین اجرا", viewAll: "مشاهده همه ←", noRuns: "هنوز اجرایی وجود ندارد.", run: "اجرا"
 } as const;
