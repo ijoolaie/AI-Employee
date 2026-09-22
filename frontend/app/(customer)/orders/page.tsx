@@ -206,7 +206,7 @@ function OrderDetail({ orderQ, m, qc, onBack }: {
               <p className="text-xs font-medium text-slate-500">{m.lineItems}</p>
               <div className="mt-2 overflow-x-auto rounded border">
                 <table className="w-full text-sm">
-                  <thead><tr className="border-b text-left text-xs text-slate-500"><th className="px-3 py-2">{m.item}</th><th className="px-3 py-2">{m.quantity}</th><th className="px-3 py-2">{m.unitPrice}</th><th className="px-3 py-2">{m.amount}</th></tr></thead>
+                  <thead><tr className="border-b text-start text-xs text-slate-500"><th className="px-3 py-2">{m.item}</th><th className="px-3 py-2">{m.quantity}</th><th className="px-3 py-2">{m.unitPrice}</th><th className="px-3 py-2">{m.amount}</th></tr></thead>
                   <tbody>{order.line_items.map((item, index) => <tr key={item.sku ?? index} className="border-b last:border-0"><td className="px-3 py-2">{item.description}</td><td className="px-3 py-2">{item.quantity}</td><td className="px-3 py-2">{money(item.unit_price)}</td><td className="px-3 py-2">{item.amount == null ? "—" : money(item.amount)}</td></tr>)}</tbody>
                 </table>
               </div>
