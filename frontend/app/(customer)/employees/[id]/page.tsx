@@ -102,7 +102,7 @@ export default function EmployeeDetailPage({
   if (empQ.error || !empQ.data) {
     return (
       <div className="p-6 text-sm text-red-600">
-        {getErrorMessage(empQ.error) || "Employee not found"}
+        {getErrorMessage(empQ.error) || tx.notFound}
       </div>
     );
   }
@@ -176,7 +176,7 @@ export default function EmployeeDetailPage({
             ) : (
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Input (JSON)
+                  {tx.inputJson}
                 </label>
                 <textarea
                   className="min-h-[100px] w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
