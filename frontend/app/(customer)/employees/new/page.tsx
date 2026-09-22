@@ -20,7 +20,7 @@ const schema = (tx: typeof messages.en.employee) => z.object({
   prompt_template: z.string().optional(),
 });
 
-type FormData = z.infer<typeof schema>;
+type FormData = z.infer<ReturnType<typeof schema>>;
 
 export default function NewEmployeePage() {
   const { t } = useI18n();
