@@ -564,6 +564,10 @@ export async function getOrder(orderId: string) {
   );
 }
 
+export async function updateOrder(orderId: string, payload: Partial<import("@/types").BusinessOrder>) {
+  return unwrap(await api.patch<APIResponse<import("@/types").BusinessOrder>>(`/orders/${orderId}`, payload));
+}
+
 export async function updateOrderStatus(orderId: string, status: string) {
   return unwrap(
     await api.post<APIResponse<import("@/types").BusinessOrder>>(
@@ -695,6 +699,9 @@ export async function deleteCustomerData(id: string) {
 export async function listInvoices(status?: string) { return unwrap(await api.get<APIResponse<import("@/types").BusinessInvoice[]>>("/invoices", { params: status ? { status } : undefined })); }
 export async function getInvoice(id: string) { return unwrap(await api.get<APIResponse<import("@/types").BusinessInvoice>>(`/invoices/${id}`)); }
 export async function getInvoiceSummary() { return unwrap(await api.get<APIResponse<import("@/types").InvoiceFinancialSummary>>("/invoices/summary")); }
+export async function updateInvoice(id: string, payload: Partial<import("@/types").BusinessInvoice>) {
+  return unwrap(await api.patch<APIResponse<import("@/types").BusinessInvoice>>(`/invoices/${id}`, payload));
+}
 export async function updateInvoiceStatus(id: string, status: string) { return unwrap(await api.post<APIResponse<import("@/types").BusinessInvoice>>(`/invoices/${id}/status`, { status })); }
 export async function exportInvoicePdf(id: string) { return unwrap(await api.post<APIResponse<Record<string, unknown>>>(`/invoices/${id}/export-pdf`)); }
 
