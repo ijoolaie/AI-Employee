@@ -44,7 +44,7 @@ export default function OnboardingPage() {
               {step===3&&<Link href="/integrations"><Button type="button" variant="outline" className="w-full">{m.connectShopify}</Button></Link>}
               {step===4&&<><Link href="/templates"><Button type="button" variant="outline" className="w-full">{m.chooseTemplate}</Button></Link><Link href="/employees/new"><Button type="button" variant="outline" className="w-full">{m.configureEmployee}</Button></Link></>}
               {step===5&&<Link href="/channels"><Button type="button" variant="outline" className="w-full">{m.manageChannels}</Button></Link>}
-              {step===6&&<><Link href="/inbox"><Button type="button" variant="outline" className="w-full">{m.openInbox}</Button></Link><Link href="/analytics"><Button type="button" variant="outline" className="w-full">{m.viewRoi}</Button></Link>}
+              {step===6&&<><Link href="/inbox"><Button type="button" variant="outline" className="w-full">{m.openInbox}</Button></Link><Link href="/analytics"><Button type="button" variant="outline" className="w-full">{m.viewRoi}</Button></Link></>}
             </div>
           </CardContent></Card>;
         })}
