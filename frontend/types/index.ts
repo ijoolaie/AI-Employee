@@ -623,7 +623,7 @@ export interface CommerceIntegration { id: string; provider: string; name: strin
 export interface OnboardingProgress { current_step: number; completed_steps: number[]; business_type: string | null; setup_data: Record<string, unknown>; completed: boolean; }
 export interface InboxConversation extends CustomerConversationSummary { handoff_requested: boolean; assigned_user_id: string | null; }
 
-export interface Customer { id:string; external_key:string; name:string|null; email:string|null; phone:string|null; tags:string[]; notes:string|null; last_channel:string|null; created_at:string; updated_at:string; }
+export interface Customer { id:string; external_key:string; name:string|null; email:string|null; phone:string|null; tags:string[]; notes:string|null; last_channel:string|null; is_active:boolean; created_at:string; updated_at:string; }
 
 export interface EmployeeTemplate {
   code: string;
