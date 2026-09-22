@@ -66,7 +66,7 @@ class TestCenterService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def create_run(self, *, tenant_id: uuid.UUID, actor_id: uuid.UUID | None, test_definition_id: uuid.UUID, workspace_key: str | None = None, fixtures: dict[str, Any] | None = None) -> TestRun:
+    async def create_run(self, *, tenant_id: uuid.UUID, actor_id: uuid.UUID | None, test_definition_id: uuid.UUID, workspace_key: str | None = None, fixtures: dict[str, Any] | None = None, tenant_kind: str | None = None) -> TestRun:
         definition = (
             await self.db.execute(
                 select(TestDefinition).where(
@@ -78,6 +78,10 @@ class TestCenterService:
         ).scalar_one_or_none()
         if definition is None:
             raise TestCenterError("test definition not found")
+        if tenant_kind is not None and not definition_allowed_for_edition(
+            tenant_kind=tenant_kind, definition_edition=definition.edition
+        ):
+            raise TestCenterError("test definition edition is outside the current tenant scope")
         if definition.workspace_key is not None and definition.workspace_key != workspace_key:
             raise TestCenterError("workspace boundary mismatch")
 
