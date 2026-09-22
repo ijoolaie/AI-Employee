@@ -179,8 +179,10 @@ test.describe("critical platform flows", () => {
       "/webhooks", "/settings", "/settings/security",
     ];
 
+    await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
     for (const locale of ["en", "fa"] as const) {
       await page.evaluate((value) => localStorage.setItem("aiep.locale", value), locale);
+      await page.reload({ waitUntil: "domcontentloaded" });
       for (const route of routes) {
         await page.goto(route, { waitUntil: "domcontentloaded" });
         await expect(page).toHaveURL(new RegExp(route.replace("/", "\\/")));
