@@ -7,7 +7,7 @@
 **GitHub Release:** `v1.4.10` — PUBLISHED
 **Exact-SHA Production Certification:** Run `35840044046` — PASS
 **Certification job:** `107112696112` — PASS
-**Current status:** v1.4.10 RELEASE-CERTIFIED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
+**Current status:** v1.4.10 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
 
@@ -22,7 +22,8 @@
 - Production deployment claimed by certification: **false**
 - Stable Git tag: **VERIFIED**
 - GitHub Release: **PUBLISHED**
-- External/customer acceptance: **PENDING**
+- Current execution stage: **LOCAL / ENGINEERING**
+- External production & commercial gates: **OPEN — PENDING EXTERNAL EXECUTION**
 
 Certification applies only to the exact certified SHA. Post-release documentation commits do not inherit certification.
 
@@ -32,7 +33,7 @@ The latest repository-certified release is **v1.4.10 / `b09f3e35...`**. The `v1.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.10 tracked scope.
 
-No evidence currently establishes real production deployment, live-provider operation, measured production SLO/DR, independent security review, staffed production operations or customer acceptance.
+The project is currently being executed on the developer/local environment. No external production target is being used at this stage. Therefore gates that require a real target, live providers, staffed operations or external acceptance are intentionally **OPEN — PENDING EXTERNAL EXECUTION**. They are not current engineering failures and do not block local development or repository-level certification.
 
 ## Post-v1.4.10 production-readiness audit
 
@@ -45,20 +46,24 @@ No evidence currently establishes real production deployment, live-provider oper
 | Backup/restore engineering path | PASS | Backup/restore scripts and local recovery evidence exist |
 | Rollback engineering contract | PASS | Controlled rollback/recovery scripts and runbook exist |
 | Observability/SLO engineering contract | PASS | Prometheus/SLO/error-budget engineering contract and alert-routing contract exist |
-| Real production deployment | NOT VERIFIED | No target-specific deployment evidence is present |
-| Deployed image/digest identity | NOT VERIFIED | External registry/deployed digest evidence is pending |
-| TLS/DNS/firewall/ingress on target | NOT VERIFIED | Repository Compose intentionally delegates public ingress to the target layer |
-| Secret-manager lifecycle/rotation on target | NOT VERIFIED | Repository contract exists; real manager and rotation evidence is absent |
-| Live provider/payment integration | NOT VERIFIED | Provider preflight exists; live target validation is pending |
-| Production SLO/SLI/error budget | NOT VERIFIED | Engineering targets exist; real traffic measurement is pending |
-| Real backup/restore and measured RPO/RTO | NOT VERIFIED | Local/engineering rehearsal exists; target measurement is pending |
-| Vendor → Reseller → Customer target isolation/RBAC | NOT VERIFIED | Real-stack engineering gates exist; deployed actor-matrix evidence is pending |
-| Authenticated DAST on deployed target | NOT VERIFIED | CI/security contracts exist; running-target DAST is pending |
-| Independent penetration/security review | NOT VERIFIED | No independent assessment evidence in repository |
-| HA/failure recovery on target | NOT VERIFIED | Engineering rollback/recovery contract exists; target drill is pending |
-| Incident response/on-call | NOT VERIFIED | Operational contract exists; staffed target evidence is pending |
-| Vendor/Reseller/Customer acceptance | NOT VERIFIED | External acceptance records are pending |
-| Commercial go-live | NOT VERIFIED | Depends on all external P0 evidence and residual-risk disposition |
+| Real production deployment | OPEN — PENDING EXTERNAL EXECUTION | No external target is currently in use; this gate is intentionally open |
+| Deployed image/digest identity | OPEN — PENDING EXTERNAL EXECUTION | Requires an external registry and deployed target |
+| TLS/DNS/firewall/ingress on target | OPEN — PENDING EXTERNAL EXECUTION | Target-layer responsibility; external target does not yet exist |
+| Secret-manager lifecycle/rotation on target | OPEN — PENDING EXTERNAL EXECUTION | Requires external secret manager and target lifecycle |
+| Live provider/payment integration | OPEN — PENDING EXTERNAL EXECUTION | Requires live provider credentials/target validation |
+| Production SLO/SLI/error budget | OPEN — PENDING EXTERNAL EXECUTION | Requires real production traffic and monitoring |
+| Real backup/restore and measured RPO/RTO | OPEN — PENDING EXTERNAL EXECUTION | Local rehearsal exists; target measurement awaits external deployment |
+| Vendor → Reseller → Customer target isolation/RBAC | OPEN — PENDING EXTERNAL EXECUTION | Requires deployed target actor-matrix execution |
+| Authenticated DAST on deployed target | OPEN — PENDING EXTERNAL EXECUTION | Requires a running external target |
+| Independent penetration/security review | OPEN — PENDING EXTERNAL EXECUTION | Intentionally deferred to external/security-review phase |
+| HA/failure recovery on target | OPEN — PENDING EXTERNAL EXECUTION | Engineering contract exists; target drill awaits external deployment |
+| Incident response/on-call | OPEN — PENDING EXTERNAL EXECUTION | Requires staffed external operations |
+| Vendor/Reseller/Customer acceptance | OPEN — PENDING EXTERNAL EXECUTION | Acceptance occurs only after external target execution |
+| Commercial go-live | OPEN — FUTURE EXTERNAL GATE | Becomes mandatory when moving from local execution to external/commercial operation |
+
+## External-gate status rule
+
+`OPEN — PENDING EXTERNAL EXECUTION` means the gate is intentionally unexecuted because the current project stage is local/engineering execution. It is neither PASS nor FAIL. Once an external target is provisioned, these gates become mandatory and must be evidenced before external/commercial go-live.
 
 ## Security rule
 

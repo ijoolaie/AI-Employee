@@ -7,10 +7,11 @@
 ## Evidence classification
 
 - **ENGINEERING** — repository, CI, local Docker, synthetic-load, simulated-provider, or test evidence.
-- **EXTERNAL-PENDING** — evidence requiring a real deployment, real provider, real customer workflow, or independent external assessment.
+- **OPEN-EXTERNAL** — an external gate intentionally left unexecuted because the current project stage is local/engineering.
+- **EXTERNAL-PENDING** — evidence requiring a real deployment, real provider, real customer workflow, or independent external assessment once the external phase begins.
 - **EXTERNAL** — completed evidence captured against the accepted immutable release on a real target.
 
-No P0 external gate may be marked complete from ENGINEERING evidence alone.
+No P0 external gate may be marked complete from ENGINEERING evidence alone. `OPEN-EXTERNAL` is not a failure; it records work intentionally deferred until an external target exists.
 
 ## Current release baseline
 
@@ -23,7 +24,7 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Production Certification | Run `35840044046` / Job `107112696112` — PASS |
 | Product Gate Failures | `0` |
 | Frontend Playwright | `8/8 PASS` |
-| External production deployment | **PENDING** |
+| External production deployment | **OPEN — PENDING EXTERNAL EXECUTION** |
 | External image registry/deployed digest evidence | **PENDING** |
 | External signed provenance/attestation | **PENDING** |
 
@@ -51,19 +52,23 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 | Secret-management contract | ENGINEERING | PASS; external lifecycle pending |
 | Failure-recovery/rollback contract | ENGINEERING | PASS; target rehearsal pending |
 | Alert routing contract | ENGINEERING | PASS; live paging test pending |
-| Real production deployment | EXTERNAL-PENDING | NOT VERIFIED |
-| Deployed image/digest identity | EXTERNAL-PENDING | NOT VERIFIED |
-| Real backup/restore/DR + measured RPO/RTO | EXTERNAL-PENDING | NOT VERIFIED |
-| Production SLO/SLI/error budget | EXTERNAL-PENDING | NOT VERIFIED |
-| Live provider/payment validation | EXTERNAL-PENDING | NOT VERIFIED |
-| Vendor → Reseller → Customer isolation | EXTERNAL-PENDING | NOT VERIFIED |
-| Authenticated DAST on accepted target | EXTERNAL-PENDING | NOT VERIFIED |
-| Independent penetration/security review | EXTERNAL-PENDING | NOT VERIFIED |
-| Network/TLS/secret lifecycle on target | EXTERNAL-PENDING | NOT VERIFIED |
-| HA/failure recovery + incident drill | EXTERNAL-PENDING | NOT VERIFIED |
-| Alert ownership/on-call test | EXTERNAL-PENDING | NOT VERIFIED |
-| Vendor → Reseller → Customer acceptance | EXTERNAL-PENDING | NOT VERIFIED |
-| Final commercial go-live authorization | EXTERNAL-PENDING | NOT VERIFIED |
+| Real production deployment | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Deployed image/digest identity | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Real backup/restore/DR + measured RPO/RTO | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Production SLO/SLI/error budget | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Live provider/payment validation | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Vendor → Reseller → Customer isolation | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Authenticated DAST on accepted target | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Independent penetration/security review | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Network/TLS/secret lifecycle on target | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| HA/failure recovery + incident drill | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Alert ownership/on-call test | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Vendor → Reseller → Customer acceptance | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+| Final commercial go-live authorization | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
+
+## Current execution-stage rule
+
+The project is currently in **LOCAL / ENGINEERING EXECUTION**. External gates are intentionally open until an external deployment target, live integrations, staffed operations, or independent assessment is actually available. These open states are not defects and do not invalidate v1.4.10 repository certification.
 
 ## Release binding rule
 

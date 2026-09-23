@@ -5,10 +5,11 @@
 **Stable release:** `v1.4.10`  
 **Certified SHA:** `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`  
 **Audit branch:** `hardening/post-v1.4.10-production-readiness`
+**Current execution stage:** `LOCAL / ENGINEERING`
 
 ## Purpose
 
-This audit separates repository/engineering evidence from evidence that can only be produced on a real production target. It does not promote the release to a production or commercial status.
+This audit separates repository/engineering evidence from evidence that can only be produced on a real production target. The project is currently being executed locally. External gates are therefore intentionally **OPEN — PENDING EXTERNAL EXECUTION**; they are not current engineering failures. This does not promote the release to a production or commercial status.
 
 ## Results
 
@@ -21,20 +22,20 @@ This audit separates repository/engineering evidence from evidence that can only
 | Backup/restore engineering | PASS | Repository scripts and engineering rehearsal exist |
 | Rollback/recovery engineering | PASS | Rollback contract and controlled recovery drill exist |
 | Observability/SLO engineering | PASS | Metrics, SLO/error-budget contract and alert-routing contract exist |
-| Real deployment | NOT VERIFIED | No target-specific deployed identity/evidence is present |
-| Registry/image digest | NOT VERIFIED | External image identity is not evidenced |
-| DNS/TLS/firewall/ingress | NOT VERIFIED | These are deliberately external target responsibilities |
-| Secret-manager lifecycle | NOT VERIFIED | Repository fail-closed contract exists; real manager, rotation and recovery evidence is absent |
-| Live providers | NOT VERIFIED | Provider preflight exists; live provider evidence is absent |
-| Production SLO/SLI | NOT VERIFIED | Planning targets exist; real traffic measurements are absent |
-| Backup/restore RPO/RTO | NOT VERIFIED | Engineering rehearsal exists; measured target values are absent |
-| Vendor/Reseller/Customer runtime acceptance | NOT VERIFIED | Real target actor-matrix evidence is absent |
-| Authenticated DAST | NOT VERIFIED | Running-target scan is absent |
-| Independent security review | NOT VERIFIED | No independent penetration/security evidence is present |
-| HA/failure recovery target drill | NOT VERIFIED | Target rehearsal is absent |
-| Incident/on-call readiness | NOT VERIFIED | Operational contract exists; staffed target evidence is absent |
-| External acceptance | NOT VERIFIED | Vendor/Reseller/Customer sign-offs are absent |
-| Commercial go-live | NOT VERIFIED | Dependent external gates remain open |
+| Real deployment | OPEN — PENDING EXTERNAL EXECUTION | No external target is currently in use |
+| Registry/image digest | OPEN — PENDING EXTERNAL EXECUTION | Requires external registry/target |
+| DNS/TLS/firewall/ingress | OPEN — PENDING EXTERNAL EXECUTION | Deliberately deferred to external target |
+| Secret-manager lifecycle | OPEN — PENDING EXTERNAL EXECUTION | Requires external manager and target lifecycle |
+| Live providers | OPEN — PENDING EXTERNAL EXECUTION | Requires live external provider validation |
+| Production SLO/SLI | OPEN — PENDING EXTERNAL EXECUTION | Requires real production traffic |
+| Backup/restore RPO/RTO | OPEN — PENDING EXTERNAL EXECUTION | Engineering rehearsal exists; target measurement awaits external deployment |
+| Vendor/Reseller/Customer runtime acceptance | OPEN — PENDING EXTERNAL EXECUTION | Requires deployed target actor matrix |
+| Authenticated DAST | OPEN — PENDING EXTERNAL EXECUTION | Requires running external target |
+| Independent security review | OPEN — PENDING EXTERNAL EXECUTION | Intentionally deferred to external security phase |
+| HA/failure recovery target drill | OPEN — PENDING EXTERNAL EXECUTION | Requires external target |
+| Incident/on-call readiness | OPEN — PENDING EXTERNAL EXECUTION | Requires staffed external operations |
+| External acceptance | OPEN — PENDING EXTERNAL EXECUTION | Occurs only after external target execution |
+| Commercial go-live | OPEN — FUTURE EXTERNAL GATE | Becomes mandatory at external/commercial transition |
 
 ## Engineering evidence reviewed
 
@@ -49,6 +50,10 @@ This audit separates repository/engineering evidence from evidence that can only
 - `docs/current/PRODUCTION_OPERATIONS.md`
 - `docs/current/PHASE_14_SLO_ERROR_BUDGET_ENGINEERING.md`
 - `docs/current/PRODUCTION_EVIDENCE_INDEX.md`
+
+## Interpretation of open gates
+
+`OPEN — PENDING EXTERNAL EXECUTION` means the evidence cannot be generated honestly while the project remains local. It is neither PASS nor FAIL. Local development and repository certification may continue. Before external/commercial go-live, every applicable open gate must be executed, evidenced, and dispositioned.
 
 ## Required external sequence
 

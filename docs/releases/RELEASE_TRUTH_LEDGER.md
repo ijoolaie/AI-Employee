@@ -11,13 +11,13 @@
 - **DEPLOYED** — verified deployment evidence exists for the exact release identity.
 - **EXTERNALLY_ACCEPTED** — independent Vendor/Reseller/Customer acceptance evidence exists.
 
-These states are independent and must not be inferred from release names.
+These states are independent and must not be inferred from release names. `OPEN / PENDING EXTERNAL EXECUTION` is a deliberate project-stage state, not a failure.
 
 ## Current release identities
 
 | Release | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
-| `v1.4.10` | `b09f3e35d512e3c4d21be9d930539cbbe1d2d451` | **VERIFIED** | **CERTIFIED** — Run `35840044046` / Job `107112696112` | **NOT VERIFIED** | Pending |
+| `v1.4.10` | `b09f3e35d512e3c4d21be9d930539cbbe1d2d451` | **VERIFIED** | **CERTIFIED** — Run `35840044046` / Job `107112696112` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.9` | `f1ce20c010779f5273eb5d0051da24cdd57b33f6` | VERIFIED | **CERTIFIED** — Run `35575615877` / Job `106256713583` | **NOT VERIFIED** | Pending |
 | `v1.4.8` | `4f7c4676850b546a1c6bdf219ab9401202302e2d` | VERIFIED | **CERTIFIED** — Run `35568392010` / Job `106234691683` | **NOT VERIFIED** | Pending |
 | `v1.4.7` | `48a6df0ea8a2fb0624e831fbdea55ee4548807f6` | VERIFIED | **CERTIFIED** — Run `35498984521` / Job `106047204166` | **NOT VERIFIED** | Pending |
@@ -43,7 +43,7 @@ No source changes were made to the certified release commit after certification.
 
 ## External production boundary
 
-The following remain open independently of repository Production Certification:
+The following remain intentionally open because the current project stage is local/engineering execution. They are independent of repository Production Certification:
 
 - real production target and deployed-identity verification;
 - live provider/payment/integration validation;
@@ -58,7 +58,11 @@ The following remain open independently of repository Production Certification:
 - final Vendor → Reseller → Customer acceptance;
 - residual-risk disposition and commercial go-live authorization.
 
-These are not release-certification claims.
+These are not release-certification claims. They are future external gates, not current engineering failures.
+
+## Current execution-stage rule
+
+Until an external target is provisioned, deployment and external acceptance remain `OPEN — PENDING EXTERNAL EXECUTION`. When the project moves to external/commercial operation, these gates become mandatory and must be evidenced against the exact immutable release identity.
 
 ## Historical integrity rule
 
