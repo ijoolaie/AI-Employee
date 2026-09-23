@@ -80,7 +80,7 @@
 
 - Release: `v1.4.10`
 - Exact certified SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
-- Workflow run: `35840044046` — **PASS`
+- Workflow run: `35840044046` — **PASS**
 - Certification job: `107112696112` — **PASS`
 - Product Gate Failures: `0`
 - Frontend Playwright: `8/8` PASS
