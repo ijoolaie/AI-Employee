@@ -12,7 +12,6 @@ class ChildTenantProvisionRequest(BaseModel):
     admin_email: str = Field(min_length=3, max_length=320)
     admin_password: str = Field(min_length=12, max_length=255)
     full_name: str | None = Field(default=None, max_length=255)
-    vendor_release_tag: str | None = Field(default=None, max_length=80)
     delivery_revision: str | None = Field(default=None, max_length=120)
 
 
