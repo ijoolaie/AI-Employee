@@ -4,7 +4,7 @@
 **Certified release baseline:** `v1.4.11`  
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
-**Mainline engineering head:** `1d450ce37a98dad0f63591252800d5566dc2aaf8`  
+**Mainline engineering head:** `ee8996fdc82a7c9098ff808cece3e329ae3a6ddb`  
 **Status date:** 2026-09-23  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
@@ -63,6 +63,14 @@ The product-completeness work identified in the 2026-09-21 audit has since been 
 - **Governance/localization:** the audited customer operational localization scope is complete.
 
 Canonical historical record: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md. The original findings remain historical evidence and are not rewritten.
+
+## Post-v1.4.11 workforce governance engineering — 2026-09-23
+
+After the v1.4.11 certified boundary, the following governed AI workforce engineering slices are now merged on mainline: durable CEO delegation (#641), runtime-bound Manager proposal provenance (#644), unrestricted Manager role selection plus four first-party role templates (#645), Manager workforce dashboard reporting (#646), and explicit workforce-role runtime enforcement (#647).
+
+The runtime governance layer fails closed for missing/unknown workforce roles, rejects human-approval-required operations, and requires matching governed runtime identity plus active CEO delegation for Internal Manager operations. It does not provision or activate workforce roles and does not change the immutable v1.4.11 certification identity.
+
+The next engineering frontier is to connect concrete role-specific capabilities/tools to explicit workforce-operation bindings without inferring authority from tool names, then add a tenant-owned SLA target contract before reporting SLA compliance. New role instances remain subject to AgentTemplate evaluation/publish, Board/CEO approval, access review and activation.
 
 ## Current frontier
 
