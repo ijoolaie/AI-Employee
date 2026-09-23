@@ -84,6 +84,21 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
 )
 
 
+MANAGER_PROPOSABLE_ROLE_CODES = frozenset({
+    "ai_marketing_advertising_manager",
+    "ai_graphic_designer",
+    "ai_software_developer",
+    "ai_trader",
+})
+
+
+def validate_manager_proposable_role(role_code: str) -> WorkforceRole:
+    """Return a role only when it is an approved next-role Manager proposal target."""
+    if role_code not in MANAGER_PROPOSABLE_ROLE_CODES:
+        raise ValueError(f"Role is not eligible for Internal Manager proposal: {role_code}")
+    return get_workforce_role(role_code)
+
+
 def list_workforce_roles() -> list[dict]:
     return [asdict(role) for role in WORKFORCE_ROLES]
 
