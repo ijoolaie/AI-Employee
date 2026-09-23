@@ -49,16 +49,15 @@ async def test_workforce_dashboard_reports_capacity_kpi_and_sla_boundary(monkeyp
         status=SimpleNamespace(value="enabled"),
         created_at=datetime.now(timezone.utc),
     )
-    monkeypatch.setattr(
-        manager,
-        "get_agent_capacity",
-        lambda *args, **kwargs: {
+    async def capacity(*args, **kwargs):
+        return {
             "max_concurrency": 2,
             "active_work_items": 1,
             "available_slots": 1,
             "accepting_work": True,
-        },
-    )
+        }
+
+    monkeypatch.setattr(manager, "get_agent_capacity", capacity)
 
     db = DB(
         [
