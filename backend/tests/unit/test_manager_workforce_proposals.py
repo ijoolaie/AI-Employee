@@ -89,6 +89,8 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
     assert proposal.delegation_id == delegation_id
     assert proposal.manager_operation == "replacement_proposal"
     assert proposal.kind is AgentWorkforceProposalKind.REPLACEMENT
+    assert proposal.configuration["workforce_role_code"] == "ai_software_developer"
+    assert proposal.configuration["workforce_role_approval_class"] == "routine_delegable"
     assert proposal.configuration["manager_operation_target_agent_instance_id"] == str(target_employee_id)
 
 
@@ -105,3 +107,45 @@ def test_manager_proposal_operations_are_explicit():
         "transfer_proposal",
         "retirement_proposal",
     }
+
+
+
+@pytest.mark.asyncio
+async def test_manager_proposal_requires_governed_role_target(monkeypatch):
+    async def deny(*args, **kwargs):
+        raise ValueError("delegation should not be reached")
+
+    monkeypatch.setattr(proposal_service, "assert_operation_delegated", deny)
+
+    with pytest.raises(proposal_service.ValidationAppError, match="workforce_role_code"):
+        await proposal_service.create_manager_proposal(
+            object(),
+            tenant_id=uuid.uuid4(),
+            manager_agent_instance_id=uuid.uuid4(),
+            operation="staffing_proposal",
+            sponsor_user_id=uuid.uuid4(),
+            title="Add worker",
+            rationale="Capacity gap",
+            requested_name="AI Worker",
+        )
+
+
+@pytest.mark.asyncio
+async def test_manager_proposal_rejects_non_proposable_role(monkeypatch):
+    async def deny(*args, **kwargs):
+        raise ValueError("delegation should not be reached")
+
+    monkeypatch.setattr(proposal_service, "assert_operation_delegated", deny)
+
+    with pytest.raises(proposal_service.ValidationAppError, match="not eligible"):
+        await proposal_service.create_manager_proposal(
+            object(),
+            tenant_id=uuid.uuid4(),
+            manager_agent_instance_id=uuid.uuid4(),
+            operation="staffing_proposal",
+            sponsor_user_id=uuid.uuid4(),
+            title="Add manager",
+            rationale="Need governance",
+            requested_name="AI Internal Manager",
+            configuration={"workforce_role_code": "ai_internal_manager"},
+        )
