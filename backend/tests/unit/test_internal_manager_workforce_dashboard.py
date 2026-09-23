@@ -71,6 +71,7 @@ async def test_workforce_dashboard_reports_capacity_kpi_and_sla_boundary(monkeyp
                 ]
             ),
             Result(scalar=None),
+            Result(scalar=None),
         ]
     )
 
@@ -85,3 +86,46 @@ async def test_workforce_dashboard_reports_capacity_kpi_and_sla_boundary(monkeyp
     assert dashboard["work_items"]["success_rate"] == 0.75
     assert dashboard["sla"]["tracking"] == "not_configured"
     assert dashboard["sla"]["compliance_rate"] is None
+
+
+@pytest.mark.asyncio
+async def test_workforce_dashboard_applies_active_tenant_sla_contract(monkeypatch):
+    agent_id = uuid4()
+    agent = SimpleNamespace(
+        id=agent_id,
+        status=SimpleNamespace(value="enabled"),
+        created_at=datetime.now(timezone.utc),
+    )
+    async def capacity(*args, **kwargs):
+        return {
+            "max_concurrency": 2,
+            "active_work_items": 1,
+            "available_slots": 1,
+            "accepting_work": True,
+        }
+    monkeypatch.setattr(manager, "get_agent_capacity", capacity)
+
+    contract = SimpleNamespace(
+        enabled=True,
+        max_queue_age_seconds=60,
+        effective_from=datetime.now(timezone.utc),
+    )
+    old = datetime.now(timezone.utc)
+
+    db = DB(
+        [
+            Result(scalar_items=[agent]),
+            Result(rows=[(SimpleNamespace(value="running"), 1)]),
+            Result(scalar=old),
+            Result(scalar=contract),
+            Result(scalar_items=[old]),
+        ]
+    )
+
+    dashboard = await manager.get_workforce_dashboard(db, tenant_id=uuid4(), window_days=30)
+
+    assert dashboard["sla"]["tracking"] == "configured"
+    assert dashboard["sla"]["target"]["max_queue_age_seconds"] == 60
+    assert dashboard["sla"]["compliance_rate"] == 1.0
+    assert dashboard["sla"]["breached"] is False
+    assert "point-in-time" in dashboard["sla"]["basis"].lower()
