@@ -119,7 +119,7 @@ The next workforce implementation slice is explicitly defined as:
 3. **AI Software Developer**
 4. **AI Trader**
 
-The first three may receive delegated routine operational authority within the CEO-defined scope. The AI Trader remains financial/high-impact and therefore requires explicit human approval for actual capital allocation or financial execution.
+All four roles operate under Internal Manager supervision and approval. The Internal Manager may execute or authorize their routine non-financial, non-critical and reversible work when the CEO has explicitly delegated that authority to the Internal Manager. The AI Trader remains financial/high-impact and actual capital allocation or financial execution still requires CEO/authorized-human approval.
 
 These roles are planned candidates, not a claim that active instances already exist in the current certified release.
 
