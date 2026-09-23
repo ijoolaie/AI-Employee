@@ -93,7 +93,7 @@ test.describe("critical platform flows", () => {
     await page.goto("/marketplace");
     await expect(page.getByRole("heading", { name: "Marketplace" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Support Team" })).toBeVisible();
-    await expect(page.getByText(/Installation does not imply customer acceptance/i)).toBeVisible();
+    await expect(page.getByText(/Installing creates tenant-local definitions and provenance/i)).toBeVisible();
 
     await page.getByLabel("Target workspace").fill("ops");
     await page.getByRole("button", { name: /Review & install/i }).click();
@@ -157,8 +157,8 @@ test.describe("critical platform flows", () => {
     await expect(page.getByRole("button", { name: "فا" })).toBeVisible();
 
     await page.getByRole("button", { name: "فا" }).click();
-    await expect(page.locator("html")).toHaveAttribute("lang", "fa");
-    await expect(page.locator("html")).toHaveAttribute("dir", "rtl");
+    await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("fa");
+    await expect.poll(() => page.locator("html").getAttribute("dir")).toBe("rtl");
 
     await page.getByRole("button", { name: "EN" }).click();
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
@@ -169,6 +169,8 @@ test.describe("critical platform flows", () => {
     await page.addInitScript((state) => {
       localStorage.setItem("aiep-auth", state);
     }, authState);
+
+    await page.route("**/api/v1/auth/refresh", async (route) => route.abort());
 
     const routes = [
       "/dashboard", "/customers", "/products", "/orders", "/sales",
@@ -184,7 +186,7 @@ test.describe("critical platform flows", () => {
       await page.evaluate((value) => localStorage.setItem("aiep.locale", value), locale);
       await page.reload({ waitUntil: "domcontentloaded" });
       for (const route of routes) {
-        await page.goto(route, { waitUntil: "domcontentloaded" });
+        await page.goto(route, { waitUntil: "commit" });
         await expect(page).toHaveURL(new RegExp(route.replace("/", "\\/")));
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
         await expect(page.locator("html")).toHaveAttribute("dir", locale === "fa" ? "rtl" : "ltr");
