@@ -25,6 +25,10 @@ def upgrade() -> None:
     )
     op.add_column(
         "agent_workforce_proposals",
+        sa.Column("manager_operation", sa.String(length=64), nullable=True),
+    )
+    op.add_column(
+        "agent_workforce_proposals",
         sa.Column(
             "proposed_by_agent_instance_id",
             postgresql.UUID(as_uuid=True),
@@ -72,5 +76,6 @@ def downgrade() -> None:
         table_name="agent_workforce_proposals",
     )
     op.drop_column("agent_workforce_proposals", "delegation_id")
+    op.drop_column("agent_workforce_proposals", "manager_operation")
     op.drop_column("agent_workforce_proposals", "proposed_by_agent_instance_id")
     op.drop_column("agent_workforce_proposals", "source_type")
