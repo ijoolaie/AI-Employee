@@ -23,7 +23,7 @@ The product-completeness gate was completed for the audited scope before v1.4.11
 ### Product-completeness requirements — CLOSED FOR CURRENT AUDITED SCOPE
 
 1. **Persian/English localization:** **DONE for the audited customer operational scope**; EN/FA browser acceptance, locale-aware formatting and true RTL direction coverage are in place.
-2. **Employee Templates:** **DONE for the audited scope**; the curated catalog contains seven tenant-safe bilingual starter templates with lifecycle/installation metadata.
+2. **Customer Employee Templates:** **DONE for the audited scope**; the customer-facing curated catalog contains seven tenant-safe bilingual starter templates with lifecycle/installation metadata. These seven templates are the current **operational/customer starter catalog**, not the complete AI-company workforce role catalog.
 3. **Operational lists and lifecycle:** **DONE for the audited scope**; Product, Customer, Order/Invoice and Schedule lifecycle parity uses resource-specific non-destructive semantics where retention/auditability requires them.
 4. **Backend/frontend parity:** **DONE for the audited scope**; customer-visible lifecycle actions map to supported and authorized operations.
 5. **Shared UX states:** **DONE for the audited scope**; customer Analytics/Reporting retry and empty states plus permission/lifecycle state handling are covered.
@@ -94,6 +94,21 @@ Canonical baseline: `docs/current/PRODUCTION_SERVER_BASELINE.md`.
 - GPU is optional for remote-provider inference and mainly relevant to local model inference/GPU OCR.
 
 These sizing values are recommendations, not evidence that infrastructure has been provisioned.
+
+## Workforce role taxonomy — clarification
+
+The product now distinguishes two related but different catalogs:
+
+1. **Customer operational starter templates** — the current seven templates exposed by the Customer Employee Templates surface: Sales Assistant, Customer Support Agent, Order Assistant, Catalog Assistant, Report Analyst, Document Analyst and Finance Assistant.
+2. **AI Company workforce role catalog** — the broader organizational workforce model defined in `docs/blueprint/AI_COMPANY_FOUNDING_WORKFORCE.md`. This includes executive/governance roles such as AI Chief of Staff and **AI Internal Manager**, plus domain managers and specialist roles.
+
+The AI Internal Manager is a managerial workforce role. It supervises specialized AI employees and prepares governed proposals for CEO decisions covering hiring/provisioning, retirement/removal, transfer/reassignment, replacement, urgent operational budgets and financial estimates. It must not be treated as one of the seven customer starter templates.
+
+The role model remains:
+
+`Human CEO → AI Board → AI Chief of Staff → AI Internal Manager → Specialized AI Workforce`
+
+The existing governed workforce substrate, proposal flow and CEO approval boundary remain the authoritative implementation path. Adding or activating these managerial roles is a separate workforce/product slice and must not be represented as already implemented merely because the architecture documents define them.
 
 ## Stage 8 — AI Company Operating Model Foundation
 
