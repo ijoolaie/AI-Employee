@@ -4,13 +4,19 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
-from app.core.deps import DbSession, OrdersCreateContext, OrdersInvoiceLinkContext, OrdersReadContext, OrdersUpdateContext
+from app.core.deps import (
+    DbSession,
+    OrdersCreateContext,
+    OrdersInvoiceLinkContext,
+    OrdersReadContext,
+    OrdersUpdateContext,
+)
 from app.schemas.common import APIResponse
 from app.schemas.order import (
     BusinessOrderCreate,
-    BusinessOrderUpdate,
     BusinessOrderResponse,
     BusinessOrderStatusUpdate,
+    BusinessOrderUpdate,
     OrderSummary,
 )
 from app.services import order_service
@@ -43,31 +49,71 @@ async def get_order(order_id: UUID, ctx: OrdersReadContext, db: DbSession):
 @router.post("", response_model=APIResponse[BusinessOrderResponse], status_code=status.HTTP_201_CREATED)
 async def create_order(payload: BusinessOrderCreate, ctx: OrdersCreateContext, db: DbSession):
     order = await order_service.create_order(
-        db, tenant_id=ctx.tenant_id, actor_id=ctx.user.id,
+        db,
+        tenant_id=ctx.tenant_id,
+        actor_id=ctx.user.id,
         customer_name=payload.customer_name,
         line_items=[li.model_dump() for li in payload.line_items],
-        currency=payload.currency, tax_rate=payload.tax_rate, number=payload.number,
-        customer_email=payload.customer_email, order_date=payload.order_date,
-        requested_delivery_date=payload.requested_delivery_date, notes=payload.notes,
+        currency=payload.currency,
+        tax_rate=payload.tax_rate,
+        number=payload.number,
+        customer_email=payload.customer_email,
+        order_date=payload.order_date,
+        requested_delivery_date=payload.requested_delivery_date,
+        notes=payload.notes,
         source_file_id=str(payload.source_file_id) if payload.source_file_id else None,
         invoice_id=str(payload.invoice_id) if payload.invoice_id else None,
     )
     return APIResponse(success=True, data=BusinessOrderResponse.model_validate(order))
 
 
-@router.post("/{order_id}/status", response_model=APIResponse[BusinessOrderResponse])
-async def update_order(order_id: UUID, payload: BusinessOrderUpdate, ctx: OrdersUpdateContext, db: DbSession):
-    order = await order_service.update_order(db, tenant_id=ctx.tenant_id, actor_id=ctx.user.id, order_id=str(order_id), **payload.model_dump(exclude_unset=True))
+@router.patch("/{order_id}", response_model=APIResponse[BusinessOrderResponse])
+async def update_order(
+    order_id: UUID,
+    payload: BusinessOrderUpdate,
+    ctx: OrdersUpdateContext,
+    db: DbSession,
+):
+    order = await order_service.update_order(
+        db,
+        tenant_id=ctx.tenant_id,
+        actor_id=ctx.user.id,
+        order_id=str(order_id),
+        **payload.model_dump(exclude_unset=True),
+    )
     return APIResponse(success=True, data=BusinessOrderResponse.model_validate(order))
 
 
-async def update_status(order_id: UUID, payload: BusinessOrderStatusUpdate, ctx: OrdersUpdateContext, db: DbSession):
-    order = await order_service.update_status(db, tenant_id=ctx.tenant_id, actor_id=ctx.user.id, order_id=str(order_id), status=payload.status)
+@router.post("/{order_id}/status", response_model=APIResponse[BusinessOrderResponse])
+async def update_status(
+    order_id: UUID,
+    payload: BusinessOrderStatusUpdate,
+    ctx: OrdersUpdateContext,
+    db: DbSession,
+):
+    order = await order_service.update_status(
+        db,
+        tenant_id=ctx.tenant_id,
+        actor_id=ctx.user.id,
+        order_id=str(order_id),
+        status=payload.status,
+    )
     await db.refresh(order)
     return APIResponse(success=True, data=BusinessOrderResponse.model_validate(order))
 
 
 @router.post("/{order_id}/link-invoice", response_model=APIResponse[BusinessOrderResponse])
-async def link_invoice(order_id: UUID, ctx: OrdersInvoiceLinkContext, db: DbSession, invoice_id: UUID = Query(...)):
-    order = await order_service.link_invoice(db, tenant_id=ctx.tenant_id, actor_id=ctx.user.id, order_id=str(order_id), invoice_id=str(invoice_id))
+async def link_invoice(
+    order_id: UUID,
+    ctx: OrdersInvoiceLinkContext,
+    db: DbSession,
+    invoice_id: UUID = Query(...),
+):
+    order = await order_service.link_invoice(
+        db,
+        tenant_id=ctx.tenant_id,
+        actor_id=ctx.user.id,
+        order_id=str(order_id),
+        invoice_id=str(invoice_id),
+    )
     return APIResponse(success=True, data=BusinessOrderResponse.model_validate(order))
