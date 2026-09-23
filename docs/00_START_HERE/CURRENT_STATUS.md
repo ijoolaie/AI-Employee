@@ -29,7 +29,7 @@ Certification applies only to the exact certified SHA. Post-release documentatio
 
 ## Executive truth
 
-The latest repository-certified release is **v1.4.10 / `b09f3e35...`**. The `v1.4.9` certification remains immutable at `f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
+The latest repository-certified release is **v1.4.11 / `90dd5cb...`**. The `v1.4.9` certification remains immutable at `f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
@@ -40,7 +40,7 @@ The project is currently being executed on the developer/local environment. No e
 | Area | Status | Evidence boundary |
 |---|---|---|
 | Immutable release identity | PASS | Tag `v1.4.11` resolves to certified SHA; GitHub Release published |
-| Repository production-like certification | PASS | Exact-SHA certification run 35840044046, Product Gates 0, Playwright 8/8 |
+| Repository production-like certification | PASS | Exact-SHA certification run 35848311037, Product Gates 0, Playwright PASS |
 | Production Compose topology | PASS | `docker-compose.production.yml` defines PostgreSQL, Redis, API, worker, Beat and frontend with health/restart controls |
 | Migration gate | PASS | Certification workflow runs `alembic upgrade head`, `alembic check`, and single-head validation |
 | Backup/restore engineering path | PASS | Backup/restore scripts and local recovery evidence exist |
