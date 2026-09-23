@@ -192,3 +192,53 @@ async def test_agent_adapter_does_not_bypass_tenant_scoped_resolver(monkeypatch)
         await agent_execution_adapter.AgentExecutionAdapter(object()).dispatch(work_item, agent)
 
     assert seen == {"tenant_id": tenant_id, "agent_instance_id": agent_id}
+
+
+@pytest.mark.asyncio
+async def test_workforce_agent_cannot_execute_tool_without_explicit_operation(monkeypatch):
+    agent = SimpleNamespace(
+        id=uuid4(),
+        tenant_id=uuid4(),
+        configuration={"workforce_role_code": "ai_trader"},
+        permission_policy={"permissions": ["run.execute"], "allowed_tools": ["calculator"]},
+    )
+
+    async def fail_if_authorized(*_args, **_kwargs):
+        raise AssertionError("policy authorization must not run before workforce operation validation")
+
+    monkeypatch.setattr(agent_execution_adapter, "assert_agent_can_execute", fail_if_authorized)
+
+    adapter = agent_execution_adapter.AgentExecutionAdapter(object())
+
+    with pytest.raises(
+        agent_execution_adapter.ValidationAppError,
+        match="Workforce operation is required",
+    ):
+        await adapter.execute_tool(
+            agent=agent,
+            tool_name="calculator",
+            arguments={"expression": "1 + 1"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_workforce_operation_cannot_run_without_workforce_role_identity():
+    agent = SimpleNamespace(
+        id=uuid4(),
+        tenant_id=uuid4(),
+        configuration={},
+        permission_policy={"permissions": ["run.execute"], "allowed_tools": ["calculator"]},
+    )
+
+    adapter = agent_execution_adapter.AgentExecutionAdapter(object())
+
+    with pytest.raises(
+        agent_execution_adapter.ValidationAppError,
+        match="requires an explicit workforce role identity",
+    ):
+        await adapter.execute_tool(
+            agent=agent,
+            tool_name="calculator",
+            arguments={"expression": "1 + 1"},
+            workforce_operation="market_research",
+        )
