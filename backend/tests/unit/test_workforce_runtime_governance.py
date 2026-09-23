@@ -95,3 +95,29 @@ async def test_unknown_or_missing_role_fails_closed():
             agent=agent,
             operation="market_research",
         )
+
+
+@pytest.mark.asyncio
+async def test_stale_workforce_capability_contract_fails_closed():
+    agent = SimpleNamespace(
+        id=uuid4(),
+        tenant_id=uuid4(),
+        configuration={
+            "workforce_role_code": "ai_trader",
+            "workforce_capability_contract": [
+                {
+                    "operation": "market_research",
+                    "capability_code": "workforce.market_research",
+                    "tool_names": ["calculator"],
+                    "required_permissions": ["run.execute"],
+                    "approval_required": False,
+                }
+            ],
+        },
+    )
+    with pytest.raises(ValidationAppError, match="capability contract is stale"):
+        await runtime.assert_workforce_operation(
+            SimpleNamespace(),
+            agent=agent,
+            operation="market_research",
+        )
