@@ -93,11 +93,11 @@ test.describe("critical platform flows", () => {
     await page.goto("/marketplace");
     await expect(page.getByRole("heading", { name: "Marketplace" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Support Team" })).toBeVisible();
-    await expect(page.getByText(/Installing creates tenant-local definitions and provenance/i)).toBeVisible();
 
     await page.getByLabel("Target workspace").fill("ops");
     await page.getByRole("button", { name: /Review & install/i }).click();
     await expect(page.getByRole("heading", { name: "Installation review" })).toBeVisible();
+    await expect(page.getByText(/Installing creates tenant-local definitions and provenance/i)).toBeVisible();
     await expect(page.getByText("Customer acceptance", { exact: true }).locator("..")).toContainText("Not implied");
     await page.getByRole("button", { name: /Install tenant-local copy/i }).click();
     await expect(page.getByText(/Installed install-.* locally/i)).toBeVisible();
@@ -150,6 +150,16 @@ test.describe("critical platform flows", () => {
       localStorage.setItem("aiep-auth", state);
       localStorage.setItem("aiep.locale", "en");
     }, authState);
+    await page.route("**/api/proxy/auth/refresh", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { access_token: "e2e-access-token", refresh_token: "e2e-refresh-token" },
+        }),
+      });
+    });
 
     await page.goto("/dashboard");
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
@@ -170,7 +180,16 @@ test.describe("critical platform flows", () => {
       localStorage.setItem("aiep-auth", state);
     }, authState);
 
-    await page.route("**/api/v1/auth/refresh", async (route) => route.abort());
+    await page.route("**/api/proxy/auth/refresh", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { access_token: "e2e-access-token", refresh_token: "e2e-refresh-token" },
+        }),
+      });
+    });
 
     const routes = [
       "/dashboard", "/customers", "/products", "/orders", "/sales",
