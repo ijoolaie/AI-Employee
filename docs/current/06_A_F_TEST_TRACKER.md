@@ -1,6 +1,6 @@
 # AI-Employee — A–F Test Tracker
 
-**Status date:** 2026-09-22
+**Status date:** 2026-09-23
 **Repository:** `ijoolaie/AI-Employee`
 **Purpose:** Single living tracker for the current test sequence. Update this document as evidence is completed; do not restart already-passed smoke/contract tests unless a regression requires it.
 
@@ -54,14 +54,14 @@
 
 ## PHASE F — Production Certification
 
-- [x] Security — Production Certification workflow passed on exact `v1.4.7` SHA; CI/CodeQL/DAST-related release gates passed
+- [x] Security — Production Certification workflow passed on exact `v1.4.10` SHA; CI/CodeQL/DAST-related release gates passed
 - [x] Tenant isolation — exact-release Product Gate passed
 - [x] Load — exact-release certification suite passed its load/performance gate
 - [x] Recovery — exact-release recovery/HA gates passed
 - [x] Dead letters — exact-release queue/dead-letter gate passed
 - [x] Observability — exact-release observability/SLO contract gate passed
 
-**Phase F aggregate release-certification gate: PASS.** Production Certification run `35498984521` executed from the `v1.4.7` tag, checked out `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`, recorded `0` Product Gate failures, and completed successfully. This is engineering/release certification evidence; external production deployment remains pending.
+**Phase F aggregate release-certification gate: PASS.** Current exact-release Production Certification run `35840044046` / job `107112696112` executed against `v1.4.10` SHA `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`, recorded `0` Product Gate failures, and completed successfully. This is engineering/release certification evidence; external production deployment remains pending.
 
 ## v1.4.8 WhatsApp + Public Chat hardening — 2026-09-21
 
@@ -76,16 +76,16 @@
 - Public Chat same-customer multiple-conversation invariant: **PASS** — including concurrent starts against real PostgreSQL.
 - Supporting gates passed. Exact-SHA Production Certification then passed for `4f7c4676850b546a1c6bdf219ab9401202302e2d` (run `35568392010`, job `106234691683`), but no `v1.4.8` tag/release was created.
 
-## Phase F — Exact-release Production Certification — 2026-09-21
+## Phase F — Exact-release Production Certification — 2026-09-23
 
-- Release: `v1.4.7`
-- Exact certified SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-- Workflow run: `35498984521` — **PASS**
-- Certification job: `106047204166` — **PASS**
+- Release: `v1.4.10`
+- Exact certified SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
+- Workflow run: `35840044046` — **PASS**
+- Certification job: `107112696112` — **PASS**
 - Product Gate Failures: `0`
-- Frontend Playwright: `6/6` PASS
-- Evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-- Artifact SHA256: `86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`
+- Frontend Playwright: `8/8` PASS
+- Evidence artifact: `production-certification-evidence-v1.4.10-b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
+- Artifact SHA256: `73b193ae14d886a8bda83e65a1486cff7d8bedeb04ec32d78f469dcf8037501b`
 - External production deployment claim: **false / pending**
 
 This closes the repository-level Phase F release-certification gate. It does not close external production deployment, live-provider, measured production SLO/DR, independent security review, or customer-acceptance gates.
@@ -98,6 +98,24 @@ This closes the repository-level Phase F release-certification gate. It does not
 - Evidence artifact: `production-certification-evidence-v1.4.8-4f7c4676850b546a1c6bdf219ab9401202302e2d`
 - Artifact SHA256: `d179fe603aac3460b0e751d7ad7957fad9c3f8dedf81ed8c4a9e9e608a78aa20`
 - Certification is bound only to that exact SHA and does not certify current main `9024a66cbc49279f317d72cebc15f56dbad4a0c1`.
+
+## Post-v1.4.10 product-completeness evidence — 2026-09-23
+
+- PR #607 Employee Template Catalog: **MERGED** — curated customer-ready catalog expanded from 3 to 7 templates with EN/FA metadata and lifecycle/error states.
+- PR #608 Product Lifecycle: **MERGED** — tenant-scoped product edit plus activate/deactivate lifecycle with dedicated RBAC permission.
+- PR #609 Customer Lifecycle: **MERGED** — audited customer edit and active/inactive lifecycle with localized controls.
+- PR #610 Order/Invoice Lifecycle: **MERGED** — draft-only edit parity, audited updates, totals recomputation, and separate status/PDF lifecycle actions.
+- PR #611 Test Center Edition Boundaries: **MERGED** — Vendor/Reseller/Customer/shared definition visibility and execution boundaries enforced at backend execution.
+- PR #612 Schedule Lifecycle: **MERGED** — non-destructive customer schedule lifecycle with locale-aware timestamps.
+- PR #613 Customer FA/EN RTL Browser Acceptance: **MERGED**.
+- PR #615 Customer Analytics/Reporting: **MERGED** — localization, retry/empty states, and locale-aware formatting.
+- PR #617 Customer Operational Browser Acceptance: **MERGED** — broader Persian route coverage with `lang=fa` / `dir=rtl` assertions.
+- PR #618 Governance Localization: **MERGED** — remaining hard-coded governance labels and invalid-evidence rendering fixed.
+- PR #619 Customer Operational EN/FA Acceptance: **MERGED** — operational route matrix validated in both locales.
+- PR #620 Product-Completeness Reconciliation: **MERGED** — frontier moved to release-candidate/certification flow.
+- PRs #622–#627: certification fixes/hardening for invoice/order lifecycle and v1.4.10 Playwright/marketplace acceptance; merged changes culminated in the exact-SHA v1.4.10 certification PASS.
+
+These changes are mainline engineering evidence. They do not retroactively change the immutable certification identity of prior releases.
 
 ## Post-certification productization evidence — 2026-09-22
 
@@ -241,8 +259,8 @@ These are post-release productization/security evidence, not a new production-ce
 
 ## Next test order
 
-1. Complete the remaining product-completeness gate on current main: Persian/English localization and RTL browser acceptance, curated Employee Templates, operational lifecycle parity, shared UX-state consistency, and documentation reconciliation.
-2. Prepare a new release candidate from the completed product-completeness scope and run fresh exact-SHA certification; never transfer certification across SHAs.
-3. Then continue external production-readiness: real target deployment, backup/restore and RPO/RTO, live providers, Vendor → Reseller → Client runtime isolation/RBAC, deployed DAST, independent security review, network/secrets lifecycle, HA/failure recovery, incident response/on-call, and customer acceptance.
+1. Keep the product-completeness surface under regression watch; do not reopen completed gates without a regression or new requirement.
+2. For any future application change after v1.4.10, create a new candidate boundary and run fresh exact-SHA certification; never transfer certification across SHAs.
+3. External production-readiness remains intentionally **OPEN — PENDING EXTERNAL EXECUTION** while the project stays local: real target deployment, backup/restore and RPO/RTO, live providers, Vendor → Reseller → Client runtime isolation/RBAC, deployed DAST, independent security review, network/secrets lifecycle, HA/failure recovery, incident response/on-call, and customer acceptance.
 
 **Rule:** Every completed test changes the corresponding `[ ]` to `[x]` here with the command/result recorded in the evidence section or a linked dated evidence document.
