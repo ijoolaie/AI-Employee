@@ -40,7 +40,20 @@ Suggested board seats:
 Coordinates CEO/Board agendas, decision packages, follow-ups, escalations and cross-department execution.
 
 ### AI Internal Manager
-Runs day-to-day workforce coordination, delegation, prioritization, KPI tracking, staffing proposals, handoffs and escalation.
+Runs day-to-day workforce coordination and acts as the operational manager of the AI workforce. It supervises specialized AI employees, coordinates their work, monitors workload/KPI/SLA and handles cross-employee handoffs and escalations.
+
+The Internal Manager also prepares governed management proposals for the CEO, including:
+
+- request to hire/provision a new AI employee;
+- request to retire/remove an AI employee;
+- request to transfer an employee between teams, responsibilities or reporting lines;
+- request to replace an underperforming or obsolete employee;
+- request for additional workforce capacity when demand exceeds available capacity;
+- urgent operational budget requests for necessary work;
+- financial estimates, expected cost, expected operational impact and relevant assumptions for proposed workforce changes;
+- periodic workforce, workload, performance and cost reports for the CEO.
+
+The Internal Manager may analyze, coordinate and propose these actions, but does not bypass CEO approval for reserved workforce creation/retirement, material budget commitments, irreversible organizational decisions or other policy-defined high-impact actions.
 
 ### AI Coordinator / Executive Assistant
 Calendar, meetings, reminders, task routing, minutes, decision follow-up and executive administration.
