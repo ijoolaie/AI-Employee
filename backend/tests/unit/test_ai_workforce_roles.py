@@ -73,3 +73,25 @@ def test_four_requested_roles_have_first_party_workforce_templates() -> None:
         assert template["description"]
         assert template["description_fa"]
         assert get_workforce_role_template(template["role_code"]).slug == template["slug"]
+
+
+
+def test_every_workforce_operation_has_an_explicit_capability_contract() -> None:
+    from app.services.ai_workforce_roles import get_workforce_capability_contract, list_workforce_roles
+
+    for role in list_workforce_roles():
+        operations = set(role["allowed_routine_operations"]) | set(role["approval_required_operations"])
+        contracts = {item["operation"]: item for item in role["capability_contract"]}
+        assert set(contracts) == operations
+        for operation in operations:
+            contract = get_workforce_capability_contract(role["code"], operation)
+            assert contract.capability_code == f"workforce.{operation}"
+            assert contract.required_permissions
+            assert contract.approval_required is (operation in role["approval_required_operations"])
+
+
+def test_unbound_workforce_operation_fails_closed_before_tool_execution() -> None:
+    from app.services.ai_workforce_roles import assert_workforce_tool_binding
+
+    with pytest.raises(ValidationAppError, match="no approved Tool Registry binding"):
+        assert_workforce_tool_binding("ai_trader", "market_research", "calculator")
