@@ -40,7 +40,6 @@ async def create_reseller(payload: ChildTenantProvisionRequest, ctx: VendorAdmin
         admin_password=payload.admin_password,
         full_name=payload.full_name,
         kind=edition_service.EDITION_RESELLER,
-        vendor_release_tag=payload.vendor_release_tag,
         delivery_revision=payload.delivery_revision,
     )
     return APIResponse(success=True, data=tenant)
