@@ -48,6 +48,7 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
             "Proposal",
             (),
             {
+                "id": uuid.uuid4(),
                 "kind": AgentWorkforceProposalKind.STAFFING,
                 "source_type": "human",
                 "proposed_by_agent_instance_id": None,
@@ -86,6 +87,7 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
     assert proposal.delegation_id == delegation_id
     assert proposal.manager_operation == "replacement_proposal"
     assert proposal.kind is AgentWorkforceProposalKind.REPLACEMENT
+    assert proposal.configuration["manager_operation_target_agent_instance_id"] is None
 
 
 def test_manager_proposal_operations_are_explicit():
