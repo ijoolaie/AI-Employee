@@ -15,7 +15,7 @@ from app.models.agent_identity import AgentIdentity
 from app.models.agent_template import AgentTemplate
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalKind, AgentWorkforceProposalStatus
 from app.services.agent_governance import current_agent_execution_context
-from app.services.ai_workforce_roles import get_workforce_role
+from app.services.ai_workforce_roles import get_workforce_role, workforce_capability_contract_snapshot
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.services.agent_template_service import provision_instance
 from app.services.audit_service import record
@@ -65,6 +65,17 @@ async def create_proposal(
             raise NotFoundError("Agent definition not found for tenant")
         raise ValidationAppError("New role provisioning requires an evaluated and published AgentTemplate")
 
+    proposal_configuration = dict(configuration or {})
+    role_code = proposal_configuration.get("workforce_role_code")
+    if isinstance(role_code, str) and role_code:
+        try:
+            proposal_configuration["workforce_capability_contract"] = workforce_capability_contract_snapshot(role_code)
+        except KeyError:
+            # Custom roles have no catalog contract yet; they remain governed by
+            # the human-approval-required custom-role path and must not inherit
+            # an approximate catalog capability set.
+            proposal_configuration.pop("workforce_capability_contract", None)
+
     proposal = AgentWorkforceProposal(
         tenant_id=tenant_id,
         agent_template_id=agent_template_id,
@@ -75,7 +86,7 @@ async def create_proposal(
         requester_user_id=requester_user_id,
         sponsor_user_id=sponsor_user_id,
         risk_tier=risk_tier,
-        configuration=configuration or {},
+        configuration=proposal_configuration,
         status=AgentWorkforceProposalStatus.SUBMITTED,
     )
     db.add(proposal)

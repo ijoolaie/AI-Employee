@@ -7,6 +7,7 @@ from app.core.exceptions import ValidationAppError
 from app.services.ai_workforce_roles import (
     get_workforce_role,
     get_workforce_role_template,
+    workforce_capability_contract_snapshot,
     is_operation_allowed,
     list_workforce_role_templates,
     list_workforce_roles,
@@ -97,3 +98,11 @@ def test_unbound_workforce_operation_fails_closed_before_tool_execution() -> Non
 
     with pytest.raises(ValidationAppError, match="no approved Tool Registry binding"):
         assert_workforce_tool_binding("ai_trader", "market_research", "calculator")
+
+
+def test_workforce_capability_contract_snapshot_is_json_safe_and_role_scoped() -> None:
+    snapshot = workforce_capability_contract_snapshot("ai_trader")
+    assert snapshot
+    assert all(set(item) == {"operation", "capability_code", "tool_names", "required_permissions", "approval_required"} for item in snapshot)
+    assert any(item["operation"] == "market_research" for item in snapshot)
+    assert not any(item["operation"] == "draft_campaign_plan" for item in snapshot)
