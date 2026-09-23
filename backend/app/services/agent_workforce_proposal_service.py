@@ -13,10 +13,11 @@ from app.models.agent_definition import AgentDefinition
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_template import AgentTemplate
-from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalStatus
+from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalKind, AgentWorkforceProposalStatus
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.services.agent_template_service import provision_instance
 from app.services.audit_service import record
+from app.services.workforce_delegation_service import assert_operation_delegated
 
 
 async def create_proposal(
@@ -79,6 +80,84 @@ async def create_proposal(
     await db.flush()
     await db.refresh(proposal)
     await record(db, action="agent_workforce.proposal.submitted", actor_id=requester_user_id, tenant_id=tenant_id, resource_type="agent_workforce_proposal", resource_id=proposal.id, metadata={"template_id": str(agent_template_id) if agent_template_id else None, "risk_tier": risk_tier})
+    return proposal
+
+
+async def create_manager_proposal(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    manager_agent_instance_id: uuid.UUID,
+    operation: str,
+    sponsor_user_id: uuid.UUID,
+    title: str,
+    rationale: str,
+    requested_name: str,
+    agent_template_id: uuid.UUID | None = None,
+    agent_definition_id: uuid.UUID | None = None,
+    risk_tier: int = 0,
+    configuration: dict | None = None,
+    affected_employee_id: uuid.UUID | None = None,
+) -> AgentWorkforceProposal:
+    if operation not in {
+        "staffing_proposal",
+        "replacement_proposal",
+        "transfer_proposal",
+        "retirement_proposal",
+    }:
+        raise ValidationAppError("Unsupported Internal Manager workforce proposal operation")
+
+    delegation = await assert_operation_delegated(
+        db,
+        tenant_id=tenant_id,
+        manager_agent_instance_id=manager_agent_instance_id,
+        operation=operation,
+        employee_id=affected_employee_id,
+    )
+
+    kind = (
+        AgentWorkforceProposalKind.REPLACEMENT
+        if operation in {"replacement_proposal", "retirement_proposal"}
+        else AgentWorkforceProposalKind.STAFFING
+    )
+    proposal = await create_proposal(
+        db,
+        tenant_id=tenant_id,
+        requester_user_id=delegation.delegated_by_user_id,
+        title=title,
+        rationale=rationale,
+        requested_name=requested_name,
+        sponsor_user_id=sponsor_user_id,
+        agent_template_id=agent_template_id,
+        agent_definition_id=agent_definition_id,
+        risk_tier=risk_tier,
+        configuration={
+            **(configuration or {}),
+            "manager_operation_target_agent_instance_id": str(affected_employee_id) if affected_employee_id else None,
+        },
+    )
+    proposal.kind = kind
+    proposal.source_type = "internal_manager"
+    proposal.proposed_by_agent_instance_id = manager_agent_instance_id
+    proposal.delegation_id = delegation.id
+    proposal.manager_operation = operation
+    await db.flush()
+    await record(
+        db,
+        action="agent_workforce.proposal.manager_submitted",
+        actor_type="agent",
+        actor_id=manager_agent_instance_id,
+        tenant_id=tenant_id,
+        resource_type="agent_workforce_proposal",
+        resource_id=proposal.id,
+        metadata={
+            "operation": operation,
+            "delegation_id": str(delegation.id),
+            "delegated_by_user_id": str(delegation.delegated_by_user_id),
+            "sponsor_user_id": str(sponsor_user_id),
+            "affected_employee_id": str(affected_employee_id) if affected_employee_id else None,
+        },
+    )
     return proposal
 
 
