@@ -4,9 +4,10 @@ import pytest
 
 from app.services.ai_workforce_roles import (
     get_workforce_role,
+    get_workforce_role_template,
     is_operation_allowed,
+    list_workforce_role_templates,
     list_workforce_roles,
-    validate_manager_proposable_role,
 )
 
 
@@ -55,19 +56,20 @@ def test_unknown_role_fails_closed() -> None:
     with pytest.raises(KeyError):
         get_workforce_role("does_not_exist")
 
-@pytest.mark.parametrize(
-    "role_code",
-    [
+
+def test_four_requested_roles_have_first_party_workforce_templates() -> None:
+    templates = list_workforce_role_templates()
+    assert {item["role_code"] for item in templates} == {
         "ai_marketing_advertising_manager",
         "ai_graphic_designer",
         "ai_software_developer",
         "ai_trader",
-    ],
-)
-def test_next_roles_are_explicit_manager_proposal_targets(role_code: str) -> None:
-    assert validate_manager_proposable_role(role_code).code == role_code
-
-
-def test_internal_manager_is_not_a_next_role_proposal_target() -> None:
-    with pytest.raises(ValueError, match="not eligible"):
-        validate_manager_proposable_role("ai_internal_manager")
+    }
+    assert len(templates) == 4
+    for template in templates:
+        assert template["slug"]
+        assert template["name"]
+        assert template["name_fa"]
+        assert template["description"]
+        assert template["description_fa"]
+        assert get_workforce_role_template(template["role_code"]).slug == template["slug"]
