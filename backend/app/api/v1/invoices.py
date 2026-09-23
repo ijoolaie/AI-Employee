@@ -89,7 +89,7 @@ async def update_invoice(
 
 
 @router.post("/{invoice_id}/status", response_model=APIResponse[BusinessInvoiceResponse])
-async def update_invoice_status(
+async def update_status(
     invoice_id: UUID,
     payload: BusinessInvoiceStatusUpdate,
     ctx: InvoiceUpdateContext,
