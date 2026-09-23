@@ -15,7 +15,6 @@ from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWor
 from app.services import agent_workforce_proposal_service as proposal_service
 from app.services.agent_workforce_manager import get_agent_capacity, get_workforce_dashboard
 from app.services import workforce_sla_service as sla_service
-from app.models.workforce_sla_contract import WorkforceSLAContract
 from app.services.governed_scaling import create_scaling_proposal
 
 router = APIRouter(prefix="/agent-workforce", tags=["agent-workforce"])
