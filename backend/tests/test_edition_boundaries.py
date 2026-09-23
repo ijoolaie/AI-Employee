@@ -17,6 +17,7 @@ from app.services.edition_service import (
     EDITION_VENDOR,
     assert_can_access,
     assert_direct_child,
+    assert_release_identity,
 )
 
 
@@ -90,3 +91,13 @@ def test_deprovision_requires_all_children_to_be_deprovisioned():
         validate_deprovision_children([SimpleNamespace(status=STATUS_ACTIVE)])
     with pytest.raises(HTTPException):
         validate_deprovision_children([SimpleNamespace(status=STATUS_SUSPENDED)])
+
+
+def test_child_release_identity_must_match_parent():
+    vendor = tenant(EDITION_VENDOR)
+    vendor.vendor_release_tag = "v1.4.10"
+
+    assert_release_identity(vendor, None)
+    assert_release_identity(vendor, "v1.4.10")
+    with pytest.raises(HTTPException):
+        assert_release_identity(vendor, "v1.4.9")
