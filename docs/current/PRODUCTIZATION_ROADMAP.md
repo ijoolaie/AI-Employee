@@ -14,7 +14,7 @@ Three axes remain independent:
 
 Phase 11 Unified Execution is complete. Phase 12 Test Center is operationally hardened. Phase 13 Agent Teams & Marketplace is engineering complete. Phase 14.1–14.16 tracked engineering is complete/reconciled.
 
-The project is now in a dedicated **Product Completeness → Commercial Readiness & External Production** sequence. The audited product-completeness gate is closed for the current scope and remains under regression watch; the default next work is external evidence, deployment, security and operational validation.
+The project is now in a dedicated **Governed AI Workforce → Commercial Readiness & External Production** sequence. The audited product-completeness gate is closed for the current scope and remains under regression watch; the default next work is external evidence, deployment, security and operational validation.
 
 ## Product Completeness Gate — added 2026-09-21
 
@@ -122,6 +122,26 @@ The next workforce implementation slice is explicitly defined as:
 All four roles operate under Internal Manager supervision and approval. The Internal Manager may execute or authorize their routine non-financial, non-critical and reversible work when the CEO has explicitly delegated that authority to the Internal Manager. The AI Trader remains financial/high-impact and actual capital allocation or financial execution still requires CEO/authorized-human approval.
 
 These roles are planned candidates, not a claim that active instances already exist in the current certified release.
+
+## Post-v1.4.11 workforce implementation checkpoint — 2026-09-23
+
+The following post-release engineering slices are now merged on mainline and remain outside the v1.4.11 certification identity:
+
+- Internal Manager workforce role catalog foundation.
+- Durable CEO delegation with scoped, time-bounded, auditable authority.
+- Runtime-bound Manager proposal provenance using governed Agent identity and durable Run identity.
+- Manager proposals may target any existing catalog role or propose a new role definition; four specialized roles have first-party workforce role templates.
+- Manager workforce dashboard reporting for capacity, queue status, terminal success rate and informational queue age; SLA compliance remains explicitly unconfigured until a tenant SLA target exists.
+- Runtime enforcement of explicit workforce operations, with fail-closed role validation and human-approval gates.
+
+No slice above provisions or activates an AgentInstance by itself, and none changes the immutable v1.4.11 release.
+
+### Next engineering order
+
+1. Define explicit role-specific capability/tool bindings where concrete tools exist; do not infer role authority from tool names.
+2. Add tenant-owned SLA target configuration and make dashboard compliance conditional on an explicit target.
+3. Add runtime/e2e evidence for governed role operations and approval execution.
+4. Reconcile exact-SHA certification only when a new release candidate is intentionally cut.
 
 ## Stage 8 — AI Company Operating Model Foundation
 
