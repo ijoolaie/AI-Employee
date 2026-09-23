@@ -79,6 +79,7 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
         title="Replace worker",
         rationale="Capacity recovery",
         requested_name="Replacement Worker",
+        configuration={"workforce_role_code": "ai_software_developer"},
         affected_employee_id=target_employee_id,
     )
 
