@@ -101,24 +101,29 @@ async def create_manager_proposal(
     configuration: dict | None = None,
     affected_employee_id: uuid.UUID | None = None,
 ) -> AgentWorkforceProposal:
-    if operation not in {
-        "staffing_proposal",
-        "replacement_proposal",
-        "transfer_proposal",
-        "retirement_proposal",
-    }:
+    if operation not in {"staffing_proposal", "replacement_proposal", "transfer_proposal", "retirement_proposal"}:
         raise ValidationAppError("Unsupported Internal Manager workforce proposal operation")
 
     proposal_configuration = dict(configuration or {})
     role_code = proposal_configuration.get("workforce_role_code")
     if not isinstance(role_code, str) or not role_code:
         raise ValidationAppError("Internal Manager workforce proposals require workforce_role_code")
+
     try:
-        role = validate_manager_proposable_role(role_code)
-    except ValueError as exc:
-        raise ValidationAppError(str(exc)) from exc
-    proposal_configuration["workforce_role_code"] = role.code
-    proposal_configuration["workforce_role_approval_class"] = role.approval_class
+        role = get_workforce_role(role_code)
+    except KeyError:
+        role = None
+
+    if role is not None:
+        proposal_configuration["workforce_role_code"] = role.code
+        proposal_configuration["workforce_role_approval_class"] = role.approval_class
+        proposal_configuration["workforce_role_custom"] = False
+    else:
+        for key in ("workforce_role_name", "workforce_role_purpose"):
+            if not isinstance(proposal_configuration.get(key), str) or not proposal_configuration[key].strip():
+                raise ValidationAppError(f"New workforce roles require {key}")
+        proposal_configuration["workforce_role_approval_class"] = "human_approval_required"
+        proposal_configuration["workforce_role_custom"] = True
 
     delegation = await assert_operation_delegated(
         db,
@@ -128,11 +133,7 @@ async def create_manager_proposal(
         employee_id=affected_employee_id,
     )
 
-    kind = (
-        AgentWorkforceProposalKind.REPLACEMENT
-        if operation in {"replacement_proposal", "retirement_proposal"}
-        else AgentWorkforceProposalKind.STAFFING
-    )
+    kind = AgentWorkforceProposalKind.REPLACEMENT if operation in {"replacement_proposal", "retirement_proposal"} else AgentWorkforceProposalKind.STAFFING
     proposal = await create_proposal(
         db,
         tenant_id=tenant_id,
@@ -172,7 +173,6 @@ async def create_manager_proposal(
         },
     )
     return proposal
-
 
 async def create_manager_proposal_from_runtime(
     db: AsyncSession,
@@ -217,7 +217,6 @@ async def create_manager_proposal_from_runtime(
         },
         affected_employee_id=affected_employee_id,
     )
-
 
 async def board_decide(
     db: AsyncSession,
