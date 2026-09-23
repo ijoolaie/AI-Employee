@@ -11,6 +11,7 @@ from app.models.agent_instance import AgentInstance
 from app.models.work_item import WorkItem
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 from app.services.agent_governance import assert_agent_can_execute
+from app.services.workforce_runtime_governance import assert_workforce_operation
 from app.services.agent_runtime_binding import resolve_employee_version
 from app.services.run_service import create_run
 from app.services import outbox_service
@@ -97,9 +98,18 @@ class AgentExecutionAdapter:
         tool_name: str,
         arguments: dict[str, Any],
         approval_granted: bool = False,
+        workforce_operation: str | None = None,
+        affected_employee_id=None,
     ) -> Any:
         """Execute a Tool only after the central policy decision allows it."""
         tool = registry.get(tool_name)
+        if workforce_operation is not None:
+            await assert_workforce_operation(
+                self.db,
+                agent=agent,
+                operation=workforce_operation,
+                affected_employee_id=affected_employee_id,
+            )
         await assert_agent_can_execute(
             self.db,
             tenant_id=agent.tenant_id,
