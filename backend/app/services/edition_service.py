@@ -51,6 +51,11 @@ def require_edition(ctx, kind: str) -> None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Edition administrator access required")
 
 
+def assert_release_identity(parent: Tenant, requested_tag: str | None) -> None:
+    if requested_tag is not None and requested_tag != parent.vendor_release_tag:
+        raise HTTPException(status_code=403, detail="Child tenant must inherit the parent vendor release identity")
+
+
 def assert_direct_child(parent: Tenant, child: Tenant, expected_kind: str) -> None:
     if child.parent_tenant_id != parent.id or child.tenant_kind != expected_kind:
         raise HTTPException(status_code=403, detail="Tenant is outside the permitted edition boundary")
@@ -86,10 +91,11 @@ async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str,
     expected_parent_kind = EDITION_VENDOR if kind == EDITION_RESELLER else EDITION_RESELLER
     if parent.tenant_kind != expected_parent_kind:
         raise HTTPException(status_code=403, detail="Invalid parent edition")
+    assert_release_identity(parent, vendor_release_tag)
     existing = (await db.execute(select(Tenant).where(Tenant.slug == slug))).scalar_one_or_none()
     if existing is not None:
         raise HTTPException(status_code=409, detail="Tenant slug already exists")
-    tenant = Tenant(name=name, slug=slug, status="active", tenant_kind=kind, parent_tenant_id=parent.id, vendor_release_tag=vendor_release_tag or parent.vendor_release_tag, delivery_revision=delivery_revision, settings={"edition": kind, "control_plane_parent": str(parent.id)})
+    tenant = Tenant(name=name, slug=slug, status="active", tenant_kind=kind, parent_tenant_id=parent.id, vendor_release_tag=parent.vendor_release_tag, delivery_revision=delivery_revision, settings={"edition": kind, "control_plane_parent": str(parent.id)})
     db.add(tenant)
     await db.flush()
     user = User(tenant_id=tenant.id, email=admin_email.lower(), password_hash=hash_password(admin_password), full_name=full_name, is_active=True, is_superuser=True)

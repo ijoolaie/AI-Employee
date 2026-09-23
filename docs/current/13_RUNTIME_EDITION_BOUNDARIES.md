@@ -45,7 +45,7 @@ Each tenant stores:
 
 - `tenant_kind`: `vendor`, `reseller`, or `customer`;
 - `parent_tenant_id` for downstream editions;
-- `vendor_release_tag` for the immutable vendor product baseline;
+- `vendor_release_tag` is inherited from the parent edition and remains the immutable vendor product baseline; child provisioning cannot override it;
 - `delivery_revision` for reseller/customer delivery revisions.
 
 Existing platform-admin tenants are promoted to the vendor root by the migration so the current control plane is not stranded.
