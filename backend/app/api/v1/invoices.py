@@ -8,9 +8,9 @@ from app.core.deps import DbSession, InvoiceCreateContext, InvoiceExportPdfConte
 from app.schemas.common import APIResponse
 from app.schemas.invoice import (
     BusinessInvoiceCreate,
-    BusinessInvoiceUpdate,
     BusinessInvoiceResponse,
     BusinessInvoiceStatusUpdate,
+    BusinessInvoiceUpdate,
     InvoiceFinancialSummary,
 )
 from app.services import invoice_service
@@ -50,7 +50,9 @@ async def get_invoice(invoice_id: UUID, ctx: InvoiceReadContext, db: DbSession):
     response_model=APIResponse[BusinessInvoiceResponse],
     status_code=status.HTTP_201_CREATED,
 )
-async def create_invoice(payload: BusinessInvoiceCreate, ctx: InvoiceCreateContext, db: DbSession):
+async def create_invoice(
+    payload: BusinessInvoiceCreate, ctx: InvoiceCreateContext, db: DbSession
+):
     inv = await invoice_service.create_invoice(
         db,
         tenant_id=ctx.tenant_id,
@@ -69,13 +71,25 @@ async def create_invoice(payload: BusinessInvoiceCreate, ctx: InvoiceCreateConte
     return APIResponse(success=True, data=BusinessInvoiceResponse.model_validate(inv))
 
 
-@router.post("/{invoice_id}/status", response_model=APIResponse[BusinessInvoiceResponse])
-async def update_invoice(invoice_id: UUID, payload: BusinessInvoiceUpdate, ctx: InvoiceUpdateContext, db: DbSession):
-    inv = await invoice_service.update_invoice(db, tenant_id=ctx.tenant_id, actor_id=ctx.user.id, invoice_id=str(invoice_id), **payload.model_dump(exclude_unset=True))
+@router.patch("/{invoice_id}", response_model=APIResponse[BusinessInvoiceResponse])
+async def update_invoice(
+    invoice_id: UUID,
+    payload: BusinessInvoiceUpdate,
+    ctx: InvoiceUpdateContext,
+    db: DbSession,
+):
+    inv = await invoice_service.update_invoice(
+        db,
+        tenant_id=ctx.tenant_id,
+        actor_id=ctx.user.id,
+        invoice_id=str(invoice_id),
+        **payload.model_dump(exclude_unset=True),
+    )
     return APIResponse(success=True, data=BusinessInvoiceResponse.model_validate(inv))
 
 
-async def update_status(
+@router.post("/{invoice_id}/status", response_model=APIResponse[BusinessInvoiceResponse])
+async def update_invoice_status(
     invoice_id: UUID,
     payload: BusinessInvoiceStatusUpdate,
     ctx: InvoiceUpdateContext,
