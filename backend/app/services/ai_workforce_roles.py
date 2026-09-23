@@ -47,6 +47,22 @@ class WorkforceRoleTemplate:
     description_fa: str
 
 
+
+def _contracts(
+    routine: tuple[str, ...] | list[str],
+    approval_required: tuple[str, ...] | list[str],
+) -> tuple[WorkforceCapabilityContract, ...]:
+    return tuple(
+        WorkforceCapabilityContract(
+            operation=operation,
+            capability_code=f"workforce.{operation}",
+            tool_names=(),
+            required_permissions=("run.execute",),
+            approval_required=operation in approval_required,
+        )
+        for operation in (*routine, *approval_required)
+    )
+
 WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
     WorkforceRole(
         code="ai_internal_manager",
