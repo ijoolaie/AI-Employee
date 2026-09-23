@@ -80,3 +80,17 @@ This is reporting only. It does not create, provision, activate, reprioritize, o
 ## Next
 
 Connect Manager proposal generation to the concrete runtime tool/action path and add an explicit tenant SLA contract/target model before reporting SLA compliance.
+
+
+## Workforce role runtime enforcement
+
+Governed Agent tool execution may now carry an explicit `workforce_operation` into the runtime adapter. When supplied, the operation is checked against the AgentInstance `workforce_role_code` before the Tool Registry executes.
+
+- Unknown or missing workforce roles fail closed.
+- A specialized role may execute only operations declared in its first-party role catalog.
+- Operations declared as human-approval-required are rejected by this role gate; the existing Tool Registry/approval path remains responsible for approved tool side effects.
+- AI Internal Manager operations additionally require an active governed runtime context whose tenant and AgentInstance match the executing Manager, plus an active CEO delegation authorizing the operation.
+- This layer does not provision, activate, or broaden role permissions.
+- Existing Agent policy, access review, kill switch, template fingerprint, Tool Registry and approval checks remain in force.
+
+The role gate is deliberately operation-oriented rather than guessing semantics from tool names. A concrete tool should supply the corresponding workforce operation explicitly when it is invoked by a governed role.
