@@ -103,7 +103,6 @@ async def create_customer(payload: ChildTenantProvisionRequest, ctx: ResellerAdm
         full_name=payload.full_name,
         kind=edition_service.EDITION_CUSTOMER,
         vendor_release_tag=payload.vendor_release_tag,
-        vendor_release_tag=payload.vendor_release_tag,
         delivery_revision=payload.delivery_revision,
     )
     return APIResponse(success=True, data=tenant)
