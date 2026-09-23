@@ -108,6 +108,18 @@ async def create_manager_proposal(
     }:
         raise ValidationAppError("Unsupported Internal Manager workforce proposal operation")
 
+    proposal_configuration = dict(configuration or {})
+    role_code = proposal_configuration.get("workforce_role_code")
+    if not isinstance(role_code, str) or not role_code:
+        raise ValidationAppError("Internal Manager workforce proposals require workforce_role_code")
+    from app.services.ai_workforce_roles import validate_manager_proposable_role
+    try:
+        role = validate_manager_proposable_role(role_code)
+    except ValueError as exc:
+        raise ValidationAppError(str(exc)) from exc
+    proposal_configuration["workforce_role_code"] = role.code
+    proposal_configuration["workforce_role_approval_class"] = role.approval_class
+
     delegation = await assert_operation_delegated(
         db,
         tenant_id=tenant_id,
@@ -133,7 +145,7 @@ async def create_manager_proposal(
         agent_definition_id=agent_definition_id,
         risk_tier=risk_tier,
         configuration={
-            **(configuration or {}),
+            **proposal_configuration,
             "manager_operation_target_agent_instance_id": str(affected_employee_id) if affected_employee_id else None,
         },
     )
