@@ -68,6 +68,13 @@ async def create_proposal(
     proposal_configuration = dict(configuration or {})
     role_code = proposal_configuration.get("workforce_role_code")
     if isinstance(role_code, str) and role_code:
+        expected_contract = workforce_capability_contract_snapshot(role_code)
+        template_contract = (template.capability_contract or {})
+        if template_contract.get("workforce_role_code") != role_code:
+            raise ValidationAppError("Workforce AgentTemplate is not bound to the requested catalog role")
+        if template_contract.get("workforce_capability_contract") != expected_contract:
+            raise ConflictError("Workforce AgentTemplate capability contract is stale or inconsistent")
+    if isinstance(role_code, str) and role_code:
         try:
             proposal_configuration["workforce_capability_contract"] = workforce_capability_contract_snapshot(role_code)
         except KeyError:

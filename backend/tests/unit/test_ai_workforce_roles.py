@@ -8,6 +8,7 @@ from app.services.ai_workforce_roles import (
     get_workforce_role,
     get_workforce_role_template,
     workforce_capability_contract_snapshot,
+    workforce_template_capability_contract,
     is_operation_allowed,
     list_workforce_role_templates,
     list_workforce_roles,
@@ -106,3 +107,9 @@ def test_workforce_capability_contract_snapshot_is_json_safe_and_role_scoped() -
     assert all(set(item) == {"operation", "capability_code", "tool_names", "required_permissions", "approval_required"} for item in snapshot)
     assert any(item["operation"] == "market_research" for item in snapshot)
     assert not any(item["operation"] == "draft_campaign_plan" for item in snapshot)
+
+
+def test_workforce_template_capability_contract_binds_catalog_role_exactly() -> None:
+    binding = workforce_template_capability_contract("ai_trader")
+    assert binding["workforce_role_code"] == "ai_trader"
+    assert binding["workforce_capability_contract"] == workforce_capability_contract_snapshot("ai_trader")

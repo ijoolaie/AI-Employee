@@ -213,6 +213,15 @@ def get_workforce_capability_contract(role_code: str, operation: str) -> Workfor
     raise KeyError(f"No capability contract for workforce operation: {role_code}:{operation}")
 
 
+def workforce_template_capability_contract(role_code: str) -> dict:
+    """Return the template-level binding required for a catalog workforce role."""
+    role = get_workforce_role(role_code)
+    return {
+        "workforce_role_code": role.code,
+        "workforce_capability_contract": workforce_capability_contract_snapshot(role.code),
+    }
+
+
 def workforce_capability_contract_snapshot(role_code: str) -> list[dict]:
     """Return a stable JSON-safe snapshot of the role's capability contracts."""
     role = get_workforce_role(role_code)

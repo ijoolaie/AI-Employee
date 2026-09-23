@@ -52,3 +52,7 @@ A capability contract cannot grant a permission that the Tool Registry or Agent 
 For each workforce role, review the actual Tool Registry and add only explicit, canonical bindings where the semantics, required permission, side effects, and approval policy are compatible.
 
 Operations without a suitable canonical tool should receive a dedicated tool or remain non-executable at the tool boundary; they must not be auto-mapped to an approximate tool.
+
+## AgentTemplate binding
+
+For a catalog workforce role, an AgentTemplate must explicitly declare both `workforce_role_code` and the exact `workforce_capability_contract` snapshot. A Workforce Proposal cannot install a catalog role when its selected AgentTemplate is not bound to the same role contract. This prevents a proposal configuration from selecting a stronger or unrelated role than the published template was evaluated for.

@@ -12,6 +12,7 @@ from app.models.agent_definition import AgentDefinition
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
 from app.services.agent_governance import assert_publishable_with_evidence, create_identity
+from app.services.ai_workforce_roles import workforce_template_capability_contract
 
 
 async def create_template(
@@ -42,6 +43,18 @@ async def create_template(
         raise ValidationAppError("risk_tier must be between 0 and 4")
     if version < 1:
         raise ValidationAppError("version must be at least 1")
+
+    requested_capabilities = capability_contract or {}
+    workforce_role_code = requested_capabilities.get("workforce_role_code")
+    if workforce_role_code:
+        try:
+            expected = workforce_template_capability_contract(str(workforce_role_code))
+        except KeyError as exc:
+            raise ValidationAppError("Unknown workforce role in AgentTemplate capability contract") from exc
+        if requested_capabilities != {**requested_capabilities, **expected}:
+            raise ValidationAppError("Workforce AgentTemplate capability contract is incomplete or inconsistent")
+        if requested_capabilities.get("workforce_capability_contract") != expected["workforce_capability_contract"]:
+            raise ValidationAppError("Workforce AgentTemplate capability contract does not match the catalog role")
 
     duplicate = (await db.execute(select(AgentTemplate).where(
         AgentTemplate.tenant_id == tenant_id,
