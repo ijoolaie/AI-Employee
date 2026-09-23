@@ -11,14 +11,14 @@
 
 ## Current release
 
-- Release: `v1.4.10`
-- Exact certified SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
+- Release: `v1.4.11`
+- Exact certified SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 - Production Certification: PASS
 - Product Gate failures: **0**
-- Frontend Playwright: **8/8 PASS**
-- Evidence artifact: `production-certification-evidence-v1.4.10-b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
-- Evidence JSON SHA-256: `73b193ae14d886a8bda83e65a1486cff7d8bedeb04ec32d78f469dcf8037501b`
-- Artifact ID: `10740739447`
+- Frontend Playwright: PASS
+- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- Evidence JSON SHA-256: `bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`
+- Artifact ID: `10744805746`
 - Production deployment claimed by certification: **false**
 - Stable Git tag: **VERIFIED**
 - GitHub Release: **PUBLISHED**
@@ -31,7 +31,7 @@ Certification applies only to the exact certified SHA. Post-release documentatio
 
 The latest repository-certified release is **v1.4.10 / `b09f3e35...`**. The `v1.4.9` certification remains immutable at `f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
 
-Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.10 tracked scope.
+Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
 The project is currently being executed on the developer/local environment. No external production target is being used at this stage. Therefore gates that require a real target, live providers, staffed operations or external acceptance are intentionally **OPEN — PENDING EXTERNAL EXECUTION**. They are not current engineering failures and do not block local development or repository-level certification.
 
@@ -39,7 +39,7 @@ The project is currently being executed on the developer/local environment. No e
 
 | Area | Status | Evidence boundary |
 |---|---|---|
-| Immutable release identity | PASS | Tag `v1.4.10` resolves to certified SHA; GitHub Release published |
+| Immutable release identity | PASS | Tag `v1.4.11` resolves to certified SHA; GitHub Release published |
 | Repository production-like certification | PASS | Exact-SHA certification run 35840044046, Product Gates 0, Playwright 8/8 |
 | Production Compose topology | PASS | `docker-compose.production.yml` defines PostgreSQL, Redis, API, worker, Beat and frontend with health/restart controls |
 | Migration gate | PASS | Certification workflow runs `alembic upgrade head`, `alembic check`, and single-head validation |
