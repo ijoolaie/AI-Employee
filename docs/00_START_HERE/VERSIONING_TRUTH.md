@@ -1,7 +1,7 @@
 # Versioning Truth
 
 **Status:** CANONICAL
-**Reconciled:** 2026-09-22
+**Reconciled:** 2026-09-23
 
 This document defines the independent version axes used by the AI Employee Platform.
 
@@ -11,19 +11,19 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 ### Current release truth
 
-- Latest published release: **`v1.4.9`**
-- Latest certified release: **`v1.4.9`**, exact certified SHA `f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
-- `v1.4.9` Git tag: **VERIFIED**, resolving to the certified release commit.
-- `v1.4.9` GitHub Release: **PUBLISHED**, not draft, not prerelease.
-- `v1.4.9` exact-SHA Production Certification: **PASS** on run `35575615877`, job `106256713583`.
-- Evidence artifact: `production-certification-evidence-v1.4.9-f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
-- Evidence digest: `sha256:32962353a3511d7d5ae951eb6d0a44620a10211493730544342afe55f980a896`.
+- Latest published release: **`v1.4.11`**
+- Latest certified release: **`v1.4.11`**, exact certified SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`.
+- `v1.4.11` Git tag: **VERIFIED**, resolving to the certified release commit.
+- `v1.4.11` GitHub Release: **PUBLISHED**, not draft, not prerelease.
+- `v1.4.11` exact-SHA Production Certification: **PASS** on run `35848311037`, job `107139710452`.
+- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`.
+- Evidence digest: `sha256:bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`.
 - External production deployment: **NOT VERIFIED / not claimed by certification**.
 - Customer acceptance / live provider validation: **PENDING**.
 
-`v1.4.9` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
+`v1.4.11` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
-Current `main` is post-certification and resolves to `9024a66cbc49279f317d72cebc15f56dbad4a0c1`. It contains subsequent source changes and is therefore outside the certified `v1.4.9` snapshot. A new release candidate must receive fresh exact-SHA certification.
+Current `main` is post-certification documentation work and resolves to `1d450ce37a98dad0f63591252800d5566dc2aaf8`. It contains subsequent source changes and is therefore outside the certified `v1.4.9` snapshot. A new application-code release candidate must receive fresh exact-SHA certification.
 
 ## 2. Architecture version
 
@@ -49,13 +49,13 @@ Current phase truth:
 - Phase 12 Test Center: **IMPLEMENTED / OPERATIONAL HARDENING**
 - Phase 13 Agent Teams & Marketplace: **ENGINEERING COMPLETE**
 - Phase 14.1–14.16: **ENGINEERING COMPLETE WHERE TRACKED**
-- Stage 7: **ACTIVE — EXTERNAL PRODUCTION EXECUTION / CERTIFICATION**
+- Stage 7: **ACTIVE — EXTERNAL PRODUCTION EXECUTION / CERTIFICATION PENDING EXTERNAL TARGET**
 - Stage 8: **GOVERNED AGENT WORKFORCE FOUNDATION IMPLEMENTED; ACCEPTANCE/EVIDENCE RECONCILIATION CONTINUES WHERE REQUIRED**
-- Stage 9: **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN THE CURRENT v1.4.9 RELEASE**
+- Stage 9: **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN THE CURRENT v1.4.11 RELEASE**
 
 ## 4. Stage 9 optimization workstream
 
-Stage 9 is the optimization layer above the governed execution substrate. Its current planned slices were implemented and certified as part of the v1.4.2 release and remain included in the current v1.4.8 release:
+Stage 9 is the optimization layer above the governed execution substrate. Its current planned slices were implemented and certified as part of the v1.4.2 release and remain included in the current v1.4.11 release:
 
 1. Capability-aware workload routing.
 2. Task/risk/cost-aware model selection.
@@ -87,8 +87,8 @@ These capabilities are substantially present in the architecture; active work sh
 
 ```text
 RELEASE
-v1.3.8 ─────► v1.4.2 ─────► v1.4.5 ─────► v1.4.6 ─────► v1.4.7 ─────► v1.4.8 ─────► v1.4.9
- historical     certified      current certified
+v1.3.8 ─────► v1.4.2 ─────► v1.4.5 ─────► v1.4.6 ─────► v1.4.7 ─────► v1.4.8 ─────► v1.4.9 ─────► v1.4.10 ─────► v1.4.11
+ historical     certified      historical certified                 current certified
                                                              |
                                                              +-- external production: pending
 
