@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+from app.core.exceptions import ValidationAppError
+
 from app.services.ai_workforce_roles import (
     get_workforce_role,
     get_workforce_role_template,
