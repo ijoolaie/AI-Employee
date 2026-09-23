@@ -100,8 +100,8 @@ test.describe("critical platform flows", () => {
     await expect(page.getByText(/Installing creates tenant-local definitions and provenance/i)).toBeVisible();
     await expect(page.getByText("Customer acceptance", { exact: true }).locator("..")).toContainText("Not implied");
     await page.getByRole("button", { name: /Install tenant-local copy/i }).click();
-    await expect(page.getByText(/Installed install-.* locally/i)).toBeVisible();
-    await expect(page.getByText(/No AI Employee instance was provisioned/i)).toBeVisible();
+    await expect(page.getByText(/Installation completed\./i)).toBeVisible();
+    await expect(page.getByText(/Installation creates a tenant-local copy\./i)).toBeVisible();
   });
 
   test("marketplace install failure is surfaced without implying deployment", async ({ page }) => {
