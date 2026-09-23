@@ -30,9 +30,33 @@ The CEO/Chairman retains final authority over ownership, major strategy, high-ri
 - AI Chief of Staff
 
 ### Management
+- AI Chief of Staff
 - AI Internal Manager
 - Domain Managers / Directors
 - Workforce Planner
+
+### AI Internal Manager operating mandate
+
+The Internal Manager is the operational manager of the specialized AI workforce. It is not merely another task-oriented assistant.
+
+It is responsible for:
+
+- supervising active AI employees and their workload;
+- assigning and reprioritizing work within authorized boundaries;
+- monitoring KPI, SLA, queue, quality, failure and escalation signals;
+- coordinating handoffs between employees and departments;
+- identifying capability or capacity gaps;
+- preparing workforce proposals for the CEO;
+- preparing hiring/provisioning requests;
+- preparing retirement/removal requests;
+- preparing transfer/reassignment requests;
+- preparing replacement requests;
+- preparing urgent operational budget requests;
+- producing financial estimates for proposed operational actions;
+- reporting workforce status, performance, utilization and cost to the CEO;
+- escalating incidents, exceptions and unresolved cross-team conflicts.
+
+The Internal Manager has **proposal and coordination authority**, not unrestricted organizational authority. CEO-reserved decisions remain behind the existing governance and approval boundary.
 
 ### Specialist workforce
 Technology, Security, Network, Finance, HR, Legal, Sales, Marketing, Customer Success, Data, Knowledge, Operations, Governance, R&D and Corporate Secretariat roles are defined in `AI_COMPANY_FOUNDING_WORKFORCE.md`.
