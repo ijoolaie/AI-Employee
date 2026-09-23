@@ -1,13 +1,14 @@
 # v1.4.10 Production Deployment Runbook
 
-**Status:** READY FOR EXTERNAL EXECUTION  
+**Status:** READY FOR EXTERNAL EXECUTION — NOT CURRENTLY EXECUTED
+**Current stage:** LOCAL / ENGINEERING; external gates intentionally remain open  
 **Release:** `v1.4.10`  
 **Certified SHA:** `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`  
 **Production Certification:** run `35840044046` / job `107112696112` — PASS  
 **Stable tag:** `v1.4.10` — VERIFIED  
 **GitHub Release:** `v1.4.10` — PUBLISHED
 
-> This runbook is an execution guide. It does not claim that production has been deployed.
+> This runbook is an execution guide for the future external phase. The current project stage is local/engineering, so the external steps are intentionally dormant. It does not claim that production has been deployed.
 
 ## 1. Admission gate
 
@@ -22,7 +23,7 @@ Before touching the target:
 7. Confirm required secrets exist without printing values.
 8. Confirm monitoring and alert delivery are reachable.
 
-**Hard stop:** do not migrate if backup, rollback, or required target credentials are unavailable.
+**Hard stop:** do not migrate if backup, rollback, or required target credentials are unavailable. These target prerequisites are intentionally open while no external target is provisioned.
 
 ## 2. Deployment workflow
 
@@ -98,4 +99,4 @@ Each acceptance record must include the exact release tag/SHA, environment, date
 
 ## 8. Final boundary
 
-A successful repository certification is not production deployment evidence. Commercial go-live remains blocked until target deployment, live integrations, measured reliability/DR, deployed security testing, operational ownership and required external acceptance are evidenced.
+A successful repository certification is not production deployment evidence. Commercial go-live remains a future external gate. It becomes mandatory only when the project transitions from local/engineering execution to external deployment; at that point target deployment, live integrations, measured reliability/DR, deployed security testing, operational ownership and required external acceptance must be evidenced.
