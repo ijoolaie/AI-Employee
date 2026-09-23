@@ -14,6 +14,8 @@ from app.core.deps import TenantContext, require_permission
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalStatus
 from app.services import agent_workforce_proposal_service as proposal_service
 from app.services.agent_workforce_manager import get_agent_capacity, get_workforce_dashboard
+from app.services import workforce_sla_service as sla_service
+from app.models.workforce_sla_contract import WorkforceSLAContract
 from app.services.governed_scaling import create_scaling_proposal
 
 router = APIRouter(prefix="/agent-workforce", tags=["agent-workforce"])
@@ -42,6 +44,23 @@ class GovernedScalingCreate(BaseModel):
 class WorkforceDecision(BaseModel):
     approve: bool
     reason: str | None = Field(default=None, max_length=4000)
+
+
+class WorkforceSLAContractRead(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    max_queue_age_seconds: int
+    enabled: bool
+    effective_from: datetime
+    created_by_user_id: UUID
+    updated_by_user_id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+class WorkforceSLAContractUpsert(BaseModel):
+    max_queue_age_seconds: int = Field(ge=1, le=30 * 24 * 60 * 60)
+    enabled: bool = True
 
 
 class WorkforceProposalRead(BaseModel):
@@ -105,6 +124,36 @@ async def manager_workforce_dashboard(
         )
     except Exception as exc:
         raise _http(exc) from exc
+
+
+@router.get("/sla", response_model=WorkforceSLAContractRead | None)
+async def get_workforce_sla(
+    ctx: TenantContext = Depends(require_permission("agent_workforce.read")),
+    db: AsyncSession = Depends(get_db, scope="function"),
+):
+    contract = await sla_service.get_contract(db, tenant_id=ctx.tenant_id)
+    return WorkforceSLAContractRead.model_validate(contract, from_attributes=True) if contract else None
+
+
+@router.put("/sla", response_model=WorkforceSLAContractRead)
+async def upsert_workforce_sla(
+    payload: WorkforceSLAContractUpsert,
+    ctx: TenantContext = Depends(require_permission("agent_workforce.ceo_approve")),
+    db: AsyncSession = Depends(get_db, scope="function"),
+):
+    try:
+        contract = await sla_service.upsert_contract(
+            db,
+            tenant_id=ctx.tenant_id,
+            actor_user_id=ctx.user_id,
+            max_queue_age_seconds=payload.max_queue_age_seconds,
+            enabled=payload.enabled,
+        )
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        raise _http(exc) from exc
+    return WorkforceSLAContractRead.model_validate(contract, from_attributes=True)
 
 
 @router.post("/proposals", response_model=WorkforceProposalRead, status_code=status.HTTP_201_CREATED)
