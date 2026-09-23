@@ -15,6 +15,7 @@ from app.models.agent_identity import AgentIdentity
 from app.models.agent_template import AgentTemplate
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalKind, AgentWorkforceProposalStatus
 from app.services.agent_governance import current_agent_execution_context
+from app.services.ai_workforce_roles import get_workforce_role
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.services.agent_template_service import provision_instance
 from app.services.audit_service import record
@@ -100,13 +101,29 @@ async def create_manager_proposal(
     configuration: dict | None = None,
     affected_employee_id: uuid.UUID | None = None,
 ) -> AgentWorkforceProposal:
-    if operation not in {
-        "staffing_proposal",
-        "replacement_proposal",
-        "transfer_proposal",
-        "retirement_proposal",
-    }:
+    if operation not in {"staffing_proposal", "replacement_proposal", "transfer_proposal", "retirement_proposal"}:
         raise ValidationAppError("Unsupported Internal Manager workforce proposal operation")
+
+    proposal_configuration = dict(configuration or {})
+    role_code = proposal_configuration.get("workforce_role_code")
+    if not isinstance(role_code, str) or not role_code:
+        raise ValidationAppError("Internal Manager workforce proposals require workforce_role_code")
+
+    try:
+        role = get_workforce_role(role_code)
+    except KeyError:
+        role = None
+
+    if role is not None:
+        proposal_configuration["workforce_role_code"] = role.code
+        proposal_configuration["workforce_role_approval_class"] = role.approval_class
+        proposal_configuration["workforce_role_custom"] = False
+    else:
+        for key in ("workforce_role_name", "workforce_role_purpose"):
+            if not isinstance(proposal_configuration.get(key), str) or not proposal_configuration[key].strip():
+                raise ValidationAppError(f"New workforce roles require {key}")
+        proposal_configuration["workforce_role_approval_class"] = "human_approval_required"
+        proposal_configuration["workforce_role_custom"] = True
 
     delegation = await assert_operation_delegated(
         db,
@@ -116,11 +133,7 @@ async def create_manager_proposal(
         employee_id=affected_employee_id,
     )
 
-    kind = (
-        AgentWorkforceProposalKind.REPLACEMENT
-        if operation in {"replacement_proposal", "retirement_proposal"}
-        else AgentWorkforceProposalKind.STAFFING
-    )
+    kind = AgentWorkforceProposalKind.REPLACEMENT if operation in {"replacement_proposal", "retirement_proposal"} else AgentWorkforceProposalKind.STAFFING
     proposal = await create_proposal(
         db,
         tenant_id=tenant_id,
@@ -133,7 +146,7 @@ async def create_manager_proposal(
         agent_definition_id=agent_definition_id,
         risk_tier=risk_tier,
         configuration={
-            **(configuration or {}),
+            **proposal_configuration,
             "manager_operation_target_agent_instance_id": str(affected_employee_id) if affected_employee_id else None,
         },
     )
@@ -160,7 +173,6 @@ async def create_manager_proposal(
         },
     )
     return proposal
-
 
 async def create_manager_proposal_from_runtime(
     db: AsyncSession,
@@ -205,7 +217,6 @@ async def create_manager_proposal_from_runtime(
         },
         affected_employee_id=affected_employee_id,
     )
-
 
 async def board_decide(
     db: AsyncSession,

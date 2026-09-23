@@ -31,10 +31,37 @@ The runtime path still calls the existing CEO-delegation assertion. Runtime iden
 
 No active workforce role is created by this slice.
 
+## Role and template selection boundary
+
+Internal Manager workforce proposals are **not restricted to a four-role allowlist**.
+
+The Manager may select any role already present in the first-party workforce role catalog, including AI Internal Manager, and may propose a new role that is not yet present in the catalog.
+
+The four current specialized roles are also represented in the first-party workforce role template catalog:
+
+- `ai_marketing_advertising_manager`
+- `ai_graphic_designer`
+- `ai_software_developer`
+- `ai_trader`
+
+A known role records its catalog-defined approval class. A new role is treated as human-approval-required by default and is stored as a proposal definition rather than becoming an active role or bypassing template evaluation.
+
+A new-role proposal should include `workforce_role_code`, `workforce_role_name`, `workforce_role_name_fa` when applicable, and `workforce_role_purpose` so the Board/CEO can evaluate the requested role.
+
+The role/template selection does not bypass:
+
+- CEO delegation for the Manager's proposal operation;
+- Board review;
+- CEO approval;
+- AgentTemplate evaluation/publish;
+- provisioning;
+- access review;
+- activation.
+
 ## Audit provenance
 
-The existing Manager proposal audit event remains bound to the Manager AgentInstance and delegation. The runtime Run identity is retained in proposal configuration as manager_runtime_run_id for correlation with execution evidence.
+The Manager proposal audit event remains bound to the Manager AgentInstance and delegation. The runtime Run identity is retained in proposal configuration as manager_runtime_run_id for correlation with execution evidence.
 
 ## Next
 
-Add role-specific proposal validation for Marketing Manager, Graphic Designer, Software Developer and Trader, then connect Manager proposal generation to the concrete runtime tool/action path and add workload/KPI/SLA/capacity reporting.
+Connect Manager proposal generation to the concrete runtime tool/action path and add workload/KPI/SLA/capacity reporting.

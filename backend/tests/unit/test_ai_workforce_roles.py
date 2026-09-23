@@ -2,7 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.ai_workforce_roles import get_workforce_role, is_operation_allowed, list_workforce_roles
+from app.services.ai_workforce_roles import (
+    get_workforce_role,
+    get_workforce_role_template,
+    is_operation_allowed,
+    list_workforce_role_templates,
+    list_workforce_roles,
+)
 
 
 def test_catalog_contains_internal_manager_and_requested_next_roles() -> None:
@@ -49,3 +55,21 @@ def test_trader_research_can_be_prepared_but_execution_is_not_autonomous() -> No
 def test_unknown_role_fails_closed() -> None:
     with pytest.raises(KeyError):
         get_workforce_role("does_not_exist")
+
+
+def test_four_requested_roles_have_first_party_workforce_templates() -> None:
+    templates = list_workforce_role_templates()
+    assert {item["role_code"] for item in templates} == {
+        "ai_marketing_advertising_manager",
+        "ai_graphic_designer",
+        "ai_software_developer",
+        "ai_trader",
+    }
+    assert len(templates) == 4
+    for template in templates:
+        assert template["slug"]
+        assert template["name"]
+        assert template["name_fa"]
+        assert template["description"]
+        assert template["description_fa"]
+        assert get_workforce_role_template(template["role_code"]).slug == template["slug"]
