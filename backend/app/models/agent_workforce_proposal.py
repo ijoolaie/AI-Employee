@@ -33,6 +33,9 @@ class AgentWorkforceProposal(Base):
         Index("ix_agent_workforce_proposals_tenant_status", "tenant_id", "status"),
         Index("ix_agent_workforce_proposals_tenant_template", "tenant_id", "agent_template_id"),
         Index("ix_agent_workforce_proposals_tenant_replacement", "tenant_id", "replacement_for_agent_instance_id"),
+        Index("ix_agent_workforce_proposals_tenant_source", "tenant_id", "source_type"),
+        Index("ix_agent_workforce_proposals_tenant_manager", "tenant_id", "proposed_by_agent_instance_id"),
+        Index("ix_agent_workforce_proposals_tenant_delegation", "tenant_id", "delegation_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -42,6 +45,14 @@ class AgentWorkforceProposal(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     rationale: Mapped[str] = mapped_column(Text, nullable=False)
     requested_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_type: Mapped[str] = mapped_column(String(32), nullable=False, default="human", server_default="human")
+    manager_operation: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    proposed_by_agent_instance_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="RESTRICT"), nullable=True
+    )
+    delegation_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("workforce_delegations.id", ondelete="RESTRICT"), nullable=True
+    )
     requester_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     sponsor_user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     risk_tier: Mapped[int] = mapped_column(nullable=False, default=0)
