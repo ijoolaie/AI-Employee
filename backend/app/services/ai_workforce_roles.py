@@ -25,6 +25,16 @@ class WorkforceRole:
     approval_required_operations: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class WorkforceRoleTemplate:
+    slug: str
+    role_code: str
+    name: str
+    name_fa: str
+    description: str
+    description_fa: str
+
+
 WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
     WorkforceRole(
         code="ai_internal_manager",
@@ -84,23 +94,50 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
 )
 
 
-MANAGER_PROPOSABLE_ROLE_CODES = frozenset({
-    "ai_marketing_advertising_manager",
-    "ai_graphic_designer",
-    "ai_software_developer",
-    "ai_trader",
-})
-
-
-def validate_manager_proposable_role(role_code: str) -> WorkforceRole:
-    """Return a role only when it is an approved next-role Manager proposal target."""
-    if role_code not in MANAGER_PROPOSABLE_ROLE_CODES:
-        raise ValueError(f"Role is not eligible for Internal Manager proposal: {role_code}")
-    return get_workforce_role(role_code)
+# These are first-party role templates for the Internal Manager workforce catalog.
+# They are not active AgentTemplates/AgentInstances; provisioning remains governed.
+WORKFORCE_ROLE_TEMPLATES: tuple[WorkforceRoleTemplate, ...] = (
+    WorkforceRoleTemplate(
+        slug="ai-marketing-advertising-manager",
+        role_code="ai_marketing_advertising_manager",
+        name="AI Marketing & Advertising Manager",
+        name_fa="مدیر بازاریابی و تبلیغات هوش مصنوعی",
+        description="Plans campaigns, coordinates marketing work, and analyzes campaign performance.",
+        description_fa="کمپین‌ها را برنامه‌ریزی می‌کند، فعالیت‌های بازاریابی را هماهنگ می‌کند و عملکرد کمپین را تحلیل می‌کند.",
+    ),
+    WorkforceRoleTemplate(
+        slug="ai-graphic-designer",
+        role_code="ai_graphic_designer",
+        name="AI Graphic Designer",
+        name_fa="طراح گرافیک هوش مصنوعی",
+        description="Produces brand, advertising, presentation, and social visual assets.",
+        description_fa="دارایی‌های بصری برند، تبلیغات، ارائه و شبکه‌های اجتماعی را تولید می‌کند.",
+    ),
+    WorkforceRoleTemplate(
+        slug="ai-software-developer",
+        role_code="ai_software_developer",
+        name="AI Software Developer",
+        name_fa="توسعه‌دهنده نرم‌افزار هوش مصنوعی",
+        description="Implements product changes, fixes, integrations, tests, and routine engineering work.",
+        description_fa="تغییرات محصول، رفع اشکال، یکپارچه‌سازی، تست و کارهای مهندسی معمول را انجام می‌دهد.",
+    ),
+    WorkforceRoleTemplate(
+        slug="ai-trader",
+        role_code="ai_trader",
+        name="AI Trader",
+        name_fa="معامله‌گر هوش مصنوعی",
+        description="Performs market research, risk analysis, trading-plan preparation, and order staging within explicit limits.",
+        description_fa="در محدوده‌های صریح، پژوهش بازار، تحلیل ریسک، آماده‌سازی برنامه معاملاتی و آماده‌سازی سفارش برای بررسی را انجام می‌دهد.",
+    ),
+)
 
 
 def list_workforce_roles() -> list[dict]:
     return [asdict(role) for role in WORKFORCE_ROLES]
+
+
+def list_workforce_role_templates() -> list[dict]:
+    return [asdict(template) for template in WORKFORCE_ROLE_TEMPLATES]
 
 
 def get_workforce_role(code: str) -> WorkforceRole:
@@ -108,6 +145,13 @@ def get_workforce_role(code: str) -> WorkforceRole:
         if role.code == code:
             return role
     raise KeyError(f"Unknown AI workforce role: {code}")
+
+
+def get_workforce_role_template(role_code: str) -> WorkforceRoleTemplate:
+    for template in WORKFORCE_ROLE_TEMPLATES:
+        if template.role_code == role_code:
+            return template
+    raise KeyError(f"No first-party workforce role template: {role_code}")
 
 
 def is_operation_allowed(role_code: str, operation: str, *, manager_delegated: bool = False) -> bool:
