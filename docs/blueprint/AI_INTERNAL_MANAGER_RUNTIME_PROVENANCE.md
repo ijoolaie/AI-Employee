@@ -35,6 +35,19 @@ No active workforce role is created by this slice.
 
 The existing Manager proposal audit event remains bound to the Manager AgentInstance and delegation. The runtime Run identity is retained in proposal configuration as manager_runtime_run_id for correlation with execution evidence.
 
+## Role-specific proposal boundary
+
+Internal Manager workforce proposals now require an explicit \`workforce_role_code\` in proposal configuration. Only the four currently approved next-role targets are accepted:
+
+- \`ai_marketing_advertising_manager\`
+- \`ai_graphic_designer\`
+- \`ai_software_developer\`
+- \`ai_trader\`
+
+The Internal Manager itself cannot be provisioned through this next-role proposal path. Each accepted proposal records the role code and its declared approval class for downstream governance.
+
+The role approval class does not bypass the workforce proposal lifecycle. In particular, the Trader remains human-approval-gated for capital allocation and order execution, while role provisioning still requires the existing Board/CEO workflow.
+
 ## Next
 
-Add role-specific proposal validation for Marketing Manager, Graphic Designer, Software Developer and Trader, then connect Manager proposal generation to the concrete runtime tool/action path and add workload/KPI/SLA/capacity reporting.
+Connect Manager proposal generation to the concrete runtime tool/action path and add workload/KPI/SLA/capacity reporting.
