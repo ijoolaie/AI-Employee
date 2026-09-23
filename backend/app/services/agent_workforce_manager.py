@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
+from app.models.workforce_sla_contract import WorkforceSLAContract
 from app.services.agent_kill_switch_service import assert_not_killed
 from app.services.unified_execution import ExecutionError
 
@@ -109,6 +110,35 @@ async def get_workforce_dashboard(
     terminal = succeeded + failed
     success_rate = round(succeeded / terminal, 4) if terminal else None
 
+    sla = (await db.execute(
+        select(WorkforceSLAContract).where(WorkforceSLAContract.tenant_id == tenant_id)
+    )).scalar_one_or_none()
+    if sla is None or not sla.enabled:
+        sla_data = {
+            "tracking": "not_configured" if sla is None else "disabled",
+            "target": None,
+            "compliance_rate": None,
+            "breached": None,
+            "basis": "No active tenant SLA target exists; queue age is informational.",
+        }
+    else:
+        active_created_rows = await db.execute(
+            select(WorkItem.created_at).where(
+                WorkItem.tenant_id == tenant_id,
+                WorkItem.status.in_(ACTIVE_WORK_ITEM_STATUSES),
+            )
+        )
+        active_ages = [max(0, int((now - created_at).total_seconds())) for created_at in active_created_rows.scalars().all()]
+        compliant = sum(age <= sla.max_queue_age_seconds for age in active_ages)
+        compliance_rate = round(compliant / len(active_ages), 4) if active_ages else 1.0
+        sla_data = {
+            "tracking": "configured",
+            "target": {"max_queue_age_seconds": sla.max_queue_age_seconds, "effective_from": sla.effective_from.isoformat()},
+            "compliance_rate": compliance_rate,
+            "breached": bool(oldest_active_age_seconds is not None and oldest_active_age_seconds > sla.max_queue_age_seconds),
+            "basis": "Point-in-time active-queue compliance; this is not a historical completion-time SLA metric.",
+        }
+
     return {
         "window_days": window_days,
         "agents": capacities,
@@ -117,12 +147,7 @@ async def get_workforce_dashboard(
             "success_rate": success_rate,
             "oldest_active_age_seconds": oldest_active_age_seconds,
         },
-        "sla": {
-            "tracking": "not_configured",
-            "target": None,
-            "compliance_rate": None,
-            "note": "No tenant SLA target is configured; queue age is reported without treating it as an SLA breach.",
-        },
+        "sla": sla_data,
     }
 
 
