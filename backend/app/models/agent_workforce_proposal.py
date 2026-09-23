@@ -46,6 +46,7 @@ class AgentWorkforceProposal(Base):
     rationale: Mapped[str] = mapped_column(Text, nullable=False)
     requested_name: Mapped[str] = mapped_column(String(255), nullable=False)
     source_type: Mapped[str] = mapped_column(String(32), nullable=False, default="human", server_default="human")
+    manager_operation: Mapped[str | None] = mapped_column(String(64), nullable=True)
     proposed_by_agent_instance_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="RESTRICT"), nullable=True
     )
