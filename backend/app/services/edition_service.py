@@ -82,10 +82,12 @@ async def _ensure_role(db: AsyncSession, tenant: Tenant, name: str, permissions:
     return role
 
 
-async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str, slug: str, admin_email: str, admin_password: str, full_name: str | None, kind: str, delivery_revision: str | None) -> tuple[Tenant, User]:
+async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str, slug: str, admin_email: str, admin_password: str, full_name: str | None, kind: str, vendor_release_tag: str | None, delivery_revision: str | None) -> tuple[Tenant, User]:
     expected_parent_kind = EDITION_VENDOR if kind == EDITION_RESELLER else EDITION_RESELLER
     if parent.tenant_kind != expected_parent_kind:
         raise HTTPException(status_code=403, detail="Invalid parent edition")
+    if vendor_release_tag is not None and vendor_release_tag != parent.vendor_release_tag:
+        raise HTTPException(status_code=403, detail="Child tenant must inherit the parent vendor release identity")
     existing = (await db.execute(select(Tenant).where(Tenant.slug == slug))).scalar_one_or_none()
     if existing is not None:
         raise HTTPException(status_code=409, detail="Tenant slug already exists")
