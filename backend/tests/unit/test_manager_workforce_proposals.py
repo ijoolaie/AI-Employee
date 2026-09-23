@@ -101,4 +101,3 @@ def test_manager_proposal_operations_are_explicit():
         "transfer_proposal",
         "retirement_proposal",
     }
-}
