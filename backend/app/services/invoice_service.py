@@ -15,6 +15,7 @@ from app.modules.employees.invoice.service import (
     get_invoice,
     list_invoices,
     normalize_tax_rate,
+    update_invoice,
     update_status,
 )
 
@@ -29,5 +30,6 @@ __all__ = [
     "get_invoice",
     "list_invoices",
     "normalize_tax_rate",
+    "update_invoice",
     "update_status",
 ]
