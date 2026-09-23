@@ -75,3 +75,12 @@ The project is currently in **LOCAL / ENGINEERING EXECUTION**. External gates ar
 Every completed external evidence record must identify exact release tag/SHA, deployment timestamp, target/environment, relevant artifact/image digest, operator/owner, and evidence artifact/log reference.
 
 No evidence transfers automatically across SHAs. Documentation cannot substitute for target evidence.
+
+
+## Post-v1.4.11 workforce governance evidence — 2026-09-23
+
+Mainline post-certification engineering now includes PRs #641, #643, #644, #645, #646 and #647 covering CEO delegation, runtime-bound Manager proposal provenance, unrestricted role targeting with four first-party templates, workforce dashboard reporting and explicit workforce-role runtime enforcement. These changes are engineering evidence only and are not part of the immutable v1.4.11 certified snapshot.
+
+Runtime role enforcement is fail-closed for missing/unknown roles and human-approval-required operations. Internal Manager operations additionally require matching governed runtime identity, durable Run identity and active CEO delegation.
+
+SLA compliance is not claimed by the dashboard until a tenant-owned SLA target contract exists. External production evidence remains OPEN — PENDING EXTERNAL EXECUTION.
