@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,6 +54,75 @@ async def get_agent_capacity(
             and agent.status is AgentInstanceStatus.ENABLED
             and available > 0
         ),
+    }
+
+
+async def get_workforce_dashboard(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    window_days: int = 30,
+) -> dict:
+    """Return tenant-scoped workload, capacity and execution KPIs for management reporting.
+
+    SLA compliance is intentionally reported as unavailable until a tenant-level
+    SLA target/contract exists; this endpoint never invents a target.
+    """
+    if not 1 <= window_days <= 365:
+        raise ExecutionError("window_days must be between 1 and 365")
+
+    agents = (
+        await db.execute(
+            select(AgentInstance)
+            .where(AgentInstance.tenant_id == tenant_id)
+            .order_by(AgentInstance.created_at.asc(), AgentInstance.id.asc())
+        )
+    ).scalars().all()
+
+    capacities: list[dict] = []
+    for agent in agents:
+        capacity = await get_agent_capacity(db, tenant_id=tenant_id, agent_instance_id=agent.id)
+        capacities.append({"agent_instance_id": str(agent.id), "status": agent.status.value, **capacity})
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=window_days)
+    status_rows = await db.execute(
+        select(WorkItem.status, func.count(WorkItem.id))
+        .where(WorkItem.tenant_id == tenant_id, WorkItem.created_at >= cutoff)
+        .group_by(WorkItem.status)
+    )
+    status_counts = {status.value: int(count) for status, count in status_rows.all()}
+
+    active_age_row = await db.execute(
+        select(func.min(WorkItem.created_at)).where(
+            WorkItem.tenant_id == tenant_id,
+            WorkItem.status.in_(ACTIVE_WORK_ITEM_STATUSES),
+        )
+    )
+    oldest_active = active_age_row.scalar_one_or_none()
+    now = datetime.now(timezone.utc)
+    oldest_active_age_seconds = None
+    if oldest_active is not None:
+        oldest_active_age_seconds = max(0, int((now - oldest_active).total_seconds()))
+
+    succeeded = status_counts.get(WorkItemStatus.SUCCEEDED.value, 0)
+    failed = status_counts.get(WorkItemStatus.FAILED.value, 0)
+    terminal = succeeded + failed
+    success_rate = round(succeeded / terminal, 4) if terminal else None
+
+    return {
+        "window_days": window_days,
+        "agents": capacities,
+        "work_items": {
+            "status_counts": status_counts,
+            "success_rate": success_rate,
+            "oldest_active_age_seconds": oldest_active_age_seconds,
+        },
+        "sla": {
+            "tracking": "not_configured",
+            "target": None,
+            "compliance_rate": None,
+            "note": "No tenant SLA target is configured; queue age is reported without treating it as an SLA breach.",
+        },
     }
 
 

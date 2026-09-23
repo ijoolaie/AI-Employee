@@ -13,7 +13,7 @@ from app.core.database import get_db
 from app.core.deps import TenantContext, require_permission
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalStatus
 from app.services import agent_workforce_proposal_service as proposal_service
-from app.services.agent_workforce_manager import get_agent_capacity
+from app.services.agent_workforce_manager import get_agent_capacity, get_workforce_dashboard
 from app.services.governed_scaling import create_scaling_proposal
 
 router = APIRouter(prefix="/agent-workforce", tags=["agent-workforce"])
@@ -87,6 +87,22 @@ async def agent_capacity(
 ):
     try:
         return await get_agent_capacity(db, tenant_id=ctx.tenant_id, agent_instance_id=agent_instance_id)
+    except Exception as exc:
+        raise _http(exc) from exc
+
+
+@router.get("/manager-dashboard")
+async def manager_workforce_dashboard(
+    window_days: int = 30,
+    ctx: TenantContext = Depends(require_permission("agent_workforce.read")),
+    db: AsyncSession = Depends(get_db, scope="function"),
+):
+    try:
+        return await get_workforce_dashboard(
+            db,
+            tenant_id=ctx.tenant_id,
+            window_days=window_days,
+        )
     except Exception as exc:
         raise _http(exc) from exc
 

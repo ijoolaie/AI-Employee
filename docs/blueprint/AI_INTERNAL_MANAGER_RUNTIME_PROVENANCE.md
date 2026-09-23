@@ -62,6 +62,21 @@ The role/template selection does not bypass:
 
 The Manager proposal audit event remains bound to the Manager AgentInstance and delegation. The runtime Run identity is retained in proposal configuration as manager_runtime_run_id for correlation with execution evidence.
 
+## Workforce reporting boundary
+
+The governed workforce layer now exposes a tenant-scoped Manager dashboard through `GET /api/v1/agent-workforce/manager-dashboard`.
+
+It reports:
+
+- per-Agent max concurrency, active work items, available slots and accepting-work state;
+- work-item status counts for a caller-selected 1–365 day window;
+- terminal execution success rate (succeeded / succeeded + failed);
+- age of the oldest currently active work item.
+
+SLA compliance is intentionally **not** inferred. If a tenant has no configured SLA target, the dashboard reports `tracking=not_configured` and leaves compliance unset. Queue age is informational and is not treated as an SLA breach.
+
+This is reporting only. It does not create, provision, activate, reprioritize, or reassign workforce members.
+
 ## Next
 
-Connect Manager proposal generation to the concrete runtime tool/action path and add workload/KPI/SLA/capacity reporting.
+Connect Manager proposal generation to the concrete runtime tool/action path and add an explicit tenant SLA contract/target model before reporting SLA compliance.
