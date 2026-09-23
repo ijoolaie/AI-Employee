@@ -1,6 +1,6 @@
 # Production Evidence Index
 
-**Reconciled:** 2026-09-20  
+**Reconciled:** 2026-09-23  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
@@ -16,68 +16,54 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone.
 
 | Field | Value |
 |---|---|
-| Repository | `ijoolaie/AI-Employee` |
-| Latest published release | `v1.4.7` |
-| Exact certified release SHA | `48a6df0ea8a2fb0624e831fbdea55ee4548807f6` |
-| Production Certification run | `35498984521` — PASS (exact `v1.4.7` tag) |
-| Certification job | `106047204166` — PASS |
+| Latest published release | `v1.4.10` |
+| Exact certified release SHA | `b09f3e35d512e3c4d21be9d930539cbbe1d2d451` |
+| Stable Git tag | **VERIFIED** |
+| GitHub Release | **PUBLISHED** |
+| Production Certification | Run `35840044046` / Job `107112696112` — PASS |
 | Product Gate Failures | `0` |
+| Frontend Playwright | `8/8 PASS` |
 | External production deployment | **PENDING** |
 | External image registry/deployed digest evidence | **PENDING** |
 | External signed provenance/attestation | **PENDING** |
 
-### Current v1.4.7 certified release identity
+## v1.4.10 certification identity
 
-- Release tag: `v1.4.7`
-- Exact certified SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-- Production Certification run: `35498984521` — PASS
-- Product Gate Failures: `0`
-- Evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-- Artifact SHA256: `86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`
-- External production deployment: **PENDING** (`production_deployment_claimed=false`)
-- Certification is bound only to the exact SHA above; it does not transfer to another SHA.
-
-### Historical v1.4.5 RC1 engineering identity
-
-- RC branch: `release/v1.4.5-rc1`
-- Exact RC1 SHA: `0976537441ebc2560624022bfaabb33096f5011c`
-- Engineering candidate baseline: `a9d5cdd`
-- RC1 GitHub Actions engineering validation: **10/10 current release-critical workflows PASS**
-- Local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**
-- RC1 external deployment/certification: **PENDING**
-- Do not transfer any historical certification onto RC1.
+- Release tag: `v1.4.10`
+- Exact certified SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
+- Evidence artifact: `production-certification-evidence-v1.4.10-b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
+- Evidence SHA256: `73b193ae14d886a8bda83e65a1486cff7d8bedeb04ec32d78f469dcf8037501b`
+- Artifact ID: `10740739447`
+- `production_deployment_claimed=false`
 
 ## Evidence matrix
 
-| Gate | Evidence | Class | Status |
-|---|---|---|---|
-| v1.4.7 Exact-SHA Production Certification | Run `35498984521` | ENGINEERING | Complete — exact tag/SHA, 0 Product Gate failures |
-| v1.4.7 certification product gates | Run `35498984521` | ENGINEERING | Complete — 0 failures |
-| RC1 GitHub Actions engineering validation | SHA `097653...` | ENGINEERING | Historical — 10/10 PASS |
-| Backend/frontend/DB engineering | Certification + RC1 CI | ENGINEERING | Complete |
-| Auth/RBAC/tenant isolation | Real-stack + RC1 isolation gate | ENGINEERING | Complete; external actor matrix pending |
-| Production-like infrastructure lifecycle | RC1 infrastructure + local certification | ENGINEERING | Complete; real target pending |
-| Backup/restore rehearsal | Production-like PostgreSQL validation | ENGINEERING | Complete; real target RPO/RTO pending |
-| SLO/error-budget contract | SLO validator/manual | ENGINEERING | Complete; live measurement pending |
-| Provider integration preflight | Provider validator | ENGINEERING | Complete; live provider validation pending |
-| Runtime isolation/RBAC contract | RC1 real-stack gate | ENGINEERING | Complete; external actor matrix pending |
-| Network hardening contract | Network validator/workflow | ENGINEERING | Complete; deployed perimeter pending |
-| Secret-management contract | Secret validator/workflow | ENGINEERING | Complete; external manager/rotation/recovery pending |
-| Failure-recovery/incident contracts | RC1 HA/rollback gates | ENGINEERING | Complete; target rehearsal pending |
-| Alert routing contract | `ops/alerting/alert-routing.yml` + validator | ENGINEERING | Complete; live paging test pending |
-| Real production deployment | Execution Pack Phase B | EXTERNAL-PENDING | Blocked |
-| Real backup/restore/DR + RPO/RTO | Execution Pack Phase C | EXTERNAL-PENDING | Blocked |
-| Production SLO/SLI/error budget | Execution Pack Phase D | EXTERNAL-PENDING | Blocked |
-| Live provider validation | Execution Pack Phase E | EXTERNAL-PENDING | Blocked |
-| Vendor → Reseller → Client isolation | Execution Pack Phase F / #19 | EXTERNAL-PENDING | Blocked |
-| DAST on accepted target | Execution Pack Phase G | EXTERNAL-PENDING | Blocked |
-| Independent penetration test | Execution Pack Phase G | EXTERNAL-PENDING | Blocked |
-| Network hardening + secret lifecycle | Execution Pack Phase H | EXTERNAL-PENDING | Blocked |
-| HA/failure recovery + incident drill | Execution Pack Phase I | EXTERNAL-PENDING | Blocked |
-| Alert ownership/on-call test | Execution Pack Phase J | EXTERNAL-PENDING | Blocked |
-| Vendor/Reseller acceptance | External acceptance | EXTERNAL-PENDING | Blocked |
-| Customer acceptance | Execution Pack final sequence / #269 | EXTERNAL-PENDING | Blocked |
-| Final commercial go-live authorization | Final gate | EXTERNAL-PENDING | Blocked by P0 evidence |
+| Gate | Class | Status |
+|---|---|---|
+| v1.4.10 Exact-SHA Production Certification | ENGINEERING | PASS |
+| Product gates / tenant isolation / RBAC | ENGINEERING | PASS |
+| Frontend Playwright | ENGINEERING | PASS — 8/8 |
+| Production-like infrastructure lifecycle | ENGINEERING | PASS |
+| Backup/restore rehearsal | ENGINEERING | PASS; target RPO/RTO pending |
+| SLO/error-budget engineering contract | ENGINEERING | PASS; live measurement pending |
+| Provider integration preflight | ENGINEERING | PASS; live validation pending |
+| Network hardening contract | ENGINEERING | PASS; deployed perimeter pending |
+| Secret-management contract | ENGINEERING | PASS; external lifecycle pending |
+| Failure-recovery/rollback contract | ENGINEERING | PASS; target rehearsal pending |
+| Alert routing contract | ENGINEERING | PASS; live paging test pending |
+| Real production deployment | EXTERNAL-PENDING | NOT VERIFIED |
+| Deployed image/digest identity | EXTERNAL-PENDING | NOT VERIFIED |
+| Real backup/restore/DR + measured RPO/RTO | EXTERNAL-PENDING | NOT VERIFIED |
+| Production SLO/SLI/error budget | EXTERNAL-PENDING | NOT VERIFIED |
+| Live provider/payment validation | EXTERNAL-PENDING | NOT VERIFIED |
+| Vendor → Reseller → Customer isolation | EXTERNAL-PENDING | NOT VERIFIED |
+| Authenticated DAST on accepted target | EXTERNAL-PENDING | NOT VERIFIED |
+| Independent penetration/security review | EXTERNAL-PENDING | NOT VERIFIED |
+| Network/TLS/secret lifecycle on target | EXTERNAL-PENDING | NOT VERIFIED |
+| HA/failure recovery + incident drill | EXTERNAL-PENDING | NOT VERIFIED |
+| Alert ownership/on-call test | EXTERNAL-PENDING | NOT VERIFIED |
+| Vendor → Reseller → Customer acceptance | EXTERNAL-PENDING | NOT VERIFIED |
+| Final commercial go-live authorization | EXTERNAL-PENDING | NOT VERIFIED |
 
 ## Release binding rule
 
