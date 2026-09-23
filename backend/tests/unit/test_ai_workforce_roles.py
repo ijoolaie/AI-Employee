@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.ai_workforce_roles import get_workforce_role, is_operation_allowed, list_workforce_roles
+from app.services.ai_workforce_roles import (
+    get_workforce_role,
+    is_operation_allowed,
+    list_workforce_roles,
+    validate_manager_proposable_role,
+)
 
 
 def test_catalog_contains_internal_manager_and_requested_next_roles() -> None:
@@ -49,3 +54,20 @@ def test_trader_research_can_be_prepared_but_execution_is_not_autonomous() -> No
 def test_unknown_role_fails_closed() -> None:
     with pytest.raises(KeyError):
         get_workforce_role("does_not_exist")
+
+@pytest.mark.parametrize(
+    "role_code",
+    [
+        "ai_marketing_advertising_manager",
+        "ai_graphic_designer",
+        "ai_software_developer",
+        "ai_trader",
+    ],
+)
+def test_next_roles_are_explicit_manager_proposal_targets(role_code: str) -> None:
+    assert validate_manager_proposable_role(role_code).code == role_code
+
+
+def test_internal_manager_is_not_a_next_role_proposal_target() -> None:
+    with pytest.raises(ValueError, match="not eligible"):
+        validate_manager_proposable_role("ai_internal_manager")
