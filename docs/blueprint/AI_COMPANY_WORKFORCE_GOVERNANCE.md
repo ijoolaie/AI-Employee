@@ -56,7 +56,20 @@ It is responsible for:
 - reporting workforce status, performance, utilization and cost to the CEO;
 - escalating incidents, exceptions and unresolved cross-team conflicts.
 
-The Internal Manager has **proposal and coordination authority**, not unrestricted organizational authority. CEO-reserved decisions remain behind the existing governance and approval boundary.
+The Internal Manager uses **CEO approval by default**. No workforce, financial or material operational action is assumed to be pre-authorized.
+
+The CEO may explicitly delegate a bounded subset of routine authority to the Internal Manager. Delegation must define scope, duration, affected employees/teams, spending/resource limits, risk tier and revocation conditions, and must be auditable.
+
+Delegated authority may cover routine non-financial, non-critical and reversible operations such as task assignment, reprioritization, handoffs, workload balancing and other low-risk workforce coordination. It does not authorize financial commitments, purchases, material resource consumption, high-impact hiring/retirement, privileged/security changes, legal commitments, production-critical changes or irreversible actions unless the CEO explicitly and separately authorizes them under policy.
+
+### Immediate next workforce roles
+
+1. **AI Marketing & Advertising Manager** — owns marketing strategy, campaigns, channel planning, content coordination, advertising proposals, campaign analytics and growth execution. Material ad spend, paid campaigns and contractual commitments require CEO/authorized-human approval.
+2. **AI Graphic Designer** — creates and adapts brand assets, advertising creatives, social graphics, presentations and other visual materials. Routine production may be delegated; paid asset procurement, licensing commitments or material spend require approval.
+3. **AI Software Developer** — implements approved product changes, fixes, integrations, tests and engineering tasks. Routine low-risk work may be delegated; production-critical, security-sensitive or material-resource actions remain approval-gated.
+4. **AI Trader** — researches markets, prepares trading plans, analyzes risk and may prepare or stage orders within explicit limits. Actual financial execution, capital allocation, leverage, withdrawals or other material financial actions require CEO/authorized-human approval.
+
+These roles are candidates for the next governed implementation slice; their listing here does not claim that active instances already exist.
 
 ### Specialist workforce
 Technology, Security, Network, Finance, HR, Legal, Sales, Marketing, Customer Success, Data, Knowledge, Operations, Governance, R&D and Corporate Secretariat roles are defined in `AI_COMPANY_FOUNDING_WORKFORCE.md`.
@@ -101,6 +114,11 @@ Use a single accountable owner for each material decision.
 | Workforce proposal | Internal Manager | CEO | AI Board |
 | Routine low-risk agent activation | Workforce Manager | Internal Manager | Security/Governance |
 | New role/template | Internal Manager | CEO | AI Board, Governance, Domain Owner |
+| Delegated routine workforce operation | Internal Manager | Internal Manager within explicit delegation | CEO / Governance |
+| Financial or material resource action | Internal Manager | CEO / authorized human | Finance, Risk |
+| Trader financial execution | Trader | CEO / authorized human | Finance, Risk, Internal Manager |
+| Marketing campaign with material spend | Marketing Manager | CEO / authorized human | Finance, Internal Manager |
+| Production-critical engineering change | Software Developer | CEO / authorized authority | Technology, Security, Internal Manager |
 | High-risk agent release | Agent Owner | CEO / designated authority | Security, Risk, Compliance |
 | Production incident | Incident Response | CISO / Operations | CTO, Internal Manager |
 | Security exception | Security/Risk | CISO | CEO |
