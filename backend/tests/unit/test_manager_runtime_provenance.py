@@ -8,7 +8,7 @@ from app.services.agent_governance import governed_agent_execution
 
 
 @pytest.mark.asyncio
-async def test_runtime_manager_proposal_requires_runtime_context(monkeypatch):
+async def test_runtime_manager_proposal_requires_runtime_context():
     with pytest.raises(ValidationAppError, match="active Agent runtime context"):
         await proposal_service.create_manager_proposal_from_runtime(
             object(),
