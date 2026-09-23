@@ -12,7 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstance
-from app.services.ai_workforce_roles import get_workforce_role, is_operation_allowed
+from app.services.ai_workforce_roles import (
+    assert_workforce_capability_contract_snapshot,
+    get_workforce_role,
+    is_operation_allowed,
+)
 from app.services.agent_governance import current_agent_execution_context
 from app.services.workforce_delegation_service import assert_operation_delegated
 
@@ -35,6 +39,11 @@ async def assert_workforce_operation(
         role = get_workforce_role(str(role_code))
     except KeyError as exc:
         raise ValidationAppError("Unknown workforce role; operation denied") from exc
+
+    assert_workforce_capability_contract_snapshot(
+        role.code,
+        (agent.configuration or {}).get("workforce_capability_contract"),
+    )
 
     if operation in role.approval_required_operations:
         raise ValidationAppError(
