@@ -242,3 +242,29 @@ async def test_workforce_operation_cannot_run_without_workforce_role_identity():
             arguments={"expression": "1 + 1"},
             workforce_operation="market_research",
         )
+
+
+@pytest.mark.asyncio
+async def test_workforce_governance_precedes_unknown_tool_resolution(monkeypatch):
+    agent = SimpleNamespace(
+        id=uuid4(),
+        tenant_id=uuid4(),
+        configuration={"workforce_role_code": "ai_trader"},
+        permission_policy={"permissions": ["run.execute"], "allowed_tools": []},
+    )
+
+    def fail_if_resolved(_name):
+        raise AssertionError("Tool Registry resolution must not run before workforce governance")
+
+    monkeypatch.setattr(agent_execution_adapter.registry, "get", fail_if_resolved)
+    adapter = agent_execution_adapter.AgentExecutionAdapter(object())
+
+    with pytest.raises(
+        agent_execution_adapter.ValidationAppError,
+        match="Workforce operation is required",
+    ):
+        await adapter.execute_tool(
+            agent=agent,
+            tool_name="not-a-real-tool",
+            arguments={},
+        )
