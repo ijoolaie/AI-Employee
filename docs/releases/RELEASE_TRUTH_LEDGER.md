@@ -17,6 +17,7 @@ These states are independent and must not be inferred from release names. `OPEN 
 
 | Release | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
+| `v1.4.11` | `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f` | **VERIFIED** | **CERTIFIED** — Run `35848311037` / Job `107139710452` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.10` | `b09f3e35d512e3c4d21be9d930539cbbe1d2d451` | **VERIFIED** | **CERTIFIED** — Run `35840044046` / Job `107112696112` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.9` | `f1ce20c010779f5273eb5d0051da24cdd57b33f6` | VERIFIED | **CERTIFIED** — Run `35575615877` / Job `106256713583` | **NOT VERIFIED** | Pending |
 | `v1.4.8` | `4f7c4676850b546a1c6bdf219ab9401202302e2d` | VERIFIED | **CERTIFIED** — Run `35568392010` / Job `106234691683` | **NOT VERIFIED** | Pending |
@@ -24,19 +25,19 @@ These states are independent and must not be inferred from release names. `OPEN 
 | `v1.4.6` | `f3d60031332450ba616e2a1c705e85c0c2c5aefd` | VERIFIED | **CERTIFIED** | **NOT VERIFIED** | Pending |
 | `v1.4.5` | `cc94bc9536f4f95680bb7a183313914c116ffcf2` | VERIFIED | **FAILED PRODUCT CERTIFICATION** — historical immutable release | **NOT VERIFIED** | Not accepted |
 
-## v1.4.10 promotion checkpoint
+## v1.4.11 promotion checkpoint
 
-`v1.4.10` passed fresh exact-SHA Production Certification on 2026-09-23 and has now been promoted as the stable release.
+`v1.4.11` passed fresh exact-SHA Production Certification on 2026-09-23 and has now been promoted as the stable release.
 
-- certified/checked-out SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`;
-- workflow run: `35840044046`;
-- certification job: `107112696112`;
+- certified/checked-out SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`;
+- workflow run: `35848311037`;
+- certification job: `107139710452`;
 - Product Gate failures: **0**;
-- frontend Playwright: **8/8 PASS**;
-- evidence JSON SHA-256: `73b193ae14d886a8bda83e65a1486cff7d8bedeb04ec32d78f469dcf8037501b`;
-- artifact ID: `10740739447`;
+- frontend Playwright: **PASS**;
+- evidence JSON SHA-256: `bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`;
+- artifact ID: `10744805746`;
 - stable Git tag: **VERIFIED** and resolves to the certified SHA;
-- GitHub Release: **PUBLISHED** for `v1.4.10`;
+- GitHub Release: **PUBLISHED** for `v1.4.11`;
 - production deployment claimed by certification: **false**.
 
 No source changes were made to the certified release commit after certification. Post-release documentation work is on top of the release boundary.
