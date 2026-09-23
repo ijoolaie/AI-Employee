@@ -30,22 +30,6 @@ class WorkforceProposalCreate(BaseModel):
     configuration: dict = Field(default_factory=dict)
 
 
-class ManagerWorkforceProposalCreate(BaseModel):
-    manager_agent_instance_id: UUID
-    operation: str = Field(
-        pattern="^(staffing_proposal|replacement_proposal|transfer_proposal|retirement_proposal)$"
-    )
-    title: str = Field(min_length=1, max_length=255)
-    rationale: str = Field(min_length=1, max_length=8000)
-    requested_name: str = Field(min_length=1, max_length=255)
-    sponsor_user_id: UUID
-    affected_employee_id: UUID | None = None
-    agent_template_id: UUID | None = None
-    agent_definition_id: UUID | None = None
-    risk_tier: int = Field(default=0, ge=0, le=4)
-    configuration: dict = Field(default_factory=dict)
-
-
 class GovernedScalingCreate(BaseModel):
     sponsor_user_id: UUID
     agent_template_id: UUID
@@ -126,39 +110,6 @@ async def create_workforce_proposal(
             agent_definition_id=payload.agent_definition_id,
             risk_tier=payload.risk_tier,
             configuration=payload.configuration,
-        )
-        await db.commit()
-    except Exception as exc:
-        await db.rollback()
-        raise _http(exc) from exc
-    return WorkforceProposalRead.model_validate(item, from_attributes=True)
-
-
-@router.post(
-    "/proposals/manager",
-    response_model=WorkforceProposalRead,
-    status_code=status.HTTP_201_CREATED,
-)
-async def create_manager_workforce_proposal(
-    payload: ManagerWorkforceProposalCreate,
-    ctx: TenantContext = Depends(require_permission("agent_workforce.propose")),
-    db: AsyncSession = Depends(get_db, scope="function"),
-):
-    try:
-        item = await proposal_service.create_manager_proposal(
-            db,
-            tenant_id=ctx.tenant_id,
-            manager_agent_instance_id=payload.manager_agent_instance_id,
-            operation=payload.operation,
-            sponsor_user_id=payload.sponsor_user_id,
-            title=payload.title,
-            rationale=payload.rationale,
-            requested_name=payload.requested_name,
-            agent_template_id=payload.agent_template_id,
-            agent_definition_id=payload.agent_definition_id,
-            risk_tier=payload.risk_tier,
-            configuration=payload.configuration,
-            affected_employee_id=payload.affected_employee_id,
         )
         await db.commit()
     except Exception as exc:
