@@ -22,13 +22,13 @@ The product-completeness gate was completed for the audited scope before v1.4.11
 
 ### Product-completeness requirements — CLOSED FOR CURRENT AUDITED SCOPE
 
-1. **Persian/English localization:** complete core customer-facing translation keys, locale-aware formatting and true RTL behavior. The current fa/en provider and small message catalog are infrastructure only; they do not constitute complete Persian support.
-2. **Employee Templates:** expand the current three-template catalog into a curated minimum commercial starter set with bilingual metadata, input/output contracts, tools, guardrails, dependencies, examples, versioning and safe installation/customization.
-3. **Operational lists and lifecycle:** inventory all major resource lists/details and implement the appropriate create/read/update/lifecycle actions. Do not add hard Delete indiscriminately; use archive/deactivate/cancel/revoke when audit or retention requires it.
-4. **Backend/frontend parity:** every customer-visible action must map to a supported, authorized backend operation; unsupported operations must not be presented as available.
-5. **Shared UX states:** standardize loading, empty, error, retry, success and permission-denied behavior.
-6. **Browser acceptance:** verify core customer workflows in both fa and en before cutting a new release candidate.
-7. **Edition-aware Test Center — IMPLEMENTED:** validate Vendor, Reseller and Customer capabilities according to ownership/scope; validate shared isolation/RBAC/execution controls once at the shared boundary; do not require every service in every edition. Backend edition filtering plus `/admin/test-center`, `/reseller/test-center`, and `/test-center` surfaces are implemented and CI-validated.
+1. **Persian/English localization:** **DONE for the audited customer operational scope**; EN/FA browser acceptance, locale-aware formatting and true RTL direction coverage are in place.
+2. **Employee Templates:** **DONE for the audited scope**; the curated catalog contains seven tenant-safe bilingual starter templates with lifecycle/installation metadata.
+3. **Operational lists and lifecycle:** **DONE for the audited scope**; Product, Customer, Order/Invoice and Schedule lifecycle parity uses resource-specific non-destructive semantics where retention/auditability requires them.
+4. **Backend/frontend parity:** **DONE for the audited scope**; customer-visible lifecycle actions map to supported and authorized operations.
+5. **Shared UX states:** **DONE for the audited scope**; customer Analytics/Reporting retry and empty states plus permission/lifecycle state handling are covered.
+6. **Browser acceptance:** **DONE for the audited scope**; principal customer operational routes are accepted in both `en` and `fa`, including `lang`/`dir` assertions.
+7. **Edition-aware Test Center — DONE:** Vendor, Reseller and Customer definition visibility and execution boundaries are edition-aware; shared isolation/RBAC/execution controls remain covered at the shared boundary, without requiring every service in every edition.
 
 Canonical record: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md.
 
