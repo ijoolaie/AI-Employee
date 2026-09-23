@@ -27,7 +27,7 @@ class WorkforceDelegation(Base):
     allowed_operations: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     resource_limits: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     risk_tier: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    status: Mapped[str] = mapped_column(String(32), nullable=False, default="active", index=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="scheduled", index=True)
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revocation_conditions: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
