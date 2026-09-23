@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Literal
 
+from app.core.exceptions import ValidationAppError
+
 ApprovalClass = Literal["routine_delegable", "human_approval_required"]
 
 
@@ -209,6 +211,30 @@ def get_workforce_capability_contract(role_code: str, operation: str) -> Workfor
         if contract.operation == operation:
             return contract
     raise KeyError(f"No capability contract for workforce operation: {role_code}:{operation}")
+
+
+def assert_workforce_tool_binding(role_code: str, operation: str, tool_name: str) -> None:
+    """Require an explicit role-operation-to-tool binding before tool execution."""
+    contract = get_workforce_capability_contract(role_code, operation)
+    if not contract.tool_names:
+        raise ValidationAppError(
+            "Workforce operation has no approved Tool Registry binding",
+            details={
+                "role": role_code,
+                "operation": operation,
+                "capability": contract.capability_code,
+            },
+        )
+    if tool_name not in contract.tool_names:
+        raise ValidationAppError(
+            "Tool is not bound to the requested workforce capability",
+            details={
+                "role": role_code,
+                "operation": operation,
+                "capability": contract.capability_code,
+                "tool": tool_name,
+            },
+        )
 
 
 def is_operation_allowed(role_code: str, operation: str, *, manager_delegated: bool = False) -> bool:
