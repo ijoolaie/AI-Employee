@@ -104,7 +104,9 @@ class AgentExecutionAdapter:
         affected_employee_id=None,
     ) -> Any:
         """Execute a Tool only after the central policy decision allows it."""
-        tool = registry.get(tool_name)
+        # Workforce governance must run before Tool Registry resolution. This
+        # keeps the workforce boundary authoritative even when the requested
+        # tool name is unknown or otherwise malformed.
         role_code = str((agent.configuration or {}).get("workforce_role_code") or "").strip()
         if role_code and workforce_operation is None:
             raise ValidationAppError(
@@ -124,6 +126,7 @@ class AgentExecutionAdapter:
                 affected_employee_id=affected_employee_id,
             )
             assert_workforce_tool_binding(role_code, workforce_operation, tool_name)
+        tool = registry.get(tool_name)
         await assert_agent_can_execute(
             self.db,
             tenant_id=agent.tenant_id,
