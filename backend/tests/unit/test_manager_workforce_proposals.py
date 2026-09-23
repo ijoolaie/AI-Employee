@@ -6,6 +6,11 @@ from app.models.agent_workforce_proposal import AgentWorkforceProposalKind
 from app.services import agent_workforce_proposal_service as proposal_service
 
 
+class DB:
+    async def flush(self):
+        return None
+
+
 @pytest.mark.asyncio
 async def test_manager_proposal_requires_delegation(monkeypatch):
     async def deny(*args, **kwargs):
@@ -67,10 +72,6 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
     monkeypatch.setattr(proposal_service, "create_proposal", create)
     monkeypatch.setattr(proposal_service, "record", record)
 
-    class DB:
-        async def flush(self):
-            return None
-
     proposal = await proposal_service.create_manager_proposal(
         DB(),
         tenant_id=uuid.uuid4(),
@@ -120,7 +121,7 @@ async def test_manager_proposal_requires_governed_role_target(monkeypatch):
 
     with pytest.raises(proposal_service.ValidationAppError, match="workforce_role_code"):
         await proposal_service.create_manager_proposal(
-            object(),
+            DB(),
             tenant_id=uuid.uuid4(),
             manager_agent_instance_id=uuid.uuid4(),
             operation="staffing_proposal",
@@ -163,7 +164,7 @@ async def test_manager_proposal_accepts_any_catalog_role(monkeypatch):
     monkeypatch.setattr(proposal_service, "record", record)
 
     proposal = await proposal_service.create_manager_proposal(
-        object(),
+        DB(),
         tenant_id=uuid.uuid4(),
         manager_agent_instance_id=uuid.uuid4(),
         operation="staffing_proposal",
@@ -210,7 +211,7 @@ async def test_manager_proposal_accepts_a_new_role_definition(monkeypatch):
     monkeypatch.setattr(proposal_service, "record", record)
 
     proposal = await proposal_service.create_manager_proposal(
-        object(),
+        DB(),
         tenant_id=uuid.uuid4(),
         manager_agent_instance_id=uuid.uuid4(),
         operation="staffing_proposal",
