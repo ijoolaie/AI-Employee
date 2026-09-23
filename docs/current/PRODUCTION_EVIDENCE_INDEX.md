@@ -43,7 +43,7 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone. `OPE
 |---|---|---|
 | v1.4.11 Exact-SHA Production Certification | ENGINEERING | PASS |
 | Product gates / tenant isolation / RBAC | ENGINEERING | PASS |
-| Frontend Playwright | ENGINEERING | PASS — 8/8 |
+| Frontend Playwright | ENGINEERING | PASS |
 | Production-like infrastructure lifecycle | ENGINEERING | PASS |
 | Backup/restore rehearsal | ENGINEERING | PASS; target RPO/RTO pending |
 | SLO/error-budget engineering contract | ENGINEERING | PASS; live measurement pending |
