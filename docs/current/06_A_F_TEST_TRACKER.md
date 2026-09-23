@@ -61,7 +61,7 @@
 - [x] Dead letters — exact-release queue/dead-letter gate passed
 - [x] Observability — exact-release observability/SLO contract gate passed
 
-**Phase F aggregate release-certification gate: PASS.** Current exact-release Production Certification run `35840044046` / job `107112696112` executed against `v1.4.10` SHA `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`, recorded `0` Product Gate failures, and completed successfully. This is engineering/release certification evidence; external production deployment remains pending.
+**Phase F aggregate release-certification gate: PASS.** Current exact-release Production Certification run `35848311037` / job `107139710452` executed against `v1.4.11` SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`, recorded `0` Product Gate failures, and completed successfully. This is engineering/release certification evidence; external production deployment remains pending.
 
 ## v1.4.8 WhatsApp + Public Chat hardening — 2026-09-21
 
@@ -87,20 +87,20 @@
 - Artifact SHA256: `bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`
 - GitHub Release: `v1.4.11` — **PUBLISHED**
 
-This is the current exact-release certification identity. External production execution remains pending.
+This is the current exact-release certification identity for `v1.4.11`. External production execution remains pending.
 
 
-- Release: `v1.4.10`
+- Release: `v1.4.11`
 - Exact certified SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
 - Workflow run: `35840044046` — **PASS**
 - Certification job: `107112696112` — **PASS**
 - Product Gate Failures: `0`
 - Frontend Playwright: `8/8` PASS
-- Evidence artifact: `production-certification-evidence-v1.4.10-b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
+- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 - Artifact SHA256: `73b193ae14d886a8bda83e65a1486cff7d8bedeb04ec32d78f469dcf8037501b`
 - External production deployment claim: **false / pending**
 
-This closes the repository-level Phase F release-certification gate. It does not close external production deployment, live-provider, measured production SLO/DR, independent security review, or customer-acceptance gates.
+This closes the repository-level Phase F release-certification gate for `v1.4.11`. It does not close external production deployment, live-provider, measured production SLO/DR, independent security review, or customer-acceptance gates.
 
 ## v1.4.8 exact-SHA certification evidence
 
@@ -111,7 +111,7 @@ This closes the repository-level Phase F release-certification gate. It does not
 - Artifact SHA256: `d179fe603aac3460b0e751d7ad7957fad9c3f8dedf81ed8c4a9e9e608a78aa20`
 - Certification is bound only to that exact SHA and does not certify current main `9024a66cbc49279f317d72cebc15f56dbad4a0c1`.
 
-## Post-v1.4.10 product-completeness evidence — 2026-09-23
+## Post-v1.4.11 product-completeness and release evidence — 2026-09-23
 
 - PR #607 Employee Template Catalog: **MERGED** — curated customer-ready catalog expanded from 3 to 7 templates with EN/FA metadata and lifecycle/error states.
 - PR #608 Product Lifecycle: **MERGED** — tenant-scoped product edit plus activate/deactivate lifecycle with dedicated RBAC permission.
@@ -125,7 +125,7 @@ This closes the repository-level Phase F release-certification gate. It does not
 - PR #618 Governance Localization: **MERGED** — remaining hard-coded governance labels and invalid-evidence rendering fixed.
 - PR #619 Customer Operational EN/FA Acceptance: **MERGED** — operational route matrix validated in both locales.
 - PR #620 Product-Completeness Reconciliation: **MERGED** — frontier moved to release-candidate/certification flow.
-- PRs #622–#627: certification fixes/hardening for invoice/order lifecycle and v1.4.10 Playwright/marketplace acceptance; merged changes culminated in the exact-SHA v1.4.10 certification PASS.
+- PRs #622–#627: certification fixes/hardening for invoice/order lifecycle and v1.4.10 Playwright/marketplace acceptance; merged changes were included in the v1.4.10 certified baseline and remain historical evidence. v1.4.11 then applied the edition release-identity hardening and passed a fresh exact-SHA certification.
 
 These changes are mainline engineering evidence. They do not retroactively change the immutable certification identity of prior releases.
 
