@@ -103,6 +103,4 @@ def is_operation_allowed(role_code: str, operation: str, *, manager_delegated: b
         return False
     if role.code == "ai_internal_manager":
         return manager_delegated
-    if role.code == "ai_trader":
-        return False
     return True
