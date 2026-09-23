@@ -44,18 +44,25 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
 
     async def create(*args, **kwargs):
         captured["requester_user_id"] = kwargs["requester_user_id"]
-        return type("Proposal", (), {
-            "kind": AgentWorkforceProposalKind.STAFFING,
-            "source_type": "human",
-            "proposed_by_agent_instance_id": None,
-            "delegation_id": None,
-            "manager_operation": None,
-            "configuration": kwargs["configuration"],
-        })()
+        return type(
+            "Proposal",
+            (),
+            {
+                "kind": AgentWorkforceProposalKind.STAFFING,
+                "source_type": "human",
+                "proposed_by_agent_instance_id": None,
+                "delegation_id": None,
+                "manager_operation": None,
+                "configuration": kwargs["configuration"],
+            },
+        )()
+
+    async def record(*args, **kwargs):
+        return None
 
     monkeypatch.setattr(proposal_service, "assert_operation_delegated", allow)
     monkeypatch.setattr(proposal_service, "create_proposal", create)
-    monkeypatch.setattr(proposal_service, "record", lambda *args, **kwargs: None)
+    monkeypatch.setattr(proposal_service, "record", record)
 
     class DB:
         async def flush(self):
@@ -94,3 +101,4 @@ def test_manager_proposal_operations_are_explicit():
         "transfer_proposal",
         "retirement_proposal",
     }
+}
