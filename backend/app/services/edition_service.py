@@ -82,14 +82,14 @@ async def _ensure_role(db: AsyncSession, tenant: Tenant, name: str, permissions:
     return role
 
 
-async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str, slug: str, admin_email: str, admin_password: str, full_name: str | None, kind: str, vendor_release_tag: str | None, delivery_revision: str | None) -> tuple[Tenant, User]:
+async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str, slug: str, admin_email: str, admin_password: str, full_name: str | None, kind: str, delivery_revision: str | None) -> tuple[Tenant, User]:
     expected_parent_kind = EDITION_VENDOR if kind == EDITION_RESELLER else EDITION_RESELLER
     if parent.tenant_kind != expected_parent_kind:
         raise HTTPException(status_code=403, detail="Invalid parent edition")
     existing = (await db.execute(select(Tenant).where(Tenant.slug == slug))).scalar_one_or_none()
     if existing is not None:
         raise HTTPException(status_code=409, detail="Tenant slug already exists")
-    tenant = Tenant(name=name, slug=slug, status="active", tenant_kind=kind, parent_tenant_id=parent.id, vendor_release_tag=vendor_release_tag or parent.vendor_release_tag, delivery_revision=delivery_revision, settings={"edition": kind, "control_plane_parent": str(parent.id)})
+    tenant = Tenant(name=name, slug=slug, status="active", tenant_kind=kind, parent_tenant_id=parent.id, vendor_release_tag=parent.vendor_release_tag, delivery_revision=delivery_revision, settings={"edition": kind, "control_plane_parent": str(parent.id)})
     db.add(tenant)
     await db.flush()
     user = User(tenant_id=tenant.id, email=admin_email.lower(), password_hash=hash_password(admin_password), full_name=full_name, is_active=True, is_superuser=True)
