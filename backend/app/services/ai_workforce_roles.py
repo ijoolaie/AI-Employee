@@ -9,7 +9,20 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Literal
 
+from app.core.exceptions import ValidationAppError
+
 ApprovalClass = Literal["routine_delegable", "human_approval_required"]
+
+
+@dataclass(frozen=True)
+class WorkforceCapabilityContract:
+    """Machine-readable binding between an operation and execution authority."""
+
+    operation: str
+    capability_code: str
+    tool_names: tuple[str, ...]
+    required_permissions: tuple[str, ...]
+    approval_required: bool
 
 
 @dataclass(frozen=True)
@@ -23,6 +36,7 @@ class WorkforceRole:
     approval_class: ApprovalClass
     allowed_routine_operations: tuple[str, ...]
     approval_required_operations: tuple[str, ...]
+    capability_contract: tuple[WorkforceCapabilityContract, ...]
 
 
 @dataclass(frozen=True)
@@ -34,6 +48,22 @@ class WorkforceRoleTemplate:
     description: str
     description_fa: str
 
+
+
+def _contracts(
+    routine: tuple[str, ...] | list[str],
+    approval_required: tuple[str, ...] | list[str],
+) -> tuple[WorkforceCapabilityContract, ...]:
+    return tuple(
+        WorkforceCapabilityContract(
+            operation=operation,
+            capability_code=f"workforce.{operation}",
+            tool_names=(),
+            required_permissions=("run.execute",),
+            approval_required=operation in approval_required,
+        )
+        for operation in (*routine, *approval_required)
+    )
 
 WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
     WorkforceRole(
@@ -55,16 +85,13 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
             "prepare_cost_optimization",
         ),
         approval_required_operations=(
-            "hire_or_provision_employee",
-            "retire_employee",
-            "transfer_employee",
-            "replace_employee",
-            "financial_commitment",
-            "material_resource_commitment",
-            "security_sensitive_change",
-            "legal_commitment",
-            "production_critical_change",
-            "irreversible_action",
+            "hire_or_provision_employee", "retire_employee", "transfer_employee", "replace_employee",
+            "financial_commitment", "material_resource_commitment", "security_sensitive_change",
+            "legal_commitment", "production_critical_change", "irreversible_action",
+        ),
+        capability_contract=_contracts(
+            ("assign_task", "reprioritize_task", "coordinate_handoff", "balance_workload", "request_workforce_capacity", "prepare_ceo_report", "prepare_budget_estimate", "prepare_cost_optimization"),
+            ("hire_or_provision_employee", "retire_employee", "transfer_employee", "replace_employee", "financial_commitment", "material_resource_commitment", "security_sensitive_change", "legal_commitment", "production_critical_change", "irreversible_action"),
         ),
     ),
     WorkforceRole(
@@ -77,6 +104,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         approval_class="routine_delegable",
         allowed_routine_operations=("draft_campaign_plan", "coordinate_content", "analyze_campaign_performance", "prepare_growth_report"),
         approval_required_operations=("paid_campaign_launch", "material_ad_spend", "contractual_commitment", "external_purchase"),
+        capability_contract=_contracts(["draft_campaign_plan","coordinate_content","analyze_campaign_performance","prepare_growth_report"], ["paid_campaign_launch","material_ad_spend","contractual_commitment","external_purchase"]),
     ),
     WorkforceRole(
         code="ai_graphic_designer",
@@ -88,6 +116,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         approval_class="routine_delegable",
         allowed_routine_operations=("create_visual_asset", "revise_visual_asset", "prepare_brand_variant", "prepare_campaign_creative"),
         approval_required_operations=("paid_asset_procurement", "commercial_license_purchase", "material_external_spend", "contractual_commitment"),
+        capability_contract=_contracts(["create_visual_asset","revise_visual_asset","prepare_brand_variant","prepare_campaign_creative"], ["paid_asset_procurement","commercial_license_purchase","material_external_spend","contractual_commitment"]),
     ),
     WorkforceRole(
         code="ai_software_developer",
@@ -99,6 +128,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         approval_class="routine_delegable",
         allowed_routine_operations=("implement_routine_fix", "write_tests", "prepare_integration", "refactor_non_critical_code", "prepare_change_proposal"),
         approval_required_operations=("production_critical_change", "security_sensitive_change", "privileged_access_change", "material_resource_consumption", "irreversible_data_change"),
+        capability_contract=_contracts(["implement_routine_fix","write_tests","prepare_integration","refactor_non_critical_code","prepare_change_proposal"], ["production_critical_change","security_sensitive_change","privileged_access_change","material_resource_consumption","irreversible_data_change"]),
     ),
     WorkforceRole(
         code="ai_trader",
@@ -110,6 +140,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         approval_class="human_approval_required",
         allowed_routine_operations=("market_research", "risk_analysis", "prepare_trading_plan", "stage_order_for_review"),
         approval_required_operations=("capital_allocation", "order_execution", "leverage_change", "withdrawal", "material_financial_commitment"),
+        capability_contract=_contracts(["market_research","risk_analysis","prepare_trading_plan","stage_order_for_review"], ["capital_allocation","order_execution","leverage_change","withdrawal","material_financial_commitment"]),
     ),
 )
 
@@ -172,6 +203,38 @@ def get_workforce_role_template(role_code: str) -> WorkforceRoleTemplate:
         if template.role_code == role_code:
             return template
     raise KeyError(f"No first-party workforce role template: {role_code}")
+
+
+def get_workforce_capability_contract(role_code: str, operation: str) -> WorkforceCapabilityContract:
+    role = get_workforce_role(role_code)
+    for contract in role.capability_contract:
+        if contract.operation == operation:
+            return contract
+    raise KeyError(f"No capability contract for workforce operation: {role_code}:{operation}")
+
+
+def assert_workforce_tool_binding(role_code: str, operation: str, tool_name: str) -> None:
+    """Require an explicit role-operation-to-tool binding before tool execution."""
+    contract = get_workforce_capability_contract(role_code, operation)
+    if not contract.tool_names:
+        raise ValidationAppError(
+            "Workforce operation has no approved Tool Registry binding",
+            details={
+                "role": role_code,
+                "operation": operation,
+                "capability": contract.capability_code,
+            },
+        )
+    if tool_name not in contract.tool_names:
+        raise ValidationAppError(
+            "Tool is not bound to the requested workforce capability",
+            details={
+                "role": role_code,
+                "operation": operation,
+                "capability": contract.capability_code,
+                "tool": tool_name,
+            },
+        )
 
 
 def is_operation_allowed(role_code: str, operation: str, *, manager_delegated: bool = False) -> bool:
