@@ -1,13 +1,13 @@
 # Current Status
 
 **Last reconciled:** 2026-09-23
-**Latest certified release:** `v1.4.10`
-**Certified release SHA:** `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
-**Stable Git tag:** `v1.4.10` — VERIFIED at the certified SHA
-**GitHub Release:** `v1.4.10` — PUBLISHED
-**Exact-SHA Production Certification:** Run `35840044046` — PASS
-**Certification job:** `107112696112` — PASS
-**Current status:** v1.4.10 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
+**Latest certified release:** `v1.4.11`
+**Certified release SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+**Stable Git tag:** `v1.4.11` — VERIFIED at the certified SHA
+**GitHub Release:** `v1.4.11` — PUBLISHED
+**Exact-SHA Production Certification:** Run `35848311037` — PASS
+**Certification job:** `107139710452` — PASS
+**Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
 
@@ -35,7 +35,7 @@ Repository engineering, CI, production-like validation, product completeness wor
 
 The project is currently being executed on the developer/local environment. No external production target is being used at this stage. Therefore gates that require a real target, live providers, staffed operations or external acceptance are intentionally **OPEN — PENDING EXTERNAL EXECUTION**. They are not current engineering failures and do not block local development or repository-level certification.
 
-## Post-v1.4.10 production-readiness audit
+## Post-v1.4.11 production-readiness audit
 
 | Area | Status | Evidence boundary |
 |---|---|---|
