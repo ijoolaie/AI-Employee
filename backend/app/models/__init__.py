@@ -56,6 +56,7 @@ from app.models.team_evaluation import TeamEvaluation
 from app.models.marketplace_publication import MarketplacePublication
 from app.models.workload_balance_event import WorkloadBalanceEvent
 from app.models.workforce_delegation import WorkforceDelegation
+from app.models.workforce_sla_contract import WorkforceSLAContract
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -71,5 +72,5 @@ __all__ = [
     "AgentEvaluation", "AgentEvaluationStatus", "AgentIdentity", "AgentAccessReview", "AgentAccessReviewDecision",
     "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",
     "TestDefinition", "TestRun", "TestRunStatus", "TestRunArtifact", "TeamDefinition", "TeamVersion",
-    "TeamInstallation", "TeamEvaluation", "MarketplacePublication", "WorkloadBalanceEvent", "WorkforceDelegation",
+    "TeamInstallation", "TeamEvaluation", "MarketplacePublication", "WorkloadBalanceEvent", "WorkforceDelegation", "WorkforceSLAContract",
 ]
