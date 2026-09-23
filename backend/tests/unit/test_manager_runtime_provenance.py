@@ -52,3 +52,42 @@ async def test_runtime_manager_proposal_uses_bound_agent_identity(monkeypatch):
     assert captured["manager_agent_instance_id"] == manager_id
     assert captured["tenant_id"] == tenant_id
     assert captured["configuration"]["manager_runtime_run_id"] == str(run_id)
+
+
+@pytest.mark.asyncio
+async def test_runtime_manager_proposal_rejects_tenant_mismatch():
+    with pytest.raises(ValidationAppError, match="does not match proposal tenant"):
+        async with governed_agent_execution(
+            tenant_id=uuid.uuid4(),
+            agent_instance_id=uuid.uuid4(),
+            run_id=uuid.uuid4(),
+        ):
+            await proposal_service.create_manager_proposal_from_runtime(
+                object(),
+                tenant_id=uuid.uuid4(),
+                sponsor_user_id=uuid.uuid4(),
+                operation="staffing_proposal",
+                title="Add developer",
+                rationale="Capacity gap",
+                requested_name="AI Developer",
+            )
+
+
+@pytest.mark.asyncio
+async def test_runtime_manager_proposal_requires_durable_run_identity():
+    tenant_id = uuid.uuid4()
+    with pytest.raises(ValidationAppError, match="durable Run identity"):
+        async with governed_agent_execution(
+            tenant_id=tenant_id,
+            agent_instance_id=uuid.uuid4(),
+            run_id=None,
+        ):
+            await proposal_service.create_manager_proposal_from_runtime(
+                object(),
+                tenant_id=tenant_id,
+                sponsor_user_id=uuid.uuid4(),
+                operation="staffing_proposal",
+                title="Add developer",
+                rationale="Capacity gap",
+                requested_name="AI Developer",
+            )
