@@ -272,7 +272,7 @@ These are post-release productization/security evidence, not a new production-ce
 ## Next test order
 
 1. Keep the product-completeness surface under regression watch; do not reopen completed gates without a regression or new requirement.
-2. For any future application change after v1.4.10, create a new candidate boundary and run fresh exact-SHA certification; never transfer certification across SHAs.
+2. For any future application change after v1.4.11, create a new candidate boundary and run fresh exact-SHA certification; never transfer certification across SHAs.
 3. External production-readiness remains intentionally **OPEN — PENDING EXTERNAL EXECUTION** while the project stays local: real target deployment, backup/restore and RPO/RTO, live providers, Vendor → Reseller → Client runtime isolation/RBAC, deployed DAST, independent security review, network/secrets lifecycle, HA/failure recovery, incident response/on-call, and customer acceptance.
 
 **Rule:** Every completed test changes the corresponding `[ ]` to `[x]` here with the command/result recorded in the evidence section or a linked dated evidence document.

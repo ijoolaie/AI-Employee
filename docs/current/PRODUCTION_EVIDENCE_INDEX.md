@@ -17,33 +17,33 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone. `OPE
 
 | Field | Value |
 |---|---|
-| Latest published release | `v1.4.10` |
-| Exact certified release SHA | `b09f3e35d512e3c4d21be9d930539cbbe1d2d451` |
+| Latest published release | `v1.4.11` |
+| Exact certified release SHA | `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f` |
 | Stable Git tag | **VERIFIED** |
 | GitHub Release | **PUBLISHED** |
-| Production Certification | Run `35840044046` / Job `107112696112` — PASS |
+| Production Certification | Run `35848311037` / Job `107139710452` — PASS |
 | Product Gate Failures | `0` |
-| Frontend Playwright | `8/8 PASS` |
+| Frontend Playwright | **PASS** |
 | External production deployment | **OPEN — PENDING EXTERNAL EXECUTION** |
 | External image registry/deployed digest evidence | **PENDING** |
 | External signed provenance/attestation | **PENDING** |
 
-## v1.4.10 certification identity
+## v1.4.11 certification identity
 
-- Release tag: `v1.4.10`
-- Exact certified SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
-- Evidence artifact: `production-certification-evidence-v1.4.10-b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
-- Evidence SHA256: `73b193ae14d886a8bda83e65a1486cff7d8bedeb04ec32d78f469dcf8037501b`
-- Artifact ID: `10740739447`
+- Release tag: `v1.4.11`
+- Exact certified SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- Evidence SHA256: `bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`
+- Artifact ID: `10744805746`
 - `production_deployment_claimed=false`
 
 ## Evidence matrix
 
 | Gate | Class | Status |
 |---|---|---|
-| v1.4.10 Exact-SHA Production Certification | ENGINEERING | PASS |
+| v1.4.11 Exact-SHA Production Certification | ENGINEERING | PASS |
 | Product gates / tenant isolation / RBAC | ENGINEERING | PASS |
-| Frontend Playwright | ENGINEERING | PASS — 8/8 |
+| Frontend Playwright | ENGINEERING | PASS |
 | Production-like infrastructure lifecycle | ENGINEERING | PASS |
 | Backup/restore rehearsal | ENGINEERING | PASS; target RPO/RTO pending |
 | SLO/error-budget engineering contract | ENGINEERING | PASS; live measurement pending |
@@ -68,7 +68,7 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone. `OPE
 
 ## Current execution-stage rule
 
-The project is currently in **LOCAL / ENGINEERING EXECUTION**. External gates are intentionally open until an external deployment target, live integrations, staffed operations, or independent assessment is actually available. These open states are not defects and do not invalidate v1.4.10 repository certification.
+The project is currently in **LOCAL / ENGINEERING EXECUTION**. External gates are intentionally open until an external deployment target, live integrations, staffed operations, or independent assessment is actually available. These open states are not defects and do not invalidate v1.4.11 repository certification.
 
 ## Release binding rule
 
