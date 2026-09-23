@@ -16,7 +16,18 @@ The backend now contains a declarative first-party workforce catalog for:
 4. AI Software Developer
 5. AI Trader
 
-The catalog provides stable role codes, bilingual names, organizational category, reporting line, routine operations and explicitly approval-gated operations.
+The catalog provides stable role codes, bilingual names, organizational category, reporting line, routine operations and explicitly approval-gated operations. The four specialized roles also have first-party workforce role templates exposed through the read-only catalog API.
+
+## Workforce role templates
+
+The first-party workforce template catalog currently contains:
+
+1. AI Marketing & Advertising Manager
+2. AI Graphic Designer
+3. AI Software Developer
+4. AI Trader
+
+These are role templates, not active AgentTemplates or AgentInstances. The Internal Manager may select any catalog role for a proposal and may also propose a new role that is not yet in the catalog. A new role is human-approval-required by default and must go through AgentTemplate evaluation/publish before provisioning.
 
 ## Authority contract
 
