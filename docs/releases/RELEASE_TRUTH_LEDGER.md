@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-22
+**Last reconciled:** 2026-09-23
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -17,36 +17,43 @@ These states are independent and must not be inferred from release names.
 
 | Release | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
+| `v1.4.10` | `b09f3e35d512e3c4d21be9d930539cbbe1d2d451` | **NOT CREATED** | **CERTIFIED** — Run `35840044046` / Job `107112696112` | **NOT VERIFIED** | Pending |
 | `v1.4.9` | `f1ce20c010779f5273eb5d0051da24cdd57b33f6` | VERIFIED | **CERTIFIED** — Run `35575615877` / Job `106256713583` | **NOT VERIFIED** | Pending |
 | `v1.4.8` | `4f7c4676850b546a1c6bdf219ab9401202302e2d` | VERIFIED | **CERTIFIED** — Run `35568392010` / Job `106234691683` | **NOT VERIFIED** | Pending |
 | `v1.4.7` | `48a6df0ea8a2fb0624e831fbdea55ee4548807f6` | VERIFIED | **CERTIFIED** — Run `35498984521` / Job `106047204166` | **NOT VERIFIED** | Pending |
 | `v1.4.6` | `f3d60031332450ba616e2a1c705e85c0c2c5aefd` | VERIFIED | **CERTIFIED** | **NOT VERIFIED** | Pending |
 | `v1.4.5` | `cc94bc9536f4f95680bb7a183313914c116ffcf2` | VERIFIED | **FAILED PRODUCT CERTIFICATION** — historical immutable release | **NOT VERIFIED** | Not accepted |
 
-## v1.4.7 checkpoint
+## v1.4.10 certification checkpoint
 
-v1.4.7 passed exact-SHA Production Certification:
+`v1.4.10` passed fresh exact-SHA Production Certification on 2026-09-23:
 
-- target/checked-out SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`;
-- Product Gate failures: 0;
-- frontend Playwright: 6/6 PASS;
-- immutable evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`;
-- artifact digest: `sha256:86c82af5326bce9d6be634df8779bf0a0f28ca16503ee34095786858780e1427`;
-- release assets include runtime and four edition packages plus manifest/checksums.
+- target/checked-out SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`;
+- workflow run: `35840044046`;
+- certification job: `107112696112`;
+- Product Gate failures: **0**;
+- frontend Playwright: **8/8 PASS**;
+- certification result: **PASS**;
+- production deployment claimed by certification: **false**;
+- evidence artifact: `production-certification-evidence-v1.4.10-b09f3e35d512e3c4d21be9d930539cbbe1d2d451`;
+- evidence JSON SHA-256: `73b193ae14d886a8bda83e65a1486cff7d8bedeb04ec32d78f469dcf8037501b`;
+- artifact ID: `10740739447`.
 
-Production deployment was explicitly **not claimed** by the certification manifest.
+Certification is bound to the exact SHA and does not by itself create a Git tag, GitHub Release, production deployment or customer acceptance.
 
-## Historical candidate boundary
+## Release promotion state
 
-Earlier v1.4.5 RC1, v1.4.5 engineering baseline and v1.4.6 certification records remain useful historical evidence. They must not be presented as the current release checkpoint, and no certification is transferred from those SHAs to v1.4.7.
+The stable `v1.4.10` certification gate is now **PASS**, but the repository does not currently have a verified `v1.4.10` Git tag or GitHub Release. The available GitHub connection in this workflow does not expose tag/release creation, so no tag or release is being fabricated or inferred from certification.
 
-## Post-certification mainline evidence
+When the stable tag is created externally, it must resolve exactly to:
 
-PR #596 completed Customer Settings, Security and API Keys lifecycle work. Its final head `bc98dc14a83f22296c7c45aa6f42b3a9f5dbe94f` passed CI #1709, CodeQL #2112, Production Infrastructure #969, HA Failure Recovery #676 and Ephemeral DAST #925, then merged as `9024a66cbc49279f317d72cebc15f56dbad4a0c1`. These checks validate the mainline change; they do not transfer `v1.4.9` certification to the new commit.
+`b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
+
+No source changes should be made to the certified commit after tagging.
 
 ## External production boundary
 
-The following remain open:
+The following remain open independently of repository Production Certification:
 
 - real production target and deployed-identity verification;
 - live provider validation;
@@ -60,15 +67,8 @@ The following remain open:
 - staffed alert ownership/on-call evidence;
 - final external certification and customer acceptance.
 
-These are tracked by #210, #269 and #19.
+These remain the commercial go-live boundary.
 
-## Current interpretation
+## Historical integrity rule
 
-- Current published release: **v1.4.9 / `f1ce20c...` — certified, not externally deployed.**
-- Current `main`: **`9024a66cbc49279f317d72cebc15f56dbad4a0c1`**, post-certification mainline; it is not a certified release identity.
-- Production deployment: **PENDING REAL INFRASTRUCTURE**.
-- Customer acceptance: **PENDING**.
-- Live provider validation: **PENDING**.
-- Commercial go-live: **PENDING external gates**.
-
-Do not retag, rewrite or reinterpret historical certified/failed releases.
+Do not retag, rewrite or reinterpret historical certified/failed releases. `v1.4.9` remains immutable at its certified SHA.
