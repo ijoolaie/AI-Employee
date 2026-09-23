@@ -15,7 +15,7 @@ from app.models.agent_identity import AgentIdentity
 from app.models.agent_template import AgentTemplate
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalKind, AgentWorkforceProposalStatus
 from app.services.agent_governance import current_agent_execution_context
-from app.services.ai_workforce_roles import validate_manager_proposable_role
+from app.services.ai_workforce_roles import get_workforce_role
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.services.agent_template_service import provision_instance
 from app.services.audit_service import record
