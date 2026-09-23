@@ -213,6 +213,23 @@ def get_workforce_capability_contract(role_code: str, operation: str) -> Workfor
     raise KeyError(f"No capability contract for workforce operation: {role_code}:{operation}")
 
 
+def workforce_capability_contract_snapshot(role_code: str) -> list[dict]:
+    """Return a stable JSON-safe snapshot of the role's capability contracts."""
+    role = get_workforce_role(role_code)
+    return [asdict(contract) for contract in role.capability_contract]
+
+
+def assert_workforce_capability_contract_snapshot(role_code: str, snapshot: object) -> None:
+    """Fail closed when a provisioned workforce role carries a stale contract snapshot."""
+    if snapshot is None:
+        return
+    if not isinstance(snapshot, list) or snapshot != workforce_capability_contract_snapshot(role_code):
+        raise ValidationAppError(
+            "Workforce capability contract is stale; operation denied",
+            details={"role": role_code},
+        )
+
+
 def assert_workforce_tool_binding(role_code: str, operation: str, tool_name: str) -> None:
     """Require an explicit role-operation-to-tool binding before tool execution."""
     contract = get_workforce_capability_contract(role_code, operation)
