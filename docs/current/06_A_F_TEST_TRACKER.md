@@ -76,7 +76,19 @@
 - Public Chat same-customer multiple-conversation invariant: **PASS** — including concurrent starts against real PostgreSQL.
 - Supporting gates passed. Exact-SHA Production Certification then passed for `4f7c4676850b546a1c6bdf219ab9401202302e2d` (run `35568392010`, job `106234691683`), but no `v1.4.8` tag/release was created.
 
-## Phase F — Exact-release Production Certification — 2026-09-23
+## Phase F — Exact-release Production Certification — v1.4.11 — 2026-09-23
+
+- Release: `v1.4.11`
+- Exact certified SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- Workflow run: `35848311037` — **PASS**
+- Certification job: `107139710452` — **PASS**
+- Product Gate Failures: `0`
+- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- Artifact SHA256: `bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`
+- GitHub Release: `v1.4.11` — **PUBLISHED**
+
+This is the current exact-release certification identity. External production execution remains pending.
+
 
 - Release: `v1.4.10`
 - Exact certified SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
