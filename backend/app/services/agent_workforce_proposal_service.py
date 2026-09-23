@@ -14,6 +14,7 @@ from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_template import AgentTemplate
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalKind, AgentWorkforceProposalStatus
+from app.services.agent_governance import current_agent_execution_context
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.services.agent_template_service import provision_instance
 from app.services.audit_service import record
@@ -159,6 +160,51 @@ async def create_manager_proposal(
         },
     )
     return proposal
+
+
+async def create_manager_proposal_from_runtime(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    sponsor_user_id: uuid.UUID,
+    operation: str,
+    title: str,
+    rationale: str,
+    requested_name: str,
+    agent_template_id: uuid.UUID | None = None,
+    agent_definition_id: uuid.UUID | None = None,
+    risk_tier: int = 0,
+    configuration: dict | None = None,
+    affected_employee_id: uuid.UUID | None = None,
+) -> AgentWorkforceProposal:
+    """Create a Manager proposal only from an authenticated Agent runtime context."""
+    context = current_agent_execution_context()
+    if context is None:
+        raise ValidationAppError("Internal Manager proposal requires an active Agent runtime context")
+    runtime_tenant_id, manager_agent_instance_id, run_id, _employee_id, _employee_version_id = context
+    if runtime_tenant_id != tenant_id:
+        raise ValidationAppError("Agent runtime tenant context does not match proposal tenant")
+    if run_id is None:
+        raise ValidationAppError("Internal Manager proposal requires a durable Run identity")
+
+    return await create_manager_proposal(
+        db,
+        tenant_id=tenant_id,
+        manager_agent_instance_id=manager_agent_instance_id,
+        operation=operation,
+        sponsor_user_id=sponsor_user_id,
+        title=title,
+        rationale=rationale,
+        requested_name=requested_name,
+        agent_template_id=agent_template_id,
+        agent_definition_id=agent_definition_id,
+        risk_tier=risk_tier,
+        configuration={
+            **(configuration or {}),
+            "manager_runtime_run_id": str(run_id),
+        },
+        affected_employee_id=affected_employee_id,
+    )
 
 
 async def board_decide(

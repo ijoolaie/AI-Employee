@@ -32,6 +32,7 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
     manager_id = uuid.uuid4()
     delegated_by = uuid.uuid4()
     sponsor = uuid.uuid4()
+    target_employee_id = uuid.uuid4()
     captured = {}
 
     class Delegation:
@@ -48,6 +49,7 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
             "Proposal",
             (),
             {
+                "id": uuid.uuid4(),
                 "kind": AgentWorkforceProposalKind.STAFFING,
                 "source_type": "human",
                 "proposed_by_agent_instance_id": None,
@@ -77,6 +79,7 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
         title="Replace worker",
         rationale="Capacity recovery",
         requested_name="Replacement Worker",
+        affected_employee_id=target_employee_id,
     )
 
     assert captured["operation"] == "replacement_proposal"
@@ -86,6 +89,7 @@ async def test_manager_proposal_persists_attribution_and_delegation(monkeypatch)
     assert proposal.delegation_id == delegation_id
     assert proposal.manager_operation == "replacement_proposal"
     assert proposal.kind is AgentWorkforceProposalKind.REPLACEMENT
+    assert proposal.configuration["manager_operation_target_agent_instance_id"] == str(target_employee_id)
 
 
 def test_manager_proposal_operations_are_explicit():
@@ -101,4 +105,3 @@ def test_manager_proposal_operations_are_explicit():
         "transfer_proposal",
         "retirement_proposal",
     }
-}
