@@ -53,7 +53,11 @@ The Internal Manager also prepares governed management proposals for the CEO, in
 - financial estimates, expected cost, expected operational impact and relevant assumptions for proposed workforce changes;
 - periodic workforce, workload, performance and cost reports for the CEO.
 
-The Internal Manager may analyze, coordinate and propose these actions, but does not bypass CEO approval for reserved workforce creation/retirement, material budget commitments, irreversible organizational decisions or other policy-defined high-impact actions.
+The Internal Manager operates under a **CEO approval-by-default** model: workforce actions and material management decisions require CEO approval unless the CEO has explicitly delegated the relevant authority.
+
+The CEO may delegate defined operational authority to the Internal Manager for routine, non-financial, non-critical and reversible work. Delegation must be explicit, scoped, auditable and revocable. It may cover routine task assignment, reprioritization, handoffs, workload balancing, non-material configuration changes and other low-risk workforce operations.
+
+Delegation does **not** remove the CEO approval requirement for financial actions, purchases, commitments that create cost or meaningful resource consumption, hiring/provisioning that creates material cost, retirement of critical employees, security-sensitive changes, legal/contractual commitments, production-critical actions, irreversible decisions or any action classified by policy as high-impact.
 
 ### AI Coordinator / Executive Assistant
 Calendar, meetings, reminders, task routing, minutes, decision follow-up and executive administration.
@@ -115,6 +119,7 @@ For a fully remote organization these may remain dormant templates rather than a
 ## 5. Finance & procurement
 
 - AI CFO
+- **AI Trader**
 - **AI Accountant**
 - AI Financial Analyst
 - AI Billing Specialist
@@ -170,6 +175,7 @@ Legal AI prepares and analyzes; legally consequential actions use configured app
 ## 9. Marketing & growth
 
 - AI CMO
+- **AI Marketing & Advertising Manager**
 - AI Marketing Manager
 - **AI SEO Specialist**
 - **AI Content Writer**
@@ -250,28 +256,29 @@ The platform must distinguish between **founding employees** and the complete ca
 
 ### Founding workforce — initial active candidates
 
-The initial first-party workforce should be deliberately small and high-leverage:
+The initial first-party workforce should be deliberately small and high-leverage. The currently requested next roles are explicitly included in this candidate set:
 
 1. AI Chief of Staff / Coordinator
 2. AI Internal Manager
 3. AI Strategy Advisor
 4. AI Technology Advisor / CTO
 5. AI Software Developer
-6. AI QA Engineer
-7. AI DevOps / Infrastructure Engineer
-8. AI Network / Security Engineer
-9. AI CISO / Security Manager
-10. AI Finance / Accountant
-11. AI Legal & Compliance Advisor
-12. AI Marketing Manager
-13. AI SEO Specialist
-14. AI Content Writer
-15. AI Graphic Designer
-16. AI Sales Manager
-17. AI Customer Success / Support Manager
-18. AI Data & Analytics Specialist
-19. AI Knowledge Manager
-20. AI Corporate Secretary
+6. AI Marketing & Advertising Manager
+7. AI Graphic Designer
+8. AI Trader
+9. AI QA Engineer
+10. AI DevOps / Infrastructure Engineer
+11. AI Network / Security Engineer
+12. AI CISO / Security Manager
+13. AI Finance / Accountant
+14. AI Legal & Compliance Advisor
+15. AI SEO Specialist
+16. AI Content Writer
+17. AI Sales Manager
+18. AI Customer Success / Support Manager
+19. AI Data & Analytics Specialist
+20. AI Knowledge Manager
+21. AI Corporate Secretary
 
 The exact activation order is a product decision governed by the CEO and the workforce governance process.
 
