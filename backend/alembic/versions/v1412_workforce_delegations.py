@@ -34,11 +34,11 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
     )
-    op.create_index("ix_workforce_delegations_tenant_status", "workforce_delegations", ["tenant_id", "status"])
+    op.create_index("ix_workforce_delegations_status", "workforce_delegations", ["status"])\n    op.create_index("ix_workforce_delegations_tenant_status", "workforce_delegations", ["tenant_id", "status"])
     op.create_index("ix_workforce_delegations_manager", "workforce_delegations", ["tenant_id", "manager_agent_instance_id"])
 
 
 def downgrade() -> None:
-    op.drop_index("ix_workforce_delegations_manager", table_name="workforce_delegations")
+    op.drop_index("ix_workforce_delegations_manager", table_name="workforce_delegations")\n    op.drop_index("ix_workforce_delegations_status", table_name="workforce_delegations")
     op.drop_index("ix_workforce_delegations_tenant_status", table_name="workforce_delegations")
     op.drop_table("workforce_delegations")
