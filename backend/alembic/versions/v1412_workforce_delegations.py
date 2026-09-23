@@ -1,14 +1,14 @@
 """Add durable CEO-to-Internal-Manager delegation governance.
 
 Revision ID: v1412workforcedelegations
-Revises: v14013billingmanagementrbac
+Revises: v148whatsappidempotency
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "v1412workforcedelegations"
-down_revision = "v14013billingmanagementrbac"
+down_revision = "v148whatsappidempotency"
 branch_labels = None
 depends_on = None
 
