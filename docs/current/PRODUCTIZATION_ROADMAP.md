@@ -102,13 +102,26 @@ The product now distinguishes two related but different catalogs:
 1. **Customer operational starter templates** — the current seven templates exposed by the Customer Employee Templates surface: Sales Assistant, Customer Support Agent, Order Assistant, Catalog Assistant, Report Analyst, Document Analyst and Finance Assistant.
 2. **AI Company workforce role catalog** — the broader organizational workforce model defined in `docs/blueprint/AI_COMPANY_FOUNDING_WORKFORCE.md`. This includes executive/governance roles such as AI Chief of Staff and **AI Internal Manager**, plus domain managers and specialist roles.
 
-The AI Internal Manager is a managerial workforce role. It supervises specialized AI employees and prepares governed proposals for CEO decisions covering hiring/provisioning, retirement/removal, transfer/reassignment, replacement, urgent operational budgets and financial estimates. It must not be treated as one of the seven customer starter templates.
+The AI Internal Manager is a managerial workforce role. It supervises specialized AI employees and prepares governed proposals for CEO decisions covering hiring/provisioning, retirement/removal, transfer/reassignment, replacement, urgent operational budgets and financial estimates. Its authority is **CEO approval by default**, with explicit delegation available for routine, non-financial, non-critical and reversible operations. Delegation is scoped, auditable and revocable; financial, material-resource, security-sensitive, legal, production-critical and irreversible actions remain approval-gated.
 
 The role model remains:
 
 `Human CEO → AI Board → AI Chief of Staff → AI Internal Manager → Specialized AI Workforce`
 
 The existing governed workforce substrate, proposal flow and CEO approval boundary remain the authoritative implementation path. Adding or activating these managerial roles is a separate workforce/product slice and must not be represented as already implemented merely because the architecture documents define them.
+
+### Next requested workforce roles
+
+The next workforce implementation slice is explicitly defined as:
+
+1. **AI Marketing & Advertising Manager**
+2. **AI Graphic Designer**
+3. **AI Software Developer**
+4. **AI Trader**
+
+All four roles operate under Internal Manager supervision and approval. The Internal Manager may execute or authorize their routine non-financial, non-critical and reversible work when the CEO has explicitly delegated that authority to the Internal Manager. The AI Trader remains financial/high-impact and actual capital allocation or financial execution still requires CEO/authorized-human approval.
+
+These roles are planned candidates, not a claim that active instances already exist in the current certified release.
 
 ## Stage 8 — AI Company Operating Model Foundation
 
