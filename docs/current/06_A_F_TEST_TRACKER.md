@@ -91,13 +91,13 @@ This is the current exact-release certification identity for `v1.4.11`. External
 
 
 - Release: `v1.4.11`
-- Exact certified SHA: `b09f3e35d512e3c4d21be9d930539cbbe1d2d451`
-- Workflow run: `35840044046` — **PASS**
-- Certification job: `107112696112` — **PASS**
+- Exact certified SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- Workflow run: `35848311037` — **PASS**
+- Certification job: `107139710452` — **PASS**
 - Product Gate Failures: `0`
-- Frontend Playwright: `8/8` PASS
+- Frontend Playwright: **PASS**
 - Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
-- Artifact SHA256: `73b193ae14d886a8bda83e65a1486cff7d8bedeb04ec32d78f469dcf8037501b`
+- Artifact SHA256: `bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`
 - External production deployment claim: **false / pending**
 
 This closes the repository-level Phase F release-certification gate for `v1.4.11`. It does not close external production deployment, live-provider, measured production SLO/DR, independent security review, or customer-acceptance gates.
