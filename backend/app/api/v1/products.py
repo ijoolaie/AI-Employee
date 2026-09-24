@@ -14,19 +14,19 @@ async def list_products(ctx: ProductReadContext, db: DbSession, q: str | None = 
 
 @router.post("", response_model=APIResponse[ProductResponse], status_code=201)
 async def create_product(payload: ProductCreate, ctx: ProductCreateContext, db: DbSession):
-    row = await product_service.create_product(db, ctx.tenant_id, payload.model_dump())
+    row = await product_service.create_product(db, ctx.tenant_id, payload.model_dump(), actor_id=ctx.user_id)
     return APIResponse(success=True, data=ProductResponse.model_validate(row))
 
 @router.patch("/{product_id}", response_model=APIResponse[ProductResponse])
 async def update_product(product_id: UUID, payload: ProductUpdate, ctx: ProductUpdateContext, db: DbSession):
-    row = await product_service.update_product(db, ctx.tenant_id, product_id, payload.model_dump(exclude_unset=True))
+    row = await product_service.update_product(db, ctx.tenant_id, product_id, payload.model_dump(exclude_unset=True), actor_id=ctx.user_id)
     if not row:
         raise HTTPException(404, "Product not found")
     return APIResponse(success=True, data=ProductResponse.model_validate(row))
 
 @router.post("/{product_id}/inventory", response_model=APIResponse[ProductResponse])
 async def update_inventory(product_id: UUID, payload: ProductInventoryUpdate, ctx: ProductInventoryUpdateContext, db: DbSession):
-    row = await product_service.update_inventory(db, ctx.tenant_id, product_id, payload.inventory)
+    row = await product_service.update_inventory(db, ctx.tenant_id, product_id, payload.inventory, actor_id=ctx.user_id)
     if not row:
         raise HTTPException(404, "Product not found")
     return APIResponse(success=True, data=ProductResponse.model_validate(row))
