@@ -268,3 +268,110 @@ async def test_workforce_governance_precedes_unknown_tool_resolution(monkeypatch
             tool_name="not-a-real-tool",
             arguments={},
         )
+
+
+@pytest.mark.asyncio
+async def test_workforce_market_research_binding_reaches_registry_only_after_governance(monkeypatch):
+    agent = SimpleNamespace(
+        id=uuid4(),
+        tenant_id=uuid4(),
+        configuration={
+            "workforce_role_code": "ai_trader",
+            "workforce_capability_contract": [
+                {
+                    "operation": "market_research",
+                    "capability_code": "workforce.market_research",
+                    "tool_names": ["workforce_market_research"],
+                    "required_permissions": ["run.execute"],
+                    "approval_required": False,
+                },
+            ],
+        },
+        permission_policy={
+            "permissions": ["run.execute"],
+            "allowed_tools": ["workforce_market_research"],
+        },
+    )
+    events = []
+
+    async def workforce_operation(db, *, agent, operation, affected_employee_id=None):
+        events.append(("workforce_operation", operation, affected_employee_id))
+
+    def workforce_binding(role_code, operation, tool_name):
+        events.append(("workforce_binding", role_code, operation, tool_name))
+
+    async def agent_authorized(*_args, **_kwargs):
+        events.append(("agent_authorized",))
+
+    class Tool:
+        required_permission = "run.execute"
+        requires_approval = False
+
+    def get_tool(tool_name):
+        events.append(("registry_get", tool_name))
+        return Tool()
+
+    async def execute_tool(tool_name, arguments, **kwargs):
+        events.append(("registry_execute", tool_name, arguments))
+        return {"ok": True}
+
+    monkeypatch.setattr(agent_execution_adapter, "assert_workforce_operation", workforce_operation)
+    monkeypatch.setattr(agent_execution_adapter, "assert_workforce_tool_binding", workforce_binding)
+    monkeypatch.setattr(agent_execution_adapter, "assert_agent_can_execute", agent_authorized)
+    monkeypatch.setattr(agent_execution_adapter.registry, "get", get_tool)
+    monkeypatch.setattr(agent_execution_adapter.registry, "execute", execute_tool)
+
+    result = await agent_execution_adapter.AgentExecutionAdapter(object()).execute_tool(
+        agent=agent,
+        tool_name="workforce_market_research",
+        arguments={"symbols": ["BTCUSDT"], "horizon_days": 30},
+        workforce_operation="market_research",
+    )
+
+    assert result == {"ok": True}
+    assert [event[0] for event in events] == [
+        "workforce_operation",
+        "workforce_binding",
+        "registry_get",
+        "agent_authorized",
+        "registry_execute",
+    ]
+    assert events[0][1] == "market_research"
+    assert events[1] == (
+        "workforce_binding",
+        "ai_trader",
+        "market_research",
+        "workforce_market_research",
+    )
+
+
+@pytest.mark.asyncio
+async def test_workforce_stale_capability_snapshot_is_denied_before_tool_resolution():
+    agent = SimpleNamespace(
+        id=uuid4(),
+        tenant_id=uuid4(),
+        configuration={
+            "workforce_role_code": "ai_trader",
+            "workforce_capability_contract": [],
+        },
+        permission_policy={"permissions": ["run.execute"], "allowed_tools": ["workforce_market_research"]},
+    )
+
+    def fail_if_resolved(_name):
+        raise AssertionError("stale workforce capability must be denied before registry resolution")
+
+    monkeypatch = pytest.MonkeyPatch()
+    try:
+        monkeypatch.setattr(agent_execution_adapter.registry, "get", fail_if_resolved)
+        with pytest.raises(
+            agent_execution_adapter.ValidationAppError,
+            match="capability contract is stale",
+        ):
+            await agent_execution_adapter.AgentExecutionAdapter(object()).execute_tool(
+                agent=agent,
+                tool_name="workforce_market_research",
+                arguments={"symbols": ["BTCUSDT"]},
+                workforce_operation="market_research",
+            )
+    finally:
+        monkeypatch.undo()
