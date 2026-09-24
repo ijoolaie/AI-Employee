@@ -254,7 +254,7 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
-            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization",
+            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization", "workforce_prepare_budget_estimate",
         }:
             result = await tool.handler(
                 arguments,
@@ -604,6 +604,23 @@ async def _workforce_request_capacity(arguments: dict[str, Any], **context):
         "window_start": forecast.window_start.isoformat(),
         "window_end": forecast.window_end.isoformat(),
     }
+
+
+async def _workforce_prepare_budget_estimate(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    if db is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_prepare_budget_estimate requires an active tenant Run context"
+        )
+    from app.services import optimization_service
+
+    estimate = await optimization_service.tenant_budget_estimate(
+        db,
+        tenant_id=tenant_id,
+    )
+    estimate["period_start"] = estimate["period_start"].isoformat()
+    return estimate
 
 
 async def _workforce_prepare_cost_optimization(arguments: dict[str, Any], **context):
@@ -1011,6 +1028,22 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_workforce_request_capacity,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_budget_estimate",
+            description="Read-only tenant-scoped month-end usage budget estimate from measured plan consumption; not accounting or financial commitment advice.",
+            input_schema={
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False,
+            },
+            handler=_workforce_prepare_budget_estimate,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
