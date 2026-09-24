@@ -93,7 +93,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         capability_contract=_contracts(
             ("assign_task", "reprioritize_task", "coordinate_handoff", "balance_workload", "request_workforce_capacity", "prepare_ceo_report", "prepare_budget_estimate", "prepare_cost_optimization"),
             ("hire_or_provision_employee", "retire_employee", "transfer_employee", "replace_employee", "financial_commitment", "material_resource_commitment", "security_sensitive_change", "legal_commitment", "production_critical_change", "irreversible_action"),
-            {"prepare_ceo_report": ("workforce_prepare_ceo_report",)},
+            {"request_workforce_capacity": ("workforce_request_capacity",), "prepare_ceo_report": ("workforce_prepare_ceo_report",)},
         ),
     ),
     WorkforceRole(

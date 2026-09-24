@@ -254,7 +254,7 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
-            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content",
+            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity",
         }:
             result = await tool.handler(
                 arguments,
@@ -564,6 +564,46 @@ async def _workforce_market_trading_plan(arguments: dict[str, Any], **context):
     )
 
 
+
+
+async def _workforce_request_capacity(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    if db is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_request_capacity requires an active tenant Run context"
+        )
+    from app.services import capacity_forecasting
+
+    forecast = await capacity_forecasting.capacity_forecast(
+        db,
+        tenant_id=tenant_id,
+        window_days=arguments.get("window_days", 30),
+        horizon_days=arguments.get("horizon_days", 7),
+    )
+    return {
+        "tenant_id": str(forecast.tenant_id),
+        "window_days": forecast.window_days,
+        "horizon_days": forecast.horizon_days,
+        "sample_count": forecast.sample_count,
+        "demand_samples_per_day": forecast.demand_samples_per_day,
+        "average_run_duration_seconds": forecast.average_run_duration_seconds,
+        "current_ready_items": forecast.current_ready_items,
+        "current_active_work_items": forecast.current_active_work_items,
+        "total_max_concurrency": forecast.total_max_concurrency,
+        "total_available_slots": forecast.total_available_slots,
+        "projected_arrivals": forecast.projected_arrivals,
+        "projected_required_concurrency": forecast.projected_required_concurrency,
+        "projected_utilization": forecast.projected_utilization,
+        "projected_backlog": forecast.projected_backlog,
+        "lower_bound_required_concurrency": forecast.lower_bound_required_concurrency,
+        "upper_bound_required_concurrency": forecast.upper_bound_required_concurrency,
+        "evidence_complete": forecast.evidence_complete,
+        "rationale": forecast.rationale,
+        "contract_version": forecast.contract_version,
+        "window_start": forecast.window_start.isoformat(),
+        "window_end": forecast.window_end.isoformat(),
+    }
 
 
 async def _workforce_prepare_ceo_report(arguments: dict[str, Any], **context):
@@ -933,6 +973,25 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_workforce_market_research,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_request_capacity",
+            description="Read-only tenant-scoped workforce capacity forecast for the Internal Manager; reports demand and capacity evidence without scaling or lifecycle side effects.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "window_days": {"type": "integer", "minimum": 1, "maximum": 90, "default": 30},
+                    "horizon_days": {"type": "integer", "minimum": 1, "maximum": 30, "default": 7},
+                },
+                "additionalProperties": False,
+            },
+            handler=_workforce_request_capacity,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
