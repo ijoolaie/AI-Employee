@@ -547,6 +547,7 @@ const approvals = {
   rejectWorkflow: "Reject Workflow",
   approveRun: "Approve & Run",
   reject: "Reject",
+  statusLabels: { pending: "Pending", approved: "Approved", rejected: "Rejected", expired: "Expired" },
 } as const;
 
 const approvalsFa = {
@@ -574,6 +575,7 @@ const approvalsFa = {
   rejectWorkflow: "رد گردش‌کار",
   approveRun: "تأیید و اجرا",
   reject: "رد",
+  statusLabels: { pending: "در انتظار", approved: "تأیید شده", rejected: "رد شده", expired: "منقضی شده" },
 } as const;
 
 const schedules = {
