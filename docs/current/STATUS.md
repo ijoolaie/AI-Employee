@@ -4,7 +4,7 @@
 **Certified release baseline:** `v1.4.11`  
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
-**Mainline engineering head:** `7434808483b10a8b6ae78ba92a7174f280e04a92`  
+**Mainline engineering head:** `0671b31e9a4b8017e2aa418755cebc0bf5c900f3`  
 **Status date:** 2026-09-24  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
@@ -84,6 +84,11 @@ The `workforce_market_research`, `workforce_market_risk_analysis`, and `workforc
 PR #658 is now merged on mainline at `5aef9a245d2e7a065b11b6eb0f60883842e06c3c`. PR #662 subsequently added the read-only `workforce_market_trading_plan` semantic capability and explicit `prepare_trading_plan` binding; its squash merge is `7434808483b10a8b6ae78ba92a7174f280e04a92`. The trading-plan provider contract is fail-closed, tenant-context-bound, and explicitly non-executing: it prepares a plan but does not place orders or allocate capital. The hardening work included explicit staging-secret placeholder validation, service-boundary validation for market-research inputs, provider-boundary tests, and a correction to the production secret-management validator so indented Compose declarations and line-local environment assignments are parsed correctly. All 16 required final check runs for the merge candidate completed successfully.
 
 **Next implementation gate:** add further dedicated semantic workforce tools only where the operation can be implemented with a real, tenant-safe handler; then bind each operation explicitly and add runtime integration coverage for role authorization, capability freshness, tool binding, permissions, approval state, tenant identity, and execution provenance. Unsupported operations remain denied until such a binding exists.
+
+## Workforce Tool Registry dispatch hardening — 2026-09-24
+
+PR #664 is merged at `0671b31e9a4b8017e2aa418755cebc0bf5c900f3`. The three governed semantic market tools now execute through their registered `RegisteredTool.handler` implementations; duplicate name-based service dispatch was removed from `ToolRegistry.execute()`. Post-merge backend, frontend, architecture, infrastructure, validation, SLO, CodeQL and DAST checks all passed. This remains post-v1.4.11 engineering and does not alter the certified release identity.
+
 
 ## Current frontier
 
