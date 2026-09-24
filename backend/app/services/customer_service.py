@@ -1,4 +1,5 @@
 import uuid
+from app.core.exceptions import ConflictError
 
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
@@ -63,6 +64,54 @@ async def upsert_customer(
         if channel:
             customer.last_channel = channel
     await db.flush()
+    await db.refresh(customer)
+    return customer
+
+
+async def create_customer(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    actor_id: uuid.UUID | None = None,
+    external_key: str | None = None,
+    name=None,
+    email=None,
+    phone=None,
+    tags=None,
+    notes=None,
+) -> Customer:
+    key = external_key or f"manual:{uuid.uuid4()}"
+    existing = (
+        await db.execute(
+            select(Customer).where(
+                Customer.tenant_id == tenant_id,
+                Customer.external_key == key,
+            )
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        raise ConflictError("Customer external key already exists")
+    customer = Customer(
+        tenant_id=tenant_id,
+        external_key=key,
+        name=name,
+        email=email,
+        phone=phone,
+        tags=tags or [],
+        notes=notes,
+        is_active=True,
+    )
+    db.add(customer)
+    await db.flush()
+    await audit_service.record(
+        db,
+        tenant_id=tenant_id,
+        actor_id=actor_id,
+        action="customer.created",
+        resource_type="customer",
+        resource_id=str(customer.id),
+        metadata={"external_key": key},
+    )
     await db.refresh(customer)
     return customer
 
