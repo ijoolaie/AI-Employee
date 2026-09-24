@@ -12,7 +12,7 @@ export const resellerMessages = {
     teamTitle: "Human Employees", teamDescription: "People operating the reseller service desk and client success function.", roles: "Roles", noRole: "No role", teamLoading: "Loading…",
     aiTitle: "AI Employees", aiDescription: "Your reseller's internal AI workforce. Client AI employees remain isolated inside each client workspace.",
     internalAiWorkforce: "Internal AI workforce", newAiEmployee: "New AI employee", noInternalAi: "No internal AI employees",
-    noInternalAiText: "Create AI roles for reseller operations such as support triage, sales, marketing, finance, or account management.", aiLoadError: "Unable to load AI employees."
+    noInternalAiText: "Create AI roles for reseller operations such as support triage, sales, marketing, finance, or account management.", aiLoadError: "Unable to load AI employees.", workflowsCatalog: "Operational workflows", workflowsDescription: "Manage reseller-owned workflows in this tenant. Client workflows remain isolated.", workflowManage: "Manage workflows", workflowsLoading: "Loading workflows…", workflowsError: "Could not load workflows.", noWorkflows: "No reseller workflows yet", noWorkflowsText: "Create a workflow for reseller-owned operational automation.", workflowActive: "Active", workflowDisabled: "Disabled", workflowBuilder: "Builder"
   },
   fa: {
     workspace: "فضای کاری نماینده", fallback: "نماینده", overview: "نمای کلی", clients: "مشتریان", humanEmployees: "کارمندان انسانی", aiEmployees: "کارمندان هوش مصنوعی",
@@ -27,6 +27,6 @@ export const resellerMessages = {
     teamTitle: "کارمندان انسانی", teamDescription: "افرادی که میز خدمات نماینده و امور موفقیت مشتری را مدیریت می‌کنند.", roles: "نقش‌ها", noRole: "بدون نقش", teamLoading: "در حال بارگذاری…",
     aiTitle: "کارمندان هوش مصنوعی", aiDescription: "نیروی کار هوش مصنوعی داخلی نماینده. کارمندان هوش مصنوعی مشتریان در فضای کاری هر مشتری جدا باقی می‌مانند.",
     internalAiWorkforce: "نیروی کار هوش مصنوعی داخلی", newAiEmployee: "کارمند هوش مصنوعی جدید", noInternalAi: "کارمند هوش مصنوعی داخلی وجود ندارد",
-    noInternalAiText: "برای عملیات نماینده مانند دسته‌بندی پشتیبانی، فروش، بازاریابی، مالی یا مدیریت حساب، نقش‌های هوش مصنوعی ایجاد کنید.", aiLoadError: "بارگذاری کارمندان هوش مصنوعی انجام نشد."
+    noInternalAiText: "برای عملیات نماینده مانند دسته‌بندی پشتیبانی، فروش، بازاریابی، مالی یا مدیریت حساب، نقش‌های هوش مصنوعی ایجاد کنید.", aiLoadError: "بارگذاری کارمندان هوش مصنوعی انجام نشد.", workflowsCatalog: "گردش‌کارهای عملیاتی", workflowsDescription: "گردش‌کارهای متعلق به نماینده را در این تننت مدیریت کنید؛ گردش‌کارهای مشتریان جدا باقی می‌مانند.", workflowManage: "مدیریت گردش‌کارها", workflowsLoading: "در حال بارگذاری گردش‌کارها…", workflowsError: "بارگذاری گردش‌کارها انجام نشد.", noWorkflows: "هنوز گردش‌کاری برای نماینده وجود ندارد", noWorkflowsText: "برای اتوماسیون عملیات متعلق به نماینده یک گردش‌کار ایجاد کنید.", workflowActive: "فعال", workflowDisabled: "غیرفعال", workflowBuilder: "سازنده"
   }
 } as const;
