@@ -21,7 +21,7 @@ def test_registry_contains_controlled_initial_tools():
         "invoice_financial_summary", "create_order", "update_order_status", "analyze_order_file",
         "order_summary", "link_order_invoice", "create_deal", "update_deal_stage",
         "sales_pipeline_summary", "sales_forecast", "search_products", "get_product",
-        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan", "workforce_prepare_ceo_report", "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity",
+        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan", "workforce_prepare_ceo_report", "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization",
     }
     assert registry.get("send_email").side_effects is True
     assert registry.get("send_email").requires_approval is True
@@ -235,6 +235,63 @@ async def test_workforce_request_capacity_dispatches_registered_handler(monkeypa
     assert result["sample_count"] == 42
     assert result["contract_version"] == "stage9-capacity-forecast-v1"
     assert result["tenant_id"] == str(tenant_id)
+
+
+def test_workforce_prepare_cost_optimization_is_read_only_and_non_approval_gated():
+    tool = registry.get("workforce_prepare_cost_optimization")
+    assert tool.side_effects is False
+    assert tool.requires_approval is False
+    assert tool.required_permission == "run.execute"
+
+
+@pytest.mark.asyncio
+async def test_workforce_prepare_cost_optimization_requires_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "workforce_prepare_cost_optimization",
+            {},
+            permissions={"run.execute"},
+            allowed_tools={"workforce_prepare_cost_optimization"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_workforce_prepare_cost_optimization_dispatches_registered_handler(monkeypatch):
+    from datetime import datetime, timezone
+    from app.services import license_service, optimization_service
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    async def optimization_summary(db, *, tenant_id):
+        assert db == "db-context"
+        assert tenant_id == "tenant-context"
+        return {
+            "period_start": datetime(2026, 9, 1, tzinfo=timezone.utc),
+            "plan": "pro",
+            "usage": {"runs": 12, "tokens": 3400, "employees": 2},
+            "cost_usd": 4.5,
+            "successful_work_items": 10,
+            "cost_per_successful_work_item_usd": 0.45,
+            "budget": {"state": "ok", "run_utilization": 0.12, "token_utilization": 0.03, "remaining_runs": 88, "remaining_tokens": 6600},
+            "optimization_actions": ["Continue observing unit cost."],
+        }
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+    monkeypatch.setattr(optimization_service, "tenant_optimization_summary", optimization_summary)
+
+    result = await registry.execute(
+        "workforce_prepare_cost_optimization",
+        {},
+        permissions={"run.execute"},
+        allowed_tools={"workforce_prepare_cost_optimization"},
+        db="db-context",
+        tenant_id="tenant-context",
+    )
+    assert result["period_start"] == "2026-09-01T00:00:00+00:00"
+    assert result["plan"] == "pro"
+    assert result["budget"]["state"] == "ok"
+    assert result["optimization_actions"] == ["Continue observing unit cost."]
 
 
 def test_workforce_prepare_ceo_report_is_read_only_and_non_approval_gated():
