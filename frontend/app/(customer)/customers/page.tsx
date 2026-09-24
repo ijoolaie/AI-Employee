@@ -6,19 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
-import { listCustomers, updateCustomer, getErrorMessage } from "@/lib/api";
+import { listCustomers, createCustomer, updateCustomer, getErrorMessage } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
 import { Search, Users, Phone, Mail, RefreshCw } from "lucide-react";
 import { useI18n } from "@/lib/i18n/provider";
 
 export default function CustomersPage(){
- const [q,setQ]=useState(""); const [editingId,setEditingId]=useState<string|null>(null); const [name,setName]=useState(""); const [email,setEmail]=useState(""); const [phone,setPhone]=useState(""); const [notes,setNotes]=useState(""); const [active,setActive]=useState(true);
+ const [q,setQ]=useState(""); const [creating,setCreating]=useState(false); const [newName,setNewName]=useState(""); const [newEmail,setNewEmail]=useState(""); const [newPhone,setNewPhone]=useState(""); const [newNotes,setNewNotes]=useState(""); const [createError,setCreateError]=useState(""); const [editingId,setEditingId]=useState<string|null>(null); const [name,setName]=useState(""); const [email,setEmail]=useState(""); const [phone,setPhone]=useState(""); const [notes,setNotes]=useState(""); const [active,setActive]=useState(true);
  const qc=useQueryClient(); const { t } = useI18n(); const m=t.customers;
  const query=useQuery({queryKey:["customers",q],queryFn:()=>listCustomers(q),refetchInterval:15000});
+ const createMut=useMutation({mutationFn:()=>createCustomer({name:newName.trim()||null,email:newEmail.trim()||null,phone:newPhone.trim()||null,notes:newNotes.trim()||null}),onSuccess:()=>{setCreating(false);setNewName("");setNewEmail("");setNewPhone("");setNewNotes("");setCreateError("");void qc.invalidateQueries({queryKey:["customers"]});},onError:(e)=>setCreateError(getErrorMessage(e).toLowerCase().includes("permission")?m.permissionDenied:m.createError),});
  const mut=useMutation({mutationFn:()=>updateCustomer(editingId!,{name:name.trim()||null,email:email.trim()||null,phone:phone.trim()||null,notes:notes.trim()||null,is_active:active}),onSuccess:()=>{setEditingId(null);void qc.invalidateQueries({queryKey:["customers"]});},});
  const start=(c: import("@/types").Customer)=>{setEditingId(c.id);setName(c.name??"");setEmail(c.email??"");setPhone(c.phone??"");setNotes(c.notes??"");setActive(c.is_active);};
  const permissionDenied=!!query.error&&getErrorMessage(query.error).toLowerCase().includes("permission");
- return <><Header title={m.title} description={m.description}/><div className="space-y-5 p-6">
+ return <><Header title={m.title} description={m.description} actions={<Button size="sm" onClick={()=>setCreating(true)}>{m.create}</Button>}/><div className="space-y-5 p-6">{creating&&<Card><CardHeader><CardTitle>{m.createTitle}</CardTitle></CardHeader><CardContent><div className="grid gap-3 md:grid-cols-2"><Input value={newName} onChange={e=>setNewName(e.target.value)} placeholder={m.name} aria-label={m.name}/><Input value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder={m.email} aria-label={m.email}/><Input value={newPhone} onChange={e=>setNewPhone(e.target.value)} placeholder={m.phone} aria-label={m.phone}/><Input value={newNotes} onChange={e=>setNewNotes(e.target.value)} placeholder={m.notes} aria-label={m.notes}/><div className="flex gap-2"><Button loading={createMut.isPending} disabled={!newName.trim()&&!newEmail.trim()&&!newPhone.trim()} onClick={()=>createMut.mutate()}>{m.save}</Button><Button variant="outline" disabled={createMut.isPending} onClick={()=>setCreating(false)}>{m.cancel}</Button></div></div>{createError&&<p role="alert" className="mt-3 text-sm text-red-600">{createError}</p>}</CardContent></Card>}
  <div className="max-w-xl"><div className="relative"><Search className="absolute start-3 top-2.5 h-4 w-4 text-slate-400"/><Input className="ps-9" value={q} onChange={e=>setQ(e.target.value)} placeholder={m.searchPlaceholder}/></div></div>
  {permissionDenied&&<div role="alert" className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">{m.permissionDenied}</div>}
  <Card><CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5"/>{m.directory}</CardTitle></CardHeader><CardContent className="p-0">
