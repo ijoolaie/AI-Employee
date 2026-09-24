@@ -91,3 +91,28 @@ async def test_agent_approval_requires_explicit_delegation_policy():
 async def test_agent_approval_is_tenant_scoped():
     with pytest.raises(NotFoundError, match="not found"):
         await approval_service._authorize_agent_decision(Db(None), agent_id=uuid4(), tenant_id=uuid4(), approval=SimpleNamespace(tool_name="crm.lookup"))
+
+
+@pytest.mark.asyncio
+async def test_create_request_preserves_requester_and_emits_one_audit_event(monkeypatch):
+    tenant_id, run_id, requester_id = uuid4(), uuid4(), uuid4()
+    run = SimpleNamespace(id=run_id, tenant_id=tenant_id, request_id="req-create", status="running", created_by=requester_id)
+    audit = []
+
+    async def record(*args, **kwargs):
+        audit.append(kwargs)
+
+    monkeypatch.setattr(approval_service.audit_service, "record", record)
+    approval = await approval_service.create_request(
+        Db(),
+        run=run,
+        tool_name="create_order",
+        tool_call_id="call-1",
+        arguments={"x": 1},
+        continuation_messages=[],
+        requested_by=run.created_by,
+    )
+
+    assert approval.requested_by == requester_id
+    assert run.status == "waiting"
+    assert [item["action"] for item in audit] == ["tool.approval_requested"]
