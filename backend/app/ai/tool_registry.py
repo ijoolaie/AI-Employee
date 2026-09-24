@@ -254,7 +254,7 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
-            "workforce_prepare_growth_report",
+            "workforce_prepare_growth_report", "workforce_draft_campaign_plan",
         }:
             result = await tool.handler(
                 arguments,
@@ -581,6 +581,25 @@ async def _workforce_prepare_ceo_report(arguments: dict[str, Any], **context):
         tenant_id=tenant_id,
         window_days=window_days,
     )
+
+async def _workforce_draft_campaign_plan(arguments: dict[str, Any], **context):
+    tenant_id = context.get("tenant_id")
+    if context.get("db") is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_draft_campaign_plan requires an active tenant Run context"
+        )
+    from app.services.workforce_marketing_campaign_plan_service import draft_campaign_plan
+
+    return draft_campaign_plan(
+        tenant_id=str(tenant_id),
+        objective=arguments["objective"],
+        audience=arguments["audience"],
+        channels=arguments["channels"],
+        duration_days=int(arguments.get("duration_days", 30)),
+        budget=arguments.get("budget"),
+        offer=arguments.get("offer"),
+    )
+
 
 async def _workforce_prepare_growth_report(arguments: dict[str, Any], **context):
     db = context.get("db")
@@ -914,6 +933,36 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_workforce_prepare_ceo_report,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_draft_campaign_plan",
+            description="Read-only tenant-scoped draft campaign plan for the AI Marketing Manager; planning only, with no campaign launch, external spend, or external-system side effects.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "objective": {"type": "string", "minLength": 1, "maxLength": 500},
+                    "audience": {"type": "string", "minLength": 1, "maxLength": 500},
+                    "channels": {
+                        "type": "array",
+                        "items": {"type": "string", "minLength": 1, "maxLength": 100},
+                        "minItems": 1,
+                        "maxItems": 20,
+                        "uniqueItems": True,
+                    },
+                    "duration_days": {"type": "integer", "minimum": 1, "maximum": 365, "default": 30},
+                    "budget": {"type": "number", "minimum": 0},
+                    "offer": {"type": "string", "maxLength": 1000},
+                },
+                "required": ["objective", "audience", "channels"],
+                "additionalProperties": False,
+            },
+            handler=_workforce_draft_campaign_plan,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
