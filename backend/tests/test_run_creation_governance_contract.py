@@ -46,3 +46,16 @@ def test_known_run_creation_entrypoints_exist():
 
     for path in expected:
         assert (BACKEND / path).exists(), path
+
+
+def test_run_creation_persists_lifecycle_audit_event():
+    """Every durable Run creation must emit exactly one tenant-scoped audit event."""
+    source = _read("app/services/run_service.py")
+
+    assert source.count('action="run.created"') == 1
+    assert 'resource_type="run"' in source
+    assert 'resource_id=run.id' in source
+    assert 'actor_id=created_by' in source
+    assert '"employee_id": str(employee.id)' in source
+    assert '"employee_version": version.version_number' in source
+    assert '"agent_instance_id": str(agent_instance_id)' in source
