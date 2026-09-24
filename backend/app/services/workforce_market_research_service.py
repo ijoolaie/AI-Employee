@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlparse
 
+import re
+
 import httpx
 
 from app.core.config import get_settings
@@ -38,10 +40,16 @@ async def market_research(
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValidationAppError("Market research provider URL is invalid; fail-closed")
 
+    if not isinstance(horizon_days, int) or isinstance(horizon_days, bool) or not 1 <= horizon_days <= 365:
+        raise ValidationAppError("Market research horizon_days must be between 1 and 365")
+
     normalized_symbols = [symbol.strip().upper() for symbol in symbols]
     if not normalized_symbols or len(normalized_symbols) > 20:
         raise ValidationAppError("Market research requires between 1 and 20 symbols")
-    if any(not symbol or len(symbol) > 32 for symbol in normalized_symbols):
+    if len(set(normalized_symbols)) != len(normalized_symbols):
+        raise ValidationAppError("Market research symbols must be unique")
+    symbol_pattern = re.compile(r"^[A-Z0-9][A-Z0-9._:-]{0,31}$")
+    if any(not symbol_pattern.fullmatch(symbol) for symbol in normalized_symbols):
         raise ValidationAppError("Market research symbol is invalid")
 
     endpoint = base_url.rstrip("/") + "/v1/market/research"
