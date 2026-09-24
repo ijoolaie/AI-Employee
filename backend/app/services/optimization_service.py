@@ -61,6 +61,47 @@ def budget_status(*, used_runs: int, run_limit: int, used_tokens: int, token_lim
     }
 
 
+async def tenant_budget_estimate(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    now: datetime | None = None,
+) -> dict[str, object]:
+    """Estimate month-end plan usage from measured month-to-date consumption."""
+    now = now or datetime.now(timezone.utc)
+    subscription = await billing_service.get_subscription(db, tenant_id=tenant_id)
+    usage = await billing_service.monthly_usage(db, tenant_id=tenant_id, now=now)
+    days_in_month = (billing_service._period_start(now).replace(month=now.month + 1) - billing_service._period_start(now)).days if now.month < 12 else (billing_service._period_start(now).replace(year=now.year + 1, month=1) - billing_service._period_start(now)).days
+    days_elapsed = max(1, now.day)
+    run_limit = subscription.plan.monthly_runs
+    token_limit = subscription.plan.monthly_tokens
+    projected_runs = int(math.ceil(usage["runs"] / days_elapsed * days_in_month))
+    projected_tokens = int(math.ceil(usage["tokens"] / days_elapsed * days_in_month))
+    projected_run_utilization = projected_runs / run_limit if run_limit > 0 else 1.0
+    projected_token_utilization = projected_tokens / token_limit if token_limit > 0 else 1.0
+    projected_ratio = max(projected_run_utilization, projected_token_utilization)
+    projected_state = "ok" if projected_ratio < 0.80 else "warning" if projected_ratio < 1.0 else "exhausted"
+    return {
+        "period_start": billing_service._period_start(now),
+        "plan": subscription.plan.code,
+        "days_elapsed": days_elapsed,
+        "days_in_month": days_in_month,
+        "usage": usage,
+        "limits": {"runs": run_limit, "tokens": token_limit},
+        "projected_month_end": {"runs": projected_runs, "tokens": projected_tokens},
+        "projected_utilization": {
+            "runs": round(projected_run_utilization, 4),
+            "tokens": round(projected_token_utilization, 4),
+        },
+        "projected_state": projected_state,
+        "remaining_at_current_usage": {
+            "runs": max(0, run_limit - usage["runs"]),
+            "tokens": max(0, token_limit - usage["tokens"]),
+        },
+        "scope": "usage-plan budget estimate only; not accounting, cash-flow, or financial commitment advice",
+    }
+
+
 async def tenant_optimization_summary(
     db: AsyncSession,
     *,
