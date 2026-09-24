@@ -1,11 +1,26 @@
 from uuid import UUID
 from fastapi import APIRouter
-from app.core.deps import CustomerReadContext, CustomerUpdateContext, DbSession
+from app.core.deps import CustomerCreateContext, CustomerReadContext, CustomerUpdateContext, DbSession
 from app.schemas.common import APIResponse
-from app.schemas.customer import CustomerResponse, CustomerUpdate
+from app.schemas.customer import CustomerCreate, CustomerResponse, CustomerUpdate
 from app.services import customer_service
 
 router = APIRouter(prefix="/customers", tags=["customers"])
+
+@router.post("", response_model=APIResponse[CustomerResponse], status_code=201)
+async def create_customer(payload: CustomerCreate, ctx: CustomerCreateContext, db: DbSession):
+    row = await customer_service.create_customer(
+        db,
+        tenant_id=ctx.tenant_id,
+        actor_id=ctx.user.id,
+        external_key=payload.external_key,
+        name=payload.name,
+        email=payload.email,
+        phone=payload.phone,
+        tags=payload.tags,
+        notes=payload.notes,
+    )
+    return APIResponse(success=True, data=CustomerResponse.model_validate(row, from_attributes=True))
 
 @router.get("", response_model=APIResponse[list[CustomerResponse]])
 async def list_customers(ctx: CustomerReadContext, db: DbSession, q: str | None = None):

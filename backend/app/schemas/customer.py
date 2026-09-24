@@ -2,6 +2,15 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field
 
+class CustomerCreate(BaseModel):
+    name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    notes: str | None = None
+    external_key: str | None = Field(default=None, max_length=160)
+
+
 class CustomerResponse(BaseModel):
     id: UUID
     external_key: str
@@ -11,6 +20,7 @@ class CustomerResponse(BaseModel):
     tags: list
     notes: str | None
     last_channel: str | None
+    is_active: bool
     created_at: datetime
     updated_at: datetime
 
