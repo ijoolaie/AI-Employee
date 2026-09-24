@@ -23,6 +23,7 @@ function isPermissionError(error: unknown) {
 export default function TasksPage() {
   const { t } = useI18n();
   const m = t.tasks;
+  const statusLabel = (status: string) => m.statusLabels[status as keyof typeof m.statusLabels] ?? status;
   const q = useQuery({ queryKey: ["work-items"], queryFn: () => listWorkItems() });
   const tasks = [...(q.data ?? [])].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
@@ -46,9 +47,9 @@ export default function TasksPage() {
               <span className="font-medium text-brand-700">{task.title}</span>
               <p className="mt-1 text-xs text-gray-500">{formatDate(task.created_at)} · {task.id.slice(0, 12)}…</p>
             </div>
-            <Badge status={task.status} />
+            <Badge status={statusLabel(task.status)} />
           </div>
-          <p className="mt-3 line-clamp-2 text-sm text-gray-600">{String(task.input_data?.message ?? task.description ?? "Work item")}</p>
+          <p className="mt-3 line-clamp-2 text-sm text-gray-600">{String(task.input_data?.message ?? task.description ?? m.workItem)}</p>
           <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
             <span>{m.priority} {task.priority}</span>
             <span>{active.includes(task.status) ? m.inProgress : m.completedLifecycle}</span>
