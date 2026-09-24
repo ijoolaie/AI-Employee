@@ -35,7 +35,7 @@ The engineering/product core is release-certified. The remaining launch blockers
 
 | ID | Area | Classification | Current finding | What is required | Code change? |
 |---|---|---|---|---|---|
-| CR-01 | Release identity | 🟢 | `v1.4.9` exact SHA certified and published | Preserve SHA/tag/checksums as launch identity | No |
+| CR-01 | Release identity | 🟢 | `v1.4.11` exact SHA certified and published | Preserve SHA/tag/checksums as launch identity | No |
 | CR-02 | Backend | 🟢 | Certified by release certification | No additional launch code indicated | No |
 | CR-03 | Frontend | 🟢 | Certified by release certification | No additional launch code indicated | No |
 | CR-04 | DB/migrations | 🟢 | Migration and single-head checks passed | Validate again on target deployment | No |
@@ -73,7 +73,7 @@ These issues should be updated/reconciled as evidence is produced. Do not close 
 
 Engineering/release evidence includes:
 
-- exact-SHA Production Certification for `v1.4.9`;
+- exact-SHA Production Certification for `v1.4.11`;
 - backend/frontend/DB validation;
 - Auth/RBAC/tenant isolation product gates;
 - workflow, billing, WorkItem and core business flows;
@@ -97,7 +97,7 @@ Provision the approved target, DNS/TLS, ingress, PostgreSQL, Redis, object stora
 
 ### 2. Exact release deployment
 
-Deploy exactly `v1.4.9` / `f1ce20c010779f5273eb5d0051da24cdd57b33f6`, record deployment timestamp, image digests, migration revision and health checks.
+Deploy exactly `v1.4.11` / `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`, record deployment timestamp, image digests, migration revision and health checks.
 
 ### 3. Backup/DR
 
