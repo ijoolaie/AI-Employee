@@ -46,11 +46,11 @@ def main() -> None:
         )
 
     for name in OPTIONAL_SECRETS:
-        matches = re.findall(rf"^[ \\t]*{re.escape(name)}[ \\t]*:[ \\t]*(.+)$", compose, re.MULTILINE)
+        matches = re.findall(rf"^[ \t]*{re.escape(name)}[ \t]*:[ \t]*(.+)$", compose, re.MULTILINE)
         assert_true(matches, f"{name} is not declared in production compose")
         for value in matches:
             assert_true(
-                re.fullmatch(rf"\\$\\{{{re.escape(name)}:-\\}}", value.strip()),
+                re.fullmatch(rf"\$\{{{re.escape(name)}:-\}}", value.strip()),
                 f"{name} must use an environment substitution with an empty fallback",
             )
 
@@ -62,7 +62,7 @@ def main() -> None:
             continue
         text = path.read_text(encoding="utf-8")
         for name in CRITICAL + OPTIONAL_SECRETS:
-            for match in re.finditer(rf"^[ \\t]*{re.escape(name)}[ \\t]*=[ \\t]*(.*)$", text, re.MULTILINE):
+            for match in re.finditer(rf"^[ \t]*{re.escape(name)}[ \t]*(.*)$", text, re.MULTILINE):
                 value = match.group(1).strip()
                 assert_true(is_placeholder(name, value), f"{path.relative_to(ROOT)} contains a concrete value for {name}")
 
