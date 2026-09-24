@@ -254,7 +254,7 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
-            "workforce_prepare_growth_report", "workforce_draft_campaign_plan",
+            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content",
         }:
             result = await tool.handler(
                 arguments,
@@ -581,6 +581,24 @@ async def _workforce_prepare_ceo_report(arguments: dict[str, Any], **context):
         tenant_id=tenant_id,
         window_days=window_days,
     )
+
+async def _workforce_coordinate_content(arguments: dict[str, Any], **context):
+    tenant_id = context.get("tenant_id")
+    if context.get("db") is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_coordinate_content requires an active tenant Run context"
+        )
+    from app.services.workforce_marketing_content_coordination_service import coordinate_content
+
+    return coordinate_content(
+        tenant_id=str(tenant_id),
+        objective=arguments["objective"],
+        channels=arguments["channels"],
+        audience=arguments["audience"],
+        key_message=arguments["key_message"],
+        offer=arguments.get("offer"),
+    )
+
 
 async def _workforce_draft_campaign_plan(arguments: dict[str, Any], **context):
     tenant_id = context.get("tenant_id")
@@ -933,6 +951,29 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_workforce_prepare_ceo_report,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_coordinate_content",
+            description="Read-only tenant-scoped marketing content work package; plans channel deliverables without publishing or external side effects.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "objective": {"type": "string", "minLength": 1, "maxLength": 500},
+                    "channels": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 100}, "minItems": 1, "maxItems": 20, "uniqueItems": True},
+                    "audience": {"type": "string", "minLength": 1, "maxLength": 500},
+                    "key_message": {"type": "string", "minLength": 1, "maxLength": 2000},
+                    "offer": {"type": "string", "maxLength": 1000},
+                },
+                "required": ["objective", "channels", "audience", "key_message"],
+                "additionalProperties": False,
+            },
+            handler=_workforce_coordinate_content,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,

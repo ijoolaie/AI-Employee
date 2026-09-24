@@ -106,7 +106,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         approval_class="routine_delegable",
         allowed_routine_operations=("draft_campaign_plan", "coordinate_content", "analyze_campaign_performance", "prepare_growth_report"),
         approval_required_operations=("paid_campaign_launch", "material_ad_spend", "contractual_commitment", "external_purchase"),
-        capability_contract=_contracts(["draft_campaign_plan","coordinate_content","analyze_campaign_performance","prepare_growth_report"], ["paid_campaign_launch","material_ad_spend","contractual_commitment","external_purchase"], {"draft_campaign_plan": ("workforce_draft_campaign_plan",), "prepare_growth_report": ("workforce_prepare_growth_report",)}),
+        capability_contract=_contracts(["draft_campaign_plan","coordinate_content","analyze_campaign_performance","prepare_growth_report"], ["paid_campaign_launch","material_ad_spend","contractual_commitment","external_purchase"], {"draft_campaign_plan": ("workforce_draft_campaign_plan",), "coordinate_content": ("workforce_coordinate_content",), "prepare_growth_report": ("workforce_prepare_growth_report",)}),
     ),
     WorkforceRole(
         code="ai_graphic_designer",

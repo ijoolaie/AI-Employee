@@ -164,3 +164,15 @@ def test_marketing_draft_campaign_plan_has_exact_semantic_tool_binding() -> None
     assert contract.tool_names == ("workforce_draft_campaign_plan",)
     assert contract.required_permissions == ("run.execute",)
     assert contract.approval_required is False
+
+
+
+def test_marketing_coordinate_content_has_exact_semantic_tool_binding() -> None:
+    from app.services.ai_workforce_roles import get_workforce_capability_contract
+
+    contract = get_workforce_capability_contract(
+        "ai_marketing_advertising_manager", "coordinate_content"
+    )
+    assert contract.tool_names == ("workforce_coordinate_content",)
+    assert contract.required_permissions == ("run.execute",)
+    assert contract.approval_required is False
