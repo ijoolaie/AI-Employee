@@ -158,6 +158,7 @@ SalesReadContext = Annotated[TenantContext, Depends(require_permission("sales.re
 SalesCreateContext = Annotated[TenantContext, Depends(require_permission("sales.create"))]
 SalesUpdateContext = Annotated[TenantContext, Depends(require_permission("sales.update"))]
 CustomerReadContext = Annotated[TenantContext, Depends(require_permission("customers.read"))]
+CustomerCreateContext = Annotated[TenantContext, Depends(require_permission("customers.create"))]
 CustomerUpdateContext = Annotated[TenantContext, Depends(require_permission("customers.update"))]
 InvoiceReadContext = Annotated[TenantContext, Depends(require_permission("invoices.read"))]
 InvoiceCreateContext = Annotated[TenantContext, Depends(require_permission("invoices.create"))]
