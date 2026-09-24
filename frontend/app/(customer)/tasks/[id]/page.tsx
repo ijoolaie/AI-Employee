@@ -82,7 +82,7 @@ export default function WorkItemDetailPage() {
               <p className="text-xs text-gray-500">{m.created} {formatDate(item.created_at)}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge status={statusLabel(item.status)} />
+              <Badge status={item.status}>{statusLabel(item.status)}</Badge>
               {item.executor_type && !["succeeded", "cancelled"].includes(item.status) && (
                 <Button size="sm" onClick={() => dispatchMutation.mutate()} loading={dispatchMutation.isPending} disabled={busy}>{m.dispatch}</Button>
               )}
@@ -125,7 +125,7 @@ export default function WorkItemDetailPage() {
           <div><h3 className="font-semibold">{m.executionResult}</h3><p className="text-xs text-gray-500">{m.executionResultDescription}</p></div>
           <div className="grid gap-3 text-sm sm:grid-cols-2">
             <div><dt className="text-gray-500">{m.status}</dt><dd className="font-medium">{statusLabel(item.status)}</dd></div>
-            <div><dt className="text-gray-500">{m.executor}</dt><dd>{item.executor_type ?? m.unassigned}</dd></div>
+            <div><dt className="text-gray-500">{m.executor}</dt><dd>{executorLabel(item.executor_type)}</dd></div>
           </div>
           {item.output_data && Object.keys(item.output_data).length > 0 ? <pre className="mt-4 overflow-x-auto rounded-lg bg-gray-50 p-3 text-xs">{JSON.stringify(item.output_data, null, 2)}</pre> : <p className="text-sm text-gray-500">{m.noOutput}</p>}
         </section>
