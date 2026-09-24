@@ -144,7 +144,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         capability_contract=_contracts(
             ["market_research","risk_analysis","prepare_trading_plan","stage_order_for_review"],
             ["capital_allocation","order_execution","leverage_change","withdrawal","material_financial_commitment"],
-            {"market_research": ("workforce_market_research",), "risk_analysis": ("workforce_market_risk_analysis",)},
+            {"market_research": ("workforce_market_research",), "risk_analysis": ("workforce_market_risk_analysis",), "prepare_trading_plan": ("workforce_market_trading_plan",)},
         ),
     ),
 )

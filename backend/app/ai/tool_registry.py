@@ -258,6 +258,16 @@ class ToolRegistry:
                 symbols=arguments["symbols"],
                 horizon_days=int(arguments.get("horizon_days", 30)),
             )
+        elif name == "workforce_market_trading_plan":
+            if db is None or tenant_id is None:
+                raise ValidationAppError("workforce_market_trading_plan requires an active tenant Run context")
+            from app.services.workforce_market_trading_plan_service import prepare_trading_plan
+            result = await prepare_trading_plan(
+                tenant_id=tenant_id,
+                symbols=arguments["symbols"],
+                horizon_days=int(arguments.get("horizon_days", 30)),
+                objective=arguments.get("objective", "balanced"),
+            )
         elif name == "workforce_market_risk_analysis":
             if db is None or tenant_id is None:
                 raise ValidationAppError("workforce_market_risk_analysis requires an active tenant Run context")
@@ -554,6 +564,22 @@ async def _workforce_market_risk_analysis(arguments: dict[str, Any], **context):
     )
 
 
+async def _workforce_market_trading_plan(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    if db is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_market_trading_plan requires an active tenant Run context"
+        )
+    from app.services.workforce_market_trading_plan_service import prepare_trading_plan
+    return await prepare_trading_plan(
+        tenant_id=tenant_id,
+        symbols=arguments["symbols"],
+        horizon_days=int(arguments.get("horizon_days", 30)),
+        objective=arguments.get("objective", "balanced"),
+    )
+
+
 async def _workforce_market_research(arguments: dict[str, Any], **context):
     db = context.get("db")
     tenant_id = context.get("tenant_id")
@@ -782,6 +808,27 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_analyze_document,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_market_trading_plan",
+            description="Read-only trading-plan preparation through the operator-configured market provider. It never places orders or allocates capital.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "symbols": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 32}, "minItems": 1, "maxItems": 20, "uniqueItems": True},
+                    "horizon_days": {"type": "integer", "minimum": 1, "maximum": 365, "default": 30},
+                    "objective": {"type": "string", "enum": ["conservative", "balanced", "growth"], "default": "balanced"},
+                },
+                "required": ["symbols"],
+                "additionalProperties": False,
+            },
+            handler=_workforce_market_trading_plan,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
