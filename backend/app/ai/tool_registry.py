@@ -254,12 +254,13 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
-            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization", "workforce_prepare_budget_estimate", "workforce_balance_workload", "workforce_assign_task", "workforce_reprioritize_task",
+            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization", "workforce_prepare_budget_estimate", "workforce_balance_workload", "workforce_assign_task", "workforce_reprioritize_task", "workforce_coordinate_handoff",
         }:
             result = await tool.handler(
                 arguments,
                 db=db,
                 tenant_id=tenant_id,
+                agent_instance_id=context.get("agent_instance_id"),
             )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
