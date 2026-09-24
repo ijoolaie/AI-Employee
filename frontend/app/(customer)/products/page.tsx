@@ -182,6 +182,37 @@ export default function ProductsPage() {
           )}
         </Card>
 
+        {editingId && (
+          <Card>
+            <CardHeader>
+              <CardTitle>{m.editTitle}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3 md:grid-cols-3">
+              <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder={m.namePlaceholder} className="rounded-lg border px-3 py-2 text-sm" aria-label={m.product} />
+              <input value={editSku} onChange={(e) => setEditSku(e.target.value)} placeholder={m.skuPlaceholder} className="rounded-lg border px-3 py-2 text-sm" aria-label={m.sku} />
+              <input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} placeholder={m.categoryPlaceholder} className="rounded-lg border px-3 py-2 text-sm" aria-label={m.category} />
+              <input type="number" min="0" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} className="rounded-lg border px-3 py-2 text-sm" aria-label={m.price} />
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={editActive} onChange={(e) => setEditActive(e.target.checked)} />
+                {editActive ? m.active : m.inactive}
+              </label>
+              <div className="flex gap-2">
+                <Button loading={editMut.isPending} disabled={!editName.trim() || Number(editPrice) < 0 || !Number.isFinite(Number(editPrice))} onClick={() => editMut.mutate()}>
+                  {m.saveChanges}
+                </Button>
+                <Button variant="outline" disabled={editMut.isPending} onClick={() => setEditingId(null)}>
+                  {m.cancel}
+                </Button>
+              </div>
+              {editMut.isError && (
+                <p role="alert" className="text-sm text-red-600 md:col-span-3">
+                  {getErrorMessage(editMut.error).toLowerCase().includes("permission") ? m.permissionDenied : m.updateError}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader className="space-y-4">
             <CardTitle>{m.catalog}</CardTitle>
@@ -278,27 +309,20 @@ export default function ProductsPage() {
                           <td className="px-5 py-3 text-slate-500">{p.source}</td>
                           <td className="px-5 py-3">{p.is_active ? m.active : m.inactive}</td>
                           <td className="px-5 py-3">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={
-                                !validInventory ||
-                                Number(draft) === p.inventory ||
-                                inventoryMut.isPending
-                              }
-                              loading={
-                                inventoryMut.isPending &&
-                                inventoryMut.variables?.id === p.id
-                              }
-                              onClick={() =>
-                                inventoryMut.mutate({
-                                  id: p.id,
-                                  value: parsedInventory,
-                                })
-                              }
-                            >
-                              {m.update}
-                            </Button>
+                            <div className="flex flex-wrap gap-2">
+                              <Button size="sm" variant="outline" onClick={() => startEdit(p)}>
+                                {m.edit}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={!validInventory || Number(draft) === p.inventory || inventoryMut.isPending}
+                                loading={inventoryMut.isPending && inventoryMut.variables?.id === p.id}
+                                onClick={() => inventoryMut.mutate({ id: p.id, value: parsedInventory })}
+                              >
+                                {m.update}
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       );
