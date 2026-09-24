@@ -53,12 +53,13 @@ class WorkforceRoleTemplate:
 def _contracts(
     routine: tuple[str, ...] | list[str],
     approval_required: tuple[str, ...] | list[str],
+    tool_bindings: dict[str, tuple[str, ...]] | None = None,
 ) -> tuple[WorkforceCapabilityContract, ...]:
     return tuple(
         WorkforceCapabilityContract(
             operation=operation,
             capability_code=f"workforce.{operation}",
-            tool_names=(),
+            tool_names=(tool_bindings or {}).get(operation, ()),
             required_permissions=("run.execute",),
             approval_required=operation in approval_required,
         )
@@ -140,7 +141,11 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         approval_class="human_approval_required",
         allowed_routine_operations=("market_research", "risk_analysis", "prepare_trading_plan", "stage_order_for_review"),
         approval_required_operations=("capital_allocation", "order_execution", "leverage_change", "withdrawal", "material_financial_commitment"),
-        capability_contract=_contracts(["market_research","risk_analysis","prepare_trading_plan","stage_order_for_review"], ["capital_allocation","order_execution","leverage_change","withdrawal","material_financial_commitment"]),
+        capability_contract=_contracts(
+            ["market_research","risk_analysis","prepare_trading_plan","stage_order_for_review"],
+            ["capital_allocation","order_execution","leverage_change","withdrawal","material_financial_commitment"],
+            {"market_research": ("workforce_market_research",)},
+        ),
     ),
 )
 
