@@ -368,3 +368,55 @@ async def test_workforce_prepare_growth_report_dispatches_registered_handler(mon
         tenant_id="tenant-context",
     )
     assert result == {"orders": {"count": 3}, "sales_pipeline": {"weighted_pipeline": 1200.0}}
+
+
+
+@pytest.mark.asyncio
+async def test_workforce_coordinate_content_requires_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "workforce_coordinate_content",
+            {
+                "objective": "launch",
+                "channels": ["social"],
+                "audience": "SMB",
+                "key_message": "Save time",
+            },
+            permissions={"run.execute"},
+            allowed_tools={"workforce_coordinate_content"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_workforce_coordinate_content_dispatches_registered_handler(monkeypatch):
+    from app.services import license_service
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+
+    result = await registry.execute(
+        "workforce_coordinate_content",
+        {
+            "objective": "launch",
+            "channels": ["Social", "email"],
+            "audience": "SMB",
+            "key_message": "Save time",
+            "offer": "Free trial",
+        },
+        permissions={"run.execute"},
+        allowed_tools={"workforce_coordinate_content"},
+        db="db-context",
+        tenant_id="tenant-context",
+    )
+    assert result["status"] == "planned"
+    assert [item["channel"] for item in result["deliverables"]] == ["social", "email"]
+    assert result["governance"]["publication_requires_separate_execution"] is True
+
+
+def test_workforce_coordinate_content_is_read_only_and_non_approval_gated():
+    tool = registry.get("workforce_coordinate_content")
+    assert tool.side_effects is False
+    assert tool.requires_approval is False
+    assert tool.required_permission == "run.execute"
