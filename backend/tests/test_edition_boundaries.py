@@ -101,3 +101,11 @@ def test_child_release_identity_must_match_parent():
     assert_release_identity(vendor, "v1.4.10")
     with pytest.raises(HTTPException):
         assert_release_identity(vendor, "v1.4.9")
+
+
+
+def test_legacy_reseller_admin_routes_are_removed():
+    from app.api.v1.router import api_router
+
+    routes = [getattr(route, "path", "") for route in api_router.routes]
+    assert not any(path.startswith("/reseller-admin") for path in routes)
