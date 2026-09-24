@@ -1,13 +1,13 @@
 """Add explicit tenant RBAC for creating CRM customers.
 
-Revision ID: customercustomelifecycle
-Revises: rc9merge03
+Revision ID: customercustomerlifecycle
+Revises: v1414workforcesla
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = "customercustomerlifecycle"
-down_revision = "rc9merge03"
+down_revision = "v1414workforcesla"
 branch_labels = None
 depends_on = None
 
