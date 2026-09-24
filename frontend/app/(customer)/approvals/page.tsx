@@ -26,6 +26,7 @@ function isPermissionError(error: unknown) {
 export default function ApprovalsPage() {
   const { t } = useI18n();
   const m = t.approvals;
+  const statusLabel = (status: string) => m.statusLabels[status as keyof typeof m.statusLabels] ?? status;
   const qc = useQueryClient();
   const [reason, setReason] = useState<Record<string, string>>({});
 
@@ -108,7 +109,7 @@ export default function ApprovalsPage() {
               <CardHeader>
                 <div className="flex items-center justify-between gap-3">
                   <CardTitle>{m.step}: {approval.step_key}</CardTitle>
-                  <Badge status={approval.status} />
+                  <Badge status={approval.status}>{statusLabel(approval.status)}</Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
