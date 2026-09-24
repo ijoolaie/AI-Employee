@@ -53,7 +53,7 @@ echo "PRODUCTION_MIGRATE|alembic|heads"
 heads="$(compose run --rm --no-deps api alembic heads 2>&1 | tr -d "\r")"
 printf "%s\n" "$heads"
 
-current_head="$(printf "%s\n" "$current" | grep -Eo "^[[:alnum:]_]+ \\(head\\)$" | sed "s/ (head)$//" | sort -u)"
+current_head="$(printf "%s\n" "$current" | grep -Eo "^[[:alnum:]_]+ \\(head\\)( \\(mergepoint\\))?$" | sed "s/ (head)$//" | sort -u)"
 expected_head="$(printf "%s\n" "$heads" | grep -Eo "^[[:alnum:]_]+ \\(head\\)$" | sed "s/ (head)$//" | sort -u)"
 
 [[ -n "$expected_head" ]] || { echo "No Alembic head was reported." >&2; exit 1; }
