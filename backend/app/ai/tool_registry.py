@@ -253,6 +253,7 @@ class ToolRegistry:
             "workforce_market_research",
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
+            "workforce_prepare_ceo_report",
         }:
             result = await tool.handler(
                 arguments,
@@ -562,6 +563,24 @@ async def _workforce_market_trading_plan(arguments: dict[str, Any], **context):
     )
 
 
+
+
+async def _workforce_prepare_ceo_report(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    if db is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_prepare_ceo_report requires an active tenant Run context"
+        )
+    from app.services.agent_workforce_manager import get_workforce_dashboard
+
+    window_days = int(arguments.get("window_days", 30))
+    return await get_workforce_dashboard(
+        db,
+        tenant_id=tenant_id,
+        window_days=window_days,
+    )
+
 async def _workforce_market_research(arguments: dict[str, Any], **context):
     db = context.get("db")
     tenant_id = context.get("tenant_id")
@@ -860,6 +879,24 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_workforce_market_research,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_ceo_report",
+            description="Read-only tenant-scoped workforce dashboard prepared for Internal Manager CEO reporting; no staffing, financial, or execution side effects.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "window_days": {"type": "integer", "minimum": 1, "maximum": 365, "default": 30},
+                },
+                "additionalProperties": False,
+            },
+            handler=_workforce_prepare_ceo_report,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
