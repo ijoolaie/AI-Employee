@@ -4,7 +4,7 @@
 **Certified release baseline:** `v1.4.11`  
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
-**Mainline engineering head:** `09f5ee9ef298e6d41b56c1ef3e516e577a9048c4`  
+**Mainline engineering head:** `8added213b49c84e11b2790e6afdb18aad35cf59`  
 **Status date:** 2026-09-24  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
@@ -77,7 +77,7 @@ The next engineering frontier is to connect concrete role-specific capabilities/
 
 Post-v1.4.11 runtime hardening now includes PR #655, which moves Workforce role/operation validation ahead of Tool Registry resolution and adds regression coverage for that ordering. All required PR CI/security/runtime gates passed before merge; merge commit is `ab68798b73ada478bd2e7dffa9adca92bc77d4fc`.
 
-The current Tool Registry contains 28 registered tools. The five governed workforce roles currently expose capability contracts for 53 operations, with four approved semantic bindings: `ai_trader:market_research -> workforce_market_research`, `ai_trader:risk_analysis -> workforce_market_risk_analysis`, and `ai_trader:prepare_trading_plan -> workforce_market_trading_plan`. This binding is intentionally read-only, requires `run.execute`, has no autonomous trading side effect, and remains dependent on an operator-configured market-data provider. No existing generic tool is being approximated as another workforce capability. In particular, existing sales, product, calculator, document, order, and analysis tools are not silently reclassified as trading, campaign, creative, engineering, or executive-governance capabilities.
+The current Tool Registry contains 31 registered tools. The five governed workforce roles currently expose capability contracts for 53 operations, with seven approved semantic bindings: `ai_trader:market_research`, `ai_trader:risk_analysis`, `ai_trader:prepare_trading_plan`, `ai_internal_manager:prepare_ceo_report`, `ai_marketing_advertising_manager:prepare_growth_report`, `ai_marketing_advertising_manager:draft_campaign_plan`, and `ai_marketing_advertising_manager:coordinate_content`. `ai_trader:market_research -> workforce_market_research`, `ai_trader:risk_analysis -> workforce_market_risk_analysis`, and `ai_trader:prepare_trading_plan -> workforce_market_trading_plan`. This binding is intentionally read-only, requires `run.execute`, has no autonomous trading side effect, and remains dependent on an operator-configured market-data provider. No existing generic tool is being approximated as another workforce capability. In particular, existing sales, product, calculator, document, order, and analysis tools are not silently reclassified as trading, campaign, creative, engineering, or executive-governance capabilities.
 
 The `workforce_market_research`, `workforce_market_risk_analysis`, and `workforce_market_trading_plan` handlers are tenant-context-bound and fail closed when the provider is not configured, returns invalid data, or returns an error. Risk analysis is read-only and does not authorize order execution, capital allocation, leverage changes, or withdrawals. The provider endpoint is configuration-owned rather than caller-supplied, and production configuration requires HTTPS.
 
@@ -121,3 +121,6 @@ PR #671 is merged at `2d19d870e7cef68fd9c6a4985690721a28176546`. The AI Marketin
 
 ## Marketing campaign-plan semantic binding — 2026-09-24
 PR #673 is merged at `30514627594ed022332f2b501aaa5ba86009133f`. The AI Marketing & Advertising Manager now has a second dedicated read-only semantic binding: `ai_marketing_advertising_manager:draft_campaign_plan -> workforce_draft_campaign_plan`. The handler produces a deterministic planning draft only; campaign launch, external spend, and measured campaign attribution remain separately governed and unbound from this planning capability.
+
+## Marketing content-coordination semantic binding — 2026-09-24
+PR #675 is merged at `8added213b49c84e11b2790e6afdb18aad35cf59`. The AI Marketing & Advertising Manager now has a third dedicated read-only semantic binding: `ai_marketing_advertising_manager:coordinate_content -> workforce_coordinate_content`. The handler produces a tenant-scoped, channel-aware content work package only; publication, external provider access, attribution, spend, and campaign launch remain outside this capability and require separate governed execution. The merge passed backend, frontend, architecture, infrastructure, recovery, rollback-contract, observability, security/privacy, tenant isolation/RBAC, CodeQL and DAST checks.
