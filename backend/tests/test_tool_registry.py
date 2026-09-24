@@ -21,7 +21,7 @@ def test_registry_contains_controlled_initial_tools():
         "invoice_financial_summary", "create_order", "update_order_status", "analyze_order_file",
         "order_summary", "link_order_invoice", "create_deal", "update_deal_stage",
         "sales_pipeline_summary", "sales_forecast", "search_products", "get_product",
-        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan", "workforce_prepare_ceo_report", "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_budget_estimate", "workforce_prepare_cost_optimization",
+        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan", "workforce_prepare_ceo_report", "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_budget_estimate", "workforce_balance_workload", "workforce_prepare_cost_optimization",
     }
     assert registry.get("send_email").side_effects is True
     assert registry.get("send_email").requires_approval is True
@@ -35,6 +35,9 @@ def test_registry_contains_controlled_initial_tools():
     assert registry.get("workforce_prepare_budget_estimate").side_effects is False
     assert registry.get("workforce_prepare_budget_estimate").requires_approval is False
     assert registry.get("workforce_prepare_budget_estimate").required_permission == "run.execute"
+    assert registry.get("workforce_balance_workload").side_effects is False
+    assert registry.get("workforce_balance_workload").requires_approval is False
+    assert registry.get("workforce_balance_workload").required_permission == "run.execute"
 
 
 def test_allowed_tools_become_provider_definitions():

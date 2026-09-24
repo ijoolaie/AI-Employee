@@ -12,6 +12,7 @@ from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.models.workforce_sla_contract import WorkforceSLAContract
 from app.services.agent_kill_switch_service import assert_not_killed
 from app.services.unified_execution import ExecutionError
+from app.services.workload_balancing import AgentLoadSnapshot, BalancingPolicy, QueueSnapshot, recommend_rebalance
 
 
 ACTIVE_WORK_ITEM_STATUSES = (WorkItemStatus.ASSIGNED, WorkItemStatus.RUNNING)
@@ -148,6 +149,75 @@ async def get_workforce_dashboard(
             "oldest_active_age_seconds": oldest_active_age_seconds,
         },
         "sla": sla_data,
+    }
+
+
+async def get_workforce_balance_recommendation(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    min_ready_items: int = 1,
+    min_queue_age_seconds: float = 0.0,
+) -> dict:
+    """Return a tenant-scoped recommendation without mutating workforce state."""
+    if min_ready_items < 0:
+        raise ExecutionError("min_ready_items must be non-negative")
+    if min_queue_age_seconds < 0:
+        raise ExecutionError("min_queue_age_seconds must be non-negative")
+
+    ready_count = int(await db.scalar(
+        select(func.count(WorkItem.id)).where(
+            WorkItem.tenant_id == tenant_id,
+            WorkItem.status == WorkItemStatus.READY,
+        )
+    ) or 0)
+    oldest_ready = await db.scalar(
+        select(func.min(WorkItem.created_at)).where(
+            WorkItem.tenant_id == tenant_id,
+            WorkItem.status == WorkItemStatus.READY,
+        )
+    )
+    now = datetime.now(timezone.utc)
+    oldest_ready_age = 0.0 if oldest_ready is None else max(0.0, (now - oldest_ready).total_seconds())
+
+    agents = (await db.execute(
+        select(AgentInstance)
+        .where(AgentInstance.tenant_id == tenant_id)
+        .order_by(AgentInstance.created_at.asc(), AgentInstance.id.asc())
+    )).scalars().all()
+    snapshots: list[AgentLoadSnapshot] = []
+    for agent in agents:
+        capacity = await get_agent_capacity(
+            db, tenant_id=tenant_id, agent_instance_id=agent.id
+        )
+        snapshots.append(AgentLoadSnapshot(
+            agent_instance_id=str(agent.id),
+            active_work_items=int(capacity["active_work_items"]),
+            max_concurrency=int(capacity["max_concurrency"]),
+            accepting_work=bool(capacity["accepting_work"]),
+        ))
+
+    decision = recommend_rebalance(
+        QueueSnapshot(
+            ready_items=ready_count,
+            oldest_ready_age_seconds=oldest_ready_age,
+        ),
+        snapshots,
+        BalancingPolicy(
+            min_ready_items=min_ready_items,
+            min_queue_age_seconds=min_queue_age_seconds,
+        ),
+    )
+    return {
+        "contract_version": decision.contract_version,
+        "queue_pressure": decision.queue_pressure,
+        "target_agent_instance_id": decision.target_agent_instance_id,
+        "rationale": decision.rationale,
+        "candidates_considered": decision.candidates_considered,
+        "ready_items": ready_count,
+        "oldest_ready_age_seconds": round(oldest_ready_age, 3),
+        "total_available_slots": sum(snapshot.available_slots for snapshot in snapshots if snapshot.accepting_work),
+        "scope": "recommendation only; no WorkItem assignment or workforce mutation is performed",
     }
 
 
