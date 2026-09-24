@@ -20,6 +20,7 @@ class CustomerResponse(BaseModel):
     tags: list
     notes: str | None
     last_channel: str | None
+    is_active: bool
     created_at: datetime
     updated_at: datetime
 
