@@ -4,7 +4,7 @@
 **Certified release baseline:** `v1.4.11`  
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
-**Mainline engineering head:** `8added213b49c84e11b2790e6afdb18aad35cf59`  
+**Mainline engineering head:** `1beb572e6a8001eb1ba9467748ffbdf90f75d94c`  
 **Status date:** 2026-09-24  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
@@ -93,7 +93,7 @@ PR #664 is merged at `0671b31e9a4b8017e2aa418755cebc0bf5c900f3`. The three gover
 ## Internal Manager CEO report semantic binding — 2026-09-24
 PR #667 is merged at `af29eb595d5b00b7257e678ab768e713aead3215`. Internal Manager `prepare_ceo_report` now has the first dedicated semantic Tool Registry binding: `workforce_prepare_ceo_report`. It delegates to the existing tenant-scoped workforce dashboard service, is read-only, requires `run.execute`, fails closed without tenant Run context, and remains subject to the existing explicit workforce-operation and CEO-delegation governance boundary. No staffing, provisioning, activation, financial authority, or release identity changed.
 
-The governed semantic binding count is now four: three Trader read-only market capabilities plus Internal Manager CEO reporting. Unsupported workforce operations remain denied until a dedicated semantic handler and explicit binding exist.
+The governed semantic binding count is now seven: three Trader read-only market capabilities, Internal Manager CEO reporting, and three Marketing Manager capabilities (growth reporting, campaign planning, and content coordination). Unsupported workforce operations remain denied until a dedicated semantic handler and explicit binding exist.
 
 ## Workforce handler dispatch regression coverage — 2026-09-24
 
@@ -102,7 +102,7 @@ PR #665 is merged at `7c9dd56a93fc3b4294467a55cd41b3daadf0bbbd`. Regression cove
 
 ## Current frontier
 
-The current release frontier is `v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN`. Post-v1.4.11 semantic workforce engineering now includes four explicit bindings (three Trader read-only market capabilities plus Internal Manager CEO reporting); unsupported workforce operations remain denied until a dedicated binding exists. No post-certification source changes are included in the certified snapshot. Continue regression watch for the audited product-completeness scope; do not reopen completed work without a regression, new requirement, or newly discovered unsupported surface.
+The current release frontier is `v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN`. Post-v1.4.11 semantic workforce engineering now includes seven explicit bindings: three Trader read-only market capabilities, Internal Manager CEO reporting, and three Marketing Manager capabilities (growth reporting, campaign planning, and content coordination). Unsupported workforce operations remain denied until a dedicated binding exists. No post-certification source changes are included in the certified snapshot. Continue regression watch for the audited product-completeness scope; do not reopen completed work without a regression, new requirement, or newly discovered unsupported surface.
 
 The next application-code change requires a new candidate boundary and fresh exact-SHA certification. External production evidence remains intentionally open while the project is local.
 
@@ -124,3 +124,11 @@ PR #673 is merged at `30514627594ed022332f2b501aaa5ba86009133f`. The AI Marketin
 
 ## Marketing content-coordination semantic binding — 2026-09-24
 PR #675 is merged at `8added213b49c84e11b2790e6afdb18aad35cf59`. The AI Marketing & Advertising Manager now has a third dedicated read-only semantic binding: `ai_marketing_advertising_manager:coordinate_content -> workforce_coordinate_content`. The handler produces a tenant-scoped, channel-aware content work package only; publication, external provider access, attribution, spend, and campaign launch remain outside this capability and require separate governed execution. The merge passed backend, frontend, architecture, infrastructure, recovery, rollback-contract, observability, security/privacy, tenant isolation/RBAC, CodeQL and DAST checks.
+
+## Workforce semantic-domain audit — 2026-09-24
+
+A repository-wide audit of the remaining Graphic Designer and Software Developer routine capabilities found no first-party tenant-safe semantic domain/handler that can currently back those workforce operations. The repository has no concrete Creative/Media/Asset domain for the Graphic Designer operations, and no dedicated engineering-workspace/change-set domain for the Software Developer operations. Existing generic sales, product, document, analysis, repository, or other tools are not reclassified to satisfy these contracts.
+
+Accordingly, the following routine operations remain intentionally unbound and fail closed: Graphic Designer `create_visual_asset`, `revise_visual_asset`, `prepare_brand_variant`, `prepare_campaign_creative`; Software Developer `implement_routine_fix`, `write_tests`, `prepare_integration`, `refactor_non_critical_code`, `prepare_change_proposal`. This is a deliberate semantic-integrity boundary, not missing implementation work to be papered over with generic wrappers.
+
+The next implementation gate is therefore domain-first: introduce a real tenant-safe domain/service only when the product model requires it, then add a dedicated handler, explicit role-operation binding, regression coverage, and governance/runtime integration checks. No release is created from this documentation reconciliation.
