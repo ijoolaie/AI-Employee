@@ -254,7 +254,7 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
-            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization", "workforce_prepare_budget_estimate", "workforce_balance_workload",
+            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization", "workforce_prepare_budget_estimate", "workforce_balance_workload", "workforce_assign_task",
         }:
             result = await tool.handler(
                 arguments,
@@ -603,6 +603,31 @@ async def _workforce_request_capacity(arguments: dict[str, Any], **context):
         "contract_version": forecast.contract_version,
         "window_start": forecast.window_start.isoformat(),
         "window_end": forecast.window_end.isoformat(),
+    }
+
+
+async def _workforce_assign_task(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    if db is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_assign_task requires an active tenant Run context"
+        )
+    from uuid import UUID
+
+    from app.services.agent_workforce_manager import assign_work_item
+
+    item = await assign_work_item(
+        db,
+        tenant_id=tenant_id,
+        work_item_id=UUID(arguments["work_item_id"]),
+        agent_instance_id=UUID(arguments["agent_instance_id"]),
+    )
+    return {
+        "work_item_id": str(item.id),
+        "agent_instance_id": str(item.executor_id),
+        "status": item.status.value,
+        "scope": "tenant-scoped Agent WorkItem assignment; no cross-tenant assignment is permitted",
     }
 
 
@@ -1046,6 +1071,26 @@ def build_default_registry() -> ToolRegistry:
             },
             handler=_workforce_request_capacity,
             side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_assign_task",
+            description="Tenant-scoped Internal Manager task assignment to an enabled Agent instance; enforces Agent capacity and kill-switch checks.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "work_item_id": {"type": "string", "format": "uuid"},
+                    "agent_instance_id": {"type": "string", "format": "uuid"},
+                },
+                "required": ["work_item_id", "agent_instance_id"],
+                "additionalProperties": False,
+            },
+            handler=_workforce_assign_task,
+            side_effects=True,
             required_permission="run.execute",
             requires_approval=False,
         )
