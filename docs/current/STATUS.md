@@ -118,3 +118,6 @@ Do not commit production hosts, private keys, registry credentials, webhook secr
 
 ## Marketing growth semantic binding — 2026-09-24
 PR #671 is merged at `2d19d870e7cef68fd9c6a4985690721a28176546`. The AI Marketing & Advertising Manager now has one dedicated read-only semantic binding: `ai_marketing_advertising_manager:prepare_growth_report -> workforce_prepare_growth_report`. The handler is tenant-scoped and uses existing tenant-owned orders and sales-deal data to produce an auditable commercial growth report. It does not claim campaign attribution or advertising-performance analysis, and it has no write, spend, launch, or external side effect. Campaign-specific operations remain unbound until a real campaign domain exists.
+
+## Marketing campaign-plan semantic binding — 2026-09-24
+PR #673 is merged at `30514627594ed022332f2b501aaa5ba86009133f`. The AI Marketing & Advertising Manager now has a second dedicated read-only semantic binding: `ai_marketing_advertising_manager:draft_campaign_plan -> workforce_draft_campaign_plan`. The handler produces a deterministic planning draft only; campaign launch, external spend, and measured campaign attribution remain separately governed and unbound from this planning capability.
