@@ -57,7 +57,6 @@ async def create_product(db: AsyncSession, tenant_id: uuid.UUID, payload: dict, 
         raise ConflictError("Product SKU already exists in this tenant") from exc
 
     await audit_service.record(db, tenant_id=tenant_id, actor_id=actor_id, action="product.created", resource_type="product", resource_id=str(product.id), metadata={"fields": sorted(data.keys())})
-    await audit_service.record(db, tenant_id=tenant_id, actor_id=actor_id, action="product.updated", resource_type="product", resource_id=str(product.id), metadata={"fields": sorted(data.keys())})
     await db.refresh(product)
     return product
 
@@ -83,6 +82,7 @@ async def update_inventory(
     product.inventory = inventory
     await db.flush()
     await audit_service.record(db, tenant_id=tenant_id, actor_id=actor_id, action="product.inventory_updated", resource_type="product", resource_id=str(product.id), metadata={"previous_inventory": previous_inventory, "inventory": inventory})
+    await audit_service.record(db, tenant_id=tenant_id, actor_id=actor_id, action="product.updated", resource_type="product", resource_id=str(product.id), metadata={"fields": sorted(data.keys())})
     await db.refresh(product)
     return product
 
