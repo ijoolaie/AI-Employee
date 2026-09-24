@@ -76,3 +76,39 @@ async def test_upsert_customer_recovers_from_unique_race():
     assert len(db.added) == 1
     assert db.executes == 2
     assert db.flushes == 2
+
+
+class _CreateRaceDb:
+    def __init__(self):
+        self.added = []
+        self.flushes = 0
+
+    def begin_nested(self):
+        return _Nested()
+
+    def add(self, row):
+        self.added.append(row)
+
+    async def flush(self):
+        self.flushes += 1
+        orig = SimpleNamespace(constraint_name=customer_service.CUSTOMER_EXTERNAL_KEY_INDEX_NAME)
+        raise IntegrityError("INSERT", {}, orig)
+
+    async def refresh(self, row):
+        return None
+
+
+@pytest.mark.asyncio
+async def test_create_customer_maps_duplicate_unique_race_to_conflict():
+    db = _CreateRaceDb()
+
+    with pytest.raises(customer_service.ConflictError, match="Customer external key already exists"):
+        await customer_service.create_customer(
+            db,
+            tenant_id=uuid4(),
+            external_key="manual:duplicate",
+            name="Duplicate",
+        )
+
+    assert len(db.added) == 1
+    assert db.flushes == 1
