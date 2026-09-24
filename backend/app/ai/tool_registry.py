@@ -581,6 +581,22 @@ async def _workforce_prepare_ceo_report(arguments: dict[str, Any], **context):
         window_days=window_days,
     )
 
+async def _workforce_prepare_growth_report(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    if db is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_prepare_growth_report requires an active tenant Run context"
+        )
+    from app.services.workforce_marketing_growth_report_service import prepare_growth_report
+
+    return await prepare_growth_report(
+        db,
+        tenant_id=tenant_id,
+        window_days=int(arguments.get("window_days", 30)),
+    )
+
+
 async def _workforce_market_research(arguments: dict[str, Any], **context):
     db = context.get("db")
     tenant_id = context.get("tenant_id")
@@ -897,6 +913,24 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_workforce_prepare_ceo_report,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_growth_report",
+            description="Read-only tenant-scoped commercial growth report for the AI Marketing Manager, based on orders and sales pipeline; no campaign attribution or external spend side effects.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "window_days": {"type": "integer", "minimum": 1, "maximum": 365, "default": 30},
+                },
+                "additionalProperties": False,
+            },
+            handler=_workforce_prepare_growth_report,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
