@@ -2,18 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useI18n } from "@/lib/i18n/provider";
 
 const items = [
-  {
-    href: "/settings",
-    label: "General",
-    description: "Profile and organization details",
-  },
-  {
-    href: "/settings/security",
-    label: "Security",
-    description: "Password and account security",
-  },
+  { href: "/settings", key: "general" as const },
+  { href: "/settings/security", key: "security" as const },
 ];
 
 export default function SettingsLayout({
@@ -22,13 +15,18 @@ export default function SettingsLayout({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
+  const { t } = useI18n();
+  const labels = {
+    general: { label: t.settings.profile, description: t.settings.description },
+    security: { label: t.settings.security, description: t.settings.securityDescription },
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:flex-row lg:items-start lg:px-6">
-      <aside className="w-full shrink-0 lg:w-64" aria-label="Settings navigation">
+      <aside className="w-full shrink-0 lg:w-64" aria-label={`${t.settings.title} ${t.nav.settings}`}>
         <nav className="rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
           <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-            Settings
+            {t.settings.title}
           </div>
           <div className="space-y-1">
             {items.map((item) => {
@@ -36,6 +34,8 @@ export default function SettingsLayout({
                 item.href === "/settings"
                   ? pathname === "/settings"
                   : pathname.startsWith(item.href);
+
+              const { label, description } = labels[item.key];
 
               return (
                 <Link
@@ -48,9 +48,9 @@ export default function SettingsLayout({
                       : "text-gray-700 hover:bg-gray-50"
                   }`}
                 >
-                  <div className="text-sm font-medium">{item.label}</div>
+                  <div className="text-sm font-medium">{label}</div>
                   <div className="mt-0.5 text-xs text-gray-500">
-                    {item.description}
+                    {description}
                   </div>
                 </Link>
               );
