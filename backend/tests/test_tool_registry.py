@@ -280,6 +280,54 @@ def test_workforce_prepare_growth_report_is_read_only_and_non_approval_gated():
     assert tool.required_permission == "run.execute"
 
 
+
+@pytest.mark.asyncio
+async def test_workforce_draft_campaign_plan_requires_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "workforce_draft_campaign_plan",
+            {"objective": "lead generation", "audience": "SMB", "channels": ["email"]},
+            permissions={"run.execute"},
+            allowed_tools={"workforce_draft_campaign_plan"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_workforce_draft_campaign_plan_dispatches_registered_handler(monkeypatch):
+    from app.services import license_service
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+
+    result = await registry.execute(
+        "workforce_draft_campaign_plan",
+        {
+            "objective": "lead generation",
+            "audience": "SMB",
+            "channels": ["Email", "social"],
+            "duration_days": 21,
+            "budget": 5000,
+        },
+        permissions={"run.execute"},
+        allowed_tools={"workforce_draft_campaign_plan"},
+        db="db-context",
+        tenant_id="tenant-context",
+    )
+    assert result["status"] == "draft"
+    assert result["channels"] == ["email", "social"]
+    assert result["duration_days"] == 21
+    assert result["governance"]["execution_required"] is True
+
+
+def test_workforce_draft_campaign_plan_is_read_only_and_non_approval_gated():
+    tool = registry.get("workforce_draft_campaign_plan")
+    assert tool.side_effects is False
+    assert tool.requires_approval is False
+    assert tool.required_permission == "run.execute"
+
+
 @pytest.mark.asyncio
 async def test_workforce_prepare_growth_report_requires_tenant_context():
     with pytest.raises(ValidationAppError, match="active tenant Run context"):
