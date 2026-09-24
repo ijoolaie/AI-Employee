@@ -1294,6 +1294,68 @@ const developerSurfacesFa = {
  governance:{title:"حاکمیت نیروی کار",description:"مدیریت حاکم AI، کنترل هویت، ارزیابی‌ها و چرخه تأیید",refresh:"تازه‌سازی",newProposal:"پیشنهاد جدید",submitProposal:"ثبت پیشنهاد نیروی کار",proposalTitle:"عنوان پیشنهاد",agentName:"نام کارمند درخواستی",sponsor:"شناسه کاربر حامی",rationale:"منطق درخواست",riskTier:"سطح ریسک",cancel:"لغو",submit:"ثبت پیشنهاد",submitting:"در حال ثبت…",registry:"دفتر نیروی کار",registryDescription:"نمای محدود به تننت از AgentDefinition → AgentTemplate → AgentInstance.",agents:"کارمند",noAgents:"هنوز نمونه Agent حاکم‌شده‌ای وجود ندارد.",risk:"ریسک",identity:"هویت",active:"فعال",notActive:"فعال نیست",cost:"هزینه منتسب",concurrency:"همزمانی",tools:"ابزارها",none:"هیچ‌کدام",evaluation:"شواهد ارزیابی",noEvidence:"شواهدی وجود ندارد",recordEvaluation:"ثبت ارزیابی",suite:"شناسه مجموعه ارزیابی",score:"امتیاز",evidence:"JSON شواهد ارزیابی",notes:"یادداشت‌ها",saveEvidence:"ذخیره شواهد",saving:"در حال ذخیره…",proposalQueue:"صف پیشنهادها",queueDescription:"درخواست‌کننده → هیئت → مدیرعامل → تأمین → بررسی دسترسی → فعال‌سازی.",proposals:"پیشنهاد",noProposals:"پیشنهاد نیروی کاری وجود ندارد.",boardApprove:"تأیید هیئت",reject:"رد",ceoApprove:"تأیید مدیرعامل",provision:"تأمین",accessReview:"بررسی دسترسی",activate:"فعال‌سازی",reviewing:"در حال بررسی…",viewEvidence:"مشاهده JSON شواهد",invalidEvidence:"JSON شواهد ارزیابی معتبر نیست.",loadError:"بارگذاری داده‌های حاکمیت انجام نشد.",retry:"تلاش مجدد",suiteLabel:"مجموعه",scoreLabel:"امتیاز",hashLabel:"هش",passed:"موفق",failed:"ناموفق",blocked:"مسدود",approveAccess:"تأیید دسترسی",tierLabel:"سطح"}
 } as const;
 
+const vendorResellers = {
+  title: "Resellers",
+  description: "Manage direct reseller tenants from the vendor control plane.",
+  createTitle: "Create reseller",
+  name: "Reseller name",
+  slug: "Reseller slug",
+  slugPlaceholder: "reseller-slug",
+  adminEmail: "Admin email",
+  adminPassword: "Admin password",
+  adminPasswordPlaceholder: "Admin password (12+ characters)",
+  adminFullName: "Admin full name",
+  adminFullNamePlaceholder: "Admin full name (optional)",
+  create: "Create reseller",
+  creating: "Creating…",
+  created: "Reseller created successfully.",
+  portfolio: "Reseller portfolio",
+  loading: "Loading resellers…",
+  empty: "No reseller tenants",
+  emptyDescription: "Create the first direct reseller from this control plane.",
+  reseller: "Reseller",
+  status: "Status",
+  release: "Release",
+  actions: "Actions",
+  suspend: "Suspend",
+  resume: "Resume",
+  deprovision: "Deprovision",
+  error: "Unable to load resellers.",
+  createError: "Unable to create reseller.",
+  actionError: "Unable to update reseller.",
+} as const;
+
+const vendorResellersFa = {
+  title: "فروشندگان همکار",
+  description: "مدیریت تننت‌های مستقیم فروشندگان همکار از کنترل‌پلین Vendor.",
+  createTitle: "ایجاد فروشنده همکار",
+  name: "نام فروشنده همکار",
+  slug: "شناسه فروشنده همکار",
+  slugPlaceholder: "reseller-slug",
+  adminEmail: "ایمیل مدیر",
+  adminPassword: "رمز عبور مدیر",
+  adminPasswordPlaceholder: "رمز عبور مدیر (حداقل ۱۲ نویسه)",
+  adminFullName: "نام کامل مدیر",
+  adminFullNamePlaceholder: "نام کامل مدیر (اختیاری)",
+  create: "ایجاد فروشنده همکار",
+  creating: "در حال ایجاد…",
+  created: "فروشنده همکار با موفقیت ایجاد شد.",
+  portfolio: "فهرست فروشندگان همکار",
+  loading: "در حال بارگذاری فروشندگان همکار…",
+  empty: "تننت فروشنده همکاری وجود ندارد",
+  emptyDescription: "اولین فروشنده همکار مستقیم را از این کنترل‌پلین ایجاد کنید.",
+  reseller: "فروشنده همکار",
+  status: "وضعیت",
+  release: "انتشار",
+  actions: "عملیات",
+  suspend: "تعلیق",
+  resume: "فعال‌سازی مجدد",
+  deprovision: "خارج‌سازی",
+  error: "بارگذاری فروشندگان همکار انجام نشد.",
+  createError: "ایجاد فروشنده همکار انجام نشد.",
+  actionError: "به‌روزرسانی فروشنده همکار انجام نشد.",
+} as const;
+
 export const messages = {
   en: {
     common: { language: "Language", english: "English", persian: "Persian", signOut: "Sign out", platformAdmin: "Platform Admin" },
@@ -1335,6 +1397,7 @@ export const messages = {
     dealDetail,
     customerLegacy,
     developerSurfaces,
+    vendorResellers,
   },
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
@@ -1376,5 +1439,6 @@ export const messages = {
     dealDetail: dealDetailFa,
     customerLegacy: customerLegacyFa,
     developerSurfaces: developerSurfacesFa,
+    vendorResellers: vendorResellersFa,
   },
 } as const;
