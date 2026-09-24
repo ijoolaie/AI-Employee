@@ -104,7 +104,7 @@ async def test_create_request_preserves_requester_and_emits_one_audit_event(monk
 
     monkeypatch.setattr(approval_service.audit_service, "record", record)
     approval = await approval_service.create_request(
-        Db(),
+        Db(None),
         run=run,
         tool_name="create_order",
         tool_call_id="call-1",
