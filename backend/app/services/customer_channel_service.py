@@ -8,17 +8,19 @@ from app.models.customer_channel import CustomerChannel
 from app.models.conversation import CustomerConversation, CustomerMessage
 from app.models.employee import Employee
 from app.models.run import Run
-from app.services import employee_service, run_service, customer_service
+from app.services import audit_service, employee_service, run_service, customer_service
 
 
 def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
-async def create_channel(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID, name: str, channel_type: str, config: dict) -> CustomerChannel:
+async def create_channel(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID, name: str, channel_type: str, config: dict, actor_id: uuid.UUID | None = None) -> CustomerChannel:
     employee = await employee_service.get_employee(db, employee_id=employee_id, tenant_id=tenant_id)
     channel = CustomerChannel(tenant_id=tenant_id, employee_id=employee.id, name=name, channel_type=channel_type, public_key="pk_" + secrets.token_urlsafe(24), config=config or {})
     db.add(channel)
-    await db.flush(); await db.refresh(channel)
+    await db.flush()
+    await audit_service.record(db, tenant_id=tenant_id, actor_id=actor_id, action="customer.channel.created", resource_type="customer_channel", resource_id=channel.id, metadata={"employee_id": str(employee_id), "channel_type": channel_type})
+    await db.refresh(channel)
     return channel
 
 async def list_channels(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID | None = None) -> list[CustomerChannel]:
