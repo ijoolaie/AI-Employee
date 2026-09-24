@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import work_items, workspace, test_center, test_center_evidence, test_center_verification, test_center_execution, team_installations, team_execution, team_evaluations, marketplace, agent_templates, agent_governance, agent_workforce, agent_workforce_replacements, agent_delegations, workforce_delegations, ai_workforce_roles, api_keys, admin, approvals, auth, employees, feedback, files, runs, usage, knowledge, memory, workflows, workflow_events, workflow_schedules, workflow_approvals, operations, customer_dashboard, billing, billing_webhooks, invoices, orders, sales, customer_channels, public_chat, products, commerce_integrations, onboarding, inbox, customers, channel_webhooks, sales_readiness, tenant_admin, reseller_admin, admin_providers, edition_control, license_control
+from app.api.v1 import work_items, workspace, test_center, test_center_evidence, test_center_verification, test_center_execution, team_installations, team_execution, team_evaluations, marketplace, agent_templates, agent_governance, agent_workforce, agent_workforce_replacements, agent_delegations, workforce_delegations, ai_workforce_roles, api_keys, admin, approvals, auth, employees, feedback, files, runs, usage, knowledge, memory, workflows, workflow_events, workflow_schedules, workflow_approvals, operations, customer_dashboard, billing, billing_webhooks, invoices, orders, sales, customer_channels, public_chat, products, commerce_integrations, onboarding, inbox, customers, channel_webhooks, sales_readiness, tenant_admin, admin_providers, edition_control, license_control
 
 api_router = APIRouter()
 api_router.include_router(work_items.router)
@@ -57,4 +57,3 @@ api_router.include_router(customers.router)
 api_router.include_router(channel_webhooks.router)
 api_router.include_router(sales_readiness.router)
 api_router.include_router(tenant_admin.router)
-api_router.include_router(reseller_admin.router)
