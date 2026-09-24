@@ -6,7 +6,7 @@ from app.core.config import get_settings
 from app.core.deps import CommerceIntegrationContext, DbSession
 from app.schemas.common import APIResponse
 from app.schemas.commerce_integration import CommerceIntegrationCreate, CommerceIntegrationResponse
-from app.services import commerce_integration_service, shopify_service, shopify_oauth_state
+from app.services import audit_service, commerce_integration_service, shopify_service, shopify_oauth_state
 from app.services.credential_service import credential_ref, revoke_credential, store_credential
 from app.models.commerce_integration import CommerceIntegration
 from sqlalchemy import select
@@ -20,7 +20,7 @@ async def list_integrations(ctx: CommerceIntegrationContext, db: DbSession):
 
 @router.post("", response_model=APIResponse[CommerceIntegrationResponse], status_code=201)
 async def create_integration(payload: CommerceIntegrationCreate, ctx: CommerceIntegrationContext, db: DbSession):
-    row = await commerce_integration_service.create_integration(db, ctx.tenant_id, payload.provider, payload.name, payload.config)
+    row = await commerce_integration_service.create_integration(db, ctx.tenant_id, payload.provider, payload.name, payload.config, actor_id=ctx.user_id)
     return APIResponse(success=True, data=CommerceIntegrationResponse.model_validate(commerce_integration_service.public_config(row)))
 
 @router.get("/shopify/install")
@@ -50,6 +50,7 @@ async def shopify_callback(shop: str, code: str, state: str, db: DbSession):
     else:
         row = CommerceIntegration(tenant_id=tenant_id, provider="shopify", name=f"Shopify — {shop}", status="connected", config=cfg, is_active=True); db.add(row)
     await db.flush()
+    await audit_service.record(db, tenant_id=tenant_id, actor_type="system", action="commerce.integration.oauth_connected", resource_type="commerce_integration", resource_id=row.id, metadata={"provider": "shopify", "shop": shop})
     try: await shopify_service.register_webhooks(db, row)
     except Exception as exc: row.config = {**(row.config or {}), "webhook_registration_error": str(exc)[:500]}
     await db.commit()
@@ -57,19 +58,19 @@ async def shopify_callback(shop: str, code: str, state: str, db: DbSession):
 
 @router.post("/{integration_id}/test", response_model=APIResponse[dict])
 async def test_integration(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
-    result = await shopify_service.test_connection(db, ctx.tenant_id, integration_id); await db.commit(); return APIResponse(success=True, data=result)
+    result = await shopify_service.test_connection(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.tested", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify"}); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/{integration_id}/sync/products", response_model=APIResponse[dict])
 async def sync_products(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
-    result = await shopify_service.sync_products(db, ctx.tenant_id, integration_id); await db.commit(); return APIResponse(success=True, data=result)
+    result = await shopify_service.sync_products(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.products_synced", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result": result}); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/{integration_id}/sync/orders", response_model=APIResponse[dict])
 async def sync_orders(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
-    result = await shopify_service.sync_orders(db, ctx.tenant_id, integration_id); await db.commit(); return APIResponse(success=True, data=result)
+    result = await shopify_service.sync_orders(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.orders_synced", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result": result}); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/{integration_id}/reconcile", response_model=APIResponse[dict])
 async def reconcile(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
-    result = await shopify_service.reconcile(db, ctx.tenant_id, integration_id); await db.commit(); return APIResponse(success=True, data=result)
+    result = await shopify_service.reconcile(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.reconciled", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result": result}); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/shopify/webhooks/{integration_id}")
 async def shopify_webhook(integration_id: UUID, request: Request, db: DbSession, x_shopify_hmac_sha256: str | None = Header(default=None, alias="X-Shopify-Hmac-Sha256"), x_shopify_webhook_id: str | None = Header(default=None, alias="X-Shopify-Webhook-Id"), x_shopify_topic: str | None = Header(default=None, alias="X-Shopify-Topic"), x_shopify_shop_domain: str | None = Header(default=None, alias="X-Shopify-Shop-Domain")):
