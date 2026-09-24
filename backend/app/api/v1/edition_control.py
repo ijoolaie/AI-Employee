@@ -152,6 +152,7 @@ async def delegate_customer_entitlement(customer_id: UUID, payload: EntitlementD
     child = (await db.execute(select(Tenant).where(Tenant.id == customer_id))).scalar_one_or_none()
     if child is None:
         raise HTTPException(status_code=404, detail="Customer tenant not found")
+    edition_service.assert_direct_child(ctx.tenant, child, edition_service.EDITION_CUSTOMER)
     row = await edition_service.delegate_entitlement(db, parent=ctx.tenant, child=child, feature_code=payload.feature_code, quota_limit=payload.quota_limit)
     return APIResponse(success=True, data=row)
 
