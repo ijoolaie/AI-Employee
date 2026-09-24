@@ -175,3 +175,53 @@ async def test_workforce_market_trading_plan_requires_tenant_context():
             permissions={"run.execute"},
             allowed_tools={"workforce_market_trading_plan"},
         )
+
+
+@pytest.mark.asyncio
+async def test_workforce_market_research_requires_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "workforce_market_research",
+            {"symbols": ["AAPL"]},
+            permissions={"run.execute"},
+            allowed_tools={"workforce_market_research"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_workforce_registered_handler_receives_runtime_context(monkeypatch):
+    from dataclasses import replace
+    from app.services import license_service
+
+    name = "workforce_market_research"
+    original = registry.get(name)
+    calls = []
+
+    async def handler(arguments, **context):
+        calls.append((arguments, context))
+        return {"ok": True}
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+    registry._tools[name] = replace(original, handler=handler)
+    try:
+        result = await registry.execute(
+            name,
+            {"symbols": ["AAPL"]},
+            permissions={"run.execute"},
+            allowed_tools={name},
+            db="db-context",
+            tenant_id="tenant-context",
+        )
+        assert result == {"ok": True}
+        assert calls == [
+            (
+                {"symbols": ["AAPL"]},
+                {"db": "db-context", "tenant_id": "tenant-context"},
+            )
+        ]
+    finally:
+        registry._tools[name] = original
+
