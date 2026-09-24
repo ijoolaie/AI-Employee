@@ -12,7 +12,7 @@ import { resellerMessages } from "@/lib/i18n/reseller";
 interface ClientSummary { id: string; name: string; slug: string; status: string; tenant_kind: string; created_at: string }
 
 async function listClients() {
-  const response = await api.get<{ success: boolean; data: ClientSummary[] }>("/reseller-admin/clients");
+  const response = await api.get<{ success: boolean; data: ClientSummary[] }>("/edition/reseller/customers");
   if (!response.data.success) throw new Error("Unable to load clients");
   return response.data.data;
 }
