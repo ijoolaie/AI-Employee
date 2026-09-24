@@ -50,7 +50,8 @@ def test_runtime_concurrency_cap_and_cross_tenant_isolation(redis_client: Redis,
     active = {"tenant-a": 0, "tenant-b": 0}
     maximum = {"tenant-a": 0, "tenant-b": 0}
     admitted = {"tenant-a": 0, "tenant-b": 0}
-    ready = threading.Barrier(3)
+    ready_a = threading.Barrier(3)
+    ready_b = threading.Event()
     release = threading.Event()
 
     def worker(tenant_id: str, hold: bool = False):
@@ -63,7 +64,10 @@ def test_runtime_concurrency_cap_and_cross_tenant_isolation(redis_client: Redis,
             admitted[tenant_id] += 1
         try:
             if hold:
-                ready.wait(timeout=2)
+                if tenant_id == "tenant-a":
+                    ready_a.wait(timeout=2)
+                else:
+                    ready_b.set()
                 release.wait(timeout=2)
             else:
                 time.sleep(0.03)
@@ -79,7 +83,8 @@ def test_runtime_concurrency_cap_and_cross_tenant_isolation(redis_client: Redis,
             first_wave.submit(worker, "tenant-a", True),
             first_wave.submit(worker, "tenant-b", True),
         ]
-        ready.wait(timeout=2)
+        ready_b.wait(timeout=2)
+        ready_a.wait(timeout=2)
 
         assert maximum == {"tenant-a": 2, "tenant-b": 1}
 
