@@ -4,7 +4,7 @@
 **Certified release baseline:** `v1.4.11`  
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
-**Mainline engineering head:** `af29eb595d5b00b7257e678ab768e713aead3215`  
+**Mainline engineering head:** `09f5ee9ef298e6d41b56c1ef3e516e577a9048c4`  
 **Status date:** 2026-09-24  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
