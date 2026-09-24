@@ -94,6 +94,7 @@ class ToolRegistry:
         db=None,
         tenant_id=None,
         actor_id=None,
+        agent_instance_id=None,
     ) -> Any:
         tool = self.get(name)
 
@@ -254,12 +255,13 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
-            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization", "workforce_prepare_budget_estimate", "workforce_balance_workload", "workforce_assign_task", "workforce_reprioritize_task",
+            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization", "workforce_prepare_budget_estimate", "workforce_balance_workload", "workforce_assign_task", "workforce_reprioritize_task", "workforce_coordinate_handoff",
         }:
             result = await tool.handler(
                 arguments,
                 db=db,
                 tenant_id=tenant_id,
+                **({"agent_instance_id": agent_instance_id} if name == "workforce_coordinate_handoff" else {}),
             )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
@@ -603,6 +605,42 @@ async def _workforce_request_capacity(arguments: dict[str, Any], **context):
         "contract_version": forecast.contract_version,
         "window_start": forecast.window_start.isoformat(),
         "window_end": forecast.window_end.isoformat(),
+    }
+
+
+async def _workforce_coordinate_handoff(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    delegator_agent_instance_id = context.get("agent_instance_id")
+    if db is None or tenant_id is None or delegator_agent_instance_id is None:
+        raise ValidationAppError(
+            "workforce_coordinate_handoff requires an active tenant Run context and Agent identity"
+        )
+    from datetime import datetime
+    from uuid import UUID
+
+    from app.services.agent_delegation_service import create_delegated_work_item
+
+    child = await create_delegated_work_item(
+        db,
+        tenant_id=tenant_id,
+        source_work_item_id=UUID(arguments["source_work_item_id"]),
+        delegator_agent_instance_id=UUID(str(delegator_agent_instance_id)),
+        delegate_agent_instance_id=UUID(arguments["delegate_agent_instance_id"]),
+        scopes=arguments["scopes"],
+        expires_at=datetime.fromisoformat(arguments["expires_at"].replace("Z", "+00:00")),
+        title=arguments.get("title"),
+        description=arguments.get("description"),
+        context=arguments.get("context"),
+        artifacts=arguments.get("artifacts"),
+        max_chain_depth=int(arguments.get("max_chain_depth", 3)),
+    )
+    return {
+        "work_item_id": str(child.id),
+        "delegation_id": str((child.policy_context or {})["delegation_id"]),
+        "delegate_agent_instance_id": str(child.executor_id),
+        "status": child.status.value,
+        "scope": "tenant-scoped governed Agent-to-Agent handoff; delegation authority and chain depth are enforced",
     }
 
 
@@ -1096,6 +1134,33 @@ def build_default_registry() -> ToolRegistry:
             },
             handler=_workforce_request_capacity,
             side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_coordinate_handoff",
+            description="Tenant-scoped governed Agent-to-Agent handoff that creates delegated work under bounded authority and delegation-chain policy.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "source_work_item_id": {"type": "string", "format": "uuid"},
+                    "delegate_agent_instance_id": {"type": "string", "format": "uuid"},
+                    "scopes": {"type": "object"},
+                    "expires_at": {"type": "string", "format": "date-time"},
+                    "max_chain_depth": {"type": "integer", "minimum": 1, "maximum": 3, "default": 3},
+                    "title": {"type": ["string", "null"]},
+                    "description": {"type": ["string", "null"]},
+                    "context": {"type": ["object", "null"]},
+                    "artifacts": {"type": ["array", "null"]},
+                },
+                "required": ["source_work_item_id", "delegate_agent_instance_id", "scopes", "expires_at"],
+                "additionalProperties": False,
+            },
+            handler=_workforce_coordinate_handoff,
+            side_effects=True,
             required_permission="run.execute",
             requires_approval=False,
         )
