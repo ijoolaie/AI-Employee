@@ -122,6 +122,7 @@ async def create_run(
     )
     db.add(run)
     await db.flush()
+    await audit_service.record(db, action="run.created", actor_type="user" if created_by else "system", actor_id=created_by, tenant_id=tenant_id, resource_type="run", resource_id=run.id, request_id=run.request_id, metadata={"employee_id": str(employee.id), "employee_version_id": str(version.id)})
     await db.refresh(run)
 
     await audit_service.record(
