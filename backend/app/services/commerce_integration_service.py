@@ -4,6 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.commerce_integration import CommerceIntegration
+from app.services import audit_service
 from app.services.credential_service import credential_ref, store_credential
 
 SECRET_KEYS = {"api_key", "access_token", "client_secret", "password", "token"}
@@ -44,7 +45,7 @@ async def _extract_credentials(db: AsyncSession, *, tenant_id: uuid.UUID, provid
     return safe
 
 
-async def create_integration(db: AsyncSession, tenant_id: uuid.UUID, provider: str, name: str, config: dict):
+async def create_integration(db: AsyncSession, tenant_id: uuid.UUID, provider: str, name: str, config: dict, actor_id: uuid.UUID | None = None):
     safe_config = await _extract_credentials(db, tenant_id=tenant_id, provider=provider, config=config)
     integration = CommerceIntegration(
         tenant_id=tenant_id,
@@ -56,6 +57,7 @@ async def create_integration(db: AsyncSession, tenant_id: uuid.UUID, provider: s
     )
     db.add(integration)
     await db.flush()
+    await audit_service.record(db, tenant_id=tenant_id, actor_id=actor_id, action="commerce.integration.created", resource_type="commerce_integration", resource_id=integration.id, metadata={"provider": provider, "name": name})
     await db.refresh(integration)
     return integration
 
