@@ -714,6 +714,10 @@ export async function updateInvoiceStatus(id: string, status: string) { return u
 export async function exportInvoicePdf(id: string) { return unwrap(await api.post<APIResponse<Record<string, unknown>>>(`/invoices/${id}/export-pdf`)); }
 
 // ── Tenant administration ─────────────────────────────
+export async function createResellerSupportEscalation(payload: { subject: string; description: string }) {
+  return unwrap(await api.post<APIResponse<{ id: string; from_tenant_id: string; to_tenant_id: string; status: string; subject: string; description: string }>>("/edition/reseller/support/escalations", payload));
+}
+
 export async function listTenantUsers() { return unwrap(await api.get<APIResponse<import("@/types").TenantUser[]>>("/tenant-admin/users")); }
 export async function listTenantRoles() { return unwrap(await api.get<APIResponse<import("@/types").TenantRole[]>>("/tenant-admin/roles")); }
 export async function updateTenantUserStatus(id: string, is_active: boolean) { return unwrap(await api.post<APIResponse<import("@/types").TenantUser>>(`/tenant-admin/users/${id}/status`, { is_active })); }
