@@ -19,6 +19,10 @@ class Result:
 class Db:
     def __init__(self, *results):
         self.results = list(results)
+        self.added = []
+
+    def add(self, value):
+        self.added.append(value)
 
     async def execute(self, *_args, **_kwargs):
         return Result(self.results.pop(0))
