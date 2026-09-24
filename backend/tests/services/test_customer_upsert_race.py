@@ -36,6 +36,9 @@ class _RaceDb:
         self.executes += 1
         return _Result(None if self.executes == 1 else self.winner)
 
+    async def execute(self, *_args, **_kwargs):
+        return SimpleNamespace(scalar_one_or_none=lambda: None)
+
     def begin_nested(self):
         return _Nested()
 
