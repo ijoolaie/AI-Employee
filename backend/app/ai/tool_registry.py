@@ -261,7 +261,7 @@ class ToolRegistry:
                 arguments,
                 db=db,
                 tenant_id=tenant_id,
-                agent_instance_id=agent_instance_id,
+                **({"agent_instance_id": agent_instance_id} if name == "workforce_coordinate_handoff" else {}),
             )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
