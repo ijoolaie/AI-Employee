@@ -1,3 +1,4 @@
-import { Header } from "@/components/layout/header";
+"use client";
 import { ResellerSurface } from "@/components/reseller/reseller-surface";
-export default function ResellerBillingPage(){return <><Header title="Billing" description="Commercial controls for the reseller relationship and managed client portfolio."/><ResellerSurface title="Reseller billing" description="Separate reseller commercial obligations from client-level billing. Client invoices and subscriptions belong to the client workspace or delegated commercial flow." capabilities={["Reseller subscription and plan","Client commercial status","Usage-based cost review","Invoice history","Commercial alerts and renewal visibility"]}/></>}
+import { useI18n } from "@/lib/i18n/provider";
+export default function ResellerBillingPage(){const {locale}=useI18n();const fa=locale==="fa";return <ResellerSurface title={fa?"صورتحساب":"Billing"} description={fa?"کنترل‌های تجاری رابطه نماینده و سبد مشتریان مدیریت‌شده.":"Commercial controls for the reseller relationship and managed client portfolio."} capabilities={fa?["اشتراک و طرح نماینده","وضعیت تجاری مشتری","بررسی هزینه مبتنی بر مصرف","تاریخچه فاکتورها","هشدارهای تجاری و مشاهده تمدید"]:["Reseller subscription and plan","Client commercial status","Usage-based cost review","Invoice history","Commercial alerts and renewal visibility"]}/>} 

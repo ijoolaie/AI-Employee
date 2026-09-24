@@ -1,3 +1,4 @@
-import { Header } from "@/components/layout/header";
+"use client";
 import { ResellerSurface } from "@/components/reseller/reseller-surface";
-export default function ResellerReportsPage(){return <><Header title="Reports" description="Management reporting for the reseller business."/><ResellerSurface title="Reseller reporting" description="Focus reports on portfolio health, service quality, revenue, usage, and AI workforce performance." capabilities={["Client portfolio health","Service SLA and incident reporting","Revenue and margin reporting","AI workforce performance","Scheduled executive summaries"]}/></>}
+import { useI18n } from "@/lib/i18n/provider";
+export default function ResellerReportsPage(){const {locale}=useI18n();const fa=locale==="fa";return <ResellerSurface title={fa?"گزارش‌ها":"Reports"} description={fa?"گزارش‌های مدیریتی کسب‌وکار نماینده.":"Management reporting for the reseller business."} capabilities={fa?["سلامت سبد مشتریان","گزارش SLA و رخدادهای خدمات","گزارش درآمد و حاشیه سود","عملکرد نیروی کار هوش مصنوعی","خلاصه‌های اجرایی زمان‌بندی‌شده"]:["Client portfolio health","Service SLA and incident reporting","Revenue and margin reporting","AI workforce performance","Scheduled executive summaries"]}/>} 
