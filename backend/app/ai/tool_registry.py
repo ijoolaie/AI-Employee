@@ -254,7 +254,7 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
-            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization", "workforce_prepare_budget_estimate",
+            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization", "workforce_prepare_budget_estimate", "workforce_balance_workload",
         }:
             result = await tool.handler(
                 arguments,
@@ -604,6 +604,23 @@ async def _workforce_request_capacity(arguments: dict[str, Any], **context):
         "window_start": forecast.window_start.isoformat(),
         "window_end": forecast.window_end.isoformat(),
     }
+
+
+async def _workforce_balance_workload(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    if db is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_balance_workload requires an active tenant Run context"
+        )
+    from app.services.agent_workforce_manager import get_workforce_balance_recommendation
+
+    return await get_workforce_balance_recommendation(
+        db,
+        tenant_id=tenant_id,
+        min_ready_items=int(arguments.get("min_ready_items", 1)),
+        min_queue_age_seconds=float(arguments.get("min_queue_age_seconds", 0)),
+    )
 
 
 async def _workforce_prepare_budget_estimate(arguments: dict[str, Any], **context):
@@ -1028,6 +1045,25 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_workforce_request_capacity,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_balance_workload",
+            description="Read-only tenant-scoped workforce balancing recommendation from live queue pressure and authorized Agent capacity; never assigns WorkItems or mutates workforce state.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "min_ready_items": {"type": "integer", "minimum": 0, "default": 1},
+                    "min_queue_age_seconds": {"type": "number", "minimum": 0, "default": 0},
+                },
+                "additionalProperties": False,
+            },
+            handler=_workforce_balance_workload,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
