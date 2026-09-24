@@ -1,7 +1,7 @@
 # Staging environment contract — populate in CI/CD secret manager only.
 APP_ENV=staging
 DATABASE_URL=postgresql+asyncpg://USER:PASSWORD@HOST:5432/DB
-REDIS_URL=
+REDIS_URL=redis://:PASSWORD@HOST:6379/0
 SECRET_KEY=<SET_IN_SECRET_MANAGER>
 JWT_SECRET=
 ENCRYPTION_KEY=
