@@ -144,4 +144,5 @@ class AgentExecutionAdapter:
             allowed_tools=set((agent.permission_policy or {}).get("allowed_tools") or (agent.permission_policy or {}).get("tools") or []),
             db=self.db,
             tenant_id=agent.tenant_id,
+            agent_instance_id=agent.id,
         )
