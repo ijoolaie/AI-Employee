@@ -1,20 +1,20 @@
 # Production & Productization Gap Register
 
-**Reconciled:** 2026-09-20  
+**Reconciled:** 2026-09-24  
 **Repository:** `ijoolaie/AI-Employee`
 
 ## Current release truth
 
-- Latest published release: `v1.4.9`
-- Exact certified release SHA: `f1ce20c010779f5273eb5d0051da24cdd57b33f6`
-- Production Certification run: `35575615877` — PASS
-- Certification job: `106256713583` — PASS
+- Latest published release: `v1.4.11`
+- Exact certified release SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- Production Certification: `v1.4.11` exact-SHA certification — PASS
+- Product Gates: `0`; Frontend Playwright: PASS
 - Product Gate Failures: `0`
-- Evidence artifact: `production-certification-evidence-v1.4.9-f1ce20c010779f5273eb5d0051da24cdd57b33f6`
-- Artifact SHA256: `32962353a3511d7d5ae951eb6d0a44620a10211493730544342afe55f980a896`
+- Evidence artifact: `v1.4.11` certification evidence
+- Evidence SHA256: `bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`
 - External production deployment: **PENDING** (`production_deployment_claimed=false`)
 
-The repository certification is release evidence. `v1.4.9` passed the exact-tag Production Certification workflow, but this is not evidence of a real external production deployment.
+The repository certification is release evidence. `v1.4.11` passed the exact-SHA Production Certification workflow, but this is not evidence of a real external production deployment.
 
 ## Audit conclusion
 
@@ -29,7 +29,7 @@ The engineering/product core is release-certified. The remaining launch blockers
 
 ## Current engineering candidate boundary
 
-`v1.4.9` is the current immutable certified release at exact SHA `f1ce20c010779f5273eb5d0051da24cdd57b33f6`. The historical `v1.4.5` release remains immutable and is not treated as the current certified release.
+`v1.4.11` is the current immutable certified release at exact SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`. All post-`v1.4.11` commits are engineering changes only and do not mutate the release identity.
 
 ## Commercial Readiness Audit v1
 
