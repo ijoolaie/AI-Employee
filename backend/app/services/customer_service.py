@@ -10,6 +10,9 @@ from app.models.customer import Customer
 from app.services import audit_service
 
 
+CUSTOMER_EXTERNAL_KEY_INDEX_NAME = "uq_customers_tenant_external_key"
+
+
 async def upsert_customer(
     db: AsyncSession,
     *,
@@ -101,8 +104,15 @@ async def create_customer(
         notes=notes,
         is_active=True,
     )
-    db.add(customer)
-    await db.flush()
+    try:
+        async with db.begin_nested():
+            db.add(customer)
+            await db.flush()
+    except IntegrityError as exc:
+        constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name == CUSTOMER_EXTERNAL_KEY_INDEX_NAME:
+            raise ConflictError("Customer external key already exists") from exc
+        raise
     await audit_service.record(
         db,
         tenant_id=tenant_id,
