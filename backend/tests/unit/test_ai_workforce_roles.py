@@ -97,7 +97,7 @@ def test_every_workforce_operation_has_an_explicit_capability_contract() -> None
 def test_unbound_workforce_operation_fails_closed_before_tool_execution() -> None:
     from app.services.ai_workforce_roles import assert_workforce_tool_binding
 
-    with pytest.raises(ValidationAppError, match="no approved Tool Registry binding"):
+    with pytest.raises(ValidationAppError, match="Tool is not bound to the requested workforce capability"):
         assert_workforce_tool_binding("ai_trader", "market_research", "calculator")
 
 
