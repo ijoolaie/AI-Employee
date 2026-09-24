@@ -97,7 +97,7 @@ def test_every_workforce_operation_has_an_explicit_capability_contract() -> None
 def test_unbound_workforce_operation_fails_closed_before_tool_execution() -> None:
     from app.services.ai_workforce_roles import assert_workforce_tool_binding
 
-    with pytest.raises(ValidationAppError, match="no approved Tool Registry binding"):
+    with pytest.raises(ValidationAppError, match="Tool is not bound to the requested workforce capability"):
         assert_workforce_tool_binding("ai_trader", "market_research", "calculator")
 
 
@@ -107,6 +107,15 @@ def test_workforce_capability_contract_snapshot_is_json_safe_and_role_scoped() -
     assert all(set(item) == {"operation", "capability_code", "tool_names", "required_permissions", "approval_required"} for item in snapshot)
     assert any(item["operation"] == "market_research" for item in snapshot)
     assert not any(item["operation"] == "draft_campaign_plan" for item in snapshot)
+
+
+def test_trader_market_research_has_exact_semantic_tool_binding() -> None:
+    from app.services.ai_workforce_roles import get_workforce_capability_contract
+
+    contract = get_workforce_capability_contract("ai_trader", "market_research")
+    assert contract.tool_names == ("workforce_market_research",)
+    assert contract.required_permissions == ("run.execute",)
+    assert contract.approval_required is False
 
 
 def test_workforce_template_capability_contract_binds_catalog_role_exactly() -> None:

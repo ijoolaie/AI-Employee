@@ -40,13 +40,19 @@ def main() -> None:
     config = CONFIG.read_text(encoding="utf-8")
 
     for name in CRITICAL:
-        assert_true(re.search(rf"{re.escape(name)}:\s*\$\{{{re.escape(name)}:\?", compose), f"{name} is not fail-closed in production compose")
+        assert_true(
+            re.search(rf"^[ \t]*{re.escape(name)}[ \t]*:[ \t]*\$\{{{re.escape(name)}:\?", compose, re.MULTILINE),
+            f"{name} is not fail-closed in production compose",
+        )
 
     for name in OPTIONAL_SECRETS:
-        matches = re.findall(rf"^\s*{re.escape(name)}:\s*(.+)$", compose, re.MULTILINE)
+        matches = re.findall(rf"^[ \t]*{re.escape(name)}[ \t]*:[ \t]*(.+)$", compose, re.MULTILINE)
         assert_true(matches, f"{name} is not declared in production compose")
         for value in matches:
-            assert_true(re.fullmatch(rf"\$\{{{re.escape(name)}:-\}}", value.strip()), f"{name} must use an environment substitution with an empty fallback")
+            assert_true(
+                re.fullmatch(rf"\$\{{{re.escape(name)}:-\}}", value.strip()),
+                f"{name} must use an environment substitution with an empty fallback",
+            )
 
     assert_true("change-me-to-a-long-random-string-in-production" in config, "expected weak-secret sentinel is absent from config")
     assert_true("SECRET_KEY" in config and "production" in config.lower(), "production SECRET_KEY safety guard is not visible")
@@ -56,7 +62,7 @@ def main() -> None:
             continue
         text = path.read_text(encoding="utf-8")
         for name in CRITICAL + OPTIONAL_SECRETS:
-            for match in re.finditer(rf"(?m)^\s*{re.escape(name)}\s*=\s*(.*)$", text):
+            for match in re.finditer(rf"^[ \t]*{re.escape(name)}[ \t]*=[ \t]*(.*)$", text, re.MULTILINE):
                 value = match.group(1).strip()
                 assert_true(is_placeholder(name, value), f"{path.relative_to(ROOT)} contains a concrete value for {name}")
 

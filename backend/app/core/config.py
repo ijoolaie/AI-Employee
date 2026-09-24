@@ -69,6 +69,8 @@ class Settings(BaseSettings):
             raise ValueError("TENANT_RESOURCE_CONCURRENCY values must be positive")
         if self.data_retention_days < 1 or self.data_retention_days > 3650:
             raise ValueError("DATA_RETENTION_DAYS must be between 1 and 3650")
+        if self.market_data_provider_timeout_seconds <= 0 or self.market_data_provider_timeout_seconds > 60:
+            raise ValueError("MARKET_DATA_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
         if self.app_env.lower() in {"production", "prod"}:
             if self.debug:
                 raise ValueError("DEBUG must be false in production")
@@ -115,6 +117,10 @@ class Settings(BaseSettings):
             # AI must not silently fall back to a local HTTP endpoint in production.
             if not self.local_production_allow_http and urlparse(self.lm_studio_base_url).scheme != "https":
                 raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
+
+            if self.market_data_provider_base_url:
+                if urlparse(self.market_data_provider_base_url).scheme != "https":
+                    raise ValueError("MARKET_DATA_PROVIDER_BASE_URL must use HTTPS in production")
 
             # External integrations must not redirect users or callbacks over plaintext HTTP.
             if not self.local_production_allow_http:
@@ -199,6 +205,12 @@ class Settings(BaseSettings):
     shopify_scopes: str = "read_products,read_inventory,read_orders,read_customers,write_orders"
     shopify_api_version: str = "2026-07"
     frontend_app_url: str = "http://localhost:3000"
+
+    # Optional, operator-configured read-only market-research provider. The
+    # URL is configuration-owned; callers cannot choose an arbitrary endpoint.
+    market_data_provider_base_url: str | None = None
+    market_data_provider_api_key: str | None = None
+    market_data_provider_timeout_seconds: float = 10.0
 
     @property
     def stripe_enabled(self) -> bool:
