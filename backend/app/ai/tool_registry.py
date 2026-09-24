@@ -249,6 +249,15 @@ class ToolRegistry:
                 file_id=arguments["file_id"],
             )
 
+        elif name == "workforce_market_research":
+            if db is None or tenant_id is None:
+                raise ValidationAppError("workforce_market_research requires an active tenant Run context")
+            from app.services.workforce_market_research_service import market_research
+            result = await market_research(
+                tenant_id=tenant_id,
+                symbols=arguments["symbols"],
+                horizon_days=int(arguments.get("horizon_days", 30)),
+            )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
                 raise ValidationAppError("create_invoice requires an active tenant Run context")
@@ -522,6 +531,21 @@ def _analyze_document(arguments: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+async def _workforce_market_research(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    if db is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_market_research requires an active tenant Run context"
+        )
+    from app.services.workforce_market_research_service import market_research
+    return await market_research(
+        tenant_id=tenant_id,
+        symbols=arguments["symbols"],
+        horizon_days=int(arguments.get("horizon_days", 30)),
+    )
+
+
 def _create_invoice(arguments: dict[str, Any]) -> dict[str, Any]:
     raise ValidationAppError(
         "create_invoice requires a tenant Run context and is executed via ToolRegistry.execute()."
@@ -735,6 +759,35 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_analyze_document,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_market_research",
+            description=(
+                "Read-only market research through the operator-configured market-data provider. "
+                "No order placement, capital allocation, leverage, withdrawal, or other trading side effect."
+            ),
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "symbols": {
+                        "type": "array",
+                        "items": {"type": "string", "minLength": 1, "maxLength": 32},
+                        "minItems": 1,
+                        "maxItems": 20,
+                        "uniqueItems": True,
+                    },
+                    "horizon_days": {"type": "integer", "minimum": 1, "maximum": 365, "default": 30},
+                },
+                "required": ["symbols"],
+                "additionalProperties": False,
+            },
+            handler=_workforce_market_research,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
