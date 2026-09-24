@@ -18,6 +18,7 @@ def _ctx_permission(endpoint) -> str:
 
 def test_customer_routes_have_explicit_rbac_boundaries():
     expected = {
+        customers.create_customer: "customers.create",
         customers.list_customers: "customers.read",
         customers.get_customer: "customers.read",
         customers.update_customer: "customers.update",
