@@ -490,6 +490,15 @@ const tasks = {
   approvalDescription: "Approval requests are scoped to the WorkItem's correlated Run.", noPendingApproval: "No pending approval for this execution.", approve: "Approve", reject: "Reject",
   executionResult: "Execution result", executionResultDescription: "Current status and output returned by the canonical execution service.", noOutput: "No execution output has been recorded yet.",
   executionHistory: "Execution history", executionHistoryDescription: "Canonical audit events for this WorkItem.", noHistory: "No execution history yet.", status: "Status", created: "Created",
+  workItem: "Work item", statusLabels: {
+    ready: "Ready", assigned: "Assigned", running: "Running", waiting_approval: "Waiting for approval",
+    succeeded: "Succeeded", failed: "Failed", cancelled: "Cancelled",
+  }, executorLabels: { human: "Human", agent: "AI agent" },
+  historyActionLabels: {
+    "work_item.assigned": "Assigned", "work_item.dispatched": "Dispatched", "work_item.execution_succeeded": "Execution succeeded",
+    "work_item.execution_failed": "Execution failed", "work_item.waiting_approval": "Waiting for approval",
+    "work_item.cancelled": "Cancelled", "work_item.retry": "Retry",
+  },
   actionFailed: "The requested task action failed.",
 } as const;
 
@@ -501,6 +510,15 @@ const tasksFa = {
   approvalDescription: "درخواست‌های تأیید بر اساس Run مرتبط با WorkItem نمایش داده می‌شوند.", noPendingApproval: "تأیید در انتظاری برای این اجرا وجود ندارد.", approve: "تأیید", reject: "رد",
   executionResult: "نتیجه اجرا", executionResultDescription: "وضعیت فعلی و خروجی سرویس مرجع اجرا.", noOutput: "هنوز خروجی اجرایی ثبت نشده است.",
   executionHistory: "تاریخچه اجرا", executionHistoryDescription: "رویدادهای حسابرسی مرجع برای این WorkItem.", noHistory: "هنوز تاریخچه اجرایی ثبت نشده است.", status: "وضعیت", created: "ایجاد شده",
+  workItem: "وظیفه", statusLabels: {
+    ready: "آماده", assigned: "تخصیص‌یافته", running: "در حال اجرا", waiting_approval: "در انتظار تأیید",
+    succeeded: "موفق", failed: "ناموفق", cancelled: "لغوشده",
+  }, executorLabels: { human: "انسان", agent: "عامل هوش مصنوعی" },
+  historyActionLabels: {
+    "work_item.assigned": "تخصیص داده شد", "work_item.dispatched": "برای اجرا ارسال شد", "work_item.execution_succeeded": "اجرا موفق بود",
+    "work_item.execution_failed": "اجرا ناموفق بود", "work_item.waiting_approval": "در انتظار تأیید",
+    "work_item.cancelled": "لغو شد", "work_item.retry": "تلاش مجدد",
+  },
   actionFailed: "عملیات درخواستی روی وظیفه انجام نشد.",
 } as const;
 
