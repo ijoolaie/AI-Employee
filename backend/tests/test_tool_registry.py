@@ -177,6 +177,66 @@ async def test_workforce_request_capacity_requires_tenant_context():
         )
 
 
+@pytest.mark.asyncio
+async def test_workforce_request_capacity_dispatches_registered_handler(monkeypatch):
+    from app.services import capacity_forecasting, license_service
+    from app.services.capacity_forecasting import CapacityForecast
+    from datetime import datetime, timezone
+    from uuid import uuid4
+
+    tenant_id = uuid4()
+    forecast = CapacityForecast(
+        tenant_id=tenant_id,
+        window_days=14,
+        horizon_days=7,
+        sample_count=42,
+        demand_samples_per_day=3.0,
+        average_run_duration_seconds=120.0,
+        current_ready_items=4,
+        current_active_work_items=2,
+        total_max_concurrency=8,
+        total_available_slots=6,
+        projected_arrivals=21.0,
+        projected_required_concurrency=0.0041666667,
+        projected_utilization=0.0005208333,
+        projected_backlog=0.0,
+        lower_bound_required_concurrency=0.0020833333,
+        upper_bound_required_concurrency=0.00625,
+        evidence_complete=True,
+        rationale=["capacity evidence"],
+        contract_version="stage9-capacity-forecast-v1",
+        window_start=datetime(2026, 9, 1, tzinfo=timezone.utc),
+        window_end=datetime(2026, 9, 15, tzinfo=timezone.utc),
+    )
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    async def capacity_forecast(db, *, tenant_id, window_days, horizon_days):
+        assert db == "db-context"
+        assert tenant_id == "tenant-context"
+        assert window_days == 14
+        assert horizon_days == 7
+        return forecast
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+    monkeypatch.setattr(capacity_forecasting, "capacity_forecast", capacity_forecast)
+
+    result = await registry.execute(
+        "workforce_request_capacity",
+        {"window_days": 14, "horizon_days": 7},
+        permissions={"run.execute"},
+        allowed_tools={"workforce_request_capacity"},
+        db="db-context",
+        tenant_id="tenant-context",
+    )
+    assert result["window_days"] == 14
+    assert result["horizon_days"] == 7
+    assert result["sample_count"] == 42
+    assert result["contract_version"] == "stage9-capacity-forecast-v1"
+    assert result["tenant_id"] == str(tenant_id)
+
+
 def test_workforce_prepare_ceo_report_is_read_only_and_non_approval_gated():
     tool = registry.get("workforce_prepare_ceo_report")
     assert tool.side_effects is False
