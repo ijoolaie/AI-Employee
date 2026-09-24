@@ -221,6 +221,36 @@ async def get_workforce_balance_recommendation(
     }
 
 
+async def reprioritize_work_item(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    work_item_id: uuid.UUID,
+    priority: int,
+) -> WorkItem:
+    """Atomically change a non-terminal WorkItem priority within one tenant."""
+    if not 0 <= priority <= 9:
+        raise ExecutionError("priority must be between 0 and 9")
+
+    stmt = (
+        select(WorkItem)
+        .where(
+            WorkItem.id == work_item_id,
+            WorkItem.tenant_id == tenant_id,
+        )
+        .with_for_update()
+    )
+    item = (await db.execute(stmt)).scalar_one_or_none()
+    if item is None:
+        raise ExecutionError("work item not found")
+    if item.status in {WorkItemStatus.SUCCEEDED, WorkItemStatus.CANCELLED}:
+        raise ExecutionError("terminal work items cannot be reprioritized")
+
+    item.priority = priority
+    await db.flush()
+    return item
+
+
 async def assign_work_item(
     db: AsyncSession,
     *,
