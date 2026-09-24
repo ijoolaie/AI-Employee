@@ -4,7 +4,7 @@
 **Certified release baseline:** `v1.4.11`  
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
-**Mainline engineering head:** `7c9dd56a93fc3b4294467a55cd41b3daadf0bbbd`  
+**Mainline engineering head:** `af29eb595d5b00b7257e678ab768e713aead3215`  
 **Status date:** 2026-09-24  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
@@ -89,6 +89,11 @@ PR #658 is now merged on mainline at `5aef9a245d2e7a065b11b6eb0f60883842e06c3c`.
 
 PR #664 is merged at `0671b31e9a4b8017e2aa418755cebc0bf5c900f3`. The three governed semantic market tools now execute through their registered `RegisteredTool.handler` implementations; duplicate name-based service dispatch was removed from `ToolRegistry.execute()`. Post-merge backend, frontend, architecture, infrastructure, validation, SLO, CodeQL and DAST checks all passed. This remains post-v1.4.11 engineering and does not alter the certified release identity.
 
+
+## Internal Manager CEO report semantic binding — 2026-09-24
+PR #667 is merged at `af29eb595d5b00b7257e678ab768e713aead3215`. Internal Manager `prepare_ceo_report` now has the first dedicated semantic Tool Registry binding: `workforce_prepare_ceo_report`. It delegates to the existing tenant-scoped workforce dashboard service, is read-only, requires `run.execute`, fails closed without tenant Run context, and remains subject to the existing explicit workforce-operation and CEO-delegation governance boundary. No staffing, provisioning, activation, financial authority, or release identity changed.
+
+The governed semantic binding count is now four: three Trader read-only market capabilities plus Internal Manager CEO reporting. Unsupported workforce operations remain denied until a dedicated semantic handler and explicit binding exist.
 
 ## Workforce handler dispatch regression coverage — 2026-09-24
 
