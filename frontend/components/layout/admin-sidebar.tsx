@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
-import { LayoutDashboard, LogOut, ShieldCheck, Users, ClipboardCheck, Activity, ScrollText, PlugZap, Bot } from "lucide-react";
+import { LayoutDashboard, LogOut, ShieldCheck, Users, ClipboardCheck, Activity, ScrollText, PlugZap, Bot, Building2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -10,6 +10,7 @@ const groups = [
   { label: "Control Plane", items: [
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
     { href: "/admin/tenants", label: "Tenants", icon: Users },
+    { href: "/admin/resellers", label: "Resellers", icon: Building2 },
     { href: "/admin/operations", label: "Operations", icon: Activity },
     { href: "/admin/audit", label: "Audit Logs", icon: ScrollText },
   ]},
