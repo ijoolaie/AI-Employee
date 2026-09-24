@@ -56,8 +56,14 @@ export default function AdminResellersPage() {
   const canCreate = form.name.trim().length >= 2 && form.slug.trim().length >= 2 &&
     form.admin_email.trim().length >= 3 && form.admin_password.length >= 12;
 
+  const statusLabel = (status: string) => ({
+    active: m.active,
+    suspended: m.suspended,
+    deprovisioned: m.deprovisioned,
+  }[status] ?? status);
+
   return <>
-    <Header title="Resellers" description="Manage direct reseller tenants from the vendor control plane." />
+    <Header title={m.title} description={m.description} />
     <div className="space-y-6 p-6">
       <Card>
         <CardHeader><CardTitle>{m.createTitle}</CardTitle></CardHeader>
@@ -85,7 +91,7 @@ export default function AdminResellersPage() {
               <thead><tr className="border-b bg-gray-50 text-xs uppercase text-gray-500"><th className="px-5 py-3">{m.reseller}</th><th className="px-5 py-3">{m.status}</th><th className="px-5 py-3">{m.release}</th><th className="px-5 py-3">{m.actions}</th></tr></thead>
               <tbody>{resellers.data?.map(r => <tr key={r.id} className="border-b border-gray-50">
                 <td className="px-5 py-4"><p className="font-medium">{r.name}</p><p className="text-xs text-gray-500">{r.slug}</p></td>
-                <td className="px-5 py-4">{r.status}</td>
+                <td className="px-5 py-4">{statusLabel(r.status)}</td>
                 <td className="px-5 py-4 text-xs text-gray-500">{r.vendor_release_tag ?? "—"}{r.delivery_revision ? " / " + r.delivery_revision : ""}</td>
                 <td className="px-5 py-4"><div className="flex gap-2">
                   {r.status !== "deprovisioned" && <button disabled={action.isPending} onClick={() => action.mutate({ id: r.id, status: r.status })} className="rounded-lg border px-3 py-1.5 text-xs">{r.status === "active" ? m.suspend : m.resume}</button>}
