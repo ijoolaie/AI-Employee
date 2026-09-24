@@ -663,6 +663,10 @@ export async function setConversationHandoff(id: string, requested: boolean, ass
 }
 
 export async function listCustomers(q?: string) { return unwrap(await api.get<APIResponse<import("@/types").Customer[]>>("/customers", { params: q ? { q } : undefined })); }
+export async function createCustomer(payload: { name?: string | null; email?: string | null; phone?: string | null; tags?: string[]; notes?: string | null; external_key?: string | null }) {
+  return unwrap(await api.post<APIResponse<import("@/types").Customer>>("/customers", payload));
+}
+
 export async function getCustomer(id: string) { return unwrap(await api.get<APIResponse<import("@/types").Customer>>(`/customers/${id}`)); }
 export async function updateCustomer(id: string, payload: Partial<import("@/types").Customer>) { return unwrap(await api.patch<APIResponse<import("@/types").Customer>>(`/customers/${id}`, payload)); }
 
