@@ -469,25 +469,10 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                             tool_call_id=tool_call.id,
                             arguments=tool_call.arguments,
                             continuation_messages=continuation_messages,
+                            requested_by=run.created_by,
                         )
                         run.status = "waiting"
                         paused_for_approval = True
-                        await audit_service.record(
-                            db,
-                            action="tool.approval_requested",
-                            actor_type="system",
-                            tenant_id=run.tenant_id,
-                            resource_type="run",
-                            resource_id=run.id,
-                            status="pending",
-                            request_id=run.request_id,
-                            metadata={
-                                "tool": tool_call.name,
-                                "tool_call_id": tool_call.id,
-                                "approval_id": str(approval.id),
-                                "approved": False,
-                            },
-                        )
                         await db.flush()
                         break
 
