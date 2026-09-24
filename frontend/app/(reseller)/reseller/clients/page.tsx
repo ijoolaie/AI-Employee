@@ -5,6 +5,8 @@ import { Building2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n/provider";
+import { resellerMessages } from "@/lib/i18n/reseller";
 
 interface ClientSummary { id: string; name: string; slug: string; status: string; tenant_kind: string; created_at: string }
 
@@ -15,6 +17,8 @@ async function getClients() {
 }
 
 export default function ResellerClientsPage() {
+  const { locale } = useI18n();
+  const m = resellerMessages[locale];
   const qc = useQueryClient();
   const clients = useQuery({ queryKey: ["reseller-clients"], queryFn: getClients });
   const action = useMutation({
@@ -23,9 +27,9 @@ export default function ResellerClientsPage() {
   });
 
   return <>
-    <Header title="Clients" description="Your directly managed customer tenants." />
-    <div className="p-6"><Card><CardHeader><CardTitle>Client portfolio</CardTitle></CardHeader><CardContent className="p-0 overflow-x-auto">
-      {clients.isLoading ? <p className="p-6 text-sm text-gray-500">Loading…</p> : clients.isError ? <p className="p-6 text-sm text-red-600">Unable to load client tenants.</p> : clients.data?.length === 0 ? <div className="p-10 text-center"><Building2 className="mx-auto h-8 w-8 text-gray-300" /><p className="mt-3 font-medium">No client tenants</p><p className="mt-1 text-sm text-gray-500">Client onboarding will create child customer tenants under this reseller.</p></div> : <table className="w-full text-left text-sm"><thead><tr className="border-b bg-gray-50 text-xs uppercase text-gray-500"><th className="px-5 py-3">Client</th><th className="px-5 py-3">Status</th><th className="px-5 py-3">Created</th><th className="px-5 py-3 text-right">Action</th></tr></thead><tbody>{clients.data?.map(client => <tr key={client.id} className="border-b border-gray-50"><td className="px-5 py-4"><p className="font-medium text-gray-900">{client.name}</p><p className="text-xs text-gray-500">{client.slug}</p></td><td className="px-5 py-4"><span className={client.status === "active" ? "rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700" : "rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600"}>{client.status}</span></td><td className="px-5 py-4 text-gray-500">{new Date(client.created_at).toLocaleDateString()}</td><td className="px-5 py-4 text-right"><button disabled={action.isPending} onClick={() => action.mutate({ id: client.id, status: client.status })} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 disabled:opacity-50">{client.status === "active" ? "Suspend" : "Activate"}</button></td></tr>)}</tbody></table>}
+    <Header title={m.clientsTitle} description={m.clientsDescription} />
+    <div className="p-6"><Card><CardHeader><CardTitle>{m.clientPortfolio}</CardTitle></CardHeader><CardContent className="overflow-x-auto p-0">
+      {clients.isLoading ? <p className="p-6 text-sm text-gray-500">{m.clientsLoading}</p> : clients.isError ? <p className="p-6 text-sm text-red-600">{m.clientsError}</p> : clients.data?.length === 0 ? <div className="p-10 text-center"><Building2 className="mx-auto h-8 w-8 text-gray-300" /><p className="mt-3 font-medium">{m.noClientTenants}</p><p className="mt-1 text-sm text-gray-500">{m.noClientTenantsText}</p></div> : <table className="w-full text-start text-sm"><thead><tr className="border-b bg-gray-50 text-xs uppercase text-gray-500"><th className="px-5 py-3 text-start">{m.client}</th><th className="px-5 py-3 text-start">{m.status}</th><th className="px-5 py-3 text-start">{m.created}</th><th className="px-5 py-3 text-end">{m.action}</th></tr></thead><tbody>{clients.data?.map(client => <tr key={client.id} className="border-b border-gray-50"><td className="px-5 py-4"><p className="font-medium text-gray-900">{client.name}</p><p className="text-xs text-gray-500">{client.slug}</p></td><td className="px-5 py-4"><span className={client.status === "active" ? "rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700" : "rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600"}>{client.status === "active" ? m.active : m.disabled}</span></td><td className="px-5 py-4 text-gray-500">{new Date(client.created_at).toLocaleDateString(locale === "fa" ? "fa-IR" : "en-US")}</td><td className="px-5 py-4 text-end"><button disabled={action.isPending} onClick={() => action.mutate({ id: client.id, status: client.status })} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 disabled:opacity-50">{client.status === "active" ? m.suspend : m.activate}</button></td></tr>)}</tbody></table>}
     </CardContent></Card></div>
   </>;
 }
