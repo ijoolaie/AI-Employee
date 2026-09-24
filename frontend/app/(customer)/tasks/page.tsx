@@ -47,7 +47,7 @@ export default function TasksPage() {
               <span className="font-medium text-brand-700">{task.title}</span>
               <p className="mt-1 text-xs text-gray-500">{formatDate(task.created_at)} · {task.id.slice(0, 12)}…</p>
             </div>
-            <Badge status={statusLabel(task.status)} />
+            <Badge status={task.status}>{statusLabel(task.status)}</Badge>
           </div>
           <p className="mt-3 line-clamp-2 text-sm text-gray-600">{String(task.input_data?.message ?? task.description ?? m.workItem)}</p>
           <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
