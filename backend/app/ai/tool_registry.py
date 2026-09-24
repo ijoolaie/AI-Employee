@@ -254,7 +254,7 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
-            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity",
+            "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_cost_optimization",
         }:
             result = await tool.handler(
                 arguments,
@@ -603,6 +603,25 @@ async def _workforce_request_capacity(arguments: dict[str, Any], **context):
         "contract_version": forecast.contract_version,
         "window_start": forecast.window_start.isoformat(),
         "window_end": forecast.window_end.isoformat(),
+    }
+
+
+async def _workforce_prepare_cost_optimization(arguments: dict[str, Any], **context):
+    db = context.get("db")
+    tenant_id = context.get("tenant_id")
+    if db is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_prepare_cost_optimization requires an active tenant Run context"
+        )
+    from app.services import optimization_service
+
+    summary = await optimization_service.tenant_optimization_summary(
+        db,
+        tenant_id=tenant_id,
+    )
+    return {
+        **summary,
+        "period_start": summary["period_start"].isoformat(),
     }
 
 
@@ -992,6 +1011,22 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_workforce_request_capacity,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_cost_optimization",
+            description="Read-only tenant-scoped workforce cost optimization guidance using measured usage, budget state and unit economics; no financial commitment or resource change.",
+            input_schema={
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False,
+            },
+            handler=_workforce_prepare_cost_optimization,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
