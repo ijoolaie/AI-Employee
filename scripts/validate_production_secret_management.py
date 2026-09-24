@@ -62,7 +62,7 @@ def main() -> None:
             continue
         text = path.read_text(encoding="utf-8")
         for name in CRITICAL + OPTIONAL_SECRETS:
-            for match in re.finditer(rf"^[ \t]*{re.escape(name)}[ \t]*(.*)$", text, re.MULTILINE):
+            for match in re.finditer(rf"^[ \t]*{re.escape(name)}[ \t]*=[ \t]*(.*)$", text, re.MULTILINE):
                 value = match.group(1).strip()
                 assert_true(is_placeholder(name, value), f"{path.relative_to(ROOT)} contains a concrete value for {name}")
 
