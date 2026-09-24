@@ -14,7 +14,9 @@ import Link from "next/link";
 
 export default function EmployeesPage() {
   const { t } = useI18n();
-  const tx = t.employee;\n  const qc = useQueryClient();\n  const status = useMutation({ mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => setEmployeeStatus(id, is_active), onSuccess: () => void qc.invalidateQueries({ queryKey: ["employees"] }) });
+  const tx = t.employee;
+  const qc = useQueryClient();
+  const status = useMutation({ mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) => setEmployeeStatus(id, is_active), onSuccess: () => void qc.invalidateQueries({ queryKey: ["employees"] }) });
   const { data, isLoading, error } = useQuery({
     queryKey: ["employees"],
     queryFn: listEmployees,
