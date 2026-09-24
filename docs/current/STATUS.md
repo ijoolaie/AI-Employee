@@ -4,7 +4,7 @@
 **Certified release baseline:** `v1.4.11`  
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
-**Mainline engineering head:** `0671b31e9a4b8017e2aa418755cebc0bf5c900f3`  
+**Mainline engineering head:** `7c9dd56a93fc3b4294467a55cd41b3daadf0bbbd`  
 **Status date:** 2026-09-24  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
@@ -88,6 +88,11 @@ PR #658 is now merged on mainline at `5aef9a245d2e7a065b11b6eb0f60883842e06c3c`.
 ## Workforce Tool Registry dispatch hardening — 2026-09-24
 
 PR #664 is merged at `0671b31e9a4b8017e2aa418755cebc0bf5c900f3`. The three governed semantic market tools now execute through their registered `RegisteredTool.handler` implementations; duplicate name-based service dispatch was removed from `ToolRegistry.execute()`. Post-merge backend, frontend, architecture, infrastructure, validation, SLO, CodeQL and DAST checks all passed. This remains post-v1.4.11 engineering and does not alter the certified release identity.
+
+
+## Workforce handler dispatch regression coverage — 2026-09-24
+
+PR #665 is merged at `7c9dd56a93fc3b4294467a55cd41b3daadf0bbbd`. Regression coverage now explicitly verifies governed market-research tenant-context enforcement and that a registered Workforce handler receives the runtime `db` and `tenant_id` context. The merge passed backend, frontend, architecture, infrastructure, recovery, CodeQL and DAST checks. This remains post-v1.4.11 engineering only.
 
 
 ## Current frontier
