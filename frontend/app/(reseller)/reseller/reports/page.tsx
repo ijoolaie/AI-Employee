@@ -1,4 +1,10 @@
 "use client";
-import { ResellerSurface } from "@/components/reseller/reseller-surface";
+
 import { useI18n } from "@/lib/i18n/provider";
-export default function ResellerReportsPage(){const {locale}=useI18n();const fa=locale==="fa";return <ResellerSurface title={fa?"گزارش‌ها":"Reports"} description={fa?"گزارش‌های مدیریتی کسب‌وکار نماینده.":"Management reporting for the reseller business."} capabilities={fa?["سلامت سبد مشتریان","گزارش SLA و رخدادهای خدمات","گزارش درآمد و حاشیه سود","عملکرد نیروی کار هوش مصنوعی","خلاصه‌های اجرایی زمان‌بندی‌شده"]:["Client portfolio health","Service SLA and incident reporting","Revenue and margin reporting","AI workforce performance","Scheduled executive summaries"]}/>} 
+import { ResellerSurface } from "@/components/reseller/reseller-surface";
+
+export default function ResellerReportsPage() {
+  const { locale } = useI18n();
+  const fa = locale === "fa";
+  return <ResellerSurface title={fa ? "گزارش‌ها" : "Reports"} description={fa ? "در حال حاضر دامنه گزارش‌گیری تجمیعی اختصاصی نماینده برای سلامت سبد مشتری، SLA، درآمد یا عملکرد نیروی کار وجود ندارد." : "There is currently no dedicated reseller reporting domain for client-portfolio health, SLA, revenue, or workforce aggregation."} capabilities={fa ? ["گزارش‌های اختصاصی هر مشتری در فضای همان مشتری باقی می‌ماند","مصرف نماینده در بخش Usage قابل مشاهده است","گزارش‌گیری تجمیعی نماینده تا زمان وجود API واقعی فعال نمی‌شود"] : ["Customer-specific reporting remains inside the customer workspace","Reseller-tenant usage is available in Usage & Cost","Reseller-level aggregation stays disabled until a real reporting API exists"]} />;
+}

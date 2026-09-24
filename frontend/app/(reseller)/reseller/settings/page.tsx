@@ -1,3 +1,10 @@
-import { Header } from "@/components/layout/header";
+"use client";
+
+import { useI18n } from "@/lib/i18n/provider";
 import { ResellerSurface } from "@/components/reseller/reseller-surface";
-export default function ResellerSettingsPage(){return <><Header title="Reseller Settings" description="Organization, branding, defaults, and reseller operating preferences."/><ResellerSurface title="Organization settings" description="Settings here apply to the reseller workspace only. Client configuration remains isolated inside each client tenant." capabilities={["Reseller organization profile","Branding and client-facing defaults","Default onboarding policies","Notification preferences","Workspace security policies"]}/></>}
+
+export default function ResellerSettingsPage() {
+  const { locale } = useI18n();
+  const fa = locale === "fa";
+  return <ResellerSurface title={fa ? "تنظیمات نماینده" : "Reseller Settings"} description={fa ? "این سطح فقط مرز تنظیمات نماینده را مشخص می‌کند؛ API واقعی برای تغییر پروفایل، برندینگ یا سیاست‌های onboarding در این صفحه هنوز وجود ندارد." : "This surface defines the reseller settings boundary; no real API currently exists here for profile, branding, or onboarding-policy mutations."} capabilities={fa ? ["مرز تنظیمات نماینده و مشتری","جلوگیری از تغییر مستقیم تنظیمات tenant مشتری","تنظیمات عملیاتی جدید فقط پس از ایجاد API و مجوز واقعی فعال می‌شوند"] : ["Reseller-versus-client settings boundary","No direct mutation of client-tenant settings","New operational settings stay disabled until real APIs and authorization exist"]} />;
+}
