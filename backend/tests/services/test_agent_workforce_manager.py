@@ -48,6 +48,59 @@ class Db:
         return self.active
 
 
+@pytest.mark.asyncio
+async def test_reprioritize_work_item_updates_non_terminal_item():
+    tenant_id, item_id = uuid4(), uuid4()
+    item = SimpleNamespace(
+        id=item_id,
+        tenant_id=tenant_id,
+        status=WorkItemStatus.READY,
+        priority=2,
+    )
+
+    class PriorityDb:
+        def __init__(self):
+            self.flush = AsyncMock()
+
+        async def execute(self, stmt):
+            return ScalarResult(item)
+
+    db = PriorityDb()
+    result = await manager.reprioritize_work_item(
+        db,
+        tenant_id=tenant_id,
+        work_item_id=item_id,
+        priority=8,
+    )
+
+    assert result is item
+    assert item.priority == 8
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_reprioritize_work_item_rejects_terminal_item():
+    tenant_id, item_id = uuid4(), uuid4()
+    item = SimpleNamespace(
+        id=item_id,
+        tenant_id=tenant_id,
+        status=WorkItemStatus.SUCCEEDED,
+        priority=2,
+    )
+
+    class PriorityDb:
+        async def execute(self, stmt):
+            return ScalarResult(item)
+
+    with pytest.raises(ExecutionError, match="terminal work items"):
+        await manager.reprioritize_work_item(
+            PriorityDb(),
+            tenant_id=tenant_id,
+            work_item_id=item_id,
+            priority=8,
+        )
+
+
 @pytest.fixture(autouse=True)
 def allow_kill_switch_check(monkeypatch):
     monkeypatch.setattr(manager, "assert_not_killed", AsyncMock())
