@@ -21,7 +21,7 @@ def test_registry_contains_controlled_initial_tools():
         "invoice_financial_summary", "create_order", "update_order_status", "analyze_order_file",
         "order_summary", "link_order_invoice", "create_deal", "update_deal_stage",
         "sales_pipeline_summary", "sales_forecast", "search_products", "get_product",
-        "check_inventory", "get_order", "track_order", "workforce_market_research",
+        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis",
     }
     assert registry.get("send_email").side_effects is True
     assert registry.get("send_email").requires_approval is True
@@ -132,6 +132,24 @@ async def test_allowed_tools_none_preserves_legacy_behavior():
 async def test_employee_guardrail_does_not_replace_permission_guardrail():
     with pytest.raises(ValidationAppError, match="Missing permission for tool"):
         await registry.execute("calculator", {"expression": "2 + 2"}, permissions=set(), allowed_tools={"calculator"})
+
+
+def test_workforce_market_risk_analysis_is_read_only_and_non_approval_gated():
+    tool = registry.get("workforce_market_risk_analysis")
+    assert tool.side_effects is False
+    assert tool.requires_approval is False
+    assert tool.required_permission == "run.execute"
+
+
+@pytest.mark.asyncio
+async def test_workforce_market_risk_analysis_requires_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "workforce_market_risk_analysis",
+            {"symbols": ["AAPL"]},
+            permissions={"run.execute"},
+            allowed_tools={"workforce_market_risk_analysis"},
+        )
 
 
 def test_workforce_market_research_is_read_only_and_non_approval_gated():

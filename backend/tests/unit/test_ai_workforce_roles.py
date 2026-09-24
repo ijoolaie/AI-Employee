@@ -118,6 +118,15 @@ def test_trader_market_research_has_exact_semantic_tool_binding() -> None:
     assert contract.approval_required is False
 
 
+def test_trader_risk_analysis_has_exact_semantic_tool_binding() -> None:
+    from app.services.ai_workforce_roles import get_workforce_capability_contract
+
+    contract = get_workforce_capability_contract("ai_trader", "risk_analysis")
+    assert contract.tool_names == ("workforce_market_risk_analysis",)
+    assert contract.required_permissions == ("run.execute",)
+    assert contract.approval_required is False
+
+
 def test_workforce_template_capability_contract_binds_catalog_role_exactly() -> None:
     binding = workforce_template_capability_contract("ai_trader")
     assert binding["workforce_role_code"] == "ai_trader"
