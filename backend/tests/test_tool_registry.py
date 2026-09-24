@@ -21,7 +21,7 @@ def test_registry_contains_controlled_initial_tools():
         "invoice_financial_summary", "create_order", "update_order_status", "analyze_order_file",
         "order_summary", "link_order_invoice", "create_deal", "update_deal_stage",
         "sales_pipeline_summary", "sales_forecast", "search_products", "get_product",
-        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan", "workforce_prepare_ceo_report", "workforce_prepare_growth_report",
+        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan", "workforce_prepare_ceo_report", "workforce_prepare_growth_report", "workforce_draft_campaign_plan",
     }
     assert registry.get("send_email").side_effects is True
     assert registry.get("send_email").requires_approval is True
@@ -275,6 +275,54 @@ async def test_workforce_registered_handler_receives_runtime_context(monkeypatch
 
 def test_workforce_prepare_growth_report_is_read_only_and_non_approval_gated():
     tool = registry.get("workforce_prepare_growth_report")
+    assert tool.side_effects is False
+    assert tool.requires_approval is False
+    assert tool.required_permission == "run.execute"
+
+
+
+@pytest.mark.asyncio
+async def test_workforce_draft_campaign_plan_requires_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "workforce_draft_campaign_plan",
+            {"objective": "lead generation", "audience": "SMB", "channels": ["email"]},
+            permissions={"run.execute"},
+            allowed_tools={"workforce_draft_campaign_plan"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_workforce_draft_campaign_plan_dispatches_registered_handler(monkeypatch):
+    from app.services import license_service
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+
+    result = await registry.execute(
+        "workforce_draft_campaign_plan",
+        {
+            "objective": "lead generation",
+            "audience": "SMB",
+            "channels": ["Email", "social"],
+            "duration_days": 21,
+            "budget": 5000,
+        },
+        permissions={"run.execute"},
+        allowed_tools={"workforce_draft_campaign_plan"},
+        db="db-context",
+        tenant_id="tenant-context",
+    )
+    assert result["status"] == "draft"
+    assert result["channels"] == ["email", "social"]
+    assert result["duration_days"] == 21
+    assert result["governance"]["execution_required"] is True
+
+
+def test_workforce_draft_campaign_plan_is_read_only_and_non_approval_gated():
+    tool = registry.get("workforce_draft_campaign_plan")
     assert tool.side_effects is False
     assert tool.requires_approval is False
     assert tool.required_permission == "run.execute"
