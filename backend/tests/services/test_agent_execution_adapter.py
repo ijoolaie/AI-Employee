@@ -325,6 +325,7 @@ async def test_workforce_market_research_binding_reaches_registry_only_after_gov
         agent=agent,
         tool_name="workforce_market_research",
         arguments={"symbols": ["BTCUSDT"], "horizon_days": 30},
+        workforce_operation="market_research",
     )
 
     assert result == {"ok": True}
