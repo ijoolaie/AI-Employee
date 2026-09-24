@@ -21,6 +21,10 @@ class EmployeeCreate(EmployeeVersionCreate):
     kind: str = "custom"  # tenant-created Employees are Custom by definition
 
 
+class EmployeeStatusUpdate(BaseModel):
+    is_active: bool
+
+
 class EmployeeVersionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
