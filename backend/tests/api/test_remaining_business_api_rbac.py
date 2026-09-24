@@ -1,7 +1,7 @@
 import inspect
 from typing import get_args
 
-from app.api.v1 import customers, invoices, products
+from app.api.v1 import customers, employees, invoices, products
 
 
 def _ctx_permission(endpoint) -> str:
@@ -23,6 +23,11 @@ def test_customer_routes_have_explicit_rbac_boundaries():
         customers.get_customer: "customers.read",
         customers.update_customer: "customers.update",
     }
+    assert {endpoint: _ctx_permission(endpoint) for endpoint in expected} == expected
+
+
+def test_employee_status_route_has_explicit_rbac_boundary():
+    expected = {employees.update_status: "employee.write"}
     assert {endpoint: _ctx_permission(endpoint) for endpoint in expected} == expected
 
 

@@ -106,6 +106,34 @@ async def create_employee(
     return employee
 
 
+async def set_employee_status(
+    db: AsyncSession,
+    *,
+    employee_id: uuid.UUID,
+    tenant_id: uuid.UUID,
+    is_active: bool,
+    actor_id: uuid.UUID | None,
+) -> Employee:
+    employee = await get_employee(db, employee_id=employee_id, tenant_id=tenant_id)
+    if employee.tenant_id != tenant_id:
+        raise NotFoundError("Employee not found")
+    employee.is_active = is_active
+    await db.flush()
+    await db.refresh(employee)
+    await audit_service.record(
+        db,
+        action="employee.status_changed",
+        actor_type="user" if actor_id else "system",
+        actor_id=actor_id,
+        tenant_id=tenant_id,
+        resource_type="employee",
+        resource_id=employee.id,
+        request_id=request_id_var.get(),
+        metadata={"is_active": is_active},
+    )
+    return employee
+
+
 async def publish_new_version(
     db: AsyncSession,
     *,

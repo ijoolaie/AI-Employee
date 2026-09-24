@@ -12,6 +12,7 @@ from app.core.deps import CurrentContext, DbSession, EmployeeReadContext, Employ
 from app.schemas.common import APIResponse
 from app.schemas.employee import (
     EmployeeCreate,
+    EmployeeStatusUpdate,
     EmployeeResponse,
     EmployeeVersionCreate,
     EmployeeVersionResponse,
@@ -67,6 +68,26 @@ async def list_available_tools(ctx: EmployeeReadContext):
 async def get_employee(employee_id: UUID, ctx: EmployeeReadContext, db: DbSession):
     employee = await employee_service.get_employee(
         db, employee_id=employee_id, tenant_id=ctx.tenant_id
+    )
+    return APIResponse(success=True, data=EmployeeResponse.model_validate(employee))
+
+
+@router.post(
+    "/{employee_id}/status",
+    response_model=APIResponse[EmployeeResponse],
+)
+async def update_status(
+    employee_id: UUID,
+    payload: EmployeeStatusUpdate,
+    ctx: EmployeeWriteContext,
+    db: DbSession,
+):
+    employee = await employee_service.set_employee_status(
+        db,
+        employee_id=employee_id,
+        tenant_id=ctx.tenant_id,
+        is_active=payload.is_active,
+        actor_id=ctx.user_id,
     )
     return APIResponse(success=True, data=EmployeeResponse.model_validate(employee))
 
