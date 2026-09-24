@@ -4,14 +4,14 @@
 **Certified release baseline:** `v1.4.11`  
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
-**Mainline engineering head:** `8cdbbdb9a4fafad0cb8d97fff14d0dafd4ae138d`  
+**Mainline engineering state:** POST-CERTIFICATION ENGINEERING — see `main` for the current head  
 **Status date:** 2026-09-24  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
 **Certification run:** `35848311037` — PASS (exact `v1.4.11` SHA)  
 **Production deployment:** OPEN — PENDING EXTERNAL EXECUTION
 
-The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.11` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification documentation changes and is not itself certified.
+The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.11` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification documentation changes and is not itself certified. The mutable STATUS document intentionally does not record an exact current-main SHA: each documentation merge creates a new mainline commit, so recording the pre-merge SHA would immediately become stale. The immutable certified SHA remains recorded above; use the `main` ref or GitHub commit history for the live engineering head.
 
 ## Executive status
 
