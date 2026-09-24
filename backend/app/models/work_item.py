@@ -45,7 +45,6 @@ class WorkItem(Base):
         Enum(WorkItemStatus, values_callable=lambda enum_type: [item.value for item in enum_type]),
         nullable=False,
         default=WorkItemStatus.DRAFT,
-        insert_default=WorkItemStatus.DRAFT,
     )
     priority: Mapped[int] = mapped_column(nullable=False, default=0)
     requester_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
