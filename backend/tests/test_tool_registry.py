@@ -21,7 +21,7 @@ def test_registry_contains_controlled_initial_tools():
         "invoice_financial_summary", "create_order", "update_order_status", "analyze_order_file",
         "order_summary", "link_order_invoice", "create_deal", "update_deal_stage",
         "sales_pipeline_summary", "sales_forecast", "search_products", "get_product",
-        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan", "workforce_prepare_ceo_report", "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_budget_estimate", "workforce_balance_workload", "workforce_assign_task", "workforce_prepare_cost_optimization",
+        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan", "workforce_prepare_ceo_report", "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_budget_estimate", "workforce_balance_workload", "workforce_assign_task", "workforce_reprioritize_task", "workforce_prepare_cost_optimization",
     }
     assert registry.get("send_email").side_effects is True
     assert registry.get("send_email").requires_approval is True
@@ -41,6 +41,9 @@ def test_registry_contains_controlled_initial_tools():
     assert registry.get("workforce_assign_task").side_effects is True
     assert registry.get("workforce_assign_task").requires_approval is False
     assert registry.get("workforce_assign_task").required_permission == "run.execute"
+    assert registry.get("workforce_reprioritize_task").side_effects is True
+    assert registry.get("workforce_reprioritize_task").requires_approval is False
+    assert registry.get("workforce_reprioritize_task").required_permission == "run.execute"
 
 
 def test_allowed_tools_become_provider_definitions():
@@ -180,6 +183,20 @@ def test_workforce_assign_task_is_side_effecting_but_non_approval_gated():
     assert tool.side_effects is True
     assert tool.requires_approval is False
     assert tool.required_permission == "run.execute"
+
+
+@pytest.mark.asyncio
+async def test_workforce_reprioritize_task_requires_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "workforce_reprioritize_task",
+            {
+                "work_item_id": "00000000-0000-0000-0000-000000000001",
+                "priority": 8,
+            },
+            permissions={"run.execute"},
+            allowed_tools={"workforce_reprioritize_task"},
+        )
 
 
 @pytest.mark.asyncio
