@@ -190,45 +190,38 @@ async def test_workforce_market_research_requires_tenant_context():
 
 @pytest.mark.asyncio
 async def test_workforce_registered_handler_receives_runtime_context(monkeypatch):
-    from app.ai.tool_registry import RegisteredTool
+    from dataclasses import replace
+    from app.services import license_service
 
-    name = "_test_context_aware_handler"
+    name = "workforce_market_research"
+    original = registry.get(name)
     calls = []
 
     async def handler(arguments, **context):
         calls.append((arguments, context))
         return {"ok": True}
 
-    registry.register(
-        RegisteredTool(
-            name=name,
-            description="test context-aware handler",
-            input_schema={"type": "object", "properties": {}, "additionalProperties": False},
-            handler=handler,
-            side_effects=False,
-            required_permission="run.execute",
-        )
-    )
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+    registry._tools[name] = replace(original, handler=handler)
     try:
-        from app.services import license_service
-
-        async def allow_entitlement(*args, **kwargs):
-            return None
-
-        monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
         result = await registry.execute(
             name,
-            {},
+            {"symbols": ["AAPL"]},
             permissions={"run.execute"},
+            allowed_tools={name},
             db="db-context",
             tenant_id="tenant-context",
         )
         assert result == {"ok": True}
         assert calls == [
             (
-                {},
-                {"db": "db-context", "tenant_id": "tenant-context", "actor_id": None},
+                {"symbols": ["AAPL"]},
+                {"db": "db-context", "tenant_id": "tenant-context"},
             )
         ]
     finally:
-        registry._tools.pop(name, None)
+        registry._tools[name] = original
+
