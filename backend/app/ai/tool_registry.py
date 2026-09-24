@@ -94,6 +94,7 @@ class ToolRegistry:
         db=None,
         tenant_id=None,
         actor_id=None,
+        agent_instance_id=None,
     ) -> Any:
         tool = self.get(name)
 
@@ -260,7 +261,7 @@ class ToolRegistry:
                 arguments,
                 db=db,
                 tenant_id=tenant_id,
-                agent_instance_id=context.get("agent_instance_id"),
+                agent_instance_id=agent_instance_id,
             )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
