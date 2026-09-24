@@ -213,6 +213,17 @@ def test_internal_manager_balance_workload_has_exact_semantic_tool_binding():
     assert contract.approval_required is False
 
 
+def test_internal_manager_assign_task_has_exact_semantic_tool_binding():
+    from app.services.ai_workforce_roles import get_workforce_capability_contract
+
+    contract = get_workforce_capability_contract(
+        "ai_internal_manager", "assign_task"
+    )
+    assert contract.tool_names == ("workforce_assign_task",)
+    assert contract.required_permissions == ("run.execute",)
+    assert contract.approval_required is False
+
+
 def test_internal_manager_capacity_request_has_exact_semantic_tool_binding():
     from app.services.ai_workforce_roles import get_workforce_capability_contract
 
