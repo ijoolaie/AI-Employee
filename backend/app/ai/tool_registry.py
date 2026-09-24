@@ -254,6 +254,7 @@ class ToolRegistry:
             "workforce_market_trading_plan",
             "workforce_market_risk_analysis",
             "workforce_prepare_ceo_report",
+            "workforce_prepare_growth_report",
         }:
             result = await tool.handler(
                 arguments,
