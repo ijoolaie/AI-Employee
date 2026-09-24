@@ -149,7 +149,11 @@ export async function listEmployees() {
   return unwrap(await api.get<APIResponse<Employee[]>>("/employees"));
 }
 
-export async function setEmployeeStatus(id: string, is_active: boolean) {\n  return unwrap(await api.post<APIResponse<Employee>>(`/employees/${id}/status`, { is_active }));\n}\n\nexport async function getEmployee(id: string) {
+export async function setEmployeeStatus(id: string, is_active: boolean) {
+  return unwrap(await api.post<APIResponse<Employee>>(`/employees/${id}/status`, { is_active }));
+}
+
+export async function getEmployee(id: string) {
   return unwrap(await api.get<APIResponse<Employee>>(`/employees/${id}`));
 }
 
