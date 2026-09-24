@@ -56,17 +56,24 @@ def test_normalize_sku(raw, expected):
 
 
 @pytest.mark.asyncio
-async def test_create_product_normalizes_sku_before_persisting():
+async def test_create_product_normalizes_sku_before_persisting(monkeypatch):
+    audit = []
+    async def record(*args, **kwargs):
+        audit.append(kwargs)
+    monkeypatch.setattr(product_service.audit_service, "record", record)
     db = _ProductDb()
     product = await product_service.create_product(
         db,
         uuid4(),
         {"sku": " test-001 ", "name": "Test", "price": 1},
+        actor_id=uuid4(),
     )
 
     assert product.sku == "TEST-001"
     assert db.added == [product]
     assert db.refreshed == [product]
+    assert audit[0]["action"] == "product.created"
+    assert audit[0]["resource_id"] == str(product.id)
 
 
 @pytest.mark.asyncio
