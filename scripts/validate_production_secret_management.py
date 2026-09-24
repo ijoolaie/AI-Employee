@@ -41,7 +41,7 @@ def main() -> None:
 
     for name in CRITICAL:
         assert_true(
-            re.search(rf"^{re.escape(name)}[ \\t]*:[ \\t]*\\$\\{{{re.escape(name)}:\?", compose, re.MULTILINE),
+            re.search(rf"^[ \\t]*{re.escape(name)}[ \\t]*:[ \\t]*\\$\\{{{re.escape(name)}:\?", compose, re.MULTILINE),
             f"{name} is not fail-closed in production compose",
         )
 
