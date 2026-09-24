@@ -201,8 +201,6 @@ async def test_workforce_coordinate_handoff_requires_agent_identity():
             },
             permissions={"run.execute"},
             allowed_tools={"workforce_coordinate_handoff"},
-            db=object(),
-            tenant_id="00000000-0000-0000-0000-000000000003",
         )
 
 
