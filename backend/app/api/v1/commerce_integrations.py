@@ -62,7 +62,7 @@ async def test_integration(integration_id: UUID, ctx: CommerceIntegrationContext
 
 @router.post("/{integration_id}/sync/products", response_model=APIResponse[dict])
 async def sync_products(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
-    result = await shopify_service.sync_products(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.products_synced", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result": result}); await db.commit(); return APIResponse(success=True, data=result)
+    result = await shopify_service.sync_products(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.products_synced", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result_keys": sorted(result.keys()) if isinstance(result, dict) else []}); await db.commit(); return APIResponse(success=True, data=result)
 
 @router.post("/{integration_id}/sync/orders", response_model=APIResponse[dict])
 async def sync_orders(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
