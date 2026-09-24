@@ -50,29 +50,54 @@ def test_runtime_concurrency_cap_and_cross_tenant_isolation(redis_client: Redis,
     active = {"tenant-a": 0, "tenant-b": 0}
     maximum = {"tenant-a": 0, "tenant-b": 0}
     admitted = {"tenant-a": 0, "tenant-b": 0}
+    ready = threading.Barrier(3)
+    release = threading.Event()
 
-    def worker(tenant_id: str) -> None:
+    def worker(tenant_id: str, hold: bool = False):
         lease = limiter.acquire(tenant_id)
         if lease is None:
-            return
+            return False
         with lock:
             active[tenant_id] += 1
             maximum[tenant_id] = max(maximum[tenant_id], active[tenant_id])
             admitted[tenant_id] += 1
-        time.sleep(0.03)
-        with lock:
-            active[tenant_id] -= 1
-        limiter.release(lease)
+        try:
+            if hold:
+                ready.wait(timeout=2)
+                release.wait(timeout=2)
+            else:
+                time.sleep(0.03)
+            return True
+        finally:
+            with lock:
+                active[tenant_id] -= 1
+            limiter.release(lease)
 
-    with ThreadPoolExecutor(max_workers=12) as pool:
-        futures = [pool.submit(worker, "tenant-a") for _ in range(8)]
-        futures += [pool.submit(worker, "tenant-b") for _ in range(4)]
-        for future in futures:
-            future.result()
+    with ThreadPoolExecutor(max_workers=3) as first_wave:
+        first = [
+            first_wave.submit(worker, "tenant-a", True),
+            first_wave.submit(worker, "tenant-a", True),
+            first_wave.submit(worker, "tenant-b", True),
+        ]
+        ready.wait(timeout=2)
+
+        assert maximum == {"tenant-a": 2, "tenant-b": 1}
+
+        with ThreadPoolExecutor(max_workers=9) as overflow:
+            overflow_results = [
+                future.result()
+                for future in [
+                    *(overflow.submit(worker, "tenant-a") for _ in range(6)),
+                    *(overflow.submit(worker, "tenant-b") for _ in range(3)),
+                ]
+            ]
+        assert overflow_results == [False] * 9
+        assert admitted == {"tenant-a": 2, "tenant-b": 1}
+
+        release.set()
+        assert [future.result() for future in first] == [True, True, True]
 
     assert maximum == {"tenant-a": 2, "tenant-b": 1}
-    assert admitted["tenant-a"] == 2
-    assert admitted["tenant-b"] == 1
     print(
         "RUNTIME_EVIDENCE|resource_caps|PASS|"
         f"tenant-a_max={maximum['tenant-a']}|tenant-b_max={maximum['tenant-b']}|"
