@@ -210,6 +210,12 @@ async def test_workforce_registered_handler_receives_runtime_context(monkeypatch
         )
     )
     try:
+        from app.services import license_service
+
+        async def allow_entitlement(*args, **kwargs):
+            return None
+
+        monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
         result = await registry.execute(
             name,
             {},
