@@ -179,6 +179,17 @@ def test_marketing_coordinate_content_has_exact_semantic_tool_binding() -> None:
 
 
 
+def test_internal_manager_cost_optimization_has_exact_semantic_tool_binding():
+    from app.services.ai_workforce_roles import get_workforce_capability_contract
+
+    contract = get_workforce_capability_contract(
+        "ai_internal_manager", "prepare_cost_optimization"
+    )
+    assert contract.tool_names == ("workforce_prepare_cost_optimization",)
+    assert contract.required_permissions == ("run.execute",)
+    assert contract.approval_required is False
+
+
 def test_internal_manager_capacity_request_has_exact_semantic_tool_binding():
     from app.services.ai_workforce_roles import get_workforce_capability_contract
 
