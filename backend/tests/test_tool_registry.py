@@ -175,3 +175,54 @@ async def test_workforce_market_trading_plan_requires_tenant_context():
             permissions={"run.execute"},
             allowed_tools={"workforce_market_trading_plan"},
         )
+
+
+@pytest.mark.asyncio
+async def test_workforce_market_research_requires_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "workforce_market_research",
+            {"symbols": ["AAPL"]},
+            permissions={"run.execute"},
+            allowed_tools={"workforce_market_research"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_workforce_registered_handler_receives_runtime_context(monkeypatch):
+    from app.ai.tool_registry import RegisteredTool
+
+    name = "_test_context_aware_handler"
+    calls = []
+
+    async def handler(arguments, **context):
+        calls.append((arguments, context))
+        return {"ok": True}
+
+    registry.register(
+        RegisteredTool(
+            name=name,
+            description="test context-aware handler",
+            input_schema={"type": "object", "properties": {}, "additionalProperties": False},
+            handler=handler,
+            side_effects=False,
+            required_permission="run.execute",
+        )
+    )
+    try:
+        result = await registry.execute(
+            name,
+            {},
+            permissions={"run.execute"},
+            db="db-context",
+            tenant_id="tenant-context",
+        )
+        assert result == {"ok": True}
+        assert calls == [
+            (
+                {},
+                {"db": "db-context", "tenant_id": "tenant-context", "actor_id": None},
+            )
+        ]
+    finally:
+        registry._tools.pop(name, None)
