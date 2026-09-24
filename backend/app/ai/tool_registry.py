@@ -258,6 +258,15 @@ class ToolRegistry:
                 symbols=arguments["symbols"],
                 horizon_days=int(arguments.get("horizon_days", 30)),
             )
+        elif name == "workforce_market_risk_analysis":
+            if db is None or tenant_id is None:
+                raise ValidationAppError("workforce_market_risk_analysis requires an active tenant Run context")
+            from app.services.workforce_market_risk_analysis_service import risk_analysis
+            result = await risk_analysis(
+                tenant_id=tenant_id,
+                symbols=arguments["symbols"],
+                horizon_days=int(arguments.get("horizon_days", 30)),
+            )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
                 raise ValidationAppError("create_invoice requires an active tenant Run context")
@@ -531,6 +540,20 @@ def _analyze_document(arguments: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+async def _workforce_market_risk_analysis(arguments: dict[str, Any], **context):
+    tenant_id = context.get("tenant_id")
+    if context.get("db") is None or tenant_id is None:
+        raise ValidationAppError(
+            "workforce_market_risk_analysis requires an active tenant Run context"
+        )
+    from app.services.workforce_market_risk_analysis_service import risk_analysis
+    return await risk_analysis(
+        tenant_id=tenant_id,
+        symbols=arguments["symbols"],
+        horizon_days=int(arguments.get("horizon_days", 30)),
+    )
+
+
 async def _workforce_market_research(arguments: dict[str, Any], **context):
     db = context.get("db")
     tenant_id = context.get("tenant_id")
@@ -759,6 +782,26 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_analyze_document,
+            side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_market_risk_analysis",
+            description="Read-only market risk analysis from the operator-configured provider. No order placement, capital allocation, leverage, withdrawal, or external trading side effects.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "symbols": {"type": "array", "items": {"type": "string", "minLength": 1, "maxLength": 32}, "minItems": 1, "maxItems": 20, "uniqueItems": True},
+                    "horizon_days": {"type": "integer", "minimum": 1, "maximum": 365, "default": 30},
+                },
+                "required": ["symbols"],
+                "additionalProperties": False,
+            },
+            handler=_workforce_market_risk_analysis,
             side_effects=False,
             required_permission="run.execute",
             requires_approval=False,
