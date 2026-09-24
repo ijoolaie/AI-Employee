@@ -30,7 +30,7 @@ class RegisteredTool:
     name: str
     description: str
     input_schema: dict[str, Any]
-    handler: Callable[[dict[str, Any]], Any]
+    handler: Callable[..., Any]
     side_effects: bool = False
     required_permission: str = "run.execute"
     requires_approval: bool = False
@@ -249,33 +249,15 @@ class ToolRegistry:
                 file_id=arguments["file_id"],
             )
 
-        elif name == "workforce_market_research":
-            if db is None or tenant_id is None:
-                raise ValidationAppError("workforce_market_research requires an active tenant Run context")
-            from app.services.workforce_market_research_service import market_research
-            result = await market_research(
+        elif name in {
+            "workforce_market_research",
+            "workforce_market_trading_plan",
+            "workforce_market_risk_analysis",
+        }:
+            result = await tool.handler(
+                arguments,
+                db=db,
                 tenant_id=tenant_id,
-                symbols=arguments["symbols"],
-                horizon_days=int(arguments.get("horizon_days", 30)),
-            )
-        elif name == "workforce_market_trading_plan":
-            if db is None or tenant_id is None:
-                raise ValidationAppError("workforce_market_trading_plan requires an active tenant Run context")
-            from app.services.workforce_market_trading_plan_service import prepare_trading_plan
-            result = await prepare_trading_plan(
-                tenant_id=tenant_id,
-                symbols=arguments["symbols"],
-                horizon_days=int(arguments.get("horizon_days", 30)),
-                objective=arguments.get("objective", "balanced"),
-            )
-        elif name == "workforce_market_risk_analysis":
-            if db is None or tenant_id is None:
-                raise ValidationAppError("workforce_market_risk_analysis requires an active tenant Run context")
-            from app.services.workforce_market_risk_analysis_service import risk_analysis
-            result = await risk_analysis(
-                tenant_id=tenant_id,
-                symbols=arguments["symbols"],
-                horizon_days=int(arguments.get("horizon_days", 30)),
             )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
