@@ -110,7 +110,7 @@ async def test_retry_records_audit_and_increments_retry_count(monkeypatch):
     assert db.commits == 1
     assert calls["audit"]["action"] == "work_item.retry"
     assert calls["audit"]["actor_id"] == actor_id
-    assert calls["audit"]["resource_id"] == work_item_id
+    assert calls["audit"]["work_item_id"] == work_item_id
     assert calls["audit"]["metadata"]["retry_count"] == 2
 
 
