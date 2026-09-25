@@ -31,9 +31,11 @@ async def test_create_channel_persists_and_audits_actor(monkeypatch):
     actor_id = uuid4()
     employee = SimpleNamespace(id=employee_id)
     audit = []
+    tenant_id_expected = tenant_id
 
     async def get_employee(db, *, employee_id, tenant_id):
-        assert tenant_id == tenant_id
+        assert employee_id == employee.id
+        assert tenant_id == tenant_id_expected
         return employee
 
     async def record(*args, **kwargs):
