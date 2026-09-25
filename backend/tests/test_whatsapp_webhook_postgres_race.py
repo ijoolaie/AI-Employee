@@ -85,7 +85,10 @@ async def whatsapp_race_setup():
             delete(EmployeeVersion).where(EmployeeVersion.employee_id == employee.id)
         )
         await db.execute(delete(Employee).where(Employee.id == employee.id))
-        await db.execute(delete(Tenant).where(Tenant.id == tenant.id))
+        # The audit ledger is immutable and retains tenant-scoped entries, so
+        # the fixture must not physically delete the tenant after audited flows.
+        # Remove the mutable fixture graph and deprovision the tenant instead.
+        tenant.status = "deprovisioned"
         await db.commit()
 
 
