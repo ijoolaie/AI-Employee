@@ -43,7 +43,7 @@ async def subscribe(payload: SubscribeRequest, ctx: BillingManageContext, db: Db
 
 @router.post("/subscription/cancel", response_model=APIResponse[SubscriptionResponse])
 async def cancel(payload: CancelRequest, ctx: BillingManageContext, db: DbSession):
-    sub = await billing_service.cancel_subscription(db, tenant_id=ctx.tenant_id, at_period_end=payload.at_period_end)
+    sub = await billing_service.cancel_subscription(db, tenant_id=ctx.tenant_id, at_period_end=payload.at_period_end, actor_id=ctx.user_id)
     await db.commit(); await db.refresh(sub, ["plan"])
     return APIResponse(success=True, data=_sub_response(sub))
 

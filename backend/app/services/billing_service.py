@@ -16,7 +16,7 @@ from app.models.ai_provider_call import AIProviderCall
 from app.models.employee import Employee
 from app.models.run import Run
 from app.models.workflow import Workflow
-from app.services import license_service
+from app.services import audit_service, license_service
 
 PLAN_SEEDS = (
     {"code": "starter", "name": "Starter", "monthly_price_usd": Decimal("0.00"), "monthly_runs": 100, "monthly_tokens": 100_000, "max_employees": 3, "max_workflows": 3, "features": {"priority": "standard"}},
@@ -149,10 +149,11 @@ async def change_plan(db: AsyncSession, *, tenant_id: uuid.UUID, plan_code: str,
         sub.current_period_start = _period_start(now)
         sub.current_period_end = _period_end(sub.current_period_start)
     await db.flush()
+    await audit_service.record(db, action="billing.subscription.plan_changed", actor_type="user" if actor_id else "system", actor_id=actor_id, tenant_id=tenant_id, resource_type="subscription", resource_id=str(sub.id), metadata={"plan_code": plan.code, "status": sub.status})
     return sub
 
 
-async def cancel_subscription(db: AsyncSession, *, tenant_id: uuid.UUID, at_period_end: bool) -> Subscription:
+async def cancel_subscription(db: AsyncSession, *, tenant_id: uuid.UUID, at_period_end: bool, actor_id: uuid.UUID | None = None) -> Subscription:
     sub = await ensure_subscription(db, tenant_id=tenant_id)
     if at_period_end:
         sub.cancel_at_period_end = True
@@ -162,6 +163,7 @@ async def cancel_subscription(db: AsyncSession, *, tenant_id: uuid.UUID, at_peri
         sub.cancel_at_period_end = False
         sub.canceled_at = datetime.now(timezone.utc)
     await db.flush()
+    await audit_service.record(db, action="billing.subscription.cancellation_updated", actor_type="user" if actor_id else "system", actor_id=actor_id, tenant_id=tenant_id, resource_type="subscription", resource_id=str(sub.id), metadata={"at_period_end": at_period_end, "status": sub.status, "cancel_at_period_end": sub.cancel_at_period_end})
     return sub
 
 

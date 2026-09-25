@@ -8,6 +8,7 @@ from app.core.deps import CurrentContext, DbSession
 from app.models.user import User
 from app.models.role import Role
 from app.schemas.common import APIResponse
+from app.services import audit_service
 
 router = APIRouter(prefix="/tenant-admin", tags=["tenant-admin"])
 
@@ -83,6 +84,7 @@ async def update_user_status(user_id: UUID, payload: UserStatusUpdate, ctx: Curr
     user = result.scalar_one_or_none()
     if user is None: raise HTTPException(status_code=404, detail="User not found")
     user.is_active = payload.is_active
+    await audit_service.record(db, action="tenant.user_status_updated", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="user", resource_id=str(user.id), metadata={"is_active": payload.is_active})
     await db.commit(); await db.refresh(user)
     return APIResponse(success=True, data=UserSummary(id=user.id,email=user.email,full_name=user.full_name,is_active=user.is_active,roles=[r.name for r in user.roles if r.tenant_id == ctx.tenant_id]))
 
@@ -94,5 +96,6 @@ async def update_user_roles(user_id: UUID, payload: UserRolesUpdate, ctx: Curren
     if user is None: raise HTTPException(status_code=404, detail="User not found")
     roles = await _load_assignable_roles(payload, ctx, db)
     user.roles = roles
+    await audit_service.record(db, action="tenant.user_roles_updated", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="user", resource_id=str(user.id), metadata={"role_ids": [str(role.id) for role in roles]})
     await db.commit(); await db.refresh(user)
     return APIResponse(success=True, data=UserSummary(id=user.id,email=user.email,full_name=user.full_name,is_active=user.is_active,roles=[r.name for r in user.roles if r.tenant_id == ctx.tenant_id]))

@@ -20,6 +20,7 @@ from app.models.employee import Employee
 from app.models.feedback import Feedback
 from app.models.run import Run
 from app.models.tenant import Tenant
+from app.services import audit_service
 
 # "Regularly using" proxy, per Roadmap §6 ("مشتری‌های فعال ... به‌طور
 # منظم"): at least one Report Employee Run in the trailing window.
@@ -68,6 +69,8 @@ async def create_feedback(
         category=category,
     )
     db.add(feedback)
+    await db.flush()
+    await audit_service.record(db, action="feedback.created", actor_type="user", actor_id=user_id, tenant_id=tenant_id, resource_type="feedback", resource_id=str(feedback.id), metadata={"rating": rating, "category": category, "run_id": str(run_id) if run_id else None, "employee_id": str(employee_id) if employee_id else None})
     await db.commit()
     await db.refresh(feedback)
     return feedback

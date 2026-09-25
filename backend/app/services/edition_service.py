@@ -134,9 +134,9 @@ async def delegate_entitlement(db: AsyncSession, *, parent: Tenant, child: Tenan
         row.quota_limit = effective_quota
         row.is_enabled = True
         row.delegated_from_tenant_id = parent.id
+    await record_audit(db, tenant_id=parent.id, actor_id=None, action="entitlement.delegated", resource_type="tenant_entitlement", resource_id=str(row.id), metadata={"child_tenant_id": str(child.id), "feature_code": feature_code, "quota_limit": effective_quota})
     await db.commit()
     await db.refresh(row)
-    await record_audit(db, tenant_id=parent.id, actor_id=None, action="entitlement.delegated", resource_type="tenant_entitlement", resource_id=str(row.id), metadata={"child_tenant_id": str(child.id), "feature_code": feature_code, "quota_limit": effective_quota})
     return row
 
 
@@ -148,9 +148,9 @@ async def create_support_escalation(db: AsyncSession, *, from_tenant: Tenant, op
         raise HTTPException(status_code=409, detail="Parent support tenant unavailable")
     row = SupportEscalation(from_tenant_id=from_tenant.id, to_tenant_id=target.id, opened_by=opened_by, subject=subject, description=description, extra_data={})
     db.add(row)
+    await record_audit(db, tenant_id=from_tenant.id, actor_id=opened_by, action="support.escalation.created", resource_type="support_escalation", resource_id=str(row.id), metadata={"to_tenant_id": str(target.id)})
     await db.commit()
     await db.refresh(row)
-    await record_audit(db, tenant_id=from_tenant.id, actor_id=opened_by, action="support.escalation.created", resource_type="support_escalation", resource_id=str(row.id), metadata={"to_tenant_id": str(target.id)})
     return row
 
 
