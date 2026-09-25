@@ -5,6 +5,7 @@ import uuid
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import request_id_var
@@ -27,6 +28,53 @@ class TeamExecutionService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
+    async def _existing_execution(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        idempotency_key: str,
+        installation_id: uuid.UUID,
+        input_data: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        key = f"team:{installation_id}:{idempotency_key}"
+        result = await self.db.execute(
+            select(WorkItem).where(
+                WorkItem.tenant_id == tenant_id,
+                WorkItem.idempotency_key == key,
+            )
+        )
+        parent = result.scalar_one_or_none()
+        if parent is None:
+            return None
+
+        policy = parent.policy_context or {}
+        if policy.get("team_installation_id") != str(installation_id) or parent.input_data != input_data:
+            raise TeamExecutionError("Idempotency key already belongs to a different team execution")
+
+        children_result = await self.db.execute(
+            select(WorkItem)
+            .where(
+                WorkItem.tenant_id == tenant_id,
+                WorkItem.parent_work_item_id == parent.id,
+            )
+            .order_by(WorkItem.created_at, WorkItem.id)
+        )
+        children = children_result.scalars().all()
+        return {
+            "work_item_id": str(parent.id),
+            "team_installation_id": policy.get("team_installation_id"),
+            "team_version_id": policy.get("team_version_id"),
+            "status": parent.status.value,
+            "correlation_id": policy.get("correlation_id"),
+            "members": [
+                {
+                    "work_item_id": str(child.id),
+                    "status": child.status.value,
+                }
+                for child in children
+            ],
+        }
+
     async def execute(
         self,
         *,
@@ -42,6 +90,15 @@ class TeamExecutionService:
             raise TeamExecutionError("idempotency_key is required")
         if len(idempotency_key) > 255:
             raise TeamExecutionError("idempotency_key is too long")
+
+        existing = await self._existing_execution(
+            tenant_id=tenant_id,
+            idempotency_key=idempotency_key,
+            installation_id=installation_id,
+            input_data=input_data,
+        )
+        if existing is not None:
+            return existing
 
         result = await self.db.execute(
             select(TeamInstallation, TeamVersion, TeamDefinition)
@@ -83,7 +140,18 @@ class TeamExecutionService:
             idempotency_key=f"team:{installation.id}:{idempotency_key}",
         )
         self.db.add(parent)
-        await self.db.flush()
+        try:
+            await self.db.flush()
+        except IntegrityError:
+            existing = await self._existing_execution(
+                tenant_id=tenant_id,
+                idempotency_key=idempotency_key,
+                installation_id=installation_id,
+                input_data=input_data,
+            )
+            if existing is None:
+                raise
+            return existing
 
         dispatches: list[dict[str, Any]] = []
         adapter = AgentExecutionAdapter(self.db)
