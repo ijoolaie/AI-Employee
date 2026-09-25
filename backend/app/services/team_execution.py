@@ -139,9 +139,10 @@ class TeamExecutionService:
             },
             idempotency_key=f"team:{installation.id}:{idempotency_key}",
         )
-        self.db.add(parent)
         try:
-            await self.db.flush()
+            async with self.db.begin_nested():
+                self.db.add(parent)
+                await self.db.flush()
         except IntegrityError:
             existing = await self._existing_execution(
                 tenant_id=tenant_id,
