@@ -23,7 +23,7 @@ class Result:
 async def test_onboarding_update_audits_actor(monkeypatch):
     tenant_id = uuid.uuid4()
     actor_id = uuid.uuid4()
-    row = OnboardingProgress(tenant_id=tenant_id, setup_data={}, completed_steps=[], current_step=1, completed=False)
+    row = OnboardingProgress(id=uuid.uuid4(), tenant_id=tenant_id, setup_data={}, completed_steps=[], current_step=1, completed=False)
     audits = []
 
     class DB:
@@ -56,7 +56,7 @@ async def test_onboarding_update_audits_actor(monkeypatch):
 async def test_change_plan_audits_actor(monkeypatch):
     tenant_id = uuid.uuid4()
     actor_id = uuid.uuid4()
-    subscription = SimpleNamespace(id=uuid.uuid4(), plan_id=uuid.uuid4(), status="trialing", cancel_at_period_end=False, canceled_at=None, current_period_end=SimpleNamespace())
+    subscription = SimpleNamespace(id=uuid.uuid4(), plan_id=uuid.uuid4(), status="trialing", cancel_at_period_end=False, canceled_at=None, current_period_end=__import__("datetime").datetime.now(__import__("datetime").timezone.utc) + __import__("datetime").timedelta(days=30))
     plan = SimpleNamespace(id=uuid.uuid4(), code="business", is_active=True)
     audits = []
 
