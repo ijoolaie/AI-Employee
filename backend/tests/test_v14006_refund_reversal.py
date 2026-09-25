@@ -154,3 +154,39 @@ async def test_successful_reversal_records_provider_metadata(monkeypatch):
         "provider_status": "canceled",
     }
     assert any(getattr(item, "event_type", None) == "payment.reversal.requested" for item in db.added)
+
+
+@pytest.mark.asyncio
+async def test_failed_refund_retry_locks_existing_idempotency_row(monkeypatch):
+    tenant_id = uuid4()
+    existing = SimpleNamespace(
+        operation="refund",
+        provider_payment_intent_id="pi_test",
+        amount_cents=1200,
+        currency="usd",
+        status="failed",
+        failure_reason="timeout",
+    )
+    db = _DB([existing, None])
+
+    async def fake_assert_payment(*_args, **_kwargs):
+        return {"currency": "usd", "status": "succeeded"}
+
+    async def fake_refund(**_kwargs):
+        return {"id": "re_retry", "status": "succeeded", "amount": 1200, "currency": "usd", "charge": "ch_retry"}
+
+    monkeypatch.setattr(refund_service, "_assert_payment_intent_belongs_to_tenant", fake_assert_payment)
+    monkeypatch.setattr(refund_service.stripe_service, "create_refund", fake_refund)
+
+    row = await refund_service.request_refund(
+        db,
+        tenant_id=tenant_id,
+        operation="refund",
+        payment_intent_id="pi_test",
+        amount_cents=1200,
+        currency="usd",
+        reason=None,
+        idempotency_key="retry-key",
+    )
+
+    assert row.status == "succeeded"
