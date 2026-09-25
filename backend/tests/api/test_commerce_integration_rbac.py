@@ -67,7 +67,6 @@ async def test_commerce_side_effect_audit_preserves_actor_and_resource(
     async def record(*args, **kwargs):
         audit.append(kwargs)
 
-    monkeypatch.setattr(getattr(commerce_integrations.shopify_service, service_name), "__call__", side_effect, raising=False)
     monkeypatch.setattr(commerce_integrations.shopify_service, service_name, side_effect)
     monkeypatch.setattr(commerce_integrations.audit_service, "record", record)
 
