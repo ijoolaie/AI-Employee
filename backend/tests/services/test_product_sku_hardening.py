@@ -144,7 +144,7 @@ async def test_update_product_persists_change_and_audits_fields(monkeypatch):
     assert db.refreshed == [product]
     assert audit == [{
         "tenant_id": product.tenant_id,
-        "actor_id": audit[0]["actor_id"],
+        "actor_id": actor_id,
         "action": "product.updated",
         "resource_type": "product",
         "resource_id": str(product.id),
