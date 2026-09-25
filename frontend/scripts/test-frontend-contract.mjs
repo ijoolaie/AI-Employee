@@ -228,6 +228,25 @@ test("api key page is real CRUD UI", () => {
     if (!src.includes(name)) throw new Error("missing " + name);
   }
 });
+test("work-item API contract", () => {
+  const workItemsApi = read("lib/work-items-api.ts");
+  const tasks = read("app/(customer)/tasks/page.tsx");
+  const taskDetail = read("app/(customer)/tasks/[id]/page.tsx");
+  const api = read("lib/api.ts");
+  for (const name of ["listWorkItems", "dispatchWorkItem", "cancelWorkItem", "retryWorkItem"]) {
+    if (!workItemsApi.includes("function " + name)) throw new Error("missing " + name);
+  }
+  for (const path of ["/work-items", "/work-items/${id}/dispatch", "/work-items/${id}/cancel", "/work-items/${id}/retry"]) {
+    if (!workItemsApi.includes(path)) throw new Error("missing work-item path " + path);
+  }
+  if (!tasks.includes("listWorkItems")) throw new Error("tasks list not wired");
+  if (!taskDetail.includes("dispatchWorkItem") || !taskDetail.includes("cancelWorkItem") || !taskDetail.includes("retryWorkItem")) {
+    throw new Error("task detail mutations not wired");
+  }
+  if (!api.includes("getWorkItemHistory")) throw new Error("work-item history API missing");
+  if (!api.includes("/work-items/${id}/history")) throw new Error("work-item history path missing");
+});
+
 test("customer P2 pages exist", () => {
   for (const rel of ["app/(customer)/tasks/page.tsx", "app/(customer)/reports/page.tsx"]) read(rel);
 });
