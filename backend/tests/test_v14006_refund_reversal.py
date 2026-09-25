@@ -49,8 +49,10 @@ class _DB:
     def __init__(self, results):
         self.results = list(results)
         self.added = []
+        self.statements = []
 
-    async def execute(self, _statement):
+    async def execute(self, statement):
+        self.statements.append(statement)
         return _Result(self.results.pop(0))
 
     def add(self, value):
@@ -120,6 +122,7 @@ async def test_successful_refund_records_billing_lifecycle_event(monkeypatch):
     )
 
     assert row.status == "succeeded"
+    assert db.statements[0]._for_update_arg is not None
     assert any(getattr(item, "event_type", None) == "payment.refund.requested" for item in db.added)
 
 
@@ -160,6 +163,7 @@ async def test_successful_reversal_records_provider_metadata(monkeypatch):
 async def test_failed_refund_retry_locks_existing_idempotency_row(monkeypatch):
     tenant_id = uuid4()
     existing = SimpleNamespace(
+        tenant_id=tenant_id,
         operation="refund",
         provider_payment_intent_id="pi_test",
         amount_cents=1200,
