@@ -48,10 +48,10 @@ class _ReplayDb:
 
 
 class _RaceDb:
-    def __init__(self, existing, children):
+    def __init__(self, installation, existing, children):
         self.results = [
             _Result(scalar=None),
-            _Result(one=None),
+            _Result(one=installation),
             _Result(scalar=existing),
             _Result(scalars=children),
         ]
@@ -145,7 +145,28 @@ async def test_team_execution_recovers_from_concurrent_parent_insert():
         status=WorkItemStatus.RUNNING,
     )
     child = SimpleNamespace(id=uuid4(), status=WorkItemStatus.ASSIGNED)
-    db = _RaceDb(existing, [child])
+    installation = (
+        SimpleNamespace(
+            id=installation_id,
+            tenant_id=tenant_id,
+            enabled=True,
+        ),
+        SimpleNamespace(
+            id=uuid4(),
+            version=1,
+            member_agent_definition_ids=[],
+            input_schema={},
+            execution_policy={},
+            allowed_tools=[],
+        ),
+        SimpleNamespace(
+            id=uuid4(),
+            slug="team",
+            description="team",
+            enabled=True,
+        ),
+    )
+    db = _RaceDb(installation, existing, [child])
 
     result = await TeamExecutionService(db).execute(
         tenant_id=tenant_id,
