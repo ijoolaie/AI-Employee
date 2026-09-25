@@ -165,12 +165,22 @@ async def test_execute_run_blocks_model_requested_tool_outside_employee_allowlis
     registry = _FakeRegistry(["allowed_tool", "blocked_tool"])
     gateway = _FakeGateway(ToolCall(id="call-blocked", name="blocked_tool", arguments={}))
 
+    audits = []
+
+    async def capture_audit(*_args, **kwargs):
+        audits.append(kwargs)
+
     _patch_execution_dependencies(monkeypatch, registry, gateway)
+    monkeypatch.setattr(run_service.audit_service, "record", capture_audit)
 
     with pytest.raises(ValidationAppError, match="Tool is not allowed by Employee guardrails"):
         await run_service.execute_run(db, run_id=run.id)
 
     assert registry.execute_calls == []
+    assert audits[-1]["action"] == "run.failed"
+    assert audits[-1]["status"] == "failure"
+    assert audits[-1]["resource_id"] == run.id
+    assert audits[-1]["metadata"]["error"].startswith("Tool is not allowed")
     assert run.status == "failed"
     assert run.error_message.startswith("Tool is not allowed by Employee guardrails")
     assert db.rollback_count == 0
