@@ -33,6 +33,12 @@ def test_secure_production_configuration_is_accepted():
     settings = Settings(**_production_env())
     assert settings.app_env == "production"
     assert settings.debug is False
+    assert settings.database_url_sync.startswith("postgresql+psycopg2://")
+
+
+def test_plain_sync_postgres_url_is_normalized_for_sqlalchemy_21():
+    settings = Settings(**_production_env(database_url_sync="postgresql://prod:strong-password@db.internal:5432/aiep"))
+    assert settings.database_url_sync == "postgresql+psycopg2://prod:strong-password@db.internal:5432/aiep"
 
 
 @pytest.mark.parametrize(

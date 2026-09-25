@@ -43,7 +43,7 @@ class AgentInstance(Base):
     configuration: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     permission_policy: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     approval_policy: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
-    risk_tier: Mapped[int] = mapped_column(Integer, nullable=False, default=0, insert_default=0)
+    risk_tier: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     status: Mapped[AgentInstanceStatus] = mapped_column(
         Enum(
             AgentInstanceStatus,
@@ -52,7 +52,6 @@ class AgentInstance(Base):
         ),
         nullable=False,
         default=AgentInstanceStatus.ENABLED,
-        insert_default=AgentInstanceStatus.ENABLED,
     )
     max_concurrency: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     budget_policy: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)

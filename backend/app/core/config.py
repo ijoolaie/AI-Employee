@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
 
     database_url: str = "postgresql+asyncpg://aiep:aiep@localhost:5432/aiep"
-    database_url_sync: str = "postgresql://aiep:aiep@localhost:5432/aiep"
+    database_url_sync: str = "postgresql+psycopg2://aiep:aiep@localhost:5432/aiep"
 
     redis_url: str = "redis://localhost:6379/0"
     celery_broker_url: str = "redis://localhost:6379/1"
@@ -55,6 +55,16 @@ class Settings(BaseSettings):
     # the normal production HTTPS policy intact while allowing localhost HTTP
     # endpoints on a developer workstation without weakening VPS production.
     local_production_allow_http: bool = False
+
+    @field_validator("database_url_sync", mode="before")
+    @classmethod
+    def _normalize_sync_postgres_driver(cls, value: Any) -> Any:
+        """Pin plain PostgreSQL sync URLs to the declared psycopg2 driver."""
+        if isinstance(value, str):
+            for prefix in ("postgresql://", "postgres://"):
+                if value.startswith(prefix):
+                    return f"postgresql+psycopg2://{value[len(prefix):]}"
+        return value
 
     @model_validator(mode="after")
     def validate_production_safety(self):
