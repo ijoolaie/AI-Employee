@@ -122,6 +122,7 @@ async def test_update_product_persists_change_and_audits_fields(monkeypatch):
         price=10,
     )
     audit = []
+    actor_id = uuid4()
 
     async def record(*args, **kwargs):
         audit.append(kwargs)
@@ -134,7 +135,7 @@ async def test_update_product_persists_change_and_audits_fields(monkeypatch):
         product.tenant_id,
         product.id,
         {"name": "New name", "sku": " new-sku "},
-        actor_id=uuid4(),
+        actor_id=actor_id,
     )
 
     assert result is product
