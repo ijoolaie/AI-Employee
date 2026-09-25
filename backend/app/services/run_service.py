@@ -563,5 +563,16 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
             run.status = "failed"
             run.error_message = str(exc)[:2000]
             run.completed_at = datetime.now(timezone.utc)
+            await audit_service.record(
+                db,
+                action="run.failed",
+                actor_type="system",
+                tenant_id=run.tenant_id,
+                resource_type="run",
+                resource_id=run.id,
+                status="failure",
+                request_id=run.request_id,
+                metadata={"error": run.error_message},
+            )
             await db.commit()
         raise
