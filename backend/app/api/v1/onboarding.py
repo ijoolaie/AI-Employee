@@ -15,5 +15,5 @@ async def get_onboarding(ctx: CurrentContext, db: DbSession):
 
 @router.post("/progress", response_model=APIResponse[OnboardingResponse])
 async def update_onboarding(payload: OnboardingUpdate, ctx: CurrentContext, db: DbSession):
-    row = await onboarding_service.update(db, ctx.tenant_id, payload.step, payload.business_type, payload.data, payload.complete_step)
+    row = await onboarding_service.update(db, ctx.tenant_id, payload.step, payload.business_type, payload.data, payload.complete_step, actor_id=ctx.user_id)
     return APIResponse(success=True, data=out(row))
