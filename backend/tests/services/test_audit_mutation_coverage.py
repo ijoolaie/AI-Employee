@@ -87,7 +87,7 @@ async def test_change_plan_audits_actor(monkeypatch):
 async def test_cancel_subscription_audits_actor(monkeypatch):
     tenant_id = uuid.uuid4()
     actor_id = uuid.uuid4()
-    subscription = SimpleNamespace(id=uuid.uuid4(), plan_id=uuid.uuid4(), status="active", cancel_at_period_end=False, canceled_at=None, current_period_end=SimpleNamespace())
+    subscription = SimpleNamespace(id=uuid.uuid4(), plan_id=uuid.uuid4(), status="active", cancel_at_period_end=False, canceled_at=None, current_period_end=SimpleNamespace(), provider="stripe", trial_ends_at=None)
     audits = []
 
     class DB:
