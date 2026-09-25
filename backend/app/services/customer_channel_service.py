@@ -43,7 +43,7 @@ async def create_conversation(db: AsyncSession, *, public_key: str, customer_nam
     return conversation, token, employee
 
 async def _get_conversation(db: AsyncSession, *, conversation_id: uuid.UUID, token: str) -> CustomerConversation:
-    result = await db.execute(select(CustomerConversation).where(CustomerConversation.id == conversation_id, CustomerConversation.customer_token_hash == _hash_token(token)))
+    result = await db.execute(select(CustomerConversation).where(CustomerConversation.id == conversation_id, CustomerConversation.customer_token_hash == _hash_token(token)).with_for_update())
     conversation = result.scalar_one_or_none()
     if not conversation: raise NotFoundError("Conversation not found")
     return conversation
