@@ -195,3 +195,4 @@ async def test_failed_refund_retry_locks_existing_idempotency_row(monkeypatch):
     )
 
     assert row.status == "succeeded"
+    assert db.statements[0]._for_update_arg is not None
