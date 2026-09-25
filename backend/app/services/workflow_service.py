@@ -200,11 +200,11 @@ async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflo
     deadline = datetime.now(timezone.utc) + timedelta(seconds=int(max_runtime)) if max_runtime else None
     context = {"input": input_data, "steps": {}, "_workflow": {"dispatch_generation": 0, "workflow_version_number": version.version_number, "workflow_content_hash": version.content_hash, "execution_contract": contract}}
     run = WorkflowRun(tenant_id=tenant_id, workflow_id=workflow.id, workflow_version_id=version.id, created_by=created_by, status="pending", context=context, deadline_at=deadline, idempotency_key=idempotency_key)
-    db.add(run)
     try:
-        await db.flush()
+        async with db.begin_nested():
+            db.add(run)
+            await db.flush()
     except IntegrityError:
-        await db.rollback()
         if idempotency_key:
             existing = await db.execute(select(WorkflowRun).where(WorkflowRun.tenant_id == tenant_id, WorkflowRun.workflow_id == workflow_id, WorkflowRun.idempotency_key == idempotency_key))
             existing_run = existing.scalar_one_or_none()
