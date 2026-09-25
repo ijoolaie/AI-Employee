@@ -52,9 +52,10 @@ class _RaceDb:
 
 
 @pytest.mark.asyncio
-async def test_upsert_customer_recovers_from_unique_race():
+async def test_upsert_customer_recovers_from_unique_race(monkeypatch):
     tenant_id = uuid4()
     winner = SimpleNamespace(
+        id=uuid4(),
         tenant_id=tenant_id,
         external_key="shopify:customer:42",
         name="Existing",
@@ -63,6 +64,12 @@ async def test_upsert_customer_recovers_from_unique_race():
         last_channel="shopify",
     )
     db = _RaceDb(winner)
+    audits = []
+
+    async def record_audit(*args, **kwargs):
+        audits.append(kwargs)
+
+    monkeypatch.setattr(customer_service.audit_service, "record", record_audit)
 
     customer = await customer_service.upsert_customer(
         db,
@@ -76,6 +83,8 @@ async def test_upsert_customer_recovers_from_unique_race():
     assert len(db.added) == 1
     assert db.executes == 2
     assert db.flushes == 2
+    assert audits[0]["action"] == "customer.updated"
+    assert audits[0]["metadata"] == {"fields": ["name"]}
 
 
 class _CreateRaceDb:
