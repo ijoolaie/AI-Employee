@@ -22,6 +22,7 @@ async def upsert_customer(
     email=None,
     phone=None,
     channel=None,
+    actor_id: uuid.UUID | None = None,
 ) -> Customer:
     customer = (
         await db.execute(
@@ -31,6 +32,7 @@ async def upsert_customer(
             )
         )
     ).scalar_one_or_none()
+    created = False
     if not customer:
         candidate = Customer(
             tenant_id=tenant_id,
@@ -57,16 +59,34 @@ async def upsert_customer(
                 raise
         else:
             customer = candidate
-    if customer:
-        if name:
-            customer.name = name
-        if email:
-            customer.email = email
-        if phone:
-            customer.phone = phone
-        if channel:
-            customer.last_channel = channel
+            created = True
+
+    changed_fields: list[str] = []
+    for field, value in (
+        ("name", name),
+        ("email", email),
+        ("phone", phone),
+        ("last_channel", channel),
+    ):
+        if value and getattr(customer, field) != value:
+            setattr(customer, field, value)
+            changed_fields.append(field)
+
     await db.flush()
+    if created or changed_fields:
+        await audit_service.record(
+            db,
+            tenant_id=tenant_id,
+            actor_id=actor_id,
+            action="customer.created" if created else "customer.updated",
+            resource_type="customer",
+            resource_id=str(customer.id),
+            metadata=(
+                {"external_key": external_key}
+                if created
+                else {"fields": changed_fields}
+            ),
+        )
     await db.refresh(customer)
     return customer
 
