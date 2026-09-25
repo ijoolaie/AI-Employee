@@ -172,6 +172,7 @@ async def test_failed_refund_retry_locks_existing_idempotency_row(monkeypatch):
         currency="usd",
         status="failed",
         failure_reason="timeout",
+        reason=None,
     )
     db = _DB([existing, None])
 
@@ -179,7 +180,13 @@ async def test_failed_refund_retry_locks_existing_idempotency_row(monkeypatch):
         return {"currency": "usd", "status": "succeeded"}
 
     async def fake_refund(**_kwargs):
-        return {"id": "re_retry", "status": "succeeded", "amount": 1200, "currency": "usd", "charge": "ch_retry"}
+        return {
+            "id": "re_retry",
+            "status": "succeeded",
+            "amount": 1200,
+            "currency": "usd",
+            "charge": "ch_retry",
+        }
 
     monkeypatch.setattr(refund_service, "_assert_payment_intent_belongs_to_tenant", fake_assert_payment)
     monkeypatch.setattr(refund_service.stripe_service, "create_refund", fake_refund)
