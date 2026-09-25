@@ -120,3 +120,59 @@ async def test_create_request_preserves_requester_and_emits_one_audit_event(monk
     assert approval.requested_by == requester_id
     assert run.status == "waiting"
     assert [item["action"] for item in audit] == ["tool.approval_requested"]
+
+
+@pytest.mark.asyncio
+async def test_approval_decision_rejects_unsupported_decision_before_lookup():
+    with pytest.raises(ConflictError, match="unsupported approval decision"):
+        await approval_service.decide(
+            Db(),
+            approval_id=uuid4(),
+            tenant_id=uuid4(),
+            decided_by=uuid4(),
+            decision="maybe",
+            reason=None,
+            actor_type="user",
+        )
+
+
+@pytest.mark.asyncio
+async def test_approval_decision_is_tenant_scoped():
+    with pytest.raises(NotFoundError, match="Approval request not found"):
+        await approval_service.decide(
+            Db(None),
+            approval_id=uuid4(),
+            tenant_id=uuid4(),
+            decided_by=uuid4(),
+            decision="approve",
+            reason=None,
+            actor_type="user",
+        )
+
+
+@pytest.mark.asyncio
+async def test_approval_decision_rejects_already_decided_request():
+    tenant_id, approval_id = uuid4(), uuid4()
+    approval = SimpleNamespace(
+        id=approval_id,
+        tenant_id=tenant_id,
+        run_id=uuid4(),
+        tool_name="crm.lookup",
+        status="approved",
+        decided_by=uuid4(),
+        decision_reason="already approved",
+        decided_at=None,
+        requested_by=uuid4(),
+    )
+
+    with pytest.raises(ConflictError, match="already decided: approved"):
+        await approval_service.decide(
+            Db(approval),
+            approval_id=approval_id,
+            tenant_id=tenant_id,
+            decided_by=uuid4(),
+            decision="reject",
+            reason="late rejection",
+            actor_type="user",
+        )
+    assert approval.status == "approved"
