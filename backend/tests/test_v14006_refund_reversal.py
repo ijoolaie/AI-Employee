@@ -166,6 +166,7 @@ async def test_failed_refund_retry_locks_existing_idempotency_row(monkeypatch):
         tenant_id=tenant_id,
         operation="refund",
         provider_payment_intent_id="pi_test",
+        idempotency_key="retry-key",
         amount_cents=1200,
         currency="usd",
         status="failed",
