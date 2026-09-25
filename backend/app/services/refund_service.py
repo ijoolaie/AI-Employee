@@ -120,7 +120,7 @@ async def request_refund(
             select(PaymentRefund).where(
                 PaymentRefund.tenant_id == tenant_id,
                 PaymentRefund.idempotency_key == idempotency_key,
-            )
+            ).with_for_update()
         )
     ).scalar_one_or_none()
 
@@ -169,7 +169,7 @@ async def request_refund(
                     select(PaymentRefund).where(
                         PaymentRefund.tenant_id == tenant_id,
                         PaymentRefund.idempotency_key == idempotency_key,
-                    )
+                    ).with_for_update()
                 )
             ).scalar_one_or_none()
             if existing is None:
