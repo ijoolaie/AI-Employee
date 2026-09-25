@@ -63,7 +63,7 @@ async def test_cancel_records_audit_and_returns_cancelled_state(monkeypatch):
     assert db.commits == 1
     assert calls["audit"]["action"] == "work_item.cancelled"
     assert calls["audit"]["actor_id"] == actor_id
-    assert calls["audit"]["resource_id"] == work_item_id
+    assert calls["audit"]["work_item_id"] == work_item_id
 
 
 @pytest.mark.asyncio
