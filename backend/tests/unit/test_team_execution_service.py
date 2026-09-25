@@ -10,6 +10,14 @@ from app.models.work_item import WorkItemStatus
 from app.services.team_execution import TeamExecutionError, TeamExecutionService
 
 
+class FakeNested:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
 class FakeResult:
     def __init__(self, row=None, scalar=None):
         self._row = row
@@ -35,9 +43,14 @@ class FakeSession:
         if getattr(item, "id", None) is None:
             item.id = uuid.uuid4()
 
+    def begin_nested(self):
+        return FakeNested()
+
     async def execute(self, statement):
         self.execute_calls += 1
         if self.execute_calls == 1:
+            return FakeResult(scalar=None)
+        if self.execute_calls == 2:
             return FakeResult(row=self.installation_row)
         agent = self.agents.pop(0) if self.agents else None
         return FakeResult(scalar=agent)
