@@ -154,7 +154,7 @@ async def test_team_execution_recovers_from_concurrent_parent_insert():
         SimpleNamespace(
             id=uuid4(),
             version=1,
-            member_agent_definition_ids=[],
+            member_agent_definition_ids=[str(uuid4())],
             input_schema={},
             execution_policy={},
             allowed_tools=[],
