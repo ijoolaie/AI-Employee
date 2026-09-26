@@ -203,7 +203,7 @@ async def validate_delegation(
             select(WorkItem).where(
                 WorkItem.id == delegation.source_work_item_id,
                 WorkItem.tenant_id == tenant_id,
-            )
+            ).with_for_update()
         )
     ).scalar_one_or_none()
     if source is None:
@@ -217,7 +217,7 @@ async def validate_delegation(
                 select(WorkItem).where(
                     WorkItem.id == delegation.delegated_work_item_id,
                     WorkItem.tenant_id == tenant_id,
-                )
+                ).with_for_update()
             )
         ).scalar_one_or_none()
         if delegated_item is None:
