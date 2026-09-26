@@ -305,6 +305,7 @@ async def create_delegated_work_item(
     if idempotency_key is None or not idempotency_key.strip():
         raise ValidationAppError("Delegation idempotency key is required")
     request_key = idempotency_key.strip()
+
     existing = await _get_existing_delegation_result(
         db,
         tenant_id=tenant_id,
@@ -356,52 +357,56 @@ async def create_delegated_work_item(
 
     try:
         async with db.begin_nested():
-        delegation = await authorize_delegation(
-            db,
-            tenant_id=tenant_id,
-            delegator_agent_instance_id=delegator_agent_instance_id,
-            delegate_agent_instance_id=delegate_agent_instance_id,
-            source_work_item_id=source.id,
-            scopes=scopes,
-            expires_at=expires_at,
-            max_chain_depth=max_chain_depth,
-        )
-        parent_context = dict(source.policy_context or {})
-        child_context = dict(parent_context)
-        child_context.update(
-            {
-                "delegated_from": str(source.id),
-                "delegation_id": str(delegation.id),
-                "delegation_depth": delegation.chain_depth,
-            }
-        )
-        if context:
-            child_context["delegation_context"] = context
-        if artifacts:
-            child_context["delegation_artifacts"] = artifacts
-        child = WorkItem(
-            tenant_id=source.tenant_id,
-            title=title or source.title,
-            description=description if description is not None else source.description,
-            status=WorkItemStatus.WAITING_APPROVAL if parent_context.get("requires_approval") else WorkItemStatus.ASSIGNED,
-            priority=source.priority,
-            requester_id=source.requester_id,
-            executor_type=ExecutorType.AGENT,
-            executor_id=delegate_agent_instance_id,
-            input_data={
-                **(source.input_data or {}),
-                "delegated_context": context or {},
-                "delegated_artifacts": artifacts or [],
-            },
-            policy_context=child_context,
-            idempotency_key=request_key,
-            parent_work_item_id=source.id,
-        )
-        db.add(child)
-        await db.flush()
-        delegation.delegated_work_item_id = child.id
-        await db.flush()
-        return child
+            delegation = await authorize_delegation(
+                db,
+                tenant_id=tenant_id,
+                delegator_agent_instance_id=delegator_agent_instance_id,
+                delegate_agent_instance_id=delegate_agent_instance_id,
+                source_work_item_id=source.id,
+                scopes=scopes,
+                expires_at=expires_at,
+                max_chain_depth=max_chain_depth,
+            )
+            parent_context = dict(source.policy_context or {})
+            child_context = dict(parent_context)
+            child_context.update(
+                {
+                    "delegated_from": str(source.id),
+                    "delegation_id": str(delegation.id),
+                    "delegation_depth": delegation.chain_depth,
+                }
+            )
+            if context:
+                child_context["delegation_context"] = context
+            if artifacts:
+                child_context["delegation_artifacts"] = artifacts
+            child = WorkItem(
+                tenant_id=source.tenant_id,
+                title=title or source.title,
+                description=description if description is not None else source.description,
+                status=(
+                    WorkItemStatus.WAITING_APPROVAL
+                    if parent_context.get("requires_approval")
+                    else WorkItemStatus.ASSIGNED
+                ),
+                priority=source.priority,
+                requester_id=source.requester_id,
+                executor_type=ExecutorType.AGENT,
+                executor_id=delegate_agent_instance_id,
+                input_data={
+                    **(source.input_data or {}),
+                    "delegated_context": context or {},
+                    "delegated_artifacts": artifacts or [],
+                },
+                policy_context=child_context,
+                idempotency_key=request_key,
+                parent_work_item_id=source.id,
+            )
+            db.add(child)
+            await db.flush()
+            delegation.delegated_work_item_id = child.id
+            await db.flush()
+            return child
     except IntegrityError as exc:
         constraint_name = getattr(getattr(exc, "orig", None), "diag", None)
         constraint_name = getattr(constraint_name, "constraint_name", None)
