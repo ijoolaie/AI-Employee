@@ -1,14 +1,14 @@
 """Add durable tool side-effect execution fences.
 
 Revision ID: c7d8e9f0a1b2
-Revises: 7a2b3c4d5e6f
+Revises: agentdelegationrbac
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "c7d8e9f0a1b2"
-down_revision = "7a2b3c4d5e6f"
+down_revision = "agentdelegationrbac"
 branch_labels = None
 depends_on = None
 
