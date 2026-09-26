@@ -2,7 +2,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=./lib/docker_compat.sh
 source "$SCRIPT_DIR/lib/docker_compat.sh"
 
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.production.yml}"
@@ -19,10 +18,6 @@ compose() {
 
 compose config --quiet
 compose build
-
-# Bootstrap the database schema before any API, worker, beat, or frontend
-# container can become active. The migration runner starts only infrastructure
-# dependencies and fails hard if the schema cannot reach the single Alembic head.
 bash "$SCRIPT_DIR/production_migrate.sh"
 
 compose up -d api worker beat frontend
@@ -49,9 +44,12 @@ done
 compose ps
 compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('LOCAL_PRODUCTION|readiness|PASS')"
 
-# The local-production override publishes the frontend container's port 3000
-# on the configured host port. Validate the published host endpoint.
-FRONTEND_PORT="${LOCAL_PRODUCTION_FRONTEND_PORT:-13000}"
+FRONTEND_PORT="$(compose port frontend 3000 | sed -E 's/.*:([0-9]+)$/\1/')"
+[[ "$FRONTEND_PORT" =~ ^[0-9]+$ ]] || {
+  echo "Unable to resolve the published frontend port." >&2
+  exit 1
+}
 curl --fail --silent --show-error "http://127.0.0.1:${FRONTEND_PORT}/login" >/dev/null
 echo "LOCAL_PRODUCTION|frontend|PASS"
+echo "LOCAL_PRODUCTION|frontend_port|$FRONTEND_PORT"
 echo "LOCAL_PRODUCTION|revision|$(git rev-parse HEAD)"
