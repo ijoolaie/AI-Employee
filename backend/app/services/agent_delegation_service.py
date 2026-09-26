@@ -261,9 +261,47 @@ async def create_delegated_work_item(
             raise ValidationAppError("Idempotency key is already bound to a different delegation request")
         return existing
 
-    source = (await db.execute(select(WorkItem).where(WorkItem.id == source_work_item_id, WorkItem.tenant_id == tenant_id))).scalar_one_or_none()
+    source = (await db.execute(
+        select(WorkItem).where(
+            WorkItem.id == source_work_item_id,
+            WorkItem.tenant_id == tenant_id,
+        ).with_for_update()
+    )).scalar_one_or_none()
     if source is None:
         raise NotFoundError("Source work item not found for tenant")
+
+    # Locking the source serializes concurrent delegation requests for the same
+    # WorkItem. Re-check after acquiring that lock so a request that arrived
+    # concurrently observes the already-committed idempotent result.
+    existing = (await db.execute(
+        select(WorkItem).where(
+            WorkItem.tenant_id == tenant_id,
+            WorkItem.idempotency_key == request_key,
+        ).with_for_update()
+    )).scalar_one_or_none()
+    if existing is not None:
+        existing_delegation_id = (existing.policy_context or {}).get("delegation_id")
+        if existing_delegation_id is None:
+            raise ValidationAppError("Idempotency key is already bound to a non-delegation WorkItem")
+        existing_delegation = (await db.execute(
+            select(AgentDelegation).where(
+                AgentDelegation.id == UUID(str(existing_delegation_id)),
+                AgentDelegation.tenant_id == tenant_id,
+            ).with_for_update()
+        )).scalar_one_or_none()
+        if existing_delegation is None:
+            raise ValidationAppError("Idempotency key is bound to a missing delegation")
+        requested_scopes = {"actions": sorted(set(scopes.get("actions") or [])), "tools": sorted(set(scopes.get("tools") or []))}
+        if (
+            existing.parent_work_item_id != source_work_item_id
+            or existing.executor_id != delegate_agent_instance_id
+            or existing_delegation.delegator_agent_instance_id != delegator_agent_instance_id
+            or existing_delegation.scopes != requested_scopes
+            or existing_delegation.expires_at != expires_at
+        ):
+            raise ValidationAppError("Idempotency key is already bound to a different delegation request")
+        return existing
+
     delegation = await authorize_delegation(
         db,
         tenant_id=tenant_id,
