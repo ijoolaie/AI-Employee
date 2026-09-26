@@ -25,6 +25,8 @@ async def authorize_agent_run(db: AsyncSession, run: Run) -> None:
             agent_instance_id=run.agent_instance_id,
             action="run.execute",
             run_id=run.id,
+            delegation_id=run.delegation_id,
+            context={"delegated_from": str(run.delegation_id)} if run.delegation_id else {},
         ),
     )
 
@@ -77,6 +79,7 @@ def install() -> None:
             tenant_id=run.tenant_id,
             agent_instance_id=run.agent_instance_id,
             run_id=run.id,
+            delegation_id=run.delegation_id,
         ):
             return await original_execute_run(db, run_id=run_id)
 
