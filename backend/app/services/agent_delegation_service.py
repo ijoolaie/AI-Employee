@@ -198,6 +198,33 @@ async def validate_delegation(
     if delegation.chain_depth > delegation.max_chain_depth:
         raise ValidationAppError("Delegation chain depth exceeded")
 
+    source = (
+        await db.execute(
+            select(WorkItem).where(
+                WorkItem.id == delegation.source_work_item_id,
+                WorkItem.tenant_id == tenant_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if source is None:
+        raise ValidationAppError("Delegation source work item is unavailable")
+    if source.status is WorkItemStatus.CANCELLED:
+        raise ValidationAppError("Delegation is revoked because its source work item was cancelled")
+
+    if delegation.delegated_work_item_id is not None:
+        delegated_item = (
+            await db.execute(
+                select(WorkItem).where(
+                    WorkItem.id == delegation.delegated_work_item_id,
+                    WorkItem.tenant_id == tenant_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if delegated_item is None:
+            raise ValidationAppError("Delegated work item is unavailable")
+        if delegated_item.status is WorkItemStatus.CANCELLED:
+            raise ValidationAppError("Delegation is revoked because its delegated work item was cancelled")
+
     agent_ids = [delegation.delegator_agent_instance_id, delegation.delegate_agent_instance_id]
     agents = (await db.execute(select(AgentInstance).where(AgentInstance.tenant_id == tenant_id, AgentInstance.id.in_(agent_ids)))).scalars().all()
     by_id = {agent.id: agent for agent in agents}

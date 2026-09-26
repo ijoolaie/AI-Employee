@@ -92,15 +92,33 @@ def test_direct_agent_to_agent_delegate_is_blocked():
 
 
 class DelegationDb:
-    def __init__(self, delegation, agents, identities, reviews):
-        self.values = [delegation, agents, identities, *reviews]
+    def __init__(self, delegation, agents, identities, reviews, source=None, delegated=None):
+        self.delegation = delegation
+        self.agents = agents
+        self.identities = identities
+        self.reviews = reviews
+        self.source = source
+        self.delegated = delegated
 
-    async def execute(self, _statement): return FakeResult(self.values.pop(0))
+    async def execute(self, statement):
+        text = str(statement)
+        if "agent_delegations" in text:
+            return FakeResult(self.delegation)
+        if "work_items" in text:
+            return FakeResult(self.source if self.delegated is None else (self.source or self.delegated))
+        if "agent_instances" in text:
+            return FakeResult(self.agents)
+        if "agent_identities" in text:
+            return FakeResult(self.identities)
+        if "agent_access_reviews" in text:
+            return FakeResult(self.reviews.pop(0) if self.reviews else None)
+        return FakeResult(None)
 
 
 def delegation_record(tenant_id, delegator_id, delegate_id, expires_at):
     return SimpleNamespace(id=uuid4(), tenant_id=tenant_id, delegator_agent_instance_id=delegator_id,
-                           delegate_agent_instance_id=delegate_id, status="active", expires_at=expires_at,
+                           delegate_agent_instance_id=delegate_id, source_work_item_id=uuid4(),
+                           delegated_work_item_id=None, status="active", expires_at=expires_at,
                            chain_depth=1, max_chain_depth=3, scopes={"actions": ["run.execute"], "tools": []})
 
 
@@ -111,7 +129,8 @@ async def test_delegation_is_denied_when_delegate_access_review_is_revoked():
     delegator_identity = identity(); delegator_identity.agent_instance_id = delegator.id
     delegate_identity = identity(); delegate_identity.agent_instance_id = delegate.id
     approved = access_review(); revoked = access_review(); revoked.decision = AgentAccessReviewDecision.REVOKED
-    db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [approved, revoked])
+    source = SimpleNamespace(id=delegation.source_work_item_id, tenant_id=tenant, status=WorkItemStatus.RUNNING)
+    db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [approved, revoked], source=source)
     with pytest.raises(ValidationAppError, match="latest Access Review"):
         await validate_delegation(db, tenant_id=tenant, delegation_id=delegation.id, delegate_agent_instance_id=delegate.id)
 
@@ -122,7 +141,8 @@ async def test_delegation_is_denied_when_delegator_identity_is_revoked():
     delegation = delegation_record(tenant, delegator.id, delegate.id, datetime.now(timezone.utc) + timedelta(hours=1))
     delegator_identity = identity(); delegator_identity.agent_instance_id = delegator.id; delegator_identity.active = False
     delegate_identity = identity(); delegate_identity.agent_instance_id = delegate.id
-    db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [])
+    source = SimpleNamespace(id=delegation.source_work_item_id, tenant_id=tenant, status=WorkItemStatus.RUNNING)
+    db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [], source=source)
     with pytest.raises(ValidationAppError, match="currently active Agent identities"):
         await validate_delegation(db, tenant_id=tenant, delegation_id=delegation.id, delegate_agent_instance_id=delegate.id)
 
@@ -133,7 +153,8 @@ async def test_delegation_is_denied_when_delegator_identity_is_expired():
     delegation = delegation_record(tenant, delegator.id, delegate.id, datetime.now(timezone.utc) + timedelta(hours=1))
     delegator_identity = identity(); delegator_identity.agent_instance_id = delegator.id; delegator_identity.expires_at = datetime.now(timezone.utc) - timedelta(minutes=1)
     delegate_identity = identity(); delegate_identity.agent_instance_id = delegate.id
-    db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [])
+    source = SimpleNamespace(id=delegation.source_work_item_id, tenant_id=tenant, status=WorkItemStatus.RUNNING)
+    db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [], source=source)
     with pytest.raises(ValidationAppError, match="identity has expired"):
         await validate_delegation(db, tenant_id=tenant, delegation_id=delegation.id, delegate_agent_instance_id=delegate.id)
 
