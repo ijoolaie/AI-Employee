@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,12 +40,25 @@ class AgentExecutionAdapter:
         # before provider/tool execution; this first check prevents a revoked,
         # killed, expired, or drifted Agent from creating a new executable Run
         # after WorkItem dispatch has already committed RUNNING state.
+        delegation_id = None
+        policy_context = work_item.policy_context or {}
+        raw_delegation_id = policy_context.get("delegation_id")
+        if raw_delegation_id is not None:
+            try:
+                delegation_id = UUID(str(raw_delegation_id))
+            except (TypeError, ValueError) as exc:
+                raise ValidationAppError("Invalid Agent delegation proof") from exc
+        elif policy_context.get("delegated_from"):
+            raise ValidationAppError("Governed Agent delegation proof is required")
+
         await assert_authorized(
             self.db,
             PolicyRequest(
                 tenant_id=work_item.tenant_id,
                 agent_instance_id=agent.id,
                 action="run.execute",
+                delegation_id=delegation_id,
+                context={"delegated_from": policy_context.get("delegated_from")} if policy_context.get("delegated_from") else {},
             ),
         )
 
@@ -68,6 +82,7 @@ class AgentExecutionAdapter:
                 created_by=work_item.requester_id,
             )
             run.agent_instance_id = instance.id
+            run.delegation_id = delegation_id
             await self.db.flush()
 
             # Persist the queue hand-off in the same outer transaction as the
