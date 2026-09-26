@@ -212,6 +212,78 @@ async def revoke_delegation(
     return delegation
 
 
+async def _get_existing_delegation_result(
+    db: AsyncSession,
+    *,
+    tenant_id: UUID,
+    request_key: str,
+    source_work_item_id: UUID,
+    delegator_agent_instance_id: UUID,
+    delegate_agent_instance_id: UUID,
+    scopes: dict[str, Any],
+    expires_at: datetime,
+    title: str | None,
+    description: str | None,
+    context: dict[str, Any] | None,
+    artifacts: list[dict[str, Any]] | None,
+    max_chain_depth: int,
+) -> WorkItem | None:
+    """Return a previously committed delegation only when the request is identical."""
+    existing = (
+        await db.execute(
+            select(WorkItem)
+            .where(
+                WorkItem.tenant_id == tenant_id,
+                WorkItem.idempotency_key == request_key,
+            )
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
+    if existing is None:
+        return None
+    existing_delegation_id = (existing.policy_context or {}).get("delegation_id")
+    if existing_delegation_id is None:
+        raise ValidationAppError("Idempotency key is already bound to a non-delegation WorkItem")
+    try:
+        delegation_uuid = UUID(str(existing_delegation_id))
+    except (TypeError, ValueError) as exc:
+        raise ValidationAppError("Idempotency key is bound to an invalid delegation proof") from exc
+    existing_delegation = (
+        await db.execute(
+            select(AgentDelegation)
+            .where(
+                AgentDelegation.id == delegation_uuid,
+                AgentDelegation.tenant_id == tenant_id,
+            )
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
+    if existing_delegation is None:
+        raise ValidationAppError("Idempotency key is bound to a missing delegation")
+    requested_scopes = {
+        "actions": sorted(set(scopes.get("actions") or [])),
+        "tools": sorted(set(scopes.get("tools") or [])),
+    }
+    existing_context = (existing.policy_context or {}).get("delegation_context") or {}
+    existing_artifacts = (existing.policy_context or {}).get("delegation_artifacts") or []
+    expected_title = title if title is not None else existing.title
+    expected_description = description if description is not None else existing.description
+    if (
+        existing.parent_work_item_id != source_work_item_id
+        or existing.executor_id != delegate_agent_instance_id
+        or existing_delegation.delegator_agent_instance_id != delegator_agent_instance_id
+        or existing_delegation.scopes != requested_scopes
+        or existing_delegation.expires_at != expires_at
+        or existing_delegation.max_chain_depth != max_chain_depth
+        or existing.title != expected_title
+        or existing.description != expected_description
+        or existing_context != (context or {})
+        or existing_artifacts != (artifacts or [])
+    ):
+        raise ValidationAppError("Idempotency key is already bound to a different delegation request")
+    return existing
+
+
 async def create_delegated_work_item(
     db: AsyncSession,
     *,
@@ -232,74 +304,53 @@ async def create_delegated_work_item(
     if idempotency_key is None or not idempotency_key.strip():
         raise ValidationAppError("Delegation idempotency key is required")
     request_key = idempotency_key.strip()
-    existing = (await db.execute(
-        select(WorkItem).where(
-            WorkItem.tenant_id == tenant_id,
-            WorkItem.idempotency_key == request_key,
-        ).with_for_update()
-    )).scalar_one_or_none()
+    existing = await _get_existing_delegation_result(
+        db,
+        tenant_id=tenant_id,
+        request_key=request_key,
+        source_work_item_id=source_work_item_id,
+        delegator_agent_instance_id=delegator_agent_instance_id,
+        delegate_agent_instance_id=delegate_agent_instance_id,
+        scopes=scopes,
+        expires_at=expires_at,
+        title=title,
+        description=description,
+        context=context,
+        artifacts=artifacts,
+        max_chain_depth=max_chain_depth,
+    )
     if existing is not None:
-        existing_delegation_id = (existing.policy_context or {}).get("delegation_id")
-        if existing_delegation_id is None:
-            raise ValidationAppError("Idempotency key is already bound to a non-delegation WorkItem")
-        existing_delegation = (await db.execute(
-            select(AgentDelegation).where(
-                AgentDelegation.id == UUID(str(existing_delegation_id)),
-                AgentDelegation.tenant_id == tenant_id,
-            ).with_for_update()
-        )).scalar_one_or_none()
-        if existing_delegation is None:
-            raise ValidationAppError("Idempotency key is bound to a missing delegation")
-        requested_scopes = {"actions": sorted(set(scopes.get("actions") or [])), "tools": sorted(set(scopes.get("tools") or []))}
-        if (
-            existing.parent_work_item_id != source_work_item_id
-            or existing.executor_id != delegate_agent_instance_id
-            or existing_delegation.delegator_agent_instance_id != delegator_agent_instance_id
-            or existing_delegation.scopes != requested_scopes
-            or existing_delegation.expires_at != expires_at
-        ):
-            raise ValidationAppError("Idempotency key is already bound to a different delegation request")
         return existing
 
-    source = (await db.execute(
-        select(WorkItem).where(
-            WorkItem.id == source_work_item_id,
-            WorkItem.tenant_id == tenant_id,
-        ).with_for_update()
-    )).scalar_one_or_none()
+    source = (
+        await db.execute(
+            select(WorkItem)
+            .where(WorkItem.id == source_work_item_id, WorkItem.tenant_id == tenant_id)
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
     if source is None:
         raise NotFoundError("Source work item not found for tenant")
 
     # Locking the source serializes concurrent delegation requests for the same
-    # WorkItem. Re-check after acquiring that lock so a request that arrived
-    # concurrently observes the already-committed idempotent result.
-    existing = (await db.execute(
-        select(WorkItem).where(
-            WorkItem.tenant_id == tenant_id,
-            WorkItem.idempotency_key == request_key,
-        ).with_for_update()
-    )).scalar_one_or_none()
+    # WorkItem. Re-check after acquiring that lock so a concurrent request
+    # observes the already-committed idempotent result.
+    existing = await _get_existing_delegation_result(
+        db,
+        tenant_id=tenant_id,
+        request_key=request_key,
+        source_work_item_id=source_work_item_id,
+        delegator_agent_instance_id=delegator_agent_instance_id,
+        delegate_agent_instance_id=delegate_agent_instance_id,
+        scopes=scopes,
+        expires_at=expires_at,
+        title=title,
+        description=description,
+        context=context,
+        artifacts=artifacts,
+        max_chain_depth=max_chain_depth,
+    )
     if existing is not None:
-        existing_delegation_id = (existing.policy_context or {}).get("delegation_id")
-        if existing_delegation_id is None:
-            raise ValidationAppError("Idempotency key is already bound to a non-delegation WorkItem")
-        existing_delegation = (await db.execute(
-            select(AgentDelegation).where(
-                AgentDelegation.id == UUID(str(existing_delegation_id)),
-                AgentDelegation.tenant_id == tenant_id,
-            ).with_for_update()
-        )).scalar_one_or_none()
-        if existing_delegation is None:
-            raise ValidationAppError("Idempotency key is bound to a missing delegation")
-        requested_scopes = {"actions": sorted(set(scopes.get("actions") or [])), "tools": sorted(set(scopes.get("tools") or []))}
-        if (
-            existing.parent_work_item_id != source_work_item_id
-            or existing.executor_id != delegate_agent_instance_id
-            or existing_delegation.delegator_agent_instance_id != delegator_agent_instance_id
-            or existing_delegation.scopes != requested_scopes
-            or existing_delegation.expires_at != expires_at
-        ):
-            raise ValidationAppError("Idempotency key is already bound to a different delegation request")
         return existing
 
     delegation = await authorize_delegation(
@@ -314,7 +365,13 @@ async def create_delegated_work_item(
     )
     parent_context = dict(source.policy_context or {})
     child_context = dict(parent_context)
-    child_context.update({"delegated_from": str(source.id), "delegation_id": str(delegation.id), "delegation_depth": delegation.chain_depth})
+    child_context.update(
+        {
+            "delegated_from": str(source.id),
+            "delegation_id": str(delegation.id),
+            "delegation_depth": delegation.chain_depth,
+        }
+    )
     if context:
         child_context["delegation_context"] = context
     if artifacts:
@@ -328,7 +385,11 @@ async def create_delegated_work_item(
         requester_id=source.requester_id,
         executor_type=ExecutorType.AGENT,
         executor_id=delegate_agent_instance_id,
-        input_data={**(source.input_data or {}), "delegated_context": context or {}, "delegated_artifacts": artifacts or []},
+        input_data={
+            **(source.input_data or {}),
+            "delegated_context": context or {},
+            "delegated_artifacts": artifacts or [],
+        },
         policy_context=child_context,
         idempotency_key=request_key,
         parent_work_item_id=source.id,
