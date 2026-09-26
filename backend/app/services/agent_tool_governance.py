@@ -30,7 +30,7 @@ def current_agent_tool_context() -> tuple[UUID, UUID, UUID, str] | None:
     tool_name = _CURRENT_TOOL.get()
     if context is None or tool_name is None:
         return None
-    tenant_id, agent_instance_id, run_id = context
+    tenant_id, agent_instance_id, run_id, _delegation_id = context
     return tenant_id, agent_instance_id, run_id, tool_name
 
 
