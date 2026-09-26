@@ -136,3 +136,88 @@ async def test_delegation_is_denied_when_delegator_identity_is_expired():
     db = DelegationDb(delegation, [delegator, delegate], [delegator_identity, delegate_identity], [])
     with pytest.raises(ValidationAppError, match="identity has expired"):
         await validate_delegation(db, tenant_id=tenant, delegation_id=delegation.id, delegate_agent_instance_id=delegate.id)
+
+
+@pytest.mark.asyncio
+async def test_delegated_run_dispatch_requires_and_persists_delegation_proof(monkeypatch):
+    from app.services.agent_execution_adapter import AgentExecutionAdapter
+
+    tenant = uuid4()
+    agent_id = uuid4()
+    delegation_id = uuid4()
+    agent_obj = SimpleNamespace(
+        id=agent_id, tenant_id=tenant, enabled=True,
+        configuration={}, permission_policy={"allowed_tools": ["send_email"], "permissions": ["run.execute"]},
+    )
+    work = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant, executor_id=agent_id,
+        policy_context={"delegated_from": str(uuid4()), "delegation_id": str(delegation_id)},
+        input_data={}, requester_id=None,
+    )
+    captured = {}
+
+    async def fake_authorize(_db, request):
+        captured["request"] = request
+        return SimpleNamespace(decision=PolicyDecision.ALLOW)
+
+    async def fake_resolve(*_args, **_kwargs):
+        return agent_obj, SimpleNamespace(id=uuid4()), SimpleNamespace(id=uuid4(), employee_id=uuid4())
+
+    class Ctx:
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return False
+
+    class FakeDb:
+        def begin_nested(self): return Ctx()
+        async def flush(self): pass
+
+    class FakeRun:
+        id = uuid4()
+        agent_instance_id = None
+        delegation_id = None
+
+    async def fake_create_run(*_args, **_kwargs): return FakeRun()
+    async def fake_enqueue(*_args, **_kwargs): pass
+
+    import app.services.agent_execution_adapter as mod
+    monkeypatch.setattr(mod, "assert_authorized", fake_authorize)
+    monkeypatch.setattr(mod, "resolve_employee_version", fake_resolve)
+    monkeypatch.setattr(mod, "create_run", fake_create_run)
+    monkeypatch.setattr(mod.outbox_service, "enqueue", fake_enqueue)
+
+    result = await AgentExecutionAdapter(FakeDb()).dispatch(work, agent_obj)
+
+    assert captured["request"].delegation_id == delegation_id
+    assert FakeRun.delegation_id == delegation_id
+    assert result["executor_type"] == "agent"
+
+
+@pytest.mark.asyncio
+async def test_delegated_tool_policy_receives_delegation_proof(monkeypatch):
+    from app.services import agent_tool_governance
+
+    tenant, agent_id, run_id, delegation_id = uuid4(), uuid4(), uuid4(), uuid4()
+    captured = {}
+
+    class FakeDb:
+        async def execute(self, _statement):
+            return FakeResult(None)
+        async def flush(self): pass
+
+    async def fake_authorize(_db, request):
+        captured["request"] = request
+        return SimpleNamespace(decision=PolicyDecision.ALLOW)
+
+    monkeypatch.setattr(agent_tool_governance, "assert_authorized", fake_authorize)
+
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant,
+        agent_instance_id=agent_id,
+        run_id=run_id,
+        delegation_id=delegation_id,
+    ):
+        await agent_tool_governance.registry.execute(
+            "calculator", {"expression": "1+1"}, db=FakeDb(), tenant_id=tenant
+        )
+
+    assert captured["request"].delegation_id == delegation_id
