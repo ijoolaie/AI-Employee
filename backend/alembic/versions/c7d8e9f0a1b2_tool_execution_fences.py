@@ -23,7 +23,6 @@ def upgrade() -> None:
         sa.Column("tool_name", sa.String(length=100), nullable=False),
         sa.Column("status", sa.String(length=20), nullable=False),
         sa.Column("error_message", sa.Text(), nullable=True),
-        sa.Column("result", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(["run_id"], ["runs.id"]),
