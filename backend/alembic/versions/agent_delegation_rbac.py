@@ -1,7 +1,7 @@
 """Add dedicated RBAC permissions for Agent-to-Agent delegation lifecycle.
 
 Revision ID: agentdelegationrbac
-Revises: customercustomerlifecycle
+Revises: v1415agentdelegationrun
 """
 
 from alembic import op
