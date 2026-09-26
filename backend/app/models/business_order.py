@@ -11,7 +11,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import Index, Date, DateTime, ForeignKey, Numeric, String, Text, func
+from sqlalchemy import Date, DateTime, ForeignKey, Index, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -23,6 +23,7 @@ class BusinessOrder(Base):
 
     __table_args__ = (
         Index("ix_business_orders_tenant_status", "tenant_id", "status"),
+        UniqueConstraint("tenant_id", "number", name="uq_business_orders_tenant_number"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
