@@ -8,7 +8,7 @@ from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstanceStatus
 from app.models.agent_access_review import AgentAccessReviewDecision
 from app.services import agent_policy_engine
-from app.services.agent_delegation_service import authorize_delegation, validate_delegation
+from app.services.agent_delegation_service import authorize_delegation, revoke_delegation, validate_delegation
 from app.services.agent_policy_engine import PolicyDecision, PolicyRequest, authorize
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 from app.models.work_item import ExecutorType, WorkItemStatus
@@ -388,3 +388,85 @@ async def test_delegated_tool_policy_receives_delegation_proof(monkeypatch):
         )
 
     assert captured["request"].delegation_id == delegation_id
+
+
+
+@pytest.mark.asyncio
+async def test_validate_delegation_locks_authority_row_before_work_item_state():
+    tenant = uuid4()
+    delegator = uuid4()
+    delegate = uuid4()
+    delegation = delegation_record(tenant, delegator, delegate, datetime.now(timezone.utc) + timedelta(hours=1))
+    delegation.source_work_item_id = uuid4()
+    source = SimpleNamespace(id=delegation.source_work_item_id, tenant_id=tenant, status=WorkItemStatus.RUNNING)
+    delegator_agent = agent(tenant, delegator, permissions=["run.execute"])
+    delegate_agent = agent(tenant, delegate, permissions=["run.execute"])
+    left = identity(); left.agent_instance_id = delegator
+    right = identity(); right.agent_instance_id = delegate
+    statements = []
+
+    class LockDb(DelegationDb):
+        async def execute(self, statement):
+            statements.append(str(statement))
+            return await super().execute(statement)
+
+    db = LockDb(
+        delegation,
+        [delegator_agent, delegate_agent],
+        [left, right],
+        [access_review(), access_review()],
+        source=source,
+    )
+    result = await validate_delegation(
+        db,
+        tenant_id=tenant,
+        delegation_id=delegation.id,
+        delegate_agent_instance_id=delegate,
+        action="run.execute",
+    )
+    assert result.id == delegation.id
+    assert "FOR UPDATE" in statements[0]
+
+
+@pytest.mark.asyncio
+async def test_revoke_delegation_is_idempotently_rejected_after_first_revoke(monkeypatch):
+    tenant = uuid4()
+    delegator = uuid4()
+    delegate = uuid4()
+    delegation = delegation_record(
+        tenant,
+        delegator,
+        delegate,
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    calls = []
+
+    class RevokeDb:
+        async def execute(self, statement):
+            calls.append(str(statement))
+            return FakeResult(delegation)
+        async def flush(self):
+            pass
+
+    async def audit(*_args, **_kwargs):
+        pass
+
+    monkeypatch.setattr("app.services.agent_delegation_service.audit_service.record", audit)
+    db = RevokeDb()
+
+    result = await revoke_delegation(
+        db,
+        tenant_id=tenant,
+        delegation_id=delegation.id,
+        actor_user_id=uuid4(),
+    )
+    assert result.status == "revoked"
+    assert "FOR UPDATE" in calls[0]
+
+    with pytest.raises(ValidationAppError, match="not active"):
+        await revoke_delegation(
+            db,
+            tenant_id=tenant,
+            delegation_id=delegation.id,
+            actor_user_id=uuid4(),
+        )
