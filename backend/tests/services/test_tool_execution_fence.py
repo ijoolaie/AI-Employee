@@ -39,6 +39,7 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
             input_schema={"type": "object", "additionalProperties": False},
             handler=handler,
             side_effects=True,
+            external_side_effects=True,
             required_permission="run.execute",
             requires_approval=False,
         )
