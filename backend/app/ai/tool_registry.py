@@ -32,6 +32,7 @@ class RegisteredTool:
     input_schema: dict[str, Any]
     handler: Callable[..., Any]
     side_effects: bool = False
+    external_side_effects: bool = False
     required_permission: str = "run.execute"
     requires_approval: bool = False
 
@@ -991,6 +992,7 @@ def build_default_registry() -> ToolRegistry:
             },
             handler=_send_email,
             side_effects=True,
+            external_side_effects=True,
             required_permission="run.execute",
             requires_approval=True,
         )
