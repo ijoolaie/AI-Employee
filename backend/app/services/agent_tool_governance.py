@@ -167,10 +167,7 @@ def install() -> None:
         try:
             result = await original_execute(name, arguments, **kwargs)
             if fence_id is not None:
-                await tool_execution_fence.complete_tool_execution_fence(
-                    fence_id,
-                    result=result,
-                )
+                await tool_execution_fence.complete_tool_execution_fence(fence_id)
             return result
         except Exception as exc:
             if fence_id is not None:
