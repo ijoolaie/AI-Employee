@@ -17,9 +17,10 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError, ValidationAppError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.business_invoice import BusinessInvoice
 from app.models.file import FileObject
 from app.services import audit_service, file_service, storage
@@ -93,8 +94,12 @@ def _compute_totals(
     return subtotal, tax_amount, total, normalized
 
 
+INVOICE_NUMBER_CONSTRAINT = "uq_business_invoices_tenant_number"
+
+
 def _next_number_fallback() -> str:
-    return f"INV-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
+    return f"INV-{timestamp}-{uuid.uuid4().hex[:8]}"
 
 
 async def create_invoice(
@@ -149,8 +154,19 @@ async def create_invoice(
         created_by=actor_id,
         metadata_={},
     )
-    db.add(inv)
-    await db.flush()
+    try:
+        async with db.begin_nested():
+            db.add(inv)
+            await db.flush()
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name is None and f'constraint "{INVOICE_NUMBER_CONSTRAINT}"' in str(exc.orig):
+            constraint_name = INVOICE_NUMBER_CONSTRAINT
+        if constraint_name != INVOICE_NUMBER_CONSTRAINT:
+            raise
+        raise ConflictError("Invoice number already exists in this tenant") from exc
 
     await audit_service.record(
         db,

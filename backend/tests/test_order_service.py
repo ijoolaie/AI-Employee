@@ -35,3 +35,22 @@ def test_order_totals_with_fraction_tax():
 def test_order_totals_reject_empty_line():
     with pytest.raises(ValidationAppError):
         _compute_totals([{"description": "", "quantity": 1, "unit_price": 10}], Decimal("0"))
+
+
+
+def test_order_number_fallback_is_collision_resistant():
+    first = _next_number_fallback()
+    second = _next_number_fallback()
+
+    assert first.startswith("ORD-")
+    assert second.startswith("ORD-")
+    assert first != second
+    assert len(first) <= 64
+    assert len(second) <= 64
+
+
+def test_business_order_number_is_tenant_scoped_unique():
+    from app.models.business_order import BusinessOrder
+
+    names = {constraint.name for constraint in BusinessOrder.__table__.constraints}
+    assert "uq_business_orders_tenant_number" in names

@@ -13,9 +13,10 @@ from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError, ValidationAppError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.business_order import BusinessOrder
 from app.services import audit_service, file_service, storage
 from app.services.invoice_service import _compute_totals, normalize_tax_rate
@@ -37,8 +38,12 @@ _ORDER_NO_RE = re.compile(
 )
 
 
+ORDER_NUMBER_CONSTRAINT = "uq_business_orders_tenant_number"
+
+
 def _next_number_fallback() -> str:
-    return f"ORD-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
+    return f"ORD-{timestamp}-{uuid.uuid4().hex[:8]}"
 
 
 async def create_order(
@@ -101,8 +106,19 @@ async def create_order(
         created_by=actor_id,
         metadata_={},
     )
-    db.add(order)
-    await db.flush()
+    try:
+        async with db.begin_nested():
+            db.add(order)
+            await db.flush()
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name is None and f'constraint "{ORDER_NUMBER_CONSTRAINT}"' in str(exc.orig):
+            constraint_name = ORDER_NUMBER_CONSTRAINT
+        if constraint_name != ORDER_NUMBER_CONSTRAINT:
+            raise
+        raise ConflictError("Order number already exists in this tenant") from exc
     await audit_service.record(
         db,
         tenant_id=tenant_id,
