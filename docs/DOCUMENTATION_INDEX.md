@@ -22,6 +22,7 @@ This is the top-level map for current project documentation.
 | Production server sizing/baseline | `current/PRODUCTION_SERVER_BASELINE.md` |
 | Production evidence | `current/PRODUCTION_EVIDENCE_INDEX.md` |
 | Production certification execution | `current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` |
+| External production execution | `current/EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` |
 | Code ↔ documentation traceability | `current/CODE_DOCUMENTATION_TRACEABILITY.md` |
 | Canonical vocabulary | `current/CANONICAL_VOCABULARY.md` |
 
@@ -36,6 +37,7 @@ This is the top-level map for current project documentation.
 - `operations/` — operational runbooks and procedures.
 - `releases/` — release records and release-specific evidence.
 - `current/PRODUCTION_SERVER_BASELINE.md` — recommended host, topology, secrets, backup and production evidence baseline.
+- `current/EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` — external target execution order and evidence contract.
 
 ## 5. Historical evidence
 
