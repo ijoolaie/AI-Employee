@@ -248,3 +248,160 @@ async def test_delegated_tool_policy_receives_delegation_proof(monkeypatch):
         )
 
     assert captured["request"].delegation_id == delegation_id
+
+
+@pytest.mark.asyncio
+async def test_nested_delegation_scope_cannot_exceed_parent_scope(monkeypatch):
+    from app.services.agent_delegation_service import authorize_delegation
+
+    tenant = uuid4()
+    delegator_id = uuid4()
+    delegate_id = uuid4()
+    source_id = uuid4()
+    parent_delegation_id = uuid4()
+
+    delegator = agent(tenant, delegator_id, permissions=["run.execute", "admin.delete"], allowed_tools=["calculator", "send_email"])
+    delegate = agent(tenant, delegate_id, permissions=["run.execute", "admin.delete"], allowed_tools=["calculator", "send_email"])
+    source = SimpleNamespace(
+        id=source_id,
+        tenant_id=tenant,
+        executor_type=ExecutorType.AGENT,
+        executor_id=delegator_id,
+        policy_context={
+            "delegation_id": str(parent_delegation_id),
+            "delegation_depth": 1,
+        },
+    )
+
+    delegator_identity = identity()
+    delegator_identity.agent_instance_id = delegator_id
+    delegate_identity = identity()
+    delegate_identity.agent_instance_id = delegate_id
+
+    parent = SimpleNamespace(
+        id=parent_delegation_id,
+        delegated_work_item_id=source_id,
+        scopes={"actions": ["run.execute"], "tools": ["calculator"]},
+    )
+
+    class AuthorizeDb:
+        def __init__(self):
+            self.added = None
+
+        async def execute(self, statement):
+            text = str(statement)
+            if "work_items" in text:
+                return FakeResult(source)
+            if "agent_instances" in text:
+                return FakeResult([delegator, delegate])
+            if "agent_identities" in text:
+                return FakeResult([delegator_identity, delegate_identity])
+            raise AssertionError(f"unexpected query: {text}")
+
+        def add(self, value):
+            self.added = value
+
+        async def flush(self):
+            if self.added is not None and self.added.id is None:
+                self.added.id = uuid4()
+
+    db = AuthorizeDb()
+
+    async def fake_validate(*_args, **_kwargs):
+        return parent
+
+    async def fake_audit(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr("app.services.agent_delegation_service.validate_delegation", fake_validate)
+    monkeypatch.setattr("app.services.agent_delegation_service.audit_service.record", fake_audit)
+
+    with pytest.raises(ValidationAppError, match="inherited delegation scope"):
+        await authorize_delegation(
+            db,
+            tenant_id=tenant,
+            delegator_agent_instance_id=delegator_id,
+            delegate_agent_instance_id=delegate_id,
+            source_work_item_id=source_id,
+            scopes={"actions": ["admin.delete"], "tools": []},
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        )
+
+
+@pytest.mark.asyncio
+async def test_nested_delegation_scope_can_only_attenuate_parent_scope(monkeypatch):
+    from app.services.agent_delegation_service import authorize_delegation
+
+    tenant = uuid4()
+    delegator_id = uuid4()
+    delegate_id = uuid4()
+    source_id = uuid4()
+    parent_delegation_id = uuid4()
+
+    delegator = agent(tenant, delegator_id, permissions=["run.execute", "admin.delete"], allowed_tools=["calculator", "send_email"])
+    delegate = agent(tenant, delegate_id, permissions=["run.execute", "admin.delete"], allowed_tools=["calculator", "send_email"])
+    source = SimpleNamespace(
+        id=source_id,
+        tenant_id=tenant,
+        executor_type=ExecutorType.AGENT,
+        executor_id=delegator_id,
+        policy_context={
+            "delegation_id": str(parent_delegation_id),
+            "delegation_depth": 1,
+        },
+    )
+
+    delegator_identity = identity()
+    delegator_identity.agent_instance_id = delegator_id
+    delegate_identity = identity()
+    delegate_identity.agent_instance_id = delegate_id
+
+    parent = SimpleNamespace(
+        id=parent_delegation_id,
+        delegated_work_item_id=source_id,
+        scopes={"actions": ["run.execute"], "tools": ["calculator", "send_email"]},
+    )
+
+    class AuthorizeDb:
+        def __init__(self):
+            self.added = None
+
+        async def execute(self, statement):
+            text = str(statement)
+            if "work_items" in text:
+                return FakeResult(source)
+            if "agent_instances" in text:
+                return FakeResult([delegator, delegate])
+            if "agent_identities" in text:
+                return FakeResult([delegator_identity, delegate_identity])
+            raise AssertionError(f"unexpected query: {text}")
+
+        def add(self, value):
+            self.added = value
+
+        async def flush(self):
+            if self.added is not None and self.added.id is None:
+                self.added.id = uuid4()
+
+    db = AuthorizeDb()
+
+    async def fake_validate(*_args, **_kwargs):
+        return parent
+
+    async def fake_audit(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr("app.services.agent_delegation_service.validate_delegation", fake_validate)
+    monkeypatch.setattr("app.services.agent_delegation_service.audit_service.record", fake_audit)
+
+    delegation = await authorize_delegation(
+        db,
+        tenant_id=tenant,
+        delegator_agent_instance_id=delegator_id,
+        delegate_agent_instance_id=delegate_id,
+        source_work_item_id=source_id,
+        scopes={"actions": ["run.execute"], "tools": ["calculator"]},
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+
+    assert delegation.scopes == {"actions": ["run.execute"], "tools": ["calculator"]}
