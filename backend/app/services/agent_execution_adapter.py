@@ -41,7 +41,7 @@ class AgentExecutionAdapter:
         # killed, expired, or drifted Agent from creating a new executable Run
         # after WorkItem dispatch has already committed RUNNING state.
         delegation_id = None
-        policy_context = work_item.policy_context or {}
+        policy_context = getattr(work_item, "policy_context", None) or {}
         raw_delegation_id = policy_context.get("delegation_id")
         if raw_delegation_id is not None:
             try:
