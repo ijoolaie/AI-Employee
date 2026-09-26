@@ -164,6 +164,54 @@ async def authorize_delegation(
     return delegation
 
 
+async def revoke_delegation(
+    db: AsyncSession,
+    *,
+    tenant_id: UUID,
+    delegation_id: UUID,
+    actor_user_id: UUID,
+) -> AgentDelegation:
+    """Explicitly revoke an active delegation under a tenant-scoped row lock."""
+    delegation = (
+        await db.execute(
+            select(AgentDelegation)
+            .where(
+                AgentDelegation.id == delegation_id,
+                AgentDelegation.tenant_id == tenant_id,
+            )
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
+    if delegation is None:
+        raise NotFoundError("Delegation not found for tenant")
+    if delegation.status != "active":
+        raise ValidationAppError("Delegation is not active")
+
+    delegation.status = "revoked"
+    await db.flush()
+    await audit_service.record(
+        db,
+        action="agent.delegation.revoked",
+        actor_type="user",
+        actor_id=actor_user_id,
+        tenant_id=tenant_id,
+        resource_type="agent_delegation",
+        resource_id=delegation.id,
+        metadata={
+            "delegator_agent_instance_id": str(delegation.delegator_agent_instance_id),
+            "delegate_agent_instance_id": str(delegation.delegate_agent_instance_id),
+            "source_work_item_id": str(delegation.source_work_item_id),
+            "delegated_work_item_id": (
+                str(delegation.delegated_work_item_id)
+                if delegation.delegated_work_item_id is not None
+                else None
+            ),
+            "chain_depth": delegation.chain_depth,
+        },
+    )
+    return delegation
+
+
 async def create_delegated_work_item(
     db: AsyncSession,
     *,
@@ -233,7 +281,13 @@ async def validate_delegation(
 ) -> AgentDelegation:
     """Validate delegation proof and current governance state at execution time."""
     current = now or datetime.now(timezone.utc)
-    delegation = (await db.execute(select(AgentDelegation).where(AgentDelegation.id == delegation_id, AgentDelegation.tenant_id == tenant_id))).scalar_one_or_none()
+    delegation = (
+        await db.execute(
+            select(AgentDelegation)
+            .where(AgentDelegation.id == delegation_id, AgentDelegation.tenant_id == tenant_id)
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
     if delegation is None:
         raise ValidationAppError("Delegation not found for tenant")
     if delegation.status != "active":
