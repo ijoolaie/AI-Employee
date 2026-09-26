@@ -26,7 +26,6 @@ async def authorize_agent_run(db: AsyncSession, run: Run) -> None:
             action="run.execute",
             run_id=run.id,
             delegation_id=run.delegation_id,
-            context={"delegated_from": str(run.delegation_id)} if run.delegation_id else {},
         ),
     )
 
