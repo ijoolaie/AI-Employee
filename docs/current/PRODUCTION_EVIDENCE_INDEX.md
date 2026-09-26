@@ -15,7 +15,7 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone. `OPE
 
 ## Current release baseline
 
-Current `main` engineering head: `a1fd0c103a10887b9c84c9741801441d317d0d33` (post-certification; not certified as a release).
+Current `main` is post-certification engineering/documentation work and is not certified as a release. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document.
 
 | Field | Value |
 |---|---|

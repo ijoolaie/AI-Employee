@@ -23,7 +23,7 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 `v1.4.11` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
-Current `main` is post-certification engineering/documentation work and resolves to `a1fd0c103a10887b9c84c9741801441d317d0d33`. It contains subsequent changes and is therefore outside the certified `v1.4.11` snapshot. A new application-code release candidate must receive fresh exact-SHA certification.
+Current `main` is post-certification engineering/documentation work and is outside the certified `v1.4.11` snapshot. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document. A new application-code release candidate must receive fresh exact-SHA certification.
 
 ## 2. Architecture version
 
