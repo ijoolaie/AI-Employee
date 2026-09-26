@@ -36,7 +36,7 @@ async def test_parent_child_execution_guard_locks_and_rejects_cancelled_run():
 
 @pytest.mark.asyncio
 async def test_parent_child_execution_guard_allows_running_run():
-    run = SimpleNamespace(status="running")
+    run = SimpleNamespace(status="running", deadline_at=None)
     db = SimpleNamespace(
         execute=AsyncMock(return_value=_Result(run))
     )
