@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-23
+**Last reconciled:** 2026-09-26
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
