@@ -69,8 +69,7 @@ async def begin_tool_execution_fence(
 
 async def complete_tool_execution_fence(
     fence_id: uuid.UUID,
-    *,
-    result: object | None = None,
+    *
 ) -> None:
     """Mark the side-effect as durably completed after the handler returns."""
     async with AsyncSessionLocal() as db:
@@ -78,7 +77,6 @@ async def complete_tool_execution_fence(
         if fence is None:
             raise RuntimeError("Tool execution fence disappeared")
         fence.status = "success"
-        fence.result = result if isinstance(result, dict) else None
         fence.completed_at = datetime.now(timezone.utc)
         await db.commit()
 
