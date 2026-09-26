@@ -9,6 +9,9 @@ from time import perf_counter
 from app.core.database import worker_db_session
 from app.core.metrics import WORKFLOW_LATENCY, WORKFLOW_RUNS
 from app.core.telemetry import span
+from sqlalchemy import select
+
+from app.models.workflow import WorkflowRun
 from app.services import workflow_service
 from app.services.workflow_execution_lease import heartbeat_workflow_execution_lease
 from app.services.tenant_resource_limiter import (
@@ -42,6 +45,17 @@ async def _run_async(workflow_run_id: str, tenant_id: str) -> None:
     workflow_uuid = uuid.UUID(workflow_run_id)
     with span("aiep.workflow.execute", workflow_run_id=workflow_run_id, tenant_id=tenant_id) as current_span:
         async with worker_db_session() as db:
+            # Celery task metadata is untrusted. Validate the durable tenant boundary
+            # before acquiring the lease or allowing any workflow step to execute.
+            result = await db.execute(
+                select(WorkflowRun.tenant_id).where(WorkflowRun.id == workflow_uuid)
+            )
+            durable_tenant_id = result.scalar_one_or_none()
+            if durable_tenant_id is None:
+                raise ValueError("Workflow Run not found")
+            if str(durable_tenant_id) != str(tenant_id):
+                raise ValueError("Worker tenant context does not match Workflow Run tenant")
+
             heartbeat_task=None; execution_task=None; lost=asyncio.Event()
             try:
                 lease_id=await workflow_service.acquire_workflow_execution_lease(db, workflow_run_id=workflow_uuid)
@@ -53,7 +67,6 @@ async def _run_async(workflow_run_id: str, tenant_id: str) -> None:
                     raise workflow_service.ValidationAppError("WORKFLOW_EXECUTION_LEASE_LOST")
                 run=await execution_task
                 if lost.is_set(): raise workflow_service.ValidationAppError("WORKFLOW_EXECUTION_LEASE_LOST")
-                if str(run.tenant_id) != str(tenant_id): raise ValueError("Worker tenant context does not match Workflow Run tenant")
                 await db.commit(); status=run.status; WORKFLOW_RUNS.labels(status).inc(); WORKFLOW_LATENCY.observe(perf_counter()-started)
                 if current_span is not None: current_span.set_attribute("workflow.status", status)
             except Exception as exc:
