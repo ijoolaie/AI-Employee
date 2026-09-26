@@ -43,7 +43,7 @@ class AgentDelegationResponse(BaseModel):
 @router.post(
     "/{source_work_item_id}",
     response_model=AgentDelegationResponse,
-    dependencies=[Depends(require_permission("run.execute"))],
+    dependencies=[Depends(require_permission("agent_delegation.create"))],
 )
 async def delegate_agent(
     source_work_item_id: UUID,
@@ -102,7 +102,7 @@ async def delegate_agent(
 @router.post(
     "/{delegation_id}/revoke",
     response_model=AgentDelegationResponse,
-    dependencies=[Depends(require_permission("run.execute"))],
+    dependencies=[Depends(require_permission("agent_delegation.revoke"))],
 )
 async def revoke_agent_delegation(
     delegation_id: UUID,
