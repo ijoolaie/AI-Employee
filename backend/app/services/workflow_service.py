@@ -22,6 +22,21 @@ from app.core.metrics import WORKFLOW_STEPS
 from app.services.workflow_execution_lease import acquire_workflow_execution_lease, assert_workflow_execution_lease, heartbeat_workflow_execution_lease
 
 
+async def _lock_parent_for_child_execution(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> WorkflowRun:
+    """Lock the durable parent immediately before a child Run can execute."""
+    result = await db.execute(
+        select(WorkflowRun).where(WorkflowRun.id == workflow_run_id).with_for_update()
+    )
+    run = result.scalar_one_or_none()
+    if run is None:
+        raise NotFoundError("Workflow run not found")
+    if run.status != "running":
+        raise ValidationAppError(
+            f"WORKFLOW_PARENT_NOT_RUNNING:{run.status}"
+        )
+    return run
+
+
 def _resolve_mapping(mapping: dict[str, str], context: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {}
     for target, source in mapping.items():
@@ -362,21 +377,10 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         await db.commit()
                         # The commit above releases the parent WorkflowRun lock.
                         # Re-lock and re-check it before the child Run can execute.
-                        parent_guard = await db.execute(
-                            select(WorkflowRun)
-                            .where(WorkflowRun.id == parent.id)
-                            .with_for_update()
-                        )
-                        parent = parent_guard.scalar_one()
+                        parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
                         await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
                         if heartbeat_lost.is_set():
                             raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
-                        if parent.status != "running":
-                            child.status = "cancelled"
-                            child.completed_at = datetime.now(timezone.utc)
-                            child.error = {"code": "WORKFLOW_PARENT_NOT_RUNNING", "message": f"Parent workflow is {parent.status}; child execution suppressed."}
-                            await db.flush()
-                            return
                         await run_service.execute_run(db, run_id=child.id)
                         if child.status != "success":
                             raise RuntimeError(f"Employee Run ended with status {child.status}")
@@ -552,19 +556,8 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                     # child Run crosses the external side-effect boundary. The
                     # create/commit above intentionally releases the parent lock;
                     # cancellation may therefore have happened in between.
-                    parent_guard = await db.execute(
-                        select(WorkflowRun)
-                        .where(WorkflowRun.id == run.id)
-                        .with_for_update()
-                    )
-                    run = parent_guard.scalar_one()
+                    run = await _lock_parent_for_child_execution(db, workflow_run_id=run.id)
                     await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
-                    if run.status != "running":
-                        child.status = "cancelled"
-                        child.completed_at = datetime.now(timezone.utc)
-                        child.error = {"code": "WORKFLOW_PARENT_NOT_RUNNING", "message": f"Parent workflow is {run.status}; child execution suppressed."}
-                        await db.flush()
-                        return run
                     await run_service.execute_run(db, run_id=child.id)
                     if child.status != "success": raise RuntimeError(f"Employee Run ended with status {child.status}")
                 except Exception as exc:
