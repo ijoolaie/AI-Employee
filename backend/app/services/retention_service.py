@@ -13,7 +13,6 @@ from uuid import UUID
 from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.audit_log import AuditLog
 from app.models.file import FileObject
 from app.models.memory import EmployeeMemory
 from app.models.usage import UsageEvent
@@ -30,9 +29,9 @@ async def enforce_retention(
 ) -> dict[str, int | str]:
     """Delete expired operational records for exactly one tenant.
 
-    Files are soft-deleted when stale; audit logs and usage events are hard
-    deleted because they are append-only operational records subject to the
-    configured retention window. Memory entries honor an explicit
+    Files are soft-deleted when stale; immutable audit logs are never deleted
+    by retention. Usage events remain subject to the configured retention
+    window. Memory entries honor an explicit
     ``expires_at`` lifecycle first, while the retention window remains a
     safety ceiling for terminal lifecycle states.
     """
@@ -42,14 +41,6 @@ async def enforce_retention(
     now = now or datetime.now(timezone.utc)
     cutoff = now - timedelta(days=retention_days)
     counts: dict[str, int | str] = {"tenant_id": str(tenant_id), "cutoff": cutoff.isoformat()}
-
-    audit_result = await db.execute(
-        delete(AuditLog).where(
-            AuditLog.tenant_id == tenant_id,
-            AuditLog.created_at < cutoff,
-        )
-    )
-    counts["audit_logs_deleted"] = audit_result.rowcount or 0
 
     usage_result = await db.execute(
         delete(UsageEvent).where(
