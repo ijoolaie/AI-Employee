@@ -34,6 +34,14 @@ def current_agent_tool_context() -> tuple[UUID, UUID, UUID, str] | None:
     return tenant_id, agent_instance_id, run_id, tool_name
 
 
+def current_agent_tool_delegation_id() -> UUID | None:
+    """Return the active delegation proof for deferred side-effect binding."""
+    context = _AGENT_CONTEXT.get()
+    if context is None:
+        return None
+    return context[3]
+
+
 @asynccontextmanager
 async def agent_tool_context(
     *, tenant_id: UUID, agent_instance_id: UUID, run_id: UUID, delegation_id: UUID | None = None

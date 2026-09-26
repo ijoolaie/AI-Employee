@@ -11,10 +11,16 @@ async def test_enqueue_persists_active_agent_binding(monkeypatch):
     tenant_id = uuid4()
     agent_instance_id = uuid4()
     run_id = uuid4()
+    delegation_id = uuid4()
     monkeypatch.setattr(
         agent_tool_governance,
         "current_agent_tool_context",
         lambda: (tenant_id, agent_instance_id, run_id, "send_email"),
+    )
+    monkeypatch.setattr(
+        agent_tool_governance,
+        "current_agent_tool_delegation_id",
+        lambda: delegation_id,
     )
 
     class FakeDB:
@@ -37,6 +43,7 @@ async def test_enqueue_persists_active_agent_binding(monkeypatch):
         "agent_instance_id": str(agent_instance_id),
         "run_id": str(run_id),
         "tool_name": "send_email",
+        "delegation_id": str(delegation_id),
     }
 
 
@@ -47,6 +54,7 @@ async def test_email_worker_reauthorizes_agent_before_smtp(monkeypatch):
     tenant_id = uuid4()
     agent_instance_id = uuid4()
     run_id = uuid4()
+    delegation_id = uuid4()
     row = SimpleNamespace(
         tenant_id=tenant_id,
         payload={
@@ -58,6 +66,7 @@ async def test_email_worker_reauthorizes_agent_before_smtp(monkeypatch):
                 "agent_instance_id": str(agent_instance_id),
                 "run_id": str(run_id),
                 "tool_name": "send_email",
+                "delegation_id": str(delegation_id),
             },
         },
     )
@@ -77,6 +86,7 @@ async def test_email_worker_reauthorizes_agent_before_smtp(monkeypatch):
     assert calls[0].tool_name == "send_email"
     assert calls[0].required_permission == "run.execute"
     assert calls[0].requires_approval is False
+    assert calls[0].delegation_id == delegation_id
 
 
 @pytest.mark.asyncio

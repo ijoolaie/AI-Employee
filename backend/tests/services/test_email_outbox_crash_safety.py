@@ -143,6 +143,7 @@ async def test_governed_email_revalidates_after_uncertain_commit(monkeypatch):
     tenant_id = uuid4()
     agent_instance_id = uuid4()
     run_id = uuid4()
+    delegation_id = uuid4()
     row = SimpleNamespace(
         id=uuid4(),
         status="processing",
@@ -156,6 +157,7 @@ async def test_governed_email_revalidates_after_uncertain_commit(monkeypatch):
                 "agent_instance_id": str(agent_instance_id),
                 "run_id": str(run_id),
                 "tool_name": "email.send",
+                "delegation_id": str(delegation_id),
             },
         },
         tenant_id=tenant_id,
