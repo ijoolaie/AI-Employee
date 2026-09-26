@@ -218,7 +218,12 @@ async def test_delegated_tool_policy_receives_delegation_proof(monkeypatch):
         delegation_id=delegation_id,
     ):
         await agent_tool_governance.registry.execute(
-            "calculator", {"expression": "1+1"}, db=FakeDb(), tenant_id=tenant
+            "calculator",
+            {"expression": "1+1"},
+            db=FakeDb(),
+            tenant_id=tenant,
+            permissions={"run.execute"},
+            allowed_tools={"calculator"},
         )
 
     assert captured["request"].delegation_id == delegation_id
