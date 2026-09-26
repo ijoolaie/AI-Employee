@@ -1,6 +1,6 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-23
+**Reconciled:** 2026-09-26
 **Current release:** `v1.4.11`
 **Certified SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 **Production Certification:** Run `35848311037` / Job `107139710452` — PASS
