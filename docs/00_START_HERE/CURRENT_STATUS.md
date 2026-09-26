@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-09-23
+**Last reconciled:** 2026-09-26
 **Latest certified release:** `v1.4.11`
 **Certified release SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 **Stable Git tag:** `v1.4.11` — VERIFIED at the certified SHA
