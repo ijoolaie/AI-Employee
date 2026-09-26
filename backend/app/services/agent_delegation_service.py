@@ -226,8 +226,41 @@ async def create_delegated_work_item(
     context: dict[str, Any] | None = None,
     artifacts: list[dict[str, Any]] | None = None,
     max_chain_depth: int = DEFAULT_MAX_CHAIN_DEPTH,
+    idempotency_key: str | None = None,
 ) -> WorkItem:
     """Atomically establish delegation authority and bind it to the child WorkItem."""
+    if idempotency_key is None or not idempotency_key.strip():
+        raise ValidationAppError("Delegation idempotency key is required")
+    request_key = idempotency_key.strip()
+    existing = (await db.execute(
+        select(WorkItem).where(
+            WorkItem.tenant_id == tenant_id,
+            WorkItem.idempotency_key == request_key,
+        ).with_for_update()
+    )).scalar_one_or_none()
+    if existing is not None:
+        existing_delegation_id = (existing.policy_context or {}).get("delegation_id")
+        if existing_delegation_id is None:
+            raise ValidationAppError("Idempotency key is already bound to a non-delegation WorkItem")
+        existing_delegation = (await db.execute(
+            select(AgentDelegation).where(
+                AgentDelegation.id == UUID(str(existing_delegation_id)),
+                AgentDelegation.tenant_id == tenant_id,
+            ).with_for_update()
+        )).scalar_one_or_none()
+        if existing_delegation is None:
+            raise ValidationAppError("Idempotency key is bound to a missing delegation")
+        requested_scopes = {"actions": sorted(set(scopes.get("actions") or [])), "tools": sorted(set(scopes.get("tools") or []))}
+        if (
+            existing.parent_work_item_id != source_work_item_id
+            or existing.executor_id != delegate_agent_instance_id
+            or existing_delegation.delegator_agent_instance_id != delegator_agent_instance_id
+            or existing_delegation.scopes != requested_scopes
+            or existing_delegation.expires_at != expires_at
+        ):
+            raise ValidationAppError("Idempotency key is already bound to a different delegation request")
+        return existing
+
     source = (await db.execute(select(WorkItem).where(WorkItem.id == source_work_item_id, WorkItem.tenant_id == tenant_id))).scalar_one_or_none()
     if source is None:
         raise NotFoundError("Source work item not found for tenant")
@@ -259,7 +292,7 @@ async def create_delegated_work_item(
         executor_id=delegate_agent_instance_id,
         input_data={**(source.input_data or {}), "delegated_context": context or {}, "delegated_artifacts": artifacts or []},
         policy_context=child_context,
-        idempotency_key=f"agent-delegation:{delegation.id}",
+        idempotency_key=request_key,
         parent_work_item_id=source.id,
     )
     db.add(child)
