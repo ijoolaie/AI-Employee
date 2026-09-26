@@ -148,7 +148,7 @@ def install() -> None:
                 delegation_id=delegation_id,
             ),
         )
-        if tool.side_effects:
+        if tool.external_side_effects:
             if not tool_call_id:
                 raise ValidationAppError(
                     "Side-effecting Agent tool execution requires a stable tool_call_id",
