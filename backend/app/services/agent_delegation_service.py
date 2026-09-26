@@ -332,7 +332,7 @@ async def validate_delegation(
     ancestor = delegation
     ancestor_source = source
     for _ in range(DEFAULT_MAX_CHAIN_DEPTH):
-        ancestor_context = dict(ancestor_source.policy_context or {})
+        ancestor_context = dict(getattr(ancestor_source, "policy_context", None) or {})
         if ancestor_context.get("delegated_from") is None:
             break
         raw_parent_id = ancestor_context.get("delegation_id")
