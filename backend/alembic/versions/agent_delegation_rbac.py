@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "agentdelegationrbac"
-down_revision = "customercustomerlifecycle"
+down_revision = "v1415agentdelegationrun"
 branch_labels = None
 depends_on = None
 
