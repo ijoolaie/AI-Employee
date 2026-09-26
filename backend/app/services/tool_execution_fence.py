@@ -67,10 +67,7 @@ async def begin_tool_execution_fence(
     return fence_id
 
 
-async def complete_tool_execution_fence(
-    fence_id: uuid.UUID,
-    *
-) -> None:
+async def complete_tool_execution_fence(fence_id: uuid.UUID) -> None:
     """Mark the side-effect as durably completed after the handler returns."""
     async with AsyncSessionLocal() as db:
         fence = await db.get(ToolExecutionFence, fence_id)
