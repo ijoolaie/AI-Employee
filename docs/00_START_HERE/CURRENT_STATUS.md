@@ -61,6 +61,14 @@ The project is currently being executed on the developer/local environment. No e
 | Vendor/Reseller/Customer acceptance | OPEN — PENDING EXTERNAL EXECUTION | Acceptance occurs only after external target execution |
 | Commercial go-live | OPEN — FUTURE EXTERNAL GATE | Becomes mandatory when moving from local execution to external/commercial operation |
 
+## Current-main post-certification engineering revalidation — 2026-09-26
+
+- PR #743 aligned local certification knowledge search with the deterministic certification provider; merged and revalidated.
+- PR #744 aligned the local worker with the deterministic certification provider; merged and its CI/CodeQL/Architecture/Infrastructure/HA/DAST checks passed.
+- Clean local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**.
+- Real-stack product acceptance on current main: Tenant/RBAC/Knowledge **PASS**; Employee → Run → AI → Result **PASS**; Files → Knowledge → Memory **PASS**; Admin/Developer **PASS**; Workflow/Approval/Schedule **PASS**.
+- These results are current-main engineering evidence only and do not transfer the v1.4.11 exact-SHA certification to current main.
+
 ## External-gate status rule
 
 `OPEN — PENDING EXTERNAL EXECUTION` means the gate is intentionally unexecuted because the current project stage is local/engineering execution. It is neither PASS nor FAIL. Once an external target is provisioned, these gates become mandatory and must be evidenced before external/commercial go-live.
