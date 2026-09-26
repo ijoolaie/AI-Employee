@@ -15,7 +15,7 @@ from app.models.tool_approval import ToolApprovalRequest
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 
 
-_AGENT_CONTEXT: ContextVar[tuple[UUID, UUID, UUID] | None] = ContextVar(
+_AGENT_CONTEXT: ContextVar[tuple[UUID, UUID, UUID, UUID | None] | None] = ContextVar(
     "agent_tool_governance_context", default=None
 )
 _CURRENT_TOOL: ContextVar[str | None] = ContextVar(
@@ -30,16 +30,16 @@ def current_agent_tool_context() -> tuple[UUID, UUID, UUID, str] | None:
     tool_name = _CURRENT_TOOL.get()
     if context is None or tool_name is None:
         return None
-    tenant_id, agent_instance_id, run_id = context
+    tenant_id, agent_instance_id, run_id, _delegation_id = context
     return tenant_id, agent_instance_id, run_id, tool_name
 
 
 @asynccontextmanager
 async def agent_tool_context(
-    *, tenant_id: UUID, agent_instance_id: UUID, run_id: UUID
+    *, tenant_id: UUID, agent_instance_id: UUID, run_id: UUID, delegation_id: UUID | None = None
 ) -> AsyncIterator[None]:
     """Bind tenant, Agent identity, and canonical Run to ToolRegistry calls."""
-    token = _AGENT_CONTEXT.set((tenant_id, agent_instance_id, run_id))
+    token = _AGENT_CONTEXT.set((tenant_id, agent_instance_id, run_id, delegation_id))
     try:
         yield
     finally:
@@ -103,7 +103,7 @@ def install() -> None:
             return await original_execute(name, arguments, **kwargs)
         if db is None:
             raise ValidationAppError("Agent tool execution requires an active database context")
-        bound_tenant_id, agent_instance_id, run_id = context
+        bound_tenant_id, agent_instance_id, run_id, delegation_id = context
         if tenant_id != bound_tenant_id:
             raise ValidationAppError("Agent tool execution tenant context mismatch")
         approval = None
@@ -134,6 +134,7 @@ def install() -> None:
                 arguments=arguments if approval else None,
                 approval_granted=approval is not None,
                 requires_approval=tool.requires_approval,
+                delegation_id=delegation_id,
             ),
         )
         if approval is not None:

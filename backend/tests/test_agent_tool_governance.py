@@ -12,7 +12,7 @@ async def test_agent_tool_context_is_tenant_instance_and_run_scoped() -> None:
     tenant_id, instance_id, run_id = uuid4(), uuid4(), uuid4()
     assert agent_tool_governance._AGENT_CONTEXT.get() is None
     async with agent_tool_governance.agent_tool_context(tenant_id=tenant_id, agent_instance_id=instance_id, run_id=run_id):
-        assert agent_tool_governance._AGENT_CONTEXT.get() == (tenant_id, instance_id, run_id)
+        assert agent_tool_governance._AGENT_CONTEXT.get() == (tenant_id, instance_id, run_id, None)
     assert agent_tool_governance._AGENT_CONTEXT.get() is None
 
 
