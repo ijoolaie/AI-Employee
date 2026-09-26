@@ -21,7 +21,7 @@ Use `docs/current/PRODUCTION_EVIDENCE_INDEX.md` as the traceability index. Every
 
 ## Version boundary
 
-`v1.4.11` is the current certified and frozen release identity. Its tag points to the exact SHA certified by run `35498984521`. Historical releases remain immutable and is not rewritten or treated as the current certified release.
+`v1.4.11` is the current certified and frozen release identity. Its tag points to the exact SHA certified by run `35848311037`. Historical releases remain immutable and are not rewritten or treated as the current certified release.
 
 Completed dependency hardening includes PRs #355, #356, #345, #344, #352, #346, #347, #348, #349, #354, #350, #351 and #353, each merged only after the required repository gates passed on the exact HEAD. No open Dependabot dependency PR remains in the current hardening queue.
 
@@ -29,7 +29,7 @@ If a future change is intended for production deployment, it must either remain 
 
 ## Phase A — Release identity and admission
 
-1. `v1.4.7` is the current certified release.
+1. `v1.4.11` is the current certified release.
 2. Exact certified SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`.
 3. Certification run `35848311037` passed the required certification suite with zero Product Gate failures.
 4. The `v1.4.11` tag has been reconciled to the same exact certified SHA.
