@@ -544,3 +544,25 @@ async def test_validate_delegation_rejects_revoked_parent_in_chain():
             delegate_agent_instance_id=delegate,
             action="run.execute",
         )
+
+
+def test_delegation_api_uses_dedicated_permissions():
+    from app.api.v1.agent_delegations import router
+
+    create_route = next(route for route in router.routes if getattr(route, "path", "") == "/agent-delegations/{source_work_item_id}")
+    revoke_route = next(route for route in router.routes if getattr(route, "path", "") == "/agent-delegations/{delegation_id}/revoke")
+
+    create_dependencies = [getattr(dep.call, "__name__", "") for dep in create_route.dependencies]
+    revoke_dependencies = [getattr(dep.call, "__name__", "") for dep in revoke_route.dependencies]
+
+    assert create_dependencies
+    assert revoke_dependencies
+    assert "agent_delegation.create" in str(create_route.dependencies[0].call)
+    assert "agent_delegation.revoke" in str(revoke_route.dependencies[0].call)
+
+
+def test_tenant_admin_defaults_include_delegation_permissions():
+    from app.services.auth_service import DEFAULT_TENANT_ADMIN_PERMISSIONS
+
+    assert "agent_delegation.create" in DEFAULT_TENANT_ADMIN_PERMISSIONS
+    assert "agent_delegation.revoke" in DEFAULT_TENANT_ADMIN_PERMISSIONS
