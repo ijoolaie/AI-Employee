@@ -2,24 +2,18 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-from starlette.requests import Request
 from fastapi import HTTPException
 
 from app.api.v1 import commerce_integrations
 
 
-def _request(body: bytes = b"{}") -> Request:
-    return Request(
-        {
-            "type": "http",
-            "method": "POST",
-            "path": "/api/v1/commerce-integrations/shopify/webhooks/test",
-            "headers": [],
-            "query_string": b"",
-            "server": ("testserver", 443),
-            "scheme": "https",
-        }
-    )
+class _Request:
+    async def body(self):
+        return b"{}"
+
+
+def _request() -> _Request:
+    return _Request()
 
 
 @pytest.mark.asyncio
