@@ -48,3 +48,37 @@ async def test_parent_child_execution_guard_allows_running_run():
 
     assert result is run
     db.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_parent_child_execution_guard_times_out_before_side_effect():
+    from datetime import datetime, timedelta, timezone
+
+    run = SimpleNamespace(
+        status="running",
+        deadline_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+        error=None,
+        completed_at=None,
+        tenant_id="tenant-1",
+        id="run-1",
+    )
+    db = SimpleNamespace(
+        execute=AsyncMock(return_value=_Result(run)),
+        flush=AsyncMock(),
+    )
+    audit = AsyncMock()
+    original = workflow_service.audit_service.record
+    workflow_service.audit_service.record = audit
+    try:
+        result = await workflow_service._lock_parent_for_child_execution(
+            db,
+            workflow_run_id="run-1",
+        )
+    finally:
+        workflow_service.audit_service.record = original
+
+    assert result is run
+    assert run.status == "timed_out"
+    assert run.error["code"] == "WORKFLOW_TIMEOUT"
+    db.flush.assert_awaited_once()
+    audit.assert_awaited_once()
