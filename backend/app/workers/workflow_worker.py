@@ -105,15 +105,17 @@ def execute_workflow_task(self, workflow_run_id: str, tenant_id: str) -> None:
         release_tenant_resource(lease)
 
 
-async def _parallel_branch_async(branch_id: str) -> None:
-    with span("aiep.workflow.parallel_branch", branch_id=branch_id):
-        await workflow_service._execute_parallel_branch(uuid.UUID(branch_id))
+async def _parallel_branch_async(branch_id: str, tenant_id: str) -> None:
+    with span("aiep.workflow.parallel_branch", branch_id=branch_id, tenant_id=tenant_id):
+        await workflow_service._execute_parallel_branch(uuid.UUID(branch_id), expected_tenant_id=uuid.UUID(tenant_id))
 
 
 @celery_app.task(name="workflow.parallel_branch", bind=True, max_retries=3, default_retry_delay=10)
-def execute_parallel_branch_task(self, branch_id: str) -> None:
+def execute_parallel_branch_task(self, branch_id: str, tenant_id: str) -> None:
+    if not tenant_id:
+        raise ValueError("tenant_id is required for workflow.parallel_branch")
     try:
-        asyncio.run(_parallel_branch_async(branch_id))
+        asyncio.run(_parallel_branch_async(branch_id, tenant_id))
     except Exception as exc:
         # Parallel branches have the same external-effect ambiguity as the
         # parent workflow. Do not blindly replay a branch after its execution

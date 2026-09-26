@@ -263,7 +263,7 @@ async def _enqueue_resume(db: AsyncSession, run: WorkflowRun, *, reason: str, de
     await outbox_service.enqueue(db, kind="workflow.execute", tenant_id=run.tenant_id, payload={"workflow_run_id": str(run.id), "reason": reason, "generation": generation}, dedupe_key=f"workflow.execute:{run.id}:{generation}", available_at=available_at)
 
 
-async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uuid.UUID | None = None) -> None:
+async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uuid.UUID | None = None, expected_tenant_id: uuid.UUID | None = None) -> None:
     from app.core.database import worker_db_session
     from app.services.workflow_execution_lease import (
         acquire_parallel_branch_execution_lease,
@@ -271,14 +271,24 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         heartbeat_parallel_branch_execution_lease,
     )
     async with worker_db_session() as db:
-        lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(db, branch_id=branch_id)
+        # Validate the durable parent tenant before acquiring a branch execution lease.
+        # Celery task metadata is untrusted and must not mutate branch state across tenants.
         result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
         branch = result.scalar_one_or_none()
         if branch is None:
             raise ValidationAppError("Parallel branch not found")
         parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id).with_for_update())
         parent = parent_result.scalar_one_or_none()
-        if parent is None or parent.status in {"cancelled", "timed_out", "failed", "success"}:
+        if parent is None:
+            raise ValidationAppError("Workflow Run not found")
+        if expected_tenant_id is not None and parent.tenant_id != expected_tenant_id:
+            raise ValidationAppError("Worker tenant context does not match Workflow Run tenant")
+        lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(db, branch_id=branch_id)
+        result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
+        branch = result.scalar_one_or_none()
+        if branch is None:
+            raise ValidationAppError("Parallel branch not found")
+        if parent.status in {"cancelled", "timed_out", "failed", "success"}:
             branch.status = "cancelled" if parent and parent.status == "cancelled" else "failed"
             branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
             await db.commit(); return
