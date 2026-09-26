@@ -23,12 +23,9 @@ compose() {
   "${COMPOSE[@]}" "$@"
 }
 
-: "${POSTGRES_USER:?POSTGRES_USER must be set by $ENV_FILE or the environment}"
-: "${POSTGRES_DB:?POSTGRES_DB must be set by $ENV_FILE or the environment}"
-
 wait_postgres() {
   for _ in $(seq 1 30); do
-    if compose exec -T postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; then
+    if compose exec -T postgres pg_isready >/dev/null 2>&1; then
       return 0
     fi
     sleep 2
