@@ -48,6 +48,12 @@ async def decide_workflow_approval(approval_id: UUID, payload: WorkflowApprovalD
     if step is None or run is None:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Workflow approval state not found")
+    if step.workflow_run_id != run.id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=409, detail="Workflow approval step does not belong to its workflow run")
+    if run.status != "waiting_approval":
+        from fastapi import HTTPException
+        raise HTTPException(status_code=409, detail=f"Workflow run is not awaiting approval: {run.status}")
     if approval.status == "rejected":
         transition_step(step, "failed")
         step.error = {"code":"WORKFLOW_APPROVAL_REJECTED","message":payload.reason or "Human approval rejected the workflow step."}
