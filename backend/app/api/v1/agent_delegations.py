@@ -12,7 +12,7 @@ from app.core.database import get_db
 from app.core.deps import get_current_context, require_permission
 from app.models.agent_delegation import AgentDelegation
 from app.services import audit_service
-from app.services.agent_delegation_service import create_delegated_work_item
+from app.services.agent_delegation_service import create_delegated_work_item, revoke_delegation
 
 router = APIRouter(prefix="/agent-delegations", tags=["agent-delegations"])
 
@@ -37,12 +37,13 @@ class AgentDelegationResponse(BaseModel):
     chain_depth: int
     expires_at: datetime
     scopes: dict
+    status: str
 
 
 @router.post(
     "/{source_work_item_id}",
     response_model=AgentDelegationResponse,
-    dependencies=[Depends(require_permission("run.execute"))],
+    dependencies=[Depends(require_permission("agent_delegation.create"))],
 )
 async def delegate_agent(
     source_work_item_id: UUID,
@@ -88,6 +89,43 @@ async def delegate_agent(
             chain_depth=delegation.chain_depth,
             expires_at=delegation.expires_at,
             scopes=delegation.scopes,
+            status=delegation.status,
+        )
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as exc:
+        await db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+
+
+@router.post(
+    "/{delegation_id}/revoke",
+    response_model=AgentDelegationResponse,
+    dependencies=[Depends(require_permission("agent_delegation.revoke"))],
+)
+async def revoke_agent_delegation(
+    delegation_id: UUID,
+    db: AsyncSession = Depends(get_db, scope="function"),
+    current_user=Depends(get_current_context),
+):
+    try:
+        delegation = await revoke_delegation(
+            db,
+            tenant_id=current_user.tenant_id,
+            delegation_id=delegation_id,
+            actor_user_id=current_user.user_id,
+        )
+        await db.commit()
+        return AgentDelegationResponse(
+            delegation_id=delegation.id,
+            work_item_id=delegation.delegated_work_item_id or delegation.source_work_item_id,
+            tenant_id=delegation.tenant_id,
+            delegate_agent_instance_id=delegation.delegate_agent_instance_id,
+            chain_depth=delegation.chain_depth,
+            expires_at=delegation.expires_at,
+            scopes=delegation.scopes,
+            status=delegation.status,
         )
     except HTTPException:
         await db.rollback()

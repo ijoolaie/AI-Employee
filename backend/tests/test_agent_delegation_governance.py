@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -8,7 +8,7 @@ from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstanceStatus
 from app.models.agent_access_review import AgentAccessReviewDecision
 from app.services import agent_policy_engine
-from app.services.agent_delegation_service import authorize_delegation, validate_delegation
+from app.services.agent_delegation_service import authorize_delegation, revoke_delegation, validate_delegation
 from app.services.agent_policy_engine import PolicyDecision, PolicyRequest, authorize
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 from app.models.work_item import ExecutorType, WorkItemStatus
@@ -169,7 +169,7 @@ async def test_chained_delegation_cannot_expand_parent_scope(monkeypatch):
             delegate_agent_instance_id=delegate.id,
             source_work_item_id=source.id,
             scopes={"actions": ["financial.commitment"]},
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            expires_at=parent.expires_at - timedelta(minutes=1),
         )
 
 
@@ -388,3 +388,182 @@ async def test_delegated_tool_policy_receives_delegation_proof(monkeypatch):
         )
 
     assert captured["request"].delegation_id == delegation_id
+
+
+
+@pytest.mark.asyncio
+async def test_validate_delegation_locks_authority_row_before_work_item_state():
+    tenant = uuid4()
+    delegator = uuid4()
+    delegate = uuid4()
+    delegation = delegation_record(tenant, delegator, delegate, datetime.now(timezone.utc) + timedelta(hours=1))
+    delegation.source_work_item_id = uuid4()
+    source = SimpleNamespace(id=delegation.source_work_item_id, tenant_id=tenant, status=WorkItemStatus.RUNNING)
+    delegator_agent = agent(tenant, delegator, permissions=["run.execute"])
+    delegate_agent = agent(tenant, delegate, permissions=["run.execute"])
+    left = identity(); left.agent_instance_id = delegator
+    right = identity(); right.agent_instance_id = delegate
+    statements = []
+
+    class LockDb(DelegationDb):
+        async def execute(self, statement):
+            statements.append(str(statement))
+            return await super().execute(statement)
+
+    db = LockDb(
+        delegation,
+        [delegator_agent, delegate_agent],
+        [left, right],
+        [access_review(), access_review()],
+        source=source,
+    )
+    result = await validate_delegation(
+        db,
+        tenant_id=tenant,
+        delegation_id=delegation.id,
+        delegate_agent_instance_id=delegate,
+        action="run.execute",
+    )
+    assert result.id == delegation.id
+    assert "FOR UPDATE" in statements[0]
+
+
+@pytest.mark.asyncio
+async def test_revoke_delegation_is_idempotently_rejected_after_first_revoke(monkeypatch):
+    tenant = uuid4()
+    delegator = uuid4()
+    delegate = uuid4()
+    delegation = delegation_record(
+        tenant,
+        delegator,
+        delegate,
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    calls = []
+
+    class RevokeDb:
+        async def execute(self, statement):
+            calls.append(str(statement))
+            return FakeResult(delegation)
+        async def flush(self):
+            pass
+
+    async def audit(*_args, **_kwargs):
+        pass
+
+    monkeypatch.setattr("app.services.agent_delegation_service.audit_service.record", audit)
+    db = RevokeDb()
+
+    result = await revoke_delegation(
+        db,
+        tenant_id=tenant,
+        delegation_id=delegation.id,
+        actor_user_id=uuid4(),
+    )
+    assert result.status == "revoked"
+    assert "FOR UPDATE" in calls[0]
+
+    with pytest.raises(ValidationAppError, match="not active"):
+        await revoke_delegation(
+            db,
+            tenant_id=tenant,
+            delegation_id=delegation.id,
+            actor_user_id=uuid4(),
+        )
+
+
+@pytest.mark.asyncio
+async def test_validate_delegation_rejects_revoked_parent_in_chain():
+    tenant = uuid4()
+    delegator = uuid4()
+    delegate = uuid4()
+    parent_delegator = uuid4()
+    parent_id = uuid4()
+    child_id = uuid4()
+    source_id = uuid4()
+    source = SimpleNamespace(
+        id=child_id,
+        tenant_id=tenant,
+        status=WorkItemStatus.RUNNING,
+        policy_context={
+            "delegated_from": str(source_id),
+            "delegation_id": str(parent_id),
+            "delegation_depth": 2,
+        },
+    )
+    leaf = delegation_record(
+        tenant,
+        delegator,
+        delegate,
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    leaf.id = uuid4()
+    leaf.source_work_item_id = child_id
+    leaf.chain_depth = 2
+    parent = delegation_record(
+        tenant,
+        parent_delegator,
+        delegator,
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    parent.id = parent_id
+    parent.source_work_item_id = source_id
+    parent.delegated_work_item_id = child_id
+    parent.status = "revoked"
+    parent.chain_depth = 1
+
+    class ParentChainDb:
+        def __init__(self):
+            self.delegation_calls = 0
+
+        async def execute(self, statement):
+            text = str(statement)
+            if "agent_delegations" in text:
+                self.delegation_calls += 1
+                return FakeResult(leaf if self.delegation_calls == 1 else parent)
+            if "work_items" in text:
+                return FakeResult(source)
+            if "agent_instances" in text:
+                return FakeResult([
+                    agent(tenant, delegator, permissions=["run.execute"]),
+                    agent(tenant, delegate, permissions=["run.execute"]),
+                ])
+            if "agent_identities" in text:
+                left = identity(); left.agent_instance_id = delegator
+                right = identity(); right.agent_instance_id = delegate
+                return FakeResult([left, right])
+            if "agent_access_reviews" in text:
+                return FakeResult(access_review())
+            return FakeResult(None)
+
+    with pytest.raises(ValidationAppError, match="inactive parent delegation"):
+        await validate_delegation(
+            ParentChainDb(),
+            tenant_id=tenant,
+            delegation_id=leaf.id,
+            delegate_agent_instance_id=delegate,
+            action="run.execute",
+        )
+
+
+def test_delegation_api_uses_dedicated_permissions():
+    from app.api.v1.agent_delegations import router
+
+    create_route = next(route for route in router.routes if getattr(route, "path", "") == "/agent-delegations/{source_work_item_id}")
+    revoke_route = next(route for route in router.routes if getattr(route, "path", "") == "/agent-delegations/{delegation_id}/revoke")
+
+    assert create_route.dependencies
+    assert revoke_route.dependencies
+    create_checker = create_route.dependencies[0].dependency
+    revoke_checker = revoke_route.dependencies[0].dependency
+    create_permission = {cell.cell_contents for cell in create_checker.__closure__ or ()}
+    revoke_permission = {cell.cell_contents for cell in revoke_checker.__closure__ or ()}
+    assert "agent_delegation.create" in create_permission
+    assert "agent_delegation.revoke" in revoke_permission
+
+
+def test_tenant_admin_defaults_include_delegation_permissions():
+    from app.services.auth_service import DEFAULT_TENANT_ADMIN_PERMISSIONS
+
+    assert "agent_delegation.create" in DEFAULT_TENANT_ADMIN_PERMISSIONS
+    assert "agent_delegation.revoke" in DEFAULT_TENANT_ADMIN_PERMISSIONS
