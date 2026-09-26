@@ -23,7 +23,12 @@ from app.services.workflow_execution_lease import acquire_workflow_execution_lea
 
 
 async def _lock_parent_for_child_execution(db: AsyncSession, *, workflow_run_id: uuid.UUID) -> WorkflowRun:
-    """Lock the durable parent immediately before a child Run can execute."""
+    """Lock the durable parent immediately before a child Run can execute.
+
+    The lock is also the timeout fence: if the configured execution window
+    expired while the parent lock was released, transition the parent to the
+    terminal timeout state before any child side effect can start.
+    """
     result = await db.execute(
         select(WorkflowRun).where(WorkflowRun.id == workflow_run_id).with_for_update()
     )
@@ -33,6 +38,26 @@ async def _lock_parent_for_child_execution(db: AsyncSession, *, workflow_run_id:
     if run.status != "running":
         raise ValidationAppError(
             f"WORKFLOW_PARENT_NOT_RUNNING:{run.status}"
+        )
+    now = datetime.now(timezone.utc)
+    if run.deadline_at is not None and run.deadline_at <= now:
+        run.status = "timed_out"
+        run.error = {
+            "code": "WORKFLOW_TIMEOUT",
+            "message": "Workflow run exceeded its configured runtime.",
+        }
+        run.completed_at = now
+        await db.flush()
+        await audit_service.record(
+            db,
+            action="workflow.run.timed_out",
+            actor_type="system",
+            tenant_id=run.tenant_id,
+            resource_type="workflow_run",
+            resource_id=run.id,
+            status="failure",
+            request_id=request_id_var.get(),
+            metadata={"deadline_at": run.deadline_at.isoformat()},
         )
     return run
 
@@ -366,6 +391,17 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         branch.employee_run_id = durable_child.id
                         await db.flush()
                         await db.commit()
+                        # A durable successful child can be resumed after a
+                        # prior worker crash. Re-acquire the parent fence
+                        # before accepting its output into the branch.
+                        parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
+                        if parent.status != "running":
+                            branch.status = "failed"
+                            branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
+                            branch.completed_at = datetime.now(timezone.utc)
+                            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                            await db.commit()
+                            return
                     else:
                         child = await run_service.create_run(
                             db,
@@ -388,12 +424,30 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         # The commit above releases the parent WorkflowRun lock.
                         # Re-lock and re-check it before the child Run can execute.
                         parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
+                        if parent.status != "running":
+                            branch.status = "failed"
+                            branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
+                            branch.completed_at = datetime.now(timezone.utc)
+                            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                            await db.commit()
+                            return
                         await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
                         if heartbeat_lost.is_set():
                             raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
                         await run_service.execute_run(db, run_id=child.id)
                         if child.status != "success":
                             raise RuntimeError(f"Employee Run ended with status {child.status}")
+                        # Do not let a timeout/cancellation that becomes
+                        # durable after child execution be overwritten by
+                        # branch success bookkeeping.
+                        parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
+                        if parent.status != "running":
+                            branch.status = "failed"
+                            branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
+                            branch.completed_at = datetime.now(timezone.utc)
+                            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                            await db.commit()
+                            return
                 outputs[definition.get("output_key") or definition["key"]] = child.output_data or {}
                 branch.output_data = outputs
                 branch.current_step_position = position + 1
@@ -567,9 +621,20 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                     # create/commit above intentionally releases the parent lock;
                     # cancellation may therefore have happened in between.
                     run = await _lock_parent_for_child_execution(db, workflow_run_id=run.id)
+                    if run.status != "running":
+                        return run
                     await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
                     await run_service.execute_run(db, run_id=child.id)
-                    if child.status != "success": raise RuntimeError(f"Employee Run ended with status {child.status}")
+                    if child.status != "success":
+                        raise RuntimeError(f"Employee Run ended with status {child.status}")
+                    # The child execution may itself consume the remaining
+                    # workflow runtime. Re-lock the parent and re-check the
+                    # deadline before recording the child as a successful
+                    # workflow step; timeout must never be overwritten by
+                    # stale post-child success handling.
+                    run = await _lock_parent_for_child_execution(db, workflow_run_id=run.id)
+                    if run.status != "running":
+                        return run
                 except Exception as exc:
                     step.last_error = {"message": str(exc)[:1000], "attempt": attempt}
                     if attempt < max_attempts:
