@@ -1,6 +1,6 @@
 # AI-Employee — A–F Test Tracker
 
-**Status date:** 2026-09-23
+**Status date:** 2026-09-26
 **Repository:** `ijoolaie/AI-Employee`
 **Purpose:** Single living tracker for the current test sequence. Update this document as evidence is completed; do not restart already-passed smoke/contract tests unless a regression requires it.
 
@@ -110,6 +110,19 @@ This closes the repository-level Phase F release-certification gate for `v1.4.11
 - Evidence artifact: `production-certification-evidence-v1.4.8-4f7c4676850b546a1c6bdf219ab9401202302e2d`
 - Artifact SHA256: `d179fe603aac3460b0e751d7ad7957fad9c3f8dedf81ed8c4a9e9e608a78aa20`
 - Certification is bound only to that exact SHA and does not certify current main `9024a66cbc49279f317d72cebc15f56dbad4a0c1`.
+
+## Phase 6 current-main revalidation — 2026-09-26
+
+- PR #743 deterministic local certification provider boundary: **MERGED** and revalidated.
+- PR #744 local certification Worker deterministic provider alignment: **MERGED** as `bf5e507dcc8281f2428ac79a181a153b9009a625`; CI, CodeQL, Architecture Guard, Infrastructure, HA and DAST gates on the PR head all **PASS**.
+- Clean local production-like certification rerun: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**. Evidence directory: `phase-14-10-local-certification-20260926T075449Z`.
+- Tenant Isolation + RBAC + Knowledge P0 real-stack rerun after #743: **PASS**.
+- Employee → Run → AI → Result current-main rerun after #744: **PASS**.
+- Files → Knowledge → Memory current-main rerun after #744: **PASS**.
+- Admin / Developer current-main rerun: **PASS**.
+- Workflow + Approval + Schedule current-main rerun: **PASS**.
+- Current-main Phase E product acceptance aggregate: **PASS** across the five official real-stack acceptance gates.
+- These runtime results are local Docker/PostgreSQL evidence for current main; they do **not** transfer the immutable `v1.4.11` exact-SHA certification identity to current main.
 
 ## Post-v1.4.11 product-completeness and release evidence — 2026-09-23
 
