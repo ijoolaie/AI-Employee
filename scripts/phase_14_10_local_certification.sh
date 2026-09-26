@@ -28,6 +28,12 @@ export LOCAL_PRODUCTION_FRONTEND_PORT="${LOCAL_PRODUCTION_FRONTEND_PORT:-13001}"
 
 mkdir -p "$OUT_DIR"
 
+# Phase 6 requires a genuinely clean local production-like environment.
+# Scope destructive cleanup strictly to this certification compose project so
+# unrelated developer stacks are never touched. Set CLEAN_START=false only when
+# intentionally reusing an already validated certification environment.
+CLEAN_START="${CLEAN_START:-true}"
+
 compose() {
   docker_compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" -f "$LOCAL_OVERRIDE" -p "$COMPOSE_PROJECT_NAME" "$@"
 }
@@ -87,6 +93,20 @@ if [[ ! -f "$ENV_FILE" ]]; then
 fi
 [[ -f "$LOCAL_OVERRIDE" ]] || { echo "Missing $LOCAL_OVERRIDE." >&2; exit 1; }
 
+if [[ "$CLEAN_START" == "true" ]]; then
+  echo "LOCAL_CERTIFICATION|clean_start|starting"
+  compose down --volumes --remove-orphans >"$OUT_DIR/clean_start.log" 2>&1 || {
+    echo "LOCAL_CERTIFICATION|clean_start|FAIL" >&2
+    cat "$OUT_DIR/clean_start.log" >&2
+    exit 1
+  }
+  echo "PASS" >"$OUT_DIR/clean_start.status"
+  echo "LOCAL_CERTIFICATION|clean_start|PASS"
+else
+  echo "REUSED_ENVIRONMENT" >"$OUT_DIR/clean_start.status"
+  echo "LOCAL_CERTIFICATION|clean_start|NOT_EXECUTED"
+fi
+
 run_capture production_completeness_audit "${PYTHON_CMD[@]}" scripts/production_completeness_audit.py
 run_capture compose_config compose config --quiet
 # Validate the application settings before starting the full stack. This catches malformed
@@ -131,6 +151,7 @@ cat >"$OUT_DIR/EVIDENCE_INDEX.md" <<EOF
 
 | Evidence | Result |
 | --- | --- |
+| Clean certification environment | $(cat "$OUT_DIR/clean_start.status") |
 | Production completeness audit | $(cat "$OUT_DIR/production_completeness_audit.status") |
 | Docker Compose configuration | $(cat "$OUT_DIR/compose_config.status") |
 | Configuration preflight | $(cat "$OUT_DIR/configuration_preflight.status") |
