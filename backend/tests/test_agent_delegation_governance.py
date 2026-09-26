@@ -470,3 +470,75 @@ async def test_revoke_delegation_is_idempotently_rejected_after_first_revoke(mon
             delegation_id=delegation.id,
             actor_user_id=uuid4(),
         )
+
+
+@pytest.mark.asyncio
+async def test_validate_delegation_rejects_revoked_parent_in_chain():
+    tenant = uuid4()
+    delegator = uuid4()
+    delegate = uuid4()
+    parent_delegator = uuid4()
+    parent_id = uuid4()
+    child_id = uuid4()
+    source_id = uuid4()
+    source = SimpleNamespace(
+        id=child_id,
+        tenant_id=tenant,
+        status=WorkItemStatus.RUNNING,
+        policy_context={
+            "delegated_from": str(source_id),
+            "delegation_id": str(parent_id),
+            "delegation_depth": 2,
+        },
+    )
+    leaf = delegation_record(
+        tenant,
+        delegator,
+        delegate,
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    leaf.id = uuid4()
+    leaf.source_work_item_id = child_id
+    leaf.chain_depth = 2
+    parent = delegation_record(
+        tenant,
+        parent_delegator,
+        delegator,
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    parent.id = parent_id
+    parent.source_work_item_id = source_id
+    parent.delegated_work_item_id = child_id
+    parent.status = "revoked"
+    parent.chain_depth = 1
+
+    class ParentChainDb:
+        async def execute(self, statement):
+            text = str(statement)
+            if "agent_delegations" in text:
+                if "agent_delegations.id" in text and str(leaf.id) in text:
+                    return FakeResult(leaf)
+                return FakeResult(parent)
+            if "work_items" in text:
+                return FakeResult(source)
+            if "agent_instances" in text:
+                return FakeResult([
+                    agent(tenant, delegator, permissions=["run.execute"]),
+                    agent(tenant, delegate, permissions=["run.execute"]),
+                ])
+            if "agent_identities" in text:
+                left = identity(); left.agent_instance_id = delegator
+                right = identity(); right.agent_instance_id = delegate
+                return FakeResult([left, right])
+            if "agent_access_reviews" in text:
+                return FakeResult(access_review())
+            return FakeResult(None)
+
+    with pytest.raises(ValidationAppError, match="inactive parent delegation"):
+        await validate_delegation(
+            ParentChainDb(),
+            tenant_id=tenant,
+            delegation_id=leaf.id,
+            delegate_agent_instance_id=delegate,
+            action="run.execute",
+        )
