@@ -15,7 +15,7 @@ No P0 external gate may be marked complete from ENGINEERING evidence alone. `OPE
 
 ## Current release baseline
 
-Current `main` engineering head: `a1fd0c103a10887b9c84c9741801441d317d0d33` (post-certification; not certified as a release).
+Current `main` engineering head: `f83dcc5d16d299d28aa07f27949782130489833e` (post-certification; not certified as a release).
 
 | Field | Value |
 |---|---|
