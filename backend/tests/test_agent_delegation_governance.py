@@ -123,6 +123,57 @@ def delegation_record(tenant_id, delegator_id, delegate_id, expires_at):
 
 
 @pytest.mark.asyncio
+async def test_chained_delegation_cannot_expand_parent_scope(monkeypatch):
+    tenant = uuid4()
+    delegator = agent(tenant, permissions=["run.execute", "financial.commitment"])
+    delegate = agent(tenant, permissions=["run.execute", "financial.commitment"])
+    source = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant, status=WorkItemStatus.RUNNING,
+        executor_type=ExecutorType.AGENT, executor_id=delegator.id,
+        policy_context={"delegated_from": str(uuid4()), "delegation_id": str(uuid4()), "delegation_depth": 1},
+    )
+    parent = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant,
+        delegator_agent_instance_id=uuid4(), delegate_agent_instance_id=delegator.id,
+        source_work_item_id=uuid4(), delegated_work_item_id=source.id,
+        status="active", expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        chain_depth=1, max_chain_depth=3,
+        scopes={"actions": ["run.execute"], "tools": []},
+    )
+    parent_id = UUID(source.policy_context["delegation_id"])
+    parent.id = parent_id
+
+    class ChainDb:
+        async def execute(self, statement):
+            text = str(statement)
+            if "agent_delegations" in text:
+                return FakeResult(parent)
+            if "work_items" in text:
+                return FakeResult(source)
+            if "agent_instances" in text:
+                return FakeResult([delegator, delegate])
+            if "agent_identities" in text:
+                left = identity(); left.agent_instance_id = delegator.id
+                right = identity(); right.agent_instance_id = delegate.id
+                return FakeResult([left, right])
+            return FakeResult(None)
+
+    async def audit(*_args, **_kwargs): pass
+    monkeypatch.setattr("app.services.agent_delegation_service.audit_service.record", audit)
+
+    with pytest.raises(ValidationAppError, match="expand the parent delegation scope"):
+        await authorize_delegation(
+            ChainDb(),
+            tenant_id=tenant,
+            delegator_agent_instance_id=delegator.id,
+            delegate_agent_instance_id=delegate.id,
+            source_work_item_id=source.id,
+            scopes={"actions": ["financial.commitment"]},
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        )
+
+
+@pytest.mark.asyncio
 async def test_delegation_creation_locks_and_rejects_cancelled_source(monkeypatch):
     tenant = uuid4()
     delegator = agent(tenant, permissions=["run.execute"])
