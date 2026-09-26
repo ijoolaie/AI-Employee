@@ -76,13 +76,14 @@ async def reconcile(integration_id: UUID, ctx: CommerceIntegrationContext, db: D
 async def shopify_webhook(integration_id: UUID, request: Request, db: DbSession, x_shopify_hmac_sha256: str | None = Header(default=None, alias="X-Shopify-Hmac-Sha256"), x_shopify_webhook_id: str | None = Header(default=None, alias="X-Shopify-Webhook-Id"), x_shopify_topic: str | None = Header(default=None, alias="X-Shopify-Topic"), x_shopify_shop_domain: str | None = Header(default=None, alias="X-Shopify-Shop-Domain")):
     body = await request.body()
     if not shopify_service.verify_webhook(body, x_shopify_hmac_sha256): raise HTTPException(status_code=401, detail="Invalid Shopify webhook signature")
+    if not x_shopify_webhook_id or not x_shopify_webhook_id.strip(): raise HTTPException(status_code=400, detail="Missing Shopify webhook delivery ID")
     integration = (await db.execute(select(CommerceIntegration).where(CommerceIntegration.id == integration_id))).scalar_one_or_none()
     if not integration or integration.provider != "shopify": raise HTTPException(status_code=404, detail="Integration not found")
     if not shopify_service.webhook_matches_integration(integration, x_shopify_shop_domain):
         raise HTTPException(status_code=403, detail="Shopify webhook integration mismatch")
     try: payload = json.loads(body.decode() or "{}")
     except Exception: payload = {}
-    webhook_id = x_shopify_webhook_id or "unknown"
+    webhook_id = x_shopify_webhook_id.strip()
     recorded = await shopify_service.record_webhook(db, integration, webhook_id, x_shopify_topic or "unknown", payload)
     if recorded:
         integration.config = {**(integration.config or {}), "last_webhook_topic": x_shopify_topic, "last_webhook_id": webhook_id}; await db.commit()
