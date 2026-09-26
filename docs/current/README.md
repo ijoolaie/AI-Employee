@@ -11,37 +11,35 @@ This directory contains maintained documentation for the current `main` implemen
 5. `PRODUCTION_SERVER_BASELINE.md` — recommended external production infrastructure baseline.
 6. `PRODUCTION_EVIDENCE_INDEX.md` — external evidence boundary.
 7. `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` — exact-SHA certification procedure.
+8. `EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` — operator-facing execution sequence for remaining external production gates.
 
 ## Current release position
 
-- Published release: **`v1.4.1`**.
-- Release SHA: **`f7f5062feb125c7ca50263f74a0e40bc4abfa591`**.
-- Exact-SHA Production Certification: **SUCCESS**, run `34696339261`.
-- External production deployment: **NOT VERIFIED**.
-- Live provider validation and customer acceptance: **PENDING**.
+- Latest published/certified release: **`v1.4.11`**.
+- Exact certified SHA: **`90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`**.
+- Production Certification run: **`35848311037`**; job **`107139710452`**.
+- External production deployment: **PENDING**.
+- Live provider validation, deployed-target security evidence and customer acceptance: **PENDING EXTERNAL EXECUTION**.
+- Current `main` is post-certification engineering/documentation work and is not represented as an exact-SHA certified release.
 
 ## Current engineering position
 
 - Phase 11: complete.
 - Phase 12: operationally hardened.
 - Phase 13: engineering complete.
-- Phase 14.1–14.16: engineering complete where tracked.
-- Stage 7: external production execution/certification pending.
-- Stage 8: governed Agent workforce engineering active.
-
-## Active Agent capability phases
-
-1. Tool Calling contract and E2E.
-2. Structured Arguments / JSON Schema fail-closed validation.
-3. Multi-step execution with bounded loops.
-4. Real-provider validation, starting with LM Studio.
-5. Exact-SHA release gate for any promoted code.
+- Phase 14 engineering gates tracked by the current status/evidence documents.
+- External production execution/certification remains pending.
+- Governed Agent/workforce semantic engineering remains active.
 
 ## Infrastructure baseline
 
 Recommended initial production target: **8 vCPU / 16 GB RAM / 150–200 GB NVMe/SSD / Ubuntu 24.04 LTS**, with fixed/public IP, TLS ingress, hardened firewall, encrypted off-host backups and centralized observability.
 
 See `PRODUCTION_SERVER_BASELINE.md` for staging and growth tiers, topology, secrets, backup/restore and evidence requirements.
+
+## External production execution
+
+Use `EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` when a real production target is available. It separates engineering/rehearsal evidence from target evidence and defines the required gate order, PASS/FAIL criteria and final evidence handoff.
 
 ## Rule
 
