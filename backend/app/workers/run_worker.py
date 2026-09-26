@@ -109,6 +109,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     run_id=run.id,
                     employee_id=run.employee_id,
                     employee_version_id=run.employee_version_id,
+                    delegation_id=getattr(run, "delegation_id", None),
                 ):
                     runtime_memory = await build_runtime_memory(
                         db,
