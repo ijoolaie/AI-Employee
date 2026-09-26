@@ -7,6 +7,7 @@ from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.ai_provider_call import AIProviderCall
 from app.models.tool_approval import ToolApprovalRequest
+from app.models.tool_execution_fence import ToolExecutionFence
 from app.models.knowledge import KnowledgeDocument, KnowledgeChunk
 from app.models.memory import EmployeeMemory
 from app.models.workflow import Workflow, WorkflowVersion, WorkflowRun, WorkflowStepRun, WorkflowParallelBranchRun
@@ -60,7 +61,7 @@ from app.models.workforce_sla_contract import WorkforceSLAContract
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
-    "FileObject", "Employee", "EmployeeVersion", "Run", "AIProviderCall", "ToolApprovalRequest",
+    "FileObject", "Employee", "EmployeeVersion", "Run", "AIProviderCall", "ToolApprovalRequest", "ToolExecutionFence",
     "KnowledgeDocument", "KnowledgeChunk", "EmployeeMemory", "Workflow", "WorkflowVersion",
     "WorkflowRun", "WorkflowStepRun", "WorkflowParallelBranchRun", "WorkflowEventTrigger",
     "WorkflowEventDelivery", "WorkflowSchedule", "WorkflowApproval", "OutboxMessage", "Feedback",
