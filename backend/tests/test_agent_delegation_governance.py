@@ -582,7 +582,7 @@ def test_delegation_creation_locks_source_before_authority_creation():
     # The first lookup and the post-lock re-check both target WorkItem state;
     # both must be row-locking reads before authorize_delegation can create authority.
     db = SourceLockDb()
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationAppError, match="non-delegation WorkItem"):
         await create_delegated_work_item(
             db,
             tenant_id=tenant,
