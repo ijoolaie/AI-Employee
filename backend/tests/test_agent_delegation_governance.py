@@ -169,7 +169,7 @@ async def test_chained_delegation_cannot_expand_parent_scope(monkeypatch):
             delegate_agent_instance_id=delegate.id,
             source_work_item_id=source.id,
             scopes={"actions": ["financial.commitment"]},
-            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            expires_at=parent.expires_at - timedelta(minutes=1),
         )
 
 
