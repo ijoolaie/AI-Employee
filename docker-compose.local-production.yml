@@ -19,6 +19,9 @@ services:
   worker:
     environment:
       LOCAL_PRODUCTION_ALLOW_HTTP: "true"
+      AI_DEFAULT_PROVIDER: deterministic
+      AI_DEFAULT_MODEL: deterministic-certification
+      AI_EMBEDDING_MODEL: deterministic-certification
 
   beat:
     environment:
