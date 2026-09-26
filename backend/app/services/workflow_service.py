@@ -360,9 +360,23 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         branch.employee_run_id = child.id
                         await db.flush()
                         await db.commit()
+                        # The commit above releases the parent WorkflowRun lock.
+                        # Re-lock and re-check it before the child Run can execute.
+                        parent_guard = await db.execute(
+                            select(WorkflowRun)
+                            .where(WorkflowRun.id == parent.id)
+                            .with_for_update()
+                        )
+                        parent = parent_guard.scalar_one()
                         await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
                         if heartbeat_lost.is_set():
                             raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
+                        if parent.status != "running":
+                            child.status = "cancelled"
+                            child.completed_at = datetime.now(timezone.utc)
+                            child.error = {"code": "WORKFLOW_PARENT_NOT_RUNNING", "message": f"Parent workflow is {parent.status}; child execution suppressed."}
+                            await db.flush()
+                            return
                         await run_service.execute_run(db, run_id=child.id)
                         if child.status != "success":
                             raise RuntimeError(f"Employee Run ended with status {child.status}")
