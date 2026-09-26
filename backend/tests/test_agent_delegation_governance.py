@@ -174,6 +174,50 @@ async def test_chained_delegation_cannot_expand_parent_scope(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_chained_delegation_cannot_outlive_parent(monkeypatch):
+    tenant = uuid4()
+    delegator = agent(tenant, permissions=["run.execute"])
+    delegate = agent(tenant, permissions=["run.execute"])
+    parent_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+    source = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant, status=WorkItemStatus.RUNNING,
+        executor_type=ExecutorType.AGENT, executor_id=delegator.id,
+        policy_context={"delegated_from": str(uuid4()), "delegation_id": str(uuid4()), "delegation_depth": 1},
+    )
+    parent = SimpleNamespace(
+        id=UUID(source.policy_context["delegation_id"]), tenant_id=tenant,
+        delegator_agent_instance_id=uuid4(), delegate_agent_instance_id=delegator.id,
+        source_work_item_id=uuid4(), delegated_work_item_id=source.id,
+        status="active", expires_at=parent_expiry,
+        chain_depth=1, max_chain_depth=3,
+        scopes={"actions": ["run.execute"], "tools": []},
+    )
+
+    class ChainDb:
+        async def execute(self, statement):
+            text = str(statement)
+            if "agent_delegations" in text:
+                return FakeResult(parent)
+            if "work_items" in text:
+                return FakeResult(source)
+            return FakeResult(None)
+
+    async def audit(*_args, **_kwargs): pass
+    monkeypatch.setattr("app.services.agent_delegation_service.audit_service.record", audit)
+
+    with pytest.raises(ValidationAppError, match="outlive its parent"):
+        await authorize_delegation(
+            ChainDb(),
+            tenant_id=tenant,
+            delegator_agent_instance_id=delegator.id,
+            delegate_agent_instance_id=delegate.id,
+            source_work_item_id=source.id,
+            scopes={"actions": ["run.execute"]},
+            expires_at=parent_expiry + timedelta(minutes=1),
+        )
+
+
+@pytest.mark.asyncio
 async def test_delegation_creation_locks_and_rejects_cancelled_source(monkeypatch):
     tenant = uuid4()
     delegator = agent(tenant, permissions=["run.execute"])
