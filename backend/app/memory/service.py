@@ -48,7 +48,13 @@ async def create_memory(
     actor_id: uuid.UUID | None = None, supersede_memory_id: uuid.UUID | None = None,
 ) -> EmployeeMemory:
     _assert_agent_memory_scope(tenant_id=tenant_id, employee_id=employee_id, run_id=source_run_id)
-    employee = (await db.execute(select(Employee).where(Employee.id == employee_id, or_(Employee.tenant_id == tenant_id, Employee.tenant_id.is_(None))))).scalar_one_or_none()
+    employee = (
+        await db.execute(
+            select(Employee)
+            .where(Employee.id == employee_id, or_(Employee.tenant_id == tenant_id, Employee.tenant_id.is_(None)))
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
     if employee is None:
         raise NotFoundError("Employee not found")
     content = content.strip()

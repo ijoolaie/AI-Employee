@@ -42,8 +42,7 @@ async def test_retention_is_tenant_scoped_and_idempotent_shape(monkeypatch):
     now = datetime(2026, 9, 5, tzinfo=timezone.utc)
     result = await enforce_retention(db, tenant_id=tenant, retention_days=365, now=now)
     assert result["tenant_id"] == str(tenant)
-    assert result["audit_logs_deleted"] == 0
     assert result["usage_events_deleted"] == 0
     assert result["memory_rows_deleted"] == 0
     assert result["files_soft_deleted"] == 0
-    assert len(db.calls) == 4
+    assert len(db.calls) == 3

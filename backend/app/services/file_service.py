@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.logging import request_id_var
 from app.models.file import FileObject
+from app.models.tenant import Tenant
 from app.services import audit_service, storage
 from app.services.file_policy import max_file_size, max_files_per_tenant, tenant_storage_quota, validate_content_type
 
@@ -50,6 +51,14 @@ async def upload_file(
     max_size = max_file_size()
     quota = tenant_storage_quota()
     file_count_limit = max_files_per_tenant()
+
+    # Serialize quota accounting per tenant so concurrent uploads cannot both
+    # observe the same remaining quota/count and over-commit it.
+    tenant_row = await db.execute(
+        select(Tenant.id).where(Tenant.id == tenant_id).with_for_update()
+    )
+    if tenant_row.scalar_one_or_none() is None:
+        raise ValidationAppError("Tenant not found")
 
     active_count = int(
         (await db.execute(
