@@ -49,9 +49,17 @@ async def authorize_delegation(
     if max_chain_depth < 1 or max_chain_depth > DEFAULT_MAX_CHAIN_DEPTH:
         raise ValidationAppError("Delegation chain depth exceeds policy limit")
 
-    source = (await db.execute(select(WorkItem).where(WorkItem.id == source_work_item_id, WorkItem.tenant_id == tenant_id))).scalar_one_or_none()
+    source = (
+        await db.execute(
+            select(WorkItem)
+            .where(WorkItem.id == source_work_item_id, WorkItem.tenant_id == tenant_id)
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
     if source is None:
         raise NotFoundError("Source work item not found for tenant")
+    if source.status is WorkItemStatus.CANCELLED:
+        raise ValidationAppError("Cannot create delegation from a cancelled source work item")
     if source.executor_type is not ExecutorType.AGENT or source.executor_id != delegator_agent_instance_id:
         raise ValidationAppError("Source work item is not owned by delegating Agent")
 
