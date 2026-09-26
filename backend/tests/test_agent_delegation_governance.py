@@ -555,7 +555,8 @@ def test_delegation_request_requires_idempotency_key():
     assert fields["idempotency_key"].metadata
 
 
-def test_delegation_creation_locks_source_before_authority_creation():
+@pytest.mark.asyncio
+async def test_delegation_creation_locks_source_before_authority_creation():
     from app.services.agent_delegation_service import create_delegated_work_item
 
     source_id = uuid4()
