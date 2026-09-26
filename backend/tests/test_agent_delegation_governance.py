@@ -513,12 +513,14 @@ async def test_validate_delegation_rejects_revoked_parent_in_chain():
     parent.chain_depth = 1
 
     class ParentChainDb:
+        def __init__(self):
+            self.delegation_calls = 0
+
         async def execute(self, statement):
             text = str(statement)
             if "agent_delegations" in text:
-                if "agent_delegations.id" in text and str(leaf.id) in text:
-                    return FakeResult(leaf)
-                return FakeResult(parent)
+                self.delegation_calls += 1
+                return FakeResult(leaf if self.delegation_calls == 1 else parent)
             if "work_items" in text:
                 return FakeResult(source)
             if "agent_instances" in text:
