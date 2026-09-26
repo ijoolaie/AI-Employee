@@ -117,3 +117,19 @@ def test_compatibility_facade_exports_private_money_helpers():
 
     assert compute_totals is not None
     assert normalize_rate is not None
+
+
+def test_next_number_fallback_is_collision_resistant():
+    first = _next_number_fallback()
+    second = _next_number_fallback()
+
+    assert first.startswith("INV-")
+    assert second.startswith("INV-")
+    assert first != second
+    assert len(first) <= 64
+    assert len(second) <= 64
+
+
+def test_business_invoice_number_is_tenant_scoped_unique():
+    names = {constraint.name for constraint in BusinessInvoice.__table__.constraints}
+    assert "uq_business_invoices_tenant_number" in names
