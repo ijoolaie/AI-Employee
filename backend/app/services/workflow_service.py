@@ -283,6 +283,11 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
             raise ValidationAppError("Workflow Run not found")
         if expected_tenant_id is not None and parent.tenant_id != expected_tenant_id:
             raise ValidationAppError("Worker tenant context does not match Workflow Run tenant")
+        lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(db, branch_id=branch_id)
+        result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
+        branch = result.scalar_one_or_none()
+        if branch is None:
+            raise ValidationAppError("Parallel branch not found")
         if parent.status in {"cancelled", "timed_out", "failed", "success"}:
             branch.status = "cancelled" if parent and parent.status == "cancelled" else "failed"
             branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
