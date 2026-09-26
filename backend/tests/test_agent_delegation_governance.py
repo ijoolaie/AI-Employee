@@ -552,13 +552,12 @@ def test_delegation_api_uses_dedicated_permissions():
     create_route = next(route for route in router.routes if getattr(route, "path", "") == "/agent-delegations/{source_work_item_id}")
     revoke_route = next(route for route in router.routes if getattr(route, "path", "") == "/agent-delegations/{delegation_id}/revoke")
 
-    create_dependencies = [getattr(dep.call, "__name__", "") for dep in create_route.dependencies]
-    revoke_dependencies = [getattr(dep.call, "__name__", "") for dep in revoke_route.dependencies]
-
-    assert create_dependencies
-    assert revoke_dependencies
-    assert "agent_delegation.create" in str(create_route.dependencies[0].call)
-    assert "agent_delegation.revoke" in str(revoke_route.dependencies[0].call)
+    assert create_route.dependencies
+    assert revoke_route.dependencies
+    create_permission = {cell.cell_contents for cell in create_route.dependencies[0].call.__closure__ or ()}
+    revoke_permission = {cell.cell_contents for cell in revoke_route.dependencies[0].call.__closure__ or ()}
+    assert "agent_delegation.create" in create_permission
+    assert "agent_delegation.revoke" in revoke_permission
 
 
 def test_tenant_admin_defaults_include_delegation_permissions():
