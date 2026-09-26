@@ -54,6 +54,9 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:?FRONTEND_BASE_URL is required}
       FRONTEND_APP_URL: ${FRONTEND_APP_URL:?FRONTEND_APP_URL is required}
+      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-lm_studio}
+      AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-nomic-embed-text-v1.5}
       # Paid/external integrations are optional at install time. Empty values
       # keep CI and first-install deployments usable until the first customer.
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-https://ai.example.test/v1}
@@ -116,6 +119,9 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:?FRONTEND_BASE_URL is required}
       FRONTEND_APP_URL: ${FRONTEND_APP_URL:?FRONTEND_APP_URL is required}
+      AI_DEFAULT_PROVIDER: ${AI_DEFAULT_PROVIDER:-lm_studio}
+      AI_DEFAULT_MODEL: ${AI_DEFAULT_MODEL:-google/gemma-4-e4b}
+      AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-text-embedding-nomic-embed-text-v1.5}
       # Keep worker configuration aligned with API for optional integrations.
       LM_STUDIO_BASE_URL: ${LM_STUDIO_BASE_URL:-https://ai.example.test/v1}
       LM_STUDIO_API_KEY: ${LM_STUDIO_API_KEY:-}
