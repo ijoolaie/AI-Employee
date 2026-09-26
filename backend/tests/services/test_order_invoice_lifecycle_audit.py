@@ -18,6 +18,14 @@ class _Result:
         return self.value
 
 
+class _NestedTransaction:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, _exc_type, _exc, _tb):
+        return False
+
+
 class _LifecycleDb:
     def __init__(self, value=None):
         self.value = value
@@ -26,6 +34,9 @@ class _LifecycleDb:
 
     def add(self, row):
         self.added.append(row)
+
+    def begin_nested(self):
+        return _NestedTransaction()
 
     async def execute(self, _statement):
         return _Result(self.value)
