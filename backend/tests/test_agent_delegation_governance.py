@@ -554,8 +554,10 @@ def test_delegation_api_uses_dedicated_permissions():
 
     assert create_route.dependencies
     assert revoke_route.dependencies
-    create_permission = {cell.cell_contents for cell in create_route.dependencies[0].call.__closure__ or ()}
-    revoke_permission = {cell.cell_contents for cell in revoke_route.dependencies[0].call.__closure__ or ()}
+    create_checker = create_route.dependencies[0].dependency
+    revoke_checker = revoke_route.dependencies[0].dependency
+    create_permission = {cell.cell_contents for cell in create_checker.__closure__ or ()}
+    revoke_permission = {cell.cell_contents for cell in revoke_checker.__closure__ or ()}
     assert "agent_delegation.create" in create_permission
     assert "agent_delegation.revoke" in revoke_permission
 
