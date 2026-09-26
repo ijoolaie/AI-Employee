@@ -534,7 +534,23 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                     step.employee_run_id = child.id
                     await db.flush()
                     await db.commit()
+                    # Re-acquire the durable parent row lock immediately before the
+                    # child Run crosses the external side-effect boundary. The
+                    # create/commit above intentionally releases the parent lock;
+                    # cancellation may therefore have happened in between.
+                    parent_guard = await db.execute(
+                        select(WorkflowRun)
+                        .where(WorkflowRun.id == run.id)
+                        .with_for_update()
+                    )
+                    run = parent_guard.scalar_one()
                     await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
+                    if run.status != "running":
+                        child.status = "cancelled"
+                        child.completed_at = datetime.now(timezone.utc)
+                        child.error = {"code": "WORKFLOW_PARENT_NOT_RUNNING", "message": f"Parent workflow is {run.status}; child execution suppressed."}
+                        await db.flush()
+                        return run
                     await run_service.execute_run(db, run_id=child.id)
                     if child.status != "success": raise RuntimeError(f"Employee Run ended with status {child.status}")
                 except Exception as exc:
