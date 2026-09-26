@@ -1,35 +1,36 @@
 # AI Employee Platform
 
-**Latest published release:** `v1.4.1` — exact release SHA `f7f5062feb125c7ca50263f74a0e40bc4abfa591`
+**Latest published/certified release:** `v1.4.11` — exact certified SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 
-**Exact-SHA Production Certification:** Run `34696339261` — SUCCESS; certification is bound to the release SHA only.
+**Exact-SHA Production Certification:** Run `35848311037` — PASS; certification is bound to exact `v1.4.11` SHA only.
 
 **Architecture baseline:** `V1.5 Agentic Operating Model` — architecture/operating-model baseline, not a release.
 
-**Current engineering program:** Stage 7 External Production Execution + Stage 8 Governed Agent Workforce Engineering.
+**Current engineering program:** External Production Execution + Governed Agent Workforce Engineering.
 
-**Production deployment:** **NOT VERIFIED / PENDING REAL INFRASTRUCTURE**
+**Production deployment:** **PENDING EXTERNAL EXECUTION**
 
 This repository is the vendor source of truth for the AI Employee Platform. The platform is evolving toward a **Human + Agent operating model** with shared authorization, tools, approvals, audit and lifecycle controls.
 
 ## Versioning truth
 
-- **Release:** immutable product snapshot. Current: `v1.4.1`.
+- **Release:** immutable product snapshot. Current: `v1.4.11`.
 - **Architecture:** current baseline: `V1.5`.
-- **Engineering stage:** Stage 7 external production execution and Stage 8 governed Agent workforce engineering.
+- **Engineering program:** external production execution and governed Agent workforce engineering.
 
 See `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
-## v1.4.1 release truth
+## v1.4.11 release truth
 
-- Tag: `v1.4.1`
-- SHA: `f7f5062feb125c7ca50263f74a0e40bc4abfa591`
-- Certification run: `34696339261` — SUCCESS
-- PR #501: Self-Hosted edition and release assets — merged
-- External production deployment: not verified
-- Live provider validation/customer acceptance: pending
+- Tag: `v1.4.11`
+- SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- Certification run: `35848311037` — PASS
+- Certification job: `107139710452` — PASS
+- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- External production deployment: pending external execution
+- Live provider validation/customer acceptance: pending external execution
 
-Historical `v1.3.8` remains frozen at `fd1e74b6b4c1701f7443efc202bad161ff19618c`.
+Historical release records remain immutable; see `docs/releases/RELEASE_TRUTH_LEDGER.md`.
 
 ## Current Agent capability workstream
 
@@ -53,7 +54,7 @@ Agent-4  Real Provider Validation (LM Studio first)
 Agent-5  Exact-SHA Release Gate
 ```
 
-This workstream is separate from Stage 7 external production certification.
+This workstream is separate from external production execution/certification.
 
 ## Production server baseline
 
@@ -88,6 +89,7 @@ CI, production-like infrastructure and simulated providers are engineering/relea
 7. `docs/current/PRODUCTION_SERVER_BASELINE.md`
 8. `docs/current/PRODUCTION_EVIDENCE_INDEX.md`
 9. `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
+10. `docs/current/EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md`
 
 ## Release rules
 
