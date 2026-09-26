@@ -12,6 +12,9 @@ services:
       - "127.0.0.1:${LOCAL_PRODUCTION_API_PORT:-18000}:8000"
     environment:
       LOCAL_PRODUCTION_ALLOW_HTTP: "true"
+      AI_DEFAULT_PROVIDER: deterministic
+      AI_DEFAULT_MODEL: deterministic-certification
+      AI_EMBEDDING_MODEL: deterministic-certification
 
   worker:
     environment:
