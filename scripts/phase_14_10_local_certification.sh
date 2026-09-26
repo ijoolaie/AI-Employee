@@ -2,12 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=./lib/docker_compat.sh
 source "$SCRIPT_DIR/lib/docker_compat.sh"
-
-# Phase 14.10 local certification harness.
-# This produces reproducible engineering evidence against the exact checked-out SHA.
-# It intentionally does NOT claim external production certification or customer acceptance.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -27,11 +22,6 @@ export LOCAL_PRODUCTION_API_PORT="${LOCAL_PRODUCTION_API_PORT:-18001}"
 export LOCAL_PRODUCTION_FRONTEND_PORT="${LOCAL_PRODUCTION_FRONTEND_PORT:-13001}"
 
 mkdir -p "$OUT_DIR"
-
-# Phase 6 requires a genuinely clean local production-like environment.
-# Scope destructive cleanup strictly to this certification compose project so
-# unrelated developer stacks are never touched. Set CLEAN_START=false only when
-# intentionally reusing an already validated certification environment.
 CLEAN_START="${CLEAN_START:-true}"
 
 compose() {
@@ -52,9 +42,6 @@ run_capture() {
   fi
 }
 
-# Resolve the host Python runtime without hard-coding a developer-specific path.
-# On Windows/WSL, cmd.exe resolves the Windows Python installation; on native
-# Linux/macOS, use python or python3 from PATH.
 if command -v cmd.exe >/dev/null 2>&1 && cmd.exe /c python --version >/dev/null 2>&1; then
   PYTHON_CMD=(cmd.exe /c python)
 elif command -v python >/dev/null 2>&1 && python --version >/dev/null 2>&1; then
@@ -87,10 +74,7 @@ printf '%s\n' "Archive SHA256: $ARCHIVE_SHA256" >>"$OUT_DIR/README.md"
 printf '%s\n' "Status: LOCAL_PRODUCTION_LIKE_ENGINEERING_EVIDENCE / EXTERNAL-PENDING" >>"$OUT_DIR/README.md"
 printf '%s\n' "No secrets, credentials, access tokens, or customer data belong in this directory." >>"$OUT_DIR/README.md"
 
-if [[ ! -f "$ENV_FILE" ]]; then
-  echo "Missing $ENV_FILE. Copy the documented production template and set local-only secrets." >&2
-  exit 1
-fi
+[[ -f "$ENV_FILE" ]] || { echo "Missing $ENV_FILE. Copy the documented production template and set local-only secrets." >&2; exit 1; }
 [[ -f "$LOCAL_OVERRIDE" ]] || { echo "Missing $LOCAL_OVERRIDE." >&2; exit 1; }
 
 if [[ "$CLEAN_START" == "true" ]]; then
@@ -109,21 +93,25 @@ fi
 
 run_capture production_completeness_audit "${PYTHON_CMD[@]}" scripts/production_completeness_audit.py
 run_capture compose_config compose config --quiet
-# Validate the application settings before starting the full stack. This catches malformed
-# JSON-backed list/dict environment values early and records the failure without exposing secrets.
 run_capture configuration_preflight compose run --rm --no-deps api python -c "from app.core.config import Settings; Settings(); print('CONFIGURATION_PREFLIGHT|PASS')"
 run_capture local_production_deploy env COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" ENV_FILE="$ENV_FILE" bash scripts/local_production_deploy.sh
 run_capture service_snapshot compose ps
-
 run_capture api_dependency_readiness compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('API_DEPENDENCY_READINESS|PASS')"
-FRONTEND_PORT="${LOCAL_PRODUCTION_FRONTEND_PORT:-13001}"
+
+# Resolve the actual published port from the merged Compose configuration.
+# This is robust across Windows/WSL where host-shell interpolation may differ.
+FRONTEND_PORT="$(compose port frontend 3000 | sed -E 's/.*:([0-9]+)$/\1/')"
+[[ "$FRONTEND_PORT" =~ ^[0-9]+$ ]] || {
+  echo "Unable to resolve the published frontend port." >&2
+  exit 1
+}
+echo "$FRONTEND_PORT" >"$OUT_DIR/frontend_port.txt"
 run_capture frontend_login curl --fail --silent --show-error "http://127.0.0.1:${FRONTEND_PORT}/login"
 run_capture backup_restore_smoke bash scripts/production_backup_restore_smoke.sh
 run_capture rollback_drill env COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" ENV_FILE="$ENV_FILE" bash scripts/local_rollback_drill.sh
 run_capture post_recovery_readiness compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5); print('POST_RECOVERY_READINESS|PASS')"
 
 if [[ -n "$PROVIDER_HEALTHCHECK_URL" ]]; then
-  # Only record status metadata; never log response bodies or authorization headers.
   if curl --fail --silent --show-error --output /dev/null --write-out '%{http_code}' "$PROVIDER_HEALTHCHECK_URL" >"$OUT_DIR/provider_http_status.txt"; then
     echo PASS >"$OUT_DIR/provider_validation.status"
     echo "LOCAL_CERTIFICATION|provider_validation|PASS"
@@ -166,19 +154,11 @@ cat >"$OUT_DIR/EVIDENCE_INDEX.md" <<EOF
 
 ## Evidence boundary
 
-This package demonstrates a reproducible local production-like execution against one exact source SHA. It does **not** establish:
-
-- independent external deployment or provider certification;
-- measured production SLO/error-budget attainment;
-- production RPO/RTO against the real target infrastructure;
-- independent security/compliance attestation; or
-- Vendor → Reseller → Client customer acceptance.
-
-Those records must be attached separately to the same exact release identity before Phase 14.10 can be marked ACCEPTED or CONDITIONALLY ACCEPTED.
+This package demonstrates a reproducible local production-like execution against one exact source SHA. It does **not** establish external production certification.
 
 ## Secret-safety rule
 
-Do not commit this directory when it contains local environment output. Review generated files before retention or sharing. Never copy credentials, access tokens, database URLs, private keys, or unnecessary personal/customer data into evidence.
+Do not commit this directory when it contains local environment output. Never copy credentials, access tokens, database URLs, private keys, or unnecessary personal/customer data into evidence.
 EOF
 
 if [[ "$KEEP_STACK" != "true" ]]; then
