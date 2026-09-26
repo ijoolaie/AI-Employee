@@ -66,7 +66,13 @@ async def _expire_workflow_approvals_async() -> int:
             step = step_result.scalar_one_or_none()
             run_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == approval.workflow_run_id).with_for_update())
             run = run_result.scalar_one_or_none()
-            if step and run and run.status == "waiting_approval":
+            if (
+                step
+                and run
+                and step.workflow_run_id == run.id
+                and run.tenant_id == approval.tenant_id
+                and run.status == "waiting_approval"
+            ):
                 step.status = "failed"
                 step.error = {"code":"WORKFLOW_APPROVAL_EXPIRED","message":"Human approval expired."}
                 run.status = "failed"
