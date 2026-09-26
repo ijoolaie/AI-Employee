@@ -54,7 +54,7 @@
 
 ## PHASE F — Production Certification
 
-- [x] Security — Production Certification workflow passed on exact `v1.4.10` SHA; CI/CodeQL/DAST-related release gates passed
+- [x] Security — Production Certification workflow passed on exact `v1.4.11` SHA; CI/CodeQL/DAST-related release gates passed
 - [x] Tenant isolation — exact-release Product Gate passed
 - [x] Load — exact-release certification suite passed its load/performance gate
 - [x] Recovery — exact-release recovery/HA gates passed
@@ -109,7 +109,7 @@ This closes the repository-level Phase F release-certification gate for `v1.4.11
 - Certification job: `106234691683` — **PASS**
 - Evidence artifact: `production-certification-evidence-v1.4.8-4f7c4676850b546a1c6bdf219ab9401202302e2d`
 - Artifact SHA256: `d179fe603aac3460b0e751d7ad7957fad9c3f8dedf81ed8c4a9e9e608a78aa20`
-- Certification is bound only to that exact SHA and does not certify current main `9024a66cbc49279f317d72cebc15f56dbad4a0c1`.
+- Certification is bound only to that exact SHA and does not certify post-release current-main engineering commits.
 
 ## Phase 6 current-main revalidation — 2026-09-26
 
