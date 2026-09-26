@@ -13,6 +13,7 @@ from app.ai.tool_registry import registry
 from app.core.exceptions import ValidationAppError
 from app.models.tool_approval import ToolApprovalRequest
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
+from app.services import tool_execution_fence
 
 
 _AGENT_CONTEXT: ContextVar[tuple[UUID, UUID, UUID, UUID | None] | None] = ContextVar(
@@ -115,6 +116,8 @@ def install() -> None:
         if tenant_id != bound_tenant_id:
             raise ValidationAppError("Agent tool execution tenant context mismatch")
         approval = None
+        tool_call_id = kwargs.get("tool_call_id")
+        fence_id = None
         if tool.requires_approval:
             approval = await _resolve_approval(
                 db,
@@ -145,12 +148,37 @@ def install() -> None:
                 delegation_id=delegation_id,
             ),
         )
+        if tool.side_effects:
+            if not tool_call_id:
+                raise ValidationAppError(
+                    "Side-effecting Agent tool execution requires a stable tool_call_id",
+                    details={"tool": name, "run_id": str(run_id)},
+                )
+            fence_id = await tool_execution_fence.begin_tool_execution_fence(
+                tenant_id=bound_tenant_id,
+                run_id=run_id,
+                tool_call_id=str(tool_call_id),
+                tool_name=name,
+            )
         if approval is not None:
             await _consume_approval(db, approval)
         kwargs["approval_granted"] = approval is not None
         tool_token = _CURRENT_TOOL.set(name)
         try:
-            return await original_execute(name, arguments, **kwargs)
+            result = await original_execute(name, arguments, **kwargs)
+            if fence_id is not None:
+                await tool_execution_fence.complete_tool_execution_fence(
+                    fence_id,
+                    result=result,
+                )
+            return result
+        except Exception as exc:
+            if fence_id is not None:
+                await tool_execution_fence.mark_tool_execution_unknown(
+                    fence_id,
+                    str(exc),
+                )
+            raise
         finally:
             _CURRENT_TOOL.reset(tool_token)
 
