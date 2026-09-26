@@ -1,6 +1,6 @@
 # Stage 8 Implementation Status Report
 
-**Reconciled:** 2026-09-16  
+**Reconciled:** 2026-09-26  
 **Engineering baseline:** `1c8c3ee2fc933148f90e967e18167fe602d0ad00`  
 **Acceptance evidence:** `docs/engineering/STAGE_8_ACCEPTANCE_EVIDENCE_2026-09-16.md`
 
@@ -68,7 +68,7 @@ These items are intentionally not represented as Stage 8 engineering gaps becaus
 - networking/TLS/secret lifecycle evidence;
 - HA/failure recovery and incident/on-call rehearsal;
 - final customer acceptance;
-- exact-SHA release certification for any promoted post-v1.4.1 commit.
+- exact-SHA release certification for any promoted post-v1.4.11 commit.
 
 ## Stage 7 boundary
 
