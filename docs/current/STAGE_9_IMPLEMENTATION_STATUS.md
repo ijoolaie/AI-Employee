@@ -2,11 +2,11 @@
 
 ## Current status
 
-**Status: CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN CURRENT RELEASE v1.4.7**
+**Status: CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN CURRENT RELEASE v1.4.11**
 
 Stage 9 builds on the governed execution substrate completed and evidenced through Stage 8. The implemented slices add deterministic optimization primitives and bounded lifecycle/control behavior without allowing an optimizer to bypass lifecycle, authorization, approval, concurrency, budget, audit or execution controls.
 
-The planned Stage 9 slices were implemented and exact-SHA certified as part of release `v1.4.2`, and remain included in current release `v1.4.7`.
+The planned Stage 9 slices were implemented and exact-SHA certified as part of release `v1.4.2`, and remain included in current release `v1.4.11`.
 
 ## Implemented slices
 
@@ -60,7 +60,7 @@ Provisioning, access review, activation, concurrency, audit and execution remain
 
 Stage 9 service tests cover routing/model selection, workload balancing and persisted evidence, telemetry fitness, version fitness, promotion evidence, governed promotion, rollback, capacity forecasting and governed scaling invariants.
 
-The Stage 9 implementation was included in the certified v1.4.2 release and remains present in v1.4.7. The current v1.4.7 Production Certification run `35498984521` passed with 0 Product Gate Failures.
+The Stage 9 implementation was included in the certified v1.4.2 release and remains present in v1.4.11. The current v1.4.11 Production Certification run `35848311037` passed with 0 Product Gate Failures.
 
 ## Explicitly not claimed
 
@@ -70,6 +70,6 @@ These remain external production-boundary items and are tracked separately.
 
 ## Exit direction
 
-The current planned Stage 9 implementation is release-certified and present in v1.4.7. Future Stage 9 work should be driven by measured optimizer evidence and concrete product requirements, not by reimplementing Stage 8 governance. Any future code change must receive fresh exact-SHA CI/certification before release promotion.
+The current planned Stage 9 implementation is release-certified and present in v1.4.11. Future Stage 9 work should be driven by measured optimizer evidence and concrete product requirements, not by reimplementing Stage 8 governance. Any future code change must receive fresh exact-SHA CI/certification before release promotion.
 
 Human governance remains above optimization. Optimization recommendations and control loops cannot authorize an action that the Stage 8 policy kernel would deny.
