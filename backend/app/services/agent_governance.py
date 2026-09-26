@@ -22,7 +22,7 @@ from app.services.agent_evaluation import EVALUATION_CONTRACT_VERSION
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 
 
-_agent_execution_context: ContextVar[tuple[uuid.UUID, uuid.UUID, uuid.UUID | None, uuid.UUID | None, uuid.UUID | None] | None] = ContextVar(
+_agent_execution_context: ContextVar[tuple[uuid.UUID, uuid.UUID, uuid.UUID | None, uuid.UUID | None, uuid.UUID | None, uuid.UUID | None] | None] = ContextVar(
     "agent_execution_context", default=None
 )
 
@@ -40,10 +40,11 @@ async def governed_agent_execution(
     run_id: uuid.UUID | None = None,
     employee_id: uuid.UUID | None = None,
     employee_version_id: uuid.UUID | None = None,
+    delegation_id: uuid.UUID | None = None,
 ) -> AsyncIterator[None]:
     """Bind Agent identity and optional Run/Employee scope to the execution context."""
     token = _agent_execution_context.set(
-        (tenant_id, agent_instance_id, run_id, employee_id, employee_version_id)
+        (tenant_id, agent_instance_id, run_id, employee_id, employee_version_id, delegation_id)
     )
     try:
         yield
@@ -52,7 +53,16 @@ async def governed_agent_execution(
 
 
 def current_agent_execution_context() -> tuple[uuid.UUID, uuid.UUID, uuid.UUID | None, uuid.UUID | None, uuid.UUID | None] | None:
-    return _agent_execution_context.get()
+    context = _agent_execution_context.get()
+    if context is None:
+        return None
+    return context[:5]
+
+
+def current_agent_execution_delegation_id() -> uuid.UUID | None:
+    """Return the active delegation proof without changing the legacy context tuple."""
+    context = _agent_execution_context.get()
+    return context[5] if context is not None else None
 
 
 async def record_evaluation(
