@@ -25,6 +25,7 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
     db = _DB()
     calls = []
     fence_ids = []
+    fence_attempts = 0
 
     async def handler(arguments, **kwargs):
         calls.append(arguments)
@@ -47,6 +48,11 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
         return None
 
     async def fake_begin(**kwargs):
+        nonlocal fence_attempts
+        fence_attempts += 1
+        if fence_attempts > 1:
+            from app.core.exceptions import ValidationAppError
+            raise ValidationAppError("Tool execution already crossed the side-effect boundary")
         fence_id = uuid4()
         fence_ids.append(fence_id)
         return fence_id
@@ -79,3 +85,21 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
     assert result == {"ok": True}
     assert calls == [{}]
     assert len(fence_ids) == 1
+
+    with pytest.raises(Exception, match="already crossed"):
+        async with agent_tool_governance.agent_tool_context(
+            tenant_id=tenant_id,
+            agent_instance_id=agent_id,
+            run_id=run_id,
+        ):
+            await registry.execute(
+                name,
+                {},
+                permissions={"run.execute"},
+                db=db,
+                tenant_id=tenant_id,
+                tool_call_id="call-1",
+            )
+
+    assert calls == [{}]
+    assert fence_attempts == 2
