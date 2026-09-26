@@ -87,6 +87,8 @@ async def authorize_delegation(
             raise ValidationAppError("Parent delegation is not active")
         if parent_delegation.expires_at <= datetime.now(timezone.utc):
             raise ValidationAppError("Parent delegation has expired")
+        if expires_at > parent_delegation.expires_at:
+            raise ValidationAppError("Delegation cannot outlive its parent")
         if parent_delegation.delegate_agent_instance_id != delegator_agent_instance_id:
             raise ValidationAppError("Delegation chain holder mismatch")
         if parent_delegation.delegated_work_item_id != source.id:
