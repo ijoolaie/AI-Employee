@@ -69,3 +69,18 @@ async def test_agent_memory_context_rejects_cross_tenant_access():
                 tenant_id=uuid4(),
                 employee_id=uuid4(),
             )
+
+
+@pytest.mark.asyncio
+async def test_agent_execution_context_preserves_delegation_proof():
+    tenant_id = uuid4()
+    delegation_id = uuid4()
+
+    async with agent_governance.governed_agent_execution(
+        tenant_id=tenant_id,
+        agent_instance_id=uuid4(),
+        run_id=uuid4(),
+        delegation_id=delegation_id,
+    ):
+        assert agent_governance.current_agent_execution_delegation_id() == delegation_id
+        assert len(agent_governance.current_agent_execution_context()) == 5

@@ -10,7 +10,10 @@ from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.security import decrypt_secret, encrypt_secret
 from app.models.credential import Credential
 from app.services import audit_service
-from app.services.agent_governance import current_agent_execution_context
+from app.services.agent_governance import (
+    current_agent_execution_context,
+    current_agent_execution_delegation_id,
+)
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 
 
@@ -80,6 +83,7 @@ async def resolve_credential(
     context = current_agent_execution_context()
     if context is not None:
         ctx_tenant, ctx_agent, ctx_run, _employee_id, _version_id = context
+        delegation_id = current_agent_execution_delegation_id()
         if ctx_tenant != tenant_id or (agent_instance_id is not None and ctx_agent != agent_instance_id) or (run_id is not None and ctx_run != run_id):
             raise ValidationAppError("Credential execution context mismatch")
         agent_instance_id = ctx_agent
@@ -95,6 +99,7 @@ async def resolve_credential(
                 resource_type="credential",
                 resource_id=str(credential.id),
                 run_id=run_id,
+                delegation_id=delegation_id,
                 context={"credential_provider": credential.provider},
             ),
         )
