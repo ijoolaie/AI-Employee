@@ -36,7 +36,7 @@ def upgrade() -> None:
                 SELECT r.id, p.id
                 FROM roles r
                 CROSS JOIN permissions p
-                WHERE lower(r.name) IN ('owner', 'admin', 'tenant_admin')
+                WHERE r.name = 'Admin'
                   AND p.code = :code
                   AND NOT EXISTS (
                       SELECT 1
