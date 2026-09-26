@@ -125,6 +125,7 @@ async def revoke_agent_delegation(
             chain_depth=delegation.chain_depth,
             expires_at=delegation.expires_at,
             scopes=delegation.scopes,
+            status=delegation.status,
         )
     except HTTPException:
         await db.rollback()
