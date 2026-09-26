@@ -271,7 +271,8 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         heartbeat_parallel_branch_execution_lease,
     )
     async with worker_db_session() as db:
-        lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(db, branch_id=branch_id)
+        # Validate the durable parent tenant before acquiring a branch execution lease.
+        # Celery task metadata is untrusted and must not mutate branch state across tenants.
         result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
         branch = result.scalar_one_or_none()
         if branch is None:
