@@ -114,7 +114,7 @@ async def create_order(
         constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
         if constraint_name is None:
             constraint_name = getattr(exc.orig, "constraint_name", None)
-        if constraint_name != ORDER_NUMBER_CONSTRAINT:
+        if constraint_name is None and f'constraint "{ORDER_NUMBER_CONSTRAINT" in str(exc.orig):
             raise
         raise ConflictError("Order number already exists in this tenant") from exc
     await audit_service.record(
