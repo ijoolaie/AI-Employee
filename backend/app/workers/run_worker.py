@@ -21,6 +21,7 @@ from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services.run_execution_fence import execute_run_locked
 from app.services.run_recovery import recover_stale_run_execution
+from app.services.agent_run_governance_bootstrap import authorize_agent_run
 from app.services.agent_governance import governed_agent_execution
 from app.services.agent_kill_switch_service import assert_not_killed
 from app.services.tenant_resource_limiter import (
@@ -101,6 +102,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     tenant_id=run.tenant_id,
                     agent_instance_id=run.agent_instance_id,
                 )
+                await authorize_agent_run(db, run)
 
             if run.agent_instance_id is not None:
                 async with governed_agent_execution(
