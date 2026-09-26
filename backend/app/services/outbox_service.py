@@ -27,12 +27,19 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
         ctx_tenant, agent_instance_id, run_id, tool_name = context
         if tenant_id != ctx_tenant:
             raise ValueError("Agent outbox tenant context mismatch")
+        try:
+            from app.services.agent_tool_governance import current_agent_tool_delegation_id
+            delegation_id = current_agent_tool_delegation_id()
+        except (ImportError, RuntimeError):
+            delegation_id = None
         persisted_payload["_agent_governance"] = {
             "tenant_id": str(ctx_tenant),
             "agent_instance_id": str(agent_instance_id),
             "run_id": str(run_id),
             "tool_name": tool_name,
         }
+        if delegation_id is not None:
+            persisted_payload["_agent_governance"]["delegation_id"] = str(delegation_id)
 
     message = OutboxMessage(tenant_id=tenant_id, kind=kind, payload=persisted_payload, status="pending", attempts=0,
                             dedupe_key=dedupe_key, available_at=available_at or datetime.now(timezone.utc))
