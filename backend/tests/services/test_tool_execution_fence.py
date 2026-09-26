@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 
 from app.ai.tool_registry import RegisteredTool, registry
-from app.services import agent_tool_governance, tool_execution_fence
+from app.services import agent_tool_governance, license_service, tool_execution_fence
 
 
 class _DB:
@@ -67,6 +67,10 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
     async def fake_unknown(*args, **kwargs):
         return None
 
+    async def fake_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", fake_entitlement)
     monkeypatch.setattr(agent_tool_governance, "assert_authorized", fake_authorize)
     monkeypatch.setattr(
         tool_execution_fence,
