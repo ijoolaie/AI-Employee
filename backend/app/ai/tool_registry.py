@@ -96,6 +96,7 @@ class ToolRegistry:
         tenant_id=None,
         actor_id=None,
         agent_instance_id=None,
+        tool_call_id=None,
     ) -> Any:
         tool = self.get(name)
 
