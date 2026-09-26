@@ -227,3 +227,45 @@ async def test_delegated_tool_policy_receives_delegation_proof(monkeypatch):
         )
 
     assert captured["request"].delegation_id == delegation_id
+
+
+@pytest.mark.asyncio
+async def test_delegation_is_denied_when_source_work_item_is_cancelled():
+    from app.services.agent_delegation_service import validate_delegation
+
+    tenant = uuid4()
+    delegator = agent(tenant, permissions=["run.execute"])
+    delegate = agent(tenant, permissions=["run.execute"])
+    delegation = delegation_record(
+        tenant,
+        delegator.id,
+        delegate.id,
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    delegation.source_work_item_id = uuid4()
+    delegation.delegated_work_item_id = uuid4()
+    source = SimpleNamespace(id=delegation.source_work_item_id, tenant_id=tenant, status=WorkItemStatus.CANCELLED)
+    db = DelegationLifecycleDb(delegation, source)
+    with pytest.raises(ValidationAppError, match="source work item was cancelled"):
+        await validate_delegation(
+            db,
+            tenant_id=tenant,
+            delegation_id=delegation.id,
+            delegate_agent_instance_id=delegate.id,
+        )
+
+
+class DelegationLifecycleDb:
+    def __init__(self, delegation, source, delegated=None):
+        self.values = [delegation, source, delegated]
+
+    async def execute(self, statement):
+        text = str(statement)
+        if "agent_delegations" in text:
+            return FakeResult(self.values[0])
+        if "work_items" in text:
+            value = self.values[1]
+            if "delegated_work_item_id" in text:
+                value = self.values[2]
+            return FakeResult(value)
+        return FakeResult(None)
