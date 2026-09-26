@@ -176,7 +176,8 @@ async def test_delegated_run_dispatch_requires_and_persists_delegation_proof(mon
         agent_instance_id = None
         delegation_id = None
 
-    async def fake_create_run(*_args, **_kwargs): return FakeRun()
+    created_run = FakeRun()
+    async def fake_create_run(*_args, **_kwargs): return created_run
     async def fake_enqueue(*_args, **_kwargs): pass
 
     import app.services.agent_execution_adapter as mod
@@ -188,7 +189,7 @@ async def test_delegated_run_dispatch_requires_and_persists_delegation_proof(mon
     result = await AgentExecutionAdapter(FakeDb()).dispatch(work, agent_obj)
 
     assert captured["request"].delegation_id == delegation_id
-    assert FakeRun.delegation_id == delegation_id
+    assert created_run.delegation_id == delegation_id
     assert result["executor_type"] == "agent"
 
 
