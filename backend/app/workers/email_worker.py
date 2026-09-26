@@ -28,6 +28,7 @@ async def _authorize_deferred_agent_side_effect(db, row: OutboxMessage) -> None:
         agent_instance_id = UUID(str(proof["agent_instance_id"]))
         run_id = UUID(str(proof["run_id"]))
         tool_name = str(proof["tool_name"])
+        delegation_id = UUID(str(proof["delegation_id"])) if proof.get("delegation_id") is not None else None
     except (KeyError, TypeError, ValueError) as exc:
         raise ValidationAppError("Malformed Agent outbox governance binding") from exc
     if tenant_id != row.tenant_id or not tool_name:
@@ -42,6 +43,7 @@ async def _authorize_deferred_agent_side_effect(db, row: OutboxMessage) -> None:
             tool_name=tool_name,
             required_permission="run.execute",
             run_id=run_id,
+            delegation_id=delegation_id,
         ),
     )
 
