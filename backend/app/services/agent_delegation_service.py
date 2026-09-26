@@ -326,6 +326,59 @@ async def validate_delegation(
         if delegated_item.status is WorkItemStatus.CANCELLED:
             raise ValidationAppError("Delegation is revoked because its delegated work item was cancelled")
 
+    # A child delegation remains executable only while every delegation in its
+    # authority chain remains active. Checking only the leaf would allow a
+    # revoked parent to continue authorizing descendants.
+    ancestor = delegation
+    ancestor_source = source
+    for _ in range(DEFAULT_MAX_CHAIN_DEPTH):
+        ancestor_context = dict(ancestor_source.policy_context or {})
+        if ancestor_context.get("delegated_from") is None:
+            break
+        raw_parent_id = ancestor_context.get("delegation_id")
+        if raw_parent_id is None:
+            raise ValidationAppError("Delegated source is missing its delegation proof")
+        try:
+            parent_id = UUID(str(raw_parent_id))
+        except (TypeError, ValueError) as exc:
+            raise ValidationAppError("Delegated source has an invalid delegation proof") from exc
+        parent = (
+            await db.execute(
+                select(AgentDelegation)
+                .where(
+                    AgentDelegation.id == parent_id,
+                    AgentDelegation.tenant_id == tenant_id,
+                )
+                .with_for_update()
+            )
+        ).scalar_one_or_none()
+        if parent is None or parent.status != "active":
+            raise ValidationAppError("Delegation chain contains an inactive parent delegation")
+        if parent.expires_at <= current:
+            raise ValidationAppError("Delegation chain contains an expired parent delegation")
+        if parent.delegate_agent_instance_id != ancestor.delegator_agent_instance_id:
+            raise ValidationAppError("Delegation chain holder mismatch")
+        if parent.delegated_work_item_id != ancestor_source.id:
+            raise ValidationAppError("Delegation chain source mismatch")
+        if parent.chain_depth != ancestor.chain_depth - 1:
+            raise ValidationAppError("Delegation chain depth proof is inconsistent")
+
+        ancestor_source = (
+            await db.execute(
+                select(WorkItem).where(
+                    WorkItem.id == parent.source_work_item_id,
+                    WorkItem.tenant_id == tenant_id,
+                ).with_for_update()
+            )
+        ).scalar_one_or_none()
+        if ancestor_source is None:
+            raise ValidationAppError("Delegation ancestor source work item is unavailable")
+        if ancestor_source.status is WorkItemStatus.CANCELLED:
+            raise ValidationAppError("Delegation is revoked because an ancestor source work item was cancelled")
+        ancestor = parent
+    else:
+        raise ValidationAppError("Delegation chain depth exceeded")
+
     agent_ids = [delegation.delegator_agent_instance_id, delegation.delegate_agent_instance_id]
     agents = (await db.execute(select(AgentInstance).where(AgentInstance.tenant_id == tenant_id, AgentInstance.id.in_(agent_ids)))).scalars().all()
     by_id = {agent.id: agent for agent in agents}
