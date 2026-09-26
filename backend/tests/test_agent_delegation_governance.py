@@ -8,7 +8,7 @@ from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstanceStatus
 from app.models.agent_access_review import AgentAccessReviewDecision
 from app.services import agent_policy_engine
-from app.services.agent_delegation_service import validate_delegation
+from app.services.agent_delegation_service import authorize_delegation, validate_delegation
 from app.services.agent_policy_engine import PolicyDecision, PolicyRequest, authorize
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 from app.models.work_item import ExecutorType, WorkItemStatus
@@ -120,6 +120,51 @@ def delegation_record(tenant_id, delegator_id, delegate_id, expires_at):
                            delegate_agent_instance_id=delegate_id, source_work_item_id=uuid4(),
                            delegated_work_item_id=None, status="active", expires_at=expires_at,
                            chain_depth=1, max_chain_depth=3, scopes={"actions": ["run.execute"], "tools": []})
+
+
+@pytest.mark.asyncio
+async def test_delegation_creation_locks_and_rejects_cancelled_source(monkeypatch):
+    tenant = uuid4()
+    delegator = agent(tenant, permissions=["run.execute"])
+    delegate = agent(tenant, permissions=["run.execute"])
+    source = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant, status=WorkItemStatus.CANCELLED,
+        executor_type=ExecutorType.AGENT, executor_id=delegator.id,
+        policy_context={},
+    )
+    statements = []
+
+    class CreateDb:
+        def add(self, _value): pass
+        async def execute(self, statement):
+            statements.append(str(statement))
+            if "work_items" in str(statement):
+                return FakeResult(source)
+            if "agent_instances" in str(statement):
+                return FakeResult([delegator, delegate])
+            if "agent_identities" in str(statement):
+                delegator_identity = identity(); delegator_identity.agent_instance_id = delegator.id
+                delegate_identity = identity(); delegate_identity.agent_instance_id = delegate.id
+                return FakeResult([delegator_identity, delegate_identity])
+            return FakeResult(None)
+        async def flush(self): pass
+
+    async def audit(*_args, **_kwargs): pass
+    monkeypatch.setattr("app.services.agent_delegation_service.audit_service.record", audit)
+
+    with pytest.raises(ValidationAppError, match="cancelled source work item"):
+        await authorize_delegation(
+            CreateDb(),
+            tenant_id=tenant,
+            delegator_agent_instance_id=delegator.id,
+            delegate_agent_instance_id=delegate.id,
+            source_work_item_id=source.id,
+            scopes={"actions": ["run.execute"]},
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        )
+
+    assert statements
+    assert "FOR UPDATE" in statements[0]
 
 
 @pytest.mark.asyncio
