@@ -159,7 +159,9 @@ async def create_invoice(
             db.add(inv)
             await db.flush()
     except IntegrityError as exc:
-        constraint_name = getattr(exc.orig, "constraint_name", None)
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
         if constraint_name != INVOICE_NUMBER_CONSTRAINT:
             raise
         raise ConflictError("Invoice number already exists in this tenant") from exc
