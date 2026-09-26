@@ -44,7 +44,6 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
             requires_approval=False,
         )
     )
-    try:
 
     async def fake_authorize(*args, **kwargs):
         return None
@@ -54,7 +53,10 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
         fence_attempts += 1
         if fence_attempts > 1:
             from app.core.exceptions import ValidationAppError
-            raise ValidationAppError("Tool execution already crossed the side-effect boundary")
+
+            raise ValidationAppError(
+                "Tool execution already crossed the side-effect boundary"
+            )
         fence_id = uuid4()
         fence_ids.append(fence_id)
         return fence_id
@@ -66,35 +68,29 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
         return None
 
     monkeypatch.setattr(agent_tool_governance, "assert_authorized", fake_authorize)
-    monkeypatch.setattr(tool_execution_fence, "begin_tool_execution_fence", fake_begin)
-    monkeypatch.setattr(tool_execution_fence, "complete_tool_execution_fence", fake_complete)
-    monkeypatch.setattr(tool_execution_fence, "mark_tool_execution_unknown", fake_unknown)
+    monkeypatch.setattr(
+        tool_execution_fence,
+        "begin_tool_execution_fence",
+        fake_begin,
+    )
+    monkeypatch.setattr(
+        tool_execution_fence,
+        "complete_tool_execution_fence",
+        fake_complete,
+    )
+    monkeypatch.setattr(
+        tool_execution_fence,
+        "mark_tool_execution_unknown",
+        fake_unknown,
+    )
 
-    async with agent_tool_governance.agent_tool_context(
-        tenant_id=tenant_id,
-        agent_instance_id=agent_id,
-        run_id=run_id,
-    ):
-        result = await registry.execute(
-            name,
-            {},
-            permissions={"run.execute"},
-            db=db,
-            tenant_id=tenant_id,
-            tool_call_id="call-1",
-        )
-
-    assert result == {"ok": True}
-    assert calls == [{}]
-    assert len(fence_ids) == 1
-
-    with pytest.raises(Exception, match="already crossed"):
+    try:
         async with agent_tool_governance.agent_tool_context(
             tenant_id=tenant_id,
             agent_instance_id=agent_id,
             run_id=run_id,
         ):
-            await registry.execute(
+            result = await registry.execute(
                 name,
                 {},
                 permissions={"run.execute"},
@@ -102,6 +98,25 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
                 tenant_id=tenant_id,
                 tool_call_id="call-1",
             )
+
+        assert result == {"ok": True}
+        assert calls == [{}]
+        assert len(fence_ids) == 1
+
+        with pytest.raises(Exception, match="already crossed"):
+            async with agent_tool_governance.agent_tool_context(
+                tenant_id=tenant_id,
+                agent_instance_id=agent_id,
+                run_id=run_id,
+            ):
+                await registry.execute(
+                    name,
+                    {},
+                    permissions={"run.execute"},
+                    db=db,
+                    tenant_id=tenant_id,
+                    tool_call_id="call-1",
+                )
 
         assert calls == [{}]
         assert fence_attempts == 2
