@@ -37,6 +37,7 @@ class AgentDelegationResponse(BaseModel):
     chain_depth: int
     expires_at: datetime
     scopes: dict
+    status: str
 
 
 @router.post(
@@ -88,6 +89,7 @@ async def delegate_agent(
             chain_depth=delegation.chain_depth,
             expires_at=delegation.expires_at,
             scopes=delegation.scopes,
+            status=delegation.status,
         )
     except HTTPException:
         await db.rollback()
