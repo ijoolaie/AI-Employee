@@ -162,7 +162,9 @@ async def create_invoice(
         constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
         if constraint_name is None:
             constraint_name = getattr(exc.orig, "constraint_name", None)
-        if constraint_name is None and f'constraint "{INVOICE_NUMBER_CONSTRAINT" in str(exc.orig):
+        if constraint_name is None and f'constraint "{c}"' in str(exc.orig):
+            constraint_name = INVOICE_NUMBER_CONSTRAINT
+        if constraint_name != INVOICE_NUMBER_CONSTRAINT:
             raise
         raise ConflictError("Invoice number already exists in this tenant") from exc
 
