@@ -48,9 +48,6 @@ class AgentExecutionAdapter:
                 delegation_id = UUID(str(raw_delegation_id))
             except (TypeError, ValueError) as exc:
                 raise ValidationAppError("Invalid Agent delegation proof") from exc
-        elif policy_context.get("delegated_from"):
-            raise ValidationAppError("Governed Agent delegation proof is required")
-
         await assert_authorized(
             self.db,
             PolicyRequest(
@@ -58,7 +55,6 @@ class AgentExecutionAdapter:
                 agent_instance_id=agent.id,
                 action="run.execute",
                 delegation_id=delegation_id,
-                context={"delegated_from": policy_context.get("delegated_from")} if policy_context.get("delegated_from") else {},
             ),
         )
 
