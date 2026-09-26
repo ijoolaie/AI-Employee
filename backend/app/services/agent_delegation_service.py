@@ -63,6 +63,39 @@ async def authorize_delegation(
     if source.executor_type is not ExecutorType.AGENT or source.executor_id != delegator_agent_instance_id:
         raise ValidationAppError("Source work item is not owned by delegating Agent")
 
+    parent_context = dict(source.policy_context or {})
+    parent_delegation_id = parent_context.get("delegation_id")
+    parent_delegation = None
+    if parent_delegation_id is None and parent_context.get("delegated_from") is not None:
+        raise ValidationAppError("Delegated source is missing its delegation proof")
+    if parent_delegation_id is not None:
+        try:
+            parent_delegation_uuid = UUID(str(parent_delegation_id))
+        except (TypeError, ValueError) as exc:
+            raise ValidationAppError("Delegated source has an invalid delegation proof") from exc
+        parent_delegation = (
+            await db.execute(
+                select(AgentDelegation)
+                .where(
+                    AgentDelegation.id == parent_delegation_uuid,
+                    AgentDelegation.tenant_id == tenant_id,
+                )
+                .with_for_update()
+            )
+        ).scalar_one_or_none()
+        if parent_delegation is None or parent_delegation.status != "active":
+            raise ValidationAppError("Parent delegation is not active")
+        if parent_delegation.expires_at <= datetime.now(timezone.utc):
+            raise ValidationAppError("Parent delegation has expired")
+        if expires_at > parent_delegation.expires_at:
+            raise ValidationAppError("Delegation cannot outlive its parent")
+        if parent_delegation.delegate_agent_instance_id != delegator_agent_instance_id:
+            raise ValidationAppError("Delegation chain holder mismatch")
+        if parent_delegation.delegated_work_item_id != source.id:
+            raise ValidationAppError("Delegation chain source mismatch")
+        if parent_context.get("delegation_depth") != parent_delegation.chain_depth:
+            raise ValidationAppError("Delegation chain depth proof is inconsistent")
+
     agents = (await db.execute(select(AgentInstance).where(AgentInstance.tenant_id == tenant_id, AgentInstance.id.in_([delegator_agent_instance_id, delegate_agent_instance_id])))).scalars().all()
     by_id = {agent.id: agent for agent in agents}
     delegator = by_id.get(delegator_agent_instance_id)
@@ -92,8 +125,14 @@ async def authorize_delegation(
         raise ValidationAppError("Delegation cannot exceed delegator authority")
     if not _contains(delegate_actions, requested_actions) or not _contains(delegate_tools, requested_tools):
         raise ValidationAppError("Delegation target cannot receive unsupported authority")
+    if parent_delegation is not None:
+        parent_scopes = parent_delegation.scopes or {}
+        if not _contains(set(parent_scopes.get("actions") or []), requested_actions) or not _contains(set(parent_scopes.get("tools") or []), requested_tools):
+            raise ValidationAppError("Delegation cannot expand the parent delegation scope")
 
-    parent_depth = int((source.policy_context or {}).get("delegation_depth", 0))
+    parent_depth = parent_delegation.chain_depth if parent_delegation is not None else 0
+    if parent_delegation is None and int(parent_context.get("delegation_depth", 0)) != 0:
+        raise ValidationAppError("Root delegation source has an invalid delegation depth")
     depth = parent_depth + 1
     if depth > max_chain_depth:
         raise ValidationAppError("Delegation chain depth exceeded")
@@ -105,7 +144,7 @@ async def authorize_delegation(
         source_work_item_id=source.id,
         scopes={"actions": sorted(requested_actions), "tools": sorted(requested_tools)},
         chain_depth=depth,
-        max_chain_depth=max_chain_depth,
+        max_chain_depth=min(max_chain_depth, parent_delegation.max_chain_depth) if parent_delegation is not None else max_chain_depth,
         correlation_id=str(uuid4()),
         status="active",
         expires_at=expires_at,
