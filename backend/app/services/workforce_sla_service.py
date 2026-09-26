@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ValidationAppError
@@ -37,10 +38,17 @@ async def upsert_contract(
             "max_queue_age_seconds must be between 1 and 2592000 seconds"
         )
 
-    contract = await get_contract(db, tenant_id=tenant_id)
+    contract = (
+        await db.execute(
+            select(WorkforceSLAContract)
+            .where(WorkforceSLAContract.tenant_id == tenant_id)
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
     now = datetime.now(timezone.utc)
+
     if contract is None:
-        contract = WorkforceSLAContract(
+        candidate = WorkforceSLAContract(
             tenant_id=tenant_id,
             max_queue_age_seconds=max_queue_age_seconds,
             enabled=enabled,
@@ -48,9 +56,32 @@ async def upsert_contract(
             created_by_user_id=actor_user_id,
             updated_by_user_id=actor_user_id,
         )
-        db.add(contract)
-        await db.flush()
-        action = "workforce.sla.created"
+        # The unique tenant constraint closes the create/create race. Keep the
+        # insert inside a savepoint so a concurrent winner cannot poison the
+        # caller's outer transaction; then reread the committed winner under
+        # the row lock before applying this request's update.
+        try:
+            async with db.begin_nested():
+                db.add(candidate)
+                await db.flush()
+            contract = candidate
+            action = "workforce.sla.created"
+        except IntegrityError:
+            contract = (
+                await db.execute(
+                    select(WorkforceSLAContract)
+                    .where(WorkforceSLAContract.tenant_id == tenant_id)
+                    .with_for_update()
+                )
+            ).scalar_one_or_none()
+            if contract is None:
+                raise
+            contract.max_queue_age_seconds = max_queue_age_seconds
+            contract.enabled = enabled
+            contract.effective_from = now
+            contract.updated_by_user_id = actor_user_id
+            await db.flush()
+            action = "workforce.sla.updated"
     else:
         contract.max_queue_age_seconds = max_queue_age_seconds
         contract.enabled = enabled
