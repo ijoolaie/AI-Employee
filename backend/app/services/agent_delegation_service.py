@@ -55,6 +55,25 @@ async def authorize_delegation(
     if source.executor_type is not ExecutorType.AGENT or source.executor_id != delegator_agent_instance_id:
         raise ValidationAppError("Source work item is not owned by delegating Agent")
 
+    # Delegated Agents may only further delegate an attenuation of the authority
+    # they received. The current source WorkItem carries the parent delegation
+    # proof in policy_context; validate that proof before deriving its scope cap.
+    parent_delegation_id_raw = (source.policy_context or {}).get("delegation_id")
+    parent_delegation: AgentDelegation | None = None
+    if parent_delegation_id_raw is not None:
+        try:
+            parent_delegation_id = UUID(str(parent_delegation_id_raw))
+        except (TypeError, ValueError) as exc:
+            raise ValidationAppError("Source WorkItem contains an invalid delegation proof") from exc
+        parent_delegation = await validate_delegation(
+            db,
+            tenant_id=tenant_id,
+            delegation_id=parent_delegation_id,
+            delegate_agent_instance_id=delegator_agent_instance_id,
+        )
+        if parent_delegation.delegated_work_item_id != source.id:
+            raise ValidationAppError("Delegation proof is not bound to the source work item")
+
     agents = (await db.execute(select(AgentInstance).where(AgentInstance.tenant_id == tenant_id, AgentInstance.id.in_([delegator_agent_instance_id, delegate_agent_instance_id])))).scalars().all()
     by_id = {agent.id: agent for agent in agents}
     delegator = by_id.get(delegator_agent_instance_id)
@@ -84,6 +103,12 @@ async def authorize_delegation(
         raise ValidationAppError("Delegation cannot exceed delegator authority")
     if not _contains(delegate_actions, requested_actions) or not _contains(delegate_tools, requested_tools):
         raise ValidationAppError("Delegation target cannot receive unsupported authority")
+
+    if parent_delegation is not None:
+        parent_actions = set((parent_delegation.scopes or {}).get("actions") or [])
+        parent_tools = set((parent_delegation.scopes or {}).get("tools") or [])
+        if not _contains(parent_actions, requested_actions) or not _contains(parent_tools, requested_tools):
+            raise ValidationAppError("Delegation cannot exceed inherited delegation scope")
 
     parent_depth = int((source.policy_context or {}).get("delegation_depth", 0))
     depth = parent_depth + 1
