@@ -44,6 +44,7 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
             requires_approval=False,
         )
     )
+    try:
 
     async def fake_authorize(*args, **kwargs):
         return None
@@ -102,5 +103,7 @@ async def test_side_effect_tool_has_durable_fence_before_handler_and_blocks_repl
                 tool_call_id="call-1",
             )
 
-    assert calls == [{}]
-    assert fence_attempts == 2
+        assert calls == [{}]
+        assert fence_attempts == 2
+    finally:
+        registry._tools.pop(name, None)
