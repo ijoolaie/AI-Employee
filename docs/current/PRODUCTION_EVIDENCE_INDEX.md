@@ -1,6 +1,6 @@
 # Production Evidence Index
 
-**Reconciled:** 2026-09-23  
+**Reconciled:** 2026-09-26  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
@@ -14,6 +14,8 @@
 No P0 external gate may be marked complete from ENGINEERING evidence alone. `OPEN-EXTERNAL` is not a failure; it records work intentionally deferred until an external target exists.
 
 ## Current release baseline
+
+Current `main` engineering head: `a1fd0c103a10887b9c84c9741801441d317d0d33` (post-certification; not certified as a release).
 
 | Field | Value |
 |---|---|
