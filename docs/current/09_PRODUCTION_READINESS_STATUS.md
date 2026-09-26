@@ -1,26 +1,26 @@
 # Production Readiness Status
 
-**Status date:** 2026-09-20
-**Latest published release:** `v1.4.7`
-**Exact certified release SHA:** `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
-**Production Certification run:** `35498984521` — PASS
-**Certification job:** `106047204166` — PASS
+**Status date:** 2026-09-26
+**Latest published release:** `v1.4.11`
+**Exact certified release SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+**Production Certification run:** `35848311037` — PASS
+**Certification job:** `107139710452` — PASS
 **Product Gate failures:** `0`
 **Current status:** ENGINEERING/RELEASE CERTIFIED / EXTERNAL PRODUCTION & COMMERCIAL ACCEPTANCE PENDING
 
 ## Current release boundary
 
-### v1.4.7
+### v1.4.11
 
-- Exact certified SHA: `48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Exact certified SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 - Exact-SHA checkout/assertion: PASS
 - Backend/frontend/DB certification stages: PASS
 - Product Gates: 0 failures
 - Frontend Playwright: 6/6 PASS
-- Certification evidence artifact: `production-certification-evidence-v1.4.7-48a6df0ea8a2fb0624e831fbdea55ee4548807f6`
+- Certification evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 - Production deployment claimed: **false**
 
-Certification applies only to the exact v1.4.7 SHA. Later commits do not inherit it.
+Certification applies only to the exact v1.4.11 SHA. Later commits do not inherit it.
 
 ## Engineering evidence complete
 
@@ -60,7 +60,7 @@ Certification applies only to the exact v1.4.7 SHA. Later commits do not inherit
 
 ## Final acceptance sequence
 
-1. Freeze/accept v1.4.7 for external deployment.
+1. Freeze/accept v1.4.11 for external deployment.
 2. Provision and harden the approved production target.
 3. Deploy the exact frozen release identity.
 4. Verify deployment, image and migration identity/checksums.
