@@ -546,6 +546,57 @@ async def test_validate_delegation_rejects_revoked_parent_in_chain():
         )
 
 
+
+def test_delegation_request_requires_idempotency_key():
+    from app.api.v1.agent_delegations import AgentDelegationRequest
+
+    fields = AgentDelegationRequest.model_fields
+    assert fields["idempotency_key"].is_required()
+    assert fields["idempotency_key"].metadata
+
+
+@pytest.mark.asyncio
+async def test_delegation_creation_locks_source_before_authority_creation():
+    from app.services.agent_delegation_service import create_delegated_work_item
+
+    source_id = uuid4()
+    tenant = uuid4()
+    delegator = uuid4()
+    delegate = uuid4()
+    source = SimpleNamespace(
+        id=source_id,
+        tenant_id=tenant,
+        status=WorkItemStatus.RUNNING,
+        executor_type=ExecutorType.AGENT,
+        executor_id=delegator,
+        policy_context={},
+    )
+    class SourceLockDb:
+        def __init__(self):
+            self.statements = []
+        async def execute(self, statement):
+            self.statements.append(str(statement))
+            if "work_items" in str(statement):
+                return FakeResult(source)
+            return FakeResult(None)
+
+    # The first lookup and the post-lock re-check both target WorkItem state;
+    # both must be row-locking reads before authorize_delegation can create authority.
+    db = SourceLockDb()
+    with pytest.raises(ValidationAppError, match="non-delegation WorkItem"):
+        await create_delegated_work_item(
+            db,
+            tenant_id=tenant,
+            source_work_item_id=source_id,
+            delegator_agent_instance_id=delegator,
+            delegate_agent_instance_id=delegate,
+            scopes={"actions": ["run.execute"]},
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            idempotency_key="delegation-request-1",
+        )
+    assert db.statements
+    assert "FOR UPDATE" in db.statements[0]
+
 def test_delegation_api_uses_dedicated_permissions():
     from app.api.v1.agent_delegations import router
 

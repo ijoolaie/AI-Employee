@@ -634,6 +634,7 @@ async def _workforce_coordinate_handoff(arguments: dict[str, Any], **context):
         context=arguments.get("context"),
         artifacts=arguments.get("artifacts"),
         max_chain_depth=int(arguments.get("max_chain_depth", 3)),
+        idempotency_key=arguments["idempotency_key"],
     )
     return {
         "work_item_id": str(child.id),
@@ -1155,8 +1156,9 @@ def build_default_registry() -> ToolRegistry:
                     "description": {"type": ["string", "null"]},
                     "context": {"type": ["object", "null"]},
                     "artifacts": {"type": ["array", "null"]},
+                    "idempotency_key": {"type": "string", "minLength": 1, "maxLength": 255},
                 },
-                "required": ["source_work_item_id", "delegate_agent_instance_id", "scopes", "expires_at"],
+                "required": ["source_work_item_id", "delegate_agent_instance_id", "scopes", "expires_at", "idempotency_key"],
                 "additionalProperties": False,
             },
             handler=_workforce_coordinate_handoff,

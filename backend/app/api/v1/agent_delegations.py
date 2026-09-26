@@ -27,6 +27,7 @@ class AgentDelegationRequest(BaseModel):
     description: str | None = None
     context: dict | None = None
     artifacts: list[dict] | None = None
+    idempotency_key: str = Field(min_length=1, max_length=255)
 
 
 class AgentDelegationResponse(BaseModel):
@@ -65,6 +66,7 @@ async def delegate_agent(
             context=payload.context,
             artifacts=payload.artifacts,
             max_chain_depth=payload.max_chain_depth,
+            idempotency_key=payload.idempotency_key,
         )
         delegation_id = UUID(str((child.policy_context or {})["delegation_id"]))
         await audit_service.record(
