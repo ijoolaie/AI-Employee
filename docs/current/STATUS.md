@@ -4,8 +4,8 @@
 **Certified release baseline:** `v1.4.11`  
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
-**Mainline engineering head:** `06d54132fa49ccea3a038c924a3f28268a4bdd83`  
-**Status date:** 2026-09-24  
+**Mainline engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA  
+**Status date:** 2026-09-26  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
 **Certification run:** `35848311037` — PASS (exact `v1.4.11` SHA)  
