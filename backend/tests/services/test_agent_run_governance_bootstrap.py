@@ -39,6 +39,32 @@ async def test_agent_run_preflight_reestablishes_current_authority(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_agent_run_preflight_propagates_delegation_proof(monkeypatch):
+    tenant_id = uuid4()
+    agent_instance_id = uuid4()
+    run_id = uuid4()
+    delegation_id = uuid4()
+    calls = []
+
+    async def fake_assert_authorized(_db, request):
+        calls.append(request)
+
+    monkeypatch.setattr(bootstrap, "assert_authorized", fake_assert_authorized)
+    run = SimpleNamespace(
+        tenant_id=tenant_id,
+        agent_instance_id=agent_instance_id,
+        id=run_id,
+        delegation_id=delegation_id,
+    )
+
+    await bootstrap.authorize_agent_run(object(), run)
+
+    assert len(calls) == 1
+    assert calls[0].delegation_id == delegation_id
+    assert calls[0].action == "run.execute"
+
+
+@pytest.mark.asyncio
 async def test_agent_run_preflight_propagates_fail_closed_denial(monkeypatch):
     async def deny(_db, _request):
         raise RuntimeError("governance denied")
