@@ -6,7 +6,7 @@ import pytest
 
 from app.core.exceptions import ValidationAppError
 from app.services.invoice_service import normalize_tax_rate
-from app.services.order_service import ALLOWED_STATUSES, _next_number_fallback
+from app.services.order_service import ALLOWED_STATUSES, ORDER_STATUS_TRANSITIONS, _next_number_fallback
 from app.services.invoice_service import _compute_totals
 
 
@@ -54,3 +54,12 @@ def test_business_order_number_is_tenant_scoped_unique():
 
     names = {constraint.name for constraint in BusinessOrder.__table__.constraints}
     assert "uq_business_orders_tenant_number" in names
+
+
+def test_order_lifecycle_transitions_are_forward_only():
+    assert ORDER_STATUS_TRANSITIONS["draft"] == {"confirmed", "cancelled"}
+    assert ORDER_STATUS_TRANSITIONS["confirmed"] == {"processing", "cancelled"}
+    assert ORDER_STATUS_TRANSITIONS["processing"] == {"shipped", "cancelled"}
+    assert ORDER_STATUS_TRANSITIONS["shipped"] == {"delivered"}
+    assert ORDER_STATUS_TRANSITIONS["delivered"] == set()
+    assert ORDER_STATUS_TRANSITIONS["cancelled"] == set()
