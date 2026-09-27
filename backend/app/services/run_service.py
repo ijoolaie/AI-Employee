@@ -41,6 +41,7 @@ from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.logging import request_id_var
 from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
+from app.models.work_item import WorkItem, WorkItemStatus
 from app.models.tool_approval import ToolApprovalRequest
 from app.models.conversation import CustomerMessage, CustomerConversation
 from app.services import approval_service
@@ -56,6 +57,59 @@ from app.agents.planner import autonomy_settings, create_plan
 
 logger = logging.getLogger("app.services.run")
 settings = get_settings()
+
+
+async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, error: str | None = None) -> None:
+    """Project canonical Run terminal state onto its bound WorkItem and team parent."""
+    child_result = await db.execute(
+        select(WorkItem)
+        .where(WorkItem.run_id == run.id, WorkItem.tenant_id == run.tenant_id)
+        .with_for_update()
+    )
+    child = child_result.scalar_one_or_none()
+    if child is None:
+        return
+
+    if error is not None:
+        output = dict(child.output_data or {})
+        output["run_error"] = error[:2000]
+        child.output_data = output
+
+    if status == "success":
+        child.status = WorkItemStatus.SUCCEEDED
+    elif status == "failed":
+        child.status = WorkItemStatus.FAILED
+    elif status == "waiting":
+        child.status = WorkItemStatus.WAITING_APPROVAL
+    else:
+        return
+
+    parent_id = child.parent_work_item_id
+    if parent_id is None:
+        return
+
+    parent_result = await db.execute(
+        select(WorkItem)
+        .where(WorkItem.id == parent_id, WorkItem.tenant_id == run.tenant_id)
+        .with_for_update()
+    )
+    parent = parent_result.scalar_one_or_none()
+    if parent is None:
+        return
+
+    children_result = await db.execute(
+        select(WorkItem)
+        .where(WorkItem.parent_work_item_id == parent.id, WorkItem.tenant_id == run.tenant_id)
+    )
+    children = list(children_result.scalars().all())
+    expected_count = int((parent.policy_context or {}).get("member_count", 0) or 0)
+    if any(item.status is WorkItemStatus.FAILED for item in children):
+        parent.status = WorkItemStatus.FAILED
+    elif any(item.status is WorkItemStatus.WAITING_APPROVAL for item in children):
+        parent.status = WorkItemStatus.WAITING_APPROVAL
+    elif expected_count > 0 and len(children) == expected_count and all(item.status is WorkItemStatus.SUCCEEDED for item in children):
+        parent.status = WorkItemStatus.SUCCEEDED
+
 
 
 def _validate_input(input_data: dict[str, Any], input_schema: dict[str, Any]) -> None:
@@ -530,6 +584,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 break
 
         if paused_for_approval:
+            await _sync_work_item_lifecycle(db, run=run, status="waiting")
             await db.flush()
             return run
 
@@ -551,6 +606,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
             resource_type="run", resource_id=run.id, status="success", request_id=run.request_id,
             metadata={"prompt_tokens": total_prompt_tokens, "completion_tokens": total_completion_tokens, "cost_usd": total_cost_usd},
         )
+        await _sync_work_item_lifecycle(db, run=run, status="success")
         await extract_and_consolidate_run_memory(db, run=run, output_data=output_data, settings=auto_memory_settings(version.rules or {}))
         await db.commit()
         return run
@@ -565,6 +621,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
             run.status = "failed"
             run.error_message = str(exc)[:2000]
             run.completed_at = datetime.now(timezone.utc)
+            await _sync_work_item_lifecycle(db, run=run, status="failed", error=run.error_message)
             await audit_service.record(
                 db,
                 action="run.failed",
