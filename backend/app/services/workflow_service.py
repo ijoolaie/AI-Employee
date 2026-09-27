@@ -36,9 +36,9 @@ async def _lock_parent_for_child_execution(db: AsyncSession, *, workflow_run_id:
     if run is None:
         raise NotFoundError("Workflow run not found")
     if run.status != "running":
-        # A terminal parent is an execution fence, not a child execution
-        # failure. Callers must observe the durable terminal state and stop.
-        return run
+        raise ValidationAppError(
+            f"WORKFLOW_PARENT_NOT_RUNNING:{run.status}"
+        )
     now = datetime.now(timezone.utc)
     if run.deadline_at is not None and run.deadline_at <= now:
         run.status = "timed_out"
