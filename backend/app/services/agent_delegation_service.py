@@ -469,17 +469,15 @@ async def validate_delegation(
     source_ids: list[UUID] = [initial.source_work_item_id]
     cursor = initial
     for _ in range(DEFAULT_MAX_CHAIN_DEPTH):
-        source_probe = (
-            await db.execute(
-                select(WorkItem.id, WorkItem.policy_context).where(
-                    WorkItem.id == cursor.source_work_item_id,
-                    WorkItem.tenant_id == tenant_id,
-                )
+        source_probe = (await db.execute(
+            select(WorkItem).where(
+                WorkItem.id == cursor.source_work_item_id,
+                WorkItem.tenant_id == tenant_id,
             )
-        ).one_or_none()
+        )).scalar_one_or_none()
         if source_probe is None:
             raise ValidationAppError("Delegation source work item is unavailable")
-        context = dict(source_probe[1] or {})
+        context = dict(getattr(source_probe, "policy_context", None) or {})
         raw_parent_id = context.get("delegation_id") if context.get("delegated_from") is not None else None
         if raw_parent_id is None:
             break
