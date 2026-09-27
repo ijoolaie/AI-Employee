@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from app.core.database import worker_db_session
 from app.services import workflow_service
+from app.core.exceptions import ValidationAppError
 from app.services.workflow_trigger_service import claim_due_schedules, advance_schedule, dispatch_event
 from app.models.workflow_event import WorkflowEventDelivery
 from app.workers.celery_app import celery_app
