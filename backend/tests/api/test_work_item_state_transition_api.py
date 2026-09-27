@@ -42,7 +42,7 @@ async def test_cancel_records_audit_and_returns_cancelled_state(monkeypatch):
         def __init__(self, _db):
             pass
 
-        def cancel(self, received):
+        async def cancel_with_descendants(self, received):
             received.status = WorkItemStatus.CANCELLED
             return received
 
@@ -133,7 +133,7 @@ async def test_cancel_conflict_rolls_back_without_audit(monkeypatch):
         def __init__(self, _db):
             pass
 
-        def cancel(self, _received):
+        async def cancel_with_descendants(self, _received):
             raise ExecutionError("terminal work item cannot be cancelled")
 
     async def fake_record(*_args, **_kwargs):
