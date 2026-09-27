@@ -75,7 +75,8 @@ async def test_execute_is_tenant_local_and_dispatches_children():
     ]
     db = FakeSession((installation, version, team), agents)
 
-    with patch("app.services.team_execution.AgentExecutionAdapter") as adapter_cls:
+    assign_mock = AsyncMock(side_effect=lambda db, **kwargs: setattr(next(item for item in db.added if item.id == kwargs["work_item_id"]), "status", WorkItemStatus.ASSIGNED))
+    with patch("app.services.team_execution.assign_agent_work_item", new=assign_mock), patch("app.services.team_execution.AgentExecutionAdapter") as adapter_cls:
         adapter_cls.return_value.dispatch = AsyncMock(side_effect=[
             {"run_id": str(uuid.uuid4()), "agent_instance_id": str(agents[0].id)},
             {"run_id": str(uuid.uuid4()), "agent_instance_id": str(agents[1].id)},
@@ -96,6 +97,8 @@ async def test_execute_is_tenant_local_and_dispatches_children():
     assert db.added[0].tenant_id == tenant_id
     assert all(item.parent_work_item_id == db.added[0].id for item in db.added[1:])
     assert all(item.tenant_id == tenant_id for item in db.added)
+    assert assign_mock.await_count == 2
+    assert all(item.status is WorkItemStatus.ASSIGNED for item in db.added[1:])
 
 
 @pytest.mark.asyncio
@@ -133,3 +136,20 @@ async def test_execute_rejects_team_without_enabled_agent_instance():
         )
 
     assert len(db.added) == 1
+
+
+@pytest.mark.asyncio
+async def test_execute_fails_before_agent_dispatch_when_workforce_capacity_is_exhausted():
+    tenant_id = uuid.uuid4()
+    installation = SimpleNamespace(id=uuid.uuid4(), enabled=True)
+    version = SimpleNamespace(id=uuid.uuid4(), version=1, member_agent_definition_ids=[str(uuid.uuid4())], input_schema={}, execution_policy={}, allowed_tools=[])
+    team = SimpleNamespace(id=uuid.uuid4(), slug="ops", description=None)
+    agent = SimpleNamespace(id=uuid.uuid4(), max_concurrency=1)
+    db = FakeSession((installation, version, team), [agent])
+    assign_mock = AsyncMock(side_effect=TeamExecutionError("concurrency limit reached"))
+    with patch("app.services.team_execution.assign_agent_work_item", new=assign_mock), patch("app.services.team_execution.AgentExecutionAdapter") as adapter_cls:
+        adapter_cls.return_value.dispatch = AsyncMock()
+        with pytest.raises(TeamExecutionError, match="concurrency limit reached"):
+            await TeamExecutionService(db).execute(tenant_id=tenant_id, installation_id=installation.id, input_data={}, actor_id=uuid.uuid4(), idempotency_key="concurrency-1")
+    assign_mock.assert_awaited_once()
+    adapter_cls.return_value.dispatch.assert_not_awaited()
