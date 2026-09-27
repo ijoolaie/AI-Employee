@@ -259,8 +259,9 @@ async def test_delegation_creation_locks_and_rejects_cancelled_source(monkeypatc
         )
 
     assert statements
-    assert "FOR UPDATE" in statements[0]
-    assert "work_items" in statements[0]
+    work_item_lock = next(statement for statement in statements if "work_items" in statement and "FOR UPDATE" in statement)
+    delegation_lock = next(statement for statement in statements if "agent_delegations" in statement and "FOR UPDATE" in statement)
+    assert statements.index(work_item_lock) < statements.index(delegation_lock)
 
 
 @pytest.mark.asyncio
