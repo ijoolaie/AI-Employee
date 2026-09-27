@@ -237,7 +237,7 @@ async def test_update_invoice_status_rejects_invalid_status_before_lookup():
 
 @pytest.mark.asyncio
 async def test_update_invoice_status_is_tenant_scoped_and_audited(monkeypatch):
-    invoice = SimpleNamespace(id=uuid4(), tenant_id=uuid4(), status="draft")
+    invoice = SimpleNamespace(id=uuid4(), tenant_id=uuid4(), status="sent")
     audit = []
 
     async def record(*_args, **kwargs):
@@ -261,6 +261,49 @@ async def test_update_invoice_status_is_tenant_scoped_and_audited(monkeypatch):
     assert audit[0]["tenant_id"] == invoice.tenant_id
     assert audit[0]["actor_id"] == actor_id
     assert audit[0]["resource_id"] == str(invoice.id)
+    assert audit[0]["metadata"] == {"status": "paid"}
+
+
+@pytest.mark.asyncio
+async def test_update_invoice_status_rejects_invalid_lifecycle_transition():
+    invoice = SimpleNamespace(id=uuid4(), tenant_id=uuid4(), status="draft")
+    db = _LifecycleDb(invoice)
+
+    with pytest.raises(Exception, match="Invalid invoice lifecycle transition"):
+        await invoice_service.update_status(
+            db,
+            tenant_id=invoice.tenant_id,
+            actor_id=uuid4(),
+            invoice_id=str(invoice.id),
+            status="paid",
+        )
+
+    assert invoice.status == "draft"
+    assert db.flushes == 0
+
+
+@pytest.mark.asyncio
+async def test_update_invoice_status_allows_sent_to_paid(monkeypatch):
+    invoice = SimpleNamespace(id=uuid4(), tenant_id=uuid4(), status="sent")
+    audit = []
+
+    async def record(*_args, **kwargs):
+        audit.append(kwargs)
+
+    monkeypatch.setattr(invoice_service.audit_service, "record", record)
+    db = _LifecycleDb(invoice)
+
+    result = await invoice_service.update_status(
+        db,
+        tenant_id=invoice.tenant_id,
+        actor_id=uuid4(),
+        invoice_id=str(invoice.id),
+        status="paid",
+    )
+
+    assert result is invoice
+    assert invoice.status == "paid"
+    assert db.flushes == 1
     assert audit[0]["metadata"] == {"status": "paid"}
 
 
