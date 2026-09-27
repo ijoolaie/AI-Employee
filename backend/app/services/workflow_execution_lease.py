@@ -98,16 +98,33 @@ async def heartbeat_parallel_branch_execution_lease(db: AsyncSession, *, branch_
 
 
 async def recover_parallel_branch_execution_lease(db: AsyncSession, *, branch_id: uuid.UUID) -> uuid.UUID:
-    """Recover only when the parent workflow has a bounded, unexpired deadline."""
-    branch_result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
-    branch = branch_result.scalar_one_or_none()
-    if branch is None:
+    """Recover only when the parent workflow has a bounded, unexpired deadline.
+
+    Lock the parent before the branch to preserve the same Parent -> Branch
+    ordering used by cancellation and terminal reconciliation. Recovery must
+    never acquire Branch -> Parent because that can deadlock with a concurrent
+    parent cancellation holding the parent row and waiting for branch rows.
+    """
+    branch_ref = await db.execute(
+        select(WorkflowParallelBranchRun.workflow_run_id)
+        .where(WorkflowParallelBranchRun.id == branch_id)
+    )
+    workflow_run_id = branch_ref.scalar_one_or_none()
+    if workflow_run_id is None:
         raise ValidationAppError("Parallel branch not found")
-    parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id).with_for_update())
+
+    parent_result = await db.execute(
+        select(WorkflowRun)
+        .where(WorkflowRun.id == workflow_run_id)
+        .with_for_update()
+    )
     parent = parent_result.scalar_one_or_none()
     now = datetime.now(timezone.utc)
     if parent is None or parent.status in {"success", "failed", "cancelled", "timed_out"}:
         raise ValidationAppError("Parent workflow is not recoverable")
     if parent.deadline_at is None or parent.deadline_at <= now:
         raise ValidationAppError("Parallel branch automatic recovery requires a bounded workflow deadline")
+
+    # Parent is already locked, so acquiring the branch lease now preserves
+    # the global Parent -> Branch lock order.
     return await acquire_parallel_branch_execution_lease(db, branch_id=branch_id, allow_recovery=True)
