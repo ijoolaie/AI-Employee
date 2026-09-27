@@ -60,10 +60,13 @@ settings = get_settings()
 
 
 async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, error: str | None = None) -> None:
-    """Project canonical Run terminal state onto its bound WorkItem and team parent."""
+    """Project a bound Run lifecycle onto its WorkItem and team parent."""
+    if getattr(run, "work_item_id", None) is None:
+        return
+
     child_result = await db.execute(
         select(WorkItem)
-        .where(WorkItem.run_id == run.id, WorkItem.tenant_id == run.tenant_id)
+        .where(WorkItem.id == run.work_item_id, WorkItem.tenant_id == run.tenant_id)
         .with_for_update()
     )
     child = child_result.scalar_one_or_none()
@@ -109,7 +112,6 @@ async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, 
         parent.status = WorkItemStatus.WAITING_APPROVAL
     elif expected_count > 0 and len(children) == expected_count and all(item.status is WorkItemStatus.SUCCEEDED for item in children):
         parent.status = WorkItemStatus.SUCCEEDED
-
 
 
 def _validate_input(input_data: dict[str, Any], input_schema: dict[str, Any]) -> None:
