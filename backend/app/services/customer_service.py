@@ -129,7 +129,9 @@ async def create_customer(
             db.add(customer)
             await db.flush()
     except IntegrityError as exc:
-        constraint_name = getattr(exc.orig, "constraint_name", None)
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
         if constraint_name == CUSTOMER_EXTERNAL_KEY_INDEX_NAME:
             raise ConflictError("Customer external key already exists") from exc
         raise
@@ -178,10 +180,12 @@ async def get_customer(
 ) -> Customer:
     customer = (
         await db.execute(
-            select(Customer).where(
+            select(Customer)
+            .where(
                 Customer.tenant_id == tenant_id,
                 Customer.id == customer_id,
             )
+            .with_for_update()
         )
     ).scalar_one_or_none()
     if not customer:

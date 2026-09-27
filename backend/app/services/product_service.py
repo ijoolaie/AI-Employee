@@ -51,7 +51,9 @@ async def create_product(db: AsyncSession, tenant_id: uuid.UUID, payload: dict, 
             db.add(product)
             await db.flush()
     except IntegrityError as exc:
-        constraint_name = getattr(exc.orig, "constraint_name", None)
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
         if constraint_name != PRODUCT_SKU_INDEX_NAME:
             raise
         raise ConflictError("Product SKU already exists in this tenant") from exc
@@ -70,10 +72,12 @@ async def update_inventory(
 ):
     product = (
         await db.execute(
-            select(Product).where(
+            select(Product)
+            .where(
                 Product.id == product_id,
                 Product.tenant_id == tenant_id,
             )
+            .with_for_update()
         )
     ).scalar_one_or_none()
     if not product:
