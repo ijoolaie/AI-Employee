@@ -113,3 +113,44 @@ async def test_run_waiting_for_approval_blocks_team_parent_until_resume():
 
     assert child.status is WorkItemStatus.WAITING_APPROVAL
     assert parent.status is WorkItemStatus.WAITING_APPROVAL
+
+
+
+@pytest.mark.asyncio
+async def test_late_run_completion_does_not_resurrect_cancelled_child():
+    tenant_id = uuid.uuid4()
+    child = _item(tenant_id, status=WorkItemStatus.CANCELLED)
+    run = Run(
+        id=uuid.uuid4(),
+        tenant_id=tenant_id,
+        employee_id=uuid.uuid4(),
+        employee_version_id=uuid.uuid4(),
+        work_item_id=child.id,
+        status="success",
+        input_data={},
+    )
+
+    await _sync_work_item_lifecycle(_DB(child, None, []), run=run, status="success")
+
+    assert child.status is WorkItemStatus.CANCELLED
+
+
+@pytest.mark.asyncio
+async def test_late_child_completion_does_not_resurrect_cancelled_team_parent():
+    tenant_id = uuid.uuid4()
+    parent = _item(tenant_id, status=WorkItemStatus.CANCELLED, policy_context={"member_count": 1})
+    child = _item(tenant_id, status=WorkItemStatus.RUNNING, parent_id=parent.id)
+    run = Run(
+        id=uuid.uuid4(),
+        tenant_id=tenant_id,
+        employee_id=uuid.uuid4(),
+        employee_version_id=uuid.uuid4(),
+        work_item_id=child.id,
+        status="success",
+        input_data={},
+    )
+
+    await _sync_work_item_lifecycle(_DB(child, parent, []), run=run, status="success")
+
+    assert child.status is WorkItemStatus.SUCCEEDED
+    assert parent.status is WorkItemStatus.CANCELLED
