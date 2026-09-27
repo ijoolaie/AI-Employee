@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from inspect import getsource
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 from uuid import uuid4
@@ -210,3 +211,12 @@ async def test_activation_activator_cannot_be_ceo_or_sponsor(monkeypatch):
     with pytest.raises(ValidationAppError, match="independent"):
         await service.activate_provisioned_proposal(db, tenant_id=uuid4(), proposal_id=proposal.id, activated_by_user_id=ceo)
     db.flush.assert_not_awaited()
+
+
+def test_activation_uses_canonical_identity_before_instance_lock_order():
+    source = getsource(service.activate_provisioned_proposal)
+    identity_block = source.index("select(AgentIdentity)")
+    instance_block = source.index("select(AgentInstance)")
+    assert identity_block < instance_block
+    assert source.index(".with_for_update()", identity_block, instance_block) > identity_block
+    assert source.index(".with_for_update()", instance_block) > instance_block
