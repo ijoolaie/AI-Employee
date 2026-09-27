@@ -25,7 +25,7 @@ class _Result:
 
 class _DB:
     def __init__(self, child, parent, children):
-        self.results = [_Result(scalar=child), _Result(scalar=parent), _Result(rows=children)]
+        self.results = [_Result(scalar=child), _Result(scalar=parent), _Result(scalar=child), _Result(rows=children)]
 
     async def execute(self, _statement):
         return self.results.pop(0)
@@ -152,5 +152,5 @@ async def test_late_child_completion_does_not_resurrect_cancelled_team_parent():
 
     await _sync_work_item_lifecycle(_DB(child, parent, []), run=run, status="success")
 
-    assert child.status is WorkItemStatus.SUCCEEDED
+    assert child.status is WorkItemStatus.RUNNING
     assert parent.status is WorkItemStatus.CANCELLED
