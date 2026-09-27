@@ -15,6 +15,7 @@ from app.models.team_installation import TeamInstallation
 from app.models.team_version import TeamVersion
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services.agent_execution_adapter import AgentExecutionAdapter
+from app.services.agent_workforce_manager import assign_work_item as assign_agent_work_item
 from app.services.schema_validation import validate_json_data
 
 
@@ -119,7 +120,7 @@ class TeamExecutionService:
                 tenant_id=tenant_id,
                 title=f"{parent.title} — member {position + 1}",
                 description=f"Team member {definition_id}",
-                status=WorkItemStatus.ASSIGNED,
+                status=WorkItemStatus.READY,
                 requester_id=actor_id,
                 executor_type=ExecutorType.AGENT,
                 executor_id=agent.id,
@@ -130,6 +131,15 @@ class TeamExecutionService:
             )
             self.db.add(child)
             await self.db.flush()
+            # Team execution must use the canonical workforce assignment path so
+            # Agent max_concurrency, kill-switch, tenant and assignment lifecycle
+            # guards cannot be bypassed by direct child creation.
+            await assign_agent_work_item(
+                self.db,
+                tenant_id=tenant_id,
+                work_item_id=child.id,
+                agent_instance_id=agent.id,
+            )
             dispatch = await adapter.dispatch(child, agent)
             dispatches.append({"work_item_id": str(child.id), **dispatch})
         return {"work_item_id": str(parent.id), "team_installation_id": str(installation.id), "team_version_id": str(version.id), "status": parent.status.value, "correlation_id": request_id, "members": dispatches}
