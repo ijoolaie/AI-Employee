@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+
 from datetime import datetime, timedelta, timezone
 import uuid
 
@@ -1386,7 +1388,14 @@ async def test_branch_lease_loss_during_parent_cancellation_preserves_terminal_b
             workflow_run_id=data["workflow_run_id"],
             workflow_step_run_id=step.id,
             branch_key="branch-lease-loss",
-            config={"steps": [{"key": "lease-loss-child", "type": "employee", "employee_id": str(data["employee_id"]), "employee_version_id": str(data["employee_version_id"])}]},
+            config={
+                "steps": [{
+                    "key": "lease-loss-child",
+                    "type": "employee",
+                    "employee_id": str(data["employee_id"]),
+                    "employee_version_id": str(data["employee_version_id"]),
+                }]
+            },
             status="pending",
         )
         db.add(branch)
@@ -1395,6 +1404,8 @@ async def test_branch_lease_loss_during_parent_cancellation_preserves_terminal_b
 
     lease_id = uuid.uuid4()
     assert_calls = 0
+    cancellation_started = asyncio.Event()
+    cancellation_task = None
 
     async def acquire_branch_lease(db, *, branch_id, **_kwargs):
         branch = await db.get(WorkflowParallelBranchRun, branch_id)
@@ -1405,20 +1416,31 @@ async def test_branch_lease_loss_during_parent_cancellation_preserves_terminal_b
         await db.flush()
         return lease_id
 
+    async def cancel_parent():
+        async with AsyncSessionLocal() as racing_db:
+            # Establish the parent-first side of the real lock-order race.
+            await racing_db.execute(
+                select(WorkflowRun)
+                .where(WorkflowRun.id == data["workflow_run_id"])
+                .with_for_update()
+            )
+            cancellation_started.set()
+            cancelled = await workflow_service.cancel_workflow_run(
+                racing_db,
+                workflow_run_id=data["workflow_run_id"],
+                tenant_id=data["tenant_id"],
+                cancelled_by=uuid.uuid4(),
+                reason="Injected branch lease-loss cancellation",
+            )
+            await racing_db.commit()
+            assert cancelled.status == "cancelled"
+
     async def assert_branch_lease(db, *, branch_id, lease_id, **_kwargs):
-        nonlocal assert_calls
+        nonlocal assert_calls, cancellation_task
         assert_calls += 1
         if assert_calls == 2:
-            async with AsyncSessionLocal() as racing_db:
-                cancelled = await workflow_service.cancel_workflow_run(
-                    racing_db,
-                    workflow_run_id=data["workflow_run_id"],
-                    tenant_id=data["tenant_id"],
-                    cancelled_by=uuid.uuid4(),
-                    reason="Injected branch lease-loss cancellation",
-                )
-                await racing_db.commit()
-                assert cancelled.status == "cancelled"
+            cancellation_task = asyncio.create_task(cancel_parent())
+            await cancellation_started.wait()
             raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
         return await db.get(WorkflowParallelBranchRun, branch_id)
 
@@ -1446,6 +1468,9 @@ async def test_branch_lease_loss_during_parent_cancellation_preserves_terminal_b
             branch_id,
             expected_tenant_id=data["tenant_id"],
         )
+
+    assert cancellation_task is not None
+    await cancellation_task
 
     async with AsyncSessionLocal() as db:
         parent = await db.get(WorkflowRun, data["workflow_run_id"])
