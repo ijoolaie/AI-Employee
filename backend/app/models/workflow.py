@@ -42,6 +42,8 @@ class WorkflowRun(Base):
     workflow_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("workflows.id"), nullable=False, index=True)
     workflow_version_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("workflow_versions.id"), nullable=False)
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    # Optional principal provenance for workflow executions initiated on behalf of an AgentInstance.
+    agent_instance_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="RESTRICT"), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
     context: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     output_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
