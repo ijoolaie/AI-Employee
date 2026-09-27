@@ -23,7 +23,11 @@ def test_cancel_child_execution_is_fail_closed():
 
 
 def test_cancel_approval_cannot_resume_a_terminal_workflow():
-    assert 'select(WorkflowRun).where(WorkflowRun.id == approval.workflow_run_id' in APPROVAL_SOURCE
+    assert 'select(WorkflowRun)' in APPROVAL_SOURCE
+    assert 'WorkflowRun.id == approval.workflow_run_id' in APPROVAL_SOURCE
+    assert 'select(WorkflowStepRun)' in APPROVAL_SOURCE
+    assert APPROVAL_SOURCE.index('select(WorkflowRun)') < APPROVAL_SOURCE.index('select(WorkflowStepRun)')
+    assert '.with_for_update()' in APPROVAL_SOURCE[APPROVAL_SOURCE.index('select(WorkflowRun)'):APPROVAL_SOURCE.index('select(WorkflowStepRun)')]
     assert 'if run.status != "waiting_approval":' in APPROVAL_SOURCE
     assert 'await _enqueue_resume(db, run, reason=f"approval:{approval.id}")' in APPROVAL_SOURCE
 
