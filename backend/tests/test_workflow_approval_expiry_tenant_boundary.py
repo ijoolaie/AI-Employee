@@ -38,8 +38,8 @@ class _FakeDb:
     def __init__(self, approval, step, run):
         self.results = iter([
             _ScalarResult([approval]),
-            _ScalarResult([step]),
             _ScalarResult([run]),
+            _ScalarResult([step]),
         ])
 
     async def execute(self, _statement):
