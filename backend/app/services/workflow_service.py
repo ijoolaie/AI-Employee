@@ -6,7 +6,7 @@ import hashlib
 import json
 from datetime import datetime, timezone, timedelta
 from typing import Any
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.attributes import flag_modified
@@ -329,7 +329,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         if branch is None:
             raise ValidationAppError("Parallel branch not found")
         if parent.status in {"cancelled", "timed_out", "failed", "success"}:
-            branch.status = "cancelled" if parent and parent.status == "cancelled" else "failed"
+            branch.status = "cancelled" if parent.status == "cancelled" else "failed"
             branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
             await db.commit(); return
         await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
@@ -357,6 +357,10 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                 parent_state = await db.execute(select(WorkflowRun.status, WorkflowRun.deadline_at).where(WorkflowRun.id == parent.id))
                 parent_status, parent_deadline = parent_state.one()
                 if parent_status != "running":
+                    branch.status = "cancelled" if parent_status == "cancelled" else "failed"
+                    branch.completed_at = datetime.now(timezone.utc)
+                    branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                    await db.commit()
                     return
                 if parent_deadline and parent_deadline <= datetime.now(timezone.utc):
                     return
@@ -396,7 +400,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         # before accepting its output into the branch.
                         parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
                         if parent.status != "running":
-                            branch.status = "failed"
+                            branch.status = "cancelled" if parent.status == "cancelled" else "failed"
                             branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
                             branch.completed_at = datetime.now(timezone.utc)
                             branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
@@ -660,10 +664,91 @@ async def get_workflow_run(db: AsyncSession, *, workflow_run_id: uuid.UUID, tena
 
 
 async def cancel_workflow_run(db: AsyncSession, *, workflow_run_id: uuid.UUID, tenant_id: uuid.UUID, cancelled_by: uuid.UUID, reason: str | None = None) -> WorkflowRun:
-    result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == workflow_run_id, WorkflowRun.tenant_id == tenant_id).with_for_update()); run = result.scalar_one_or_none()
-    if run is None: raise NotFoundError("Workflow run not found")
-    if run.status in {"success", "failed", "cancelled", "timed_out"}: raise ValidationAppError(f"Workflow run is already terminal: {run.status}")
-    now = datetime.now(timezone.utc); run.status = "cancelled"; run.cancelled_at = now; run.cancel_reason = reason; run.completed_at = now; run.error = {"code": "WORKFLOW_CANCELLED", "message": reason or "Workflow run cancelled by user."}; await db.flush(); await audit_service.record(db, action="workflow.run.cancelled", actor_type="user", actor_id=cancelled_by, tenant_id=tenant_id, resource_type="workflow_run", resource_id=run.id, status="success", request_id=request_id_var.get(), metadata={"reason": reason}); return run
+    result = await db.execute(
+        select(WorkflowRun)
+        .where(WorkflowRun.id == workflow_run_id, WorkflowRun.tenant_id == tenant_id)
+        .with_for_update()
+    )
+    run = result.scalar_one_or_none()
+    if run is None:
+        raise NotFoundError("Workflow run not found")
+    if run.status in {"success", "failed", "cancelled", "timed_out"}:
+        raise ValidationAppError(f"Workflow run is already terminal: {run.status}")
+
+    # Cancellation is terminal at the workflow boundary. Any child Run that
+    # has not crossed its own execution boundary must be cancelled as well;
+    # otherwise a queued outbox delivery can execute a child after the parent
+    # has been cancelled. Already-running child Runs are deliberately left
+    # untouched because their external side effect may already be in flight.
+    step_ids_result = await db.execute(
+        select(WorkflowStepRun.id).where(WorkflowStepRun.workflow_run_id == run.id)
+    )
+    step_ids = list(step_ids_result.scalars().all())
+    branch_ids_result = await db.execute(
+        select(WorkflowParallelBranchRun.id).where(WorkflowParallelBranchRun.workflow_run_id == run.id)
+    )
+    branch_ids = list(branch_ids_result.scalars().all())
+
+    if step_ids or branch_ids:
+        predicates = []
+        if step_ids:
+            predicates.append(Run.workflow_step_run_id.in_(step_ids))
+        if branch_ids:
+            predicates.append(Run.workflow_parallel_branch_run_id.in_(branch_ids))
+        child_result = await db.execute(
+            select(Run)
+            .where(
+                Run.tenant_id == tenant_id,
+                Run.status.in_({"pending", "waiting"}),
+                or_(*predicates),
+            )
+            .with_for_update()
+        )
+        now = datetime.now(timezone.utc)
+        for child in child_result.scalars().all():
+            child.status = "cancelled"
+            child.error_message = "Run cancelled because its WorkflowRun was cancelled"
+            child.completed_at = now
+
+    if branch_ids:
+        branch_result = await db.execute(
+            select(WorkflowParallelBranchRun)
+            .where(
+                WorkflowParallelBranchRun.workflow_run_id == run.id,
+                WorkflowParallelBranchRun.status.not_in({"success", "failed", "cancelled"}),
+            )
+            .with_for_update()
+        )
+        for branch in branch_result.scalars().all():
+            branch.status = "cancelled"
+            branch.completed_at = now
+            branch.execution_lease_id = None
+            branch.execution_lease_expires_at = None
+            branch.execution_heartbeat_at = None
+
+    now = datetime.now(timezone.utc)
+    run.status = "cancelled"
+    run.cancelled_at = now
+    run.cancel_reason = reason
+    run.completed_at = now
+    run.error = {
+        "code": "WORKFLOW_CANCELLED",
+        "message": reason or "Workflow run cancelled by user.",
+    }
+    await db.flush()
+    await audit_service.record(
+        db,
+        action="workflow.run.cancelled",
+        actor_type="user",
+        actor_id=cancelled_by,
+        tenant_id=tenant_id,
+        resource_type="workflow_run",
+        resource_id=run.id,
+        status="success",
+        request_id=request_id_var.get(),
+        metadata={"reason": reason},
+    )
+    return run
 
 
 async def list_workflows(db, *, tenant_id):
