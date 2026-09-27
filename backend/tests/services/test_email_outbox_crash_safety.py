@@ -98,7 +98,7 @@ async def test_claim_includes_stale_email_delivery_in_recovery_predicate():
 
     predicate = db.statement.whereclause.compile(compile_kwargs={"literal_binds": True})
     sql = str(predicate)
-    assert "email.send" not in sql
+    assert "email.send" in sql
     assert rows == []
 
 
