@@ -327,3 +327,35 @@ async def test_concurrent_agent_assignments_are_serialized_by_agent_row_lock():
         assert tenant_row is not None
         await db.delete(tenant_row)
         await db.commit()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "status, message",
+    [
+        (WorkItemStatus.FAILED, "failed or blocked"),
+        (WorkItemStatus.BLOCKED, "failed or blocked"),
+        (WorkItemStatus.WAITING_APPROVAL, "waiting for approval"),
+    ],
+)
+async def test_assign_work_item_rejects_lifecycle_bypass_statuses(status, message):
+    tenant_id, agent_id, item_id = uuid4(), uuid4(), uuid4()
+    agent = SimpleNamespace(
+        id=agent_id, tenant_id=tenant_id, enabled=True,
+        status=AgentInstanceStatus.ENABLED, max_concurrency=2,
+    )
+    item = SimpleNamespace(
+        id=item_id, tenant_id=tenant_id, status=status,
+        executor_type=None, executor_id=None,
+    )
+    db = Db(agent, item, active=0)
+
+    with pytest.raises(ExecutionError, match=message):
+        await manager.assign_work_item(
+            db,
+            tenant_id=tenant_id,
+            work_item_id=item_id,
+            agent_instance_id=agent_id,
+        )
+
+    db.flush.assert_not_awaited()
