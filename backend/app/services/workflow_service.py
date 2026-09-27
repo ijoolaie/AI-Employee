@@ -376,6 +376,18 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                 # This both refreshes stale ORM state and converts an expired deadline
                 # into the durable timed_out terminal state before branch progress.
                 parent = await _lock_parent_for_child_execution(db, workflow_run_id=workflow_run_id)
+                # Once the parent fence is held, lock the branch. This keeps the
+                # durable multi-row order Parent -> Branch for cancellation,
+                # recovery, and normal branch execution.
+                branch_result = await db.execute(
+                    select(WorkflowParallelBranchRun)
+                    .where(WorkflowParallelBranchRun.id == branch_id)
+                    .execution_options(populate_existing=True)
+                    .with_for_update()
+                )
+                branch = branch_result.scalar_one_or_none()
+                if branch is None:
+                    raise ValidationAppError("Parallel branch not found")
                 if parent.status != "running":
                     branch.status = "cancelled" if parent.status == "cancelled" else "failed"
                     branch.error = {
