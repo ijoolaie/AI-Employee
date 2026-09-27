@@ -5,6 +5,7 @@ from __future__ import annotations
 import inspect
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Any, Protocol
 
 from sqlalchemy import select
@@ -181,6 +182,59 @@ class UnifiedExecutionService:
         if work_item.status is WorkItemStatus.DRAFT:
             raise ExecutionError("draft work item cannot be cancelled")
         work_item.status = WorkItemStatus.CANCELLED
+        return work_item
+
+    async def cancel_with_descendants(self, work_item: WorkItem) -> WorkItem:
+        """Cancel a WorkItem subtree and prevent queued Runs from executing.
+
+        Locks are acquired parent -> child, matching Run lifecycle projection.
+        Runs are cancelled only while non-terminal; an already-running Run may
+        finish while holding its Run lock, after which lifecycle projection
+        observes the cancelled WorkItem and cannot resurrect it.
+        """
+        self.cancel(work_item)
+
+        frontier = [work_item.id]
+        cancelled_work_item_ids = [work_item.id]
+        while frontier:
+            result = await self.db.execute(
+                select(WorkItem)
+                .where(
+                    WorkItem.tenant_id == work_item.tenant_id,
+                    WorkItem.parent_work_item_id.in_(frontier),
+                )
+                .with_for_update()
+            )
+            children = list(result.scalars().all())
+            frontier = []
+            for child in children:
+                if child.status not in {
+                    WorkItemStatus.SUCCEEDED,
+                    WorkItemStatus.FAILED,
+                    WorkItemStatus.CANCELLED,
+                }:
+                    child.status = WorkItemStatus.CANCELLED
+                    cancelled_work_item_ids.append(child.id)
+                elif child.status is WorkItemStatus.CANCELLED:
+                    cancelled_work_item_ids.append(child.id)
+                frontier.append(child.id)
+
+        if cancelled_work_item_ids:
+            result = await self.db.execute(
+                select(Run)
+                .where(
+                    Run.tenant_id == work_item.tenant_id,
+                    Run.work_item_id.in_(cancelled_work_item_ids),
+                    Run.status.in_({"pending", "waiting", "running"}),
+                )
+                .with_for_update()
+            )
+            now = datetime.now(timezone.utc)
+            for run in result.scalars().all():
+                run.status = "cancelled"
+                run.error_message = "Run cancelled because its WorkItem was cancelled"
+                run.completed_at = now
+
         return work_item
 
     def retry(self, work_item: WorkItem) -> WorkItem:
