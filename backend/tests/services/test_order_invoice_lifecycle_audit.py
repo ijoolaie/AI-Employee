@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.core.exceptions import NotFoundError, ValidationAppError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.modules.employees.invoice import service as invoice_service
 from app.modules.employees.order import service as order_service
 
@@ -269,7 +269,7 @@ async def test_update_invoice_status_rejects_invalid_lifecycle_transition():
     invoice = SimpleNamespace(id=uuid4(), tenant_id=uuid4(), status="draft")
     db = _LifecycleDb(invoice)
 
-    with pytest.raises(Exception, match="Invalid invoice lifecycle transition"):
+    with pytest.raises(ConflictError, match="Invalid invoice lifecycle transition"):
         await invoice_service.update_status(
             db,
             tenant_id=invoice.tenant_id,
