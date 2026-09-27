@@ -36,9 +36,9 @@ async def _lock_parent_for_child_execution(db: AsyncSession, *, workflow_run_id:
     if run is None:
         raise NotFoundError("Workflow run not found")
     if run.status != "running":
-        raise ValidationAppError(
-            f"WORKFLOW_PARENT_NOT_RUNNING:{run.status}"
-        )
+        # A terminal parent is an execution fence, not a child execution
+        # failure. Callers must observe the durable terminal state and stop.
+        return run
     now = datetime.now(timezone.utc)
     if run.deadline_at is not None and run.deadline_at <= now:
         run.status = "timed_out"
@@ -429,7 +429,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         # Re-lock and re-check it before the child Run can execute.
                         parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
                         if parent.status != "running":
-                            branch.status = "failed"
+                            branch.status = "cancelled" if parent.status == "cancelled" else "failed"
                             branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
                             branch.completed_at = datetime.now(timezone.utc)
                             branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
@@ -446,7 +446,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         # branch success bookkeeping.
                         parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
                         if parent.status != "running":
-                            branch.status = "failed"
+                            branch.status = "cancelled" if parent.status == "cancelled" else "failed"
                             branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
                             branch.completed_at = datetime.now(timezone.utc)
                             branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
