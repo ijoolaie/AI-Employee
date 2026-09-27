@@ -144,7 +144,7 @@ async def shopify_callback(shop: str, code: str, state: str, db: DbSession):
             await db.flush()
     except IntegrityError as exc:
         constraint_name = getattr(exc.orig, "constraint_name", None)
-        if constraint_name != commerce_integration_service.COMMERCE_INTEGRATION_PROVIDER_INDEX_NAME:
+        if constraint_name != commerce_integration_service.SHOPIFY_INTEGRATION_INDEX_NAME:
             raise
         raise ConflictError("Shopify integration already exists for this tenant") from exc
 
