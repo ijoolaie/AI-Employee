@@ -60,21 +60,56 @@ settings = get_settings()
 
 
 async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, error: str | None = None) -> None:
-    """Project a bound Run lifecycle onto its WorkItem and team parent."""
-    if getattr(run, "work_item_id", None) is None:
+    """Project a bound Run lifecycle onto its WorkItem and team parent.
+
+    Parent-first locking is intentional: cancellation and completion both
+    serialize parent -> child, preventing a parent/child lock inversion.
+    """
+    work_item_id = getattr(run, "work_item_id", None)
+    if work_item_id is None:
         return
+
+    child_probe = await db.execute(
+        select(WorkItem).where(
+            WorkItem.id == work_item_id,
+            WorkItem.tenant_id == run.tenant_id,
+        )
+    )
+    child_probe = child_probe.scalar_one_or_none()
+    if child_probe is None:
+        return
+
+    parent = None
+    parent_id = child_probe.parent_work_item_id
+    if parent_id is not None:
+        parent_result = await db.execute(
+            select(WorkItem)
+            .where(
+                WorkItem.id == parent_id,
+                WorkItem.tenant_id == run.tenant_id,
+            )
+            .with_for_update()
+        )
+        parent = parent_result.scalar_one_or_none()
+        # Parent cancellation/terminal state is authoritative. Do not even
+        # project a late child completion into a terminal parent subtree.
+        if parent is not None and parent.status in {
+            WorkItemStatus.SUCCEEDED,
+            WorkItemStatus.FAILED,
+            WorkItemStatus.CANCELLED,
+        }:
+            return
 
     child_result = await db.execute(
         select(WorkItem)
-        .where(WorkItem.id == run.work_item_id, WorkItem.tenant_id == run.tenant_id)
+        .where(
+            WorkItem.id == work_item_id,
+            WorkItem.tenant_id == run.tenant_id,
+        )
         .with_for_update()
     )
     child = child_result.scalar_one_or_none()
-    if child is None:
-        return
-
-    # A user cancellation is terminal and must never be resurrected by a late Run completion.
-    if child.status is WorkItemStatus.CANCELLED:
+    if child is None or child.status is WorkItemStatus.CANCELLED:
         return
 
     if error is not None:
@@ -91,26 +126,15 @@ async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, 
     else:
         return
 
-    parent_id = child.parent_work_item_id
-    if parent_id is None:
-        return
-
-    parent_result = await db.execute(
-        select(WorkItem)
-        .where(WorkItem.id == parent_id, WorkItem.tenant_id == run.tenant_id)
-        .with_for_update()
-    )
-    parent = parent_result.scalar_one_or_none()
     if parent is None:
-        return
-
-    # Parent terminal state is authoritative; late child completion must not resurrect it.
-    if parent.status in {WorkItemStatus.SUCCEEDED, WorkItemStatus.FAILED, WorkItemStatus.CANCELLED}:
         return
 
     children_result = await db.execute(
         select(WorkItem)
-        .where(WorkItem.parent_work_item_id == parent.id, WorkItem.tenant_id == run.tenant_id)
+        .where(
+            WorkItem.parent_work_item_id == parent.id,
+            WorkItem.tenant_id == run.tenant_id,
+        )
     )
     children = list(children_result.scalars().all())
     expected_count = int((parent.policy_context or {}).get("member_count", 0) or 0)
@@ -118,7 +142,11 @@ async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, 
         parent.status = WorkItemStatus.FAILED
     elif any(item.status is WorkItemStatus.WAITING_APPROVAL for item in children):
         parent.status = WorkItemStatus.WAITING_APPROVAL
-    elif expected_count > 0 and len(children) == expected_count and all(item.status is WorkItemStatus.SUCCEEDED for item in children):
+    elif (
+        expected_count > 0
+        and len(children) == expected_count
+        and all(item.status is WorkItemStatus.SUCCEEDED for item in children)
+    ):
         parent.status = WorkItemStatus.SUCCEEDED
 
 
