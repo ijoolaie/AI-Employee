@@ -216,8 +216,9 @@ async def test_worker_crash_branch_lease_recovery_requeues_same_branch(
         return message
 
     from app.workers import workflow_trigger_worker
+    from app.services import outbox_service
 
-    monkeypatch.setattr(workflow_trigger_worker, "enqueue", enqueue)
+    monkeypatch.setattr(outbox_service, "enqueue", enqueue)
 
     count = await workflow_trigger_worker._timeout_workflow_runs_async()
     assert count == 1
