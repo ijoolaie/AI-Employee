@@ -1,90 +1,256 @@
-from uuid import UUID
 import json
+from uuid import UUID
+
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+
 from app.core.config import get_settings
 from app.core.deps import CommerceIntegrationContext, DbSession
+from app.core.exceptions import ConflictError
+from app.models.commerce_integration import CommerceIntegration
 from app.schemas.common import APIResponse
 from app.schemas.commerce_integration import CommerceIntegrationCreate, CommerceIntegrationResponse
-from app.services import audit_service, commerce_integration_service, shopify_service, shopify_oauth_state
+from app.services import audit_service, commerce_integration_service, shopify_oauth_state, shopify_service
 from app.services.credential_service import credential_ref, revoke_credential, store_credential
-from app.models.commerce_integration import CommerceIntegration
-from sqlalchemy import select
 
 router = APIRouter(prefix="/commerce-integrations", tags=["commerce-integrations"])
+
 
 @router.get("", response_model=APIResponse[list[CommerceIntegrationResponse]])
 async def list_integrations(ctx: CommerceIntegrationContext, db: DbSession):
     rows = await commerce_integration_service.list_integrations(db, ctx.tenant_id)
-    return APIResponse(success=True, data=[CommerceIntegrationResponse.model_validate(commerce_integration_service.public_config(x)) for x in rows])
+    return APIResponse(
+        success=True,
+        data=[
+            CommerceIntegrationResponse.model_validate(
+                commerce_integration_service.public_config(x)
+            )
+            for x in rows
+        ],
+    )
+
 
 @router.post("", response_model=APIResponse[CommerceIntegrationResponse], status_code=201)
-async def create_integration(payload: CommerceIntegrationCreate, ctx: CommerceIntegrationContext, db: DbSession):
-    row = await commerce_integration_service.create_integration(db, ctx.tenant_id, payload.provider, payload.name, payload.config, actor_id=ctx.user_id)
-    return APIResponse(success=True, data=CommerceIntegrationResponse.model_validate(commerce_integration_service.public_config(row)))
+async def create_integration(
+    payload: CommerceIntegrationCreate,
+    ctx: CommerceIntegrationContext,
+    db: DbSession,
+):
+    row = await commerce_integration_service.create_integration(
+        db,
+        ctx.tenant_id,
+        payload.provider,
+        payload.name,
+        payload.config,
+        actor_id=ctx.user_id,
+    )
+    return APIResponse(
+        success=True,
+        data=CommerceIntegrationResponse.model_validate(
+            commerce_integration_service.public_config(row)
+        ),
+    )
+
 
 @router.get("/shopify/install")
 async def shopify_install(shop: str, ctx: CommerceIntegrationContext, db: DbSession):
     settings = get_settings()
-    if not settings.shopify_client_id or not settings.shopify_client_secret: raise HTTPException(status_code=503, detail="Shopify OAuth is not configured")
+    if not settings.shopify_client_id or not settings.shopify_client_secret:
+        raise HTTPException(status_code=503, detail="Shopify OAuth is not configured")
     state = await shopify_oauth_state.issue_state(db, ctx.tenant_id, shop)
     await db.commit()
     return RedirectResponse(shopify_service.build_install_url(shop, state), status_code=302)
 
+
 @router.get("/shopify/callback")
 async def shopify_callback(shop: str, code: str, state: str, db: DbSession):
     tenant_id = await shopify_oauth_state.consume_state(db, state, shop)
+    existing = (
+        await db.execute(
+            select(CommerceIntegration).where(
+                CommerceIntegration.tenant_id == tenant_id,
+                CommerceIntegration.provider == "shopify",
+            )
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        configured_shop = shopify_service.normalize_shop_domain(
+            (existing.config or {}).get("shop_domain")
+        )
+        if configured_shop != shopify_service.normalize_shop_domain(shop):
+            raise ConflictError("Shopify integration already exists for this tenant")
+
     token = await shopify_service.exchange_code(shop, code)
     access_token = token.get("access_token")
-    if not access_token: raise HTTPException(status_code=502, detail="Shopify OAuth response did not contain an access token")
-    credential = await store_credential(db, tenant_id=tenant_id, provider="shopify", name=f"shopify:{shop}:access_token", secret=access_token)
-    ref = credential_ref(credential)
-    cfg = {"shop_domain": shop, "scope": token.get("scope"), "api_version": get_settings().shopify_api_version, "currency": "EUR", "oauth_installed": True, "credential_refs": {"access_token": ref}}
-    existing = (await db.execute(select(CommerceIntegration).where(CommerceIntegration.tenant_id == tenant_id, CommerceIntegration.provider == "shopify", CommerceIntegration.config["shop_domain"].as_string() == shop))).scalar_one_or_none()
-    if existing:
-        old_ref = (existing.config or {}).get("credential_refs", {}).get("access_token")
-        existing.config = {**(existing.config or {}), **cfg}; existing.status = "connected"; existing.is_active = True; row = existing
-        if old_ref and old_ref != ref and str(old_ref).startswith("cred:"):
-            try: await revoke_credential(db, tenant_id=tenant_id, credential_id=UUID(str(old_ref)[5:]))
-            except (ValueError, HTTPException): pass
-    else:
-        row = CommerceIntegration(tenant_id=tenant_id, provider="shopify", name=f"Shopify — {shop}", status="connected", config=cfg, is_active=True); db.add(row)
-    await db.flush()
-    await audit_service.record(db, tenant_id=tenant_id, actor_type="system", action="commerce.integration.oauth_connected", resource_type="commerce_integration", resource_id=row.id, metadata={"provider": "shopify", "shop": shop})
-    try: await shopify_service.register_webhooks(db, row)
-    except Exception as exc: row.config = {**(row.config or {}), "webhook_registration_error": str(exc)[:500]}
+    if not access_token:
+        raise HTTPException(
+            status_code=502,
+            detail="Shopify OAuth response did not contain an access token",
+        )
+    try:
+        async with db.begin_nested():
+            credential = await store_credential(
+                db,
+                tenant_id=tenant_id,
+                provider="shopify",
+                name=f"shopify:{shop}:access_token",
+                secret=access_token,
+            )
+            ref = credential_ref(credential)
+            cfg = {
+                "shop_domain": shop,
+                "scope": token.get("scope"),
+                "api_version": get_settings().shopify_api_version,
+                "currency": "EUR",
+                "oauth_installed": True,
+                "credential_refs": {"access_token": ref},
+            }
+            existing = (
+                await db.execute(
+                    select(CommerceIntegration).where(
+                        CommerceIntegration.tenant_id == tenant_id,
+                        CommerceIntegration.provider == "shopify",
+                        CommerceIntegration.config["shop_domain"].as_string() == shop,
+                    )
+                )
+            ).scalar_one_or_none()
+            if existing:
+                old_ref = (existing.config or {}).get("credential_refs", {}).get("access_token")
+                existing.config = {**(existing.config or {}), **cfg}
+                existing.status = "connected"
+                existing.is_active = True
+                row = existing
+                if old_ref and old_ref != ref and str(old_ref).startswith("cred:"):
+                    try:
+                        await revoke_credential(
+                            db,
+                            tenant_id=tenant_id,
+                            credential_id=UUID(str(old_ref)[5:]),
+                        )
+                    except (ValueError, HTTPException):
+                        pass
+            else:
+                row = CommerceIntegration(
+                    tenant_id=tenant_id,
+                    provider="shopify",
+                    name=f"Shopify — {shop}",
+                    status="connected",
+                    config=cfg,
+                    is_active=True,
+                )
+                db.add(row)
+            await db.flush()
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name is None and (
+            f'constraint "{commerce_integration_service.SHOPIFY_INTEGRATION_INDEX_NAME}"'
+            in str(exc.orig)
+        ):
+            constraint_name = commerce_integration_service.SHOPIFY_INTEGRATION_INDEX_NAME
+        if constraint_name != commerce_integration_service.SHOPIFY_INTEGRATION_INDEX_NAME:
+            raise
+        raise ConflictError("Shopify integration already exists for this tenant") from exc
+
+    await audit_service.record(
+        db,
+        tenant_id=tenant_id,
+        actor_type="system",
+        action="commerce.integration.oauth_connected",
+        resource_type="commerce_integration",
+        resource_id=row.id,
+        metadata={"provider": "shopify", "shop": shop},
+    )
+    try:
+        await shopify_service.register_webhooks(db, row)
+    except Exception as exc:
+        row.config = {
+            **(row.config or {}),
+            "webhook_registration_error": str(exc)[:500],
+        }
     await db.commit()
-    return RedirectResponse(f"{get_settings().frontend_app_url}/integrations?shopify=connected", status_code=302)
+    return RedirectResponse(
+        f"{get_settings().frontend_app_url}/integrations?shopify=connected",
+        status_code=302,
+    )
+
 
 @router.post("/{integration_id}/test", response_model=APIResponse[dict])
 async def test_integration(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
-    result = await shopify_service.test_connection(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.tested", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify"}); await db.commit(); return APIResponse(success=True, data=result)
+    result = await shopify_service.test_connection(db, ctx.tenant_id, integration_id)
+    await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.tested", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify"})
+    await db.commit()
+    return APIResponse(success=True, data=result)
+
 
 @router.post("/{integration_id}/sync/products", response_model=APIResponse[dict])
 async def sync_products(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
-    result = await shopify_service.sync_products(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.products_synced", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result_keys": sorted(result.keys()) if isinstance(result, dict) else []}); await db.commit(); return APIResponse(success=True, data=result)
+    result = await shopify_service.sync_products(db, ctx.tenant_id, integration_id)
+    await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.products_synced", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result_keys": sorted(result.keys()) if isinstance(result, dict) else []})
+    await db.commit()
+    return APIResponse(success=True, data=result)
+
 
 @router.post("/{integration_id}/sync/orders", response_model=APIResponse[dict])
 async def sync_orders(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
-    result = await shopify_service.sync_orders(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.orders_synced", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result": result}); await db.commit(); return APIResponse(success=True, data=result)
+    result = await shopify_service.sync_orders(db, ctx.tenant_id, integration_id)
+    await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.orders_synced", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result": result})
+    await db.commit()
+    return APIResponse(success=True, data=result)
+
 
 @router.post("/{integration_id}/reconcile", response_model=APIResponse[dict])
 async def reconcile(integration_id: UUID, ctx: CommerceIntegrationContext, db: DbSession):
-    result = await shopify_service.reconcile(db, ctx.tenant_id, integration_id); await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.reconciled", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result": result}); await db.commit(); return APIResponse(success=True, data=result)
+    result = await shopify_service.reconcile(db, ctx.tenant_id, integration_id)
+    await audit_service.record(db, tenant_id=ctx.tenant_id, actor_id=ctx.user_id, action="commerce.integration.reconciled", resource_type="commerce_integration", resource_id=integration_id, metadata={"provider": "shopify", "result": result})
+    await db.commit()
+    return APIResponse(success=True, data=result)
+
 
 @router.post("/shopify/webhooks/{integration_id}")
-async def shopify_webhook(integration_id: UUID, request: Request, db: DbSession, x_shopify_hmac_sha256: str | None = Header(default=None, alias="X-Shopify-Hmac-Sha256"), x_shopify_webhook_id: str | None = Header(default=None, alias="X-Shopify-Webhook-Id"), x_shopify_topic: str | None = Header(default=None, alias="X-Shopify-Topic"), x_shopify_shop_domain: str | None = Header(default=None, alias="X-Shopify-Shop-Domain")):
+async def shopify_webhook(
+    integration_id: UUID,
+    request: Request,
+    db: DbSession,
+    x_shopify_hmac_sha256: str | None = Header(default=None, alias="X-Shopify-Hmac-Sha256"),
+    x_shopify_webhook_id: str | None = Header(default=None, alias="X-Shopify-Webhook-Id"),
+    x_shopify_topic: str | None = Header(default=None, alias="X-Shopify-Topic"),
+    x_shopify_shop_domain: str | None = Header(default=None, alias="X-Shopify-Shop-Domain"),
+):
     body = await request.body()
-    if not shopify_service.verify_webhook(body, x_shopify_hmac_sha256): raise HTTPException(status_code=401, detail="Invalid Shopify webhook signature")
-    if not x_shopify_webhook_id or not x_shopify_webhook_id.strip(): raise HTTPException(status_code=400, detail="Missing Shopify webhook delivery ID")
-    integration = (await db.execute(select(CommerceIntegration).where(CommerceIntegration.id == integration_id))).scalar_one_or_none()
-    if not integration or integration.provider != "shopify": raise HTTPException(status_code=404, detail="Integration not found")
+    if not shopify_service.verify_webhook(body, x_shopify_hmac_sha256):
+        raise HTTPException(status_code=401, detail="Invalid Shopify webhook signature")
+    if not x_shopify_webhook_id or not x_shopify_webhook_id.strip():
+        raise HTTPException(status_code=400, detail="Missing Shopify webhook delivery ID")
+    integration = (
+        await db.execute(
+            select(CommerceIntegration).where(CommerceIntegration.id == integration_id)
+        )
+    ).scalar_one_or_none()
+    if not integration or integration.provider != "shopify":
+        raise HTTPException(status_code=404, detail="Integration not found")
     if not shopify_service.webhook_matches_integration(integration, x_shopify_shop_domain):
         raise HTTPException(status_code=403, detail="Shopify webhook integration mismatch")
-    try: payload = json.loads(body.decode() or "{}")
-    except Exception: payload = {}
+    try:
+        payload = json.loads(body.decode() or "{}")
+    except Exception:
+        payload = {}
     webhook_id = x_shopify_webhook_id.strip()
-    recorded = await shopify_service.record_webhook(db, integration, webhook_id, x_shopify_topic or "unknown", payload)
+    recorded = await shopify_service.record_webhook(
+        db,
+        integration,
+        webhook_id,
+        x_shopify_topic or "unknown",
+        payload,
+    )
     if recorded:
-        integration.config = {**(integration.config or {}), "last_webhook_topic": x_shopify_topic, "last_webhook_id": webhook_id}; await db.commit()
+        integration.config = {
+            **(integration.config or {}),
+            "last_webhook_topic": x_shopify_topic,
+            "last_webhook_id": webhook_id,
+        }
+        await db.commit()
     return {"success": True, "duplicate": not recorded, "webhook_id": webhook_id}

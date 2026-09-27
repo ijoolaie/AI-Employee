@@ -17,6 +17,16 @@ class _AuditDb:
     def add(self, row):
         self.added.append(row)
 
+    class _Nested:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            return False
+
+    def begin_nested(self):
+        return self._Nested()
+
     async def flush(self):
         self.flushes += 1
 
