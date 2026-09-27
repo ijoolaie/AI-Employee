@@ -209,18 +209,15 @@ async def test_timeout_between_child_commit_and_execution_fence_cancels_pending_
     monkeypatch.setattr(workflow_service.run_service, "create_run", create_run)
     monkeypatch.setattr(workflow_service.run_service, "execute_run", execute_child)
 
-    async with AsyncSessionLocal() as db:
-        original_commit = db.commit
-        timeout_injected = False
+    original_lock = workflow_service._lock_parent_for_child_execution
+    timeout_injected = False
 
-        async def commit_and_timeout():
-            nonlocal timeout_injected
-            await original_commit()
-            if timeout_injected:
-                return
+    async def lock_with_injected_timeout(db, *, workflow_run_id):
+        nonlocal timeout_injected
+        if not timeout_injected:
             timeout_injected = True
             async with AsyncSessionLocal() as racing_db:
-                parent = await racing_db.get(WorkflowRun, data["workflow_run_id"])
+                parent = await racing_db.get(WorkflowRun, workflow_run_id)
                 assert parent is not None
                 parent.status = "timed_out"
                 parent.error = {
@@ -229,9 +226,15 @@ async def test_timeout_between_child_commit_and_execution_fence_cancels_pending_
                 }
                 parent.completed_at = datetime.now(timezone.utc)
                 await racing_db.commit()
+        return await original_lock(db, workflow_run_id=workflow_run_id)
 
-        monkeypatch.setattr(db, "commit", commit_and_timeout)
+    monkeypatch.setattr(
+        workflow_service,
+        "_lock_parent_for_child_execution",
+        lock_with_injected_timeout,
+    )
 
+    async with AsyncSessionLocal() as db:
         result = await workflow_service.execute_workflow(
             db,
             workflow_run_id=data["workflow_run_id"],
