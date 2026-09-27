@@ -91,7 +91,7 @@ def test_email_message_id_is_stable_for_outbox_item():
 
 
 @pytest.mark.asyncio
-async def test_claim_excludes_stale_email_delivery_from_recovery_predicate():
+async def test_claim_includes_stale_email_delivery_in_recovery_predicate():
     db = _DB([])
 
     rows = await outbox_service.claim(db)
