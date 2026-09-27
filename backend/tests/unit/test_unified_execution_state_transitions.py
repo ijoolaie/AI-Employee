@@ -66,8 +66,8 @@ def test_retry_rejects_failed_item_without_executor() -> None:
 
 
 class _CancelDB:
-    def __init__(self, children, runs):
-        self.results = [_Result(rows=children), _Result(rows=[]), _Result(rows=runs)]
+    def __init__(self, children, grand_children, runs):
+        self.results = [_Result(rows=children), _Result(rows=grand_children), _Result(rows=runs)]
 
     async def execute(self, _statement):
         return self.results.pop(0)
@@ -111,7 +111,7 @@ async def test_cancel_with_descendants_cancels_active_children_and_queued_runs()
         status="success",
         input_data={},
     )
-    db = _CancelDB([child], [child_run, grandchild_run, terminal_run])
+    db = _CancelDB([child], [grandchild], [child_run, grandchild_run, terminal_run])
     service = UnifiedExecutionService(db)  # type: ignore[arg-type]
 
     await service.cancel_with_descendants(parent)
