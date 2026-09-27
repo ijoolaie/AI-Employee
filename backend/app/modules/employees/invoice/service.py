@@ -188,7 +188,9 @@ async def update_invoice(
     invoice_id: str,
     **data: Any,
 ) -> BusinessInvoice:
-    inv = await get_invoice(db, tenant_id=tenant_id, invoice_id=invoice_id)
+    inv = await get_invoice(
+        db, tenant_id=tenant_id, invoice_id=invoice_id, for_update=True
+    )
     if inv.status != "draft":
         raise ValidationAppError("Only draft invoices can be edited")
     if not data:
@@ -222,7 +224,9 @@ async def update_status(
 ) -> BusinessInvoice:
     if status not in ALLOWED_STATUSES:
         raise ValidationAppError(f"status must be one of {sorted(ALLOWED_STATUSES)}")
-    inv = await get_invoice(db, tenant_id=tenant_id, invoice_id=invoice_id)
+    inv = await get_invoice(
+        db, tenant_id=tenant_id, invoice_id=invoice_id, for_update=True
+    )
     inv.status = status
     await db.flush()
     await audit_service.record(
@@ -238,18 +242,23 @@ async def update_status(
 
 
 async def get_invoice(
-    db: AsyncSession, *, tenant_id: uuid.UUID, invoice_id: str
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    invoice_id: str,
+    for_update: bool = False,
 ) -> BusinessInvoice:
     try:
         iid = uuid.UUID(str(invoice_id))
     except ValueError as exc:
         raise ValidationAppError("invoice_id must be a valid UUID") from exc
-    result = await db.execute(
-        select(BusinessInvoice).where(
-            BusinessInvoice.id == iid,
-            BusinessInvoice.tenant_id == tenant_id,
-        )
+    stmt = select(BusinessInvoice).where(
+        BusinessInvoice.id == iid,
+        BusinessInvoice.tenant_id == tenant_id,
     )
+    if for_update:
+        stmt = stmt.with_for_update()
+    result = await db.execute(stmt)
     inv = result.scalar_one_or_none()
     if inv is None:
         raise NotFoundError("Invoice not found")
@@ -426,7 +435,9 @@ async def export_pdf(
     actor_id: uuid.UUID | None,
     invoice_id: str,
 ) -> dict[str, Any]:
-    inv = await get_invoice(db, tenant_id=tenant_id, invoice_id=invoice_id)
+    inv = await get_invoice(
+        db, tenant_id=tenant_id, invoice_id=invoice_id, for_update=True
+    )
     pdf_bytes = _render_invoice_pdf(inv)
     if actor_id is None:
         raise ValidationAppError("export_pdf requires an authenticated actor")

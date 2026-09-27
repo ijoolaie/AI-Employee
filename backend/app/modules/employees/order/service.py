@@ -85,6 +85,16 @@ async def create_order(
             invoice_uuid = uuid.UUID(str(invoice_id))
         except ValueError as exc:
             raise ValidationAppError("invoice_id must be a valid UUID") from exc
+        from app.models.business_invoice import BusinessInvoice
+
+        invoice_result = await db.execute(
+            select(BusinessInvoice).where(
+                BusinessInvoice.id == invoice_uuid,
+                BusinessInvoice.tenant_id == tenant_id,
+            )
+        )
+        if invoice_result.scalar_one_or_none() is None:
+            raise NotFoundError("Invoice not found for this tenant")
 
     order = BusinessOrder(
         tenant_id=tenant_id,
@@ -141,7 +151,9 @@ async def update_status(
 ) -> BusinessOrder:
     if status not in ALLOWED_STATUSES:
         raise ValidationAppError(f"status must be one of {sorted(ALLOWED_STATUSES)}")
-    order = await get_order(db, tenant_id=tenant_id, order_id=order_id)
+    order = await get_order(
+        db, tenant_id=tenant_id, order_id=order_id, for_update=True
+    )
     order.status = status
     await db.flush()
     await audit_service.record(
@@ -157,18 +169,23 @@ async def update_status(
 
 
 async def get_order(
-    db: AsyncSession, *, tenant_id: uuid.UUID, order_id: str
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    order_id: str,
+    for_update: bool = False,
 ) -> BusinessOrder:
     try:
         oid = uuid.UUID(str(order_id))
     except ValueError as exc:
         raise ValidationAppError("order_id must be a valid UUID") from exc
-    result = await db.execute(
-        select(BusinessOrder).where(
-            BusinessOrder.id == oid,
-            BusinessOrder.tenant_id == tenant_id,
-        )
+    stmt = select(BusinessOrder).where(
+        BusinessOrder.id == oid,
+        BusinessOrder.tenant_id == tenant_id,
     )
+    if for_update:
+        stmt = stmt.with_for_update()
+    result = await db.execute(stmt)
     order = result.scalar_one_or_none()
     if order is None:
         raise NotFoundError("Order not found")
@@ -185,7 +202,9 @@ async def update_order(
     order_id: str,
     **data: Any,
 ) -> BusinessOrder:
-    order = await get_order(db, tenant_id=tenant_id, order_id=order_id)
+    order = await get_order(
+        db, tenant_id=tenant_id, order_id=order_id, for_update=True
+    )
     if order.status != "draft":
         raise ValidationAppError("Only draft orders can be edited")
     if not data:
@@ -337,7 +356,9 @@ async def link_invoice(
     order_id: str,
     invoice_id: str,
 ) -> BusinessOrder:
-    order = await get_order(db, tenant_id=tenant_id, order_id=order_id)
+    order = await get_order(
+        db, tenant_id=tenant_id, order_id=order_id, for_update=True
+    )
     try:
         inv_uuid = uuid.UUID(str(invoice_id))
     except ValueError as exc:
