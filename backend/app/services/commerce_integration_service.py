@@ -10,7 +10,7 @@ from app.services import audit_service
 from app.services.credential_service import credential_ref, store_credential
 
 SECRET_KEYS = {"api_key", "access_token", "client_secret", "password", "token"}
-COMMERCE_INTEGRATION_PROVIDER_INDEX_NAME = "uq_commerce_integrations_tenant_provider"
+SHOPIFY_INTEGRATION_INDEX_NAME = "uq_commerce_integrations_tenant_shopify"
 
 
 def _redact(config: dict) -> dict:
@@ -65,16 +65,17 @@ async def create_integration(
     config: dict,
     actor_id: uuid.UUID | None = None,
 ):
-    existing = (
-        await db.execute(
-            select(CommerceIntegration).where(
-                CommerceIntegration.tenant_id == tenant_id,
-                CommerceIntegration.provider == provider,
+    if provider == "shopify":
+        existing = (
+            await db.execute(
+                select(CommerceIntegration).where(
+                    CommerceIntegration.tenant_id == tenant_id,
+                    CommerceIntegration.provider == provider,
+                )
             )
-        )
-    ).scalar_one_or_none()
-    if existing is not None:
-        raise ConflictError(f"{provider} integration already exists for this tenant")
+        ).scalar_one_or_none()
+        if existing is not None:
+            raise ConflictError("Shopify integration already exists for this tenant")
 
     try:
         async with db.begin_nested():
@@ -93,11 +94,9 @@ async def create_integration(
             await db.flush()
     except IntegrityError as exc:
         constraint_name = getattr(exc.orig, "constraint_name", None)
-        if constraint_name != COMMERCE_INTEGRATION_PROVIDER_INDEX_NAME:
+        if constraint_name != SHOPIFY_INTEGRATION_INDEX_NAME:
             raise
-        raise ConflictError(
-            f"{provider} integration already exists for this tenant"
-        ) from exc
+        raise ConflictError("Shopify integration already exists for this tenant") from exc
 
     await audit_service.record(
         db,
