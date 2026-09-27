@@ -10,6 +10,8 @@ import pytest_asyncio
 from sqlalchemy import delete, select
 
 from app.core.database import AsyncSessionLocal
+from app.models.agent_definition import AgentDefinition
+from app.models.agent_instance import AgentInstance
 from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.tenant import Tenant
@@ -31,6 +33,22 @@ async def workflow_cross_race_setup(monkeypatch):
             status="active",
         )
         db.add(tenant)
+        await db.flush()
+
+        agent_definition = AgentDefinition(
+            tenant_id=tenant.id,
+            slug=f"workflow-cross-race-agent-{uuid.uuid4().hex[:8]}",
+            name="Workflow Cross-Race Agent",
+        )
+        db.add(agent_definition)
+        await db.flush()
+
+        agent_instance = AgentInstance(
+            tenant_id=tenant.id,
+            agent_definition_id=agent_definition.id,
+            name="Workflow Cross-Race Agent Instance",
+        )
+        db.add(agent_instance)
         await db.flush()
 
         employee = Employee(
@@ -95,6 +113,7 @@ async def workflow_cross_race_setup(monkeypatch):
             workflow_id=workflow.id,
             workflow_version_id=version.id,
             created_by=None,
+            agent_instance_id=agent_instance.id,
             status="running",
             context={
                 "input": {"value": "race"},
@@ -113,6 +132,8 @@ async def workflow_cross_race_setup(monkeypatch):
             "tenant_id": tenant.id,
             "employee_id": employee.id,
             "employee_version_id": employee_version.id,
+            "agent_instance_id": agent_instance.id,
+            "agent_definition_id": agent_definition.id,
             "workflow_id": workflow.id,
             "workflow_version_id": version.id,
             "workflow_run_id": run.id,
@@ -130,21 +151,27 @@ async def workflow_cross_race_setup(monkeypatch):
         await db.execute(
             delete(WorkflowRun).where(WorkflowRun.id == data["workflow_run_id"])
         )
+        # WorkflowVersion is an immutable ledger row and cannot be physically deleted.
+        # Retain the workflow/version graph and deprovision the tenant fixture instead.
         await db.execute(
-            delete(WorkflowVersion).where(
-                WorkflowVersion.id == data["workflow_version_id"]
+            delete(AgentInstance).where(
+                AgentInstance.id == data["agent_instance_id"]
             )
         )
-        await db.execute(delete(Workflow).where(Workflow.id == data["workflow_id"]))
+        await db.execute(
+            delete(AgentDefinition).where(
+                AgentDefinition.id == data["agent_definition_id"]
+            )
+        )
         await db.execute(
             delete(EmployeeVersion).where(
                 EmployeeVersion.id == data["employee_version_id"]
             )
         )
-        await db.execute(
-            delete(Employee).where(Employee.id == data["employee_id"])
-        )
-        await db.execute(delete(Tenant).where(Tenant.id == data["tenant_id"]))
+        await db.execute(delete(Employee).where(Employee.id == data["employee_id"]))
+        tenant = await db.get(Tenant, data["tenant_id"])
+        if tenant is not None:
+            tenant.status = "deprovisioned"
         await db.commit()
 
 
@@ -259,5 +286,6 @@ async def test_timeout_between_child_commit_and_execution_fence_cancels_pending_
         assert parent.status == "timed_out"
         assert len(child) == 1
         assert child[0].status == "cancelled"
+        assert child[0].agent_instance_id == data["agent_instance_id"]
         assert child[0].completed_at is not None
         assert "became terminal before child execution" in (child[0].error_message or "")
