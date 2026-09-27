@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import uuid
-from types import SimpleNamespace
-
 import pytest
 
-from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.models.run import Run
+from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services.run_service import _sync_work_item_lifecycle
 
 
