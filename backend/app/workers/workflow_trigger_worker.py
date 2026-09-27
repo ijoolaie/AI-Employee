@@ -62,10 +62,16 @@ async def _expire_workflow_approvals_async() -> int:
         for approval in result.scalars().all():
             approval.status = "expired"
             approval.decided_at = datetime.now(timezone.utc)
-            step_result = await db.execute(select(WorkflowStepRun).where(WorkflowStepRun.id == approval.workflow_step_run_id).with_for_update())
-            step = step_result.scalar_one_or_none()
-            run_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == approval.workflow_run_id).with_for_update())
+            # Keep the same parent-first order as cancellation and timeout
+            # reconciliation: WorkflowRun -> WorkflowStepRun.
+            run_result = await db.execute(
+                select(WorkflowRun).where(WorkflowRun.id == approval.workflow_run_id).with_for_update()
+            )
             run = run_result.scalar_one_or_none()
+            step_result = await db.execute(
+                select(WorkflowStepRun).where(WorkflowStepRun.id == approval.workflow_step_run_id).with_for_update()
+            )
+            step = step_result.scalar_one_or_none()
             if (
                 step
                 and run
