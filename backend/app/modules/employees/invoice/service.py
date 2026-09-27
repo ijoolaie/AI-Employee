@@ -27,6 +27,14 @@ from app.services import audit_service, file_service, storage
 
 ALLOWED_STATUSES = frozenset({"draft", "sent", "paid", "overdue", "void"})
 
+INVOICE_STATUS_TRANSITIONS = {
+    "draft": {"sent", "void"},
+    "sent": {"paid", "overdue", "void"},
+    "paid": set(),
+    "overdue": {"paid", "void"},
+    "void": set(),
+}
+
 _AMOUNT_RE = re.compile(
     r"[\d,\.]{3,}\s?(?:ریال|تومان|﷼|\$|€|USD|IRR|EUR)\b|(?:\$|€)\s?[\d,\.]{2,}"
 )
@@ -227,6 +235,8 @@ async def update_status(
     inv = await get_invoice(
         db, tenant_id=tenant_id, invoice_id=invoice_id, for_update=True
     )
+    if status != inv.status and status not in INVOICE_STATUS_TRANSITIONS[inv.status]:
+        raise ConflictError(f"Invalid invoice lifecycle transition: {inv.status} -> {status}")
     inv.status = status
     await db.flush()
     await audit_service.record(
