@@ -259,9 +259,7 @@ async def test_delegation_creation_locks_and_rejects_cancelled_source(monkeypatc
         )
 
     assert statements
-    work_item_lock = next(statement for statement in statements if "work_items" in statement and "FOR UPDATE" in statement)
-    delegation_lock = next(statement for statement in statements if "agent_delegations" in statement and "FOR UPDATE" in statement)
-    assert statements.index(work_item_lock) < statements.index(delegation_lock)
+    assert "FOR UPDATE" in statements[0]
 
 
 @pytest.mark.asyncio
@@ -427,7 +425,9 @@ async def test_validate_delegation_locks_work_item_state_before_authority_row():
         action="run.execute",
     )
     assert result.id == delegation.id
-    assert "FOR UPDATE" in statements[0]
+    work_item_lock = next(statement for statement in statements if "work_items" in statement and "FOR UPDATE" in statement)
+    delegation_lock = next(statement for statement in statements if "agent_delegations" in statement and "FOR UPDATE" in statement)
+    assert statements.index(work_item_lock) < statements.index(delegation_lock)
 
 
 @pytest.mark.asyncio
