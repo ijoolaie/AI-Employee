@@ -1687,8 +1687,9 @@ def test_workflow_approval_paths_lock_parent_before_step():
     """Approval decision and expiry must share WorkflowRun -> WorkflowStepRun order."""
     from pathlib import Path
 
-    api_source = Path("backend/app/api/v1/workflow_approvals.py").read_text()
-    worker_source = Path("backend/app/workers/workflow_trigger_worker.py").read_text()
+    root = Path(__file__).resolve().parents[1]
+    api_source = (root / "app/api/v1/workflow_approvals.py").read_text()
+    worker_source = (root / "app/workers/workflow_trigger_worker.py").read_text()
 
     api_parent = api_source.index("select(WorkflowRun)")
     api_step = api_source.index("select(WorkflowStepRun)")
