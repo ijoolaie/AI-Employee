@@ -1,6 +1,6 @@
 # Data Retention & Lifecycle Enforcement
 
-**Reconciled:** 2026-09-05
+**Reconciled:** 2026-09-27
 
 ## Purpose
 
@@ -10,10 +10,11 @@ Define a deterministic, tenant-scoped retention boundary for operational data wi
 
 - Default retention window: **365 days**.
 - Allowed operational window: 1–3650 days when the caller explicitly supplies the value.
-- Audit logs: hard-delete records older than the retention cutoff for the selected tenant.
+- **Audit logs are immutable and are not hard-deleted by the retention service.**
 - Usage events: hard-delete records older than the retention cutoff for the selected tenant.
 - Employee memory: hard-delete only lifecycle-terminal rows (`expired`, `deleted`, `superseded`) older than the cutoff. Active memory is never removed solely because it is old.
 - Files: mark stale active file metadata as `deleted` and record `deleted_at`; physical object deletion remains storage-provider lifecycle work and must be verified on the target storage backend.
+- File upload compensates for pre-commit metadata/audit failures by deleting the newly written object. A database commit failure can still occur after the service returns; provider-side orphan reconciliation/lifecycle controls therefore remain a production requirement.
 - Every cleanup operation is tenant-scoped and idempotent by predicate.
 - No retention job accepts secrets on the command line.
 
@@ -33,13 +34,15 @@ In particular, physical deletion/version expiry for object storage and backup li
 
 - [x] Tenant-scoped retention service.
 - [x] Bounded retention window validation.
-- [x] Audit-log cleanup.
+- [x] Immutable audit logs excluded from retention deletion.
 - [x] Usage-ledger cleanup.
 - [x] Terminal-memory cleanup.
 - [x] File metadata soft deletion.
+- [x] Pre-commit file-upload compensation for DB/audit failures.
 - [x] Tenant-wide runner.
 - [x] Unit coverage for policy bounds and tenant-scoped execution shape.
 - [ ] Target scheduler configured and observed.
 - [ ] Object-storage lifecycle/version expiration verified.
+- [ ] Storage orphan reconciliation after post-service DB commit failure verified.
 - [ ] Backup retention/legal-hold interaction reviewed.
 - [ ] Production evidence attached to immutable release identity.
