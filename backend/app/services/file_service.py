@@ -94,6 +94,10 @@ async def upload_file(
     write_limit = min(max_size, remaining_quota) + 1
     key = storage.build_key(str(tenant_id), filename)
     backend = storage.get_storage_backend()
+
+    # Object storage is external to the SQL transaction. If the metadata or
+    # audit write fails before the caller commits, compensate immediately so a
+    # rejected transaction does not leave an unreachable object behind.
     size = backend.save(key, _LimitedReader(data, write_limit))
 
     if size > max_size:
@@ -109,30 +113,46 @@ async def upload_file(
             details={"quota_bytes": quota, "used_bytes": used_bytes},
         )
 
-    file_obj = FileObject(
-        tenant_id=tenant_id,
-        uploaded_by=uploaded_by,
-        filename=filename,
-        content_type=content_type,
-        size_bytes=size,
-        storage_key=key,
-        status="active",
-    )
-    db.add(file_obj)
-    await db.flush()
-    await db.refresh(file_obj)
+    try:
+        file_obj = FileObject(
+            tenant_id=tenant_id,
+            uploaded_by=uploaded_by,
+            filename=filename,
+            content_type=content_type,
+            size_bytes=size,
+            storage_key=key,
+            status="active",
+        )
+        db.add(file_obj)
+        await db.flush()
+        await db.refresh(file_obj)
 
-    await audit_service.record(
-        db,
-        action="file.uploaded",
-        actor_type="user",
-        actor_id=uploaded_by,
-        tenant_id=tenant_id,
-        resource_type="file",
-        resource_id=file_obj.id,
-        request_id=request_id_var.get(),
-        metadata={"filename": filename, "size_bytes": size, "tenant_storage_used_bytes": used_bytes + size},
-    )
+        await audit_service.record(
+            db,
+            action="file.uploaded",
+            actor_type="user",
+            actor_id=uploaded_by,
+            tenant_id=tenant_id,
+            resource_type="file",
+            resource_id=file_obj.id,
+            request_id=request_id_var.get(),
+            metadata={
+                "filename": filename,
+                "size_bytes": size,
+                "tenant_storage_used_bytes": used_bytes + size,
+            },
+        )
+    except Exception:
+        # The outer DB dependency owns rollback. We own the compensating
+        # storage action for failures discovered before that transaction ends.
+        try:
+            backend.delete(key)
+        except Exception:
+            # Preserve the original DB/audit failure; provider-side cleanup
+            # remains observable through storage lifecycle reconciliation.
+            pass
+        raise
+
     return file_obj
 
 
