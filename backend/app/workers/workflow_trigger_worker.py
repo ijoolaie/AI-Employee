@@ -120,8 +120,14 @@ async def _timeout_workflow_runs_async() -> int:
             recovered += 1
         from app.models.workflow import WorkflowParallelBranchRun
         from app.services.workflow_execution_lease import recover_parallel_branch_execution_lease
+        # Discovery must lock the parent only. The recovery helper then acquires
+        # Parent -> Branch. Locking the branch here first would recreate the
+        # Branch -> Parent inversion against concurrent cancellation.
         branch_stale = await db.execute(
-            select(WorkflowParallelBranchRun).join(WorkflowRun, WorkflowRun.id == WorkflowParallelBranchRun.workflow_run_id).where(
+            select(WorkflowParallelBranchRun).join(
+                WorkflowRun,
+                WorkflowRun.id == WorkflowParallelBranchRun.workflow_run_id,
+            ).where(
                 WorkflowParallelBranchRun.status == "running",
                 WorkflowParallelBranchRun.execution_lease_id.is_not(None),
                 WorkflowParallelBranchRun.execution_lease_expires_at.is_not(None),
@@ -129,7 +135,7 @@ async def _timeout_workflow_runs_async() -> int:
                 WorkflowRun.deadline_at.is_not(None),
                 WorkflowRun.deadline_at > now,
                 WorkflowRun.status == "running",
-            ).with_for_update(skip_locked=True)
+            ).with_for_update(of=WorkflowRun, skip_locked=True)
         )
         for branch in branch_stale.scalars().all():
             lease_id = await recover_parallel_branch_execution_lease(db, branch_id=branch.id)
