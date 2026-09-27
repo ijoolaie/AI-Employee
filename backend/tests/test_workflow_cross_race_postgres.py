@@ -430,12 +430,11 @@ async def test_parallel_branch_timeout_after_child_commit_never_executes_child(
         lock_with_timeout,
     )
 
-    with pytest.raises(Exception):
-        await workflow_service._execute_parallel_branch(
-            branch_id,
-            execution_lease_id=branch_lease_id,
-            expected_tenant_id=data["tenant_id"],
-        )
+    await workflow_service._execute_parallel_branch(
+        branch_id,
+        execution_lease_id=branch_lease_id,
+        expected_tenant_id=data["tenant_id"],
+    )
 
     assert executed is False
 
