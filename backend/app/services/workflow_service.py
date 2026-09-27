@@ -36,9 +36,7 @@ async def _lock_parent_for_child_execution(db: AsyncSession, *, workflow_run_id:
     if run is None:
         raise NotFoundError("Workflow run not found")
     if run.status != "running":
-        raise ValidationAppError(
-            f"WORKFLOW_PARENT_NOT_RUNNING:{run.status}"
-        )
+        return run
     now = datetime.now(timezone.utc)
     if run.deadline_at is not None and run.deadline_at <= now:
         run.status = "timed_out"
@@ -429,6 +427,10 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         # Re-lock and re-check it before the child Run can execute.
                         parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
                         if parent.status != "running":
+                            if child.status in {"pending", "waiting"}:
+                                child.status = "cancelled"
+                                child.error_message = "Run cancelled because its WorkflowRun became terminal before child execution"
+                                child.completed_at = datetime.now(timezone.utc)
                             branch.status = "cancelled" if parent.status == "cancelled" else "failed"
                             branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
                             branch.completed_at = datetime.now(timezone.utc)
@@ -626,6 +628,11 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                     # cancellation may therefore have happened in between.
                     run = await _lock_parent_for_child_execution(db, workflow_run_id=run.id)
                     if run.status != "running":
+                        if child.status in {"pending", "waiting"}:
+                            child.status = "cancelled"
+                            child.error_message = "Run cancelled because its WorkflowRun became terminal before child execution"
+                            child.completed_at = datetime.now(timezone.utc)
+                            await db.flush()
                         return run
                     await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
                     await run_service.execute_run(db, run_id=child.id)
