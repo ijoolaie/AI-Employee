@@ -505,19 +505,22 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
             if branch.status == "success":
                 return
         except Exception as exc:
-            # A concurrent cancellation may hold the parent lock while waiting
-            # for this branch row. Release this transaction's branch lock first
-            # so the two paths cannot deadlock in opposite lock order.
+            # Capture immutable identifiers before rollback. AsyncSession.rollback()
+            # expires ORM state; dereferencing parent.id/branch.id afterwards can
+            # trigger implicit IO and raise MissingGreenlet. The rollback also
+            # releases the branch lock before parent-first cancellation reconciliation.
+            parent_id = parent.id
+            branch_id = branch.id
             await db.rollback()
             fresh_parent = await db.execute(
                 select(WorkflowRun.status, WorkflowRun.error)
-                .where(WorkflowRun.id == parent.id)
+                .where(WorkflowRun.id == parent_id)
                 .with_for_update()
             )
             fresh_parent_row = fresh_parent.one_or_none()
             branch_result = await db.execute(
                 select(WorkflowParallelBranchRun)
-                .where(WorkflowParallelBranchRun.id == branch.id)
+                .where(WorkflowParallelBranchRun.id == branch_id)
                 .execution_options(populate_existing=True)
             )
             branch = branch_result.scalar_one_or_none()
