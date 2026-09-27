@@ -1,7 +1,7 @@
 """Persist optional AgentInstance provenance on WorkflowRun.
 
 Revision ID: v1414workflowprincipal
-Revises: v1413workforceprovenance
+Revises: f6a7b8c9d0e1, v1413workforceprovenance
 """
 
 from alembic import op
@@ -10,7 +10,7 @@ from sqlalchemy.dialects import postgresql
 
 
 revision = "v1414workflowprincipal"
-down_revision = "v1413workforceprovenance"
+down_revision = ("f6a7b8c9d0e1", "v1413workforceprovenance")
 branch_labels = None
 depends_on = None
 
