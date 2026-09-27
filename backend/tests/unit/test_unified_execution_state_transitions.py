@@ -9,6 +9,17 @@ from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 
 
+class _Result:
+    def __init__(self, *, rows=()):
+        self._rows = list(rows)
+
+    def scalars(self):
+        return self
+
+    def all(self):
+        return self._rows
+
+
 def _item(status: WorkItemStatus) -> WorkItem:
     return WorkItem(
         tenant_id=uuid4(),
@@ -67,7 +78,12 @@ def test_retry_rejects_failed_item_without_executor() -> None:
 
 class _CancelDB:
     def __init__(self, children, grand_children, runs):
-        self.results = [_Result(rows=children), _Result(rows=grand_children), _Result(rows=runs)]
+        self.results = [
+            _Result(rows=children),
+            _Result(rows=grand_children),
+            _Result(rows=[]),
+            _Result(rows=runs),
+        ]
 
     async def execute(self, _statement):
         return self.results.pop(0)
@@ -118,7 +134,7 @@ async def test_cancel_with_descendants_cancels_active_children_and_queued_runs()
 
     assert parent.status is WorkItemStatus.CANCELLED
     assert child.status is WorkItemStatus.CANCELLED
-    assert grandchild.status is WorkItemStatus.WAITING_APPROVAL
+    assert grandchild.status is WorkItemStatus.CANCELLED
     assert child_run.status == "cancelled"
     assert grandchild_run.status == "cancelled"
     assert terminal_run.status == "success"
