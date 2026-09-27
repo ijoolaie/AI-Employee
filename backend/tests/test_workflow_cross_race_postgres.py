@@ -1700,3 +1700,110 @@ def test_workflow_approval_paths_lock_parent_before_step():
     assert worker_parent < worker_step
     assert ".with_for_update()" in api_source[api_parent:api_step]
     assert ".with_for_update()" in worker_source[worker_parent:worker_step]
+
+
+@pytest.mark.asyncio
+async def test_timeout_sweep_branch_recovery_keeps_parent_first_lock_order(
+    workflow_cross_race_setup, monkeypatch
+):
+    """The recovery sweep must not hold a branch lock before acquiring its parent."""
+    data = workflow_cross_race_setup
+
+    async with AsyncSessionLocal() as db:
+        run = await db.get(WorkflowRun, data["workflow_run_id"])
+        assert run is not None
+        run.status = "running"
+        run.deadline_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        step = WorkflowStepRun(
+            workflow_run_id=run.id,
+            step_key="sweep-lock-order",
+            step_type="parallel",
+            position=0,
+            status="waiting_parallel",
+            input_data={},
+        )
+        db.add(step)
+        await db.flush()
+        branch = WorkflowParallelBranchRun(
+            workflow_run_id=run.id,
+            workflow_step_run_id=step.id,
+            branch_key="sweep-lock-order-branch",
+            config={"steps": []},
+            status="running",
+            execution_lease_id=uuid.uuid4(),
+            execution_lease_expires_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+        )
+        db.add(branch)
+        await db.commit()
+        branch_id = branch.id
+
+    discovery_returned = asyncio.Event()
+    cancellation_started = asyncio.Event()
+    cancellation_task = None
+
+    async def cancel_parent():
+        async with AsyncSessionLocal() as db:
+            await db.execute(
+                select(WorkflowRun)
+                .where(WorkflowRun.id == data["workflow_run_id"])
+                .with_for_update()
+            )
+            cancellation_started.set()
+            cancelled = await workflow_service.cancel_workflow_run(
+                db,
+                workflow_run_id=data["workflow_run_id"],
+                tenant_id=data["tenant_id"],
+                cancelled_by=uuid.uuid4(),
+                reason="Recovery sweep lock-order race",
+            )
+            await db.commit()
+            assert cancelled.status == "cancelled"
+
+    original_recover = workflow_execution_lease.recover_parallel_branch_execution_lease
+
+    async def recover_with_race(db, *, branch_id):
+        nonlocal cancellation_task
+        discovery_returned.set()
+        cancellation_task = asyncio.create_task(cancel_parent())
+        await cancellation_started.wait()
+        return await original_recover(db, branch_id=branch_id)
+
+    async def enqueue(db, *, kind, tenant_id=None, payload, dedupe_key=None, available_at=None):
+        message = OutboxMessage(
+            tenant_id=tenant_id,
+            kind=kind,
+            payload=payload,
+            status="pending",
+            attempts=0,
+            dedupe_key=dedupe_key,
+            available_at=available_at or datetime.now(timezone.utc),
+        )
+        db.add(message)
+        await db.flush()
+        return message
+
+    from app.workers import workflow_trigger_worker
+    from app.services import outbox_service
+
+    monkeypatch.setattr(workflow_execution_lease, "recover_parallel_branch_execution_lease", recover_with_race)
+    monkeypatch.setattr(outbox_service, "enqueue", enqueue)
+
+    count = await asyncio.wait_for(
+        workflow_trigger_worker._timeout_workflow_runs_async(),
+        timeout=4,
+    )
+
+    assert discovery_returned.is_set()
+    assert cancellation_task is not None
+    await asyncio.wait_for(cancellation_task, timeout=2)
+    assert count == 0
+
+    async with AsyncSessionLocal() as db:
+        parent = await db.get(WorkflowRun, data["workflow_run_id"])
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert parent is not None
+        assert parent.status == "cancelled"
+        assert branch is not None
+        assert branch.status == "cancelled"
+        assert branch.execution_lease_id is None
+        assert branch.execution_lease_expires_at is None
