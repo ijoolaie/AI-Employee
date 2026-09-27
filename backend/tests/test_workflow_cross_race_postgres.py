@@ -13,7 +13,7 @@ from app.core.database import AsyncSessionLocal
 from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.tenant import Tenant
-from app.models.workflow import Workflow, WorkflowRun, WorkflowVersion
+from app.models.workflow import Workflow, WorkflowRun, WorkflowStepRun, WorkflowVersion
 from app.services import workflow_service
 
 
@@ -122,6 +122,11 @@ async def workflow_cross_race_setup(monkeypatch):
 
     async with AsyncSessionLocal() as db:
         await db.execute(delete(Run).where(Run.tenant_id == data["tenant_id"]))
+        await db.execute(
+            delete(WorkflowStepRun).where(
+                WorkflowStepRun.workflow_run_id == data["workflow_run_id"]
+            )
+        )
         await db.execute(
             delete(WorkflowRun).where(WorkflowRun.id == data["workflow_run_id"])
         )
@@ -240,7 +245,10 @@ async def test_timeout_between_child_commit_and_execution_fence_cancels_pending_
         parent = await db.get(WorkflowRun, data["workflow_run_id"])
         child = (
             await db.execute(
-                select(Run).where(Run.workflow_step_run_id.is_not(None))
+                select(Run).where(
+                    Run.tenant_id == data["tenant_id"],
+                    Run.workflow_step_run_id.is_not(None),
+                )
             )
         ).scalars().all()
 
