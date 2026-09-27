@@ -331,6 +331,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
             raise ValidationAppError("Workflow Run not found")
         if expected_tenant_id is not None and parent.tenant_id != expected_tenant_id:
             raise ValidationAppError("Worker tenant context does not match Workflow Run tenant")
+        workflow_run_id = parent.id
 
         acquired_lease = execution_lease_id is None
         lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(
@@ -374,7 +375,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                 # Re-lock the durable parent before every branch execution boundary.
                 # This both refreshes stale ORM state and converts an expired deadline
                 # into the durable timed_out terminal state before branch progress.
-                parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
+                parent = await _lock_parent_for_child_execution(db, workflow_run_id=workflow_run_id)
                 if parent.status != "running":
                     branch.status = "cancelled" if parent.status == "cancelled" else "failed"
                     branch.error = {
