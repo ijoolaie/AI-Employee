@@ -260,6 +260,7 @@ async def test_delegation_creation_locks_and_rejects_cancelled_source(monkeypatc
 
     assert statements
     assert "FOR UPDATE" in statements[0]
+    assert "work_items" in statements[0]
 
 
 @pytest.mark.asyncio
@@ -392,7 +393,7 @@ async def test_delegated_tool_policy_receives_delegation_proof(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_validate_delegation_locks_authority_row_before_work_item_state():
+async def test_validate_delegation_locks_work_item_state_before_authority_row():
     tenant = uuid4()
     delegator = uuid4()
     delegate = uuid4()
