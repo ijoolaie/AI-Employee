@@ -1484,3 +1484,97 @@ async def test_branch_lease_loss_during_parent_cancellation_preserves_terminal_b
         assert branch.execution_lease_expires_at is None
         assert branch.execution_heartbeat_at is None
         assert branch.completed_at is not None
+
+
+
+@pytest.mark.asyncio
+async def test_parallel_branch_recovery_uses_parent_first_lock_order(
+    workflow_cross_race_setup,
+):
+    """Branch recovery must not deadlock with parent-first cancellation."""
+    data = workflow_cross_race_setup
+
+    async with AsyncSessionLocal() as db:
+        run = await db.get(WorkflowRun, data["workflow_run_id"])
+        assert run is not None
+        run.status = "running"
+        run.deadline_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        db.add(
+            WorkflowStepRun(
+                workflow_run_id=run.id,
+                step_key="recovery-race",
+                step_type="parallel",
+                position=0,
+                status="waiting_parallel",
+                input_data={},
+            )
+        )
+        await db.flush()
+        step = (
+            await db.execute(
+                select(WorkflowStepRun).where(
+                    WorkflowStepRun.workflow_run_id == run.id,
+                    WorkflowStepRun.step_key == "recovery-race",
+                )
+            )
+        ).scalar_one()
+        branch = WorkflowParallelBranchRun(
+            workflow_run_id=run.id,
+            workflow_step_run_id=step.id,
+            branch_key="recovery-race-branch",
+            config={"steps": []},
+            status="running",
+            execution_lease_id=uuid.uuid4(),
+            execution_lease_expires_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+        )
+        db.add(branch)
+        await db.commit()
+        branch_id = branch.id
+
+    parent_locked = asyncio.Event()
+
+    async def cancel_parent():
+        async with AsyncSessionLocal() as db:
+            await db.execute(
+                select(WorkflowRun)
+                .where(WorkflowRun.id == data["workflow_run_id"])
+                .with_for_update()
+            )
+            parent_locked.set()
+            # Give recovery a chance to contend for the same parent row before
+            # cancellation takes the branch lock.
+            await asyncio.sleep(0.1)
+            cancelled = await workflow_service.cancel_workflow_run(
+                db,
+                workflow_run_id=data["workflow_run_id"],
+                tenant_id=data["tenant_id"],
+                cancelled_by=uuid.uuid4(),
+                reason="Recovery lock-order race",
+            )
+            await db.commit()
+            assert cancelled.status == "cancelled"
+
+    cancellation_task = asyncio.create_task(cancel_parent())
+    await asyncio.wait_for(parent_locked.wait(), timeout=2)
+
+    async with AsyncSessionLocal() as recovery_db:
+        recovery_task = asyncio.create_task(
+            workflow_execution_lease.recover_parallel_branch_execution_lease(
+                recovery_db,
+                branch_id=branch_id,
+            )
+        )
+        with pytest.raises(ValidationAppError, match="Parent workflow is not recoverable"):
+            await asyncio.wait_for(recovery_task, timeout=2)
+
+    await asyncio.wait_for(cancellation_task, timeout=2)
+
+    async with AsyncSessionLocal() as db:
+        parent = await db.get(WorkflowRun, data["workflow_run_id"])
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert parent is not None
+        assert parent.status == "cancelled"
+        assert branch is not None
+        assert branch.status == "cancelled"
+        assert branch.execution_lease_id is None
+        assert branch.execution_lease_expires_at is None
