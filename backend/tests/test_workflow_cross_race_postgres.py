@@ -15,8 +15,8 @@ from app.models.agent_instance import AgentInstance
 from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.tenant import Tenant
-from app.models.workflow import Workflow, WorkflowRun, WorkflowStepRun, WorkflowVersion
-from app.services import workflow_service
+from app.models.workflow import Workflow, WorkflowParallelBranchRun, WorkflowRun, WorkflowStepRun, WorkflowVersion
+from app.services import workflow_execution_lease, workflow_service
 
 
 @pytest_asyncio.fixture
@@ -142,6 +142,11 @@ async def workflow_cross_race_setup(monkeypatch):
     yield data
 
     async with AsyncSessionLocal() as db:
+        await db.execute(
+            delete(WorkflowParallelBranchRun).where(
+                WorkflowParallelBranchRun.workflow_run_id == data["workflow_run_id"]
+            )
+        )
         await db.execute(
             delete(WorkflowStepRun).where(
                 WorkflowStepRun.workflow_run_id == data["workflow_run_id"]
@@ -289,3 +294,153 @@ async def test_timeout_between_child_commit_and_execution_fence_cancels_pending_
         assert child[0].agent_instance_id == data["agent_instance_id"]
         assert child[0].completed_at is not None
         assert "became terminal before child execution" in (child[0].error_message or "")
+
+
+@pytest.mark.asyncio
+async def test_parallel_branch_timeout_after_child_commit_never_executes_child(
+    workflow_cross_race_setup, monkeypatch
+):
+    data = workflow_cross_race_setup
+    branch_lease_id = uuid.uuid4()
+
+    async with AsyncSessionLocal() as db:
+        step = WorkflowStepRun(
+            workflow_run_id=data["workflow_run_id"],
+            step_key="parallel",
+            step_type="parallel",
+            position=0,
+            status="waiting_parallel",
+            input_data={},
+        )
+        db.add(step)
+        await db.flush()
+        branch = WorkflowParallelBranchRun(
+            workflow_run_id=data["workflow_run_id"],
+            workflow_step_run_id=step.id,
+            branch_key="branch-a",
+            config={
+                "steps": [
+                    {
+                        "key": "child",
+                        "type": "employee",
+                        "employee_id": str(data["employee_id"]),
+                        "employee_version_id": str(data["employee_version_id"]),
+                    }
+                ]
+            },
+            status="pending",
+        )
+        db.add(branch)
+        await db.commit()
+        branch_id = branch.id
+
+    async def acquire_branch(db, *, branch_id, **_kwargs):
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert branch is not None
+        branch.status = "running"
+        branch.execution_lease_id = branch_lease_id
+        branch.execution_lease_expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        await db.flush()
+        return branch_lease_id
+
+    async def assert_branch(db, *, branch_id, lease_id, **_kwargs):
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert branch is not None
+        assert branch.status == "running"
+        assert branch.execution_lease_id == branch_lease_id
+        return branch
+
+    async def heartbeat_branch(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(workflow_execution_lease, "acquire_parallel_branch_execution_lease", acquire_branch)
+    monkeypatch.setattr(workflow_execution_lease, "assert_parallel_branch_execution_lease", assert_branch)
+    monkeypatch.setattr(workflow_execution_lease, "heartbeat_parallel_branch_execution_lease", heartbeat_branch)
+
+    async def create_run(
+        db,
+        *,
+        tenant_id,
+        employee_id,
+        input_data,
+        created_by,
+        employee_version_id=None,
+        agent_instance_id=None,
+    ):
+        child = Run(
+            tenant_id=tenant_id,
+            employee_id=employee_id,
+            employee_version_id=employee_version_id or data["employee_version_id"],
+            agent_instance_id=agent_instance_id,
+            created_by=created_by,
+            status="pending",
+            input_data=input_data,
+        )
+        db.add(child)
+        await db.flush()
+        return child
+
+    executed = False
+
+    async def execute_child(*_args, **_kwargs):
+        nonlocal executed
+        executed = True
+        raise AssertionError("parallel child execution crossed the timeout fence")
+
+    monkeypatch.setattr(workflow_service.run_service, "create_run", create_run)
+    monkeypatch.setattr(workflow_service.run_service, "execute_run", execute_child)
+
+    original_lock = workflow_service._lock_parent_for_child_execution
+    lock_calls = 0
+
+    async def lock_with_timeout(db, *, workflow_run_id):
+        nonlocal lock_calls
+        lock_calls += 1
+        # The first boundary check must admit the branch and allow the child
+        # Run to be durably committed. Inject the concurrent timeout only at
+        # the second parent lock, which is the post-commit execution fence.
+        if lock_calls == 2:
+            async with AsyncSessionLocal() as racing_db:
+                parent = await racing_db.get(WorkflowRun, workflow_run_id)
+                assert parent is not None
+                parent.status = "timed_out"
+                parent.error = {
+                    "code": "WORKFLOW_TIMEOUT",
+                    "message": "Injected parallel-branch timeout",
+                }
+                parent.completed_at = datetime.now(timezone.utc)
+                await racing_db.commit()
+        return await original_lock(db, workflow_run_id=workflow_run_id)
+
+    monkeypatch.setattr(
+        workflow_service,
+        "_lock_parent_for_child_execution",
+        lock_with_timeout,
+    )
+
+    await workflow_service._execute_parallel_branch(
+        branch_id,
+        expected_tenant_id=data["tenant_id"],
+    )
+
+    assert executed is False
+
+    async with AsyncSessionLocal() as db:
+        parent = await db.get(WorkflowRun, data["workflow_run_id"])
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        child_result = await db.execute(
+            select(Run).where(
+                Run.tenant_id == data["tenant_id"],
+                Run.workflow_parallel_branch_run_id == branch_id,
+            )
+        )
+        child = child_result.scalar_one()
+
+        assert parent is not None
+        assert parent.status == "timed_out"
+        assert branch is not None
+        assert branch.status == "failed"
+        assert branch.execution_lease_id is None
+        assert child.status == "cancelled"
+        assert child.completed_at is not None
+        assert "became terminal before child execution" in (child.error_message or "")

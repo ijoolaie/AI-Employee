@@ -318,7 +318,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         branch = result.scalar_one_or_none()
         if branch is None:
             raise ValidationAppError("Parallel branch not found")
-        parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id).with_for_update())
+        parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id))
         parent = parent_result.scalar_one_or_none()
         if parent is None:
             raise ValidationAppError("Workflow Run not found")
@@ -355,15 +355,19 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                 await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
                 if heartbeat_lost.is_set():
                     raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
-                parent_state = await db.execute(select(WorkflowRun.status, WorkflowRun.deadline_at).where(WorkflowRun.id == parent.id))
-                parent_status, parent_deadline = parent_state.one()
-                if parent_status != "running":
-                    branch.status = "cancelled" if parent_status == "cancelled" else "failed"
+                # Re-lock the durable parent before every branch execution boundary.
+                # This both refreshes stale ORM state and converts an expired deadline
+                # into the durable timed_out terminal state before branch progress.
+                parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
+                if parent.status != "running":
+                    branch.status = "cancelled" if parent.status == "cancelled" else "failed"
+                    branch.error = {
+                        "code": "WORKFLOW_PARENT_TERMINAL",
+                        "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}",
+                    }
                     branch.completed_at = datetime.now(timezone.utc)
                     branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
                     await db.commit()
-                    return
-                if parent_deadline and parent_deadline <= datetime.now(timezone.utc):
                     return
                 position = branch.current_step_position
                 definition = definitions[position]
@@ -472,6 +476,26 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
             if branch.status == "success":
                 return
         except Exception as exc:
+            # Cancellation/timeout is a durable terminal decision and must not
+            # be rewritten as a generic branch failure by a stale worker.
+            fresh_parent = await db.execute(
+                select(WorkflowRun.status, WorkflowRun.error)
+                .where(WorkflowRun.id == parent.id)
+                .with_for_update()
+            )
+            fresh_parent_row = fresh_parent.one_or_none()
+            if fresh_parent_row is not None and fresh_parent_row[0] in {"cancelled", "timed_out"}:
+                parent.status = fresh_parent_row[0]
+                parent.error = fresh_parent_row[1]
+                branch.status = "cancelled" if fresh_parent_row[0] == "cancelled" else "failed"
+                branch.error = {
+                    "code": "WORKFLOW_PARENT_TERMINAL",
+                    "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {fresh_parent_row[0]}",
+                }
+                branch.completed_at = datetime.now(timezone.utc)
+                branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                await db.commit()
+                raise
             branch.status = "failed"
             branch.error = {"code": "PARALLEL_BRANCH_FAILED", "message": str(exc)[:1000]}
             branch.completed_at = datetime.now(timezone.utc)

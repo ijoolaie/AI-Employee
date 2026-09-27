@@ -26,5 +26,5 @@ def test_workflow_execution_fences_non_running_parent_after_child_commit():
 
 def test_parallel_branch_rechecks_parent_before_each_child():
     source = (Path(__file__).resolve().parents[1] / "app" / "services" / "workflow_service.py").read_text()
-    assert 'parent_state = await db.execute(select(WorkflowRun.status, WorkflowRun.deadline_at)' in source
-    assert 'if parent_status != "running":' in source
+    assert 'parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)' in source
+    assert 'if parent.status != "running":' in source
