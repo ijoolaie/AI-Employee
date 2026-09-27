@@ -347,7 +347,7 @@ async def cancel(
 ):
     item = await _get_work_item(db, work_item_id, current_user.tenant_id, for_update=True)
     try:
-        UnifiedExecutionService(db).cancel(item)
+        await UnifiedExecutionService(db).cancel_with_descendants(item)
         await record_execution_event(
             db,
             tenant_id=item.tenant_id,
