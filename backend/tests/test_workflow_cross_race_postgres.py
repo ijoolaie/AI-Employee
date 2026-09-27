@@ -1386,7 +1386,7 @@ async def test_branch_lease_loss_during_parent_cancellation_preserves_terminal_b
             workflow_run_id=data["workflow_run_id"],
             workflow_step_run_id=step.id,
             branch_key="branch-lease-loss",
-            config={"steps": []},
+            config={"steps": [{"key": "lease-loss-child", "type": "employee", "employee_id": str(data["employee_id"]), "employee_version_id": str(data["employee_version_id"])}]},
             status="pending",
         )
         db.add(branch)
