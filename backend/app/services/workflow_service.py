@@ -473,10 +473,21 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         # branch success bookkeeping.
                         parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
                         if parent.status != "running":
-                            branch.status = "cancelled" if parent.status == "cancelled" else "failed"
-                            branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
-                            branch.completed_at = datetime.now(timezone.utc)
-                            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                            # Parent cancellation/timeout can reconcile the branch
+                            # concurrently after child execution. Refresh the
+                            # versioned branch row before terminal bookkeeping so
+                            # the worker cannot overwrite a newer cancellation.
+                            branch_result = await db.execute(
+                                select(WorkflowParallelBranchRun)
+                                .where(WorkflowParallelBranchRun.id == branch.id)
+                                .execution_options(populate_existing=True)
+                            )
+                            branch = branch_result.scalar_one()
+                            if branch.status not in {"success", "failed", "cancelled"}:
+                                branch.status = "cancelled" if parent.status == "cancelled" else "failed"
+                                branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
+                                branch.completed_at = datetime.now(timezone.utc)
+                                branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
                             await db.commit()
                             return
                 outputs[definition.get("output_key") or definition["key"]] = child.output_data or {}
