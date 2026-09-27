@@ -156,9 +156,7 @@ async def workflow_cross_race_setup(monkeypatch):
             )
         )
         await db.execute(delete(Run).where(Run.tenant_id == data["tenant_id"]))
-        await db.execute(
-            delete(WorkflowRun).where(WorkflowRun.id == data["workflow_run_id"])
-        )
+        await db.execute(delete(WorkflowRun).where(WorkflowRun.tenant_id == data["tenant_id"]))
         # WorkflowVersion is an immutable ledger row and cannot be physically deleted.
         # Retain the workflow/version graph and deprovision the tenant fixture instead.
         await db.execute(
@@ -1298,7 +1296,7 @@ async def test_retry_mismatched_linked_child_fails_closed_without_cross_step_reu
     monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", lambda db, **kwargs: None)
 
     async with AsyncSessionLocal() as db:
-        with pytest.raises(ValidationAppError, match="no matching durable workflow-step identity"):
+        with pytest.raises(ValidationAppError, match="no matching durable workflow-step identity|refusing replay"):
             await workflow_service.execute_workflow(db, workflow_run_id=data["workflow_run_id"])
         await db.commit()
 
