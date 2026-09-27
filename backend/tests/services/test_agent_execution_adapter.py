@@ -87,6 +87,7 @@ async def test_agent_adapter_creates_run_from_resolved_employee_version(monkeypa
         "dedupe_key": f"agent.run.execute:{run_id}",
     }
     assert run.agent_instance_id == agent_id
+    assert work_item.run_id == run_id
     assert result == {
         "run_id": str(run_id),
         "executor_type": "agent",
