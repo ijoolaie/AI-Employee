@@ -384,6 +384,25 @@ async def test_replay_existing_parallel_branch_creates_new_branch_identity(
         ).scalars().all()
         assert linked_children == []
 
+        # Remove the extra replay/source execution graph created by this test.
+        # WorkflowVersion remains immutable by design.
+        await db.execute(
+            delete(WorkflowParallelBranchRun).where(
+                WorkflowParallelBranchRun.workflow_run_id.in_([source_id, replay_id])
+            )
+        )
+        await db.execute(
+            delete(WorkflowStepRun).where(
+                WorkflowStepRun.workflow_run_id.in_([source_id, replay_id])
+            )
+        )
+        await db.execute(
+            delete(WorkflowRun).where(
+                WorkflowRun.id.in_([source_id, replay_id])
+            )
+        )
+        await db.commit()
+
 
 @pytest.mark.asyncio
 async def test_worker_crash_branch_lease_recovery_requeues_same_branch(
