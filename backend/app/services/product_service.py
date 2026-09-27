@@ -70,10 +70,12 @@ async def update_inventory(
 ):
     product = (
         await db.execute(
-            select(Product).where(
+            select(Product)
+            .where(
                 Product.id == product_id,
                 Product.tenant_id == tenant_id,
             )
+            .with_for_update()
         )
     ).scalar_one_or_none()
     if not product:
