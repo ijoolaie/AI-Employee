@@ -16,7 +16,7 @@ from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.tenant import Tenant
 from app.models.workflow import Workflow, WorkflowParallelBranchRun, WorkflowRun, WorkflowStepRun, WorkflowVersion
-from app.services import workflow_service
+from app.services import workflow_execution_lease, workflow_service
 
 
 @pytest_asyncio.fixture
@@ -353,9 +353,9 @@ async def test_parallel_branch_timeout_after_child_commit_never_executes_child(
     async def heartbeat_branch(*_args, **_kwargs):
         return None
 
-    monkeypatch.setattr(workflow_service, "acquire_parallel_branch_execution_lease", acquire_branch)
-    monkeypatch.setattr(workflow_service, "assert_parallel_branch_execution_lease", assert_branch)
-    monkeypatch.setattr(workflow_service, "heartbeat_parallel_branch_execution_lease", heartbeat_branch)
+    monkeypatch.setattr(workflow_execution_lease, "acquire_parallel_branch_execution_lease", acquire_branch)
+    monkeypatch.setattr(workflow_execution_lease, "assert_parallel_branch_execution_lease", assert_branch)
+    monkeypatch.setattr(workflow_execution_lease, "heartbeat_parallel_branch_execution_lease", heartbeat_branch)
 
     async def create_run(
         db,
