@@ -1681,3 +1681,22 @@ async def test_parallel_branch_execution_uses_parent_first_lock_order(
         assert branch.status == "cancelled"
         assert branch.execution_lease_id is None
         assert branch.execution_lease_expires_at is None
+
+
+def test_workflow_approval_paths_lock_parent_before_step():
+    """Approval decision and expiry must share WorkflowRun -> WorkflowStepRun order."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    api_source = (root / "app/api/v1/workflow_approvals.py").read_text()
+    worker_source = (root / "app/workers/workflow_trigger_worker.py").read_text()
+
+    api_parent = api_source.index("select(WorkflowRun)")
+    api_step = api_source.index("select(WorkflowStepRun)")
+    worker_parent = worker_source.index("select(WorkflowRun).where(WorkflowRun.id == approval.workflow_run_id)")
+    worker_step = worker_source.index("select(WorkflowStepRun).where(WorkflowStepRun.id == approval.workflow_step_run_id)")
+
+    assert api_parent < api_step
+    assert worker_parent < worker_step
+    assert ".with_for_update()" in api_source[api_parent:api_step]
+    assert ".with_for_update()" in worker_source[worker_parent:worker_step]
