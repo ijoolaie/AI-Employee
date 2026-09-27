@@ -303,10 +303,20 @@ async def test_replay_existing_parallel_branch_creates_new_branch_identity(
 
         # Executing the replay creates branch rows scoped to the replay's
         # WorkflowStepRun. It must never discover/reuse the source branch.
+        async def acquire_lease(db, *, workflow_run_id, allow_recovery=False):
+            run = await db.get(WorkflowRun, workflow_run_id)
+            assert run is not None
+            lease_id = uuid.uuid4()
+            run.execution_lease_id = lease_id
+            run.execution_lease_expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+            run.status = "running"
+            await db.flush()
+            return lease_id
+
         monkeypatch.setattr(
             workflow_service,
             "acquire_workflow_execution_lease",
-            lambda db, **kwargs: None,
+            acquire_lease,
         )
 
         async def assert_lease(db, *, workflow_run_id, lease_id):
