@@ -289,6 +289,10 @@ async def assign_work_item(
         raise ExecutionError("work item not found")
     if item.status in {WorkItemStatus.SUCCEEDED, WorkItemStatus.CANCELLED}:
         raise ExecutionError("terminal work items cannot be assigned")
+    if item.status in {WorkItemStatus.FAILED, WorkItemStatus.BLOCKED}:
+        raise ExecutionError("failed or blocked work items must be resumed through their lifecycle action")
+    if item.status is WorkItemStatus.WAITING_APPROVAL:
+        raise ExecutionError("work item is waiting for approval")
 
     # A READY item may already carry the requested executor as an initial routing
     # hint. It still needs the ASSIGNED transition. Idempotency only applies once

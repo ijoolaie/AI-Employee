@@ -241,3 +241,7 @@ class UnifiedExecutionService:
     def _assert_assignable(work_item: WorkItem) -> None:
         if work_item.status in {WorkItemStatus.SUCCEEDED, WorkItemStatus.CANCELLED}:
             raise ExecutionError("terminal work items cannot be assigned")
+        if work_item.status in {WorkItemStatus.FAILED, WorkItemStatus.BLOCKED}:
+            raise ExecutionError("failed or blocked work items must be resumed through their lifecycle action")
+        if work_item.status is WorkItemStatus.WAITING_APPROVAL:
+            raise ExecutionError("work item is waiting for approval")
