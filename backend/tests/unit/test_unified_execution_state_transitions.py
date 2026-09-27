@@ -82,7 +82,7 @@ class _CancelDB:
             _Result(rows=children),
             _Result(rows=grand_children),
             _Result(rows=[]),
-            _Result(rows=runs),
+            _Result(rows=[run for run in runs if run.status in {"pending", "waiting"}]),
         ]
 
     async def execute(self, _statement):
