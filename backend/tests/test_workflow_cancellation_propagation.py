@@ -82,7 +82,7 @@ async def test_cancel_workflow_run_cancels_queued_children_and_branches_but_not_
             _FakeResult(workflow_run),
             _FakeResult(step_run_id),
             _FakeResult(branch_run_id),
-            _FakeResult(pending_step_child, waiting_branch_child, running_child),
+            _FakeResult(pending_step_child, waiting_branch_child),
             _FakeResult(branch),
         ]
     )
