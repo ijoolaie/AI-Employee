@@ -1424,6 +1424,7 @@ async def test_branch_lease_loss_during_parent_cancellation_preserves_terminal_b
                 .where(WorkflowRun.id == data["workflow_run_id"])
                 .with_for_update()
             )
+            cancellation_started.set()
             cancelled = await workflow_service.cancel_workflow_run(
                 racing_db,
                 workflow_run_id=data["workflow_run_id"],
