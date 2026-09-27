@@ -145,7 +145,8 @@ async def workflow_cross_race_setup(monkeypatch):
     yield data
 
     async with AsyncSessionLocal() as db:
-        await db.execute(delete(Run).where(Run.tenant_id == data["tenant_id"]))
+        # Execution rows reference Run through employee_run_id, so remove
+        # branch/step link owners before deleting the durable child Runs.
         await db.execute(
             delete(WorkflowParallelBranchRun).where(
                 WorkflowParallelBranchRun.workflow_run_id == data["workflow_run_id"]
@@ -156,6 +157,7 @@ async def workflow_cross_race_setup(monkeypatch):
                 WorkflowStepRun.workflow_run_id == data["workflow_run_id"]
             )
         )
+        await db.execute(delete(Run).where(Run.tenant_id == data["tenant_id"]))
         await db.execute(delete(WorkflowRun).where(WorkflowRun.tenant_id == data["tenant_id"]))
         # WorkflowVersion is an immutable ledger row and cannot be physically deleted.
         # Retain the workflow/version graph and deprovision the tenant fixture instead.
