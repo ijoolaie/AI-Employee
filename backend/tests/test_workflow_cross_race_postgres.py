@@ -1054,3 +1054,274 @@ async def test_parallel_branch_cancellation_after_child_execution_preserves_term
         assert branch.status == "cancelled"
         assert branch.execution_lease_id is None
         assert child.status == "success"
+
+
+@pytest.mark.asyncio
+async def test_retry_existing_successful_child_reuses_same_run_without_reexecution(
+    workflow_cross_race_setup, monkeypatch
+):
+    data = workflow_cross_race_setup
+    async with AsyncSessionLocal() as db:
+        step = WorkflowStepRun(
+            workflow_run_id=data["workflow_run_id"],
+            step_key="child",
+            step_type="employee",
+            position=0,
+            status="running",
+            attempt=2,
+            input_data={"value": "retry"},
+        )
+        db.add(step)
+        await db.flush()
+        child = Run(
+            tenant_id=data["tenant_id"],
+            employee_id=data["employee_id"],
+            employee_version_id=data["employee_version_id"],
+            agent_instance_id=data["agent_instance_id"],
+            status="success",
+            input_data={"value": "retry"},
+            output_data={"result": "already-executed"},
+            workflow_step_run_id=step.id,
+        )
+        db.add(child)
+        await db.flush()
+        step.employee_run_id = child.id
+        await db.commit()
+        child_id = child.id
+
+    async def acquire_lease(db, *, workflow_run_id, allow_recovery=False):
+        run = await db.get(WorkflowRun, workflow_run_id)
+        assert run is not None
+        run.status = "running"
+        run.execution_lease_id = uuid.uuid4()
+        run.execution_lease_expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        await db.flush()
+        return run.execution_lease_id
+
+    async def assert_lease(db, *, workflow_run_id, lease_id, **_kwargs):
+        run = await db.get(WorkflowRun, workflow_run_id)
+        assert run is not None
+        assert run.execution_lease_id == lease_id
+        return run
+
+    monkeypatch.setattr(workflow_service, "acquire_workflow_execution_lease", acquire_lease)
+    monkeypatch.setattr(workflow_service, "assert_workflow_execution_lease", assert_lease)
+    monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", lambda db, **kwargs: None)
+
+    async def execute_child(*_args, **_kwargs):
+        raise AssertionError("successful durable child was re-executed")
+
+    async def create_child(*_args, **_kwargs):
+        raise AssertionError("successful durable child caused a replacement Run")
+
+    monkeypatch.setattr(workflow_service.run_service, "execute_run", execute_child)
+    monkeypatch.setattr(workflow_service.run_service, "create_run", create_child)
+
+    async with AsyncSessionLocal() as db:
+        result = await workflow_service.execute_workflow(db, workflow_run_id=data["workflow_run_id"])
+        await db.commit()
+        assert result.status == "success"
+
+    async with AsyncSessionLocal() as db:
+        children = (
+            await db.execute(
+                select(Run).where(
+                    Run.tenant_id == data["tenant_id"],
+                    Run.workflow_step_run_id.is_not(None),
+                )
+            )
+        ).scalars().all()
+        step = (
+            await db.execute(
+                select(WorkflowStepRun).where(
+                    WorkflowStepRun.workflow_run_id == data["workflow_run_id"],
+                    WorkflowStepRun.step_key == "child",
+                )
+            )
+        ).scalar_one()
+        assert len(children) == 1
+        assert children[0].id == child_id
+        assert children[0].status == "success"
+        assert step.employee_run_id == child_id
+        assert step.status == "success"
+        assert step.output_data == {"result": "already-executed"}
+
+
+@pytest.mark.asyncio
+async def test_retry_existing_non_successful_child_fails_closed_without_replacement(
+    workflow_cross_race_setup, monkeypatch
+):
+    data = workflow_cross_race_setup
+    async with AsyncSessionLocal() as db:
+        step = WorkflowStepRun(
+            workflow_run_id=data["workflow_run_id"],
+            step_key="child",
+            step_type="employee",
+            position=0,
+            status="retry_wait",
+            attempt=2,
+            input_data={"value": "retry"},
+        )
+        db.add(step)
+        await db.flush()
+        child = Run(
+            tenant_id=data["tenant_id"],
+            employee_id=data["employee_id"],
+            employee_version_id=data["employee_version_id"],
+            agent_instance_id=data["agent_instance_id"],
+            status="failed",
+            input_data={"value": "retry"},
+            error={"code": "RUN_EXECUTION_FAILED", "message": "prior attempt failed"},
+            workflow_step_run_id=step.id,
+        )
+        db.add(child)
+        await db.flush()
+        step.employee_run_id = child.id
+        await db.commit()
+        child_id = child.id
+
+    async def acquire_lease(db, *, workflow_run_id, allow_recovery=False):
+        run = await db.get(WorkflowRun, workflow_run_id)
+        assert run is not None
+        run.status = "running"
+        run.execution_lease_id = uuid.uuid4()
+        run.execution_lease_expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        await db.flush()
+        return run.execution_lease_id
+
+    async def assert_lease(db, *, workflow_run_id, lease_id, **_kwargs):
+        return await db.get(WorkflowRun, workflow_run_id)
+
+    monkeypatch.setattr(workflow_service, "acquire_workflow_execution_lease", acquire_lease)
+    monkeypatch.setattr(workflow_service, "assert_workflow_execution_lease", assert_lease)
+    monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", lambda db, **kwargs: None)
+
+    async def create_child(*_args, **_kwargs):
+        raise AssertionError("failed durable child caused an unsafe replacement Run")
+
+    async def execute_child(*_args, **_kwargs):
+        raise AssertionError("failed durable child was re-executed")
+
+    monkeypatch.setattr(workflow_service.run_service, "create_run", create_child)
+    monkeypatch.setattr(workflow_service.run_service, "execute_run", execute_child)
+
+    from app.core.exceptions import ValidationAppError
+
+    async with AsyncSessionLocal() as db:
+        with pytest.raises(ValidationAppError, match="refusing to create a replacement"):
+            await workflow_service.execute_workflow(db, workflow_run_id=data["workflow_run_id"])
+        await db.commit()
+
+    async with AsyncSessionLocal() as db:
+        children = (
+            await db.execute(
+                select(Run).where(
+                    Run.tenant_id == data["tenant_id"],
+                    Run.workflow_step_run_id.is_not(None),
+                )
+            )
+        ).scalars().all()
+        step = (
+            await db.execute(
+                select(WorkflowStepRun).where(
+                    WorkflowStepRun.workflow_run_id == data["workflow_run_id"],
+                    WorkflowStepRun.step_key == "child",
+                )
+            )
+        ).scalar_one()
+        parent = await db.get(WorkflowRun, data["workflow_run_id"])
+
+        assert len(children) == 1
+        assert children[0].id == child_id
+        assert children[0].status == "failed"
+        assert step.employee_run_id == child_id
+        assert step.status == "failed"
+        assert step.error["code"] == "WORKFLOW_CHILD_RETRY_UNSAFE"
+        assert parent.status == "failed"
+
+
+@pytest.mark.asyncio
+async def test_retry_mismatched_linked_child_fails_closed_without_cross_step_reuse(
+    workflow_cross_race_setup, monkeypatch
+):
+    data = workflow_cross_race_setup
+    async with AsyncSessionLocal() as db:
+        step = WorkflowStepRun(
+            workflow_run_id=data["workflow_run_id"],
+            step_key="child",
+            step_type="employee",
+            position=0,
+            status="running",
+            attempt=2,
+            input_data={"value": "retry"},
+        )
+        wrong_step = WorkflowStepRun(
+            workflow_run_id=data["workflow_run_id"],
+            step_key="wrong-child",
+            step_type="employee",
+            position=1,
+            status="success",
+            input_data={},
+        )
+        db.add_all([step, wrong_step])
+        await db.flush()
+        child = Run(
+            tenant_id=data["tenant_id"],
+            employee_id=data["employee_id"],
+            employee_version_id=data["employee_version_id"],
+            agent_instance_id=data["agent_instance_id"],
+            status="success",
+            input_data={"value": "wrong-step"},
+            output_data={"result": "wrong-boundary"},
+            workflow_step_run_id=wrong_step.id,
+        )
+        db.add(child)
+        await db.flush()
+        step.employee_run_id = child.id
+        await db.commit()
+        child_id = child.id
+
+    async def acquire_lease(db, *, workflow_run_id, allow_recovery=False):
+        run = await db.get(WorkflowRun, workflow_run_id)
+        assert run is not None
+        run.status = "running"
+        run.execution_lease_id = uuid.uuid4()
+        run.execution_lease_expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        await db.flush()
+        return run.execution_lease_id
+
+    async def assert_lease(db, *, workflow_run_id, lease_id, **_kwargs):
+        return await db.get(WorkflowRun, workflow_run_id)
+
+    monkeypatch.setattr(workflow_service, "acquire_workflow_execution_lease", acquire_lease)
+    monkeypatch.setattr(workflow_service, "assert_workflow_execution_lease", assert_lease)
+    monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", lambda db, **kwargs: None)
+
+    async with AsyncSessionLocal() as db:
+        with pytest.raises(ValidationAppError, match="no matching durable workflow-step identity"):
+            await workflow_service.execute_workflow(db, workflow_run_id=data["workflow_run_id"])
+        await db.commit()
+
+    async with AsyncSessionLocal() as db:
+        children = (
+            await db.execute(
+                select(Run).where(
+                    Run.tenant_id == data["tenant_id"],
+                    Run.workflow_step_run_id.is_not(None),
+                )
+            )
+        ).scalars().all()
+        step = (
+            await db.execute(
+                select(WorkflowStepRun).where(
+                    WorkflowStepRun.workflow_run_id == data["workflow_run_id"],
+                    WorkflowStepRun.step_key == "child",
+                )
+            )
+        ).scalar_one()
+        assert len(children) == 1
+        assert children[0].id == child_id
+        assert children[0].workflow_step_run_id == wrong_step.id
+        assert step.employee_run_id == child_id
+        assert step.status == "failed"
+        assert step.error["code"] == "WORKFLOW_CHILD_RETRY_UNSAFE"
