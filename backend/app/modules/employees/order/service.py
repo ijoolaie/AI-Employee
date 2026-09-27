@@ -25,6 +25,15 @@ ALLOWED_STATUSES = frozenset(
     {"draft", "confirmed", "processing", "shipped", "delivered", "cancelled"}
 )
 
+ORDER_STATUS_TRANSITIONS = {
+    "draft": {"confirmed", "cancelled"},
+    "confirmed": {"processing", "cancelled"},
+    "processing": {"shipped", "cancelled"},
+    "shipped": {"delivered"},
+    "delivered": set(),
+    "cancelled": set(),
+}
+
 _AMOUNT_RE = re.compile(
     r"[\d,\.]{3,}\s?(?:ریال|تومان|﷼|\$|€|USD|IRR|EUR)\b|(?:\$|€)\s?[\d,\.]{2,}"
 )
@@ -154,6 +163,8 @@ async def update_status(
     order = await get_order(
         db, tenant_id=tenant_id, order_id=order_id, for_update=True
     )
+    if status != order.status and status not in ORDER_STATUS_TRANSITIONS[order.status]:
+        raise ConflictError(f"Invalid order lifecycle transition: {order.status} -> {status}")
     order.status = status
     await db.flush()
     await audit_service.record(
@@ -370,10 +381,13 @@ async def link_invoice(
         select(BusinessInvoice).where(
             BusinessInvoice.id == inv_uuid,
             BusinessInvoice.tenant_id == tenant_id,
-        )
+        ).with_for_update()
     )
-    if result.scalar_one_or_none() is None:
+    invoice = result.scalar_one_or_none()
+    if invoice is None:
         raise NotFoundError("Invoice not found for this tenant")
+    if invoice.status in {"void", "paid"}:
+        raise ConflictError(f"Cannot link invoice in terminal status: {invoice.status}")
     order.invoice_id = inv_uuid
     await db.flush()
     await audit_service.record(
