@@ -73,6 +73,10 @@ async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, 
     if child is None:
         return
 
+    # A user cancellation is terminal and must never be resurrected by a late Run completion.
+    if child.status is WorkItemStatus.CANCELLED:
+        return
+
     if error is not None:
         output = dict(child.output_data or {})
         output["run_error"] = error[:2000]
@@ -98,6 +102,10 @@ async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, 
     )
     parent = parent_result.scalar_one_or_none()
     if parent is None:
+        return
+
+    # Parent terminal state is authoritative; late child completion must not resurrect it.
+    if parent.status in {WorkItemStatus.SUCCEEDED, WorkItemStatus.FAILED, WorkItemStatus.CANCELLED}:
         return
 
     children_result = await db.execute(
