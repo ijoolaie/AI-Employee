@@ -1737,6 +1737,7 @@ async def test_timeout_sweep_branch_recovery_keeps_parent_first_lock_order(
         branch_id = branch.id
 
     discovery_returned = asyncio.Event()
+    cancellation_started = asyncio.Event()
     cancellation_task = None
 
     async def cancel_parent():
