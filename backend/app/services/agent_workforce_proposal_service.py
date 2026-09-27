@@ -358,14 +358,17 @@ async def activate_provisioned_proposal(
     if activated_by_user_id in {proposal.requester_user_id, proposal.sponsor_user_id, proposal.board_reviewed_by, proposal.ceo_approved_by}:
         raise ValidationAppError("Activation reviewer must be independent from proposal authorities")
 
+    # Canonical Agent authorization lock order is Identity -> Instance.
+    # Activation must use the same order and hold both locks through the
+    # governance/access-review checks so revocation cannot race activation.
+    identity = (await db.execute(select(AgentIdentity).where(
+        AgentIdentity.agent_instance_id == proposal.provisioned_agent_instance_id,
+        AgentIdentity.tenant_id == tenant_id,
+    ).with_for_update())).scalar_one_or_none()
     instance = (await db.execute(select(AgentInstance).where(
         AgentInstance.id == proposal.provisioned_agent_instance_id,
         AgentInstance.tenant_id == tenant_id,
     ).with_for_update())).scalar_one_or_none()
-    identity = (await db.execute(select(AgentIdentity).where(
-        AgentIdentity.agent_instance_id == proposal.provisioned_agent_instance_id,
-        AgentIdentity.tenant_id == tenant_id,
-    ))).scalar_one_or_none()
     if instance is None or identity is None:
         raise NotFoundError("Provisioned AgentInstance identity state not found")
     if instance.status != AgentInstanceStatus.SUSPENDED:
