@@ -652,6 +652,20 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
         if fresh.scalar_one() == "cancelled": run.status = "cancelled"; return run
         run.context = context; run.output_data = context.get("steps", {}); run.status = "success"; run.completed_at = datetime.now(timezone.utc); await db.flush(); await audit_service.record(db, action="workflow.run.completed", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="success", request_id=request_id_var.get(), metadata={"status": run.status}); return run
     except Exception:
+        # A child execution fence can lose a race to parent cancellation or
+        # timeout after the child Run has been durably created. Re-read the
+        # parent before entering the generic failure path; otherwise a stale
+        # ORM instance could rewrite a durable cancellation/timeout as failed.
+        fresh_parent = await db.execute(
+            select(WorkflowRun.status)
+            .where(WorkflowRun.id == run.id)
+            .with_for_update()
+        )
+        fresh_status = fresh_parent.scalar_one_or_none()
+        if fresh_status in {"cancelled", "timed_out"}:
+            run.status = fresh_status
+            await db.flush()
+            return run
         if run.status != "waiting_approval":
             run.status = "failed"; run.completed_at = datetime.now(timezone.utc); await db.flush(); await audit_service.record(db, action="workflow.run.completed", actor_type="system", tenant_id=run.tenant_id, resource_type="workflow_run", resource_id=run.id, status="failure", request_id=request_id_var.get(), metadata={"status": run.status})
         raise
