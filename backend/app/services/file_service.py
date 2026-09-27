@@ -95,25 +95,23 @@ async def upload_file(
     key = storage.build_key(str(tenant_id), filename)
     backend = storage.get_storage_backend()
 
-    # Object storage is external to the SQL transaction. If the metadata or
-    # audit write fails before the caller commits, compensate immediately so a
-    # rejected transaction does not leave an unreachable object behind.
-    size = backend.save(key, _LimitedReader(data, write_limit))
-
-    if size > max_size:
-        backend.delete(key)
-        raise ValidationAppError(
-            "File exceeds maximum allowed size",
-            details={"max_file_size_bytes": max_size},
-        )
-    if size > remaining_quota:
-        backend.delete(key)
-        raise ValidationAppError(
-            "Tenant storage quota exceeded",
-            details={"quota_bytes": quota, "used_bytes": used_bytes},
-        )
-
+    # Object storage is external to the SQL transaction. Keep the complete
+    # write + metadata/audit phase under one compensating boundary so a
+    # provider failure after a partial write cannot strand an object.
     try:
+        size = backend.save(key, _LimitedReader(data, write_limit))
+
+        if size > max_size:
+            raise ValidationAppError(
+                "File exceeds maximum allowed size",
+                details={"max_file_size_bytes": max_size},
+            )
+        if size > remaining_quota:
+            raise ValidationAppError(
+                "Tenant storage quota exceeded",
+                details={"quota_bytes": quota, "used_bytes": used_bytes},
+            )
+
         file_obj = FileObject(
             tenant_id=tenant_id,
             uploaded_by=uploaded_by,
@@ -148,10 +146,11 @@ async def upload_file(
         try:
             backend.delete(key)
         except Exception:
-            # Preserve the original DB/audit failure; provider-side cleanup
-            # remains observable through storage lifecycle reconciliation.
+            # Preserve the original failure; provider-side cleanup remains an
+            # operational reconciliation concern if deletion itself fails.
             pass
         raise
+
 
     return file_obj
 
