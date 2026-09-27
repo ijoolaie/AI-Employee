@@ -16,10 +16,10 @@ class CommerceIntegration(Base):
         # Until those tables gain first-class integration identity, each provider must
         # have at most one instance per tenant to prevent cross-store identity collisions.
         Index(
-            "uq_commerce_integrations_tenant_provider",
+            "uq_commerce_integrations_tenant_shopify",
             "tenant_id",
-            "provider",
             unique=True,
+            postgresql_where=text("provider = 'shopify'"),
         ),
     )
 
