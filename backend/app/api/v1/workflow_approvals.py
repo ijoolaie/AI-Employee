@@ -41,10 +41,23 @@ async def decide_workflow_approval(approval_id: UUID, payload: WorkflowApprovalD
     approval.decided_by = ctx.user_id
     approval.decision_reason = payload.reason
     approval.decided_at = now
-    step_result = await db.execute(select(WorkflowStepRun).where(WorkflowStepRun.id == approval.workflow_step_run_id).with_for_update())
-    step = step_result.scalar_one_or_none()
-    run_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == approval.workflow_run_id, WorkflowRun.tenant_id == ctx.tenant_id).with_for_update())
+    # Lock the durable parent before its child step. Cancellation and timeout
+    # reconciliation use the same WorkflowRun -> WorkflowStepRun order.
+    run_result = await db.execute(
+        select(WorkflowRun)
+        .where(
+            WorkflowRun.id == approval.workflow_run_id,
+            WorkflowRun.tenant_id == ctx.tenant_id,
+        )
+        .with_for_update()
+    )
     run = run_result.scalar_one_or_none()
+    step_result = await db.execute(
+        select(WorkflowStepRun)
+        .where(WorkflowStepRun.id == approval.workflow_step_run_id)
+        .with_for_update()
+    )
+    step = step_result.scalar_one_or_none()
     if step is None or run is None:
         from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Workflow approval state not found")
