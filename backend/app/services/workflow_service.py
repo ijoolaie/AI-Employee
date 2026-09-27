@@ -318,7 +318,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         branch = result.scalar_one_or_none()
         if branch is None:
             raise ValidationAppError("Parallel branch not found")
-        parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id).with_for_update())
+        parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id))
         parent = parent_result.scalar_one_or_none()
         if parent is None:
             raise ValidationAppError("Workflow Run not found")
