@@ -1,5 +1,5 @@
-from uuid import UUID
 import json
+from uuid import UUID
 
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import RedirectResponse
