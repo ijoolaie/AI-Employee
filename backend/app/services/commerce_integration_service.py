@@ -65,18 +65,6 @@ async def create_integration(
     config: dict,
     actor_id: uuid.UUID | None = None,
 ):
-    if provider == "shopify":
-        existing = (
-            await db.execute(
-                select(CommerceIntegration).where(
-                    CommerceIntegration.tenant_id == tenant_id,
-                    CommerceIntegration.provider == provider,
-                )
-            )
-        ).scalar_one_or_none()
-        if existing is not None:
-            raise ConflictError("Shopify integration already exists for this tenant")
-
     try:
         async with db.begin_nested():
             safe_config = await _extract_credentials(
