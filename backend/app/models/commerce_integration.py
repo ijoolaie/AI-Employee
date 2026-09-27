@@ -13,8 +13,8 @@ class CommerceIntegration(Base):
     __table_args__ = (
         Index("ix_commerce_integrations_tenant", "tenant_id"),
         # Current commerce domain tables (customers/products/orders) are tenant-global.
-        # Until those tables gain first-class integration identity, each provider must
-        # have at most one instance per tenant to prevent cross-store identity collisions.
+        # Until those tables gain first-class integration identity, Shopify must have
+        # at most one instance per tenant to prevent cross-store identity collisions.
         Index(
             "uq_commerce_integrations_tenant_shopify",
             "tenant_id",
