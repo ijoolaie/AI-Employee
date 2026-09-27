@@ -6,6 +6,7 @@ does not export underscore-prefixed names.
 """
 from app.modules.employees.invoice.service import (
     ALLOWED_STATUSES,
+    INVOICE_STATUS_TRANSITIONS,
     _compute_totals,
     _money,
     _next_number_fallback,
@@ -21,6 +22,7 @@ from app.modules.employees.invoice.service import (
 
 __all__ = [
     "ALLOWED_STATUSES",
+    "INVOICE_STATUS_TRANSITIONS",
     "_compute_totals",
     "_money",
     "_next_number_fallback",
