@@ -188,8 +188,20 @@ async def test_worker_crash_branch_lease_recovery_requeues_same_branch(
     data = workflow_cross_race_setup
 
     async with AsyncSessionLocal() as db:
+        step = WorkflowStepRun(
+            workflow_run_id=data["workflow_run_id"],
+            step_key="parallel",
+            step_type="parallel",
+            position=0,
+            status="waiting_parallel",
+            input_data={},
+        )
+        db.add(step)
+        await db.flush()
         branch = WorkflowParallelBranchRun(
             workflow_run_id=data["workflow_run_id"],
+            workflow_step_run_id=step.id,
+            branch_key="branch-a",
             config={"steps": [{"key": "child", "employee_id": str(data["employee_id"])}]},
             status="running",
             current_step_position=0,
