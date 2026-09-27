@@ -214,7 +214,7 @@ async def get_current_version(db: AsyncSession, *, workflow_id: uuid.UUID) -> Wo
     return version
 
 
-async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id: uuid.UUID, input_data: dict[str, Any], created_by: uuid.UUID, idempotency_key: str | None = None, workflow_version_id: uuid.UUID | None = None) -> WorkflowRun:
+async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id: uuid.UUID, input_data: dict[str, Any], created_by: uuid.UUID, idempotency_key: str | None = None, workflow_version_id: uuid.UUID | None = None, agent_instance_id: uuid.UUID | None = None) -> WorkflowRun:
     workflow = await get_workflow(db, workflow_id=workflow_id, tenant_id=tenant_id)
     if idempotency_key:
         existing = await db.execute(select(WorkflowRun).where(WorkflowRun.tenant_id == tenant_id, WorkflowRun.workflow_id == workflow_id, WorkflowRun.idempotency_key == idempotency_key))
@@ -237,7 +237,7 @@ async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflo
     max_runtime = version.config.get("max_runtime_seconds")
     deadline = datetime.now(timezone.utc) + timedelta(seconds=int(max_runtime)) if max_runtime else None
     context = {"input": input_data, "steps": {}, "_workflow": {"dispatch_generation": 0, "workflow_version_number": version.version_number, "workflow_content_hash": version.content_hash, "execution_contract": contract}}
-    run = WorkflowRun(tenant_id=tenant_id, workflow_id=workflow.id, workflow_version_id=version.id, created_by=created_by, status="pending", context=context, deadline_at=deadline, idempotency_key=idempotency_key)
+    run = WorkflowRun(tenant_id=tenant_id, workflow_id=workflow.id, workflow_version_id=version.id, created_by=created_by, agent_instance_id=agent_instance_id, status="pending", context=context, deadline_at=deadline, idempotency_key=idempotency_key)
     try:
         async with db.begin_nested():
             db.add(run)
