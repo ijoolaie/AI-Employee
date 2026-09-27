@@ -602,4 +602,4 @@ async def test_parallel_branch_cancellation_after_child_commit_never_executes_ch
         assert branch.execution_lease_id is None
         assert child.status == "cancelled"
         assert child.completed_at is not None
-        assert "WorkflowRun was cancelled" in (child.error_message or "")
+        assert "became terminal before child execution" in (child.error_message or "")
