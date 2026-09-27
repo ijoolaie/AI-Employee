@@ -173,7 +173,7 @@ jobs:
 
       - name: Backend tests
         working-directory: backend
-        run: pytest -q -m 'not requires_ocr'
+        run: pytest -vv --durations=25 -m 'not requires_ocr'
 
   frontend:
     runs-on: ubuntu-latest
