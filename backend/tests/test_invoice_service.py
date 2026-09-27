@@ -9,6 +9,7 @@ import pytest
 from app.core.exceptions import ValidationAppError
 from app.services.invoice_service import (
     ALLOWED_STATUSES,
+    INVOICE_STATUS_TRANSITIONS,
     _compute_totals,
     _money,
     _next_number_fallback,
@@ -133,3 +134,11 @@ def test_next_number_fallback_is_collision_resistant():
 def test_business_invoice_number_is_tenant_scoped_unique():
     names = {constraint.name for constraint in BusinessInvoice.__table__.constraints}
     assert "uq_business_invoices_tenant_number" in names
+
+
+def test_invoice_lifecycle_transitions_are_forward_only():
+    assert INVOICE_STATUS_TRANSITIONS["draft"] == {"sent", "void"}
+    assert INVOICE_STATUS_TRANSITIONS["sent"] == {"paid", "overdue", "void"}
+    assert INVOICE_STATUS_TRANSITIONS["overdue"] == {"paid", "void"}
+    assert INVOICE_STATUS_TRANSITIONS["paid"] == set()
+    assert INVOICE_STATUS_TRANSITIONS["void"] == set()
