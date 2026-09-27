@@ -81,7 +81,11 @@ async def create_integration(
             db.add(integration)
             await db.flush()
     except IntegrityError as exc:
-        constraint_name = getattr(exc.orig, "constraint_name", None)
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name is None and f'constraint "{SHOPIFY_INTEGRATION_INDEX_NAME}"' in str(exc.orig):
+            constraint_name = SHOPIFY_INTEGRATION_INDEX_NAME
         if constraint_name != SHOPIFY_INTEGRATION_INDEX_NAME:
             raise
         raise ConflictError("Shopify integration already exists for this tenant") from exc
