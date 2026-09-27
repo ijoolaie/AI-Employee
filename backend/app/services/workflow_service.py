@@ -312,27 +312,44 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         heartbeat_parallel_branch_execution_lease,
     )
     async with worker_db_session() as db:
-        # Validate the durable parent tenant before acquiring a branch execution lease.
         # Celery task metadata is untrusted and must not mutate branch state across tenants.
-        result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
-        branch = result.scalar_one_or_none()
-        if branch is None:
+        # Read both identities without locking; the first durable lock in this worker
+        # must be the parent WorkflowRun. Cancellation and terminal reconciliation use
+        # the same Parent -> Branch order.
+        branch_ref = await db.execute(
+            select(WorkflowParallelBranchRun.workflow_run_id)
+            .where(WorkflowParallelBranchRun.id == branch_id)
+        )
+        workflow_run_id = branch_ref.scalar_one_or_none()
+        if workflow_run_id is None:
             raise ValidationAppError("Parallel branch not found")
-        parent_result = await db.execute(select(WorkflowRun).where(WorkflowRun.id == branch.workflow_run_id))
+        parent_result = await db.execute(
+            select(WorkflowRun).where(WorkflowRun.id == workflow_run_id)
+        )
         parent = parent_result.scalar_one_or_none()
         if parent is None:
             raise ValidationAppError("Workflow Run not found")
         if expected_tenant_id is not None and parent.tenant_id != expected_tenant_id:
             raise ValidationAppError("Worker tenant context does not match Workflow Run tenant")
-        lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(db, branch_id=branch_id)
-        result = await db.execute(select(WorkflowParallelBranchRun).where(WorkflowParallelBranchRun.id == branch_id).with_for_update())
-        branch = result.scalar_one_or_none()
+        workflow_run_id = parent.id
+
+        acquired_lease = execution_lease_id is None
+        lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(
+            db, branch_id=branch_id
+        )
+        if acquired_lease:
+            # acquire_parallel_branch_execution_lease locks the branch row. Commit
+            # immediately so the worker does not retain Branch while later locking
+            # Parent; this is the critical deadlock-prevention boundary.
+            await db.commit()
+
+        branch_result = await db.execute(
+            select(WorkflowParallelBranchRun)
+            .where(WorkflowParallelBranchRun.id == branch_id)
+        )
+        branch = branch_result.scalar_one_or_none()
         if branch is None:
             raise ValidationAppError("Parallel branch not found")
-        if parent.status in {"cancelled", "timed_out", "failed", "success"}:
-            branch.status = "cancelled" if parent.status == "cancelled" else "failed"
-            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
-            await db.commit(); return
         await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
         heartbeat_lost = asyncio.Event()
         async def heartbeat_loop() -> None:
@@ -358,7 +375,19 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                 # Re-lock the durable parent before every branch execution boundary.
                 # This both refreshes stale ORM state and converts an expired deadline
                 # into the durable timed_out terminal state before branch progress.
-                parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
+                parent = await _lock_parent_for_child_execution(db, workflow_run_id=workflow_run_id)
+                # Once the parent fence is held, lock the branch. This keeps the
+                # durable multi-row order Parent -> Branch for cancellation,
+                # recovery, and normal branch execution.
+                branch_result = await db.execute(
+                    select(WorkflowParallelBranchRun)
+                    .where(WorkflowParallelBranchRun.id == branch_id)
+                    .execution_options(populate_existing=True)
+                    .with_for_update()
+                )
+                branch = branch_result.scalar_one_or_none()
+                if branch is None:
+                    raise ValidationAppError("Parallel branch not found")
                 if parent.status != "running":
                     branch.status = "cancelled" if parent.status == "cancelled" else "failed"
                     branch.error = {

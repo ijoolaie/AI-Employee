@@ -1578,3 +1578,106 @@ async def test_parallel_branch_recovery_uses_parent_first_lock_order(
         assert branch.status == "cancelled"
         assert branch.execution_lease_id is None
         assert branch.execution_lease_expires_at is None
+
+
+@pytest.mark.asyncio
+async def test_parallel_branch_execution_uses_parent_first_lock_order(
+    workflow_cross_race_setup, monkeypatch
+):
+    """A running branch must not hold Branch while waiting for its parent lock."""
+    data = workflow_cross_race_setup
+    lease_id = uuid.uuid4()
+
+    async with AsyncSessionLocal() as db:
+        run = await db.get(WorkflowRun, data["workflow_run_id"])
+        assert run is not None
+        run.status = "running"
+        run.deadline_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        step = WorkflowStepRun(
+            workflow_run_id=run.id,
+            step_key="execution-lock-order",
+            step_type="parallel",
+            position=0,
+            status="waiting_parallel",
+            input_data={},
+        )
+        db.add(step)
+        await db.flush()
+        branch = WorkflowParallelBranchRun(
+            workflow_run_id=run.id,
+            workflow_step_run_id=step.id,
+            branch_key="execution-lock-order-branch",
+            config={
+                "steps": [{
+                    "key": "execution-lock-order-child",
+                    "type": "employee",
+                    "employee_id": str(data["employee_id"]),
+                    "employee_version_id": str(data["employee_version_id"]),
+                }]
+            },
+            status="running",
+            execution_lease_id=lease_id,
+            execution_lease_expires_at=datetime.now(timezone.utc) + timedelta(minutes=5),
+        )
+        db.add(branch)
+        await db.commit()
+        branch_id = branch.id
+
+    parent_locked = asyncio.Event()
+    cancellation_task = None
+
+    async def assert_branch_lease(db, *, branch_id, lease_id):
+        nonlocal cancellation_task
+        if cancellation_task is None:
+            cancellation_task = asyncio.create_task(
+                cancel_parent_while_worker_is_at_branch_fence()
+            )
+            await asyncio.wait_for(parent_locked.wait(), timeout=2)
+        current = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert current is not None
+        return current
+
+    async def cancel_parent_while_worker_is_at_branch_fence():
+        async with AsyncSessionLocal() as db:
+            await db.execute(
+                select(WorkflowRun)
+                .where(WorkflowRun.id == data["workflow_run_id"])
+                .with_for_update()
+            )
+            parent_locked.set()
+            cancelled = await workflow_service.cancel_workflow_run(
+                db,
+                workflow_run_id=data["workflow_run_id"],
+                tenant_id=data["tenant_id"],
+                cancelled_by=uuid.uuid4(),
+                reason="Execution lock-order race",
+            )
+            await db.commit()
+            assert cancelled.status == "cancelled"
+
+    monkeypatch.setattr(
+        workflow_execution_lease,
+        "assert_parallel_branch_execution_lease",
+        assert_branch_lease,
+    )
+
+    await asyncio.wait_for(
+        workflow_service._execute_parallel_branch(
+            branch_id,
+            execution_lease_id=lease_id,
+            expected_tenant_id=data["tenant_id"],
+        ),
+        timeout=4,
+    )
+    assert cancellation_task is not None
+    await asyncio.wait_for(cancellation_task, timeout=4)
+
+    async with AsyncSessionLocal() as db:
+        parent = await db.get(WorkflowRun, data["workflow_run_id"])
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert parent is not None
+        assert parent.status == "cancelled"
+        assert branch is not None
+        assert branch.status == "cancelled"
+        assert branch.execution_lease_id is None
+        assert branch.execution_lease_expires_at is None
