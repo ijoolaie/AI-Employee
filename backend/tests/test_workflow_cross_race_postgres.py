@@ -1764,7 +1764,10 @@ async def test_timeout_sweep_branch_recovery_keeps_parent_first_lock_order(
         nonlocal cancellation_task
         discovery_returned.set()
         cancellation_task = asyncio.create_task(cancel_parent())
-        await asyncio.sleep(0.05)
+        # The production sweep no longer owns the parent during discovery.
+        # Force the concurrent cancellation to win the parent lock before
+        # recovery attempts its Parent -> Branch acquisition.
+        await asyncio.wait_for(cancellation_started.wait(), timeout=2)
         return await original_recover(db, branch_id=branch_id)
 
     async def enqueue(db, *, kind, tenant_id=None, payload, dedupe_key=None, available_at=None):
@@ -1795,7 +1798,7 @@ async def test_timeout_sweep_branch_recovery_keeps_parent_first_lock_order(
     assert discovery_returned.is_set()
     assert cancellation_task is not None
     await asyncio.wait_for(cancellation_task, timeout=2)
-    assert count == 1
+    assert count == 0
 
     async with AsyncSessionLocal() as db:
         parent = await db.get(WorkflowRun, data["workflow_run_id"])
