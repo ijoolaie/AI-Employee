@@ -40,8 +40,12 @@ async def _dispatch_async(limit: int = 50) -> int:
                         )
                     elif row.kind == "email.send":
                         from app.workers.email_worker import send_email_task
-                        send_email_task.delay(str(row.id))
+                        # Commit the durable "processing" claim before publishing
+                        # the task. Publishing first and committing second can
+                        # roll back to "pending" after the broker already accepted
+                        # the task, creating duplicate email deliveries.
                         await db.commit()
+                        send_email_task.delay(str(row.id))
                         OUTBOX_DISPATCH.labels("queued", row.kind).inc()
                         if current_span is not None:
                             current_span.set_attribute("outbox.status", "queued")
