@@ -505,24 +505,35 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
             if branch.status == "success":
                 return
         except Exception as exc:
-            # Cancellation/timeout is a durable terminal decision and must not
-            # be rewritten as a generic branch failure by a stale worker.
+            # A concurrent cancellation may hold the parent lock while waiting
+            # for this branch row. Release this transaction's branch lock first
+            # so the two paths cannot deadlock in opposite lock order.
+            await db.rollback()
             fresh_parent = await db.execute(
                 select(WorkflowRun.status, WorkflowRun.error)
                 .where(WorkflowRun.id == parent.id)
                 .with_for_update()
             )
             fresh_parent_row = fresh_parent.one_or_none()
+            branch_result = await db.execute(
+                select(WorkflowParallelBranchRun)
+                .where(WorkflowParallelBranchRun.id == branch.id)
+                .execution_options(populate_existing=True)
+            )
+            branch = branch_result.scalar_one_or_none()
+            if branch is None:
+                raise
             if fresh_parent_row is not None and fresh_parent_row[0] in {"cancelled", "timed_out"}:
                 parent.status = fresh_parent_row[0]
                 parent.error = fresh_parent_row[1]
-                branch.status = "cancelled" if fresh_parent_row[0] == "cancelled" else "failed"
-                branch.error = {
-                    "code": "WORKFLOW_PARENT_TERMINAL",
-                    "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {fresh_parent_row[0]}",
-                }
-                branch.completed_at = datetime.now(timezone.utc)
-                branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                if branch.status not in {"success", "failed", "cancelled"}:
+                    branch.status = "cancelled" if fresh_parent_row[0] == "cancelled" else "failed"
+                    branch.error = {
+                        "code": "WORKFLOW_PARENT_TERMINAL",
+                        "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {fresh_parent_row[0]}",
+                    }
+                    branch.completed_at = datetime.now(timezone.utc)
+                    branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
                 await db.commit()
                 raise
             branch.status = "failed"
