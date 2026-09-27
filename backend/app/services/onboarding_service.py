@@ -1,6 +1,7 @@
 import uuid
 
 from sqlalchemy import select
+from app.models.tenant import Tenant
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,6 +31,9 @@ async def get_or_create(db: AsyncSession, tenant_id: uuid.UUID):
 
 
 async def update(db: AsyncSession, tenant_id: uuid.UUID, step: int, business_type: str | None, data: dict, complete_step: bool, actor_id: uuid.UUID | None = None):
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id).with_for_update())).scalar_one_or_none()
+    if tenant is None:
+        raise ValueError("Tenant not found")
     row = await get_or_create(db, tenant_id)
     if business_type:
         row.business_type = business_type
