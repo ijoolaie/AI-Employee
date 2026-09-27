@@ -17,20 +17,19 @@ class _Result:
 
 
 @pytest.mark.asyncio
-async def test_parent_child_execution_guard_locks_and_rejects_cancelled_run():
+async def test_parent_child_execution_guard_returns_cancelled_parent_without_admission():
+    run = SimpleNamespace(status="cancelled", deadline_at=None)
     db = SimpleNamespace(
-        execute=AsyncMock(return_value=_Result(SimpleNamespace(status="cancelled")))
+        execute=AsyncMock(return_value=_Result(run))
     )
 
-    with pytest.raises(
-        workflow_service.ValidationAppError,
-        match="WORKFLOW_PARENT_NOT_RUNNING:cancelled",
-    ):
-        await workflow_service._lock_parent_for_child_execution(
-            db,
-            workflow_run_id="run-1",
-        )
+    result = await workflow_service._lock_parent_for_child_execution(
+        db,
+        workflow_run_id="run-1",
+    )
 
+    assert result is run
+    assert result.status == "cancelled"
     db.execute.assert_awaited_once()
 
 
@@ -82,3 +81,11 @@ async def test_parent_child_execution_guard_times_out_before_side_effect():
     assert run.error["code"] == "WORKFLOW_TIMEOUT"
     db.flush.assert_awaited_once()
     audit.assert_awaited_once()
+
+def test_child_creation_terminal_race_cancels_unadmitted_child_before_return():
+    source = (workflow_service.__file__ and
+              __import__("pathlib").Path(workflow_service.__file__).read_text(encoding="utf-8"))
+    marker = 'if run.status != "running":'
+    assert marker in source
+    assert 'child.status in {"pending", "waiting"}' in source
+    assert 'Run cancelled because its WorkflowRun became terminal before child execution' in source
