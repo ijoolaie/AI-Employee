@@ -25,13 +25,12 @@ def upgrade() -> None:
         ),
     )
     op.create_index(
-        "uq_runs_work_item_id",
+        "ix_runs_work_item_id",
         "runs",
         ["work_item_id"],
-        unique=True,
     )
 
 
 def downgrade() -> None:
-    op.drop_index("uq_runs_work_item_id", table_name="runs")
+    op.drop_index("ix_runs_work_item_id", table_name="runs")
     op.drop_column("runs", "work_item_id")
