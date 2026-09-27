@@ -603,3 +603,150 @@ async def test_parallel_branch_cancellation_after_child_commit_never_executes_ch
         assert child.status == "cancelled"
         assert child.completed_at is not None
         assert "became terminal before child execution" in (child.error_message or "")
+
+
+@pytest.mark.asyncio
+async def test_parallel_branch_cancellation_after_child_execution_preserves_terminal_branch(
+    workflow_cross_race_setup, monkeypatch
+):
+    data = workflow_cross_race_setup
+    branch_lease_id = uuid.uuid4()
+
+    async with AsyncSessionLocal() as db:
+        step = WorkflowStepRun(
+            workflow_run_id=data["workflow_run_id"],
+            step_key="parallel-post-child",
+            step_type="parallel",
+            position=0,
+            status="waiting_parallel",
+            input_data={},
+        )
+        db.add(step)
+        await db.flush()
+        branch = WorkflowParallelBranchRun(
+            workflow_run_id=data["workflow_run_id"],
+            workflow_step_run_id=step.id,
+            branch_key="branch-post-child",
+            config={
+                "steps": [{
+                    "key": "child",
+                    "type": "employee",
+                    "employee_id": str(data["employee_id"]),
+                    "employee_version_id": str(data["employee_version_id"]),
+                }]
+            },
+            status="pending",
+        )
+        db.add(branch)
+        await db.commit()
+        branch_id = branch.id
+
+    async def acquire_branch(db, *, branch_id, **_kwargs):
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert branch is not None
+        branch.status = "running"
+        branch.execution_lease_id = branch_lease_id
+        branch.execution_lease_expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        await db.flush()
+        return branch_lease_id
+
+    async def assert_branch(db, *, branch_id, lease_id, **_kwargs):
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert branch is not None
+        assert branch.status == "running"
+        assert branch.execution_lease_id == branch_lease_id
+        return branch
+
+    async def heartbeat_branch(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(workflow_execution_lease, "acquire_parallel_branch_execution_lease", acquire_branch)
+    monkeypatch.setattr(workflow_execution_lease, "assert_parallel_branch_execution_lease", assert_branch)
+    monkeypatch.setattr(workflow_execution_lease, "heartbeat_parallel_branch_execution_lease", heartbeat_branch)
+
+    async def create_run(
+        db,
+        *,
+        tenant_id,
+        employee_id,
+        input_data,
+        created_by,
+        employee_version_id=None,
+        agent_instance_id=None,
+    ):
+        child = Run(
+            tenant_id=tenant_id,
+            employee_id=employee_id,
+            employee_version_id=employee_version_id or data["employee_version_id"],
+            agent_instance_id=agent_instance_id,
+            created_by=created_by,
+            status="pending",
+            input_data=input_data,
+        )
+        db.add(child)
+        await db.flush()
+        return child
+
+    executed = False
+
+    async def execute_child(db, *, run_id, **_kwargs):
+        nonlocal executed
+        executed = True
+        child = await db.get(Run, run_id)
+        assert child is not None
+        child.status = "success"
+        child.output_data = {"result": "completed-before-cancel"}
+
+    monkeypatch.setattr(workflow_service.run_service, "create_run", create_run)
+    monkeypatch.setattr(workflow_service.run_service, "execute_run", execute_child)
+
+    original_lock = workflow_service._lock_parent_for_child_execution
+    lock_calls = 0
+
+    async def lock_with_post_child_cancellation(db, *, workflow_run_id):
+        nonlocal lock_calls
+        lock_calls += 1
+        if lock_calls == 3:
+            async with AsyncSessionLocal() as racing_db:
+                cancelled = await workflow_service.cancel_workflow_run(
+                    racing_db,
+                    workflow_run_id=workflow_run_id,
+                    tenant_id=data["tenant_id"],
+                    cancelled_by=uuid.uuid4(),
+                    reason="Injected post-child cancellation",
+                )
+                await racing_db.commit()
+                assert cancelled.status == "cancelled"
+        return await original_lock(db, workflow_run_id=workflow_run_id)
+
+    monkeypatch.setattr(
+        workflow_service,
+        "_lock_parent_for_child_execution",
+        lock_with_post_child_cancellation,
+    )
+
+    await workflow_service._execute_parallel_branch(
+        branch_id,
+        expected_tenant_id=data["tenant_id"],
+    )
+
+    assert executed is True
+
+    async with AsyncSessionLocal() as db:
+        parent = await db.get(WorkflowRun, data["workflow_run_id"])
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        child = (
+            await db.execute(
+                select(Run).where(
+                    Run.tenant_id == data["tenant_id"],
+                    Run.workflow_parallel_branch_run_id == branch_id,
+                )
+            )
+        ).scalar_one()
+
+        assert parent is not None
+        assert parent.status == "cancelled"
+        assert branch is not None
+        assert branch.status == "cancelled"
+        assert branch.execution_lease_id is None
+        assert child.status == "success"
