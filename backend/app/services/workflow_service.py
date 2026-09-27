@@ -30,7 +30,10 @@ async def _lock_parent_for_child_execution(db: AsyncSession, *, workflow_run_id:
     terminal timeout state before any child side effect can start.
     """
     result = await db.execute(
-        select(WorkflowRun).where(WorkflowRun.id == workflow_run_id).with_for_update()
+        select(WorkflowRun)
+        .where(WorkflowRun.id == workflow_run_id)
+        .execution_options(populate_existing=True)
+        .with_for_update()
     )
     run = result.scalar_one_or_none()
     if run is None:
