@@ -12,6 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
+from app.models.run import Run
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
 from app.services.execution_policy import ExecutionPolicy
 from app.services.execution_telemetry import ExecutionEvent, ExecutionTelemetry
@@ -188,9 +189,10 @@ class UnifiedExecutionService:
         """Cancel a WorkItem subtree and prevent queued Runs from executing.
 
         Locks are acquired parent -> child, matching Run lifecycle projection.
-        Runs are cancelled only while non-terminal; an already-running Run may
-        finish while holding its Run lock, after which lifecycle projection
-        observes the cancelled WorkItem and cannot resurrect it.
+        Queued Runs are cancelled; an already-running Run is deliberately not
+        force-cancelled because its external side effect may already be in
+        flight. Its bound cancelled WorkItem prevents lifecycle resurrection,
+        while stale-run recovery remains the authority for abandoned execution.
         """
         self.cancel(work_item)
 
@@ -225,7 +227,7 @@ class UnifiedExecutionService:
                 .where(
                     Run.tenant_id == work_item.tenant_id,
                     Run.work_item_id.in_(cancelled_work_item_ids),
-                    Run.status.in_({"pending", "waiting", "running"}),
+                    Run.status.in_({"pending", "waiting"}),
                 )
                 .with_for_update()
             )
