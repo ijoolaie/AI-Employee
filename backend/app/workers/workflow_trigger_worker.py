@@ -120,11 +120,15 @@ async def _timeout_workflow_runs_async() -> int:
             recovered += 1
         from app.models.workflow import WorkflowParallelBranchRun
         from app.services.workflow_execution_lease import recover_parallel_branch_execution_lease
-        # Discovery must lock the parent only. The recovery helper then acquires
-        # Parent -> Branch. Locking the branch here first would recreate the
-        # Branch -> Parent inversion against concurrent cancellation.
+        # Discovery is deliberately non-locking. The recovery helper is the
+        # single ownership boundary and acquires Parent -> Branch atomically.
+        # Holding parent locks for the whole sweep would create long-lived
+        # contention and could deadlock another recovery/cancellation cycle.
         branch_stale = await db.execute(
-            select(WorkflowParallelBranchRun).join(
+            select(
+                WorkflowParallelBranchRun.id,
+                WorkflowParallelBranchRun.workflow_run_id,
+            ).join(
                 WorkflowRun,
                 WorkflowRun.id == WorkflowParallelBranchRun.workflow_run_id,
             ).where(
@@ -135,11 +139,38 @@ async def _timeout_workflow_runs_async() -> int:
                 WorkflowRun.deadline_at.is_not(None),
                 WorkflowRun.deadline_at > now,
                 WorkflowRun.status == "running",
-            ).with_for_update(of=WorkflowRun, skip_locked=True)
+            )
         )
-        for branch in branch_stale.scalars().all():
-            lease_id = await recover_parallel_branch_execution_lease(db, branch_id=branch.id)
-            await enqueue(db, kind="workflow.parallel_branch", tenant_id=branch.workflow_run_id and (await db.get(WorkflowRun, branch.workflow_run_id)).tenant_id, payload={"branch_id": str(branch.id)}, dedupe_key=f"workflow.parallel_branch:{branch.id}:lease-recovery:{lease_id}")
+        for branch_id, workflow_run_id in branch_stale.all():
+            try:
+                lease_id = await recover_parallel_branch_execution_lease(
+                    db,
+                    branch_id=branch_id,
+                )
+            except ValidationAppError as exc:
+                # A concurrent cancellation or another recovery may win the
+                # parent/branch ownership race. The durable state is then
+                # authoritative; simply skip this stale discovery candidate.
+                if str(exc) not in {
+                    "Parent workflow is not recoverable",
+                    "Parallel branch execution lease is still owned",
+                    "Parallel branch is terminal",
+                }:
+                    raise
+                continue
+            tenant_result = await db.execute(
+                select(WorkflowRun.tenant_id).where(WorkflowRun.id == workflow_run_id)
+            )
+            tenant_id = tenant_result.scalar_one_or_none()
+            if tenant_id is None:
+                continue
+            await enqueue(
+                db,
+                kind="workflow.parallel_branch",
+                tenant_id=tenant_id,
+                payload={"branch_id": str(branch_id)},
+                dedupe_key=f"workflow.parallel_branch:{branch_id}:lease-recovery:{lease_id}",
+            )
             branch_recovered += 1
         await db.flush()
         result = await db.execute(
