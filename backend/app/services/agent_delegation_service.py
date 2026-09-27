@@ -496,6 +496,8 @@ async def validate_delegation(
         ).scalar_one_or_none()
         if parent is None:
             raise ValidationAppError("Delegation chain contains a missing parent delegation")
+        if parent.status != "active":
+            raise ValidationAppError("Delegation chain contains an inactive parent delegation")
         if parent.id in seen_delegation_ids:
             raise ValidationAppError("Delegation chain contains a cycle")
         seen_delegation_ids.add(parent.id)
