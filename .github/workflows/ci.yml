@@ -171,9 +171,31 @@ jobs:
           test "$(alembic heads | grep -c '(head)')" -eq 1
           alembic check
 
+      - name: Targeted workflow recovery race test
+        working-directory: backend
+        run: timeout 30s pytest -vv tests/test_workflow_cross_race_postgres.py::test_timeout_sweep_branch_recovery_keeps_parent_first_lock_order
+
       - name: Backend tests
         working-directory: backend
-        run: pytest -q -m 'not requires_ocr'
+        timeout-minutes: 20
+        env:
+          PYTHONFAULTHANDLER: '1'
+        run: |
+          set -o pipefail
+          echo '=== BACKEND TEST SUITE START ==='
+          echo 'Hard timeout: 20 minutes; faulthandler timeout: 60 seconds.'
+          timeout --foreground -k 15s 20m pytest -vv -o faulthandler_timeout=60 --durations=25 -m 'not requires_ocr'
+          status=$?
+          if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
+            echo '=== BACKEND TEST SUITE TIMEOUT DIAGNOSTICS ==='
+            echo '=== Process tree ==='
+            ps -ef --forest || true
+            echo '=== PostgreSQL activity ==='
+            PGPASSWORD=aiep psql "postgresql://aiep:aiep@localhost:5432/aiep" -X -A -F ' | ' -t -c "SELECT pid, state, COALESCE(wait_event_type,''), COALESCE(wait_event,''), LEFT(REPLACE(query, E'\\n', ' '), 500) FROM pg_stat_activity WHERE datname = current_database() ORDER BY pid;" || true
+            echo '=== PostgreSQL locks ==='
+            PGPASSWORD=aiep psql "postgresql://aiep:aiep@localhost:5432/aiep" -X -A -F ' | ' -t -c "SELECT a.pid, a.state, COALESCE(a.wait_event_type,''), COALESCE(a.wait_event,''), l.locktype, l.mode, l.granted, LEFT(REPLACE(a.query, E'\\n', ' '), 300) FROM pg_stat_activity a LEFT JOIN pg_locks l ON l.pid=a.pid WHERE a.datname=current_database() ORDER BY a.pid, l.granted;" || true
+          fi
+          exit "$status"
 
   frontend:
     runs-on: ubuntu-latest
