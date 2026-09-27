@@ -7,6 +7,8 @@ import uuid
 
 import pytest
 import pytest_asyncio
+
+from app.core.exceptions import ValidationAppError
 from sqlalchemy import delete, select
 
 from app.core.database import AsyncSessionLocal
@@ -1204,8 +1206,6 @@ async def test_retry_existing_non_successful_child_fails_closed_without_replacem
 
     monkeypatch.setattr(workflow_service.run_service, "create_run", create_child)
     monkeypatch.setattr(workflow_service.run_service, "execute_run", execute_child)
-
-    from app.core.exceptions import ValidationAppError
 
     async with AsyncSessionLocal() as db:
         with pytest.raises(ValidationAppError, match="refusing to create a replacement"):
