@@ -178,10 +178,12 @@ async def get_customer(
 ) -> Customer:
     customer = (
         await db.execute(
-            select(Customer).where(
+            select(Customer)
+            .where(
                 Customer.tenant_id == tenant_id,
                 Customer.id == customer_id,
             )
+            .with_for_update()
         )
     ).scalar_one_or_none()
     if not customer:
