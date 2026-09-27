@@ -301,7 +301,6 @@ async def test_parallel_branch_timeout_after_child_commit_never_executes_child(
     workflow_cross_race_setup, monkeypatch
 ):
     data = workflow_cross_race_setup
-    lease_id = uuid.uuid4()
     branch_lease_id = uuid.uuid4()
 
     async with AsyncSessionLocal() as db:
@@ -335,8 +334,6 @@ async def test_parallel_branch_timeout_after_child_commit_never_executes_child(
         await db.commit()
         branch_id = branch.id
 
-    from app.services import workflow_execution_lease
-
     async def acquire_branch(db, *, branch_id, **_kwargs):
         branch = await db.get(WorkflowParallelBranchRun, branch_id)
         assert branch is not None
@@ -356,21 +353,9 @@ async def test_parallel_branch_timeout_after_child_commit_never_executes_child(
     async def heartbeat_branch(*_args, **_kwargs):
         return None
 
-    monkeypatch.setattr(
-        workflow_execution_lease,
-        "acquire_parallel_branch_execution_lease",
-        acquire_branch,
-    )
-    monkeypatch.setattr(
-        workflow_execution_lease,
-        "assert_parallel_branch_execution_lease",
-        assert_branch,
-    )
-    monkeypatch.setattr(
-        workflow_execution_lease,
-        "heartbeat_parallel_branch_execution_lease",
-        heartbeat_branch,
-    )
+    monkeypatch.setattr(workflow_service, "acquire_parallel_branch_execution_lease", acquire_branch)
+    monkeypatch.setattr(workflow_service, "assert_parallel_branch_execution_lease", assert_branch)
+    monkeypatch.setattr(workflow_service, "heartbeat_parallel_branch_execution_lease", heartbeat_branch)
 
     async def create_run(
         db,
