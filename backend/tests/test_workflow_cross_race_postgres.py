@@ -14,6 +14,7 @@ from app.models.agent_definition import AgentDefinition
 from app.models.agent_instance import AgentInstance
 from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
+from app.models.outbox import OutboxMessage
 from app.models.tenant import Tenant
 from app.models.workflow import Workflow, WorkflowParallelBranchRun, WorkflowRun, WorkflowStepRun, WorkflowVersion
 from app.services import workflow_execution_lease, workflow_service
@@ -178,6 +179,67 @@ async def workflow_cross_race_setup(monkeypatch):
         if tenant is not None:
             tenant.status = "deprovisioned"
         await db.commit()
+
+
+@pytest.mark.asyncio
+async def test_worker_crash_branch_lease_recovery_requeues_same_branch(
+    workflow_cross_race_setup, monkeypatch
+):
+    data = workflow_cross_race_setup
+
+    async with AsyncSessionLocal() as db:
+        branch = WorkflowParallelBranchRun(
+            workflow_run_id=data["workflow_run_id"],
+            config={"steps": [{"key": "child", "employee_id": str(data["employee_id"])}]},
+            status="running",
+            current_step_position=0,
+            execution_lease_id=uuid.uuid4(),
+            execution_lease_expires_at=datetime.now(timezone.utc) - timedelta(seconds=5),
+            execution_heartbeat_at=datetime.now(timezone.utc) - timedelta(seconds=30),
+        )
+        db.add(branch)
+        await db.commit()
+        branch_id = branch.id
+
+    async def enqueue(db, *, kind, tenant_id=None, payload, dedupe_key=None, available_at=None):
+        message = OutboxMessage(
+            tenant_id=tenant_id,
+            kind=kind,
+            payload=payload,
+            status="pending",
+            attempts=0,
+            dedupe_key=dedupe_key,
+            available_at=available_at or datetime.now(timezone.utc),
+        )
+        db.add(message)
+        await db.flush()
+        return message
+
+    from app.workers import workflow_trigger_worker
+
+    monkeypatch.setattr(workflow_trigger_worker, "enqueue", enqueue)
+
+    count = await workflow_trigger_worker._timeout_workflow_runs_async()
+    assert count == 1
+
+    async with AsyncSessionLocal() as db:
+        recovered = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert recovered is not None
+        assert recovered.execution_lease_id is not None
+        assert recovered.execution_lease_expires_at is not None
+        assert recovered.execution_lease_expires_at > datetime.now(timezone.utc)
+
+        outbox = (
+            await db.execute(
+                select(OutboxMessage).where(
+                    OutboxMessage.dedupe_key
+                    == f"workflow.parallel_branch:{branch_id}:lease-recovery:{recovered.execution_lease_id}"
+                )
+            )
+        ).scalar_one_or_none()
+        assert outbox is not None
+        assert outbox.kind == "workflow.parallel_branch"
+        assert outbox.payload["branch_id"] == str(branch_id)
 
 
 @pytest.mark.asyncio
