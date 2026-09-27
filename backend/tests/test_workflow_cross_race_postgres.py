@@ -696,6 +696,12 @@ async def test_parallel_branch_cancellation_after_child_execution_preserves_term
         assert child is not None
         child.status = "success"
         child.output_data = {"result": "completed-before-cancel"}
+        # Mirror the real run_service.execute_run() transaction boundary:
+        # child execution commits before the workflow worker re-locks the
+        # parent for post-child terminal reconciliation. Without this commit
+        # the test session retains the parent FOR UPDATE lock and the injected
+        # concurrent cancellation blocks instead of exercising the race.
+        await db.commit()
 
     monkeypatch.setattr(workflow_service.run_service, "create_run", create_run)
     monkeypatch.setattr(workflow_service.run_service, "execute_run", execute_child)
