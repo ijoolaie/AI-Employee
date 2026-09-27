@@ -91,6 +91,7 @@ async def test_execute_is_tenant_local_and_dispatches_children():
         )
 
     assert result["status"] == WorkItemStatus.RUNNING.value
+    assert db.added[0].policy_context["member_count"] == 2
     assert result["correlation_id"] == "corr-1"
     assert len(result["members"]) == 2
     assert len(db.added) == 3

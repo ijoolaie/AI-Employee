@@ -90,6 +90,7 @@ class TeamExecutionService:
                 "correlation_id": request_id,
                 "execution_policy": version.execution_policy or {},
                 "allowed_tools": version.allowed_tools or [],
+                "member_count": len(version.member_agent_definition_ids),
             },
             idempotency_key=f"team:{installation.id}:{idempotency_key}",
         )

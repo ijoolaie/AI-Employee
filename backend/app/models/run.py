@@ -19,6 +19,8 @@ class Run(Base):
     employee_version_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("employee_versions.id"), nullable=False)
     agent_instance_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="RESTRICT"), nullable=True, index=True)
     delegation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_delegations.id", ondelete="RESTRICT"), nullable=True, index=True)
+    # Multiple Runs may belong to one WorkItem across explicit retries; this is historical execution provenance, not a one-to-one identity.
+    work_item_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("work_items.id", ondelete="SET NULL"), nullable=True, index=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     conversation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("customer_conversations.id", ondelete="SET NULL"), nullable=True, index=True)
     # These two FKs intentionally use ALTER-time DDL so SQLAlchemy can topologically

@@ -78,6 +78,7 @@ class AgentExecutionAdapter:
                 created_by=work_item.requester_id,
             )
             run.agent_instance_id = instance.id
+            run.work_item_id = work_item.id
             run.delegation_id = delegation_id
             await self.db.flush()
 
