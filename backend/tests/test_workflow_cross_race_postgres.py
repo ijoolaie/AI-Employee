@@ -1361,3 +1361,101 @@ async def test_retry_mismatched_linked_child_fails_closed_without_cross_step_reu
         assert step.employee_run_id == child_id
         assert step.status == "failed"
         assert step.error["code"] == "WORKFLOW_CHILD_RETRY_UNSAFE"
+
+
+@pytest.mark.asyncio
+async def test_branch_lease_loss_during_parent_cancellation_preserves_terminal_branch(
+    workflow_cross_race_setup, monkeypatch
+):
+    """A branch losing its lease while the parent is concurrently cancelled
+    must not resurrect or overwrite the durable cancellation decision.
+    """
+    data = workflow_cross_race_setup
+    async with AsyncSessionLocal() as db:
+        step = WorkflowStepRun(
+            workflow_run_id=data["workflow_run_id"],
+            step_key="parallel-lease-loss",
+            step_type="parallel",
+            position=0,
+            status="waiting_parallel",
+            input_data={},
+        )
+        db.add(step)
+        await db.flush()
+        branch = WorkflowParallelBranchRun(
+            workflow_run_id=data["workflow_run_id"],
+            workflow_step_run_id=step.id,
+            branch_key="branch-lease-loss",
+            config={"steps": []},
+            status="pending",
+        )
+        db.add(branch)
+        await db.commit()
+        branch_id = branch.id
+
+    lease_id = uuid.uuid4()
+    assert_calls = 0
+
+    async def acquire_branch_lease(db, *, branch_id, **_kwargs):
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+        assert branch is not None
+        branch.status = "running"
+        branch.execution_lease_id = lease_id
+        branch.execution_lease_expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+        await db.flush()
+        return lease_id
+
+    async def assert_branch_lease(db, *, branch_id, lease_id, **_kwargs):
+        nonlocal assert_calls
+        assert_calls += 1
+        if assert_calls == 2:
+            async with AsyncSessionLocal() as racing_db:
+                cancelled = await workflow_service.cancel_workflow_run(
+                    racing_db,
+                    workflow_run_id=data["workflow_run_id"],
+                    tenant_id=data["tenant_id"],
+                    cancelled_by=uuid.uuid4(),
+                    reason="Injected branch lease-loss cancellation",
+                )
+                await racing_db.commit()
+                assert cancelled.status == "cancelled"
+            raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
+        return await db.get(WorkflowParallelBranchRun, branch_id)
+
+    async def heartbeat_branch(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(
+        workflow_execution_lease,
+        "acquire_parallel_branch_execution_lease",
+        acquire_branch_lease,
+    )
+    monkeypatch.setattr(
+        workflow_execution_lease,
+        "assert_parallel_branch_execution_lease",
+        assert_branch_lease,
+    )
+    monkeypatch.setattr(
+        workflow_execution_lease,
+        "heartbeat_parallel_branch_execution_lease",
+        heartbeat_branch,
+    )
+
+    with pytest.raises(ValidationAppError, match="WORKFLOW_BRANCH_EXECUTION_LEASE_LOST"):
+        await workflow_service._execute_parallel_branch(
+            branch_id,
+            expected_tenant_id=data["tenant_id"],
+        )
+
+    async with AsyncSessionLocal() as db:
+        parent = await db.get(WorkflowRun, data["workflow_run_id"])
+        branch = await db.get(WorkflowParallelBranchRun, branch_id)
+
+        assert parent is not None
+        assert parent.status == "cancelled"
+        assert branch is not None
+        assert branch.status == "cancelled"
+        assert branch.execution_lease_id is None
+        assert branch.execution_lease_expires_at is None
+        assert branch.execution_heartbeat_at is None
+        assert branch.completed_at is not None
