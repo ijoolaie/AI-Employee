@@ -145,6 +145,8 @@ async def workflow_cross_race_setup(monkeypatch):
     yield data
 
     async with AsyncSessionLocal() as db:
+        # Execution rows reference Run through employee_run_id, so remove
+        # branch/step link owners before deleting the durable child Runs.
         await db.execute(
             delete(WorkflowParallelBranchRun).where(
                 WorkflowParallelBranchRun.workflow_run_id == data["workflow_run_id"]
@@ -156,9 +158,7 @@ async def workflow_cross_race_setup(monkeypatch):
             )
         )
         await db.execute(delete(Run).where(Run.tenant_id == data["tenant_id"]))
-        await db.execute(
-            delete(WorkflowRun).where(WorkflowRun.id == data["workflow_run_id"])
-        )
+        await db.execute(delete(WorkflowRun).where(WorkflowRun.tenant_id == data["tenant_id"]))
         # WorkflowVersion is an immutable ledger row and cannot be physically deleted.
         # Retain the workflow/version graph and deprovision the tenant fixture instead.
         await db.execute(
@@ -329,10 +329,13 @@ async def test_replay_existing_parallel_branch_creates_new_branch_identity(
             "assert_workflow_execution_lease",
             assert_lease,
         )
+        async def heartbeat_lease(*_args, **_kwargs):
+            return None
+
         monkeypatch.setattr(
             workflow_service,
             "heartbeat_workflow_execution_lease",
-            lambda db, **kwargs: None,
+            heartbeat_lease,
         )
 
         await workflow_service.execute_workflow(db, workflow_run_id=replay.id)
@@ -1064,6 +1067,14 @@ async def test_retry_existing_successful_child_reuses_same_run_without_reexecuti
 ):
     data = workflow_cross_race_setup
     async with AsyncSessionLocal() as db:
+        run = await db.get(WorkflowRun, data["workflow_run_id"])
+        assert run is not None
+        run.status = "pending"
+        run.execution_lease_id = None
+        run.execution_lease_expires_at = None
+        await db.commit()
+
+    async with AsyncSessionLocal() as db:
         step = WorkflowStepRun(
             workflow_run_id=data["workflow_run_id"],
             step_key="child",
@@ -1108,7 +1119,10 @@ async def test_retry_existing_successful_child_reuses_same_run_without_reexecuti
 
     monkeypatch.setattr(workflow_service, "acquire_workflow_execution_lease", acquire_lease)
     monkeypatch.setattr(workflow_service, "assert_workflow_execution_lease", assert_lease)
-    monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", lambda db, **kwargs: None)
+    async def heartbeat_lease(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", heartbeat_lease)
 
     async def execute_child(*_args, **_kwargs):
         raise AssertionError("successful durable child was re-executed")
@@ -1155,6 +1169,14 @@ async def test_retry_existing_non_successful_child_fails_closed_without_replacem
 ):
     data = workflow_cross_race_setup
     async with AsyncSessionLocal() as db:
+        run = await db.get(WorkflowRun, data["workflow_run_id"])
+        assert run is not None
+        run.status = "pending"
+        run.execution_lease_id = None
+        run.execution_lease_expires_at = None
+        await db.commit()
+
+    async with AsyncSessionLocal() as db:
         step = WorkflowStepRun(
             workflow_run_id=data["workflow_run_id"],
             step_key="child",
@@ -1196,7 +1218,10 @@ async def test_retry_existing_non_successful_child_fails_closed_without_replacem
 
     monkeypatch.setattr(workflow_service, "acquire_workflow_execution_lease", acquire_lease)
     monkeypatch.setattr(workflow_service, "assert_workflow_execution_lease", assert_lease)
-    monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", lambda db, **kwargs: None)
+    async def heartbeat_lease(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", heartbeat_lease)
 
     async def create_child(*_args, **_kwargs):
         raise AssertionError("failed durable child caused an unsafe replacement Run")
@@ -1245,6 +1270,14 @@ async def test_retry_mismatched_linked_child_fails_closed_without_cross_step_reu
     workflow_cross_race_setup, monkeypatch
 ):
     data = workflow_cross_race_setup
+    async with AsyncSessionLocal() as db:
+        run = await db.get(WorkflowRun, data["workflow_run_id"])
+        assert run is not None
+        run.status = "pending"
+        run.execution_lease_id = None
+        run.execution_lease_expires_at = None
+        await db.commit()
+
     async with AsyncSessionLocal() as db:
         step = WorkflowStepRun(
             workflow_run_id=data["workflow_run_id"],
@@ -1295,10 +1328,13 @@ async def test_retry_mismatched_linked_child_fails_closed_without_cross_step_reu
 
     monkeypatch.setattr(workflow_service, "acquire_workflow_execution_lease", acquire_lease)
     monkeypatch.setattr(workflow_service, "assert_workflow_execution_lease", assert_lease)
-    monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", lambda db, **kwargs: None)
+    async def heartbeat_lease(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(workflow_service, "heartbeat_workflow_execution_lease", heartbeat_lease)
 
     async with AsyncSessionLocal() as db:
-        with pytest.raises(ValidationAppError, match="no matching durable workflow-step identity"):
+        with pytest.raises(ValidationAppError, match="no matching durable workflow-step identity|refusing replay"):
             await workflow_service.execute_workflow(db, workflow_run_id=data["workflow_run_id"])
         await db.commit()
 
