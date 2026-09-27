@@ -467,6 +467,7 @@ async def validate_delegation(
     # WorkItem -> Delegation -> WorkItem acquisition from reintroducing a cycle.
     delegation_chain: list[AgentDelegation] = [initial]
     source_ids: list[UUID] = [initial.source_work_item_id]
+    seen_delegation_ids = {initial.id}
     cursor = initial
     for _ in range(DEFAULT_MAX_CHAIN_DEPTH):
         source_probe = (await db.execute(
@@ -495,6 +496,9 @@ async def validate_delegation(
         ).scalar_one_or_none()
         if parent is None:
             raise ValidationAppError("Delegation chain contains a missing parent delegation")
+        if parent.id in seen_delegation_ids:
+            raise ValidationAppError("Delegation chain contains a cycle")
+        seen_delegation_ids.add(parent.id)
         delegation_chain.append(parent)
         source_ids.append(parent.source_work_item_id)
         cursor = parent
