@@ -405,10 +405,21 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         # before accepting its output into the branch.
                         parent = await _lock_parent_for_child_execution(db, workflow_run_id=parent.id)
                         if parent.status != "running":
-                            branch.status = "cancelled" if parent.status == "cancelled" else "failed"
-                            branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
-                            branch.completed_at = datetime.now(timezone.utc)
-                            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                            # Parent cancellation may have already reconciled this branch
+                            # in a concurrent transaction. Refresh the versioned branch
+                            # row before writing terminal state so a stale ORM version
+                            # cannot turn an idempotent race into StaleDataError.
+                            branch_result = await db.execute(
+                                select(WorkflowParallelBranchRun)
+                                .where(WorkflowParallelBranchRun.id == branch.id)
+                                .execution_options(populate_existing=True)
+                            )
+                            branch = branch_result.scalar_one()
+                            if branch.status not in {"success", "failed", "cancelled"}:
+                                branch.status = "cancelled" if parent.status == "cancelled" else "failed"
+                                branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
+                                branch.completed_at = datetime.now(timezone.utc)
+                                branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
                             await db.commit()
                             return
                     else:
@@ -438,10 +449,17 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                                 child.status = "cancelled"
                                 child.error_message = "Run cancelled because its WorkflowRun became terminal before child execution"
                                 child.completed_at = datetime.now(timezone.utc)
-                            branch.status = "cancelled" if parent.status == "cancelled" else "failed"
-                            branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
-                            branch.completed_at = datetime.now(timezone.utc)
-                            branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                            branch_result = await db.execute(
+                                select(WorkflowParallelBranchRun)
+                                .where(WorkflowParallelBranchRun.id == branch.id)
+                                .execution_options(populate_existing=True)
+                            )
+                            branch = branch_result.scalar_one()
+                            if branch.status not in {"success", "failed", "cancelled"}:
+                                branch.status = "cancelled" if parent.status == "cancelled" else "failed"
+                                branch.error = {"code": "WORKFLOW_PARENT_TERMINAL", "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}"}
+                                branch.completed_at = datetime.now(timezone.utc)
+                                branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
                             await db.commit()
                             return
                         await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
