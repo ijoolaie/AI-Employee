@@ -118,7 +118,8 @@ async def test_agent_dispatch_is_tenant_scoped_and_does_not_precommit():
         (WorkItemStatus.WAITING_APPROVAL, "waiting for approval"),
     ],
 )
-def test_assignment_rejects_lifecycle_bypass_statuses(status, message):
+@pytest.mark.asyncio
+async def test_assignment_rejects_lifecycle_bypass_statuses(status, message):
     tenant_id = uuid4()
     item = work_item(tenant_id)
     item.status = status
@@ -128,5 +129,4 @@ def test_assignment_rejects_lifecycle_bypass_statuses(status, message):
         service.assign_human(item, uuid4())
 
     with pytest.raises(ExecutionError, match=message):
-        import asyncio
-        asyncio.run(service.assign_agent(item, agent(tenant_id)))
+        await service.assign_agent(item, agent(tenant_id))
