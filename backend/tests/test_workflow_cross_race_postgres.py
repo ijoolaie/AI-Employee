@@ -182,6 +182,229 @@ async def workflow_cross_race_setup(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_replay_existing_parallel_branch_creates_new_branch_identity(
+    workflow_cross_race_setup, monkeypatch
+):
+    data = workflow_cross_race_setup
+
+    # Replay must bind to the immutable source version. Use a dedicated
+    # parallel version so execution exercises durable branch creation on the
+    # replayed WorkflowRun rather than merely replay metadata.
+    async with AsyncSessionLocal() as db:
+        version = WorkflowVersion(
+            workflow_id=data["workflow_id"],
+            version_number=2,
+            is_current=False,
+            trigger_type="manual",
+            config={
+                "steps": [{
+                    "key": "parallel",
+                    "type": "parallel",
+                    "branches": [{
+                        "key": "branch-a",
+                        "steps": [{
+                            "key": "child",
+                            "type": "employee",
+                            "employee_id": str(data["employee_id"]),
+                            "employee_version_id": str(data["employee_version_id"]),
+                        }],
+                    }],
+                }],
+            },
+            execution_contract={
+                "schema_version": 1,
+                "legacy": False,
+                "workflow_version_number": 2,
+                "steps": [{
+                    "key": "parallel",
+                    "type": "parallel",
+                    "branches": [{
+                        "key": "branch-a",
+                        "steps": [{
+                            "key": "child",
+                            "type": "employee",
+                            "employee_id": str(data["employee_id"]),
+                            "employee_version_id": str(data["employee_version_id"]),
+                        }],
+                    }],
+                }],
+                "max_runtime_seconds": 300,
+            },
+            content_hash="replay-existing-branch-runtime-v2",
+            created_by=None,
+        )
+        db.add(version)
+        await db.flush()
+
+        source = WorkflowRun(
+            tenant_id=data["tenant_id"],
+            workflow_id=data["workflow_id"],
+            workflow_version_id=version.id,
+            created_by=None,
+            agent_instance_id=data["agent_instance_id"],
+            status="waiting_parallel",
+            context={
+                "input": {"value": "replay"},
+                "steps": {},
+                "_workflow": {
+                    "next_position": 0,
+                    "execution_contract": version.execution_contract,
+                },
+            },
+            deadline_at=datetime.now(timezone.utc) + timedelta(minutes=5),
+        )
+        db.add(source)
+        await db.flush()
+
+        source_step = WorkflowStepRun(
+            workflow_run_id=source.id,
+            step_key="parallel",
+            step_type="parallel",
+            position=0,
+            status="waiting_parallel",
+            input_data={},
+        )
+        db.add(source_step)
+        await db.flush()
+
+        source_branch = WorkflowParallelBranchRun(
+            workflow_run_id=source.id,
+            workflow_step_run_id=source_step.id,
+            branch_key="branch-a",
+            config={"steps": version.execution_contract["steps"][0]["branches"][0]["steps"]},
+            status="pending",
+        )
+        db.add(source_branch)
+        await db.commit()
+
+        source_id = source.id
+        source_branch_id = source_branch.id
+        source_step_id = source_step.id
+        source_version_id = version.id
+        source_hash = version.content_hash
+
+        replay = await workflow_service.replay_workflow_run(
+            db,
+            tenant_id=data["tenant_id"],
+            workflow_id=data["workflow_id"],
+            source_run_id=source.id,
+            created_by=None,
+            idempotency_key=f"replay-existing-branch-{uuid.uuid4()}",
+        )
+        await db.commit()
+
+        replay_id = replay.id
+        assert replay_id != source_id
+        assert replay.workflow_version_id == source_version_id
+        assert replay.context["_workflow"]["replay_of_run_id"] == str(source_id)
+        assert replay.context["_workflow"]["replay_source_version_id"] == str(source_version_id)
+        assert replay.context["_workflow"]["workflow_content_hash"] == source_hash
+        assert replay.context["_workflow"]["execution_contract"] == version.execution_contract
+
+        # Executing the replay creates branch rows scoped to the replay's
+        # WorkflowStepRun. It must never discover/reuse the source branch.
+        async def acquire_lease(db, *, workflow_run_id, allow_recovery=False):
+            run = await db.get(WorkflowRun, workflow_run_id)
+            assert run is not None
+            lease_id = uuid.uuid4()
+            run.execution_lease_id = lease_id
+            run.execution_lease_expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
+            run.status = "running"
+            await db.flush()
+            return lease_id
+
+        monkeypatch.setattr(
+            workflow_service,
+            "acquire_workflow_execution_lease",
+            acquire_lease,
+        )
+
+        async def assert_lease(db, *, workflow_run_id, lease_id):
+            return await db.get(WorkflowRun, workflow_run_id)
+
+        monkeypatch.setattr(
+            workflow_service,
+            "assert_workflow_execution_lease",
+            assert_lease,
+        )
+        monkeypatch.setattr(
+            workflow_service,
+            "heartbeat_workflow_execution_lease",
+            lambda db, **kwargs: None,
+        )
+
+        await workflow_service.execute_workflow(db, workflow_run_id=replay.id)
+        await db.commit()
+
+        replay_steps = (
+            await db.execute(
+                select(WorkflowStepRun).where(
+                    WorkflowStepRun.workflow_run_id == replay.id,
+                    WorkflowStepRun.step_key == "parallel",
+                )
+            )
+        ).scalars().all()
+        assert len(replay_steps) == 1
+        replay_step = replay_steps[0]
+        assert replay_step.id != source_step_id
+
+        replay_branches = (
+            await db.execute(
+                select(WorkflowParallelBranchRun).where(
+                    WorkflowParallelBranchRun.workflow_run_id == replay.id,
+                    WorkflowParallelBranchRun.workflow_step_run_id == replay_step.id,
+                )
+            )
+        ).scalars().all()
+        assert len(replay_branches) == 1
+        replay_branch = replay_branches[0]
+        assert replay_branch.id != source_branch_id
+        assert replay_branch.workflow_run_id == replay.id
+        assert replay_branch.workflow_step_run_id == replay_step.id
+        assert replay_branch.branch_key == "branch-a"
+        assert replay_branch.status == "pending"
+
+        source_branch_after = await db.get(WorkflowParallelBranchRun, source_branch_id)
+        source_run_after = await db.get(WorkflowRun, source_id)
+        assert source_branch_after is not None
+        assert source_branch_after.workflow_run_id == source_id
+        assert source_branch_after.workflow_step_run_id == source_step_id
+        assert source_branch_after.status == "pending"
+        assert source_run_after is not None
+        assert source_run_after.workflow_version_id == source_version_id
+
+        # No employee child from the source branch may be accidentally linked
+        # to the replayed branch during replay branch creation.
+        linked_children = (
+            await db.execute(
+                select(Run).where(
+                    Run.workflow_parallel_branch_run_id == replay_branch.id
+                )
+            )
+        ).scalars().all()
+        assert linked_children == []
+
+        # Remove the extra replay/source execution graph created by this test.
+        # WorkflowVersion remains immutable by design.
+        await db.execute(
+            delete(WorkflowParallelBranchRun).where(
+                WorkflowParallelBranchRun.workflow_run_id.in_([source_id, replay_id])
+            )
+        )
+        await db.execute(
+            delete(WorkflowStepRun).where(
+                WorkflowStepRun.workflow_run_id.in_([source_id, replay_id])
+            )
+        )
+        await db.execute(
+            delete(WorkflowRun).where(
+                WorkflowRun.id.in_([source_id, replay_id])
+            )
+        )
+        await db.commit()
+
+
+@pytest.mark.asyncio
 async def test_worker_crash_branch_lease_recovery_requeues_same_branch(
     workflow_cross_race_setup, monkeypatch
 ):
