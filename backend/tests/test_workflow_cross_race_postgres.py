@@ -391,12 +391,15 @@ async def test_parallel_branch_timeout_after_child_commit_never_executes_child(
     monkeypatch.setattr(workflow_service.run_service, "execute_run", execute_child)
 
     original_lock = workflow_service._lock_parent_for_child_execution
-    timeout_injected = False
+    lock_calls = 0
 
     async def lock_with_timeout(db, *, workflow_run_id):
-        nonlocal timeout_injected
-        if not timeout_injected:
-            timeout_injected = True
+        nonlocal lock_calls
+        lock_calls += 1
+        # The first boundary check must admit the branch and allow the child
+        # Run to be durably committed. Inject the concurrent timeout only at
+        # the second parent lock, which is the post-commit execution fence.
+        if lock_calls == 2:
             async with AsyncSessionLocal() as racing_db:
                 parent = await racing_db.get(WorkflowRun, workflow_run_id)
                 assert parent is not None
