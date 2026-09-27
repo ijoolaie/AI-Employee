@@ -142,12 +142,12 @@ async def workflow_cross_race_setup(monkeypatch):
     yield data
 
     async with AsyncSessionLocal() as db:
-        await db.execute(delete(Run).where(Run.tenant_id == data["tenant_id"]))
         await db.execute(
             delete(WorkflowStepRun).where(
                 WorkflowStepRun.workflow_run_id == data["workflow_run_id"]
             )
         )
+        await db.execute(delete(Run).where(Run.tenant_id == data["tenant_id"]))
         await db.execute(
             delete(WorkflowRun).where(WorkflowRun.id == data["workflow_run_id"])
         )
