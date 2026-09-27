@@ -444,15 +444,98 @@ async def validate_delegation(
 ) -> AgentDelegation:
     """Validate delegation proof and current governance state at execution time."""
     current = now or datetime.now(timezone.utc)
-    delegation = (
+
+    # Read first without retaining a lock. Creation establishes the canonical
+    # WorkItem -> AgentDelegation order; validation must acquire the same
+    # WorkItem lock before retaining any delegation lock.
+    initial = (
         await db.execute(
-            select(AgentDelegation)
-            .where(AgentDelegation.id == delegation_id, AgentDelegation.tenant_id == tenant_id)
-            .with_for_update()
+            select(AgentDelegation).where(
+                AgentDelegation.id == delegation_id,
+                AgentDelegation.tenant_id == tenant_id,
+            )
         )
     ).scalar_one_or_none()
-    if delegation is None:
+    if initial is None:
         raise ValidationAppError("Delegation not found for tenant")
+    if initial.delegate_agent_instance_id != delegate_agent_instance_id:
+        raise ValidationAppError("Delegation target mismatch")
+
+    # Discover the authority chain from durable proofs without locks first.
+    # We then lock all involved WorkItems root -> leaf, followed by all
+    # AgentDelegations root -> leaf. This prevents alternating
+    # WorkItem -> Delegation -> WorkItem acquisition from reintroducing a cycle.
+    delegation_chain: list[AgentDelegation] = [initial]
+    source_ids: list[UUID] = [initial.source_work_item_id]
+    cursor = initial
+    for _ in range(DEFAULT_MAX_CHAIN_DEPTH):
+        source_probe = (
+            await db.execute(
+                select(WorkItem.id, WorkItem.policy_context).where(
+                    WorkItem.id == cursor.source_work_item_id,
+                    WorkItem.tenant_id == tenant_id,
+                )
+            )
+        ).one_or_none()
+        if source_probe is None:
+            raise ValidationAppError("Delegation source work item is unavailable")
+        context = dict(source_probe[1] or {})
+        raw_parent_id = context.get("delegation_id") if context.get("delegated_from") is not None else None
+        if raw_parent_id is None:
+            break
+        try:
+            parent_id = UUID(str(raw_parent_id))
+        except (TypeError, ValueError) as exc:
+            raise ValidationAppError("Delegated source has an invalid delegation proof") from exc
+        parent = (
+            await db.execute(
+                select(AgentDelegation).where(
+                    AgentDelegation.id == parent_id,
+                    AgentDelegation.tenant_id == tenant_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if parent is None:
+            raise ValidationAppError("Delegation chain contains a missing parent delegation")
+        delegation_chain.append(parent)
+        source_ids.append(parent.source_work_item_id)
+        cursor = parent
+    else:
+        raise ValidationAppError("Delegation chain depth exceeded")
+
+    # Lock source WorkItems in deterministic root -> leaf order.
+    work_item_ids = list(dict.fromkeys(reversed(source_ids)))
+    work_items: dict[UUID, WorkItem] = {}
+    for work_item_id in work_item_ids:
+        locked = (
+            await db.execute(
+                select(WorkItem).where(
+                    WorkItem.id == work_item_id,
+                    WorkItem.tenant_id == tenant_id,
+                ).with_for_update()
+            )
+        ).scalar_one_or_none()
+        if locked is None:
+            raise ValidationAppError("Delegation source work item is unavailable")
+        work_items[work_item_id] = locked
+
+    # Now lock delegations in deterministic parent -> child order and refresh
+    # their durable state after the WorkItem locks are held.
+    locked_delegations: dict[UUID, AgentDelegation] = {}
+    for probe in reversed(delegation_chain):
+        locked = (
+            await db.execute(
+                select(AgentDelegation).where(
+                    AgentDelegation.id == probe.id,
+                    AgentDelegation.tenant_id == tenant_id,
+                ).execution_options(populate_existing=True).with_for_update()
+            )
+        ).scalar_one_or_none()
+        if locked is None:
+            raise ValidationAppError("Delegation not found for tenant")
+        locked_delegations[locked.id] = locked
+
+    delegation = locked_delegations[initial.id]
     if delegation.status != "active":
         raise ValidationAppError("Delegation is not active")
     if delegation.delegate_agent_instance_id != delegate_agent_instance_id:
@@ -462,16 +545,7 @@ async def validate_delegation(
     if delegation.chain_depth > delegation.max_chain_depth:
         raise ValidationAppError("Delegation chain depth exceeded")
 
-    source = (
-        await db.execute(
-            select(WorkItem).where(
-                WorkItem.id == delegation.source_work_item_id,
-                WorkItem.tenant_id == tenant_id,
-            ).with_for_update()
-        )
-    ).scalar_one_or_none()
-    if source is None:
-        raise ValidationAppError("Delegation source work item is unavailable")
+    source = work_items[delegation.source_work_item_id]
     if source.status is WorkItemStatus.CANCELLED:
         raise ValidationAppError("Delegation is revoked because its source work item was cancelled")
 
@@ -489,33 +563,11 @@ async def validate_delegation(
         if delegated_item.status is WorkItemStatus.CANCELLED:
             raise ValidationAppError("Delegation is revoked because its delegated work item was cancelled")
 
-    # A child delegation remains executable only while every delegation in its
-    # authority chain remains active. Checking only the leaf would allow a
-    # revoked parent to continue authorizing descendants.
     ancestor = delegation
     ancestor_source = source
-    for _ in range(DEFAULT_MAX_CHAIN_DEPTH):
-        ancestor_context = dict(getattr(ancestor_source, "policy_context", None) or {})
-        if ancestor_context.get("delegated_from") is None:
-            break
-        raw_parent_id = ancestor_context.get("delegation_id")
-        if raw_parent_id is None:
-            raise ValidationAppError("Delegated source is missing its delegation proof")
-        try:
-            parent_id = UUID(str(raw_parent_id))
-        except (TypeError, ValueError) as exc:
-            raise ValidationAppError("Delegated source has an invalid delegation proof") from exc
-        parent = (
-            await db.execute(
-                select(AgentDelegation)
-                .where(
-                    AgentDelegation.id == parent_id,
-                    AgentDelegation.tenant_id == tenant_id,
-                )
-                .with_for_update()
-            )
-        ).scalar_one_or_none()
-        if parent is None or parent.status != "active":
+    for parent_probe in reversed(delegation_chain[1:]):
+        parent = locked_delegations[parent_probe.id]
+        if parent.status != "active":
             raise ValidationAppError("Delegation chain contains an inactive parent delegation")
         if parent.expires_at <= current:
             raise ValidationAppError("Delegation chain contains an expired parent delegation")
@@ -526,31 +578,26 @@ async def validate_delegation(
         if parent.chain_depth != ancestor.chain_depth - 1:
             raise ValidationAppError("Delegation chain depth proof is inconsistent")
 
-        ancestor_source = (
-            await db.execute(
-                select(WorkItem).where(
-                    WorkItem.id == parent.source_work_item_id,
-                    WorkItem.tenant_id == tenant_id,
-                ).with_for_update()
-            )
-        ).scalar_one_or_none()
-        if ancestor_source is None:
-            raise ValidationAppError("Delegation ancestor source work item is unavailable")
+        ancestor_source = work_items[parent.source_work_item_id]
         if ancestor_source.status is WorkItemStatus.CANCELLED:
             raise ValidationAppError("Delegation is revoked because an ancestor source work item was cancelled")
         ancestor = parent
-    else:
-        raise ValidationAppError("Delegation chain depth exceeded")
 
     agent_ids = [delegation.delegator_agent_instance_id, delegation.delegate_agent_instance_id]
-    agents = (await db.execute(select(AgentInstance).where(AgentInstance.tenant_id == tenant_id, AgentInstance.id.in_(agent_ids)))).scalars().all()
+    agents = (await db.execute(select(AgentInstance).where(
+        AgentInstance.tenant_id == tenant_id,
+        AgentInstance.id.in_(agent_ids),
+    ))).scalars().all()
     by_id = {agent.id: agent for agent in agents}
     for agent_id in agent_ids:
         agent = by_id.get(agent_id)
         if agent is None or not agent.enabled or agent.status is not AgentInstanceStatus.ENABLED:
             raise ValidationAppError("Delegation requires currently enabled Agent instances")
 
-    identities = (await db.execute(select(AgentIdentity).where(AgentIdentity.tenant_id == tenant_id, AgentIdentity.agent_instance_id.in_(agent_ids)))).scalars().all()
+    identities = (await db.execute(select(AgentIdentity).where(
+        AgentIdentity.tenant_id == tenant_id,
+        AgentIdentity.agent_instance_id.in_(agent_ids),
+    ))).scalars().all()
     identity_by_agent = {identity.agent_instance_id: identity for identity in identities}
     for agent_id in agent_ids:
         identity = identity_by_agent.get(agent_id)
