@@ -16,22 +16,22 @@ depends_on = None
 
 def upgrade() -> None:
     op.add_column(
-        "work_items",
+        "runs",
         sa.Column(
-            "run_id",
+            "work_item_id",
             postgresql.UUID(as_uuid=True),
-            sa.ForeignKey("runs.id", ondelete="SET NULL"),
+            sa.ForeignKey("work_items.id", ondelete="SET NULL"),
             nullable=True,
         ),
     )
     op.create_index(
-        "uq_work_items_run_id",
-        "work_items",
-        ["run_id"],
+        "uq_runs_work_item_id",
+        "runs",
+        ["work_item_id"],
         unique=True,
     )
 
 
 def downgrade() -> None:
-    op.drop_index("uq_work_items_run_id", table_name="work_items")
-    op.drop_column("work_items", "run_id")
+    op.drop_index("uq_runs_work_item_id", table_name="runs")
+    op.drop_column("runs", "work_item_id")
