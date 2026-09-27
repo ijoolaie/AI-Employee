@@ -80,7 +80,7 @@ async def update_user_status(user_id: UUID, payload: UserStatusUpdate, ctx: Curr
     await require_tenant_admin(ctx)
     if user_id == ctx.user_id and not payload.is_active:
         raise HTTPException(status_code=400, detail="You cannot deactivate your own account")
-    result = await db.execute(select(User).options(selectinload(User.roles)).where(User.id == user_id, User.tenant_id == ctx.tenant_id))
+    result = await db.execute(select(User).options(selectinload(User.roles)).where(User.id == user_id, User.tenant_id == ctx.tenant_id).with_for_update())
     user = result.scalar_one_or_none()
     if user is None: raise HTTPException(status_code=404, detail="User not found")
     user.is_active = payload.is_active

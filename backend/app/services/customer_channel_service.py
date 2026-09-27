@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError, ConflictError
 from app.models.customer_channel import CustomerChannel
 from app.models.conversation import CustomerConversation, CustomerMessage
+from app.models.user import User
 from app.models.employee import Employee
 from app.models.run import Run
 from app.services import audit_service, employee_service, run_service, customer_service
@@ -87,9 +88,13 @@ async def list_conversations(db: AsyncSession, *, tenant_id: uuid.UUID, employee
 
 
 async def update_handoff(db: AsyncSession, *, tenant_id: uuid.UUID, conversation_id: uuid.UUID, requested: bool, assigned_user_id: uuid.UUID | None):
-    conversation = (await db.execute(select(CustomerConversation).where(CustomerConversation.id == conversation_id, CustomerConversation.tenant_id == tenant_id))).scalar_one_or_none()
+    conversation = (await db.execute(select(CustomerConversation).where(CustomerConversation.id == conversation_id, CustomerConversation.tenant_id == tenant_id).with_for_update())).scalar_one_or_none()
     if not conversation:
         raise NotFoundError("Conversation not found")
+    if requested and assigned_user_id is not None:
+        assigned = (await db.execute(select(User).where(User.id == assigned_user_id, User.tenant_id == tenant_id, User.is_active.is_(True)))).scalar_one_or_none()
+        if assigned is None:
+            raise NotFoundError("Assigned user not found")
     conversation.handoff_requested = requested
     conversation.assigned_user_id = assigned_user_id if requested else None
     conversation.status = "human" if requested else "open"

@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.business_deal import BusinessDeal
+from app.models.business_order import BusinessOrder
 from app.services import audit_service
 
 ALLOWED_STAGES = frozenset(
@@ -75,6 +76,12 @@ async def create_deal(
             order_uuid = uuid.UUID(str(order_id))
         except ValueError as exc:
             raise ValidationAppError("order_id must be a valid UUID") from exc
+        order = (await db.execute(select(BusinessOrder).where(
+            BusinessOrder.id == order_uuid,
+            BusinessOrder.tenant_id == tenant_id,
+        ))).scalar_one_or_none()
+        if order is None:
+            raise NotFoundError("Order not found")
 
     deal = BusinessDeal(
         tenant_id=tenant_id,
@@ -119,7 +126,7 @@ async def update_stage(
     stage = stage.lower()
     if stage not in ALLOWED_STAGES:
         raise ValidationAppError(f"stage must be one of {sorted(ALLOWED_STAGES)}")
-    deal = await get_deal(db, tenant_id=tenant_id, deal_id=deal_id)
+    deal = await get_deal(db, tenant_id=tenant_id, deal_id=deal_id, for_update=True)
     deal.stage = stage
     if probability is not None:
         if probability < 0 or probability > 100:
@@ -140,17 +147,18 @@ async def update_stage(
     return deal
 
 
-async def get_deal(db: AsyncSession, *, tenant_id: uuid.UUID, deal_id: str) -> BusinessDeal:
+async def get_deal(db: AsyncSession, *, tenant_id: uuid.UUID, deal_id: str, for_update: bool = False) -> BusinessDeal:
     try:
         did = uuid.UUID(str(deal_id))
     except ValueError as exc:
         raise ValidationAppError("deal_id must be a valid UUID") from exc
-    result = await db.execute(
-        select(BusinessDeal).where(
-            BusinessDeal.id == did,
-            BusinessDeal.tenant_id == tenant_id,
-        )
+    stmt = select(BusinessDeal).where(
+        BusinessDeal.id == did,
+        BusinessDeal.tenant_id == tenant_id,
     )
+    if for_update:
+        stmt = stmt.with_for_update()
+    result = await db.execute(stmt)
     deal = result.scalar_one_or_none()
     if deal is None:
         raise NotFoundError("Deal not found")
