@@ -125,7 +125,7 @@ async def test_activation_requires_approved_access_review_and_fresh_decision(mon
     instance = SimpleNamespace(id=proposal.provisioned_agent_instance_id, status=AgentInstanceStatus.SUSPENDED, enabled=False, max_concurrency=1, budget_policy=configuration["budget_policy"], created_at=created_at)
     identity = SimpleNamespace(id=uuid4())
     review = SimpleNamespace(id=uuid4(), reviewed_at=created_at + timedelta(minutes=1), next_review_at=datetime.now(timezone.utc) + timedelta(hours=1))
-    db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(instance), Result(identity), Result(template), Result(review)]), flush=AsyncMock())
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(template), Result(review)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
     monkeypatch.setattr(service, "record", AsyncMock())
 
@@ -163,7 +163,7 @@ async def test_activation_rejects_stale_template_change(monkeypatch):
     created_at = datetime.now(timezone.utc) - timedelta(minutes=10)
     instance = SimpleNamespace(id=proposal.provisioned_agent_instance_id, status=AgentInstanceStatus.SUSPENDED, enabled=False, max_concurrency=1, budget_policy={}, created_at=created_at)
     identity = SimpleNamespace(id=uuid4())
-    db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(instance), Result(identity), Result(stale_template)]), flush=AsyncMock())
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(stale_template)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
     with pytest.raises(ConflictError, match="stale"):
         await service.activate_provisioned_proposal(db, tenant_id=tenant_id, proposal_id=proposal.id, activated_by_user_id=activator)
