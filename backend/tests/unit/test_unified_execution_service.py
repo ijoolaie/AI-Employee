@@ -108,3 +108,25 @@ async def test_agent_dispatch_is_tenant_scoped_and_does_not_precommit():
     assert item.status is WorkItemStatus.RUNNING
     assert item.output_data["executor"] == "agent"
     assert db.commit_count == 0
+
+
+@pytest.mark.parametrize(
+    "status, message",
+    [
+        (WorkItemStatus.FAILED, "failed or blocked"),
+        (WorkItemStatus.BLOCKED, "failed or blocked"),
+        (WorkItemStatus.WAITING_APPROVAL, "waiting for approval"),
+    ],
+)
+def test_assignment_rejects_lifecycle_bypass_statuses(status, message):
+    tenant_id = uuid4()
+    item = work_item(tenant_id)
+    item.status = status
+    service = UnifiedExecutionService(SimpleNamespace())
+
+    with pytest.raises(ExecutionError, match=message):
+        service.assign_human(item, uuid4())
+
+    with pytest.raises(ExecutionError, match=message):
+        import asyncio
+        asyncio.run(service.assign_agent(item, agent(tenant_id)))
