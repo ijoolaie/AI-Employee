@@ -129,7 +129,9 @@ async def create_customer(
             db.add(customer)
             await db.flush()
     except IntegrityError as exc:
-        constraint_name = getattr(exc.orig, "constraint_name", None)
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
         if constraint_name == CUSTOMER_EXTERNAL_KEY_INDEX_NAME:
             raise ConflictError("Customer external key already exists") from exc
         raise
