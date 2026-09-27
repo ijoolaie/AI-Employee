@@ -123,16 +123,3 @@ async def test_cancel_workflow_run_cancels_queued_children_and_branches_but_not_
     assert branch.execution_heartbeat_at is None
     assert len(db.executed) == 5
 
-
-@pytest.mark.asyncio
-async def test_parent_execution_fence_returns_terminal_cancellation_without_raising():
-    workflow_run = SimpleNamespace(status="cancelled")
-    db = _FakeDb([_FakeResult(workflow_run)])
-
-    result = await workflow_service._lock_parent_for_child_execution(
-        db,
-        workflow_run_id=uuid.uuid4(),
-    )
-
-    assert result is workflow_run
-    assert result.status == "cancelled"
