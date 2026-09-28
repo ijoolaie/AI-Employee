@@ -49,6 +49,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.services import audit_service, employee_service, billing_service
 from app.services.schema_validation import validate_json_data
+from app.services.workforce_runtime_governance import assert_workforce_tool_execution
 from app.rag import service as rag_service
 from app.memory import service as memory_service
 from app.memory.context import build_memory_query, memory_settings
@@ -442,6 +443,13 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                     effective_permissions = set(tool_permissions)
                     if "*" in effective_permissions:
                         effective_permissions.add(tool.required_permission)
+                    if run.agent_instance_id is not None:
+                        await assert_workforce_tool_execution(
+                            db,
+                            tenant_id=run.tenant_id,
+                            agent_instance_id=run.agent_instance_id,
+                            tool_name=tool_call_name,
+                        )
                     tool_result = await registry.execute(
                         tool_call_name,
                         resume_approval.arguments,
@@ -569,6 +577,13 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         await db.flush()
                         break
 
+                    if run.agent_instance_id is not None:
+                        await assert_workforce_tool_execution(
+                            db,
+                            tenant_id=run.tenant_id,
+                            agent_instance_id=run.agent_instance_id,
+                            tool_name=tool_call.name,
+                        )
                     tool_result = await registry.execute(
                         tool_call.name,
                         tool_call.arguments,
