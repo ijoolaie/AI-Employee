@@ -30,6 +30,7 @@ async def test_promotion_requires_comparable_evidence(monkeypatch):
     import app.services.agent_promotion as service
 
     db = AsyncMock()
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     monkeypatch.setattr(service, "agent_promotion_evidence_summary", AsyncMock(return_value=[]))
 
     with pytest.raises(ConflictError, match="evidence is unavailable"):
@@ -47,6 +48,7 @@ async def test_promotion_reuses_governed_evaluation_and_publish(monkeypatch):
     import app.services.agent_promotion as service
 
     db = AsyncMock()
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     template_id = uuid.uuid4()
     tenant_id = uuid.uuid4()
     requester = uuid.uuid4()
@@ -81,3 +83,27 @@ async def test_promotion_reuses_governed_evaluation_and_publish(monkeypatch):
         template_id=template_id,
         approved_by_user_id=approver,
     )
+
+
+@pytest.mark.asyncio
+async def test_promotion_rejects_cross_tenant_requester_or_approver(monkeypatch):
+    import app.services.agent_promotion as service
+
+    db = AsyncMock()
+    requested_by = uuid.uuid4()
+    approved_by = uuid.uuid4()
+
+    async def reject_cross_tenant(*args, **kwargs):
+        raise ValidationAppError("requested_by_user_id must reference users belonging to the current tenant")
+
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", reject_cross_tenant)
+
+    with pytest.raises(ValidationAppError, match="requested_by_user_id"):
+        await promote_agent_template(
+            db,
+            tenant_id=uuid.uuid4(),
+            template_id=uuid.uuid4(),
+            requested_by_user_id=requested_by,
+            approved_by_user_id=approved_by,
+        )
+    db.execute.assert_not_awaited()

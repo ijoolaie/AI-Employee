@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, ValidationAppError
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
-from app.services.agent_governance import assert_publishable_with_evidence
+from app.services.agent_governance import assert_publishable_with_evidence, assert_users_belong_to_tenant
 from app.services.agent_promotion_evidence import agent_promotion_evidence_summary
 from app.services.agent_template_service import publish_template
 
@@ -30,6 +30,15 @@ async def promote_agent_template(
         raise ValidationAppError("Promotion requester and approver are required")
     if requested_by_user_id == approved_by_user_id:
         raise ValidationAppError("Promotion requester and approver must be independent")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={requested_by_user_id, approved_by_user_id},
+        field_names={
+            requested_by_user_id: "requested_by_user_id",
+            approved_by_user_id: "approved_by_user_id",
+        },
+    )
 
     evidence_rows = await agent_promotion_evidence_summary(
         db,
