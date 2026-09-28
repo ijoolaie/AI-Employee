@@ -24,7 +24,7 @@
 - Stable Git tag: **VERIFIED**
 - GitHub Release: **PUBLISHED**
 - Current execution stage: **LOCAL / ENGINEERING**
-- Current engineering head: **main / 9211714e5d415dba6e24f69b653a31ddb192db09**
+- Current main head: **main / 0814c951882c96f50a6f7a71536f782b5901dbd5**
 - External production & commercial gates: **OPEN — PENDING EXTERNAL EXECUTION**
 
 Certification applies only to the exact certified SHA. Post-release code or documentation commits do not inherit certification.
