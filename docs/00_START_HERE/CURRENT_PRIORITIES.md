@@ -3,8 +3,8 @@
 **Reconciled:** 2026-09-28
 **Current release:** `v1.4.11`
 **Certified SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
-**Current main head:** `main / 27768f30dea49c87789695a9c9bd44df587d4c51`
-**Latest code-bearing engineering head:** `d32845d4502341dc259c507da63531612dab1831`
+**Current main head:** `main / e844d55e5053e9689f5afdca8aa6a4d4e75a2662`
+**Latest code-bearing engineering head:** `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`
 **Production Certification:** Run `35848311037` / Job `107139710452` — PASS
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN
 
@@ -80,4 +80,4 @@ Stage 8/9 and future workforce work should therefore proceed only when the relev
 
 The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
 
-The current main head is post-certification `main / 27768f30dea49c87789695a9c9bd44df587d4c51`; it is not certified by the v1.4.11 exact-SHA evidence. The latest code-bearing engineering head is `d32845d4502341dc259c507da63531612dab1831`, containing the merged CI timeout process-termination fix from PR #826. The commits after `d32845d...` are documentation-only reconciliation commits. Current-main validation remains engineering evidence only.
+The current main head is post-certification `main / e844d55e5053e9689f5afdca8aa6a4d4e75a2662`; it is not certified by the v1.4.11 exact-SHA evidence. The latest code-bearing engineering head is `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`, containing the merged CI timeout process-termination fix from PR #826 and governed Workforce runtime-binding fix from PR #827. Current-main validation remains engineering evidence only.
