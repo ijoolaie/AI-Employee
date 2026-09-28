@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ValidationAppError
 from app.models.workforce_sla_contract import WorkforceSLAContract
 from app.services.audit_service import record
+from app.services.agent_governance import assert_users_belong_to_tenant
 
 
 MIN_QUEUE_AGE_SECONDS = 1
@@ -37,6 +38,13 @@ async def upsert_contract(
         raise ValidationAppError(
             "max_queue_age_seconds must be between 1 and 2592000 seconds"
         )
+
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={actor_user_id},
+        field_names={actor_user_id: "actor_user_id"},
+    )
 
     contract = (
         await db.execute(

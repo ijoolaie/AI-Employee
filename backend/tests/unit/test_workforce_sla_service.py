@@ -15,6 +15,12 @@ class Result:
     def scalar_one_or_none(self):
         return self.value
 
+    def scalars(self):
+        return self
+
+    def all(self):
+        return [self.value] if self.value is not None else []
+
 
 class NestedTransaction:
     async def __aenter__(self):
@@ -56,12 +62,35 @@ async def test_sla_contract_rejects_unbounded_target():
 
 
 @pytest.mark.asyncio
+async def test_sla_contract_rejects_cross_tenant_actor(monkeypatch):
+    async def reject(*args, **kwargs):
+        raise ValidationAppError("actor_user_id must belong to the current tenant")
+
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", reject)
+    db = DB()
+
+    with pytest.raises(ValidationAppError, match="actor_user_id"):
+        await service.upsert_contract(
+            db,
+            tenant_id=uuid4(),
+            actor_user_id=uuid4(),
+            max_queue_age_seconds=300,
+        )
+
+    assert db.statements == []
+
+
+@pytest.mark.asyncio
 async def test_sla_contract_creates_tenant_owned_target(monkeypatch):
     audit = {}
+
+    async def allow(*args, **kwargs):
+        return None
 
     async def record(*args, **kwargs):
         audit.update(kwargs)
 
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", allow)
     monkeypatch.setattr(service, "record", record)
     db = DB()
 
@@ -83,9 +112,13 @@ async def test_sla_contract_creates_tenant_owned_target(monkeypatch):
 async def test_sla_contract_updates_existing_target_under_row_lock(monkeypatch):
     audit = {}
 
+    async def allow(*args, **kwargs):
+        return None
+
     async def record(*args, **kwargs):
         audit.update(kwargs)
 
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", allow)
     monkeypatch.setattr(service, "record", record)
     existing = type(
         "Contract",
