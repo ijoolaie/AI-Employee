@@ -26,7 +26,16 @@ async def request_reset(db: AsyncSession, *, email: str, tenant_slug: str) -> st
     if tenant is None or tenant.status != "active":
         return GENERIC_MESSAGE
     normalized = email.lower()
-    user_result = await db.execute(select(User).where(User.email == normalized, User.tenant_id == tenant.id, User.is_active.is_(True)))
+    # Password-reset throttling and token replacement mutate the same user's
+    # token set. Lock the parent User row first so concurrent requests cannot
+    # both observe the same rate-limit count and then replace/send a token.
+    # This also establishes User -> PasswordResetToken as the canonical order
+    # used by both request and completion paths.
+    user_result = await db.execute(
+        select(User)
+        .where(User.email == normalized, User.tenant_id == tenant.id, User.is_active.is_(True))
+        .with_for_update()
+    )
     user = user_result.scalar_one_or_none()
     if user is None:
         return GENERIC_MESSAGE
@@ -54,13 +63,36 @@ async def request_reset(db: AsyncSession, *, email: str, tenant_slug: str) -> st
 
 async def reset_password(db: AsyncSession, *, raw_token: str, password: str) -> None:
     now = datetime.now(timezone.utc)
-    result = await db.execute(select(PasswordResetToken).where(PasswordResetToken.token_hash == _hash(raw_token)).with_for_update())
-    token = result.scalar_one_or_none()
-    if token is None or token.used_at is not None or token.expires_at <= now:
+    # Discover the token without retaining a child lock, then acquire the
+    # parent User lock before locking the token. request_reset() uses the same
+    # User -> PasswordResetToken order, preventing a token -> user inversion.
+    token_probe_result = await db.execute(
+        select(PasswordResetToken).where(PasswordResetToken.token_hash == _hash(raw_token))
+    )
+    token_probe = token_probe_result.scalar_one_or_none()
+    if token_probe is None or token_probe.used_at is not None or token_probe.expires_at <= now:
         raise UnauthorizedError("Invalid or expired password reset token")
-    user_result = await db.execute(select(User).where(User.id == token.user_id, User.tenant_id == token.tenant_id).with_for_update())
+
+    user_result = await db.execute(
+        select(User)
+        .where(User.id == token_probe.user_id, User.tenant_id == token_probe.tenant_id)
+        .with_for_update()
+    )
     user = user_result.scalar_one_or_none()
     if user is None or not user.is_active:
+        raise UnauthorizedError("Invalid or expired password reset token")
+
+    result = await db.execute(
+        select(PasswordResetToken)
+        .where(
+            PasswordResetToken.id == token_probe.id,
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.tenant_id == user.tenant_id,
+        )
+        .with_for_update()
+    )
+    token = result.scalar_one_or_none()
+    if token is None or token.used_at is not None or token.expires_at <= now:
         raise UnauthorizedError("Invalid or expired password reset token")
     user.password_hash = hash_password(password)
     user.password_changed_at = now
