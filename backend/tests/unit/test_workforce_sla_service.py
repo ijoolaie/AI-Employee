@@ -56,6 +56,25 @@ async def test_sla_contract_rejects_unbounded_target():
 
 
 @pytest.mark.asyncio
+async def test_sla_contract_rejects_cross_tenant_actor(monkeypatch):
+    async def reject(*args, **kwargs):
+        raise ValidationAppError("actor_user_id must belong to the current tenant")
+
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", reject)
+    db = DB()
+
+    with pytest.raises(ValidationAppError, match="actor_user_id"):
+        await service.upsert_contract(
+            db,
+            tenant_id=uuid4(),
+            actor_user_id=uuid4(),
+            max_queue_age_seconds=300,
+        )
+
+    assert db.statements == []
+
+
+@pytest.mark.asyncio
 async def test_sla_contract_creates_tenant_owned_target(monkeypatch):
     audit = {}
 
