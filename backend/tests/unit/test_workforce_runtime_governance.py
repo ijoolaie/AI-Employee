@@ -121,3 +121,38 @@ async def test_stale_workforce_capability_contract_fails_closed():
             agent=agent,
             operation="market_research",
         )
+
+
+def test_workforce_tool_resolves_to_explicit_catalog_operation():
+    assert runtime.workforce_operation_for_tool("workforce_market_research") == (
+        "ai_trader",
+        "market_research",
+    )
+    assert runtime.workforce_operation_for_tool("calculator") is None
+
+
+@pytest.mark.asyncio
+async def test_workforce_tool_execution_rejects_wrong_role():
+    tenant_id = uuid4()
+    agent_id = uuid4()
+    agent = SimpleNamespace(
+        id=agent_id,
+        tenant_id=tenant_id,
+        configuration={"workforce_role_code": "ai_marketing_advertising_manager"},
+    )
+
+    class Result:
+        def scalar_one_or_none(self):
+            return agent
+
+    class DB:
+        async def execute(self, _query):
+            return Result()
+
+    with pytest.raises(ValidationAppError, match="not bound to the executing Agent role"):
+        await runtime.assert_workforce_tool_execution(
+            DB(),
+            tenant_id=tenant_id,
+            agent_instance_id=agent_id,
+            tool_name="workforce_market_research",
+        )
