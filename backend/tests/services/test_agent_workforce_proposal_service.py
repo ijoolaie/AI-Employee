@@ -27,6 +27,7 @@ async def test_board_decision_requires_submitted_and_independent_reviewer(monkey
     proposal = SimpleNamespace(id=uuid4(), status=AgentWorkforceProposalStatus.SUBMITTED, requester_user_id=requester, sponsor_user_id=sponsor, board_reviewed_by=None, board_decision_reason=None)
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
     monkeypatch.setattr(service, "record", AsyncMock())
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     db = SimpleNamespace(flush=AsyncMock())
     result = await service.board_decide(db, tenant_id=uuid4(), proposal_id=proposal.id, reviewer_user_id=reviewer, approve=True, reason="Capacity is justified")
     assert result.status == AgentWorkforceProposalStatus.BOARD_APPROVED
@@ -63,6 +64,7 @@ async def test_ceo_decision_records_freshness_proof(monkeypatch):
     )
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
     monkeypatch.setattr(service, "record", AsyncMock())
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     db = SimpleNamespace(execute=AsyncMock(return_value=Result(template)), flush=AsyncMock())
     result = await service.ceo_decide(db, tenant_id=tenant_id, proposal_id=proposal.id, approver_user_id=ceo, approve=True, reason="Approved")
     assert result.status == AgentWorkforceProposalStatus.CEO_APPROVED
