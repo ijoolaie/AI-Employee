@@ -142,7 +142,13 @@ async def create_checkout_session(
     if plan is None:
         raise NotFoundError("Billing plan not found")
     sub = await billing_service.ensure_subscription(db, tenant_id=tenant_id)
-    user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+    user = (
+        await db.execute(
+            select(User).where(User.id == user_id, User.tenant_id == tenant_id)
+        )
+    ).scalar_one_or_none()
+    if user is None:
+        raise NotFoundError("Checkout user not found")
     customer_id = await _get_or_create_stripe_customer(
         db,
         stripe,

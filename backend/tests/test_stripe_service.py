@@ -12,7 +12,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.core.config import get_settings
-from app.core.exceptions import ValidationAppError
+from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.billing import Subscription
 from app.schemas.billing import CheckoutSessionRequest
 from app.services import stripe_service
@@ -169,3 +169,40 @@ async def test_customer_creation_uses_same_provider_key_on_retry():
 
     assert first == second == "cus_deterministic"
     assert seen_keys == [f"customer:{tenant_id}", f"customer:{tenant_id}"]
+
+
+@pytest.mark.asyncio
+async def test_checkout_rejects_user_outside_current_tenant(monkeypatch):
+    tenant_id = uuid.UUID("00000000-0000-0000-0000-000000000123")
+    foreign_user_id = uuid.UUID("00000000-0000-0000-0000-000000000456")
+    plan = SimpleNamespace(code="business")
+    sub = Subscription(provider_customer_id=None)
+
+    class UserLookupResult:
+        def scalar_one_or_none(self):
+            return None
+
+    async def execute(statement):
+        sql = str(statement)
+        if "billing_plans" in sql:
+            return SimpleNamespace(scalar_one_or_none=lambda: plan)
+        assert "users.tenant_id" in sql
+        assert str(foreign_user_id) not in sql
+        return UserLookupResult()
+
+    db = SimpleNamespace(execute=execute)
+    monkeypatch.setattr(stripe_service, "_client", lambda: SimpleNamespace())
+    monkeypatch.setattr(
+        stripe_service.billing_service,
+        "ensure_subscription",
+        AsyncMock(return_value=sub),
+    )
+
+    with pytest.raises(NotFoundError, match="Checkout user not found"):
+        await stripe_service.create_checkout_session(
+            db,
+            tenant_id=tenant_id,
+            user_id=foreign_user_id,
+            plan_code="business",
+            idempotency_key="checkout-tenant-boundary",
+        )
