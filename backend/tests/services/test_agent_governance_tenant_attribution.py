@@ -12,7 +12,10 @@ class Result:
         self.values = values
 
     def scalars(self):
-        return iter(self.values)
+        return self
+
+    def all(self):
+        return self.values
 
 
 @pytest.mark.asyncio
