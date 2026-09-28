@@ -14,11 +14,58 @@ from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstance
 from app.services.ai_workforce_roles import (
     assert_workforce_capability_contract_snapshot,
+    assert_workforce_tool_binding,
     get_workforce_role,
     is_operation_allowed,
+    WORKFORCE_ROLES,
 )
 from app.services.agent_governance import current_agent_execution_context
 from app.services.workforce_delegation_service import assert_operation_delegated
+
+
+def workforce_operation_for_tool(tool_name: str) -> tuple[str, str] | None:
+    """Resolve a registered workforce tool to its catalog role/operation binding."""
+    for role in WORKFORCE_ROLES:
+        for contract in role.capability_contract:
+            if tool_name in contract.tool_names:
+                return role.code, contract.operation
+    return None
+
+
+async def assert_workforce_tool_execution(
+    db: AsyncSession,
+    *,
+    tenant_id: UUID,
+    agent_instance_id: UUID,
+    tool_name: str,
+) -> None:
+    """Enforce role/capability/tool binding at the canonical Run tool boundary."""
+    binding = workforce_operation_for_tool(tool_name)
+    if binding is None:
+        return
+
+    from sqlalchemy import select
+
+    result = await db.execute(
+        select(AgentInstance).where(
+            AgentInstance.id == agent_instance_id,
+            AgentInstance.tenant_id == tenant_id,
+        )
+    )
+    agent = result.scalar_one_or_none()
+    if agent is None:
+        raise ValidationAppError("Workforce tool execution requires a tenant-scoped AgentInstance")
+
+    role_code, operation = binding
+    actual_role = str((agent.configuration or {}).get("workforce_role_code") or "").strip()
+    if actual_role != role_code:
+        raise ValidationAppError(
+            "Workforce tool is not bound to the executing Agent role",
+            details={"role": actual_role or None, "required_role": role_code, "operation": operation, "tool": tool_name},
+        )
+
+    await assert_workforce_operation(db, agent=agent, operation=operation)
+    assert_workforce_tool_binding(role_code, operation, tool_name)
 
 
 async def assert_workforce_operation(
