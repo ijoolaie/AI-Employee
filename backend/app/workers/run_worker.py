@@ -165,7 +165,18 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             runtime = AgentRuntime(contract)
 
             try:
-                await runtime.execute(lambda: execute_run_locked(db, run_id=parsed_run_id), retryable=False)
+                if run.agent_instance_id is not None:
+                    async with governed_agent_execution(
+                        tenant_id=run.tenant_id,
+                        agent_instance_id=run.agent_instance_id,
+                        run_id=run.id,
+                        employee_id=run.employee_id,
+                        employee_version_id=run.employee_version_id,
+                        delegation_id=getattr(run, "delegation_id", None),
+                    ):
+                        await runtime.execute(lambda: execute_run_locked(db, run_id=parsed_run_id), retryable=False)
+                else:
+                    await runtime.execute(lambda: execute_run_locked(db, run_id=parsed_run_id), retryable=False)
                 refreshed = await db.execute(select(Run).where(Run.id == parsed_run_id))
                 completed_run = refreshed.scalar_one_or_none()
                 if completed_run is not None:
