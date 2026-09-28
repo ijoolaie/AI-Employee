@@ -7,7 +7,7 @@
 **GitHub Release:** `v1.4.11` — PUBLISHED
 **Exact-SHA Production Certification:** Run `35848311037` — PASS
 **Certification job:** `107139710452` — PASS
-**Current engineering head:** `main / d32845d4502341dc259c507da63531612dab1831`
+**Current engineering head:** `main / b21077093d84fcb815ec3a579c5e90d2624ce1ad`
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
