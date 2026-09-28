@@ -130,6 +130,7 @@ async def test_activation_requires_approved_access_review_and_fresh_decision(mon
     db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(template), Result(review)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
     monkeypatch.setattr(service, "record", AsyncMock())
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
 
     result = await service.activate_provisioned_proposal(db, tenant_id=tenant_id, proposal_id=proposal.id, activated_by_user_id=activator)
     assert result is proposal
@@ -167,6 +168,7 @@ async def test_activation_rejects_stale_template_change(monkeypatch):
     identity = SimpleNamespace(id=uuid4())
     db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(stale_template)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     with pytest.raises(ConflictError, match="stale"):
         await service.activate_provisioned_proposal(db, tenant_id=tenant_id, proposal_id=proposal.id, activated_by_user_id=activator)
     db.flush.assert_not_awaited()
@@ -199,6 +201,7 @@ async def test_activation_rejects_expired_access_review(monkeypatch):
     review = SimpleNamespace(id=uuid4(), reviewed_at=created_at + timedelta(minutes=1), next_review_at=datetime.now(timezone.utc) - timedelta(minutes=1))
     db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(template), Result(review)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     with pytest.raises(ConflictError, match="expired"):
         await service.activate_provisioned_proposal(db, tenant_id=tenant_id, proposal_id=proposal.id, activated_by_user_id=activator)
     db.flush.assert_not_awaited()
