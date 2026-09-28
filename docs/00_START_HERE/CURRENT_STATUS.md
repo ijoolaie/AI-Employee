@@ -7,7 +7,7 @@
 **GitHub Release:** `v1.4.11` — PUBLISHED
 **Exact-SHA Production Certification:** Run `35848311037` — PASS
 **Certification job:** `107139710452` — PASS
-**Current engineering head:** `main / 5cf9793ef58279a0dfcbe76e93b8ae8c95663110`
+**Current engineering head:** `main / b72064e065676e072731048c764c3552a5311e79`
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
@@ -24,7 +24,7 @@
 - Stable Git tag: **VERIFIED**
 - GitHub Release: **PUBLISHED**
 - Current execution stage: **LOCAL / ENGINEERING**
-- Current engineering head: **main / 5cf9793ef58279a0dfcbe76e93b8ae8c95663110**
+- Current engineering head: **main / b72064e065676e072731048c764c3552a5311e79**
 - External production & commercial gates: **OPEN — PENDING EXTERNAL EXECUTION**
 
 Certification applies only to the exact certified SHA. Post-release code or documentation commits do not inherit certification.
@@ -33,7 +33,7 @@ Certification applies only to the exact certified SHA. Post-release code or docu
 
 The latest repository-certified release is **v1.4.11 / `90dd5cb...`**.
 
-The current engineering head is **main / `b72064e...`**. It contains post-certification engineering changes and is not itself certified by the v1.4.11 evidence.
+The latest code-bearing engineering head is **main / `b72064e...`**. It contains post-certification engineering changes and is not itself certified by the v1.4.11 evidence.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
