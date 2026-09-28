@@ -1,8 +1,9 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-26
+**Reconciled:** 2026-09-28
 **Current release:** `v1.4.11`
 **Certified SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+**Current engineering head:** `main / b72064e065676e072731048c764c3552a5311e79`
 **Production Certification:** Run `35848311037` / Job `107139710452` — PASS
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN
 
@@ -21,7 +22,7 @@ The customer-facing product-completeness gate that preceded v1.4.11 certificatio
 7. **DONE:** v1.4.11 exact-SHA certification passed with Product Gate Failures = 0.
 8. **REGRESSION WATCH:** continue monitoring residual/non-core customer surfaces for localization, lifecycle, CRUD parity, permission, and UX-state regressions.
 
-Canonical historical audit: docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md. Its original findings are retained as historical evidence; this file is the current priority source.
+Canonical historical audit: `docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md`. Its original findings are retained as historical evidence; this file is the current priority source.
 
 ### P1 — External production evidence
 
@@ -42,14 +43,26 @@ External gates remain intentionally **OPEN — PENDING EXTERNAL EXECUTION** beca
 13. Complete Vendor, then Reseller, then Customer acceptance.
 14. Reconcile residual risks and execute the final commercial go-live gate.
 
-### P2 — Target verification
+### P2 — Target verification and externally discovered engineering scope
 
 - Data retention/lifecycle verification on the real target.
 - Usage/quota/cost-control validation on the real target.
 - Customer support and operational ownership validation.
 - Any concrete engineering defects discovered during external validation.
 
-### Evidence rules
+## Feature-expansion rule
+
+Broad feature expansion remains paused unless one of the following creates a concrete engineering scope:
+
+- customer requirement
+- regression
+- newly discovered unsupported surface
+- external-validation finding
+- explicit planned implementation slice backed by current roadmap/evidence
+
+Stage 8/9 and future workforce work should therefore proceed only when the relevant slice is explicitly selected and evidence requirements are clear; workforce role names in architecture/roadmap documents are not evidence of active production capabilities.
+
+## Evidence rules
 
 - CI/internal validation = engineering evidence.
 - Exact-SHA certification = release evidence.
@@ -64,4 +77,6 @@ External gates remain intentionally **OPEN — PENDING EXTERNAL EXECUTION** beca
 
 ## Current engineering state
 
-The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists. Broad feature expansion should remain paused unless a concrete customer requirement, regression, or external-validation finding creates a new engineering scope.
+The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
+
+The current engineering head is post-certification `main / b72064e...`; it is not certified by the v1.4.11 exact-SHA evidence.
