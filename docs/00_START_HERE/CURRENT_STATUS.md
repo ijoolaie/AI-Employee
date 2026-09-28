@@ -1,12 +1,13 @@
 # Current Status
 
-**Last reconciled:** 2026-09-26
+**Last reconciled:** 2026-09-28
 **Latest certified release:** `v1.4.11`
 **Certified release SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 **Stable Git tag:** `v1.4.11` — VERIFIED at the certified SHA
 **GitHub Release:** `v1.4.11` — PUBLISHED
 **Exact-SHA Production Certification:** Run `35848311037` — PASS
 **Certification job:** `107139710452` — PASS
+**Current engineering head:** `main / b72064e065676e072731048c764c3552a5311e79`
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
@@ -23,13 +24,16 @@
 - Stable Git tag: **VERIFIED**
 - GitHub Release: **PUBLISHED**
 - Current execution stage: **LOCAL / ENGINEERING**
+- Current engineering head: **main / b72064e065676e072731048c764c3552a5311e79**
 - External production & commercial gates: **OPEN — PENDING EXTERNAL EXECUTION**
 
-Certification applies only to the exact certified SHA. Post-release documentation commits do not inherit certification.
+Certification applies only to the exact certified SHA. Post-release code or documentation commits do not inherit certification.
 
 ## Executive truth
 
-The latest repository-certified release is **v1.4.11 / `90dd5cb...`**. The `v1.4.9` certification remains immutable at `f1ce20c010779f5273eb5d0051da24cdd57b33f6`.
+The latest repository-certified release is **v1.4.11 / `90dd5cb...`**.
+
+The current engineering head is **main / `b72064e...`**. It contains post-certification engineering changes and is not itself certified by the v1.4.11 evidence.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
@@ -61,17 +65,31 @@ The project is currently being executed on the developer/local environment. No e
 | Vendor/Reseller/Customer acceptance | OPEN — PENDING EXTERNAL EXECUTION | Acceptance occurs only after external target execution |
 | Commercial go-live | OPEN — FUTURE EXTERNAL GATE | Becomes mandatory when moving from local execution to external/commercial operation |
 
-## Current-main post-certification engineering revalidation — 2026-09-26
+## Current-main post-certification engineering revalidation
 
-- PR #743 aligned local certification knowledge search with the deterministic certification provider; merged and revalidated.
-- PR #744 aligned the local worker with the deterministic certification provider; merged and its CI/CodeQL/Architecture/Infrastructure/HA/DAST checks passed.
-- Clean local production-like certification: **PASS_ENGINEERING_EVIDENCE_EXTERNAL_PENDING**.
-- Real-stack product acceptance on current main: Tenant/RBAC/Knowledge **PASS**; Employee → Run → AI → Result **PASS**; Files → Knowledge → Memory **PASS**; Admin/Developer **PASS**; Workflow/Approval/Schedule **PASS**.
-- These results are current-main engineering evidence only and do not transfer the v1.4.11 exact-SHA certification to current main.
+Current-main validation is **engineering evidence only** and does not transfer the v1.4.11 exact-SHA certification.
+
+Recent post-certification hardening includes the tenant-attribution and execution-safety PR sequence through PR #824. The current main head is PR #824's merge commit `b72064e...`.
+
+The current-main evidence boundary remains:
+
+`CURRENT MAIN ENGINEERING EVIDENCE` ≠ `V1.4.11 RELEASE CERTIFICATION` ≠ `EXTERNAL PRODUCTION EVIDENCE`.
 
 ## External-gate status rule
 
 `OPEN — PENDING EXTERNAL EXECUTION` means the gate is intentionally unexecuted because the current project stage is local/engineering execution. It is neither PASS nor FAIL. Once an external target is provisioned, these gates become mandatory and must be evidenced before external/commercial go-live.
+
+## Documentation authority rule
+
+For current status, use this precedence:
+
+1. `CURRENT_STATUS.md`
+2. `CURRENT_PRIORITIES.md`
+3. current roadmap/execution packs
+4. dated historical audit documents
+5. architecture/blueprint documents for architecture truth only
+
+A blueprint, historical document or plan must not override current release/evidence truth.
 
 ## Security rule
 
