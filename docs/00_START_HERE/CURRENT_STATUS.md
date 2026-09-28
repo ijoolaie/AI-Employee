@@ -7,7 +7,7 @@
 **GitHub Release:** `v1.4.11` — PUBLISHED
 **Exact-SHA Production Certification:** Run `35848311037` — PASS
 **Certification job:** `107139710452` — PASS
-**Current engineering head:** `main / 9211714e5d415dba6e24f69b653a31ddb192db09`
+**Current engineering head:** `main / d32845d4502341dc259c507da63531612dab1831`
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
@@ -69,7 +69,7 @@ The project is currently being executed on the developer/local environment. No e
 
 Current-main validation is **engineering evidence only** and does not transfer the v1.4.11 exact-SHA certification.
 
-The post-certification dependency update PR #809 is merged at `c9c3cf...`. Successful GitHub Actions evidence was observed for the post-certification main line, including Ephemeral DAST Validation run `36433675291` and Dependabot dynamic runs `36433715534` and `36433707766`. These are engineering/CI evidence only.
+The post-certification dependency update PR #809 is merged at `c9c3cf...`. PR #826 is merged at `d32845d...` for the CI timeout process-termination fix. The PR #826 head passed CI and CodeQL; no GitHub Actions run is currently surfaced for the merge commit `d32845d...`. These are engineering/CI evidence only.
 
 The current-main evidence boundary remains:
 
