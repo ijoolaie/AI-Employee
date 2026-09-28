@@ -53,7 +53,7 @@ Merged as the current mainline commit. `agent_instance_id` is preserved through 
 | Auditability | IMPLEMENTED FOR GOVERNED REPOSITORY PATHS | Policy audit bridge, lifecycle events and principal propagation |
 | Kill switch / revocation | IMPLEMENTED / VALIDATED | Policy, identity and kill-switch tests |
 | Tool Calling / Structured Arguments / bounded Multi-step | IMPLEMENTED CORE / VALIDATED | RunService, Tool Registry, schema validation and iteration controls |
-| Production evidence on promoted release SHA | NOT COMPLETE | Current main is newer than certified `v1.4.1` and needs fresh certification |
+| Production evidence on promoted release SHA | NOT COMPLETE | The current code-bearing mainline is newer than certified `v1.4.11` and needs fresh certification |
 
 ## What remains outside repository engineering completion
 
