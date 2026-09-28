@@ -184,7 +184,7 @@ jobs:
           set -o pipefail
           echo '=== BACKEND TEST SUITE START ==='
           echo 'Hard timeout: 20 minutes; faulthandler timeout: 60 seconds.'
-          timeout --foreground -k 15s 20m pytest -vv -o faulthandler_timeout=60 --durations=25 -m 'not requires_ocr'
+          timeout --signal=TERM --kill-after=15s 20m pytest -vv -o faulthandler_timeout=60 --durations=25 -m 'not requires_ocr'
           status=$?
           if [ "$status" -eq 124 ] || [ "$status" -eq 137 ]; then
             echo '=== BACKEND TEST SUITE TIMEOUT DIAGNOSTICS ==='
