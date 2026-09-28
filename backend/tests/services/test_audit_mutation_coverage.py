@@ -137,6 +137,7 @@ async def test_feedback_creation_audits_actor(monkeypatch):
         audits.append(kwargs)
 
     monkeypatch.setattr(feedback_service.audit_service, "record", record)
+    monkeypatch.setattr(feedback_service, "assert_users_belong_to_tenant", AsyncMock())
     result = await feedback_service.create_feedback(
         DB(),
         tenant_id=tenant_id,
@@ -153,3 +154,34 @@ async def test_feedback_creation_audits_actor(monkeypatch):
     assert audits[0]["actor_id"] == user_id
     assert audits[0]["tenant_id"] == tenant_id
     assert audits[0]["resource_type"] == "feedback"
+
+
+@pytest.mark.asyncio
+async def test_feedback_creation_rejects_cross_tenant_actor_before_persist(monkeypatch):
+    tenant_id = uuid.uuid4()
+    foreign_user_id = uuid.uuid4()
+    persisted = []
+
+    class DB:
+        def add(self, value):
+            persisted.append(value)
+
+    async def reject(*args, **kwargs):
+        from app.core.exceptions import ValidationAppError
+        raise ValidationAppError("user_id must reference users belonging to the current tenant")
+
+    monkeypatch.setattr(feedback_service, "assert_users_belong_to_tenant", reject)
+
+    with pytest.raises(Exception, match="user_id"):
+        await feedback_service.create_feedback(
+            DB(),
+            tenant_id=tenant_id,
+            user_id=foreign_user_id,
+            rating=1,
+            comment="cross-tenant",
+            run_id=None,
+            employee_id=None,
+            category="product",
+        )
+
+    assert persisted == []
