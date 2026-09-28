@@ -3,7 +3,7 @@
 **Reconciled:** 2026-09-28
 **Current release:** `v1.4.11`
 **Certified SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
-**Current engineering head:** `main / c9c3cf521bc8bef2e802eae8d4f089bf14c7a9d1`
+**Current engineering head:** `main / 273a36f7d0673812dbb1184939c97d2d56d34dbd`
 **Production Certification:** Run `35848311037` / Job `107139710452` — PASS
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN
 
@@ -79,4 +79,4 @@ Stage 8/9 and future workforce work should therefore proceed only when the relev
 
 The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
 
-The current engineering head is post-certification `main / c9c3cf521bc8bef2e802eae8d4f089bf14c7a9d1`; it is not certified by the v1.4.11 exact-SHA evidence. The post-certification head currently contains the merged Dependabot patch update from PR #809 (`@tanstack/react-query` 5.103.1 → 5.103.2). Current-main validation remains engineering evidence only.
+The current engineering head is post-certification `main / 273a36f7d0673812dbb1184939c97d2d56d34dbd`; it is not certified by the v1.4.11 exact-SHA evidence. The post-certification head currently contains the merged Dependabot patch update from PR #809 (`@tanstack/react-query` 5.103.1 → 5.103.2). Current-main validation remains engineering evidence only.
