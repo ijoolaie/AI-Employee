@@ -6,6 +6,7 @@ import pytest
 
 from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstanceStatus
+from app.models.agent_template import AgentTemplateStatus
 from app.services import agent_template_service as service
 
 
@@ -43,7 +44,7 @@ async def test_publish_template_rejects_cross_tenant_approver(monkeypatch):
     tenant_id, approver = uuid.uuid4(), uuid.uuid4()
     template = SimpleNamespace(
         id=uuid.uuid4(),
-        status=SimpleNamespace(value="draft"),
+        status=AgentTemplateStatus.DRAFT,
         evaluation_policy={},
     )
 
