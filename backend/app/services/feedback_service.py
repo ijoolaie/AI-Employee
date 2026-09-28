@@ -21,6 +21,7 @@ from app.models.feedback import Feedback
 from app.models.run import Run
 from app.models.tenant import Tenant
 from app.services import audit_service
+from app.services.agent_governance import assert_users_belong_to_tenant
 
 # "Regularly using" proxy, per Roadmap §6 ("مشتری‌های فعال ... به‌طور
 # منظم"): at least one Report Employee Run in the trailing window.
@@ -41,6 +42,13 @@ async def create_feedback(
     employee_id: uuid.UUID | None,
     category: str,
 ) -> Feedback:
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={user_id},
+        field_names={user_id: "user_id"},
+    )
+
     if run_id is not None:
         run = (
             await db.execute(
