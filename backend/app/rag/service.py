@@ -16,6 +16,7 @@ from app.core.config import get_settings
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.logging import request_id_var
 from app.rag.text import chunk_text
+from app.services.agent_governance import assert_users_belong_to_tenant
 
 settings = get_settings()
 
@@ -83,6 +84,12 @@ async def embed_texts(texts: list[str]) -> list[list[float]]:
 
 
 async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UUID, actor_id: uuid.UUID):
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={actor_id},
+        field_names={actor_id: "actor_id"},
+    )
     from app.models.file import FileObject
     from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
     from app.services import audit_service
