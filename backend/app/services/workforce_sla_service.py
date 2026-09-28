@@ -39,6 +39,13 @@ async def upsert_contract(
             "max_queue_age_seconds must be between 1 and 2592000 seconds"
         )
 
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={actor_user_id},
+        field_names={actor_user_id: "actor_user_id"},
+    )
+
     contract = (
         await db.execute(
             select(WorkforceSLAContract)
