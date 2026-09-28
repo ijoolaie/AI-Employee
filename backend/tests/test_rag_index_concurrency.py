@@ -3,6 +3,8 @@
 import uuid
 
 import pytest
+
+from app.core.exceptions import ValidationAppError
 from sqlalchemy.exc import IntegrityError
 
 from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
@@ -86,6 +88,10 @@ async def _noop_audit(*args, **kwargs):
     return None
 
 
+async def _noop_actor_validation(*args, **kwargs):
+    return None
+
+
 @pytest.mark.asyncio
 async def test_index_file_recovers_concurrent_document_creation_and_locks_winner(monkeypatch):
     tenant_id = uuid.uuid4()
@@ -100,6 +106,7 @@ async def test_index_file_recovers_concurrent_document_creation_and_locks_winner
 
     monkeypatch.setattr(service, "extract_text", lambda _: "content")
     monkeypatch.setattr(service, "chunk_text", lambda _: ["content"])
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", _noop_actor_validation)
 
     async def embeddings(texts):
         return [[1.0] for _ in texts]
@@ -134,6 +141,7 @@ async def test_index_file_locks_existing_document_before_replacing_chunks(monkey
 
     monkeypatch.setattr(service, "extract_text", lambda _: "content")
     monkeypatch.setattr(service, "chunk_text", lambda _: ["content"])
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", _noop_actor_validation)
 
     async def embeddings(texts):
         return [[1.0] for _ in texts]
@@ -149,3 +157,29 @@ async def test_index_file_locks_existing_document_before_replacing_chunks(monkey
     assert document.status == "indexed"
     assert db.events.index("lock") < db.events.index("delete")
     assert db.events.index("lock") < db.events.index("add-chunk")
+
+
+@pytest.mark.asyncio
+async def test_index_file_rejects_cross_tenant_actor_before_mutation(monkeypatch):
+    tenant_id = uuid.uuid4()
+    foreign_actor_id = uuid.uuid4()
+    persisted = []
+
+    class DB:
+        def add(self, value):
+            persisted.append(value)
+
+    async def reject(*args, **kwargs):
+        raise ValidationAppError("actor_id must reference users belonging to the current tenant")
+
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", reject)
+
+    with pytest.raises(ValidationAppError, match="actor_id"):
+        await service.index_file(
+            DB(),
+            tenant_id=tenant_id,
+            file_id=uuid.uuid4(),
+            actor_id=foreign_actor_id,
+        )
+
+    assert persisted == []
