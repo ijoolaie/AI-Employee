@@ -7,7 +7,7 @@
 **GitHub Release:** `v1.4.11` — PUBLISHED
 **Exact-SHA Production Certification:** Run `35848311037` — PASS
 **Certification job:** `107139710452` — PASS
-**Current engineering head:** `main / b72064e065676e072731048c764c3552a5311e79`
+**Current engineering head:** `main / 9211714e5d415dba6e24f69b653a31ddb192db09`
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
@@ -24,7 +24,7 @@
 - Stable Git tag: **VERIFIED**
 - GitHub Release: **PUBLISHED**
 - Current execution stage: **LOCAL / ENGINEERING**
-- Current engineering head: **main / b72064e065676e072731048c764c3552a5311e79**
+- Current engineering head: **main / 9211714e5d415dba6e24f69b653a31ddb192db09**
 - External production & commercial gates: **OPEN — PENDING EXTERNAL EXECUTION**
 
 Certification applies only to the exact certified SHA. Post-release code or documentation commits do not inherit certification.
@@ -33,7 +33,7 @@ Certification applies only to the exact certified SHA. Post-release code or docu
 
 The latest repository-certified release is **v1.4.11 / `90dd5cb...`**.
 
-The latest code-bearing engineering head is **main / `b72064e...`**. It contains post-certification engineering changes and is not itself certified by the v1.4.11 evidence.
+The latest code-bearing engineering head before this documentation reconciliation was `c9c3cf521bc8bef2e802eae8d4f089bf14c7a9d1`, containing the merged Dependabot patch from PR #809. The current main head is now `9211714e5d415dba6e24f69b653a31ddb192db09`, which adds documentation-only reconciliation to reflect that actual post-certification engineering state. Neither post-certification head is certified by the v1.4.11 evidence.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
@@ -69,7 +69,7 @@ The project is currently being executed on the developer/local environment. No e
 
 Current-main validation is **engineering evidence only** and does not transfer the v1.4.11 exact-SHA certification.
 
-Recent post-certification hardening includes the tenant-attribution and execution-safety PR sequence through PR #824. The current main head is PR #824's merge commit `b72064e...`.
+The post-certification dependency update PR #809 is merged at `c9c3cf...`. Successful GitHub Actions evidence was observed for the post-certification main line, including Ephemeral DAST Validation run `36433675291` and Dependabot dynamic runs `36433715534` and `36433707766`. These are engineering/CI evidence only.
 
 The current-main evidence boundary remains:
 
