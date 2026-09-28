@@ -375,6 +375,12 @@ async def activate_provisioned_proposal(
         raise ValidationAppError("Provisioned workforce proposal has no AgentInstance")
     if activated_by_user_id in {proposal.requester_user_id, proposal.sponsor_user_id, proposal.board_reviewed_by, proposal.ceo_approved_by}:
         raise ValidationAppError("Activation reviewer must be independent from proposal authorities")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={activated_by_user_id},
+        field_names={activated_by_user_id: "activated_by_user_id"},
+    )
 
     # Canonical Agent authorization lock order is Identity -> Instance.
     # Activation must use the same order and hold both locks through the
