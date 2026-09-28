@@ -141,6 +141,7 @@ async def test_index_file_locks_existing_document_before_replacing_chunks(monkey
 
     monkeypatch.setattr(service, "extract_text", lambda _: "content")
     monkeypatch.setattr(service, "chunk_text", lambda _: ["content"])
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", _noop_actor_validation)
 
     async def embeddings(texts):
         return [[1.0] for _ in texts]
