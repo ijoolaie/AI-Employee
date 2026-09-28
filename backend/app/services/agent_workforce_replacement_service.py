@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalKind, AgentWorkforceProposalStatus
+from app.services.agent_governance import assert_users_belong_to_tenant
 from app.services.agent_workforce_manager import get_agent_capacity
 from app.services.agent_workforce_proposal_service import activate_provisioned_proposal, create_proposal
 from app.services.audit_service import record
@@ -92,6 +93,12 @@ async def prepare_replacement_cutover(
     proposal = await _locked_proposal(db, tenant_id, proposal_id)
     if proposal.kind != AgentWorkforceProposalKind.REPLACEMENT:
         raise ConflictError("Only replacement workforce proposals can enter replacement cutover")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={requested_by_user_id},
+        field_names={requested_by_user_id: "requested_by_user_id"},
+    )
     if proposal.status != AgentWorkforceProposalStatus.PROVISIONED:
         raise ConflictError("Replacement cutover requires a provisioned replacement")
     if requested_by_user_id in {
