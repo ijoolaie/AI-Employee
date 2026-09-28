@@ -14,7 +14,7 @@ from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_template import AgentTemplate
 from app.models.agent_workforce_proposal import AgentWorkforceProposal, AgentWorkforceProposalKind, AgentWorkforceProposalStatus
-from app.services.agent_governance import current_agent_execution_context
+from app.services.agent_governance import assert_users_belong_to_tenant, current_agent_execution_context
 from app.services.ai_workforce_roles import get_workforce_role, workforce_capability_contract_snapshot
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.services.agent_template_service import provision_instance
@@ -40,6 +40,12 @@ async def create_proposal(
         raise ValidationAppError("risk_tier must be between 0 and 4")
     if requester_user_id == sponsor_user_id:
         raise ValidationAppError("Requester and sponsor must be independently attributable")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={requester_user_id, sponsor_user_id},
+        field_names={requester_user_id: "requester_user_id", sponsor_user_id: "sponsor_user_id"},
+    )
     if not agent_template_id and not agent_definition_id:
         raise ValidationAppError("A template or agent definition is required")
 
@@ -250,6 +256,12 @@ async def board_decide(
         raise ConflictError("Board decision requires a submitted workforce proposal")
     if reviewer_user_id in {proposal.requester_user_id, proposal.sponsor_user_id}:
         raise ValidationAppError("Board reviewer must be independent from requester and sponsor")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={reviewer_user_id},
+        field_names={reviewer_user_id: "reviewer_user_id"},
+    )
     proposal.board_reviewed_by = reviewer_user_id
     proposal.board_decision_reason = reason
     proposal.status = AgentWorkforceProposalStatus.BOARD_APPROVED if approve else AgentWorkforceProposalStatus.BOARD_REJECTED
@@ -272,6 +284,12 @@ async def ceo_decide(
         raise ConflictError("CEO decision requires prior Board approval")
     if approver_user_id in {proposal.requester_user_id, proposal.sponsor_user_id, proposal.board_reviewed_by}:
         raise ValidationAppError("CEO approver must be independent from requester, sponsor and Board reviewer")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={approver_user_id},
+        field_names={approver_user_id: "approver_user_id"},
+    )
 
     if approve:
         if not proposal.agent_template_id:

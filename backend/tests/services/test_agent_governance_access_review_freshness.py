@@ -17,6 +17,12 @@ class Result:
     def scalar_one_or_none(self):
         return self.value
 
+    def scalars(self):
+        return self
+
+    def all(self):
+        return [self.value] if self.value is not None else []
+
 
 @pytest.mark.asyncio
 async def test_approved_access_review_cannot_reactivate_enabled_instance(monkeypatch):
@@ -35,7 +41,7 @@ async def test_approved_access_review_cannot_reactivate_enabled_instance(monkeyp
         status=AgentInstanceStatus.ENABLED,
     )
     db = SimpleNamespace(
-        execute=AsyncMock(side_effect=[Result(identity), Result(instance)]),
+        execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(uuid4())]),
         add=SimpleNamespace(),
         flush=AsyncMock(),
         refresh=AsyncMock(),
@@ -60,6 +66,7 @@ async def test_approved_access_review_cannot_reactivate_enabled_instance(monkeyp
 @pytest.mark.asyncio
 async def test_approved_access_review_remains_valid_for_suspended_instance(monkeypatch):
     tenant_id = uuid4()
+    reviewer_user_id = uuid4()
     identity = SimpleNamespace(
         id=uuid4(),
         agent_instance_id=uuid4(),
@@ -74,7 +81,9 @@ async def test_approved_access_review_remains_valid_for_suspended_instance(monke
         status=AgentInstanceStatus.SUSPENDED,
     )
     db = SimpleNamespace(
-        execute=AsyncMock(side_effect=[Result(identity), Result(instance)]),
+        execute=AsyncMock(
+            side_effect=[Result(identity), Result(instance), Result(reviewer_user_id)]
+        ),
         add=lambda review: setattr(db, "review", review),
         flush=AsyncMock(),
         refresh=AsyncMock(),
@@ -84,7 +93,7 @@ async def test_approved_access_review_remains_valid_for_suspended_instance(monke
         db,
         tenant_id=tenant_id,
         identity_id=identity.id,
-        reviewer_user_id=uuid4(),
+        reviewer_user_id=reviewer_user_id,
         decision=AgentAccessReviewDecision.APPROVED,
         next_review_at=None,
         reason="Initial approval",

@@ -18,6 +18,7 @@ from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
+from app.models.user import User
 from app.services.agent_evaluation import EVALUATION_CONTRACT_VERSION
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 
@@ -80,6 +81,13 @@ async def record_evaluation(
     template = (await db.execute(select(AgentTemplate).where(AgentTemplate.id == template_id, AgentTemplate.tenant_id == tenant_id))).scalar_one_or_none()
     if template is None:
         raise NotFoundError("Agent template not found")
+    if evaluator_user_id is not None:
+        await assert_users_belong_to_tenant(
+            db,
+            tenant_id=tenant_id,
+            user_ids={evaluator_user_id},
+            field_names={evaluator_user_id: "evaluator_user_id"},
+        )
     if template.status in {AgentTemplateStatus.PUBLISHED, AgentTemplateStatus.RETIRED}:
         raise ConflictError("Published or retired templates cannot receive new evaluation evidence")
     if score is not None and not 0 <= score <= 100:
@@ -160,12 +168,41 @@ async def assert_publishable_with_evidence(db: AsyncSession, *, tenant_id: uuid.
     return evidence
 
 
+async def assert_users_belong_to_tenant(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    user_ids: set[uuid.UUID],
+    field_names: dict[uuid.UUID, str] | None = None,
+) -> None:
+    """Reject cross-tenant user attribution before governance state is persisted."""
+    if not user_ids:
+        return
+    result = await db.execute(
+        select(User.id).where(User.tenant_id == tenant_id, User.id.in_(user_ids))
+    )
+    found = set(result.scalars().all())
+    missing = user_ids - found
+    if missing:
+        names = field_names or {}
+        fields = sorted(names.get(user_id, "user_id") for user_id in missing)
+        raise ValidationAppError(
+            f"{', '.join(fields)} must reference users belonging to the current tenant"
+        )
+
+
 async def create_identity(db: AsyncSession, *, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID, owner_user_id: uuid.UUID, sponsor_user_id: uuid.UUID, expires_at: datetime | None = None) -> AgentIdentity:
     existing = (await db.execute(select(AgentIdentity).where(AgentIdentity.agent_instance_id == agent_instance_id, AgentIdentity.tenant_id == tenant_id))).scalar_one_or_none()
     if existing is not None:
         return existing
     if not owner_user_id or not sponsor_user_id:
         raise ValidationAppError("Agent identity requires an attributable owner and sponsor")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={owner_user_id, sponsor_user_id},
+        field_names={owner_user_id: "owner_user_id", sponsor_user_id: "sponsor_user_id"},
+    )
     identity = AgentIdentity(tenant_id=tenant_id, agent_instance_id=agent_instance_id, owner_user_id=owner_user_id, sponsor_user_id=sponsor_user_id, subject=f"agent:{tenant_id}:{agent_instance_id}", expires_at=expires_at, active=True)
     db.add(identity)
     await db.flush()
@@ -198,6 +235,12 @@ async def review_access(db: AsyncSession, *, tenant_id: uuid.UUID, identity_id: 
         raise NotFoundError("Agent instance not found for identity")
     if decision == AgentAccessReviewDecision.APPROVED and instance.status != AgentInstanceStatus.SUSPENDED:
         raise ConflictError("Approved access review cannot grant execution authority to an active AgentInstance; use governed workforce activation")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={reviewer_user_id},
+        field_names={reviewer_user_id: "reviewer_user_id"},
+    )
 
     review = AgentAccessReview(tenant_id=tenant_id, agent_identity_id=identity.id, reviewer_user_id=reviewer_user_id, decision=decision, next_review_at=next_review_at, reason=reason)
     db.add(review)

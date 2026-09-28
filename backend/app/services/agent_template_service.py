@@ -11,7 +11,7 @@ from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.agent_definition import AgentDefinition
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
-from app.services.agent_governance import assert_publishable_with_evidence, create_identity
+from app.services.agent_governance import assert_publishable_with_evidence, assert_users_belong_to_tenant, create_identity
 from app.services.ai_workforce_roles import workforce_template_capability_contract
 
 
@@ -149,6 +149,12 @@ async def provision_instance(
         raise NotFoundError("Published agent template not found")
     if not sponsor_user_id or not approved_by_user_id:
         raise ValidationAppError("Sponsor and CEO/designated approver are required")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={sponsor_user_id, approved_by_user_id},
+        field_names={sponsor_user_id: "sponsor_user_id", approved_by_user_id: "approved_by_user_id"},
+    )
 
     policy = template.install_policy or {}
     if policy.get("requires_ceo_approval", True) and sponsor_user_id == approved_by_user_id:
@@ -221,6 +227,12 @@ async def transition_instance(
         raise ConflictError(f"Invalid agent instance lifecycle transition: {instance.status.value} -> {target_status.value}")
     if not requested_by_user_id or not approved_by_user_id:
         raise ValidationAppError("Lifecycle requester and approver are required")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={requested_by_user_id, approved_by_user_id},
+        field_names={requested_by_user_id: "requested_by_user_id", approved_by_user_id: "approved_by_user_id"},
+    )
 
     approval_policy = instance.approval_policy or {}
     requires_approval = bool(approval_policy.get("requires_ceo_approval", False)) or instance.risk_tier >= 3 or target_status in {
