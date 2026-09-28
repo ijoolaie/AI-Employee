@@ -30,6 +30,7 @@ async def test_promotion_requires_comparable_evidence(monkeypatch):
     import app.services.agent_promotion as service
 
     db = AsyncMock()
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     monkeypatch.setattr(service, "agent_promotion_evidence_summary", AsyncMock(return_value=[]))
 
     with pytest.raises(ConflictError, match="evidence is unavailable"):
@@ -47,6 +48,7 @@ async def test_promotion_reuses_governed_evaluation_and_publish(monkeypatch):
     import app.services.agent_promotion as service
 
     db = AsyncMock()
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     template_id = uuid.uuid4()
     tenant_id = uuid.uuid4()
     requester = uuid.uuid4()
