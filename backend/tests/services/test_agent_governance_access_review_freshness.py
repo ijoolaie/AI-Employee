@@ -17,6 +17,12 @@ class Result:
     def scalar_one_or_none(self):
         return self.value
 
+    def scalars(self):
+        return self
+
+    def all(self):
+        return [self.value] if self.value is not None else []
+
 
 @pytest.mark.asyncio
 async def test_approved_access_review_cannot_reactivate_enabled_instance(monkeypatch):
