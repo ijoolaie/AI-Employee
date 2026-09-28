@@ -7,7 +7,7 @@
 **GitHub Release:** `v1.4.11` — PUBLISHED
 **Exact-SHA Production Certification:** Run `35848311037` — PASS
 **Certification job:** `107139710452` — PASS
-**Current engineering head:** `main / b21077093d84fcb815ec3a579c5e90d2624ce1ad`
+**Current engineering head:** `main / 27768f30dea49c87789695a9c9bd44df587d4c51`
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
@@ -33,7 +33,7 @@ Certification applies only to the exact certified SHA. Post-release code or docu
 
 The latest repository-certified release is **v1.4.11 / `90dd5cb...`**.
 
-The latest code-bearing engineering head before this documentation reconciliation was `c9c3cf521bc8bef2e802eae8d4f089bf14c7a9d1`, containing the merged Dependabot patch from PR #809. The current main head is now `9211714e5d415dba6e24f69b653a31ddb192db09`, which adds documentation-only reconciliation to reflect that actual post-certification engineering state. Neither post-certification head is certified by the v1.4.11 evidence.
+The latest code-bearing engineering head is `d32845d4502341dc259c507da63531612dab1831`, containing the merged CI timeout process-termination fix from PR #826. The current main head is `27768f30dea49c87789695a9c9bd44df587d4c51`, which adds documentation-only reconciliation after that merge. Neither post-certification head is certified by the v1.4.11 evidence.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
@@ -69,7 +69,7 @@ The project is currently being executed on the developer/local environment. No e
 
 Current-main validation is **engineering evidence only** and does not transfer the v1.4.11 exact-SHA certification.
 
-The post-certification dependency update PR #809 is merged at `c9c3cf...`. PR #826 is merged at `d32845d...` for the CI timeout process-termination fix. The PR #826 head passed CI and CodeQL; no GitHub Actions run is currently surfaced for the merge commit `d32845d...`. These are engineering/CI evidence only.
+The post-certification dependency update PR #809 is merged at `c9c3cf...`. PR #826 is merged at `d32845d...` for the CI timeout process-termination fix. The PR #826 head passed CI and CodeQL; no GitHub Actions run is currently surfaced for the merge commit `d32845d...`. The current main head `27768f30...` consists only of documentation reconciliation after that merge. These are engineering/CI evidence only.
 
 The current-main evidence boundary remains:
 
