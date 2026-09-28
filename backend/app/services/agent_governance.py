@@ -81,6 +81,13 @@ async def record_evaluation(
     template = (await db.execute(select(AgentTemplate).where(AgentTemplate.id == template_id, AgentTemplate.tenant_id == tenant_id))).scalar_one_or_none()
     if template is None:
         raise NotFoundError("Agent template not found")
+    if evaluator_user_id is not None:
+        await assert_users_belong_to_tenant(
+            db,
+            tenant_id=tenant_id,
+            user_ids={evaluator_user_id},
+            field_names={evaluator_user_id: "evaluator_user_id"},
+        )
     if template.status in {AgentTemplateStatus.PUBLISHED, AgentTemplateStatus.RETIRED}:
         raise ConflictError("Published or retired templates cannot receive new evaluation evidence")
     if score is not None and not 0 <= score <= 100:
