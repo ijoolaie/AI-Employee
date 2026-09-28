@@ -12,6 +12,7 @@ from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_template import AgentTemplate
 from app.models.workforce_delegation import WorkforceDelegation
 from app.services.audit_service import record
+from app.services.agent_governance import assert_users_belong_to_tenant
 
 MAX_DELEGATION_DAYS = 365
 MANAGER_TEMPLATE_SLUG = "ai-internal-manager"
@@ -73,6 +74,12 @@ async def create_delegation(
     if not allowed_operations:
         raise ValidationAppError("At least one delegated operation is required")
     await _get_manager(db, tenant_id=tenant_id, manager_agent_instance_id=manager_agent_instance_id)
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={delegated_by_user_id},
+        field_names={delegated_by_user_id: "delegated_by_user_id"},
+    )
     delegation = WorkforceDelegation(
         tenant_id=tenant_id,
         manager_agent_instance_id=manager_agent_instance_id,
@@ -108,6 +115,12 @@ async def revoke_delegation(
     )).scalar_one_or_none()
     if delegation is None:
         raise NotFoundError("Workforce delegation not found")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={revoked_by_user_id},
+        field_names={revoked_by_user_id: "revoked_by_user_id"},
+    )
     if delegation.status == "revoked":
         raise ConflictError("Workforce delegation is already revoked")
     delegation.status = "revoked"

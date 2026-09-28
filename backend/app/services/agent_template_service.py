@@ -103,6 +103,12 @@ async def publish_template(
         raise ConflictError("Agent template is not publishable from its current state")
     if not approved_by_user_id:
         raise ValidationAppError("CEO or designated approver is required for publication")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={approved_by_user_id},
+        field_names={approved_by_user_id: "approved_by_user_id"},
+    )
 
     evidence = await assert_publishable_with_evidence(db, tenant_id=tenant_id, template_id=template.id)
     template.status = AgentTemplateStatus.PUBLISHED

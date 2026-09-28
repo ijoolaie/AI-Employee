@@ -130,6 +130,7 @@ async def test_activation_requires_approved_access_review_and_fresh_decision(mon
     db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(template), Result(review)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
     monkeypatch.setattr(service, "record", AsyncMock())
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
 
     result = await service.activate_provisioned_proposal(db, tenant_id=tenant_id, proposal_id=proposal.id, activated_by_user_id=activator)
     assert result is proposal
@@ -167,6 +168,7 @@ async def test_activation_rejects_stale_template_change(monkeypatch):
     identity = SimpleNamespace(id=uuid4())
     db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(stale_template)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     with pytest.raises(ConflictError, match="stale"):
         await service.activate_provisioned_proposal(db, tenant_id=tenant_id, proposal_id=proposal.id, activated_by_user_id=activator)
     db.flush.assert_not_awaited()
@@ -199,6 +201,7 @@ async def test_activation_rejects_expired_access_review(monkeypatch):
     review = SimpleNamespace(id=uuid4(), reviewed_at=created_at + timedelta(minutes=1), next_review_at=datetime.now(timezone.utc) - timedelta(minutes=1))
     db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(template), Result(review)]), flush=AsyncMock())
     monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", AsyncMock())
     with pytest.raises(ConflictError, match="expired"):
         await service.activate_provisioned_proposal(db, tenant_id=tenant_id, proposal_id=proposal.id, activated_by_user_id=activator)
     db.flush.assert_not_awaited()
@@ -222,3 +225,33 @@ def test_activation_uses_canonical_identity_before_instance_lock_order():
     assert identity_block < instance_block
     assert source.index(".with_for_update()", identity_block, instance_block) > identity_block
     assert source.index(".with_for_update()", instance_block) > instance_block
+
+
+@pytest.mark.asyncio
+async def test_activation_rejects_cross_tenant_activator(monkeypatch):
+    tenant_id = uuid4()
+    activator = uuid4()
+    proposal = SimpleNamespace(
+        id=uuid4(),
+        status=AgentWorkforceProposalStatus.PROVISIONED,
+        provisioned_agent_instance_id=uuid4(),
+        requester_user_id=uuid4(),
+        sponsor_user_id=uuid4(),
+        board_reviewed_by=uuid4(),
+        ceo_approved_by=uuid4(),
+    )
+    monkeypatch.setattr(service, "_get_locked", AsyncMock(return_value=proposal))
+
+    async def reject(*args, **kwargs):
+        raise ValidationAppError("activated_by_user_id does not belong to tenant")
+
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", reject)
+    db = SimpleNamespace(execute=AsyncMock(), flush=AsyncMock())
+    with pytest.raises(ValidationAppError, match="activated_by_user_id"):
+        await service.activate_provisioned_proposal(
+            db,
+            tenant_id=tenant_id,
+            proposal_id=proposal.id,
+            activated_by_user_id=activator,
+        )
+    db.execute.assert_not_awaited()
