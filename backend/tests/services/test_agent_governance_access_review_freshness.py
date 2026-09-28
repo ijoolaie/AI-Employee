@@ -35,7 +35,7 @@ async def test_approved_access_review_cannot_reactivate_enabled_instance(monkeyp
         status=AgentInstanceStatus.ENABLED,
     )
     db = SimpleNamespace(
-        execute=AsyncMock(side_effect=[Result(identity), Result(instance)]),
+        execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(uuid4())]),
         add=SimpleNamespace(),
         flush=AsyncMock(),
         refresh=AsyncMock(),
