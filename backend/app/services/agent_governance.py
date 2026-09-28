@@ -215,12 +215,6 @@ async def review_access(db: AsyncSession, *, tenant_id: uuid.UUID, identity_id: 
         raise NotFoundError("Agent identity not found")
     if reviewer_user_id in {identity.owner_user_id, identity.sponsor_user_id}:
         raise ValidationAppError("Access reviewer must be independent from the agent owner and sponsor")
-    await assert_users_belong_to_tenant(
-        db,
-        tenant_id=tenant_id,
-        user_ids={reviewer_user_id},
-        field_names={reviewer_user_id: "reviewer_user_id"},
-    )
 
     instance = (await db.execute(
         select(AgentInstance)
@@ -234,6 +228,12 @@ async def review_access(db: AsyncSession, *, tenant_id: uuid.UUID, identity_id: 
         raise NotFoundError("Agent instance not found for identity")
     if decision == AgentAccessReviewDecision.APPROVED and instance.status != AgentInstanceStatus.SUSPENDED:
         raise ConflictError("Approved access review cannot grant execution authority to an active AgentInstance; use governed workforce activation")
+    await assert_users_belong_to_tenant(
+        db,
+        tenant_id=tenant_id,
+        user_ids={reviewer_user_id},
+        field_names={reviewer_user_id: "reviewer_user_id"},
+    )
 
     review = AgentAccessReview(tenant_id=tenant_id, agent_identity_id=identity.id, reviewer_user_id=reviewer_user_id, decision=decision, next_review_at=next_review_at, reason=reason)
     db.add(review)
