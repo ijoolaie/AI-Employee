@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ValidationAppError
 from app.models.workforce_sla_contract import WorkforceSLAContract
 from app.services.audit_service import record
+from app.services.agent_governance import assert_users_belong_to_tenant
 
 
 MIN_QUEUE_AGE_SECONDS = 1
