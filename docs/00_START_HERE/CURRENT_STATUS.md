@@ -7,7 +7,7 @@
 **GitHub Release:** `v1.4.11` — PUBLISHED
 **Exact-SHA Production Certification:** Run `35848311037` — PASS
 **Certification job:** `107139710452` — PASS
-**Current engineering head:** `main / e844d55e5053e9689f5afdca8aa6a4d4e75a2662`
+**Current engineering head:** `main / 783ab44fbd4e6922878114e1f599021b3e397fe7`
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
@@ -24,7 +24,7 @@
 - Stable Git tag: **VERIFIED**
 - GitHub Release: **PUBLISHED**
 - Current execution stage: **LOCAL / ENGINEERING**
-- Current main head: **main / 0814c951882c96f50a6f7a71536f782b5901dbd5**
+- Current main head: **main / 783ab44fbd4e6922878114e1f599021b3e397fe7**
 - External production & commercial gates: **OPEN — PENDING EXTERNAL EXECUTION**
 
 Certification applies only to the exact certified SHA. Post-release code or documentation commits do not inherit certification.
@@ -33,7 +33,7 @@ Certification applies only to the exact certified SHA. Post-release code or docu
 
 The latest repository-certified release is **v1.4.11 / `90dd5cb...`**.
 
-The latest code-bearing engineering head is `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`, containing the merged CI timeout process-termination fix from PR #826 and the governed Workforce runtime-binding fix from PR #827. This post-certification engineering head is not certified by the v1.4.11 exact-SHA evidence.
+The latest code-bearing engineering head is `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`, containing the merged CI timeout process-termination fix from PR #826 and the governed Workforce runtime-binding fix from PR #827. The current main head `783ab44fbd4e6922878114e1f599021b3e397fe7` adds the documentation-only reconciliation from PR #828. Neither post-certification head is certified by the v1.4.11 exact-SHA evidence.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
@@ -69,7 +69,7 @@ The project is currently being executed on the developer/local environment. No e
 
 Current-main validation is **engineering evidence only** and does not transfer the v1.4.11 exact-SHA certification.
 
-The post-certification dependency update PR #809 is merged at `c9c3cf...`. PR #826 is merged at `d32845d...` for the CI timeout process-termination fix. The PR #826 head passed CI and CodeQL; no GitHub Actions run is currently surfaced for the merge commit `d32845d...`. The current main head `27768f30...` consists only of documentation reconciliation after that merge. These are engineering/CI evidence only.
+The post-certification dependency update PR #809 is merged at `c9c3cf...`. PR #826 is merged at `d32845d...` for the CI timeout process-termination fix. PR #827 is merged at `e844d55...` for the governed Workforce runtime-binding fix. PR #828 is merged at `783ab44...` and is documentation-only. The PR #827 head passed its listed engineering/security gates; no claim is made here that the post-certification main head is release-certified.
 
 The current-main evidence boundary remains:
 
