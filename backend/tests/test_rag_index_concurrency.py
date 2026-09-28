@@ -3,6 +3,8 @@
 import uuid
 
 import pytest
+
+from app.core.exceptions import ValidationAppError
 from sqlalchemy.exc import IntegrityError
 
 from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
@@ -167,12 +169,11 @@ async def test_index_file_rejects_cross_tenant_actor_before_mutation(monkeypatch
             persisted.append(value)
 
     async def reject(*args, **kwargs):
-        from app.core.exceptions import ValidationAppError
         raise ValidationAppError("actor_id must reference users belonging to the current tenant")
 
     monkeypatch.setattr(service, "assert_users_belong_to_tenant", reject)
 
-    with pytest.raises(Exception, match="actor_id"):
+    with pytest.raises(ValidationAppError, match="actor_id"):
         await service.index_file(
             DB(),
             tenant_id=tenant_id,
