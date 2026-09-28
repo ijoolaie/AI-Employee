@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from app.core.exceptions import ValidationAppError
 from app.models.onboarding import OnboardingProgress
 from app.services import billing_service, feedback_service, onboarding_service
 
@@ -167,12 +168,11 @@ async def test_feedback_creation_rejects_cross_tenant_actor_before_persist(monke
             persisted.append(value)
 
     async def reject(*args, **kwargs):
-        from app.core.exceptions import ValidationAppError
         raise ValidationAppError("user_id must reference users belonging to the current tenant")
 
     monkeypatch.setattr(feedback_service, "assert_users_belong_to_tenant", reject)
 
-    with pytest.raises(Exception, match="user_id"):
+    with pytest.raises(ValidationAppError, match="user_id"):
         await feedback_service.create_feedback(
             DB(),
             tenant_id=tenant_id,
