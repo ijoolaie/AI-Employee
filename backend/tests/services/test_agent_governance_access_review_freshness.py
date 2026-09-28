@@ -74,7 +74,7 @@ async def test_approved_access_review_remains_valid_for_suspended_instance(monke
         status=AgentInstanceStatus.SUSPENDED,
     )
     db = SimpleNamespace(
-        execute=AsyncMock(side_effect=[Result(identity), Result(instance)]),
+        execute=AsyncMock(side_effect=[Result(identity), Result(instance), Result(uuid4())]),
         add=lambda review: setattr(db, "review", review),
         flush=AsyncMock(),
         refresh=AsyncMock(),
