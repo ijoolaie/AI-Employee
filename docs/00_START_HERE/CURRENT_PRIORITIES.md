@@ -3,7 +3,7 @@
 **Reconciled:** 2026-09-28
 **Current release:** `v1.4.11`
 **Certified SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
-**Current engineering head:** `main / 273a36f7d0673812dbb1184939c97d2d56d34dbd`
+**Current engineering head:** `main / d32845d4502341dc259c507da63531612dab1831`
 **Production Certification:** Run `35848311037` / Job `107139710452` — PASS
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN
 
