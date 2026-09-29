@@ -92,7 +92,7 @@ async def wait_result(wid):
     for _ in range(100):
         async with AsyncSessionLocal() as db:
             w=await db.get(WorkItem,wid)
-            if w and w.status in {WorkItemStatus.SUCCESS,WorkItemStatus.FAILED}:
+            if w and w.status in {WorkItemStatus.SUCCEEDED,WorkItemStatus.FAILED}:
                 rid=(w.output_data or {}).get("run_id")
                 run=await db.get(Run,uuid.UUID(rid)) if rid else None
                 return w,run
