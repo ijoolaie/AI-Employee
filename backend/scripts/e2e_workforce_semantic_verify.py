@@ -41,7 +41,7 @@ def req(method,path,payload=None,token=None):
     except URLError as e: raise AssertionError(f"{method} {path} unavailable: {e}") from e
 
 async def new_user(db,tenant_id,suffix,label):
-    u=User(tenant_id=tenant_id,email=f"e2e-{label}-{suffix}@example.invalid",password_hash="fixture",full_name=f"E2E {label}",is_active=True)
+    u=User(tenant_id=tenant_id,email=f"e2e-{label}-{suffix}@example.com",password_hash="fixture",full_name=f"E2E {label}",is_active=True)
     db.add(u); await db.flush(); return u
 
 async def license_fixture(tenant_id,suffix):
@@ -112,7 +112,7 @@ async def verify_cross_tenant_assignment(token, tenant_id, source_agent_id, suff
     status, data=req("POST","/auth/register",{
         "tenant_name":f"Workforce Semantic E2E Cross Tenant {other_suffix}",
         "tenant_slug":f"workforce-semantic-cross-{other_suffix}",
-        "email":f"workforce-semantic-cross-{other_suffix}@example.invalid",
+        "email":f"workforce-semantic-cross-{other_suffix}@example.com",
         "password":"WorkforceSemanticE2E-2026!",
         "full_name":"Workforce Semantic E2E Cross Tenant",
     })
@@ -185,7 +185,7 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
 
 def main():
     suffix=str(time.time_ns())[-10:]
-    status,data=req("POST","/auth/register",{"tenant_name":f"Workforce Semantic E2E {suffix}","tenant_slug":f"workforce-semantic-{suffix}","email":f"workforce-semantic-{suffix}@example.invalid","password":"WorkforceSemanticE2E-2026!","full_name":"Workforce Semantic E2E Owner"})
+    status,data=req("POST","/auth/register",{"tenant_name":f"Workforce Semantic E2E {suffix}","tenant_slug":f"workforce-semantic-{suffix}","email":f"workforce-semantic-{suffix}@example.com","password":"WorkforceSemanticE2E-2026!","full_name":"Workforce Semantic E2E Owner"})
     assert status==201,data
     token=data["data"]["access_token"]
     status,me=req("GET","/auth/me",token=token); assert status==200,me
