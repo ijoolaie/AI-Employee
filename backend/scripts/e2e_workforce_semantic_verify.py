@@ -96,7 +96,7 @@ async def wait_result(wid):
                 rid=(w.output_data or {}).get("run_id")
                 run=await db.get(Run,uuid.UUID(rid)) if rid else None
                 return w,run
-        time.sleep(.25)
+        await asyncio.sleep(.25)
     raise AssertionError("WorkItem execution timed out")
 
 async def verify_audit(tenant_id,run_id):
@@ -114,7 +114,7 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     assert req("POST",f"/work-items/{wid}/assign/agent",{"agent_instance_id":str(good)},token)[0]==200
     assert req("POST",f"/work-items/{wid}/dispatch",token=token)[0]==200
     w,run=await wait_result(wid)
-    assert w.status is WorkItemStatus.SUCCESS and run and run.status.value=="success"
+    assert w.status is WorkItemStatus.SUCCEEDED and run and run.status=="success"
     await verify_audit(tenant_id,run.id)
     print("WORKFORCE SEMANTIC ALLOWED TOOL REAL-STACK PASS")
 
