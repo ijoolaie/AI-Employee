@@ -4,7 +4,7 @@
 **Current release:** `v1.4.11`
 **Certified SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 **Current main head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA
-**Latest code-bearing engineering head:** `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`
+**Latest code-bearing engineering head:** PR #832 merge `b352ce41ab65031b5463542e254ddd3a2a1f459b`; current main also includes docs-only PR #833 merge `3d29aeffb44bcba7d833ca906884b6dc5fca814a`
 **Production Certification:** Run `35848311037` / Job `107139710452` — PASS
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN
 
@@ -93,4 +93,4 @@ Stage 8/9 and future workforce work should therefore proceed only when the relev
 
 The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
 
-The latest code-bearing engineering head is `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`, containing the merged CI timeout process-termination fix from PR #826 and governed Workforce runtime-binding fix from PR #827. Mutable current-main SHA is intentionally resolved directly from the repository. Current-main validation remains engineering evidence only.
+The latest code-bearing engineering head is PR #832 merge `b352ce41ab65031b5463542e254ddd3a2a1f459b`, containing the merged CI timeout process-termination fix lineage through PR #826 and governed Workforce runtime-binding fix from PR #827. PR #833 is documentation-only and merged at `3d29aeffb44bcba7d833ca906884b6dc5fca814a`. Mutable current-main SHA is intentionally resolved directly from the repository. Current-main validation remains engineering evidence only.
