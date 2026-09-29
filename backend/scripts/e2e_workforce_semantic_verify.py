@@ -81,7 +81,7 @@ async def governed_agent(tenant_id,suffix,owner_id,variant):
         await activate_provisioned_proposal(db,tenant_id=tenant_id,proposal_id=proposal.id,activated_by_user_id=activator.id)
         db.add(AgentRuntimeBinding(tenant_id=tenant_id,agent_definition_id=definition.id,employee_version_id=version.id,is_active=True))
         await db.commit()
-        return instance_id,version.id
+        return instance_id,version.id,definition.id
 
 async def work_item(tenant_id,agent_id,suffix,variant):
     async with AsyncSessionLocal() as db:
@@ -109,16 +109,27 @@ async def verify_audit(tenant_id,run_id):
 
 async def run_matrix(token,tenant_id,owner_id,suffix):
     await license_fixture(tenant_id,suffix)
-    good,version=await governed_agent(tenant_id,suffix,owner_id,"allowed")
+    good,version,definition_id=await governed_agent(tenant_id,suffix,owner_id,"allowed")
     wid=await work_item(tenant_id,good,suffix,"allowed")
     assert req("POST",f"/work-items/{wid}/assign/agent",{"agent_instance_id":str(good)},token)[0]==200
     assert req("POST",f"/work-items/{wid}/dispatch",token=token)[0]==200
     w,run=await wait_result(wid)
     assert w.status is WorkItemStatus.SUCCEEDED and run and run.status=="success"
     await verify_audit(tenant_id,run.id)
+    assert run.agent_instance_id == good
+    assert run.employee_version_id == version
+    async with AsyncSessionLocal() as db:
+        binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==definition_id,
+            AgentRuntimeBinding.employee_version_id==version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert binding is not None
+    print("WORKFORCE SEMANTIC RUNTIME-BINDING CORRELATION REAL-STACK PASS")
     print("WORKFORCE SEMANTIC ALLOWED TOOL REAL-STACK PASS")
 
-    wrong,_=await governed_agent(tenant_id,suffix,owner_id,"wrong-role")
+    wrong,_,_=await governed_agent(tenant_id,suffix,owner_id,"wrong-role")
     async with AsyncSessionLocal() as db:
         a=(await db.execute(select(AgentInstance).where(AgentInstance.id==wrong,AgentInstance.tenant_id==tenant_id))).scalar_one()
         a.configuration={**a.configuration,"workforce_role_code":"ai_marketing_advertising_manager"}; await db.commit()
@@ -129,7 +140,7 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     assert w.status is WorkItemStatus.FAILED and run and "not bound to the executing Agent role" in (run.error_message or "")
     print("WORKFORCE SEMANTIC WRONG-ROLE DENIAL REAL-STACK PASS")
 
-    stale,stale_version=await governed_agent(tenant_id,suffix,owner_id,"stale-capability")
+    stale,stale_version,_=await governed_agent(tenant_id,suffix,owner_id,"stale-capability")
     async with AsyncSessionLocal() as db:
         agent=(await db.execute(select(AgentInstance).where(AgentInstance.id==stale,AgentInstance.tenant_id==tenant_id))).scalar_one()
         agent.configuration={**agent.configuration,"workforce_capability_contract":[{"operation":"tampered","tool_names":["workforce_market_research"]}]}
