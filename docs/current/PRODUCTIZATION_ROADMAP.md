@@ -149,25 +149,23 @@ Repository audit conclusion:
 
 - The governed role → operation → tool enforcement is implemented on the canonical Agent Run path after PR #827.
 - Generic real-stack Agent WorkItem execution is validated through Celery and audit correlation.
-- The remaining gap is semantic Workforce **runtime evidence**, not a currently demonstrated bypass.
-- No existing local market-data provider stub/server was found, and the deterministic E2E provider does not produce `tool_calls`.
-- This gap must not be closed by changing production semantics merely to satisfy an E2E test.
+- PR #832 closes the identified semantic Workforce runtime evidence gap for the currently implemented read-only market-research binding.
+- The E2E-only deterministic provider and market-data provider are isolated to the certification/Compose path; production provider defaults and market-provider behavior remain unchanged.
 
-### Logical next order
+### Completed evidence slice
 
-1. Define the smallest E2E-only provider/test infrastructure that can produce deterministic tool calls and a tenant-safe market-data response.
-2. Exercise the existing governed proposal/template/instance/runtime path through a real WorkItem → Run → Celery → ToolRegistry execution.
-3. Capture persisted semantic provenance/audit evidence.
-4. Run negative controls for wrong role, approval-required operation, cross-tenant access and stale capability contract.
-5. Reconcile the evidence index. Only then decide whether a release candidate should be cut.
+1. Minimum E2E-only deterministic tool-call/provider infrastructure was added by PR #832.
+2. The real WorkItem → Run → Celery → ToolRegistry → semantic handler path was executed successfully.
+3. Persisted `tool.call` audit evidence and runtime binding correlation were verified.
+4. Negative controls covered wrong-role denial, stale capability denial, approval-required operation denial and cross-tenant assignment denial.
+5. The evidence index and current-priority records were reconciled after the PR #832 merge.
 
-Graphic Designer and Software Developer domain work remains separate and should not be introduced solely to fill this evidence gap.
-## Stage 8 — AI Company Operating Model Foundation
+### Next engineering order
 
-**Class:** PRODUCT / ARCHITECTURE — **GOVERNED WORKFORCE FOUNDATION IMPLEMENTED; ACCEPTANCE/EVIDENCE RECONCILIATION WHERE REQUIRED; NOT A RELEASE IDENTITY**
-
-The governed workforce foundation is the substrate for Stage 9. Do not reimplement these foundations merely because older audit documents still describe them as gaps. Reconcile remaining acceptance/evidence criteria against current code and tests.
-
+1. Keep the implemented semantic bindings under regression watch; do not add generic wrappers or reclassify unrelated tools.
+2. Add new semantic workforce tools only when a concrete operation has a real tenant-safe domain/service and an explicit role-operation binding.
+3. If the post-certification Workforce evidence is intentionally selected for release, create a new release candidate and run fresh exact-SHA certification; the v1.4.11 certification remains unchanged.
+4. Continue the independent external-production sequence separately; repository engineering evidence does not close external deployment, live-provider, SLO/DR, security-review or customer-acceptance gates.
 ## Stage 9 — Autonomous Workforce Optimization
 
 **Class:** PRODUCT / ENGINEERING — **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN v1.4.11**
