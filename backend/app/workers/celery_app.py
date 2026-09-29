@@ -4,7 +4,7 @@ from __future__ import annotations
 from time import perf_counter
 
 from celery import Celery
-from celery.signals import task_failure, task_postrun, task_prerun
+from celery.signals import task_failure, task_postrun, task_prerun, worker_process_init
 from kombu import Queue
 
 from app.core.config import get_settings
@@ -13,6 +13,13 @@ from app.core.telemetry import get_tracer
 from app.services.tenant_fair_scheduler import DEFAULT_PRIORITY, build_redis_scheduler
 
 settings = get_settings()
+
+
+@worker_process_init.connect
+def _install_agent_run_governance(**_kwargs):
+    from app.services.agent_run_governance_bootstrap import install
+
+    install()
 
 celery_app = Celery(
     "aiep",

@@ -230,8 +230,10 @@ def workforce_template_capability_contract(role_code: str) -> dict:
 
 def workforce_capability_contract_snapshot(role_code: str) -> list[dict]:
     """Return a stable JSON-safe snapshot of the role's capability contracts."""
+    import json
+
     role = get_workforce_role(role_code)
-    return [asdict(contract) for contract in role.capability_contract]
+    return json.loads(json.dumps([asdict(contract) for contract in role.capability_contract]))
 
 
 def assert_workforce_capability_contract_snapshot(role_code: str, snapshot: object) -> None:

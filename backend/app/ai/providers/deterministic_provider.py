@@ -6,7 +6,7 @@ model service. Production defaults never select this provider.
 from __future__ import annotations
 
 from app.ai.providers.base import AIProvider
-from app.ai.schemas import ChatRequest, ChatResult
+from app.ai.schemas import ChatRequest, ChatResult, ToolCall
 
 
 class DeterministicProvider:
@@ -19,8 +19,40 @@ class DeterministicProvider:
     async def chat(self, request: ChatRequest) -> ChatResult:
         user_messages = [m.content for m in request.messages if m.role == "user" and m.content]
         prompt = user_messages[-1] if user_messages else ""
+
+        # The deterministic provider is E2E-only. When the certification stack
+        # exposes a governed Workforce tool, emit one deterministic tool call
+        # so the real Gateway -> Run -> Celery -> ToolRegistry path can be
+        # exercised without an external model service. Production providers
+        # are unchanged.
+        if request.tools and not any(message.role == "tool" for message in request.messages):
+            tool = next(
+                (item for item in request.tools if item.name == "workforce_market_research"),
+                None,
+            )
+            if tool is not None:
+                return ChatResult(
+                    content="",
+                    prompt_tokens=max(1, len(prompt.split())),
+                    completion_tokens=5,
+                    stop_reason="tool_calls",
+                    raw={"provider": self.name, "certification": True, "e2e_tool_call": True},
+                    tool_calls=[
+                        ToolCall(
+                            id="e2e-workforce-market-research-1",
+                            name=tool.name,
+                            arguments={"symbols": ["AAPL"], "horizon_days": 30},
+                        )
+                    ],
+                )
+
+        tool_messages = [message for message in request.messages if message.role == "tool"]
         return ChatResult(
-            content=f"Deterministic certification result: {prompt}",
+            content=(
+                "Deterministic workforce certification result: tool execution verified."
+                if tool_messages
+                else f"Deterministic certification result: {prompt}"
+            ),
             prompt_tokens=max(1, len(prompt.split())),
             completion_tokens=5,
             stop_reason="stop",

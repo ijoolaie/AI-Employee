@@ -285,7 +285,22 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
     # Re-authorize tool execution inside the worker. Endpoint RBAC alone is not
     # sufficient because Celery is a separate execution boundary.
     tool_permissions: set[str] = set()
-    if run.created_by is not None:
+    if run.agent_instance_id is not None:
+        from app.models.agent_instance import AgentInstance
+
+        agent_result = await db.execute(
+            select(AgentInstance).where(
+                AgentInstance.id == run.agent_instance_id,
+                AgentInstance.tenant_id == run.tenant_id,
+            )
+        )
+        agent = agent_result.scalar_one_or_none()
+        if agent is None:
+            raise ValidationAppError("AgentInstance not found for Run")
+        tool_permissions = set(
+            (agent.permission_policy or {}).get("permissions") or []
+        )
+    elif run.created_by is not None:
         user_result = await db.execute(
             select(User)
             .options(selectinload(User.roles).selectinload(Role.permissions))
