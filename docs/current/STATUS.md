@@ -5,7 +5,7 @@
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
 **Mainline engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA  
-**Status date:** 2026-09-26  
+**Status date:** 2026-09-29  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
 **Certification run:** `35848311037` — PASS (exact `v1.4.11` SHA)  
@@ -105,6 +105,24 @@ PR #665 is merged at `7c9dd56a93fc3b4294467a55cd41b3daadf0bbbd`. Regression cove
 The current release frontier is `v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN`. Post-v1.4.11 semantic workforce engineering now includes seven explicit bindings: three Trader read-only market capabilities, Internal Manager CEO reporting, and three Marketing Manager capabilities (growth reporting, campaign planning, and content coordination). Unsupported workforce operations remain denied until a dedicated binding exists. No post-certification source changes are included in the certified snapshot. Continue regression watch for the audited product-completeness scope; do not reopen completed work without a regression, new requirement, or newly discovered unsupported surface.
 
 The next application-code change requires a new candidate boundary and fresh exact-SHA certification. External production evidence remains intentionally open while the project is local.
+
+## Semantic Workforce runtime evidence checkpoint — 2026-09-29
+
+The post-v1.4.11 audit now distinguishes implementation from evidence:
+
+- The canonical Agent Run path enforces Workforce role → operation → tool binding before `ToolRegistry.execute()`; this is implemented after PR #827.
+- The generic real-stack Agent WorkItem E2E passes through the real Docker/Celery execution path and verifies Run/audit correlation.
+- A semantic Workforce real-stack matrix is **not yet evidenced**.
+- The repository does not currently contain a local market-data provider stub/server, and the deterministic E2E AI provider does not emit `tool_calls`.
+- Therefore no semantic Workforce bypass or production defect is being claimed. The remaining item is an explicit E2E evidence/infrastructure slice.
+
+### Next engineering order
+
+1. Add the minimum E2E-only deterministic tool-call/provider infrastructure without changing production defaults.
+2. Execute the existing governed Workforce path through WorkItem → Run → Celery → ToolRegistry → semantic handler.
+3. Verify persisted provenance/audit and negative controls for wrong role, approval-required operation, tenant isolation and stale capability contract.
+4. Reconcile the evidence index.
+5. Only if the resulting scope is release-worthy, cut a new release candidate and obtain fresh exact-SHA certification.
 
 ## Security rule
 
