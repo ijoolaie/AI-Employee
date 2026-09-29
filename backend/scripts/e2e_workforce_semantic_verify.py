@@ -129,6 +129,18 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     assert w.status is WorkItemStatus.FAILED and run and "not bound to the executing Agent role" in (run.error_message or "")
     print("WORKFORCE SEMANTIC WRONG-ROLE DENIAL REAL-STACK PASS")
 
+    stale,stale_version=await governed_agent(tenant_id,suffix,owner_id,"stale-capability")
+    async with AsyncSessionLocal() as db:
+        agent=(await db.execute(select(AgentInstance).where(AgentInstance.id==stale,AgentInstance.tenant_id==tenant_id))).scalar_one()
+        agent.configuration={**agent.configuration,"workforce_capability_contract":[{"operation":"tampered","tool_names":["workforce_market_research"]}]}
+        await db.commit()
+    wid=await work_item(tenant_id,stale,suffix,"stale-capability")
+    assert req("POST",f"/work-items/{wid}/assign/agent",{"agent_instance_id":str(stale)},token)[0]==200
+    assert req("POST",f"/work-items/{wid}/dispatch",token=token)[0]==200
+    w,run=await wait_result(wid)
+    assert w.status is WorkItemStatus.FAILED and run and "capability" in (run.error_message or "").lower()
+    print("WORKFORCE SEMANTIC STALE-CAPABILITY DENIAL REAL-STACK PASS")
+
     async with AsyncSessionLocal() as db:
         agent=(await db.execute(select(AgentInstance).where(AgentInstance.id==good,AgentInstance.tenant_id==tenant_id))).scalar_one()
         try: await assert_workforce_operation(db,agent=agent,operation="order_execution")
