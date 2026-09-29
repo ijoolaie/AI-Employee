@@ -140,9 +140,28 @@ No slice above provisions or activates an AgentInstance by itself, and none chan
 
 1. Define explicit role-specific capability/tool bindings where concrete tools exist; do not infer role authority from tool names.
 2. Add tenant-owned SLA target configuration and make dashboard compliance conditional on an explicit target.
-3. Add runtime/e2e evidence for governed role operations and approval execution.
+3. Add runtime/e2e evidence for governed role operations and approval execution. **CURRENT NEXT ENGINEERING SLICE:** the canonical Run-path enforcement is implemented, but a semantic Workforce real-stack E2E matrix is not yet evidenced; the existing Compose stack has no market-data provider stub and the deterministic E2E AI provider does not emit `tool_calls`.
 4. Reconcile exact-SHA certification only when a new release candidate is intentionally cut.
 
+## Workforce semantic runtime evidence checkpoint — 2026-09-29
+
+Repository audit conclusion:
+
+- The governed role → operation → tool enforcement is implemented on the canonical Agent Run path after PR #827.
+- Generic real-stack Agent WorkItem execution is validated through Celery and audit correlation.
+- The remaining gap is semantic Workforce **runtime evidence**, not a currently demonstrated bypass.
+- No existing local market-data provider stub/server was found, and the deterministic E2E provider does not produce `tool_calls`.
+- This gap must not be closed by changing production semantics merely to satisfy an E2E test.
+
+### Logical next order
+
+1. Define the smallest E2E-only provider/test infrastructure that can produce deterministic tool calls and a tenant-safe market-data response.
+2. Exercise the existing governed proposal/template/instance/runtime path through a real WorkItem → Run → Celery → ToolRegistry execution.
+3. Capture persisted semantic provenance/audit evidence.
+4. Run negative controls for wrong role, approval-required operation, cross-tenant access and stale capability contract.
+5. Reconcile the evidence index. Only then decide whether a release candidate should be cut.
+
+Graphic Designer and Software Developer domain work remains separate and should not be introduced solely to fill this evidence gap.
 ## Stage 8 — AI Company Operating Model Foundation
 
 **Class:** PRODUCT / ARCHITECTURE — **GOVERNED WORKFORCE FOUNDATION IMPLEMENTED; ACCEPTANCE/EVIDENCE RECONCILIATION WHERE REQUIRED; NOT A RELEASE IDENTITY**
