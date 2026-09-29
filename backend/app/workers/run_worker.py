@@ -202,6 +202,8 @@ def execute_run_task(self, run_id: str, tenant_id: str) -> None:
         raise self.retry(exc=RuntimeError("Tenant execution capacity is currently exhausted"), countdown=min(60, 5 * (2 ** self.request.retries)))
     try:
         asyncio.run(_run_async(run_id, tenant_id))
+    except ValidationAppError:
+        raise
     except Exception as exc:
         if self.request.retries >= self.max_retries:
             raise
