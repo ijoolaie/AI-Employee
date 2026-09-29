@@ -1,9 +1,9 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-28
+**Reconciled:** 2026-09-29
 **Current release:** `v1.4.11`
 **Certified SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
-**Current main head:** `main / e844d55e5053e9689f5afdca8aa6a4d4e75a2662`
+**Current main head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA
 **Latest code-bearing engineering head:** `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`
 **Production Certification:** Run `35848311037` / Job `107139710452` — PASS
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN
@@ -44,7 +44,20 @@ External gates remain intentionally **OPEN — PENDING EXTERNAL EXECUTION** beca
 13. Complete Vendor, then Reseller, then Customer acceptance.
 14. Reconcile residual risks and execute the final commercial go-live gate.
 
-### P2 — Target verification and externally discovered engineering scope
+### P2 — Governed Workforce semantic runtime evidence
+
+This is the next local engineering slice identified by the current roadmap. It is an evidence/infrastructure task, not a newly discovered production runtime defect.
+
+1. **DONE:** canonical Run-path Workforce role/operation/tool enforcement is implemented after PR #827.
+2. **DONE:** generic real-stack Agent WorkItem E2E proves the real Tenant → Agent → WorkItem → Run → Celery → audit path.
+3. **OPEN:** no repository-backed semantic Workforce E2E matrix currently executes a real governed Workforce tool through that path.
+4. **OPEN:** the Compose E2E stack has no market-data provider stub/server, and the deterministic E2E AI provider does not emit `tool_calls`.
+5. **NEXT:** define the minimum E2E-only provider/test infrastructure needed to exercise existing semantic bindings without changing production defaults.
+6. **THEN:** execute a real-stack semantic matrix covering at minimum allowed execution, wrong-role denial, approval-required denial, tenant isolation, capability freshness, runtime binding and persisted audit/provenance.
+7. **THEN:** record the resulting evidence and update the evidence index; only after successful validation consider whether a new release candidate is warranted.
+
+Do not add generic wrappers, reclassify unrelated tools, or alter production provider behavior solely to manufacture this evidence. Unsupported workforce operations remain intentionally denied until a real tenant-safe semantic handler and explicit binding exist.
+### P3 — Target verification and externally discovered engineering scope
 
 - Data retention/lifecycle verification on the real target.
 - Usage/quota/cost-control validation on the real target.
@@ -80,4 +93,4 @@ Stage 8/9 and future workforce work should therefore proceed only when the relev
 
 The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
 
-The current main head is post-certification `main / e844d55e5053e9689f5afdca8aa6a4d4e75a2662`; it is not certified by the v1.4.11 exact-SHA evidence. The latest code-bearing engineering head is `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`, containing the merged CI timeout process-termination fix from PR #826 and governed Workforce runtime-binding fix from PR #827. Current-main validation remains engineering evidence only.
+The latest code-bearing engineering head is `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`, containing the merged CI timeout process-termination fix from PR #826 and governed Workforce runtime-binding fix from PR #827. Mutable current-main SHA is intentionally resolved directly from the repository. Current-main validation remains engineering evidence only.

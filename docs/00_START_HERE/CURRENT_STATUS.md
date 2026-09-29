@@ -1,13 +1,13 @@
 # Current Status
 
-**Last reconciled:** 2026-09-28
+**Last reconciled:** 2026-09-29
 **Latest certified release:** `v1.4.11`
 **Certified release SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 **Stable Git tag:** `v1.4.11` — VERIFIED at the certified SHA
 **GitHub Release:** `v1.4.11` — PUBLISHED
 **Exact-SHA Production Certification:** Run `35848311037` — PASS
 **Certification job:** `107139710452` — PASS
-**Current engineering head:** `main / 783ab44fbd4e6922878114e1f599021b3e397fe7`
+**Current engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA
 **Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
@@ -33,7 +33,7 @@ Certification applies only to the exact certified SHA. Post-release code or docu
 
 The latest repository-certified release is **v1.4.11 / `90dd5cb...`**.
 
-The latest code-bearing engineering head is `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`, containing the merged CI timeout process-termination fix from PR #826 and the governed Workforce runtime-binding fix from PR #827. The current main head `783ab44fbd4e6922878114e1f599021b3e397fe7` adds the documentation-only reconciliation from PR #828. Neither post-certification head is certified by the v1.4.11 exact-SHA evidence.
+The latest code-bearing engineering head is `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`, containing the merged CI timeout process-termination fix from PR #826 and the governed Workforce runtime-binding fix from PR #827. Later documentation-only reconciliation commits do not change that code-bearing boundary. No post-certification mainline SHA is certified by the v1.4.11 exact-SHA evidence.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
@@ -74,6 +74,19 @@ The post-certification dependency update PR #809 is merged at `c9c3cf...`. PR #8
 The current-main evidence boundary remains:
 
 `CURRENT MAIN ENGINEERING EVIDENCE` ≠ `V1.4.11 RELEASE CERTIFICATION` ≠ `EXTERNAL PRODUCTION EVIDENCE`.
+
+## Post-v1.4.11 governed Workforce semantic runtime evidence — 2026-09-29
+
+The repository audit has now separated **runtime implementation** from **runtime evidence**:
+
+- **Implemented:** governed Workforce role → operation → tool binding is enforced on the canonical Agent Run path after PR #827. The enforcement is active before `ToolRegistry.execute()`, and the governed runtime context remains active through actual Run execution.
+- **Validated:** the generic real-stack Agent WorkItem E2E passes through Tenant → AgentDefinition → AgentTemplate → AgentInstance → AgentIdentity → Access Review → Runtime Binding → WorkItem → Run → Celery → audit correlation.
+- **Not yet evidenced:** a semantic Workforce matrix executing an actual governed Workforce tool through the real Run/Celery path and persisting the expected semantic provenance/audit evidence.
+- **Current semantic gap:** the repository has no existing local market-data provider stub/server, while the E2E deterministic AI provider does not emit `tool_calls`. Therefore the semantic E2E gap is an **evidence/infrastructure gap**, not a demonstrated production runtime defect.
+- **Scope rule:** do not modify production behavior merely to make the E2E green. Any E2E-only deterministic tool-call/provider infrastructure must be an explicit engineering slice, preserve production defaults, and be validated through the normal PR gates.
+- **No semantic Workforce E2E certification is claimed** until that real-stack matrix is executed and its evidence is captured.
+
+The roadmap already identifies “runtime/e2e evidence for governed role operations and approval execution” as the next Workforce evidence step. The logical implementation order is therefore: build the minimum E2E-only provider/test infrastructure required to exercise the existing governance path, then execute the semantic matrix, then reconcile the evidence index. Broad new workforce domain handlers should not be added merely to manufacture E2E coverage.
 
 ## External-gate status rule
 

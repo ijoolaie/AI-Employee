@@ -1,6 +1,6 @@
 # Production Evidence Index
 
-**Reconciled:** 2026-09-26  
+**Reconciled:** 2026-09-29  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
@@ -68,6 +68,18 @@ Current `main` is post-certification engineering/documentation work and is not c
 | Vendor → Reseller → Customer acceptance | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
 | Final commercial go-live authorization | OPEN-EXTERNAL | OPEN — PENDING EXTERNAL EXECUTION |
 
+## Post-v1.4.11 semantic Workforce runtime evidence — 2026-09-29
+
+| Evidence item | Class | Status |
+|---|---|---|
+| Governed Workforce role → operation → tool enforcement on canonical Run path | ENGINEERING | PASS — implemented and merged in PR #827 |
+| Generic real-stack Agent WorkItem → Run → Celery → audit path | ENGINEERING | PASS |
+| Semantic Workforce tool execution through real Run/Celery path | ENGINEERING | OPEN — evidence not yet captured |
+| Semantic Workforce persisted provenance/audit matrix | ENGINEERING | OPEN — evidence not yet captured |
+| Existing local market-data provider stub/server | ENGINEERING | NOT PRESENT |
+| Deterministic E2E AI provider emitting tool calls | ENGINEERING | NOT PRESENT |
+
+This is an engineering evidence gap, not a demonstrated production runtime defect. The next slice is to add only the minimum E2E-only provider/test infrastructure required to exercise the already-governed semantic path. Production defaults and provider behavior must remain unchanged. No external-production or release-certification claim follows from this work.
 ## Current execution-stage rule
 
 The project is currently in **LOCAL / ENGINEERING EXECUTION**. External gates are intentionally open until an external deployment target, live integrations, staffed operations, or independent assessment is actually available. These open states are not defects and do not invalidate v1.4.11 repository certification.
