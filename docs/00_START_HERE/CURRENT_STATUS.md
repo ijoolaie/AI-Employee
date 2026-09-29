@@ -33,7 +33,7 @@ Certification applies only to the exact certified SHA. Post-release code or docu
 
 The latest repository-certified release is **v1.4.11 / `90dd5cb...`**.
 
-The latest code-bearing engineering head is PR #832 merge commit `b352ce41ab65031b5463542e254ddd3a2a1f459b`, followed by documentation reconciliation in PR #833 merged at `3d29aeffb44bcba7d833ca906884b6dc5fca814a`. No post-certification mainline SHA is certified by the v1.4.11 exact-SHA evidence. No post-certification mainline SHA is certified by the v1.4.11 exact-SHA evidence.
+The latest code-bearing engineering head is PR #832 merge commit `b352ce41ab65031b5463542e254ddd3a2a1f459b`, followed by documentation-only PR #833 (`3d29aeffb44bcba7d833ca906884b6dc5fca814a`) and PR #834. No post-certification mainline SHA is certified by the v1.4.11 exact-SHA evidence.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
