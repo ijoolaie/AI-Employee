@@ -107,6 +107,28 @@ async def verify_audit(tenant_id,run_id):
         assert rows[-1].status=="success" and meta.get("tool")=="workforce_market_research"
         assert meta.get("tool_call_id")=="e2e-workforce-market-research-1"
 
+async def verify_cross_tenant_assignment(token, tenant_id, source_agent_id, suffix):
+    other_suffix=f"{suffix}-cross"
+    status, data=req("POST","/auth/register",{
+        "tenant_name":f"Workforce Semantic E2E Cross Tenant {other_suffix}",
+        "tenant_slug":f"workforce-semantic-cross-{other_suffix}",
+        "email":f"workforce-semantic-cross-{other_suffix}@example.invalid",
+        "password":"WorkforceSemanticE2E-2026!",
+        "full_name":"Workforce Semantic E2E Cross Tenant",
+    })
+    assert status==201,data
+    other_token=data["data"]["access_token"]
+    status,me=req("GET","/auth/me",token=other_token); assert status==200,me
+    other_tenant_id=uuid.UUID(str(me["data"]["tenant"]["id"]))
+    wid=await work_item(other_tenant_id,source_agent_id,suffix,"cross-tenant")
+    try:
+        req("POST",f"/work-items/{wid}/assign/agent",{"agent_instance_id":str(source_agent_id)},other_token)
+    except AssertionError as exc:
+        assert "HTTP 404" in str(exc) or "HTTP 409" in str(exc), str(exc)
+        print("WORKFORCE SEMANTIC CROSS-TENANT DENIAL REAL-STACK PASS")
+        return
+    raise AssertionError("cross-tenant Agent assignment unexpectedly succeeded")
+
 async def run_matrix(token,tenant_id,owner_id,suffix):
     await license_fixture(tenant_id,suffix)
     good,version,definition_id=await governed_agent(tenant_id,suffix,owner_id,"allowed")
@@ -159,6 +181,7 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
             assert "approval" in str(exc).lower()
         else: raise AssertionError("approval-required operation was not denied")
     print("WORKFORCE SEMANTIC APPROVAL-REQUIRED DENIAL GOVERNANCE PASS")
+    await verify_cross_tenant_assignment(token,tenant_id,good,suffix)
 
 def main():
     suffix=str(time.time_ns())[-10:]
