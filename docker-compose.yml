@@ -68,6 +68,20 @@ services:
       timeout: 5s
       retries: 10
 
+  e2e-market-provider:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "scripts/e2e_market_data_provider.py"]
+    environment:
+      APP_ENV: e2e
+      DEBUG: "false"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
   api:
     build:
       context: .
