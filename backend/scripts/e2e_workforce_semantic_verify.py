@@ -45,17 +45,15 @@ async def new_user(db,tenant_id,suffix,label):
     db.add(u); await db.flush(); return u
 
 async def license_fixture(tenant_id,suffix):
-    t=(await db_execute(Tenant,tenant_id)).scalar_one()
-    t.tenant_kind=edition_service.EDITION_CUSTOMER
-    vendor=Tenant(name=f"E2E Vendor {suffix}",slug=f"e2e-vendor-{suffix}",status="active",tenant_kind=edition_service.EDITION_VENDOR)
-    db.add(vendor); await db.flush()
-    reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
-    db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-    row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
-    assert row.status=="active"; await db.commit()
-
-async def db_execute(model,ident):
-    return await db.execute(select(model).where(model.id==ident))
+    async with AsyncSessionLocal() as db:
+        t=(await db.execute(select(Tenant).where(Tenant.id==tenant_id))).scalar_one()
+        t.tenant_kind=edition_service.EDITION_CUSTOMER
+        vendor=Tenant(name=f"E2E Vendor {suffix}",slug=f"e2e-vendor-{suffix}",status="active",tenant_kind=edition_service.EDITION_VENDOR)
+        db.add(vendor); await db.flush()
+        reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
+        db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        assert row.status=="active"; await db.commit()
 
 async def governed_agent(tenant_id,suffix,owner_id,variant):
     async with AsyncSessionLocal() as db:
