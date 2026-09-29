@@ -74,12 +74,17 @@ Current `main` is post-certification engineering/documentation work and is not c
 |---|---|---|
 | Governed Workforce role → operation → tool enforcement on canonical Run path | ENGINEERING | PASS — implemented and merged in PR #827 |
 | Generic real-stack Agent WorkItem → Run → Celery → audit path | ENGINEERING | PASS |
-| Semantic Workforce tool execution through real Run/Celery path | ENGINEERING | OPEN — evidence not yet captured |
-| Semantic Workforce persisted provenance/audit matrix | ENGINEERING | OPEN — evidence not yet captured |
-| Existing local market-data provider stub/server | ENGINEERING | NOT PRESENT |
-| Deterministic E2E AI provider emitting tool calls | ENGINEERING | NOT PRESENT |
+| E2E-only deterministic market-data provider | ENGINEERING | PASS — added by PR #832; production provider behavior unchanged |
+| Deterministic E2E provider tool-call emission | ENGINEERING | PASS — added by PR #832; only emits when the governed Workforce tool is exposed |
+| Semantic Workforce tool execution through real Run/Celery path | ENGINEERING | PASS — local real-stack matrix executed successfully |
+| Semantic Workforce persisted tool.call audit evidence | ENGINEERING | PASS — local real-stack matrix verified tenant/run/tool-call correlation |
+| Negative control: wrong-role denial | ENGINEERING | PASS — local real-stack matrix |
+| Negative control: stale capability denial | ENGINEERING | PASS — local real-stack matrix |
+| Negative control: approval-required operation denial | ENGINEERING | PASS — existing governance path verified by matrix |
+| Negative control: cross-tenant assignment denial | ENGINEERING | PASS — local real-stack matrix |
+| Runtime binding correlation | ENGINEERING | PASS — local real-stack matrix |
 
-This is an engineering evidence gap, not a demonstrated production runtime defect. The next slice is to add only the minimum E2E-only provider/test infrastructure required to exercise the already-governed semantic path. Production defaults and provider behavior must remain unchanged. No external-production or release-certification claim follows from this work.
+PR #832 is merged to main at merge commit b352ce41ab65031b5463542e254ddd3a2a1f459b. The semantic matrix evidence is engineering evidence from the real local Docker/Celery stack; it is not external-production evidence and does not transfer the v1.4.11 exact-SHA certification. A new release candidate should be considered only if this post-certification scope is intentionally selected for release.
 ## Current execution-stage rule
 
 The project is currently in **LOCAL / ENGINEERING EXECUTION**. External gates are intentionally open until an external deployment target, live integrations, staffed operations, or independent assessment is actually available. These open states are not defects and do not invalidate v1.4.11 repository certification.

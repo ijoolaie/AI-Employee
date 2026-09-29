@@ -33,7 +33,7 @@ Certification applies only to the exact certified SHA. Post-release code or docu
 
 The latest repository-certified release is **v1.4.11 / `90dd5cb...`**.
 
-The latest code-bearing engineering head is `e844d55e5053e9689f5afdca8aa6a4d4e75a2662`, containing the merged CI timeout process-termination fix from PR #826 and the governed Workforce runtime-binding fix from PR #827. Later documentation-only reconciliation commits do not change that code-bearing boundary. No post-certification mainline SHA is certified by the v1.4.11 exact-SHA evidence.
+The latest code-bearing engineering head is PR #832 merge commit `b352ce41ab65031b5463542e254ddd3a2a1f459b`, containing the post-certification governed Workforce semantic runtime evidence slice. No post-certification mainline SHA is certified by the v1.4.11 exact-SHA evidence.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
@@ -81,12 +81,12 @@ The repository audit has now separated **runtime implementation** from **runtime
 
 - **Implemented:** governed Workforce role → operation → tool binding is enforced on the canonical Agent Run path after PR #827. The enforcement is active before `ToolRegistry.execute()`, and the governed runtime context remains active through actual Run execution.
 - **Validated:** the generic real-stack Agent WorkItem E2E passes through Tenant → AgentDefinition → AgentTemplate → AgentInstance → AgentIdentity → Access Review → Runtime Binding → WorkItem → Run → Celery → audit correlation.
-- **Not yet evidenced:** a semantic Workforce matrix executing an actual governed Workforce tool through the real Run/Celery path and persisting the expected semantic provenance/audit evidence.
-- **Current semantic gap:** the repository has no existing local market-data provider stub/server, while the E2E deterministic AI provider does not emit `tool_calls`. Therefore the semantic E2E gap is an **evidence/infrastructure gap**, not a demonstrated production runtime defect.
-- **Scope rule:** do not modify production behavior merely to make the E2E green. Any E2E-only deterministic tool-call/provider infrastructure must be an explicit engineering slice, preserve production defaults, and be validated through the normal PR gates.
-- **No semantic Workforce E2E certification is claimed** until that real-stack matrix is executed and its evidence is captured.
+- **Evidenced:** PR #832 adds the minimum E2E-only deterministic tool-call/provider infrastructure and the local real-stack semantic matrix.
+- **Validated:** the matrix executed the governed market-research tool through WorkItem → Run → Celery → ToolRegistry and verified persisted `tool.call` audit evidence plus negative controls for wrong role, stale capability, approval-required operation and cross-tenant assignment.
+- **Scope rule:** production provider defaults and production market-provider behavior remain unchanged; the added provider is Compose/E2E-only.
+- **Evidence boundary:** this is engineering evidence on the post-certification mainline and does not certify `v1.4.11` or constitute external-production evidence.
 
-The roadmap already identifies “runtime/e2e evidence for governed role operations and approval execution” as the next Workforce evidence step. The logical implementation order is therefore: build the minimum E2E-only provider/test infrastructure required to exercise the existing governance path, then execute the semantic matrix, then reconcile the evidence index. Broad new workforce domain handlers should not be added merely to manufacture E2E coverage.
+The semantic Workforce evidence gap identified by the roadmap is therefore closed for the currently implemented binding. Further workforce work should follow the domain-first rule: add a dedicated tenant-safe handler and explicit binding only when a concrete operation requires it.
 
 ## External-gate status rule
 
