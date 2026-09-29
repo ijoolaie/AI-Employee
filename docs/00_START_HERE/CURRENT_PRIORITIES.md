@@ -46,17 +46,17 @@ External gates remain intentionally **OPEN — PENDING EXTERNAL EXECUTION** beca
 
 ### P2 — Governed Workforce semantic runtime evidence
 
-This is the next local engineering slice identified by the current roadmap. It is an evidence/infrastructure task, not a newly discovered production runtime defect.
+The semantic runtime evidence slice is now **IMPLEMENTED / VALIDATED** by PR #832 and is no longer an open evidence gap.
 
 1. **DONE:** canonical Run-path Workforce role/operation/tool enforcement is implemented after PR #827.
 2. **DONE:** generic real-stack Agent WorkItem E2E proves the real Tenant → Agent → WorkItem → Run → Celery → audit path.
-3. **OPEN:** no repository-backed semantic Workforce E2E matrix currently executes a real governed Workforce tool through that path.
-4. **OPEN:** the Compose E2E stack has no market-data provider stub/server, and the deterministic E2E AI provider does not emit `tool_calls`.
-5. **NEXT:** define the minimum E2E-only provider/test infrastructure needed to exercise existing semantic bindings without changing production defaults.
-6. **THEN:** execute a real-stack semantic matrix covering at minimum allowed execution, wrong-role denial, approval-required denial, tenant isolation, capability freshness, runtime binding and persisted audit/provenance.
-7. **THEN:** record the resulting evidence and update the evidence index; only after successful validation consider whether a new release candidate is warranted.
+3. **DONE:** PR #832 added only E2E-local deterministic tool-call/provider infrastructure; production provider defaults remain unchanged.
+4. **DONE:** local real-stack semantic matrix executed successfully through WorkItem → Run → Celery → ToolRegistry → governed market-research handler.
+5. **DONE:** matrix covered allowed execution, runtime binding correlation, wrong-role denial, stale-capability denial, approval-required denial, cross-tenant assignment denial and persisted tool.call audit evidence.
+6. **DONE:** evidence index reconciled against the merged PR boundary.
+7. **NEXT DECISION:** only if this post-certification scope is intentionally selected for release should a new release candidate and fresh exact-SHA certification be created.
 
-Do not add generic wrappers, reclassify unrelated tools, or alter production provider behavior solely to manufacture this evidence. Unsupported workforce operations remain intentionally denied until a real tenant-safe semantic handler and explicit binding exist.
+Do not add generic wrappers, reclassify unrelated tools, or alter production provider behavior solely to manufacture evidence. Unsupported workforce operations remain intentionally denied until a real tenant-safe semantic handler and explicit binding exist.
 ### P3 — Target verification and externally discovered engineering scope
 
 - Data retention/lifecycle verification on the real target.
