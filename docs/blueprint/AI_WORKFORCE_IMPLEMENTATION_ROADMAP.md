@@ -1,0 +1,358 @@
+# AI Workforce Implementation Roadmap
+
+## Status
+
+**Post-v1.4.11 engineering roadmap — code-reconciled 2026-09-30**
+
+This document is the implementation roadmap for turning the governed AI Workforce foundation into an actually executable internal AI company.
+
+It is based on the repository code audit performed on 2026-09-30. It intentionally separates role/catalog definitions, governance/runtime infrastructure, concrete executable tools and handlers, real-stack evidence, and production/customer evidence.
+
+A role listed in a blueprint is not considered implemented until the role has a real governed execution path.
+
+## Current code-reconciled baseline
+
+The repository currently contains five governed first-party workforce roles:
+1. ai_internal_manager
+2. ai_marketing_advertising_manager
+3. ai_graphic_designer
+4. ai_software_developer
+5. ai_trader
+
+The role catalog defines explicit capability contracts and fail-closed binding rules.
+
+The current code audit found:
+- Internal Manager has concrete workforce coordination/reporting/budget/cost tools.
+- Marketing Manager has concrete campaign-plan, content-coordination and growth-report tools.
+- Trader has concrete read-only market-research, risk-analysis and trading-plan tools.
+- Graphic Designer has role/capability definitions but no approved first-party creative/media execution tool.
+- Software Developer has role/capability definitions but no approved first-party engineering-workspace/change-set execution domain.
+- Content coordination exists as a semantic planning capability, but is not Instagram/social publishing.
+- Instagram publishing, comments/DM/analytics automation was not found as a governed first-party workforce tool.
+- Dedicated image-generation and video-generation workforce tools were not found.
+- Sales/CRM infrastructure exists, but a governed autonomous lead-generation/outreach workforce was not found.
+- Customer Success, SEO, QA and DevOps appear in the broader product/blueprint model but are not currently first-party executable workforce roles with dedicated governed tool chains.
+- Website creation/edit/build/deploy/health/rollback is not currently exposed as a governed Software Developer/Website Employee tool chain.
+
+### Evidence rule
+
+A capability moves from planned to implemented only when all applicable layers exist:
+
+Role → Operation → Capability Contract → Registered Tool → Tenant-safe Handler → Runtime Governance → Tests → Real-stack Evidence
+
+Missing any required execution layer means the operation remains unavailable or partially implemented.
+
+# Phased implementation plan
+
+## Phase W0 — Evidence and contract reconciliation
+
+**Goal:** make the repository documentation exactly match executable code before adding new workforce functionality.
+
+### Deliverables
+- Reconcile STATUS.md with the current Role/Tool Registry code.
+- Maintain one authoritative binding inventory.
+- Record role/operation/tool/handler/test/evidence status.
+- Keep unsupported operations explicitly fail-closed.
+- Add/update tests whenever a binding is added or removed.
+- Separate certified v1.4.11 evidence from mutable post-release mainline evidence.
+
+### Exit criteria
+- No documentation claims an operation is executable unless the code path exists.
+- Binding counts and role counts are generated/verified from code or checked against code in CI.
+- Unsupported operations are visibly marked as unavailable.
+
+**Priority: P0**
+
+## Phase W1 — Internal Company Control Plane
+
+**Goal:** make the AI Internal Manager capable of operating the company as a governed coordinator.
+
+### Scope
+- Workforce roster and active-instance state.
+- Task assignment and reprioritization.
+- Handoffs.
+- Workload balancing.
+- Capacity requests.
+- CEO report.
+- Budget/cost estimates.
+- Proposal generation.
+- Approval queue integration.
+- KPI/SLA state.
+- Cross-employee run correlation.
+- Daily CEO operating brief.
+
+### Important boundary
+The Internal Manager coordinates existing capabilities. It must not invent execution authority merely because another tool has a similar name.
+
+### Exit criteria
+A deterministic real-stack scenario passes:
+CEO goal → Internal Manager → assign work → specialized employee → result → verification → CEO report
+with tenant identity, audit provenance and approval controls verified.
+
+**Priority: P0**
+
+## Phase W2 — Engineering Employee
+
+**Goal:** make ai_software_developer a real governed execution employee.
+
+### Build a dedicated Engineering Workspace domain
+Required first-party tools should be explicit and independently governed:
+1. workspace read/list
+2. file create
+3. file edit
+4. file delete
+5. patch/change-set creation
+6. test execution
+7. lint/type-check
+8. build
+9. Git branch/change-set preparation
+10. commit proposal
+11. pull-request proposal
+12. CI/status inspection
+13. deployment proposal
+14. health check
+15. rollback proposal
+
+### Safety
+- Workspace and repository scope must be tenant-bound.
+- Production-critical/security-sensitive changes remain approval-gated.
+- No arbitrary shell capability should be silently substituted for these semantic operations.
+- Every change must have provenance and a reversible path where possible.
+
+### Exit criteria
+Developer task → workspace change → tests → review/proposal → approval when required → deploy → health check → audit
+works end-to-end on a controlled test repository.
+
+**Priority: P0**
+
+## Phase W3 — Content & Creative Workforce
+
+**Goal:** turn content planning into actual content production.
+
+### Content Production Employee
+Capabilities:
+- long-form article
+- social caption
+- short-form variant
+- CTA
+- content calendar
+- brand/voice policy
+- SEO-aware content brief
+- repurposing
+- content QA
+
+### Graphic Designer
+Introduce a real Creative/Media domain:
+- create visual asset
+- revise asset
+- brand variant
+- campaign creative
+- asset metadata/versioning
+- approval state
+- provider selection
+
+### Generation provider architecture
+Use a provider abstraction:
+Local → Free/low-cost API → Paid API
+Paid generation must remain approval-gated.
+
+### Exit criteria
+A content request can produce a governed text + creative package with stored artifacts, provenance and approval state.
+
+**Priority: P1**
+
+## Phase W4 — Social / Instagram Employee
+
+**Goal:** convert content packages into governed distribution.
+
+### Capabilities
+- account/channel connection
+- publish post
+- publish reel
+- publish story
+- schedule publication
+- read comments
+- classify/triage comments
+- read/respond to DMs where permitted
+- analytics retrieval
+- publication status
+- failure/retry handling
+
+### Governance
+Publishing and external messaging are Tier 2 external-impact actions. Account credentials and provider scopes must be tenant-owned and never exposed to model context.
+
+### Exit criteria
+Content Employee → Social Employee → approval → Instagram provider → publish → verify → analytics
+passes against a test/sandbox-capable integration or explicitly documented provider test environment.
+
+**Priority: P1**
+
+## Phase W5 — Sales & Lead Generation Workforce
+
+**Goal:** make the Internal Company capable of generating and managing its own pipeline.
+
+### Capabilities
+- lead research
+- lead qualification
+- CRM enrichment
+- outreach draft
+- follow-up queue
+- proposal preparation
+- meeting-request preparation
+- pipeline reporting
+- conversion attribution
+
+### Human boundary
+External outreach, contractual commitments and material commercial actions require explicit policy/approval.
+
+### Exit criteria
+research → qualify → CRM → draft outreach → human approval → send → response → follow-up → pipeline
+is auditable end-to-end.
+
+**Priority: P1**
+
+## Phase W6 — Website Employee
+
+**Goal:** allow the AI Company to create and operate its own website.
+
+### Capabilities
+- requirements/specification
+- UX/content plan
+- implementation
+- asset integration
+- automated tests
+- accessibility checks
+- build
+- preview
+- deployment
+- health check
+- rollback
+- post-release issue detection
+
+This phase depends on W2 Engineering Workspace and W3 Content/Creative capabilities.
+
+### Exit criteria
+The Internal Manager can assign a website change and the governed engineering chain can implement, test, deploy, verify and report the result.
+
+**Priority: P1**
+
+## Phase W7 — SEO & Growth Employee
+
+**Goal:** create a measurable organic-growth loop.
+
+### Capabilities
+- keyword/topic research
+- content opportunity analysis
+- on-page recommendations
+- technical SEO checks
+- internal-link recommendations
+- content briefs
+- search-performance ingestion
+- growth reporting
+- experiment proposals
+
+No claim of actual search-engine impact is made without external measurement.
+
+### Exit criteria
+research → opportunity → content/technical task → implementation → measurement → report
+is operational.
+
+**Priority: P2**
+
+## Phase W8 — Customer Success / Support Employee
+
+**Goal:** operate the customer lifecycle after acquisition.
+
+### Capabilities
+- inbox triage
+- customer profile/context retrieval
+- support drafting
+- escalation
+- churn-risk evidence
+- onboarding follow-up
+- satisfaction reporting
+- knowledge-base maintenance proposals
+
+Customer-facing responses remain governed external-impact actions.
+
+**Priority: P2**
+
+## Phase W9 — QA & DevOps Employees
+
+**Goal:** close the autonomous software delivery loop.
+
+### QA
+- test-plan generation
+- regression execution
+- Playwright/API checks
+- defect creation
+- release evidence
+
+### DevOps/SRE
+- CI status
+- deployment orchestration
+- health checks
+- logs/metrics
+- incident detection
+- rollback
+- backup/restore verification
+
+Production-critical actions remain approval-gated.
+
+**Priority: P2**
+
+## Phase W10 — Internal AI Company Dogfood
+
+**Goal:** make AI-Employee its own first customer.
+
+### Target operating loop
+CEO → Internal Manager → Research → Marketing → Content → Creative → Sales → Customer Success → Developer → QA → DevOps → Website → Analytics → Internal Manager
+
+### First business objective
+**First Revenue Generated by AI Workforce**
+
+The first measurable objective is not number of employees. It is a real qualified lead, customer conversation, pilot, and eventually paid customer generated and processed through the governed workforce.
+
+### Cost principle
+Use the local machine and local models where practical. Add paid APIs, external infrastructure and heavier compute only when a real workload requires them and the economics are covered by customer revenue.
+
+### Exit criteria
+At least one real business workflow is completed repeatedly with measurable outcome, human approval at consequential boundaries, audit trail, cost measurement, failure/recovery handling, and repeatability.
+
+**Priority: P0 after W1–W6 foundations**
+
+# Implementation order
+
+The recommended engineering order is:
+
+W0 → W1 → W2 → W3 → W4 → W5 → W6 → W7 → W8 → W9 → W10
+
+W10 is the business validation loop, not a final finish-everything-first milestone.
+
+The project should begin dogfooding as soon as W1 plus the minimum tools for one complete revenue workflow exist.
+
+## Build rule
+Do not implement a workforce role because it appears in the catalog.
+Implement a role when there is a real workflow that needs it.
+Do not add a generic wrapper merely to make a capability appear executable.
+
+For every new capability:
+1. define the semantic operation;
+2. define its side effects and risk;
+3. define tenant/security boundaries;
+4. implement a dedicated domain/service where necessary;
+5. register a canonical Tool;
+6. bind Role → Operation → Tool explicitly;
+7. add negative/authorization tests;
+8. add real-stack evidence;
+9. update the authoritative status;
+10. only then call the capability implemented.
+
+## Definition of Done
+A workforce role is Executable only when role, template where required, capability contract, Tool Registry binding, handler, permissions, approvals, tenant scope, runtime provenance, automated tests and relevant real-stack evidence all exist.
+
+A role with only catalog/contract/template definitions is Planned/Partial, not Executable.
+
+## Release boundary
+All post-v1.4.11 workforce implementation is mainline engineering until a new release candidate is created and exact-SHA certification is rerun.
+The immutable v1.4.11 certification remains unchanged.
