@@ -118,7 +118,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         approval_class="routine_delegable",
         allowed_routine_operations=("create_visual_asset", "revise_visual_asset", "prepare_brand_variant", "prepare_campaign_creative"),
         approval_required_operations=("paid_asset_procurement", "commercial_license_purchase", "material_external_spend", "contractual_commitment"),
-        capability_contract=_contracts(["create_visual_asset","revise_visual_asset","prepare_brand_variant","prepare_campaign_creative"], ["paid_asset_procurement","commercial_license_purchase","material_external_spend","contractual_commitment"]),
+        capability_contract=_contracts(["create_visual_asset","revise_visual_asset","prepare_brand_variant","prepare_campaign_creative"], ["paid_asset_procurement","commercial_license_purchase","material_external_spend","contractual_commitment"], {"create_visual_asset":("workforce_create_visual_asset",),"revise_visual_asset":("workforce_revise_visual_asset",),"prepare_brand_variant":("workforce_prepare_brand_variant",),"prepare_campaign_creative":("workforce_prepare_campaign_creative",)}),
     ),
     WorkforceRole(
         code="ai_software_developer",
@@ -130,7 +130,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         approval_class="routine_delegable",
         allowed_routine_operations=("implement_routine_fix", "write_tests", "prepare_integration", "refactor_non_critical_code", "prepare_change_proposal"),
         approval_required_operations=("production_critical_change", "security_sensitive_change", "privileged_access_change", "material_resource_consumption", "irreversible_data_change"),
-        capability_contract=_contracts(["implement_routine_fix","write_tests","prepare_integration","refactor_non_critical_code","prepare_change_proposal"], ["production_critical_change","security_sensitive_change","privileged_access_change","material_resource_consumption","irreversible_data_change"]),
+        capability_contract=_contracts(["implement_routine_fix","write_tests","prepare_integration","refactor_non_critical_code","prepare_change_proposal"], ["production_critical_change","security_sensitive_change","privileged_access_change","material_resource_consumption","irreversible_data_change"], {"implement_routine_fix":("workforce_workspace_edit_file",),"write_tests":("workforce_workspace_test",),"prepare_integration":("workforce_workspace_change_set",),"refactor_non_critical_code":("workforce_workspace_change_set",),"prepare_change_proposal":("workforce_git_pr_proposal",)}),
     ),
     WorkforceRole(
         code="ai_trader",
@@ -147,6 +147,38 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
             ["capital_allocation","order_execution","leverage_change","withdrawal","material_financial_commitment"],
             {"market_research": ("workforce_market_research",), "risk_analysis": ("workforce_market_risk_analysis",), "prepare_trading_plan": ("workforce_market_trading_plan",)},
         ),
+    ),
+    WorkforceRole(
+        code="ai_content_producer", name="AI Content Producer", name_fa="تولیدکننده محتوای هوش مصنوعی",
+        category="content", supervisor="ai_internal_manager",
+        purpose="Produce governed text content packages and content-calendar artifacts.", approval_class="routine_delegable",
+        allowed_routine_operations=("produce_article","produce_social_caption","produce_short_form","prepare_cta","prepare_content_calendar","prepare_content_brief","repurpose_content","content_qa"),
+        approval_required_operations=("external_content_commitment",),
+        capability_contract=_contracts(["produce_article","produce_social_caption","produce_short_form","prepare_cta","prepare_content_calendar","prepare_content_brief","repurpose_content","content_qa"],["external_content_commitment"], {op:(f"workforce_{op}",) for op in ("produce_article","produce_social_caption","produce_short_form","prepare_cta","prepare_content_calendar","prepare_content_brief","repurpose_content","content_qa")}),
+    ),
+    WorkforceRole(
+        code="ai_social_media", name="AI Social Media Employee", name_fa="کارمند شبکه‌های اجتماعی هوش مصنوعی",
+        category="distribution", supervisor="ai_internal_manager",
+        purpose="Prepare and govern social distribution, publication, comment, DM, and analytics workflows.", approval_class="routine_delegable",
+        allowed_routine_operations=("connect_channel","read_comments","triage_comments","read_analytics","publication_status"),
+        approval_required_operations=("publish_post","publish_reel","publish_story","schedule_publication","respond_to_dm"),
+        capability_contract=_contracts(["connect_channel","read_comments","triage_comments","read_analytics","publication_status"],["publish_post","publish_reel","publish_story","schedule_publication","respond_to_dm"], {op:(f"workforce_{op}",) for op in ("connect_channel","read_comments","triage_comments","read_analytics","publication_status","publish_post","publish_reel","publish_story","schedule_publication","respond_to_dm")}),
+    ),
+    WorkforceRole(
+        code="ai_sales_lead_generation", name="AI Sales & Lead Generation Employee", name_fa="کارمند فروش و تولید سرنخ هوش مصنوعی",
+        category="sales", supervisor="ai_internal_manager",
+        purpose="Research, qualify, enrich, and prepare governed commercial outreach and pipeline work.", approval_class="routine_delegable",
+        allowed_routine_operations=("lead_research","lead_qualification","crm_enrichment","prepare_outreach_draft","prepare_follow_up_queue","prepare_proposal","prepare_meeting_request","pipeline_reporting","conversion_attribution"),
+        approval_required_operations=("external_outreach","contractual_commitment","material_commercial_action"),
+        capability_contract=_contracts(["lead_research","lead_qualification","crm_enrichment","prepare_outreach_draft","prepare_follow_up_queue","prepare_proposal","prepare_meeting_request","pipeline_reporting","conversion_attribution"],["external_outreach","contractual_commitment","material_commercial_action"], {op:(f"workforce_{op}",) for op in ("lead_research","lead_qualification","crm_enrichment","prepare_outreach_draft","prepare_follow_up_queue","prepare_proposal","prepare_meeting_request","pipeline_reporting","conversion_attribution")}),
+    ),
+    WorkforceRole(
+        code="ai_website_employee", name="AI Website Employee", name_fa="کارمند وب‌سایت هوش مصنوعی",
+        category="web_operations", supervisor="ai_internal_manager",
+        purpose="Prepare, verify, and operate governed website changes through the Engineering Workspace.", approval_class="routine_delegable",
+        allowed_routine_operations=("website_requirements","website_ux_content_plan","website_implementation","website_asset_integration","website_tests","website_accessibility","website_build","website_preview","website_health_check"),
+        approval_required_operations=("website_deploy","website_rollback"),
+        capability_contract=_contracts(["website_requirements","website_ux_content_plan","website_implementation","website_asset_integration","website_tests","website_accessibility","website_build","website_preview","website_health_check"],["website_deploy","website_rollback"], {op:(f"workforce_{op}",) for op in ("website_requirements","website_ux_content_plan","website_implementation","website_asset_integration","website_tests","website_accessibility","website_build","website_preview","website_health_check","website_deploy","website_rollback")}),
     ),
 )
 
