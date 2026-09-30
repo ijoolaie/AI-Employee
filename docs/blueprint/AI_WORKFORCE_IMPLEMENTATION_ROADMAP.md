@@ -12,12 +12,16 @@ A role listed in a blueprint is not considered implemented until the role has a 
 
 ## Current code-reconciled baseline
 
-The repository currently contains five governed first-party workforce roles:
+The repository now contains nine governed first-party workforce roles in the role catalog:
 1. ai_internal_manager
 2. ai_marketing_advertising_manager
 3. ai_graphic_designer
 4. ai_software_developer
 5. ai_trader
+6. ai_content_producer
+7. ai_social_media
+8. ai_sales_lead_generation
+9. ai_website_employee
 
 The role catalog defines explicit capability contracts and fail-closed binding rules.
 
