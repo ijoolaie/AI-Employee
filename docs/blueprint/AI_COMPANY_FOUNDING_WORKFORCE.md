@@ -2,9 +2,9 @@
 
 ## Status
 
-**Architecture / Product Design — planned**
+**Architecture / Product Design — code-reconciled 2026-09-30**
 
-This document defines the proposed first-party AI workforce for the AI Company Operating Model. It is a role catalog and governance baseline; it does **not** claim that every listed role is already implemented or released.
+This document defines the proposed first-party AI workforce for the AI Company Operating Model. It remains a role catalog and governance baseline; it does **not** claim that every listed role is implemented or released. A repository code audit on 2026-09-30 found five governed first-party role definitions in backend/app/services/ai_workforce_roles.py: Internal Manager, Marketing & Advertising Manager, Graphic Designer, Software Developer and Trader. Only a subset of their operations currently has concrete governed execution tooling. The implementation status and phased path are maintained in docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md.
 
 ## Authority model
 
@@ -280,7 +280,7 @@ The initial first-party workforce should be deliberately small and high-leverage
 20. AI Knowledge Manager
 21. AI Corporate Secretary
 
-The exact activation order is a product decision governed by the CEO and the workforce governance process.
+The exact activation order is a product decision governed by the CEO and the workforce governance process. For engineering purposes, activation also requires the role's executable capability chain: capability contract, explicit Tool Registry binding, tenant-safe handler, permissions/approval enforcement, tests and relevant real-stack evidence.
 
 ### Marketplace / dormant templates
 
