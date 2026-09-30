@@ -55,7 +55,7 @@ async def license_fixture(tenant_id,suffix):
         row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
-async def governed_agent(tenant_id,suffix,owner_id,variant):
+async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader"):
     async with AsyncSessionLocal() as db:
         sponsor=await new_user(db,tenant_id,suffix,f"sponsor-{variant}")
         board=await new_user(db,tenant_id,suffix,f"board-{variant}")
@@ -67,10 +67,10 @@ async def governed_agent(tenant_id,suffix,owner_id,variant):
         version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template="Perform deterministic market research.",allowed_tools=["workforce_market_research"],rules={})
         definition=AgentDefinition(tenant_id=tenant_id,slug=f"e2e-trader-def-{suffix}-{variant}",name=f"E2E Trader {variant}",capabilities=["execution"],allowed_tools=["workforce_market_research"],model_policy={},input_schema={},output_schema=output,policy_requirements={},enabled=True)
         db.add_all([version,definition]); await db.flush()
-        template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-trader-template-{suffix}-{variant}",name=f"E2E Trader Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract("ai_trader"),permission_policy={"permissions":["run.execute"],"allowed_tools":["workforce_market_research"]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
+        template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-trader-template-{suffix}-{variant}",name=f"E2E Trader Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract(role_code),permission_policy={"permissions":["run.execute"],"allowed_tools":["workforce_market_research"]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
         await record_evaluation(db,tenant_id=tenant_id,template_id=template.id,suite_id="workforce-semantic-e2e-v1",status=AgentEvaluationStatus.PASSED,evidence={"contract_version":"v1","fixture":True},score=100,evaluator_user_id=board.id,notes="E2E fixture")
         await publish_template(db,tenant_id=tenant_id,template_id=template.id,approved_by_user_id=ceo.id)
-        config={"workforce_role_code":"ai_trader","workforce_capability_contract":workforce_capability_contract_snapshot("ai_trader"),"max_concurrency":1,"budget_policy":{},"e2e_variant":variant}
+        config={"workforce_role_code":role_code,"workforce_capability_contract":workforce_capability_contract_snapshot(role_code),"max_concurrency":1,"budget_policy":{},"e2e_variant":variant}
         proposal=await create_proposal(db,tenant_id=tenant_id,requester_user_id=owner_id,title=f"E2E Trader {variant}",rationale="Semantic runtime certification",requested_name=f"E2E Trader {variant}",sponsor_user_id=sponsor.id,agent_template_id=template.id,risk_tier=0,configuration=config)
         await board_decide(db,tenant_id=tenant_id,proposal_id=proposal.id,reviewer_user_id=board.id,approve=True,reason="E2E")
         await ceo_decide(db,tenant_id=tenant_id,proposal_id=proposal.id,approver_user_id=ceo.id,approve=True,reason="E2E")
@@ -151,10 +151,13 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     print("WORKFORCE SEMANTIC RUNTIME-BINDING CORRELATION REAL-STACK PASS")
     print("WORKFORCE SEMANTIC ALLOWED TOOL REAL-STACK PASS")
 
-    wrong,_,_=await governed_agent(tenant_id,suffix,owner_id,"wrong-role")
-    async with AsyncSessionLocal() as db:
-        a=(await db.execute(select(AgentInstance).where(AgentInstance.id==wrong,AgentInstance.tenant_id==tenant_id))).scalar_one()
-        a.configuration={**a.configuration,"workforce_role_code":"ai_marketing_advertising_manager"}; await db.commit()
+    wrong,_,_=await governed_agent(
+        tenant_id,
+        suffix,
+        owner_id,
+        "wrong-role",
+        role_code="ai_marketing_advertising_manager",
+    )
     wid=await work_item(tenant_id,wrong,suffix,"wrong-role")
     assert req("POST",f"/work-items/{wid}/assign/agent",{"agent_instance_id":str(wrong)},token)[0]==200
     assert req("POST",f"/work-items/{wid}/dispatch",token=token)[0]==200
@@ -169,10 +172,13 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
         await db.commit()
     wid=await work_item(tenant_id,stale,suffix,"stale-capability")
     assert req("POST",f"/work-items/{wid}/assign/agent",{"agent_instance_id":str(stale)},token)[0]==200
-    assert req("POST",f"/work-items/{wid}/dispatch",token=token)[0]==200
-    w,run=await wait_result(wid)
-    assert w.status is WorkItemStatus.FAILED and run and "capability" in (run.error_message or "").lower()
-    print("WORKFORCE SEMANTIC STALE-CAPABILITY DENIAL REAL-STACK PASS")
+    try:
+        req("POST",f"/work-items/{wid}/dispatch",token=token)
+    except AssertionError as exc:
+        assert "HTTP 422" in str(exc) and "agent_governance_fingerprint_mismatch" in str(exc), str(exc)
+        print("WORKFORCE SEMANTIC STALE-CAPABILITY DENIAL REAL-STACK PASS")
+    else:
+        raise AssertionError("stale capability drift unexpectedly passed dispatch")
 
     async with AsyncSessionLocal() as db:
         agent=(await db.execute(select(AgentInstance).where(AgentInstance.id==good,AgentInstance.tenant_id==tenant_id))).scalar_one()

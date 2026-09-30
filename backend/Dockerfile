@@ -18,6 +18,7 @@ COPY backend/alembic.ini ./alembic.ini
 COPY backend/scripts ./scripts
 COPY backend/pyproject.toml ./pyproject.toml
 COPY backend/tests ./tests
+COPY delivery /delivery
 COPY docker-compose.yml ./docker-compose.yml
 
 RUN chown -R appuser:appuser /app

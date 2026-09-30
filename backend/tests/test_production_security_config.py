@@ -18,6 +18,8 @@ def _production_env(**overrides):
         "cors_origins": ["https://app.example.com"],
         "frontend_base_url": "https://app.example.com",
         "frontend_app_url": "https://app.example.com",
+        "lm_studio_base_url": "https://ai.example.test/v1",
+        "market_data_provider_base_url": "https://market.example.test",
         "database_url": "postgresql+asyncpg://prod:strong-password@db.internal:5432/aiep",
         "database_url_sync": "postgresql://prod:strong-password@db.internal:5432/aiep",
         "redis_url": "redis://:strong-password@redis.internal:6379/0",
@@ -29,14 +31,16 @@ def _production_env(**overrides):
     return values
 
 
-def test_secure_production_configuration_is_accepted():
+def test_secure_production_configuration_is_accepted(monkeypatch):
+    monkeypatch.delenv("MARKET_DATA_PROVIDER_BASE_URL", raising=False)
     settings = Settings(**_production_env())
     assert settings.app_env == "production"
     assert settings.debug is False
     assert settings.database_url_sync.startswith("postgresql+psycopg2://")
 
 
-def test_plain_sync_postgres_url_is_normalized_for_sqlalchemy_21():
+def test_plain_sync_postgres_url_is_normalized_for_sqlalchemy_21(monkeypatch):
+    monkeypatch.delenv("MARKET_DATA_PROVIDER_BASE_URL", raising=False)
     settings = Settings(**_production_env(database_url_sync="postgresql://prod:strong-password@db.internal:5432/aiep"))
     assert settings.database_url_sync == "postgresql+psycopg2://prod:strong-password@db.internal:5432/aiep"
 

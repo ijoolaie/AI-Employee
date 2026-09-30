@@ -16,7 +16,11 @@ from sqlalchemy import create_engine, text
 
 
 def main() -> int:
-    db_url = os.environ.get("DATABASE_URL_SYNC", "postgresql://aiep:aiep@localhost:5432/aiep")
+    db_url = os.environ.get("DATABASE_URL_SYNC", "postgresql+psycopg2://aiep:aiep@localhost:5432/aiep")
+    if db_url.startswith("postgresql://"):
+        db_url = "postgresql+psycopg2://" + db_url[len("postgresql://"):]
+    elif db_url.startswith("postgres://"):
+        db_url = "postgresql+psycopg2://" + db_url[len("postgres://"):]
     redis_url = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
     failures: list[str] = []
 

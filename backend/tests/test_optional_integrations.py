@@ -1,7 +1,9 @@
 from app.core.config import Settings
 
 
-def test_paid_integrations_are_optional_for_ci_and_first_install():
+def test_paid_integrations_are_optional_for_ci_and_first_install(monkeypatch):
+    monkeypatch.delenv("MARKET_DATA_PROVIDER_BASE_URL", raising=False)
+
     settings = Settings(
         app_env="production",
         debug=False,
