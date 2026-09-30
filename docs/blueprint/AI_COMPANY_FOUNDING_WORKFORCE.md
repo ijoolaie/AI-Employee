@@ -4,7 +4,7 @@
 
 **Architecture / Product Design — code-reconciled 2026-09-30**
 
-This document defines the proposed first-party AI workforce for the AI Company Operating Model. It remains a role catalog and governance baseline; it does **not** claim that every listed role is implemented or released. A repository code audit on 2026-09-30 found five governed first-party role definitions in backend/app/services/ai_workforce_roles.py: Internal Manager, Marketing & Advertising Manager, Graphic Designer, Software Developer and Trader. Only a subset of their operations currently has concrete governed execution tooling. The implementation status and phased path are maintained in docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md.
+This document defines the proposed first-party AI workforce for the AI Company Operating Model. It remains a role catalog and governance baseline; it does **not** claim that every listed role is implemented or released. The role catalog has now been expanded to nine governed first-party roles: Internal Manager, Marketing & Advertising Manager, Graphic Designer, Software Developer, Trader, Content Producer, Social Media, Sales & Lead Generation, and Website Employee. The W0–W6 implementation pass added explicit semantic contracts/tools for the new roles, while provider-backed external execution remains separately evidenced. The implementation status and phased path are maintained in docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md.
 
 ## Authority model
 
