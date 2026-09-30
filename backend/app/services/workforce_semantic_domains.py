@@ -116,9 +116,11 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
     _tenant(arguments, context)
     operation = arguments["_operation"]
     if operation == "lead_research":
-        return {"operation": operation, "status": "research_request", "query": arguments["query"], "external_outreach": False}
+        return {"operation": operation, "status": "research_request", "query": arguments.get("query", ""), "external_outreach": False}
     if operation == "lead_qualification":
         return {"operation": operation, "status": "qualification", "criteria": arguments.get("criteria", {})}
+    if operation in {"crm_enrichment","prepare_outreach_draft","prepare_follow_up_queue","prepare_proposal","prepare_meeting_request","pipeline_reporting","conversion_attribution"}:
+        return {"operation": operation, "status": "draft_or_report", "external_side_effect": False}
     return {"operation": operation, "status": "proposal", "approval_required": True, "external_side_effect": True}
 
 
