@@ -99,7 +99,14 @@ async def execute_creative(arguments: dict[str, Any], **context: Any) -> dict[st
 async def execute_social(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     _tenant(arguments, context)
     operation = arguments["_operation"]
-    return {"operation": operation, "status": "proposal", "provider": arguments.get("provider", "instagram"), "approval_required": True, "external_side_effect": True}
+    external = operation in {"publish_post", "publish_reel", "publish_story", "schedule_publication", "respond_to_dm"}
+    return {
+        "operation": operation,
+        "status": "proposal" if external else "ready",
+        "provider": arguments.get("provider", "instagram"),
+        "approval_required": external,
+        "external_side_effect": external,
+    }
 
 
 async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
