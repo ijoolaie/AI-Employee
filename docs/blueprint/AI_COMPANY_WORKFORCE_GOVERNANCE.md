@@ -2,9 +2,9 @@
 
 ## Status
 
-**Architecture / Product Design — Stage 8 foundation**
+**Architecture / Product Design — Stage 8 foundation; post-v1.4.11 implementation reconciled 2026-09-30**
 
-This document turns the workforce role catalog into an operational governance model. It does not claim that the roles or controls are implemented in the current release.
+This document turns the workforce role catalog into an operational governance model. It does not claim that the full role catalog is implemented in the current release. Stage 8 governance infrastructure is substantially implemented on mainline, while the broader specialist workforce remains partially executable. The 2026-09-30 code audit is the source of truth for current implementation boundaries; see docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md.
 
 ## 1. Authority hierarchy
 
@@ -69,7 +69,7 @@ Delegated authority may cover routine non-financial, non-critical and reversible
 3. **AI Software Developer** — implements approved product changes, fixes, integrations, tests and engineering tasks. Routine low-risk work may be delegated; production-critical, security-sensitive or material-resource actions remain approval-gated.
 4. **AI Trader** — researches markets, prepares trading plans, analyzes risk and may prepare or stage orders within explicit limits. Actual financial execution, capital allocation, leverage, withdrawals or other material financial actions require CEO/authorized-human approval.
 
-These roles are candidates for the next governed implementation slice; their listing here does not claim that active instances already exist.
+These roles are candidates for governed implementation; their listing here does not claim that active instances already exist. Current code status is asymmetric: Internal Manager, Marketing Manager and Trader have concrete semantic bindings for selected operations; Graphic Designer and Software Developer currently have role/capability contracts but no approved first-party execution binding for their routine operations.
 
 ### Specialist workforce
 Technology, Security, Network, Finance, HR, Legal, Sales, Marketing, Customer Success, Data, Knowledge, Operations, Governance, R&D and Corporate Secretariat roles are defined in `AI_COMPANY_FOUNDING_WORKFORCE.md`.
