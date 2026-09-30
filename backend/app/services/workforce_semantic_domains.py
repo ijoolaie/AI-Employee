@@ -129,4 +129,4 @@ async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str
     operation = arguments["_operation"]
     payload = {"kind": "website_change", "operation": operation, "site": arguments["site"], "spec": arguments.get("spec", {}), "created_at": _now()}
     artifact = _save_json(tenant_id, f"website-{operation}.json", payload)
-    return {**artifact, "operation": operation, "status": "proposal" if operation in {"deploy", "rollback"} else "staged", "approval_required": operation in {"deploy", "rollback"}}
+    return {**artifact, "operation": operation, "status": "proposal" if operation in {"website_deploy", "website_rollback"} else "staged", "approval_required": operation in {"website_deploy", "website_rollback"}}
