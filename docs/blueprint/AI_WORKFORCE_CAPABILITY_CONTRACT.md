@@ -47,6 +47,18 @@ Role Governance → Tool Binding → Tool Permission → Tool Approval → Tenan
 
 A capability contract cannot grant a permission that the Tool Registry or Agent permission policy does not grant.
 
+## Code-reconciled implementation status — 2026-09-30
+
+- Internal Manager: concrete coordination/reporting/budget/cost bindings exist in the role catalog and Tool Registry path.
+- Marketing Manager: concrete growth-report, campaign-plan and content-coordination bindings exist.
+- Trader: concrete read-only market-research, risk-analysis and trading-plan bindings exist; these do not execute trades.
+- Graphic Designer: role and operations exist, but no approved first-party creative/media execution binding currently exists.
+- Software Developer: role and operations exist, but no approved first-party engineering-workspace/change-set execution binding currently exists.
+- Instagram/social publishing: no governed first-party publish/comment/DM/analytics tool chain was verified in the code audit.
+- Image/video generation: no dedicated governed first-party workforce generation tool chain was verified.
+
+The authoritative executable boundary is code plus tests/evidence, not the role catalog or blueprint. See docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md for the phased implementation plan.
+
 ## Next slice
 
 For each workforce role, review the actual Tool Registry and add only explicit, canonical bindings where the semantics, required permission, side effects, and approval policy are compatible.
