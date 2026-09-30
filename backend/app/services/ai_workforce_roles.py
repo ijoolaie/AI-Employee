@@ -217,7 +217,11 @@ WORKFORCE_ROLE_TEMPLATES: tuple[WorkforceRoleTemplate, ...] = (
         name_fa="معامله‌گر هوش مصنوعی",
         description="Performs market research, risk analysis, trading-plan preparation, and order staging within explicit limits.",
         description_fa="در محدوده‌های صریح، پژوهش بازار، تحلیل ریسک، آماده‌سازی برنامه معاملاتی و آماده‌سازی سفارش برای بررسی را انجام می‌دهد.",
-    ),
+    ),,
+    WorkforceRoleTemplate(slug="ai-content-producer", role_code="ai_content_producer", name="AI Content Producer", name_fa="تولیدکننده محتوای هوش مصنوعی", description="Produces governed text content packages.", description_fa="بسته‌های محتوایی متنی را به‌صورت حاکمیت‌شده تولید می‌کند."),
+    WorkforceRoleTemplate(slug="ai-social-media", role_code="ai_social_media", name="AI Social Media Employee", name_fa="کارمند شبکه‌های اجتماعی هوش مصنوعی", description="Prepares and governs social distribution.", description_fa="توزیع و انتشار شبکه‌های اجتماعی را به‌صورت حاکمیت‌شده مدیریت می‌کند."),
+    WorkforceRoleTemplate(slug="ai-sales-lead-generation", role_code="ai_sales_lead_generation", name="AI Sales & Lead Generation Employee", name_fa="کارمند فروش و تولید سرنخ هوش مصنوعی", description="Researches and prepares governed commercial workflows.", description_fa="گردش‌کارهای تجاری حاکمیت‌شده را پژوهش و آماده می‌کند."),
+    WorkforceRoleTemplate(slug="ai-website-employee", role_code="ai_website_employee", name="AI Website Employee", name_fa="کارمند وب‌سایت هوش مصنوعی", description="Operates governed website delivery workflows.", description_fa="گردش‌کارهای حاکمیت‌شده ساخت و بهره‌برداری وب‌سایت را انجام می‌دهد."),
 )
 
 
