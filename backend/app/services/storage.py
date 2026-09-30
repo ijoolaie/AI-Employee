@@ -39,6 +39,10 @@ class StorageBackend(Protocol):
     def exists(self, key: str) -> bool:
         ...
 
+    def list_prefix(self, prefix: str) -> list[str]:
+        """List tenant-namespaced keys under a prefix."""
+        ...
+
 
 class LocalDiskStorage:
     def __init__(self, base_dir: str | None = None):
@@ -71,6 +75,15 @@ class LocalDiskStorage:
 
     def exists(self, key: str) -> bool:
         return self._path(key).exists()
+
+    def list_prefix(self, prefix: str) -> list[str]:
+        base = self._path(prefix)
+        if base.is_file():
+            return [prefix]
+        if not base.exists():
+            return []
+        root = self.base_dir.resolve()
+        return [str(p.relative_to(root)).replace("\\\\", "/") for p in base.rglob("*") if p.is_file()]
 
 
 _backend: StorageBackend | None = None
