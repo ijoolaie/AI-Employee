@@ -169,3 +169,18 @@ A repository-wide audit of the remaining Graphic Designer and Software Developer
 Accordingly, the following routine operations remain intentionally unbound and fail closed: Graphic Designer `create_visual_asset`, `revise_visual_asset`, `prepare_brand_variant`, `prepare_campaign_creative`; Software Developer `implement_routine_fix`, `write_tests`, `prepare_integration`, `refactor_non_critical_code`, `prepare_change_proposal`. This is a deliberate semantic-integrity boundary, not missing implementation work to be papered over with generic wrappers.
 
 The next implementation gate is therefore domain-first: introduce a real tenant-safe domain/service only when the product model requires it, then add a dedicated handler, explicit role-operation binding, regression coverage, and governance/runtime integration checks. No release is created from this documentation reconciliation.
+
+## W0–W6 implementation checkpoint — 2026-09-30
+
+The post-v1.4.11 workforce implementation pass now contains a code-derived W0 binding inventory plus governed semantic foundations for W2–W6. The implementation is deliberately split from production/provider evidence.
+
+- W0: code-derived binding inventory and focused reconciliation tests added.
+- W1: existing Internal Manager control-plane tools remain governed; dedicated full-cycle CEO-to-report real-stack evidence is still open.
+- W2: tenant-scoped Engineering Workspace artifact/change-set and delivery-proposal tools added; repository/deployment providers remain an explicit dependency.
+- W3: Content Producer role/template and Graphic Designer semantic bindings added; creative provider execution remains unconfigured.
+- W4: Social/Instagram semantic operations added with external-impact approval boundaries; live Instagram provider evidence remains open.
+- W5: Sales/Lead Generation role/template and governed research/proposal operations added; autonomous external outreach remains approval-gated and provider-dependent.
+- W6: Website Employee role/template and governed website delivery operations added; actual repository deployment remains dependent on W2 provider tooling.
+
+These are mutable mainline engineering changes after certified v1.4.11. They must not be described as part of the immutable v1.4.11 production certification until a new RC is certified.
+
