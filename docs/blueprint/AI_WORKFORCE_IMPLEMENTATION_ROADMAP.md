@@ -29,14 +29,14 @@ The current code audit found:
 - Internal Manager has concrete workforce coordination/reporting/budget/cost tools.
 - Marketing Manager has concrete campaign-plan, content-coordination and growth-report tools.
 - Trader has concrete read-only market-research, risk-analysis and trading-plan tools.
-- Graphic Designer has role/capability definitions but no approved first-party creative/media execution tool.
-- Software Developer has role/capability definitions but no approved first-party engineering-workspace/change-set execution domain.
-- Content coordination exists as a semantic planning capability, but is not Instagram/social publishing.
-- Instagram publishing, comments/DM/analytics automation was not found as a governed first-party workforce tool.
-- Dedicated image-generation and video-generation workforce tools were not found.
-- Sales/CRM infrastructure exists, but a governed autonomous lead-generation/outreach workforce was not found.
-- Customer Success, SEO, QA and DevOps appear in the broader product/blueprint model but are not currently first-party executable workforce roles with dedicated governed tool chains.
-- Website creation/edit/build/deploy/health/rollback is not currently exposed as a governed Software Developer/Website Employee tool chain.
+- Graphic Designer now has explicit governed semantic bindings for visual-asset operations; provider-backed image generation remains unconfigured.
+- Software Developer now has a tenant-scoped Engineering Workspace semantic domain for artifact changes, change sets, test/lint/build staging, CI/repository proposals, health and rollback proposals.
+- Content Producer now has governed text-content artifact operations.
+- Social/Instagram now has governed channel/publication/comment/DM/analytics operation contracts; live Instagram provider credentials/API execution remain unconfigured.
+- Dedicated image/video generation providers remain unconfigured; the creative domain records governed asset requests rather than faking provider execution.
+- Sales/CRM now has a governed Sales & Lead Generation role with research/qualification/proposal/reporting operations; autonomous external outreach remains approval-gated and provider-dependent.
+- Customer Success, SEO, QA and DevOps remain future dedicated workforce roles outside W0–W6.
+- Website Employee now has governed requirements/implementation/test/build/preview/health/deploy/rollback operations; actual deployment remains dependent on the W2 repository/deployment provider chain.
 
 ### Evidence rule
 
