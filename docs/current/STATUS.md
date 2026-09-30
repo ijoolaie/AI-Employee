@@ -77,7 +77,7 @@ The next engineering frontier is to connect concrete role-specific capabilities/
 
 Post-v1.4.11 runtime hardening now includes PR #655, which moves Workforce role/operation validation ahead of Tool Registry resolution and adds regression coverage for that ordering. All required PR CI/security/runtime gates passed before merge; merge commit is `ab68798b73ada478bd2e7dffa9adca92bc77d4fc`.
 
-The current Tool Registry contains 31 registered tools. The five governed workforce roles currently expose capability contracts for 53 operations, with seven approved semantic bindings: `ai_trader:market_research`, `ai_trader:risk_analysis`, `ai_trader:prepare_trading_plan`, `ai_internal_manager:prepare_ceo_report`, `ai_marketing_advertising_manager:prepare_growth_report`, `ai_marketing_advertising_manager:draft_campaign_plan`, and `ai_marketing_advertising_manager:coordinate_content`. `ai_trader:market_research -> workforce_market_research`, `ai_trader:risk_analysis -> workforce_market_risk_analysis`, and `ai_trader:prepare_trading_plan -> workforce_market_trading_plan`. This binding is intentionally read-only, requires `run.execute`, has no autonomous trading side effect, and remains dependent on an operator-configured market-data provider. No existing generic tool is being approximated as another workforce capability. In particular, existing sales, product, calculator, document, order, and analysis tools are not silently reclassified as trading, campaign, creative, engineering, or executive-governance capabilities.
+The current Tool Registry contains 31 registered tools. The five governed workforce roles currently expose capability contracts for 53 operations. A 2026-09-30 source audit of backend/app/services/ai_workforce_roles.py found 14 explicit Role → Operation → Tool bindings in the mainline role catalog: `ai_trader:market_research`, `ai_trader:risk_analysis`, `ai_trader:prepare_trading_plan`, `ai_internal_manager:prepare_ceo_report`, `ai_marketing_advertising_manager:prepare_growth_report`, `ai_marketing_advertising_manager:draft_campaign_plan`, and `ai_marketing_advertising_manager:coordinate_content`. `ai_trader:market_research -> workforce_market_research`, `ai_trader:risk_analysis -> workforce_market_risk_analysis`, and `ai_trader:prepare_trading_plan -> workforce_market_trading_plan`. This binding is intentionally read-only, requires `run.execute`, has no autonomous trading side effect, and remains dependent on an operator-configured market-data provider. No existing generic tool is being approximated as another workforce capability. In particular, existing sales, product, calculator, document, order, and analysis tools are not silently reclassified as trading, campaign, creative, engineering, or executive-governance capabilities.
 
 The `workforce_market_research`, `workforce_market_risk_analysis`, and `workforce_market_trading_plan` handlers are tenant-context-bound and fail closed when the provider is not configured, returns invalid data, or returns an error. Risk analysis is read-only and does not authorize order execution, capital allocation, leverage changes, or withdrawals. The provider endpoint is configuration-owned rather than caller-supplied, and production configuration requires HTTPS.
 
@@ -93,7 +93,7 @@ PR #664 is merged at `0671b31e9a4b8017e2aa418755cebc0bf5c900f3`. The three gover
 ## Internal Manager CEO report semantic binding — 2026-09-24
 PR #667 is merged at `af29eb595d5b00b7257e678ab768e713aead3215`. Internal Manager `prepare_ceo_report` now has the first dedicated semantic Tool Registry binding: `workforce_prepare_ceo_report`. It delegates to the existing tenant-scoped workforce dashboard service, is read-only, requires `run.execute`, fails closed without tenant Run context, and remains subject to the existing explicit workforce-operation and CEO-delegation governance boundary. No staffing, provisioning, activation, financial authority, or release identity changed.
 
-The governed semantic binding count is now seven: three Trader read-only market capabilities, Internal Manager CEO reporting, and three Marketing Manager capabilities (growth reporting, campaign planning, and content coordination). Unsupported workforce operations remain denied until a dedicated semantic handler and explicit binding exist.
+The governed semantic binding inventory is maintained against source code rather than this historical narrative. The 2026-09-30 audit found 14 explicit bindings in ai_workforce_roles.py, while only the subset with dedicated registered handlers and the required evidence should be treated as executable. Unsupported workforce operations remain denied until a dedicated semantic handler and explicit binding exists. See docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md.
 
 ## Workforce handler dispatch regression coverage — 2026-09-24
 
@@ -102,7 +102,7 @@ PR #665 is merged at `7c9dd56a93fc3b4294467a55cd41b3daadf0bbbd`. Regression cove
 
 ## Current frontier
 
-The current release frontier is `v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN`. Post-v1.4.11 semantic workforce engineering now includes seven explicit bindings: three Trader read-only market capabilities, Internal Manager CEO reporting, and three Marketing Manager capabilities (growth reporting, campaign planning, and content coordination). Unsupported workforce operations remain denied until a dedicated binding exists. No post-certification source changes are included in the certified snapshot. Continue regression watch for the audited product-completeness scope; do not reopen completed work without a regression, new requirement, or newly discovered unsupported surface.
+The current release frontier is `v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN`. Post-v1.4.11 semantic workforce engineering now includes an explicit code-reconciled binding inventory. The current source audit identifies 14 explicit Role → Operation → Tool bindings, while executable/evidenced status remains capability-specific. Unsupported workforce operations remain denied until a dedicated binding exists. No post-certification source changes are included in the certified snapshot. Continue regression watch for the audited product-completeness scope; do not reopen completed work without a regression, new requirement, or newly discovered unsupported surface.
 
 The next application-code change requires a new candidate boundary and fresh exact-SHA certification. External production evidence remains intentionally open while the project is local.
 
@@ -115,6 +115,25 @@ The post-v1.4.11 audit now distinguishes implementation from evidence:
 - A semantic Workforce real-stack matrix is **not yet evidenced**.
 - The repository does not currently contain a local market-data provider stub/server, and the deterministic E2E AI provider does not emit `tool_calls`.
 - Therefore no semantic Workforce bypass or production defect is being claimed. The remaining item is an explicit E2E evidence/infrastructure slice.
+
+### Code-reconciled workforce implementation roadmap
+
+The repository-wide source audit on 2026-09-30 confirms that the workforce governance foundation is implemented, but the broader Internal AI Company workforce remains only partially executable. The canonical roadmap is now docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md.
+
+Implementation phases:
+1. W0 — Evidence and contract reconciliation
+2. W1 — Internal Company Control Plane
+3. W2 — Engineering Employee
+4. W3 — Content & Creative Workforce
+5. W4 — Social / Instagram Employee
+6. W5 — Sales & Lead Generation Workforce
+7. W6 — Website Employee
+8. W7 — SEO & Growth Employee
+9. W8 — Customer Success / Support Employee
+10. W9 — QA & DevOps Employees
+11. W10 — Internal AI Company Dogfood / first revenue workflow
+
+The highest-priority engineering gap is not additional role catalog breadth; it is dedicated, tenant-safe execution tooling for engineering, creative/media, social distribution and revenue workflows.
 
 ### Next engineering order
 
