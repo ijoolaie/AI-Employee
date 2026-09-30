@@ -160,9 +160,9 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         code="ai_social_media", name="AI Social Media Employee", name_fa="کارمند شبکه‌های اجتماعی هوش مصنوعی",
         category="distribution", supervisor="ai_internal_manager",
         purpose="Prepare and govern social distribution, publication, comment, DM, and analytics workflows.", approval_class="routine_delegable",
-        allowed_routine_operations=("connect_channel","read_comments","triage_comments","read_analytics","publication_status"),
-        approval_required_operations=("publish_post","publish_reel","publish_story","schedule_publication","respond_to_dm"),
-        capability_contract=_contracts(["connect_channel","read_comments","triage_comments","read_analytics","publication_status"],["publish_post","publish_reel","publish_story","schedule_publication","respond_to_dm"], {op:(f"workforce_{op}",) for op in ("connect_channel","read_comments","triage_comments","read_analytics","publication_status","publish_post","publish_reel","publish_story","schedule_publication","respond_to_dm")}),
+        allowed_routine_operations=("read_comments","triage_comments","read_analytics","publication_status"),
+        approval_required_operations=("connect_channel","publish_post","publish_reel","publish_story","schedule_publication","respond_to_dm"),
+        capability_contract=_contracts(["read_comments","triage_comments","read_analytics","publication_status"],["connect_channel","publish_post","publish_reel","publish_story","schedule_publication","respond_to_dm"], {op:(f"workforce_{op}",) for op in ("connect_channel","read_comments","triage_comments","read_analytics","publication_status","publish_post","publish_reel","publish_story","schedule_publication","respond_to_dm")}),
     ),
     WorkforceRole(
         code="ai_sales_lead_generation", name="AI Sales & Lead Generation Employee", name_fa="کارمند فروش و تولید سرنخ هوش مصنوعی",
