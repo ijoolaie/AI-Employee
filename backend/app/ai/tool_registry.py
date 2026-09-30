@@ -1673,68 +1673,760 @@ def build_default_registry() -> ToolRegistry:
         )
     )
 
-    registry.register(\n        RegisteredTool(\n            name="workforce_workspace_read",\n            description="Governed workforce semantic operation: workspace_read.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="workspace_read", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
+
     registry.register(
         RegisteredTool(
-name="workforce_workspace_list",\n            description="Governed workforce semantic operation: workspace_list.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="workspace_read", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )
+            name="workforce_workspace_read",
+            description="Governed workforce semantic operation: workspace_read.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="workspace_read", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
     )
 
-    registry.register(\n        RegisteredTool(\n            name="workforce_workspace_create_file",\n            description="Governed workforce semantic operation: workspace_create_file.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="workspace_create_file", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_workspace_edit_file",\n            description="Governed workforce semantic operation: workspace_edit_file.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="workspace_edit_file", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_workspace_delete_file",\n            description="Governed workforce semantic operation: workspace_delete_file.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="workspace_delete_file", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_workspace_change_set",\n            description="Governed workforce semantic operation: workspace_change_set.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="workspace_change_set", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_workspace_test",\n            description="Governed workforce semantic operation: workspace_test.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="workspace_test", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_workspace_lint",\n            description="Governed workforce semantic operation: workspace_lint.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="workspace_lint", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_workspace_build",\n            description="Governed workforce semantic operation: workspace_build.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="workspace_build", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_git_branch",\n            description="Governed workforce semantic operation: git_branch.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="git_branch", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_git_commit_proposal",\n            description="Governed workforce semantic operation: git_commit_proposal.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="git_commit_proposal", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_git_pr_proposal",\n            description="Governed workforce semantic operation: git_pr_proposal.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="git_pr_proposal", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_ci_status",\n            description="Governed workforce semantic operation: ci_status.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="ci_status", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_deploy_proposal",\n            description="Governed workforce semantic operation: deploy_proposal.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="deploy_proposal", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_health_check",\n            description="Governed workforce semantic operation: health_check.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="health_check", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_rollback_proposal",\n            description="Governed workforce semantic operation: rollback_proposal.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="rollback_proposal", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_create_visual_asset",\n            description="Governed workforce semantic operation: create_visual_asset.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="create_visual_asset", fn=workforce_semantic_domains.execute_creative, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_revise_visual_asset",\n            description="Governed workforce semantic operation: revise_visual_asset.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="revise_visual_asset", fn=workforce_semantic_domains.execute_creative, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_prepare_brand_variant",\n            description="Governed workforce semantic operation: prepare_brand_variant.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="prepare_brand_variant", fn=workforce_semantic_domains.execute_creative, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_prepare_campaign_creative",\n            description="Governed workforce semantic operation: prepare_campaign_creative.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="prepare_campaign_creative", fn=workforce_semantic_domains.execute_creative, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_produce_article",\n            description="Governed workforce semantic operation: produce_article.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="produce_article", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_produce_social_caption",\n            description="Governed workforce semantic operation: produce_social_caption.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="produce_social_caption", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_produce_short_form",\n            description="Governed workforce semantic operation: produce_short_form.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="produce_short_form", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_prepare_cta",\n            description="Governed workforce semantic operation: prepare_cta.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="prepare_cta", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_prepare_content_calendar",\n            description="Governed workforce semantic operation: prepare_content_calendar.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="prepare_content_calendar", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_prepare_content_brief",\n            description="Governed workforce semantic operation: prepare_content_brief.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="prepare_content_brief", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_repurpose_content",\n            description="Governed workforce semantic operation: repurpose_content.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="repurpose_content", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_content_qa",\n            description="Governed workforce semantic operation: content_qa.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="content_qa", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_connect_channel",\n            description="Governed workforce semantic operation: connect_channel.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="connect_channel", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_read_comments",\n            description="Governed workforce semantic operation: read_comments.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="read_comments", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_triage_comments",\n            description="Governed workforce semantic operation: triage_comments.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="triage_comments", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_read_analytics",\n            description="Governed workforce semantic operation: read_analytics.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="read_analytics", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_publication_status",\n            description="Governed workforce semantic operation: publication_status.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="publication_status", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_publish_post",\n            description="Governed workforce semantic operation: publish_post.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="publish_post", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_publish_reel",\n            description="Governed workforce semantic operation: publish_reel.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="publish_reel", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_publish_story",\n            description="Governed workforce semantic operation: publish_story.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="publish_story", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_schedule_publication",\n            description="Governed workforce semantic operation: schedule_publication.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="schedule_publication", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_respond_to_dm",\n            description="Governed workforce semantic operation: respond_to_dm.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="respond_to_dm", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_lead_research",\n            description="Governed workforce semantic operation: lead_research.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="lead_research", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_lead_qualification",\n            description="Governed workforce semantic operation: lead_qualification.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="lead_qualification", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_crm_enrichment",\n            description="Governed workforce semantic operation: crm_enrichment.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="crm_enrichment", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_prepare_outreach_draft",\n            description="Governed workforce semantic operation: prepare_outreach_draft.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="prepare_outreach_draft", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_prepare_follow_up_queue",\n            description="Governed workforce semantic operation: prepare_follow_up_queue.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="prepare_follow_up_queue", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_prepare_proposal",\n            description="Governed workforce semantic operation: prepare_proposal.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="prepare_proposal", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_prepare_meeting_request",\n            description="Governed workforce semantic operation: prepare_meeting_request.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="prepare_meeting_request", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_pipeline_reporting",\n            description="Governed workforce semantic operation: pipeline_reporting.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="pipeline_reporting", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_conversion_attribution",\n            description="Governed workforce semantic operation: conversion_attribution.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="conversion_attribution", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_requirements",\n            description="Governed workforce semantic operation: website_requirements.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_requirements", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_ux_content_plan",\n            description="Governed workforce semantic operation: website_ux_content_plan.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_ux_content_plan", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_implementation",\n            description="Governed workforce semantic operation: website_implementation.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_implementation", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_asset_integration",\n            description="Governed workforce semantic operation: website_asset_integration.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_asset_integration", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_tests",\n            description="Governed workforce semantic operation: website_tests.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_tests", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_accessibility",\n            description="Governed workforce semantic operation: website_accessibility.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_accessibility", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_build",\n            description="Governed workforce semantic operation: website_build.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_build", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_preview",\n            description="Governed workforce semantic operation: website_preview.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_preview", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_health_check",\n            description="Governed workforce semantic operation: website_health_check.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_health_check", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=false,\n            external_side_effects=false,\n            required_permission="run.execute",\n            requires_approval=false,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_deploy",\n            description="Governed workforce semantic operation: website_deploy.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_deploy", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
-    registry.register(\n        RegisteredTool(\n            name="workforce_website_rollback",\n            description="Governed workforce semantic operation: website_rollback.",\n            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},\n            handler=lambda arguments, op="website_rollback", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),\n            side_effects=true,\n            external_side_effects=true,\n            required_permission="run.execute",\n            requires_approval=true,\n        )\n    )
+    registry.register(
+        RegisteredTool(
+            name="workforce_workspace_list",
+            description="Governed workforce semantic operation: workspace_list.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="workspace_list", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_workspace_create_file",
+            description="Governed workforce semantic operation: workspace_create_file.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="workspace_create_file", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_workspace_edit_file",
+            description="Governed workforce semantic operation: workspace_edit_file.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="workspace_edit_file", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_workspace_delete_file",
+            description="Governed workforce semantic operation: workspace_delete_file.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="workspace_delete_file", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_workspace_change_set",
+            description="Governed workforce semantic operation: workspace_change_set.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="workspace_change_set", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_workspace_test",
+            description="Governed workforce semantic operation: workspace_test.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="workspace_test", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_workspace_lint",
+            description="Governed workforce semantic operation: workspace_lint.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="workspace_lint", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_workspace_build",
+            description="Governed workforce semantic operation: workspace_build.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="workspace_build", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_git_branch",
+            description="Governed workforce semantic operation: git_branch.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="git_branch", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_git_commit_proposal",
+            description="Governed workforce semantic operation: git_commit_proposal.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="git_commit_proposal", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_git_pr_proposal",
+            description="Governed workforce semantic operation: git_pr_proposal.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="git_pr_proposal", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_ci_status",
+            description="Governed workforce semantic operation: ci_status.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="ci_status", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_deploy_proposal",
+            description="Governed workforce semantic operation: deploy_proposal.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="deploy_proposal", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_health_check",
+            description="Governed workforce semantic operation: health_check.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="health_check", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_rollback_proposal",
+            description="Governed workforce semantic operation: rollback_proposal.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="rollback_proposal", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_create_visual_asset",
+            description="Governed workforce semantic operation: create_visual_asset.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="create_visual_asset", fn=workforce_semantic_domains.execute_creative, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_revise_visual_asset",
+            description="Governed workforce semantic operation: revise_visual_asset.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="revise_visual_asset", fn=workforce_semantic_domains.execute_creative, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_brand_variant",
+            description="Governed workforce semantic operation: prepare_brand_variant.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="prepare_brand_variant", fn=workforce_semantic_domains.execute_creative, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_campaign_creative",
+            description="Governed workforce semantic operation: prepare_campaign_creative.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="prepare_campaign_creative", fn=workforce_semantic_domains.execute_creative, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_produce_article",
+            description="Governed workforce semantic operation: produce_article.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="produce_article", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_produce_social_caption",
+            description="Governed workforce semantic operation: produce_social_caption.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="produce_social_caption", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_produce_short_form",
+            description="Governed workforce semantic operation: produce_short_form.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="produce_short_form", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_cta",
+            description="Governed workforce semantic operation: prepare_cta.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="prepare_cta", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_content_calendar",
+            description="Governed workforce semantic operation: prepare_content_calendar.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="prepare_content_calendar", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_content_brief",
+            description="Governed workforce semantic operation: prepare_content_brief.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="prepare_content_brief", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_repurpose_content",
+            description="Governed workforce semantic operation: repurpose_content.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="repurpose_content", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_content_qa",
+            description="Governed workforce semantic operation: content_qa.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="content_qa", fn=workforce_semantic_domains.execute_content, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_connect_channel",
+            description="Governed workforce semantic operation: connect_channel.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="connect_channel", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_read_comments",
+            description="Governed workforce semantic operation: read_comments.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="read_comments", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_triage_comments",
+            description="Governed workforce semantic operation: triage_comments.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="triage_comments", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_read_analytics",
+            description="Governed workforce semantic operation: read_analytics.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="read_analytics", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_publication_status",
+            description="Governed workforce semantic operation: publication_status.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="publication_status", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_publish_post",
+            description="Governed workforce semantic operation: publish_post.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="publish_post", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_publish_reel",
+            description="Governed workforce semantic operation: publish_reel.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="publish_reel", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_publish_story",
+            description="Governed workforce semantic operation: publish_story.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="publish_story", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_schedule_publication",
+            description="Governed workforce semantic operation: schedule_publication.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="schedule_publication", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_respond_to_dm",
+            description="Governed workforce semantic operation: respond_to_dm.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="respond_to_dm", fn=workforce_semantic_domains.execute_social, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_lead_research",
+            description="Governed workforce semantic operation: lead_research.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="lead_research", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_lead_qualification",
+            description="Governed workforce semantic operation: lead_qualification.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="lead_qualification", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_crm_enrichment",
+            description="Governed workforce semantic operation: crm_enrichment.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="crm_enrichment", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_outreach_draft",
+            description="Governed workforce semantic operation: prepare_outreach_draft.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="prepare_outreach_draft", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_follow_up_queue",
+            description="Governed workforce semantic operation: prepare_follow_up_queue.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="prepare_follow_up_queue", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_proposal",
+            description="Governed workforce semantic operation: prepare_proposal.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="prepare_proposal", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_prepare_meeting_request",
+            description="Governed workforce semantic operation: prepare_meeting_request.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="prepare_meeting_request", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_pipeline_reporting",
+            description="Governed workforce semantic operation: pipeline_reporting.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="pipeline_reporting", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_conversion_attribution",
+            description="Governed workforce semantic operation: conversion_attribution.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="conversion_attribution", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_requirements",
+            description="Governed workforce semantic operation: website_requirements.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_requirements", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_ux_content_plan",
+            description="Governed workforce semantic operation: website_ux_content_plan.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_ux_content_plan", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_implementation",
+            description="Governed workforce semantic operation: website_implementation.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_implementation", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_asset_integration",
+            description="Governed workforce semantic operation: website_asset_integration.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_asset_integration", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_tests",
+            description="Governed workforce semantic operation: website_tests.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_tests", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_accessibility",
+            description="Governed workforce semantic operation: website_accessibility.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_accessibility", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_build",
+            description="Governed workforce semantic operation: website_build.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_build", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_preview",
+            description="Governed workforce semantic operation: website_preview.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_preview", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_health_check",
+            description="Governed workforce semantic operation: website_health_check.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_health_check", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=False,
+            external_side_effects=False,
+            required_permission="run.execute",
+            requires_approval=False,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_deploy",
+            description="Governed workforce semantic operation: website_deploy.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_deploy", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_website_rollback",
+            description="Governed workforce semantic operation: website_rollback.",
+            input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":false},
+            handler=lambda arguments, op="website_rollback", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
 
     return registry
 
