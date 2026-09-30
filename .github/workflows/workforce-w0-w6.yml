@@ -1,0 +1,80 @@
+name: Workforce W0-W6 Contract Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/app/services/ai_workforce_roles.py'
+      - 'backend/app/services/workforce_semantic_domains.py'
+      - 'backend/app/ai/tool_registry.py'
+      - 'backend/scripts/workforce_binding_inventory.py'
+      - 'backend/tests/test_workforce_w0_inventory.py'
+      - 'backend/tests/test_workforce_w2_w6_semantic_domains.py'
+      - '.github/workflows/workforce-w0-w6.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/app/services/ai_workforce_roles.py'
+      - 'backend/app/services/workforce_semantic_domains.py'
+      - 'backend/app/ai/tool_registry.py'
+      - 'backend/scripts/workforce_binding_inventory.py'
+      - 'backend/tests/test_workforce_w0_inventory.py'
+      - 'backend/tests/test_workforce_w2_w6_semantic_domains.py'
+      - '.github/workflows/workforce-w0-w6.yml'
+
+concurrency:
+  group: workforce-w0-w6-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://aiep:aiep@localhost:5432/aiep
+      DATABASE_URL_SYNC: postgresql://aiep:aiep@localhost:5432/aiep
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+      SECRET_KEY: workforce-ci-secret
+      APP_ENV: test
+      CI: true
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: aiep
+          POSTGRES_PASSWORD: aiep
+          POSTGRES_DB: aiep
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U aiep -d aiep"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.lock
+      - name: Install backend
+        working-directory: backend
+        run: |
+          pip install -r requirements.lock
+          pip install -e . --no-deps
+      - name: Compile workforce sources
+        working-directory: backend
+        run: |
+          python -m py_compile app/services/ai_workforce_roles.py
+          python -m py_compile app/services/workforce_semantic_domains.py
+          python -m py_compile app/ai/tool_registry.py
+          python -m py_compile scripts/workforce_binding_inventory.py
+      - name: Code-derived W0 inventory
+        working-directory: backend
+        run: python scripts/workforce_binding_inventory.py
+      - name: Focused W0-W6 tests
+        working-directory: backend
+        run: pytest -q tests/test_workforce_w0_inventory.py tests/test_workforce_w2_w6_semantic_domains.py
