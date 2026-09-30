@@ -9,6 +9,8 @@ holds even if a caller forgets to check tenant_id.
 
 from __future__ import annotations
 
+import os
+
 import uuid
 from pathlib import Path
 from typing import BinaryIO, Protocol
@@ -83,7 +85,7 @@ class LocalDiskStorage:
         if not base.exists():
             return []
         root = self.base_dir.resolve()
-        return [str(p.relative_to(root)).replace("\\\\", "/") for p in base.rglob("*") if p.is_file()]
+        return [str(p.relative_to(root)).replace(os.sep, "/") for p in base.rglob("*") if p.is_file()]
 
 
 _backend: StorageBackend | None = None
