@@ -52,6 +52,9 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
     operation = arguments["_operation"]
     if operation == "workspace_read":
         return _read_json(tenant_id, arguments["storage_key"])
+    if operation == "workspace_list":
+        prefix = f"{tenant_id}/"
+        return {"tenant_id": tenant_id, "storage_keys": get_storage_backend().list_prefix(prefix)}
     if operation == "workspace_create_file":
         path = arguments["path"].strip()
         if not path or path.startswith("/") or ".." in path.split("/"):
