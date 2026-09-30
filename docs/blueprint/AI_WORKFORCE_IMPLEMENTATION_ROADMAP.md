@@ -356,3 +356,47 @@ A role with only catalog/contract/template definitions is Planned/Partial, not E
 ## Release boundary
 All post-v1.4.11 workforce implementation is mainline engineering until a new release candidate is created and exact-SHA certification is rerun.
 The immutable v1.4.11 certification remains unchanged.
+## Implementation checkpoint — 2026-09-30
+
+The W0–W6 engineering pass has started on mainline after the v1.4.11 certified boundary.
+
+### W0 — implemented
+- Added `backend/scripts/workforce_binding_inventory.py` as the code-derived Role → Operation → Tool inventory.
+- Added focused W0 tests.
+- The registry dispatch boundary now treats every `workforce_*` tool through the same governed context path instead of maintaining a growing hand-written allowlist.
+- Unsupported operations remain fail-closed.
+
+### W1 — existing foundation reconciled
+- Internal Manager coordination, handoff, balancing, capacity, CEO reporting, budget and cost tools remain governed by the existing runtime/delegation controls.
+- Existing real-stack workforce semantic certification remains the evidence path for runtime identity, role binding, stale-contract denial, approval denial and tenant isolation.
+- W1 is not declared fully closed until the complete CEO → assignment → specialist → verification → CEO-report scenario is recorded as dedicated real-stack evidence.
+
+### W2 — semantic Engineering Workspace foundation implemented
+Added governed engineering operations for tenant-scoped workspace artifacts, change-set creation, test/lint/build staging, Git/CI proposals, deployment proposal, health check and rollback proposal.
+- Workspace artifacts are tenant-namespaced through the existing storage boundary.
+- External repository/deployment operations remain provider-backed proposals; no arbitrary shell execution was introduced.
+- Production/deployment/rollback boundaries are approval-gated.
+
+### W3 — Content & Creative foundation implemented
+- Added executable Content Producer role/template and governed text-content artifact operations.
+- Added concrete bindings for Graphic Designer visual-asset operations.
+- Creative provider execution remains explicitly unconfigured rather than being faked by a generic tool.
+
+### W4 — Social/Instagram governance foundation implemented
+- Added Social Media role/template and semantic channel/publication/comment/DM/analytics operations.
+- External publication and messaging are approval-gated.
+- No Instagram credential/provider adapter is claimed as live until a tenant-owned provider integration is configured and real-stack evidence exists.
+
+### W5 — Sales & Lead Generation governance foundation implemented
+- Added Sales/Lead Generation role/template and research/qualification/CRM/draft/follow-up/proposal/reporting operations.
+- External outreach and material commercial actions remain approval-gated.
+- Existing CRM infrastructure is not silently treated as an autonomous outreach provider.
+
+### W6 — Website Employee foundation implemented
+- Added Website Employee role/template and requirements → implementation → tests → build → preview → health → deploy/rollback semantic operations.
+- Deploy and rollback are approval-gated.
+- W6 depends on the W2 engineering provider chain for actual repository deployment; no production deployment is claimed by these semantic foundations alone.
+
+### Verification rule
+These phases are **mainline implementation**, not a new certified release. v1.4.11 SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f` remains immutable. A future release candidate must rerun exact-SHA certification after the W0–W6 changes are validated.
+
