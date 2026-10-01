@@ -81,3 +81,20 @@ def test_w4_w6_external_actions_are_approval_gated_at_registry():
         tool = registry.get(tool_name)
         assert tool.requires_approval is True
         assert tool.external_side_effects is True
+
+
+@pytest.mark.asyncio
+async def test_w2_provider_bound_operations_never_claim_execution():
+    for operation in ("workspace_test", "workspace_lint", "workspace_build", "git_branch", "git_pr_proposal", "ci_status", "health_check"):
+        result = await execute_engineering({"_operation": operation}, tenant_id="tenant-a")
+        assert result["provider_execution"] == "not_configured"
+        assert result["requires_provider"] or result["provider_required"]
+
+
+@pytest.mark.asyncio
+async def test_w5_provider_boundary_is_explicit():
+    research = await execute_sales({"_operation": "lead_research", "query": "SaaS"}, tenant_id="tenant-a")
+    outreach = await execute_sales({"_operation": "prepare_outreach_draft", "query": "SaaS"}, tenant_id="tenant-a")
+    assert research["provider_execution"] == "not_configured"
+    assert outreach["provider_execution"] == "not_configured"
+    assert outreach["external_side_effect"] is False
