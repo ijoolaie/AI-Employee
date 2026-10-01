@@ -290,6 +290,9 @@ async def test_git_branch_semantic_result_is_external_and_approval_gated(monkeyp
 
     class FakeSettings:
         engineering_provider_name = "github"
+        engineering_github_repositories = {}
+        engineering_github_token = None
+        engineering_github_timeout_seconds = 2.5
 
     monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
     result = await execute_engineering(
