@@ -15,8 +15,6 @@ from app.services.audit_service import record
 from app.services.agent_governance import assert_users_belong_to_tenant
 
 MAX_DELEGATION_DAYS = 365
-MANAGER_TEMPLATE_SLUG = "ai-internal-manager"
-
 ALLOWED_MANAGER_OPERATIONS = frozenset({
     "assign_task", "reprioritize_task", "coordinate_handoff", "balance_workload",
     "request_workforce_capacity", "prepare_ceo_report", "prepare_budget_estimate",
@@ -27,17 +25,20 @@ ALLOWED_MANAGER_OPERATIONS = frozenset({
 
 async def _get_manager(db: AsyncSession, *, tenant_id: UUID, manager_agent_instance_id: UUID) -> AgentInstance:
     result = await db.execute(
-        select(AgentInstance)
+        select(AgentInstance, AgentTemplate)
         .join(AgentTemplate, AgentTemplate.id == AgentInstance.agent_template_id)
         .where(
             AgentInstance.id == manager_agent_instance_id,
             AgentInstance.tenant_id == tenant_id,
             AgentTemplate.tenant_id == tenant_id,
-            AgentTemplate.slug == MANAGER_TEMPLATE_SLUG,
         )
     )
-    manager = result.scalar_one_or_none()
-    if manager is None:
+    row = result.one_or_none()
+    if row is None:
+        raise NotFoundError("AI Internal Manager instance not found for tenant")
+    manager, template = row
+    capability_contract = template.capability_contract or {}
+    if capability_contract.get("workforce_role_code") != "ai_internal_manager":
         raise NotFoundError("AI Internal Manager instance not found for tenant")
     if not manager.enabled or manager.status is not AgentInstanceStatus.ENABLED:
         raise ConflictError("AI Internal Manager instance is not active")
