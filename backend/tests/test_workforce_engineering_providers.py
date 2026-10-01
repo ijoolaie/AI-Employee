@@ -304,3 +304,79 @@ async def test_git_branch_semantic_result_is_external_and_approval_gated(monkeyp
     assert result["provider"]["external_execution"] is True
     assert result["approval_required"] is True
     assert result["external_side_effect"] is True
+
+
+def test_github_branch_provider_creates_missing_branch(monkeypatch):
+    from urllib.error import HTTPError
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return self.payload
+
+    calls = []
+
+    def fake_urlopen(request, timeout):
+        calls.append((request.method, request.full_url, request.data, request.get_header("Authorization"), timeout))
+        if request.method == "GET":
+            raise HTTPError(request.full_url, 404, "not found", {}, None)
+        assert request.method == "POST"
+        return FakeResponse(b'{"ref":"refs/heads/ai/test-branch","object":{"sha":"0123456789abcdef0123456789abcdef01234567"}}')
+
+    monkeypatch.setattr("app.services.workforce_engineering_providers.get_settings", lambda: FakeSettings())
+    monkeypatch.setattr("app.services.workforce_engineering_providers.urlopen", fake_urlopen)
+
+    result = GitHubEngineeringProvider().execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={
+            "branch_name": "ai/test-branch",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        },
+    )
+    assert result.status == "executed"
+    assert result.executed is True
+    assert calls[1][1] == "https://api.github.com/repos/ijoolaie/AI-Employee/git/refs"
+    assert calls[1][3] == "Bearer secret-token"
+    assert b'"ref": "refs/heads/ai/test-branch"' in calls[1][2]
+    assert b'"sha": "0123456789abcdef0123456789abcdef01234567"' in calls[1][2]
+
+
+def test_github_branch_provider_rejects_unsafe_inputs_without_network(monkeypatch):
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    monkeypatch.setattr("app.services.workforce_engineering_providers.get_settings", lambda: FakeSettings())
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("network must not be called")),
+    )
+
+    provider = GitHubEngineeringProvider()
+    invalid_branch = provider.execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={"branch_name": "../main", "source_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+    invalid_sha = provider.execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={"branch_name": "ai/test", "source_sha": "abc123"},
+    )
+    assert invalid_branch.status == "not_configured"
+    assert invalid_sha.status == "not_configured"
