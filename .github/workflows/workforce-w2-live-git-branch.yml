@@ -1,0 +1,70 @@
+name: Workforce W2 Live Git Branch Certification
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: "Temporary certification branch; must start with ai-cert/"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: workforce-w2-live-git-branch
+  cancel-in-progress: false
+
+jobs:
+  live-git-branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock
+          pip install -e .
+
+      - name: Compile certification
+        working-directory: backend
+        run: python -m py_compile scripts/e2e_workforce_w2_git_branch_live.py app/services/workforce_engineering_providers.py app/services/workforce_semantic_domains.py
+
+      - name: Run governed live branch certification
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://aiep:aiep@localhost:5432/aiep
+          DATABASE_URL_SYNC: postgresql+psycopg2://aiep:aiep@localhost:5432/aiep
+          STORAGE_DIR: ./var/storage
+          ENGINEERING_PROVIDER_NAME: github
+          ENGINEERING_GITHUB_REPOSITORIES: '{"live-cert":"ijoolaie/AI-Employee"}'
+          ENGINEERING_GITHUB_TOKEN: ${{ github.token }}
+          ENGINEERING_GITHUB_TIMEOUT_SECONDS: "10"
+          W2_LIVE_BRANCH: ${{ inputs.branch_name }}
+        run: |
+          set -euo pipefail
+          branch="${W2_LIVE_BRANCH:-ai-cert/w2-git-branch-${GITHUB_RUN_ID}}"
+          case "$branch" in
+            ai-cert/*) ;;
+            *) echo "branch_name must start with ai-cert/" >&2; exit 1 ;;
+          esac
+          export W2_LIVE_BRANCH="$branch"
+          trap 'docker rm -f workforce-w2-live-postgres >/dev/null 2>&1 || true' EXIT
+          docker run -d --name workforce-w2-live-postgres             -e POSTGRES_USER=aiep             -e POSTGRES_PASSWORD=aiep             -e POSTGRES_DB=aiep             -p 5432:5432             --health-cmd='pg_isready -U aiep -d aiep'             --health-interval=2s             --health-timeout=2s             --health-retries=30             postgres:16-alpine
+          for _ in $(seq 1 30); do
+            health="$(docker inspect -f '{{.State.Health.Status}}' workforce-w2-live-postgres)"
+            [ "$health" = "healthy" ] && break
+            sleep 2
+          done
+          test "$(docker inspect -f '{{.State.Health.Status}}' workforce-w2-live-postgres)" = "healthy"
+          alembic upgrade head
+          alembic check
+          test "$(alembic heads | grep -c "(head)")" -eq 1
+          python scripts/e2e_workforce_w2_git_branch_live.py
