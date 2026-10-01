@@ -65,6 +65,14 @@ async def run() -> None:
         assert result["provider_required"] is True
         assert result["provider_execution"] == "not_configured"
 
+    ci_status = await execute_engineering(
+        {"_operation": "ci_status", "commit_sha": os.environ["GITHUB_SHA"]},
+        tenant_id="w2-tenant-a",
+    )
+    assert ci_status["provider"]["provider"] == "github-readonly"
+    assert ci_status["provider_execution"] == "read_verified"
+    assert ci_status["executed"] is False
+
     deploy = await execute_engineering({"_operation": "deploy_proposal"}, tenant_id="w2-tenant-a")
     runtime_override = await execute_engineering(
         {"_operation": "workspace_test"},
@@ -82,6 +90,7 @@ async def run() -> None:
     print("W2 CROSS-TENANT ISOLATION PASS")
     print("W2 DURABLE CHANGE-SET PASS")
     print("W2 PROVIDER FAIL-CLOSED PASS")
+    print("W2 GITHUB CI STATUS READ PASS")
     print("W2 DEPLOY APPROVAL GATE PASS")
     print("W2 PROVIDER CONFIGURATION BOUNDARY PASS")
     print("WORKFORCE W2 ENGINEERING SEMANTIC REAL-STACK PASS")
