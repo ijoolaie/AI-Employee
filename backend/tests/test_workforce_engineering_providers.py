@@ -4,6 +4,7 @@ import pytest
 
 from app.services.workforce_engineering_providers import (
     ContractTestEngineeringProvider,
+    GitHubEngineeringProvider,
     UnconfiguredEngineeringProvider,
     get_engineering_provider,
 )
@@ -231,3 +232,75 @@ async def test_ci_status_semantic_result_exposes_execution_state(monkeypatch):
     assert result["provider_execution"] == "read_verified"
     assert result["approval_required"] is False
     assert result["external_side_effect"] is False
+
+
+def test_github_branch_provider_is_operator_bound_and_idempotent(monkeypatch):
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return self.payload
+
+    calls = []
+
+    def fake_urlopen(request, timeout):
+        calls.append((request.method, request.full_url, request.data, request.get_header("Authorization"), timeout))
+        if request.method == "GET":
+            return FakeResponse(b'{"object":{"sha":"0123456789abcdef0123456789abcdef01234567"}}')
+        raise AssertionError("POST must not run when branch already exists at requested SHA")
+
+    monkeypatch.setattr("app.services.workforce_engineering_providers.get_settings", lambda: FakeSettings())
+    monkeypatch.setattr("app.services.workforce_engineering_providers.urlopen", fake_urlopen)
+
+    provider = GitHubEngineeringProvider()
+    result = provider.execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={
+            "branch_name": "ai/test-branch",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+            "repository": "attacker/repo",
+            "token": "attacker-token",
+        },
+    )
+    assert result.status == "already_exists"
+    assert result.executed is False
+    assert provider.operations == frozenset({"ci_status", "git_branch"})
+    assert provider.external_execution is True
+    assert calls[0][1] == "https://api.github.com/repos/ijoolaie/AI-Employee/git/refs/heads/ai/test-branch"
+    assert calls[0][3] == "Bearer secret-token"
+    assert calls[0][4] == 2.5
+
+
+@pytest.mark.asyncio
+async def test_git_branch_semantic_result_is_external_and_approval_gated(monkeypatch):
+    from app.services import workforce_engineering_providers as providers
+
+    class FakeSettings:
+        engineering_provider_name = "github"
+
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
+    result = await execute_engineering(
+        {
+            "_operation": "git_branch",
+            "branch_name": "ai/test-branch",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        },
+        tenant_id="tenant-a",
+    )
+    assert result["provider"]["provider"] == "github"
+    assert result["provider"]["external_execution"] is True
+    assert result["approval_required"] is True
+    assert result["external_side_effect"] is True
