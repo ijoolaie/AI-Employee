@@ -227,7 +227,7 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         capability_contract=_contracts(
             ["qa_test_plan","regression_analysis","ci_health_check","release_readiness","incident_diagnostics","rollback_readiness"],
             ["deployment_proposal","rollback_proposal","production_change_proposal"],
-            {op:(f"workforce_{op}",) for op in ("qa_test_plan","regression_analysis","ci_health_check","release_readiness","incident_diagnostics","rollback_readiness","deployment_proposal","rollback_proposal","production_change_proposal")}
+            {op:(("workforce_qa_rollback_proposal",) if op == "rollback_proposal" else (f"workforce_{op}",)) for op in ("qa_test_plan","regression_analysis","ci_health_check","release_readiness","incident_diagnostics","rollback_readiness","deployment_proposal","rollback_proposal","production_change_proposal")}
         ),
     ),
     WorkforceRole(
