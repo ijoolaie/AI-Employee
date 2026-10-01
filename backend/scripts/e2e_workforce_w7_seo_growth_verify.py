@@ -42,7 +42,7 @@ async def prepare():
   db.add(AgentAccessReview(tenant_id=t.id,agent_identity_id=ident.id,reviewer_user_id=rv.id,decision=AgentAccessReviewDecision.APPROVED,reason="Controlled W7 certification"))
   db.add(AgentRuntimeBinding(tenant_id=t.id,agent_definition_id=ad.id,employee_version_id=ev.id,is_active=True))
   rr=Run(tenant_id=t.id,employee_id=e.id,employee_version_id=ev.id,agent_instance_id=ai.id,created_by=o.id,status="pending",input_data={"purpose":"W7 research"});pr=Run(tenant_id=t.id,employee_id=e.id,employee_version_id=ev.id,agent_instance_id=ai.id,created_by=o.id,status="pending",input_data={"purpose":"W7 experiment proposal"});db.add_all([rr,pr]);await db.flush()
-  ap=ToolApprovalRequest(tenant_id=t.id,run_id=pr.id,tool_name="workforce_seo_experiment_proposal",tool_call_id=f"w7-{uuid.uuid4().hex}",arguments={"topic":"organic growth"},continuation_messages=[],iteration=0,status="approved",requested_by=o.id,decided_by=rv.id,decision_reason="Controlled W7 certification",decided_at=datetime.now(timezone.utc));db.add(ap);await db.commit()
+  ap=ToolApprovalRequest(tenant_id=t.id,run_id=pr.id,tool_name="workforce_seo_experiment_proposal",tool_call_id=f"w7-{uuid.uuid4().hex}",arguments={"topic":"SaaS customer acquisition","spec":{"hypothesis":"improve organic conversion"}},continuation_messages=[],iteration=0,status="approved",requested_by=o.id,decided_by=rv.id,decision_reason="Controlled W7 certification",decided_at=datetime.now(timezone.utc));db.add(ap);await db.commit()
   return t.id,ai.id,rr.id,pr.id,ap.tool_call_id
 async def execute(t,a,r,tool,args,call=None):
  async with AsyncSessionLocal() as db:
