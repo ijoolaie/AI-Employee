@@ -1,4 +1,5 @@
 name: Workforce W5 Sales Governance E2E
+# W5 real-stack certification gate
 
 on:
   workflow_dispatch:
