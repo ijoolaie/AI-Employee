@@ -24,3 +24,17 @@ def test_w0_approval_required_operations_have_no_routine_tool_binding():
         for contract in role.capability_contract:
             if contract.operation in role.approval_required_operations:
                 assert contract.approval_required is True
+
+
+def test_w0_bound_tool_approval_matches_authoritative_role_contract():
+    for role in WORKFORCE_ROLES:
+        for contract in role.capability_contract:
+            for tool_name in contract.tool_names:
+                tool = registry.get(tool_name)
+                assert tool.requires_approval is contract.approval_required, (
+                    role.code,
+                    contract.operation,
+                    tool_name,
+                    contract.approval_required,
+                    tool.requires_approval,
+                )
