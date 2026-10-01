@@ -264,7 +264,11 @@ class ToolRegistry:
                 arguments,
                 db=db,
                 tenant_id=tenant_id,
-                **({"agent_instance_id": agent_instance_id} if name == "workforce_coordinate_handoff" else {}),
+                **(
+                    {"agent_instance_id": agent_instance_id, "tool_call_id": tool_call_id}
+                    if name == "workforce_external_outreach"
+                    else ({"agent_instance_id": agent_instance_id} if name == "workforce_coordinate_handoff" else {})
+                ),
             )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
@@ -2185,7 +2189,7 @@ def build_default_registry() -> ToolRegistry:
         RegisteredTool(
             name="workforce_external_outreach",
             description="Governed workforce semantic operation: external_outreach.",
-            input_schema={"type":"object","properties":{"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"message":{"type":"string","maxLength":10000},"provider":{"type":"string","maxLength":100},"channel":{"type":"string","maxLength":255}},"additionalProperties":False},
+            input_schema={"type":"object","properties":{"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"message":{"type":"string","maxLength":10000},"subject":{"type":"string","minLength":1,"maxLength":200},"to":{"type":"array","items":{"type":"string","format":"email"},"minItems":1,"maxItems":10,"uniqueItems":true},"provider":{"type":"string","maxLength":100},"channel":{"type":"string","maxLength":255}},"additionalProperties":False},
             handler=lambda arguments, op="external_outreach", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
             side_effects=True,
             external_side_effects=True,
