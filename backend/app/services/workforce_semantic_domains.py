@@ -129,17 +129,61 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
 
 
 async def execute_content(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
+    """Create a durable, versioned content artifact without overwriting prior work."""
     tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
-    payload = {"kind": operation, "title": arguments.get("title"), "body": arguments.get("body"), "metadata": arguments.get("metadata", {}), "created_at": _now()}
-    return {**_save_json(tenant_id, f"{operation}.json", payload), "status": "draft", "approval_required": False}
+    content_id = str(uuid.uuid4())
+    payload = {
+        "kind": "content_artifact",
+        "operation": operation,
+        "content_id": content_id,
+        "version": 1,
+        "status": "draft",
+        "title": arguments.get("title"),
+        "body": arguments.get("body"),
+        "metadata": arguments.get("metadata", {}),
+        "provenance": {
+            "tenant_id": tenant_id,
+            "created_at": _now(),
+            "provider_execution": "not_required",
+        },
+    }
+    artifact = _save_json(tenant_id, f"content-{content_id}.json", payload)
+    return {
+        **artifact,
+        "content_id": content_id,
+        "version": 1,
+        "status": "draft",
+        "approval_required": _approval_required("ai_content_producer", operation),
+        "provider_execution": "not_required",
+    }
 
 
 async def execute_creative(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
+    """Record a governed creative request; never fake image/video provider execution."""
     tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
-    payload = {"kind": "creative_asset_request", "operation": operation, "prompt": arguments["prompt"], "brand_context": arguments.get("brand_context"), "provider": arguments.get("provider", "local"), "created_at": _now()}
-    return {**_save_json(tenant_id, f"{operation}.json", payload), "status": "draft", "provider_execution": "not_configured"}
+    asset_id = str(uuid.uuid4())
+    payload = {
+        "kind": "creative_asset_request",
+        "operation": operation,
+        "asset_id": asset_id,
+        "version": 1,
+        "status": "draft",
+        "prompt": arguments["prompt"],
+        "brand_context": arguments.get("brand_context"),
+        "provider_requested": arguments.get("provider"),
+        "provider_execution": "not_configured",
+        "provenance": {"tenant_id": tenant_id, "created_at": _now()},
+    }
+    artifact = _save_json(tenant_id, f"creative-{asset_id}.json", payload)
+    return {
+        **artifact,
+        "asset_id": asset_id,
+        "version": 1,
+        "status": "draft",
+        "provider_execution": "not_configured",
+    }
 
 
 async def execute_social(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
