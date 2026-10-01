@@ -88,6 +88,55 @@ def test_engineering_registry_matches_role_side_effect_contract():
     assert commit.requires_approval is True
 
 
+def test_github_readonly_provider_reads_operator_configured_status_without_execution(monkeypatch):
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b'{"state":"success","total_count":3}'
+
+    captured = {}
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["authorization"] = request.get_header("Authorization")
+        captured["timeout"] = timeout
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        fake_urlopen,
+    )
+
+    result = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "abc123", "repository": "attacker/repo", "token": "attacker-token"},
+    )
+
+    assert result.status == "read_verified"
+    assert result.executed is False
+    assert result.reason == '{"state": "success", "total_count": 3}'
+    assert captured["url"] == "https://api.github.com/repos/ijoolaie/AI-Employee/commits/abc123/status"
+    assert captured["authorization"] == "Bearer secret-token"
+    assert captured["timeout"] == 2.5
+
+
 def test_github_readonly_provider_is_operator_configured_and_read_only(monkeypatch):
     from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
 
