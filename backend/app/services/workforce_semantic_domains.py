@@ -82,8 +82,19 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         backend.delete(arguments["storage_key"])
         return {"storage_key": arguments["storage_key"], "deleted": True}
     if operation == "workspace_change_set":
-        payload = {"kind": "change_set", "title": arguments["title"], "changes": arguments["changes"], "created_at": _now()}
-        return {**_save_json(tenant_id, "change-set.json", payload), "status": "proposed"}
+        change_set_id = str(uuid.uuid4())
+        payload = {
+            "kind": "change_set",
+            "id": change_set_id,
+            "title": arguments["title"],
+            "changes": arguments["changes"],
+            "created_at": _now(),
+        }
+        return {
+            **_save_json(tenant_id, f"change-set-{change_set_id}.json", payload),
+            "status": "proposed",
+            "change_set_id": change_set_id,
+        }
     if operation in {"workspace_test", "workspace_lint", "workspace_build"}:
         return {
             "operation": operation,
