@@ -81,6 +81,8 @@ class Settings(BaseSettings):
             raise ValueError("DATA_RETENTION_DAYS must be between 1 and 3650")
         if self.market_data_provider_timeout_seconds <= 0 or self.market_data_provider_timeout_seconds > 60:
             raise ValueError("MARKET_DATA_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
+        if self.engineering_github_timeout_seconds <= 0 or self.engineering_github_timeout_seconds > 60:
+            raise ValueError("ENGINEERING_GITHUB_TIMEOUT_SECONDS must be between 0 and 60")
         if self.app_env.lower() in {"production", "prod"}:
             if self.debug:
                 raise ValueError("DEBUG must be false in production")
