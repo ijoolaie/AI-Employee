@@ -432,3 +432,21 @@ This W1 exit criterion is now **VERIFIED**. GitHub Actions run `36830129984` / j
 
 W1 is now evidenced on mainline. This evidence remains post-v1.4.11 engineering evidence and does not modify the immutable certified release.
 
+
+
+## W3 real-stack certification checkpoint — 2026-10-01
+
+W3 Content & Creative now has dedicated real-stack evidence through `backend/scripts/e2e_workforce_w3_content_creative_verify.py` and `.github/workflows/workforce-w3-e2e.yml`.
+
+GitHub Actions run `36882689747` / job `110438160948` completed successfully. Evidence verified:
+- Content Producer governed Run → durable versioned content artifact.
+- Graphic Designer governed Run → durable creative request.
+- artifact provenance and tenant scoping.
+- cross-tenant artifact read denial.
+- persisted artifact approval state.
+- `external_content_commitment` remains explicitly human-approval-required in the authoritative role contract.
+- creative provider execution remains explicitly `not_configured`; no provider execution was faked.
+
+Certification output included `WORKFORCE W3 CONTENT-CREATIVE REAL-STACK E2E PASS`.
+
+W3 is therefore **VERIFIED on the real stack** for its current governed Content & Creative scope. This is post-v1.4.11 mainline evidence and does not modify the immutable certified release.
