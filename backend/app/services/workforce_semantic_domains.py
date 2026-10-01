@@ -250,17 +250,42 @@ async def execute_social(arguments: dict[str, Any], **context: Any) -> dict[str,
     }
 
 async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
-    _tenant(arguments, context)
+    """Create tenant-scoped sales artifacts without executing external outreach."""
+    tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
-    if operation == "lead_research":
-        return {"operation": operation, "status": "research_request", "query": arguments.get("query", ""), "external_outreach": False, "provider_execution": "not_configured"}
-    if operation == "lead_qualification":
-        return {"operation": operation, "status": "qualification", "criteria": arguments.get("criteria", {}), "provider_execution": "not_configured"}
-    if operation in {"crm_enrichment","prepare_outreach_draft","prepare_follow_up_queue","prepare_proposal","prepare_meeting_request","pipeline_reporting","conversion_attribution"}:
-        return {"operation": operation, "status": "draft_or_report", "external_side_effect": False, "provider_execution": "not_configured"}
     approval_required = _approval_required("ai_sales_lead_generation", operation)
-    return {"operation": operation, "status": "proposal", "approval_required": approval_required, "external_side_effect": True, "provider_execution": "not_configured"}
-
+    external = operation in {"external_outreach", "contractual_commitment", "material_commercial_action"}
+    sales_id = str(uuid.uuid4())
+    provider_execution = "not_configured"
+    status = "proposal" if external else "draft_or_report"
+    approval_status = "pending" if approval_required else "not_required"
+    payload = {
+        "kind": "sales_operation",
+        "sales_id": sales_id,
+        "operation": operation,
+        "version": 1,
+        "status": status,
+        "approval_required": approval_required,
+        "approval_status": approval_status,
+        "query": arguments.get("query"),
+        "criteria": arguments.get("criteria", {}),
+        "provider_requested": arguments.get("provider", "crm_or_outreach"),
+        "provider_execution": provider_execution,
+        "external_side_effect": external,
+        "provenance": {"tenant_id": tenant_id, "created_at": _now(), "provider_execution": provider_execution},
+    }
+    artifact = _save_json(tenant_id, f"sales-{sales_id}.json", payload)
+    return {
+        **artifact,
+        "sales_id": sales_id,
+        "operation": operation,
+        "version": 1,
+        "status": status,
+        "approval_required": approval_required,
+        "approval_status": approval_status,
+        "external_side_effect": external,
+        "provider_execution": provider_execution,
+    }
 
 async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     tenant_id = _tenant(arguments, context)
