@@ -84,3 +84,32 @@ def test_engineering_registry_matches_role_side_effect_contract():
     assert branch.requires_approval is True
     assert commit.external_side_effects is True
     assert commit.requires_approval is True
+
+
+def test_github_readonly_provider_is_operator_configured_and_read_only(monkeypatch):
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = None
+        engineering_github_timeout_seconds = 1.0
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    provider = GitHubReadOnlyEngineeringProvider()
+    result = provider.execute("ci_status", tenant_id="tenant-a", arguments={"commit_sha": "abc"})
+    assert result.status == "not_configured"
+    unsupported = provider.execute("git_branch", tenant_id="tenant-a", arguments={})
+    assert unsupported.status == "not_configured"
+
+
+@pytest.mark.asyncio
+async def test_git_branch_is_external_side_effect():
+    result = await execute_engineering(
+        {"_operation": "git_branch"},
+        tenant_id="tenant-a",
+    )
+    assert result["external_side_effect"] is True
+    assert result["approval_required"] is True
