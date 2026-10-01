@@ -5,7 +5,7 @@
 **Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
 **Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
 **Mainline engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA  
-**Status date:** 2026-09-30  
+**Status date:** 2026-10-01  
 **Latest published release:** `v1.4.11`  
 **Latest certified release:** `v1.4.11`  
 **Certification run:** `35848311037` — PASS (exact `v1.4.11` SHA)  
@@ -191,5 +191,7 @@ A dedicated real-stack W1 certification harness was added at `backend/scripts/e2
 
 The harness provisions its own tenant-scoped fixture, Manager and specialist Agent identities, and a bounded CEO delegation. It does not change the immutable `v1.4.11` release.
 
-**Evidence status:** the harness is implemented, but its current GitHub Actions/real-stack execution is **NOT YET VERIFIED**. No green run is claimed until an actual execution result is retrieved.
+**Evidence status:** **VERIFIED**. GitHub Actions run `36830129984`, job `110264598687`, completed successfully. The run passed database migration checks, application health, the full W1 real-stack certification, and shutdown. The certification output recorded `W1 CEO DELEGATION PASS`, `W1 MANAGER ASSIGN_TASK PASS`, `W1 SPECIALIST RESULT PASS`, `W1 CEO REPORT VERIFICATION PASS`, and `WORKFORCE W1 CONTROL-PLANE REAL-STACK E2E PASS`. Specialist Run evidence: `cd46f769-0823-4141-b012-72c0f7e6b0f2`.
+
+The W1 evidence path also required two mainline corrections discovered by real-stack execution: Manager lookup now uses the governed `workforce_role_code` rather than a fixed template slug, and the W1 stack now starts the transactional-outbox dispatcher/beat services required to deliver the persisted `agent.run.execute` handoff. These are post-v1.4.11 mainline changes and do not alter the immutable certified release.
 
