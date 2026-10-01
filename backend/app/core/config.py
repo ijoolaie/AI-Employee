@@ -225,6 +225,11 @@ class Settings(BaseSettings):
     # Engineering provider selection is operator-owned; workforce tool input
     # must never be able to select an external provider.
     engineering_provider_name: str = "none"
+    # Read-only GitHub provider configuration is operator-owned. The repository
+    # mapping is tenant-scoped; callers cannot override it through tool input.
+    engineering_github_repositories: dict[str, str] = {}
+    engineering_github_token: str | None = None
+    engineering_github_timeout_seconds: float = 10.0
 
     @property
     def stripe_enabled(self) -> bool:
