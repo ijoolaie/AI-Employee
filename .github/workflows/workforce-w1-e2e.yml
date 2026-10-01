@@ -1,0 +1,86 @@
+name: Workforce W1 Control Plane E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/scripts/e2e_workforce_w1_control_plane_verify.py'
+      - 'backend/app/services/ai_workforce_roles.py'
+      - 'backend/app/services/agent_execution_adapter.py'
+      - 'backend/app/services/agent_governance.py'
+      - 'backend/app/services/workforce_delegation_service.py'
+      - 'backend/app/services/workforce_runtime_governance.py'
+      - 'backend/app/ai/tool_registry.py'
+      - 'backend/app/api/v1/work_items.py'
+      - 'backend/app/services/unified_execution.py'
+      - 'backend/app/services/run_execution_fence.py'
+      - 'backend/app/workers'
+      - 'docker-compose.yml'
+      - 'backend/requirements.lock'
+      - '.github/workflows/workforce-w1-e2e.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/scripts/e2e_workforce_w1_control_plane_verify.py'
+      - 'backend/app/services/ai_workforce_roles.py'
+      - 'backend/app/services/agent_execution_adapter.py'
+      - 'backend/app/services/agent_governance.py'
+      - 'backend/app/services/workforce_delegation_service.py'
+      - 'backend/app/services/workforce_runtime_governance.py'
+      - 'backend/app/ai/tool_registry.py'
+      - 'backend/app/api/v1/work_items.py'
+      - 'backend/app/services/unified_execution.py'
+      - 'backend/app/services/run_execution_fence.py'
+      - 'backend/app/workers'
+      - 'docker-compose.yml'
+      - 'backend/requirements.lock'
+      - '.github/workflows/workforce-w1-e2e.yml'
+
+concurrency:
+  group: workforce-w1-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  w1-real-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build and start W1 stack
+        timeout-minutes: 15
+        run: |
+          docker compose up -d --build postgres redis e2e-market-provider storage-init api worker
+
+      - name: Wait for application health
+        timeout-minutes: 5
+        run: |
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8000/health/dependencies >/dev/null; then
+              echo "API HEALTH PASS"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "API health did not become ready"
+          docker compose ps
+          docker compose logs --tail=200 api worker e2e-market-provider
+          exit 1
+
+      - name: Run W1 real-stack certification
+        timeout-minutes: 8
+        run: |
+          docker compose exec -T api python scripts/e2e_workforce_w1_control_plane_verify.py
+
+      - name: Collect failure diagnostics
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --tail=300 api worker e2e-market-provider postgres redis
+
+      - name: Shutdown
+        if: always()
+        run: docker compose down -v --remove-orphans
