@@ -23,6 +23,10 @@ def test_catalog_contains_internal_manager_and_requested_next_roles() -> None:
         "ai_graphic_designer",
         "ai_software_developer",
         "ai_trader",
+        "ai_content_producer",
+        "ai_social_media",
+        "ai_sales_lead_generation",
+        "ai_website_employee",
     }
 
 
@@ -68,8 +72,12 @@ def test_four_requested_roles_have_first_party_workforce_templates() -> None:
         "ai_graphic_designer",
         "ai_software_developer",
         "ai_trader",
+        "ai_content_producer",
+        "ai_social_media",
+        "ai_sales_lead_generation",
+        "ai_website_employee",
     }
-    assert len(templates) == 4
+    assert len(templates) == 8
     for template in templates:
         assert template["slug"]
         assert template["name"]

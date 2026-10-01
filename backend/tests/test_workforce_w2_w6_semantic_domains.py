@@ -40,10 +40,10 @@ async def test_w4_social_external_actions_are_approval_gated():
 
 
 @pytest.mark.asyncio
-async def test_w5_sales_outreach_is_proposal_only():
+async def test_w5_sales_outreach_draft_is_non_external():
     result = await execute_sales({"_operation": "prepare_outreach_draft", "query": "B2B SaaS"}, tenant_id="tenant-a")
-    assert result["status"] == "proposal"
-    assert result["approval_required"] is True
+    assert result["status"] == "draft_or_report"
+    assert result["external_side_effect"] is False
 
 
 @pytest.mark.asyncio

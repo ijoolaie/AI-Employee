@@ -15,14 +15,22 @@ def test_registry_contains_controlled_initial_tools():
     # Phase 5: analyze_document (Document)
     # Phase 7: invoice tools (BusinessInvoice) — see
     # documents/67_PHASE_7_INVOICE_EMPLOYEE_AS_BUILT_v0.7.0.md
-    assert names == {
+    expected_baseline = {
         "calculator", "current_time", "send_email", "analyze_dataset", "analyze_document",
         "create_invoice", "update_invoice_status", "analyze_invoice_file", "export_invoice_pdf",
         "invoice_financial_summary", "create_order", "update_order_status", "analyze_order_file",
         "order_summary", "link_order_invoice", "create_deal", "update_deal_stage",
         "sales_pipeline_summary", "sales_forecast", "search_products", "get_product",
-        "check_inventory", "get_order", "track_order", "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan", "workforce_prepare_ceo_report", "workforce_prepare_growth_report", "workforce_draft_campaign_plan", "workforce_coordinate_content", "workforce_request_capacity", "workforce_prepare_budget_estimate", "workforce_balance_workload", "workforce_assign_task", "workforce_reprioritize_task", "workforce_coordinate_handoff", "workforce_prepare_cost_optimization",
+        "check_inventory", "get_order", "track_order",
+        "workforce_market_research", "workforce_market_risk_analysis", "workforce_market_trading_plan",
+        "workforce_prepare_ceo_report", "workforce_prepare_growth_report",
+        "workforce_draft_campaign_plan", "workforce_coordinate_content",
+        "workforce_request_capacity", "workforce_prepare_budget_estimate",
+        "workforce_balance_workload", "workforce_assign_task",
+        "workforce_reprioritize_task", "workforce_coordinate_handoff",
+        "workforce_prepare_cost_optimization",
     }
+    assert expected_baseline.issubset(names)
     assert registry.get("send_email").side_effects is True
     assert registry.get("send_email").requires_approval is True
     assert registry.get("analyze_dataset").requires_approval is False

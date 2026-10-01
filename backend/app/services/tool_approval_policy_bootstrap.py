@@ -5,12 +5,26 @@ making the centralized policy authoritative for every execution path. It is
 imported by the services package, which is loaded by the Run execution service.
 """
 
-from app.ai.tool_registry import registry
-from app.services.tool_approval_policy import requires_approval
+from __future__ import annotations
+
+_INSTALLED = False
 
 
-for _tool in registry.list():
-    if requires_approval(_tool.name, _tool.requires_approval):
-        # RegisteredTool is intentionally frozen; changing the effective flag
-        # once during application bootstrap prevents request-time mutation.
-        object.__setattr__(_tool, "requires_approval", True)
+def install() -> None:
+    """Apply the centralized approval policy after the Tool Registry exists."""
+    global _INSTALLED
+
+    if _INSTALLED:
+        return
+
+    from app.ai.tool_registry import registry
+    from app.services.tool_approval_policy import requires_approval
+
+    for _tool in registry.list():
+        if requires_approval(_tool.name, _tool.requires_approval):
+            # RegisteredTool is intentionally frozen; changing the effective
+            # flag once during application bootstrap prevents request-time
+            # mutation.
+            object.__setattr__(_tool, "requires_approval", True)
+
+    _INSTALLED = True

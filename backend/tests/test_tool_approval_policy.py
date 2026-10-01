@@ -4,9 +4,9 @@ from app.ai.tool_registry import registry
 from app.core.exceptions import ValidationAppError
 from app.services.tool_approval_policy import MANDATORY_APPROVAL_TOOLS, requires_approval
 
-# Import the bootstrap explicitly in this focused unit test so the assertion
-# exercises the same policy activation used by the Run service package import.
-import app.services.tool_approval_policy_bootstrap  # noqa: F401,E402
+from app.services.tool_approval_policy_bootstrap import install as install_tool_approval_policy
+
+install_tool_approval_policy()
 
 
 def test_mandatory_side_effect_tools_are_approval_gated():

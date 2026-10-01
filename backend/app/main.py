@@ -13,6 +13,7 @@ from app.core.config import get_settings
 from app.core.exceptions import AppError, app_error_handler
 from app.core.logging import configure_logging
 from app.services.agent_run_governance_bootstrap import install as install_agent_run_governance
+from app.services.tool_approval_policy_bootstrap import install as install_tool_approval_policy
 from app.core.middleware import RequestContextMiddleware, SecurityHardeningMiddleware, SecurityHeadersMiddleware
 from app.core.telemetry import init_telemetry
 from app.schemas.common import APIErrorResponse, ErrorBody
@@ -31,6 +32,7 @@ GIT_COMMIT_SHA = os.getenv("GIT_COMMIT_SHA", "unknown")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     install_agent_run_governance()
+    install_tool_approval_policy()
     yield
 
 
