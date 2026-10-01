@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import re
 from typing import Any, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -82,9 +83,12 @@ class GitHubReadOnlyEngineeringProvider:
         token = settings.engineering_github_token
         if not repository or not token:
             return ProviderResult(self.name, operation, False, "not_configured", "GitHub repository/token is not configured for this tenant")
-        url = f"https://api.github.com/repos/{repository}/commits/{arguments.get('commit_sha', '')}/status"
-        if not arguments.get("commit_sha"):
+        commit_sha = str(arguments.get("commit_sha", "")).strip()
+        if not commit_sha:
             return ProviderResult(self.name, operation, False, "not_configured", "ci_status requires a commit_sha")
+        if not re.fullmatch(r"[0-9a-fA-F]{40}", commit_sha):
+            return ProviderResult(self.name, operation, False, "not_configured", "ci_status requires a 40-character hexadecimal commit SHA")
+        url = f"https://api.github.com/repos/{repository}/commits/{commit_sha}/status"
         request = Request(url, headers={
             "Accept": "application/vnd.github+json",
             "Authorization": f"Bearer {token}",
