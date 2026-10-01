@@ -18,7 +18,6 @@ def _production_env(**overrides):
         "cors_origins": ["https://app.example.com"],
         "frontend_base_url": "https://app.example.com",
         "frontend_app_url": "https://app.example.com",
-        "lm_studio_base_url": "https://ai.example.test/v1",
         "market_data_provider_base_url": "https://market.example.test",
         "database_url": "postgresql+asyncpg://prod:strong-password@db.internal:5432/aiep",
         "database_url_sync": "postgresql://prod:strong-password@db.internal:5432/aiep",
