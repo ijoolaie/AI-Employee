@@ -1,6 +1,7 @@
 name: Workforce W1 Control Plane E2E
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
