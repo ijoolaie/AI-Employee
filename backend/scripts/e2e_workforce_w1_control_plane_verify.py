@@ -116,7 +116,12 @@ async def license_fixture(tenant_id, suffix):
             db,
             issuer=reseller,
             tenant=tenant,
-            feature_codes=["employee.run", "tool:workforce_market_research"],
+            feature_codes=[
+                "employee.run",
+                "tool:workforce_assign_task",
+                "tool:workforce_prepare_ceo_report",
+                "tool:workforce_market_research",
+            ],
             metadata={"certification_fixture": True, "purpose": "workforce-w1-control-plane-e2e"},
         )
         assert row.status == "active"
