@@ -594,3 +594,38 @@ W0–W9 are now evidenced on mainline at their applicable scope. W10 is the next
 W10 must not be treated as a nominal role-count exercise. The first target is one repeatable, governed business workflow that can produce a qualified lead and customer conversation, with human approval at consequential boundaries, complete provenance/audit evidence, cost measurement, and failure/recovery handling.
 
 The immutable v1.4.11 release boundary remains unchanged. All W10 work is post-v1.4.11 mainline engineering until a future release candidate is created and separately certified.
+
+## W10 real-stack dogfood foundation checkpoint — 2026-10-01
+
+The first Internal AI Company dogfood pipeline is now implemented and evidenced through `backend/scripts/e2e_workforce_w10_dogfood_verify.py` and `.github/workflows/workforce-w10-dogfood-e2e.yml`.
+
+GitHub Actions run `36892642090` / job `110472293257` completed successfully. The governed pipeline exercised:
+1. lead research;
+2. lead qualification;
+3. content brief;
+4. article production;
+5. content QA;
+6. outreach drafting;
+7. approval-gated external outreach proposal.
+
+Certification evidence included:
+- lead research and qualification PASS;
+- content brief → article → QA PASS;
+- outreach draft PASS;
+- exact approval governance PASS;
+- external provider fail-closed PASS with `provider_execution=not_configured`;
+- `W10 REVENUE WORKFLOW FOUNDATION REAL-STACK E2E PASS`.
+
+Example certification artifacts:
+- sales research ID `e910cd61-5df1-4600-9f9b-13fe3a100635`;
+- qualification ID `042b7cdc-a63c-47ea-a7f7-9c9a97b009b5`;
+- content article ID `e34d6671-caf0-4eac-b53b-129daa40fd24`;
+- outreach proposal ID `fe6e3366-719b-42b9-a60f-d4d20e4fb1ac`.
+
+### W10 status boundary
+
+The **revenue workflow foundation is VERIFIED on the real stack**.
+
+The **full revenue outcome is NOT VERIFIED**. No real external outreach, customer conversation, or revenue is claimed because the CRM/outreach provider is still `not_configured`. The next W10 work item is therefore provider-backed business execution plus measurement, not another nominal employee/tool layer.
+
+This remains post-v1.4.11 mainline engineering evidence.
