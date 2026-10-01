@@ -132,9 +132,20 @@ def cleanup() -> None:
 async def main() -> None:
     assert_branch_absent()
     tenant_id, instance_id, run_id, approval_id, tool_call_id = await prepare()
-    await execute(tenant_id, instance_id, run_id, approval_id, tool_call_id)
-    cleanup()
-
+    result = None
+    try:
+        result = await execute(tenant_id, instance_id, run_id, approval_id, tool_call_id)
+        assert result["provider"]["provider"] == "github"
+        assert result["provider_execution"] == "executed", result
+        assert result["executed"] is True, result
+        assert result["approval_required"] is True, result
+        assert result["external_side_effect"] is True, result
+        print("W2 LIVE GIT BRANCH GOVERNANCE PASS")
+        print("W2 LIVE GIT BRANCH PROVIDER WRITE PASS")
+        print(f"W2 LIVE GIT BRANCH CREATED {BRANCH}")
+    finally:
+        if result and result.get("provider_execution") == "executed" and result.get("executed") is True:
+            cleanup()
 
 if __name__ == "__main__":
     asyncio.run(main())
