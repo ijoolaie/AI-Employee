@@ -55,6 +55,13 @@ jobs:
         run: |
           docker compose up -d --build postgres redis e2e-market-provider storage-init api worker
 
+      - name: Prepare stack database
+        timeout-minutes: 5
+        run: |
+          docker compose exec -T api alembic upgrade head
+          docker compose exec -T api alembic check
+          test "$(docker compose exec -T api alembic heads | grep -c "(head)")" -eq 1
+
       - name: Wait for application health
         timeout-minutes: 5
         run: |
