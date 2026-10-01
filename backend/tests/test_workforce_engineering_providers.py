@@ -182,3 +182,4 @@ def test_ci_status_tool_accepts_commit_sha():
     tool = registry.get("workforce_ci_status")
     properties = tool.input_schema["properties"]
     assert properties["commit_sha"] == {"type": "string", "maxLength": 100}
+    assert tool.input_schema["required"] == ["commit_sha"]
