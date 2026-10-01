@@ -174,3 +174,11 @@ def test_developer_approval_operations_are_not_routine():
     assert set(role.allowed_routine_operations).isdisjoint(role.approval_required_operations)
     for operation in role.approval_required_operations:
         assert get_workforce_capability_contract("ai_software_developer", operation).approval_required is True
+
+
+def test_ci_status_tool_accepts_commit_sha():
+    from app.ai.tool_registry import registry
+
+    tool = registry.get("workforce_ci_status")
+    properties = tool.input_schema["properties"]
+    assert properties["commit_sha"] == {"type": "string", "maxLength": 100}
