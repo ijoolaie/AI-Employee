@@ -115,7 +115,8 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         result = provider.execute(operation, tenant_id=tenant_id, arguments=arguments)
         return {
             "operation": operation,
-            "status": "proposal",
+            "status": result.status if operation == "ci_status" else "proposal",
+            "executed": result.executed,
             "requires_provider": True,
             "provider_required": True,
             "provider_execution": result.status,
