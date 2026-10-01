@@ -214,3 +214,10 @@ The W2 change-set implementation was corrected so each change set receives a uni
 The W2 engineering domain now routes provider-bound operations through an explicit named provider interface at `backend/app/services/workforce_engineering_providers.py`. Production/default resolution is the fail-closed `none` provider; the deterministic `contract-test` adapter is available only for non-mutating contract verification. Unknown provider names fail closed. The semantic domain exposes provider identity and execution state instead of implying that Git, CI, deployment, or health operations executed.
 
 **Evidence boundary:** provider-interface/contract behavior is implemented and covered by focused tests plus the W2 real-stack harness. A live Git hosting, CI, deployment, or health provider is still **NOT CONFIGURED / NOT VERIFIED** because no operator-controlled external credentials/endpoints are present. No generic shell execution was introduced.
+
+
+## W2 provider-selection hardening — 2026-10-01
+
+A provider-selection flaw found during continuation review has been corrected. Runtime Workforce semantic execution no longer accepts an `engineering_provider` value from tool execution context. Engineering provider selection is now operator-owned through `ENGINEERING_PROVIDER_NAME` / application settings, with the default remaining `none`. The deterministic `contract-test` provider remains available for controlled test/bootstrap use, but is not selectable by an agent through semantic tool arguments.
+
+This closes the provider-selection control boundary; it does **not** create a live Git/CI/deployment provider. Live external engineering execution remains **NOT CONFIGURED / NOT VERIFIED**.
