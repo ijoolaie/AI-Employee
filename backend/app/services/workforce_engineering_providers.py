@@ -53,6 +53,7 @@ class ContractTestEngineeringProvider:
     """Deterministic contract adapter for tests; it never mutates external systems."""
     name: str = "contract-test"
     operations: frozenset[str] = ENGINEERING_PROVIDER_OPERATIONS
+    external_execution: bool = False
 
     def execute(self, operation: str, *, tenant_id: str, arguments: dict[str, Any]) -> ProviderResult:
         if operation not in self.operations:
