@@ -31,6 +31,76 @@ async def test_w3_creative_and_content_bindings_exist():
 
 
 @pytest.mark.asyncio
+async def test_w3_content_artifacts_are_unique_versioned_and_tenant_scoped():
+    from app.services.workforce_semantic_domains import execute_content
+
+    first = await execute_content(
+        {
+            "_operation": "produce_article",
+            "title": "First",
+            "body": "A",
+            "metadata": {"campaign": "w3"},
+        },
+        tenant_id="tenant-a",
+    )
+    second = await execute_content(
+        {
+            "_operation": "produce_article",
+            "title": "Second",
+            "body": "B",
+            "metadata": {"campaign": "w3"},
+        },
+        tenant_id="tenant-a",
+    )
+    assert first["content_id"] != second["content_id"]
+    assert first["storage_key"] != second["storage_key"]
+    assert first["version"] == 1
+    assert first["status"] == "draft"
+    assert first["approval_required"] is False
+    assert first["storage_key"].startswith("tenant-a/")
+
+    other_tenant = await execute_content(
+        {
+            "_operation": "produce_social_caption",
+            "title": "Other",
+            "body": "Tenant B",
+        },
+        tenant_id="tenant-b",
+    )
+    assert other_tenant["storage_key"].startswith("tenant-b/")
+    assert other_tenant["storage_key"] != first["storage_key"]
+
+
+@pytest.mark.asyncio
+async def test_w3_creative_requests_are_unique_and_never_claim_provider_execution():
+    from app.services.workforce_semantic_domains import execute_creative
+
+    first = await execute_creative(
+        {
+            "_operation": "create_visual_asset",
+            "prompt": "A product hero image",
+            "brand_context": "W3 test",
+            "provider": "paid-provider",
+        },
+        tenant_id="tenant-a",
+    )
+    second = await execute_creative(
+        {
+            "_operation": "revise_visual_asset",
+            "prompt": "A revised product hero image",
+            "brand_context": "W3 test",
+        },
+        tenant_id="tenant-a",
+    )
+    assert first["asset_id"] != second["asset_id"]
+    assert first["storage_key"] != second["storage_key"]
+    assert first["version"] == 1
+    assert first["status"] == "draft"
+    assert first["provider_execution"] == "not_configured"
+    assert first["storage_key"].startswith("tenant-a/")
+
+
+@pytest.mark.asyncio
 async def test_w4_social_external_actions_are_approval_gated():
     role = get_workforce_role("ai_social_media")
     assert "publish_post" in role.approval_required_operations
