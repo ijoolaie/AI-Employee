@@ -2337,6 +2337,30 @@ def build_default_registry() -> ToolRegistry:
         )
     )
 
+    for _w7_operation in ("keyword_research","content_opportunity_analysis","on_page_recommendations","technical_seo_check","internal_link_recommendations","content_brief","search_performance_ingestion","growth_report","seo_experiment_proposal"):
+        registry.register(
+            RegisteredTool(
+                name=f"workforce_{_w7_operation}",
+                description=f"Governed W7 SEO and growth operation: {_w7_operation}.",
+                input_schema={
+                    "type":"object",
+                    "properties":{
+                        "topic":{"type":"string","maxLength":1000},
+                        "query":{"type":"string","maxLength":1000},
+                        "recommendations":{"type":"array","items":{"type":"string","maxLength":2000},"maxItems":100},
+                        "spec":{"type":"object"},
+                        "provider":{"type":"string","maxLength":100},
+                    },
+                    "additionalProperties":False,
+                },
+                handler=lambda arguments, op=_w7_operation, fn=workforce_semantic_domains.execute_seo_growth, **context: fn({**arguments, "_operation": op}, **context),
+                side_effects=_w7_operation == "seo_experiment_proposal",
+                external_side_effects=_w7_operation == "seo_experiment_proposal",
+                required_permission="run.execute",
+                requires_approval=_w7_operation == "seo_experiment_proposal",
+            )
+        )
+
     registry.register(
         RegisteredTool(
             name="workforce_website_requirements",
