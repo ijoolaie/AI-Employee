@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.core.exceptions import ValidationAppError
+from app.services.ai_workforce_roles import get_workforce_capability_contract
 from app.services.storage import build_key, get_storage_backend
 
 
@@ -45,6 +46,11 @@ def _read_json(tenant_id: str, storage_key: str) -> dict[str, Any]:
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _approval_required(role_code: str, operation: str) -> bool:
+    """Read approval state from the authoritative workforce role contract."""
+    return get_workforce_capability_contract(role_code, operation).approval_required
 
 
 async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
@@ -81,7 +87,12 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
     if operation in {"workspace_test", "workspace_lint", "workspace_build"}:
         return {"operation": operation, "status": "staged", "executed": False, "reason": "Execution provider is not configured in this environment"}
     if operation in {"git_branch", "git_commit_proposal", "git_pr_proposal", "ci_status", "deploy_proposal", "health_check", "rollback_proposal"}:
-        return {"operation": operation, "status": "proposal", "requires_provider": True, "approval_required": operation in {"git_commit_proposal", "git_pr_proposal", "deploy_proposal", "rollback_proposal"}}
+        return {
+            "operation": operation,
+            "status": "proposal",
+            "requires_provider": True,
+            "approval_required": _approval_required("ai_software_developer", operation),
+        }
     raise ValidationAppError("Unsupported engineering operation")
 
 
@@ -102,12 +113,13 @@ async def execute_creative(arguments: dict[str, Any], **context: Any) -> dict[st
 async def execute_social(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     _tenant(arguments, context)
     operation = arguments["_operation"]
-    external = operation in {"publish_post", "publish_reel", "publish_story", "schedule_publication", "respond_to_dm"}
+    approval_required = _approval_required("ai_social_media", operation)
+    external = operation in {"connect_channel", "publish_post", "publish_reel", "publish_story", "schedule_publication", "respond_to_dm"}
     return {
         "operation": operation,
         "status": "proposal" if external else "ready",
         "provider": arguments.get("provider", "instagram"),
-        "approval_required": external,
+        "approval_required": approval_required,
         "external_side_effect": external,
     }
 
@@ -129,4 +141,10 @@ async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str
     operation = arguments["_operation"]
     payload = {"kind": "website_change", "operation": operation, "site": arguments["site"], "spec": arguments.get("spec", {}), "created_at": _now()}
     artifact = _save_json(tenant_id, f"website-{operation}.json", payload)
-    return {**artifact, "operation": operation, "status": "proposal" if operation in {"website_deploy", "website_rollback"} else "staged", "approval_required": operation in {"website_deploy", "website_rollback"}}
+    approval_required = _approval_required("ai_website_employee", operation)
+    return {
+        **artifact,
+        "operation": operation,
+        "status": "proposal" if approval_required else "staged",
+        "approval_required": approval_required,
+    }
