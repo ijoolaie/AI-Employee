@@ -232,6 +232,8 @@ class Settings(BaseSettings):
     engineering_github_repositories: dict[str, str] = {}
     engineering_github_token: str | None = None
     engineering_github_timeout_seconds: float = 10.0
+    # Sales outreach provider selection is operator-owned; model/tool input cannot choose transport.
+    sales_outreach_provider_name: str = "none"
 
     @property
     def stripe_enabled(self) -> bool:
