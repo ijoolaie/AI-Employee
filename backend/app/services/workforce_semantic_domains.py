@@ -85,13 +85,22 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         payload = {"kind": "change_set", "title": arguments["title"], "changes": arguments["changes"], "created_at": _now()}
         return {**_save_json(tenant_id, "change-set.json", payload), "status": "proposed"}
     if operation in {"workspace_test", "workspace_lint", "workspace_build"}:
-        return {"operation": operation, "status": "staged", "executed": False, "reason": "Execution provider is not configured in this environment"}
+        return {
+            "operation": operation,
+            "status": "staged",
+            "executed": False,
+            "provider_required": True,
+            "reason": "Execution provider is not configured in this environment",
+        }
     if operation in {"git_branch", "git_commit_proposal", "git_pr_proposal", "ci_status", "deploy_proposal", "health_check", "rollback_proposal"}:
+        approval_required = _approval_required("ai_software_developer", operation)
         return {
             "operation": operation,
             "status": "proposal",
             "requires_provider": True,
-            "approval_required": _approval_required("ai_software_developer", operation),
+            "provider_execution": "not_configured",
+            "approval_required": approval_required,
+            "external_side_effect": operation in {"git_commit_proposal", "deploy_proposal", "rollback_proposal"},
         }
     raise ValidationAppError("Unsupported engineering operation")
 
@@ -128,12 +137,13 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
     _tenant(arguments, context)
     operation = arguments["_operation"]
     if operation == "lead_research":
-        return {"operation": operation, "status": "research_request", "query": arguments.get("query", ""), "external_outreach": False}
+        return {"operation": operation, "status": "research_request", "query": arguments.get("query", ""), "external_outreach": False, "provider_execution": "not_configured"}
     if operation == "lead_qualification":
-        return {"operation": operation, "status": "qualification", "criteria": arguments.get("criteria", {})}
+        return {"operation": operation, "status": "qualification", "criteria": arguments.get("criteria", {}), "provider_execution": "not_configured"}
     if operation in {"crm_enrichment","prepare_outreach_draft","prepare_follow_up_queue","prepare_proposal","prepare_meeting_request","pipeline_reporting","conversion_attribution"}:
-        return {"operation": operation, "status": "draft_or_report", "external_side_effect": False}
-    return {"operation": operation, "status": "proposal", "approval_required": True, "external_side_effect": True}
+        return {"operation": operation, "status": "draft_or_report", "external_side_effect": False, "provider_execution": "not_configured"}
+    approval_required = _approval_required("ai_sales_lead_generation", operation)
+    return {"operation": operation, "status": "proposal", "approval_required": approval_required, "external_side_effect": True, "provider_execution": "not_configured"}
 
 
 async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
