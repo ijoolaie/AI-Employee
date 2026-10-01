@@ -1804,9 +1804,9 @@ def build_default_registry() -> ToolRegistry:
             input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":False},
             handler=lambda arguments, op="git_branch", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
             side_effects=False,
-            external_side_effects=False,
+            external_side_effects=True,
             required_permission="run.execute",
-            requires_approval=False,
+            requires_approval=True,
         )
     )
 
@@ -1817,9 +1817,9 @@ def build_default_registry() -> ToolRegistry:
             input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":False},
             handler=lambda arguments, op="git_commit_proposal", fn=workforce_semantic_domains.execute_engineering, **context: fn({**arguments, "_operation": op}, **context),
             side_effects=False,
-            external_side_effects=False,
+            external_side_effects=True,
             required_permission="run.execute",
-            requires_approval=False,
+            requires_approval=True,
         )
     )
 
