@@ -287,6 +287,47 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "provider_execution": provider_execution,
     }
 
+
+async def execute_seo_growth(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
+    """Persist tenant-scoped SEO/growth research and proposals; no search-engine execution."""
+    tenant_id = _tenant(arguments, context)
+    operation = arguments["_operation"]
+    approval_required = _approval_required("ai_seo_growth_employee", operation)
+    external = operation == "seo_experiment_proposal"
+    artifact_id = str(uuid.uuid4())
+    provider_execution = "not_configured"
+    status = "proposal" if external else "research"
+    approval_status = "pending" if approval_required else "not_required"
+    payload = {
+        "kind": "seo_growth_artifact",
+        "artifact_id": artifact_id,
+        "operation": operation,
+        "version": 1,
+        "status": status,
+        "approval_required": approval_required,
+        "approval_status": approval_status,
+        "topic": arguments.get("topic"),
+        "query": arguments.get("query"),
+        "recommendations": arguments.get("recommendations", []),
+        "spec": arguments.get("spec", {}),
+        "provider_requested": arguments.get("provider", "search_performance"),
+        "provider_execution": provider_execution,
+        "external_side_effect": external,
+        "provenance": {"tenant_id": tenant_id, "created_at": _now(), "provider_execution": provider_execution},
+    }
+    artifact = _save_json(tenant_id, f"seo-growth-{artifact_id}.json", payload)
+    return {
+        **artifact,
+        "artifact_id": artifact_id,
+        "operation": operation,
+        "version": 1,
+        "status": status,
+        "approval_required": approval_required,
+        "approval_status": approval_status,
+        "provider_execution": provider_execution,
+        "external_side_effect": external,
+    }
+
 async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     """Persist tenant-scoped website work; deployment never executes without a provider."""
     tenant_id = _tenant(arguments, context)
