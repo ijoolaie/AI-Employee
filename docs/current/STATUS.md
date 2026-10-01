@@ -184,3 +184,12 @@ The post-v1.4.11 workforce implementation pass now contains a code-derived W0 bi
 
 These are mutable mainline engineering changes after certified v1.4.11. They must not be described as part of the immutable v1.4.11 production certification until a new RC is certified.
 
+
+## W1 control-plane E2E harness — 2026-10-01
+
+A dedicated real-stack W1 certification harness was added at `backend/scripts/e2e_workforce_w1_control_plane_verify.py`. It exercises the intended control-plane chain against the live application stack: CEO-owned delegation → Internal Manager `assign_task` → specialist Agent WorkItem execution → persisted Run/audit verification → Internal Manager `prepare_ceo_report`.
+
+The harness provisions its own tenant-scoped fixture, Manager and specialist Agent identities, and a bounded CEO delegation. It does not change the immutable `v1.4.11` release.
+
+**Evidence status:** the harness is implemented, but its current GitHub Actions/real-stack execution is **NOT YET VERIFIED**. No green run is claimed until an actual execution result is retrieved.
+
