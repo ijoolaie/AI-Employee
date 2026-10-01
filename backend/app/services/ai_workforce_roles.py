@@ -173,6 +173,19 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         capability_contract=_contracts(["lead_research","lead_qualification","crm_enrichment","prepare_outreach_draft","prepare_follow_up_queue","prepare_proposal","prepare_meeting_request","pipeline_reporting","conversion_attribution"],["external_outreach","contractual_commitment","material_commercial_action"], {op:(f"workforce_{op}",) for op in ("lead_research","lead_qualification","crm_enrichment","prepare_outreach_draft","prepare_follow_up_queue","prepare_proposal","prepare_meeting_request","pipeline_reporting","conversion_attribution","external_outreach","contractual_commitment","material_commercial_action")}),
     ),
     WorkforceRole(
+        code="ai_seo_growth_employee", name="AI SEO & Growth Employee", name_fa="کارمند سئو و رشد هوش مصنوعی",
+        category="growth", supervisor="ai_internal_manager",
+        purpose="Researches organic-growth opportunities and prepares governed SEO and growth experiments.",
+        approval_class="routine_delegable",
+        allowed_routine_operations=("keyword_research","content_opportunity_analysis","on_page_recommendations","technical_seo_check","internal_link_recommendations","content_brief","search_performance_ingestion","growth_report"),
+        approval_required_operations=("seo_experiment_proposal",),
+        capability_contract=_contracts(
+            ["keyword_research","content_opportunity_analysis","on_page_recommendations","technical_seo_check","internal_link_recommendations","content_brief","search_performance_ingestion","growth_report"],
+            ["seo_experiment_proposal"],
+            {op:(f"workforce_{op}",) for op in ("keyword_research","content_opportunity_analysis","on_page_recommendations","technical_seo_check","internal_link_recommendations","content_brief","search_performance_ingestion","growth_report","seo_experiment_proposal")}
+        ),
+    ),
+    WorkforceRole(
         code="ai_website_employee", name="AI Website Employee", name_fa="کارمند وب‌سایت هوش مصنوعی",
         category="web_operations", supervisor="ai_internal_manager",
         purpose="Prepare, verify, and operate governed website changes through the Engineering Workspace.", approval_class="routine_delegable",
@@ -221,6 +234,7 @@ WORKFORCE_ROLE_TEMPLATES: tuple[WorkforceRoleTemplate, ...] = (
     WorkforceRoleTemplate(slug="ai-content-producer", role_code="ai_content_producer", name="AI Content Producer", name_fa="تولیدکننده محتوای هوش مصنوعی", description="Produces governed text content packages.", description_fa="بسته‌های محتوایی متنی را به‌صورت حاکمیت‌شده تولید می‌کند."),
     WorkforceRoleTemplate(slug="ai-social-media", role_code="ai_social_media", name="AI Social Media Employee", name_fa="کارمند شبکه‌های اجتماعی هوش مصنوعی", description="Prepares and governs social distribution.", description_fa="توزیع و انتشار شبکه‌های اجتماعی را به‌صورت حاکمیت‌شده مدیریت می‌کند."),
     WorkforceRoleTemplate(slug="ai-sales-lead-generation", role_code="ai_sales_lead_generation", name="AI Sales & Lead Generation Employee", name_fa="کارمند فروش و تولید سرنخ هوش مصنوعی", description="Researches and prepares governed commercial workflows.", description_fa="گردش‌کارهای تجاری حاکمیت‌شده را پژوهش و آماده می‌کند."),
+    WorkforceRoleTemplate(slug="ai-seo-growth-employee", role_code="ai_seo_growth_employee", name="AI SEO & Growth Employee", name_fa="کارمند سئو و رشد هوش مصنوعی", description="Researches organic growth and prepares governed SEO experiments.", description_fa="رشد ارگانیک را پژوهش و آزمایش‌های سئو را به‌صورت حاکمیت‌شده آماده می‌کند."),
     WorkforceRoleTemplate(slug="ai-website-employee", role_code="ai_website_employee", name="AI Website Employee", name_fa="کارمند وب‌سایت هوش مصنوعی", description="Operates governed website delivery workflows.", description_fa="گردش‌کارهای حاکمیت‌شده ساخت و بهره‌برداری وب‌سایت را انجام می‌دهد."),
 )
 
