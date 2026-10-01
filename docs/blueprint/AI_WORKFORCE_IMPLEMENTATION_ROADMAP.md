@@ -519,3 +519,21 @@ GitHub Actions run `36885609693` / job `110448029552` completed successfully. Ev
 Certification output included `WORKFORCE W4 SOCIAL GOVERNANCE REAL-STACK E2E PASS`.
 
 W4 is therefore **VERIFIED on the real stack** for its current governed Social/Instagram scope. This is post-v1.4.11 mainline evidence and does not modify the immutable certified release.
+
+
+## W5 real-stack certification checkpoint — 2026-10-01
+
+W5 Sales & Lead Generation governance now has dedicated real-stack evidence through `backend/scripts/e2e_workforce_w5_sales_governance_verify.py` and `.github/workflows/workforce-w5-e2e.yml`.
+
+GitHub Actions run `36886034231` / job `110449446757` completed successfully. Evidence verified:
+- Sales Employee governed research Run.
+- tenant-scoped durable sales artifact and provenance.
+- approved external-outreach proposal remains an internal proposal.
+- outreach approval state is pending and governed.
+- cross-tenant artifact access is denied.
+- CRM/outreach provider execution remains explicitly `not_configured`.
+- no external outreach side effect is claimed or executed.
+
+Certification output included `WORKFORCE W5 SALES GOVERNANCE REAL-STACK E2E PASS`.
+
+W5 is therefore **VERIFIED on the real stack** for its current governed Sales & Lead Generation scope. This is post-v1.4.11 mainline evidence and does not modify the immutable certified release.
