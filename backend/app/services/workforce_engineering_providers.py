@@ -109,6 +109,110 @@ class GitHubReadOnlyEngineeringProvider:
             json.dumps({"state": payload.get("state"), "total_count": payload.get("total_count")}, sort_keys=True),
         )
 
+
+_GITHUB_SHA_RE = re.compile(r"[0-9a-fA-F]{40}")
+_GITHUB_BRANCH_RE = re.compile(r"[A-Za-z0-9._/-]{1,255}")
+
+
+def _validate_github_branch_name(branch_name: str) -> str | None:
+    name = branch_name.strip()
+    if (
+        not name
+        or not _GITHUB_BRANCH_RE.fullmatch(name)
+        or name.startswith("/")
+        or name.endswith("/")
+        or name.startswith(".")
+        or name.endswith(".")
+        or name.startswith("-")
+        or name.endswith("-")
+        or ".." in name
+        or "//" in name
+        or "@{" in name
+        or name.startswith("refs/")
+    ):
+        return None
+    return name
+
+
+@dataclass(frozen=True)
+class GitHubEngineeringProvider:
+    """Operator-configured GitHub provider for narrowly-scoped engineering writes."""
+    name: str = "github"
+    operations: frozenset[str] = frozenset({"ci_status", "git_branch"})
+    external_execution: bool = True
+
+    def execute(self, operation: str, *, tenant_id: str, arguments: dict[str, Any]) -> ProviderResult:
+        if operation not in self.operations:
+            return ProviderResult(self.name, operation, False, "not_configured", "GitHub provider does not execute this operation")
+        settings = get_settings()
+        repository = settings.engineering_github_repositories.get(tenant_id)
+        token = settings.engineering_github_token
+        if not repository or not token:
+            return ProviderResult(self.name, operation, False, "not_configured", "GitHub repository/token is not configured for this tenant")
+        if operation == "ci_status":
+            return GitHubReadOnlyEngineeringProvider().execute(
+                operation, tenant_id=tenant_id, arguments=arguments
+            )
+
+        branch_name = _validate_github_branch_name(str(arguments.get("branch_name", "")))
+        source_sha = str(arguments.get("source_sha", "")).strip()
+        if branch_name is None:
+            return ProviderResult(self.name, operation, False, "not_configured", "git_branch requires a safe branch_name")
+        if not _GITHUB_SHA_RE.fullmatch(source_sha):
+            return ProviderResult(self.name, operation, False, "not_configured", "git_branch requires a 40-character hexadecimal source_sha")
+
+        base_url = f"https://api.github.com/repos/{repository}/git/refs/heads/{branch_name}"
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "AI-Employee-Engineering-Provider",
+        }
+        try:
+            request = Request(base_url, headers=headers, method="GET")
+            with urlopen(request, timeout=settings.engineering_github_timeout_seconds) as response:
+                existing = json.loads(response.read().decode("utf-8"))
+            existing_sha = str(existing.get("object", {}).get("sha", ""))
+            if existing_sha == source_sha:
+                return ProviderResult(
+                    self.name, operation, False, "already_exists",
+                    json.dumps({"branch": branch_name, "sha": source_sha}, sort_keys=True),
+                )
+            return ProviderResult(
+                self.name, operation, False, "conflict",
+                "Branch already exists at a different commit",
+            )
+        except HTTPError as exc:
+            if exc.code != 404:
+                return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch lookup failed: HTTP {exc.code}")
+        except (URLError, TimeoutError, ValueError) as exc:
+            return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch lookup failed: {type(exc).__name__}")
+
+        payload = json.dumps({"ref": f"refs/heads/{branch_name}", "sha": source_sha}).encode("utf-8")
+        request = Request(
+            f"https://api.github.com/repos/{repository}/git/refs",
+            data=payload,
+            headers={**headers, "Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=settings.engineering_github_timeout_seconds) as response:
+                created = json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            if exc.code == 422:
+                return ProviderResult(self.name, operation, False, "conflict", "GitHub rejected branch creation; the branch may have been created concurrently")
+            return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch creation failed: HTTP {exc.code}")
+        except (URLError, TimeoutError, ValueError) as exc:
+            return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch creation failed: {type(exc).__name__}")
+
+        return ProviderResult(
+            self.name, operation, True, "executed",
+            json.dumps(
+                {"branch": branch_name, "sha": str(created.get("object", {}).get("sha", source_sha))},
+                sort_keys=True,
+            ),
+        )
+
 def get_engineering_provider(*, provider_name: str | None = None) -> EngineeringProvider:
     """Resolve an explicit provider name; unknown names fail closed.
 
@@ -124,6 +228,8 @@ def get_engineering_provider(*, provider_name: str | None = None) -> Engineering
         return ContractTestEngineeringProvider()
     if name == "github-readonly":
         return GitHubReadOnlyEngineeringProvider()
+    if name == "github":
+        return GitHubEngineeringProvider()
     raise ValueError(f"Unknown engineering provider: {name}")
 
 def provider_contract_snapshot(provider: EngineeringProvider) -> dict[str, Any]:
