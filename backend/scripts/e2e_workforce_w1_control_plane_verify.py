@@ -11,6 +11,11 @@ import json
 import os
 import sys
 import time
+
+# Allow direct execution from /app/scripts as well as module execution.
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 import uuid
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
