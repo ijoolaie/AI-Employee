@@ -133,12 +133,15 @@ async def execute_content(arguments: dict[str, Any], **context: Any) -> dict[str
     tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
     content_id = str(uuid.uuid4())
+    approval_required = _approval_required("ai_content_producer", operation)
     payload = {
         "kind": "content_artifact",
         "operation": operation,
         "content_id": content_id,
         "version": 1,
         "status": "draft",
+        "approval_required": approval_required,
+        "approval_status": "pending" if approval_required else "not_required",
         "title": arguments.get("title"),
         "body": arguments.get("body"),
         "metadata": arguments.get("metadata", {}),
@@ -154,7 +157,8 @@ async def execute_content(arguments: dict[str, Any], **context: Any) -> dict[str
         "content_id": content_id,
         "version": 1,
         "status": "draft",
-        "approval_required": _approval_required("ai_content_producer", operation),
+        "approval_required": approval_required,
+        "approval_status": "pending" if approval_required else "not_required",
         "provider_execution": "not_required",
     }
 
@@ -164,12 +168,15 @@ async def execute_creative(arguments: dict[str, Any], **context: Any) -> dict[st
     tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
     asset_id = str(uuid.uuid4())
+    approval_required = _approval_required("ai_graphic_designer", operation)
     payload = {
         "kind": "creative_asset_request",
         "operation": operation,
         "asset_id": asset_id,
         "version": 1,
         "status": "draft",
+        "approval_required": approval_required,
+        "approval_status": "pending" if approval_required else "not_required",
         "prompt": arguments["prompt"],
         "brand_context": arguments.get("brand_context"),
         "provider_requested": arguments.get("provider"),
@@ -182,6 +189,8 @@ async def execute_creative(arguments: dict[str, Any], **context: Any) -> dict[st
         "asset_id": asset_id,
         "version": 1,
         "status": "draft",
+        "approval_required": approval_required,
+        "approval_status": "pending" if approval_required else "not_required",
         "provider_execution": "not_configured",
     }
 
