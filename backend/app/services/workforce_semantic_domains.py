@@ -288,14 +288,37 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
     }
 
 async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
+    """Persist tenant-scoped website work; deployment never executes without a provider."""
     tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
-    payload = {"kind": "website_change", "operation": operation, "site": arguments["site"], "spec": arguments.get("spec", {}), "created_at": _now()}
-    artifact = _save_json(tenant_id, f"website-{operation}.json", payload)
+    change_id = str(uuid.uuid4())
     approval_required = _approval_required("ai_website_employee", operation)
+    provider_execution = "not_configured"
+    status = "proposal" if approval_required else "staged"
+    approval_status = "pending" if approval_required else "not_required"
+    payload = {
+        "kind": "website_change",
+        "change_id": change_id,
+        "operation": operation,
+        "version": 1,
+        "status": status,
+        "approval_required": approval_required,
+        "approval_status": approval_status,
+        "site": arguments["site"],
+        "spec": arguments.get("spec", {}),
+        "provider_execution": provider_execution,
+        "external_side_effect": operation in {"website_deploy", "website_rollback"},
+        "provenance": {"tenant_id": tenant_id, "created_at": _now(), "provider_execution": provider_execution},
+    }
+    artifact = _save_json(tenant_id, f"website-{change_id}.json", payload)
     return {
         **artifact,
+        "change_id": change_id,
         "operation": operation,
-        "status": "proposal" if approval_required else "staged",
+        "version": 1,
+        "status": status,
         "approval_required": approval_required,
+        "approval_status": approval_status,
+        "provider_execution": provider_execution,
+        "external_side_effect": operation in {"website_deploy", "website_rollback"},
     }
