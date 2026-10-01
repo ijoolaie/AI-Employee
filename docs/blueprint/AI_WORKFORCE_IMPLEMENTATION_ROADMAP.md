@@ -467,3 +467,20 @@ GitHub Actions run `36883693486` / job `110441538977` completed successfully. Ev
 Certification output included `WORKFORCE W4 SOCIAL GOVERNANCE REAL-STACK E2E PASS`.
 
 This closes the **W4 governance/provider-boundary checkpoint**, but does **not** close the full W4 exit criterion. Actual Instagram connect/publish/schedule/DM execution still requires a tenant-owned provider integration and a sandbox/test-capable provider certification. W4 full provider execution is therefore **NOT VERIFIED**.
+
+
+## W5 real-stack governance checkpoint — 2026-10-01
+
+W5 Sales & Lead Generation now has dedicated real-stack governance evidence through `backend/scripts/e2e_workforce_w5_sales_governance_verify.py` and `.github/workflows/workforce-w5-e2e.yml`.
+
+GitHub Actions run `36884126600` / job `110442982171` completed successfully. Evidence verified:
+- Sales Employee governed research Run.
+- Durable tenant-scoped sales artifacts with provenance.
+- Approved external-outreach proposal remains a proposal and does not execute externally.
+- Cross-tenant sales artifact read denial.
+- External outreach remains approval-gated.
+- CRM/outreach provider execution remains explicitly `not_configured`.
+
+Certification output included `WORKFORCE W5 SALES GOVERNANCE REAL-STACK E2E PASS`.
+
+This closes the **W5 governance/provider-boundary checkpoint**, but does **not** close the full W5 exit criterion. Actual CRM integration, outreach delivery, response ingestion, and follow-up execution require tenant-owned providers and separate real-stack evidence. Full W5 external execution is therefore **NOT VERIFIED**.
