@@ -375,6 +375,12 @@ The W0–W6 engineering pass has started on mainline after the v1.4.11 certified
 - Existing real-stack workforce semantic certification remains the evidence path for runtime identity, role binding, stale-contract denial, approval denial and tenant isolation.
 - W1 is not declared fully closed until the complete CEO → assignment → specialist → verification → CEO-report scenario is recorded as dedicated real-stack evidence.
 
+### W2 verification checkpoint — 2026-10-01
+
+W2 semantic foundation is now **VERIFIED on the real stack** for its governed artifact and approval/provider-boundary behavior. GitHub Actions run `36832544726` / job `110272236014` passed. Evidence covers tenant-scoped workspace create/list/edit, cross-tenant isolation, durable unique change sets, fail-closed test/lint/build provider boundaries, and approval-gated deployment proposals.
+
+This does **not** close the live engineering-provider gap: Git hosting, CI execution, deployment, and health providers remain explicitly `not_configured` until a provider adapter is implemented and separately evidenced.
+
 ### W2 — semantic Engineering Workspace foundation implemented
 Added governed engineering operations for tenant-scoped workspace artifacts, change-set creation, test/lint/build staging, Git/CI proposals, deployment proposal, health check and rollback proposal.
 - Workspace artifacts are tenant-namespaced through the existing storage boundary.
