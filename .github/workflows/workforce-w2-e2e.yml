@@ -9,6 +9,8 @@ on:
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/ai/tool_registry.py"
       - "backend/app/services/storage.py"
+      - "backend/tests/test_workforce_engineering_providers.py"
+      - "backend/app/services/workforce_engineering_providers.py"
       - ".github/workflows/workforce-w2-e2e.yml"
   pull_request:
     branches: [main]
@@ -62,7 +64,7 @@ jobs:
       - name: Compile W2 sources
         working-directory: backend
         run: |
-          python -m py_compile             app/services/workforce_semantic_domains.py             scripts/e2e_workforce_w2_engineering_verify.py
+          python -m py_compile app/services/workforce_semantic_domains.py app/services/workforce_engineering_providers.py scripts/e2e_workforce_w2_engineering_verify.py tests/test_workforce_engineering_providers.py
 
       - name: Run W2 semantic certification
         working-directory: backend
@@ -74,4 +76,5 @@ jobs:
           alembic upgrade head
           alembic check
           test "$(alembic heads | grep -c "(head)")" -eq 1
+          pytest -q tests/test_workforce_engineering_providers.py
           python scripts/e2e_workforce_w2_engineering_verify.py
