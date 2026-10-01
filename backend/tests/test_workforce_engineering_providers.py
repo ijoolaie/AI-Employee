@@ -135,6 +135,13 @@ def test_github_readonly_provider_reads_operator_configured_status_without_execu
     assert captured["url"] == "https://api.github.com/repos/ijoolaie/AI-Employee/commits/abc123/status"
     assert captured["authorization"] == "Bearer secret-token"
     assert captured["timeout"] == 2.5
+    invalid = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "abc123"},
+    )
+    assert invalid.status == "not_configured"
+    assert "40-character hexadecimal" in invalid.reason
 
 
 def test_github_readonly_provider_is_operator_configured_and_read_only(monkeypatch):
