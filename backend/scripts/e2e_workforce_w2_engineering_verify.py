@@ -66,10 +66,14 @@ async def run() -> None:
         assert result["provider_execution"] == "not_configured"
 
     deploy = await execute_engineering({"_operation": "deploy_proposal"}, tenant_id="w2-tenant-a")
-    contract = await execute_engineering({"_operation": "workspace_test"}, tenant_id="w2-tenant-a")
-    assert contract["provider"]["provider"] == "contract-test"
-    assert contract["provider_execution"] == "contract_verified"
-    assert contract["executed"] is False
+    runtime_override = await execute_engineering(
+        {"_operation": "workspace_test"},
+        tenant_id="w2-tenant-a",
+        engineering_provider="contract-test",
+    )
+    assert runtime_override["provider"]["provider"] == "none"
+    assert runtime_override["provider_execution"] == "not_configured"
+    assert runtime_override["executed"] is False
     assert deploy["status"] == "proposal"
     assert deploy["approval_required"] is True
     assert deploy["external_side_effect"] is True
