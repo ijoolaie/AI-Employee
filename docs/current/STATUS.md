@@ -221,6 +221,22 @@ The W2 engineering domain now routes provider-bound operations through an explic
 A provider-selection flaw found during continuation review has been corrected. Runtime Workforce semantic execution no longer accepts an `engineering_provider` value from tool execution context. Engineering provider selection is now operator-owned through `ENGINEERING_PROVIDER_NAME` / application settings, with the default remaining `none`. The deterministic `contract-test` provider remains available for controlled test/bootstrap use, but is not selectable by an agent through semantic tool arguments.
 
 This closes the provider-selection control boundary; it does **not** create a live Git/CI/deployment provider. Live external engineering execution remains **NOT CONFIGURED / NOT VERIFIED**.
+## W2 read-only GitHub provider — 2026-10-01
+
+A first real provider adapter is now present, but remains fail-closed unless explicitly configured by the operator:
+
+- provider: `github-readonly`;
+- supported operation: `ci_status` only;
+- tenant-to-repository mapping is operator-owned through application settings;
+- GitHub token and timeout are operator-owned settings;
+- repository URL, token, headers, and provider selection cannot be supplied by workforce tool input;
+- the adapter never reports external execution; it returns read-only verification or an explicit configuration/provider error;
+- branch, commit, PR, deployment, health, and rollback execution remain unavailable.
+
+A follow-up review also corrected W2 semantic metadata so `git_branch` is explicitly classified as an external side effect and approval-gated.
+
+This is post-v1.4.11 mainline work. No live GitHub provider has been certified yet.
+
 ## W2 provider and engineering-side-effect hardening — 2026-10-01
 
 Continuation review found two additional control-boundary defects and corrected them:
