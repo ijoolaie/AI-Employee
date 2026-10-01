@@ -17,6 +17,7 @@ on:
     paths:
       - 'backend/app/services/ai_workforce_roles.py'
       - 'backend/app/services/workforce_semantic_domains.py'
+      - 'backend/app/services/storage.py'
       - 'backend/app/ai/tool_registry.py'
       - 'backend/scripts/workforce_binding_inventory.py'
       - 'backend/tests/test_workforce_w0_inventory.py'
