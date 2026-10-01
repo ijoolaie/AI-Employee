@@ -79,7 +79,7 @@ async def run() -> None:
         tenant_id="w2-tenant-a",
         engineering_provider="contract-test",
     )
-    assert runtime_override["provider"]["provider"] == "none"
+    assert runtime_override["provider"]["provider"] == "github-readonly"
     assert runtime_override["provider_execution"] == "not_configured"
     assert runtime_override["executed"] is False
     assert deploy["status"] == "proposal"
