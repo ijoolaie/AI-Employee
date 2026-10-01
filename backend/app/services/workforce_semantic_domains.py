@@ -196,18 +196,58 @@ async def execute_creative(arguments: dict[str, Any], **context: Any) -> dict[st
 
 
 async def execute_social(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
-    _tenant(arguments, context)
+    """Create a tenant-scoped social operation record without faking provider execution.
+
+    Read/analysis operations remain non-external requests. Publication, channel
+    connection, scheduling, and DM responses are durable proposals and never
+    execute against Instagram until a tenant-owned provider is configured and
+    the governed approval path authorizes the action.
+    """
+    tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
     approval_required = _approval_required("ai_social_media", operation)
-    external = operation in {"connect_channel", "publish_post", "publish_reel", "publish_story", "schedule_publication", "respond_to_dm"}
-    return {
+    external = operation in {
+        "connect_channel", "publish_post", "publish_reel", "publish_story",
+        "schedule_publication", "respond_to_dm",
+    }
+    social_id = str(uuid.uuid4())
+    provider = arguments.get("provider", "instagram")
+    provider_execution = "not_configured"
+    status = "proposal" if external else "request"
+    approval_status = "pending" if approval_required else "not_required"
+    payload = {
+        "kind": "social_operation",
+        "social_id": social_id,
         "operation": operation,
-        "status": "proposal" if external else "ready",
-        "provider": arguments.get("provider", "instagram"),
+        "version": 1,
+        "status": status,
         "approval_required": approval_required,
+        "approval_status": approval_status,
+        "channel": arguments.get("channel", "instagram"),
+        "content_id": arguments.get("content_id"),
+        "message": arguments.get("message"),
+        "provider_requested": provider,
+        "provider_execution": provider_execution,
+        "external_side_effect": external,
+        "provenance": {
+            "tenant_id": tenant_id,
+            "created_at": _now(),
+            "provider_execution": provider_execution,
+        },
+    }
+    artifact = _save_json(tenant_id, f"social-{social_id}.json", payload)
+    return {
+        **artifact,
+        "social_id": social_id,
+        "operation": operation,
+        "version": 1,
+        "status": status,
+        "approval_required": approval_required,
+        "approval_status": approval_status,
+        "provider": provider,
+        "provider_execution": provider_execution,
         "external_side_effect": external,
     }
-
 
 async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     _tenant(arguments, context)
