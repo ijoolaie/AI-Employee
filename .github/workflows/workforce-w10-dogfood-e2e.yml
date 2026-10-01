@@ -1,0 +1,74 @@
+name: Workforce W10 Internal Company Dogfood E2E
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "backend/app/ai/tool_registry.py"
+      - "backend/app/services/ai_workforce_roles.py"
+      - "backend/app/services/workforce_semantic_domains.py"
+      - "backend/scripts/e2e_workforce_w10_dogfood_verify.py"
+      - ".github/workflows/workforce-w10-dogfood-e2e.yml"
+  pull_request:
+    paths:
+      - "backend/app/ai/tool_registry.py"
+      - "backend/app/services/ai_workforce_roles.py"
+      - "backend/app/services/workforce_semantic_domains.py"
+      - "backend/scripts/e2e_workforce_w10_dogfood_verify.py"
+      - ".github/workflows/workforce-w10-dogfood-e2e.yml"
+
+concurrency:
+  group: workforce-w10-dogfood-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  w10-real-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Build and start W10 stack
+        run: |
+          timeout 12m docker compose up -d --build postgres redis e2e-market-provider storage-init api worker worker-outbox beat
+
+      - name: Prepare stack database
+        run: |
+          timeout 5m docker compose exec -T api alembic upgrade head
+          timeout 3m docker compose exec -T api alembic check
+          timeout 3m docker compose exec -T api sh -lc 'test "$(alembic heads | wc -l)" = "1"'
+
+      - name: Wait for application health
+        run: |
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8000/health/dependencies >/dev/null; then
+              echo "API HEALTH PASS"
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose ps
+          docker compose logs --tail=200 api worker
+          exit 1
+
+      - name: Compile W10 sources
+        run: |
+          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py
+
+      - name: Run W10 real-stack certification
+        run: |
+          timeout 8m docker compose exec -T api python scripts/e2e_workforce_w10_dogfood_verify.py
+
+      - name: Failure diagnostics
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --tail=300 api worker worker-outbox beat || true
+
+      - name: Shutdown
+        if: always()
+        run: |
+          timeout 3m docker compose down -v --remove-orphans || true
