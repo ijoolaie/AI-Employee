@@ -221,3 +221,15 @@ The W2 engineering domain now routes provider-bound operations through an explic
 A provider-selection flaw found during continuation review has been corrected. Runtime Workforce semantic execution no longer accepts an `engineering_provider` value from tool execution context. Engineering provider selection is now operator-owned through `ENGINEERING_PROVIDER_NAME` / application settings, with the default remaining `none`. The deterministic `contract-test` provider remains available for controlled test/bootstrap use, but is not selectable by an agent through semantic tool arguments.
 
 This closes the provider-selection control boundary; it does **not** create a live Git/CI/deployment provider. Live external engineering execution remains **NOT CONFIGURED / NOT VERIFIED**.
+## W2 provider and engineering-side-effect hardening — 2026-10-01
+
+Continuation review found two additional control-boundary defects and corrected them:
+
+- all provider-bound Engineering operations now resolve through the operator-owned ENGINEERING_PROVIDER_NAME setting; runtime engineering_provider context is ignored;
+- the W2 E2E no longer expects the deterministic contract-test provider in the default real-stack environment and explicitly verifies that runtime provider override is rejected;
+- git_branch is now treated as an external side effect and is approval-gated;
+- workforce_git_branch and workforce_git_commit_proposal registry metadata now matches the authoritative role contract (external_side_effects=true, requires_approval=true);
+- the W2 pull-request gate now triggers on provider/configuration/test changes as well as semantic-domain changes.
+
+This remains post-v1.4.11 mainline engineering. Live GitHub/CI/deployment execution remains NOT CONFIGURED / NOT VERIFIED.
+
