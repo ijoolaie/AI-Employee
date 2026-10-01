@@ -90,6 +90,7 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
             "status": "staged",
             "executed": False,
             "provider_required": True,
+            "provider_execution": "not_configured",
             "reason": "Execution provider is not configured in this environment",
         }
     if operation in {"git_branch", "git_commit_proposal", "git_pr_proposal", "ci_status", "deploy_proposal", "health_check", "rollback_proposal"}:
@@ -98,6 +99,7 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
             "operation": operation,
             "status": "proposal",
             "requires_provider": True,
+            "provider_required": True,
             "provider_execution": "not_configured",
             "approval_required": approval_required,
             "external_side_effect": operation in {"git_commit_proposal", "deploy_proposal", "rollback_proposal"},
