@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import time
+import traceback
 
 # Allow direct execution from /app/scripts as well as module execution.
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -448,6 +449,10 @@ def main():
         asyncio.run(run())
     except AssertionError as exc:
         print(f"WORKFORCE W1 CONTROL-PLANE REAL-STACK E2E FAIL: {exc}", file=sys.stderr)
+        raise SystemExit(1)
+    except Exception as exc:
+        print(f"WORKFORCE W1 CONTROL-PLANE REAL-STACK E2E ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
+        traceback.print_exc()
         raise SystemExit(1)
 
 
