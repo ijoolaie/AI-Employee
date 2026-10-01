@@ -37,6 +37,9 @@ async def test_w4_social_external_actions_are_approval_gated():
     result = await execute_social({"_operation": "publish_post", "channel": "instagram"}, tenant_id="tenant-a")
     assert result["approval_required"] is True
     assert result["external_side_effect"] is True
+    connect = await execute_social({"_operation": "connect_channel", "channel": "instagram"}, tenant_id="tenant-a")
+    assert connect["approval_required"] is True
+    assert connect["external_side_effect"] is True
 
 
 @pytest.mark.asyncio
