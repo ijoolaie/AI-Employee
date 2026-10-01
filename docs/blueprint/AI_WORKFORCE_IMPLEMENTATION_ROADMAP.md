@@ -537,3 +537,19 @@ GitHub Actions run `36886034231` / job `110449446757` completed successfully. Ev
 Certification output included `WORKFORCE W5 SALES GOVERNANCE REAL-STACK E2E PASS`.
 
 W5 is therefore **VERIFIED on the real stack** for its current governed Sales & Lead Generation scope. This is post-v1.4.11 mainline evidence and does not modify the immutable certified release.
+
+
+## W7 real-stack certification checkpoint — 2026-10-01
+
+W7 SEO & Growth now has a dedicated governed semantic domain, first-party role contract, canonical SEO/growth tools, and real-stack certification through `backend/scripts/e2e_workforce_w7_seo_growth_verify.py` and `.github/workflows/workforce-w7-e2e.yml`.
+
+GitHub Actions run `36887142892` / job `110453250609` completed successfully. Evidence verified:
+- SEO & Growth Employee governed research Run.
+- durable tenant-scoped SEO/growth artifact with provenance.
+- SEO experiment proposal is approval-gated and requires an exact matching approved tool request.
+- cross-tenant artifact access is denied.
+- search/growth provider execution remains explicitly `not_configured`; no search-engine impact is claimed.
+
+Certification output included `WORKFORCE W7 SEO GROWTH REAL-STACK E2E PASS`.
+
+W7 is therefore **VERIFIED on the real stack** for its current governed SEO & Growth scope. This is post-v1.4.11 mainline evidence and does not modify the immutable certified release.
