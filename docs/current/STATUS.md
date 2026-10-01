@@ -207,3 +207,10 @@ The W1 evidence path also required two mainline corrections discovered by real-s
 W2 now has dedicated real-stack semantic evidence. GitHub Actions run `36832544726`, job `110272236014`, completed successfully after Alembic migration checks. The certification verified tenant-scoped workspace create/list/edit, cross-tenant read rejection, durable unique change-set artifacts, provider fail-closed behavior for test/lint/build, and approval-gated deployment proposals.
 
 The W2 change-set implementation was corrected so each change set receives a unique durable artifact key instead of overwriting a shared `change-set.json`. This is semantic/provider-boundary evidence only: no live Git hosting, CI, deployment, or health provider is claimed.
+
+
+## W2 engineering provider boundary — 2026-10-01
+
+The W2 engineering domain now routes provider-bound operations through an explicit named provider interface at `backend/app/services/workforce_engineering_providers.py`. Production/default resolution is the fail-closed `none` provider; the deterministic `contract-test` adapter is available only for non-mutating contract verification. Unknown provider names fail closed. The semantic domain exposes provider identity and execution state instead of implying that Git, CI, deployment, or health operations executed.
+
+**Evidence boundary:** provider-interface/contract behavior is implemented and covered by focused tests plus the W2 real-stack harness. A live Git hosting, CI, deployment, or health provider is still **NOT CONFIGURED / NOT VERIFIED** because no operator-controlled external credentials/endpoints are present. No generic shell execution was introduced.
