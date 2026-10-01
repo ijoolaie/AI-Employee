@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "backend/scripts/e2e_workforce_w2_engineering_verify.py"
+      - "backend/scripts/e2e_workforce_w2_git_branch_live.py"
       - "backend/app/services/workforce_semantic_domains.py"
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/ai/tool_registry.py"
