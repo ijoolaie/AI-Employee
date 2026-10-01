@@ -76,6 +76,10 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://aiep:aiep@localhost:5432/aiep
           DATABASE_URL_SYNC: postgresql+psycopg2://aiep:aiep@localhost:5432/aiep
           STORAGE_DIR: ./var/storage
+          ENGINEERING_PROVIDER_NAME: github-readonly
+          ENGINEERING_GITHUB_REPOSITORIES: '{"w2-tenant-a":"ijoolaie/AI-Employee"}'
+          ENGINEERING_GITHUB_TOKEN: ${{ github.token }}
+          ENGINEERING_GITHUB_TIMEOUT_SECONDS: "10"
         run: |
           alembic upgrade head
           alembic check
