@@ -121,6 +121,26 @@ def cleanup() -> None:
     print("W2 LIVE GIT BRANCH CLEANUP PASS")
 
 
+def cleanup_if_present() -> None:
+    req = Request(
+        f"https://api.github.com/repos/{REPO}/git/refs/heads/{BRANCH}",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {TOKEN}",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "AI-Employee-W2-Live-Certification",
+        },
+        method="GET",
+    )
+    try:
+        with urlopen(req, timeout=10):
+            cleanup()
+    except HTTPError as exc:
+        if exc.code == 404:
+            print("W2 LIVE GIT BRANCH CLEANUP SKIPPED (REF ABSENT)")
+            return
+        raise RuntimeError(f"Unable to verify certification branch cleanup target: HTTP {exc.code}") from exc
+
 async def main() -> None:
     assert_branch_absent()
     tenant_id, instance_id, run_id, approval_id, tool_call_id = await prepare()
@@ -136,8 +156,11 @@ async def main() -> None:
         print("W2 LIVE GIT BRANCH PROVIDER WRITE PASS")
         print(f"W2 LIVE GIT BRANCH CREATED {BRANCH}")
     finally:
-        if result and result.get("provider_execution") == "executed" and result.get("executed") is True:
-            cleanup()
+        # Cleanup is existence-based, not result-based. A network/DB exception can
+        # happen after GitHub has created the ref but before execute() returns.
+        # The preflight proves this unique certification ref was absent, so deleting
+        # it here cannot remove an unrelated pre-existing branch.
+        cleanup_if_present()
 
 if __name__ == "__main__":
     asyncio.run(main())
