@@ -55,7 +55,7 @@ jobs:
       - name: Build and start W1 stack
         timeout-minutes: 15
         run: |
-          docker compose up -d --build postgres redis e2e-market-provider storage-init api worker
+          docker compose up -d --build postgres redis e2e-market-provider storage-init api worker worker-outbox beat
 
       - name: Prepare stack database
         timeout-minutes: 5
