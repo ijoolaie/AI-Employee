@@ -484,3 +484,20 @@ GitHub Actions run `36884126600` / job `110442982171` completed successfully. Ev
 Certification output included `WORKFORCE W5 SALES GOVERNANCE REAL-STACK E2E PASS`.
 
 This closes the **W5 governance/provider-boundary checkpoint**, but does **not** close the full W5 exit criterion. Actual CRM integration, outreach delivery, response ingestion, and follow-up execution require tenant-owned providers and separate real-stack evidence. Full W5 external execution is therefore **NOT VERIFIED**.
+
+
+## W6 real-stack governance checkpoint — 2026-10-01
+
+W6 Website Employee now has dedicated real-stack governance evidence through `backend/scripts/e2e_workforce_w6_website_governance_verify.py` and `.github/workflows/workforce-w6-e2e.yml`.
+
+GitHub Actions run `36884770848` / job `110445143994` completed successfully. Evidence verified:
+- Website Employee governed Run.
+- Durable unique tenant-scoped website change artifact.
+- Approved deployment remains an auditable proposal.
+- Cross-tenant website artifact read denial.
+- Deployment remains approval-gated.
+- Website deployment provider execution remains explicitly `not_configured`.
+
+Certification output included `WORKFORCE W6 WEBSITE GOVERNANCE REAL-STACK E2E PASS`.
+
+This closes the **W6 governance/provider-boundary checkpoint**, but does **not** close the full W6 exit criterion. Actual repository implementation/deployment/health/rollback execution requires the W2 provider chain to be configured and separately evidenced. Full W6 external execution is therefore **NOT VERIFIED**.
