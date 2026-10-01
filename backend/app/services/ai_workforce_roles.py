@@ -215,6 +215,22 @@ WORKFORCE_ROLES: tuple[WorkforceRole, ...] = (
         ),
     ),
     WorkforceRole(
+        code="ai_qa_devops",
+        name="AI QA & DevOps Employee",
+        name_fa="کارمند تضمین کیفیت و دواپس هوش مصنوعی",
+        category="quality_devops",
+        supervisor="ai_internal_manager",
+        purpose="Validate software quality, CI health, release readiness, incident evidence, and governed recovery readiness without bypassing deployment controls.",
+        approval_class="routine_delegable",
+        allowed_routine_operations=("qa_test_plan","regression_analysis","ci_health_check","release_readiness","incident_diagnostics","rollback_readiness"),
+        approval_required_operations=("deployment_proposal","rollback_proposal","production_change_proposal"),
+        capability_contract=_contracts(
+            ["qa_test_plan","regression_analysis","ci_health_check","release_readiness","incident_diagnostics","rollback_readiness"],
+            ["deployment_proposal","rollback_proposal","production_change_proposal"],
+            {op:(f"workforce_{op}",) for op in ("qa_test_plan","regression_analysis","ci_health_check","release_readiness","incident_diagnostics","rollback_readiness","deployment_proposal","rollback_proposal","production_change_proposal")}
+        ),
+    ),
+    WorkforceRole(
         code="ai_website_employee", name="AI Website Employee", name_fa="کارمند وب‌سایت هوش مصنوعی",
         category="web_operations", supervisor="ai_internal_manager",
         purpose="Prepare, verify, and operate governed website changes through the Engineering Workspace.", approval_class="routine_delegable",
@@ -265,6 +281,7 @@ WORKFORCE_ROLE_TEMPLATES: tuple[WorkforceRoleTemplate, ...] = (
     WorkforceRoleTemplate(slug="ai-sales-lead-generation", role_code="ai_sales_lead_generation", name="AI Sales & Lead Generation Employee", name_fa="کارمند فروش و تولید سرنخ هوش مصنوعی", description="Researches and prepares governed commercial workflows.", description_fa="گردش‌کارهای تجاری حاکمیت‌شده را پژوهش و آماده می‌کند."),
     WorkforceRoleTemplate(slug="ai-seo-growth-employee", role_code="ai_seo_growth_employee", name="AI SEO & Growth Employee", name_fa="کارمند سئو و رشد هوش مصنوعی", description="Researches organic growth and prepares governed SEO experiments.", description_fa="رشد ارگانیک را پژوهش و آزمایش‌های سئو را به‌صورت حاکمیت‌شده آماده می‌کند."),
     WorkforceRoleTemplate(slug="ai-customer-success", role_code="ai_customer_success", name="AI Customer Success & Support Employee", name_fa="کارمند موفقیت مشتری و پشتیبانی هوش مصنوعی", description="Triage customer context and prepare governed support workflows.", description_fa="زمینه مشتری را بررسی و گردش‌کارهای حاکمیت‌شده پشتیبانی را آماده می‌کند."),
+    WorkforceRoleTemplate(slug="ai-qa-devops", role_code="ai_qa_devops", name="AI QA & DevOps Employee", name_fa="کارمند تضمین کیفیت و دواپس هوش مصنوعی", description="Validates quality, CI health, release readiness, incident evidence, and governed recovery readiness.", description_fa="کیفیت، سلامت CI، آمادگی انتشار، شواهد رخداد و آمادگی بازیابی را به‌صورت حاکمیت‌شده بررسی می‌کند."),
     WorkforceRoleTemplate(slug="ai-website-employee", role_code="ai_website_employee", name="AI Website Employee", name_fa="کارمند وب‌سایت هوش مصنوعی", description="Operates governed website delivery workflows.", description_fa="گردش‌کارهای حاکمیت‌شده ساخت و بهره‌برداری وب‌سایت را انجام می‌دهد."),
 )
 
