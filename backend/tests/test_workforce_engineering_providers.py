@@ -34,7 +34,11 @@ def test_unknown_provider_fails_closed():
 
 
 @pytest.mark.asyncio
-async def test_engineering_domain_exposes_provider_boundary():
+async def test_engineering_domain_exposes_provider_boundary(monkeypatch):
+    from app.services import workforce_engineering_providers as providers
+    class FakeSettings:
+        engineering_provider_name = "none"
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
     result = await execute_engineering({"_operation": "workspace_test"}, tenant_id="tenant-a")
     assert result["provider"]["provider"] == "none"
     assert result["provider_execution"] == "not_configured"
@@ -42,7 +46,11 @@ async def test_engineering_domain_exposes_provider_boundary():
 
 
 @pytest.mark.asyncio
-async def test_real_provider_path_remains_not_configured():
+async def test_real_provider_path_remains_not_configured(monkeypatch):
+    from app.services import workforce_engineering_providers as providers
+    class FakeSettings:
+        engineering_provider_name = "none"
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
     result = await execute_engineering(
         {"_operation": "deploy_proposal"},
         tenant_id="tenant-a",
