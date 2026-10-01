@@ -2183,6 +2183,45 @@ def build_default_registry() -> ToolRegistry:
 
     registry.register(
         RegisteredTool(
+            name="workforce_external_outreach",
+            description="Governed workforce semantic operation: external_outreach.",
+            input_schema={"type":"object","properties":{"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"message":{"type":"string","maxLength":10000},"provider":{"type":"string","maxLength":100},"channel":{"type":"string","maxLength":255}},"additionalProperties":False},
+            handler=lambda arguments, op="external_outreach", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_contractual_commitment",
+            description="Governed workforce semantic operation: contractual_commitment.",
+            input_schema={"type":"object","properties":{"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"message":{"type":"string","maxLength":10000},"provider":{"type":"string","maxLength":100},"channel":{"type":"string","maxLength":255}},"additionalProperties":False},
+            handler=lambda arguments, op="contractual_commitment", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_material_commercial_action",
+            description="Governed workforce semantic operation: material_commercial_action.",
+            input_schema={"type":"object","properties":{"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"message":{"type":"string","maxLength":10000},"provider":{"type":"string","maxLength":100},"channel":{"type":"string","maxLength":255}},"additionalProperties":False},
+            handler=lambda arguments, op="material_commercial_action", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
             name="workforce_lead_research",
             description="Governed workforce semantic operation: lead_research.",
             input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":False},
