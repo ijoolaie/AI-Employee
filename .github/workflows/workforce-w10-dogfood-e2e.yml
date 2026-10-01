@@ -73,4 +73,4 @@ jobs:
         run: |
           timeout 3m docker compose down -v --remove-orphans || true
 
-# W10 trigger reconciliation: run on mainline changes to the dogfood workflow.
+# W10 trigger reconciliation: certification rerun after sales-outreach schema fix.
