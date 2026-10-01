@@ -37,20 +37,6 @@ jobs:
   w2-real-stack:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: aiep
-          POSTGRES_PASSWORD: aiep
-          POSTGRES_DB: aiep
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U aiep -d aiep"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 20
     steps:
       - uses: actions/checkout@v4
 
@@ -81,6 +67,26 @@ jobs:
           ENGINEERING_GITHUB_TOKEN: ${{ github.token }}
           ENGINEERING_GITHUB_TIMEOUT_SECONDS: "10"
         run: |
+          set -euo pipefail
+          trap 'docker rm -f workforce-w2-postgres >/dev/null 2>&1 || true' EXIT
+          docker run -d --name workforce-w2-postgres \
+            -e POSTGRES_USER=aiep \
+            -e POSTGRES_PASSWORD=aiep \
+            -e POSTGRES_DB=aiep \
+            -p 5432:5432 \
+            --health-cmd='pg_isready -U aiep -d aiep' \
+            --health-interval=2s \
+            --health-timeout=2s \
+            --health-retries=30 \
+            postgres:16-alpine
+          for _ in $(seq 1 30); do
+            health="$(docker inspect -f '{{.State.Health.Status}}' workforce-w2-postgres)"
+            if [ "$health" = "healthy" ]; then
+              break
+            fi
+            sleep 2
+          done
+          test "$(docker inspect -f '{{.State.Health.Status}}' workforce-w2-postgres)" = "healthy"
           alembic upgrade head
           alembic check
           test "$(alembic heads | grep -c "(head)")" -eq 1
