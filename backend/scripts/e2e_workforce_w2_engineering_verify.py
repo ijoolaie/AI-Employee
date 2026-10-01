@@ -66,7 +66,7 @@ async def run() -> None:
         assert result["provider_execution"] == "not_configured"
 
     deploy = await execute_engineering({"_operation": "deploy_proposal"}, tenant_id="w2-tenant-a")
-    contract = await execute_engineering({"_operation": "workspace_test"}, tenant_id="w2-tenant-a", engineering_provider="contract-test")
+    contract = await execute_engineering({"_operation": "workspace_test"}, tenant_id="w2-tenant-a")
     assert contract["provider"]["provider"] == "contract-test"
     assert contract["provider_execution"] == "contract_verified"
     assert contract["executed"] is False
@@ -79,7 +79,7 @@ async def run() -> None:
     print("W2 DURABLE CHANGE-SET PASS")
     print("W2 PROVIDER FAIL-CLOSED PASS")
     print("W2 DEPLOY APPROVAL GATE PASS")
-    print("W2 PROVIDER CONTRACT BOUNDARY PASS")
+    print("W2 PROVIDER CONFIGURATION BOUNDARY PASS")
     print("WORKFORCE W2 ENGINEERING SEMANTIC REAL-STACK PASS")
 
 
