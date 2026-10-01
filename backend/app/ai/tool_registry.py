@@ -2377,6 +2377,21 @@ def build_default_registry() -> ToolRegistry:
             )
         )
 
+    for _w9_operation in ("qa_test_plan","regression_analysis","ci_health_check","release_readiness","incident_diagnostics","rollback_readiness","deployment_proposal","rollback_proposal","production_change_proposal"):
+        _w9_external = _w9_operation.endswith("_proposal")
+        registry.register(
+            RegisteredTool(
+                name=f"workforce_{_w9_operation}",
+                description=f"Governed W9 QA and DevOps operation: {_w9_operation}.",
+                input_schema={"type":"object","properties":{"repository":{"type":"string","maxLength":500},"commit_sha":{"type":"string","maxLength":100},"test_scope":{"type":"string","maxLength":2000},"finding":{"type":"string","maxLength":5000},"evidence":{"type":"array","items":{"type":"string","maxLength":3000},"maxItems":100},"recommendation":{"type":"string","maxLength":5000},"provider":{"type":"string","maxLength":100}},"additionalProperties":False},
+                handler=lambda arguments, db=None, tenant_id=None, agent_instance_id=None, op=_w9_operation, fn=workforce_semantic_domains.execute_qa_devops: fn({**arguments, "_operation": op}, db=db, tenant_id=tenant_id, agent_instance_id=agent_instance_id),
+                side_effects=_w9_external,
+                external_side_effects=_w9_external,
+                required_permission="run.execute",
+                requires_approval=_w9_external,
+            )
+        )
+
     registry.register(
         RegisteredTool(
             name="workforce_website_requirements",
