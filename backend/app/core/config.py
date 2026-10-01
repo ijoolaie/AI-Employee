@@ -222,6 +222,10 @@ class Settings(BaseSettings):
     market_data_provider_api_key: str | None = None
     market_data_provider_timeout_seconds: float = 10.0
 
+    # Engineering provider selection is operator-owned; workforce tool input
+    # must never be able to select an external provider.
+    engineering_provider_name: str = "none"
+
     @property
     def stripe_enabled(self) -> bool:
         return bool(self.stripe_secret_key and self.stripe_webhook_secret)
