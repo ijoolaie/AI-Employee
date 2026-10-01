@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from app.core.config import get_settings
+
 ENGINEERING_PROVIDER_OPERATIONS = frozenset(
     {
         "workspace_test", "workspace_lint", "workspace_build",
@@ -53,7 +55,13 @@ class ContractTestEngineeringProvider:
         return ProviderResult(self.name, operation, False, "contract_verified", "Deterministic provider contract; no external side effect is performed")
 
 def get_engineering_provider(*, provider_name: str | None = None) -> EngineeringProvider:
-    """Resolve an explicit provider name; unknown names fail closed."""
+    """Resolve an explicit provider name; unknown names fail closed.
+
+    ``provider_name`` is intended for deterministic tests and controlled
+    bootstrap code. Runtime semantic execution must use
+    ``get_configured_engineering_provider`` so the agent cannot select its own
+    external provider.
+    """
     name = (provider_name or "none").strip().lower()
     if name == "none":
         return UnconfiguredEngineeringProvider()
@@ -63,3 +71,8 @@ def get_engineering_provider(*, provider_name: str | None = None) -> Engineering
 
 def provider_contract_snapshot(provider: EngineeringProvider) -> dict[str, Any]:
     return {"provider": provider.name, "operations": sorted(provider.operations), "external_execution": provider.name != "contract-test"}
+
+def get_configured_engineering_provider() -> EngineeringProvider:
+    """Resolve the operator-configured runtime provider; never from tool input."""
+    name = get_settings().engineering_provider_name
+    return get_engineering_provider(provider_name=name)
