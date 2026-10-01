@@ -501,3 +501,21 @@ GitHub Actions run `36884770848` / job `110445143994` completed successfully. Ev
 Certification output included `WORKFORCE W6 WEBSITE GOVERNANCE REAL-STACK E2E PASS`.
 
 This closes the **W6 governance/provider-boundary checkpoint**, but does **not** close the full W6 exit criterion. Actual repository implementation/deployment/health/rollback execution requires the W2 provider chain to be configured and separately evidenced. Full W6 external execution is therefore **NOT VERIFIED**.
+
+
+## W4 real-stack certification checkpoint — 2026-10-01
+
+W4 Social/Instagram governance now has dedicated real-stack evidence through `backend/scripts/e2e_workforce_w4_social_governance_verify.py` and `.github/workflows/workforce-w4-e2e.yml`.
+
+GitHub Actions run `36885609693` / job `110448029552` completed successfully. Evidence verified:
+- Social Employee governed read/analytics Run.
+- tenant-scoped durable social artifact and provenance.
+- approved publication proposal remains an internal proposal rather than an external publication.
+- publication approval state is pending and governed by the Social role contract.
+- cross-tenant artifact access is denied.
+- Instagram provider execution remains explicitly `not_configured`.
+- no Instagram external side effect is claimed or executed.
+
+Certification output included `WORKFORCE W4 SOCIAL GOVERNANCE REAL-STACK E2E PASS`.
+
+W4 is therefore **VERIFIED on the real stack** for its current governed Social/Instagram scope. This is post-v1.4.11 mainline evidence and does not modify the immutable certified release.
