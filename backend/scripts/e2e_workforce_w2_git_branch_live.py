@@ -12,80 +12,71 @@ from urllib.request import Request, urlopen
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
-from app.models.employee import EmployeeVersion
+from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.agent_instance import AgentInstance
-from app.models.agent_template import AgentTemplate
+from app.models.agent_template import AgentTemplate, AgentTemplateStatus
 from app.models.tool_approval import ToolApprovalRequest
 from app.models.user import User
-from app.services import agent_tool_governance
+from app.models.tenant import Tenant
+from app.models.agent_definition import AgentDefinition
+from app.models.agent_identity import AgentIdentity
+from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
+from app.models.agent_runtime_binding import AgentRuntimeBinding
+from app.services import agent_tool_governance, edition_service, license_service
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
-from app.services.ai_workforce_roles import get_workforce_capability_contract
 from app.ai.tool_registry import registry
-from app.core.exceptions import ValidationAppError
 
 REPO = "ijoolaie/AI-Employee"
 TOKEN = os.environ["ENGINEERING_GITHUB_TOKEN"]
 SOURCE_SHA = os.environ["GITHUB_SHA"]
 BRANCH = os.environ.get("W2_LIVE_BRANCH", f"ai-cert/w2-git-branch-{os.environ.get('GITHUB_RUN_ID', uuid.uuid4().hex[:8])}")
-TENANT_ID = uuid.UUID(os.environ["W2_LIVE_TENANT_ID"])
 
 
-async def prepare() -> tuple[uuid.UUID, uuid.UUID, uuid.UUID, str]:
+
+async def prepare() -> tuple[uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID, str]:
+    suffix = f"{os.environ.get('GITHUB_RUN_ID', 'local')}-{uuid.uuid4().hex[:8]}"
     async with AsyncSessionLocal() as db:
-        instance = (await db.execute(select(AgentInstance).where(AgentInstance.tenant_id == TENANT_ID).order_by(AgentInstance.created_at.desc()).limit(1))).scalar_one()
-        template = (await db.execute(select(AgentTemplate).where(AgentTemplate.id == instance.agent_template_id, AgentTemplate.tenant_id == TENANT_ID))).scalar_one()
-        version = (await db.execute(select(EmployeeVersion).order_by(EmployeeVersion.id.desc()).limit(1))).scalar_one()
-        users = list((await db.execute(select(User).where(User.tenant_id == TENANT_ID, User.is_active.is_(True)).order_by(User.created_at.asc()))).scalars().all())
-        if len(users) < 2:
-            raise AssertionError("Live certification requires two active users for separation of duties")
-        requester, reviewer = users[0], users[-1]
-
-        allowed_tools = sorted(set((instance.permission_policy or {}).get("allowed_tools") or []) | {"workforce_git_branch"})
-        permission_policy = {"permissions": ["run.execute"], "allowed_tools": allowed_tools}
-        instance.permission_policy = permission_policy
-        template.permission_policy = permission_policy
-        configuration = dict(instance.configuration or {})
-        approved_fingerprint = execution_authority_fingerprint(
-            tenant_id=TENANT_ID, template_id=template.id, template_version=template.version,
-            agent_definition_id=instance.agent_definition_id, risk_tier=instance.risk_tier,
-            capability_contract=template.capability_contract, permission_policy=permission_policy,
-            approval_policy=instance.approval_policy, install_policy=template.install_policy,
-            configuration={k:v for k,v in configuration.items() if k != FINGERPRINT_KEY},
-            max_concurrency=instance.max_concurrency, budget_policy=instance.budget_policy,
-        )
-        instance.configuration = {**configuration, FINGERPRINT_KEY: approved_fingerprint}
-
-        run = Run(
-            tenant_id=TENANT_ID, employee_id=version.employee_id, employee_version_id=version.id,
-            agent_instance_id=instance.id, created_by=requester.id, status="pending",
-            input_data={"purpose":"W2 live git_branch certification", "branch":BRANCH, "source_sha":SOURCE_SHA},
-        )
-        db.add(run)
-        await db.flush()
+        vendor = Tenant(name=f"Live Cert Vendor {suffix}", slug=f"live-cert-vendor-{suffix}", status="active", tenant_kind=edition_service.EDITION_VENDOR)
+        db.add(vendor); await db.flush()
+        reseller = Tenant(name=f"Live Cert Reseller {suffix}", slug=f"live-cert-reseller-{suffix}", status="active", tenant_kind=edition_service.EDITION_RESELLER, parent_tenant_id=vendor.id)
+        customer = Tenant(name=f"Live Cert Customer {suffix}", slug=f"live-cert-customer-{suffix}", status="active", tenant_kind=edition_service.EDITION_CUSTOMER, parent_tenant_id=reseller.id)
+        db.add_all([reseller, customer]); await db.flush()
+        owner = User(tenant_id=customer.id, email=f"live-cert-owner-{suffix}@example.invalid", password_hash="certification-fixture", full_name="Live Certification Requester", is_active=True)
+        reviewer = User(tenant_id=customer.id, email=f"live-cert-reviewer-{suffix}@example.invalid", password_hash="certification-fixture", full_name="Live Certification Independent Reviewer", is_active=True)
+        db.add_all([owner, reviewer]); await db.flush()
+        await license_service.issue_license(db, issuer=reseller, tenant=customer, feature_codes=["employee.run", "tool:workforce_git_branch"], metadata={"certification_fixture": True, "purpose": "W2-live-git-branch"})
+        employee = Employee(tenant_id=customer.id, slug=f"live-cert-employee-{suffix}", name="Live Git Branch Certification Employee", kind="custom", is_active=True)
+        db.add(employee); await db.flush()
+        version = EmployeeVersion(employee_id=employee.id, version_number=1, is_current=True, input_schema={}, output_schema={}, prompt_template="Live Git Branch Certification", allowed_tools=["workforce_git_branch"], rules={})
+        definition = AgentDefinition(tenant_id=customer.id, slug=f"live-cert-definition-{suffix}", name="Live Git Branch Certification Definition", capabilities=["execution"], allowed_tools=["workforce_git_branch"], model_policy={}, input_schema={}, output_schema={}, policy_requirements={}, enabled=True)
+        db.add_all([version, definition]); await db.flush()
+        permission_policy = {"permissions": ["run.execute"], "allowed_tools": ["workforce_git_branch"]}
+        template = AgentTemplate(tenant_id=customer.id, agent_definition_id=definition.id, slug=f"live-cert-template-{suffix}", name="Live Git Branch Certification Template", version=1, status=AgentTemplateStatus.PUBLISHED, risk_tier=0, capability_contract={"execution": True}, permission_policy=permission_policy, approval_policy={}, evaluation_policy={"certification_fixture": True}, install_policy={}, published_at=datetime.now(timezone.utc))
+        db.add(template); await db.flush()
+        fingerprint = execution_authority_fingerprint(tenant_id=customer.id, template_id=template.id, template_version=template.version, agent_definition_id=definition.id, risk_tier=template.risk_tier, capability_contract=template.capability_contract, permission_policy=permission_policy, approval_policy=template.approval_policy, install_policy=template.install_policy, configuration={}, max_concurrency=1, budget_policy={})
+        instance = AgentInstance(tenant_id=customer.id, agent_definition_id=definition.id, agent_template_id=template.id, sponsor_user_id=owner.id, name="Live Git Branch Certification Instance", configuration={FINGERPRINT_KEY: fingerprint}, permission_policy=permission_policy, approval_policy={}, risk_tier=0, max_concurrency=1, budget_policy={}, enabled=True)
+        db.add(instance); await db.flush()
+        identity = AgentIdentity(tenant_id=customer.id, agent_instance_id=instance.id, owner_user_id=owner.id, sponsor_user_id=owner.id, subject=f"agent:{customer.id}:{instance.id}", active=True)
+        db.add(identity); await db.flush()
+        db.add(AgentAccessReview(tenant_id=customer.id, agent_identity_id=identity.id, reviewer_user_id=reviewer.id, decision=AgentAccessReviewDecision.APPROVED, reason="Controlled W2 live certification"))
+        db.add(AgentRuntimeBinding(tenant_id=customer.id, agent_definition_id=definition.id, employee_version_id=version.id, is_active=True))
+        run = Run(tenant_id=customer.id, employee_id=employee.id, employee_version_id=version.id, agent_instance_id=instance.id, created_by=owner.id, status="pending", input_data={"purpose":"W2 live git_branch certification", "branch":BRANCH, "source_sha":SOURCE_SHA})
+        db.add(run); await db.flush()
         arguments = {"branch_name": BRANCH, "source_sha": SOURCE_SHA}
-        approval = ToolApprovalRequest(
-            tenant_id=TENANT_ID, run_id=run.id, tool_name="workforce_git_branch",
-            tool_call_id=f"w2-live-{uuid.uuid4().hex}", arguments=arguments,
-            continuation_messages=[], iteration=0, status="approved",
-            requested_by=requester.id, decided_by=reviewer.id,
-            decision_reason="Controlled W2 live certification; temporary branch only",
-            decided_at=datetime.now(timezone.utc),
-        )
-        db.add(approval)
-        await db.commit()
-        return instance.id, run.id, approval.id, approval.tool_call_id
+        approval = ToolApprovalRequest(tenant_id=customer.id, run_id=run.id, tool_name="workforce_git_branch", tool_call_id=f"w2-live-{uuid.uuid4().hex}", arguments=arguments, continuation_messages=[], iteration=0, status="approved", requested_by=owner.id, decided_by=reviewer.id, decision_reason="Controlled W2 live certification; temporary branch only", decided_at=datetime.now(timezone.utc))
+        db.add(approval); await db.commit()
+        return customer.id, instance.id, run.id, approval.id, approval.tool_call_id
 
-
-async def execute(instance_id: uuid.UUID, run_id: uuid.UUID, approval_id: uuid.UUID, tool_call_id: str) -> dict:
+async def execute(tenant_id: uuid.UUID, instance_id: uuid.UUID, run_id: uuid.UUID, approval_id: uuid.UUID, tool_call_id: str) -> dict:
     arguments = {"branch_name": BRANCH, "source_sha": SOURCE_SHA}
     async with AsyncSessionLocal() as db:
         async with agent_tool_governance.agent_tool_context(
-            tenant_id=TENANT_ID, agent_instance_id=instance_id, run_id=run_id
+            tenant_id=tenant_id, agent_instance_id=instance_id, run_id=run_id
         ):
             result = await registry.execute(
                 "workforce_git_branch", arguments,
-                permissions={"run.execute"}, db=db, tenant_id=TENANT_ID,
+                permissions={"run.execute"}, db=db, tenant_id=tenant_id,
                 agent_instance_id=instance_id, tool_call_id=tool_call_id,
             )
         await db.commit()
@@ -118,9 +109,9 @@ def cleanup() -> None:
 
 
 async def main() -> None:
-    instance_id, run_id, approval_id, tool_call_id = await prepare()
+    tenant_id, instance_id, run_id, approval_id, tool_call_id = await prepare()
     try:
-        await execute(instance_id, run_id, approval_id, tool_call_id)
+        await execute(tenant_id, instance_id, run_id, approval_id, tool_call_id)
     finally:
         cleanup()
 
