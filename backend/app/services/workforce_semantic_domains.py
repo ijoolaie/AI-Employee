@@ -361,6 +361,41 @@ async def execute_customer_success(arguments: dict[str, Any], **context: Any) ->
             "provider_execution": provider_execution, "external_side_effect": external}
 
 
+async def execute_qa_devops(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
+    """Persist tenant-scoped QA/DevOps evidence and governed proposals; no deployment executes here."""
+    tenant_id = _tenant(arguments, context)
+    operation = arguments["_operation"]
+    approval_required = _approval_required("ai_qa_devops", operation)
+    external = operation.endswith("_proposal")
+    artifact_id = str(uuid.uuid4())
+    provider_execution = "not_configured"
+    status = "proposal" if external else "analysis"
+    approval_status = "pending" if approval_required else "not_required"
+    payload = {
+        "kind": "qa_devops_artifact",
+        "artifact_id": artifact_id,
+        "operation": operation,
+        "version": 1,
+        "status": status,
+        "approval_required": approval_required,
+        "approval_status": approval_status,
+        "repository": arguments.get("repository"),
+        "commit_sha": arguments.get("commit_sha"),
+        "test_scope": arguments.get("test_scope"),
+        "finding": arguments.get("finding"),
+        "evidence": arguments.get("evidence", []),
+        "recommendation": arguments.get("recommendation"),
+        "provider_requested": arguments.get("provider", "qa_devops"),
+        "provider_execution": provider_execution,
+        "external_side_effect": external,
+        "provenance": {"tenant_id": tenant_id, "created_at": _now(), "provider_execution": provider_execution},
+    }
+    artifact = _save_json(tenant_id, f"qa-devops-{artifact_id}.json", payload)
+    return {**artifact, "artifact_id": artifact_id, "operation": operation, "version": 1,
+            "status": status, "approval_required": approval_required, "approval_status": approval_status,
+            "provider_execution": provider_execution, "external_side_effect": external}
+
+
 async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     """Persist tenant-scoped website work; deployment never executes without a provider."""
     tenant_id = _tenant(arguments, context)
