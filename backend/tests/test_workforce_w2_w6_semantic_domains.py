@@ -57,6 +57,7 @@ async def test_w3_content_artifacts_are_unique_versioned_and_tenant_scoped():
     assert first["version"] == 1
     assert first["status"] == "draft"
     assert first["approval_required"] is False
+    assert first["approval_status"] == "not_required"
     assert first["storage_key"].startswith("tenant-a/")
 
     other_tenant = await execute_content(
@@ -97,6 +98,8 @@ async def test_w3_creative_requests_are_unique_and_never_claim_provider_executio
     assert first["version"] == 1
     assert first["status"] == "draft"
     assert first["provider_execution"] == "not_configured"
+    assert first["approval_required"] is False
+    assert first["approval_status"] == "not_required"
     assert first["storage_key"].startswith("tenant-a/")
 
 
