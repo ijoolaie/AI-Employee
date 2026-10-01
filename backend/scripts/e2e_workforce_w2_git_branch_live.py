@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
+from app.core.config import get_settings
 from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.agent_instance import AgentInstance
@@ -45,6 +46,10 @@ async def prepare() -> tuple[uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID, str]:
         owner = User(tenant_id=customer.id, email=f"live-cert-owner-{suffix}@example.invalid", password_hash="certification-fixture", full_name="Live Certification Requester", is_active=True)
         reviewer = User(tenant_id=customer.id, email=f"live-cert-reviewer-{suffix}@example.invalid", password_hash="certification-fixture", full_name="Live Certification Independent Reviewer", is_active=True)
         db.add_all([owner, reviewer]); await db.flush()
+        settings = get_settings()
+        settings.engineering_provider_name = "github"
+        settings.engineering_github_repositories[str(customer.id)] = REPO
+        settings.engineering_github_token = TOKEN
         await license_service.issue_license(db, issuer=reseller, tenant=customer, feature_codes=["employee.run", "tool:workforce_git_branch"], metadata={"certification_fixture": True, "purpose": "W2-live-git-branch"})
         employee = Employee(tenant_id=customer.id, slug=f"live-cert-employee-{suffix}", name="Live Git Branch Certification Employee", kind="custom", is_active=True)
         db.add(employee); await db.flush()
