@@ -122,7 +122,7 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
             "provider": provider_contract_snapshot(provider),
             "provider_reason": result.reason,
             "approval_required": approval_required,
-            "external_side_effect": operation in {"git_commit_proposal", "deploy_proposal", "rollback_proposal"},
+            "external_side_effect": operation in {"git_branch", "git_commit_proposal", "deploy_proposal", "rollback_proposal"},
         }
     raise ValidationAppError("Unsupported engineering operation")
 
