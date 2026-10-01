@@ -16,6 +16,8 @@ def test_provider_defaults_to_fail_closed_none():
     result = provider.execute("git_branch", tenant_id="tenant-a", arguments={})
     assert result.executed is False
     assert result.status == "not_configured"
+    from app.services.workforce_engineering_providers import provider_contract_snapshot
+    assert provider_contract_snapshot(provider)["external_execution"] is False
 
 
 def test_contract_provider_is_deterministic_and_non_mutating():
@@ -99,6 +101,8 @@ def test_github_readonly_provider_is_operator_configured_and_read_only(monkeypat
         lambda: FakeSettings(),
     )
     provider = GitHubReadOnlyEngineeringProvider()
+    from app.services.workforce_engineering_providers import provider_contract_snapshot
+    assert provider_contract_snapshot(provider)["external_execution"] is False
     result = provider.execute("ci_status", tenant_id="tenant-a", arguments={"commit_sha": "abc"})
     assert result.status == "not_configured"
     unsupported = provider.execute("git_branch", tenant_id="tenant-a", arguments={})
