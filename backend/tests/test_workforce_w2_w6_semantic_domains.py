@@ -231,3 +231,32 @@ def test_w4_social_registry_dispatch_matches_operation():
         tool = registry.get(tool_name)
         assert tool is not None
         assert operation in tool.description
+
+
+@pytest.mark.asyncio
+async def test_w5_sales_artifacts_are_tenant_scoped_and_external_outreach_is_proposed():
+    from app.services.workforce_semantic_domains import execute_sales, _read_json
+
+    research = await execute_sales(
+        {"_operation": "lead_research", "query": "B2B SaaS"},
+        tenant_id="tenant-a",
+    )
+    outreach = await execute_sales(
+        {"_operation": "external_outreach", "query": "B2B SaaS"},
+        tenant_id="tenant-a",
+    )
+    assert research["sales_id"] != outreach["sales_id"]
+    assert research["status"] == "draft_or_report"
+    assert research["provider_execution"] == "not_configured"
+    assert research["external_side_effect"] is False
+    assert outreach["status"] == "proposal"
+    assert outreach["approval_required"] is True
+    assert outreach["approval_status"] == "pending"
+    assert outreach["external_side_effect"] is True
+    assert outreach["provider_execution"] == "not_configured"
+    assert outreach["storage_key"].startswith("tenant-a/")
+
+    payload = _read_json("tenant-a", outreach["storage_key"])
+    assert payload["provenance"]["tenant_id"] == "tenant-a"
+    with pytest.raises(Exception):
+        _read_json("tenant-b", outreach["storage_key"])
