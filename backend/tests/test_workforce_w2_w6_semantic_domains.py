@@ -260,3 +260,31 @@ async def test_w5_sales_artifacts_are_tenant_scoped_and_external_outreach_is_pro
     assert payload["provenance"]["tenant_id"] == "tenant-a"
     with pytest.raises(Exception):
         _read_json("tenant-b", outreach["storage_key"])
+
+
+@pytest.mark.asyncio
+async def test_w6_website_changes_are_unique_and_provider_bound():
+    from app.services.workforce_semantic_domains import execute_website, _read_json
+
+    first = await execute_website(
+        {"_operation": "website_requirements", "site": "internal-company", "spec": {"page": "home"}},
+        tenant_id="tenant-a",
+    )
+    deploy = await execute_website(
+        {"_operation": "website_deploy", "site": "internal-company", "spec": {"release": "w6"}},
+        tenant_id="tenant-a",
+    )
+    assert first["change_id"] != deploy["change_id"]
+    assert first["storage_key"] != deploy["storage_key"]
+    assert first["status"] == "staged"
+    assert first["approval_required"] is False
+    assert first["provider_execution"] == "not_configured"
+    assert deploy["status"] == "proposal"
+    assert deploy["approval_required"] is True
+    assert deploy["approval_status"] == "pending"
+    assert deploy["external_side_effect"] is True
+    assert deploy["provider_execution"] == "not_configured"
+    payload = _read_json("tenant-a", deploy["storage_key"])
+    assert payload["provenance"]["tenant_id"] == "tenant-a"
+    with pytest.raises(Exception):
+        _read_json("tenant-b", deploy["storage_key"])
