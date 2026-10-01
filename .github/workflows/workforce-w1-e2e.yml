@@ -2,7 +2,7 @@ name: Workforce W1 Control Plane E2E
 
 on:
   workflow_dispatch:
-    # Manual reruns are supported for certification debugging.
+    # Manual reruns are supported for certification debugging and fixture updates.
   push:
     branches: [main]
     paths:
