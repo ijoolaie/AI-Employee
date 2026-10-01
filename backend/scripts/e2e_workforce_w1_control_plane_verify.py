@@ -164,7 +164,7 @@ async def provision_agent(tenant_id, suffix, owner_id, role_code, label, allowed
             db,
             tenant_id=tenant_id,
             agent_definition_id=definition.id,
-            slug="ai-internal-manager" if role_code == "ai_internal_manager" else f"w1-{label}-template-{suffix}",
+            slug=f"w1-{label}-template-{suffix}",
             name=f"W1 {label} Template",
             version=1,
             risk_tier=0,
