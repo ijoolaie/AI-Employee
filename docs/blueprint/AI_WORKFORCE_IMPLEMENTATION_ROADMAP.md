@@ -404,3 +404,18 @@ Added governed engineering operations for tenant-scoped workspace artifacts, cha
 ### Verification rule
 These phases are **mainline implementation**, not a new certified release. v1.4.11 SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f` remains immutable. A future release candidate must rerun exact-SHA certification after the W0–W6 changes are validated.
 
+
+
+## W1 implementation checkpoint — 2026-10-01
+
+A dedicated real-stack certification harness now exists at `backend/scripts/e2e_workforce_w1_control_plane_verify.py`.
+
+It exercises:
+- CEO-owned bounded delegation to the Internal Manager;
+- governed Manager `assign_task`;
+- specialist Agent WorkItem dispatch and successful Run;
+- persisted execution/audit verification;
+- governed Manager `prepare_ceo_report` against the resulting tenant workload.
+
+This closes the **implementation of the W1 evidence harness**, but not the W1 exit criterion itself. The harness must still be executed against the Docker/Celery application stack and its output verified before W1 is marked fully evidenced.
+
