@@ -185,6 +185,12 @@ The post-v1.4.11 workforce implementation pass now contains a code-derived W0 bi
 These are mutable mainline engineering changes after certified v1.4.11. They must not be described as part of the immutable v1.4.11 production certification until a new RC is certified.
 
 
+## W0–W6 contract gate verification — 2026-10-01
+
+The dedicated Workforce W0–W6 Contract Gate is now **PASS** on mainline after correcting the W2 provider-state contract. GitHub Actions run `36831599565`, job `110269241283`, completed successfully: source compilation, code-derived W0 inventory, and all focused W0–W6 tests passed (`13 passed`).
+
+The W2 semantic domain now reports both `provider_required/requires_provider=true` and `provider_execution=not_configured` consistently for provider-bound operations. This is an evidence/contract correction; it does not claim a live engineering provider.
+
 ## W1 control-plane E2E harness — 2026-10-01
 
 A dedicated real-stack W1 certification harness was added at `backend/scripts/e2e_workforce_w1_control_plane_verify.py`. It exercises the intended control-plane chain against the live application stack: CEO-owned delegation → Internal Manager `assign_task` → specialist Agent WorkItem execution → persisted Run/audit verification → Internal Manager `prepare_ceo_report`.
