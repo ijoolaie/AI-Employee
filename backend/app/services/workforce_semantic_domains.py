@@ -111,7 +111,7 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         }
     if operation in {"git_branch", "git_commit_proposal", "git_pr_proposal", "ci_status", "deploy_proposal", "health_check", "rollback_proposal"}:
         approval_required = _approval_required("ai_software_developer", operation)
-        provider = get_engineering_provider(provider_name=context.get("engineering_provider"))
+        provider = get_configured_engineering_provider()
         result = provider.execute(operation, tenant_id=tenant_id, arguments=arguments)
         return {
             "operation": operation,
