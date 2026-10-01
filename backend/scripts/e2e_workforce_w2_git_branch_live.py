@@ -3,13 +3,10 @@ from __future__ import annotations
 
 import asyncio
 import os
-import sys
-import time
 import uuid
 from datetime import datetime, timezone
 from urllib.request import Request, urlopen
-
-from sqlalchemy import select
+from urllib.error import HTTPError
 
 from app.core.database import AsyncSessionLocal
 from app.core.config import get_settings
@@ -34,6 +31,25 @@ SOURCE_SHA = os.environ["GITHUB_SHA"]
 BRANCH = os.environ.get("W2_LIVE_BRANCH", f"ai-cert/w2-git-branch-{os.environ.get('GITHUB_RUN_ID', uuid.uuid4().hex[:8])}")
 
 
+
+def assert_branch_absent() -> None:
+    req = Request(
+        f"https://api.github.com/repos/{REPO}/git/refs/heads/{BRANCH}",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {TOKEN}",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "AI-Employee-W2-Live-Certification",
+        },
+        method="GET",
+    )
+    try:
+        with urlopen(req, timeout=10):
+            raise RuntimeError(f"Refusing certification: branch already exists: {BRANCH}")
+    except HTTPError as exc:
+        if exc.code == 404:
+            return
+        raise RuntimeError(f"Unable to prove certification branch is absent: HTTP {exc.code}") from exc
 
 async def prepare() -> tuple[uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID, str]:
     suffix = f"{os.environ.get('GITHUB_RUN_ID', 'local')}-{uuid.uuid4().hex[:8]}"
@@ -114,11 +130,10 @@ def cleanup() -> None:
 
 
 async def main() -> None:
+    assert_branch_absent()
     tenant_id, instance_id, run_id, approval_id, tool_call_id = await prepare()
-    try:
-        await execute(tenant_id, instance_id, run_id, approval_id, tool_call_id)
-    finally:
-        cleanup()
+    await execute(tenant_id, instance_id, run_id, approval_id, tool_call_id)
+    cleanup()
 
 
 if __name__ == "__main__":
