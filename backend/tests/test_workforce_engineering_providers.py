@@ -126,13 +126,13 @@ def test_github_readonly_provider_reads_operator_configured_status_without_execu
     result = GitHubReadOnlyEngineeringProvider().execute(
         "ci_status",
         tenant_id="tenant-a",
-        arguments={"commit_sha": "abc123", "repository": "attacker/repo", "token": "attacker-token"},
+        arguments={"commit_sha": "0123456789abcdef0123456789abcdef01234567", "repository": "attacker/repo", "token": "attacker-token"},
     )
 
     assert result.status == "read_verified"
     assert result.executed is False
     assert result.reason == '{"state": "success", "total_count": 3}'
-    assert captured["url"] == "https://api.github.com/repos/ijoolaie/AI-Employee/commits/abc123/status"
+    assert captured["url"] == "https://api.github.com/repos/ijoolaie/AI-Employee/commits/0123456789abcdef0123456789abcdef01234567/status"
     assert captured["authorization"] == "Bearer secret-token"
     assert captured["timeout"] == 2.5
     invalid = GitHubReadOnlyEngineeringProvider().execute(
