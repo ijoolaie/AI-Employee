@@ -171,3 +171,63 @@ async def test_w5_provider_boundary_is_explicit():
     assert research["provider_execution"] == "not_configured"
     assert outreach["provider_execution"] == "not_configured"
     assert outreach["external_side_effect"] is False
+
+
+@pytest.mark.asyncio
+async def test_w4_social_operations_are_unique_tenant_scoped_and_provider_bound():
+    from app.services.workforce_semantic_domains import execute_social, _read_json
+
+    proposal = await execute_social(
+        {
+            "_operation": "publish_post",
+            "channel": "instagram",
+            "content_id": "content-123",
+            "provider": "instagram",
+        },
+        tenant_id="tenant-a",
+    )
+    read_request = await execute_social(
+        {
+            "_operation": "read_comments",
+            "channel": "instagram",
+        },
+        tenant_id="tenant-a",
+    )
+    assert proposal["social_id"] != read_request["social_id"]
+    assert proposal["storage_key"].startswith("tenant-a/")
+    assert read_request["storage_key"].startswith("tenant-a/")
+    assert proposal["status"] == "proposal"
+    assert proposal["approval_required"] is True
+    assert proposal["approval_status"] == "pending"
+    assert proposal["external_side_effect"] is True
+    assert proposal["provider_execution"] == "not_configured"
+    assert read_request["status"] == "request"
+    assert read_request["approval_required"] is False
+    assert read_request["provider_execution"] == "not_configured"
+
+    payload = _read_json("tenant-a", proposal["storage_key"])
+    assert payload["provenance"]["tenant_id"] == "tenant-a"
+    assert payload["provider_execution"] == "not_configured"
+    assert payload["approval_status"] == "pending"
+
+    with pytest.raises(Exception):
+        _read_json("tenant-b", proposal["storage_key"])
+
+
+def test_w4_social_registry_dispatch_matches_operation():
+    expected = {
+        "workforce_connect_channel": "connect_channel",
+        "workforce_read_comments": "read_comments",
+        "workforce_triage_comments": "triage_comments",
+        "workforce_read_analytics": "read_analytics",
+        "workforce_publication_status": "publication_status",
+        "workforce_publish_post": "publish_post",
+        "workforce_publish_reel": "publish_reel",
+        "workforce_publish_story": "publish_story",
+        "workforce_schedule_publication": "schedule_publication",
+        "workforce_respond_to_dm": "respond_to_dm",
+    }
+    for tool_name, operation in expected.items():
+        tool = registry.get(tool_name)
+        assert tool is not None
+        assert operation in tool.description
