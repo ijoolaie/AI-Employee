@@ -17,6 +17,7 @@ from typing import Any
 from app.core.exceptions import ValidationAppError
 from app.services.ai_workforce_roles import get_workforce_capability_contract
 from app.services.storage import build_key, get_storage_backend
+from app.services.workforce_engineering_providers import get_engineering_provider, provider_contract_snapshot
 
 
 def _tenant(arguments: dict[str, Any], context: dict[str, Any]) -> str:
@@ -96,23 +97,30 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
             "change_set_id": change_set_id,
         }
     if operation in {"workspace_test", "workspace_lint", "workspace_build"}:
+        provider = get_engineering_provider(provider_name=context.get("engineering_provider"))
+        result = provider.execute(operation, tenant_id=tenant_id, arguments=arguments)
         return {
             "operation": operation,
-            "status": "staged",
-            "executed": False,
+            "status": "staged" if result.status == "not_configured" else result.status,
+            "executed": result.executed,
             "provider_required": True,
             "requires_provider": True,
-            "provider_execution": "not_configured",
-            "reason": "Execution provider is not configured in this environment",
+            "provider_execution": result.status,
+            "provider": provider_contract_snapshot(provider),
+            "reason": result.reason,
         }
     if operation in {"git_branch", "git_commit_proposal", "git_pr_proposal", "ci_status", "deploy_proposal", "health_check", "rollback_proposal"}:
         approval_required = _approval_required("ai_software_developer", operation)
+        provider = get_engineering_provider(provider_name=context.get("engineering_provider"))
+        result = provider.execute(operation, tenant_id=tenant_id, arguments=arguments)
         return {
             "operation": operation,
             "status": "proposal",
             "requires_provider": True,
             "provider_required": True,
-            "provider_execution": "not_configured",
+            "provider_execution": result.status,
+            "provider": provider_contract_snapshot(provider),
+            "provider_reason": result.reason,
             "approval_required": approval_required,
             "external_side_effect": operation in {"git_commit_proposal", "deploy_proposal", "rollback_proposal"},
         }
