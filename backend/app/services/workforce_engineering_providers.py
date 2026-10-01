@@ -33,6 +33,7 @@ class ProviderResult:
 class EngineeringProvider(Protocol):
     name: str
     operations: frozenset[str]
+    external_execution: bool
     def execute(self, operation: str, *, tenant_id: str, arguments: dict[str, Any]) -> ProviderResult: ...
 
 @dataclass(frozen=True)
@@ -40,6 +41,7 @@ class UnconfiguredEngineeringProvider:
     """Fail-closed provider used when no operator-controlled adapter is configured."""
     name: str = "none"
     operations: frozenset[str] = ENGINEERING_PROVIDER_OPERATIONS
+    external_execution: bool = False
 
     def execute(self, operation: str, *, tenant_id: str, arguments: dict[str, Any]) -> ProviderResult:
         if operation not in self.operations:
@@ -69,6 +71,7 @@ class GitHubReadOnlyEngineeringProvider:
     """
     name: str = "github-readonly"
     operations: frozenset[str] = frozenset({"ci_status"})
+    external_execution: bool = False
 
     def execute(self, operation: str, *, tenant_id: str, arguments: dict[str, Any]) -> ProviderResult:
         if operation != "ci_status":
@@ -119,7 +122,7 @@ def get_engineering_provider(*, provider_name: str | None = None) -> Engineering
     raise ValueError(f"Unknown engineering provider: {name}")
 
 def provider_contract_snapshot(provider: EngineeringProvider) -> dict[str, Any]:
-    return {"provider": provider.name, "operations": sorted(provider.operations), "external_execution": provider.name != "contract-test"}
+    return {"provider": provider.name, "operations": sorted(provider.operations), "external_execution": provider.external_execution}
 
 def get_configured_engineering_provider() -> EngineeringProvider:
     """Resolve the operator-configured runtime provider; never from tool input."""
