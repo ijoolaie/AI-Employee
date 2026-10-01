@@ -198,3 +198,36 @@ def test_ci_status_tool_accepts_commit_sha():
     properties = tool.input_schema["properties"]
     assert properties["commit_sha"] == {"type": "string", "maxLength": 100}
     assert tool.input_schema["required"] == ["commit_sha"]
+
+
+@pytest.mark.asyncio
+async def test_ci_status_semantic_result_exposes_execution_state(monkeypatch):
+    from app.services import workforce_engineering_providers as providers
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_provider_name = "github-readonly"
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc, tb):
+            return False
+        def read(self):
+            return b'{"state":"success","total_count":1}'
+
+    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
+    monkeypatch.setattr(providers, "urlopen", lambda request, timeout: FakeResponse())
+
+    result = await execute_engineering(
+        {"_operation": "ci_status", "commit_sha": "0123456789abcdef0123456789abcdef01234567"},
+        tenant_id="tenant-a",
+    )
+    assert result["status"] == "read_verified"
+    assert result["executed"] is False
+    assert result["provider_execution"] == "read_verified"
+    assert result["approval_required"] is False
+    assert result["external_side_effect"] is False
