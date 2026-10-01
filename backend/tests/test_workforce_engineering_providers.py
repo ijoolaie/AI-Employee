@@ -60,7 +60,7 @@ async def test_real_provider_path_remains_not_configured(monkeypatch):
     assert result["provider_execution"] == "not_configured"
     assert result["approval_required"] is True
     assert result["external_side_effect"] is True
-    assert result["status"] == "not_configured"
+    assert result["status"] == "proposal"
 
 def test_runtime_provider_is_operator_configured(monkeypatch):
     from app.services import workforce_engineering_providers as providers
