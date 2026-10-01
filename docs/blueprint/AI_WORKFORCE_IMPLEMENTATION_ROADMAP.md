@@ -553,3 +553,44 @@ GitHub Actions run `36887142892` / job `110453250609` completed successfully. Ev
 Certification output included `WORKFORCE W7 SEO GROWTH REAL-STACK E2E PASS`.
 
 W7 is therefore **VERIFIED on the real stack** for its current governed SEO & Growth scope. This is post-v1.4.11 mainline evidence and does not modify the immutable certified release.
+
+## W8 real-stack certification checkpoint — 2026-10-01
+
+W8 Customer Success & Support now has dedicated real-stack evidence through `backend/scripts/e2e_workforce_w8_customer_success_verify.py` and `.github/workflows/workforce-w8-e2e.yml`.
+
+GitHub Actions run `36889736209` / job `110462022257` completed successfully at commit `6705607b06d29a70f5e30785eef6d154fdea6178`. Evidence verified:
+- Customer Success governed research Run.
+- approval-gated customer action with an exact matching approved tool request.
+- durable tenant-scoped artifact and provenance.
+- cross-tenant isolation.
+- provider execution remains explicitly `not_configured`; no external customer action was faked.
+
+Certification output included `WORKFORCE W8 CUSTOMER SUCCESS REAL-STACK E2E PASS`.
+
+W8 is therefore **VERIFIED on the real stack** for its current governed Customer Success & Support scope. This is post-v1.4.11 mainline evidence and does not modify the immutable certified release.
+
+## W9 real-stack certification checkpoint — 2026-10-01
+
+W9 QA & DevOps now has dedicated real-stack evidence through `backend/scripts/e2e_workforce_w9_qa_devops_verify.py` and `.github/workflows/workforce-w9-e2e.yml`.
+
+The first W9 certification attempt exposed a real registry collision: `workforce_rollback_proposal` was already owned by the Engineering domain. W9 was corrected to use the dedicated `workforce_qa_rollback_proposal` tool, preserving the existing Engineering binding rather than overwriting or duplicating it.
+
+Final GitHub Actions run `36891616509` / job `110468909696` completed successfully at commit `5887c26c727fd2681cc1dd71fc17f0a475c9e80a`. Evidence verified:
+- QA & DevOps governed research Run.
+- approval-gated deployment proposal with exact approval governance.
+- durable tenant-scoped artifact and provenance.
+- cross-tenant isolation.
+- provider execution remains explicitly `not_configured`; no deployment or rollback side effect was faked.
+- Docker stack shutdown completed cleanly without the prior CI-hang pattern.
+
+Certification output included `WORKFORCE W9 QA DEVOPS REAL-STACK E2E PASS`.
+
+W9 is therefore **VERIFIED on the real stack** for its current governed QA & DevOps scope. This is post-v1.4.11 mainline evidence and does not modify the immutable certified release.
+
+## W10 entry checkpoint — 2026-10-01
+
+W0–W9 are now evidenced on mainline at their applicable scope. W10 is the next implementation phase: internal AI Company dogfooding and the first measurable revenue workflow.
+
+W10 must not be treated as a nominal role-count exercise. The first target is one repeatable, governed business workflow that can produce a qualified lead and customer conversation, with human approval at consequential boundaries, complete provenance/audit evidence, cost measurement, and failure/recovery handling.
+
+The immutable v1.4.11 release boundary remains unchanged. All W10 work is post-v1.4.11 mainline engineering until a future release candidate is created and separately certified.
