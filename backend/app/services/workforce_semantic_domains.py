@@ -257,8 +257,20 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
     external = operation in {"external_outreach", "contractual_commitment", "material_commercial_action"}
     sales_id = str(uuid.uuid4())
     provider_execution = "not_configured"
+    execution_result: dict[str, Any] | None = None
+    if operation == "external_outreach":
+        from app.services.workforce_sales_outreach_provider import execute_sales_outreach
+        execution_result = await execute_sales_outreach(
+            db=context.get("db"),
+            tenant_id=tenant_id,
+            arguments=arguments,
+            tool_call_id=context.get("tool_call_id"),
+        )
+        provider_execution = execution_result["provider_execution"]
     status = "proposal" if external else "draft_or_report"
-    approval_status = "pending" if approval_required else "not_required"
+    # Reaching this handler for an approval-gated operation means the durable
+    # approval was already consumed by the Tool governance boundary.
+    approval_status = "approved" if approval_required else "not_required"
     payload = {
         "kind": "sales_operation",
         "sales_id": sales_id,
@@ -271,7 +283,8 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "criteria": arguments.get("criteria", {}),
         "provider_requested": arguments.get("provider", "crm_or_outreach"),
         "provider_execution": provider_execution,
-        "external_side_effect": external,
+        "external_side_effect": bool(execution_result and execution_result.get("external_side_effect")) if operation == "external_outreach" else external,
+        **({"execution": execution_result} if execution_result is not None else {}),
         "provenance": {"tenant_id": tenant_id, "created_at": _now(), "provider_execution": provider_execution},
     }
     artifact = _save_json(tenant_id, f"sales-{sales_id}.json", payload)
@@ -283,8 +296,9 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "status": status,
         "approval_required": approval_required,
         "approval_status": approval_status,
-        "external_side_effect": external,
+        "external_side_effect": bool(execution_result and execution_result.get("external_side_effect")) if operation == "external_outreach" else external,
         "provider_execution": provider_execution,
+        **({"execution": execution_result} if execution_result is not None else {}),
     }
 
 
