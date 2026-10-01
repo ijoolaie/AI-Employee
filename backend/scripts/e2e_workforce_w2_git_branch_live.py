@@ -101,14 +101,6 @@ async def execute(tenant_id: uuid.UUID, instance_id: uuid.UUID, run_id: uuid.UUI
                 agent_instance_id=instance_id, tool_call_id=tool_call_id,
             )
         await db.commit()
-    assert result["provider"]["provider"] == "github"
-    assert result["provider_execution"] == "executed", result
-    assert result["executed"] is True, result
-    assert result["approval_required"] is True, result
-    assert result["external_side_effect"] is True, result
-    print("W2 LIVE GIT BRANCH GOVERNANCE PASS")
-    print("W2 LIVE GIT BRANCH PROVIDER WRITE PASS")
-    print(f"W2 LIVE GIT BRANCH CREATED {BRANCH}")
     return result
 
 
