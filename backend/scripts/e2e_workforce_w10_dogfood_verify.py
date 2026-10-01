@@ -323,6 +323,9 @@ async def main():
         "query": lead_query,
         "criteria": criteria,
         "message": "We can show a governed AI workforce workflow for customer operations.",
+        "subject": "Governed AI workforce for customer operations",
+        "to": ["prospect@example.invalid"],
+        "channel": "email",
     }
     outreach = await execute(
         tenant_id, instance_id, runs["external_outreach"],
@@ -331,10 +334,11 @@ async def main():
         outreach_call_id,
     )
     assert outreach["approval_required"] is True
-    assert outreach["approval_status"] == "pending"
+    assert outreach["approval_status"] == "approved"
     assert outreach["status"] == "proposal"
     assert outreach["external_side_effect"] is True
     assert outreach["provider_execution"] == "not_configured"
+    assert outreach["execution"]["executed"] is False
 
     print("W10 LEAD RESEARCH AND QUALIFICATION PASS")
     print(f"W10 SALES RESEARCH ID={research['sales_id']}")
