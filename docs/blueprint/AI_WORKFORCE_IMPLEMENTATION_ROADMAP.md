@@ -417,5 +417,12 @@ It exercises:
 - persisted execution/audit verification;
 - governed Manager `prepare_ceo_report` against the resulting tenant workload.
 
-This closes the **implementation of the W1 evidence harness**, but not the W1 exit criterion itself. The harness must still be executed against the Docker/Celery application stack and its output verified before W1 is marked fully evidenced.
+This W1 exit criterion is now **VERIFIED**. GitHub Actions run `36830129984` / job `110264598687` completed successfully against the Docker/Celery stack. The run verified database readiness, application health, CEO delegation, governed Manager `assign_task`, specialist Agent WorkItem → Run execution, persisted audit/provenance, and Manager CEO report generation. Certification output included `WORKFORCE W1 CONTROL-PLANE REAL-STACK E2E PASS`; specialist Run evidence was `cd46f769-0823-4141-b012-72c0f7e6b0f2`.
+
+### W1 evidence corrections discovered during certification
+- Manager delegation lookup was corrected to identify the Manager by the governed `workforce_role_code=ai_internal_manager` capability contract rather than the obsolete fixed template slug.
+- The W1 real-stack workflow was corrected to start the transactional-outbox dispatcher and Celery beat services, so persisted `agent.run.execute` handoffs are actually delivered to the execution worker.
+- The W1 fixture license was corrected to include the Manager tools it actually executes.
+
+W1 is now evidenced on mainline. This evidence remains post-v1.4.11 engineering evidence and does not modify the immutable certified release.
 
