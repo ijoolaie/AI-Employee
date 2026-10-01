@@ -17,7 +17,7 @@ from typing import Any
 from app.core.exceptions import ValidationAppError
 from app.services.ai_workforce_roles import get_workforce_capability_contract
 from app.services.storage import build_key, get_storage_backend
-from app.services.workforce_engineering_providers import get_engineering_provider, provider_contract_snapshot
+from app.services.workforce_engineering_providers import get_configured_engineering_provider, provider_contract_snapshot
 
 
 def _tenant(arguments: dict[str, Any], context: dict[str, Any]) -> str:
@@ -97,7 +97,7 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
             "change_set_id": change_set_id,
         }
     if operation in {"workspace_test", "workspace_lint", "workspace_build"}:
-        provider = get_engineering_provider(provider_name=context.get("engineering_provider"))
+        provider = get_configured_engineering_provider()
         result = provider.execute(operation, tenant_id=tenant_id, arguments=arguments)
         return {
             "operation": operation,
