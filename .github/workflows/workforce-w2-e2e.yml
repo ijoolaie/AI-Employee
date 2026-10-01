@@ -9,6 +9,7 @@ on:
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/ai/tool_registry.py"
       - "backend/app/services/storage.py"
+      - "backend/app/core/config.py"
       - "backend/tests/test_workforce_engineering_providers.py"
       - "backend/app/services/workforce_engineering_providers.py"
       - ".github/workflows/workforce-w2-e2e.yml"
