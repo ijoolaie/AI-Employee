@@ -50,7 +50,13 @@ def register_tenant(base, suffix):
     ), timeout=20) as response:
         data = json.loads(response.read().decode())
         assert response.status == 201, data
-        return uuid.UUID(data["data"]["tenant"]["id"]), uuid.UUID(data["data"]["user"]["id"])
+        token = data["data"]["access_token"]
+    with urlopen(Request(
+        f"{base}/auth/me", headers={"Accept": "application/json", "Authorization": f"Bearer {token}"}, method="GET"
+    ), timeout=20) as response:
+        me = json.loads(response.read().decode())
+        assert response.status == 200, me
+    return uuid.UUID(me["data"]["tenant"]["id"]), uuid.UUID(me["data"]["user"]["id"])
 
 
 async def license_fixture(tenant_id, suffix):
