@@ -201,3 +201,9 @@ The harness provisions its own tenant-scoped fixture, Manager and specialist Age
 
 The W1 evidence path also required two mainline corrections discovered by real-stack execution: Manager lookup now uses the governed `workforce_role_code` rather than a fixed template slug, and the W1 stack now starts the transactional-outbox dispatcher/beat services required to deliver the persisted `agent.run.execute` handoff. These are post-v1.4.11 mainline changes and do not alter the immutable certified release.
 
+
+## W2 Engineering semantic verification — 2026-10-01
+
+W2 now has dedicated real-stack semantic evidence. GitHub Actions run `36832544726`, job `110272236014`, completed successfully after Alembic migration checks. The certification verified tenant-scoped workspace create/list/edit, cross-tenant read rejection, durable unique change-set artifacts, provider fail-closed behavior for test/lint/build, and approval-gated deployment proposals.
+
+The W2 change-set implementation was corrected so each change set receives a unique durable artifact key instead of overwriting a shared `change-set.json`. This is semantic/provider-boundary evidence only: no live Git hosting, CI, deployment, or health provider is claimed.
