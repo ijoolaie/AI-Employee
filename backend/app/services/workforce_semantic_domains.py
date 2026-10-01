@@ -328,6 +328,39 @@ async def execute_seo_growth(arguments: dict[str, Any], **context: Any) -> dict[
         "external_side_effect": external,
     }
 
+async def execute_customer_success(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
+    tenant_id = _tenant(arguments, context)
+    operation = arguments["_operation"]
+    approval_required = _approval_required("ai_customer_success", operation)
+    external = operation.startswith("send_") or operation.endswith("_proposal")
+    artifact_id = str(uuid.uuid4())
+    provider_execution = "not_configured"
+    status = "proposal" if external else "analysis"
+    approval_status = "pending" if approval_required else "not_required"
+    payload = {
+        "kind": "customer_success_artifact",
+        "artifact_id": artifact_id,
+        "operation": operation,
+        "version": 1,
+        "status": status,
+        "approval_required": approval_required,
+        "approval_status": approval_status,
+        "customer_reference": arguments.get("customer_reference"),
+        "query": arguments.get("query"),
+        "message": arguments.get("message"),
+        "evidence": arguments.get("evidence", []),
+        "recommendation": arguments.get("recommendation"),
+        "provider_requested": arguments.get("provider", "customer_support"),
+        "provider_execution": provider_execution,
+        "external_side_effect": external,
+        "provenance": {"tenant_id": tenant_id, "created_at": _now(), "provider_execution": provider_execution},
+    }
+    artifact = _save_json(tenant_id, f"customer-success-{artifact_id}.json", payload)
+    return {**artifact, "artifact_id": artifact_id, "operation": operation, "version": 1,
+            "status": status, "approval_required": approval_required, "approval_status": approval_status,
+            "provider_execution": provider_execution, "external_side_effect": external}
+
+
 async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     """Persist tenant-scoped website work; deployment never executes without a provider."""
     tenant_id = _tenant(arguments, context)
