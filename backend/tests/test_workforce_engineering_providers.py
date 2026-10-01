@@ -117,3 +117,11 @@ async def test_git_branch_is_external_side_effect():
     )
     assert result["external_side_effect"] is True
     assert result["approval_required"] is True
+
+
+def test_developer_approval_operations_are_not_routine():
+    from app.services.ai_workforce_roles import get_workforce_role, get_workforce_capability_contract
+    role = get_workforce_role("ai_software_developer")
+    assert set(role.allowed_routine_operations).isdisjoint(role.approval_required_operations)
+    for operation in role.approval_required_operations:
+        assert get_workforce_capability_contract("ai_software_developer", operation).approval_required is True
