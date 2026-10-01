@@ -2361,6 +2361,21 @@ def build_default_registry() -> ToolRegistry:
             )
         )
 
+    for _w8_operation in ("customer_context","support_triage","conversation_summary","churn_risk_evidence","escalation_recommendation","response_draft","customer_health_report","send_customer_message","account_change_proposal","refund_proposal","cancellation_proposal"):
+        _w8_external = _w8_operation == "send_customer_message" or _w8_operation.endswith("_proposal")
+        registry.register(
+            RegisteredTool(
+                name=f"workforce_{_w8_operation}",
+                description=f"Governed W8 customer success operation: {_w8_operation}.",
+                input_schema={"type":"object","properties":{"customer_reference":{"type":"string","maxLength":500},"query":{"type":"string","maxLength":2000},"message":{"type":"string","maxLength":10000},"evidence":{"type":"array","items":{"type":"string","maxLength":2000},"maxItems":100},"recommendation":{"type":"string","maxLength":5000},"provider":{"type":"string","maxLength":100}},"additionalProperties":False},
+                handler=lambda arguments, op=_w8_operation, fn=workforce_semantic_domains.execute_customer_success: fn({**arguments, "_operation": op}, **context),
+                side_effects=_w8_external,
+                external_side_effects=_w8_external,
+                required_permission="run.execute",
+                requires_approval=_w8_external,
+            )
+        )
+
     registry.register(
         RegisteredTool(
             name="workforce_website_requirements",
