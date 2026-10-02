@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 from typing import Any
+from uuid import UUID
 
 from app.core.config import get_settings
 from app.core.exceptions import ValidationAppError
@@ -73,10 +74,15 @@ async def execute_sales_outreach(
     dedupe_source = tool_call_id or sha256(
         ("|".join(recipients) + "|" + subject + "|" + body).encode("utf-8")
     ).hexdigest()
+    try:
+        tenant_uuid = tenant_id if isinstance(tenant_id, UUID) else UUID(str(tenant_id))
+    except (TypeError, ValueError) as exc:
+        raise ValidationAppError("Configured sales outreach requires a valid tenant Run context") from exc
+
     queued = await outbox_service.enqueue(
         db,
         kind="email.send",
-        tenant_id=tenant_id,
+        tenant_id=tenant_uuid,
         dedupe_key=f"sales-outreach:{dedupe_source}",
         payload={"to": recipients, "subject": subject, "body": body},
     )
