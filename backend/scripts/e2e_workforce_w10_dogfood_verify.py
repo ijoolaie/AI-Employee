@@ -13,6 +13,8 @@ import traceback
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy import select
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
@@ -29,6 +31,7 @@ from app.models.agent_definition import AgentDefinition
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.agent_runtime_binding import AgentRuntimeBinding
+from app.models.audit_log import AuditLog
 from app.services import agent_tool_governance, edition_service, license_service
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.ai.tool_registry import registry
@@ -263,23 +266,8 @@ async def prepare():
         )
         db.add(deal_approval)
 
-        approval = ToolApprovalRequest(
-            tenant_id=customer.id,
-            run_id=runs["external_outreach"],
-            tool_name="workforce_external_outreach",
-            tool_call_id=f"w10-outreach-{uuid.uuid4().hex}",
-            arguments={**outreach_args, "subject": "Governed AI workforce for customer operations", "to": ["prospect@example.invalid"], "channel": "email"},
-            continuation_messages=[],
-            iteration=0,
-            status="approved",
-            requested_by=owner.id,
-            decided_by=reviewer.id,
-            decision_reason="W10 dogfood: provider must remain fail-closed",
-            decided_at=datetime.now(timezone.utc),
-        )
-        db.add(approval)
         await db.commit()
-        return customer.id, instance.id, runs, approval.tool_call_id, deal_approval.tool_call_id
+        return customer.id, instance.id, runs, owner.id, reviewer.id, deal_approval.tool_call_id
 
 
 async def execute(tenant_id, instance_id, run_id, tool_name, arguments, tool_call_id=None, actor_id=None):
@@ -304,7 +292,7 @@ async def execute(tenant_id, instance_id, run_id, tool_name, arguments, tool_cal
 
 
 async def main():
-    tenant_id, instance_id, runs, outreach_call_id, deal_approval_tool_call_id = await prepare()
+    tenant_id, instance_id, runs, owner_id, reviewer_id, deal_approval_tool_call_id = await prepare()
 
     lead_query = "B2B SaaS founders with manual customer operations"
     criteria = {"company_size": "10-200", "pain": "manual customer operations"}
@@ -377,8 +365,40 @@ async def main():
     if forecast.get("expected_revenue", 0) < 62500000.0:
         raise RuntimeError(f"W10 forecast mismatch: {forecast!r}")
 
-
     outreach_args = {
+        "query": lead_query,
+        "criteria": criteria,
+        "message": "We can show a governed AI workforce workflow for customer operations.",
+        "subject": "Governed AI workforce for customer operations",
+        "to": ["prospect@example.invalid"],
+        "channel": "email",
+        "deal_id": deal["deal_id"],
+    }
+
+    # The consequential outreach approval is created only after the governed
+    # CRM mutation has produced the durable deal_id. This keeps the approved
+    # argument set immutable and makes the delivery event fully attributable.
+    outreach_call_id = f"w10-outreach-{uuid.uuid4().hex}"
+    async with AsyncSessionLocal() as db:
+        db.add(
+            ToolApprovalRequest(
+                tenant_id=tenant_id,
+                run_id=runs["external_outreach"],
+                tool_name="workforce_external_outreach",
+                tool_call_id=outreach_call_id,
+                arguments=outreach_args,
+                continuation_messages=[],
+                iteration=0,
+                status="approved",
+                requested_by=owner_id,
+                decided_by=reviewer_id,
+                decision_reason="W10 dogfood: approved outreach for governed attribution",
+                decided_at=datetime.now(timezone.utc),
+            )
+        )
+        await db.commit()
+
+    outreach_args = dict(outreach_args)
         "query": lead_query,
         "criteria": criteria,
         "message": "We can show a governed AI workforce workflow for customer operations.",
@@ -402,17 +422,37 @@ async def main():
         assert outreach["execution"]["executed"] is True
         assert outreach["execution"]["queued"] is True
         print("W10 SMTP OUTREACH PROVIDER QUEUE PASS")
-        async with AsyncSessionLocal() as db:
-            delivered = await workforce_sales_engagement.record_outreach_delivered(
-                db,
-                tenant_id=tenant_id,
-                tool_call_id=outreach_call_id,
-                outbox_id=outreach["execution"]["outbox_id"],
-                provider_message_id=f"outbox-{outreach['execution']['outbox_id']}",
-                recipients=outreach_args["to"],
-                subject=outreach_args["subject"],
-                deal_id=deal["deal_id"],
+        delivery_event = None
+        delivery_event_key = f"delivered:{outreach['execution']['outbox_id']}"
+        for _ in range(30):
+            async with AsyncSessionLocal() as db:
+                delivery_event = (
+                    await db.execute(
+                        select(AuditLog).where(
+                            AuditLog.tenant_id == tenant_id,
+                            AuditLog.action == workforce_sales_engagement.EVENT_ACTION,
+                            AuditLog.resource_type == "sales_engagement",
+                            AuditLog.metadata_.op("->>")("event_key") == delivery_event_key,
+                        )
+                    )
+                ).scalar_one_or_none()
+                if delivery_event is not None:
+                    metadata = delivery_event.metadata_ or {}
+                    assert metadata.get("event_type") == "outreach_delivered"
+                    assert metadata.get("outbox_id") == outreach["execution"]["outbox_id"]
+                    assert metadata.get("tool_call_id") == outreach_call_id
+                    assert metadata.get("deal_id") == deal["deal_id"]
+                    break
+            await asyncio.sleep(1)
+
+        if delivery_event is None:
+            raise RuntimeError(
+                f"W10 delivery event not emitted by email worker: {delivery_event_key}"
             )
+
+        print("W10 SALES DELIVERY EVENT INGESTION PASS")
+
+        async with AsyncSessionLocal() as db:
             response_key = f"w10-response:{outreach['execution']['outbox_id']}"
             response = await workforce_sales_engagement.record_outreach_response(
                 db,
@@ -439,11 +479,17 @@ async def main():
             summary = await workforce_sales_engagement.attribution_summary(
                 db, tenant_id=tenant_id
             )
-            assert delivered.id is not None
+            assert delivery_event.id is not None
             assert response.id == duplicate.id
             assert summary["delivered"] == 1
             assert summary["responded"] == 1
             assert summary["event_count"] == 2
+            foreign_summary = await workforce_sales_engagement.attribution_summary(
+                db, tenant_id=uuid.uuid4(), deal_id=deal["deal_id"]
+            )
+            assert foreign_summary["event_count"] == 0
+            assert foreign_summary["delivered"] == 0
+            assert foreign_summary["responded"] == 0
             await db.commit()
         print("W10 SALES DELIVERY + RESPONSE INGESTION PASS")
         print("W10 SALES RESPONSE IDEMPOTENCY PASS")
