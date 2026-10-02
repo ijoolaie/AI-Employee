@@ -84,7 +84,12 @@ async def execute_sales_outreach(
         kind="email.send",
         tenant_id=tenant_uuid,
         dedupe_key=f"sales-outreach:{dedupe_source}",
-        payload={"to": recipients, "subject": subject, "body": body},
+        payload={
+            "to": recipients,
+            "subject": subject,
+            "body": body,
+            "_sales_engagement": {"tool_call_id": tool_call_id},
+        },
     )
     return {
         "provider": "smtp",
