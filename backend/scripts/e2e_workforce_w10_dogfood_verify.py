@@ -1,8 +1,9 @@
 """Real-stack W10 internal-company dogfood certification.
 
 This certifies a repeatable governed revenue-workflow foundation using the
-existing first-party workforce tools. It deliberately stops before any real
-external outreach because the CRM/outreach provider is not configured.
+existing first-party workforce tools. Outbound delivery uses the isolated SMTP
+sink and inbound response uses the operator-configured contract-test provider;
+real customer delivery, response, and revenue remain outside this certification.
 """
 from __future__ import annotations
 
@@ -16,6 +17,7 @@ import traceback
 import uuid
 from datetime import datetime, timezone
 
+import httpx
 from sqlalchemy import select
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
