@@ -23,7 +23,7 @@ jobs:
       SMTP_PASSWORD: ${{ secrets.W10_LIVE_SMTP_PASSWORD }}
       SMTP_FROM_EMAIL: ${{ secrets.W10_LIVE_SMTP_FROM_EMAIL }}
       SMTP_USE_STARTTLS: ${{ secrets.W10_LIVE_SMTP_USE_STARTTLS }}
-      SMTP_ALLOWED_RECIPIENT_DOMAINS: '["${{ secrets.W10_LIVE_SMTP_ALLOWED_DOMAIN }}"]'
+      SMTP_ALLOWED_RECIPIENT_DOMAINS: '[\"${{ secrets.W10_LIVE_SMTP_ALLOWED_DOMAIN }}\"]'
       W10_SALES_RECIPIENT_EMAIL: ${{ secrets.W10_LIVE_SMTP_RECIPIENT }}
       W10_LIVE_SMTP_CERTIFICATION: "true"
       SALES_INBOUND_PROVIDER_NAME: none
@@ -49,11 +49,26 @@ jobs:
           domain = recipient.rsplit("@", 1)[1].lower()
           if domain not in {str(x).strip().lower().lstrip("@") for x in allowed}:
               raise SystemExit("Live SMTP recipient domain is not in the configured allowlist")
-          starttls = os.environ.get("SMTP_USE_STARTTLS", "").strip().lower()
-          if starttls not in {"true", "false"}:
-              raise SystemExit("SMTP_USE_STARTTLS must be exactly true or false")
+
+          starttls_raw = os.environ.get("SMTP_USE_STARTTLS", "").strip().lower()
+          starttls_map = {
+              "true": "true",
+              "false": "false",
+              "1": "true",
+              "0": "false",
+              "yes": "true",
+              "no": "false",
+              "on": "true",
+              "off": "false",
+          }
+          try:
+              starttls = starttls_map[starttls_raw]
+          except KeyError:
+              raise SystemExit(
+                  "SMTP_USE_STARTTLS must be one of: true, false, 1, 0, yes, no, on, off"
+              )
           with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
-              handle.write(f"SMTP_USE_STARTTLS={starttls}\\n")
+              handle.write(f"SMTP_USE_STARTTLS={starttls}\n")
           print("LIVE SMTP CONFIGURATION GUARD PASS")
           PY
 
