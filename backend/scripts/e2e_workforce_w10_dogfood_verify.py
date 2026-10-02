@@ -234,11 +234,6 @@ async def prepare():
             await db.flush()
             runs[stage] = run.id
 
-        outreach_args = {
-            "query": "B2B SaaS founders with manual customer operations",
-            "criteria": {"company_size": "10-200", "pain": "manual customer operations"},
-            "message": "We can show a governed AI workforce workflow for customer operations.",
-        }
         deal_args = {
             "title": "W10 qualified AI workforce opportunity",
             "customer_name": "Certification Prospect",
