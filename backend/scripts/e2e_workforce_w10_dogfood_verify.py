@@ -419,8 +419,8 @@ async def main():
                 event_key=response_key,
                 response_text="Certification prospect replied: please send pricing and implementation details.",
                 tool_call_id=outreach_call_id,
-                outbox_id=outreach["outbox_id"],
-                provider_message_id=f"outbox-{outreach['outbox_id']}",
+                outbox_id=outreach["execution"]["outbox_id"],
+                provider_message_id=f"outbox-{outreach['execution']['outbox_id']}",
                 deal_id=deal["deal_id"],
                 source="e2e-synthetic-inbound",
             )
@@ -430,8 +430,8 @@ async def main():
                 event_key=response_key,
                 response_text="duplicate replay",
                 tool_call_id=outreach_call_id,
-                outbox_id=outreach["outbox_id"],
-                provider_message_id=f"outbox-{outreach['outbox_id']}",
+                outbox_id=outreach["execution"]["outbox_id"],
+                provider_message_id=f"outbox-{outreach['execution']['outbox_id']}",
                 deal_id=deal["deal_id"],
                 source="e2e-synthetic-inbound-replay",
             )
