@@ -34,14 +34,9 @@ class Settings(BaseSettings):
     celery_result_backend: str = "redis://localhost:6379/2"
     test_center_run_timeout_seconds: int = 3600
 
-    # Tenant-scoped execution resource shares. A tenant-specific entry wins;
-    # the default is deliberately small so one tenant cannot monopolize workers.
     tenant_resource_concurrency: dict[str, int] = {}
     tenant_resource_default_concurrency: int = 1
     tenant_resource_lease_seconds: int = 3600
-
-    # Data lifecycle: operational records default to one year and may be
-    # overridden through DATA_RETENTION_DAYS within the enforced safety bounds.
     data_retention_days: int = 365
 
     cors_origins: List[str] = [
@@ -50,16 +45,11 @@ class Settings(BaseSettings):
         "http://172.18.0.1:3000",
         "http://host.docker.internal:3000",
     ]
-
-    # Explicit opt-in for the local production-like Docker stack. This keeps
-    # the normal production HTTPS policy intact while allowing localhost HTTP
-    # endpoints on a developer workstation without weakening VPS production.
     local_production_allow_http: bool = False
 
     @field_validator("database_url_sync", mode="before")
     @classmethod
     def _normalize_sync_postgres_driver(cls, value: Any) -> Any:
-        """Pin plain PostgreSQL sync URLs to the declared psycopg2 driver."""
         if isinstance(value, str):
             for prefix in ("postgresql://", "postgres://"):
                 if value.startswith(prefix):
@@ -68,7 +58,6 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_safety(self):
-        """Fail fast on unsafe production configuration."""
         if self.test_center_run_timeout_seconds < 1 or self.test_center_run_timeout_seconds > 86_400:
             raise ValueError("TEST_CENTER_RUN_TIMEOUT_SECONDS must be between 1 and 86400")
         if self.tenant_resource_default_concurrency < 1:
@@ -90,14 +79,15 @@ class Settings(BaseSettings):
                 raise ValueError("SECRET_KEY must be a strong production secret")
             if self.sales_inbound_provider_name.lower() == "generic-webhook" and "*" in self.sales_inbound_webhook_secrets:
                 raise ValueError("SALES_INBOUND_WEBHOOK_SECRETS must not use wildcard '*' with generic-webhook in production")
-
+            if self.sales_inbound_provider_name.lower() == "imap-mailbox":
+                if not self.sales_inbound_mailbox_host or not self.sales_inbound_mailbox_username or not self.sales_inbound_mailbox_password:
+                    raise ValueError("IMAP mailbox credentials must be configured when imap-mailbox is enabled")
             if not self.rate_limit_enabled:
                 raise ValueError("RATE_LIMIT_ENABLED must be true in production")
             if not self.rate_limit_fail_closed:
                 raise ValueError("RATE_LIMIT_FAIL_CLOSED must be true in production")
             if not self.cors_origins:
                 raise ValueError("CORS_ORIGINS must explicitly allow trusted origins in production")
-
             if not self.local_production_allow_http:
                 if any(urlparse(origin).scheme != "https" for origin in self.cors_origins):
                     raise ValueError("CORS_ORIGINS must use HTTPS in production")
@@ -105,11 +95,7 @@ class Settings(BaseSettings):
                     raise ValueError("FRONTEND_BASE_URL must use HTTPS in production")
                 if urlparse(self.frontend_app_url).scheme != "https":
                     raise ValueError("FRONTEND_APP_URL must use HTTPS in production")
-
-            database_urls = {
-                "DATABASE_URL": self.database_url,
-                "DATABASE_URL_SYNC": self.database_url_sync,
-            }
+            database_urls = {"DATABASE_URL": self.database_url, "DATABASE_URL_SYNC": self.database_url_sync}
             for name, value in {
                 **database_urls,
                 "REDIS_URL": self.redis_url,
@@ -117,27 +103,16 @@ class Settings(BaseSettings):
                 "CELERY_RESULT_BACKEND": self.celery_result_backend,
             }.items():
                 parsed = urlparse(value)
-                host = (parsed.hostname or "").lower()
-                if host in {"localhost", "127.0.0.1", "::1"}:
+                if (parsed.hostname or "").lower() in {"localhost", "127.0.0.1", "::1"}:
                     raise ValueError(f"{name} must not point to localhost in production")
-
-            # The repository's E2E defaults intentionally use a known demo
-            # database credential. Never allow that credential to cross into
-            # production, even when the database host itself is remote.
             for name, value in database_urls.items():
                 parsed = urlparse(value)
                 if parsed.username == "aiep" and parsed.password == "aiep":
                     raise ValueError(f"{name} must not use the default E2E database credentials in production")
-
-            # AI must not silently fall back to a local HTTP endpoint in production.
             if not self.local_production_allow_http and urlparse(self.lm_studio_base_url).scheme != "https":
                 raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
-
-            if self.market_data_provider_base_url:
-                if urlparse(self.market_data_provider_base_url).scheme != "https":
-                    raise ValueError("MARKET_DATA_PROVIDER_BASE_URL must use HTTPS in production")
-
-            # External integrations must not redirect users or callbacks over plaintext HTTP.
+            if self.market_data_provider_base_url and urlparse(self.market_data_provider_base_url).scheme != "https":
+                raise ValueError("MARKET_DATA_PROVIDER_BASE_URL must use HTTPS in production")
             if not self.local_production_allow_http:
                 if self.stripe_secret_key or self.stripe_webhook_secret:
                     for name, value in {
@@ -147,7 +122,6 @@ class Settings(BaseSettings):
                     }.items():
                         if urlparse(value).scheme != "https":
                             raise ValueError(f"{name} must use HTTPS in production")
-
                 if self.shopify_client_id or self.shopify_client_secret:
                     if urlparse(self.shopify_redirect_uri).scheme != "https":
                         raise ValueError("SHOPIFY_REDIRECT_URI must use HTTPS in production")
@@ -156,7 +130,6 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_cors_origins(cls, v: Any) -> Any:
-        """Accept JSON list or comma-separated string from env."""
         defaults = [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
@@ -221,26 +194,22 @@ class Settings(BaseSettings):
     shopify_api_version: str = "2026-07"
     frontend_app_url: str = "http://localhost:3000"
 
-    # Optional, operator-configured read-only market-research provider. The
-    # URL is configuration-owned; callers cannot choose an arbitrary endpoint.
     market_data_provider_base_url: str | None = None
     market_data_provider_api_key: str | None = None
     market_data_provider_timeout_seconds: float = 10.0
-
-    # Engineering provider selection is operator-owned; workforce tool input
-    # must never be able to select an external provider.
     engineering_provider_name: str = "none"
-    # Read-only GitHub provider configuration is operator-owned. The repository
-    # mapping is tenant-scoped; callers cannot override it through tool input.
     engineering_github_repositories: dict[str, str] = {}
     engineering_github_token: str | None = None
     engineering_github_timeout_seconds: float = 10.0
-    # Sales outreach provider selection is operator-owned; model/tool input cannot choose transport.
     sales_outreach_provider_name: str = "none"
-    # Sales inbound response provider and webhook secrets are operator-owned.
-    # Runtime payloads cannot select a provider or supply a tenant secret.
     sales_inbound_provider_name: str = "none"
     sales_inbound_webhook_secrets: dict[str, str] = {}
+    sales_inbound_mailbox_host: str | None = None
+    sales_inbound_mailbox_port: int = 993
+    sales_inbound_mailbox_username: str | None = None
+    sales_inbound_mailbox_password: str | None = None
+    sales_inbound_mailbox_folder: str = "INBOX"
+    sales_inbound_mailbox_timeout_seconds: int = 20
 
     @property
     def stripe_enabled(self) -> bool:
