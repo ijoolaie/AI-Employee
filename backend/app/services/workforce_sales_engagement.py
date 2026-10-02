@@ -81,6 +81,7 @@ async def record_outreach_delivered(
     provider_message_id: str,
     recipients: list[str],
     subject: str,
+    deal_id: str | None = None,
 ) -> AuditLog:
     return await record_event(
         db,
@@ -90,7 +91,7 @@ async def record_outreach_delivered(
         tool_call_id=tool_call_id,
         outbox_id=outbox_id,
         provider_message_id=provider_message_id,
-        metadata={"recipient_count": len(recipients), "subject": subject},
+        metadata={"recipient_count": len(recipients), "subject": subject, "deal_id": deal_id},
     )
 
 
