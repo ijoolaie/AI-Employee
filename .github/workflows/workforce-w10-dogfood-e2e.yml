@@ -16,6 +16,7 @@ on:
       - "backend/scripts/e2e_smtp_sink.py"
       - ".github/workflows/workforce-w10-dogfood-e2e.yml"
       - "backend/app/core/config.py"
+      - "docker-compose.yml"
   pull_request:
     paths:
       - "backend/app/ai/tool_registry.py"
@@ -109,4 +110,4 @@ jobs:
         run: |
           timeout 3m docker compose down -v --remove-orphans || true
 
-# W10 trigger reconciliation: certification rerun after actual provider-message correlation fix.
+# W10 generic-webhook certification: explicit tenant-scoped HMAC secret; no wildcard fixture.
