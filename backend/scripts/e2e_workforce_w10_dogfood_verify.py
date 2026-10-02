@@ -76,7 +76,9 @@ async def prepare():
         )
         db.add(reseller)
         await db.flush()
+        configured_tenant_id = os.environ.get("SALES_INBOUND_TENANT_ID", "").strip()
         customer = Tenant(
+            id=uuid.UUID(configured_tenant_id) if configured_tenant_id else None,
             name=f"W10 Dogfood Customer {suffix}",
             slug=f"w10-dogfood-customer-{suffix}",
             status="active",
@@ -450,9 +452,19 @@ async def main():
         provider_message_id = (delivery_event.metadata_ or {}).get("provider_message_id")
         assert provider_message_id
         inbound_provider = os.environ.get("SALES_INBOUND_PROVIDER_NAME", "contract-test").strip().lower()
-        inbound_secret = os.environ.get("SALES_INBOUND_CONTRACT_SECRET", "w10-contract-secret")
         if inbound_provider not in {"contract-test", "generic-webhook"}:
             raise RuntimeError(f"Unsupported W10 inbound provider fixture: {inbound_provider}")
+        if inbound_provider == "generic-webhook":
+            configured_secrets = json.loads(os.environ.get("SALES_INBOUND_WEBHOOK_SECRETS", "{}"))
+            inbound_secret = configured_secrets.get(str(tenant_id))
+            if not inbound_secret:
+                raise RuntimeError(
+                    f"Missing tenant-scoped generic-webhook secret for {tenant_id}"
+                )
+        else:
+            inbound_secret = os.environ.get(
+                "SALES_INBOUND_CONTRACT_SECRET", "w10-contract-secret"
+            )
         inbound_body = json.dumps(
             {
                 "provider_message_id": provider_message_id,
