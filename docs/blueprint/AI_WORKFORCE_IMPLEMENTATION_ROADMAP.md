@@ -677,3 +677,32 @@ Evidence:
 This closes the **governed provider-path / deferred email execution checkpoint** for W10. It does not close real external customer outreach, response ingestion, customer conversation, or revenue generation. Those remain **NOT VERIFIED** until a tenant-owned real SMTP/provider configuration is exercised against an authorized recipient and separately evidenced.
 
 This remains post-v1.4.11 mainline engineering evidence and does not modify the immutable v1.4.11 certification boundary.
+
+
+## W10 sales response ingestion & attribution checkpoint — 2026-10-02
+
+The W10 provider-path was extended into a governed sales engagement measurement loop. Outreach delivery is now correlated through the transactional outbox to an immutable tenant-scoped sales engagement event, and synthetic inbound responses are recorded through an idempotent event contract.
+
+Implementation:
+- backend/app/services/workforce_sales_engagement.py provides tenant-scoped engagement events and attribution summaries using the immutable audit ledger;
+- delivery events are emitted by the dedicated email worker after SMTP acceptance;
+- outbound records carry stable Sales correlation metadata through the transactional outbox;
+- response ingestion is idempotent by a stable event_key;
+- the W10 certification replays the same inbound response and verifies that it resolves to the original event rather than creating a duplicate;
+- attribution evidence covers sent=1, delivered=1, responded=1;
+- the E2E workflow remains isolated to the deterministic SMTP sink.
+
+Final GitHub Actions run 36970645134 / job 110723765442 completed successfully at commit 30d71beb86b6a17b956956fdac5dc1101d339bf3.
+
+Evidence:
+- W10 SMTP OUTREACH PROVIDER QUEUE PASS;
+- W10 SALES DELIVERY + RESPONSE INGESTION PASS;
+- W10 SALES RESPONSE IDEMPOTENCY PASS;
+- W10 SALES ATTRIBUTION PASS sent=1 delivered=1 responded=1;
+- W10 SMTP EXTERNAL DELIVERY PASS;
+- complete Docker shutdown PASS;
+- W10 FULL REVENUE OUTCOME NOT_VERIFIED: E2E SMTP sink only; no real customer delivery or revenue claimed.
+
+The W10 governed sales engagement measurement checkpoint is VERIFIED on the real stack for the isolated E2E provider path. Real customer response, customer conversation, and revenue generation remain NOT VERIFIED. The current evidence proves governed queueing, SMTP-sink acceptance, durable delivery-event recording, deterministic response ingestion, replay idempotency, and attribution mechanics—not real-world customer behavior or revenue.
+
+This remains post-v1.4.11 mainline engineering evidence and does not modify the immutable v1.4.11 certification boundary.
