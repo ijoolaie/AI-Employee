@@ -7,6 +7,9 @@ external outreach because the CRM/outreach provider is not configured.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import hmac
+import json
 import os
 import sys
 import traceback
@@ -439,35 +442,63 @@ async def main():
 
         print("W10 SALES DELIVERY EVENT INGESTION PASS")
 
+        # Exercise the real application ingress path: provider adapter ->
+        # authenticated webhook -> delivery correlation -> immutable ledger.
+        response_event_id = f"w10-provider-response-{uuid.uuid4().hex}"
+        provider_message_id = f"outbox-{outreach['execution']['outbox_id']}"
+        inbound_secret = os.environ.get("SALES_INBOUND_CONTRACT_SECRET", "w10-contract-secret")
+        inbound_body = json.dumps(
+            {
+                "provider_message_id": provider_message_id,
+                "response_text": "Certification prospect replied: please send pricing and implementation details.",
+            },
+            separators=(",", ":"),
+        ).encode("utf-8")
+        inbound_signature = hmac.new(
+            inbound_secret.encode("utf-8"),
+            inbound_body,
+            hashlib.sha256,
+        ).hexdigest()
+        inbound_url = (
+            os.environ.get("SALES_INBOUND_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+            + f"/api/v1/webhooks/sales/outreach/{tenant_id}"
+        )
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            inbound_response = await client.post(
+                inbound_url,
+                content=inbound_body,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Sales-Event-Id": response_event_id,
+                    "X-Sales-Provider-Message-Id": provider_message_id,
+                    "X-Sales-Signature": inbound_signature,
+                },
+            )
+            assert inbound_response.status_code == 202, inbound_response.text
+            inbound_payload = inbound_response.json()
+            assert inbound_payload["event_type"] == "outreach_response"
+            assert inbound_payload["event_key"] == f"provider:contract-test:{response_event_id}"
+
+            replay = await client.post(
+                inbound_url,
+                content=inbound_body,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Sales-Event-Id": response_event_id,
+                    "X-Sales-Provider-Message-Id": provider_message_id,
+                    "X-Sales-Signature": inbound_signature,
+                },
+            )
+            assert replay.status_code == 202, replay.text
+            replay_payload = replay.json()
+            assert replay_payload["event_id"] == inbound_payload["event_id"]
+
+        print("W10 SALES PROVIDER INBOUND RESPONSE INGESTION PASS")
+
         async with AsyncSessionLocal() as db:
-            response_key = f"w10-response:{outreach['execution']['outbox_id']}"
-            response = await workforce_sales_engagement.record_outreach_response(
-                db,
-                tenant_id=tenant_id,
-                event_key=response_key,
-                response_text="Certification prospect replied: please send pricing and implementation details.",
-                tool_call_id=outreach_call_id,
-                outbox_id=outreach["execution"]["outbox_id"],
-                provider_message_id=f"outbox-{outreach['execution']['outbox_id']}",
-                deal_id=deal["deal_id"],
-                source="e2e-synthetic-inbound",
-            )
-            duplicate = await workforce_sales_engagement.record_outreach_response(
-                db,
-                tenant_id=tenant_id,
-                event_key=response_key,
-                response_text="duplicate replay",
-                tool_call_id=outreach_call_id,
-                outbox_id=outreach["execution"]["outbox_id"],
-                provider_message_id=f"outbox-{outreach['execution']['outbox_id']}",
-                deal_id=deal["deal_id"],
-                source="e2e-synthetic-inbound-replay",
-            )
             summary = await workforce_sales_engagement.attribution_summary(
                 db, tenant_id=tenant_id
             )
-            assert delivery_event.id is not None
-            assert response.id == duplicate.id
             assert summary["delivered"] == 1
             assert summary["responded"] == 1
             assert summary["event_count"] == 2
@@ -478,6 +509,8 @@ async def main():
             assert foreign_summary["delivered"] == 0
             assert foreign_summary["responded"] == 0
             await db.commit()
+        print("W10 SALES RESPONSE IDEMPOTENCY PASS")
+        print("W10 SALES ATTRIBUTION PASS sent=1 delivered=1 responded=1")
         print("W10 SALES DELIVERY + RESPONSE INGESTION PASS")
         print("W10 SALES RESPONSE IDEMPOTENCY PASS")
         print("W10 SALES ATTRIBUTION PASS sent=1 delivered=1 responded=1")
