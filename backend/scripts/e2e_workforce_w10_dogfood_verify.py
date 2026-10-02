@@ -40,6 +40,9 @@ TOOLS = [
     "workforce_content_qa",
     "workforce_prepare_outreach_draft",
     "workforce_external_outreach",
+    "create_deal",
+    "sales_pipeline_summary",
+    "sales_forecast",
 ]
 
 
@@ -250,7 +253,7 @@ async def prepare():
         return customer.id, instance.id, runs, approval.tool_call_id
 
 
-async def execute(tenant_id, instance_id, run_id, tool_name, arguments, tool_call_id=None):
+async def execute(tenant_id, instance_id, run_id, tool_name, arguments, tool_call_id=None, actor_id=None):
     async with AsyncSessionLocal() as db:
         async with agent_tool_governance.agent_tool_context(
             tenant_id=tenant_id,
@@ -263,6 +266,7 @@ async def execute(tenant_id, instance_id, run_id, tool_name, arguments, tool_cal
                 permissions={"run.execute"},
                 db=db,
                 tenant_id=tenant_id,
+                actor_id=actor_id,
                 agent_instance_id=instance_id,
                 tool_call_id=tool_call_id,
             )
@@ -318,6 +322,22 @@ async def main():
     )
     assert draft["provider_execution"] == "not_configured"
     assert draft["external_side_effect"] is False
+    deal = await execute(tenant_id, instance_id, runs["outreach_draft"], "create_deal", {
+        "title": "W10 qualified AI workforce opportunity",
+        "customer_name": "Certification Prospect",
+        "customer_email": "prospect@example.invalid",
+        "amount": 250000000, "currency": "IRR", "stage": "qualified", "probability": 25,
+        "source": "ai_workforce_dogfood",
+        "notes": "Certification-only internal pipeline record.",
+    })
+    pipeline = await execute(tenant_id, instance_id, runs["outreach_draft"], "sales_pipeline_summary", {})
+    forecast = await execute(tenant_id, instance_id, runs["outreach_draft"], "sales_forecast", {"horizon_days": 30})
+    assert deal["deal_id"]
+    assert deal["stage"] == "qualified"
+    assert pipeline["total_deals"] >= 1
+    assert pipeline["weighted_pipeline"] >= 62500000.0
+    assert forecast["expected_revenue"] >= 62500000.0
+
 
     outreach_args = {
         "query": lead_query,
@@ -345,6 +365,10 @@ async def main():
     print(f"W10 QUALIFICATION ID={qualification['sales_id']}")
     print("W10 CONTENT BRIEF -> ARTICLE -> QA PASS")
     print(f"W10 CONTENT ARTICLE ID={article['content_id']}")
+    print("W10 INTERNAL CRM DEAL + PIPELINE + FORECAST PASS")
+    print("W10 DEAL ID=" + deal["deal_id"])
+    print("W10 WEIGHTED PIPELINE=" + str(pipeline["weighted_pipeline"]))
+    print("W10 FORECAST=" + str(forecast["expected_revenue"]))
     print("W10 OUTREACH DRAFT PASS")
     print(f"W10 OUTREACH PROPOSAL ID={outreach['sales_id']}")
     print("W10 APPROVAL GOVERNANCE PASS")
