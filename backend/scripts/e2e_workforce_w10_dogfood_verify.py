@@ -395,8 +395,16 @@ async def main():
     assert outreach["approval_status"] == "approved"
     assert outreach["status"] == "proposal"
     assert outreach["external_side_effect"] is True
-    assert outreach["provider_execution"] == "not_configured"
-    assert outreach["execution"]["executed"] is False
+
+    if os.environ.get("SALES_OUTREACH_PROVIDER_NAME", "none").strip().lower() == "smtp":
+        assert outreach["provider_execution"] == "queued"
+        assert outreach["execution"]["executed"] is True
+        assert outreach["execution"]["queued"] is True
+        print("W10 SMTP OUTREACH PROVIDER QUEUE PASS")
+    else:
+        assert outreach["provider_execution"] == "not_configured"
+        assert outreach["execution"]["executed"] is False
+        print("W10 EXTERNAL PROVIDER FAIL-CLOSED PASS provider_execution=not_configured")
 
     print("W10 LEAD RESEARCH AND QUALIFICATION PASS")
     print(f"W10 SALES RESEARCH ID={research['sales_id']}")
@@ -410,7 +418,8 @@ async def main():
     print("W10 OUTREACH DRAFT PASS")
     print(f"W10 OUTREACH PROPOSAL ID={outreach['sales_id']}")
     print("W10 APPROVAL GOVERNANCE PASS")
-    print("W10 EXTERNAL PROVIDER FAIL-CLOSED PASS provider_execution=not_configured")
+    if os.environ.get("SALES_OUTREACH_PROVIDER_NAME", "none").strip().lower() != "smtp":
+        print("W10 EXTERNAL PROVIDER FAIL-CLOSED PASS provider_execution=not_configured")
     print("W10 REVENUE WORKFLOW FOUNDATION REAL-STACK E2E PASS")
     print("W10 FULL REVENUE OUTCOME NOT_VERIFIED: external provider not configured")
 
