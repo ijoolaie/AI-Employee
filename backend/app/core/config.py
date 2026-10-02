@@ -83,8 +83,7 @@ class Settings(BaseSettings):
             raise ValueError("MARKET_DATA_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
         if self.engineering_github_timeout_seconds <= 0 or self.engineering_github_timeout_seconds > 60:
             raise ValueError("ENGINEERING_GITHUB_TIMEOUT_SECONDS must be between 0 and 60")
-        if self.app_env.lower() in {"production", "prod"}:
-            if self.debug:
+NaN            if self.debug:
                 raise ValueError("DEBUG must be false in production")
             if self.secret_key.startswith("change-me") or len(self.secret_key) < 32:
                 raise ValueError("SECRET_KEY must be a strong production secret")
