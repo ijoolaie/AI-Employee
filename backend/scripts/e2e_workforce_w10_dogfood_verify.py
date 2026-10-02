@@ -43,6 +43,7 @@ from app.services import agent_tool_governance, edition_service, license_service
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.ai.tool_registry import registry
 from app.services import workforce_sales_engagement
+from app.services.workforce_sales_mailbox_provider import poll_sales_replies
 
 TOOLS = [
     "workforce_lead_research",
@@ -450,8 +451,58 @@ async def main():
 
         if os.environ.get("W10_LIVE_SMTP_CERTIFICATION", "").strip().lower() == "true":
             print("W10 LIVE SMTP SEND ACCEPTED PASS")
-            print("W10 LIVE CUSTOMER INBOX RECEIPT NOT_VERIFIED: no independent downstream mailbox/provider evidence")
-            print("W10 LIVE CUSTOMER RESPONSE NOT_VERIFIED: no independently observed customer response")
+            inbound_provider = os.environ.get("SALES_INBOUND_PROVIDER_NAME", "none").strip().lower()
+            if inbound_provider != "imap-mailbox":
+                print("W10 LIVE CUSTOMER INBOX RECEIPT NOT_VERIFIED: mailbox provider is not enabled")
+                print("W10 LIVE CUSTOMER RESPONSE NOT_VERIFIED: no independently observed mailbox response")
+                print("W10 LIVE REVENUE OUTCOME NOT_VERIFIED: no verified customer payment/revenue event")
+                return
+
+            observed_response = None
+            for _ in range(60):
+                async with AsyncSessionLocal() as db:
+                    replies = await poll_sales_replies(db, tenant_id=tenant_id)
+                if replies:
+                    observed_response = replies[0]
+                    break
+                await asyncio.sleep(10)
+
+            if observed_response is None:
+                raise RuntimeError(
+                    "W10 live mailbox response was not observed within the certification window"
+                )
+
+            async with AsyncSessionLocal() as db:
+                response_event = await workforce_sales_engagement.ingest_outreach_response(
+                    db,
+                    tenant_id=observed_response.tenant_id,
+                    event_key=observed_response.event_id,
+                    provider_message_id=observed_response.provider_message_id,
+                    response_text=observed_response.response_text,
+                    source="imap-mailbox",
+                )
+                replay = await workforce_sales_engagement.ingest_outreach_response(
+                    db,
+                    tenant_id=observed_response.tenant_id,
+                    event_key=observed_response.event_id,
+                    provider_message_id=observed_response.provider_message_id,
+                    response_text=observed_response.response_text,
+                    source="imap-mailbox",
+                )
+                assert response_event.id == replay.id
+                summary = await workforce_sales_engagement.attribution_summary(
+                    db, tenant_id=tenant_id, deal_id=deal["deal_id"]
+                )
+                assert summary["delivered"] == 1
+                assert summary["responded"] == 1
+                assert summary["event_count"] == 2
+                await db.commit()
+
+            print("W10 LIVE MAILBOX RESPONSE OBSERVED PASS provider=imap-mailbox")
+            print("W10 LIVE SALES RESPONSE INGESTION PASS")
+            print("W10 LIVE SALES RESPONSE IDEMPOTENCY PASS")
+            print("W10 LIVE SALES ATTRIBUTION PASS sent=1 delivered=1 responded=1")
+            print("W10 LIVE CUSTOMER RESPONSE NOT_VERIFIED: mailbox response observed; sender identity/customer status is not independently verified")
             print("W10 LIVE REVENUE OUTCOME NOT_VERIFIED: no verified customer payment/revenue event")
             return
 

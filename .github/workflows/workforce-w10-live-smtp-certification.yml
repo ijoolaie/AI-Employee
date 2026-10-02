@@ -26,7 +26,13 @@ jobs:
       SMTP_ALLOWED_RECIPIENT_DOMAINS: '["${{ secrets.W10_LIVE_SMTP_ALLOWED_DOMAIN }}"]'
       W10_SALES_RECIPIENT_EMAIL: ${{ secrets.W10_LIVE_SMTP_RECIPIENT }}
       W10_LIVE_SMTP_CERTIFICATION: "true"
-      SALES_INBOUND_PROVIDER_NAME: none
+      SALES_INBOUND_PROVIDER_NAME: imap-mailbox
+      SALES_INBOUND_MAILBOX_HOST: imap.gmail.com
+      SALES_INBOUND_MAILBOX_PORT: "993"
+      SALES_INBOUND_MAILBOX_USERNAME: ${{ secrets.W10_LIVE_SMTP_USERNAME }}
+      SALES_INBOUND_MAILBOX_PASSWORD: ${{ secrets.W10_LIVE_SMTP_PASSWORD }}
+      SALES_INBOUND_MAILBOX_FOLDER: INBOX
+      SALES_INBOUND_MAILBOX_TIMEOUT_SECONDS: "20"
     steps:
       - uses: actions/checkout@v7
 
@@ -97,11 +103,11 @@ jobs:
 
       - name: Compile W10 sources
         run: |
-          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/workers/email_worker.py
+          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/services/workforce_sales_mailbox_provider.py app/workers/email_worker.py
 
       - name: Run live SMTP governed certification
         run: |
-          timeout 8m docker compose exec -T api python scripts/e2e_workforce_w10_dogfood_verify.py
+          timeout 20m docker compose exec -T api python scripts/e2e_workforce_w10_dogfood_verify.py
 
       - name: Failure diagnostics
         if: failure()
