@@ -88,7 +88,8 @@ async def execute_sales_outreach(
             "to": recipients,
             "subject": subject,
             "body": body,
-            "_sales_engagement": {"tool_call_id": tool_call_id},
+            "deal_id": arguments.get("deal_id"),
+            "_sales_engagement": {"tool_call_id": tool_call_id, "deal_id": arguments.get("deal_id")},
         },
     )
     return {
