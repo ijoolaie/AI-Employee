@@ -11,6 +11,7 @@ on:
       - "backend/app/services/workforce_sales_engagement.py"
       - "backend/app/services/workforce_sales_inbound_provider.py"
       - "backend/app/api/v1/sales_webhooks.py"
+      - "backend/tests/test_workforce_sales_inbound_provider.py"
       - "backend/scripts/e2e_workforce_w10_dogfood_verify.py"
       - "backend/scripts/e2e_smtp_sink.py"
       - ".github/workflows/workforce-w10-dogfood-e2e.yml"
@@ -73,6 +74,10 @@ jobs:
       - name: Compile W10 sources
         run: |
           timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/services/workforce_sales_inbound_provider.py app/api/v1/sales_webhooks.py app/workers/email_worker.py
+
+      - name: Run sales inbound provider unit tests
+        run: |
+          timeout 3m docker compose exec -T api pytest -q tests/test_workforce_sales_inbound_provider.py
 
       - name: Run W10 real-stack certification
         run: |
