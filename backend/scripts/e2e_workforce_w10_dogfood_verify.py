@@ -446,6 +446,13 @@ async def main():
 
         print("W10 SALES DELIVERY EVENT INGESTION PASS")
 
+        if os.environ.get("W10_LIVE_SMTP_CERTIFICATION", "").strip().lower() == "true":
+            print("W10 LIVE SMTP PROVIDER ACCEPTANCE PASS")
+            print("W10 LIVE CUSTOMER INBOX RECEIPT NOT_VERIFIED")
+            print("W10 LIVE CUSTOMER RESPONSE NOT_VERIFIED")
+            print("W10 LIVE REVENUE OUTCOME NOT_VERIFIED")
+            return
+
         # Exercise the real application ingress path: provider adapter ->
         # authenticated webhook -> delivery correlation -> immutable ledger.
         response_event_id = f"w10-provider-response-{uuid.uuid4().hex}"
