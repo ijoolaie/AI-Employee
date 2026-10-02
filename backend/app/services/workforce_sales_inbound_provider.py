@@ -56,7 +56,7 @@ def parse_and_verify(
     settings = get_settings()
     provider = (settings.sales_inbound_provider_name or "none").strip().lower()
 
-    if provider != "contract-test":
+    if provider not in {"contract-test", "generic-webhook"}:
         raise ValidationAppError(
             "Sales inbound response provider is not configured",
             details={"provider_execution": "not_configured"},
