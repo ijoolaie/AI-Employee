@@ -249,3 +249,25 @@ Continuation review found two additional control-boundary defects and corrected 
 
 This remains post-v1.4.11 mainline engineering. Live GitHub/CI/deployment execution remains NOT CONFIGURED / NOT VERIFIED.
 
+
+
+## W10 sales response ingestion & attribution verification — 2026-10-02
+
+The W10 governed SMTP path now has end-to-end sales engagement measurement evidence on the real stack.
+
+Final GitHub Actions run **36971624051** / job **110726669120** completed successfully at commit **3eff76c8a2217ceb91339bbaed692f193b3d59cb**.
+
+Verified evidence:
+- `W10 SMTP OUTREACH PROVIDER QUEUE PASS`;
+- `W10 SALES DELIVERY EVENT INGESTION PASS` — the delivery event was observed after the dedicated email worker processed the transactional outbox; the certification script did not manually insert the delivery event;
+- `W10 SALES DELIVERY + RESPONSE INGESTION PASS`;
+- `W10 SALES RESPONSE IDEMPOTENCY PASS`;
+- `W10 SALES ATTRIBUTION PASS sent=1 delivered=1 responded=1`;
+- `W10 SMTP EXTERNAL DELIVERY PASS` against the isolated deterministic E2E SMTP sink;
+- complete Docker shutdown PASS.
+
+The delivery-event correlation includes the governed `tool_call_id`, `outbox_id`, and `deal_id`. Response replay resolves to the existing immutable event rather than creating a duplicate.
+
+Status boundary: **W10 governed sales delivery/response ingestion, idempotency, and attribution mechanics are VERIFIED on the real stack for the isolated E2E SMTP provider path.** Real customer delivery, real customer response/conversation, and revenue remain **NOT VERIFIED**. The E2E sink is deterministic test infrastructure and is not evidence of real-world customer behavior or revenue.
+
+This is post-v1.4.11 mainline engineering evidence and does not modify the immutable v1.4.11 certification boundary.
