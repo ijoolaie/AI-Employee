@@ -1,4 +1,5 @@
 import pytest
+from uuid import UUID
 
 from app.services import workforce_sales_outreach_provider
 
@@ -57,9 +58,10 @@ async def test_sales_outreach_smtp_queues_through_transactional_outbox(monkeypat
         fake_enqueue,
     )
 
+    tenant_id = UUID("00000000-0000-0000-0000-000000000001")
     result = await workforce_sales_outreach_provider.execute_sales_outreach(
         db=object(),
-        tenant_id="tenant-1",
+        tenant_id=tenant_id,
         arguments={
             "to": ["prospect@example.com"],
             "subject": "Hello",
@@ -73,7 +75,7 @@ async def test_sales_outreach_smtp_queues_through_transactional_outbox(monkeypat
     assert result["external_side_effect"] is True
     assert result["outbox_id"] == "outbox-1"
     assert captured["kind"] == "email.send"
-    assert captured["tenant_id"] == "tenant-1"
+    assert captured["tenant_id"] == tenant_id
     assert captured["dedupe_key"] == "sales-outreach:call-1"
     assert captured["payload"]["to"] == ["prospect@example.com"]
 
@@ -91,7 +93,7 @@ async def test_sales_outreach_rejects_recipient_outside_operator_allowlist(monke
     with pytest.raises(Exception, match="Recipient domain is not allowed"):
         await workforce_sales_outreach_provider.execute_sales_outreach(
             db=object(),
-            tenant_id="tenant-1",
+            tenant_id=UUID("00000000-0000-0000-0000-000000000002"),
             arguments={
                 "to": ["outside@other.example"],
                 "subject": "Hello",
