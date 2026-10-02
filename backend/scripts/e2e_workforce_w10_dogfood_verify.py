@@ -364,11 +364,16 @@ async def main():
     )
     pipeline = await execute(tenant_id, instance_id, runs["outreach_draft"], "sales_pipeline_summary", {})
     forecast = await execute(tenant_id, instance_id, runs["outreach_draft"], "sales_forecast", {"horizon_days": 30})
-    assert deal["deal_id"]
-    assert deal["stage"] == "qualified"
-    assert pipeline["total_deals"] >= 1
-    assert pipeline["weighted_pipeline"] >= 62500000.0
-    assert forecast["expected_revenue"] >= 62500000.0
+    if not deal.get("deal_id"):
+        raise RuntimeError(f"W10 create_deal returned no deal_id: {deal!r}")
+    if deal.get("stage") != "qualified":
+        raise RuntimeError(f"W10 create_deal stage mismatch: {deal!r}")
+    if pipeline.get("total_deals", 0) < 1:
+        raise RuntimeError(f"W10 pipeline total_deals mismatch: {pipeline!r}")
+    if pipeline.get("weighted_pipeline", 0) < 62500000.0:
+        raise RuntimeError(f"W10 weighted_pipeline mismatch: {pipeline!r}")
+    if forecast.get("expected_revenue", 0) < 62500000.0:
+        raise RuntimeError(f"W10 forecast mismatch: {forecast!r}")
 
 
     outreach_args = {
@@ -413,5 +418,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except Exception as exc:
-        print(f"W10 REVENUE WORKFLOW FOUNDATION REAL-STACK E2E FAIL: {exc}", file=sys.stderr)
+        print(f"W10 REVENUE WORKFLOW FOUNDATION REAL-STACK E2E FAIL: {type(exc).__name__}: {exc!r}", file=sys.stderr)
         raise SystemExit(1)
