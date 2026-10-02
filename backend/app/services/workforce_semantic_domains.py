@@ -283,7 +283,11 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "criteria": arguments.get("criteria", {}),
         "provider_requested": arguments.get("provider", "crm_or_outreach"),
         "provider_execution": provider_execution,
-        "external_side_effect": bool(execution_result and execution_result.get("external_side_effect")) if operation == "external_outreach" else external,
+        # external_side_effect describes the operation's governed side-effect class;
+        # provider_execution/execution.executed separately records whether anything
+        # actually left the system. A fail-closed unconfigured provider therefore
+        # remains an external operation with zero external execution.
+        "external_side_effect": external,
         **({"execution": execution_result} if execution_result is not None else {}),
         "provenance": {"tenant_id": tenant_id, "created_at": _now(), "provider_execution": provider_execution},
     }
@@ -296,7 +300,11 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "status": status,
         "approval_required": approval_required,
         "approval_status": approval_status,
-        "external_side_effect": bool(execution_result and execution_result.get("external_side_effect")) if operation == "external_outreach" else external,
+        # external_side_effect describes the operation's governed side-effect class;
+        # provider_execution/execution.executed separately records whether anything
+        # actually left the system. A fail-closed unconfigured provider therefore
+        # remains an external operation with zero external execution.
+        "external_side_effect": external,
         "provider_execution": provider_execution,
         **({"execution": execution_result} if execution_result is not None else {}),
     }
