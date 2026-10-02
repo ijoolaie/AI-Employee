@@ -447,7 +447,8 @@ async def main():
         # Exercise the real application ingress path: provider adapter ->
         # authenticated webhook -> delivery correlation -> immutable ledger.
         response_event_id = f"w10-provider-response-{uuid.uuid4().hex}"
-        provider_message_id = f"outbox-{outreach['execution']['outbox_id']}"
+        provider_message_id = (delivery_event.metadata_ or {}).get("provider_message_id")
+        assert provider_message_id
         inbound_secret = os.environ.get("SALES_INBOUND_CONTRACT_SECRET", "w10-contract-secret")
         inbound_body = json.dumps(
             {
