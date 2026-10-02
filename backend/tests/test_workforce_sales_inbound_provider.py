@@ -78,3 +78,44 @@ def test_sales_inbound_fails_closed_when_provider_not_configured(monkeypatch):
             provider_message_id="message-1",
             signature="unused",
         )
+
+
+def test_sales_inbound_generic_webhook_requires_explicit_tenant_secret(monkeypatch):
+    tenant_id = uuid.uuid4()
+    secret = "tenant-production-secret"
+    settings = get_settings()
+    monkeypatch.setattr(settings, "sales_inbound_provider_name", "generic-webhook")
+    monkeypatch.setattr(settings, "sales_inbound_webhook_secrets", {str(tenant_id): secret})
+
+    body = json.dumps(
+        {"provider_message_id": "provider-message-1", "response_text": "Interested in a pilot."},
+        separators=(",", ":"),
+    ).encode()
+
+    result = workforce_sales_inbound_provider.parse_and_verify(
+        tenant_id=tenant_id,
+        body=body,
+        event_id="evt-production-1",
+        provider_message_id="provider-message-1",
+        signature=_signed(body, secret),
+    )
+
+    assert result.provider == "generic-webhook"
+    assert result.event_key == "provider:generic-webhook:evt-production-1"
+
+
+def test_sales_inbound_generic_webhook_rejects_wildcard_only_secret(monkeypatch):
+    tenant_id = uuid.uuid4()
+    settings = get_settings()
+    monkeypatch.setattr(settings, "sales_inbound_provider_name", "generic-webhook")
+    monkeypatch.setattr(settings, "sales_inbound_webhook_secrets", {"*": "wildcard-secret"})
+
+    body = b'{"provider_message_id":"provider-message-1","response_text":"hello"}'
+    with pytest.raises(Exception, match="Invalid sales inbound provider signature"):
+        workforce_sales_inbound_provider.parse_and_verify(
+            tenant_id=tenant_id,
+            body=body,
+            event_id="evt-production-1",
+            provider_message_id="provider-message-1",
+            signature=_signed(body, "wildcard-secret"),
+        )
