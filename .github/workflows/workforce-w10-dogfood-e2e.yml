@@ -8,6 +8,7 @@ on:
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/services/workforce_semantic_domains.py"
       - "backend/app/services/workforce_sales_outreach_provider.py"
+      - "backend/app/services/workforce_sales_engagement.py"
       - "backend/scripts/e2e_workforce_w10_dogfood_verify.py"
       - "backend/scripts/e2e_smtp_sink.py"
       - ".github/workflows/workforce-w10-dogfood-e2e.yml"
@@ -66,7 +67,7 @@ jobs:
 
       - name: Compile W10 sources
         run: |
-          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py
+          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/workers/email_worker.py
 
       - name: Run W10 real-stack certification
         run: |
