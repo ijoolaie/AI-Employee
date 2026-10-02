@@ -117,6 +117,7 @@ async def _send(outbox_id: str) -> None:
                     provider_message_id=f"outbox-{row.id}",
                     recipients=list(payload.get("to") or []),
                     subject=str(payload.get("subject") or ""),
+                    deal_id=sales_binding.get("deal_id"),
                 )
         except Exception as exc:
             if side_effect_started:
