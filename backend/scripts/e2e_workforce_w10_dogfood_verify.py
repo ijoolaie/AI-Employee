@@ -266,7 +266,7 @@ async def prepare():
             run_id=runs["external_outreach"],
             tool_name="workforce_external_outreach",
             tool_call_id=f"w10-outreach-{uuid.uuid4().hex}",
-            arguments=outreach_args,
+            arguments={**outreach_args, "subject": "Governed AI workforce for customer operations", "to": ["prospect@example.invalid"], "channel": "email"},
             continuation_messages=[],
             iteration=0,
             status="approved",
