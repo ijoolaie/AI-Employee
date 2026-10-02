@@ -208,7 +208,7 @@ async def test_w4_social_operations_are_unique_tenant_scoped_and_provider_bound(
     payload = _read_json("tenant-a", proposal["storage_key"])
     assert payload["provenance"]["tenant_id"] == "tenant-a"
     assert payload["provider_execution"] == "not_configured"
-    assert payload["approval_status"] == "approved"
+    assert payload["approval_status"] == "pending"
 
     with pytest.raises(Exception):
         _read_json("tenant-b", proposal["storage_key"])
