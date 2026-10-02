@@ -26,6 +26,8 @@ jobs:
       SMTP_ALLOWED_RECIPIENT_DOMAINS: '["${{ secrets.W10_LIVE_SMTP_ALLOWED_DOMAIN }}"]'
       W10_SALES_RECIPIENT_EMAIL: ${{ secrets.W10_LIVE_SMTP_RECIPIENT }}
       W10_LIVE_SMTP_CERTIFICATION: "true"
+      W10_LIVE_MAILBOX_POLL_ATTEMPTS: "12"
+      W10_LIVE_MAILBOX_POLL_INTERVAL_SECONDS: "10"
       SALES_INBOUND_PROVIDER_NAME: imap-mailbox
       SALES_INBOUND_MAILBOX_HOST: imap.gmail.com
       SALES_INBOUND_MAILBOX_PORT: "993"
@@ -107,7 +109,7 @@ jobs:
 
       - name: Run live SMTP governed certification
         run: |
-          timeout 20m docker compose exec -T api python scripts/e2e_workforce_w10_dogfood_verify.py
+          timeout 5m docker compose exec -T api python scripts/e2e_workforce_w10_dogfood_verify.py
 
       - name: Failure diagnostics
         if: failure()
