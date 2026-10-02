@@ -655,3 +655,25 @@ A contract correction was made in the Sales semantic domain: `external_side_effe
 The **W10 internal revenue-workflow foundation is VERIFIED on the real stack**. The **full revenue outcome remains NOT VERIFIED**: no external outreach, customer conversation, or revenue is claimed while the CRM/outreach provider remains `not_configured`.
 
 This remains post-v1.4.11 mainline engineering evidence and does not modify the immutable v1.4.11 certification boundary.
+
+
+## W10 governed SMTP provider checkpoint — 2026-10-02
+
+W10 now exercises the configured Sales outreach provider path through the existing transactional outbox and dedicated email worker. The E2E environment uses an isolated deterministic SMTP sink; this is provider-path evidence only and is not a real customer delivery.
+
+A real integration gap discovered during certification was fixed: the Sales semantic domain carries tenant IDs as storage-safe strings, while the transactional outbox governance context is UUID-bound. The provider now normalizes the tenant ID to UUID before enqueueing, preserving the deferred Agent governance binding instead of failing with a tenant-context mismatch.
+
+The W10 workflow was also corrected to start the dedicated `worker-email` service. Previously the outbox could be queued without the email delivery worker being present in this certification stack.
+
+Final GitHub Actions run `36969414362` / job `110720048581` completed successfully at commit `69aa536be417046c688950de0cc1e3512c7fbbcc`.
+
+Evidence:
+- `W10 SMTP OUTREACH PROVIDER QUEUE PASS`;
+- `W10 APPROVAL GOVERNANCE PASS`;
+- `W10 SMTP EXTERNAL DELIVERY PASS` against the isolated E2E SMTP sink;
+- complete Docker stack shutdown PASS;
+- `W10 FULL REVENUE OUTCOME NOT_VERIFIED: E2E SMTP sink only; no real customer delivery or revenue claimed`.
+
+This closes the **governed provider-path / deferred email execution checkpoint** for W10. It does not close real external customer outreach, response ingestion, customer conversation, or revenue generation. Those remain **NOT VERIFIED** until a tenant-owned real SMTP/provider configuration is exercised against an authorized recipient and separately evidenced.
+
+This remains post-v1.4.11 mainline engineering evidence and does not modify the immutable v1.4.11 certification boundary.
