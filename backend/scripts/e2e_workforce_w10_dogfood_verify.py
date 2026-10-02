@@ -32,6 +32,7 @@ from app.models.agent_runtime_binding import AgentRuntimeBinding
 from app.services import agent_tool_governance, edition_service, license_service
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.ai.tool_registry import registry
+from app.services import workforce_sales_engagement
 
 TOOLS = [
     "workforce_lead_research",
@@ -401,6 +402,51 @@ async def main():
         assert outreach["execution"]["executed"] is True
         assert outreach["execution"]["queued"] is True
         print("W10 SMTP OUTREACH PROVIDER QUEUE PASS")
+        async with AsyncSessionLocal() as db:
+            delivered = await workforce_sales_engagement.record_outreach_delivered(
+                db,
+                tenant_id=tenant_id,
+                tool_call_id=outreach_call_id,
+                outbox_id=outreach["outbox_id"],
+                provider_message_id=f"outbox-{outreach['outbox_id']}",
+                recipients=outreach_args["to"],
+                subject=outreach_args["subject"],
+            )
+            response_key = f"w10-response:{outreach['outbox_id']}"
+            response = await workforce_sales_engagement.record_outreach_response(
+                db,
+                tenant_id=tenant_id,
+                event_key=response_key,
+                response_text="Certification prospect replied: please send pricing and implementation details.",
+                tool_call_id=outreach_call_id,
+                outbox_id=outreach["outbox_id"],
+                provider_message_id=f"outbox-{outreach['outbox_id']}",
+                deal_id=deal["deal_id"],
+                source="e2e-synthetic-inbound",
+            )
+            duplicate = await workforce_sales_engagement.record_outreach_response(
+                db,
+                tenant_id=tenant_id,
+                event_key=response_key,
+                response_text="duplicate replay",
+                tool_call_id=outreach_call_id,
+                outbox_id=outreach["outbox_id"],
+                provider_message_id=f"outbox-{outreach['outbox_id']}",
+                deal_id=deal["deal_id"],
+                source="e2e-synthetic-inbound-replay",
+            )
+            summary = await workforce_sales_engagement.attribution_summary(
+                db, tenant_id=tenant_id, deal_id=deal["deal_id"]
+            )
+            assert delivered.id is not None
+            assert response.id == duplicate.id
+            assert summary["delivered"] == 1
+            assert summary["responded"] == 1
+            assert summary["event_count"] == 2
+            await db.commit()
+        print("W10 SALES DELIVERY + RESPONSE INGESTION PASS")
+        print("W10 SALES RESPONSE IDEMPOTENCY PASS")
+        print("W10 SALES ATTRIBUTION PASS sent=1 delivered=1 responded=1")
     else:
         assert outreach["provider_execution"] == "not_configured"
         assert outreach["execution"]["executed"] is False
