@@ -459,17 +459,32 @@ async def main():
                 return
 
             observed_response = None
-            for _ in range(60):
+            poll_attempts = max(
+                1, int(os.environ.get("W10_LIVE_MAILBOX_POLL_ATTEMPTS", "12"))
+            )
+            poll_interval_seconds = max(
+                1, int(os.environ.get("W10_LIVE_MAILBOX_POLL_INTERVAL_SECONDS", "10"))
+            )
+            for attempt in range(1, poll_attempts + 1):
                 async with AsyncSessionLocal() as db:
                     replies = await poll_sales_replies(db, tenant_id=tenant_id)
                 if replies:
                     observed_response = replies[0]
+                    print(
+                        f"W10 LIVE MAILBOX RESPONSE POLL PASS attempt={attempt}/{poll_attempts}"
+                    )
                     break
-                await asyncio.sleep(10)
+                print(
+                    f"W10 LIVE MAILBOX RESPONSE POLL WAIT attempt={attempt}/{poll_attempts}"
+                )
+                if attempt < poll_attempts:
+                    await asyncio.sleep(poll_interval_seconds)
 
             if observed_response is None:
                 raise RuntimeError(
-                    "W10 live mailbox response was not observed within the certification window"
+                    "W10 live mailbox response was not observed within the "
+                    f"certification window ({poll_attempts} polls x "
+                    f"{poll_interval_seconds}s)"
                 )
 
             async with AsyncSessionLocal() as db:
