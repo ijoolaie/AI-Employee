@@ -23,6 +23,7 @@ x-worker-common: &worker-common
     SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
     SMTP_USE_STARTTLS: ${SMTP_USE_STARTTLS:-true}
     SMTP_ALLOWED_RECIPIENT_DOMAINS: ${SMTP_ALLOWED_RECIPIENT_DOMAINS:-[]}
+    SALES_OUTREACH_PROVIDER_NAME: ${SALES_OUTREACH_PROVIDER_NAME:-none}
     MARKET_DATA_PROVIDER_BASE_URL: ${MARKET_DATA_PROVIDER_BASE_URL:-http://e2e-market-provider:8090}
   volumes:
     - app_storage:/app/var/storage
@@ -68,6 +69,22 @@ services:
       timeout: 5s
       retries: 10
 
+  smtp-test:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "scripts/e2e_smtp_sink.py"]
+    environment:
+      APP_ENV: e2e
+      DEBUG: "false"
+    volumes:
+      - smtp_outbox:/smtp-outbox
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('127.0.0.1',2525),2); s.close()"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
   e2e-market-provider:
     build:
       context: .
@@ -107,6 +124,7 @@ services:
       SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
       SMTP_USE_STARTTLS: ${SMTP_USE_STARTTLS:-true}
       SMTP_ALLOWED_RECIPIENT_DOMAINS: ${SMTP_ALLOWED_RECIPIENT_DOMAINS:-[]}
+      SALES_OUTREACH_PROVIDER_NAME: ${SALES_OUTREACH_PROVIDER_NAME:-none}
       MARKET_DATA_PROVIDER_BASE_URL: ${MARKET_DATA_PROVIDER_BASE_URL:-http://e2e-market-provider:8090}
     volumes:
       - app_storage:/app/var/storage
@@ -184,3 +202,4 @@ services:
 volumes:
   postgres_data:
   app_storage:
+  smtp_outbox:
