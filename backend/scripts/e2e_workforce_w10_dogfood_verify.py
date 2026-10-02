@@ -407,12 +407,12 @@ async def main():
                 db,
                 tenant_id=tenant_id,
                 tool_call_id=outreach_call_id,
-                outbox_id=outreach["outbox_id"],
-                provider_message_id=f"outbox-{outreach['outbox_id']}",
+                outbox_id=outreach["execution"]["outbox_id"],
+                provider_message_id=f"outbox-{outreach['execution']['outbox_id']}",
                 recipients=outreach_args["to"],
                 subject=outreach_args["subject"],
             )
-            response_key = f"w10-response:{outreach['outbox_id']}"
+            response_key = f"w10-response:{outreach['execution']['outbox_id']}"
             response = await workforce_sales_engagement.record_outreach_response(
                 db,
                 tenant_id=tenant_id,
