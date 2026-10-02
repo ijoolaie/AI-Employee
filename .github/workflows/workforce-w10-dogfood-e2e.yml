@@ -107,4 +107,4 @@ jobs:
         run: |
           timeout 3m docker compose down -v --remove-orphans || true
 
-# W10 trigger reconciliation: certification rerun after sales-outreach schema fix.
+# W10 trigger reconciliation: certification rerun after provider-backed inbound response ingress fix.
