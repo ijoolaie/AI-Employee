@@ -436,7 +436,7 @@ async def main():
                 source="e2e-synthetic-inbound-replay",
             )
             summary = await workforce_sales_engagement.attribution_summary(
-                db, tenant_id=tenant_id, deal_id=deal["deal_id"]
+                db, tenant_id=tenant_id
             )
             assert delivered.id is not None
             assert response.id == duplicate.id
