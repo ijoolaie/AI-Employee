@@ -1,9 +1,11 @@
 """Real-stack W10 internal-company dogfood certification.
 
 This certifies a repeatable governed revenue-workflow foundation using the
-existing first-party workforce tools. Outbound delivery uses the isolated SMTP
-sink and inbound response uses the operator-configured contract-test provider;
-real customer delivery, response, and revenue remain outside this certification.
+existing first-party workforce tools. The default SMTP path uses an isolated
+sink; live certification may use operator-configured SMTP credentials. The
+application observes SMTP send acceptance and records a governed delivery
+event, but customer inbox receipt, customer response, and revenue require
+independent downstream evidence.
 """
 from __future__ import annotations
 
@@ -447,10 +449,10 @@ async def main():
         print("W10 SALES DELIVERY EVENT INGESTION PASS")
 
         if os.environ.get("W10_LIVE_SMTP_CERTIFICATION", "").strip().lower() == "true":
-            print("W10 LIVE SMTP PROVIDER ACCEPTANCE PASS")
-            print("W10 LIVE CUSTOMER INBOX RECEIPT NOT_VERIFIED")
-            print("W10 LIVE CUSTOMER RESPONSE NOT_VERIFIED")
-            print("W10 LIVE REVENUE OUTCOME NOT_VERIFIED")
+            print("W10 LIVE SMTP SEND ACCEPTED PASS")
+            print("W10 LIVE CUSTOMER INBOX RECEIPT NOT_VERIFIED: no independent downstream mailbox/provider evidence")
+            print("W10 LIVE CUSTOMER RESPONSE NOT_VERIFIED: no independently observed customer response")
+            print("W10 LIVE REVENUE OUTCOME NOT_VERIFIED: no verified customer payment/revenue event")
             return
 
         # Exercise the real application ingress path: provider adapter ->
