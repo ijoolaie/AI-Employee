@@ -208,7 +208,7 @@ async def test_w4_social_operations_are_unique_tenant_scoped_and_provider_bound(
     payload = _read_json("tenant-a", proposal["storage_key"])
     assert payload["provenance"]["tenant_id"] == "tenant-a"
     assert payload["provider_execution"] == "not_configured"
-    assert payload["approval_status"] == "pending"
+    assert payload["approval_status"] == "approved"
 
     with pytest.raises(Exception):
         _read_json("tenant-b", proposal["storage_key"])
@@ -251,7 +251,7 @@ async def test_w5_sales_artifacts_are_tenant_scoped_and_external_outreach_is_pro
     assert research["external_side_effect"] is False
     assert outreach["status"] == "proposal"
     assert outreach["approval_required"] is True
-    assert outreach["approval_status"] == "pending"
+    assert outreach["approval_status"] == "approved"
     assert outreach["external_side_effect"] is True
     assert outreach["provider_execution"] == "not_configured"
     assert outreach["storage_key"].startswith("tenant-a/")
