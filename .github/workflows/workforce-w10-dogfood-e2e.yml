@@ -38,6 +38,7 @@ env:
   SMTP_FROM_EMAIL: ai-employee@example.invalid
   SMTP_USE_STARTTLS: "false"
   SMTP_ALLOWED_RECIPIENT_DOMAINS: '["example.invalid"]'
+  W10_SALES_RECIPIENT_EMAIL: w10-prospect@example.invalid
   SALES_INBOUND_PROVIDER_NAME: generic-webhook
   SALES_INBOUND_CONTRACT_SECRET: w10-contract-secret
   SALES_INBOUND_TENANT_ID: 00000000-0000-0000-0000-000000000010
