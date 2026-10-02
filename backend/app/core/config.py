@@ -83,10 +83,14 @@ class Settings(BaseSettings):
             raise ValueError("MARKET_DATA_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
         if self.engineering_github_timeout_seconds <= 0 or self.engineering_github_timeout_seconds > 60:
             raise ValueError("ENGINEERING_GITHUB_TIMEOUT_SECONDS must be between 0 and 60")
-NaN            if self.debug:
+        if self.app_env.lower() in {"production", "prod"}:
+            if self.debug:
                 raise ValueError("DEBUG must be false in production")
             if self.secret_key.startswith("change-me") or len(self.secret_key) < 32:
                 raise ValueError("SECRET_KEY must be a strong production secret")
+            if self.sales_inbound_provider_name.lower() == "generic-webhook" and "*" in self.sales_inbound_webhook_secrets:
+                raise ValueError("SALES_INBOUND_WEBHOOK_SECRETS must not use wildcard '*' with generic-webhook in production")
+
             if not self.rate_limit_enabled:
                 raise ValueError("RATE_LIMIT_ENABLED must be true in production")
             if not self.rate_limit_fail_closed:
