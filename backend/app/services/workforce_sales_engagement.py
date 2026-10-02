@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import uuid
 from typing import Any
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.audit_log import AuditLog
