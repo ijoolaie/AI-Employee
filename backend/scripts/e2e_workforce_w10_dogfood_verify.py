@@ -421,7 +421,10 @@ async def main():
     if os.environ.get("SALES_OUTREACH_PROVIDER_NAME", "none").strip().lower() != "smtp":
         print("W10 EXTERNAL PROVIDER FAIL-CLOSED PASS provider_execution=not_configured")
     print("W10 REVENUE WORKFLOW FOUNDATION REAL-STACK E2E PASS")
-    print("W10 FULL REVENUE OUTCOME NOT_VERIFIED: external provider not configured")
+    if os.environ.get("SALES_OUTREACH_PROVIDER_NAME", "none").strip().lower() == "smtp":
+        print("W10 FULL REVENUE OUTCOME NOT_VERIFIED: E2E SMTP sink only; no real customer delivery or revenue claimed")
+    else:
+        print("W10 FULL REVENUE OUTCOME NOT_VERIFIED: external provider not configured")
 
 
 if __name__ == "__main__":
