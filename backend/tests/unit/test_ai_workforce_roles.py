@@ -26,6 +26,9 @@ def test_catalog_contains_internal_manager_and_requested_next_roles() -> None:
         "ai_content_producer",
         "ai_social_media",
         "ai_sales_lead_generation",
+        "ai_seo_growth_employee",
+        "ai_customer_success",
+        "ai_qa_devops",
         "ai_website_employee",
     }
 
@@ -65,7 +68,7 @@ def test_unknown_role_fails_closed() -> None:
         get_workforce_role("does_not_exist")
 
 
-def test_four_requested_roles_have_first_party_workforce_templates() -> None:
+def test_workforce_roles_have_first_party_workforce_templates() -> None:
     templates = list_workforce_role_templates()
     assert {item["role_code"] for item in templates} == {
         "ai_marketing_advertising_manager",
@@ -75,9 +78,12 @@ def test_four_requested_roles_have_first_party_workforce_templates() -> None:
         "ai_content_producer",
         "ai_social_media",
         "ai_sales_lead_generation",
+        "ai_seo_growth_employee",
+        "ai_customer_success",
+        "ai_qa_devops",
         "ai_website_employee",
     }
-    assert len(templates) == 8
+    assert len(templates) == 11
     for template in templates:
         assert template["slug"]
         assert template["name"]
