@@ -142,11 +142,29 @@ async def poll_sales_replies(
 
     mailbox = _connect(settings)
     try:
-        mailbox.select(settings.sales_inbound_mailbox_folder, readonly=True)
+        select_status, select_data = mailbox.select(
+            settings.sales_inbound_mailbox_folder, readonly=True
+        )
+        message_count = 0
+        if select_data and select_data[0]:
+            try:
+                message_count = int(select_data[0])
+            except (TypeError, ValueError):
+                message_count = 0
+        print(
+            "W10 IMAP MAILBOX SELECT "
+            f"folder={settings.sales_inbound_mailbox_folder} "
+            f"status={select_status} messages={message_count}"
+        )
+        if select_status != "OK":
+            raise RuntimeError("Sales inbound mailbox folder selection failed")
+
         results: list[MailboxResponse] = []
         seen_uids: set[str] = set()
 
-        for candidate_index, (candidate_tenant, provider_message_id) in enumerate(candidates, start=1):
+        for candidate_index, (candidate_tenant, provider_message_id) in enumerate(
+            candidates, start=1
+        ):
             # The SMTP worker emits <outbox-{uuid}@ai-employee.local>. Some
             # providers normalize header search terms, so try the full token
             # and the bare application Message-ID token. Acceptance below
@@ -171,67 +189,50 @@ async def poll_sales_replies(
                         f"header={header} term={'full' if search_value == token else 'bare'} "
                         f"status={status} matches={len(uids)}"
                     )
+                    await _process_uids(
+                        mailbox,
+                        uids,
+                        seen_uids,
+                        candidate_index,
+                        len(candidates),
+                        candidate_tenant,
+                        provider_message_id,
+                        results,
+                    )
+                    candidate_valid = sum(
+                        1 for item in results if item.provider_message_id == provider_message_id
+                    )
 
-                    for raw_uid in uids:
-                        uid = raw_uid.decode("ascii", errors="ignore")
-                        if not uid or uid in seen_uids:
-                            continue
-                        seen_uids.add(uid)
-                        fetch_status, fetched = mailbox.uid("FETCH", uid, "(RFC822)")
-                        if fetch_status != "OK":
-                            print(
-                                "W10 IMAP MAILBOX FETCH "
-                                f"candidate={candidate_index}/{len(candidates)} status={fetch_status}"
-                            )
-                            continue
-                        raw_message = next(
-                            (
-                                item[1]
-                                for item in fetched
-                                if isinstance(item, tuple) and len(item) > 1
-                            ),
-                            None,
-                        )
-                        if not raw_message:
-                            continue
-                        message = email.message_from_bytes(raw_message)
-                        referenced = (
-                            _message_ids(message.get("In-Reply-To"))
-                            | _message_ids(message.get("References"))
-                        )
-                        if provider_message_id not in referenced:
-                            print(
-                                "W10 IMAP MAILBOX CORRELATION REJECT "
-                                f"candidate={candidate_index}/{len(candidates)} reason=header_mismatch"
-                            )
-                            continue
-                        message_id = next(
-                            iter(_message_ids(message.get("Message-ID"))), ""
-                        )
-                        if not message_id:
-                            print(
-                                "W10 IMAP MAILBOX CORRELATION REJECT "
-                                f"candidate={candidate_index}/{len(candidates)} reason=missing_message_id"
-                            )
-                            continue
-                        response_text = _response_text(message)
-                        if not response_text:
-                            print(
-                                "W10 IMAP MAILBOX CORRELATION REJECT "
-                                f"candidate={candidate_index}/{len(candidates)} reason=empty_text"
-                            )
-                            continue
-                        candidate_valid += 1
-                        results.append(
-                            MailboxResponse(
-                                tenant_id=candidate_tenant,
-                                provider_message_id=provider_message_id,
-                                event_id=f"message:{message_id}",
-                                response_text=response_text,
-                                sender=_header_text(message.get("From")),
-                                subject=_header_text(message.get("Subject")),
-                            )
-                        )
+            # Fallback diagnostic path: some IMAP implementations search
+            # headers differently or expose reply headers only through a
+            # full-message TEXT search. This path is discovery-only; the
+            # fetched message must still pass the exact header correlation
+            # check above before acceptance.
+            for search_value in search_values:
+                status, data = mailbox.uid("SEARCH", None, "TEXT", search_value)
+                raw_uids = (data[0] or b"") if status == "OK" and data else b""
+                uids = raw_uids.split()
+                candidate_matches += len(uids)
+                print(
+                    "W10 IMAP MAILBOX SEARCH "
+                    f"candidate={candidate_index}/{len(candidates)} "
+                    f"header=TEXT term={'full' if search_value == token else 'bare'} "
+                    f"status={status} matches={len(uids)}"
+                )
+                await _process_uids(
+                    mailbox,
+                    uids,
+                    seen_uids,
+                    candidate_index,
+                    len(candidates),
+                    candidate_tenant,
+                    provider_message_id,
+                    results,
+                )
+                candidate_valid = sum(
+                    1 for item in results if item.provider_message_id == provider_message_id
+                )
+
             print(
                 "W10 IMAP MAILBOX CANDIDATE RESULT "
                 f"candidate={candidate_index}/{len(candidates)} "
@@ -247,3 +248,72 @@ async def poll_sales_replies(
             mailbox.logout()
         except Exception:
             pass
+
+
+async def _process_uids(
+    mailbox,
+    uids: list[bytes],
+    seen_uids: set[str],
+    candidate_index: int,
+    candidate_count: int,
+    candidate_tenant: uuid.UUID,
+    provider_message_id: str,
+    results: list[MailboxResponse],
+) -> None:
+    for raw_uid in uids:
+        uid = raw_uid.decode("ascii", errors="ignore")
+        if not uid or uid in seen_uids:
+            continue
+        seen_uids.add(uid)
+        fetch_status, fetched = mailbox.uid("FETCH", uid, "(RFC822)")
+        if fetch_status != "OK":
+            print(
+                "W10 IMAP MAILBOX FETCH "
+                f"candidate={candidate_index}/{candidate_count} status={fetch_status}"
+            )
+            continue
+        raw_message = next(
+            (
+                item[1]
+                for item in fetched
+                if isinstance(item, tuple) and len(item) > 1
+            ),
+            None,
+        )
+        if not raw_message:
+            continue
+        message = email.message_from_bytes(raw_message)
+        referenced = (
+            _message_ids(message.get("In-Reply-To"))
+            | _message_ids(message.get("References"))
+        )
+        if provider_message_id not in referenced:
+            print(
+                "W10 IMAP MAILBOX CORRELATION REJECT "
+                f"candidate={candidate_index}/{candidate_count} reason=header_mismatch"
+            )
+            continue
+        message_id = next(iter(_message_ids(message.get("Message-ID"))), "")
+        if not message_id:
+            print(
+                "W10 IMAP MAILBOX CORRELATION REJECT "
+                f"candidate={candidate_index}/{candidate_count} reason=missing_message_id"
+            )
+            continue
+        response_text = _response_text(message)
+        if not response_text:
+            print(
+                "W10 IMAP MAILBOX CORRELATION REJECT "
+                f"candidate={candidate_index}/{candidate_count} reason=empty_text"
+            )
+            continue
+        results.append(
+            MailboxResponse(
+                tenant_id=candidate_tenant,
+                provider_message_id=provider_message_id,
+                event_id=f"message:{message_id}",
+                response_text=response_text,
+                sender=_header_text(message.get("From")),
+                subject=_header_text(message.get("Subject")),
+            )
+        )
