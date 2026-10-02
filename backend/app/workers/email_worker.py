@@ -105,6 +105,19 @@ async def _send(outbox_id: str) -> None:
 
             from app.services.outbox_service import mark_dispatched
             await mark_dispatched(db, row)
+
+            sales_binding = payload.get("_sales_engagement") or {}
+            if sales_binding.get("tool_call_id"):
+                from app.services import workforce_sales_engagement
+                await workforce_sales_engagement.record_outreach_delivered(
+                    db,
+                    tenant_id=row.tenant_id,
+                    tool_call_id=str(sales_binding["tool_call_id"]),
+                    outbox_id=str(row.id),
+                    provider_message_id=f"outbox-{row.id}",
+                    recipients=list(payload.get("to") or []),
+                    subject=str(payload.get("subject") or ""),
+                )
         except Exception as exc:
             if side_effect_started:
                 # The provider may have accepted the message even when the
