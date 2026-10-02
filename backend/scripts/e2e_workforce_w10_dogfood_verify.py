@@ -449,7 +449,7 @@ async def main():
         response_event_id = f"w10-provider-response-{uuid.uuid4().hex}"
         provider_message_id = (delivery_event.metadata_ or {}).get("provider_message_id")
         assert provider_message_id
-        inbound_secret = os.environ.get("SALES_INBOUND_CONTRACT_SECRET", "w10-contract-secret")
+        inbound_provider = os.environ.get("SALES_INBOUND_PROVIDER_NAME", "contract-test").strip().lower()\n        inbound_secret = os.environ.get("SALES_INBOUND_CONTRACT_SECRET", "w10-contract-secret")\n        if inbound_provider not in {"contract-test", "generic-webhook"}:\n            raise RuntimeError(f"Unsupported W10 inbound provider fixture: {inbound_provider}")
         inbound_body = json.dumps(
             {
                 "provider_message_id": provider_message_id,
@@ -480,7 +480,7 @@ async def main():
             assert inbound_response.status_code == 202, inbound_response.text
             inbound_payload = inbound_response.json()
             assert inbound_payload["event_type"] == "outreach_response"
-            assert inbound_payload["event_key"] == f"provider:contract-test:{response_event_id}"
+            assert inbound_payload["event_key"] == f"provider:{inbound_provider}:{response_event_id}"\n            assert inbound_payload["provider"] == inbound_provider
 
             replay = await client.post(
                 inbound_url,
@@ -496,7 +496,7 @@ async def main():
             replay_payload = replay.json()
             assert replay_payload["event_id"] == inbound_payload["event_id"]
 
-        print("W10 SALES PROVIDER INBOUND RESPONSE INGESTION PASS")
+        print(f"W10 SALES PROVIDER INBOUND RESPONSE INGESTION PASS provider={inbound_provider}")
 
         async with AsyncSessionLocal() as db:
             summary = await workforce_sales_engagement.attribution_summary(
