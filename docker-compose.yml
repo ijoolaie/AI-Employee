@@ -70,6 +70,7 @@ services:
       retries: 10
 
   smtp-test:
+    user: "0:0"
     build:
       context: .
       dockerfile: backend/Dockerfile
