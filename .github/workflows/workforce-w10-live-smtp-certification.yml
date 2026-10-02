@@ -49,8 +49,11 @@ jobs:
           domain = recipient.rsplit("@", 1)[1].lower()
           if domain not in {str(x).strip().lower().lstrip("@") for x in allowed}:
               raise SystemExit("Live SMTP recipient domain is not in the configured allowlist")
-          if not os.environ.get("SMTP_USE_STARTTLS"):
-              raise SystemExit("SMTP_USE_STARTTLS must be explicitly configured")
+          starttls = os.environ.get("SMTP_USE_STARTTLS", "").strip().lower()
+          if starttls not in {"true", "false"}:
+              raise SystemExit("SMTP_USE_STARTTLS must be exactly true or false")
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"SMTP_USE_STARTTLS={starttls}\\n")
           print("LIVE SMTP CONFIGURATION GUARD PASS")
           PY
 
