@@ -234,6 +234,33 @@ async def prepare():
             "criteria": {"company_size": "10-200", "pain": "manual customer operations"},
             "message": "We can show a governed AI workforce workflow for customer operations.",
         }
+        deal_args = {
+            "title": "W10 qualified AI workforce opportunity",
+            "customer_name": "Certification Prospect",
+            "customer_email": "prospect@example.invalid",
+            "amount": 250000000,
+            "currency": "IRR",
+            "stage": "qualified",
+            "probability": 25,
+            "source": "ai_workforce_dogfood",
+            "notes": "Certification-only internal pipeline record.",
+        }
+        deal_approval = ToolApprovalRequest(
+            tenant_id=customer.id,
+            run_id=runs["outreach_draft"],
+            tool_name="create_deal",
+            tool_call_id=f"w10-deal-{uuid.uuid4().hex}",
+            arguments=deal_args,
+            continuation_messages=[],
+            iteration=0,
+            status="approved",
+            requested_by=owner.id,
+            decided_by=reviewer.id,
+            decision_reason="W10 dogfood: governed internal CRM mutation",
+            decided_at=datetime.now(timezone.utc),
+        )
+        db.add(deal_approval)
+
         approval = ToolApprovalRequest(
             tenant_id=customer.id,
             run_id=runs["external_outreach"],
@@ -250,7 +277,7 @@ async def prepare():
         )
         db.add(approval)
         await db.commit()
-        return customer.id, instance.id, runs, approval.tool_call_id
+        return customer.id, instance.id, runs, approval.tool_call_id, deal_approval.tool_call_id
 
 
 async def execute(tenant_id, instance_id, run_id, tool_name, arguments, tool_call_id=None, actor_id=None):
@@ -275,7 +302,7 @@ async def execute(tenant_id, instance_id, run_id, tool_name, arguments, tool_cal
 
 
 async def main():
-    tenant_id, instance_id, runs, outreach_call_id = await prepare()
+    tenant_id, instance_id, runs, outreach_call_id, deal_approval_tool_call_id = await prepare()
 
     lead_query = "B2B SaaS founders with manual customer operations"
     criteria = {"company_size": "10-200", "pain": "manual customer operations"}
@@ -322,14 +349,19 @@ async def main():
     )
     assert draft["provider_execution"] == "not_configured"
     assert draft["external_side_effect"] is False
-    deal = await execute(tenant_id, instance_id, runs["outreach_draft"], "create_deal", {
+    deal_args = {
         "title": "W10 qualified AI workforce opportunity",
         "customer_name": "Certification Prospect",
         "customer_email": "prospect@example.invalid",
         "amount": 250000000, "currency": "IRR", "stage": "qualified", "probability": 25,
         "source": "ai_workforce_dogfood",
         "notes": "Certification-only internal pipeline record.",
-    })
+    }
+    deal = await execute(
+        tenant_id, instance_id, runs["outreach_draft"], "create_deal",
+        deal_args,
+        tool_call_id=deal_approval_tool_call_id,
+    )
     pipeline = await execute(tenant_id, instance_id, runs["outreach_draft"], "sales_pipeline_summary", {})
     forecast = await execute(tenant_id, instance_id, runs["outreach_draft"], "sales_forecast", {"horizon_days": 30})
     assert deal["deal_id"]
