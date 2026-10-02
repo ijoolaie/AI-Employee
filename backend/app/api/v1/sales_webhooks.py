@@ -29,7 +29,7 @@ async def receive_sales_outreach_response(
     correlation is always derived from the tenant's immutable delivery event.
     """
     provider = (get_settings().sales_inbound_provider_name or "none").strip().lower()
-    if provider != "contract-test":
+    if provider not in {"contract-test", "generic-webhook"}:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Sales inbound response provider is not configured",
