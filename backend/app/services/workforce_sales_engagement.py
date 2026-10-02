@@ -120,6 +120,70 @@ async def record_outreach_response(
     )
 
 
+async def ingest_outreach_response(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    event_key: str,
+    provider_message_id: str,
+    response_text: str,
+    source: str,
+) -> AuditLog:
+    """Ingest a provider response only when it correlates to a delivered event.
+
+    Correlation is derived from the immutable delivery ledger; callers cannot
+    supply or override deal_id, outbox_id, or tool_call_id.
+    """
+    if not response_text or len(response_text) > 8000:
+        raise ValueError("response_text is required and must be <=8000 characters")
+
+    existing_response = await db.execute(
+        select(AuditLog)
+        .where(
+            AuditLog.tenant_id == tenant_id,
+            AuditLog.action == EVENT_ACTION,
+            AuditLog.resource_type == "sales_engagement",
+            AuditLog.metadata_.op("->>")("event_key") == event_key,
+        )
+        .limit(1)
+    )
+    existing = existing_response.scalar_one_or_none()
+    if existing is not None:
+        existing_metadata = existing.metadata_ or {}
+        if existing_metadata.get("provider_message_id") != provider_message_id:
+            raise ValueError("Inbound event key is already bound to another provider message")
+        return existing
+
+    delivery_result = await db.execute(
+        select(AuditLog)
+        .where(
+            AuditLog.tenant_id == tenant_id,
+            AuditLog.action == EVENT_ACTION,
+            AuditLog.resource_type == "sales_engagement",
+            AuditLog.metadata_.op("->>")("event_type") == "outreach_delivered",
+            AuditLog.metadata_.op("->>")("provider_message_id") == provider_message_id,
+        )
+        .order_by(AuditLog.created_at.desc())
+        .limit(1)
+    )
+    delivery = delivery_result.scalar_one_or_none()
+    if delivery is None:
+        raise ValueError("Inbound provider message does not correlate to a delivered outreach")
+
+    delivery_metadata = delivery.metadata_ or {}
+    return await record_outreach_response(
+        db,
+        tenant_id=tenant_id,
+        event_key=event_key,
+        response_text=response_text,
+        tool_call_id=delivery_metadata.get("tool_call_id"),
+        outbox_id=delivery_metadata.get("outbox_id"),
+        provider_message_id=provider_message_id,
+        deal_id=delivery_metadata.get("deal_id"),
+        source=source,
+    )
+
+
 async def attribution_summary(
     db: AsyncSession,
     *,
