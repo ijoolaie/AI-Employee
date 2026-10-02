@@ -14,7 +14,6 @@ import ssl
 import uuid
 from dataclasses import dataclass
 from email.header import decode_header, make_header
-from typing import Iterable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
