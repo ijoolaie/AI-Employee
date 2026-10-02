@@ -244,7 +244,7 @@ async def prepare():
         deal_args = {
             "title": "W10 qualified AI workforce opportunity",
             "customer_name": "Certification Prospect",
-            "customer_email": "prospect@example.invalid",
+            "customer_email": os.environ.get("W10_SALES_RECIPIENT_EMAIL", "prospect@example.invalid").strip(),
             "amount": 250000000,
             "currency": "IRR",
             "stage": "qualified",
