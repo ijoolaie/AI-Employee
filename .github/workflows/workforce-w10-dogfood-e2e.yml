@@ -7,6 +7,7 @@ on:
       - "backend/app/ai/tool_registry.py"
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/services/workforce_semantic_domains.py"
+      - "backend/app/services/workforce_sales_outreach_provider.py"
       - "backend/scripts/e2e_workforce_w10_dogfood_verify.py"
       - "backend/scripts/e2e_smtp_sink.py"
       - ".github/workflows/workforce-w10-dogfood-e2e.yml"
