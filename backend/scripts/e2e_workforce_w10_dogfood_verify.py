@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import os
 import sys
+import traceback
 import uuid
 from datetime import datetime, timezone
 
@@ -418,5 +419,6 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except Exception as exc:
+        traceback.print_exc(file=sys.stderr)
         print(f"W10 REVENUE WORKFLOW FOUNDATION REAL-STACK E2E FAIL: {type(exc).__name__}: {exc!r}", file=sys.stderr)
         raise SystemExit(1)
