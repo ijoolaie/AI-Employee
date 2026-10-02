@@ -15,6 +15,7 @@ on:
       - "backend/scripts/e2e_workforce_w10_dogfood_verify.py"
       - "backend/scripts/e2e_smtp_sink.py"
       - ".github/workflows/workforce-w10-dogfood-e2e.yml"
+      - "backend/app/core/config.py"
   pull_request:
     paths:
       - "backend/app/ai/tool_registry.py"
@@ -34,9 +35,10 @@ env:
   SMTP_FROM_EMAIL: ai-employee@example.invalid
   SMTP_USE_STARTTLS: "false"
   SMTP_ALLOWED_RECIPIENT_DOMAINS: '["example.invalid"]'
-  SALES_INBOUND_PROVIDER_NAME: contract-test
+  SALES_INBOUND_PROVIDER_NAME: generic-webhook
   SALES_INBOUND_CONTRACT_SECRET: w10-contract-secret
-  SALES_INBOUND_WEBHOOK_SECRETS: '{"*":"w10-contract-secret"}'
+  SALES_INBOUND_TENANT_ID: 00000000-0000-0000-0000-000000000010
+  SALES_INBOUND_WEBHOOK_SECRETS: '{"00000000-0000-0000-0000-000000000010":"w10-generic-webhook-secret"}'
 
 permissions:
   contents: read
