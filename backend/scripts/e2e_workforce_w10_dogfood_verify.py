@@ -411,6 +411,7 @@ async def main():
                 provider_message_id=f"outbox-{outreach['execution']['outbox_id']}",
                 recipients=outreach_args["to"],
                 subject=outreach_args["subject"],
+                deal_id=deal["deal_id"],
             )
             response_key = f"w10-response:{outreach['execution']['outbox_id']}"
             response = await workforce_sales_engagement.record_outreach_response(
