@@ -344,7 +344,7 @@ async def main():
     deal_args = {
         "title": "W10 qualified AI workforce opportunity",
         "customer_name": "Certification Prospect",
-        "customer_email": "prospect@example.invalid",
+        "customer_email": os.environ.get("W10_SALES_RECIPIENT_EMAIL", "prospect@example.invalid").strip(),
         "amount": 250000000, "currency": "IRR", "stage": "qualified", "probability": 25,
         "source": "ai_workforce_dogfood",
         "notes": "Certification-only internal pipeline record.",
@@ -372,7 +372,7 @@ async def main():
         "criteria": criteria,
         "message": "We can show a governed AI workforce workflow for customer operations.",
         "subject": "Governed AI workforce for customer operations",
-        "to": ["prospect@example.invalid"],
+        "to": [os.environ.get("W10_SALES_RECIPIENT_EMAIL", "prospect@example.invalid").strip()],
         "channel": "email",
         "deal_id": deal["deal_id"],
     }
