@@ -398,14 +398,6 @@ async def main():
         )
         await db.commit()
 
-    outreach_args = dict(outreach_args)
-        "query": lead_query,
-        "criteria": criteria,
-        "message": "We can show a governed AI workforce workflow for customer operations.",
-        "subject": "Governed AI workforce for customer operations",
-        "to": ["prospect@example.invalid"],
-        "channel": "email",
-    }
     outreach = await execute(
         tenant_id, instance_id, runs["external_outreach"],
         "workforce_external_outreach",
