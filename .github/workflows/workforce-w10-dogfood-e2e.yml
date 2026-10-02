@@ -8,6 +8,7 @@ on:
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/services/workforce_semantic_domains.py"
       - "backend/scripts/e2e_workforce_w10_dogfood_verify.py"
+      - "backend/scripts/e2e_smtp_sink.py"
       - ".github/workflows/workforce-w10-dogfood-e2e.yml"
   pull_request:
     paths:
@@ -21,6 +22,14 @@ concurrency:
   group: workforce-w10-dogfood-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  SALES_OUTREACH_PROVIDER_NAME: smtp
+  SMTP_HOST: smtp-test
+  SMTP_PORT: "2525"
+  SMTP_FROM_EMAIL: ai-employee@example.invalid
+  SMTP_USE_STARTTLS: "false"
+  SMTP_ALLOWED_RECIPIENT_DOMAINS: '["example.invalid"]'
+
 permissions:
   contents: read
 
@@ -33,7 +42,7 @@ jobs:
 
       - name: Build and start W10 stack
         run: |
-          timeout 12m docker compose up -d --build postgres redis e2e-market-provider storage-init api worker worker-outbox beat
+          timeout 12m docker compose up -d --build postgres redis smtp-test e2e-market-provider storage-init api worker worker-outbox worker-email beat
 
       - name: Prepare stack database
         run: |
@@ -56,11 +65,24 @@ jobs:
 
       - name: Compile W10 sources
         run: |
-          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py
+          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py
 
       - name: Run W10 real-stack certification
         run: |
           timeout 8m docker compose exec -T api python scripts/e2e_workforce_w10_dogfood_verify.py
+
+      - name: Verify governed SMTP delivery
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose exec -T smtp-test sh -lc 'test -s /smtp-outbox/messages.eml && grep -q "Governed AI workforce for customer operations" /smtp-outbox/messages.eml'; then
+              echo "W10 SMTP EXTERNAL DELIVERY PASS"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs --tail=200 worker-email smtp-test
+          docker compose exec -T smtp-test sh -lc 'ls -la /smtp-outbox && cat /smtp-outbox/messages.eml 2>/dev/null || true'
+          exit 1
 
       - name: Failure diagnostics
         if: failure()
