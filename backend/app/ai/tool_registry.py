@@ -2189,7 +2189,7 @@ def build_default_registry() -> ToolRegistry:
         RegisteredTool(
             name="workforce_external_outreach",
             description="Governed workforce semantic operation: external_outreach.",
-            input_schema={"type":"object","properties":{"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"message":{"type":"string","maxLength":10000},"subject":{"type":"string","minLength":1,"maxLength":200},"to":{"type":"array","items":{"type":"string"},"minItems":1,"maxItems":10,"uniqueItems":true},"provider":{"type":"string","maxLength":100},"channel":{"type":"string","maxLength":255}},"additionalProperties":False},
+            input_schema={"type":"object","properties":{"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"message":{"type":"string","maxLength":10000},"subject":{"type":"string","minLength":1,"maxLength":200},"to":{"type":"array","items":{"type":"string"},"minItems":1,"maxItems":10,"uniqueItems":True},"provider":{"type":"string","maxLength":100},"channel":{"type":"string","maxLength":255}},"additionalProperties":False},
             handler=lambda arguments, op="external_outreach", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
             side_effects=True,
             external_side_effects=True,
