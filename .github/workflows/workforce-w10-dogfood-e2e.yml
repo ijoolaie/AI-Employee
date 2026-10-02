@@ -9,6 +9,8 @@ on:
       - "backend/app/services/workforce_semantic_domains.py"
       - "backend/app/services/workforce_sales_outreach_provider.py"
       - "backend/app/services/workforce_sales_engagement.py"
+      - "backend/app/services/workforce_sales_inbound_provider.py"
+      - "backend/app/api/v1/sales_webhooks.py"
       - "backend/scripts/e2e_workforce_w10_dogfood_verify.py"
       - "backend/scripts/e2e_smtp_sink.py"
       - ".github/workflows/workforce-w10-dogfood-e2e.yml"
@@ -31,6 +33,9 @@ env:
   SMTP_FROM_EMAIL: ai-employee@example.invalid
   SMTP_USE_STARTTLS: "false"
   SMTP_ALLOWED_RECIPIENT_DOMAINS: '["example.invalid"]'
+  SALES_INBOUND_PROVIDER_NAME: contract-test
+  SALES_INBOUND_CONTRACT_SECRET: w10-contract-secret
+  SALES_INBOUND_WEBHOOK_SECRETS: '{"*":"w10-contract-secret"}'
 
 permissions:
   contents: read
@@ -67,7 +72,7 @@ jobs:
 
       - name: Compile W10 sources
         run: |
-          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/workers/email_worker.py
+          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/services/workforce_sales_inbound_provider.py app/api/v1/sales_webhooks.py app/workers/email_worker.py
 
       - name: Run W10 real-stack certification
         run: |
