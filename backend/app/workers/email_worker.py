@@ -126,7 +126,17 @@ async def _send(outbox_id: str) -> None:
                 # into an automatic retry.
                 row.status = "uncertain"
                 row.last_error = str(exc)[:4000]
+                print(
+                    f"EMAIL SEND UNCERTAIN outbox_id={row.id} "
+                    f"exception_type={type(exc).__name__} "
+                    f"stage=post_side_effect"
+                )
             else:
+                print(
+                    f"EMAIL SEND RETRYABLE outbox_id={row.id} "
+                    f"exception_type={type(exc).__name__} "
+                    f"stage=pre_side_effect"
+                )
                 from app.services.outbox_service import mark_retry
                 await mark_retry(db, row, str(exc), delay_seconds=min(300, 10 * max(1, row.attempts)))
         await db.commit()
