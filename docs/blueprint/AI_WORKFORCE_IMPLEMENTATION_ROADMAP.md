@@ -629,3 +629,29 @@ The **revenue workflow foundation is VERIFIED on the real stack**.
 The **full revenue outcome is NOT VERIFIED**. No real external outreach, customer conversation, or revenue is claimed because the CRM/outreach provider is still `not_configured`. The next W10 work item is therefore provider-backed business execution plus measurement, not another nominal employee/tool layer.
 
 This remains post-v1.4.11 mainline engineering evidence.
+
+
+## W10 internal CRM dogfood checkpoint — 2026-10-02
+
+The W10 dogfood foundation was extended with a governed internal CRM mutation and read-only pipeline/forecast loop. The certification harness now exercises:
+1. an approval-gated internal CRM deal creation;
+2. tenant-scoped pipeline summary;
+3. probability-weighted 30-day forecast;
+4. the existing approval-gated external-outreach proposal with the provider still fail-closed.
+
+Final GitHub Actions run `36968628359` / job `110717725998` completed successfully at commit `183d46f79fdc723ad70f4c64529ec095fec0d8ea`.
+
+Certification evidence:
+- `W10 INTERNAL CRM DEAL + PIPELINE + FORECAST PASS`;
+- deal ID `6d37195f-f20d-4b2a-aa9d-5cb27ef42389`;
+- weighted pipeline `62,500,000 IRR`;
+- 30-day forecast `62,500,000 IRR`;
+- `W10 APPROVAL GOVERNANCE PASS`;
+- `W10 EXTERNAL PROVIDER FAIL-CLOSED PASS provider_execution=not_configured`;
+- `W10 REVENUE WORKFLOW FOUNDATION REAL-STACK E2E PASS`.
+
+A contract correction was made in the Sales semantic domain: `external_side_effect` now represents the governed operation class, while provider execution and `execution.executed` separately represent whether an external effect actually occurred. This preserves fail-closed behavior while keeping the audit classification accurate.
+
+The **W10 internal revenue-workflow foundation is VERIFIED on the real stack**. The **full revenue outcome remains NOT VERIFIED**: no external outreach, customer conversation, or revenue is claimed while the CRM/outreach provider remains `not_configured`.
+
+This remains post-v1.4.11 mainline engineering evidence and does not modify the immutable v1.4.11 certification boundary.
