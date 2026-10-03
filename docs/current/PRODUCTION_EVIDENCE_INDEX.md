@@ -103,3 +103,26 @@ Mainline post-certification engineering now includes PRs #641, #643, #644, #645,
 Runtime role enforcement is fail-closed for missing/unknown roles and human-approval-required operations. Internal Manager operations additionally require matching governed runtime identity, durable Run identity and active CEO delegation.
 
 SLA compliance is not claimed by the dashboard until a tenant-owned SLA target contract exists. External production evidence remains OPEN — PENDING EXTERNAL EXECUTION.
+
+
+## W10 live provider response evidence — 2026-10-03
+
+| Evidence item | Class | Status |
+|---|---|---|
+| Live SMTP provider acceptance | EXTERNAL-PENDING / live-provider evidence | **VERIFIED** |
+| Live mailbox connection and INBOX observation | EXTERNAL-PENDING / live-provider evidence | **VERIFIED** |
+| Live mailbox response discovery | EXTERNAL-PENDING / live-provider evidence | **VERIFIED** |
+| Live Message-ID correlation | EXTERNAL-PENDING / live-provider evidence | **VERIFIED** |
+| Live response ingestion | EXTERNAL-PENDING / live-provider evidence | **VERIFIED** |
+| Live response idempotency | EXTERNAL-PENDING / live-provider evidence | **VERIFIED** |
+| Live sales attribution | EXTERNAL-PENDING / live-provider evidence | **VERIFIED — sent=1 delivered=1 responded=1** |
+| Independent customer identity/status | EXTERNAL-PENDING | **NOT VERIFIED** |
+| Payment/revenue event | EXTERNAL-PENDING | **NOT VERIFIED** |
+
+Evidence reference:
+- GitHub Actions Run **37103195020**
+- Job **111146601368**
+- Mainline SHA **7f7b0d9c917b0deb8891e23a862a227ef3bc939d**
+- Workflow: `Workforce W10 Live SMTP Certification`
+
+This is post-v1.4.11 live-provider evidence. It does not certify or modify the immutable `v1.4.11` release. The evidence demonstrates a real SMTP → mailbox → correlated response → idempotent ingestion → attribution loop; it does not independently establish customer identity, commercial intent, payment, or revenue.
