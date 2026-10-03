@@ -265,7 +265,7 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         from app.services.workforce_sales_outreach_provider import execute_sales_outreach
         result = await execute_sales_outreach(
             db=db,
-            tenant_id=uuid.UUID(tenant_id),
+            tenant_id=tenant_id,
             arguments=arguments,
             tool_call_id=context.get("tool_call_id"),
         )
