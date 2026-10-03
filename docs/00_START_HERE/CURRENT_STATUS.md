@@ -145,3 +145,26 @@ Current W10 commercial boundary: the technical sales engagement loop is verified
 - Release certification: **NOT RUN for this post-v1.4.11 change**.
 
 Evidence boundary: W11 identity metadata is a lightweight foundation. It does not certify any image-generation, vision, TTS, lip-sync or video provider.
+
+## Product Experience Expansion — 2026-10-03
+
+The post-v1.4.11 workforce program now includes a planned Virtual AI Company Headquarters presentation layer over the governed Workforce Runtime.
+
+- W11 Employee identity/avatar foundation: IMPLEMENTED on post-v1.4.11 mainline.
+- W12 Virtual Office UI: NOT IMPLEMENTED / NOT VERIFIED.
+- W13 Customer HQ progression/tiering: NOT IMPLEMENTED / NOT VERIFIED.
+- W14 Employee appearance customization: NOT IMPLEMENTED / NOT VERIFIED.
+- W15 Clothing/cosmetic commerce: NOT IMPLEMENTED / NOT VERIFIED.
+- W16 Skill marketplace: NOT IMPLEMENTED / NOT VERIFIED.
+- W17 Employee career/reputation presentation: NOT IMPLEMENTED / NOT VERIFIED.
+- W18 Virtual meeting rooms: NOT IMPLEMENTED / NOT VERIFIED.
+- W19 Voice/TTS/real-time visual avatar: NOT IMPLEMENTED / NOT VERIFIED.
+- W20 Third-party Employee marketplace: NOT IMPLEMENTED / NOT VERIFIED.
+- W21 AI Business Network: PLANNED / NOT IMPLEMENTED.
+- New GPU requirement: NONE introduced by this architecture.
+
+The Virtual Office must consume authoritative Employee, WorkItem, Run, Governance, Approval, Audit and business-metric state. Frontend animation must not invent operational state. Commercial cosmetics and marketplace assets must remain tenant-scoped and must not bypass permissions or approvals.
+
+Next concrete slice: W12 Virtual Office Foundation — inspect existing status/read APIs, define a read-only office-state contract, map real runtime states, build the first CEO Office/employee-floor vertical slice, then test and evidence it.
+
+No release is created merely because these plans are documented.
