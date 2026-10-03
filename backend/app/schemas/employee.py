@@ -22,6 +22,18 @@ class EmployeeCreate(EmployeeVersionCreate):
     kind: str = "custom"  # tenant-created Employees are Custom by definition
 
 
+class EmployeePresentationProfile(BaseModel):
+    # Presentation-only fields; values are intentionally bounded and have no runtime authority.
+    gender_presentation: str = Field(default="neutral", pattern="^(neutral|feminine|masculine)$")
+    outfit: str = Field(default="business", pattern="^(business|casual|technical|formal)$")
+    hair_style: str = Field(default="default", pattern="^(default|short|long|curly|tied)$")
+    accessory: str = Field(default="none", pattern="^(none|glasses|headset|badge)$")
+
+
+class EmployeePresentationProfileUpdate(EmployeePresentationProfile):
+    pass
+
+
 class EmployeeStatusUpdate(BaseModel):
     is_active: bool
 
