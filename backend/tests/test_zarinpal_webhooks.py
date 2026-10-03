@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 from urllib.parse import urlencode
+from decimal import Decimal
 
 import pytest
 from fastapi import HTTPException
@@ -68,7 +69,7 @@ async def test_zarinpal_callback_verifies_and_reconciles(configured, monkeypatch
     deal = SimpleNamespace(
         id=deal_id,
         tenant_id=tenant_id,
-        amount=100000,
+        amount=Decimal("100000"),
         currency="IRR",
         metadata_={
             "payment_provider": "zarinpal",
