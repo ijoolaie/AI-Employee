@@ -57,6 +57,8 @@ The workflow defaults to sandbox mode.
 
 ### Production certification
 
+Important distinction: the current GitHub Actions workflow is a **live provider integration certification runner** built on an ephemeral Docker Compose stack. Even with `sandbox=false`, a successful run of that workflow alone does **not** prove that the deployed production application generated revenue. Production revenue evidence requires the payment to be created and reconciled by the actual deployed production environment (or its durable production data plane), with the production run/job evidence retained.
+
 Additionally required:
 
 - Production ZarinPal merchant ID.
@@ -146,7 +148,7 @@ Before starting:
 - Confirm the server/application environment is production-ready.
 - Confirm the customer/operator understands that this is a real charge.
 
-Only then run the same workflow with production mode.
+Only then run the controlled production payment flow against the deployed production environment. The existing GitHub Actions workflow may be used as a provider/integration certification step, but its ephemeral test database must not be counted as production revenue evidence.
 
 ## PASS criteria
 
@@ -285,6 +287,8 @@ After a successful sandbox run:
 `W10 ZarinPal Sandbox Certification: VERIFIED — see workflow run <RUN_ID>, commit <SHA>.`
 
 Sandbox verification alone does **not** prove production revenue.
+
+A successful `workforce-w10-live-zarinpal-payment.yml` run with `sandbox=false` is also not sufficient by itself if the payment is reconciled only into the workflow's ephemeral Docker Compose database. It proves live-provider interaction; it does not prove production revenue persistence.
 
 After a successful real production payment:
 
