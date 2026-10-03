@@ -193,3 +193,6 @@ Detailed implementation record: `docs/current/W12_VIRTUAL_OFFICE_IMPLEMENTATION.
 ### Evidence boundary
 This W12 slice is post-v1.4.11 application code. Exact-SHA CI/certification for the current mainline is **NOT RUN / NOT VERIFIED**. No release tag is created from this implementation alone.
 
+
+
+W12.2 checkpoint: current employee work visibility implemented from authoritative `Run.work_item_id` → tenant-scoped `WorkItem`; synthetic task/project/progress/meeting state remains intentionally unimplemented. Exact-SHA certification remains **NOT RUN / NOT VERIFIED**.
