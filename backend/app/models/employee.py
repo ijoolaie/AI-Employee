@@ -46,6 +46,8 @@ class Employee(Base):
     # Stable presentation identity; intentionally stored on Employee, not EmployeeVersion.
     # The runtime does not fetch or execute this URL; clients may render the avatar.
     avatar_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    # Presentation-only customization. Never used for permissions, governance, execution, or billing.
+    presentation_profile: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     kind: Mapped[str] = mapped_column(String(20), nullable=False, default="system")
     # "system" | "custom"
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
