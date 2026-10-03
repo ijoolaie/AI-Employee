@@ -1,14 +1,14 @@
 # Current Status
 
 **Last reconciled:** 2026-10-03
-**Latest certified release:** `v1.4.11`
-**Certified release SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
-**Stable Git tag:** `v1.4.11` — VERIFIED at the certified SHA
-**GitHub Release:** `v1.4.11` — PUBLISHED
-**Exact-SHA Production Certification:** Run `35848311037` — PASS
-**Certification job:** `107139710452` — PASS
+**Latest certified release:** `v1.4.12`
+**Certified release SHA:** `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`
+**Stable Git tag:** `v1.4.12` — VERIFIED at the certified SHA
+**GitHub Release:** `v1.4.12` — PUBLISHED
+**Exact-SHA Production Certification:** Run `37138840482` — PASS
+**Certification job:** `111248877948` — PASS
 **Current engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA
-**Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
+**Current status:** v1.4.12 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
 
 ## Current release
 
@@ -199,3 +199,21 @@ W12.2 checkpoint: current employee work visibility implemented from authoritativ
 
 
 W12.3 checkpoint: Virtual Office CEO Desk now surfaces real tenant-scoped pending WorkflowApproval records and links them to the existing approvals workspace. The presentation layer does not mutate approval state. Exact-SHA certification remains **NOT RUN / NOT VERIFIED**.
+
+
+## v1.4.12 release reconciliation — 2026-10-03
+
+- Release: **v1.4.12**
+- Exact certified/checked-out SHA: `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`
+- Production Certification Run: **37138840482**
+- Certification Job: **111248877948**
+- Certification result: **PASS**
+- Product Gate failures: **0**
+- Evidence artifact: `production-certification-evidence-v1.4.12-rc.1-9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`
+- Evidence artifact SHA-256: `sha256:b380f8849b6347995c17bcec8a97de979b2a67b01d88dc26d0f02258b8779af1`
+- GitHub Release: **PUBLISHED**
+- Release assets: **BUILT/PUBLISHED** by the immutable release workflow.
+- Production deployment: **NOT VERIFIED**; certification explicitly records `production_deployment_claimed:false`.
+- Customer acceptance / live payment revenue: **NOT VERIFIED**.
+
+This section supersedes older v1.4.11-only “latest release” statements above. Historical v1.4.11 evidence remains immutable and unchanged.
