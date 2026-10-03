@@ -235,3 +235,27 @@ W13 exact-SHA CI/product gates: **VERIFIED PASS** on `5d57d9929cc5e924c5b9147dc0
 As-built record: `docs/current/W13_CUSTOMER_HQ_PROGRESSION.md`.
 
 Next slice: W14 Employee Appearance & Customization, preserving the hard boundary between presentation identity and business identity.
+
+
+## v1.4.13 release reconciliation — 2026-10-03
+
+- Release: **v1.4.13**
+- Exact source/certified SHA: `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`
+- Git tag: **VERIFIED** and resolves to the certified SHA.
+- GitHub Release: **PUBLISHED** (release `402628656`).
+- Production Certification: Run `37141161822`, Job `111255715821` — **PASS**.
+- Evidence artifact: `production-certification-evidence-v1.4.13-rc.1-5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`.
+- Evidence digest: `sha256:35e4b5dea1c57a3c021051f4dacaa841dee2f6c17cea9f0ed5db505676ea9479`.
+- Release assets: **BUILT/PUBLISHED**.
+- Production deployment: **NOT VERIFIED**; certification records `production_deployment_claimed:false`.
+- Customer acceptance / live payment revenue: **NOT VERIFIED**.
+
+W13 is therefore inside the immutable v1.4.13 release boundary. W14 begins after v1.4.13 and requires fresh exact-SHA certification.
+
+## W14 Employee Appearance & Customization — 2026-10-03
+
+W14 foundation is now implemented on post-v1.4.13 mainline. Employee presentation profile is tenant-scoped and presentation-only. It cannot change permissions, quotas, approvals, tenant isolation, execution authority or billing.
+
+Implemented: bounded gender presentation, outfit, hair style and accessory fields; tenant-scoped update endpoint; audit event; customer employee appearance controls.
+
+Exact-SHA CI/certification for W14: **NOT RUN / NOT VERIFIED**.
