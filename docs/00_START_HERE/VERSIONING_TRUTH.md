@@ -11,7 +11,7 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 ### Current release truth
 
-- Latest published release: **`v1.4.12`**
+- Latest published release: **`v1.4.12`** (W13 candidate certified but not yet promoted)
 - Latest certified release: **`v1.4.12`**, exact certified SHA `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`.
 - `v1.4.12` Git tag: **VERIFIED**, resolving to the certified release commit.
 - `v1.4.12` GitHub Release: **PUBLISHED**, not draft, not prerelease.
@@ -23,7 +23,7 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 `v1.4.12` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
-Current `main` is post-certification engineering/documentation work and is outside the certified `v1.4.11` snapshot. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document. A new application-code release candidate must receive fresh exact-SHA certification.
+Current `main` contains post-v1.4.12 W13 work. The W13 candidate SHA has fresh exact-SHA certification evidence, but certification does not create a Git tag or release. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document. A new application-code release candidate must receive fresh exact-SHA certification.
 
 ## 2. Architecture version
 
@@ -87,7 +87,7 @@ These capabilities are substantially present in the architecture; active work sh
 
 ```text
 RELEASE
-v1.3.8 ─────► v1.4.2 ─────► v1.4.5 ─────► v1.4.6 ─────► v1.4.7 ─────► v1.4.8 ─────► v1.4.9 ─────► v1.4.10 ─────► v1.4.11
+v1.3.8 ─────► v1.4.2 ─────► v1.4.5 ─────► v1.4.6 ─────► v1.4.7 ─────► v1.4.8 ─────► v1.4.9 ─────► v1.4.10 ─────► v1.4.12
  historical     certified      historical certified                 current certified
                                                              |
                                                              +-- external production: pending
@@ -180,3 +180,15 @@ W12 is not part of immutable `v1.4.11`. Exact-SHA certification must cover any f
 - External customer acceptance and revenue remain **NOT VERIFIED**.
 
 W12 Virtual Office is therefore part of the immutable v1.4.12 release boundary. Any subsequent W13+ application-code work is post-release mainline and requires fresh exact-SHA certification before promotion.
+
+## 14. v1.4.13 candidate certification — 2026-10-03
+
+- Candidate scope: W13 Customer HQ Progression.
+- Exact certified candidate SHA: `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`.
+- Production Certification: Run `37141161822`, Job `111255715821` — **PASS**.
+- Evidence artifact: `production-certification-evidence-v1.4.13-rc.1-5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`.
+- Evidence digest: `sha256:35e4b5dea1c57a3c021051f4dacaa841dee2f6c17cea9f0ed5db505676ea9479`.
+- Production deployment: **NOT VERIFIED**; certification explicitly records `production_deployment_claimed:false`.
+- Git tag/release: **NOT CREATED** at reconciliation time.
+
+Certification is complete for the exact candidate SHA. Manual tag/release promotion is the remaining release step; no certification transfers to later SHAs.
