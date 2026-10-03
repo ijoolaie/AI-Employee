@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - "backend/requirements.txt"
       - "backend/app/ai/tool_registry.py"
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/services/workforce_semantic_domains.py"
@@ -32,6 +33,7 @@ on:
       - "docker-compose.yml"
   pull_request:
     paths:
+      - "backend/requirements.txt"
       - "backend/app/ai/tool_registry.py"
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/services/workforce_semantic_domains.py"
