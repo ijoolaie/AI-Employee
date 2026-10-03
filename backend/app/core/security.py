@@ -5,23 +5,24 @@ from typing import Any, Optional
 from uuid import UUID
 
 import base64
+import bcrypt
 import hashlib
 import jwt
 from cryptography.fernet import Fernet
-from passlib.context import CryptContext
 
 from app.core.config import get_settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 settings = get_settings()
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    """Hash passwords with bcrypt without the deprecated passlib wrapper."""
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    """Verify a bcrypt password hash, including hashes created by passlib."""
+    return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
 def _fernet() -> Fernet:
