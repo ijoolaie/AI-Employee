@@ -32,6 +32,8 @@ class CustomerOfficeApprovalResponse(BaseModel):
 
 class CustomerOfficeResponse(BaseModel):
     office_state: str
+    hq_tier: str = "STARTER"
+    hq_metrics: dict = {}
     employee_count: int
     working_count: int
     waiting_count: int
