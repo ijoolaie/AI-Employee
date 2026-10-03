@@ -10,7 +10,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
 import { useI18n } from "@/lib/i18n/provider";
 import { useQuery } from "@tanstack/react-query";
-import { Bot, Play, Coins, Activity, GitBranch, ShieldCheck, CalendarClock, Webhook, AlertTriangle } from "lucide-react";
+import { Bot, Play, Coins, Activity, GitBranch, ShieldCheck, CalendarClock, Webhook, AlertTriangle, Building2 } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -63,7 +63,8 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-4">
+          <Quick href="/office" icon={Building2} title="AI Company HQ" text="Open the live virtual office" />
           <Quick href="/approvals" icon={ShieldCheck} title={tx.approvals} text={`${data.pending_approval_count} ${tx.approvalsAttention}`} />
           <Quick href="/schedules" icon={CalendarClock} title={tx.schedules} text={`${data.active_schedule_count} ${tx.activeSchedulesText}`} />
           <Quick href="/webhooks" icon={Webhook} title={tx.webhooks} text={`${data.active_webhook_count} ${tx.activeTriggers}`} />
