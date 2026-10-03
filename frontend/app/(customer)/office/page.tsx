@@ -94,7 +94,14 @@ export default function OfficePage() {
                             </div>
                             <p className="mt-4 font-semibold text-white">{employee.name}</p>
                             <p className="mt-1 text-xs text-slate-400">{employee.kind} · {employee.slug}</p>
-                            <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500">
+                            {employee.current_work_item && (
+                              <div className="mt-4 rounded-xl border border-white/10 bg-black/10 p-3">
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{tx.currentTask}</p>
+                                <p className="mt-1 line-clamp-2 text-xs font-medium text-slate-200">{employee.current_work_item.title}</p>
+                                <p className="mt-1 text-[10px] text-slate-500">{employee.current_work_item.status}</p>
+                              </div>
+                            )}
+                            <div className="mt-3 flex items-center justify-between text-[11px] text-slate-500">
                               <span>{tx.latestRun}</span>
                               <span>{employee.latest_run_id ? `#${employee.latest_run_id.slice(0, 8)}` : tx.noRun}</span>
                             </div>
