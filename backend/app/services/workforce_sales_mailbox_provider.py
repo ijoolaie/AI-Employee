@@ -46,9 +46,23 @@ def _header_text(value: str | None) -> str:
 
 
 def _message_ids(value: str | None) -> set[str]:
+    """Extract Message-ID tokens from strict RFC or provider-normalized headers."""
     if not value:
         return set()
-    return {match.group(1).strip() for match in _MESSAGE_ID_RE.finditer(value)}
+
+    ids = {match.group(1).strip() for match in _MESSAGE_ID_RE.finditer(value)}
+    # Some IMAP providers expose the same Message-ID without angle brackets
+    # after header normalization. Accept only exact address-shaped tokens;
+    # never accept a substring match.
+    normalized = value.replace("<", " ").replace(">", " ").replace('"', " ")
+    for token in re.split(r"\s+", normalized):
+        token = token.strip(" 	
+,;")
+        if "@" in token and token and re.fullmatch(
+            r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", token
+        ):
+            ids.add(token)
+    return ids
 
 
 def _response_text(message: email.message.Message) -> str:
@@ -287,7 +301,8 @@ async def _process_uids(
             _message_ids(message.get("In-Reply-To"))
             | _message_ids(message.get("References"))
         )
-        if provider_message_id not in referenced:
+        provider_token = f"{provider_message_id}@ai-employee.local"
+        if provider_message_id not in referenced and provider_token not in referenced:
             print(
                 "W10 IMAP MAILBOX CORRELATION REJECT "
                 f"candidate={candidate_index}/{candidate_count} reason=header_mismatch"
