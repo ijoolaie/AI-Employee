@@ -44,6 +44,23 @@ export default function OfficePage() {
 
         {data && (
           <>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{tx.hqTier}</p>
+                  <p className="mt-1 text-2xl font-semibold">{data.hq_tier}</p>
+                  <p className="mt-1 text-sm text-slate-500">{data.hq_metrics.plan_name} · {data.hq_metrics.subscription_status}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
+                  <HqStat label={tx.hqEmployees} value={`${data.hq_metrics.active_employees}/${data.hq_metrics.employee_limit}`} />
+                  <HqStat label={tx.hqWorkflows} value={`${data.hq_metrics.active_workflows}/${data.hq_metrics.workflow_limit}`} />
+                  <HqStat label={tx.hqRuns} value={`${data.hq_metrics.monthly_runs}/${data.hq_metrics.monthly_run_limit}`} />
+                  <HqStat label={tx.hqTokens} value={`${data.hq_metrics.monthly_tokens.toLocaleString()}/${data.hq_metrics.monthly_token_limit.toLocaleString()}`} />
+                </div>
+              </div>
+              <p className="mt-4 text-xs text-slate-500">{tx.hqTierBoundary}</p>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <Metric icon={Users} label={tx.employees} value={data.employee_count} />
               <Metric icon={CheckCircle2} label={tx.working} value={data.working_count} />
@@ -146,6 +163,15 @@ export default function OfficePage() {
         )}
       </div>
     </>
+  );
+}
+
+function HqStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
+    </div>
   );
 }
 
