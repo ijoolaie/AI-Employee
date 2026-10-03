@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 import uuid
 
 import pytest
@@ -77,7 +77,9 @@ def test_disabled_agent_is_not_selected():
 
 @pytest.mark.asyncio
 async def test_record_balance_decision_persists_snapshot_without_execution_mutation():
-    db = AsyncMock()
+    db = MagicMock()
+    db.flush = AsyncMock()
+    db.execute = AsyncMock()
     tenant_id = uuid.uuid4()
     target_agent_id = uuid.uuid4()
     queue = QueueSnapshot(ready_items=4, oldest_ready_age_seconds=12.5)
