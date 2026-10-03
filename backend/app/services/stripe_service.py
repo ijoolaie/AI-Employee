@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -441,7 +442,13 @@ async def apply_verified_sales_payment(
     deal.metadata_ = deal_metadata
     deal.stage = "won"
     deal.probability = 100
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        # The provider-event uniqueness constraint is the final concurrency
+        # guard. Fail closed rather than allowing a concurrent cross-deal
+        # replay to look like a successful settlement.
+        raise ConflictError("Sales payment provider event was concurrently bound to another deal") from exc
     return tenant_id, str(order.id)
 
 
