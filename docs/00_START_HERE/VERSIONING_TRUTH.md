@@ -161,3 +161,10 @@ W11 Humanized Employee Identity → W12 Virtual Office → W13 Customer HQ Progr
 These are engineering/product phases, not release numbers. The Presentation Layer remains downstream of Workforce Core truth: Employee / WorkItem / Run / Governance / Approval / Audit / Metrics → Presentation.
 
 No visual state, cosmetic purchase, marketplace asset or avatar provider creates execution authority. Any application-code phase promoted into a release requires fresh exact-SHA certification.
+
+## 12. W12 Virtual Office implementation boundary
+
+W12 now contains a first post-v1.4.11 implementation slice: a tenant-scoped read-only office-state API and customer Virtual Office UI. The implementation derives presentation state from existing Employee/Run/WorkflowApproval data and does not introduce a second execution state store or authorization path.
+
+W12 is not part of immutable `v1.4.11`. Exact-SHA certification must cover any future release containing W12 code.
+
