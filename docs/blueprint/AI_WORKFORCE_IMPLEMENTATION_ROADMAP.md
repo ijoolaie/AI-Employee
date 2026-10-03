@@ -920,3 +920,17 @@ W13 Customer HQ Progression is implemented on post-v1.4.12 mainline.
 - HQ tier is presentation-only and cannot alter permissions, quotas, approvals, tenant isolation or execution authority.
 
 **Evidence boundary:** W13 exact-SHA CI/product gates/Production Certification are **NOT RUN / NOT VERIFIED**. W13 must not inherit `v1.4.12` certification.
+
+## W14 checkpoint — Employee Appearance & Customization — 2026-10-03
+
+**Status:** IMPLEMENTED on post-v1.4.13 mainline; exact-SHA certification **NOT RUN / NOT VERIFIED**.
+
+Implemented foundation:
+- tenant-scoped `Employee.presentation_profile` storage;
+- bounded presentation-only fields: gender presentation, outfit, hair style, accessory;
+- authenticated tenant write endpoint with audit provenance;
+- customer employee appearance controls;
+- explicit boundary: presentation metadata never affects permissions, governance, approvals, quotas, execution or billing;
+- unit/API-adjacent tests for bounded values, tenant seam and audit evidence.
+
+Next: W15 Wardrobe / Cosmetic Marketplace. Any commerce capability must use authoritative product/order/payment state and must not grant employee runtime authority.
