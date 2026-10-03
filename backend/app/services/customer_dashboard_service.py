@@ -128,3 +128,113 @@ async def get_dashboard(db: AsyncSession, *, tenant_id):
         "health": {"api": "ok"},
         "generated_at": datetime.now(timezone.utc),
     }
+
+async def get_office(db: AsyncSession, *, tenant_id):
+    """Build a tenant-scoped, read-only presentation state from real Employee/Run data.
+
+    The office layer does not create or mutate execution state. It maps the latest
+    governed Run status for each Employee into a small presentation vocabulary.
+    """
+
+    ranked_runs = (
+        select(
+            WorkflowStepRun.employee_run_id.label("run_id"),
+            WorkflowStepRun.workflow_run_id.label("workflow_run_id"),
+            func.row_number()
+            .over(
+                partition_by=WorkflowStepRun.employee_run_id,
+                order_by=WorkflowStepRun.created_at.desc(),
+            )
+            .label("rn"),
+        )
+        .join(WorkflowRun, WorkflowRun.id == WorkflowStepRun.workflow_run_id)
+        .where(WorkflowRun.tenant_id == tenant_id, WorkflowStepRun.employee_run_id.is_not(None))
+        .subquery()
+    )
+
+    # Employee Run records are the authoritative execution state used by the
+    # existing workforce runtime. WorkflowStepRun is used only to locate the
+    # newest Employee Run without introducing a second state store.
+    from app.models.run import Run
+
+    ranked_employee_runs = (
+        select(
+            Run.id.label("run_id"),
+            Run.employee_id.label("employee_id"),
+            Run.status.label("run_status"),
+            Run.created_at.label("run_created_at"),
+            func.row_number()
+            .over(partition_by=Run.employee_id, order_by=Run.created_at.desc())
+            .label("rn"),
+        )
+        .where(Run.tenant_id == tenant_id)
+        .subquery()
+    )
+
+    result = await db.execute(
+        select(
+            Employee,
+            ranked_employee_runs.c.run_id,
+            ranked_employee_runs.c.run_status,
+            ranked_employee_runs.c.run_created_at,
+        )
+        .outerjoin(
+            ranked_employee_runs,
+            (ranked_employee_runs.c.employee_id == Employee.id)
+            & (ranked_employee_runs.c.rn == 1),
+        )
+        .where(Employee.tenant_id == tenant_id)
+        .order_by(Employee.created_at.asc(), Employee.name.asc())
+    )
+
+    employees = []
+    counts = {
+        "working": 0,
+        "waiting": 0,
+        "idle": 0,
+        "blocked": 0,
+        "escalated": 0,
+    }
+
+    for employee, run_id, run_status, run_created_at in result.all():
+        if not employee.is_active:
+            state = "IDLE"
+        elif run_status in {"pending", "queued", "running"}:
+            state = "WORKING"
+        elif run_status == "failed":
+            state = "ESCALATED"
+        elif run_status == "cancelled":
+            state = "BLOCKED"
+        else:
+            state = "IDLE"
+
+        key = state.lower()
+        if key in counts:
+            counts[key] += 1
+
+        employees.append(
+            {
+                "id": str(employee.id),
+                "name": employee.name,
+                "slug": employee.slug,
+                "avatar_url": employee.avatar_url,
+                "kind": employee.kind,
+                "is_active": employee.is_active,
+                "presentation_state": state,
+                "latest_run_id": str(run_id) if run_id else None,
+                "latest_run_status": run_status,
+                "latest_run_created_at": run_created_at,
+            }
+        )
+
+    return {
+        "office_state": "LIVE",
+        "employee_count": len(employees),
+        "working_count": counts["working"],
+        "waiting_count": counts["waiting"],
+        "idle_count": counts["idle"],
+        "blocked_count": counts["blocked"],
+        "escalated_count": counts["escalated"],
+        "employees": employees,
+        "generated_at": datetime.now(timezone.utc),
+    }
