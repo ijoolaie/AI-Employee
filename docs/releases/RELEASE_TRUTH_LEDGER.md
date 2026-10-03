@@ -81,3 +81,20 @@ A new application-code change has been added after the certified `v1.4.11` bound
 - deployment: **NOT VERIFIED**
 
 This change must not be described as `v1.4.11` functionality or certification. If promoted to a release, create a new immutable release from the exact certified SHA only after the applicable CI/product gates and fresh exact-SHA certification complete.
+
+## Post-v1.4.11 Product Experience Expansion — 2026-10-03
+
+The experience/commerce roadmap is planned mainline work, not release-certified functionality:
+- W11 Employee Identity / Avatar foundation — implemented post-release; exact-SHA certification pending.
+- W12 Virtual Office — planned.
+- W13 Customer HQ Progression — planned.
+- W14 Employee Appearance & Customization — planned.
+- W15 Wardrobe / Cosmetic Marketplace — planned.
+- W16 Skills Marketplace — planned.
+- W17 Employee Career / Reputation — planned.
+- W18 Virtual Meeting Rooms — planned.
+- W19 Voice / Visual Interaction — planned.
+- W20 Third-party Employee Marketplace — planned.
+- W21 AI Business Network — planned.
+
+Documentation of these phases does not create a release tag or certification. Any future release containing application code from these phases must be certified against its exact immutable SHA. Cosmetic/marketplace revenue is not claimed until a real commercial event is independently evidenced.
