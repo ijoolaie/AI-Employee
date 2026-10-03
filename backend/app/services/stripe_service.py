@@ -322,6 +322,27 @@ async def apply_verified_sales_payment(
         raise ConflictError("Sales payment cannot settle a lost deal")
 
     deal_metadata = dict(deal.metadata_ or {})
+
+    # Provider event IDs are globally unique within a provider. Check the
+    # independent revenue ledger before the deal-local replay marker so a
+    # provider reference cannot settle a second deal without creating a
+    # second ledger row.
+    existing_revenue_event = (
+        await db.execute(
+            select(WorkforceRevenueEvent).where(
+                WorkforceRevenueEvent.provider == provider,
+                WorkforceRevenueEvent.provider_event_id == provider_event_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if existing_revenue_event is not None:
+        if (
+            existing_revenue_event.tenant_id != tenant_id
+            or existing_revenue_event.deal_id != deal.id
+        ):
+            raise ConflictError("Sales payment provider event is already bound to another deal")
+        return tenant_id, str(deal.order_id) if deal.order_id else str(existing_revenue_event.order_id)
+
     event_ids = list(deal_metadata.get("sales_payment_event_ids") or [])
     if provider_event_id in event_ids:
         return tenant_id, str(deal.order_id) if deal.order_id else None
