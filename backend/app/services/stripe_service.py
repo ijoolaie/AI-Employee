@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import uuid
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -277,6 +278,112 @@ async def _lock_subscription_for_lifecycle(
     return sub, bool(event_created_at and latest >= event_created_at)
 
 
+async def _apply_sales_payment_success(
+    db: AsyncSession,
+    *,
+    provider_event_id: str,
+    data: dict,
+) -> tuple[uuid.UUID | None, str | None]:
+    """Convert a verified one-time Stripe payment into a tenant-scoped order.
+
+    The BusinessDeal row is locked so retries/concurrent provider events cannot
+    create duplicate business orders. The provider event remains the immutable
+    billing ledger entry; the deal metadata carries the reconciled event id.
+    """
+    metadata = data.get("metadata") or {}
+    tenant_ref = metadata.get("tenant_id")
+    deal_ref = metadata.get("sales_deal_id")
+    if not tenant_ref or not deal_ref:
+        raise ValidationAppError("Sales payment event is missing tenant/deal correlation metadata")
+    try:
+        tenant_id = uuid.UUID(str(tenant_ref))
+        deal_id = uuid.UUID(str(deal_ref))
+    except ValueError as exc:
+        raise ValidationAppError("Sales payment event contains invalid tenant/deal correlation") from exc
+
+    from app.models.business_deal import BusinessDeal
+    from app.models.business_order import BusinessOrder
+
+    deal = (
+        await db.execute(
+            select(BusinessDeal).where(
+                BusinessDeal.id == deal_id,
+                BusinessDeal.tenant_id == tenant_id,
+            ).with_for_update()
+        )
+    ).scalar_one_or_none()
+    if deal is None:
+        raise NotFoundError("Sales payment references an unknown deal")
+    if deal.stage == "lost":
+        raise ConflictError("Sales payment cannot settle a lost deal")
+
+    deal_metadata = dict(deal.metadata_ or {})
+    event_ids = list(deal_metadata.get("sales_payment_event_ids") or [])
+    if provider_event_id in event_ids:
+        return tenant_id, str(deal.order_id) if deal.order_id else None
+
+    amount_minor = int(data.get("amount_received") or data.get("amount") or 0)
+    if amount_minor <= 0:
+        raise ValidationAppError("Sales payment event must contain a positive paid amount")
+    currency = str(data.get("currency") or deal.currency or "usd").upper()
+    amount = Decimal(amount_minor) / Decimal("100")
+
+    order = None
+    if deal.order_id:
+        order = (
+            await db.execute(
+                select(BusinessOrder).where(
+                    BusinessOrder.id == deal.order_id,
+                    BusinessOrder.tenant_id == tenant_id,
+                )
+            )
+        ).scalar_one_or_none()
+
+    if order is None:
+        order = BusinessOrder(
+            tenant_id=tenant_id,
+            number=f"AIW-{str(deal.id)[:8]}-{provider_event_id[:8]}",
+            status="confirmed",
+            currency=currency,
+            customer_name=deal.customer_name,
+            customer_email=deal.customer_email,
+            order_date=datetime.now(timezone.utc).date(),
+            subtotal=amount,
+            tax_amount=Decimal("0"),
+            total=amount,
+            line_items=[{
+                "description": deal.title,
+                "quantity": 1,
+                "unit_price": float(amount),
+                "currency": currency,
+            }],
+            notes="Created from verified sales payment provider event.",
+            metadata_={
+                "source": "ai_workforce",
+                "sales_deal_id": str(deal.id),
+                "provider": "stripe",
+                "provider_event_id": provider_event_id,
+                "payment_object_id": data.get("id"),
+            },
+        )
+        db.add(order)
+        await db.flush()
+        deal.order_id = order.id
+
+    event_ids.append(provider_event_id)
+    deal_metadata["sales_payment_event_ids"] = event_ids[-20:]
+    deal_metadata["payment_verified"] = True
+    deal_metadata["payment_provider"] = "stripe"
+    deal_metadata["payment_provider_event_id"] = provider_event_id
+    deal_metadata["payment_amount"] = float(amount)
+    deal_metadata["payment_currency"] = currency
+    deal.metadata_ = deal_metadata
+    deal.stage = "won"
+    deal.probability = 100
+    await db.flush()
+    return tenant_id, str(order.id)
+
+
 async def apply_webhook_event(db: AsyncSession, event) -> dict:
     """Translate verified Stripe events into provider-neutral billing state.
 
@@ -310,7 +417,28 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
     status: str | None = None
     stale = False
 
-    if event_type == "checkout.session.completed":
+    if event_type == "payment_intent.succeeded":
+        tenant_id, order_id = await _apply_sales_payment_success(
+            db,
+            provider_event_id=provider_event_id,
+            data=data,
+        )
+        status = "paid"
+        plan_code = None
+    elif event_type == "checkout.session.completed" and (data.get("metadata") or {}).get("sales_deal_id"):
+        if data.get("payment_status") != "paid":
+            raise ValidationAppError("Sales checkout completion is not a verified paid event")
+        tenant_id, order_id = await _apply_sales_payment_success(
+            db,
+            provider_event_id=provider_event_id,
+            data={
+                **data,
+                "amount_received": data.get("amount_total"),
+            },
+        )
+        status = "paid"
+        plan_code = None
+    elif event_type == "checkout.session.completed":
         tenant_ref = data.get("client_reference_id") or (data.get("metadata") or {}).get("tenant_id")
         if tenant_ref:
             tenant_id = uuid.UUID(tenant_ref)
