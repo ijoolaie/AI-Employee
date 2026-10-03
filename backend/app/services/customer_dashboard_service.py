@@ -136,22 +136,6 @@ async def get_office(db: AsyncSession, *, tenant_id):
     governed Run status for each Employee into a small presentation vocabulary.
     """
 
-    ranked_runs = (
-        select(
-            WorkflowStepRun.employee_run_id.label("run_id"),
-            WorkflowStepRun.workflow_run_id.label("workflow_run_id"),
-            func.row_number()
-            .over(
-                partition_by=WorkflowStepRun.employee_run_id,
-                order_by=WorkflowStepRun.created_at.desc(),
-            )
-            .label("rn"),
-        )
-        .join(WorkflowRun, WorkflowRun.id == WorkflowStepRun.workflow_run_id)
-        .where(WorkflowRun.tenant_id == tenant_id, WorkflowStepRun.employee_run_id.is_not(None))
-        .subquery()
-    )
-
     # Employee Run records are the authoritative execution state used by the
     # existing workforce runtime. WorkflowStepRun is used only to locate the
     # newest Employee Run without introducing a second state store.
