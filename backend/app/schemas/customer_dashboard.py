@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class CustomerOfficeWorkItemResponse(BaseModel):
     id: str
@@ -33,7 +33,7 @@ class CustomerOfficeApprovalResponse(BaseModel):
 class CustomerOfficeResponse(BaseModel):
     office_state: str
     hq_tier: str = "STARTER"
-    hq_metrics: dict = {}
+    hq_metrics: dict = Field(default_factory=dict)
     employee_count: int
     working_count: int
     waiting_count: int
