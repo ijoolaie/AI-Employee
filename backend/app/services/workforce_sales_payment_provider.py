@@ -1,8 +1,8 @@
 """Provider boundary for governed sales commercial commitments.
 
 Provider selection is operator-controlled. Runtime arguments cannot select a
-provider. Contract-test is deterministic and never calls an external service;
-Stripe creates a one-time Checkout Session with immutable deal/tenant metadata.
+provider. Contract-test is deterministic and never calls an external service.
+Stripe and ZarinPal are explicit external adapters with tenant/deal correlation.
 """
 
 from __future__ import annotations
@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
 import uuid
+
+from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.core.exceptions import ValidationAppError
@@ -50,6 +52,7 @@ async def create_sales_checkout_session(
     currency: str,
     customer_email: str | None,
     idempotency_key: str,
+    db=None,
 ) -> SalesPaymentResult:
     settings = get_settings()
     provider = settings.sales_payment_provider_name.lower().strip()
@@ -68,6 +71,39 @@ async def create_sales_checkout_session(
             f"https://contract-test.invalid/checkout/{deal_id}/{idempotency_key}",
             f"contract-payment-{deal_id}",
         )
+    if provider == "zarinpal":
+        if not settings.zarinpal_merchant_id:
+            raise ValidationAppError("Sales payment provider zarinpal requires ZARINPAL_MERCHANT_ID")
+        if db is None:
+            raise ValidationAppError("Sales payment provider zarinpal requires an active tenant Run database context")
+        from app.models.business_deal import BusinessDeal
+        from app.services.zarinpal_service import create_payment_request
+        deal = (
+            await db.execute(
+                select(BusinessDeal).where(
+                    BusinessDeal.id == deal_id,
+                    BusinessDeal.tenant_id == tenant_id,
+                ).with_for_update()
+            )
+        ).scalar_one_or_none()
+        if deal is None:
+            raise ValidationAppError("Sales payment provider zarinpal references an unknown deal")
+        result = await create_payment_request(
+            tenant_id=tenant_id,
+            deal_id=deal_id,
+            amount=amount,
+            currency=currency,
+            customer_email=customer_email,
+            idempotency_key=idempotency_key,
+        )
+        metadata = dict(deal.metadata_ or {})
+        metadata["payment_provider"] = "zarinpal"
+        metadata["payment_provider_authority"] = result.provider_payment_id
+        metadata["payment_amount"] = float(amount)
+        metadata["payment_currency"] = currency.upper()
+        deal.metadata_ = metadata
+        await db.flush()
+        return result
     if provider != "stripe":
         raise ValidationAppError(f"Unsupported sales payment provider: {provider}")
     if not settings.stripe_secret_key:
