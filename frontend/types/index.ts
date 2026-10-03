@@ -352,6 +352,33 @@ export interface AdminDashboard {
   };
 }
 
+export type OfficePresentationState = "WORKING" | "WAITING_APPROVAL" | "IDLE" | "BLOCKED" | "MEETING" | "COMPLETED" | "ESCALATED";
+
+export interface CustomerOfficeEmployee {
+  id: string;
+  name: string;
+  slug: string;
+  avatar_url: string | null;
+  kind: string;
+  is_active: boolean;
+  presentation_state: OfficePresentationState | string;
+  latest_run_id: string | null;
+  latest_run_status: string | null;
+  latest_run_created_at: string | null;
+}
+
+export interface CustomerOffice {
+  office_state: string;
+  employee_count: number;
+  working_count: number;
+  waiting_count: number;
+  idle_count: number;
+  blocked_count: number;
+  escalated_count: number;
+  employees: CustomerOfficeEmployee[];
+  generated_at: string;
+}
+
 export interface CustomerDashboard {
   employee_count: number;
   active_employee_count: number;
