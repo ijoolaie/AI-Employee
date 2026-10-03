@@ -1,7 +1,7 @@
 # Versioning Truth
 
 **Status:** CANONICAL
-**Reconciled:** 2026-09-26
+**Reconciled:** 2026-10-03
 
 This document defines the independent version axes used by the AI Employee Platform.
 
@@ -11,17 +11,17 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 ### Current release truth
 
-- Latest published release: **`v1.4.11`**
-- Latest certified release: **`v1.4.11`**, exact certified SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`.
-- `v1.4.11` Git tag: **VERIFIED**, resolving to the certified release commit.
-- `v1.4.11` GitHub Release: **PUBLISHED**, not draft, not prerelease.
-- `v1.4.11` exact-SHA Production Certification: **PASS** on run `35848311037`, job `107139710452`.
-- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`.
-- Evidence digest: `sha256:bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`.
+- Latest published release: **`v1.4.12`**
+- Latest certified release: **`v1.4.12`**, exact certified SHA `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`.
+- `v1.4.12` Git tag: **VERIFIED**, resolving to the certified release commit.
+- `v1.4.12` GitHub Release: **PUBLISHED**, not draft, not prerelease.
+- `v1.4.12` exact-SHA Production Certification: **PASS** on run `37138840482`, job `111248877948`.
+- Evidence artifact: `production-certification-evidence-v1.4.12-rc.1-9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`.
+- Evidence digest: `sha256:b380f8849b6347995c17bcec8a97de979b2a67b01d88dc26d0f02258b8779af1`.
 - External production deployment: **NOT VERIFIED / not claimed by certification**.
 - Customer acceptance / live provider validation: **PENDING**.
 
-`v1.4.11` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
+`v1.4.12` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
 Current `main` is post-certification engineering/documentation work and is outside the certified `v1.4.11` snapshot. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document. A new application-code release candidate must receive fresh exact-SHA certification.
 
@@ -168,3 +168,15 @@ W12 now contains a first post-v1.4.11 implementation slice: a tenant-scoped read
 
 W12 is not part of immutable `v1.4.11`. Exact-SHA certification must cover any future release containing W12 code.
 
+
+
+## 13. v1.4.12 release
+
+- Published release: `v1.4.12`.
+- Exact certified SHA: `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`.
+- Production Certification: Run `37138840482`, Job `111248877948` — PASS.
+- Immutable certification evidence artifact: `production-certification-evidence-v1.4.12-rc.1-9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519` with digest `sha256:b380f8849b6347995c17bcec8a97de979b2a67b01d88dc26d0f02258b8779af1`.
+- Production deployment remains **NOT VERIFIED**.
+- External customer acceptance and revenue remain **NOT VERIFIED**.
+
+W12 Virtual Office is therefore part of the immutable v1.4.12 release boundary. Any subsequent W13+ application-code work is post-release mainline and requires fresh exact-SHA certification before promotion.
