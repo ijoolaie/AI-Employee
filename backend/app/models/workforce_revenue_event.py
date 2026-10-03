@@ -39,7 +39,7 @@ class WorkforceRevenueEvent(Base):
         ForeignKey("tenants.id", ondelete="CASCADE"),
         nullable=False,
     )
-    deal_id: Mapped[uuid.UUID] = mapped_column(
+    deal_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("business_deals.id", ondelete="SET NULL"),
         nullable=True,
