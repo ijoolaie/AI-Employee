@@ -405,7 +405,7 @@ async def apply_verified_sales_payment(
             amount=amount,
             currency=currency,
             verified_at=datetime.now(timezone.utc),
-            source="stripe_verified_sales_payment",
+            source=f"{provider}_verified_sales_payment",
             metadata_={
                 "payment_object_id": data.get("id"),
                 "sales_deal_id": str(deal.id),
@@ -413,7 +413,7 @@ async def apply_verified_sales_payment(
             },
         )
         db.add(revenue_event)
-    deal_metadata["payment_provider"] = "stripe"
+    deal_metadata["payment_provider"] = provider
     deal_metadata["payment_provider_event_id"] = provider_event_id
     deal_metadata["payment_amount"] = float(amount)
     deal_metadata["payment_currency"] = currency
@@ -471,6 +471,7 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
             raise ValidationAppError("Sales checkout completion is not a verified paid event")
         tenant_id, order_id = await apply_verified_sales_payment(
             db,
+            provider="stripe",
             provider_event_id=provider_event_id,
             data={
                 **data,
