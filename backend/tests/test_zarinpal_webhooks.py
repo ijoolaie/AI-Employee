@@ -131,7 +131,7 @@ async def test_zarinpal_callback_rejects_authority_mismatch(configured):
     deal = SimpleNamespace(
         id=deal_id,
         tenant_id=uuid.uuid4(),
-        amount=100000,
+        amount=Decimal("100000"),
         currency="IRR",
         metadata_={
             "payment_provider": "zarinpal",
@@ -168,7 +168,7 @@ async def test_zarinpal_callback_converts_reconciliation_amount_conflict_to_409(
     deal = SimpleNamespace(
         id=deal_id,
         tenant_id=tenant_id,
-        amount=100000,
+        amount=Decimal("100000"),
         currency="IRR",
         metadata_={
             "payment_provider": "zarinpal",
@@ -211,7 +211,7 @@ async def test_zarinpal_callback_non_ok_status_does_not_reconcile(configured, mo
     deal = SimpleNamespace(
         id=deal_id,
         tenant_id=uuid.uuid4(),
-        amount=100000,
+        amount=Decimal("100000"),
         currency="IRR",
         metadata_={
             "payment_provider": "zarinpal",
@@ -250,7 +250,7 @@ async def test_zarinpal_callback_replay_reaches_idempotent_reconciliation_bounda
     deal = SimpleNamespace(
         id=deal_id,
         tenant_id=tenant_id,
-        amount=100000,
+        amount=Decimal("100000"),
         currency="IRR",
         metadata_={
             "payment_provider": "zarinpal",
