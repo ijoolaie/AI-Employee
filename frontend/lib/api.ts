@@ -4,6 +4,7 @@ import type {
   APIResponse,
   Employee,
   EmployeeCreate,
+  EmployeePresentationProfile,
   FileItem,
   LoginRequest,
   MeResponse,
