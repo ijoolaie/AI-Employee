@@ -70,8 +70,8 @@ async def create_sales_checkout_session(
         )
     if provider != "stripe":
         raise ValidationAppError(f"Unsupported sales payment provider: {provider}")
-    if not settings.stripe_enabled:
-        raise ValidationAppError("Sales payment provider stripe requires Stripe configuration")
+    if not settings.stripe_secret_key:
+        raise ValidationAppError("Sales payment provider stripe requires STRIPE_SECRET_KEY")
 
     import stripe
 
