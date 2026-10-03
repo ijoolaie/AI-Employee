@@ -24,7 +24,7 @@ async def create_employee(
     tenant_id: uuid.UUID | None,
     slug: str,
     name: str,
-    avatar_url: str | None,
+    avatar_url: str | None = None,
     kind: str,
     input_schema: dict[str, Any],
     output_schema: dict[str, Any],
