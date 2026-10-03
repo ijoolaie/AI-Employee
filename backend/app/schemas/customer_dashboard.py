@@ -1,6 +1,11 @@
 from datetime import datetime
 from pydantic import BaseModel
 
+class CustomerOfficeWorkItemResponse(BaseModel):
+    id: str
+    title: str
+    status: str
+
 class CustomerOfficeEmployeeResponse(BaseModel):
     id: str
     name: str
@@ -12,6 +17,7 @@ class CustomerOfficeEmployeeResponse(BaseModel):
     latest_run_id: str | None
     latest_run_status: str | None
     latest_run_created_at: datetime | None
+    current_work_item: CustomerOfficeWorkItemResponse | None
 
 class CustomerOfficeResponse(BaseModel):
     office_state: str
