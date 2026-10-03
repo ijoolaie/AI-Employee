@@ -115,6 +115,7 @@ async def test_office_service_is_tenant_scoped_and_preserves_authoritative_state
 async def test_customer_office_route_passes_authenticated_tenant_to_service(monkeypatch):
     tenant_id = uuid4()
     captured = {}
+    now = datetime.now(timezone.utc)
 
     async def fake_get_office(db, *, tenant_id):
         captured["db"] = db
