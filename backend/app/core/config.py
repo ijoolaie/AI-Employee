@@ -72,6 +72,8 @@ class Settings(BaseSettings):
             raise ValueError("MARKET_DATA_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
         if self.engineering_github_timeout_seconds <= 0 or self.engineering_github_timeout_seconds > 60:
             raise ValueError("ENGINEERING_GITHUB_TIMEOUT_SECONDS must be between 0 and 60")
+        if self.zarinpal_timeout_seconds <= 0 or self.zarinpal_timeout_seconds > 60:
+            raise ValueError("ZARINPAL_TIMEOUT_SECONDS must be between 0 and 60")
         if self.app_env.lower() in {"production", "prod"}:
             if self.debug:
                 raise ValueError("DEBUG must be false in production")
@@ -113,6 +115,9 @@ class Settings(BaseSettings):
                 raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
             if self.market_data_provider_base_url and urlparse(self.market_data_provider_base_url).scheme != "https":
                 raise ValueError("MARKET_DATA_PROVIDER_BASE_URL must use HTTPS in production")
+            if self.zarinpal_merchant_id and not self.local_production_allow_http:
+                if urlparse(self.zarinpal_callback_url).scheme != "https":
+                    raise ValueError("ZARINPAL_CALLBACK_URL must use HTTPS in production")
             if not self.local_production_allow_http:
                 if self.stripe_secret_key or self.stripe_webhook_secret:
                     for name, value in {
