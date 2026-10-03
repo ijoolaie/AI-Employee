@@ -113,6 +113,7 @@ const office = {
   approvalsDescription: "Pending decisions remain governed and can be opened from the approvals workspace.",
   visualOnly: "Presentation layer",
   visualOnlyDescription: "Office visuals reflect real workforce state; they do not create permissions or execution authority.",
+  retry: "Retry",
 } as const;
 
 const officeFa = {
@@ -136,6 +137,7 @@ const officeFa = {
   approvalsDescription: "تصمیم‌های در انتظار همچنان تحت حاکمیت هستند و از بخش تأییدها قابل مشاهده‌اند.",
   visualOnly: "لایه ارائه",
   visualOnlyDescription: "ظاهر دفتر وضعیت واقعی نیروی کار را نمایش می‌دهد و مجوز یا اختیار اجرای جدید ایجاد نمی‌کند.",
+  retry: "تلاش مجدد",
 } as const;
 
 const customers = {
