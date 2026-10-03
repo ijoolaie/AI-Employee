@@ -12,6 +12,7 @@ from app.models.workflow_approval import WorkflowApproval
 from app.models.workflow_schedule import WorkflowSchedule
 from app.models.workflow_event import WorkflowEventTrigger
 from app.models.ai_provider_call import AIProviderCall
+from app.models.run import Run
 
 
 async def get_dashboard(db: AsyncSession, *, tenant_id):
@@ -166,7 +167,6 @@ async def get_office(db: AsyncSession, *, tenant_id):
     # Employee Run records are the authoritative execution state used by the
     # existing workforce runtime. WorkflowStepRun is used only to locate the
     # newest Employee Run without introducing a second state store.
-    from app.models.run import Run
 
     ranked_employee_runs = (
         select(
