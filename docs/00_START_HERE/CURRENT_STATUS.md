@@ -187,6 +187,9 @@ W12 has now moved from planned design into a first implementation slice on post-
 - Cosmetic/wardrobe commerce: NOT IMPLEMENTED / NOT VERIFIED.
 - Virtual meetings, voice, TTS, real-time avatar/video: NOT IMPLEMENTED / NOT VERIFIED.
 
+### As-built record
+Detailed implementation record: `docs/current/W12_VIRTUAL_OFFICE_IMPLEMENTATION.md`.
+
 ### Evidence boundary
 This W12 slice is post-v1.4.11 application code. Exact-SHA CI/certification for the current mainline is **NOT RUN / NOT VERIFIED**. No release tag is created from this implementation alone.
 
