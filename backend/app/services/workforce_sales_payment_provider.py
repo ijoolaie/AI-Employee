@@ -55,6 +55,11 @@ async def create_sales_checkout_session(
     provider = settings.sales_payment_provider_name.lower().strip()
     if provider == "none":
         return SalesPaymentResult("none", "not_configured", False, None, None)
+    if amount <= 0:
+        raise ValidationAppError("Commercial commitment amount must be positive")
+    currency = (currency or "usd").lower()
+    if len(currency) != 3 or not currency.isalpha():
+        raise ValidationAppError("Sales payment currency must be a three-letter ISO currency")
     if provider == "contract-test":
         return SalesPaymentResult(
             "contract-test",
@@ -65,17 +70,12 @@ async def create_sales_checkout_session(
         )
     if provider != "stripe":
         raise ValidationAppError(f"Unsupported sales payment provider: {provider}")
-    if amount <= 0:
-        raise ValidationAppError("Commercial commitment amount must be positive")
     if not settings.stripe_enabled:
         raise ValidationAppError("Sales payment provider stripe requires Stripe configuration")
 
     import stripe
 
     stripe.api_key = settings.stripe_secret_key
-    currency = (currency or "usd").lower()
-    if len(currency) != 3 or not currency.isalpha():
-        raise ValidationAppError("Sales payment currency must be a three-letter ISO currency")
     session = stripe.checkout.Session.create(
         mode="payment",
         line_items=[{
