@@ -83,6 +83,10 @@ jobs:
           docker compose logs --tail=200 api worker
           exit 1
 
+      - name: Verify W10 provider configuration
+        run: |
+          docker compose exec -T api python -c 'from app.core.config import get_settings; s=get_settings(); print("W10 provider config:", s.sales_outreach_provider_name, s.sales_payment_provider_name)'
+
       - name: Compile W10 sources
         run: |
           timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_workforce_w10_commercial_commitment_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/services/workforce_sales_inbound_provider.py app/services/workforce_sales_mailbox_provider.py app/api/v1/sales_webhooks.py app/workers/email_worker.py
