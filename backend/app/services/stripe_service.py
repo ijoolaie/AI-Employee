@@ -286,7 +286,7 @@ async def apply_verified_sales_payment(
     provider_event_id: str,
     data: dict,
 ) -> tuple[uuid.UUID | None, str | None]:
-    """Convert a verified one-time Stripe payment into a tenant-scoped order.
+    """Convert a verified one-time provider payment into a tenant-scoped order.
 
     The BusinessDeal row is locked so retries/concurrent provider events cannot
     create duplicate business orders. BillingEvent remains the provider webhook
@@ -462,7 +462,7 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
     elif event_type == "checkout.session.completed" and (data.get("metadata") or {}).get("sales_deal_id"):
         if data.get("payment_status") != "paid":
             raise ValidationAppError("Sales checkout completion is not a verified paid event")
-        tenant_id, order_id = await _apply_sales_payment_success(
+        tenant_id, order_id = await apply_verified_sales_payment(
             db,
             provider_event_id=provider_event_id,
             data={
