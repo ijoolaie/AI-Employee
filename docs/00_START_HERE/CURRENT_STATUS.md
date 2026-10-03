@@ -1,39 +1,39 @@
 # Current Status
 
 **Last reconciled:** 2026-10-03
-**Latest certified release:** `v1.4.12`
-**Certified release SHA:** `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`
-**Stable Git tag:** `v1.4.12` — VERIFIED at the certified SHA
-**GitHub Release:** `v1.4.12` — PUBLISHED
-**Exact-SHA Production Certification:** Run `37138840482` — PASS
-**Certification job:** `111248877948` — PASS
+**Latest certified release:** `v1.4.13`
+**Certified release SHA:** `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`
+**Stable Git tag:** `v1.4.13` — PENDING MANUAL PROMOTION
+**GitHub Release:** `v1.4.13` — NOT CREATED
+**Exact-SHA Production Certification:** Run `37141161822` — PASS
+**Certification job:** `111255715821` — PASS
 **Current engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA
-**Current status:** v1.4.12 RELEASE-CERTIFIED / LOCAL-ENGINEERING STAGE / EXTERNAL GATES OPEN
+**Current status:** v1.4.13 CANDIDATE CERTIFIED / RELEASE PROMOTION PENDING / EXTERNAL GATES OPEN
 
-## Current release
+## Previous certified release boundary
 
-- Release: `v1.4.11`
-- Exact certified SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+- Release: `v1.4.12`
+- Exact certified SHA: `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`
 - Production Certification: PASS
 - Product Gate failures: **0**
 - Frontend Playwright: PASS
-- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
-- Evidence JSON SHA-256: `bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`
-- Artifact ID: `10744805746`
+- Evidence artifact: `production-certification-evidence-v1.4.12-rc.1-9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`
+- Evidence JSON SHA-256: `sha256:b380f8849b6347995c17bcec8a97de979b2a67b01d88dc26d0f02258b8779af1`
+- Artifact ID: `11279782875`
 - Production deployment claimed by certification: **false**
 - Stable Git tag: **VERIFIED**
 - GitHub Release: **PUBLISHED**
 - Current execution stage: **LOCAL / ENGINEERING**
-- Current main head: **main / 783ab44fbd4e6922878114e1f599021b3e397fe7**
+- Current main head: **resolve directly from the repository**
 - External production & commercial gates: **OPEN — PENDING EXTERNAL EXECUTION**
 
 Certification applies only to the exact certified SHA. Post-release code or documentation commits do not inherit certification.
 
 ## Executive truth
 
-The latest repository-certified release is **v1.4.11 / `90dd5cb...`**.
+The latest repository-certified release is **v1.4.12 / `9c3f0ff...`**; W13 has now passed fresh exact-SHA Production Certification and is the next release candidate.
 
-The latest code-bearing engineering head is PR #832 merge commit `b352ce41ab65031b5463542e254ddd3a2a1f459b`, followed by documentation-only PR #833 (`3d29aeffb44bcba7d833ca906884b6dc5fca814a`) and PR #834. No post-certification mainline SHA is certified by the v1.4.11 exact-SHA evidence.
+The latest code-bearing engineering head is PR #832 merge commit `b352ce41ab65031b5463542e254ddd3a2a1f459b`, followed by documentation-only PR #833 (`3d29aeffb44bcba7d833ca906884b6dc5fca814a`) and PR #834. The W13 candidate SHA `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83` has independent exact-SHA certification evidence in run `37141161822`; it is not yet a published release.
 
 Repository engineering, CI, production-like validation, product completeness work and fresh exact-SHA Production Certification are complete for the v1.4.11 tracked scope.
 
@@ -220,7 +220,7 @@ This section supersedes older v1.4.11-only “latest release” statements above
 
 ## W13 Customer HQ Progression — 2026-10-03
 
-W13 is implemented on post-v1.4.12 mainline.
+W13 is implemented on post-v1.4.12 mainline and has now passed exact-SHA Production Certification.
 
 ### Implemented
 - Tenant-scoped HQ tier derived from authoritative subscription entitlement.
@@ -230,7 +230,7 @@ W13 is implemented on post-v1.4.12 mainline.
 - Backend tests cover entitlement-to-tier mapping and preservation of W12 office state/tenant boundaries.
 
 ### Evidence boundary
-W13 is post-release engineering work. Exact-SHA CI/product gates/Production Certification for W13 are **NOT RUN / NOT VERIFIED**. It must not be attributed to the certified `v1.4.12` SHA.
+W13 exact-SHA CI/product gates: **VERIFIED PASS** on `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`. Production Certification: **PASS** — Run `37141161822`, Job `111255715821`. Evidence artifact: `production-certification-evidence-v1.4.13-rc.1-5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`, digest `sha256:35e4b5dea1c57a3c021051f4dacaa841dee2f6c17cea9f0ed5db505676ea9479`. Certification records `production_deployment_claimed:false`. `v1.4.13` is not yet tagged/published.
 
 As-built record: `docs/current/W13_CUSTOMER_HQ_PROGRESSION.md`.
 
