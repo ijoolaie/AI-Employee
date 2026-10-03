@@ -386,8 +386,25 @@ export interface CustomerOfficeApproval {
   expires_at: string | null;
 }
 
+export interface CustomerOfficeHqMetrics {
+  plan_code: string;
+  plan_name: string;
+  subscription_status: string;
+  active_employees: number;
+  employee_limit: number;
+  active_workflows: number;
+  workflow_limit: number;
+  monthly_runs: number;
+  monthly_run_limit: number;
+  monthly_tokens: number;
+  monthly_token_limit: number;
+  enabled_capabilities: string[];
+}
+
 export interface CustomerOffice {
   office_state: string;
+  hq_tier: string;
+  hq_metrics: CustomerOfficeHqMetrics;
   employee_count: number;
   working_count: number;
   waiting_count: number;
