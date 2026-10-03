@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from decimal import Decimal
 import uuid
 
@@ -14,6 +15,7 @@ def test_workforce_revenue_event_is_independent_business_outcome_ledger():
         provider_event_id="evt_test_revenue_1",
         amount=Decimal("100.00"),
         currency="USD",
+        verified_at=datetime.now(timezone.utc),
         source="stripe_verified_sales_payment",
         metadata_={"source": "ai_workforce"},
     )
@@ -21,13 +23,18 @@ def test_workforce_revenue_event_is_independent_business_outcome_ledger():
     assert event.tenant_id == tenant_id
     assert event.provider == "stripe"
     assert event.amount == Decimal("100.00")
+    assert event.verified_at.tzinfo is not None
     assert event.metadata_["source"] == "ai_workforce"
 
     constraints = {c.name for c in WorkforceRevenueEvent.__table__.constraints}
     assert "uq_workforce_revenue_event_provider_id" in constraints
 
+
 def test_workforce_revenue_event_is_tenant_scoped():
-    assert "ix_workforce_revenue_event_tenant" in {i.name for i in WorkforceRevenueEvent.__table__.indexes}
+    assert "ix_workforce_revenue_event_tenant" in {
+        i.name for i in WorkforceRevenueEvent.__table__.indexes
+    }
+
 
 def test_workforce_revenue_event_source_is_bounded():
     assert WorkforceRevenueEvent.__table__.c.source.type.length == 64
