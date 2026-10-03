@@ -103,7 +103,7 @@ jobs:
 
       - name: Run ZarinPal provider contract tests
         run: |
-          timeout 3m docker compose exec -T api pytest -q tests/test_zarinpal_service.py tests/test_workforce_sales_payment_provider.py
+          timeout 3m docker compose exec -T api pytest -q tests/test_zarinpal_service.py tests/test_zarinpal_webhooks.py tests/test_workforce_sales_payment_provider.py
 
       - name: Create and manually verify ZarinPal sandbox payment
         run: |
