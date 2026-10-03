@@ -354,6 +354,12 @@ export interface AdminDashboard {
 
 export type OfficePresentationState = "WORKING" | "WAITING_APPROVAL" | "IDLE" | "BLOCKED" | "MEETING" | "COMPLETED" | "ESCALATED";
 
+export interface CustomerOfficeWorkItem {
+  id: string;
+  title: string;
+  status: string;
+}
+
 export interface CustomerOfficeEmployee {
   id: string;
   name: string;
@@ -365,6 +371,7 @@ export interface CustomerOfficeEmployee {
   latest_run_id: string | null;
   latest_run_status: string | null;
   latest_run_created_at: string | null;
+  current_work_item: CustomerOfficeWorkItem | null;
 }
 
 export interface CustomerOffice {
