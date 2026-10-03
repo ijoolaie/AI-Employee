@@ -25,3 +25,6 @@ def test_workforce_revenue_event_is_independent_business_outcome_ledger():
 
     constraints = {c.name for c in WorkforceRevenueEvent.__table__.constraints}
     assert "uq_workforce_revenue_event_provider_id" in constraints
+
+def test_workforce_revenue_event_is_tenant_scoped():
+    assert "ix_workforce_revenue_event_tenant" in {i.name for i in WorkforceRevenueEvent.__table__.indexes}
