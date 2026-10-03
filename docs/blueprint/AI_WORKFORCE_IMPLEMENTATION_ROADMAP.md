@@ -793,3 +793,98 @@ Do not store generated image bytes in the Employee row. Prefer durable object/me
 - Real-provider evidence before claiming visual-chat execution.
 
 **Evidence rule:** implementation of identity metadata is not evidence that visual chat or a real avatar provider is operational.
+
+## Product Experience & Monetization Expansion — 2026-10-03
+
+The workforce product is expanding from an AI operations dashboard into a visual **AI Company Headquarters**, while the governed Workforce Runtime remains the single source of business truth.
+
+### Product principles
+1. Game-like presentation, enterprise-grade semantics.
+2. Presentation is separate from execution and authorization.
+3. Cosmetics never bypass governance, permissions, approvals or tenant isolation.
+4. Dashboard, Executive Office, Virtual Office, mobile and future 3D/VR views consume the same backend truth.
+5. Commerce-ready contracts should not couple marketplace features to core authorization.
+
+### Planned experience roadmap
+
+**W12 — Virtual Office Foundation**
+- CEO/Executive Office as the primary command interface.
+- Employee floor, department clusters, project rooms and meeting-room presentation.
+- Real employee states such as WORKING, WAITING_APPROVAL, BLOCKED, MEETING, IDLE, COMPLETED and ESCALATED.
+- Read-only presentation contracts over Workforce API data.
+- Frontend must never infer business state.
+
+**W13 — Customer HQ Progression**
+- Office tier derived from authoritative customer metrics and entitlements.
+- Inputs may include subscription/usage, active projects, employee count and enabled capabilities.
+- Expandable rooms, floors and clusters; Enterprise/white-label presentation options.
+- Presentation tier is not an authorization shortcut.
+
+**W14 — Employee Appearance & Customization**
+- Stable visual identity separate from business identity.
+- Avatar, gender presentation, appearance, hairstyle, body presentation, clothing and accessories where supported.
+- Professional presentation settings such as language and communication style.
+- Role, permissions and capabilities remain independent of appearance.
+
+**W15 — Wardrobe & Cosmetic Marketplace**
+- Clothing/uniforms, accessories, office furniture/decorations, themes and seasonal or limited collections.
+- Tenant-scoped, auditable, non-authoritative commercial assets.
+
+**W16 — Skills Marketplace**
+- Versioned, governed skill packages attachable to eligible employees.
+- Skill installation cannot silently expand permissions.
+- Paid skills may be recurring or one-time products.
+
+**W17 — Employee Career & Reputation Presentation**
+- Work history, tenure, completed projects and verified operational KPIs.
+- Achievements/badges are presentation metadata and cannot fabricate business performance.
+
+**W18 — Virtual Meeting Rooms**
+- CEO-to-employee conversations and multi-employee governed sessions.
+- Project-focused meeting context.
+- Meeting state tied to real Workforce sessions/runs.
+
+**W19 — Voice & Visual Interaction**
+- Voice input/output, TTS and visual/avatar providers behind explicit contracts.
+- Camera, lip-sync and video remain optional presentation capabilities.
+- Heavy GPU/video workloads remain isolated from core runtime.
+
+**W20 — Third-party Employee Marketplace**
+- Employee templates, specialist personas, governed skill bundles, workflows and visual packs.
+- Third-party packages require validation, versioning, permissions review and tenant isolation.
+
+**W21 — AI Business Network**
+- Future governed company-to-company workforce requests, partner/customer handoffs and controlled agent-to-agent business workflows.
+- Commercial and contractual boundaries remain explicit and approval-gated.
+
+### Employee identity boundary
+
+Employee business identity contains role, permissions, capabilities, memory and work history. Presentation identity contains avatar, appearance, clothing, accessories and office placement. Changing presentation must never change business authority.
+
+### Presentation architecture
+
+Workforce Core (Employee / WorkItem / Run / Governance / Approval / Audit / Metrics) feeds a Presentation Layer (Executive Office / Virtual Office / Avatar / Clothing / Meetings / Analytics). The Presentation Layer is never an alternative execution or authorization path.
+
+### Customer HQ progression
+
+The visual progression may evolve from Office → Department Clusters → Floors → Campus. The tier must be computed from authoritative customer metrics and entitlements, not arbitrary frontend counters.
+
+### Monetization model
+
+1. Recurring SaaS: employees, projects, usage, skills and enterprise capabilities.
+2. Marketplace revenue: third-party employees, skills, workflows, themes and cosmetics, with platform commission where applicable.
+3. Premium experience: office customization, branded HQ, avatars, voice/visual presentation and white-label capabilities.
+
+The primary business KPI remains First Revenue Generated by AI Workforce. Cosmetic and marketplace revenue is additive.
+
+### CEO experience
+
+The Executive Office should expose real business state as a living company: morning brief, approvals/documents on the CEO desk, employees visibly working or waiting, project/department navigation, meeting transitions and company growth milestones. These are visualizations over real data, not simulated business activity.
+
+### Anti-pay-to-win boundary
+
+Commercial cosmetics and presentation upgrades must not increase permissions, bypass approval, change tenant isolation, unlock unauthorized privileged operations, or fabricate employee performance/revenue.
+
+### Evidence rule
+
+All W12–W21 phases remain PLANNED until their contracts, implementation, tests and relevant real-stack evidence exist. No marketplace, cosmetic purchase, visual provider or revenue claim may be described as live without evidence.
