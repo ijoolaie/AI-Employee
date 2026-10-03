@@ -23,6 +23,7 @@ from app.core.database import AsyncSessionLocal
 from app.models.business_deal import BusinessDeal
 from app.models.business_order import BusinessOrder
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
+from app.core.exceptions import ConflictError
 from app.services.stripe_service import apply_verified_sales_payment
 from scripts.e2e_workforce_w10_dogfood_verify import prepare
 
@@ -142,6 +143,57 @@ async def main() -> None:
 
         assert len(revenue_rows) == 1
         assert len(order_rows) == 1
+
+        cross_deal_id = uuid.uuid4()
+        db.add(
+            BusinessDeal(
+                id=cross_deal_id,
+                tenant_id=tenant_id,
+                title="W10 synthetic ZarinPal cross-deal replay guard",
+                customer_name="Synthetic Replay Prospect",
+                customer_email="synthetic-replay@example.invalid",
+                amount=Decimal("100000"),
+                currency="IRR",
+                stage="proposal",
+                probability=50,
+                source="ai_workforce_zarinpal_cross_deal_replay_test",
+                notes="Synthetic provider event replay must not settle another deal.",
+                metadata_={},
+                created_by=owner_id,
+            )
+        )
+        await db.commit()
+
+        cross_deal_event = {
+            **event_data,
+            "metadata": {
+                "tenant_id": str(tenant_id),
+                "sales_deal_id": str(cross_deal_id),
+            },
+        }
+        try:
+            await apply_verified_sales_payment(
+                db,
+                provider="zarinpal",
+                provider_event_id=reference_id,
+                data=cross_deal_event,
+            )
+        except ConflictError as exc:
+            assert "already bound to another deal" in str(exc)
+            await db.rollback()
+        else:
+            raise AssertionError("cross-deal provider reference replay must be rejected")
+
+        cross_deal_row = (
+            await db.execute(
+                select(BusinessDeal).where(
+                    BusinessDeal.id == cross_deal_id,
+                    BusinessDeal.tenant_id == tenant_id,
+                )
+            )
+        ).scalar_one()
+        assert cross_deal_row.stage == "proposal"
+        assert cross_deal_row.order_id is None
 
     print("W10 SYNTHETIC ZARINPAL RECONCILIATION PASS")
     print("W10 WORKFORCE REVENUE EVENT PASS provider=zarinpal amount=100000 IRR")
