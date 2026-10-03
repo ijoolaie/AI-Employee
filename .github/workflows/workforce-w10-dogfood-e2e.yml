@@ -20,6 +20,9 @@ on:
       - "backend/app/core/config.py"
       - "backend/app/services/workforce_sales_payment_provider.py"
       - "backend/app/services/stripe_service.py"
+      - "backend/app/models/workforce_revenue_event.py"
+      - "backend/alembic/versions/w10_workforce_revenue_event.py"
+      - "backend/scripts/e2e_workforce_w10_revenue_reconciliation_verify.py"
       - "backend/tests/test_workforce_sales_payment_provider.py"
       - "backend/scripts/e2e_workforce_w10_commercial_commitment_verify.py"
       - "docker-compose.yml"
@@ -89,7 +92,7 @@ jobs:
 
       - name: Compile W10 sources
         run: |
-          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_workforce_w10_commercial_commitment_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/services/workforce_sales_inbound_provider.py app/services/workforce_sales_mailbox_provider.py app/api/v1/sales_webhooks.py app/workers/email_worker.py
+          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_workforce_w10_commercial_commitment_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/services/workforce_sales_inbound_provider.py app/services/workforce_sales_mailbox_provider.py app/services/stripe_service.py app/models/workforce_revenue_event.py app/api/v1/sales_webhooks.py app/workers/email_worker.py
 
       - name: Run sales provider unit tests
         run: |
@@ -98,6 +101,10 @@ jobs:
       - name: Run W10 real-stack certification
         run: |
           timeout 8m docker compose exec -T api python scripts/e2e_workforce_w10_dogfood_verify.py
+
+      - name: Run synthetic Stripe revenue reconciliation certification
+        run: |
+          timeout 8m docker compose exec -T api python scripts/e2e_workforce_w10_revenue_reconciliation_verify.py
 
       - name: Run governed commercial commitment certification
         env:
