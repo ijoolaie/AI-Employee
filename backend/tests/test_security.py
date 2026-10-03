@@ -8,8 +8,17 @@ from app.core.security import hash_password, verify_password, create_access_toke
 def test_password_hash_and_verify():
     hashed = hash_password("Secret123!")
     assert hashed != "Secret123!"
+    assert hashed.startswith("$2b$")
     assert verify_password("Secret123!", hashed)
     assert not verify_password("wrong", hashed)
+
+
+def test_password_verify_accepts_existing_passlib_bcrypt_hash():
+    # Known bcrypt vector documented by Passlib; existing database hashes
+    # must remain login-compatible after removing the Passlib wrapper.
+    legacy_hash = "$2a$12$NT0I31Sa7ihGEWpka9ASYrEFkhuTNeBQ2xfZskIiiJeyFXhRgS.Sy"
+    assert verify_password("password", legacy_hash)
+    assert not verify_password("wrong", legacy_hash)
 
 
 def test_access_token_roundtrip():
