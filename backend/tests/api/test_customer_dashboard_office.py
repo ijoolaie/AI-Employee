@@ -33,7 +33,7 @@ class _DB:
 
 
 @pytest.mark.asyncio
-async def test_office_service_is_tenant_scoped_and_preserves_authoritative_state():
+async def test_office_service_is_tenant_scoped_and_preserves_authoritative_state(monkeypatch):
     tenant_id = uuid4()
     employee_id = uuid4()
     run_id = uuid4()
@@ -64,6 +64,18 @@ async def test_office_service_is_tenant_scoped_and_preserves_authoritative_state
         expires_at=None,
     )
 
+    plan = SimpleNamespace(
+        code="business", name="Business", features={"analytics": True, "priority": "standard"},
+        max_employees=20, max_workflows=25, monthly_runs=2000, monthly_tokens=2_000_000,
+    )
+    subscription = SimpleNamespace(plan=plan, status="active")
+    async def fake_subscription(db, *, tenant_id):
+        return subscription
+    async def fake_usage(db, *, tenant_id, now=None):
+        return {"calls": 3, "tokens": 1200, "runs": 7, "employees": 1, "workflows": 2}
+    monkeypatch.setattr(customer_dashboard_service.billing_service, "get_subscription", fake_subscription)
+    monkeypatch.setattr(customer_dashboard_service.billing_service, "monthly_usage", fake_usage)
+
     db = _DB(
         [
             _Result(scalar_rows=[run_id]),
@@ -87,6 +99,10 @@ async def test_office_service_is_tenant_scoped_and_preserves_authoritative_state
     office = await customer_dashboard_service.get_office(db, tenant_id=tenant_id)
 
     assert office["employee_count"] == 1
+    assert office["hq_tier"] == "BUSINESS"
+    assert office["hq_metrics"]["active_employees"] == 1
+    assert office["hq_metrics"]["monthly_runs"] == 7
+    assert office["hq_metrics"]["enabled_capabilities"] == ["analytics", "priority"]
     assert office["working_count"] == 0
     assert office["waiting_count"] == 1
     assert office["idle_count"] == 0
@@ -144,3 +160,17 @@ async def test_customer_office_route_passes_authenticated_tenant_to_service(monk
     assert response.success is True
     assert response.data["employee_count"] == 0
     assert response.data["office_state"] == "LIVE"
+
+
+@pytest.mark.parametrize(
+    ("plan_code", "features", "expected"),
+    [
+        ("starter", {}, "STARTER"),
+        ("business", {"analytics": True}, "BUSINESS"),
+        ("professional", {"advanced_workflows": True}, "PROFESSIONAL"),
+        ("enterprise", {}, "ENTERPRISE"),
+        ("custom", {}, "CUSTOM"),
+    ],
+)
+def test_office_hq_tier_is_entitlement_bound(plan_code, features, expected):
+    assert customer_dashboard_service._office_hq_tier(plan_code=plan_code, features=features) == expected
