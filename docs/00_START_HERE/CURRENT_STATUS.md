@@ -130,3 +130,18 @@ The post-v1.4.11 W10 dogfood workflow now has real live SMTP + mailbox response 
 The certification observed the mailbox response on polling attempt 3/12 after the INBOX count increased from 83 to 84. This is live provider evidence on post-release mainline code, not v1.4.11 release evidence.
 
 Current W10 commercial boundary: the technical sales engagement loop is verified through real SMTP → mailbox → correlated response → idempotent ingestion → attribution. The next evidence boundary is an independently verified customer outcome and, ultimately, a payment/revenue event.
+
+
+## W11 Humanized Employee Identity & Visual Presentation — 2026-10-03
+
+- W11 foundation: **IMPLEMENTED on post-v1.4.11 mainline**.
+- Stable Employee name: **ALREADY SUPPORTED** by the Employee identity model.
+- Stable Employee avatar reference: **IMPLEMENTED** as nullable `employees.avatar_url` via migration `w11_employee_avatar_identity`.
+- API create/read path: **IMPLEMENTED**.
+- Static avatar rendering UI: **NOT VERIFIED / NOT IMPLEMENTED IN THIS SLICE**.
+- Voice/TTS: **NOT IMPLEMENTED IN THIS SLICE**.
+- Real-time visual chat / camera / talking avatar: **NOT IMPLEMENTED / NOT VERIFIED**.
+- GPU requirement: **NOT introduced by the identity foundation**.
+- Release certification: **NOT RUN for this post-v1.4.11 change**.
+
+Evidence boundary: W11 identity metadata is a lightweight foundation. It does not certify any image-generation, vision, TTS, lip-sync or video provider.

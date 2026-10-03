@@ -68,3 +68,16 @@ Until an external target is provisioned, deployment and external acceptance rema
 ## Historical integrity rule
 
 Do not retag, rewrite or reinterpret historical certified/failed releases. `v1.4.9` remains immutable at its certified SHA.
+
+
+## Post-v1.4.11 W11 engineering checkpoint — 2026-10-03
+
+A new application-code change has been added after the certified `v1.4.11` boundary:
+
+- commit: `086aadef3e1025d06f98610847ea3b4f6baf7cac`
+- scope: stable Employee avatar identity metadata + API/schema/migration/test foundation
+- release tag: **NONE**
+- exact-SHA certification: **NOT RUN**
+- deployment: **NOT VERIFIED**
+
+This change must not be described as `v1.4.11` functionality or certification. If promoted to a release, create a new immutable release from the exact certified SHA only after the applicable CI/product gates and fresh exact-SHA certification complete.

@@ -750,3 +750,46 @@ The certification logs show the mailbox response was actually discovered after t
 The immutable `v1.4.11` certification boundary remains unchanged. This evidence belongs to post-v1.4.11 mainline SHA `7f7b0d9...` and does not transfer certification to that SHA.
 
 The next W10 work should therefore focus on **customer-outcome evidence** (qualified customer conversation → proposal/pilot → payment/revenue event) and on reconciling the authoritative current-status/evidence documents, rather than repeating the already verified live SMTP response loop.
+
+
+## Phase W11 — Humanized Employee Identity & Visual Presentation
+
+**Status: FOUNDATION IMPLEMENTED — post-v1.4.11 mainline; not release-certified.**
+
+**Goal:** give every Employee a stable human-readable identity and optional visual presentation without coupling identity to heavy inference or video generation.
+
+### Identity contract
+
+- `Employee.name` is the stable display name and survives EmployeeVersion changes.
+- `Employee.avatar_url` is optional stable presentation metadata stored on the Employee identity, not on EmployeeVersion.
+- The backend treats `avatar_url` as inert metadata: it does not fetch, execute, proxy, or dereference the URL.
+- Tenant isolation follows the existing Employee authorization path; system Employees remain platform-owned and tenant Custom Employees remain tenant-scoped.
+- Historical Runs continue to resolve the immutable EmployeeVersion; changing a name/avatar does not rewrite historical execution definitions.
+
+### Presentation tiers
+
+1. **Name + static avatar:** lightweight and available without GPU inference.
+2. **Name + avatar + voice:** optional presentation layer; TTS/provider work is separate from core Employee identity.
+3. **Real-time visual conversation:** future capability. Camera/vision, LLM, TTS and talking-avatar/lip-sync processing must be provider-backed and isolated from the core runtime. It is not claimed implemented by this phase.
+
+### Engineering boundary
+
+Do not store generated image bytes in the Employee row. Prefer durable object/media storage and reference metadata. Do not make the Agent/Employee runtime download arbitrary avatar URLs. Visual-chat providers must be explicit capabilities with tenant, permission, approval and audit controls when they introduce external side effects or paid compute.
+
+### Current implementation
+
+- Added nullable `employees.avatar_url` via Alembic migration `w11_employee_avatar_identity`.
+- Employee create/read schemas expose `avatar_url`.
+- Employee identity creation persists the optional avatar reference.
+- No image generation, camera processing, lip-sync or video streaming is enabled by this change.
+- No GPU requirement is introduced by the identity foundation.
+
+### Next acceptance slices
+
+- UI employee cards/profile with name + avatar.
+- Media storage contract with tenant-safe asset ownership and lifecycle.
+- Optional voice profile contract.
+- Visual-chat session contract: text/voice/vision transport, provider selection, latency/cost limits, consent and audit.
+- Real-provider evidence before claiming visual-chat execution.
+
+**Evidence rule:** implementation of identity metadata is not evidence that visual chat or a real avatar provider is operational.

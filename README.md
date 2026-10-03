@@ -6,7 +6,7 @@
 
 **Architecture baseline:** `V1.5 Agentic Operating Model` — architecture/operating-model baseline, not a release.
 
-**Current engineering program:** External Production Execution + Governed Agent Workforce Engineering.
+**Current engineering program:** External Production Execution + Governed Agent Workforce Engineering + W11 Humanized Employee Identity.
 
 **Production deployment:** **PENDING EXTERNAL EXECUTION**
 
@@ -31,6 +31,12 @@ See `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 - Live provider validation/customer acceptance: pending external execution
 
 Historical release records remain immutable; see `docs/releases/RELEASE_TRUTH_LEDGER.md`.
+
+## W11 Humanized Employee Identity & Visual Presentation
+
+The post-v1.4.11 workforce program now gives each Employee a stable display identity with an optional avatar reference. The initial foundation is intentionally lightweight: no GPU inference, image generation, camera processing, lip-sync or video streaming is introduced. Real-time visual chat remains a future provider-backed capability and requires its own governance and evidence boundary.
+
+See `docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md` for the W11 contract and evidence boundary.
 
 ## Current Agent capability workstream
 

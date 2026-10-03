@@ -145,3 +145,8 @@ For engineering status:
 4. verified CI/test evidence
 
 If documents disagree, update the canonical document rather than creating a parallel status file.
+
+
+## 10. W11 identity/presentation boundary
+
+W11 Humanized Employee Identity & Visual Presentation is post-v1.4.11 mainline engineering. Its initial slice adds stable avatar metadata to the Employee identity model; it is not part of the immutable v1.4.11 release and has no transferred certification evidence. A release containing W11 application code requires fresh exact-SHA certification.
