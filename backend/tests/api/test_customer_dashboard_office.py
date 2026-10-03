@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -52,13 +53,14 @@ async def test_office_service_is_tenant_scoped_and_preserves_authoritative_state
     )
     work_item_status = SimpleNamespace(value="running")
     work_item = (work_item_id, "Implement governed change", work_item_status)
+    now = datetime.now(timezone.utc)
     approval = SimpleNamespace(
         id=approval_id,
         workflow_run_id=uuid4(),
         workflow_step_run_id=step_run_id,
         step_key="deploy",
         status="pending",
-        created_at=None,
+        created_at=now,
         expires_at=None,
     )
 
@@ -127,7 +129,7 @@ async def test_customer_office_route_passes_authenticated_tenant_to_service(monk
             "escalated_count": 0,
             "employees": [],
             "pending_approvals": [],
-            "generated_at": None,
+            "generated_at": now,
         }
 
     monkeypatch.setattr(customer_dashboard.customer_dashboard_service, "get_office", fake_get_office)
