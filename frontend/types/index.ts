@@ -374,6 +374,18 @@ export interface CustomerOfficeEmployee {
   current_work_item: CustomerOfficeWorkItem | null;
 }
 
+export interface CustomerOfficeApproval {
+  id: string;
+  workflow_run_id: string;
+  workflow_step_run_id: string;
+  employee_id: string | null;
+  employee_name: string | null;
+  step_key: string;
+  status: string;
+  created_at: string;
+  expires_at: string | null;
+}
+
 export interface CustomerOffice {
   office_state: string;
   employee_count: number;
@@ -383,6 +395,7 @@ export interface CustomerOffice {
   blocked_count: number;
   escalated_count: number;
   employees: CustomerOfficeEmployee[];
+  pending_approvals: CustomerOfficeApproval[];
   generated_at: string;
 }
 
