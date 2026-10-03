@@ -236,3 +236,67 @@ async def test_zarinpal_callback_non_ok_status_does_not_reconcile(configured, mo
     }
     assert db.commits == 0
     assert db.rollbacks == 0
+
+@pytest.mark.asyncio
+async def test_zarinpal_callback_replay_reaches_idempotent_reconciliation_boundary(
+    configured, monkeypatch
+):
+    import uuid
+
+    deal_id = uuid.uuid4()
+    tenant_id = uuid.uuid4()
+    authority = "A00000000000000000000000000000replay"
+    deal = SimpleNamespace(
+        id=deal_id,
+        tenant_id=tenant_id,
+        amount=100000,
+        currency="IRR",
+        metadata_={
+            "payment_provider": "zarinpal",
+            "payment_provider_authority": authority,
+        },
+    )
+    db = _Db(deal)
+    reconcile_calls = []
+
+    async def fake_verify(*, authority, amount, currency):
+        return {"code": 100, "ref_id": 513655103}
+
+    async def fake_reconcile(db, *, provider, provider_event_id, data):
+        reconcile_calls.append(
+            (provider, provider_event_id, data["metadata"]["sales_deal_id"])
+        )
+        return tenant_id, "order-1"
+
+    monkeypatch.setattr(zarinpal_webhooks.zarinpal_service, "verify_payment", fake_verify)
+    monkeypatch.setattr(
+        zarinpal_webhooks.stripe_service,
+        "apply_verified_sales_payment",
+        fake_reconcile,
+    )
+
+    first = await zarinpal_webhooks.receive_zarinpal_callback(
+        _request(deal_id=str(deal_id), Authority=authority, Status="OK"),
+        db,
+    )
+    second = await zarinpal_webhooks.receive_zarinpal_callback(
+        _request(deal_id=str(deal_id), Authority=authority, Status="OK"),
+        db,
+    )
+
+    assert first == second == {
+        "success": True,
+        "status": "paid",
+        "provider": "zarinpal",
+        "deal_id": str(deal_id),
+        "tenant_id": str(tenant_id),
+        "order_id": "order-1",
+        "reference_id": "513655103",
+    }
+    assert reconcile_calls == [
+        ("zarinpal", "513655103", str(deal_id)),
+        ("zarinpal", "513655103", str(deal_id)),
+    ]
+    assert db.commits == 2
+    assert db.rollbacks == 0
+
