@@ -107,7 +107,14 @@ jobs:
 
       - name: Create and manually verify ZarinPal sandbox payment
         run: |
-          timeout $((W10_ZARINPAL_WAIT_MINUTES * 60 + 120)) docker compose exec -T api             python scripts/e2e_workforce_w10_live_zarinpal_payment_verify.py
+          timeout $((W10_ZARINPAL_WAIT_MINUTES * 60 + 120)) docker compose exec -T \
+            -e ZARINPAL_SANDBOX="$ZARINPAL_SANDBOX" \
+            -e ZARINPAL_CALLBACK_URL="$ZARINPAL_CALLBACK_URL" \
+            -e W10_ZARINPAL_AMOUNT_IRR="$W10_ZARINPAL_AMOUNT_IRR" \
+            -e W10_ZARINPAL_WAIT_MINUTES="$W10_ZARINPAL_WAIT_MINUTES" \
+            -e W10_ZARINPAL_CERTIFICATION_EMAIL="$W10_ZARINPAL_CERTIFICATION_EMAIL" \
+            -e W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION="$W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION" \
+            api python scripts/e2e_workforce_w10_live_zarinpal_payment_verify.py
 
       - name: Diagnostics
         if: always()
