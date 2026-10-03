@@ -56,12 +56,21 @@ export interface LoginRequest {
   tenant_slug: string;
 }
 
+export interface EmployeePresentationProfile {
+  gender_presentation: "neutral" | "feminine" | "masculine";
+  outfit: "business" | "casual" | "technical" | "formal";
+  hair_style: "default" | "short" | "long" | "curly" | "tied";
+  accessory: "none" | "glasses" | "headset" | "badge";
+}
+
 export interface Employee {
   id: string;
   slug: string;
   name: string;
   kind: string;
   is_active: boolean;
+  avatar_url: string | null;
+  presentation_profile: EmployeePresentationProfile;
   created_at: string;
 }
 
