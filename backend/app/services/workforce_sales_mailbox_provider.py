@@ -56,8 +56,7 @@ def _message_ids(value: str | None) -> set[str]:
     # never accept a substring match.
     normalized = value.replace("<", " ").replace(">", " ").replace('"', " ")
     for token in re.split(r"\s+", normalized):
-        token = token.strip(" 	
-,;")
+        token = token.strip(" \t\n,;")
         if "@" in token and token and re.fullmatch(
             r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", token
         ):
@@ -179,11 +178,6 @@ async def poll_sales_replies(
         for candidate_index, (candidate_tenant, provider_message_id) in enumerate(
             candidates, start=1
         ):
-            # The SMTP worker emits <outbox-{uuid}@ai-employee.local>. Some
-            # providers normalize header search terms, so try the full token
-            # and the bare application Message-ID token. Acceptance below
-            # remains strict: the fetched RFC822 headers must contain the exact
-            # provider_message_id.
             token = f"<{provider_message_id}@ai-employee.local>"
             search_values = (token, provider_message_id)
             candidate_matches = 0
@@ -217,11 +211,6 @@ async def poll_sales_replies(
                         1 for item in results if item.provider_message_id == provider_message_id
                     )
 
-            # Fallback diagnostic path: some IMAP implementations search
-            # headers differently or expose reply headers only through a
-            # full-message TEXT search. This path is discovery-only; the
-            # fetched message must still pass the exact header correlation
-            # check above before acceptance.
             for search_value in search_values:
                 status, data = mailbox.uid("SEARCH", None, "TEXT", search_value)
                 raw_uids = (data[0] or b"") if status == "OK" and data else b""
