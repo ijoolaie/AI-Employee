@@ -1,0 +1,112 @@
+name: Workforce W10 Live ZarinPal Payment Certification
+
+on:
+  workflow_dispatch:
+    inputs:
+      sandbox:
+        description: "Use ZarinPal sandbox (true) or live production gateway (false)"
+        required: true
+        default: "true"
+        type: string
+      amount_irr:
+        description: "Certification amount in IRR; minimum 10000"
+        required: true
+        default: "100000"
+        type: string
+      wait_minutes:
+        description: "Minutes to wait for manual payment"
+        required: true
+        default: "20"
+        type: string
+
+concurrency:
+  group: workforce-w10-live-zarinpal
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  APP_ENV: test
+  DEBUG: "true"
+  SALES_PAYMENT_PROVIDER_NAME: zarinpal
+  ZARINPAL_MERCHANT_ID: ${{ secrets.ZARINPAL_MERCHANT_ID }}
+  ZARINPAL_SANDBOX: ${{ inputs.sandbox }}
+  ZARINPAL_CALLBACK_URL: ${{ secrets.ZARINPAL_CALLBACK_URL }}
+  W10_ZARINPAL_AMOUNT_IRR: ${{ inputs.amount_irr }}
+  W10_ZARINPAL_WAIT_MINUTES: ${{ inputs.wait_minutes }}
+  W10_ZARINPAL_CERTIFICATION_EMAIL: ${{ secrets.W10_ZARINPAL_CERTIFICATION_EMAIL }}
+  W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION: ${{ secrets.W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION }}
+
+jobs:
+  live-zarinpal-payment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate ZarinPal certification configuration
+        run: |
+          test -n "$ZARINPAL_MERCHANT_ID"
+          test -n "$ZARINPAL_CALLBACK_URL"
+          test -n "$W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION"
+          test "$W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION" = "I_UNDERSTAND_THIS_CREATES_A_REAL_ZARINPAL_CHECKOUT"
+          test -n "$W10_ZARINPAL_CERTIFICATION_EMAIL"
+          test "$W10_ZARINPAL_AMOUNT_IRR" -ge 10000
+          test "$W10_ZARINPAL_WAIT_MINUTES" -ge 1
+          test "$W10_ZARINPAL_WAIT_MINUTES" -le 60
+          if [ "$ZARINPAL_SANDBOX" = "false" ]; then
+            case "$ZARINPAL_CALLBACK_URL" in
+              https://*) ;;
+              *) echo "Live ZarinPal certification requires an HTTPS callback URL"; exit 1 ;;
+            esac
+          fi
+
+      - name: Build and start W10 stack
+        run: |
+          timeout 12m docker compose up -d --build postgres redis smtp-test e2e-market-provider storage-init api worker worker-outbox worker-email beat
+
+      - name: Database migrations
+        run: |
+          timeout 3m docker compose exec -T api alembic upgrade head
+          timeout 2m docker compose exec -T api alembic check
+          test "$(docker compose exec -T api alembic heads | grep -c '^[0-9a-zA-Z_-]' || true)" -eq 1
+
+      - name: Health
+        run: |
+          timeout 3m bash -c 'until curl -fsS http://localhost:8000/health >/dev/null; do sleep 2; done'
+
+      - name: Provider configuration
+        run: |
+          docker compose exec -T api python - <<'PY'
+          from app.core.config import get_settings
+          s = get_settings()
+          assert s.sales_payment_provider_name.lower() == "zarinpal"
+          assert s.zarinpal_merchant_id
+          assert s.zarinpal_callback_url
+          print("W10 LIVE ZARINPAL CONFIGURATION PASS")
+          PY
+
+      - name: Compile live ZarinPal certification
+        run: |
+          timeout 2m docker compose exec -T api python -m py_compile             scripts/e2e_workforce_w10_live_zarinpal_payment_verify.py             app/services/zarinpal_service.py             app/services/workforce_sales_payment_provider.py             app/services/stripe_service.py             app/api/v1/zarinpal_webhooks.py
+
+      - name: Run ZarinPal provider contract tests
+        run: |
+          timeout 3m docker compose exec -T api pytest -q tests/test_zarinpal_service.py tests/test_workforce_sales_payment_provider.py
+
+      - name: Create and manually verify real ZarinPal payment
+        run: |
+          timeout $((W10_ZARINPAL_WAIT_MINUTES * 60 + 120)) docker compose exec -T api             python scripts/e2e_workforce_w10_live_zarinpal_payment_verify.py
+
+      - name: Diagnostics
+        if: always()
+        run: |
+          docker compose ps
+          docker compose logs --tail=200 api || true
+
+      - name: Shutdown
+        if: always()
+        run: |
+          timeout 3m docker compose down -v --remove-orphans || true
