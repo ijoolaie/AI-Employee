@@ -250,7 +250,7 @@ async def execute_social(arguments: dict[str, Any], **context: Any) -> dict[str,
     }
 
 async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
-    """Create tenant-scoped sales artifacts without executing external outreach."""
+    """Create tenant-scoped sales artifacts and execute only approved commercial commitments."""
     tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
     approval_required = _approval_required("ai_sales_lead_generation", operation)
@@ -258,18 +258,43 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
     sales_id = str(uuid.uuid4())
     provider_execution = "not_configured"
     execution_result: dict[str, Any] | None = None
-    if operation == "external_outreach":
-        from app.services.workforce_sales_outreach_provider import execute_sales_outreach
-        execution_result = await execute_sales_outreach(
-            db=context.get("db"),
-            tenant_id=tenant_id,
-            arguments=arguments,
-            tool_call_id=context.get("tool_call_id"),
+
+    if operation == "material_commercial_action":
+        db = context.get("db")
+        if db is None:
+            raise ValidationAppError("material_commercial_action requires an active tenant Run database context")
+        from app.modules.employees.sales.service import get_deal
+        deal = await get_deal(
+            db,
+            tenant_id=uuid.UUID(tenant_id),
+            deal_id=arguments["deal_id"],
+            for_update=True,
         )
-        provider_execution = execution_result["provider_execution"]
+        if deal.stage not in {"proposal", "negotiation"}:
+            raise ValidationAppError(
+                "material_commercial_action requires a deal in proposal or negotiation stage"
+            )
+        if deal.amount <= 0:
+            raise ValidationAppError("material_commercial_action requires a positive deal amount")
+        from app.services.workforce_sales_payment_provider import create_sales_checkout_session
+        result = await create_sales_checkout_session(
+            tenant_id=uuid.UUID(tenant_id),
+            deal_id=deal.id,
+            amount=deal.amount,
+            currency=arguments.get("currency") or deal.currency,
+            customer_email=deal.customer_email,
+            idempotency_key=arguments["idempotency_key"],
+        )
+        provider_execution = result.provider_execution
+        execution_result = {
+            "provider": result.provider,
+            "provider_execution": result.provider_execution,
+            "executed": result.executed,
+            "checkout_url": result.checkout_url,
+            "provider_payment_id": result.provider_payment_id,
+        }
+
     status = "proposal" if external else "draft_or_report"
-    # Reaching this handler for an approval-gated operation means the durable
-    # approval was already consumed by the Tool governance boundary.
     approval_status = "approved" if approval_required else "not_required"
     payload = {
         "kind": "sales_operation",
@@ -281,15 +306,16 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "approval_status": approval_status,
         "query": arguments.get("query"),
         "criteria": arguments.get("criteria", {}),
+        "deal_id": arguments.get("deal_id"),
         "provider_requested": arguments.get("provider", "crm_or_outreach"),
         "provider_execution": provider_execution,
-        # external_side_effect describes the operation's governed side-effect class;
-        # provider_execution/execution.executed separately records whether anything
-        # actually left the system. A fail-closed unconfigured provider therefore
-        # remains an external operation with zero external execution.
         "external_side_effect": external,
         **({"execution": execution_result} if execution_result is not None else {}),
-        "provenance": {"tenant_id": tenant_id, "created_at": _now(), "provider_execution": provider_execution},
+        "provenance": {
+            "tenant_id": tenant_id,
+            "created_at": _now(),
+            "provider_execution": provider_execution,
+        },
     }
     artifact = _save_json(tenant_id, f"sales-{sales_id}.json", payload)
     return {
@@ -300,15 +326,10 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "status": status,
         "approval_required": approval_required,
         "approval_status": approval_status,
-        # external_side_effect describes the operation's governed side-effect class;
-        # provider_execution/execution.executed separately records whether anything
-        # actually left the system. A fail-closed unconfigured provider therefore
-        # remains an external operation with zero external execution.
-        "external_side_effect": external,
         "provider_execution": provider_execution,
+        "external_side_effect": external,
         **({"execution": execution_result} if execution_result is not None else {}),
     }
-
 
 async def execute_seo_growth(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     """Persist tenant-scoped SEO/growth research and proposals; no search-engine execution."""
