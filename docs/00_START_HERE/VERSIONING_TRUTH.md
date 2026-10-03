@@ -150,3 +150,14 @@ If documents disagree, update the canonical document rather than creating a para
 ## 10. W11 identity/presentation boundary
 
 W11 Humanized Employee Identity & Visual Presentation is post-v1.4.11 mainline engineering. Its initial slice adds stable avatar metadata to the Employee identity model; it is not part of the immutable v1.4.11 release and has no transferred certification evidence. A release containing W11 application code requires fresh exact-SHA certification.
+
+## 11. Virtual AI Company / Presentation-Commerce boundary
+
+The post-v1.4.11 roadmap now includes a Presentation Layer for a visual AI Company Headquarters.
+
+Planned sequence:
+W11 Humanized Employee Identity → W12 Virtual Office → W13 Customer HQ Progression → W14 Employee Appearance → W15 Wardrobe/Cosmetics → W16 Skills Marketplace → W17 Career/Reputation → W18 Virtual Meetings → W19 Voice/Visual → W20 Third-party Employee Marketplace → W21 AI Business Network.
+
+These are engineering/product phases, not release numbers. The Presentation Layer remains downstream of Workforce Core truth: Employee / WorkItem / Run / Governance / Approval / Audit / Metrics → Presentation.
+
+No visual state, cosmetic purchase, marketplace asset or avatar provider creates execution authority. Any application-code phase promoted into a release requires fresh exact-SHA certification.
