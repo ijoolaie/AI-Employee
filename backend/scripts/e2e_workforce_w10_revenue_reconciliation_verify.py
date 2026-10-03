@@ -30,26 +30,26 @@ async def main() -> None:
     os.environ.pop("SALES_INBOUND_TENANT_ID", None)
     tenant_id, instance_id, runs, owner_id, reviewer_id, _ = await prepare()
 
-    deal = await execute(
-        tenant_id,
-        instance_id,
-        runs["outreach_draft"],
-        "create_deal",
-        {
-            "title": "W10 synthetic Stripe revenue certification",
-            "customer_name": "Synthetic Revenue Prospect",
-            "customer_email": "synthetic-revenue@example.invalid",
-            "amount": 100,
-            "currency": "USD",
-            "stage": "proposal",
-            "probability": 50,
-            "source": "ai_workforce_revenue_reconciliation_test",
-            "notes": "Synthetic provider event only; no Stripe network call.",
-        },
-        tool_call_id=f"w10-revenue-deal-{uuid.uuid4().hex}",
-        actor_id=owner_id,
-    )
-    deal_id = uuid.UUID(str(deal["deal_id"]))
+    deal_id = uuid.uuid4()
+    async with AsyncSessionLocal() as db:
+        db.add(
+            BusinessDeal(
+                id=deal_id,
+                tenant_id=tenant_id,
+                title="W10 synthetic Stripe revenue certification",
+                customer_name="Synthetic Revenue Prospect",
+                customer_email="synthetic-revenue@example.invalid",
+                amount=Decimal("100"),
+                currency="USD",
+                stage="proposal",
+                probability=50,
+                source="ai_workforce_revenue_reconciliation_test",
+                notes="Synthetic provider event only; no Stripe network call.",
+                metadata_={},
+                created_by=owner_id,
+            )
+        )
+        await db.commit()
 
     event_id = f"evt_w10_revenue_{uuid.uuid4().hex}"
     async with AsyncSessionLocal() as db:
