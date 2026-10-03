@@ -232,6 +232,10 @@ export async function getCustomerDashboard() {
   return unwrap(await api.get<APIResponse<import("@/types").CustomerDashboard>>("/customer-dashboard"));
 }
 
+export async function getCustomerOffice() {
+  return unwrap(await api.get<APIResponse<import("@/types").CustomerOffice>>("/customer-dashboard/office"));
+}
+
 export async function getOperationsMetrics() {
   return unwrap(await api.get<APIResponse<OperationsMetrics>>("/operations/metrics"));
 }
