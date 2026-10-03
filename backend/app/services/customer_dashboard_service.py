@@ -130,6 +130,31 @@ async def get_dashboard(db: AsyncSession, *, tenant_id):
         "generated_at": datetime.now(timezone.utc),
     }
 
+def _office_presentation_state(*, is_active: bool, run_status: str | None, waiting_approval: bool) -> str:
+    """Map authoritative runtime state to the bounded office presentation vocabulary."""
+    if not is_active:
+        return "IDLE"
+    if waiting_approval:
+        return "WAITING_APPROVAL"
+    if run_status in {"pending", "queued", "running"}:
+        return "WORKING"
+    if run_status == "failed":
+        return "ESCALATED"
+    if run_status == "cancelled":
+        return "BLOCKED"
+    return "IDLE"
+
+
+def _office_count_key(state: str) -> str:
+    return {
+        "WORKING": "working",
+        "WAITING_APPROVAL": "waiting",
+        "IDLE": "idle",
+        "BLOCKED": "blocked",
+        "ESCALATED": "escalated",
+    }[state]
+
+
 async def get_office(db: AsyncSession, *, tenant_id):
     """Build a tenant-scoped, read-only presentation state from real Employee/Run data.
 
@@ -249,27 +274,12 @@ async def get_office(db: AsyncSession, *, tenant_id):
     }
 
     for employee, run_id, run_status, run_created_at, work_item_id, work_item_title, work_item_status in latest_result.all():
-        if not employee.is_active:
-            state = "IDLE"
-        elif run_id in pending_approval_employee_ids:
-            state = "WAITING_APPROVAL"
-        elif run_status in {"pending", "queued", "running"}:
-            state = "WORKING"
-        elif run_status == "failed":
-            state = "ESCALATED"
-        elif run_status == "cancelled":
-            state = "BLOCKED"
-        else:
-            state = "IDLE"
-
-        count_key = {
-            "WORKING": "working",
-            "WAITING_APPROVAL": "waiting",
-            "IDLE": "idle",
-            "BLOCKED": "blocked",
-            "ESCALATED": "escalated",
-        }[state]
-        counts[count_key] += 1
+        state = _office_presentation_state(
+            is_active=employee.is_active,
+            run_status=run_status,
+            waiting_approval=run_id in pending_approval_employee_ids,
+        )
+        counts[_office_count_key(state)] += 1
 
         current_work_item = None
         if work_item_id and (run_status in {"pending", "queued", "running"} or run_id in pending_approval_employee_ids):
