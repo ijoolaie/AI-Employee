@@ -542,7 +542,8 @@ async def main():
             print("W10 LIVE SALES RESPONSE INGESTION PASS")
             print("W10 LIVE SALES RESPONSE IDEMPOTENCY PASS")
             print("W10 LIVE SALES ATTRIBUTION PASS sent=1 delivered=1 responded=1")
-            print("W10 LIVE CUSTOMER RESPONSE NOT_VERIFIED: mailbox response observed; sender identity/customer status is not independently verified")
+            print("W10 LIVE CUSTOMER RESPONSE ATTRIBUTION VERIFIED: mailbox response observed and sender matched governed deal customer_email")
+            print("W10 LIVE CUSTOMER HUMAN IDENTITY NOT_VERIFIED: independent proof of the human behind the sender address is outside this certification boundary")
             print("W10 LIVE REVENUE OUTCOME NOT_VERIFIED: no verified customer payment/revenue event")
             return
 
