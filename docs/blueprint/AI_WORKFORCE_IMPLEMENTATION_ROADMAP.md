@@ -906,3 +906,17 @@ The current slice intentionally does not invent department clusters, office tier
 
 
 W12.3 checkpoint: Virtual Office CEO Desk now surfaces real tenant-scoped pending WorkflowApproval records and links them to the existing approvals workspace. The presentation layer does not mutate approval state. Exact-SHA certification remains **NOT RUN / NOT VERIFIED**.
+
+
+## W13 implementation checkpoint — 2026-10-03
+
+W13 Customer HQ Progression is implemented on post-v1.4.12 mainline.
+
+- Added authoritative HQ tier derivation from tenant subscription entitlement.
+- Added tenant-scoped plan/capacity/usage metrics to the existing read-only Virtual Office contract.
+- Added presentation of tier and capacity in `/office`.
+- Added backend coverage for tier mapping and authoritative metric preservation.
+- No project/department/room state is fabricated without an authoritative source.
+- HQ tier is presentation-only and cannot alter permissions, quotas, approvals, tenant isolation or execution authority.
+
+**Evidence boundary:** W13 exact-SHA CI/product gates/Production Certification are **NOT RUN / NOT VERIFIED**. W13 must not inherit `v1.4.12` certification.
