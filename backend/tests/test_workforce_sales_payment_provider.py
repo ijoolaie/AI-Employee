@@ -55,7 +55,7 @@ async def test_sales_payment_stripe_fails_closed_without_configuration(monkeypat
     monkeypatch.setattr(settings, "stripe_secret_key", None)
     monkeypatch.setattr(settings, "stripe_webhook_secret", None)
 
-    with pytest.raises(Exception, match="requires Stripe configuration"):
+    with pytest.raises(Exception, match="requires STRIPE_SECRET_KEY"):
         await workforce_sales_payment_provider.create_sales_checkout_session(
             tenant_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
             deal_id=uuid.UUID("00000000-0000-0000-0000-000000000002"),
