@@ -328,6 +328,8 @@ async def _apply_sales_payment_success(
         raise ValidationAppError("Sales payment event must contain a positive paid amount")
     currency = str(data.get("currency") or deal.currency or "usd").upper()
     amount = _major_units(amount_minor, currency.lower())
+    if currency != str(deal.currency or "").upper() or amount != Decimal(str(deal.amount)):
+        raise ConflictError("Sales payment amount/currency does not match the governed deal commitment")
 
     order = None
     if deal.order_id:
