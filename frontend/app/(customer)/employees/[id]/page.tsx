@@ -14,7 +14,7 @@ import {
   getErrorMessage,
   listFiles,
   listRuns,
-  getEmployeeGuardrails, updateEmployeeGuardrails,
+  getEmployeeGuardrails, updateEmployeeGuardrails, updateEmployeePresentation,
 } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -39,6 +39,10 @@ export default function EmployeeDetailPage({
   const [channelName, setChannelName] = useState("Website Sales Assistant");
   const [channelCreated, setChannelCreated] = useState<string | null>(null);
   const [guardrailsJson, setGuardrailsJson] = useState("{}");
+  const appearanceMutation = useMutation({
+    mutationFn: (profile: NonNullable<typeof empQ.data>["presentation_profile"]) => updateEmployeePresentation(id, profile),
+    onSuccess: () => { void empQ.refetch(); },
+  });
 
   const empQ = useQuery({
     queryKey: ["employees", id],
@@ -119,6 +123,19 @@ export default function EmployeeDetailPage({
         actions={<Badge status={emp.is_active ? "active" : "inactive"} />}
       />
       <div className="space-y-6 p-6">
+        <Card>
+          <CardHeader><CardTitle>{tx.appearance}</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-gray-600">{tx.appearanceDescription}</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="text-sm"><span className="mb-1 block font-medium">{tx.genderPresentation}</span><select className="w-full rounded-lg border px-3 py-2" value={emp.presentation_profile.gender_presentation} onChange={(e) => appearanceMutation.mutate({ ...emp.presentation_profile, gender_presentation: e.target.value as typeof emp.presentation_profile.gender_presentation })}><option value="neutral">{tx.neutral}</option><option value="feminine">{tx.feminine}</option><option value="masculine">{tx.masculine}</option></select></label>
+              <label className="text-sm"><span className="mb-1 block font-medium">{tx.outfit}</span><select className="w-full rounded-lg border px-3 py-2" value={emp.presentation_profile.outfit} onChange={(e) => appearanceMutation.mutate({ ...emp.presentation_profile, outfit: e.target.value as typeof emp.presentation_profile.outfit })}><option value="business">{tx.business}</option><option value="casual">{tx.casual}</option><option value="technical">{tx.technical}</option><option value="formal">{tx.formal}</option></select></label>
+              <label className="text-sm"><span className="mb-1 block font-medium">{tx.hairStyle}</span><select className="w-full rounded-lg border px-3 py-2" value={emp.presentation_profile.hair_style} onChange={(e) => appearanceMutation.mutate({ ...emp.presentation_profile, hair_style: e.target.value as typeof emp.presentation_profile.hair_style })}><option value="default">{tx.defaultHair}</option><option value="short">{tx.shortHair}</option><option value="long">{tx.longHair}</option><option value="curly">{tx.curlyHair}</option><option value="tied">{tx.tiedHair}</option></select></label>
+              <label className="text-sm"><span className="mb-1 block font-medium">{tx.accessory}</span><select className="w-full rounded-lg border px-3 py-2" value={emp.presentation_profile.accessory} onChange={(e) => appearanceMutation.mutate({ ...emp.presentation_profile, accessory: e.target.value as typeof emp.presentation_profile.accessory })}><option value="none">{tx.noneAccessory}</option><option value="glasses">{tx.glasses}</option><option value="headset">{tx.headset}</option><option value="badge">{tx.badge}</option></select></label>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader><CardTitle>{tx.publishCustomers}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
