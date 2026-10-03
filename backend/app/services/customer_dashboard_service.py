@@ -6,6 +6,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.employee import Employee
+from app.models.work_item import WorkItem
 from app.models.workflow import Workflow, WorkflowRun, WorkflowStepRun
 from app.models.workflow_approval import WorkflowApproval
 from app.models.workflow_schedule import WorkflowSchedule
@@ -147,6 +148,7 @@ async def get_office(db: AsyncSession, *, tenant_id):
             Run.employee_id.label("employee_id"),
             Run.status.label("run_status"),
             Run.created_at.label("run_created_at"),
+            Run.work_item_id.label("work_item_id"),
             func.row_number()
             .over(partition_by=Run.employee_id, order_by=Run.created_at.desc())
             .label("rn"),
@@ -183,12 +185,16 @@ async def get_office(db: AsyncSession, *, tenant_id):
             ranked_employee_runs.c.run_id,
             ranked_employee_runs.c.run_status,
             ranked_employee_runs.c.run_created_at,
+            ranked_employee_runs.c.work_item_id,
+            WorkItem.title.label("work_item_title"),
+            WorkItem.status.label("work_item_status"),
         )
         .outerjoin(
             ranked_employee_runs,
             (ranked_employee_runs.c.employee_id == Employee.id)
             & (ranked_employee_runs.c.rn == 1),
         )
+        .outerjoin(WorkItem, (WorkItem.id == ranked_employee_runs.c.work_item_id) & (WorkItem.tenant_id == tenant_id))
         .where(Employee.tenant_id == tenant_id)
         .order_by(Employee.created_at.asc(), Employee.name.asc())
     )
@@ -202,7 +208,7 @@ async def get_office(db: AsyncSession, *, tenant_id):
         "escalated": 0,
     }
 
-    for employee, run_id, run_status, run_created_at in latest_result.all():
+    for employee, run_id, run_status, run_created_at, work_item_id, work_item_title, work_item_status in latest_result.all():
         if not employee.is_active:
             state = "IDLE"
         elif run_id in pending_approval_employee_ids:
@@ -220,6 +226,14 @@ async def get_office(db: AsyncSession, *, tenant_id):
         if key in counts:
             counts[key] += 1
 
+        current_work_item = None
+        if work_item_id and run_status in {"pending", "queued", "running"} or (work_item_id and run_id in pending_approval_employee_ids):
+            current_work_item = {
+                "id": str(work_item_id),
+                "title": work_item_title,
+                "status": work_item_status.value if hasattr(work_item_status, "value") else str(work_item_status),
+            }
+
         employees.append(
             {
                 "id": str(employee.id),
@@ -232,6 +246,7 @@ async def get_office(db: AsyncSession, *, tenant_id):
                 "latest_run_id": str(run_id) if run_id else None,
                 "latest_run_status": run_status,
                 "latest_run_created_at": run_created_at,
+                "current_work_item": current_work_item,
             }
         )
 
