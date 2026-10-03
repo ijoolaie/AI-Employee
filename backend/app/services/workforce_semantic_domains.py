@@ -12,6 +12,7 @@ import io
 import json
 import uuid
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any
 
 from app.core.exceptions import ValidationAppError
@@ -280,7 +281,7 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         result = await create_sales_checkout_session(
             tenant_id=uuid.UUID(tenant_id),
             deal_id=deal.id,
-            amount=__import__("decimal").Decimal(str(arguments.get("payment_amount", deal.amount))),
+            amount=Decimal(str(arguments.get("payment_amount", deal.amount))),
             currency=arguments.get("currency") or deal.currency,
             customer_email=deal.customer_email,
             idempotency_key=arguments["idempotency_key"],
