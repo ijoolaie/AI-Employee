@@ -30,7 +30,6 @@ on:
       - "backend/tests/test_zarinpal_webhooks.py"
       - "backend/tests/test_workforce_revenue_event.py"
       - "backend/tests/test_workforce_sales_payment_provider.py"
-      - "backend/tests/test_zarinpal_webhooks.py"
       - "backend/scripts/e2e_workforce_w10_commercial_commitment_verify.py"
       - "docker-compose.yml"
   pull_request:
@@ -42,6 +41,7 @@ on:
       - "backend/scripts/e2e_workforce_w10_dogfood_verify.py"
       - "backend/scripts/e2e_workforce_w10_commercial_commitment_verify.py"
       - "backend/scripts/e2e_workforce_w10_zarinpal_reconciliation_idempotency_verify.py"
+      - "backend/tests/test_zarinpal_webhooks.py"
       - ".github/workflows/workforce-w10-dogfood-e2e.yml"
 
 concurrency:
