@@ -24,7 +24,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from app.core.database import AsyncSessionLocal
-from app.models.business import BusinessDeal
+from app.models.business_deal import BusinessDeal
 from app.services import zarinpal_service
 from app.services.stripe_service import apply_verified_sales_payment
 from app.services.workforce_sales_payment_provider import create_sales_checkout_session
