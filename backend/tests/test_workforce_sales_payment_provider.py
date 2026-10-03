@@ -64,3 +64,10 @@ async def test_sales_payment_stripe_fails_closed_without_configuration(monkeypat
             customer_email="customer@example.test",
             idempotency_key="commercial-stripe-1",
         )
+
+
+def test_sales_payment_zero_decimal_currency_uses_provider_minor_unit():
+    assert workforce_sales_payment_provider._minor_units(Decimal("500"), "JPY") == 500
+    assert workforce_sales_payment_provider._minor_units(Decimal("5.50"), "USD") == 550
+    assert workforce_sales_payment_provider._major_units(500, "JPY") == Decimal("500")
+    assert workforce_sales_payment_provider._major_units(550, "USD") == Decimal("5.5")
