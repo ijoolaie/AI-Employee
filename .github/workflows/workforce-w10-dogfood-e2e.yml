@@ -95,11 +95,11 @@ jobs:
 
       - name: Compile W10 sources
         run: |
-          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_workforce_w10_commercial_commitment_verify.py scripts/e2e_workforce_w10_revenue_reconciliation_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/services/workforce_sales_inbound_provider.py app/services/workforce_sales_mailbox_provider.py app/services/stripe_service.py app/models/workforce_revenue_event.py app/api/v1/sales_webhooks.py app/workers/email_worker.py
+          timeout 2m docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_dogfood_verify.py scripts/e2e_workforce_w10_commercial_commitment_verify.py scripts/e2e_workforce_w10_revenue_reconciliation_verify.py scripts/e2e_smtp_sink.py app/services/workforce_semantic_domains.py app/services/ai_workforce_roles.py app/services/workforce_sales_engagement.py app/services/workforce_sales_outreach_provider.py app/services/workforce_sales_inbound_provider.py app/services/workforce_sales_mailbox_provider.py app/services/stripe_service.py app/services/zarinpal_service.py app/api/v1/zarinpal_webhooks.py app/models/workforce_revenue_event.py app/api/v1/sales_webhooks.py app/workers/email_worker.py
 
       - name: Run sales provider unit tests
         run: |
-          timeout 3m docker compose exec -T api pytest -q tests/test_workforce_sales_inbound_provider.py tests/test_workforce_sales_mailbox_provider.py tests/test_workforce_sales_payment_provider.py tests/test_workforce_revenue_event.py
+          timeout 3m docker compose exec -T api pytest -q tests/test_workforce_sales_inbound_provider.py tests/test_workforce_sales_mailbox_provider.py tests/test_workforce_sales_payment_provider.py tests/test_zarinpal_service.py tests/test_workforce_revenue_event.py
 
       - name: Run W10 real-stack certification
         run: |
