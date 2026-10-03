@@ -157,6 +157,10 @@ export async function getEmployee(id: string) {
   return unwrap(await api.get<APIResponse<Employee>>(`/employees/${id}`));
 }
 
+export async function updateEmployeePresentation(id: string, presentation_profile: EmployeePresentationProfile) {
+  return unwrap(await api.put<APIResponse<Employee>>(`/employees/${id}/presentation`, presentation_profile));
+}
+
 export async function createCustomerChannel(payload: { employee_id: string; name: string; channel_type?: "web_widget" | "public_chat" | "whatsapp"; config?: Record<string, unknown> }) {
   return unwrap(await api.post<APIResponse<CustomerChannel>>("/customer-channels", payload));
 }
