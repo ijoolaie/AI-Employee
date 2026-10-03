@@ -77,8 +77,6 @@ def test_sales_payment_zero_decimal_currency_uses_provider_minor_unit():
 async def test_sales_payment_rejects_non_positive_amount(monkeypatch):
     settings = get_settings()
     monkeypatch.setattr(settings, "sales_payment_provider_name", "stripe")
-    monkeypatch.setattr(settings, "stripe_enabled", True)
-
     with pytest.raises(Exception, match="amount must be positive"):
         await workforce_sales_payment_provider.create_sales_checkout_session(
             tenant_id=uuid.UUID("00000000-0000-0000-0000-000000000001"),
@@ -94,7 +92,8 @@ async def test_sales_payment_rejects_non_positive_amount(monkeypatch):
 async def test_sales_payment_rejects_invalid_currency(monkeypatch):
     settings = get_settings()
     monkeypatch.setattr(settings, "sales_payment_provider_name", "stripe")
-    monkeypatch.setattr(settings, "stripe_enabled", True)
+    monkeypatch.setattr(settings, "stripe_secret_key", "test-secret")
+    monkeypatch.setattr(settings, "stripe_webhook_secret", "test-webhook")
 
     with pytest.raises(Exception, match="three-letter ISO currency"):
         await workforce_sales_payment_provider.create_sales_checkout_session(
