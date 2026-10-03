@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-03  
 **Scope:** post-v1.4.12 mainline engineering  
-**Status:** IMPLEMENTED — exact-SHA CI/certification pending for post-release changes
+**Status:** IMPLEMENTED — certified in `v1.4.13`
 
 ## Purpose
 
@@ -65,4 +65,4 @@ Added coverage for:
 
 W13 commits are after immutable release `v1.4.12` and therefore do **not** inherit its certification.
 
-Post-W13 exact-SHA CI, product gates and Production Certification are **NOT RUN / NOT VERIFIED** at this checkpoint. No new release is created from W13 until exact-SHA certification completes.
+W13 exact-SHA CI/product gates and Production Certification are **VERIFIED PASS**. The implementation was included in certified release `v1.4.13` at SHA `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`.
