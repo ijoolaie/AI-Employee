@@ -55,6 +55,7 @@ class EmployeeResponse(BaseModel):
     slug: str
     name: str
     avatar_url: str | None
+    presentation_profile: EmployeePresentationProfile
     kind: str
     is_active: bool
     created_at: datetime
