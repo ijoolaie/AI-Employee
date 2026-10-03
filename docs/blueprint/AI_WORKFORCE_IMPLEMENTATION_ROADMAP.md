@@ -888,3 +888,16 @@ Commercial cosmetics and presentation upgrades must not increase permissions, by
 ### Evidence rule
 
 All W12–W21 phases remain PLANNED until their contracts, implementation, tests and relevant real-stack evidence exist. No marketplace, cosmetic purchase, visual provider or revenue claim may be described as live without evidence.
+
+### W12 implementation checkpoint — 2026-10-03
+
+**Status: FIRST FOUNDATION SLICE IMPLEMENTED; EXACT-SHA CERTIFICATION NOT RUN.**
+
+Implemented on post-v1.4.11 mainline:
+- tenant-scoped read-only office-state API;
+- presentation state derived from real Employee/Run/WorkflowApproval data;
+- initial customer Virtual Office UI with CEO desk and employee floor;
+- avatar presentation from stable Employee avatar metadata;
+- navigation/dashboard entry point.
+
+The current slice intentionally does not invent department clusters, office tiers, meetings, voice or video states. Those require real underlying contracts in later phases.
