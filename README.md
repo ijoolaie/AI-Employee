@@ -120,3 +120,7 @@ Planned monetization includes recurring AI Employee/project/usage/skill subscrip
 Planned product phases are W11–W21. They are not release-certified functionality until exact-SHA implementation and evidence exist.
 
 See docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md for the authoritative roadmap and architecture boundaries.
+
+### Current Virtual Office implementation
+
+The first W12 Virtual Office foundation is now implemented on post-v1.4.11 mainline: a tenant-scoped read-only office-state API and customer office UI derive employee presentation state from existing governed Employee/Run/WorkflowApproval data. This is not release-certified yet; exact-SHA CI/certification remains **NOT RUN / NOT VERIFIED**.
