@@ -903,3 +903,6 @@ Implemented on post-v1.4.11 mainline:
 - navigation/dashboard entry point.
 
 The current slice intentionally does not invent department clusters, office tiers, meetings, voice or video states. Those require real underlying contracts in later phases.
+
+
+W12.3 checkpoint: Virtual Office CEO Desk now surfaces real tenant-scoped pending WorkflowApproval records and links them to the existing approvals workspace. The presentation layer does not mutate approval state. Exact-SHA certification remains **NOT RUN / NOT VERIFIED**.
