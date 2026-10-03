@@ -81,7 +81,7 @@ async def create_sales_checkout_session(
         line_items=[{
             "price_data": {
                 "currency": currency,
-                "unit_amount": _minor_units(amount),
+                "unit_amount": _minor_units(amount, currency),
                 "product_data": {"name": f"AI Workforce commercial commitment {deal_id}"},
             },
             "quantity": 1,
