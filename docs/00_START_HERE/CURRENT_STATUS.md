@@ -168,3 +168,25 @@ The Virtual Office must consume authoritative Employee, WorkItem, Run, Governanc
 Next concrete slice: W12 Virtual Office Foundation — inspect existing status/read APIs, define a read-only office-state contract, map real runtime states, build the first CEO Office/employee-floor vertical slice, then test and evidence it.
 
 No release is created merely because these plans are documented.
+
+## W12 Virtual Office Foundation — 2026-10-03
+
+W12 has now moved from planned design into a first implementation slice on post-v1.4.11 mainline.
+
+### Implemented
+- Tenant-scoped read-only `GET /api/v1/customer-dashboard/office` contract.
+- Office state is derived from real `Employee`, `Run`, `WorkflowStepRun` and pending `WorkflowApproval` records; no second operational state store was introduced.
+- Employee presentation states currently map real runtime evidence to `WORKING`, `WAITING_APPROVAL`, `IDLE`, `BLOCKED`, and `ESCALATED`. `MEETING` and richer project/cluster states remain future slices until their underlying runtime/session contracts exist.
+- First customer `/office` UI with Executive/CEO desk, workforce floor, employee cards, avatar rendering and live polling.
+- Customer navigation and dashboard entry point now expose the Virtual Office.
+
+### Not yet implemented / verified
+- Office progression/tiering based on spend, projects and workforce size: NOT IMPLEMENTED / NOT VERIFIED.
+- Department/floor/campus clustering: NOT IMPLEMENTED / NOT VERIFIED.
+- Appearance/gender/clothing customization: NOT IMPLEMENTED / NOT VERIFIED.
+- Cosmetic/wardrobe commerce: NOT IMPLEMENTED / NOT VERIFIED.
+- Virtual meetings, voice, TTS, real-time avatar/video: NOT IMPLEMENTED / NOT VERIFIED.
+
+### Evidence boundary
+This W12 slice is post-v1.4.11 application code. Exact-SHA CI/certification for the current mainline is **NOT RUN / NOT VERIFIED**. No release tag is created from this implementation alone.
+
