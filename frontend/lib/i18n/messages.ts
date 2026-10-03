@@ -92,6 +92,52 @@ const employeeFa = {
   copyEmbed: "برای قراردادن در وب‌سایت", templates: "قالب‌های کارمند", templatesDescription: "از یک قالب آماده و منتخب برای کارمند هوش مصنوعی شروع کنید.", templatePurpose: "کاربرد", templateTools: "ابزارها", templateDependencies: "وابستگی‌ها", templateInput: "قرارداد ورودی", templateOutput: "قرارداد خروجی", templateExample: "نمونه کاربرد", templateVersion: "نسخه", templateCompatibility: "سازگار از", installTemplate: "نصب قالب", existingChannels: "کانال‌های منتشرشده", guardrailsLoadError: "بارگذاری قواعد حفاظتی انجام نشد.", guardrailsSaveError: "ذخیره قواعد حفاظتی انجام نشد.", publishError: "انتشار کانال انجام نشد.", publishSuccess: "کانال با موفقیت منتشر شد.", runLoadError: "بارگذاری تاریخچه اجرا انجام نشد.", runError: "شروع اجرا انجام نشد.", details: "جزئیات", status: "وضعیت", tokens: "توکن‌ها", cost: "هزینه", id: "شناسه", active: "فعال", inactive: "غیرفعال", slugKind: "شناسه / نوع", guardrailsInvalid: "قواعد حفاظتی باید JSON معتبر باشند.", notFound: "کارمند پیدا نشد.", first: "ابتدا.", retry: "تلاش مجدد"
 } as const;
 
+const office = {
+  title: "AI Company Headquarters",
+  description: "A live visual view of your governed AI workforce.",
+  live: "Live",
+  employees: "Employees",
+  working: "Working",
+  waiting: "Waiting",
+  idle: "Idle",
+  blocked: "Blocked",
+  escalated: "Escalated",
+  officeFloor: "Workforce Floor",
+  empty: "No employees are assigned to this tenant yet.",
+  openEmployee: "Open employee",
+  latestRun: "Latest run",
+  noRun: "No execution yet",
+  state: "State",
+  executiveDesk: "CEO Desk",
+  approvals: "Approvals",
+  approvalsDescription: "Pending decisions remain governed and can be opened from the approvals workspace.",
+  visualOnly: "Presentation layer",
+  visualOnlyDescription: "Office visuals reflect real workforce state; they do not create permissions or execution authority.",
+} as const;
+
+const officeFa = {
+  title: "دفتر مرکزی شرکت هوش مصنوعی",
+  description: "نمای زنده و بصری از نیروی کار حاکم‌شده هوش مصنوعی شما.",
+  live: "زنده",
+  employees: "کارمندان",
+  working: "در حال کار",
+  waiting: "در انتظار",
+  idle: "آماده",
+  blocked: "مسدود",
+  escalated: "نیازمند توجه",
+  officeFloor: "طبقه نیروی کار",
+  empty: "هنوز کارمندی برای این تننت ثبت نشده است.",
+  openEmployee: "مشاهده کارمند",
+  latestRun: "آخرین اجرا",
+  noRun: "هنوز اجرایی ثبت نشده",
+  state: "وضعیت",
+  executiveDesk: "میز مدیرعامل",
+  approvals: "تأییدها",
+  approvalsDescription: "تصمیم‌های در انتظار همچنان تحت حاکمیت هستند و از بخش تأییدها قابل مشاهده‌اند.",
+  visualOnly: "لایه ارائه",
+  visualOnlyDescription: "ظاهر دفتر وضعیت واقعی نیروی کار را نمایش می‌دهد و مجوز یا اختیار اجرای جدید ایجاد نمی‌کند.",
+} as const;
+
 const customers = {
   title: "Customers", description: "Customer profiles connected to your AI Employees and channels.", create: "Add customer", createTitle: "Create customer", searchPlaceholder: "Search name, email or phone…", directory: "Customer directory", anonymous: "Anonymous customer", empty: "No customers yet. Customers appear automatically when they start conversations.", edit: "Edit", editTitle: "Edit customer", name: "Name", email: "Email", phone: "Phone", notes: "Notes", tags: "Tags", save: "Save changes", cancel: "Cancel", active: "Active", inactive: "Inactive", status: "Status", updateError: "Unable to update customer.", createError: "Unable to create customer.", permissionDenied: "You do not have permission to manage customers.", retry: "Retry",
 } as const;
@@ -1389,6 +1435,7 @@ export const messages = {
   en: {
     common: { language: "Language", english: "English", persian: "Persian", signOut: "Sign out", platformAdmin: "Platform Admin" },
     employee,
+    office,
     nav,
     dashboard,
     analytics,
@@ -1432,6 +1479,7 @@ export const messages = {
   fa: {
     common: { language: "زبان", english: "انگلیسی", persian: "فارسی", signOut: "خروج", platformAdmin: "مدیریت پلتفرم" },
     employee: employeeFa,
+    office: officeFa,
     nav: navFa,
     dashboard: dashboardFa,
     analytics: analyticsFa,
