@@ -88,3 +88,10 @@ Implemented a read-only `current_work_item` presentation field per employee when
 Displayed fields: WorkItem id, title, and status. No synthetic task title, progress percentage, project, department, or meeting state is generated.
 
 Exact-SHA CI/certification remains **NOT RUN / NOT VERIFIED** after this implementation slice; no release or production deployment is claimed.
+
+
+## W12.3 checkpoint — governed executive approval desk
+
+The CEO desk now reads up to eight real pending `WorkflowApproval` records for the authenticated tenant, joined to the governed employee Run when available. The presentation includes approval id, workflow/step identity, employee identity, status, creation time, and expiry. Each item links to the existing approvals workspace; the Office layer does not approve, reject, mutate, or synthesize approval records.
+
+Exact-SHA CI/certification remains **NOT RUN / NOT VERIFIED** after this slice. No release or production deployment is claimed.
