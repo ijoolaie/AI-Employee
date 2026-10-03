@@ -108,3 +108,15 @@ CI, production-like infrastructure and simulated providers are engineering/relea
 - Production claims require target-specific evidence.
 
 The repository includes an Apache-2.0 `LICENSE` file.
+
+## Virtual AI Company Headquarters
+
+The roadmap is expanding beyond a traditional AI dashboard toward a visual AI Company Headquarters. The Presentation Layer can show the CEO office, employee departments, project rooms, meetings, real employee work states and company growth while the governed Workforce Runtime remains the single source of truth.
+
+The experience is game-like in presentation but enterprise-grade in semantics. Office visuals, avatars, clothing, themes and cosmetics never grant permissions or bypass governance.
+
+Planned monetization includes recurring AI Employee/project/usage/skill subscriptions, marketplace commissions for third-party employees/skills/workflows, and premium office/avatar/clothing/theme/white-label experiences.
+
+Planned product phases are W11–W21. They are not release-certified functionality until exact-SHA implementation and evidence exist.
+
+See docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md for the authoritative roadmap and architecture boundaries.
