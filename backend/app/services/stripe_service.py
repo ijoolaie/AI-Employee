@@ -367,7 +367,7 @@ async def apply_verified_sales_payment(
             metadata_={
                 "source": "ai_workforce",
                 "sales_deal_id": str(deal.id),
-                "provider": "stripe",
+                "provider": provider,
                 "provider_event_id": provider_event_id,
                 "payment_object_id": data.get("id"),
             },
@@ -383,7 +383,7 @@ async def apply_verified_sales_payment(
     revenue_event = (
         await db.execute(
             select(WorkforceRevenueEvent).where(
-                WorkforceRevenueEvent.provider == "stripe",
+                WorkforceRevenueEvent.provider == provider,
                 WorkforceRevenueEvent.provider_event_id == provider_event_id,
             )
         )
@@ -393,7 +393,7 @@ async def apply_verified_sales_payment(
             tenant_id=tenant_id,
             deal_id=deal.id,
             order_id=order.id,
-            provider="stripe",
+            provider=provider,
             provider_event_id=provider_event_id,
             amount=amount,
             currency=currency,
@@ -451,8 +451,9 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
     stale = False
 
     if event_type == "payment_intent.succeeded":
-        tenant_id, order_id = await _apply_sales_payment_success(
+        tenant_id, order_id = await apply_verified_sales_payment(
             db,
+            provider="stripe",
             provider_event_id=provider_event_id,
             data=data,
         )
