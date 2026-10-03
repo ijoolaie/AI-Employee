@@ -203,6 +203,10 @@ class Settings(BaseSettings):
     engineering_github_timeout_seconds: float = 10.0
     sales_outreach_provider_name: str = "none"
     sales_payment_provider_name: str = "none"
+    zarinpal_merchant_id: str | None = None
+    zarinpal_sandbox: bool = True
+    zarinpal_callback_url: str = "http://localhost:8000/api/v1/webhooks/billing/zarinpal"
+    zarinpal_timeout_seconds: float = 15.0
     sales_inbound_provider_name: str = "none"
     sales_inbound_webhook_secrets: dict[str, str] = {}
     sales_inbound_mailbox_host: str | None = None
