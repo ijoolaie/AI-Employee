@@ -179,6 +179,46 @@ async def get_office(db: AsyncSession, *, tenant_id):
         ).scalars().all()
     )
 
+    pending_approval_result = await db.execute(
+        select(
+            WorkflowApproval,
+            Employee.id.label("employee_id"),
+            Employee.name.label("employee_name"),
+        )
+        .join(
+            WorkflowStepRun,
+            WorkflowStepRun.id == WorkflowApproval.workflow_step_run_id,
+        )
+        .outerjoin(
+            Run,
+            Run.id == WorkflowStepRun.employee_run_id,
+        )
+        .outerjoin(
+            Employee,
+            Employee.id == Run.employee_id,
+        )
+        .where(
+            WorkflowApproval.tenant_id == tenant_id,
+            WorkflowApproval.status == "pending",
+        )
+        .order_by(WorkflowApproval.created_at.desc())
+        .limit(8)
+    )
+    pending_approvals = [
+        {
+            "id": str(approval.id),
+            "workflow_run_id": str(approval.workflow_run_id),
+            "workflow_step_run_id": str(approval.workflow_step_run_id),
+            "employee_id": str(employee_id) if employee_id else None,
+            "employee_name": employee_name,
+            "step_key": approval.step_key,
+            "status": approval.status,
+            "created_at": approval.created_at,
+            "expires_at": approval.expires_at,
+        }
+        for approval, employee_id, employee_name in pending_approval_result.all()
+    ]
+
     latest_result = await db.execute(
         select(
             Employee,
@@ -259,5 +299,6 @@ async def get_office(db: AsyncSession, *, tenant_id):
         "blocked_count": counts["blocked"],
         "escalated_count": counts["escalated"],
         "employees": employees,
+        "pending_approvals": pending_approvals,
         "generated_at": datetime.now(timezone.utc),
     }
