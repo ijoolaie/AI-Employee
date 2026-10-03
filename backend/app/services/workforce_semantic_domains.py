@@ -260,6 +260,18 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
     provider_execution = "not_configured"
     execution_result: dict[str, Any] | None = None
 
+    if operation == "external_outreach":
+        db = context.get("db")
+        from app.services.workforce_sales_outreach_provider import execute_sales_outreach
+        result = await execute_sales_outreach(
+            db=db,
+            tenant_id=uuid.UUID(tenant_id),
+            arguments=arguments,
+            tool_call_id=context.get("tool_call_id"),
+        )
+        provider_execution = result["provider_execution"]
+        execution_result = dict(result)
+
     if operation == "material_commercial_action":
         db = context.get("db")
         if db is None:
