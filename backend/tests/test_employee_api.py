@@ -67,6 +67,7 @@ async def test_create_employee_endpoint_delegates_to_service(monkeypatch):
         slug="sales-agent",
         name="Sales Agent",
         kind="custom",
+        avatar_url=None,
         input_schema=VALID_SCHEMA,
         output_schema=VALID_SCHEMA,
         prompt_template="test",
