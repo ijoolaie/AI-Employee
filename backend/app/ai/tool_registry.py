@@ -2215,7 +2215,7 @@ def build_default_registry() -> ToolRegistry:
         RegisteredTool(
             name="workforce_material_commercial_action",
             description="Governed workforce semantic operation: material_commercial_action.",
-            input_schema={"type":"object","properties":{"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"message":{"type":"string","maxLength":10000},"provider":{"type":"string","maxLength":100},"channel":{"type":"string","maxLength":255}},"additionalProperties":False},
+            input_schema={"type":"object","properties":{"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"message":{"type":"string","maxLength":10000},"provider":{"type":"string","maxLength":100},"channel":{"type":"string","maxLength":255},"deal_id":{"type":"string","format":"uuid"},"currency":{"type":"string","minLength":3,"maxLength":3},"idempotency_key":{"type":"string","minLength":1,"maxLength":255}},"required":["deal_id","idempotency_key"],"additionalProperties":False},
             handler=lambda arguments, op="material_commercial_action", fn=workforce_semantic_domains.execute_sales, **context: fn({**arguments, "_operation": op}, **context),
             side_effects=True,
             external_side_effects=True,
