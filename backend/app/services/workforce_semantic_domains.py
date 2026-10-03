@@ -297,6 +297,7 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
             currency=arguments.get("currency") or deal.currency,
             customer_email=deal.customer_email,
             idempotency_key=arguments["idempotency_key"],
+            db=db,
         )
         provider_execution = result.provider_execution
         execution_result = {
