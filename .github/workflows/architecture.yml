@@ -43,5 +43,6 @@ jobs:
         run: python -m pytest backend/tests/test_m3_infrastructure_boundaries.py backend/tests/test_m4_event_boundaries.py backend/tests/test_m7_real_migration.py backend/tests/test_edition_boundaries.py
       - name: Final architecture audit
         run: python scripts/final_architecture_audit.py
+      # Keep this workflow file in the push path set so architecture is evaluated on every W14 mainline checkpoint.
       - name: Production completeness baseline
         run: python scripts/production_completeness_audit.py
