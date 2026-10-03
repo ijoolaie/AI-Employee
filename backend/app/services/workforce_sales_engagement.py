@@ -106,6 +106,7 @@ async def record_outreach_response(
     provider_message_id: str | None = None,
     deal_id: str | None = None,
     source: str = "synthetic",
+    sender_email: str | None = None,
 ) -> AuditLog:
     return await record_event(
         db,
@@ -116,7 +117,11 @@ async def record_outreach_response(
         outbox_id=outbox_id,
         provider_message_id=provider_message_id,
         deal_id=deal_id,
-        metadata={"source": source, "response_text": response_text},
+        metadata={
+            "source": source,
+            "response_text": response_text,
+            "sender_email": sender_email,
+        },
     )
 
 
@@ -128,6 +133,7 @@ async def ingest_outreach_response(
     provider_message_id: str,
     response_text: str,
     source: str,
+    sender_email: str | None = None,
 ) -> AuditLog:
     """Ingest a provider response only when it correlates to a delivered event.
 
@@ -181,6 +187,7 @@ async def ingest_outreach_response(
         provider_message_id=provider_message_id,
         deal_id=delivery_metadata.get("deal_id"),
         source=source,
+        sender_email=sender_email,
     )
 
 
