@@ -8,6 +8,7 @@ from app.schemas.employee import EmployeePresentationProfile
 from app.services import employee_service
 
 
+# W14 presentation customization remains presentation-only; execution authority is unchanged.
 def test_presentation_profile_defaults_are_bounded():
     profile = EmployeePresentationProfile()
     assert profile.model_dump() == {
