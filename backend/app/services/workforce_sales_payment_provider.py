@@ -97,8 +97,12 @@ async def create_sales_checkout_session(
             idempotency_key=idempotency_key,
         )
         metadata = dict(deal.metadata_ or {})
+        if metadata.get("payment_provider") == "zarinpal" and metadata.get("payment_provider_idempotency_key") == idempotency_key and metadata.get("payment_provider_authority"):
+            from app.services.zarinpal_service import gateway_url
+            return SalesPaymentResult("zarinpal", "accepted", True, gateway_url(str(metadata["payment_provider_authority"])), str(metadata["payment_provider_authority"]))
         metadata["payment_provider"] = "zarinpal"
         metadata["payment_provider_authority"] = result.provider_payment_id
+        metadata["payment_provider_idempotency_key"] = idempotency_key
         metadata["payment_amount"] = float(amount)
         metadata["payment_currency"] = currency.upper()
         deal.metadata_ = metadata
