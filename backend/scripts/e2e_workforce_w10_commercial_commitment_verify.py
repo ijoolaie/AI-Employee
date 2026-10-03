@@ -18,7 +18,7 @@ if PROJECT_ROOT not in sys.path:
 
 from app.core.database import AsyncSessionLocal
 from app.models.tool_approval import ToolApprovalRequest
-from app.services.modules.employees.sales import service as sales_service
+from app.modules.employees.sales import service as sales_service
 from scripts.e2e_workforce_w10_dogfood_verify import execute, prepare
 
 
