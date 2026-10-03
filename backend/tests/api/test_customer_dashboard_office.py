@@ -142,5 +142,5 @@ async def test_customer_office_route_passes_authenticated_tenant_to_service(monk
 
     assert captured == {"db": db, "tenant_id": tenant_id}
     assert response.success is True
-    assert response.data.employee_count == 0
-    assert response.data.office_state == "LIVE"
+    assert response.data["employee_count"] == 0
+    assert response.data["office_state"] == "LIVE"
