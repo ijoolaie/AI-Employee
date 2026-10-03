@@ -30,7 +30,7 @@
 `/login`, `/register`
 
 ### Customer
-`/dashboard`, `/employees`, `/employees/new`, `/employees/[id]`, `/runs`, `/runs/[id]`, `/files`, `/knowledge`, `/memory`, `/chat`, `/studio`, `/workflows`, `/workflows/[id]`, `/workflows/[id]/builder`, `/schedules`, `/approvals`, `/orders`, `/sales`, `/billing`, `/usage`, `/analytics`, `/traces`, `/developer`, `/api-keys`, `/webhooks`, `/settings`
+/dashboard`, `/office`, `/employees``, `/employees`, `/employees/new`, `/employees/[id]`, `/runs`, `/runs/[id]`, `/files`, `/knowledge`, `/memory`, `/chat`, `/studio`, `/workflows`, `/workflows/[id]`, `/workflows/[id]/builder`, `/schedules`, `/approvals`, `/orders`, `/sales`, `/billing`, `/usage`, `/analytics`, `/traces`, `/developer`, `/api-keys`, `/webhooks`, `/settings`
 
 ### Admin
 `/admin`, `/admin/tenants`, `/admin/validation`
