@@ -11,6 +11,7 @@ import os
 import sys
 import uuid
 from decimal import Decimal
+from datetime import datetime, timezone
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
@@ -23,7 +24,7 @@ from app.models.business_deal import BusinessDeal
 from app.models.business_order import BusinessOrder
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
 from app.services import stripe_service
-from scripts.e2e_workforce_w10_dogfood_verify import execute, prepare
+from scripts.e2e_workforce_w10_dogfood_verify import prepare
 
 
 async def main() -> None:
@@ -87,6 +88,8 @@ async def main() -> None:
         assert revenue.amount == Decimal("100")
         assert revenue.currency == "USD"
         assert revenue.source == "stripe_verified_sales_payment"
+        assert revenue.verified_at is not None
+        assert revenue.verified_at.tzinfo is not None
 
         deal_row = (
             await db.execute(
