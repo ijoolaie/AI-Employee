@@ -27,8 +27,6 @@ from scripts.e2e_workforce_w10_dogfood_verify import prepare
 async def main() -> None:
     if not os.environ.get("STRIPE_SECRET_KEY"):
         raise RuntimeError("STRIPE_SECRET_KEY is required for live checkout certification")
-    if not os.environ.get("STRIPE_WEBHOOK_SECRET"):
-        raise RuntimeError("STRIPE_WEBHOOK_SECRET is required because stripe_enabled gates the provider")
 
     tenant_id, _instance_id, _runs, owner_id, _reviewer_id, _ = await prepare()
     deal_id = uuid.uuid4()
