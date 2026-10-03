@@ -195,6 +195,7 @@ async def main() -> None:
         assert cross_deal_row.stage == "proposal"
         assert cross_deal_row.order_id is None
 
+    print("W10 ZARINPAL CROSS-DEAL REPLAY GUARD PASS same_reference_rejected=1 second_deal_unsettled=1")
     print("W10 SYNTHETIC ZARINPAL RECONCILIATION PASS")
     print("W10 WORKFORCE REVENUE EVENT PASS provider=zarinpal amount=100000 IRR")
     print("W10 ZARINPAL REVENUE IDEMPOTENCY PASS duplicate_reference=1 ledger_rows=1 order_rows=1")
