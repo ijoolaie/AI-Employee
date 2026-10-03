@@ -326,11 +326,18 @@ async def apply_verified_sales_payment(
     if provider_event_id in event_ids:
         return tenant_id, str(deal.order_id) if deal.order_id else None
 
-    amount_minor = int(data.get("amount_received") or data.get("amount") or 0)
+    amount_raw = data.get("amount_received") or data.get("amount") or 0
+    try:
+        amount_minor = int(amount_raw)
+    except (TypeError, ValueError) as exc:
+        raise ValidationAppError("Sales payment event amount must be numeric") from exc
     if amount_minor <= 0:
         raise ValidationAppError("Sales payment event must contain a positive paid amount")
     currency = str(data.get("currency") or deal.currency or "usd").upper()
-    amount = _major_units(amount_minor, currency.lower())
+    if provider == "zarinpal" and currency == "IRR":
+        amount = Decimal(amount_minor)
+    else:
+        amount = _major_units(amount_minor, currency.lower())
     if currency != str(deal.currency or "").upper() or amount != Decimal(str(deal.amount)):
         raise ConflictError("Sales payment amount/currency does not match the governed deal commitment")
 
