@@ -35,7 +35,14 @@ def _minor_units(amount: Decimal, currency: str) -> int:
     return int(value)
 
 
-\ndef _major_units(amount_minor: int, currency: str) -> Decimal:\n    divisor = Decimal("1") if currency.lower() in ZERO_DECIMAL_CURRENCIES else Decimal("100")\n    return Decimal(amount_minor) / divisor\n\nasync def create_sales_checkout_session(
+
+
+def _major_units(amount_minor: int, currency: str) -> Decimal:
+    divisor = Decimal("1") if currency.lower() in ZERO_DECIMAL_CURRENCIES else Decimal("100")
+    return Decimal(amount_minor) / divisor
+
+
+async def create_sales_checkout_session(
     *,
     tenant_id: uuid.UUID,
     deal_id: uuid.UUID,
