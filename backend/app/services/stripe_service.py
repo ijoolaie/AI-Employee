@@ -303,6 +303,7 @@ async def _apply_sales_payment_success(
 
     from app.models.business_deal import BusinessDeal
     from app.models.business_order import BusinessOrder
+    from app.services.workforce_sales_payment_provider import _major_units
 
     deal = (
         await db.execute(
@@ -326,7 +327,7 @@ async def _apply_sales_payment_success(
     if amount_minor <= 0:
         raise ValidationAppError("Sales payment event must contain a positive paid amount")
     currency = str(data.get("currency") or deal.currency or "usd").upper()
-    amount = Decimal(amount_minor) / Decimal("100")
+    amount = _major_units(amount_minor, currency.lower())
 
     order = None
     if deal.order_id:
