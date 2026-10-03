@@ -45,6 +45,7 @@ async def get_dashboard(db: AsyncSession, *, tenant_id):
         select(func.count(WorkflowApproval.id)).where(
             WorkflowApproval.tenant_id == tenant_id,
             WorkflowApproval.status == "pending",
+            Run.tenant_id == tenant_id,
         )
     )
     active_schedules = await db.scalar(
