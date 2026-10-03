@@ -98,3 +98,17 @@ The experience/commerce roadmap is planned mainline work, not release-certified 
 - W21 AI Business Network — planned.
 
 Documentation of these phases does not create a release tag or certification. Any future release containing application code from these phases must be certified against its exact immutable SHA. Cosmetic/marketplace revenue is not claimed until a real commercial event is independently evidenced.
+
+## W12 Virtual Office implementation checkpoint — 2026-10-03
+
+Post-v1.4.11 mainline now contains the first W12 implementation slice:
+- read-only tenant-scoped `/customer-dashboard/office` state contract;
+- real Employee/Run/WorkflowApproval-derived presentation states;
+- customer `/office` Virtual Office UI with CEO desk and employee floor;
+- navigation/dashboard entry point.
+
+Exact-SHA CI/certification: **NOT RUN / NOT VERIFIED**.
+Release tag: **NONE**.
+Deployment: **NOT VERIFIED**.
+This does not modify immutable `v1.4.11`.
+
