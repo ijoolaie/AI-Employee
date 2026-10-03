@@ -202,6 +202,7 @@ class Settings(BaseSettings):
     engineering_github_token: str | None = None
     engineering_github_timeout_seconds: float = 10.0
     sales_outreach_provider_name: str = "none"
+    sales_payment_provider_name: str = "none"
     sales_inbound_provider_name: str = "none"
     sales_inbound_webhook_secrets: dict[str, str] = {}
     sales_inbound_mailbox_host: str | None = None
