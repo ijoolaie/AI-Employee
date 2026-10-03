@@ -17,6 +17,8 @@ These states are independent and must not be inferred from release names. `OPEN 
 
 | Release | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
+| `v1.4.13` candidate | `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83` | **NOT CREATED** | **CERTIFIED** — Run `37141161822` / Job `111255715821` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
+|---|---|---|---|---|---|
 | `v1.4.12` | `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519` | **VERIFIED** | **CERTIFIED** — Run `37138840482` / Job `111248877948` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.11` | `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f` | **VERIFIED** | **CERTIFIED** — Run `35848311037` / Job `107139710452` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.10` | `b09f3e35d512e3c4d21be9d930539cbbe1d2d451` | **VERIFIED** | **CERTIFIED** — Run `35840044046` / Job `107112696112` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
@@ -132,3 +134,18 @@ This does not modify immutable `v1.4.11`.
 - external acceptance and revenue: **NOT VERIFIED**.
 
 W12 Virtual Office and its tenant/approval/state hardening are inside this immutable release boundary. New W13 application-code work starts after this release and must not inherit v1.4.12 certification.
+
+## v1.4.13 candidate certification checkpoint — 2026-10-03
+
+W13 Customer HQ Progression has passed fresh exact-SHA Production Certification.
+
+- candidate SHA: `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`;
+- Production Certification workflow run: `37141161822`;
+- certification job: `111255715821`;
+- certification result: **PASS**;
+- evidence artifact: `production-certification-evidence-v1.4.13-rc.1-5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`;
+- evidence artifact digest: `sha256:35e4b5dea1c57a3c021051f4dacaa841dee2f6c17cea9f0ed5db505676ea9479`;
+- production deployment claimed by certification: **false**;
+- Git tag/release: **NOT CREATED** at this checkpoint.
+
+The candidate is therefore certification-complete but not yet a published release. A manual promotion must use exactly this SHA; no later SHA inherits the evidence.
