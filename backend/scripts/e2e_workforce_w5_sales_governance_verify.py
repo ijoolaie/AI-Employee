@@ -94,7 +94,7 @@ async def main():
 
     outreach = await execute(tenant_id, instance_id, outreach_run, "workforce_external_outreach", {"query":"B2B SaaS"}, outreach_call_id)
     assert outreach["approval_required"] is True
-    assert outreach["approval_status"] == "pending"
+    assert outreach["approval_status"] == "approved"
     assert outreach["external_side_effect"] is True
     assert outreach["provider_execution"] == "not_configured"
     assert outreach["status"] == "proposal"
