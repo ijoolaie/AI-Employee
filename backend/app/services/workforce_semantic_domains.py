@@ -280,7 +280,7 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         result = await create_sales_checkout_session(
             tenant_id=uuid.UUID(tenant_id),
             deal_id=deal.id,
-            amount=deal.amount,
+            amount=__import__("decimal").Decimal(str(arguments.get("payment_amount", deal.amount))),
             currency=arguments.get("currency") or deal.currency,
             customer_email=deal.customer_email,
             idempotency_key=arguments["idempotency_key"],
