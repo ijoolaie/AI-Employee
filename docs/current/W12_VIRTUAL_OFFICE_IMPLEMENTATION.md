@@ -79,3 +79,12 @@ Not implemented:
 This implementation is post-v1.4.11 mainline work.
 
 Exact-SHA CI, product gates and production certification for the resulting mainline are NOT RUN / NOT VERIFIED at this checkpoint. Therefore no release tag or production claim is made.
+
+
+## W12.2 checkpoint — current work visibility
+
+Implemented a read-only `current_work_item` presentation field per employee when the latest governed Run is actively executing or waiting for approval. It is derived from the authoritative `Run.work_item_id` → tenant-scoped `WorkItem` relation; the office layer does not create or mutate WorkItems.
+
+Displayed fields: WorkItem id, title, and status. No synthetic task title, progress percentage, project, department, or meeting state is generated.
+
+Exact-SHA CI/certification remains **NOT RUN / NOT VERIFIED** after this implementation slice; no release or production deployment is claimed.
