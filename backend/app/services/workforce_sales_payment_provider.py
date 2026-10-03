@@ -88,6 +88,16 @@ async def create_sales_checkout_session(
         ).scalar_one_or_none()
         if deal is None:
             raise ValidationAppError("Sales payment provider zarinpal references an unknown deal")
+        metadata = dict(deal.metadata_ or {})
+        if metadata.get("payment_provider") == "zarinpal" and metadata.get("payment_provider_idempotency_key") == idempotency_key and metadata.get("payment_provider_authority"):
+            from app.services.zarinpal_service import gateway_url
+            return SalesPaymentResult(
+                "zarinpal",
+                "accepted",
+                True,
+                gateway_url(str(metadata["payment_provider_authority"])),
+                str(metadata["payment_provider_authority"]),
+            )
         result = await create_payment_request(
             tenant_id=tenant_id,
             deal_id=deal_id,
@@ -96,10 +106,6 @@ async def create_sales_checkout_session(
             customer_email=customer_email,
             idempotency_key=idempotency_key,
         )
-        metadata = dict(deal.metadata_ or {})
-        if metadata.get("payment_provider") == "zarinpal" and metadata.get("payment_provider_idempotency_key") == idempotency_key and metadata.get("payment_provider_authority"):
-            from app.services.zarinpal_service import gateway_url
-            return SalesPaymentResult("zarinpal", "accepted", True, gateway_url(str(metadata["payment_provider_authority"])), str(metadata["payment_provider_authority"]))
         metadata["payment_provider"] = "zarinpal"
         metadata["payment_provider_authority"] = result.provider_payment_id
         metadata["payment_provider_idempotency_key"] = idempotency_key
