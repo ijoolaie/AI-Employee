@@ -18,6 +18,7 @@ import sys
 import traceback
 import uuid
 from datetime import datetime, timezone
+from email.utils import parseaddr
 
 import httpx
 from sqlalchemy import select
@@ -488,7 +489,27 @@ async def main():
                     f"{poll_interval_seconds}s)"
                 )
 
+            sender_name, sender_email = parseaddr(observed_response.sender or "")
+            sender_email = sender_email.strip().lower()
             async with AsyncSessionLocal() as db:
+                from app.models.business_deal import BusinessDeal
+
+                governed_deal = (
+                    await db.execute(
+                        select(BusinessDeal).where(
+                            BusinessDeal.id == uuid.UUID(str(deal["deal_id"])),
+                            BusinessDeal.tenant_id == tenant_id,
+                        )
+                    )
+                ).scalar_one_or_none()
+                if governed_deal is None:
+                    raise RuntimeError("W10 live response attribution failed: governed deal not found")
+                expected_email = (governed_deal.customer_email or "").strip().lower()
+                if not expected_email or sender_email != expected_email:
+                    raise RuntimeError(
+                        "W10 live response attribution failed: sender does not match governed deal customer_email"
+                    )
+
                 response_event = await workforce_sales_engagement.ingest_outreach_response(
                     db,
                     tenant_id=observed_response.tenant_id,
@@ -496,6 +517,7 @@ async def main():
                     provider_message_id=observed_response.provider_message_id,
                     response_text=observed_response.response_text,
                     source="imap-mailbox",
+                    sender_email=sender_email,
                 )
                 replay = await workforce_sales_engagement.ingest_outreach_response(
                     db,
@@ -504,6 +526,7 @@ async def main():
                     provider_message_id=observed_response.provider_message_id,
                     response_text=observed_response.response_text,
                     source="imap-mailbox",
+                    sender_email=sender_email,
                 )
                 assert response_event.id == replay.id
                 summary = await workforce_sales_engagement.attribution_summary(
@@ -515,6 +538,7 @@ async def main():
                 await db.commit()
 
             print("W10 LIVE MAILBOX RESPONSE OBSERVED PASS provider=imap-mailbox")
+            print("W10 LIVE CUSTOMER IDENTITY ATTRIBUTION PASS sender_matches_governed_deal=1")
             print("W10 LIVE SALES RESPONSE INGESTION PASS")
             print("W10 LIVE SALES RESPONSE IDEMPOTENCY PASS")
             print("W10 LIVE SALES ATTRIBUTION PASS sent=1 delivered=1 responded=1")
