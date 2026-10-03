@@ -18,6 +18,11 @@ on:
         required: true
         default: "20"
         type: string
+      confirm_external_payment:
+        description: "Type I_UNDERSTAND_THIS_CREATES_A_REAL_ZARINPAL_CHECKOUT to authorize creating the checkout"
+        required: true
+        default: ""
+        type: string
 
 concurrency:
   group: workforce-w10-live-zarinpal
@@ -36,7 +41,7 @@ env:
   W10_ZARINPAL_AMOUNT_IRR: ${{ inputs.amount_irr }}
   W10_ZARINPAL_WAIT_MINUTES: ${{ inputs.wait_minutes }}
   W10_ZARINPAL_CERTIFICATION_EMAIL: ${{ secrets.W10_ZARINPAL_CERTIFICATION_EMAIL || 'zarinpal-certification@example.invalid' }}
-  W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION: ${{ secrets.W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION }}
+  W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION: ${{ inputs.confirm_external_payment }}
 
 jobs:
   live-zarinpal-payment:
