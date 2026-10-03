@@ -19,6 +19,17 @@ class CustomerOfficeEmployeeResponse(BaseModel):
     latest_run_created_at: datetime | None
     current_work_item: CustomerOfficeWorkItemResponse | None
 
+class CustomerOfficeApprovalResponse(BaseModel):
+    id: str
+    workflow_run_id: str
+    workflow_step_run_id: str
+    employee_id: str | None
+    employee_name: str | None
+    step_key: str
+    status: str
+    created_at: datetime
+    expires_at: datetime | None
+
 class CustomerOfficeResponse(BaseModel):
     office_state: str
     employee_count: int
@@ -28,6 +39,7 @@ class CustomerOfficeResponse(BaseModel):
     blocked_count: int
     escalated_count: int
     employees: list[CustomerOfficeEmployeeResponse]
+    pending_approvals: list[CustomerOfficeApprovalResponse]
     generated_at: datetime
 
 class CustomerDashboardResponse(BaseModel):
