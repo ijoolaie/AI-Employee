@@ -13,8 +13,8 @@ def test_password_hash_and_verify():
     assert not verify_password("wrong", hashed)
 
 
-def test_password_verify_accepts_existing_passlib_bcrypt_hash():
-    # Existing Passlib bcrypt hashes may use the legacy $2a$ identifier.
+def test_password_verify_accepts_existing_legacy_bcrypt_hash():
+    # Existing legacy bcrypt hashes may use the $2a$ identifier.
     # Keep the same bcrypt payload and change only the version marker so this
     # test proves compatibility without introducing a fabricated test vector.
     current_hash = hash_password("password")
