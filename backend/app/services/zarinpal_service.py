@@ -18,6 +18,7 @@ from app.services.workforce_sales_payment_provider import SalesPaymentResult
 
 
 def _urls() -> tuple[str, str]:
+
     settings = get_settings()
     if settings.zarinpal_sandbox:
         base = "https://sandbox.zarinpal.com"
@@ -30,6 +31,9 @@ def _urls() -> tuple[str, str]:
         f"{base}/pg/v4/payment/request.json",
         "https://www.zarinpal.com/pg/StartPay/",
     )
+
+def gateway_url(authority: str) -> str:
+    return f"{_urls()[1]}{authority}"
 
 
 def _rial_amount(amount: Decimal, currency: str) -> int:
@@ -110,7 +114,7 @@ async def create_payment_request(
         provider="zarinpal",
         provider_execution="accepted",
         executed=True,
-        checkout_url=f"{gateway_base}{authority}",
+        checkout_url=gateway_url(str(authority)),
         provider_payment_id=str(authority),
     )
 
