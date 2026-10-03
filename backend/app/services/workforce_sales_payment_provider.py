@@ -24,14 +24,18 @@ class SalesPaymentResult:
     provider_payment_id: str | None
 
 
-def _minor_units(amount: Decimal) -> int:
-    value = (amount * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+ZERO_DECIMAL_CURRENCIES = frozenset({"bif", "clp", "djf", "gnf", "jpy", "kmf", "krw", "mga", "pyg", "rwf", "ugx", "vnd", "vuv", "xaf", "xof", "xpf"})
+
+
+def _minor_units(amount: Decimal, currency: str) -> int:
+    multiplier = Decimal("1") if currency.lower() in ZERO_DECIMAL_CURRENCIES else Decimal("100")
+    value = (amount * multiplier).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     if value <= 0:
         raise ValidationAppError("Commercial commitment amount must be positive")
     return int(value)
 
 
-async def create_sales_checkout_session(
+\ndef _major_units(amount_minor: int, currency: str) -> Decimal:\n    divisor = Decimal("1") if currency.lower() in ZERO_DECIMAL_CURRENCIES else Decimal("100")\n    return Decimal(amount_minor) / divisor\n\nasync def create_sales_checkout_session(
     *,
     tenant_id: uuid.UUID,
     deal_id: uuid.UUID,
