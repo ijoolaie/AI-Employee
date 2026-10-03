@@ -24,6 +24,7 @@ async def create_employee(
     tenant_id: uuid.UUID | None,
     slug: str,
     name: str,
+    avatar_url: str | None,
     kind: str,
     input_schema: dict[str, Any],
     output_schema: dict[str, Any],
@@ -64,6 +65,7 @@ async def create_employee(
         tenant_id=tenant_id,
         slug=slug,
         name=name,
+        avatar_url=avatar_url,
         kind=kind,
         is_active=True,
     )

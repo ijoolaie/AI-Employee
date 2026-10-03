@@ -23,6 +23,7 @@ def _employee():
         tenant_id=uuid.uuid4(),
         slug="sales-agent",
         name="Sales Agent",
+        avatar_url="https://example.com/sales-agent.png",
         kind="custom",
         is_active=True,
         created_at=datetime.now(),
@@ -84,6 +85,7 @@ async def test_create_employee_endpoint_delegates_to_service(monkeypatch):
         tenant_id=ctx.tenant_id,
         slug=payload.slug,
         name=payload.name,
+        avatar_url=payload.avatar_url,
         kind=payload.kind,
         input_schema=payload.input_schema,
         output_schema=payload.output_schema,
@@ -116,6 +118,7 @@ async def test_create_employee_endpoint_propagates_unregistered_tool_error(monke
     payload = SimpleNamespace(
         slug="blocked-agent",
         name="Blocked Agent",
+        avatar_url=None,
         kind="custom",
         input_schema=VALID_SCHEMA,
         output_schema=VALID_SCHEMA,

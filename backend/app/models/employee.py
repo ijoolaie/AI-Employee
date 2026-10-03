@@ -43,6 +43,9 @@ class Employee(Base):
     )
     slug: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Stable presentation identity; intentionally stored on Employee, not EmployeeVersion.
+    # The runtime does not fetch or execute this URL; clients may render the avatar.
+    avatar_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     kind: Mapped[str] = mapped_column(String(20), nullable=False, default="system")
     # "system" | "custom"
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

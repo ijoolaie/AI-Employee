@@ -18,6 +18,7 @@ class EmployeeVersionCreate(BaseModel):
 class EmployeeCreate(EmployeeVersionCreate):
     slug: str
     name: str
+    avatar_url: str | None = Field(default=None, max_length=2048)
     kind: str = "custom"  # tenant-created Employees are Custom by definition
 
 
@@ -41,6 +42,7 @@ class EmployeeResponse(BaseModel):
     id: UUID
     slug: str
     name: str
+    avatar_url: str | None
     kind: str
     is_active: bool
     created_at: datetime

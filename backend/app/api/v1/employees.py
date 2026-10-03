@@ -30,6 +30,7 @@ async def create_employee(payload: EmployeeCreate, ctx: EmployeeWriteContext, db
         tenant_id=ctx.tenant_id,
         slug=payload.slug,
         name=payload.name,
+        avatar_url=payload.avatar_url,
         kind=payload.kind,
         input_schema=payload.input_schema,
         output_schema=payload.output_schema,
