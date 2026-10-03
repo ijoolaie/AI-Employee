@@ -326,7 +326,7 @@ async def get_office(db: AsyncSession, *, tenant_id):
     usage = await billing_service.monthly_usage(db, tenant_id=tenant_id)
     plan = subscription.plan
     features = dict(plan.features or {})
-    enabled_capabilities = sorted(str(key) for key, value in features.items() if bool(value))
+    enabled_capabilities = sorted(str(key) for key, value in features.items() if value is True)
     hq_tier = _office_hq_tier(plan_code=plan.code, features=features)
 
     return {
