@@ -341,6 +341,7 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "approval_status": approval_status,
         "provider_execution": provider_execution,
         "external_side_effect": external,
+        "deal_id": arguments.get("deal_id"),
         **({"execution": execution_result} if execution_result is not None else {}),
     }
 
