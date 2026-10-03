@@ -192,7 +192,7 @@ test.describe("critical platform flows", () => {
     });
 
     const routes = [
-      "/dashboard", "/customers", "/products", "/orders", "/sales",
+      "/dashboard", "/office", "/customers", "/products", "/orders", "/sales",
       "/analytics", "/reports", "/employees", "/templates", "/knowledge",
       "/memory", "/inbox", "/conversations", "/channels", "/workflows",
       "/tasks", "/approvals", "/schedules", "/files", "/runs",
