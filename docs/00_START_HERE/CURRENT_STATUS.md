@@ -217,3 +217,21 @@ W12.3 checkpoint: Virtual Office CEO Desk now surfaces real tenant-scoped pendin
 - Customer acceptance / live payment revenue: **NOT VERIFIED**.
 
 This section supersedes older v1.4.11-only “latest release” statements above. Historical v1.4.11 evidence remains immutable and unchanged.
+
+## W13 Customer HQ Progression — 2026-10-03
+
+W13 is implemented on post-v1.4.12 mainline.
+
+### Implemented
+- Tenant-scoped HQ tier derived from authoritative subscription entitlement.
+- Tenant-scoped plan, subscription, employee, workflow, monthly-run and monthly-token metrics exposed by the existing Virtual Office endpoint.
+- Enabled capability labels derived only from truthy billing-plan feature data.
+- Customer `/office` now presents HQ tier/capacity without creating authorization or execution authority.
+- Backend tests cover entitlement-to-tier mapping and preservation of W12 office state/tenant boundaries.
+
+### Evidence boundary
+W13 is post-release engineering work. Exact-SHA CI/product gates/Production Certification for W13 are **NOT RUN / NOT VERIFIED**. It must not be attributed to the certified `v1.4.12` SHA.
+
+As-built record: `docs/current/W13_CUSTOMER_HQ_PROGRESSION.md`.
+
+Next slice: W14 Employee Appearance & Customization, preserving the hard boundary between presentation identity and business identity.
