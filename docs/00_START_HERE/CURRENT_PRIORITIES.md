@@ -1,6 +1,6 @@
 # Current Priorities
 
-**Reconciled:** 2026-09-29
+**Reconciled:** 2026-10-03
 **Current release:** `v1.4.11`
 **Certified SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 **Current main head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA
@@ -94,3 +94,22 @@ Stage 8/9 and future workforce work should therefore proceed only when the relev
 The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
 
 The latest code-bearing engineering head is PR #832 merge `b352ce41ab65031b5463542e254ddd3a2a1f459b`, containing the merged CI timeout process-termination fix lineage through PR #826 and governed Workforce runtime-binding fix from PR #827. PR #833 is documentation-only and merged at `3d29aeffb44bcba7d833ca906884b6dc5fca814a`. Mutable current-main SHA is intentionally resolved directly from the repository. Current-main validation remains engineering evidence only.
+
+
+
+## W10 live-response checkpoint — 2026-10-03
+
+The W10 live sales engagement loop has crossed the real-provider response boundary.
+
+1. **DONE:** governed live SMTP send/provider acceptance — Run `37103195020` / Job `111146601368`.
+2. **DONE:** live IMAP mailbox observation and Message-ID correlation.
+3. **DONE:** live response ingestion.
+4. **DONE:** live response idempotency replay.
+5. **DONE:** live attribution `sent=1 delivered=1 responded=1`.
+6. **OPEN:** independently verify customer identity/status and qualify the conversation.
+7. **OPEN:** execute a governed proposal/pilot/customer-outcome path.
+8. **OPEN:** independently verify a payment/revenue event.
+
+Do **not** repeat the live SMTP certification solely to reproduce evidence already captured by Run `37103195020`. Any further live side effect must be explicitly operator-triggered and tied to a new evidence question.
+
+The W10 technical response loop is therefore **VERIFIED**; the business/revenue outcome remains **NOT VERIFIED**.
