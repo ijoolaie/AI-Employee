@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.billing import BillingEvent, BillingPlan, Subscription
+from app.models.workforce_revenue_event import WorkforceRevenueEvent
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.services import billing_service
@@ -287,8 +288,9 @@ async def _apply_sales_payment_success(
     """Convert a verified one-time Stripe payment into a tenant-scoped order.
 
     The BusinessDeal row is locked so retries/concurrent provider events cannot
-    create duplicate business orders. The provider event remains the immutable
-    billing ledger entry; the deal metadata carries the reconciled event id.
+    create duplicate business orders. BillingEvent remains the provider webhook
+    admission ledger; WorkforceRevenueEvent is the independent, governed business
+    outcome boundary used for AI Workforce revenue accounting.
     """
     metadata = data.get("metadata") or {}
     tenant_ref = metadata.get("tenant_id")
@@ -376,6 +378,33 @@ async def _apply_sales_payment_success(
     event_ids.append(provider_event_id)
     deal_metadata["sales_payment_event_ids"] = event_ids[-20:]
     deal_metadata["payment_verified"] = True
+
+    revenue_event = (
+        await db.execute(
+            select(WorkforceRevenueEvent).where(
+                WorkforceRevenueEvent.provider == "stripe",
+                WorkforceRevenueEvent.provider_event_id == provider_event_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if revenue_event is None:
+        revenue_event = WorkforceRevenueEvent(
+            tenant_id=tenant_id,
+            deal_id=deal.id,
+            order_id=order.id,
+            provider="stripe",
+            provider_event_id=provider_event_id,
+            amount=amount,
+            currency=currency,
+            verified_at=datetime.now(timezone.utc),
+            source="stripe_verified_sales_payment",
+            metadata_={
+                "payment_object_id": data.get("id"),
+                "sales_deal_id": str(deal.id),
+                "business_order_id": str(order.id),
+            },
+        )
+        db.add(revenue_event)
     deal_metadata["payment_provider"] = "stripe"
     deal_metadata["payment_provider_event_id"] = provider_event_id
     deal_metadata["payment_amount"] = float(amount)
