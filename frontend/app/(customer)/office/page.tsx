@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Building2, CheckCircle2, Clock3, DoorOpen, ShieldCheck, UserRound, Users, AlertTriangle } from "lucide-react";
 import { Header } from "@/components/layout/header";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -39,7 +38,7 @@ export default function OfficePage() {
         {q.error && (
           <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             <span>{getErrorMessage(q.error)}</span>
-            <Button variant="outline" size="sm" onClick={() => void q.refetch()}>Retry</Button>
+            <Button variant="outline" size="sm" onClick={() => void q.refetch()}>{tx.retry}</Button>
           </div>
         )}
 
