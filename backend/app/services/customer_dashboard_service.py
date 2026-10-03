@@ -155,7 +155,29 @@ async def get_office(db: AsyncSession, *, tenant_id):
         .subquery()
     )
 
-    result = await db.execute(
+    pending_approval_employee_ids = set(
+        (
+            await db.execute(
+                select(WorkflowStepRun.employee_run_id)
+                .join(
+                    WorkflowApproval,
+                    WorkflowApproval.workflow_step_run_id == WorkflowStepRun.id,
+                )
+                .join(
+                    Run,
+                    Run.id == WorkflowStepRun.employee_run_id,
+                )
+                .where(
+                    WorkflowApproval.tenant_id == tenant_id,
+                    WorkflowApproval.status == "pending",
+                    WorkflowStepRun.employee_run_id.is_not(None),
+                    Run.tenant_id == tenant_id,
+                )
+            )
+        ).scalars().all()
+    )
+
+    latest_result = await db.execute(
         select(
             Employee,
             ranked_employee_runs.c.run_id,
@@ -180,9 +202,11 @@ async def get_office(db: AsyncSession, *, tenant_id):
         "escalated": 0,
     }
 
-    for employee, run_id, run_status, run_created_at in result.all():
+    for employee, run_id, run_status, run_created_at in latest_result.all():
         if not employee.is_active:
             state = "IDLE"
+        elif run_id in pending_approval_employee_ids:
+            state = "WAITING_APPROVAL"
         elif run_status in {"pending", "queued", "running"}:
             state = "WORKING"
         elif run_status == "failed":
