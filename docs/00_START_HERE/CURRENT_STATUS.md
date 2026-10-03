@@ -196,3 +196,6 @@ This W12 slice is post-v1.4.11 application code. Exact-SHA CI/certification for 
 
 
 W12.2 checkpoint: current employee work visibility implemented from authoritative `Run.work_item_id` → tenant-scoped `WorkItem`; synthetic task/project/progress/meeting state remains intentionally unimplemented. Exact-SHA certification remains **NOT RUN / NOT VERIFIED**.
+
+
+W12.3 checkpoint: Virtual Office CEO Desk now surfaces real tenant-scoped pending WorkflowApproval records and links them to the existing approvals workspace. The presentation layer does not mutate approval state. Exact-SHA certification remains **NOT RUN / NOT VERIFIED**.
