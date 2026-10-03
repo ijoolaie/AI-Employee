@@ -18,7 +18,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from app.core.database import AsyncSessionLocal
-from app.models.business import BusinessDeal
+from app.models.business_deal import BusinessDeal
 from app.models.tenant import Tenant
 from app.services.workforce_sales_payment_provider import create_sales_checkout_session
 from scripts.e2e_workforce_w10_dogfood_verify import prepare
