@@ -262,9 +262,14 @@ async def get_office(db: AsyncSession, *, tenant_id):
         else:
             state = "IDLE"
 
-        key = state.lower()
-        if key in counts:
-            counts[key] += 1
+        count_key = {
+            "WORKING": "working",
+            "WAITING_APPROVAL": "waiting",
+            "IDLE": "idle",
+            "BLOCKED": "blocked",
+            "ESCALATED": "escalated",
+        }[state]
+        counts[count_key] += 1
 
         current_work_item = None
         if work_item_id and (run_status in {"pending", "queued", "running"} or run_id in pending_approval_employee_ids):
