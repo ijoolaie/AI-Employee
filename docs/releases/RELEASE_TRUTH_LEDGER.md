@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-09-26
+**Last reconciled:** 2026-10-03
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -17,6 +17,7 @@ These states are independent and must not be inferred from release names. `OPEN 
 
 | Release | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
+| `v1.4.12` | `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519` | **VERIFIED** | **CERTIFIED** — Run `37138840482` / Job `111248877948` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.11` | `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f` | **VERIFIED** | **CERTIFIED** — Run `35848311037` / Job `107139710452` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.10` | `b09f3e35d512e3c4d21be9d930539cbbe1d2d451` | **VERIFIED** | **CERTIFIED** — Run `35840044046` / Job `107112696112` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.9` | `f1ce20c010779f5273eb5d0051da24cdd57b33f6` | VERIFIED | **CERTIFIED** — Run `35575615877` / Job `106256713583` | **NOT VERIFIED** | Pending |
@@ -112,3 +113,22 @@ Release tag: **NONE**.
 Deployment: **NOT VERIFIED**.
 This does not modify immutable `v1.4.11`.
 
+
+
+## v1.4.12 promotion checkpoint — 2026-10-03
+
+`v1.4.12` is now the latest published and exact-SHA certified release.
+
+- certified/checked-out SHA: `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`;
+- Production Certification workflow run: `37138840482`;
+- certification job: `111248877948`;
+- Product Gate failures: **0**;
+- certification result: **PASS**;
+- evidence artifact: `production-certification-evidence-v1.4.12-rc.1-9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`;
+- evidence artifact digest: `sha256:b380f8849b6347995c17bcec8a97de979b2a67b01d88dc26d0f02258b8779af1`;
+- GitHub Release: **PUBLISHED**;
+- immutable release assets: **BUILT/PUBLISHED**;
+- production deployment claimed by certification: **false**;
+- external acceptance and revenue: **NOT VERIFIED**.
+
+W12 Virtual Office and its tenant/approval/state hardening are inside this immutable release boundary. New W13 application-code work starts after this release and must not inherit v1.4.12 certification.
