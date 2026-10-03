@@ -12,6 +12,14 @@ def test_message_ids_extracts_rfc_message_ids():
     }
 
 
+def test_message_ids_accepts_provider_normalized_unbracketed_ids():
+    value = "outbox-123@ai-employee.local other@example.test"
+    assert provider._message_ids(value) == {
+        "outbox-123@ai-employee.local",
+        "other@example.test",
+    }
+
+
 def test_response_text_reads_plain_text_part():
     message = email.message_from_string(
         'From: prospect@example.test\n'
