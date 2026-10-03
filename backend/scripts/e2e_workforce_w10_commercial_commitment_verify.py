@@ -122,8 +122,8 @@ async def main() -> None:
     assert result["approval_required"] is True
     assert result["approval_status"] == "approved"
     assert result["external_side_effect"] is True
-    assert result["provider"] == "contract-test"
     assert result["provider_execution"] == "accepted"
+    assert result["execution"]["provider"] == "contract-test"
     assert result["execution"]["executed"] is False
     assert result["execution"]["checkout_url"]
     assert result["execution"]["provider_payment_id"].startswith("contract-payment-")
