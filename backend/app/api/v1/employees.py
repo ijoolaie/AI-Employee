@@ -12,6 +12,8 @@ from app.core.deps import CurrentContext, DbSession, EmployeeReadContext, Employ
 from app.schemas.common import APIResponse
 from app.schemas.employee import (
     EmployeeCreate,
+    EmployeePresentationProfile,
+    EmployeePresentationProfileUpdate,
     EmployeeStatusUpdate,
     EmployeeResponse,
     EmployeeVersionCreate,
@@ -69,6 +71,26 @@ async def list_available_tools(ctx: EmployeeReadContext):
 async def get_employee(employee_id: UUID, ctx: EmployeeReadContext, db: DbSession):
     employee = await employee_service.get_employee(
         db, employee_id=employee_id, tenant_id=ctx.tenant_id
+    )
+    return APIResponse(success=True, data=EmployeeResponse.model_validate(employee))
+
+
+@router.put(
+    "/{employee_id}/presentation",
+    response_model=APIResponse[EmployeeResponse],
+)
+async def update_presentation(
+    employee_id: UUID,
+    payload: EmployeePresentationProfileUpdate,
+    ctx: EmployeeWriteContext,
+    db: DbSession,
+):
+    employee = await employee_service.update_presentation_profile(
+        db,
+        employee_id=employee_id,
+        tenant_id=ctx.tenant_id,
+        presentation_profile=payload.model_dump(),
+        actor_id=ctx.user_id,
     )
     return APIResponse(success=True, data=EmployeeResponse.model_validate(employee))
 
