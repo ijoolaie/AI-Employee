@@ -891,7 +891,9 @@ All W12–W21 phases remain PLANNED until their contracts, implementation, tests
 
 ### W12 implementation checkpoint — 2026-10-03
 
-**Status: FIRST FOUNDATION SLICE IMPLEMENTED; EXACT-SHA CERTIFICATION NOT RUN.**
+**Status: FIRST FOUNDATION SLICE IMPLEMENTED; EXACT-SHA CERTIFICATION NOT RUN.
+
+W12.2 checkpoint: current employee work visibility implemented from authoritative `Run.work_item_id` → tenant-scoped `WorkItem`; synthetic task/project/progress/meeting state remains intentionally unimplemented. Exact-SHA certification remains NOT RUN / NOT VERIFIED.**
 
 Implemented on post-v1.4.11 mainline:
 - tenant-scoped read-only office-state API;
