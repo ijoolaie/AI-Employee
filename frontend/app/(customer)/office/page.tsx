@@ -71,12 +71,28 @@ export default function OfficePage() {
 
               <div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_280px]">
                 <div className="min-h-[430px] rounded-2xl border border-white/10 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-6">
-                  <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-300/20 bg-amber-200/5 p-4">
-                    <div className="rounded-lg bg-amber-200/10 p-2"><ShieldCheck className="h-5 w-5 text-amber-200" /></div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">{tx.executiveDesk}</p>
-                      <p className="text-xs text-slate-400">{tx.approvalsDescription}</p>
+                  <div className="mb-6 rounded-xl border border-amber-300/20 bg-amber-200/5 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-amber-200/10 p-2"><ShieldCheck className="h-5 w-5 text-amber-200" /></div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{tx.executiveDesk}</p>
+                        <p className="text-xs text-slate-400">{tx.approvalsDescription}</p>
+                      </div>
                     </div>
+                    {data.pending_approvals.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        {data.pending_approvals.map((approval) => (
+                          <Link key={approval.id} href="/approvals" className="block rounded-lg border border-white/10 bg-black/10 p-3 transition hover:border-amber-200/30">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-xs font-semibold text-amber-100">{approval.step_key}</p>
+                              <span className="text-[10px] font-medium uppercase text-amber-300">{approval.status}</span>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-300">{approval.employee_name ?? tx.unknownEmployee}</p>
+                            <p className="mt-1 text-[10px] text-slate-500">{formatDate(approval.created_at)}</p>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {data.employees.length === 0 ? (
@@ -142,6 +158,10 @@ function Metric({ icon: Icon, label, value }: { icon: typeof Users; label: strin
       </CardContent>
     </Card>
   );
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
 function Avatar({ name, url }: { name: string; url: string | null }) {
