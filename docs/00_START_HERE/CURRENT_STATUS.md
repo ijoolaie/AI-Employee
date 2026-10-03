@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-09-29
+**Last reconciled:** 2026-10-03
 **Latest certified release:** `v1.4.11`
 **Certified release SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
 **Stable Git tag:** `v1.4.11` — VERIFIED at the certified SHA
@@ -107,3 +107,26 @@ A blueprint, historical document or plan must not override current release/evide
 ## Security rule
 
 No production host, private key, registry credential, webhook secret, payment secret, customer data or environment-specific access token belongs in Git history, GitHub issues, documentation or chat. Missing required production inputs must fail closed.
+
+
+
+## W10 live sales response evidence — 2026-10-03
+
+The post-v1.4.11 W10 dogfood workflow now has real live SMTP + mailbox response evidence.
+
+- Live certification Run: **37103195020**
+- Job: **111146601368**
+- SHA: **7f7b0d9c917b0deb8891e23a862a227ef3bc939d**
+- Result: **SUCCESS**
+- Live SMTP send/provider acceptance: **VERIFIED**
+- Live mailbox response observation: **VERIFIED**
+- Live Message-ID response correlation: **VERIFIED**
+- Live response ingestion: **VERIFIED**
+- Live response idempotency: **VERIFIED**
+- Live attribution: **VERIFIED — sent=1, delivered=1, responded=1**
+- Customer identity/customer status: **NOT VERIFIED**
+- Payment/revenue outcome: **NOT VERIFIED**
+
+The certification observed the mailbox response on polling attempt 3/12 after the INBOX count increased from 83 to 84. This is live provider evidence on post-release mainline code, not v1.4.11 release evidence.
+
+Current W10 commercial boundary: the technical sales engagement loop is verified through real SMTP → mailbox → correlated response → idempotent ingestion → attribution. The next evidence boundary is an independently verified customer outcome and, ultimately, a payment/revenue event.
