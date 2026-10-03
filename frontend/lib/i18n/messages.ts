@@ -1247,7 +1247,7 @@ const testCenter = { title:"Test Center", description:"Run authorized tenant-sco
 const testCenterFa = { title:"مرکز تست", description:"اجرای تست‌های مجاز و محدود به تننت و مشاهده شواهد مهندسی.", workspace:"فضای کاری", allWorkspaces:"همه فضاهای کاری", status:"وضعیت", allStatuses:"همه وضعیت‌ها", queued:"در صف", running:"در حال اجرا", passed:"موفق", failed:"ناموفق", cancelled:"لغوشده", expired:"منقضی", availableTests:"تست‌های در دسترس", noDefinitions:"تعریف تستی وجود ندارد", noDefinitionsDescription:"برای این فضای کاری هیچ تست فعال مرکز تستی در دسترس نیست.", noDescription:"توضیحی ثبت نشده است.", run:"اجرا", runHistory:"تاریخچه اجرا", noRuns:"اجرایی وجود ندارد", noRunsDescription:"یک تست در دسترس را اجرا کنید تا اولین رکورد شواهد ایجاد شود.", dispatched:"اجرای تست ارسال شد", toWorker:"به Worker", selectedRun:"اجرای انتخاب‌شده", correlation:"همبستگی", liveRefresh:"به‌روزرسانی زنده وضعیت فعال است.", refresh:"تازه‌سازی", exportEvidence:"خروجی رکورد تأیید", evidence:"شواهد", queuedAt:"در صف", started:"شروع", finished:"پایان", executionError:"خطای اجرا", result:"نتیجه", artifacts:"آرتیفکت‌ها", noArtifacts:"آرتیفکتی پیوست نشده است.", refreshed:"اجرای انتخاب‌شده تازه‌سازی شد.", exported:"رکورد تأیید خروجی گرفته شد.", testRun:"اجرا", test:"تست", actions:"عملیات", workspaceColumn:"فضای کاری", created:"ایجاد شده", enabled:"فعال", disabled:"غیرفعال" } as const;
 
 const nav = {
-  business: "Business", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
+  business: "Business", office: "AI Company HQ", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
   customerOperations: "Customer Operations", inbox: "Unified Inbox", conversations: "Conversations", channels: "Customer Channels", workflows: "Workflows", tasks: "Tasks", approvals: "Approvals", schedules: "Schedules",
   financePlatform: "Finance & Platform", billing: "Billing", invoices: "Invoices", usage: "Usage & Cost", integrations: "Integrations", files: "Files", runs: "Runs", traces: "Trace Explorer",
@@ -1256,7 +1256,7 @@ const nav = {
 } as const;
 
 const navFa = {
-  business: "کسب‌وکار", overview: "نمای کلی", customers: "مشتریان", orders: "سفارش‌ها", products: "محصولات", sales: "فروش", analytics: "تحلیل‌ها", reports: "گزارش‌ها",
+  business: "کسب‌وکار", office: "دفتر مرکزی هوش مصنوعی", overview: "نمای کلی", customers: "مشتریان", orders: "سفارش‌ها", products: "محصولات", sales: "فروش", analytics: "تحلیل‌ها", reports: "گزارش‌ها",
   peopleAi: "افراد و هوش مصنوعی", team: "کارمندان انسانی", employees: "کارمندان هوش مصنوعی", templates: "قالب‌های کارمند", workspace: "فضای کاری هوش مصنوعی", chat: "گفتگوی هوش مصنوعی", governance: "حاکمیت نیروی کار", knowledge: "پایگاه دانش", memory: "حافظه",
   customerOperations: "عملیات مشتری", inbox: "صندوق ورودی یکپارچه", conversations: "گفتگوها", channels: "کانال‌های مشتری", workflows: "گردش‌کارها", tasks: "وظایف", approvals: "تأییدها", schedules: "زمان‌بندی‌ها",
   financePlatform: "مالی و پلتفرم", billing: "صورتحساب", invoices: "فاکتورها", usage: "مصرف و هزینه", integrations: "یکپارچه‌سازی‌ها", files: "فایل‌ها", runs: "اجراها", traces: "رهگیری اجرا",
