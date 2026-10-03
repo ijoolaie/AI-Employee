@@ -27,8 +27,10 @@ on:
       - "backend/alembic/versions/w10_workforce_revenue_event.py"
       - "backend/scripts/e2e_workforce_w10_revenue_reconciliation_verify.py"
       - "backend/scripts/e2e_workforce_w10_zarinpal_reconciliation_idempotency_verify.py"
+      - "backend/tests/test_zarinpal_webhooks.py"
       - "backend/tests/test_workforce_revenue_event.py"
       - "backend/tests/test_workforce_sales_payment_provider.py"
+      - "backend/tests/test_zarinpal_webhooks.py"
       - "backend/scripts/e2e_workforce_w10_commercial_commitment_verify.py"
       - "docker-compose.yml"
   pull_request:
@@ -103,7 +105,7 @@ jobs:
 
       - name: Run sales provider unit tests
         run: |
-          timeout 3m docker compose exec -T api pytest -q tests/test_workforce_sales_inbound_provider.py tests/test_workforce_sales_mailbox_provider.py tests/test_workforce_sales_payment_provider.py tests/test_zarinpal_service.py tests/test_workforce_revenue_event.py
+          timeout 3m docker compose exec -T api pytest -q tests/test_workforce_sales_inbound_provider.py tests/test_workforce_sales_mailbox_provider.py tests/test_workforce_sales_payment_provider.py tests/test_zarinpal_service.py tests/test_zarinpal_webhooks.py tests/test_workforce_revenue_event.py
 
       - name: Run W10 real-stack certification
         run: |
