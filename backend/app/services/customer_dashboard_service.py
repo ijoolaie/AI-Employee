@@ -13,6 +13,7 @@ from app.models.workflow_schedule import WorkflowSchedule
 from app.models.workflow_event import WorkflowEventTrigger
 from app.models.ai_provider_call import AIProviderCall
 from app.models.run import Run
+from app.services import billing_service
 
 
 async def get_dashboard(db: AsyncSession, *, tenant_id):
@@ -144,6 +145,21 @@ def _office_presentation_state(*, is_active: bool, run_status: str | None, waiti
     if run_status == "cancelled":
         return "BLOCKED"
     return "IDLE"
+
+
+def _office_hq_tier(*, plan_code: str, features: dict) -> str:
+    """Map authoritative subscription entitlement to a presentation tier only.
+
+    The tier is presentation metadata. It never changes permissions, quotas,
+    approvals, or execution authority. Unknown plans fail closed to CUSTOM.
+    """
+    if features.get("enterprise") is True or plan_code == "enterprise":
+        return "ENTERPRISE"
+    return {
+        "starter": "STARTER",
+        "business": "BUSINESS",
+        "professional": "PROFESSIONAL",
+    }.get(plan_code, "CUSTOM")
 
 
 def _office_count_key(state: str) -> str:
@@ -306,8 +322,30 @@ async def get_office(db: AsyncSession, *, tenant_id):
             }
         )
 
+    subscription = await billing_service.get_subscription(db, tenant_id=tenant_id)
+    usage = await billing_service.monthly_usage(db, tenant_id=tenant_id)
+    plan = subscription.plan
+    features = dict(plan.features or {})
+    enabled_capabilities = sorted(str(key) for key, value in features.items() if bool(value))
+    hq_tier = _office_hq_tier(plan_code=plan.code, features=features)
+
     return {
         "office_state": "LIVE",
+        "hq_tier": hq_tier,
+        "hq_metrics": {
+            "plan_code": plan.code,
+            "plan_name": plan.name,
+            "subscription_status": subscription.status,
+            "active_employees": usage["employees"],
+            "employee_limit": plan.max_employees,
+            "active_workflows": usage["workflows"],
+            "workflow_limit": plan.max_workflows,
+            "monthly_runs": usage["runs"],
+            "monthly_run_limit": plan.monthly_runs,
+            "monthly_tokens": usage["tokens"],
+            "monthly_token_limit": plan.monthly_tokens,
+            "enabled_capabilities": enabled_capabilities,
+        },
         "employee_count": len(employees),
         "working_count": counts["working"],
         "waiting_count": counts["waiting"],
