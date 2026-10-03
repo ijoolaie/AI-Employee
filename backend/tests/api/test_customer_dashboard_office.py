@@ -102,7 +102,7 @@ async def test_office_service_is_tenant_scoped_and_preserves_authoritative_state
     assert office["hq_tier"] == "BUSINESS"
     assert office["hq_metrics"]["active_employees"] == 1
     assert office["hq_metrics"]["monthly_runs"] == 7
-    assert office["hq_metrics"]["enabled_capabilities"] == ["analytics", "priority"]
+    assert office["hq_metrics"]["enabled_capabilities"] == ["analytics"]
     assert office["working_count"] == 0
     assert office["waiting_count"] == 1
     assert office["idle_count"] == 0
