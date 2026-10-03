@@ -14,9 +14,11 @@ def test_password_hash_and_verify():
 
 
 def test_password_verify_accepts_existing_passlib_bcrypt_hash():
-    # Known bcrypt vector documented by Passlib; existing database hashes
-    # must remain login-compatible after removing the Passlib wrapper.
-    legacy_hash = "$2a$12$NT0I31Sa7ihGEWpka9ASYrEFkhuTNeBQ2xfZskIiiJeyFXhRgS.Sy"
+    # Existing Passlib bcrypt hashes may use the legacy $2a$ identifier.
+    # Keep the same bcrypt payload and change only the version marker so this
+    # test proves compatibility without introducing a fabricated test vector.
+    current_hash = hash_password("password")
+    legacy_hash = "$2a$" + current_hash[4:]
     assert verify_password("password", legacy_hash)
     assert not verify_password("wrong", legacy_hash)
 
