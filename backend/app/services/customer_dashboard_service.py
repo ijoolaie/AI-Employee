@@ -227,7 +227,7 @@ async def get_office(db: AsyncSession, *, tenant_id):
             counts[key] += 1
 
         current_work_item = None
-        if work_item_id and run_status in {"pending", "queued", "running"} or (work_item_id and run_id in pending_approval_employee_ids):
+        if work_item_id and (run_status in {"pending", "queued", "running"} or run_id in pending_approval_employee_ids):
             current_work_item = {
                 "id": str(work_item_id),
                 "title": work_item_title,
