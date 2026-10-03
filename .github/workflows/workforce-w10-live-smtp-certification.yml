@@ -2,6 +2,11 @@ name: Workforce W10 Live SMTP Certification
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_external_outreach:
+        description: "Type I_UNDERSTAND_THIS_SENDS_A_REAL_CUSTOMER_EMAIL to enable live SMTP outreach"
+        required: true
+        type: string
 
 concurrency:
   group: workforce-w10-live-smtp
@@ -35,13 +40,19 @@ jobs:
       SALES_INBOUND_MAILBOX_PASSWORD: ${{ secrets.W10_LIVE_SMTP_PASSWORD }}
       SALES_INBOUND_MAILBOX_FOLDER: INBOX
       SALES_INBOUND_MAILBOX_TIMEOUT_SECONDS: "20"
+      W10_EXTERNAL_OUTREACH_CONFIRMATION: ${{ inputs.confirm_external_outreach }}
     steps:
       - uses: actions/checkout@v7
 
-      - name: Validate live SMTP configuration
+      - name: Validate live SMTP configuration and explicit outreach confirmation
         shell: bash
         run: |
           set -euo pipefail
+          if [ "${W10_EXTERNAL_OUTREACH_CONFIRMATION:-}" != "I_UNDERSTAND_THIS_SENDS_A_REAL_CUSTOMER_EMAIL" ]; then
+            echo "External outreach certification requires explicit confirmation: I_UNDERSTAND_THIS_SENDS_A_REAL_CUSTOMER_EMAIL"
+            exit 1
+          fi
+          echo "LIVE SMTP EXTERNAL OUTREACH CONFIRMATION PASS"
           for name in SMTP_HOST SMTP_PORT SMTP_FROM_EMAIL W10_SALES_RECIPIENT_EMAIL SMTP_ALLOWED_RECIPIENT_DOMAINS; do
             if [ -z "${!name:-}" ]; then
               echo "Missing required live SMTP configuration: $name"
