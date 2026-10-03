@@ -707,3 +707,46 @@ Evidence:
 The W10 governed sales engagement measurement checkpoint is **VERIFIED on the real stack** for the isolated E2E provider path. The new evidence specifically verifies that the delivery event is produced by the email worker and reaches the immutable ledger, rather than being synthetically inserted by the certification script. Real customer response, customer conversation, and revenue generation remain **NOT VERIFIED**. The current evidence proves governed queueing, SMTP-sink acceptance, worker-generated delivery-event recording, deterministic response ingestion, replay idempotency, and attribution mechanics—not real-world customer behavior or revenue.
 
 This remains post-v1.4.11 mainline engineering evidence and does not modify the immutable v1.4.11 certification boundary.
+
+
+## W10 live SMTP + mailbox response checkpoint — 2026-10-03
+
+The W10 dogfood revenue workflow has now crossed from isolated provider-path evidence into a real live SMTP/mailbox response loop.
+
+Final GitHub Actions live certification:
+- Run **37103195020**
+- Job **111146601368**
+- SHA **7f7b0d9c917b0deb8891e23a862a227ef3bc939d**
+- Workflow: `Workforce W10 Live SMTP Certification`
+- Result: **SUCCESS**
+
+Live evidence:
+- governed SMTP queue: PASS;
+- live SMTP send/provider acceptance: PASS;
+- IMAP mailbox connection and INBOX selection: PASS;
+- mailbox response discovered during polling attempt **3/12**;
+- response correlation against the application Message-ID: PASS;
+- live sales response ingestion: PASS;
+- live response idempotency replay: PASS;
+- live attribution: **sent=1 delivered=1 responded=1**.
+
+The certification logs show the mailbox response was actually discovered after the INBOX message count increased from 83 to 84, with `In-Reply-To` search matches and `valid_responses=1`. This is live provider evidence, not an SMTP-sink simulation.
+
+### W10 status boundary after live certification
+
+**VERIFIED:**
+- live SMTP application/provider acceptance;
+- live mailbox response observation;
+- live response correlation;
+- live response ingestion;
+- live response idempotency;
+- live sales attribution mechanics.
+
+**NOT VERIFIED:**
+- independent verification that the responding mailbox identity represents a customer;
+- customer/conversation qualification;
+- payment or revenue outcome.
+
+The immutable `v1.4.11` certification boundary remains unchanged. This evidence belongs to post-v1.4.11 mainline SHA `7f7b0d9...` and does not transfer certification to that SHA.
+
+The next W10 work should therefore focus on **customer-outcome evidence** (qualified customer conversation → proposal/pilot → payment/revenue event) and on reconciling the authoritative current-status/evidence documents, rather than repeating the already verified live SMTP response loop.
