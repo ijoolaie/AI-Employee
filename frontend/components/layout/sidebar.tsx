@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/auth-store";
-import { LayoutDashboard, LogOut, Settings, BarChart3, CreditCard, Sparkles, GitBranch, CalendarClock, ShieldCheck, BookOpen, Brain, ShoppingCart, TrendingUp, Activity, MessageCircle, Bot, Play, FileText, Radio, Package, PlugZap, ListChecks, UserRound, KeyRound, Users, Code2, FlaskConical, Store } from "lucide-react";
+import { LayoutDashboard, Building2, LogOut, Settings, BarChart3, CreditCard, Sparkles, GitBranch, CalendarClock, ShieldCheck, BookOpen, Brain, ShoppingCart, TrendingUp, Activity, MessageCircle, Bot, Play, FileText, Radio, Package, PlugZap, ListChecks, UserRound, KeyRound, Users, Code2, FlaskConical, Store } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/provider";
@@ -10,6 +10,7 @@ import { useI18n } from "@/lib/i18n/provider";
 const groups = [
   { key: "business", label: "Business", items: [
     { href: "/dashboard", key: "overview", label: "Overview", icon: LayoutDashboard },
+    { href: "/office", key: "office", label: "AI Company HQ", icon: Building2 },
     { href: "/customers", key: "customers", label: "Customers", icon: UserRound },
     { href: "/orders", key: "orders", label: "Orders", icon: ShoppingCart },
     { href: "/products", key: "products", label: "Products", icon: Package },
