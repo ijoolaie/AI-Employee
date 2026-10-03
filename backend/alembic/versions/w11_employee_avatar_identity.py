@@ -3,7 +3,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "w11_employee_avatar_identity"
-down_revision = "v1415agentdelegationrun"
+down_revision = "w12_merge_revenue_delegation"
 branch_labels = None
 depends_on = None
 
