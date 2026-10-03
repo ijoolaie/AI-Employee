@@ -56,6 +56,7 @@ TOOLS = [
     "create_deal",
     "sales_pipeline_summary",
     "sales_forecast",
+    "workforce_material_commercial_action",
 ]
 
 
