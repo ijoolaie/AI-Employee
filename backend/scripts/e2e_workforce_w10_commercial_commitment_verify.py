@@ -23,6 +23,10 @@ from scripts.e2e_workforce_w10_dogfood_verify import execute, prepare
 
 
 async def main() -> None:
+    # The parent W10 foundation uses a fixed webhook tenant fixture. This
+    # commercial certification must allocate its own tenant so it can run in
+    # the same database immediately after the foundation certification.
+    os.environ.pop("SALES_INBOUND_TENANT_ID", None)
     tenant_id, instance_id, runs, owner_id, reviewer_id, _ = await prepare()
 
     deal_call_id = f"w10-commercial-deal-{uuid.uuid4().hex}"
