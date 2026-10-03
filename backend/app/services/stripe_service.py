@@ -279,9 +279,10 @@ async def _lock_subscription_for_lifecycle(
     return sub, bool(event_created_at and latest >= event_created_at)
 
 
-async def _apply_sales_payment_success(
+async def apply_verified_sales_payment(
     db: AsyncSession,
     *,
+    provider: str,
     provider_event_id: str,
     data: dict,
 ) -> tuple[uuid.UUID | None, str | None]:
