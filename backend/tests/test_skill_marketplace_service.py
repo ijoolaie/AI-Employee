@@ -1,5 +1,6 @@
 from app.models.skill_package import EmployeeSkillInstallation, SkillPackage
-from app.services.skill_marketplace_service import SkillMarketplaceError, _validate_manifest
+from app.core.exceptions import ValidationAppError
+from app.services.skill_marketplace_service import SkillMarketplaceError, _validate_manifest, create_package
 
 
 def test_skill_manifest_cannot_declare_execution_authority():
@@ -48,7 +49,6 @@ def test_skill_metadata_rejects_nested_execution_authority():
 
 
 def test_skill_metadata_must_be_objects():
-    from app.core.exceptions import ValidationAppError
     from app.services.skill_marketplace_service import _validate_skill_metadata
 
     for value in ([], "invalid", 1):
@@ -58,3 +58,16 @@ def test_skill_metadata_must_be_objects():
             pass
         else:
             raise AssertionError(value)
+
+
+async def test_create_package_rejects_non_object_skill_metadata_before_db():
+    import uuid
+
+    for field in ("manifest", "compatibility", "presentation_metadata"):
+        kwargs = {field: []}
+        try:
+            await create_package(object(), tenant_id=uuid.uuid4(), slug="bad-metadata", **kwargs)
+        except ValidationAppError:
+            pass
+        else:
+            raise AssertionError(field)
