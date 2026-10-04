@@ -139,10 +139,14 @@ class HttpMarketplacePayoutProvider(MarketplacePayoutProvider):
         payout_id = data.get("payout_id")
         if payout_id is not None and (not isinstance(payout_id, str) or not payout_id.strip()):
             raise MarketplacePayoutProviderError("Marketplace payout provider returned an invalid payout_id")
+        if data.get("executed") is not True:
+            raise MarketplacePayoutProviderUnknown(
+                "Marketplace payout provider accepted the request without confirming execution"
+            )
         return MarketplacePayoutResult(
             provider=self.name,
-            executed=bool(data.get("executed") is True),
-            status="executed" if data.get("executed") is True else "accepted",
+            executed=True,
+            status="executed",
             provider_payout_id=payout_id,
         )
 
