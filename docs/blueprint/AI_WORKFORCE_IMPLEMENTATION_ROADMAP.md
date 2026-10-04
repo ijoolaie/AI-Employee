@@ -1265,3 +1265,42 @@ The dedicated real-stack scenario verified settlement-derived totals, seller fil
 - Production Certification of `027d8005df6ac9069a4734b9679bf839d1129a35`: **NOT RUN / NOT VERIFIED**.
 
 The immutable `v1.4.16` production-certified release remains unchanged.
+
+
+### W16 cross-tenant marketplace purchase HTTP API verification checkpoint — 2026-10-04
+
+PR #866 verifies the cross-tenant marketplace purchase boundary through the actual HTTP API on a real Docker Compose/PostgreSQL/Redis stack.
+
+Implementation/evidence boundary:
+- dedicated workflow `.github/workflows/w16-cross-tenant-skill-purchase-api-real-stack.yml` starts PostgreSQL and Redis, builds the API/worker/beat services, applies migrations and checks the migration graph before the E2E gate;
+- the API stack explicitly uses the deterministic `contract-test` payment provider for the engineering fixture;
+- the E2E drives tenant registration, Employee creation, seller publication, buyer public discovery, buyer purchase, replay and seller self-purchase rejection through HTTP;
+- the E2E then verifies durable buyer/seller/package ownership and purchase/deal correlation directly on PostgreSQL;
+- focused unit contracts verify purchase route ordering and the explicit `publication_id` / `employee_id` / `idempotency_key` request schema;
+- cleanup deprovisions the temporary fixture tenants.
+
+Exact-head evidence:
+- PR #866 exact head: `a481c4093879a4e7b58cfa03b3d6ea84a377959a`;
+- merge SHA: `34a0010087f7f821164ef7214f133fc83446e361`;
+- W16 Cross-Tenant Skill Purchase Real-Stack: PASS — Run `37205970070`;
+- W16 Cross-Tenant Skill Purchase API Real-Stack: PASS — Run `37205970267`;
+- CI: PASS — Run `37205970205`;
+- CodeQL: PASS — Run `37205970054`;
+- Architecture Guard: PASS — Run `37205970162`;
+- Production Infrastructure Validation: PASS — Run `37205970102`;
+- HA Failure Recovery: PASS — Run `37205970099`;
+- Ephemeral DAST: PASS — Run `37205970056`.
+
+The dedicated HTTP scenario verified:
+- seller-owned public publication is reachable through the buyer tenant's authenticated API context;
+- buyer-owned Employee identity is used for purchase;
+- buyer and seller tenant identities remain distinct;
+- the deterministic provider reports settlement state without being treated as external customer payment;
+- the same idempotency key replays the existing purchase/deal rather than creating a second transaction;
+- seller self-purchase is rejected;
+- PostgreSQL records preserve buyer-side purchase/deal ownership and seller-side package/publication ownership;
+- fixture cleanup completes through tenant deprovisioning.
+
+**Evidence boundary:** cross-tenant marketplace purchase HTTP/API verification is **VERIFIED** for the exact PR head above and merged mainline SHA `34a0010087f7f821164ef7214f133fc83446e361`. This does not verify external customer payment, realized marketplace revenue, external seller payout execution or tax settlement. The immutable `v1.4.16` Production Certification remains unchanged; `34a0010087f7f821164ef7214f133fc83446e361` is not production-certified.
+
+**Next boundary:** the next W16 provider/commercial slice must remain isolated from this HTTP verification. External seller payout and external production Skill provider execution require separate named-provider contracts, operator-owned credentials, approval, idempotency, failure/unknown-state semantics, audit/provenance and real-provider evidence. No generic HTTP or shell execution is an acceptable substitute.
