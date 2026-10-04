@@ -28,6 +28,20 @@ def upgrade() -> None:
         create_type=False,
     )
     approval_enum.create(bind, checkfirst=True)
+    op.execute(
+        sa.text(
+            "INSERT INTO permissions (id, code, description) VALUES "
+            "(gen_random_uuid(), 'skill_marketplace.payout.approve', 'Core permission: skill_marketplace.payout.approve') "
+            "ON CONFLICT (code) DO NOTHING"
+        )
+    )
+    op.execute(
+        sa.text(
+            "INSERT INTO permissions (id, code, description) VALUES "
+            "(gen_random_uuid(), 'skill_marketplace.payout.execute', 'Core permission: skill_marketplace.payout.execute') "
+            "ON CONFLICT (code) DO NOTHING"
+        )
+    )
 
     op.drop_constraint(
         "ck_skill_marketplace_payout_proposal_provider_none",
@@ -87,22 +101,4 @@ def upgrade() -> None:
         "skill_marketplace_payout_approvals",
         ["platform_admin_tenant_id"],
     )
-    op.add_column(
-        "skill_marketplace_payout_proposals",
-        sa.Column("status_tmp", sa.String(length=16), nullable=True),
-    )
-    op.drop_column("skill_marketplace_payout_proposals", "status_tmp")
 
-
-def downgrade() -> None:
-    op.drop_index(
-        "ix_skill_marketplace_payout_proposals_provider_payout_id",
-        table_name="skill_marketplace_payout_proposals",
-    )
-    op.drop_column("skill_marketplace_payout_proposals", "executed_at")
-    op.drop_column("skill_marketplace_payout_proposals", "provider_payout_id")
-    op.drop_index(
-        "ix_skill_marketplace_payout_approvals_admin",
-        table_name="skill_marketplace_payout_approvals",
-    )
-    op.drop_table("skill_marketplace_payout_approvals")
