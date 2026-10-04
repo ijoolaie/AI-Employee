@@ -51,6 +51,14 @@ class SkillPurchaseEntitlement(Base):
             "ix_skill_purchase_entitlements_tenant_status",
             "tenant_id", "status",
         ),
+        Index(
+            "ix_skill_purchase_entitlements_source_owner",
+            "source_owner_tenant_id",
+        ),
+        Index(
+            "ix_skill_purchase_entitlements_source_publication",
+            "source_publication_id",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -61,13 +69,13 @@ class SkillPurchaseEntitlement(Base):
         UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True
     )
     source_owner_tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False
     )
     skill_package_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("skill_packages.id", ondelete="CASCADE"), nullable=False, index=True
     )
     source_publication_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("skill_marketplace_publications.id", ondelete="RESTRICT"), nullable=True, index=True
+        UUID(as_uuid=True), ForeignKey("skill_marketplace_publications.id", ondelete="RESTRICT"), nullable=True
     )
     source_order_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("business_orders.id", ondelete="RESTRICT"), nullable=False, index=True
