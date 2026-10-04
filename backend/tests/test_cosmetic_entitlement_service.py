@@ -115,13 +115,18 @@ async def test_verified_payment_grant_is_idempotent_at_deal_marker(monkeypatch):
         return type("Entitlement", (), {"id": entitlement_id})()
 
     source_order_id = uuid.uuid4()
+
+    class DB:
+        async def flush(self):
+            return None
+
     monkeypatch.setattr(
         "app.services.cosmetic_entitlement_service.grant",
         fake_grant,
     )
     deal = Deal()
     entitlement = await grant_from_verified_payment(
-        object(),
+        DB(),
         tenant_id=tenant_id,
         deal=deal,
         source_order_id=source_order_id,
@@ -140,7 +145,7 @@ async def test_verified_payment_grant_is_idempotent_at_deal_marker(monkeypatch):
         fail_grant,
     )
     assert await grant_from_verified_payment(
-        object(),
+        DB(),
         tenant_id=tenant_id,
         deal=deal,
         source_order_id=source_order_id,
