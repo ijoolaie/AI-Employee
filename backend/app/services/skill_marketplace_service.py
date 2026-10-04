@@ -179,6 +179,7 @@ async def install(
     employee_id: uuid.UUID,
     skill_package_id: uuid.UUID,
     actor_id: uuid.UUID | None = None,
+    source_publication_id: uuid.UUID | None = None,
 ) -> EmployeeSkillInstallation:
     employee = (await db.execute(select(Employee).where(
         Employee.id == employee_id, Employee.tenant_id == tenant_id,
@@ -186,13 +187,29 @@ async def install(
     if employee is None:
         raise NotFoundError("employee not found in tenant")
 
+    source_owner_tenant_id = tenant_id
+    if source_publication_id is not None:
+        from app.models.skill_marketplace_publication import SkillMarketplacePublication
+        publication = (await db.execute(select(SkillMarketplacePublication).where(
+            SkillMarketplacePublication.id == source_publication_id,
+            SkillMarketplacePublication.visibility == "public",
+        ))).scalar_one_or_none()
+        if publication is None:
+            raise NotFoundError("public skill marketplace publication not found")
+        if publication.skill_package_id != skill_package_id:
+            raise ConflictError("skill package does not match marketplace publication")
+        source_owner_tenant_id = publication.owner_tenant_id
+        if source_owner_tenant_id == tenant_id:
+            raise ConflictError("marketplace publication owner cannot be the buyer tenant")
+
     package = (await db.execute(select(SkillPackage).where(
         SkillPackage.id == skill_package_id,
-        SkillPackage.tenant_id == tenant_id,
+        SkillPackage.tenant_id == source_owner_tenant_id,
         SkillPackage.status == SkillPackageStatus.PUBLISHED,
     ))).scalar_one_or_none()
     if package is None:
         raise NotFoundError("published skill package not found")
+
     _validate_manifest(package.manifest or {})
     _validate_skill_metadata(package.compatibility or {}, "skill compatibility")
     _validate_skill_metadata(package.presentation_metadata or {}, "skill presentation metadata")
@@ -219,17 +236,16 @@ async def install(
         existing.status = EmployeeSkillInstallationStatus.ACTIVE
         existing.installed_at = datetime.now(timezone.utc)
         existing.revoked_at = None
+        existing.source_owner_tenant_id = source_owner_tenant_id
         installation = existing
     else:
         installation = EmployeeSkillInstallation(
             tenant_id=tenant_id,
             employee_id=employee_id,
+            source_owner_tenant_id=source_owner_tenant_id,
             skill_package_id=skill_package_id,
             status=EmployeeSkillInstallationStatus.ACTIVE,
         )
-        # The preflight SELECT above is not sufficient under concurrent installs.
-        # Keep the unique constraint as the authoritative race boundary and
-        # translate its violation into the service-level ConflictError contract.
         try:
             async with db.begin_nested():
                 db.add(installation)
@@ -250,6 +266,8 @@ async def install(
         metadata={
             "employee_id": str(employee_id),
             "skill_package_id": str(skill_package_id),
+            "source_owner_tenant_id": str(source_owner_tenant_id),
+            "source_publication_id": str(source_publication_id) if source_publication_id else None,
             "skill_slug": package.slug,
             "skill_version": package.version,
             "presentation_only": True,
@@ -259,7 +277,6 @@ async def install(
         },
     )
     return installation
-
 
 async def revoke(
     db: AsyncSession,
