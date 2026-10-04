@@ -1091,3 +1091,48 @@ The real-stack gate also exposed and corrected two implementation/wiring defects
 - production certification of `659c1e757c3cdc6dcc1d7c390a5bdd74bd3feff8`: **NOT RUN / NOT VERIFIED**.
 
 The `v1.4.16` production-certified release remains immutable and is not extended by this checkpoint.
+
+
+### W16 cross-tenant Skill Marketplace purchase checkpoint — 2026-10-04
+
+PR #857 closes the buyer/seller separation needed for the next W16 commerce boundary.
+
+Implemented:
+- buyer-side `SkillMarketplacePurchase` ledger with buyer/seller tenants, publication, Employee, package, Product and idempotency correlation;
+- buyer Employee remains tenant-owned while the SkillPackage/Product remain seller-owned;
+- EmployeeSkillInstallation and SkillPurchaseEntitlement now retain the source owner tenant;
+- public publication is required for cross-tenant purchase;
+- purchase creates a buyer-tenant BusinessDeal and uses the existing provider-neutral sales payment checkout boundary;
+- verified payment settles the purchase, creates/reconciles buyer entitlement, installs the seller-owned package for the buyer Employee, and records correlated WorkforceRevenueEvent metadata;
+- repeated verified provider events remain idempotent;
+- purchase/install/execution paths do not create permissions, allowed tools, capability contracts, approval authority or seller payout authority.
+
+Exact-head evidence:
+- PR #857 exact head: `272ce9f52b73fcd72354d2f41efe1278a921e7a8`;
+- merge SHA: `8487f0b1133e20c4ce142d43fffd3ee69bf010c1`;
+- W16 Cross-Tenant Skill Purchase Real-Stack: PASS — Run `37201453142`;
+- CI: PASS — Run `37201453176`;
+- CodeQL: PASS — Run `37201453185`;
+- W16 Skill API: PASS — Run `37201453134`;
+- W16 Skill Provider: PASS — Run `37201453112`;
+- W16 Third-Party Publishing: PASS — Run `37201453159`;
+- Runtime Isolation/RBAC: PASS — Run `37201453102`;
+- Production Infrastructure: PASS — Run `37201453113`;
+- HA Recovery: PASS — Run `37201453146`;
+- Ephemeral DAST: PASS — Run `37201453141`;
+- Architecture Guard: PASS — Run `37201453158`;
+- Security/Privacy: PASS — Run `37201453101`;
+- Production Observability: PASS — Run `37201453103`;
+- Production Rollback & Alerting: PASS — Run `37201453138`;
+- Provider Integration: PASS — Run `37201453190`.
+
+The first exact-head attempt exposed ORM/migration index-name drift. After the migration/model names were reconciled, the final exact head passed migration consistency and the full backend CI suite.
+
+Evidence boundary:
+- cross-tenant marketplace purchase/settlement mechanics: **VERIFIED** on the deterministic contract-test payment provider and real PostgreSQL CI stack;
+- real external customer purchase: **NOT VERIFIED**;
+- realized customer marketplace revenue: **NOT VERIFIED**;
+- seller payout/platform commission/tax settlement: **NOT VERIFIED**;
+- Production Certification for `8487f0b1133e20c4ce142d43fffd3ee69bf010c1`: **NOT RUN / NOT VERIFIED**.
+
+Next W16 work should not add financial distribution semantics implicitly. Any seller payout, platform commission, refunds, chargebacks or tax treatment requires separate contracts and evidence.
