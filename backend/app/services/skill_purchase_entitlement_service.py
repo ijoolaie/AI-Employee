@@ -29,10 +29,12 @@ async def grant_from_verified_payment(
     provider_event_id: str,
 ) -> SkillPurchaseEntitlement | None:
     """Grant ownership only from a verified provider payment settlement."""
-    purchase = (deal.metadata_ or {}).get("skill_purchase")
+    metadata = deal.metadata_ or {}
+    purchase = metadata.get("skill_purchase")
+    marketplace = metadata.get("skill_marketplace_purchase")
     if not purchase:
         return None
-    if (deal.metadata_ or {}).get("skill_entitlement_granted") is True:
+    if metadata.get("skill_entitlement_granted") is True:
         return None
 
     required = {"employee_id", "product_id", "skill_package_id"}
@@ -62,17 +64,56 @@ async def grant_from_verified_payment(
             select(Employee).where(
                 Employee.id == employee_id,
                 Employee.tenant_id == tenant_id,
+                Employee.is_active.is_(True),
             )
         )
     ).scalar_one_or_none()
     if employee is None:
         raise NotFoundError("skill purchase employee not found in tenant")
 
+    source_owner_tenant_id = tenant_id
+    source_publication_id = None
+    if marketplace is not None:
+        required_marketplace = {
+            "buyer_tenant_id",
+            "seller_tenant_id",
+            "publication_id",
+            "employee_id",
+            "product_id",
+            "skill_package_id",
+            "skill_package_slug",
+            "skill_package_version",
+            "idempotency_key",
+        }
+        if set(marketplace) != required_marketplace:
+            raise ConflictError("skill marketplace purchase contract is malformed")
+        if str(marketplace["buyer_tenant_id"]) != str(tenant_id):
+            raise ConflictError("skill marketplace buyer tenant does not match payment tenant")
+        try:
+            seller_tenant_id = uuid.UUID(str(marketplace["seller_tenant_id"]))
+            source_publication_id = uuid.UUID(str(marketplace["publication_id"]))
+        except (TypeError, ValueError) as exc:
+            raise ConflictError("skill marketplace seller/publication identifiers are invalid") from exc
+        source_owner_tenant_id = seller_tenant_id
+        from app.models.skill_marketplace_publication import SkillMarketplacePublication
+        publication = (
+            await db.execute(
+                select(SkillMarketplacePublication).where(
+                    SkillMarketplacePublication.id == source_publication_id,
+                    SkillMarketplacePublication.owner_tenant_id == seller_tenant_id,
+                    SkillMarketplacePublication.skill_package_id == skill_package_id,
+                    SkillMarketplacePublication.visibility == "public",
+                )
+            )
+        ).scalar_one_or_none()
+        if publication is None:
+            raise NotFoundError("verified skill marketplace publication not found")
+
     package = (
         await db.execute(
             select(SkillPackage).where(
                 SkillPackage.id == skill_package_id,
-                SkillPackage.tenant_id == tenant_id,
+                SkillPackage.tenant_id == source_owner_tenant_id,
                 SkillPackage.status == SkillPackageStatus.PUBLISHED,
             )
         )
@@ -84,7 +125,7 @@ async def grant_from_verified_payment(
         await db.execute(
             select(Product).where(
                 Product.id == product_id,
-                Product.tenant_id == tenant_id,
+                Product.tenant_id == source_owner_tenant_id,
                 Product.is_active.is_(True),
             )
         )
@@ -118,6 +159,8 @@ async def grant_from_verified_payment(
         existing.status = SkillPurchaseEntitlementStatus.ACTIVE
         existing.granted_at = datetime.now(timezone.utc)
         existing.revoked_at = None
+        existing.source_owner_tenant_id = source_owner_tenant_id
+        existing.source_publication_id = source_publication_id
         existing.source_order_id = source_order_id
         existing.provider = provider
         existing.provider_event_id = provider_event_id
@@ -126,12 +169,18 @@ async def grant_from_verified_payment(
         entitlement = SkillPurchaseEntitlement(
             tenant_id=tenant_id,
             employee_id=employee_id,
+            source_owner_tenant_id=source_owner_tenant_id,
+            source_publication_id=source_publication_id,
             skill_package_id=skill_package_id,
             source_order_id=source_order_id,
             provider=provider,
             provider_event_id=provider_event_id,
             status=SkillPurchaseEntitlementStatus.ACTIVE,
-            metadata_={"presentation_only": True, "execution_authority_changed": False},
+            metadata_={
+                "presentation_only": True,
+                "execution_authority_changed": False,
+                "cross_tenant_marketplace": marketplace is not None,
+            },
         )
         db.add(entitlement)
         await db.flush()
@@ -145,18 +194,21 @@ async def grant_from_verified_payment(
         resource_id=str(entitlement.id),
         metadata={
             "employee_id": str(employee_id),
+            "source_owner_tenant_id": str(source_owner_tenant_id),
+            "source_publication_id": str(source_publication_id) if source_publication_id else None,
             "skill_package_id": str(skill_package_id),
             "product_id": str(product_id),
             "source_order_id": str(source_order_id),
             "provider": provider,
             "provider_event_id": provider_event_id,
+            "cross_tenant_marketplace": marketplace is not None,
             "presentation_only": True,
             "execution_authority_changed": False,
             "permissions_changed": False,
             "allowed_tools_changed": False,
         },
     )
-    deal_metadata = dict(deal.metadata_ or {})
+    deal_metadata = dict(metadata)
     deal_metadata["skill_entitlement_granted"] = True
     deal_metadata["skill_entitlement_id"] = str(entitlement.id)
     deal.metadata_ = deal_metadata
