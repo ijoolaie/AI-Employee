@@ -1044,3 +1044,50 @@ The migration revision initially exceeded the existing Alembic `version_num VARC
 - production certification of `dbacb01c4111174493b8d520a2934a07561a9a08`: **NOT RUN / NOT VERIFIED**.
 
 This checkpoint does not change the immutable `v1.4.16` production-certified release.
+
+### W16 governed SkillPackage provider execution checkpoint — 2026-10-04
+
+PR #855 added a dedicated runtime path for installed SkillPackage execution through an explicit operator-configured provider.
+
+Implementation boundary:
+- `workforce_execute_installed_skill` is a registered Tool Registry capability;
+- execution requires an active tenant Run context, `run.execute`, Employee allowed-tool guardrails and mandatory approval for the external side effect;
+- execution requires an active tenant-scoped Employee Skill installation;
+- commercial SkillPackages additionally require the independently verified purchase entitlement;
+- provider name, endpoint, credentials and timeout are operator-owned configuration; runtime Skill input cannot select a provider or endpoint;
+- the default provider remains fail-closed `none`;
+- the deterministic HTTP provider used by CI is test infrastructure only;
+- provider payload carries tenant, employee, package, Skill version and stable request correlation identity;
+- execution audit records provider, external execution state and unchanged execution authority;
+- redirects and oversized provider responses are rejected;
+- no generic shell or arbitrary command execution is introduced.
+
+Exact-head evidence:
+- PR head: `20727001c2f967d850bda036c53acf7ccd326f81`;
+- merge SHA: `659c1e757c3cdc6dcc1d7c390a5bdd74bd3feff8`;
+- W16 Skill Provider Execution Real-Stack: PASS — Run `37199713576`;
+- CI: PASS — Run `37199713528`;
+- CodeQL: PASS — Run `37199713526`;
+- Provider Integration Contract: PASS — Run `37199713527`;
+- Runtime Isolation/RBAC: PASS — Run `37199713590`;
+- Production Infrastructure Validation: PASS — Run `37199713566`;
+- HA Failure Recovery: PASS — Run `37199713653`;
+- Ephemeral DAST: PASS — Run `37199713615`;
+- Architecture Guard: PASS — Run `37199713621`;
+- Production Secret Management: PASS — Run `37199713523`;
+- Production Observability: PASS — Run `37199713593`;
+- Production Rollback & Alerting: PASS — Run `37199713539`;
+- Production Hardening: PASS — Run `37199713605`;
+- Phase 14.14 Security/Privacy: PASS — Run `37199713604`;
+- Workforce W0-W6 Contract Gate: PASS — Run `37199713600`;
+- Workforce W1/W2/W3/W4/W5/W6/W7/W8/W9/W10 exact-head gates: PASS — Runs `37199713521`, `37199713613`, `37199713617`, `37199713531`, `37199713607`, `37199713575`, `37199713536`, `37199713519`, `37199713598`, `37199713599`.
+
+The real-stack gate also exposed and corrected two implementation/wiring defects before the final PASS: provider settings were initially present only in the workflow runner rather than the API container, and the generic Workforce Tool Registry dispatch initially dropped the stable `tool_call_id`. The final exact head passed after both corrections.
+
+**Evidence boundary:**
+- governed SkillPackage provider execution against the deterministic CI HTTP provider fixture: **VERIFIED**;
+- external production Skill provider execution: **NOT VERIFIED**;
+- customer acceptance / marketplace revenue: **NOT VERIFIED**;
+- production certification of `659c1e757c3cdc6dcc1d7c390a5bdd74bd3feff8`: **NOT RUN / NOT VERIFIED**.
+
+The `v1.4.16` production-certified release remains immutable and is not extended by this checkpoint.
