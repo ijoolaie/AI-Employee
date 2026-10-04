@@ -55,16 +55,16 @@ class SkillPurchaseEntitlement(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False
     )
     employee_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
     )
     skill_package_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("skill_packages.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("skill_packages.id", ondelete="CASCADE"), nullable=False
     )
     source_order_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("business_orders.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True), ForeignKey("business_orders.id", ondelete="RESTRICT"), nullable=False
     )
     provider: Mapped[str] = mapped_column(String(40), nullable=False)
     provider_event_id: Mapped[str] = mapped_column(String(255), nullable=False)
