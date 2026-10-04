@@ -1,10 +1,12 @@
 """W16 third-party SkillPackage publication and discovery endpoints."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query, status
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
 from app.core.deps import DbSession, TenantContext, require_permission
+from app.core.exceptions import NotFoundError
 from app.models.skill_marketplace_publication import SkillMarketplacePublication
 from app.schemas.common import APIResponse
 from app.schemas.skill_marketplace_publication import (
@@ -20,6 +22,7 @@ from app.services.skill_marketplace_publication_service import (
 router = APIRouter(prefix="/skill-marketplace/publications", tags=["skill-marketplace"])
 
 SkillMarketplacePublishContext = TenantContext
+SkillMarketplaceReadContext = TenantContext
 
 
 def _read(item: SkillMarketplacePublication) -> SkillMarketplacePublicationResponse:
@@ -27,11 +30,10 @@ def _read(item: SkillMarketplacePublication) -> SkillMarketplacePublicationRespo
 
 
 def _error(exc: Exception) -> HTTPException:
-    if isinstance(exc, SkillMarketplacePublicationError):
-        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
-    from app.core.exceptions import NotFoundError
     if isinstance(exc, NotFoundError):
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    if isinstance(exc, SkillMarketplacePublicationError):
+        return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
     return HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
 
 
@@ -42,7 +44,7 @@ def _error(exc: Exception) -> HTTPException:
 )
 async def publish_skill_package(
     payload: SkillMarketplacePublicationCreate,
-    ctx: SkillMarketplacePublishContext = __import__("fastapi").Depends(require_permission("skill_marketplace.publish")),
+    ctx: SkillMarketplacePublishContext = Depends(require_permission("skill_marketplace.publish")),
     db: DbSession = None,
 ):
     try:
@@ -85,7 +87,7 @@ async def publish_skill_package(
     response_model=APIResponse[list[SkillMarketplacePublicationResponse]],
 )
 async def list_skill_publications(
-    ctx: TenantContext = __import__("fastapi").Depends(require_permission("skill_marketplace.read")),
+    ctx: SkillMarketplaceReadContext = Depends(require_permission("skill_marketplace.read")),
     db: DbSession = None,
     visibility: str | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=200),
@@ -110,7 +112,7 @@ async def list_skill_publications(
 )
 async def get_skill_publication(
     publication_id: UUID,
-    ctx: TenantContext = __import__("fastapi").Depends(require_permission("skill_marketplace.read")),
+    ctx: SkillMarketplaceReadContext = Depends(require_permission("skill_marketplace.read")),
     db: DbSession = None,
 ):
     try:
