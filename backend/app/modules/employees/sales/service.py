@@ -18,6 +18,7 @@ from app.models.business_deal import BusinessDeal
 from app.models.business_order import BusinessOrder
 from app.models.employee import Employee
 from app.models.product import Product
+from app.models.skill_package import SkillPackage, SkillPackageStatus
 from app.services import audit_service
 
 ALLOWED_STAGES = frozenset(
@@ -56,6 +57,7 @@ async def create_deal(
     source: str | None = None,
     order_id: str | None = None,
     cosmetic_purchase: dict[str, Any] | None = None,
+    skill_purchase: dict[str, Any] | None = None,
 ) -> BusinessDeal:
     if not title or not str(title).strip():
         raise ValidationAppError("title is required")
@@ -108,6 +110,55 @@ async def create_deal(
             "cosmetic_value": cosmetic_value,
         }
 
+    skill_contract = None
+    if skill_purchase is not None:
+        required = {"employee_id", "product_id", "skill_package_id"}
+        if set(skill_purchase) != required:
+            raise ValidationAppError("skill_purchase must contain exactly employee_id, product_id, skill_package_id")
+        try:
+            skill_employee_id = uuid.UUID(str(skill_purchase["employee_id"]))
+            skill_product_id = uuid.UUID(str(skill_purchase["product_id"]))
+            skill_package_id = uuid.UUID(str(skill_purchase["skill_package_id"]))
+        except (TypeError, ValueError) as exc:
+            raise ValidationAppError("skill_purchase employee_id/product_id/skill_package_id must be valid UUIDs") from exc
+        employee = (await db.execute(select(Employee).where(
+            Employee.id == skill_employee_id,
+            Employee.tenant_id == tenant_id,
+        ))).scalar_one_or_none()
+        if employee is None:
+            raise NotFoundError("Skill purchase employee not found")
+        product = (await db.execute(select(Product).where(
+            Product.id == skill_product_id,
+            Product.tenant_id == tenant_id,
+        ))).scalar_one_or_none()
+        if product is None:
+            raise NotFoundError("Skill purchase product not found")
+        package = (await db.execute(select(SkillPackage).where(
+            SkillPackage.id == skill_package_id,
+            SkillPackage.tenant_id == tenant_id,
+            SkillPackage.status == SkillPackageStatus.PUBLISHED,
+        ))).scalar_one_or_none()
+        if package is None:
+            raise NotFoundError("Skill purchase package not found or unpublished")
+        if package.product_id != product.id or product.category != "employee_skill" or not product.is_active:
+            raise ValidationAppError("Skill purchase product does not match an active employee skill package")
+        attributes = product.attributes or {}
+        if attributes.get("skill_package_slug") != package.slug:
+            raise ValidationAppError("Skill purchase product does not match package slug")
+        try:
+            product_version = int(attributes.get("skill_package_version", -1))
+        except (TypeError, ValueError):
+            raise ValidationAppError("Skill purchase product version is invalid") from None
+        if product_version != package.version:
+            raise ValidationAppError("Skill purchase product does not match package version")
+        if (product.currency or "").upper() != (currency or "").upper() or _money(product.price) != amt:
+            raise ValidationAppError("Skill purchase amount/currency must match the catalog product")
+        skill_contract = {
+            "employee_id": str(skill_employee_id),
+            "product_id": str(skill_product_id),
+            "skill_package_id": str(skill_package_id),
+        }
+
     order_uuid = None
     if order_id:
         try:
@@ -136,7 +187,10 @@ async def create_deal(
         source=source,
         order_id=order_uuid,
         created_by=actor_id,
-        metadata_={"cosmetic_purchase": cosmetic_contract} if cosmetic_contract else {},
+        metadata_={
+            **({"cosmetic_purchase": cosmetic_contract} if cosmetic_contract else {}),
+            **({"skill_purchase": skill_contract} if skill_contract else {}),
+        },
     )
     db.add(deal)
     await db.flush()
