@@ -47,7 +47,7 @@ def _contains_execution_authority(value: object) -> bool:
     return False
 
 
-def _validate_skill_metadata(value: dict, field_name: str) -> None:
+def _validate_skill_metadata(value: object, field_name: str) -> None:
     if not isinstance(value, dict):
         raise ValidationAppError(f"{field_name} must be an object")
     if _contains_execution_authority(value):
@@ -68,7 +68,11 @@ def _validate_product_contract(product: Product | None, package: SkillPackage) -
     attributes = product.attributes or {}
     if attributes.get("skill_package_slug") != package.slug:
         raise SkillMarketplaceError("skill product does not match package")
-    if int(attributes.get("skill_package_version", -1)) != package.version:
+    try:
+        product_version = int(attributes.get("skill_package_version", -1))
+    except (TypeError, ValueError):
+        raise SkillMarketplaceError("skill product version is invalid") from None
+    if product_version != package.version:
         raise SkillMarketplaceError("skill product version does not match package")
 
 
@@ -89,9 +93,9 @@ async def create_package(
         raise ValidationAppError("skill slug is invalid")
     if version < 1:
         raise ValidationAppError("skill version must be at least 1")
-    manifest = dict(manifest or {})
-    compatibility = dict(compatibility or {})
-    presentation_metadata = dict(presentation_metadata or {})
+    manifest = {} if manifest is None else manifest
+    compatibility = {} if compatibility is None else compatibility
+    presentation_metadata = {} if presentation_metadata is None else presentation_metadata
     _validate_manifest(manifest)
     _validate_skill_metadata(compatibility, "skill compatibility")
     _validate_skill_metadata(presentation_metadata, "skill presentation metadata")
