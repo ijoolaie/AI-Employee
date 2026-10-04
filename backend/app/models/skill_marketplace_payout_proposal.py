@@ -41,6 +41,10 @@ class SkillMarketplacePayoutProposal(Base):
             "ix_skill_marketplace_payout_proposals_status",
             "status",
         ),
+        Index(
+            "ix_skill_marketplace_payout_proposals_provider_payout_id",
+            "provider_payout_id",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
