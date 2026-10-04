@@ -1226,3 +1226,42 @@ The dedicated marketplace real-stack scenario verified proposal creation, seller
 - Production Certification for `c8fd849e77d2181f32700e1a7e52f03e48cd21e8`: **NOT RUN / NOT VERIFIED**.
 
 The immutable `v1.4.16` certification boundary remains unchanged.
+
+### W16 marketplace financial outcome reporting checkpoint — 2026-10-04
+
+PR #864 adds a read-only financial reporting boundary over the already verified marketplace purchase/settlement ledger.
+
+Implementation:
+- platform-admin read-only financial summary endpoint;
+- aggregates only recorded `SkillMarketplaceSettlement` rows;
+- exposes verified settlement and paid-purchase counts plus gross/platform-fee/seller-net totals by currency;
+- supports seller-tenant filtering;
+- exposes payout-proposal count without assuming payout execution;
+- reporting service contains no payment-provider calls and no mutation path.
+
+Exact-head evidence:
+- PR head: `bbef175cb0926827db065323ee718e1f080cedac`;
+- merge SHA: `027d8005df6ac9069a4734b9679bf839d1129a35`;
+- W16 Marketplace Financial Reporting Real-Stack: PASS — Run `37204822747`;
+- W16 Cross-Tenant Skill Purchase Real-Stack: PASS — Run `37204822786`;
+- CI: PASS — Run `37204822802`;
+- CodeQL: PASS — Run `37204822799`;
+- Runtime Isolation/RBAC: PASS — Run `37204822831`;
+- Ephemeral DAST: PASS — Run `37204822773`;
+- Architecture Guard: PASS — Run `37204822768`;
+- Production Infrastructure: PASS — Run `37204822764`;
+- HA Failure Recovery: PASS — Run `37204822782`;
+- Production Observability: PASS — Run `37204822766`;
+- Production Rollback & Alerting: PASS — Run `37204822752`;
+- Security/Privacy: PASS — Run `37204822753`.
+
+The dedicated real-stack scenario verified settlement-derived totals, seller filtering, zero-result tenant isolation, payout-proposal visibility and the read-only boundary.
+
+**Evidence boundary:**
+- marketplace financial outcome reporting: **VERIFIED** on the deterministic/real PostgreSQL engineering stack;
+- external customer payment / realized marketplace revenue: **NOT VERIFIED**;
+- external seller payout execution: **NOT VERIFIED**;
+- tax calculation/settlement: **NOT VERIFIED**;
+- Production Certification of `027d8005df6ac9069a4734b9679bf839d1129a35`: **NOT RUN / NOT VERIFIED**.
+
+The immutable `v1.4.16` production-certified release remains unchanged.
