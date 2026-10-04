@@ -984,6 +984,30 @@ The following remain **NOT VERIFIED**:
 
 This evidence is post-release engineering evidence and does not inherit v1.4.16 certification.
 
-### Next W16 slice
+### W16 commercial purchase entitlement checkpoint — 2026-10-04
 
-Before expanding into broader commercial marketplace behavior, add focused real-stack/API evidence for the tenant-scoped employee skill endpoints and entitlement boundary. Keep paid-skill installation fail-closed until a verified purchase entitlement contract exists. Do not introduce permission/tool expansion through skill installation.
+The previously planned entitlement slice is now implemented, real-stack verified, and merged on mainline through PR #851.
+
+Implementation:
+- tenant/employee/skill-package scoped `SkillPurchaseEntitlement` ownership ledger;
+- entitlement creation only from the existing provider-verified sales-payment settlement path;
+- exact employee/product/package contract validation against the published package and active employee-skill Product;
+- commercial skill installation requires an active verified entitlement;
+- free skills remain unaffected;
+- entitlement state is presentation-only and does not grant permissions, allowed tools, capability contracts, approval policy or tool bindings;
+- provider event and tenant/employee/package uniqueness constraints preserve replay and ownership boundaries.
+
+Real-stack evidence:
+- PR #851 exact head `0afd8d021afc5b71fb53f84d7c187a33545ec4f7` passed the full applicable CI/security/real-stack gate set before merge;
+- merge commit: `bbafa2c7b754cd69d421c6011bf42f5523fdeaa2`;
+- W16 Skill API Real-Stack run `37196737015` / job associated with the exact head completed **PASS**;
+- post-merge W10 dogfood run `37196994830` completed **PASS** on the merge SHA.
+
+Evidence boundary:
+- W16 commercial purchase entitlement and commercial-install fail-closed behavior: **VERIFIED**;
+- third-party skill publishing: **NOT VERIFIED**;
+- external skill-provider execution: **NOT VERIFIED**;
+- real marketplace/customer revenue: **NOT VERIFIED**;
+- production certification of the post-v1.4.16 merge SHA: **NOT RUN / NOT VERIFIED**.
+
+The next W16 work should focus on independently evidenced marketplace/customer outcome behavior or other concrete business requirements, not reimplementing the entitlement gate.
