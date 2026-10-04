@@ -39,3 +39,18 @@ def test_marketplace_purchase_model_has_idempotency_boundary():
     }
     assert frozenset({"buyer_tenant_id", "idempotency_key"}) in unique_sets
     assert frozenset({"business_deal_id"}) in unique_sets
+
+
+def test_marketplace_purchase_routes_are_ordered_and_explicit():
+    from app.api.v1.skill_marketplace import router
+    routes = [route.path for route in router.routes if hasattr(route, "path")]
+    assert "/skill-marketplace/publications/purchases" in routes
+    assert "/skill-marketplace/publications/{publication_id}" in routes
+    assert routes.index("/skill-marketplace/publications/purchases") < routes.index("/skill-marketplace/publications/{publication_id}")
+
+
+def test_marketplace_purchase_http_schema_is_explicit():
+    from app.schemas.skill_marketplace_purchase import SkillMarketplacePurchaseCreate
+    fields = SkillMarketplacePurchaseCreate.model_fields
+    assert set(fields) == {"publication_id", "employee_id", "idempotency_key"}
+    assert fields["idempotency_key"].is_required()

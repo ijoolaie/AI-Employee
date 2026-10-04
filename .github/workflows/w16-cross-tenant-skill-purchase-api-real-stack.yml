@@ -1,0 +1,84 @@
+name: W16 Cross-Tenant Skill Purchase API Real-Stack
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/api/v1/skill_marketplace.py"
+      - "backend/app/services/skill_marketplace_purchase_service.py"
+      - "backend/app/services/skill_marketplace_service.py"
+      - "backend/app/services/workforce_sales_payment_provider.py"
+      - "backend/app/schemas/skill_marketplace_purchase.py"
+      - "backend/app/models/skill_marketplace_purchase.py"
+      - "backend/scripts/e2e_w16_cross_tenant_skill_purchase_api_verify.py"
+      - "backend/tests/test_skill_marketplace_purchase.py"
+      - ".github/workflows/w16-cross-tenant-skill-purchase-api-real-stack.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: w16-cross-tenant-skill-purchase-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  w16-cross-tenant-skill-purchase-api:
+    name: W16 cross-tenant marketplace purchase API real-stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABASE_URL: postgresql+asyncpg://aiep:aiep@localhost:5432/aiep
+      DATABASE_URL_SYNC: postgresql://aiep:aiep@localhost:5432/aiep
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+      SECRET_KEY: ci-w16-marketplace-api-secret
+      APP_ENV: test
+      CI: true
+      E2E_API_BASE_URL: http://localhost:8000/api/v1
+    steps:
+      - uses: actions/checkout@v7
+      - name: Start PostgreSQL and Redis
+        run: docker compose up -d postgres redis
+      - name: Wait for dependencies
+        run: |
+          set -euo pipefail
+          for i in {1..40}; do
+            if docker compose exec -T postgres pg_isready -U aiep -d aiep >/dev/null 2>&1 && docker compose exec -T redis redis-cli ping >/dev/null 2>&1; then exit 0; fi
+            sleep 3
+          done
+          docker compose logs postgres redis
+          exit 1
+      - name: Build and start API with deterministic payment provider
+        run: |
+          set -euo pipefail
+          cat > /tmp/w16-marketplace-api.override.yml <<'YAML'
+          services:
+            api:
+              environment:
+                SALES_PAYMENT_PROVIDER_NAME: contract-test
+          YAML
+          docker compose -f docker-compose.yml -f /tmp/w16-marketplace-api.override.yml up -d --build api worker beat
+      - name: Wait for API
+        run: |
+          set -euo pipefail
+          for i in {1..40}; do
+            if curl -fsS http://localhost:8000/health/dependencies >/dev/null; then exit 0; fi
+            sleep 3
+          done
+          docker compose logs api worker beat
+          exit 1
+      - name: Apply migrations
+        run: docker compose exec -T api alembic upgrade head
+      - name: Verify migration graph
+        run: |
+          set -euo pipefail
+          docker compose exec -T api alembic check
+          test "$(docker compose exec -T api alembic heads | grep -c '(head)')" -eq 1
+      - name: Run HTTP marketplace purchase gate
+        run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_w16_cross_tenant_skill_purchase_api_verify.py'
+      - name: Run focused purchase unit contracts
+        run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app pytest -q tests/test_skill_marketplace_purchase.py'
+      - name: Dump logs on failure
+        if: ${{ failure() }}
+        run: docker compose logs --no-color
+      - name: Teardown
+        if: ${{ always() }}
+        run: docker compose down -v
