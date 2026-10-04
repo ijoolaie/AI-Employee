@@ -2,6 +2,7 @@
 
 from alembic import op
 
+
 revision = "w16_payout_exec_state"
 down_revision = "w16_payout_dest_bind"
 branch_labels = None
@@ -9,6 +10,14 @@ depends_on = None
 
 
 def upgrade() -> None:
+    # The preceding payout-execution-ledger migration adds PostgreSQL enum
+    # values. PostgreSQL requires those new enum values to be committed before
+    # they can be referenced by a CHECK constraint. Alembic's normal migration
+    # transaction keeps them uncommitted, so explicitly commit the preceding
+    # migration work before creating this constraint.
+    with op.get_context().autocommit_block():
+        pass
+
     op.drop_constraint(
         "ck_skill_marketplace_payout_proposal_not_executed",
         "skill_marketplace_payout_proposals",
