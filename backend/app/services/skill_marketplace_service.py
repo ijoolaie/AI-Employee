@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AppError, ConflictError, NotFoundError, ValidationAppError
@@ -217,8 +218,17 @@ async def install(
             skill_package_id=skill_package_id,
             status=EmployeeSkillInstallationStatus.ACTIVE,
         )
-        db.add(installation)
-    await db.flush()
+        # The preflight SELECT above is not sufficient under concurrent installs.
+        # Keep the unique constraint as the authoritative race boundary and
+        # translate its violation into the service-level ConflictError contract.
+        try:
+            async with db.begin_nested():
+                db.add(installation)
+                await db.flush()
+        except IntegrityError as exc:
+            raise ConflictError("skill package is already installed") from exc
+    if installation.id is None:
+        await db.refresh(installation)
     await audit_service.record(
         db,
         tenant_id=tenant_id,
