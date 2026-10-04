@@ -14,6 +14,8 @@ from app.models.product import Product
 from app.models.skill_marketplace_publication import SkillMarketplacePublication
 from app.models.skill_marketplace_purchase import SkillMarketplacePurchase, SkillMarketplacePurchaseStatus
 from app.models.skill_package import SkillPackage, SkillPackageStatus
+from app.models.tenant import Tenant
+from app.services.workforce_sales_payment_provider import create_sales_checkout_session
 from app.services import audit_service
 
 
@@ -30,6 +32,8 @@ async def prepare_purchase(
     key = idempotency_key.strip()
     if not key or len(key) > 255:
         raise ValidationAppError("skill marketplace purchase idempotency key is invalid")
+
+    await db.execute(select(Tenant).where(Tenant.id == buyer_tenant_id).with_for_update())
 
     existing = (
         await db.execute(
@@ -181,3 +185,49 @@ async def prepare_purchase(
         },
     )
     return purchase, deal, False
+
+
+async def create_checkout(
+    db: AsyncSession,
+    *,
+    buyer_tenant_id: uuid.UUID,
+    employee_id: uuid.UUID,
+    publication_id: uuid.UUID,
+    actor_id: uuid.UUID | None,
+    customer_email: str | None,
+    idempotency_key: str,
+):
+    purchase, deal, replay = await prepare_purchase(
+        db,
+        buyer_tenant_id=buyer_tenant_id,
+        employee_id=employee_id,
+        publication_id=publication_id,
+        actor_id=actor_id,
+        customer_email=customer_email,
+        idempotency_key=idempotency_key,
+    )
+    if replay and purchase.status == SkillMarketplacePurchaseStatus.PAID:
+        return purchase, deal, None, True
+
+    await db.commit()
+    try:
+        result = await create_sales_checkout_session(
+            tenant_id=buyer_tenant_id,
+            deal_id=deal.id,
+            amount=purchase.amount,
+            currency=purchase.currency,
+            customer_email=customer_email,
+            idempotency_key=idempotency_key,
+            db=db,
+        )
+    except Exception:
+        await db.rollback()
+        raise
+
+    purchase.provider = result.provider
+    metadata = dict(purchase.metadata_ or {})
+    metadata["provider_execution"] = result.provider_execution
+    metadata["checkout_created"] = bool(result.checkout_url)
+    purchase.metadata_ = metadata
+    await db.commit()
+    return purchase, deal, result, replay
