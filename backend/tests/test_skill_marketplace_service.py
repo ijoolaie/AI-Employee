@@ -35,3 +35,26 @@ def test_skill_package_product_fk_is_not_nullable_on_delete():
     assert SkillPackage.__table__.c.product_id.foreign_keys
     fk = next(iter(SkillPackage.__table__.c.product_id.foreign_keys))
     assert fk.ondelete == "RESTRICT"
+
+
+def test_skill_metadata_rejects_nested_execution_authority():
+    nested = {"ui": {"presentation": {"permissions": ["run.execute"]}}}
+    try:
+        _validate_manifest(nested)
+    except SkillMarketplaceError:
+        pass
+    else:
+        raise AssertionError("nested permissions must be rejected")
+
+
+def test_skill_metadata_must_be_objects():
+    from app.core.exceptions import ValidationAppError
+    from app.services.skill_marketplace_service import _validate_skill_metadata
+
+    for value in ([], "invalid", 1):
+        try:
+            _validate_skill_metadata(value, "skill compatibility")
+        except ValidationAppError:
+            pass
+        else:
+            raise AssertionError(value)
