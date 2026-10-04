@@ -12,10 +12,10 @@
 
 1. **DONE:** W16 exact-SHA Production Certification and immutable v1.4.16 release.
 2. **DONE:** W10 Internal Company Dogfood on the certified SHA.
-3. **OPEN:** Reconcile this documentation set with the actual v1.4.16 release state; do not merge stale release-candidate claims.
-4. **OPEN:** Rebase/recreate PR #836 on current `main` and require fresh validation before merge.
-5. **OPEN:** Establish GitHub `main` branch protection and required checks so release governance is enforced by repository policy, not documentation alone.
-6. **NEXT:** Select the next concrete Workforce/product slice only after the above release-governance cleanup is complete.
+3. **DONE:** Reconcile current documentation with the published v1.4.16 release and current `main` head.
+4. **DONE:** Rebase and merge PR #836 after fresh exact-head validation.
+5. **BLOCKED:** Establish GitHub `main` branch protection and required checks; the available GitHub integration lacks the required repository-rules write capability and the direct protection endpoint returned HTTP 403.
+6. **NEXT:** Verify current-main CI after the PR #836 merge, then select the next concrete Workforce/product hardening slice.
 
 
 ## Priority order
