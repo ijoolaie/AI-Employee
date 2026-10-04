@@ -80,5 +80,5 @@ __all__ = [
     "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",
     "TestDefinition", "TestRun", "TestRunStatus", "TestRunArtifact", "TeamDefinition", "TeamVersion",
     "TeamInstallation", "TeamEvaluation", "MarketplacePublication", "WorkloadBalanceEvent", "WorkforceDelegation", "WorkforceSLAContract",
-    "WorkforceRevenueEvent", "CosmeticEntitlement", "SkillMarketplacePublication", "SkillPackage", "SkillPackageStatus", "EmployeeSkillInstallation", "EmployeeSkillInstallationStatus",
+    "WorkforceRevenueEvent", "CosmeticEntitlement", "SkillMarketplacePublication", "SkillMarketplacePurchase", "SkillMarketplacePurchaseStatus", "SkillPackage", "SkillPackageStatus", "EmployeeSkillInstallation", "EmployeeSkillInstallationStatus",
 ]
