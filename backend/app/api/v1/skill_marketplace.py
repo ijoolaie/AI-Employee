@@ -44,8 +44,8 @@ def _error(exc: Exception) -> HTTPException:
 )
 async def publish_skill_package(
     payload: SkillMarketplacePublicationCreate,
-    ctx: SkillMarketplacePublishContext = Depends(require_permission("skill_marketplace.publish")),
     db: DbSession,
+    ctx: SkillMarketplacePublishContext = Depends(require_permission("skill_marketplace.publish")),
 ):
     try:
         publication = await SkillMarketplacePublicationService.publish(
