@@ -159,6 +159,8 @@ async def install(
     if package is None:
         raise NotFoundError("published skill package not found")
     _validate_manifest(package.manifest or {})
+    if package.product_id is not None:
+        raise SkillMarketplaceError("commercial skill installation requires a verified purchase entitlement")
 
     existing = (await db.execute(select(EmployeeSkillInstallation).where(
         EmployeeSkillInstallation.tenant_id == tenant_id,
