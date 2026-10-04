@@ -274,6 +274,31 @@ class ToolRegistry:
                 tenant_id=tenant_id,
                 **extra_context,
             )
+        elif name == "marketplace_execute_payout":
+            if db is None or tenant_id is None or actor_id is None:
+                raise ValidationAppError(
+                    "marketplace_execute_payout requires an active tenant and actor context"
+                )
+            from app.services import skill_marketplace_payout_service
+            proposal = await skill_marketplace_payout_service.execute_payout_proposal(
+                db,
+                proposal_id=__import__("uuid").UUID(arguments["proposal_id"]),
+                platform_admin_tenant_id=tenant_id,
+                actor_user_id=actor_id,
+                approval_granted=approval_granted,
+            )
+            result = {
+                "proposal_id": str(proposal.id),
+                "execution_status": proposal.execution_status.value,
+                "provider": proposal.provider,
+                "provider_payout_id": proposal.provider_payout_id,
+                "provider_event_id": proposal.provider_event_id,
+                "executed": proposal.executed,
+                "external_execution": proposal.external_execution,
+                "failure_code": proposal.failure_code,
+                "retryable": proposal.retryable,
+            }
+
         elif name == "create_invoice":
             if db is None or tenant_id is None:
                 raise ValidationAppError("create_invoice requires an active tenant Run context")
