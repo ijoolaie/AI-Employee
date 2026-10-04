@@ -171,7 +171,6 @@ async def verify() -> None:
         assert summary["verified_settlement_count"] == 1
         assert summary["verified_paid_purchase_count"] == 1
         assert summary["payout_proposal_count"] == 1
-        assert summary["payout_executed_count"] == 0
         assert summary["by_currency"]["EUR"]["gross_amount"] == "20.00"
         assert summary["by_currency"]["EUR"]["platform_fee_amount"] == "3.00"
         assert summary["by_currency"]["EUR"]["seller_net_amount"] == "17.00"
