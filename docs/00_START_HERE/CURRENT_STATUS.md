@@ -478,3 +478,23 @@ Latest W16 financial-control-plane boundary:
 PR #862 exact head `881ca9d498989ec7af522ec799fbb693dd708c5e` passed the dedicated cross-tenant marketplace real-stack gate `37203634612`, CI `37203634678`, CodeQL `37203634695`, DAST `37203634654`, Runtime Isolation/RBAC `37203634634`, Architecture `37203634622`, Production Infrastructure `37203634605`, HA `37203634742`, Production Observability `37203634636`, Production Rollback & Alerting `37203634710`, and Security/Privacy `37203634663` before merge. Merge SHA: `c8fd849e77d2181f32700e1a7e52f03e48cd21e8`.
 
 The proposal is platform-admin/vendor scoped and explicitly non-executing: provider `none`, destination `not_configured`, payout `not_executed`, tax `not_calculated`. This does not extend the immutable `v1.4.16` certification.
+
+## W16 marketplace financial reporting — 2026-10-04
+
+The latest W16 engineering chain now has a read-only marketplace financial outcome report derived from recorded settlements.
+
+- PR #864 exact head: `bbef175cb0926827db065323ee718e1f080cedac`
+- merge SHA: `027d8005df6ac9069a4734b9679bf839d1129a35`
+- W16 Marketplace Financial Reporting Real-Stack: **PASS** — Run `37204822747`
+- CI: **PASS** — Run `37204822802`
+- CodeQL: **PASS** — Run `37204822799`
+- Ephemeral DAST: **PASS** — Run `37204822773`
+- Runtime Isolation/RBAC: **PASS** — Run `37204822831`
+- Production Infrastructure: **PASS** — Run `37204822764`
+- HA Failure Recovery: **PASS** — Run `37204822782`
+
+The report is read-only and settlement-derived. It does not create payment events, execute payouts, infer customer revenue, or change employee execution authority.
+
+**VERIFIED:** marketplace financial outcome reporting on the real PostgreSQL CI stack.
+
+**NOT VERIFIED:** real external customer payment/revenue, external seller payout execution, tax settlement, and Production Certification of the post-v1.4.16 merge SHA.
