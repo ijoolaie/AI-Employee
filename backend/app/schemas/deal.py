@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class CosmeticPurchase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     employee_id: UUID
     product_id: UUID
     cosmetic_type: str = Field(pattern="^(gender_presentation|outfit|hair_style|accessory)$")
