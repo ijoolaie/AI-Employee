@@ -58,11 +58,10 @@ No later commit inherits this release certification.
 
 No source changes were made to the certified release commit after certification. Post-release documentation work is on top of the release boundary.
 
-## v1.4.16 candidate certification checkpoint — 2026-10-04
+## v1.4.16 post-release certification record — 2026-10-04
 
-W16 Skills Marketplace Foundation at `434a0c4a4501af08a393faaf58092add764df2a2` has passed fresh exact-SHA Production Certification.
+W16 Skills Marketplace Foundation at `434a0c4a4501af08a393faaf58092add764df2a2` passed fresh exact-SHA Production Certification and was subsequently published as `v1.4.16`.
 
-- candidate SHA: `434a0c4a4501af08a393faaf58092add764df2a2`;
 - Production Certification workflow run: `37188879277`;
 - certification job: `111396657270`;
 - certification result: **PASS**;
@@ -70,9 +69,10 @@ W16 Skills Marketplace Foundation at `434a0c4a4501af08a393faaf58092add764df2a2` 
 - evidence artifact: `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`;
 - evidence artifact digest: `sha256:7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`;
 - production deployment claimed by certification: **false**;
-- Git tag/release: **NOT CREATED** at this checkpoint.
+- Git tag/release: **VERIFIED / PUBLISHED**;
+- W10 Dogfood Run `37189332690` / Job `111398049109`: **PASS**.
 
-The candidate is certification-complete but is not yet a published release. Any promotion to `v1.4.16` must use exactly this SHA; no later SHA inherits this evidence.
+This supersedes the earlier candidate-state wording below/above; the immutable release remains bound to the exact certified SHA.
 
 ## External production boundary
 
