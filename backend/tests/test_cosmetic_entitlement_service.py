@@ -86,3 +86,15 @@ def test_cosmetic_purchase_schema_is_bounded():
     assert CosmeticPurchase.model_validate(payload).cosmetic_type == "accessory"
     with pytest.raises(Exception):
         CosmeticPurchase.model_validate({**payload, "permission": "admin"})
+
+
+def test_apply_entitlement_is_presentation_only():
+    import inspect
+    from app.services import cosmetic_entitlement_service
+
+    source = inspect.getsource(cosmetic_entitlement_service.apply_entitlement)
+    assert "presentation_profile" in source
+    assert "permission" not in source
+    assert "capability" not in source
+    assert "tool" not in source
+    assert "approval" not in source
