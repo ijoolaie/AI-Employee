@@ -10,7 +10,7 @@ from decimal import Decimal
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
-from app.core.exceptions import ConflictError, ValidationAppError
+from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.audit_log import AuditLog
 from app.models.business_deal import BusinessDeal
 from app.models.product import Product
