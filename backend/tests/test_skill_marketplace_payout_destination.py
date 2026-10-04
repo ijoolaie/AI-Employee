@@ -46,7 +46,7 @@ def test_destination_model_uses_tenant_and_actor_fields():
     )
     assert binding.seller_tenant_id == seller
     assert binding.created_by_user_id == actor
-    assert binding.status == SkillMarketplacePayoutDestinationStatus.ACTIVE
+    assert binding.status is None  # ORM default is applied on INSERT/flush, not construction
 
 
 def test_destination_service_has_no_external_transport_import():
