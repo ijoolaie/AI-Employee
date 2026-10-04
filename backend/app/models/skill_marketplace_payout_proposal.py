@@ -20,6 +20,8 @@ class SkillMarketplacePayoutProposalStatus(str, enum.Enum):
 
 class SkillMarketplacePayoutExecutionStatus(str, enum.Enum):
     NOT_EXECUTED = "not_executed"
+    EXECUTED = "executed"
+    UNKNOWN = "unknown"
 
 
 class SkillMarketplacePayoutProposal(Base):
@@ -91,6 +93,8 @@ class SkillMarketplacePayoutProposal(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    provider_payout_id: Mapped[str | None] = mapped_column(String(255))
+    executed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
