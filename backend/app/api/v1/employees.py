@@ -161,7 +161,8 @@ async def revoke_skill(
     installation = await skill_marketplace_service.revoke(
         db,
         tenant_id=ctx.tenant_id,
-        installation_id=installation.id,
+        employee_id=employee_id,
+        skill_package_id=skill_package_id,
         actor_id=ctx.user_id,
     )
     return APIResponse(success=True, data=SkillInstallationResponse.model_validate(installation))
