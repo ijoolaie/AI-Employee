@@ -60,6 +60,7 @@ from app.models.workforce_delegation import WorkforceDelegation
 from app.models.workforce_sla_contract import WorkforceSLAContract
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
 from app.models.cosmetic_entitlement import CosmeticEntitlement
+from app.models.skill_package import SkillPackage, SkillPackageStatus, EmployeeSkillInstallation, EmployeeSkillInstallationStatus
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -76,5 +77,5 @@ __all__ = [
     "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",
     "TestDefinition", "TestRun", "TestRunStatus", "TestRunArtifact", "TeamDefinition", "TeamVersion",
     "TeamInstallation", "TeamEvaluation", "MarketplacePublication", "WorkloadBalanceEvent", "WorkforceDelegation", "WorkforceSLAContract",
-    "WorkforceRevenueEvent", "CosmeticEntitlement",
+    "WorkforceRevenueEvent", "CosmeticEntitlement", "SkillPackage", "SkillPackageStatus", "EmployeeSkillInstallation", "EmployeeSkillInstallationStatus",
 ]

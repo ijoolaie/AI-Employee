@@ -10,6 +10,7 @@ from app.ai.tool_registry import registry
 
 from app.core.deps import CurrentContext, DbSession, EmployeeReadContext, EmployeeWriteContext
 from app.schemas.common import APIResponse
+from app.schemas.skill_marketplace import SkillInstallationResponse
 from app.schemas.employee import (
     EmployeeCreate,
     EmployeePresentationProfile,
@@ -22,6 +23,7 @@ from app.schemas.employee import (
 )
 from app.services import employee_service
 from app.services import cosmetic_entitlement_service
+from app.services import skill_marketplace_service
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -114,6 +116,67 @@ async def apply_cosmetic(
         actor_id=ctx.user_id,
     )
     return APIResponse(success=True, data=EmployeeResponse.model_validate(employee))
+
+
+@router.post(
+    "/{employee_id}/skills/{skill_package_id}",
+    response_model=APIResponse[SkillInstallationResponse],
+)
+async def install_skill(
+    employee_id: UUID,
+    skill_package_id: UUID,
+    ctx: EmployeeWriteContext,
+    db: DbSession,
+):
+    installation = await skill_marketplace_service.install(
+        db,
+        tenant_id=ctx.tenant_id,
+        employee_id=employee_id,
+        skill_package_id=skill_package_id,
+        actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=SkillInstallationResponse.model_validate(installation))
+
+
+@router.delete(
+    "/{employee_id}/skills/{skill_package_id}",
+    response_model=APIResponse[SkillInstallationResponse],
+)
+async def revoke_skill(
+    employee_id: UUID,
+    skill_package_id: UUID,
+    ctx: EmployeeWriteContext,
+    db: DbSession,
+):
+    installation = await skill_marketplace_service.revoke(
+        db,
+        tenant_id=ctx.tenant_id,
+        employee_id=employee_id,
+        skill_package_id=skill_package_id,
+        actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=SkillInstallationResponse.model_validate(installation))
+
+
+@router.get(
+    "/{employee_id}/skills",
+    response_model=APIResponse[list[SkillInstallationResponse]],
+)
+async def list_skills(
+    employee_id: UUID,
+    ctx: EmployeeReadContext,
+    db: DbSession,
+):
+    installations = await skill_marketplace_service.list_for_employee(
+        db,
+        tenant_id=ctx.tenant_id,
+        employee_id=employee_id,
+        active_only=True,
+    )
+    return APIResponse(
+        success=True,
+        data=[SkillInstallationResponse.model_validate(item) for item in installations],
+    )
 
 
 @router.post(
