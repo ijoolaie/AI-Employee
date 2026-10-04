@@ -186,7 +186,7 @@ The post-v1.4.11 workforce program now includes a planned Virtual AI Company Hea
 - W13 Customer HQ progression/tiering: NOT IMPLEMENTED / NOT VERIFIED.
 - W14 Employee appearance customization: NOT IMPLEMENTED / NOT VERIFIED.
 - W15 Clothing/cosmetic commerce: NOT IMPLEMENTED / NOT VERIFIED.
-- W16 Skill marketplace: NOT IMPLEMENTED / NOT VERIFIED.
+- W16 Skill marketplace: FOUNDATION IMPLEMENTED + REAL-STACK LIFECYCLE VERIFIED; exact-SHA Production Certification NOT RUN / NOT VERIFIED.
 - W17 Employee career/reputation presentation: NOT IMPLEMENTED / NOT VERIFIED.
 - W18 Virtual meeting rooms: NOT IMPLEMENTED / NOT VERIFIED.
 - W19 Voice/TTS/real-time visual avatar: NOT IMPLEMENTED / NOT VERIFIED.
@@ -326,3 +326,48 @@ A focused security/tenant-boundary review identified and corrected:
 - tests cover the hardened error contract and product FK policy.
 
 **W16 validation after these corrections: NOT RUN / NOT VERIFIED.**
+
+## W16 real-stack lifecycle reconciliation — 2026-10-04
+
+This section is the latest W16 evidence reconciliation and supersedes earlier W16 status wording in this historical document.
+
+**Status: FOUNDATION IMPLEMENTED + HARDENED + REAL-STACK LIFECYCLE VERIFIED — post-v1.4.16 mainline; exact-SHA Production Certification NOT RUN / NOT VERIFIED.**
+
+Implemented and hardened:
+- versioned tenant-scoped `SkillPackage` catalog and `EmployeeSkillInstallation` ledger;
+- skill metadata validation rejects execution-authority declarations such as allowed tools, permissions, approval policy, capability contracts and tool bindings;
+- concurrent install race is closed by the authoritative unique constraint boundary;
+- database-level tenant consistency is enforced with tenant-scoped unique keys and composite foreign keys;
+- published skill package content is immutable at the PostgreSQL boundary after publication, while lifecycle status remains mutable;
+- tenant-scoped install/revoke/list API paths preserve employee/package tenant boundaries;
+- audit provenance records presentation-only installation semantics and explicitly records unchanged permissions, allowed tools and execution authority;
+- audit ledger entry hashing now assigns the immutable AuditLog UUID before hash computation, preventing persisted-ID/hash mismatches.
+
+### Exact-head real-stack evidence
+
+PR #846, `test: verify W16 skill lifecycle on real PostgreSQL`, was merged only after the exact head passed all observed required validation workflows.
+
+- PR head: `73f6f15916926a80c872031cf200ef9e39ee47ce`
+- Merge SHA: `d7550e0489ed43c5a3cda9e9151e199d05a07119`
+- CI: **PASS** — Run `37193115014`
+- CodeQL: **PASS** — Run `37193114955`
+- Architecture Guard: **PASS** — Run `37193114850`
+- Security/Privacy: **PASS** — Run `37193114998`
+- Production Infrastructure Validation: **PASS** — Run `37193115005`
+- HA Failure Recovery Validation: **PASS** — Run `37193114996`
+- Production Observability: **PASS** — Run `37193114997`
+- Production Rollback & Alerting: **PASS** — Run `37193115020`
+- Runtime Isolation/RBAC Contract: **PASS** — Run `37193114911`
+- Ephemeral DAST: **PASS** — Run `37193114933`
+
+The lifecycle E2E covers package publication, installation, revocation, reactivation of the same installation, cross-tenant rejection, audit-action verification, audit metadata invariants, ledger verification, and persisted audit-row count.
+
+During this validation, the lifecycle test exposed a real audit-ledger defect: the AuditLog UUID was generated during flush after the entry hash had already been computed. The service was corrected to assign `uuid4()` before hashing, and the audit regression test asserts that a recorded entry has an assigned ID. The final exact-head CI passed with this correction.
+
+### Evidence boundary
+
+**VERIFIED:** W16 lifecycle behavior on the exact PR head through the repository's real PostgreSQL CI stack.
+
+**NOT VERIFIED:** exact-SHA Production Certification for the post-v1.4.16 W16 changes; live commercial purchase entitlement settlement; third-party skill publishing; external skill-provider execution; real customer marketplace revenue.
+
+The immutable `v1.4.16` certification boundary remains unchanged. These W16 changes are post-release engineering evidence and do not inherit v1.4.16 certification.
