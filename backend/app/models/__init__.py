@@ -60,6 +60,7 @@ from app.models.workforce_delegation import WorkforceDelegation
 from app.models.workforce_sla_contract import WorkforceSLAContract
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
 from app.models.cosmetic_entitlement import CosmeticEntitlement
+from app.models.skill_purchase_entitlement import SkillPurchaseEntitlement, SkillPurchaseEntitlementStatus
 from app.models.skill_package import SkillPackage, SkillPackageStatus, EmployeeSkillInstallation, EmployeeSkillInstallationStatus
 
 __all__ = [
@@ -71,7 +72,7 @@ __all__ = [
     "BillingPlan", "Subscription", "BillingEvent", "PaymentRefund", "UsageEvent", "BusinessInvoice", "CustomerChannel",
     "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "Credential", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "ShopifyOAuthState", "PasswordResetToken",
-    "TenantEntitlement", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
+    "TenantEntitlement", "SkillPurchaseEntitlement", "SkillPurchaseEntitlementStatus", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
     "AgentDefinition", "AgentTemplate", "AgentTemplateStatus", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding",
     "AgentEvaluation", "AgentEvaluationStatus", "AgentIdentity", "AgentAccessReview", "AgentAccessReviewDecision",
     "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",

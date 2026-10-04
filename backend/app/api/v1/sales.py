@@ -45,6 +45,7 @@ async def create_deal(payload: BusinessDealCreate, ctx: SalesCreateContext, db: 
         expected_close_date=payload.expected_close_date, owner_name=payload.owner_name,
         notes=payload.notes, source=payload.source, order_id=str(payload.order_id) if payload.order_id else None,
         cosmetic_purchase=payload.cosmetic_purchase.model_dump(mode="json") if payload.cosmetic_purchase else None,
+        skill_purchase=payload.skill_purchase.model_dump(mode="json") if payload.skill_purchase else None,
     )
     await db.commit()
     return APIResponse(success=True, data=BusinessDealResponse.model_validate(deal))

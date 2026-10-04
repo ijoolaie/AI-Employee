@@ -14,8 +14,9 @@ from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.models.product import Product
+from app.models.skill_purchase_entitlement import SkillPurchaseEntitlement, SkillPurchaseEntitlementStatus
 from app.models.tenant import Tenant
-from app.services import edition_lifecycle_service, skill_marketplace_service
+from app.services import edition_lifecycle_service, sales_service, skill_marketplace_service, stripe_service
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
@@ -142,6 +143,53 @@ async def cleanup(slugs: list[str]) -> None:
         await db.commit()
 
 
+
+
+async def settle_skill_purchase(
+    *, tenant_slug: str, employee_id: str, product_id: str, skill_package_id: str, payment_event_id: str
+) -> str:
+    async with AsyncSessionLocal() as db:
+        tenant = (await db.execute(select(Tenant).where(Tenant.slug == tenant_slug))).scalar_one()
+        deal = await sales_service.create_deal(
+            db,
+            tenant_id=tenant.id,
+            actor_id=None,
+            title="W16 Commercial Skill Purchase",
+            customer_name="W16 Skill Customer",
+            amount=Decimal("10.00"),
+            currency="EUR",
+            stage="proposal",
+            probability=50,
+            skill_purchase={"employee_id": employee_id, "product_id": product_id, "skill_package_id": skill_package_id},
+        )
+        await stripe_service.apply_verified_sales_payment(
+            db,
+            provider="stripe",
+            provider_event_id=payment_event_id,
+            data={
+                "id": payment_event_id,
+                "amount_received": 1000,
+                "currency": "eur",
+                "metadata": {"tenant_id": str(tenant.id), "sales_deal_id": str(deal.id)},
+            },
+        )
+        entitlement = (
+            await db.execute(
+                select(SkillPurchaseEntitlement).where(
+                    SkillPurchaseEntitlement.tenant_id == tenant.id,
+                    SkillPurchaseEntitlement.employee_id == employee_id,
+                    SkillPurchaseEntitlement.skill_package_id == skill_package_id,
+                    SkillPurchaseEntitlement.status == SkillPurchaseEntitlementStatus.ACTIVE,
+                )
+            )
+        ).scalar_one_or_none()
+        assert entitlement is not None, "verified payment did not create active skill entitlement"
+        assert entitlement.provider == "stripe"
+        assert entitlement.provider_event_id == payment_event_id
+        await db.commit()
+        return str(tenant.id)
+
+
 def main() -> int:
     suffix = str(time.time_ns())[-12:]
     slugs: list[str] = []
@@ -223,8 +271,31 @@ def main() -> int:
             token=token_a,
         )
         assert_status(status, 422, "commercial skill without entitlement", commercial)
-        assert "verified purchase entitlement" in str(commercial)
+        error_message = ((commercial.get("error") or {}).get("message") if isinstance(commercial, dict) else None)
+        assert error_message == "verified skill purchase entitlement is missing or revoked", f"unexpected entitlement rejection: {commercial}"
         print("COMMERCIAL SKILL FAIL-CLOSED WITHOUT ENTITLEMENT PASS")
+
+        payment_event_id = f"evt_w16_skill_{suffix}"
+        entitlement_tenant_id = asyncio.run(
+            settle_skill_purchase(
+                tenant_slug=tenant_a,
+                employee_id=employee_a,
+                product_id=product_id,
+                skill_package_id=commercial_package,
+                payment_event_id=payment_event_id,
+            )
+        )
+        assert entitlement_tenant_id
+        print("VERIFIED PAYMENT CREATES SKILL ENTITLEMENT PASS")
+
+        status, installed = request(
+            "POST",
+            f"/employees/{employee_a}/skills/{commercial_package}",
+            token=token_a,
+        )
+        assert_status(status, 200, "commercial skill install after verified payment", installed)
+        assert (installed.get("data") or {}).get("status") == "active"
+        print("COMMERCIAL SKILL INSTALL AFTER VERIFIED PAYMENT PASS")
 
         print("W16 EMPLOYEE SKILL API REAL-STACK TENANT + ENTITLEMENT GATE PASS")
         return 0

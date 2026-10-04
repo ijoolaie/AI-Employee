@@ -197,7 +197,16 @@ async def install(
     _validate_skill_metadata(package.compatibility or {}, "skill compatibility")
     _validate_skill_metadata(package.presentation_metadata or {}, "skill presentation metadata")
     if package.product_id is not None:
-        raise SkillMarketplaceError("commercial skill installation requires a verified purchase entitlement")
+        from app.services.skill_purchase_entitlement_service import assert_owned
+        try:
+            await assert_owned(
+                db,
+                tenant_id=tenant_id,
+                employee_id=employee_id,
+                skill_package_id=skill_package_id,
+            )
+        except ConflictError as exc:
+            raise SkillMarketplaceError(str(exc)) from exc
 
     existing = (await db.execute(select(EmployeeSkillInstallation).where(
         EmployeeSkillInstallation.tenant_id == tenant_id,
