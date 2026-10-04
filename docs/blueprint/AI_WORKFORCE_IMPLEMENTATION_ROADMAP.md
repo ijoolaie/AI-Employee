@@ -934,3 +934,56 @@ Implemented foundation:
 - unit/API-adjacent tests for bounded values, tenant seam and audit evidence.
 
 Next: W15 Wardrobe / Cosmetic Marketplace. Any commerce capability must use authoritative product/order/payment state and must not grant employee runtime authority.
+
+
+## W16 real-stack lifecycle checkpoint — 2026-10-04
+
+W16 Skills Marketplace has moved beyond the initial foundation into hardened real-stack lifecycle evidence on post-v1.4.16 mainline.
+
+### Implemented and hardened
+
+- Versioned, tenant-scoped `SkillPackage` catalog and `EmployeeSkillInstallation` ledger.
+- Skill metadata validation rejects execution-authority declarations such as allowed tools, permissions, approval policy, capability contracts and tool bindings.
+- Concurrent installation uses the database unique constraint as the authoritative race boundary.
+- Tenant consistency is enforced at the database boundary with tenant-scoped unique identity keys and composite foreign keys.
+- Published skill package content is immutable after publication at the PostgreSQL boundary; lifecycle status remains mutable for governed suspension/retirement behavior.
+- Install/revoke/list operations preserve tenant-scoped Employee and SkillPackage ownership.
+- Audit provenance records installation as presentation-only and explicitly records unchanged permissions, allowed tools and execution authority.
+- Audit ledger entry IDs are assigned before entry-hash computation, preserving ledger verification after persistence.
+
+### Real-stack evidence
+
+PR #846, `test: verify W16 skill lifecycle on real PostgreSQL`, was merged at **`d7550e0489ed43c5a3cda9e9151e199d05a07119`** after exact-head validation of **`73f6f15916926a80c872031cf200ef9e39ee47ce`**.
+
+Observed exact-head gates:
+- CI: PASS — Run `37193115014`
+- CodeQL: PASS — Run `37193114955`
+- Architecture Guard: PASS — Run `37193114850`
+- Security/Privacy: PASS — Run `37193114998`
+- Production Infrastructure Validation: PASS — Run `37193115005`
+- HA Failure Recovery Validation: PASS — Run `37193114996`
+- Production Observability: PASS — Run `37193114997`
+- Production Rollback & Alerting: PASS — Run `37193115020`
+- Runtime Isolation/RBAC Contract: PASS — Run `37193114911`
+- Ephemeral DAST: PASS — Run `37193114933`
+
+The real-stack lifecycle scenario verifies publication, installation, revocation, reactivation of the same installation, cross-tenant rejection, audit actions, audit metadata invariants, ledger verification and persisted audit-row count.
+
+The certification run exposed and corrected an actual audit-hash persistence defect: the AuditLog UUID was generated during flush after hashing. The service now assigns the UUID before hashing, with a regression assertion covering the invariant.
+
+### Evidence boundary
+
+W16 lifecycle behavior is **VERIFIED on the real PostgreSQL CI stack** for the exact PR head above.
+
+The following remain **NOT VERIFIED**:
+- post-v1.4.16 exact-SHA Production Certification;
+- verified purchase entitlement settlement;
+- third-party skill publishing;
+- external skill-provider execution;
+- real customer marketplace revenue.
+
+This evidence is post-release engineering evidence and does not inherit v1.4.16 certification.
+
+### Next W16 slice
+
+Before expanding into broader commercial marketplace behavior, add focused real-stack/API evidence for the tenant-scoped employee skill endpoints and entitlement boundary. Keep paid-skill installation fail-closed until a verified purchase entitlement contract exists. Do not introduce permission/tool expansion through skill installation.
