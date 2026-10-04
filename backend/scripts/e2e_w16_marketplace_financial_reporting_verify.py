@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 import time
-import uuid
 from datetime import datetime, timezone
 from decimal import Decimal
 
@@ -20,7 +19,7 @@ from app.models.skill_package import SkillPackage, SkillPackageStatus
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
-from app.services import edition_lifecycle_service, skill_marketplace_payout_service, skill_marketplace_reporting_service
+from app.services import edition_lifecycle_service, skill_marketplace_payout_destination, skill_marketplace_payout_service, skill_marketplace_reporting_service
 
 
 async def verify() -> None:
@@ -46,6 +45,13 @@ async def verify() -> None:
             is_active=True,
             is_platform_admin=True,
         )
+        seller_actor = User(
+            tenant_id=seller_a.id,
+            email=f"w16-report-seller-{suffix}@example.test",
+            password_hash="certification-fixture",
+            full_name="W16 Reporting Seller Actor",
+            is_active=True,
+        )
         employee = Employee(
             tenant_id=buyer.id,
             slug=f"w16-report-employee-{suffix}",
@@ -53,7 +59,7 @@ async def verify() -> None:
             kind="custom",
             is_active=True,
         )
-        db.add_all([admin, employee])
+        db.add_all([admin, seller_actor, employee])
         await db.flush()
 
         product = Product(
@@ -156,6 +162,17 @@ async def verify() -> None:
         db.add(settlement)
         await db.flush()
 
+        destination = await skill_marketplace_payout_destination.bind_payout_destination(
+            db,
+            seller_tenant_id=seller_a.id,
+            provider="contract-test",
+            destination_ref=f"seller-destination-{suffix}",
+            actor_user_id=seller_actor.id,
+        )
+        await db.flush()
+        assert destination.seller_tenant_id == seller_a.id
+        assert destination.status.value == "active"
+
         proposal = await skill_marketplace_payout_service.create_payout_proposal(
             db,
             settlement_id=settlement.id,
@@ -163,6 +180,10 @@ async def verify() -> None:
             created_by_user_id=admin.id,
         )
         await db.flush()
+
+        assert proposal.destination_id == destination.id
+        assert proposal.destination_provider == "contract-test"
+        assert proposal.destination_ref == destination.destination_ref
 
         summary = await skill_marketplace_reporting_service.marketplace_financial_summary(
             db,
