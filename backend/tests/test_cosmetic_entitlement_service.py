@@ -5,10 +5,11 @@ import pytest
 
 from app.models.cosmetic_entitlement import CosmeticEntitlement
 from app.services.cosmetic_entitlement_service import (
+    COSMETIC_VALUES,
     CosmeticEntitlementError,
+    _validate_cosmetic,
+    _validate_product_contract,
     grant,
-    list_for_employee,
-    revoke,
 )
 
 
@@ -22,8 +23,6 @@ def test_cosmetic_entitlement_model_is_presentation_only():
 
 def test_invalid_cosmetic_value_rejected():
     with pytest.raises(CosmeticEntitlementError, match="cosmetic value"):
-        from app.services.cosmetic_entitlement_service import _validate_cosmetic
-
         _validate_cosmetic("outfit", "admin")
 
 
@@ -39,10 +38,20 @@ def test_idempotent_regrant_contract_is_unique():
 
 
 def test_presentation_values_match_w14_contract():
-    from app.services.cosmetic_entitlement_service import COSMETIC_VALUES
-
     assert COSMETIC_VALUES["outfit"] == {"business", "casual", "technical", "formal"}
     assert COSMETIC_VALUES["accessory"] == {"none", "glasses", "headset", "badge"}
+
+
+def test_product_must_explicitly_declare_matching_cosmetic_contract():
+    class ProductStub:
+        is_active = True
+        category = "employee_cosmetic"
+        attributes = {"cosmetic_type": "accessory", "cosmetic_value": "glasses"}
+
+    _validate_product_contract(ProductStub(), "accessory", "glasses")
+
+    with pytest.raises(CosmeticEntitlementError, match="does not match"):
+        _validate_product_contract(ProductStub(), "outfit", "business")
 
 
 @pytest.mark.asyncio
