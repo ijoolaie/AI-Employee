@@ -285,7 +285,7 @@ The purchase entitlement ledger is presentation-only ownership state. It does no
 
 Post-merge W10 Internal Company Dogfood E2E run `37196994830` completed successfully on merge SHA `bbafa2c7b754cd69d421c6011bf42f5523fdeaa2`. This is post-release engineering evidence; it does not create a new production certification for the merge SHA.
 
-**Current boundary:** W16 commercial purchase entitlement, third-party SkillPackage publication/discovery, governed SkillPackage provider execution, and cross-tenant marketplace purchase/settlement mechanics are **VERIFIED on the real PostgreSQL stack** for their exact validated mainline boundaries. External production skill-provider execution and real customer marketplace revenue remain **NOT VERIFIED**. The immutable `v1.4.16` certification remains unchanged.
+**Current boundary:** W16 commercial purchase entitlement, third-party SkillPackage publication/discovery, governed SkillPackage provider execution, cross-tenant marketplace purchase/settlement mechanics, marketplace financial allocation accounting, and read-only marketplace financial outcome reporting are **VERIFIED on the real PostgreSQL stack** for their exact validated mainline boundaries. External production skill-provider execution, external seller payout execution, and real customer marketplace revenue remain **NOT VERIFIED**. The immutable `v1.4.16` certification remains unchanged.
 
 ## W16 third-party Skill Marketplace publication — 2026-10-04
 
@@ -458,3 +458,26 @@ and
 The same exact head also passed W16 Skill API `37203634599`, W16 Third-Party Publication `37203634686`, CI `37203634678`, CodeQL `37203634695`, DAST `37203634654`, Runtime Isolation/RBAC `37203634634`, Architecture `37203634622`, Production Infrastructure `37203634605`, HA `37203634742`, Production Observability `37203634636`, Production Rollback & Alerting `37203634710`, and Security/Privacy `37203634663`.
 
 **Evidence boundary:** seller payout proposal generation is **VERIFIED** on the deterministic CI / real PostgreSQL stack. Actual seller payout execution, payout-provider integration, tax calculation/settlement, external customer payment and realized marketplace revenue remain **NOT VERIFIED**. The immutable `v1.4.16` Production Certification remains unchanged; `c8fd849e77d2181f32700e1a7e52f03e48cd21e8` is not production-certified.
+
+
+## W16 marketplace financial outcome reporting — 2026-10-04
+
+PR #864, `feat(w16): add read-only marketplace financial outcome reporting`, was validated at exact head `bbef175cb0926827db065323ee718e1f080cedac` and merged with merge commit `027d8005df6ac9069a4734b9679bf839d1129a35`.
+
+Exact-head validation completed successfully for the dedicated and shared gates:
+- W16 Marketplace Financial Reporting Real-Stack — run `37204822747`;
+- W16 Cross-Tenant Skill Purchase Real-Stack — run `37204822786`;
+- CI — run `37204822802`;
+- CodeQL — run `37204822799`;
+- Runtime Isolation/RBAC — run `37204822831`;
+- Ephemeral DAST — run `37204822773`;
+- Architecture Guard — run `37204822768`;
+- Production Infrastructure Validation — run `37204822764`;
+- HA Failure Recovery — run `37204822782`;
+- Production Observability — run `37204822766`;
+- Production Rollback & Alerting — run `37204822752`;
+- Security/Privacy — run `37204822753`.
+
+The reporting contract is deliberately read-only and aggregates only recorded `SkillMarketplaceSettlement` rows, with seller-scoped filtering and payout-proposal counts. The real-stack gate verified gross amount, platform fee, seller net, verified settlement count, paid purchase count, seller filtering and zero-result isolation for another seller tenant. It also asserts that the reporting service contains no Stripe/ZarinPal/payment-provider calls and no create/mutation path.
+
+**Evidence boundary:** marketplace financial outcome reporting is **VERIFIED** on the real PostgreSQL CI stack for the exact PR head above. This is reporting of recorded verified engineering/settlement state, not proof of a real external customer payment, realized customer revenue, or external seller payout. The immutable `v1.4.16` Production Certification remains unchanged; `027d8005df6ac9069a4734b9679bf839d1129a35` is not production-certified.
