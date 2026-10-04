@@ -20,6 +20,10 @@ class SkillMarketplacePayoutProposalStatus(str, enum.Enum):
 
 class SkillMarketplacePayoutExecutionStatus(str, enum.Enum):
     NOT_EXECUTED = "not_executed"
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    FAILED = "failed"
+    UNKNOWN = "unknown"
 
 
 class SkillMarketplacePayoutProposal(Base):
@@ -76,6 +80,13 @@ class SkillMarketplacePayoutProposal(Base):
         nullable=False,
         default=SkillMarketplacePayoutProposalStatus.PROPOSED,
     )
+    idempotency_key: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+    provider_payout_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    provider_event_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    failure_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    retryable: Mapped[bool] = mapped_column(default=False, nullable=False)
+    executed: Mapped[bool] = mapped_column(default=False, nullable=False)
+    external_execution: Mapped[bool] = mapped_column(default=False, nullable=False)
     execution_status: Mapped[SkillMarketplacePayoutExecutionStatus] = mapped_column(
         Enum(
             SkillMarketplacePayoutExecutionStatus,
