@@ -162,6 +162,7 @@ def install() -> None:
             )
         if approval is not None:
             await _consume_approval(db, approval)
+            kwargs["approval_request_id"] = approval.id
         kwargs["approval_granted"] = approval is not None
         tool_token = _CURRENT_TOOL.set(name)
         try:
