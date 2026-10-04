@@ -37,19 +37,27 @@ def test_payout_proposal_model_records_provider_evidence_without_authorizing_exe
     assert "SkillMarketplacePayoutExecutionStatus" in source
 
 
-def test_payout_execution_migration_removes_single_state_constraint():
+def test_payout_execution_ledger_uses_a_new_migration_after_existing_proposal_migration():
     source = (
+        Path(__file__).resolve().parents[1]
+        / "alembic"
+        / "versions"
+        / "w16_skill_marketplace_payout_execution_ledger.py"
+    ).read_text(encoding="utf-8")
+
+    assert "down_revision = \"w16_skill_mkt_payout_proposal\"" in source
+    assert "pending" in source
+    assert "accepted" in source
+    assert "failed" in source
+    assert "unknown" in source
+    original = (
         Path(__file__).resolve().parents[1]
         / "alembic"
         / "versions"
         / "w16_skill_marketplace_payout_proposal.py"
     ).read_text(encoding="utf-8")
-
-    assert "pending" in source
-    assert "accepted" in source
-    assert "failed" in source
-    assert "unknown" in source
-    assert "ck_skill_marketplace_payout_proposal_not_executed" not in source
+    assert "ck_skill_marketplace_payout_proposal_not_executed" in original
+    assert "idempotency_key" not in original
 
 
 def test_payout_execution_ledger_does_not_add_transport_calls():
