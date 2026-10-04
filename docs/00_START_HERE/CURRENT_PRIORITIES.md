@@ -52,7 +52,7 @@ Canonical historical audit: `docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.m
 External gates remain intentionally **OPEN — PENDING EXTERNAL EXECUTION** because the project is still being executed locally. They become actionable when an approved external target exists.
 
 1. Establish the approved real production target and capture infrastructure identity.
-2. Deploy the exact v1.4.11 release identity without retagging or modifying the certified snapshot.
+2. Deploy the latest approved immutable release identity only after an external target is provisioned; the current latest certified release is `v1.4.16` at exact SHA `434a0c4a4501af08a393faaf58092add764df2a2`.
 3. Capture deployment, image and migration identity/checksums.
 4. Verify production networking, TLS, ingress/egress and secret-manager lifecycle.
 5. Validate live providers, billing and integrations where applicable.
