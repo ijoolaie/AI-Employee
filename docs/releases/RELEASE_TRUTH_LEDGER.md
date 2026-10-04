@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-10-03
+**Last reconciled:** 2026-10-04
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -17,6 +17,8 @@ These states are independent and must not be inferred from release names. `OPEN 
 
 | Release | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
+| `v1.4.16` candidate | `434a0c4a4501af08a393faaf58092add764df2a2` | **NOT CREATED** | **CERTIFIED** — Run `37188879277` / Job `111396657270` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
+| `v1.4.15` | `226dddcfbab7abde166c8cd6967d63a03f2d4e71` | **VERIFIED** | **CERTIFIED** — Run `37185102432` / Job `111385347811` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.13` candidate | `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83` | **NOT CREATED** | **CERTIFIED** — Run `37141161822` / Job `111255715821` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 |---|---|---|---|---|---|
 | `v1.4.12` | `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519` | **VERIFIED** | **CERTIFIED** — Run `37138840482` / Job `111248877948` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
@@ -44,6 +46,22 @@ These states are independent and must not be inferred from release names. `OPEN 
 - production deployment claimed by certification: **false**.
 
 No source changes were made to the certified release commit after certification. Post-release documentation work is on top of the release boundary.
+
+## v1.4.16 candidate certification checkpoint — 2026-10-04
+
+W16 Skills Marketplace Foundation at `434a0c4a4501af08a393faaf58092add764df2a2` has passed fresh exact-SHA Production Certification.
+
+- candidate SHA: `434a0c4a4501af08a393faaf58092add764df2a2`;
+- Production Certification workflow run: `37188879277`;
+- certification job: `111396657270`;
+- certification result: **PASS**;
+- Product Gate failures: **0**;
+- evidence artifact: `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`;
+- evidence artifact digest: `sha256:7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`;
+- production deployment claimed by certification: **false**;
+- Git tag/release: **NOT CREATED** at this checkpoint.
+
+The candidate is certification-complete but is not yet a published release. Any promotion to `v1.4.16` must use exactly this SHA; no later SHA inherits this evidence.
 
 ## External production boundary
 
