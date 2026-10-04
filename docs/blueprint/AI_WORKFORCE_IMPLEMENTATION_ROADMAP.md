@@ -1344,3 +1344,35 @@ Evidence boundary:
 - production certification of the merge SHA: **NOT RUN / NOT VERIFIED**.
 
 The immutable `v1.4.16` production certification remains unchanged.
+
+### W16 payout execution/destination reconciliation checkpoint — 2026-10-05
+
+The W16 marketplace finance implementation now has four additional explicit boundaries after the payout-provider contract:
+
+1. **PR #871 — payout execution evidence ledger**
+   - Exact head `2889e8aefebe9f1a04d772b576c55386650f88e9`; merge `190a1201437a04114a4f3702e4174531297d7ef3`.
+   - Durable execution state supports `not_executed/pending/accepted/failed/unknown`, provider IDs, idempotency and reconciliation metadata.
+   - No external payout execution is claimed.
+
+2. **PR #872 — seller payout destination binding**
+   - Exact head `04886104d691b4a4c9b9733008906e04d729f5bc`; merge `25b78dd30b94beab64b8ab5da9308f56e158e20c`.
+   - Tenant-scoped active/revoked destination ledger with one active destination per seller and opaque destination references.
+   - No provider execution is performed by this boundary.
+
+3. **PR #873 — seller destination actor authorization**
+   - Exact head `75c4f3ea47998f9d52357c2a144a738b43bcc200`; merge `41482361378bf7f4c3f15fc984ef546a1eff678b`.
+   - Destination bind/revoke requires an active user of the seller tenant.
+   - Post-merge checks observed on the merge SHA passed.
+
+4. **PR #874 — payout proposal destination binding**
+   - Exact head `aa3ebf3057a769b4dbaa467c789ae90753ef5042`; merge `d1543734a0da80df62716936fc9f584f563e091b`.
+   - Proposal creation requires an active seller destination and stores an immutable destination ID/provider/reference snapshot.
+   - Revoke/replace does not redirect existing proposals.
+   - Exact-head 14-workflow validation passed.
+   - Post-merge checks for the merge SHA currently have no registered workflow/status evidence and remain **NOT VERIFIED**.
+
+**Current W16 finance boundary:** proposal/provider contract + execution evidence ledger + tenant/actor-controlled destination binding + immutable proposal destination snapshot are implemented/evidenced on mainline. Actual external seller payout, tax settlement and real external marketplace revenue remain **NOT VERIFIED**.
+
+The next application-code boundary must not collapse proposal, approval, provider execution and reconciliation into an implicit generic payment call. Any future payout execution slice must preserve named-provider selection, explicit approval, immutable destination binding, idempotency, durable execution state, `UNKNOWN` reconciliation, tenant/actor authorization, audit/provenance and fail-closed behavior.
+
+All post-v1.4.16 work remains mainline engineering and requires fresh exact-SHA validation/certification if a new release candidate is created.
