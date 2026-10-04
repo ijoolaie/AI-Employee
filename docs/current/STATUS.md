@@ -285,7 +285,7 @@ The purchase entitlement ledger is presentation-only ownership state. It does no
 
 Post-merge W10 Internal Company Dogfood E2E run `37196994830` completed successfully on merge SHA `bbafa2c7b754cd69d421c6011bf42f5523fdeaa2`. This is post-release engineering evidence; it does not create a new production certification for the merge SHA.
 
-**Current boundary:** W16 commercial purchase entitlement, third-party SkillPackage publication/discovery, and governed SkillPackage provider execution are **VERIFIED on the real PostgreSQL stack** for their exact validated mainline boundaries. External production skill-provider execution and real marketplace/customer revenue remain **NOT VERIFIED**. The immutable `v1.4.16` certification remains unchanged.
+**Current boundary:** W16 commercial purchase entitlement, third-party SkillPackage publication/discovery, governed SkillPackage provider execution, and cross-tenant marketplace purchase/settlement mechanics are **VERIFIED on the real PostgreSQL stack** for their exact validated mainline boundaries. External production skill-provider execution and real customer marketplace revenue remain **NOT VERIFIED**. The immutable `v1.4.16` certification remains unchanged.
 
 ## W16 third-party Skill Marketplace publication — 2026-10-04
 
@@ -353,3 +353,43 @@ The dedicated W16 provider execution real-stack gate verified:
 A first execution attempt exposed two real defects in CI: workflow provider settings were not injected into the API container, and the ToolRegistry workforce dispatch dropped `tool_call_id`. Both were corrected before the final exact-head validation passed.
 
 **Evidence boundary:** governed SkillPackage provider execution is **VERIFIED on the deterministic CI HTTP provider fixture** for the exact PR head above. This is not evidence of an external production provider or customer environment. External production provider execution, customer acceptance, and real marketplace revenue remain **NOT VERIFIED**. The `v1.4.16` Production Certification remains the immutable certified release; `659c1e757c3cdc6dcc1d7c390a5bdd74bd3feff8` is not production-certified.
+
+
+## W16 cross-tenant Skill Marketplace purchase — 2026-10-04
+
+PR #857, `feat(w16): add cross-tenant Skill Marketplace purchase`, was validated at exact head `272ce9f52b73fcd72354d2f41efe1278a921e7a8` and merged with merge commit `8487f0b1133e20c4ce142d43fffd3ee69bf010c1`.
+
+Exact-head validation completed successfully for the dedicated marketplace and shared application/security gates:
+- W16 Cross-Tenant Skill Purchase Real-Stack — run `37201453142`;
+- CI — run `37201453176`;
+- CodeQL — run `37201453185`;
+- W16 Skill API Real-Stack Contract — run `37201453134`;
+- W16 Skill Provider Execution Real-Stack — run `37201453112`;
+- W16 Third-Party Skill Publishing Real-Stack — run `37201453159`;
+- Runtime Isolation/RBAC — run `37201453102`;
+- Production Infrastructure Validation — run `37201453113`;
+- HA Failure Recovery — run `37201453146`;
+- Ephemeral DAST — run `37201453141`;
+- Architecture Guard — run `37201453158`;
+- Security/Privacy — run `37201453101`;
+- Production Observability — run `37201453103`;
+- Production Rollback & Alerting — run `37201453138`;
+- Provider Integration — run `37201453190`.
+
+The dedicated real-stack scenario verified:
+- seller tenant owns the published SkillPackage and paid Product;
+- buyer tenant owns the Employee;
+- only the buyer can prepare the purchase and only a public publication can be purchased cross-tenant;
+- purchase idempotency returns the same durable buyer-side purchase and deal;
+- verified provider payment settles the purchase to PAID;
+- the buyer receives a tenant-scoped verified purchase entitlement referencing the seller tenant and source publication;
+- the buyer Employee receives an installation referencing the seller-owned package;
+- the WorkforceRevenueEvent correlates the marketplace purchase and seller tenant;
+- replay of the same verified provider event does not create duplicate purchase, entitlement, installation or revenue rows;
+- direct buyer installation without the marketplace publication path remains rejected.
+
+The database boundary keeps buyer Employee ownership separate from seller SkillPackage/Product ownership through tenant-consistent composite foreign keys. Marketplace ownership does not grant permissions, allowed tools, capability contracts or approval authority.
+
+A first validation exposed ORM/migration index-name drift; the migration and ORM declarations were reconciled before the final exact-head gate passed. The full backend CI then passed 1240 tests with the corrected W16 tenant/FK contract.
+
+**Evidence boundary:** cross-tenant marketplace purchase, verified settlement, entitlement creation, installation, revenue-event correlation and replay idempotency are **VERIFIED on the deterministic contract-test payment provider / real PostgreSQL CI stack**. This is engineering evidence, not proof of a real external customer purchase or realized customer revenue. Seller payout, platform commission accounting, tax handling and external production customer revenue remain **NOT VERIFIED**. No new Production Certification is claimed for `8487f0b1133e20c4ce142d43fffd3ee69bf010c1`.
