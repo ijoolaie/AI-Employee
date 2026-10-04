@@ -38,10 +38,10 @@ class SkillPurchaseEntitlement(Base):
             ondelete="CASCADE",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "skill_package_id"],
+            ["source_owner_tenant_id", "skill_package_id"],
             ["skill_packages.tenant_id", "skill_packages.id"],
-            name="fk_skill_purchase_entitlement_package_tenant",
-            ondelete="CASCADE",
+            name="fk_skill_purchase_entitlement_source_package_tenant",
+            ondelete="RESTRICT",
         ),
         Index(
             "ix_skill_purchase_entitlements_tenant_employee",
@@ -60,8 +60,14 @@ class SkillPurchaseEntitlement(Base):
     employee_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    source_owner_tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+    )
     skill_package_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("skill_packages.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    source_publication_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("skill_marketplace_publications.id", ondelete="RESTRICT"), nullable=True, index=True
     )
     source_order_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("business_orders.id", ondelete="RESTRICT"), nullable=False, index=True
