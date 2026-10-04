@@ -16,6 +16,7 @@ on:
       - "backend/app/schemas/admin_marketplace.py"
       - "backend/app/api/v1/admin.py"
       - "backend/alembic/versions/w16_skill_marketplace_payout_proposal.py"
+      - "backend/alembic/versions/w16_skill_marketplace_payout_execution_ledger.py"
       - "backend/tests/test_skill_marketplace_payout_service.py"
       - "backend/app/services/skill_marketplace_payout_provider.py"
       - "backend/tests/test_skill_marketplace_payout_provider.py"
