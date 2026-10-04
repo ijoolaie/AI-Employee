@@ -17,7 +17,7 @@ def upgrade() -> None:
     )
     proposal_enum.create(op.get_bind(), checkfirst=True)
     execution_enum = postgresql.ENUM(
-        "not_executed",
+        "not_executed", "pending", "accepted", "failed", "unknown",
         name="skillmarketplacepayoutexecutionstatus",
         create_type=False,
     )
@@ -34,6 +34,13 @@ def upgrade() -> None:
         sa.Column("currency", sa.String(length=8), nullable=False),
         sa.Column("provider", sa.String(length=40), nullable=False, server_default="none"),
         sa.Column("status", proposal_enum, nullable=False, server_default="proposed"),
+        sa.Column("idempotency_key", sa.String(length=255), nullable=True),
+        sa.Column("provider_payout_id", sa.String(length=255), nullable=True),
+        sa.Column("provider_event_id", sa.String(length=255), nullable=True),
+        sa.Column("failure_code", sa.String(length=100), nullable=True),
+        sa.Column("retryable", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column("executed", sa.Boolean(), nullable=False, server_default=sa.false()),
+        sa.Column("external_execution", sa.Boolean(), nullable=False, server_default=sa.false()),
         sa.Column("execution_status", execution_enum, nullable=False, server_default="not_executed"),
         sa.Column(
             "metadata", postgresql.JSONB(astext_type=sa.Text()),
@@ -78,6 +85,10 @@ def upgrade() -> None:
             name="ck_skill_marketplace_payout_proposal_not_executed",
         ),
     )
+    op.create_unique_constraint(
+        "uq_skill_marketplace_payout_proposal_idempotency_key",
+        "skill_marketplace_payout_proposals", ["idempotency_key"],
+    )
     op.create_index(
         "ix_skill_marketplace_payout_proposals_seller",
         "skill_marketplace_payout_proposals", ["seller_tenant_id"],
@@ -89,6 +100,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.drop_constraint(
+        "uq_skill_marketplace_payout_proposal_idempotency_key",
+        "skill_marketplace_payout_proposals",
+        type_="unique",
+    )
     op.drop_index("ix_skill_marketplace_payout_proposals_status", table_name="skill_marketplace_payout_proposals")
     op.drop_index("ix_skill_marketplace_payout_proposals_seller", table_name="skill_marketplace_payout_proposals")
     op.drop_table("skill_marketplace_payout_proposals")
