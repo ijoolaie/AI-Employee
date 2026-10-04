@@ -78,6 +78,10 @@ class Settings(BaseSettings):
             raise ValueError("SKILL_PROVIDER_NAME must be one of: none, http")
         if self.zarinpal_timeout_seconds <= 0 or self.zarinpal_timeout_seconds > 60:
             raise ValueError("ZARINPAL_TIMEOUT_SECONDS must be between 0 and 60")
+        if self.skill_marketplace_platform_fee_bps < 0 or self.skill_marketplace_platform_fee_bps > 10_000:
+            raise ValueError("SKILL_MARKETPLACE_PLATFORM_FEE_BPS must be between 0 and 10000")
+        if self.skill_marketplace_settlement_enabled and self.skill_marketplace_platform_fee_bps < 0:
+            raise ValueError("SKILL_MARKETPLACE_PLATFORM_FEE_BPS must be configured when marketplace settlement is enabled")
         if self.app_env.lower() in {"production", "prod"}:
             if self.debug:
                 raise ValueError("DEBUG must be false in production")
@@ -224,6 +228,8 @@ class Settings(BaseSettings):
     skill_provider_timeout_seconds: float = 10.0
     sales_outreach_provider_name: str = "none"
     sales_payment_provider_name: str = "none"
+    skill_marketplace_settlement_enabled: bool = False
+    skill_marketplace_platform_fee_bps: int = 0
     zarinpal_merchant_id: str | None = None
     zarinpal_sandbox: bool = True
     zarinpal_callback_url: str = "http://localhost:8000/api/v1/webhooks/billing/zarinpal"
