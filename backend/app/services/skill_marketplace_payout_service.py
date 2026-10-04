@@ -17,6 +17,7 @@ from app.models.skill_marketplace_payout_proposal import (
     SkillMarketplacePayoutProposal,
     SkillMarketplacePayoutProposalStatus,
 )
+from app.models.tool_approval import ToolApprovalRequest
 from app.models.skill_marketplace_settlement import (
     SkillMarketplacePayoutStatus,
     SkillMarketplaceSettlementStatus,
@@ -178,6 +179,7 @@ async def execute_payout_proposal(
     platform_admin_tenant_id: uuid.UUID,
     actor_user_id: uuid.UUID,
     approval_granted: bool,
+    approval_request_id: uuid.UUID | None,
 ) -> SkillMarketplacePayoutProposal:
     """Execute one approved payout proposal through the named provider boundary.
 
@@ -186,8 +188,8 @@ async def execute_payout_proposal(
     and a durable idempotency key. The operator-selected provider is resolved
     from configuration; runtime arguments cannot select it.
     """
-    if not approval_granted:
-        raise ValidationAppError("marketplace payout execution requires explicit approval")
+    if not approval_granted or approval_request_id is None:
+        raise ValidationAppError("marketplace payout execution requires a durable explicit approval")
 
     admin_tenant = (
         await db.execute(
@@ -213,6 +215,22 @@ async def execute_payout_proposal(
     ).scalar_one_or_none()
     if admin_user is None:
         raise ValidationAppError("payout execution requires an active platform administrator")
+
+    approval_result = await db.execute(
+        select(ToolApprovalRequest).where(
+            ToolApprovalRequest.id == approval_request_id,
+            ToolApprovalRequest.tenant_id == platform_admin_tenant_id,
+        ).with_for_update()
+    )
+    approval = approval_result.scalar_one_or_none()
+    if approval is None:
+        raise ValidationAppError("payout execution approval request was not found")
+    if approval.tool_name != "marketplace_execute_payout":
+        raise ValidationAppError("approval request is bound to a different tool")
+    if approval.status != "consumed" or approval.decided_by is None or approval.decided_at is None:
+        raise ValidationAppError("payout execution approval was not explicitly decided and consumed")
+    if approval.arguments != {"proposal_id": str(proposal_id)}:
+        raise ValidationAppError("payout execution approval arguments do not match the proposal")
 
     result = await db.execute(
         select(SkillMarketplacePayoutProposal)
