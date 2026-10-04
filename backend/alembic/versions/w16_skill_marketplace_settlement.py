@@ -74,6 +74,18 @@ def upgrade() -> None:
             "provider", "provider_event_id",
             name="uq_skill_marketplace_settlement_provider_event",
         ),
+        sa.CheckConstraint(
+            "platform_fee_bps >= 0 AND platform_fee_bps <= 10000",
+            name="ck_skill_marketplace_settlement_fee_bps",
+        ),
+        sa.CheckConstraint(
+            "gross_amount > 0 AND platform_fee_amount >= 0 AND seller_net_amount >= 0",
+            name="ck_skill_marketplace_settlement_amounts_nonnegative",
+        ),
+        sa.CheckConstraint(
+            "platform_fee_amount + seller_net_amount = gross_amount",
+            name="ck_skill_marketplace_settlement_split_balances",
+        ),
     )
     op.create_index(
         "ix_skill_marketplace_settlements_buyer",
