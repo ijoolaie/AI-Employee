@@ -1,18 +1,15 @@
 # AI Employee Platform
 
-**Latest published release:** `v1.4.15` — exact SHA `226dddcfbab7abde166c8cd6967d63a03f2d4e71`
+**Latest published/certified release:** `v1.4.16` — exact certified SHA `434a0c4a4501af08a393faaf58092add764df2a2`
 
-**Latest certified candidate:** `v1.4.16` — exact SHA `434a0c4a4501af08a393faaf58092add764df2a2`
+**Exact-SHA Production Certification:** Run `37188879277` — PASS; Job `111396657270` — PASS
 
-**v1.4.16 Exact-SHA Production Certification:** Run `37188879277` / Job `111396657270` — PASS. Tag and GitHub Release are **NOT CREATED** yet.
+**Current `main`:** `434a0c4a4501af08a393faaf58092add764df2a2`
 
-**Architecture baseline:** `V1.5 Agentic Operating Model` — architecture/operating-model baseline, not a release.
-
-**Current engineering program:** External Production Execution + Governed Agent Workforce Engineering + W11 Humanized Employee Identity.
-
-**Production deployment:** **PENDING EXTERNAL EXECUTION**
+**Production deployment:** **NOT CLAIMED / NOT VERIFIED**
 
 This repository is the vendor source of truth for the AI Employee Platform. The platform is evolving toward a **Human + Agent operating model** with shared authorization, tools, approvals, audit and lifecycle controls.
+
 
 ## Versioning truth
 
@@ -22,17 +19,19 @@ This repository is the vendor source of truth for the AI Employee Platform. The 
 
 See `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
-## v1.4.11 release truth
+## v1.4.16 release truth
 
-- Tag: `v1.4.11`
-- SHA: `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
-- Certification run: `35848311037` — PASS
-- Certification job: `107139710452` — PASS
-- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
-- External production deployment: pending external execution
-- Live provider validation/customer acceptance: pending external execution
+- Tag: `v1.4.16`
+- SHA: `434a0c4a4501af08a393faaf58092add764df2a2`
+- Certification run: `37188879277` — PASS
+- Certification job: `111396657270` — PASS
+- Evidence artifact: `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`
+- Evidence artifact SHA-256: `7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`
+- Production deployment: **NOT CLAIMED / NOT VERIFIED**
+- W10 Internal Company Dogfood on the same SHA: **PASS** — Run `37189332690` / Job `111398049109`
 
 Historical release records remain immutable; see `docs/releases/RELEASE_TRUTH_LEDGER.md`.
+
 
 ## W11 Humanized Employee Identity & Visual Presentation
 
