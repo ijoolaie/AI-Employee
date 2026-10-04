@@ -108,26 +108,6 @@ async def list_skill_publications(
     return APIResponse(success=True, data=[_read(item) for item in items])
 
 
-@router.get(
-    "/{publication_id}",
-    response_model=APIResponse[SkillMarketplacePublicationResponse],
-)
-async def get_skill_publication(
-    publication_id: UUID,
-    db: DbSession,
-    ctx: SkillMarketplaceReadContext = Depends(require_permission("skill_marketplace.read")),
-):
-    try:
-        item = await SkillMarketplacePublicationService.get_for_tenant(
-            db,
-            tenant_id=ctx.tenant_id,
-            publication_id=publication_id,
-        )
-    except Exception as exc:
-        raise _error(exc) from exc
-    return APIResponse(success=True, data=_read(item))
-
-
 @router.post(
     "/purchases",
     response_model=APIResponse[SkillMarketplacePurchaseResponse],
@@ -179,3 +159,23 @@ async def purchase_skill_package(
             idempotent_replay=replay,
         ),
     )
+@router.get(
+    "/{publication_id}",
+    response_model=APIResponse[SkillMarketplacePublicationResponse],
+)
+async def get_skill_publication(
+    publication_id: UUID,
+    db: DbSession,
+    ctx: SkillMarketplaceReadContext = Depends(require_permission("skill_marketplace.read")),
+):
+    try:
+        item = await SkillMarketplacePublicationService.get_for_tenant(
+            db,
+            tenant_id=ctx.tenant_id,
+            publication_id=publication_id,
+        )
+    except Exception as exc:
+        raise _error(exc) from exc
+    return APIResponse(success=True, data=_read(item))
+
+
