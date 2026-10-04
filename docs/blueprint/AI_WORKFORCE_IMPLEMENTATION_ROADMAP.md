@@ -1011,3 +1011,36 @@ Evidence boundary:
 - production certification of the post-v1.4.16 merge SHA: **NOT RUN / NOT VERIFIED**.
 
 The next W16 work should focus on independently evidenced marketplace/customer outcome behavior or other concrete business requirements, not reimplementing the entitlement gate.
+
+### W16 third-party Skill Marketplace publication checkpoint — 2026-10-04
+
+PR #853 introduced and real-stack verified the third-party SkillPackage publication/discovery boundary.
+
+Evidence:
+- exact PR head: `9a2a8fe00b0da1b8bf61a6036b435e5f3a56b4a7`;
+- merged as `dbacb01c4111174493b8d520a2934a07561a9a08`;
+- W16 Third-Party Skill Publishing Real-Stack: PASS — run `37198545817`;
+- W16 Skill API Real-Stack Contract: PASS — run `37198545857`;
+- CI: PASS — run `37198545866`;
+- CodeQL: PASS — run `37198545818`;
+- Architecture Guard: PASS — run `37198545942`;
+- Security/Privacy: PASS — run `37198545795`;
+- Runtime Isolation/RBAC: PASS — run `37198545767`;
+- HA Failure Recovery: PASS — run `37198545794`;
+- Production Infrastructure Validation: PASS — run `37198545861`;
+- Ephemeral DAST: PASS — run `37198545868`;
+- Production Rollback & Alerting: PASS — run `37198545797`;
+- Production Observability: PASS — run `37198545870`.
+
+The real-stack scenario verified owner publication, cross-tenant public discovery, metadata-only public lookup, private-publication hiding, wrong-tenant rejection, duplicate-publication rejection and publication immutability.
+
+The migration revision initially exceeded the existing Alembic `version_num VARCHAR(32)` boundary. Real-stack execution exposed the failure; the revision was corrected to `w16_skill_mkt_publications`, after which the exact-head gate set passed. Alembic's documented version table uses a string `version_num` column, and the repository's concrete failure was the database rejecting the longer revision value.
+
+**Evidence boundary:**
+- third-party SkillPackage publication/discovery: **VERIFIED** on the real PostgreSQL stack;
+- installation authority: remains governed separately by the existing Employee Skill entitlement/install boundary;
+- external skill-provider execution: **NOT VERIFIED**;
+- real marketplace/customer revenue: **NOT VERIFIED**;
+- production certification of `dbacb01c4111174493b8d520a2934a07561a9a08`: **NOT RUN / NOT VERIFIED**.
+
+This checkpoint does not change the immutable `v1.4.16` production-certified release.
