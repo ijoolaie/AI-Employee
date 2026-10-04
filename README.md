@@ -13,7 +13,7 @@ This repository is the vendor source of truth for the AI Employee Platform. The 
 
 ## Versioning truth
 
-- **Release:** immutable product snapshot. Latest published: `v1.4.15`; latest certified candidate: `v1.4.16`.
+- **Release:** immutable product snapshot. Latest published: `v1.4.16`.
 - **Architecture:** current baseline: `V1.5`.
 - **Engineering program:** external production execution and governed Agent workforce engineering.
 
