@@ -4,6 +4,7 @@ import uuid
 import pytest
 
 from app.models.cosmetic_entitlement import CosmeticEntitlement
+from app.schemas.deal import CosmeticPurchase
 from app.services.cosmetic_entitlement_service import (
     COSMETIC_VALUES,
     CosmeticEntitlementError,
@@ -73,3 +74,15 @@ async def test_cross_tenant_employee_is_rejected_before_product_lookup():
             cosmetic_type="accessory",
             cosmetic_value="glasses",
         )
+
+
+def test_cosmetic_purchase_schema_is_bounded():
+    payload = {
+        "employee_id": uuid.uuid4(),
+        "product_id": uuid.uuid4(),
+        "cosmetic_type": "accessory",
+        "cosmetic_value": "glasses",
+    }
+    assert CosmeticPurchase.model_validate(payload).cosmetic_type == "accessory"
+    with pytest.raises(Exception):
+        CosmeticPurchase.model_validate({**payload, "permission": "admin"})
