@@ -44,9 +44,9 @@ def test_marketplace_purchase_model_has_idempotency_boundary():
 def test_marketplace_purchase_routes_are_ordered_and_explicit():
     from app.api.v1.skill_marketplace import router
     routes = [route.path for route in router.routes if hasattr(route, "path")]
-    assert "/purchases" in routes
-    assert "/{publication_id}" in routes
-    assert routes.index("/purchases") < routes.index("/{publication_id}")
+    assert "/skill-marketplace/publications/purchases" in routes
+    assert "/skill-marketplace/publications/{publication_id}" in routes
+    assert routes.index("/skill-marketplace/publications/purchases") < routes.index("/skill-marketplace/publications/{publication_id}")
 
 
 def test_marketplace_purchase_http_schema_is_explicit():
