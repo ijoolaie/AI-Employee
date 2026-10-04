@@ -11,7 +11,8 @@ from app.schemas.capacity_forecast import CapacityForecastResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
 from app.schemas.workload_balance import WorkloadBalanceEventResponse
-from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting
+from app.schemas.admin_marketplace import MarketplacePayoutProposalResponse
+from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting, skill_marketplace_payout_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -43,6 +44,51 @@ async def list_tenants(ctx: PlatformAdminContext, db: DbSession, status: str | N
 async def get_validation_summary(ctx: PlatformAdminContext, db: DbSession):
     summary = await feedback_service.validation_summary(db)
     return APIResponse(success=True, data=ValidationSummaryResponse.model_validate(summary))
+
+
+@router.post("/marketplace/settlements/{settlement_id}/payout-proposal", response_model=APIResponse[MarketplacePayoutProposalResponse])
+async def create_marketplace_payout_proposal(
+    settlement_id: UUID,
+    ctx: PlatformAdminContext,
+    db: DbSession,
+):
+    proposal = await skill_marketplace_payout_service.create_payout_proposal(
+        db,
+        settlement_id=settlement_id,
+        platform_admin_tenant_id=ctx.tenant.id,
+        created_by_user_id=ctx.user.id,
+    )
+    await db.commit()
+    return APIResponse(
+        success=True,
+        data=MarketplacePayoutProposalResponse.model_validate(proposal),
+    )
+
+
+@router.get("/marketplace/payout-proposals", response_model=APIResponse[list[MarketplacePayoutProposalResponse]])
+async def list_marketplace_payout_proposals(
+    ctx: PlatformAdminContext,
+    db: DbSession,
+    status: str | None = Query(default=None),
+):
+    from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutProposalStatus
+
+    parsed_status = None
+    if status is not None:
+        try:
+            parsed_status = SkillMarketplacePayoutProposalStatus(status)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail="Invalid payout proposal status") from exc
+
+    proposals = await skill_marketplace_payout_service.list_payout_proposals(
+        db,
+        platform_admin_tenant_id=ctx.tenant.id,
+        status=parsed_status,
+    )
+    return APIResponse(
+        success=True,
+        data=[MarketplacePayoutProposalResponse.model_validate(item) for item in proposals],
+    )
 
 
 @router.get("/billing")
