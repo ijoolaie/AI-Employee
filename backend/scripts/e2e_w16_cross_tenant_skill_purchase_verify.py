@@ -18,7 +18,7 @@ from app.models.skill_purchase_entitlement import SkillPurchaseEntitlement, Skil
 from app.models.tenant import Tenant
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
 from app.models.user import User
-from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutExecutionStatus, SkillMarketplacePayoutProposal, SkillMarketplacePayoutProposalStatus
+from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutExecutionStatus, SkillMarketplacePayoutProposalStatus
 from app.models.skill_marketplace_settlement import SkillMarketplacePayoutStatus, SkillMarketplaceSettlement, SkillMarketplaceSettlementStatus
 from app.services import edition_lifecycle_service, skill_marketplace_service, stripe_service
 from app.services.skill_marketplace_publication_service import SkillMarketplacePublicationService
