@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.business_order import BusinessOrder
 from app.models.cosmetic_entitlement import CosmeticEntitlement
 from app.models.employee import Employee
 from app.models.product import Product
@@ -20,6 +21,7 @@ COSMETIC_VALUES = {
     "hair_style": {"default", "short", "long", "curly", "tied"},
     "accessory": {"none", "glasses", "headset", "badge"},
 }
+COSMETIC_PRODUCT_CATEGORY = "employee_cosmetic"
 
 
 class CosmeticEntitlementError(ValueError):
@@ -31,6 +33,17 @@ def _validate_cosmetic(cosmetic_type: str, cosmetic_value: str) -> None:
         raise CosmeticEntitlementError("cosmetic type is invalid")
     if cosmetic_value not in COSMETIC_VALUES[cosmetic_type]:
         raise CosmeticEntitlementError("cosmetic value is invalid")
+
+
+def _validate_product_contract(product: Product, cosmetic_type: str, cosmetic_value: str) -> None:
+    """Only explicitly designated cosmetic catalog products may create ownership."""
+    if not product.is_active:
+        raise CosmeticEntitlementError("product is inactive")
+    if product.category != COSMETIC_PRODUCT_CATEGORY:
+        raise CosmeticEntitlementError("product is not an employee cosmetic")
+    attributes = product.attributes or {}
+    if attributes.get("cosmetic_type") != cosmetic_type or attributes.get("cosmetic_value") != cosmetic_value:
+        raise CosmeticEntitlementError("product cosmetic contract does not match entitlement")
 
 
 async def grant(
@@ -61,6 +74,19 @@ async def grant(
     ).scalar_one_or_none()
     if product is None:
         raise CosmeticEntitlementError("product not found in tenant")
+    _validate_product_contract(product, cosmetic_type, cosmetic_value)
+
+    if source_order_id is not None:
+        order = (
+            await db.execute(
+                select(BusinessOrder).where(
+                    BusinessOrder.id == source_order_id,
+                    BusinessOrder.tenant_id == tenant_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if order is None:
+            raise CosmeticEntitlementError("source order not found in tenant")
 
     existing = (
         await db.execute(
