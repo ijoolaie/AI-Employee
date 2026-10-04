@@ -226,7 +226,10 @@ async def install(
                 db.add(installation)
                 await db.flush()
         except IntegrityError as exc:
-            raise ConflictError("skill package is already installed") from exc
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name == "uq_employee_skill_installation":
+                raise ConflictError("skill package is already installed") from exc
+            raise
     await db.flush()
     await audit_service.record(
         db,
