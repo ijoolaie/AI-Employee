@@ -50,6 +50,10 @@ async def require_marketplace_payout_executor(
     return ctx
 
 
+MarketplacePayoutApproverContext = Annotated[TenantContext, Depends(require_marketplace_payout_approver)]
+MarketplacePayoutExecutorContext = Annotated[TenantContext, Depends(require_marketplace_payout_executor)]
+
+
 @router.get("/dashboard", response_model=APIResponse[AdminDashboardResponse])
 async def get_dashboard(ctx: PlatformAdminContext, db: DbSession):
     return APIResponse(success=True, data=AdminDashboardResponse.model_validate(await admin_service.dashboard(db)))
@@ -126,7 +130,7 @@ async def list_marketplace_payout_proposals(
 async def decide_marketplace_payout_approval(
     proposal_id: UUID,
     payload: MarketplacePayoutApprovalCreate,
-    ctx: TenantContext = Depends(require_marketplace_payout_approver),
+    ctx: MarketplacePayoutApproverContext,
     db: DbSession,
 ):
     approval = await skill_marketplace_payout_service.approve_payout_proposal(
