@@ -7,7 +7,7 @@
 **GitHub Release:** `v1.4.16` — PUBLISHED
 **Exact-SHA Production Certification:** Run `37188879277` — PASS
 **Certification job:** `111396657270` — PASS
-**Current engineering head:** `main` — `933fb68c8857f0b4fe939bb03351a726f3ec890b`
+**Current engineering head:** `main` — mutable; resolve directly from Git metadata
 **Current status:** v1.4.16 CERTIFIED at its immutable SHA / current main is post-release engineering and **NOT release-certified**
 
 ## Release boundary
@@ -39,7 +39,7 @@ This file is the current-status authority. Historical sections below preserve pr
 
 ## Current-main post-certification engineering revalidation
 
-Current-main and post-release engineering evidence must never be treated as v1.4.16 certification. The current main head `933fb68c8857f0b4fe939bb03351a726f3ec890b` is post-release engineering evidence only.
+Current-main and post-release engineering evidence must never be treated as v1.4.16 certification. The mutable `main` branch is post-release engineering evidence only; resolve its exact SHA directly from Git metadata when reporting a point-in-time state.
 
 ## Previous certified release boundary
 
