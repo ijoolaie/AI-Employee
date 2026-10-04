@@ -11,7 +11,7 @@
 **Certification run:** `37188879277` — PASS (exact `v1.4.16` SHA)  
 **Production deployment:** OPEN — PENDING EXTERNAL EXECUTION
 
-The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.11` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification documentation changes and is not itself certified.
+The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.16` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification documentation changes and is not itself certified.
 
 ## Executive status
 
@@ -19,7 +19,7 @@ Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.
 
 The exact-SHA Production Certification suite passed for `v1.4.16`. Certification run `37188879277` / job `111396657270` checked out SHA `434a0c4a4501af08a393faaf58092add764df2a2`, recorded the required certification evidence, and completed successfully. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
 
-## v1.4.11 certified and published release
+## v1.4.16 certified and published release
 
 - **Release status:** **PUBLISHED** — exact certified SHA `434a0c4a4501af08a393faaf58092add764df2a2`.
 - Exact-SHA Production Certification: **PASS**, run `37188879277`, job `111396657270`.
@@ -102,7 +102,7 @@ PR #665 is merged at `7c9dd56a93fc3b4294467a55cd41b3daadf0bbbd`. Regression cove
 
 ## Current frontier
 
-The current release frontier is `v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN`. Post-v1.4.11 semantic workforce engineering now includes an explicit code-reconciled binding inventory. The current source audit identifies 14 explicit Role → Operation → Tool bindings, while executable/evidenced status remains capability-specific. Unsupported workforce operations remain denied until a dedicated binding exists. No post-certification source changes are included in the certified snapshot. Continue regression watch for the audited product-completeness scope; do not reopen completed work without a regression, new requirement, or newly discovered unsupported surface.
+The current release frontier is `v1.4.16 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN`. Post-v1.4.11 semantic workforce engineering now includes an explicit code-reconciled binding inventory. The current source audit identifies 14 explicit Role → Operation → Tool bindings, while executable/evidenced status remains capability-specific. Unsupported workforce operations remain denied until a dedicated binding exists. No post-certification source changes are included in the certified snapshot. Continue regression watch for the audited product-completeness scope; do not reopen completed work without a regression, new requirement, or newly discovered unsupported surface.
 
 W16 commercial skill purchase entitlement is now merged and real-stack verified on post-v1.4.16 mainline; it is not part of the immutable v1.4.16 release. The next application-code change requires a new candidate boundary and fresh exact-SHA certification. External production evidence remains intentionally open while the project is local.
 
@@ -286,3 +286,34 @@ The purchase entitlement ledger is presentation-only ownership state. It does no
 Post-merge W10 Internal Company Dogfood E2E run `37196994830` completed successfully on merge SHA `bbafa2c7b754cd69d421c6011bf42f5523fdeaa2`. This is post-release engineering evidence; it does not create a new production certification for the merge SHA.
 
 **Current boundary:** W16 commercial purchase entitlement is **VERIFIED on the real PostgreSQL stack** for the merged implementation. Third-party publishing, external skill-provider execution, and real marketplace/customer revenue remain **NOT VERIFIED**. The immutable `v1.4.16` certification remains unchanged.
+
+## W16 third-party Skill Marketplace publication — 2026-10-04
+
+PR #853, `feat(w16): add third-party skill marketplace publishing`, was validated at exact head `9a2a8fe00b0da1b8bf61a6036b435e5f3a56b4a7` and merged with merge commit `dbacb01c4111174493b8d520a2934a07561a9a08`.
+
+The exact-head gate set completed successfully:
+- W16 Third-Party Skill Publishing Real-Stack — run `37198545817`;
+- W16 Skill API Real-Stack Contract — run `37198545857`;
+- CI — run `37198545866`;
+- CodeQL — run `37198545818`;
+- Architecture Guard — run `37198545942`;
+- Security/Privacy — run `37198545795`;
+- Runtime Isolation/RBAC — run `37198545767`;
+- HA Failure Recovery — run `37198545794`;
+- Production Infrastructure Validation — run `37198545861`;
+- Ephemeral DAST — run `37198545868`;
+- Production Rollback & Alerting — run `37198545797`;
+- Production Observability — run `37198545870`.
+
+The dedicated real-stack publishing scenario verified:
+- owner tenant can publish an already-published SkillPackage;
+- public publication is discoverable by another tenant;
+- public lookup exposes publication metadata without manifest/compatibility payloads;
+- private publication is hidden cross-tenant;
+- wrong-tenant publication is rejected;
+- duplicate publication is rejected;
+- publication metadata is immutable.
+
+The publication record is presentation/discovery metadata only. It does not create or modify permissions, allowed tools, capability contracts, approval policy, tool bindings, installation entitlement or execution authority.
+
+**Current boundary:** third-party SkillPackage publication/discovery is **VERIFIED on the real PostgreSQL stack** for the exact PR head above. External skill-provider execution and real marketplace/customer revenue remain **NOT VERIFIED**. The `v1.4.16` Production Certification remains the immutable certified release; the merge SHA above is not production-certified.
