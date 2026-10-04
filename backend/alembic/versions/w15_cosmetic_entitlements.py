@@ -42,12 +42,11 @@ def upgrade():
         sa.ForeignKeyConstraint(["source_order_id"], ["business_orders.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
-            "tenant_id",
-            "employee_id",
-            "product_id",
+            "tenant_id", "employee_id", "product_id",
             name="uq_cosmetic_entitlement_tenant_employee_product",
         ),
     )
+    op.alter_column("cosmetic_entitlements", "status", server_default=None)
     op.create_index("ix_cosmetic_entitlements_tenant", "cosmetic_entitlements", ["tenant_id"])
     op.create_index("ix_cosmetic_entitlements_employee", "cosmetic_entitlements", ["employee_id"])
     op.create_index("ix_cosmetic_entitlements_product", "cosmetic_entitlements", ["product_id"])
