@@ -66,13 +66,14 @@ def test_destination_binding_uses_a_new_migration_after_destination_ledger():
     assert "destination_id" not in original
 
 
-def test_payout_proposal_destination_binding_does_not_redirect_on_replacement():
+def test_payout_proposal_snapshots_destination_at_creation():
     source = (
         Path(__file__).resolve().parents[1]
         / "app"
         / "services"
         / "skill_marketplace_payout_service.py"
     ).read_text(encoding="utf-8")
-    assert "destination_ref=destination.destination_ref" in source
-    assert "get_active_payout_destination" not in source
-    assert "destination_ref" not in source.split("proposal = SkillMarketplacePayoutProposal(", 1)[1].split(")", 1)[0] or True
+    proposal_source = source.split("proposal = SkillMarketplacePayoutProposal(", 1)[1].split("db.add(proposal)", 1)[0]
+    assert "destination_id=destination.id" in proposal_source
+    assert "destination_provider=destination.provider" in proposal_source
+    assert "destination_ref=destination.destination_ref" in proposal_source
