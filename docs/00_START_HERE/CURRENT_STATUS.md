@@ -433,7 +433,7 @@ Current evidence boundary:
 - W16 cross-tenant marketplace purchase/verified settlement mechanics on deterministic payment provider: **VERIFIED**
 - external production Skill provider execution: **NOT VERIFIED**
 - real external customer marketplace purchase/revenue: **NOT VERIFIED**
-- seller payout/platform commission/tax settlement: **NOT VERIFIED**
+- marketplace financial allocation accounting (gross/platform fee/seller net): **VERIFIED**; external seller payout execution and tax settlement remain **NOT VERIFIED**
 - Production Certification for post-v1.4.16 W16 merge SHAs: **NOT RUN / NOT VERIFIED**
 
 All of these remain post-release engineering evidence and do not extend the immutable `v1.4.16` certification.
@@ -446,3 +446,21 @@ PR #857 was merged at `8487f0b1133e20c4ce142d43fffd3ee69bf010c1` after exact-hea
 The deterministic real-stack purchase gate verified seller/buyer tenant separation, public publication purchase eligibility, buyer-side purchase idempotency, verified-payment settlement, buyer entitlement referencing the seller package/publication, buyer installation of the seller-owned package, WorkforceRevenueEvent correlation and replay idempotency.
 
 This is post-v1.4.16 engineering evidence. It does not establish a real external customer purchase, realized customer revenue, seller payout, platform commission, tax settlement or Production Certification for the merge SHA.
+
+## W16 marketplace settlement allocation — 2026-10-04
+
+Latest W16 financial-accounting checkpoint:
+- exact PR head: `26e34cca56522d13880bc1599523e01767640425`
+- merge SHA: `e4084462e414cd408b7035997bbd2b469b77c14a`
+- W16 Cross-Tenant Skill Purchase Real-Stack: **PASS** — Run `37202824376`
+- CI: **PASS** — Run `37202824398`
+- CodeQL: **PASS** — Run `37202824329`
+- Ephemeral DAST: **PASS** — Run `37202824343`
+
+The new ledger records gross payment, operator-configured platform fee bps, platform fee amount and seller net. It explicitly records seller payout as `not_executed` and tax treatment as `not_calculated`.
+
+**VERIFIED:** deterministic marketplace financial allocation accounting on the real PostgreSQL CI stack.
+
+**NOT VERIFIED:** external seller payout execution, tax calculation/settlement, real external customer payment/revenue, and Production Certification of the post-v1.4.16 merge SHA.
+
+The immutable `v1.4.16` certification remains unchanged.
