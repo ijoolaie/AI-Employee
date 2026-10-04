@@ -16,6 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.business_deal import BusinessDeal
 from app.models.business_order import BusinessOrder
+from app.models.employee import Employee
+from app.models.product import Product
 from app.services import audit_service
 
 ALLOWED_STAGES = frozenset(
@@ -53,6 +55,7 @@ async def create_deal(
     notes: str | None = None,
     source: str | None = None,
     order_id: str | None = None,
+    cosmetic_purchase: dict[str, Any] | None = None,
 ) -> BusinessDeal:
     if not title or not str(title).strip():
         raise ValidationAppError("title is required")
@@ -69,6 +72,41 @@ async def create_deal(
     prob = probability if probability is not None else DEFAULT_PROBABILITY[stage]
     if prob < 0 or prob > 100:
         raise ValidationAppError("probability must be 0-100")
+
+    cosmetic_contract = None
+    if cosmetic_purchase is not None:
+        required = {"employee_id", "product_id", "cosmetic_type", "cosmetic_value"}
+        if set(cosmetic_purchase) != required:
+            raise ValidationAppError("cosmetic_purchase must contain exactly employee_id, product_id, cosmetic_type, cosmetic_value")
+        try:
+            cosmetic_employee_id = uuid.UUID(str(cosmetic_purchase["employee_id"]))
+            cosmetic_product_id = uuid.UUID(str(cosmetic_purchase["product_id"]))
+        except (TypeError, ValueError) as exc:
+            raise ValidationAppError("cosmetic_purchase employee_id/product_id must be valid UUIDs") from exc
+        employee = (await db.execute(select(Employee).where(
+            Employee.id == cosmetic_employee_id,
+            Employee.tenant_id == tenant_id,
+        ))).scalar_one_or_none()
+        if employee is None:
+            raise NotFoundError("Cosmetic purchase employee not found")
+        product = (await db.execute(select(Product).where(
+            Product.id == cosmetic_product_id,
+            Product.tenant_id == tenant_id,
+        ))).scalar_one_or_none()
+        if product is None:
+            raise NotFoundError("Cosmetic purchase product not found")
+        from app.services.cosmetic_entitlement_service import _validate_product_contract
+        cosmetic_type = str(cosmetic_purchase["cosmetic_type"])
+        cosmetic_value = str(cosmetic_purchase["cosmetic_value"])
+        _validate_product_contract(product, cosmetic_type, cosmetic_value)
+        if (product.currency or "").upper() != (currency or "").upper() or _money(product.price) != amt:
+            raise ValidationAppError("Cosmetic purchase amount/currency must match the catalog product")
+        cosmetic_contract = {
+            "employee_id": str(cosmetic_employee_id),
+            "product_id": str(cosmetic_product_id),
+            "cosmetic_type": cosmetic_type,
+            "cosmetic_value": cosmetic_value,
+        }
 
     order_uuid = None
     if order_id:
@@ -98,7 +136,7 @@ async def create_deal(
         source=source,
         order_id=order_uuid,
         created_by=actor_id,
-        metadata_={},
+        metadata_={"cosmetic_purchase": cosmetic_contract} if cosmetic_contract else {},
     )
     db.add(deal)
     await db.flush()
