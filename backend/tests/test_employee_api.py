@@ -243,3 +243,126 @@ async def test_available_tools_endpoint_returns_registry_tools():
     assert "create_deal" in names
     assert "sales_pipeline_summary" in names
     assert "sales_forecast" in names
+
+
+def _installation(employee_id, skill_package_id, *, status="active"):
+    return SimpleNamespace(
+        id=uuid.uuid4(),
+        employee_id=employee_id,
+        skill_package_id=skill_package_id,
+        status=status,
+        installed_at=datetime.now(),
+        revoked_at=None,
+    )
+
+
+@pytest.mark.asyncio
+async def test_install_skill_endpoint_delegates_with_tenant_and_actor(monkeypatch):
+    employee_id = uuid.uuid4()
+    skill_package_id = uuid.uuid4()
+    installation = _installation(employee_id, skill_package_id)
+
+    service_mock = AsyncMock(return_value=installation)
+    monkeypatch.setattr(
+        employees.skill_marketplace_service,
+        "install",
+        service_mock,
+    )
+
+    ctx = SimpleNamespace(
+        tenant_id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+    )
+    db = object()
+
+    response = await employees.install_skill(
+        employee_id,
+        skill_package_id,
+        ctx,
+        db,
+    )
+
+    assert response.success is True
+    assert response.data.id == installation.id
+    assert response.data.status == "active"
+    service_mock.assert_awaited_once_with(
+        db,
+        tenant_id=ctx.tenant_id,
+        employee_id=employee_id,
+        skill_package_id=skill_package_id,
+        actor_id=ctx.user_id,
+    )
+
+
+@pytest.mark.asyncio
+async def test_revoke_skill_endpoint_delegates_with_tenant_and_actor(monkeypatch):
+    employee_id = uuid.uuid4()
+    skill_package_id = uuid.uuid4()
+    installation = _installation(
+        employee_id,
+        skill_package_id,
+        status="revoked",
+    )
+
+    service_mock = AsyncMock(return_value=installation)
+    monkeypatch.setattr(
+        employees.skill_marketplace_service,
+        "revoke",
+        service_mock,
+    )
+
+    ctx = SimpleNamespace(
+        tenant_id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+    )
+    db = object()
+
+    response = await employees.revoke_skill(
+        employee_id,
+        skill_package_id,
+        ctx,
+        db,
+    )
+
+    assert response.success is True
+    assert response.data.id == installation.id
+    assert response.data.status == "revoked"
+    service_mock.assert_awaited_once_with(
+        db,
+        tenant_id=ctx.tenant_id,
+        employee_id=employee_id,
+        skill_package_id=skill_package_id,
+        actor_id=ctx.user_id,
+    )
+
+
+@pytest.mark.asyncio
+async def test_list_skills_endpoint_passes_tenant_scope_and_active_only(monkeypatch):
+    employee_id = uuid.uuid4()
+    skill_package_id = uuid.uuid4()
+    installation = _installation(employee_id, skill_package_id)
+
+    service_mock = AsyncMock(return_value=[installation])
+    monkeypatch.setattr(
+        employees.skill_marketplace_service,
+        "list_for_employee",
+        service_mock,
+    )
+
+    ctx = SimpleNamespace(
+        tenant_id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+    )
+    db = object()
+
+    response = await employees.list_skills(employee_id, ctx, db)
+
+    assert response.success is True
+    assert len(response.data) == 1
+    assert response.data[0].skill_package_id == skill_package_id
+    service_mock.assert_awaited_once_with(
+        db,
+        tenant_id=ctx.tenant_id,
+        employee_id=employee_id,
+        active_only=True,
+    )
