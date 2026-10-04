@@ -148,16 +148,6 @@ async def revoke_skill(
     ctx: EmployeeWriteContext,
     db: DbSession,
 ):
-    installations = await skill_marketplace_service.list_for_employee(
-        db,
-        tenant_id=ctx.tenant_id,
-        employee_id=employee_id,
-        active_only=True,
-    )
-    installation = next((item for item in installations if item.skill_package_id == skill_package_id), None)
-    if installation is None:
-        from app.core.exceptions import NotFoundError
-        raise NotFoundError("active skill installation not found")
     installation = await skill_marketplace_service.revoke(
         db,
         tenant_id=ctx.tenant_id,
