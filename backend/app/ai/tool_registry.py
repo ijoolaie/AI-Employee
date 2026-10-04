@@ -2620,6 +2620,31 @@ def build_default_registry() -> ToolRegistry:
         )
     )
 
+    registry.register(
+        RegisteredTool(
+            name="marketplace_execute_payout",
+            description="Execute one approved marketplace seller payout proposal through the operator-selected named payout provider.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "proposal_id": {
+                        "type": "string",
+                        "minLength": 36,
+                        "maxLength": 36,
+                        "pattern": "^[0-9a-fA-F-]{36}$",
+                    }
+                },
+                "required": ["proposal_id"],
+                "additionalProperties": False,
+            },
+            handler=lambda arguments, **context: None,
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
     return registry
 
 
