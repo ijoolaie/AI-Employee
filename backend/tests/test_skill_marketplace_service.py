@@ -107,3 +107,15 @@ def test_w16_referenced_entities_expose_composite_tenant_keys():
         for constraint in SkillPackage.__table__.constraints
         if constraint.__class__.__name__ == "UniqueConstraint"
     }
+
+
+def test_w16_published_immutability_contract_is_present():
+    from pathlib import Path
+
+    migration = Path(__file__).resolve().parents[1] / "alembic" / "versions" / "w16_skill_package_immutability.py"
+    text = migration.read_text(encoding="utf-8")
+    assert "prevent_published_skill_package_mutation" in text
+    assert "trg_skill_packages_published_immutable" in text
+    assert "OLD.published_at IS NOT NULL" in text
+    assert "NEW.manifest IS DISTINCT FROM OLD.manifest" in text
+    assert "NEW.version IS DISTINCT FROM OLD.version" in text
