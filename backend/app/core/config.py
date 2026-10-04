@@ -78,6 +78,10 @@ class Settings(BaseSettings):
             raise ValueError("SKILL_PROVIDER_NAME must be one of: none, http")
         if self.zarinpal_timeout_seconds <= 0 or self.zarinpal_timeout_seconds > 60:
             raise ValueError("ZARINPAL_TIMEOUT_SECONDS must be between 0 and 60")
+        if self.skill_marketplace_payout_provider_timeout_seconds <= 0 or self.skill_marketplace_payout_provider_timeout_seconds > 60:
+            raise ValueError("SKILL_MARKETPLACE_PAYOUT_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
+        if self.skill_marketplace_payout_provider_name.lower() not in {"none", "contract-test", "http"}:
+            raise ValueError("SKILL_MARKETPLACE_PAYOUT_PROVIDER_NAME must be one of: none, contract-test, http")
         if self.skill_marketplace_platform_fee_bps < 0 or self.skill_marketplace_platform_fee_bps > 10_000:
             raise ValueError("SKILL_MARKETPLACE_PLATFORM_FEE_BPS must be between 0 and 10000")
         if self.skill_marketplace_settlement_enabled and self.skill_marketplace_platform_fee_bps < 0:
@@ -123,6 +127,16 @@ class Settings(BaseSettings):
                 raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
             if self.market_data_provider_base_url and urlparse(self.market_data_provider_base_url).scheme != "https":
                 raise ValueError("MARKET_DATA_PROVIDER_BASE_URL must use HTTPS in production")
+            if self.skill_marketplace_payout_provider_name.lower() == "contract-test":
+                raise ValueError("SKILL_MARKETPLACE_PAYOUT_PROVIDER_NAME must not use contract-test in production")
+            if self.skill_marketplace_payout_provider_name.lower() == "http":
+                if not self.skill_marketplace_payout_provider_base_url or not self.skill_marketplace_payout_provider_api_key:
+                    raise ValueError("SKILL_MARKETPLACE_PAYOUT_PROVIDER_BASE_URL and SKILL_MARKETPLACE_PAYOUT_PROVIDER_API_KEY are required when marketplace payout provider http is enabled")
+                parsed_payout_provider = urlparse(self.skill_marketplace_payout_provider_base_url)
+                if parsed_payout_provider.scheme != "https":
+                    raise ValueError("SKILL_MARKETPLACE_PAYOUT_PROVIDER_BASE_URL must use HTTPS in production")
+                if (parsed_payout_provider.hostname or "").lower() in {"localhost", "127.0.0.1", "::1"}:
+                    raise ValueError("SKILL_MARKETPLACE_PAYOUT_PROVIDER_BASE_URL must not point to localhost in production")
             if self.skill_provider_name.lower() == "http":
                 if not self.skill_provider_base_url or not self.skill_provider_api_key:
                     raise ValueError("SKILL_PROVIDER_BASE_URL and SKILL_PROVIDER_API_KEY are required when http skill provider is enabled")
@@ -230,6 +244,10 @@ class Settings(BaseSettings):
     sales_payment_provider_name: str = "none"
     skill_marketplace_settlement_enabled: bool = False
     skill_marketplace_platform_fee_bps: int = 0
+    skill_marketplace_payout_provider_name: str = "none"
+    skill_marketplace_payout_provider_base_url: str | None = None
+    skill_marketplace_payout_provider_api_key: str | None = None
+    skill_marketplace_payout_provider_timeout_seconds: float = 10.0
     zarinpal_merchant_id: str | None = None
     zarinpal_sandbox: bool = True
     zarinpal_callback_url: str = "http://localhost:8000/api/v1/webhooks/billing/zarinpal"
