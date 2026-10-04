@@ -218,9 +218,9 @@ async def verify() -> None:
             "SKILL_MARKETPLACE_PAYOUT_PROVIDER_NAME", "none"
         )
 
-        # Verify the default remains fail-closed before enabling the deterministic
-        # CI contract provider for the positive execution path.
+        # Approval is required before any provider execution is attempted.
         settings.skill_marketplace_payout_provider_name = "none"
+
         proposal = await skill_marketplace_payout_service.create_payout_proposal(
             db,
             settlement_id=settlement.id,
@@ -232,20 +232,46 @@ async def verify() -> None:
         assert proposal.execution_status == SkillMarketplacePayoutExecutionStatus.NOT_EXECUTED
 
         try:
+            await skill_marketplace_payout_service.approve_payout_proposal(
+                db,
+                proposal_id=proposal.id,
+                platform_admin_tenant_id=platform.id,
+                decided_by_user_id=proposer.id,
+                decision="approve",
+            )
+        except ConflictError as exc:
+            assert "creator cannot approve" in str(exc)
+            print("PAYOUT SEPARATION OF DUTIES CREATOR REJECT PASS")
+        else:
+            raise AssertionError("proposal creator was allowed to approve")
+
+        approval = await skill_marketplace_payout_service.approve_payout_proposal(
+            db,
+            proposal_id=proposal.id,
+            platform_admin_tenant_id=platform.id,
+            decided_by_user_id=approver.id,
+            decision="approve",
+            reason="fixture approval",
+        )
+        await db.commit()
+        assert approval.status.value == "approved"
+        print("PAYOUT HUMAN APPROVAL PASS")
+
+        settings.skill_marketplace_payout_provider_name = "none"
+        try:
             await skill_marketplace_payout_service.execute_payout_proposal(
                 db,
                 proposal_id=proposal.id,
                 platform_admin_tenant_id=platform.id,
                 executed_by_user_id=executor.id,
             )
-        except (ValidationAppError, ConflictError) as exc:
-            assert "provider" in str(exc).lower() or "configured" in str(exc).lower()
+        except ValidationAppError as exc:
+            assert "No operator-configured marketplace payout provider is available" in str(exc)
             print("PAYOUT DEFAULT PROVIDER FAIL-CLOSED PASS")
         else:
             raise AssertionError("unconfigured payout provider unexpectedly executed")
 
         settings.skill_marketplace_payout_provider_name = "contract-test"
-
         try:
             await skill_marketplace_payout_service.approve_payout_proposal(
                 db,
