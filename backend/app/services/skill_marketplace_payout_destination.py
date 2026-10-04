@@ -16,6 +16,7 @@ from app.models.skill_marketplace_payout_destination import (
     SkillMarketplacePayoutDestination,
     SkillMarketplacePayoutDestinationStatus,
 )
+from app.models.user import User
 
 
 def _validate_destination(*, provider: str, destination_ref: str) -> tuple[str, str]:
@@ -28,6 +29,26 @@ def _validate_destination(*, provider: str, destination_ref: str) -> tuple[str, 
     if not destination_value or len(destination_value) > 255:
         raise ValidationAppError("Payout destination reference is required and must be at most 255 characters")
     return provider_value, destination_value
+
+
+async def _assert_seller_actor(
+    db: AsyncSession,
+    *,
+    seller_tenant_id: uuid.UUID,
+    actor_user_id: uuid.UUID,
+) -> None:
+    """Require an active seller-tenant user before mutating a destination."""
+    result = await db.execute(
+        select(User).where(
+            User.id == actor_user_id,
+            User.tenant_id == seller_tenant_id,
+            User.is_active.is_(True),
+        )
+    )
+    if result.scalar_one_or_none() is None:
+        raise ValidationAppError(
+            "Payout destination actor must be an active user of the seller tenant"
+        )
 
 
 async def get_active_payout_destination(
@@ -54,6 +75,9 @@ async def bind_payout_destination(
     actor_user_id: uuid.UUID,
 ) -> SkillMarketplacePayoutDestination:
     """Create one active binding; an existing active binding must be revoked first."""
+    await _assert_seller_actor(
+        db, seller_tenant_id=seller_tenant_id, actor_user_id=actor_user_id
+    )
     provider_value, destination_value = _validate_destination(
         provider=provider,
         destination_ref=destination_ref,
@@ -84,6 +108,9 @@ async def revoke_payout_destination(
     seller_tenant_id: uuid.UUID,
     actor_user_id: uuid.UUID,
 ) -> SkillMarketplacePayoutDestination:
+    await _assert_seller_actor(
+        db, seller_tenant_id=seller_tenant_id, actor_user_id=actor_user_id
+    )
     binding = await get_active_payout_destination(
         db, seller_tenant_id=seller_tenant_id
     )
