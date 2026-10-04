@@ -11,7 +11,7 @@ from app.schemas.capacity_forecast import CapacityForecastResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
 from app.schemas.workload_balance import WorkloadBalanceEventResponse
-from app.schemas.admin_marketplace import MarketplacePayoutProposalResponse
+from app.schemas.admin_marketplace import MarketplacePayoutApprovalCreate, MarketplacePayoutApprovalResponse, MarketplacePayoutProposalResponse
 from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting, skill_marketplace_payout_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -90,6 +90,47 @@ async def list_marketplace_payout_proposals(
         data=[MarketplacePayoutProposalResponse.model_validate(item) for item in proposals],
     )
 
+
+
+@router.post("/marketplace/payout-proposals/{proposal_id}/approval", response_model=APIResponse[MarketplacePayoutApprovalResponse])
+async def decide_marketplace_payout_approval(
+    proposal_id: UUID,
+    payload: MarketplacePayoutApprovalCreate,
+    ctx: PlatformAdminContext,
+    db: DbSession,
+):
+    approval = await skill_marketplace_payout_service.approve_payout_proposal(
+        db,
+        proposal_id=proposal_id,
+        platform_admin_tenant_id=ctx.tenant.id,
+        decided_by_user_id=ctx.user.id,
+        decision=payload.decision,
+        reason=payload.reason,
+    )
+    await db.commit()
+    return APIResponse(
+        success=True,
+        data=MarketplacePayoutApprovalResponse.model_validate(approval),
+    )
+
+
+@router.post("/marketplace/payout-proposals/{proposal_id}/execute", response_model=APIResponse[MarketplacePayoutProposalResponse])
+async def execute_marketplace_payout(
+    proposal_id: UUID,
+    ctx: PlatformAdminContext,
+    db: DbSession,
+):
+    proposal = await skill_marketplace_payout_service.execute_payout_proposal(
+        db,
+        proposal_id=proposal_id,
+        platform_admin_tenant_id=ctx.tenant.id,
+        executed_by_user_id=ctx.user.id,
+    )
+    await db.commit()
+    return APIResponse(
+        success=True,
+        data=MarketplacePayoutProposalResponse.model_validate(proposal),
+    )
 
 @router.get("/billing")
 async def get_billing_summary(ctx: PlatformAdminContext, db: DbSession):
