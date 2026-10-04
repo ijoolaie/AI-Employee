@@ -267,7 +267,7 @@ class ToolRegistry:
             elif name == "workforce_coordinate_handoff":
                 extra_context = {"agent_instance_id": agent_instance_id}
             elif name == "workforce_execute_installed_skill":
-                extra_context = {"employee_id": employee_id}
+                extra_context = {"employee_id": employee_id, "tool_call_id": tool_call_id, "actor_id": actor_id}
             result = await tool.handler(
                 arguments,
                 db=db,
