@@ -171,6 +171,87 @@ jobs:
           test "$(alembic heads | grep -c '(head)')" -eq 1
           alembic check
 
+      - name: Verify W16 published skill immutability at PostgreSQL boundary
+        run: |
+          set -euo pipefail
+          PGPASSWORD=aiep psql "postgresql://aiep:aiep@localhost:5432/aiep" -v ON_ERROR_STOP=1 <<'SQL'
+          BEGIN;
+          INSERT INTO tenants (id, name, slug, status, tenant_kind)
+          VALUES ('00000000-0000-0000-0000-000000000101', 'W16 Runtime Test', 'w16-runtime-test', 'active', 'customer');
+
+          INSERT INTO products (id, tenant_id, sku, name, price, currency, inventory, attributes, images, is_active, source)
+          VALUES (
+            '00000000-0000-0000-0000-000000000102',
+            '00000000-0000-0000-0000-000000000101',
+            'w16-runtime-test',
+            'W16 Runtime Test Product',
+            0,
+            'EUR',
+            0,
+            '{}'::jsonb,
+            '[]'::jsonb,
+            true,
+            'test'
+          );
+
+          INSERT INTO skill_packages (
+            id, tenant_id, product_id, slug, name, description, version, status,
+            manifest, compatibility, presentation_metadata, published_at
+          )
+          VALUES (
+            '00000000-0000-0000-0000-000000000103',
+            '00000000-0000-0000-0000-000000000101',
+            '00000000-0000-0000-0000-000000000102',
+            'w16-runtime-test',
+            'W16 Runtime Test Skill',
+            'runtime trigger verification',
+            1,
+            'published',
+            '{}'::jsonb,
+            '{}'::jsonb,
+            '{}'::jsonb,
+            now()
+          );
+
+          DO $$
+          DECLARE
+            rejected boolean;
+          BEGIN
+            rejected := false;
+            BEGIN
+              UPDATE skill_packages
+              SET version = 2
+              WHERE id = '00000000-0000-0000-0000-000000000103';
+            EXCEPTION
+              WHEN check_violation THEN
+                rejected := true;
+            END;
+            IF NOT rejected THEN
+              RAISE EXCEPTION 'W16 immutability trigger failed to reject version mutation';
+            END IF;
+
+            rejected := false;
+            BEGIN
+              UPDATE skill_packages
+              SET manifest = '{"mutation":"rejected"}'::jsonb
+              WHERE id = '00000000-0000-0000-0000-000000000103';
+            EXCEPTION
+              WHEN check_violation THEN
+                rejected := true;
+            END;
+            IF NOT rejected THEN
+              RAISE EXCEPTION 'W16 immutability trigger failed to reject manifest mutation';
+            END IF;
+
+            UPDATE skill_packages
+            SET status = 'suspended'
+            WHERE id = '00000000-0000-0000-0000-000000000103';
+          END;
+          $$;
+
+          ROLLBACK;
+          SQL
+
       - name: Targeted workflow recovery race test
         working-directory: backend
         run: timeout 30s pytest -vv tests/test_workflow_cross_race_postgres.py::test_timeout_sweep_branch_recovery_keeps_parent_first_lock_order
