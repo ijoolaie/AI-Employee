@@ -84,6 +84,7 @@ async def grant_from_verified_payment(
             "skill_package_slug",
             "skill_package_version",
             "idempotency_key",
+            "purchase_id",
         }
         if set(marketplace) != required_marketplace:
             raise ConflictError("skill marketplace purchase contract is malformed")
