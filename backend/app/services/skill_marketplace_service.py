@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
+from app.core.exceptions import AppError, ConflictError, NotFoundError, ValidationAppError
 from app.models.employee import Employee
 from app.models.product import Product
 from app.models.skill_package import (
@@ -21,8 +21,11 @@ from app.services import audit_service
 SKILL_PRODUCT_CATEGORY = "employee_skill"
 
 
-class SkillMarketplaceError(ValueError):
+class SkillMarketplaceError(AppError):
     """Raised when a skill marketplace invariant is violated."""
+
+    def __init__(self, message: str):
+        super().__init__("SKILL_MARKETPLACE_INVALID", message, 422)
 
 
 def _validate_manifest(manifest: dict) -> None:
@@ -208,17 +211,26 @@ async def revoke(
     db: AsyncSession,
     *,
     tenant_id: uuid.UUID,
-    installation_id: uuid.UUID,
+    employee_id: uuid.UUID,
+    skill_package_id: uuid.UUID,
     actor_id: uuid.UUID | None = None,
 ) -> EmployeeSkillInstallation:
+    employee = (await db.execute(select(Employee).where(
+        Employee.id == employee_id, Employee.tenant_id == tenant_id,
+    ))).scalar_one_or_none()
+    if employee is None:
+        raise NotFoundError("employee not found in tenant")
+
     installation = (await db.execute(select(EmployeeSkillInstallation).where(
-        EmployeeSkillInstallation.id == installation_id,
+        EmployeeSkillInstallation.id.is_not(None),
         EmployeeSkillInstallation.tenant_id == tenant_id,
+        EmployeeSkillInstallation.employee_id == employee_id,
+        EmployeeSkillInstallation.skill_package_id == skill_package_id,
+        EmployeeSkillInstallation.status == EmployeeSkillInstallationStatus.ACTIVE,
     ))).scalar_one_or_none()
     if installation is None:
-        raise NotFoundError("skill installation not found")
-    if installation.status == EmployeeSkillInstallationStatus.REVOKED:
-        return installation
+        raise NotFoundError("active skill installation not found")
+
     installation.status = EmployeeSkillInstallationStatus.REVOKED
     installation.revoked_at = datetime.now(timezone.utc)
     await db.flush()
@@ -229,10 +241,16 @@ async def revoke(
         action="employee_skill.revoked",
         resource_type="employee_skill_installation",
         resource_id=str(installation.id),
-        metadata={"presentation_only": True, "execution_authority_changed": False},
+        metadata={
+            "employee_id": str(employee_id),
+            "skill_package_id": str(skill_package_id),
+            "presentation_only": True,
+            "execution_authority_changed": False,
+            "permissions_changed": False,
+            "allowed_tools_changed": False,
+        },
     )
     return installation
-
 
 async def list_for_employee(
     db: AsyncSession,
