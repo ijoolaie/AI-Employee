@@ -65,24 +65,10 @@ async def marketplace_financial_summary(
     )
     payout_proposals = int((await db.execute(proposal_stmt)).scalar_one() or 0)
 
-    executed_stmt = select(func.count(SkillMarketplacePayoutProposal.id)).where(
-        SkillMarketplacePayoutProposal.execution_status == "executed",
-    )
-    if seller_tenant_id is not None:
-        executed_stmt = executed_stmt.where(
-            SkillMarketplacePayoutProposal.seller_tenant_id == seller_tenant_id
-        )
-    else:
-        executed_stmt = executed_stmt.where(
-            SkillMarketplacePayoutProposal.platform_admin_tenant_id == platform_admin_tenant_id
-        )
-    payout_executed = int((await db.execute(executed_stmt)).scalar_one() or 0)
-
     return {
         "verified_settlement_count": total_settlements,
         "verified_paid_purchase_count": paid_purchases,
         "payout_proposal_count": payout_proposals,
-        "payout_executed_count": payout_executed,
         "by_currency": by_currency,
         "evidence_basis": "recorded_skill_marketplace_settlements_only",
         "external_customer_revenue_verified": False,
