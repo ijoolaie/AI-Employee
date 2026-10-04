@@ -4,6 +4,7 @@ import uuid
 
 import pytest
 
+from app.schemas.deal import SkillPurchase
 from app.models.skill_purchase_entitlement import (
     SkillPurchaseEntitlement,
     SkillPurchaseEntitlementStatus,
@@ -38,6 +39,25 @@ def test_commercial_skill_install_requires_verified_entitlement():
     assert "assert_owned" in source
     assert "package.product_id is not None" in source
 
+
+
+def test_skill_purchase_schema_is_bounded():
+    payload = {
+        "employee_id": uuid.uuid4(),
+        "product_id": uuid.uuid4(),
+        "skill_package_id": uuid.uuid4(),
+    }
+    assert SkillPurchase.model_validate(payload).product_id == payload["product_id"]
+    with pytest.raises(Exception):
+        SkillPurchase.model_validate({**payload, "allowed_tools": []})
+
+
+def test_payment_settlement_preserves_entitlement_marker():
+    source = inspect.getsource(stripe_service.apply_verified_sales_payment)
+    grant_marker = source.index("skill_purchase_entitlement_service")
+    reload_marker = source.index("deal_metadata = dict(deal.metadata_ or {})", grant_marker)
+    payment_marker = source.index('deal_metadata["payment_verified"] = True')
+    assert grant_marker < reload_marker < payment_marker
 
 def test_verified_payment_settlement_grants_skill_ownership_before_payment_marker():
     source = inspect.getsource(stripe_service.apply_verified_sales_payment)
