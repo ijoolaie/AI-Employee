@@ -1,29 +1,41 @@
 # Current Status
 
 **Last reconciled:** 2026-10-04
-**Latest published release:** `v1.4.15`
-**Latest published release SHA:** `226dddcfbab7abde166c8cd6967d63a03f2d4e71`
-**Latest certified candidate:** `v1.4.16` — exact SHA `434a0c4a4501af08a393faaf58092add764df2a2`
-**Stable Git tag:** `v1.4.15` — VERIFIED
-**GitHub Release:** `v1.4.15` — PUBLISHED
-**v1.4.16 Exact-SHA Production Certification:** Run `37188879277` — PASS
-**v1.4.16 certification job:** `111396657270` — PASS
-**Current engineering head:** `main` — W16 foundation at `434a0c4a4501af08a393faaf58092add764df2a2`
-**Current status:** v1.4.15 PUBLISHED / v1.4.16 CERTIFIED CANDIDATE / TAG AND RELEASE NOT CREATED
+**Latest certified release:** `v1.4.16`
+**Certified release SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
+**Stable Git tag:** `v1.4.16` — VERIFIED
+**GitHub Release:** `v1.4.16` — PUBLISHED
+**Exact-SHA Production Certification:** Run `37188879277` — PASS
+**Certification job:** `111396657270` — PASS
+**Current engineering head:** `main` — `434a0c4a4501af08a393faaf58092add764df2a2`
+**Current status:** v1.4.16 CERTIFIED / W10 INTERNAL COMPANY DOGFOOD VERIFIED
 
 ## Release boundary
 
-Certification applies only to the exact certified SHA `226dddcfbab7abde166c8cd6967d63a03f2d4e71`. W16 branch commits are post-release engineering work and do not inherit v1.4.15 certification.
+Certification applies only to the exact certified SHA `434a0c4a4501af08a393faaf58092add764df2a2`. Later commits, including documentation-only changes, do not inherit v1.4.16 certification.
 
 ## Executive truth
 
-`v1.4.15` is the latest published, exact-SHA Production-Certified release. Its certification evidence reports Product Gate failures = 0, Playwright = 8 passed, and production deployment claimed = false.
+`v1.4.16` is the latest published, exact-SHA Production-Certified release. Product Gate failures = 0 and `production_deployment_claimed=false`.
 
-W15 Employee Cosmetic Entitlements is implemented and release-certified in v1.4.15. Real external customer cosmetic payment/revenue remains NOT VERIFIED.
+W16 Skills Marketplace Foundation is inside the immutable v1.4.16 release boundary. The release does not claim commercial paid-skill execution: verified purchase entitlement remains a required fail-closed boundary.
 
-W16 Skills Marketplace has now started from the certified v1.4.15 SHA on branch `w16-skills-marketplace`. The first foundation slice adds versioned tenant-scoped skill packages and a tenant-scoped employee installation ledger. Skill manifests explicitly reject execution-authority fields, and installation audit metadata records that permissions, allowed tools, and execution authority are unchanged.
+W10 Internal Company Dogfood has independently passed on the same SHA:
+- Run `37189332690`
+- Job `111398049109`
+- W10 real-stack certification: **PASS**
+- Governed commercial commitment certification: **PASS**
+- Synthetic Stripe reconciliation: **PASS**
+- Synthetic ZarinPal idempotency: **PASS**
+- Governed SMTP delivery: **PASS**
+- Production deployment: **NOT CLAIMED / NOT VERIFIED**
 
-**W16 exact-SHA Production Certification is PASS.** Run `37188879277`, job `111396657270`; evidence artifact `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`, digest `sha256:7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`. Production deployment claimed by certification: **false**. Git tag/release for `v1.4.16`: **NOT CREATED**.
+The W10 workflow did not produce a separate artifact in the currently observed GitHub run, so no W10 artifact digest is claimed.
+
+## Documentation authority
+
+This file is the current-status authority. Historical sections below preserve prior release evidence and must not override the current release identity above.
+
 
 ## Current-main post-certification engineering revalidation
 
