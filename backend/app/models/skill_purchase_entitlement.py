@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, UniqueConstraint, func
+from sqlalchemy import DateTime, Enum, ForeignKey, ForeignKeyConstraint, Index, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -26,6 +26,22 @@ class SkillPurchaseEntitlement(Base):
         UniqueConstraint(
             "tenant_id", "employee_id", "skill_package_id",
             name="uq_skill_purchase_entitlement",
+        ),
+        UniqueConstraint(
+            "provider", "provider_event_id",
+            name="uq_skill_purchase_entitlement_provider_event",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "employee_id"],
+            ["employees.tenant_id", "employees.id"],
+            name="fk_skill_purchase_entitlement_employee_tenant",
+            ondelete="CASCADE",
+        ),
+        ForeignKeyConstraint(
+            ["tenant_id", "skill_package_id"],
+            ["skill_packages.tenant_id", "skill_packages.id"],
+            name="fk_skill_purchase_entitlement_package_tenant",
+            ondelete="CASCADE",
         ),
         Index(
             "ix_skill_purchase_entitlements_tenant_employee",
