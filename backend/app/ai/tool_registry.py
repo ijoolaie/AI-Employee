@@ -261,15 +261,18 @@ class ToolRegistry:
             )
 
         elif name.startswith("workforce_"):
+            extra_context = {}
+            if name == "workforce_external_outreach":
+                extra_context = {"agent_instance_id": agent_instance_id, "tool_call_id": tool_call_id}
+            elif name == "workforce_coordinate_handoff":
+                extra_context = {"agent_instance_id": agent_instance_id}
+            elif name == "workforce_execute_installed_skill":
+                extra_context = {"employee_id": employee_id}
             result = await tool.handler(
                 arguments,
                 db=db,
                 tenant_id=tenant_id,
-                **(
-                    {"agent_instance_id": agent_instance_id, "tool_call_id": tool_call_id}
-                    if name == "workforce_external_outreach"
-                    else ({"agent_instance_id": agent_instance_id} if name == "workforce_coordinate_handoff" else {})
-                ),
+                **extra_context,
             )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
