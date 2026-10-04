@@ -11,6 +11,7 @@ from app.core.exceptions import ConflictError, NotFoundError
 from app.models.business_order import BusinessOrder
 from app.models.employee import Employee
 from app.models.skill_package import SkillPackage, SkillPackageStatus
+from app.models.skill_marketplace_purchase import SkillMarketplacePurchase, SkillMarketplacePurchaseStatus
 from app.models.skill_purchase_entitlement import (
     SkillPurchaseEntitlement,
     SkillPurchaseEntitlementStatus,
@@ -91,11 +92,34 @@ async def grant_from_verified_payment(
         if str(marketplace["buyer_tenant_id"]) != str(tenant_id):
             raise ConflictError("skill marketplace buyer tenant does not match payment tenant")
         try:
+            marketplace_purchase_id = uuid.UUID(str(marketplace["purchase_id"]))
             seller_tenant_id = uuid.UUID(str(marketplace["seller_tenant_id"]))
             source_publication_id = uuid.UUID(str(marketplace["publication_id"]))
         except (TypeError, ValueError) as exc:
-            raise ConflictError("skill marketplace seller/publication identifiers are invalid") from exc
-        source_owner_tenant_id = seller_tenant_id
+            raise ConflictError("skill marketplace purchase identifiers are invalid") from exc
+        marketplace_purchase = (
+            await db.execute(
+                select(SkillMarketplacePurchase).where(
+                    SkillMarketplacePurchase.id == marketplace_purchase_id,
+                    SkillMarketplacePurchase.buyer_tenant_id == tenant_id,
+                    SkillMarketplacePurchase.business_deal_id == deal.id,
+                    SkillMarketplacePurchase.status == SkillMarketplacePurchaseStatus.PENDING,
+                ).with_for_update()
+            )
+        ).scalar_one_or_none()
+        if marketplace_purchase is None:
+            raise NotFoundError("skill marketplace purchase is missing or already settled")
+        expected = {
+            "seller_tenant_id": str(marketplace_purchase.seller_tenant_id),
+            "publication_id": str(marketplace_purchase.publication_id),
+            "employee_id": str(marketplace_purchase.employee_id),
+            "product_id": str(marketplace_purchase.product_id),
+            "skill_package_id": str(marketplace_purchase.skill_package_id),
+        }
+        for key, expected_value in expected.items():
+            if str(marketplace.get(key)) != expected_value:
+                raise ConflictError(f"skill marketplace purchase {key} does not match settlement record")
+        source_owner_tenant_id = marketplace_purchase.seller_tenant_id
         from app.models.skill_marketplace_publication import SkillMarketplacePublication
         publication = (
             await db.execute(
