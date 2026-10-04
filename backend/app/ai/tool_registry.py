@@ -23,7 +23,7 @@ from jsonschema import Draft202012Validator
 from app.ai.schemas import ToolDefinition
 from app.core.config import get_settings
 from app.core.exceptions import ValidationAppError
-from app.services import workforce_semantic_domains
+from app.services import skill_execution_service, workforce_semantic_domains
 from app.services.tool_approval_policy import requires_approval
 
 
@@ -46,7 +46,7 @@ class RegisteredTool:
         Business tools use a stable name-derived code so licenses can restrict
         capabilities without coupling the registry to a plan implementation.
         """
-        if self.name in {"calculator", "current_time"}:
+        if self.name in {"calculator", "current_time", "workforce_execute_installed_skill"}:
             return None
         return f"tool:{self.name}"
 
@@ -103,6 +103,7 @@ class ToolRegistry:
         tenant_id=None,
         actor_id=None,
         agent_instance_id=None,
+        employee_id=None,
         tool_call_id=None,
     ) -> Any:
         tool = self.get(name)
@@ -260,15 +261,18 @@ class ToolRegistry:
             )
 
         elif name.startswith("workforce_"):
+            extra_context = {}
+            if name == "workforce_external_outreach":
+                extra_context = {"agent_instance_id": agent_instance_id, "tool_call_id": tool_call_id}
+            elif name == "workforce_coordinate_handoff":
+                extra_context = {"agent_instance_id": agent_instance_id}
+            elif name == "workforce_execute_installed_skill":
+                extra_context = {"employee_id": employee_id, "tool_call_id": tool_call_id, "actor_id": actor_id}
             result = await tool.handler(
                 arguments,
                 db=db,
                 tenant_id=tenant_id,
-                **(
-                    {"agent_instance_id": agent_instance_id, "tool_call_id": tool_call_id}
-                    if name == "workforce_external_outreach"
-                    else ({"agent_instance_id": agent_instance_id} if name == "workforce_coordinate_handoff" else {})
-                ),
+                **extra_context,
             )
         elif name == "create_invoice":
             if db is None or tenant_id is None:
@@ -2546,6 +2550,43 @@ def build_default_registry() -> ToolRegistry:
             input_schema={"type":"object","properties":{"path":{"type":"string","maxLength":500},"content":{"type":"string","maxLength":200000},"storage_key":{"type":"string","maxLength":1000},"title":{"type":"string","maxLength":500},"changes":{"type":"array","items":{"type":"object"},"maxItems":100},"site":{"type":"string","maxLength":255},"spec":{"type":"object"},"prompt":{"type":"string","maxLength":10000},"brand_context":{"type":["string","null"],"maxLength":5000},"provider":{"type":"string","maxLength":100},"metadata":{"type":"object"},"body":{"type":"string","maxLength":200000},"query":{"type":"string","maxLength":1000},"criteria":{"type":"object"},"channel":{"type":"string","maxLength":255},"content_id":{"type":"string","maxLength":255},"message":{"type":"string","maxLength":10000}},"additionalProperties":False},
             handler=lambda arguments, op="website_rollback", fn=workforce_semantic_domains.execute_website, **context: fn({**arguments, "_operation": op}, **context),
             side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="workforce_execute_installed_skill",
+            description="Governed execution of an installed employee SkillPackage through the operator-configured skill provider.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "skill_package_id": {
+                        "type": "string",
+                        "minLength": 36,
+                        "maxLength": 36,
+                        "pattern": "^[0-9a-fA-F-]{36}$",
+                    },
+                    "input": {
+                        "type": "object",
+                        "maxProperties": 50,
+                        "additionalProperties": True,
+                    },
+                },
+                "required": ["skill_package_id", "input"],
+                "additionalProperties": False,
+            },
+            handler=lambda arguments, db=None, tenant_id=None, employee_id=None, actor_id=None, tool_call_id=None, **context: skill_execution_service.execute_installed_skill(
+                db,
+                tenant_id=tenant_id,
+                employee_id=employee_id,
+                skill_package_id=__import__("uuid").UUID(arguments["skill_package_id"]),
+                input_data=arguments["input"],
+                actor_id=actor_id,
+                request_id=str(tool_call_id or context.get("request_id") or "direct-tool-execution"),
+            ),            side_effects=True,
             external_side_effects=True,
             required_permission="run.execute",
             requires_approval=True,

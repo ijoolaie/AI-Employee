@@ -1,0 +1,116 @@
+name: W16 Skill Provider Execution Real-Stack
+
+on:
+  pull_request:
+    paths:
+      - "backend/app/ai/tool_registry.py"
+      - "backend/app/core/config.py"
+      - "backend/app/services/skill_provider.py"
+      - "backend/app/services/skill_execution_service.py"
+      - "backend/app/services/skill_marketplace_service.py"
+      - "backend/app/services/skill_purchase_entitlement_service.py"
+      - "backend/scripts/e2e_w16_skill_provider_execution_verify.py"
+      - "backend/scripts/w16_skill_provider_test_server.py"
+      - ".github/workflows/w16-skill-provider-execution-real-stack.yml"
+      - "docker-compose.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: w16-skill-provider-execution-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  w16-skill-provider-execution:
+    name: W16 skill provider execution real-stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      DATABASE_URL: postgresql+asyncpg://aiep:aiep@localhost:5432/aiep
+      DATABASE_URL_SYNC: postgresql://aiep:aiep@localhost:5432/aiep
+      REDIS_URL: redis://localhost:6379/0
+      CELERY_BROKER_URL: redis://localhost:6379/1
+      CELERY_RESULT_BACKEND: redis://localhost:6379/2
+      SECRET_KEY: ci-w16-skill-provider-secret
+      APP_ENV: test
+      CI: true
+      SKILL_PROVIDER_NAME: http
+      SKILL_PROVIDER_BASE_URL: http://127.0.0.1:18181/execute
+      SKILL_PROVIDER_API_KEY: ci-w16-skill-provider-key
+      SKILL_PROVIDER_TIMEOUT_SECONDS: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Start database and Redis
+        run: docker compose up -d postgres redis
+
+      - name: Wait for dependencies
+        run: |
+          set -euo pipefail
+          for i in {1..40}; do
+            if docker compose exec -T postgres pg_isready -U aiep -d aiep >/dev/null 2>&1 && docker compose exec -T redis redis-cli ping >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 3
+          done
+          docker compose logs postgres redis
+          exit 1
+
+      - name: Build and start API stack
+        run: |
+          set -euo pipefail
+          cat > /tmp/w16-skill-provider.override.yml <<'YAML'
+          services:
+            api:
+              environment:
+                SKILL_PROVIDER_NAME: http
+                SKILL_PROVIDER_BASE_URL: http://127.0.0.1:18181/execute
+                SKILL_PROVIDER_API_KEY: ci-w16-skill-provider-key
+                SKILL_PROVIDER_TIMEOUT_SECONDS: "10"
+          YAML
+          docker compose -f docker-compose.yml -f /tmp/w16-skill-provider.override.yml up -d --build api worker beat
+
+      - name: Wait for API readiness
+        run: |
+          set -euo pipefail
+          for i in {1..40}; do
+            if curl -fsS http://localhost:8000/health/dependencies >/dev/null; then
+              exit 0
+            fi
+            sleep 3
+          done
+          docker compose logs api worker beat
+          exit 1
+
+      - name: Apply migrations
+        run: docker compose exec -T api alembic upgrade head
+
+      - name: Verify migration graph
+        run: |
+          set -euo pipefail
+          docker compose exec -T api alembic check
+          test "$(docker compose exec -T api alembic heads | grep -c '(head)')" -eq 1
+
+      - name: Start deterministic skill provider fixture
+        run: |
+          docker compose exec -T api sh -lc 'rm -f /tmp/w16-skill-provider-last.json'
+          docker compose exec -d api sh -lc 'PYTHONPATH=/app python /app/scripts/w16_skill_provider_test_server.py'
+
+      - name: Run W16 installed skill provider execution gate
+        run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_w16_skill_provider_execution_verify.py'
+
+      - name: Assert certification boundary
+        run: |
+          set -euo pipefail
+          ! grep -q "production_certification_claimed.*true" backend/scripts/e2e_w16_skill_provider_execution_verify.py
+
+      - name: Dump logs on failure
+        if: ${{ failure() }}
+        run: docker compose logs --no-color
+
+      - name: Teardown
+        if: ${{ always() }}
+        run: |
+          docker compose exec -T api sh -lc 'pkill -f w16_skill_provider_test_server.py || true'
+          docker compose down -v

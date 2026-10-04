@@ -630,3 +630,69 @@ def test_workforce_coordinate_content_is_read_only_and_non_approval_gated():
     assert tool.side_effects is False
     assert tool.requires_approval is False
     assert tool.required_permission == "run.execute"
+
+
+def test_workforce_execute_installed_skill_is_external_and_approval_gated():
+    tool = registry.get("workforce_execute_installed_skill")
+    assert tool.side_effects is True
+    assert tool.external_side_effects is True
+    assert tool.required_permission == "run.execute"
+    assert tool.requires_approval is True
+    assert tool.entitlement_code is None
+
+
+@pytest.mark.asyncio
+async def test_workforce_execute_installed_skill_requires_approval():
+    with pytest.raises(ValidationAppError, match="Human approval required"):
+        await registry.execute(
+            "workforce_execute_installed_skill",
+            {
+                "skill_package_id": "00000000-0000-0000-0000-000000000001",
+                "input": {},
+            },
+            permissions={"run.execute"},
+            allowed_tools={"workforce_execute_installed_skill"},
+            employee_id="00000000-0000-0000-0000-000000000002",
+            db="db",
+            tenant_id="tenant",
+            approval_granted=False,
+        )
+
+
+@pytest.mark.asyncio
+async def test_workforce_execute_installed_skill_forwards_employee_identity(monkeypatch):
+    from types import SimpleNamespace
+
+    calls = []
+
+    async def fake_execute(db, **kwargs):
+        calls.append(kwargs)
+        return {"ok": True}
+
+    original = registry.get("workforce_execute_installed_skill")
+    monkeypatch.setattr("app.ai.tool_registry.skill_execution_service.execute_installed_skill", fake_execute)
+
+    result = await registry.execute(
+        "workforce_execute_installed_skill",
+        {
+            "skill_package_id": "00000000-0000-0000-0000-000000000001",
+            "input": {},
+        },
+        permissions={"run.execute"},
+        allowed_tools={"workforce_execute_installed_skill"},
+        db="db-context",
+        tenant_id="tenant-context",
+        employee_id="employee-context",
+        actor_id="actor-context",
+        tool_call_id="tool-call-context",
+        approval_granted=True,
+    )
+    assert result == {"ok": True}
+    assert calls == [{
+        "tenant_id": "tenant-context",
+        "employee_id": "employee-context",
+        "skill_package_id": __import__("uuid").UUID("00000000-0000-0000-0000-000000000001"),
+        "input_data": {},
+        "actor_id": "actor-context",
+        "request_id": "tool-call-context",
+    }]

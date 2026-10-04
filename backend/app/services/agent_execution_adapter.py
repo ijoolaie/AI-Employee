@@ -157,4 +157,5 @@ class AgentExecutionAdapter:
             db=self.db,
             tenant_id=agent.tenant_id,
             agent_instance_id=agent.id,
+            employee_id=affected_employee_id,
         )
