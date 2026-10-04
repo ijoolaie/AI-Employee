@@ -65,6 +65,18 @@ def upgrade() -> None:
             "provider", "provider_event_id",
             name="uq_skill_purchase_entitlement_provider_event",
         ),
+        sa.ForeignKeyConstraint(
+            ["tenant_id", "employee_id"],
+            ["employees.tenant_id", "employees.id"],
+            name="fk_skill_purchase_entitlement_employee_tenant",
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["tenant_id", "skill_package_id"],
+            ["skill_packages.tenant_id", "skill_packages.id"],
+            name="fk_skill_purchase_entitlement_package_tenant",
+            ondelete="CASCADE",
+        ),
     )
     op.create_index(
         "ix_skill_purchase_entitlements_tenant_employee",
@@ -99,6 +111,16 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.drop_constraint(
+        "fk_skill_purchase_entitlement_package_tenant",
+        "skill_purchase_entitlements",
+        type_="foreignkey",
+    )
+    op.drop_constraint(
+        "fk_skill_purchase_entitlement_employee_tenant",
+        "skill_purchase_entitlements",
+        type_="foreignkey",
+    )
     op.drop_constraint(
         "uq_skill_purchase_entitlement_provider_event",
         "skill_purchase_entitlements",
