@@ -24,6 +24,7 @@ on:
       - "backend/app/models/skill_marketplace_payout_destination.py"
       - "backend/app/services/skill_marketplace_payout_destination.py"
       - "backend/alembic/versions/w16_skill_marketplace_payout_destination.py"
+      - "backend/alembic/versions/w16_skill_marketplace_payout_destination_binding.py"
       - "backend/tests/test_skill_marketplace_payout_destination.py"
       - "backend/tests/test_admin_marketplace_payout_api.py"
       - "backend/app/models/skill_marketplace_settlement.py"
