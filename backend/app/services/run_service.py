@@ -475,6 +475,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         db=db,
                         tenant_id=run.tenant_id,
                         agent_instance_id=run.agent_instance_id,
+                        employee_id=run.employee_id,
                         actor_id=run.created_by,
                     )
                     tool_status = "success"
@@ -609,6 +610,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         db=db,
                         tenant_id=run.tenant_id,
                         agent_instance_id=run.agent_instance_id,
+                        employee_id=run.employee_id,
                         actor_id=run.created_by,
                     )
                     tool_status = "success"
