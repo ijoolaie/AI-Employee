@@ -44,7 +44,7 @@ def test_skill_provider_response_shape_is_object(monkeypatch, payload):
     monkeypatch.setattr("app.services.skill_provider.build_opener", lambda *args: Opener())
     settings = config.get_settings()
     monkeypatch.setattr(settings, "skill_provider_name", "http")
-    monkeypatch.setattr(settings, "skill_provider_endpoints", {"tenant": "https://provider.example.test/execute"})
+    monkeypatch.setattr(settings, "skill_provider_base_url", "https://provider.example.test/execute")
     monkeypatch.setattr(settings, "skill_provider_api_key", "test-key")
     with pytest.raises(SkillProviderError, match="response must be a JSON object"):
         HttpSkillProvider().execute(
