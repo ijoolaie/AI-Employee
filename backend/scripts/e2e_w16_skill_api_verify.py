@@ -228,48 +228,16 @@ def main() -> int:
         print("COMMERCIAL SKILL FAIL-CLOSED WITHOUT ENTITLEMENT PASS")
 
         payment_event_id = f"evt_w16_skill_{suffix}"
-        async with AsyncSessionLocal() as db:
-            tenant = (await db.execute(select(Tenant).where(Tenant.slug == tenant_a))).scalar_one()
-            deal = await sales_service.create_deal(
-                db,
-                tenant_id=tenant.id,
-                actor_id=None,
-                title="W16 Commercial Skill Purchase",
-                customer_name="W16 Skill Customer",
-                amount=Decimal("10.00"),
-                currency="EUR",
-                stage="proposal",
-                probability=50,
-                skill_purchase={
-                    "employee_id": employee_a,
-                    "product_id": product_id,
-                    "skill_package_id": commercial_package,
-                },
+        entitlement_tenant_id = asyncio.run(
+            settle_skill_purchase(
+                tenant_slug=tenant_a,
+                employee_id=employee_a,
+                product_id=product_id,
+                skill_package_id=commercial_package,
+                payment_event_id=payment_event_id,
             )
-            await stripe_service.apply_verified_sales_payment(
-                db,
-                provider="stripe",
-                provider_event_id=payment_event_id,
-                data={
-                    "id": payment_event_id,
-                    "amount_received": 1000,
-                    "currency": "eur",
-                    "metadata": {
-                        "tenant_id": str(tenant.id),
-                        "sales_deal_id": str(deal.id),
-                    },
-                },
-            )
-            entitlement = (await db.execute(select(SkillPurchaseEntitlement).where(
-                SkillPurchaseEntitlement.tenant_id == tenant.id,
-                SkillPurchaseEntitlement.employee_id == employee_a,
-                SkillPurchaseEntitlement.skill_package_id == commercial_package,
-                SkillPurchaseEntitlement.status == SkillPurchaseEntitlementStatus.ACTIVE,
-            ))).scalar_one_or_none()
-            assert entitlement is not None
-            assert entitlement.provider == "stripe"
-            assert entitlement.provider_event_id == payment_event_id
-            await db.commit()
+        )
+        assert entitlement_tenant_id
         print("VERIFIED PAYMENT CREATES SKILL ENTITLEMENT PASS")
 
         status, installed = request(
