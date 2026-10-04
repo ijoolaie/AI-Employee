@@ -79,7 +79,7 @@ def test_w16_models_enforce_tenant_consistent_foreign_keys():
         for fk in EmployeeSkillInstallation.__table__.foreign_key_constraints
     }
     assert ("tenant_id", "employee_id") in installation_fks
-    assert ("tenant_id", "skill_package_id") in installation_fks
+    assert ("source_owner_tenant_id", "skill_package_id") in installation_fks
 
     package_fks = {
         tuple(column.name for column in fk.columns)

@@ -426,6 +426,51 @@ async def apply_verified_sales_payment(
             provider_event_id=provider_event_id,
         )
 
+    marketplace_purchase_id = None
+    marketplace_seller_tenant_id = None
+    if (deal.metadata_ or {}).get("skill_marketplace_purchase"):
+        from app.models.skill_marketplace_purchase import SkillMarketplacePurchase, SkillMarketplacePurchaseStatus
+        from app.services import skill_marketplace_service
+        marketplace = (deal.metadata_ or {}).get("skill_marketplace_purchase") or {}
+        try:
+            marketplace_purchase_id = uuid.UUID(str(marketplace.get("purchase_id"))) if marketplace.get("purchase_id") else None
+            marketplace_publication_id = uuid.UUID(str(marketplace["publication_id"]))
+        except (TypeError, ValueError, KeyError) as exc:
+            raise ValidationAppError("skill marketplace payment metadata is malformed") from exc
+        if marketplace_purchase_id is None:
+            raise ValidationAppError("skill marketplace payment metadata is missing purchase_id")
+        purchase = (
+            await db.execute(
+                select(SkillMarketplacePurchase).where(
+                    SkillMarketplacePurchase.id == marketplace_purchase_id,
+                    SkillMarketplacePurchase.buyer_tenant_id == tenant_id,
+                    SkillMarketplacePurchase.business_deal_id == deal.id,
+                ).with_for_update()
+            )
+        ).scalar_one_or_none()
+        if purchase is None:
+            raise NotFoundError("skill marketplace purchase record not found")
+        if purchase.status == SkillMarketplacePurchaseStatus.PAID:
+            return tenant_id, str(order.id)
+        marketplace_seller_tenant_id = purchase.seller_tenant_id
+        await skill_marketplace_service.install(
+            db,
+            tenant_id=tenant_id,
+            employee_id=purchase.employee_id,
+            skill_package_id=purchase.skill_package_id,
+            source_publication_id=marketplace_publication_id,
+            actor_id=None,
+        )
+        purchase.status = SkillMarketplacePurchaseStatus.PAID
+        purchase.provider = provider
+        purchase.provider_event_id = provider_event_id
+        purchase.metadata_ = {
+            **(purchase.metadata_ or {}),
+            "provider_payment_verified": True,
+            "source_order_id": str(order.id),
+        }
+        await db.flush()
+
     # Entitlement settlement updates the governed deal metadata; reload it
     # before adding payment markers so those ownership markers are preserved.
     deal_metadata = dict(deal.metadata_ or {})
@@ -457,6 +502,15 @@ async def apply_verified_sales_payment(
                 "payment_object_id": data.get("id"),
                 "sales_deal_id": str(deal.id),
                 "business_order_id": str(order.id),
+                **(
+                    {
+                        "skill_marketplace_purchase_id": str(marketplace_purchase_id),
+                        "skill_marketplace_seller_tenant_id": str(marketplace_seller_tenant_id),
+                        "source": "skill_marketplace",
+                    }
+                    if marketplace_purchase_id is not None
+                    else {}
+                ),
             },
         )
         db.add(revenue_event)

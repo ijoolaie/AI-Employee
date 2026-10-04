@@ -63,6 +63,7 @@ from app.models.cosmetic_entitlement import CosmeticEntitlement
 from app.models.skill_purchase_entitlement import SkillPurchaseEntitlement, SkillPurchaseEntitlementStatus
 from app.models.skill_package import SkillPackage, SkillPackageStatus, EmployeeSkillInstallation, EmployeeSkillInstallationStatus
 from app.models.skill_marketplace_publication import SkillMarketplacePublication
+from app.models.skill_marketplace_purchase import SkillMarketplacePurchase, SkillMarketplacePurchaseStatus
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -79,5 +80,5 @@ __all__ = [
     "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",
     "TestDefinition", "TestRun", "TestRunStatus", "TestRunArtifact", "TeamDefinition", "TeamVersion",
     "TeamInstallation", "TeamEvaluation", "MarketplacePublication", "WorkloadBalanceEvent", "WorkforceDelegation", "WorkforceSLAContract",
-    "WorkforceRevenueEvent", "CosmeticEntitlement", "SkillMarketplacePublication", "SkillPackage", "SkillPackageStatus", "EmployeeSkillInstallation", "EmployeeSkillInstallationStatus",
+    "WorkforceRevenueEvent", "CosmeticEntitlement", "SkillMarketplacePublication", "SkillMarketplacePurchase", "SkillMarketplacePurchaseStatus", "SkillPackage", "SkillPackageStatus", "EmployeeSkillInstallation", "EmployeeSkillInstallationStatus",
 ]

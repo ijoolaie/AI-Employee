@@ -88,6 +88,7 @@ class EmployeeSkillInstallation(Base):
         UniqueConstraint("tenant_id", "employee_id", "skill_package_id", name="uq_employee_skill_installation"),
         Index("ix_employee_skill_installations_tenant_employee", "tenant_id", "employee_id"),
         Index("ix_employee_skill_installations_tenant_status", "tenant_id", "status"),
+        Index("ix_employee_skill_installations_source_owner", "source_owner_tenant_id"),
         ForeignKeyConstraint(
             ["tenant_id"],
             ["tenants.id"],
@@ -101,16 +102,17 @@ class EmployeeSkillInstallation(Base):
             ondelete="CASCADE",
         ),
         ForeignKeyConstraint(
-            ["tenant_id", "skill_package_id"],
+            ["source_owner_tenant_id", "skill_package_id"],
             ["skill_packages.tenant_id", "skill_packages.id"],
-            name="fk_employee_skill_installations_skill_package_tenant",
-            ondelete="CASCADE",
+            name="fk_employee_skill_installations_source_package_tenant",
+            ondelete="RESTRICT",
         ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     employee_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    source_owner_tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     skill_package_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     status: Mapped[EmployeeSkillInstallationStatus] = mapped_column(
         Enum(EmployeeSkillInstallationStatus, values_callable=lambda cls: [item.value for item in cls], name="employeeskillinstallationstatus"),
