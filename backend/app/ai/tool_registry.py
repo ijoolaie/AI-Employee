@@ -105,6 +105,7 @@ class ToolRegistry:
         agent_instance_id=None,
         employee_id=None,
         tool_call_id=None,
+        approval_request_id=None,
     ) -> Any:
         tool = self.get(name)
 
@@ -286,6 +287,7 @@ class ToolRegistry:
                 platform_admin_tenant_id=tenant_id,
                 actor_user_id=actor_id,
                 approval_granted=approval_granted,
+                approval_request_id=approval_request_id,
             )
             result = {
                 "proposal_id": str(proposal.id),
