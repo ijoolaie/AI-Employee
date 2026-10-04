@@ -23,3 +23,22 @@ class MarketplacePayoutProposalResponse(BaseModel):
     metadata: dict
     created_at: datetime
     updated_at: datetime
+
+
+class MarketplaceFinancialCurrencySummary(BaseModel):
+    settlement_count: int
+    gross_amount: str
+    platform_fee_amount: str
+    seller_net_amount: str
+
+
+class MarketplaceFinancialSummaryResponse(BaseModel):
+    verified_settlement_count: int
+    verified_paid_purchase_count: int
+    payout_proposal_count: int
+    payout_executed_count: int
+    by_currency: dict[str, MarketplaceFinancialCurrencySummary]
+    evidence_basis: str
+    external_customer_revenue_verified: bool
+    external_seller_payout_verified: bool
+    execution_authority_changed: bool
