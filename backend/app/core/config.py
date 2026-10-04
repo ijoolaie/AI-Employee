@@ -228,6 +228,7 @@ class Settings(BaseSettings):
     skill_provider_timeout_seconds: float = 10.0
     sales_outreach_provider_name: str = "none"
     sales_payment_provider_name: str = "none"
+    marketplace_payout_provider_name: str = "none"
     skill_marketplace_settlement_enabled: bool = False
     skill_marketplace_platform_fee_bps: int = 0
     zarinpal_merchant_id: str | None = None
