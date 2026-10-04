@@ -97,13 +97,6 @@ async def verify() -> None:
             )
             assert installation.status == EmployeeSkillInstallationStatus.ACTIVE
 
-            active = await (
-                db.execute(
-                    select(EmployeeSkillInstallationStatus).where(False)
-                )
-            )
-            del active
-
             await revoke(
                 db,
                 tenant_id=tenant_a_id,
