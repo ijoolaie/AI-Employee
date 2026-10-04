@@ -7,7 +7,7 @@
 **GitHub Release:** `v1.4.15` — PUBLISHED
 **Exact-SHA Production Certification:** Run `37185102432` — PASS
 **Certification job:** `111385347811` — PASS
-**Current engineering head:** `w16-skills-marketplace` — post-`v1.4.15` branch
+**Current engineering head:** `w16-skills-marketplace` — post-`v1.4.15` branch; latest reviewed SHA `0b0507b5b7ac5572a5631ac5e587c206b031aa72`
 **Current status:** v1.4.15 CERTIFIED / W16 FOUNDATION IN IMPLEMENTATION / EXACT-SHA W16 CERTIFICATION NOT RUN
 
 ## Release boundary
@@ -281,7 +281,7 @@ Exact-SHA CI/certification for W14: **NOT RUN / NOT VERIFIED**.
 
 ## W16 Skills Marketplace — 2026-10-04
 
-**Status: FOUNDATION IMPLEMENTED — EXACT-SHA CERTIFICATION NOT RUN / NOT VERIFIED.**
+**Status: FOUNDATION IMPLEMENTED + HARDENED — EXACT-SHA CERTIFICATION NOT RUN / NOT VERIFIED.**
 
 Implemented on post-v1.4.15 branch `w16-skills-marketplace`:
 - versioned `SkillPackage` catalog records;
@@ -301,3 +301,15 @@ Not implemented by this slice:
 - exact-SHA CI/security/real-stack certification.
 
 The next W16 slice should add governed package evaluation/compatibility checks and, separately, commercial purchase/verified-payment linkage if required. No skill installation may become an authorization shortcut.
+
+
+### W16 review corrections — 2026-10-04
+
+A focused security/tenant-boundary review identified and corrected:
+- marketplace invariant errors previously surfaced as generic Python exceptions; they now use the application 422 error contract;
+- skill revoke is now performed directly through a tenant + employee + package scoped service query, avoiding redundant lookup/TOCTOU behavior;
+- skill listing now returns NOT_FOUND for an employee outside the tenant rather than silently returning an empty list;
+- the Product foreign key is now RESTRICT rather than SET NULL, preventing a commercial SkillPackage from silently becoming an unpriced/free package when its product is deleted;
+- tests cover the hardened error contract and product FK policy.
+
+**W16 validation after these corrections: NOT RUN / NOT VERIFIED.**
