@@ -236,11 +236,29 @@ def downgrade() -> None:
     op.drop_table("skill_marketplace_purchases")
     postgresql.ENUM(name="skillmarketplacepurchasestatus").drop(op.get_bind(), checkfirst=True)
 
+    op.execute(
+        sa.text(
+            "DO $ BEGIN "
+            "IF EXISTS (SELECT 1 FROM skill_purchase_entitlements WHERE source_owner_tenant_id <> tenant_id) "
+            "THEN RAISE EXCEPTION 'cannot downgrade: cross-tenant skill entitlements exist'; END IF; "
+            "IF EXISTS (SELECT 1 FROM employee_skill_installations WHERE source_owner_tenant_id <> tenant_id) "
+            "THEN RAISE EXCEPTION 'cannot downgrade: cross-tenant skill installations exist'; END IF; "
+            "END $;"
+        )
+    )
     op.drop_index("ix_skill_purchase_entitlements_source_publication", table_name="skill_purchase_entitlements")
     op.drop_index("ix_skill_purchase_entitlements_source_owner", table_name="skill_purchase_entitlements")
     op.drop_constraint("fk_skill_purchase_entitlement_source_publication", "skill_purchase_entitlements", type_="foreignkey")
     op.drop_constraint("fk_skill_purchase_entitlement_source_package_tenant", "skill_purchase_entitlements", type_="foreignkey")
     op.drop_constraint("fk_skill_purchase_entitlement_source_owner_tenant", "skill_purchase_entitlements", type_="foreignkey")
+    op.create_foreign_key(
+        "fk_skill_purchase_entitlement_package_tenant",
+        "skill_purchase_entitlements",
+        "skill_packages",
+        ["tenant_id", "skill_package_id"],
+        ["tenant_id", "id"],
+        ondelete="CASCADE",
+    )
     op.drop_column("skill_purchase_entitlements", "source_publication_id")
     op.drop_column("skill_purchase_entitlements", "source_owner_tenant_id")
 
