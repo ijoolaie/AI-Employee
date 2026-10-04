@@ -252,6 +252,10 @@ jobs:
           ROLLBACK;
           SQL
 
+      - name: Verify W16 real-stack skill lifecycle
+        working-directory: backend
+        run: timeout 90s python scripts/e2e_w16_skill_lifecycle_verify.py
+
       - name: Targeted workflow recovery race test
         working-directory: backend
         run: timeout 30s pytest -vv tests/test_workflow_cross_race_postgres.py::test_timeout_sweep_branch_recovery_keeps_parent_first_lock_order
