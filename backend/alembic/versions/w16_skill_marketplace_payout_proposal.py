@@ -22,6 +22,10 @@ def upgrade() -> None:
         create_type=False,
     )
     execution_enum.create(op.get_bind(), checkfirst=True)
+    op.execute("ALTER TYPE skillmarketplacepayoutexecutionstatus ADD VALUE IF NOT EXISTS 'pending'")
+    op.execute("ALTER TYPE skillmarketplacepayoutexecutionstatus ADD VALUE IF NOT EXISTS 'accepted'")
+    op.execute("ALTER TYPE skillmarketplacepayoutexecutionstatus ADD VALUE IF NOT EXISTS 'failed'")
+    op.execute("ALTER TYPE skillmarketplacepayoutexecutionstatus ADD VALUE IF NOT EXISTS 'unknown'")
 
     op.create_table(
         "skill_marketplace_payout_proposals",
@@ -79,10 +83,6 @@ def upgrade() -> None:
         sa.CheckConstraint(
             "provider = 'none'",
             name="ck_skill_marketplace_payout_proposal_provider_none",
-        ),
-        sa.CheckConstraint(
-            "execution_status = 'not_executed'",
-            name="ck_skill_marketplace_payout_proposal_not_executed",
         ),
     )
     op.create_unique_constraint(
