@@ -657,3 +657,42 @@ async def test_workforce_execute_installed_skill_requires_approval():
             tenant_id="tenant",
             approval_granted=False,
         )
+
+
+@pytest.mark.asyncio
+async def test_workforce_execute_installed_skill_forwards_employee_identity(monkeypatch):
+    from types import SimpleNamespace
+
+    calls = []
+
+    async def fake_execute(db, **kwargs):
+        calls.append(kwargs)
+        return {"ok": True}
+
+    original = registry.get("workforce_execute_installed_skill")
+    monkeypatch.setattr("app.ai.tool_registry.skill_execution_service.execute_installed_skill", fake_execute)
+
+    result = await registry.execute(
+        "workforce_execute_installed_skill",
+        {
+            "skill_package_id": "00000000-0000-0000-0000-000000000001",
+            "input": {},
+        },
+        permissions={"run.execute"},
+        allowed_tools={"workforce_execute_installed_skill"},
+        db="db-context",
+        tenant_id="tenant-context",
+        employee_id="employee-context",
+        actor_id="actor-context",
+        tool_call_id="tool-call-context",
+        approval_granted=True,
+    )
+    assert result == {"ok": True}
+    assert calls == [{
+        "tenant_id": "tenant-context",
+        "employee_id": "employee-context",
+        "skill_package_id": __import__("uuid").UUID("00000000-0000-0000-0000-000000000001"),
+        "input_data": {},
+        "actor_id": "actor-context",
+        "request_id": "tool-call-context",
+    }]
