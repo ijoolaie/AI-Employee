@@ -248,7 +248,14 @@ async def verify() -> None:
                 )
             )
         ).scalar_one()
-        settlement_count = (            await db.execute(                select(func.count()).select_from(SkillMarketplaceSettlement).where(                    SkillMarketplaceSettlement.purchase_id == purchase.id                )            )        ).scalar_one()        revenue_count = (
+        settlement_count = (
+            await db.execute(
+                select(func.count()).select_from(SkillMarketplaceSettlement).where(
+                    SkillMarketplaceSettlement.purchase_id == purchase.id
+                )
+            )
+        ).scalar_one()
+        revenue_count = (
             await db.execute(
                 select(func.count()).select_from(WorkforceRevenueEvent).where(
                     WorkforceRevenueEvent.provider == "stripe",
