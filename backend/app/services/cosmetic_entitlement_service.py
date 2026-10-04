@@ -212,3 +212,44 @@ async def assert_owned(
     if entitlement is None:
         raise CosmeticEntitlementError("active cosmetic entitlement not found")
     return entitlement
+
+
+async def grant_from_verified_payment(
+    db: AsyncSession,
+    *,
+    tenant_id: uuid.UUID,
+    deal,
+    source_order_id: uuid.UUID,
+) -> CosmeticEntitlement | None:
+    """Grant only the cosmetic contract bound to a deal after verified payment."""
+    purchase = (deal.metadata_ or {}).get("cosmetic_purchase")
+    if not purchase:
+        return None
+    if (deal.metadata_ or {}).get("cosmetic_entitlement_granted") is True:
+        return None
+
+    required = {"employee_id", "product_id", "cosmetic_type", "cosmetic_value"}
+    if set(purchase) != required:
+        raise CosmeticEntitlementError("cosmetic purchase contract is malformed")
+    try:
+        employee_id = uuid.UUID(str(purchase["employee_id"]))
+        product_id = uuid.UUID(str(purchase["product_id"]))
+    except (TypeError, ValueError) as exc:
+        raise CosmeticEntitlementError("cosmetic purchase contract contains invalid UUIDs") from exc
+
+    entitlement = await grant(
+        db,
+        tenant_id=tenant_id,
+        employee_id=employee_id,
+        product_id=product_id,
+        cosmetic_type=str(purchase["cosmetic_type"]),
+        cosmetic_value=str(purchase["cosmetic_value"]),
+        source_order_id=source_order_id,
+    )
+    deal_metadata = dict(deal.metadata_ or {})
+    deal_metadata["cosmetic_entitlement_granted"] = True
+    deal_metadata["cosmetic_entitlement_id"] = str(entitlement.id)
+    deal_metadata["presentation_only"] = True
+    deal.metadata_ = deal_metadata
+    await db.flush()
+    return entitlement
