@@ -1,4 +1,5 @@
 """W15 ownership ledger contract tests."""
+import inspect
 import uuid
 
 import pytest
@@ -11,6 +12,7 @@ from app.services.cosmetic_entitlement_service import (
     _validate_cosmetic,
     _validate_product_contract,
     grant,
+    grant_from_verified_payment,
 )
 
 
@@ -88,8 +90,75 @@ def test_cosmetic_purchase_schema_is_bounded():
         CosmeticPurchase.model_validate({**payload, "permission": "admin"})
 
 
+@pytest.mark.asyncio
+async def test_verified_payment_grant_is_idempotent_at_deal_marker(monkeypatch):
+    entitlement_id = uuid.uuid4()
+    tenant_id = uuid.uuid4()
+    employee_id = uuid.uuid4()
+    product_id = uuid.uuid4()
+
+    class Deal:
+        metadata_ = {
+            "cosmetic_purchase": {
+                "employee_id": str(employee_id),
+                "product_id": str(product_id),
+                "cosmetic_type": "accessory",
+                "cosmetic_value": "glasses",
+            }
+        }
+
+    async def fake_grant(*_args, **kwargs):
+        assert kwargs["tenant_id"] == tenant_id
+        assert kwargs["employee_id"] == employee_id
+        assert kwargs["product_id"] == product_id
+        assert kwargs["source_order_id"] == source_order_id
+        return type("Entitlement", (), {"id": entitlement_id})()
+
+    source_order_id = uuid.uuid4()
+    monkeypatch.setattr(
+        "app.services.cosmetic_entitlement_service.grant",
+        fake_grant,
+    )
+    deal = Deal()
+    entitlement = await grant_from_verified_payment(
+        object(),
+        tenant_id=tenant_id,
+        deal=deal,
+        source_order_id=source_order_id,
+    )
+    assert entitlement.id == entitlement_id
+    assert deal.metadata_["cosmetic_entitlement_granted"] is True
+    assert deal.metadata_["cosmetic_entitlement_id"] == str(entitlement_id)
+    assert deal.metadata_["presentation_only"] is True
+
+    # A replay against the same governed deal must not invoke grant again.
+    async def fail_grant(*_args, **_kwargs):
+        raise AssertionError("grant must not run on an already-settled cosmetic purchase")
+
+    monkeypatch.setattr(
+        "app.services.cosmetic_entitlement_service.grant",
+        fail_grant,
+    )
+    assert await grant_from_verified_payment(
+        object(),
+        tenant_id=tenant_id,
+        deal=deal,
+        source_order_id=source_order_id,
+    ) is None
+
+
+def test_verified_payment_integration_is_after_provider_verification():
+    from app.services import stripe_service
+
+    source = inspect.getsource(stripe_service.apply_verified_sales_payment)
+    payment_marker = source.index('deal_metadata["payment_verified"] = True')
+    grant_marker = source.index("grant_from_verified_payment")
+    assert grant_marker < payment_marker
+    assert "provider_event_id" in source[:grant_marker]
+    assert "amount != Decimal(str(deal.amount))" in source[:grant_marker]
+
+
 def test_apply_entitlement_is_presentation_only():
-    import inspect
     from app.services import cosmetic_entitlement_service
 
     source = inspect.getsource(cosmetic_entitlement_service.apply_entitlement)
