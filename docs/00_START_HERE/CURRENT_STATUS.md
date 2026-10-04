@@ -7,8 +7,8 @@
 **GitHub Release:** `v1.4.16` — PUBLISHED
 **Exact-SHA Production Certification:** Run `37188879277` — PASS
 **Certification job:** `111396657270` — PASS
-**Current engineering head:** `main` — `434a0c4a4501af08a393faaf58092add764df2a2`
-**Current status:** v1.4.16 CERTIFIED / W10 INTERNAL COMPANY DOGFOOD VERIFIED
+**Current engineering head:** `main` — `933fb68c8857f0b4fe939bb03351a726f3ec890b`
+**Current status:** v1.4.16 CERTIFIED at its immutable SHA / current main is post-release engineering and **NOT release-certified**
 
 ## Release boundary
 
