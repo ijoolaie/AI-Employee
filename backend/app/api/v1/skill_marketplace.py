@@ -87,8 +87,8 @@ async def publish_skill_package(
     response_model=APIResponse[list[SkillMarketplacePublicationResponse]],
 )
 async def list_skill_publications(
+    db: DbSession,
     ctx: SkillMarketplaceReadContext = Depends(require_permission("skill_marketplace.read")),
-    db: DbSession = None,
     visibility: str | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -112,8 +112,8 @@ async def list_skill_publications(
 )
 async def get_skill_publication(
     publication_id: UUID,
+    db: DbSession,
     ctx: SkillMarketplaceReadContext = Depends(require_permission("skill_marketplace.read")),
-    db: DbSession = None,
 ):
     try:
         item = await SkillMarketplacePublicationService.get_for_tenant(
