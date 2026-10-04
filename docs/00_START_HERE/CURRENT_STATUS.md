@@ -464,3 +464,17 @@ The new ledger records gross payment, operator-configured platform fee bps, plat
 **NOT VERIFIED:** external seller payout execution, tax calculation/settlement, real external customer payment/revenue, and Production Certification of the post-v1.4.16 merge SHA.
 
 The immutable `v1.4.16` certification remains unchanged.
+
+## W16 seller payout proposal — 2026-10-04
+
+Latest W16 financial-control-plane boundary:
+- seller payout proposal generation: **VERIFIED** on deterministic CI / real PostgreSQL;
+- actual seller payout transfer: **NOT VERIFIED**;
+- payout-provider integration: **NOT VERIFIED**;
+- tax calculation/settlement: **NOT VERIFIED**;
+- real external marketplace payment/revenue: **NOT VERIFIED**;
+- post-v1.4.16 Production Certification: **NOT RUN / NOT VERIFIED**.
+
+PR #862 exact head `881ca9d498989ec7af522ec799fbb693dd708c5e` passed the dedicated cross-tenant marketplace real-stack gate `37203634612`, CI `37203634678`, CodeQL `37203634695`, DAST `37203634654`, Runtime Isolation/RBAC `37203634634`, Architecture `37203634622`, Production Infrastructure `37203634605`, HA `37203634742`, Production Observability `37203634636`, Production Rollback & Alerting `37203634710`, and Security/Privacy `37203634663` before merge. Merge SHA: `c8fd849e77d2181f32700e1a7e52f03e48cd21e8`.
+
+The proposal is platform-admin/vendor scoped and explicitly non-executing: provider `none`, destination `not_configured`, payout `not_executed`, tax `not_calculated`. This does not extend the immutable `v1.4.16` certification.

@@ -1183,3 +1183,46 @@ The real-stack scenario verified the configured 15% CI allocation policy, persis
 - Production Certification for `e4084462e414cd408b7035997bbd2b469b77c14a`: **NOT RUN / NOT VERIFIED**.
 
 The immutable `v1.4.16` production-certified release remains unchanged.
+
+## W16 seller payout proposal checkpoint — 2026-10-04
+
+PR #862 adds the next explicit marketplace-finance boundary without executing a payout.
+
+Implementation boundary:
+- platform-admin control plane only;
+- active vendor tenant + `is_platform_admin=true` identity required;
+- proposal derives seller-net only from a recorded marketplace settlement;
+- idempotent one-proposal-per-settlement boundary;
+- provider `none`;
+- payout execution `not_executed`;
+- destination `not_configured`;
+- tax `not_calculated`;
+- audited creation;
+- no Workforce Agent operation or execution authority is added;
+- no external payment/payout API is called.
+
+Exact-head evidence:
+- PR #862 head: `881ca9d498989ec7af522ec799fbb693dd708c5e`;
+- merge SHA: `c8fd849e77d2181f32700e1a7e52f03e48cd21e8`;
+- W16 Cross-Tenant Skill Purchase Real-Stack: PASS — Run `37203634612`;
+- CI: PASS — Run `37203634678`;
+- CodeQL: PASS — Run `37203634695`;
+- Ephemeral DAST: PASS — Run `37203634654`;
+- Runtime Isolation/RBAC: PASS — Run `37203634634`;
+- Architecture Guard: PASS — Run `37203634622`;
+- Production Infrastructure: PASS — Run `37203634605`;
+- HA Failure Recovery: PASS — Run `37203634742`;
+- Production Observability: PASS — Run `37203634636`;
+- Production Rollback & Alerting: PASS — Run `37203634710`;
+- Security/Privacy: PASS — Run `37203634663`.
+
+The dedicated marketplace real-stack scenario verified proposal creation, seller-net equality, platform-admin ownership, provider `none`, destination `not_configured`, payout `not_executed`, tax `not_calculated`, proposal replay idempotency and cleanup.
+
+**Evidence boundary:**
+- seller payout proposal boundary: **VERIFIED**;
+- external seller payout execution: **NOT VERIFIED**;
+- tax calculation/settlement: **NOT VERIFIED**;
+- external customer payment/revenue: **NOT VERIFIED**;
+- Production Certification for `c8fd849e77d2181f32700e1a7e52f03e48cd21e8`: **NOT RUN / NOT VERIFIED**.
+
+The immutable `v1.4.16` certification boundary remains unchanged.

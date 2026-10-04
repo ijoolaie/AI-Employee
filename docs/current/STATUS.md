@@ -433,3 +433,28 @@ PostgreSQL constraints enforce valid fee bounds, non-negative amounts, and `plat
 The settlement ledger is accounting state only. It does not execute money transfer to the seller, calculate tax, or create execution authority.
 
 **Evidence boundary:** marketplace financial allocation accounting is **VERIFIED on the deterministic payment provider / real PostgreSQL CI stack** for the exact PR head above. External seller payout execution, tax calculation/settlement, external production customer payment and realized marketplace revenue remain **NOT VERIFIED**. The immutable `v1.4.16` production certification remains unchanged; merge SHA `e4084462e414cd408b7035997bbd2b469b77c14a` is not production-certified.
+
+## W16 marketplace payout proposal checkpoint — 2026-10-04
+
+PR #862, `feat(w16): add platform-admin seller payout proposals`, was validated at exact head `881ca9d498989ec7af522ec799fbb693dd708c5e` and merged with merge commit `c8fd849e77d2181f32700e1a7e52f03e48cd21e8`.
+
+The platform-control-plane payout proposal boundary is now implemented and real-stack verified:
+- proposal creation requires an active vendor tenant and active `is_platform_admin=true` user;
+- the proposal derives only the recorded settlement seller-net amount and currency;
+- payout provider remains `none`;
+- destination remains `not_configured`;
+- execution status remains `not_executed`;
+- tax treatment remains `not_calculated`;
+- one settlement can produce at most one active proposal;
+- proposal replay returns the existing proposal without creating another row;
+- creation is audited;
+- no Workforce Tool, Agent capability, external payout call, bank destination or tax engine is introduced.
+
+Exact-head W16 Cross-Tenant Skill Purchase Real-Stack Run `37203634612` completed PASS and recorded:
+`MARKETPLACE SELLER PAYOUT PROPOSAL CREATION PASS`
+and
+`MARKETPLACE SELLER PAYOUT PROPOSAL IDEMPOTENCY PASS`.
+
+The same exact head also passed W16 Skill API `37203634599`, W16 Third-Party Publication `37203634686`, CI `37203634678`, CodeQL `37203634695`, DAST `37203634654`, Runtime Isolation/RBAC `37203634634`, Architecture `37203634622`, Production Infrastructure `37203634605`, HA `37203634742`, Production Observability `37203634636`, Production Rollback & Alerting `37203634710`, and Security/Privacy `37203634663`.
+
+**Evidence boundary:** seller payout proposal generation is **VERIFIED** on the deterministic CI / real PostgreSQL stack. Actual seller payout execution, payout-provider integration, tax calculation/settlement, external customer payment and realized marketplace revenue remain **NOT VERIFIED**. The immutable `v1.4.16` Production Certification remains unchanged; `c8fd849e77d2181f32700e1a7e52f03e48cd21e8` is not production-certified.
