@@ -101,6 +101,7 @@ async def grant(
         if existing.status == "active":
             raise CosmeticEntitlementError("cosmetic entitlement already exists")
         existing.status = "active"
+        existing.granted_at = datetime.now(timezone.utc)
         existing.revoked_at = None
         existing.cosmetic_type = cosmetic_type
         existing.cosmetic_value = cosmetic_value
