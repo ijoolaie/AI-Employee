@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from app.core.deps import DbSession, TenantContext, get_current_context
+from app.core.deps import DbSession, TenantContext, get_current_context, has_permission
 from app.schemas.admin import AdminDashboardResponse, AdminTenantListResponse, AdminOptimizationResponse
 from app.schemas.agent_fitness import AgentFitnessResponse
 from app.schemas.agent_promotion_evidence import AgentPromotionEvidenceResponse
@@ -11,7 +11,7 @@ from app.schemas.capacity_forecast import CapacityForecastResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
 from app.schemas.workload_balance import WorkloadBalanceEventResponse
-from app.schemas.admin_marketplace import MarketplaceFinancialSummaryResponse, MarketplacePayoutProposalResponse
+from app.schemas.admin_marketplace import MarketplaceFinancialSummaryResponse, MarketplacePayoutApprovalCreate, MarketplacePayoutApprovalResponse, MarketplacePayoutProposalResponse
 from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting, skill_marketplace_payout_service, skill_marketplace_reporting_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -24,6 +24,30 @@ async def require_platform_admin(ctx: TenantContext = Depends(get_current_contex
 
 
 PlatformAdminContext = Annotated[TenantContext, Depends(require_platform_admin)]
+
+
+async def require_marketplace_payout_approver(
+    ctx: TenantContext = Depends(get_current_context),
+) -> TenantContext:
+    ctx = await require_platform_admin(ctx)
+    if not await has_permission(ctx, "skill_marketplace.payout.approve"):
+        raise HTTPException(
+            status_code=403,
+            detail="Missing permission: skill_marketplace.payout.approve",
+        )
+    return ctx
+
+
+async def require_marketplace_payout_executor(
+    ctx: TenantContext = Depends(get_current_context),
+) -> TenantContext:
+    ctx = await require_platform_admin(ctx)
+    if not await has_permission(ctx, "skill_marketplace.payout.execute"):
+        raise HTTPException(
+            status_code=403,
+            detail="Missing permission: skill_marketplace.payout.execute",
+        )
+    return ctx
 
 
 @router.get("/dashboard", response_model=APIResponse[AdminDashboardResponse])
@@ -90,6 +114,56 @@ async def list_marketplace_payout_proposals(
         data=[MarketplacePayoutProposalResponse.model_validate(item) for item in proposals],
     )
 
+
+
+
+
+
+@router.post(
+    "/marketplace/payout-proposals/{proposal_id}/approval",
+    response_model=APIResponse[MarketplacePayoutApprovalResponse],
+)
+async def decide_marketplace_payout_approval(
+    proposal_id: UUID,
+    payload: MarketplacePayoutApprovalCreate,
+    ctx: TenantContext = Depends(require_marketplace_payout_approver),
+    db: DbSession = None,
+):
+    approval = await skill_marketplace_payout_service.approve_payout_proposal(
+        db,
+        proposal_id=proposal_id,
+        platform_admin_tenant_id=ctx.tenant.id,
+        decided_by_user_id=ctx.user.id,
+        decision=payload.decision,
+        reason=payload.reason,
+    )
+    await db.commit()
+    return APIResponse(
+        success=True,
+        data=MarketplacePayoutApprovalResponse.model_validate(approval),
+    )
+
+
+@router.post(
+    "/marketplace/payout-proposals/{proposal_id}/execute",
+    response_model=APIResponse[MarketplacePayoutProposalResponse],
+)
+async def execute_marketplace_payout(
+    proposal_id: UUID,
+    ctx: TenantContext = Depends(require_marketplace_payout_executor),
+    db: DbSession = None,
+):
+    proposal = await skill_marketplace_payout_service.execute_payout_proposal(
+        db,
+        proposal_id=proposal_id,
+        platform_admin_tenant_id=ctx.tenant.id,
+        executed_by_user_id=ctx.user.id,
+    )
+    await db.commit()
+    return APIResponse(
+        success=True,
+        data=MarketplacePayoutProposalResponse.model_validate(proposal),
+    )
 
 
 @router.get("/marketplace/financial-summary", response_model=APIResponse[MarketplaceFinancialSummaryResponse])
