@@ -44,8 +44,8 @@ Canonical historical audit: `docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.m
 3. **DONE:** immutable evidence artifact emitted and uploaded.
 4. **DONE:** `v1.4.16` tag and GitHub Release verified against the certified SHA.
 5. **DONE:** W10 Internal Company Dogfood — Run `37189332690`, Job `111398049109`.
-6. **OPEN:** rebase/recreate PR #836 on current `main` and require fresh validation before merge.
-7. **OPEN:** establish GitHub `main` branch protection and required checks.
+6. **DONE:** PR #836 was rebased onto current `main`, freshly validated at head `ea055755498bb65042e693cf011eec3eb3801b83`, and merged as `933fb68c8857f0b4fe939bb03351a726f3ec890b`.
+7. **BLOCKED:** GitHub `main` branch protection and required checks remain **NOT ENABLED / NOT VERIFIED** because the available integration cannot modify repository rules and the direct protection endpoint returned HTTP 403.
 
 ### P1 — External production evidence
 
