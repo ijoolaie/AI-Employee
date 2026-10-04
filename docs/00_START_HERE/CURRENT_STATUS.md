@@ -1,14 +1,15 @@
 # Current Status
 
 **Last reconciled:** 2026-10-04
-**Latest certified release:** `v1.4.15`
-**Certified release SHA:** `226dddcfbab7abde166c8cd6967d63a03f2d4e71`
+**Latest published release:** `v1.4.15`
+**Latest published release SHA:** `226dddcfbab7abde166c8cd6967d63a03f2d4e71`
+**Latest certified candidate:** `v1.4.16` — exact SHA `434a0c4a4501af08a393faaf58092add764df2a2`
 **Stable Git tag:** `v1.4.15` — VERIFIED
 **GitHub Release:** `v1.4.15` — PUBLISHED
-**Exact-SHA Production Certification:** Run `37185102432` — PASS
-**Certification job:** `111385347811` — PASS
-**Current engineering head:** `w16-skills-marketplace` — post-`v1.4.15` branch; latest reviewed SHA `0b0507b5b7ac5572a5631ac5e587c206b031aa72`
-**Current status:** v1.4.15 CERTIFIED / W16 FOUNDATION IN IMPLEMENTATION / EXACT-SHA W16 CERTIFICATION NOT RUN
+**v1.4.16 Exact-SHA Production Certification:** Run `37188879277` — PASS
+**v1.4.16 certification job:** `111396657270` — PASS
+**Current engineering head:** `main` — W16 foundation at `434a0c4a4501af08a393faaf58092add764df2a2`
+**Current status:** v1.4.15 PUBLISHED / v1.4.16 CERTIFIED CANDIDATE / TAG AND RELEASE NOT CREATED
 
 ## Release boundary
 
@@ -22,7 +23,7 @@ W15 Employee Cosmetic Entitlements is implemented and release-certified in v1.4.
 
 W16 Skills Marketplace has now started from the certified v1.4.15 SHA on branch `w16-skills-marketplace`. The first foundation slice adds versioned tenant-scoped skill packages and a tenant-scoped employee installation ledger. Skill manifests explicitly reject execution-authority fields, and installation audit metadata records that permissions, allowed tools, and execution authority are unchanged.
 
-**W16 exact-SHA CI, security gates, real-stack evidence, and Production Certification are NOT RUN / NOT VERIFIED.**
+**W16 exact-SHA Production Certification is PASS.** Run `37188879277`, job `111396657270`; evidence artifact `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`, digest `sha256:7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`. Production deployment claimed by certification: **false**. Git tag/release for `v1.4.16`: **NOT CREATED**.
 
 ## Current-main post-certification engineering revalidation
 
