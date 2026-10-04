@@ -371,3 +371,42 @@ During this validation, the lifecycle test exposed a real audit-ledger defect: t
 **NOT VERIFIED:** exact-SHA Production Certification for the post-v1.4.16 W16 changes; live commercial purchase entitlement settlement; third-party skill publishing; external skill-provider execution; real customer marketplace revenue.
 
 The immutable `v1.4.16` certification boundary remains unchanged. These W16 changes are post-release engineering evidence and do not inherit v1.4.16 certification.
+
+
+## W16 real-stack employee skill API checkpoint — 2026-10-04
+
+W16 employee skill HTTP API behavior has now been exercised on the real Docker/PostgreSQL stack after the lifecycle evidence above.
+
+### Real-stack API evidence
+
+PR #849, `test: verify W16 employee skill API on real PostgreSQL`, was validated at exact head **`4684445224cb6cc09cb432fb56d84451abcca305`** and squash-merged at **`d582dab6fb42918a523093ce72791b2c2b9552ac`**.
+
+Exact-head workflow evidence:
+- W16 Skill API Real-Stack Contract: PASS — Run `37193659040`
+- CI: PASS — Run `37193659060`
+- CodeQL: PASS — Run `37193659013`
+- Architecture Guard: PASS — Run `37193658995`
+- Production Infrastructure Validation: PASS — Run `37193659051`
+- HA Failure Recovery Validation: PASS — Run `37193658991`
+- Ephemeral DAST Validation: PASS — Run `37193659048`
+
+The real-stack scenario verifies:
+- same-tenant employee skill installation through HTTP API;
+- same-tenant skill listing and revocation;
+- cross-tenant listing/revocation rejection;
+- commercial skill installation remains fail-closed without a verified purchase entitlement.
+
+### Evidence boundary
+
+This closes the focused **employee skill API / tenant-isolation / entitlement-boundary engineering checkpoint** on the real PostgreSQL stack.
+
+It does **not** establish:
+- post-v1.4.16 Production Certification;
+- a verified purchase/order/payment entitlement implementation;
+- third-party skill publishing;
+- external skill-provider execution;
+- customer marketplace revenue.
+
+The paid-skill path remains intentionally fail-closed. Skill installation does not grant permissions, allowed tools, approval policy, capability contracts or execution authority.
+
+This is post-release engineering evidence and does not inherit the immutable v1.4.16 certification.
