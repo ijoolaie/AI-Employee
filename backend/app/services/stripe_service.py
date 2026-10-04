@@ -429,8 +429,7 @@ async def apply_verified_sales_payment(
     marketplace_purchase_id = None
     marketplace_seller_tenant_id = None
     if (deal.metadata_ or {}).get("skill_marketplace_purchase"):
-        from app.services.skill_marketplace_purchase_service import SkillMarketplacePurchaseStatus
-        from app.models.skill_marketplace_purchase import SkillMarketplacePurchase
+        from app.models.skill_marketplace_purchase import SkillMarketplacePurchase, SkillMarketplacePurchaseStatus
         from app.services import skill_marketplace_service
         marketplace = (deal.metadata_ or {}).get("skill_marketplace_purchase") or {}
         try:
