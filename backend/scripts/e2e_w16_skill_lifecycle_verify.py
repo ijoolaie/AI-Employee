@@ -62,7 +62,9 @@ async def verify() -> None:
                 name="W16 Runtime Employee B",
                 kind="custom",
             )
-            db.add_all([tenant_a, tenant_b, employee_a, employee_b])
+            db.add_all([tenant_a, tenant_b])
+            await db.flush()
+            db.add_all([employee_a, employee_b])
             await db.flush()
 
             package = await create_package(
