@@ -39,7 +39,7 @@ This file is the current-status authority. Historical sections below preserve pr
 
 ## Current-main post-certification engineering revalidation
 
-Current-main and post-release engineering evidence must never be treated as v1.4.15 certification.
+Current-main and post-release engineering evidence must never be treated as v1.4.16 certification. The current main head `933fb68c8857f0b4fe939bb03351a726f3ec890b` is post-release engineering evidence only.
 
 ## Previous certified release boundary
 
