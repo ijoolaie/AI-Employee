@@ -12,7 +12,6 @@ from app.models.product import Product
 from app.models.skill_marketplace_publication import SkillMarketplacePublication
 from app.models.skill_package import SkillPackage, SkillPackageStatus
 from app.services.skill_marketplace_service import (
-    SKILL_PRODUCT_CATEGORY,
     _validate_manifest,
     _validate_product_contract,
     _validate_skill_metadata,
