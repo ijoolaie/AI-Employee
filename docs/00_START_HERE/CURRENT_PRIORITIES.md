@@ -35,15 +35,17 @@ The customer-facing product-completeness gate that preceded v1.4.11 certificatio
 
 Canonical historical audit: `docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md`. Its original findings are retained as historical evidence; this file is the current priority source.
 
-### P0 — v1.4.16 promotion
+### P0 — Post-release governance cleanup
 
-`v1.4.16` is exact-SHA Production-Certified at `434a0c4a4501af08a393faaf58092add764df2a2`, but its Git tag and GitHub Release are not yet created. Promotion must use exactly this SHA. No later SHA inherits the certification.
+`v1.4.16` is published and exact-SHA certified at `434a0c4a4501af08a393faaf58092add764df2a2`.
 
 1. **DONE:** exact-SHA Production Certification — Run `37188879277`, Job `111396657270`.
 2. **DONE:** Product Gate failures = 0.
 3. **DONE:** immutable evidence artifact emitted and uploaded.
-4. **NEXT:** create the immutable `v1.4.16` Git tag and GitHub Release at exactly `434a0c4a4501af08a393faaf58092add764df2a2`.
-5. **NEXT:** verify tag target and release identity after publication.
+4. **DONE:** `v1.4.16` tag and GitHub Release verified against the certified SHA.
+5. **DONE:** W10 Internal Company Dogfood — Run `37189332690`, Job `111398049109`.
+6. **OPEN:** rebase/recreate PR #836 on current `main` and require fresh validation before merge.
+7. **OPEN:** establish GitHub `main` branch protection and required checks.
 
 ### P1 — External production evidence
 
