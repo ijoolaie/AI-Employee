@@ -1132,7 +1132,54 @@ Evidence boundary:
 - cross-tenant marketplace purchase/settlement mechanics: **VERIFIED** on the deterministic contract-test payment provider and real PostgreSQL CI stack;
 - real external customer purchase: **NOT VERIFIED**;
 - realized customer marketplace revenue: **NOT VERIFIED**;
-- seller payout/platform commission/tax settlement: **NOT VERIFIED**;
+- marketplace financial allocation accounting (gross/platform fee/seller net): **VERIFIED**; external seller payout execution and tax settlement remain **NOT VERIFIED**;
 - Production Certification for `8487f0b1133e20c4ce142d43fffd3ee69bf010c1`: **NOT RUN / NOT VERIFIED**.
 
 Next W16 work should not add financial distribution semantics implicitly. Any seller payout, platform commission, refunds, chargebacks or tax treatment requires separate contracts and evidence.
+
+### W16 marketplace financial allocation checkpoint — 2026-10-04
+
+PR #860 added an explicit settlement-allocation ledger after verified cross-tenant marketplace payment.
+
+Implementation boundary:
+- settlement record is created only after the verified payment path has produced the WorkforceRevenueEvent;
+- gross amount is taken from the settled marketplace purchase;
+- platform commission is an explicit operator-configured basis-point policy;
+- seller net is calculated as gross minus platform fee using deterministic currency-precision rounding;
+- database constraints enforce fee bounds and balanced gross/fee/net amounts;
+- provider event and purchase uniqueness preserve replay idempotency;
+- payout execution is explicitly `not_executed`;
+- tax treatment is explicitly `not_calculated`;
+- no payout provider, tax engine, refund, chargeback or distribution authority is introduced.
+
+Exact-head evidence:
+- PR #860 exact head: `26e34cca56522d13880bc1599523e01767640425`;
+- merge SHA: `e4084462e414cd408b7035997bbd2b469b77c14a`;
+- W16 Cross-Tenant Skill Purchase Real-Stack: PASS — Run `37202824376`;
+- CI: PASS — Run `37202824398`;
+- CodeQL: PASS — Run `37202824329`;
+- Ephemeral DAST: PASS — Run `37202824343`;
+- W16 Skill Provider Execution: PASS — Run `37202824380`;
+- W16 Skill API: PASS — Run `37202824326`;
+- W16 Third-Party Publication: PASS — Run `37202824356`;
+- Runtime Isolation/RBAC: PASS — Run `37202824391`;
+- Architecture Guard: PASS — Run `37202824355`;
+- Production Infrastructure: PASS — Run `37202824370`;
+- HA Failure Recovery: PASS — Run `37202824314`;
+- Production Secret Management: PASS — Run `37202824344`;
+- Production Observability: PASS — Run `37202824350`;
+- Production Rollback & Alerting: PASS — Run `37202824366`;
+- Production Hardening: PASS — Run `37202824330`;
+- Security/Privacy: PASS — Run `37202824372`;
+- Provider Integration Contract: PASS — Run `37202824365`.
+
+The real-stack scenario verified the configured 15% CI allocation policy, persisted gross/platform-fee/seller-net split, buyer/seller correlation, payout status `not_executed`, tax treatment `not_calculated`, and one-row replay idempotency.
+
+**Evidence boundary:**
+- marketplace financial allocation accounting: **VERIFIED** on the deterministic payment provider / real PostgreSQL CI stack;
+- external seller payout execution: **NOT VERIFIED**;
+- tax calculation/settlement: **NOT VERIFIED**;
+- external customer payment/revenue: **NOT VERIFIED**;
+- Production Certification for `e4084462e414cd408b7035997bbd2b469b77c14a`: **NOT RUN / NOT VERIFIED**.
+
+The immutable `v1.4.16` production-certified release remains unchanged.
