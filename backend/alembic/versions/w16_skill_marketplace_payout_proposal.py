@@ -65,6 +65,18 @@ def upgrade() -> None:
             "settlement_id",
             name="uq_skill_marketplace_payout_proposal_settlement",
         ),
+        sa.CheckConstraint(
+            "amount > 0",
+            name="ck_skill_marketplace_payout_proposal_amount_positive",
+        ),
+        sa.CheckConstraint(
+            "provider = 'none'",
+            name="ck_skill_marketplace_payout_proposal_provider_none",
+        ),
+        sa.CheckConstraint(
+            "execution_status = 'not_executed'",
+            name="ck_skill_marketplace_payout_proposal_not_executed",
+        ),
     )
     op.create_index(
         "ix_skill_marketplace_payout_proposals_seller",
