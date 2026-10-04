@@ -3,10 +3,10 @@
 **Reconciled:** 2026-10-04
 **Current release:** `v1.4.16`
 **Certified SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
-**Current main head:** `434a0c4a4501af08a393faaf58092add764df2a2`
-**Production Certification:** Run `37188879277` / Job `111396657270` — PASS
+**Current main head:** `933fb68c8857f0b4fe939bb03351a726f3ec890b` — post-release engineering head; **NOT release-certified**
+**Production Certification:** v1.4.16 exact-SHA Run `37188879277` / Job `111396657270` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
-**Current status:** v1.4.16 RELEASE-CERTIFIED / W10 DOGFOOD VERIFIED / EXTERNAL GATES OPEN
+**Current status:** v1.4.16 RELEASE-CERTIFIED at its immutable SHA / current main is post-release engineering / EXTERNAL GATES OPEN
 
 ## Immediate post-release priorities
 
