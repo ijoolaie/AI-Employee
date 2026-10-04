@@ -227,10 +227,13 @@ async def execute_payout_proposal(
         raise ValidationAppError("payout execution approval request was not found")
     if approval.tool_name != "marketplace_execute_payout":
         raise ValidationAppError("approval request is bound to a different tool")
-    if approval.status != "consumed" or approval.decided_by is None or approval.decided_at is None:
-        raise ValidationAppError("payout execution approval was not explicitly decided and consumed")
+    if approval.status not in {"approved", "consumed"} or approval.decided_by is None or approval.decided_at is None:
+        raise ValidationAppError("payout execution approval was not explicitly decided")
     if approval.arguments != {"proposal_id": str(proposal_id)}:
         raise ValidationAppError("payout execution approval arguments do not match the proposal")
+    if approval.status == "approved":
+        approval.status = "consumed"
+        await db.flush()
 
     result = await db.execute(
         select(SkillMarketplacePayoutProposal)
