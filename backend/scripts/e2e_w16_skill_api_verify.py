@@ -143,7 +143,52 @@ async def cleanup(slugs: list[str]) -> None:
         await db.commit()
 
 
-\n\nasync def settle_skill_purchase(\n    *, tenant_slug: str, employee_id: str, product_id: str, skill_package_id: str, payment_event_id: str\n) -> str:\n    async with AsyncSessionLocal() as db:\n        tenant = (await db.execute(select(Tenant).where(Tenant.slug == tenant_slug))).scalar_one()\n        deal = await sales_service.create_deal(db, tenant_id=tenant.id, actor_id=None, title="W16 Commercial Skill Purchase", customer_name="W16 Skill Customer", amount=Decimal("10.00"), currency="EUR", stage="proposal", probability=50, skill_purchase={"employee_id": employee_id, "product_id": product_id, "skill_package_id": skill_package_id})\n        await stripe_service.apply_verified_sales_payment(db, provider="stripe", provider_event_id=payment_event_id, data={"id": payment_event_id, "amount_received": 1000, "currency": "eur", "metadata": {"tenant_id": str(tenant.id), "sales_deal_id": str(deal.id)}})\n        entitlement = (await db.execute(select(SkillPurchaseEntitlement).where(SkillPurchaseEntitlement.tenant_id == tenant.id, SkillPurchaseEntitlement.employee_id == employee_id, SkillPurchaseEntitlement.skill_package_id == skill_package_id, SkillPurchaseEntitlement.status == SkillPurchaseEntitlementStatus.ACTIVE))).scalar_one_or_none()\n        assert entitlement is not None, "verified payment did not create active skill entitlement"\n        assert entitlement.provider == "stripe"\n        assert entitlement.provider_event_id == payment_event_id\n        await db.commit()\n        return str(tenant.id)\n\n\ndef main() -> int:
+
+
+async def settle_skill_purchase(
+    *, tenant_slug: str, employee_id: str, product_id: str, skill_package_id: str, payment_event_id: str
+) -> str:
+    async with AsyncSessionLocal() as db:
+        tenant = (await db.execute(select(Tenant).where(Tenant.slug == tenant_slug))).scalar_one()
+        deal = await sales_service.create_deal(
+            db,
+            tenant_id=tenant.id,
+            actor_id=None,
+            title="W16 Commercial Skill Purchase",
+            customer_name="W16 Skill Customer",
+            amount=Decimal("10.00"),
+            currency="EUR",
+            stage="proposal",
+            probability=50,
+            skill_purchase={"employee_id": employee_id, "product_id": product_id, "skill_package_id": skill_package_id},
+        )
+        await stripe_service.apply_verified_sales_payment(
+            db,
+            provider="stripe",
+            provider_event_id=payment_event_id,
+            data={
+                "id": payment_event_id,
+                "amount_received": 1000,
+                "currency": "eur",
+                "metadata": {"tenant_id": str(tenant.id), "sales_deal_id": str(deal.id)},
+            },
+        )
+        entitlement = (
+            await db.execute(
+                select(SkillPurchaseEntitlement).where(
+                    SkillPurchaseEntitlement.tenant_id == tenant.id,
+                    SkillPurchaseEntitlement.employee_id == employee_id,
+                    SkillPurchaseEntitlement.skill_package_id == skill_package_id,
+                    SkillPurchaseEntitlement.status == SkillPurchaseEntitlementStatus.ACTIVE,
+                )
+            )
+        ).scalar_one_or_none()
+        assert entitlement is not None, "verified payment did not create active skill entitlement"
+        assert entitlement.provider == "stripe"
+        assert entitlement.provider_event_id == payment_event_id
+        await db.commit()
+        return str(tenant.id)
+\n\ndef main() -> int:
     suffix = str(time.time_ns())[-12:]
     slugs: list[str] = []
     try:
@@ -224,7 +269,8 @@ async def cleanup(slugs: list[str]) -> None:
             token=token_a,
         )
         assert_status(status, 422, "commercial skill without entitlement", commercial)
-        error_message = ((commercial.get("error") or {}).get("message") if isinstance(commercial, dict) else None)\n        assert error_message == "verified skill purchase entitlement is missing or revoked", f"unexpected entitlement rejection: {commercial}"
+        error_message = ((commercial.get("error") or {}).get("message") if isinstance(commercial, dict) else None)
+        assert error_message == "verified skill purchase entitlement is missing or revoked", f"unexpected entitlement rejection: {commercial}"
         print("COMMERCIAL SKILL FAIL-CLOSED WITHOUT ENTITLEMENT PASS")
 
         payment_event_id = f"evt_w16_skill_{suffix}"
