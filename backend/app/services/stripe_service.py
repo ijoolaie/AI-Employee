@@ -426,6 +426,10 @@ async def apply_verified_sales_payment(
             provider_event_id=provider_event_id,
         )
 
+    # Entitlement settlement updates the governed deal metadata; reload it
+    # before adding payment markers so those ownership markers are preserved.
+    deal_metadata = dict(deal.metadata_ or {})
+    event_ids = list(deal_metadata.get("sales_payment_event_ids") or [])
     event_ids.append(provider_event_id)
     deal_metadata["sales_payment_event_ids"] = event_ids[-20:]
     deal_metadata["payment_verified"] = True
