@@ -19,7 +19,6 @@ from app.models.skill_purchase_entitlement import SkillPurchaseEntitlement, Skil
 from app.models.tenant import Tenant
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
 from app.models.user import User
-from app.models.tool_approval import ToolApprovalRequest
 from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutExecutionStatus, SkillMarketplacePayoutProposalStatus
 from app.models.skill_marketplace_settlement import SkillMarketplacePayoutStatus, SkillMarketplaceSettlement, SkillMarketplaceSettlementStatus
 from app.services import edition_lifecycle_service, skill_marketplace_service, stripe_service
@@ -351,8 +350,6 @@ async def verify() -> None:
             reason="W16 deterministic payout execution certification fixture",
         )
         assert decided.status == "approved"
-        decided.status = "consumed"
-        await db.flush()
 
         executed = await execute_payout_proposal(
             db,
