@@ -515,6 +515,7 @@ async def apply_verified_sales_payment(
         )
         db.add(revenue_event)
     if marketplace_purchase_id is not None:
+        await db.flush()
         from app.services.skill_marketplace_settlement_service import record_verified_payment_allocation
         allocation = await record_verified_payment_allocation(
             db,
