@@ -18,7 +18,7 @@ Certification applies only to the exact certified SHA `434a0c4a4501af08a393faaf5
 
 `v1.4.16` is the latest published, exact-SHA Production-Certified release. Product Gate failures = 0 and `production_deployment_claimed=false`.
 
-W16 Skills Marketplace Foundation is inside the immutable v1.4.16 release boundary. The release does not claim commercial paid-skill execution: verified purchase entitlement remains a required fail-closed boundary.
+W16 Skills Marketplace engineering is post-v1.4.16 mainline work. The immutable v1.4.16 release does not include these later W16 changes. Commercial paid-skill execution remains fail-closed behind verified purchase entitlement.
 
 W10 Internal Company Dogfood has independently passed on the same SHA:
 - Run `37189332690`
@@ -410,3 +410,28 @@ It does **not** establish:
 The paid-skill path remains intentionally fail-closed. Skill installation does not grant permissions, allowed tools, approval policy, capability contracts or execution authority.
 
 This is post-release engineering evidence and does not inherit the immutable v1.4.16 certification.
+
+## W16 current evidence reconciliation — 2026-10-04
+
+The W16 sequence now has separate real-stack evidence for lifecycle, employee Skill API, verified purchase entitlement, third-party publication/discovery, and governed provider execution.
+
+Latest application-code merge:
+- PR #855 exact head: `20727001c2f967d850bda036c53acf7ccd326f81`
+- merge SHA: `659c1e757c3cdc6dcc1d7c390a5bdd74bd3feff8`
+- W16 Skill Provider Execution Real-Stack: PASS — Run `37199713576`
+- CI: PASS — Run `37199713528`
+- CodeQL: PASS — Run `37199713526`
+- Runtime Isolation/RBAC: PASS — Run `37199713590`
+- Ephemeral DAST: PASS — Run `37199713615`
+- Production Infrastructure Validation: PASS — Run `37199713566`
+
+Current evidence boundary:
+- W16 lifecycle/install/revoke/list: **VERIFIED**
+- W16 employee Skill API and entitlement gate: **VERIFIED**
+- W16 third-party publication/discovery: **VERIFIED**
+- W16 governed SkillPackage provider execution on deterministic CI HTTP provider fixture: **VERIFIED**
+- external production Skill provider execution: **NOT VERIFIED**
+- real customer marketplace purchase/revenue: **NOT VERIFIED**
+- Production Certification for post-v1.4.16 W16 merge SHAs: **NOT RUN / NOT VERIFIED**
+
+All of these remain post-release engineering evidence and do not extend the immutable `v1.4.16` certification.
