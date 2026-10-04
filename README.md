@@ -1,8 +1,10 @@
 # AI Employee Platform
 
-**Latest published/certified release:** `v1.4.11` — exact certified SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+**Latest published release:** `v1.4.15` — exact SHA `226dddcfbab7abde166c8cd6967d63a03f2d4e71`
 
-**Exact-SHA Production Certification:** Run `35848311037` — PASS; certification is bound to exact `v1.4.11` SHA only.
+**Latest certified candidate:** `v1.4.16` — exact SHA `434a0c4a4501af08a393faaf58092add764df2a2`
+
+**v1.4.16 Exact-SHA Production Certification:** Run `37188879277` / Job `111396657270` — PASS. Tag and GitHub Release are **NOT CREATED** yet.
 
 **Architecture baseline:** `V1.5 Agentic Operating Model` — architecture/operating-model baseline, not a release.
 
@@ -14,7 +16,7 @@ This repository is the vendor source of truth for the AI Employee Platform. The 
 
 ## Versioning truth
 
-- **Release:** immutable product snapshot. Current: `v1.4.11`.
+- **Release:** immutable product snapshot. Latest published: `v1.4.15`; latest certified candidate: `v1.4.16`.
 - **Architecture:** current baseline: `V1.5`.
 - **Engineering program:** external production execution and governed Agent workforce engineering.
 
