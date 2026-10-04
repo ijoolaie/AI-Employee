@@ -554,3 +554,56 @@ Evidence boundary:
 - production certification of the merge SHA: **NOT RUN / NOT VERIFIED**.
 
 The immutable `v1.4.16` production certification remains unchanged.
+
+## W16 payout execution and destination-binding checkpoints — 2026-10-05
+
+The W16 marketplace finance boundary was extended through PRs #871–#874 after the previously verified payout proposal/provider foundation.
+
+### Payout execution evidence ledger — PR #871
+
+- Exact PR head: `2889e8aefebe9f1a04d772b576c55386650f88e9`.
+- Merge SHA: `190a1201437a04114a4f3702e4174531297d7ef3`.
+- `SkillMarketplacePayoutExecutionStatus` now distinguishes `not_executed`, `pending`, `accepted`, `failed`, and `unknown`.
+- Durable payout evidence includes idempotency key, provider payout/event IDs, failure code, retryability, executed flag and external-execution flag.
+- The new migration is additive and preserves the previously landed payout-proposal migration.
+- `unknown` remains a reconciliation state; no automatic retry is implied.
+- No external seller payout was executed.
+
+**Evidence boundary:** payout execution ledger schema/state foundation is **VERIFIED on exact PR validation**; external seller payout execution, tax settlement and real customer revenue remain **NOT VERIFIED**. Production certification of `190a1201437a04114a4f3702e4174531297d7ef3` is **NOT RUN / NOT VERIFIED**.
+
+### Seller payout destination binding — PR #872
+
+- Exact PR head: `04886104d691b4a4c9b9733008906e04d729f5bc`.
+- Merge SHA: `25b78dd30b94beab64b8ab5da9308f56e158e20c`.
+- A seller has at most one active payout destination.
+- Destination references are opaque provider-owned values; credentials and arbitrary URLs are not stored.
+- Destination history is active/revoked and replacement requires explicit revocation.
+- Binding is tenant-scoped and provider execution is not performed by the destination service.
+- The final exact-head validation passed after correcting control-character validation and ORM-default test expectations.
+
+**Evidence boundary:** tenant-scoped seller payout destination binding is **VERIFIED on exact PR validation**; external payout execution and tax settlement remain **NOT VERIFIED**. Production certification of `25b78dd30b94beab64b8ab5da9308f56e158e20c` is **NOT RUN / NOT VERIFIED**.
+
+### Seller payout destination actor authorization — PR #873
+
+- Exact PR head: `75c4f3ea47998f9d52357c2a144a738b43bcc200`.
+- Merge SHA: `41482361378bf7f4c3f15fc984ef546a1eff678b`.
+- Binding and revoke operations require an active user belonging to the seller tenant.
+- Exact-head application/security/runtime gates passed before merge.
+- Post-merge validation on `41482361378bf7f4c3f15fc984ef546a1eff678b` also completed successfully across the observed registered checks.
+
+**Evidence boundary:** seller-tenant actor authorization is **VERIFIED**; it does not authorize or execute an external payout. Production certification remains **NOT RUN / NOT VERIFIED** for this post-v1.4.16 SHA.
+
+### Payout proposal destination binding and immutable snapshot — PR #874
+
+- Exact PR head: `aa3ebf3057a769b4dbaa467c789ae90753ef5042`.
+- Merge SHA: `d1543734a0da80df62716936fc9f584f563e091b`.
+- Proposal creation now requires an active seller payout destination.
+- The proposal stores destination ID/provider/reference as an immutable historical snapshot.
+- Revoking/replacing the seller's active destination does not redirect an existing proposal.
+- The destination FK uses `RESTRICT` semantics so historical proposal binding cannot be deleted through destination replacement.
+- Exact-head validation completed successfully across the observed 14 workflows.
+- Post-merge workflow/status checks for `d1543734a0da80df62716936fc9f584f563e091b` were checked after merge and currently return no registered runs/statuses; therefore post-merge validation is **NOT VERIFIED**.
+
+**Evidence boundary:** payout-proposal destination binding and immutable snapshot are **VERIFIED on exact PR validation**. Post-merge validation for the merge SHA, external seller payout execution, tax settlement and real customer revenue remain **NOT VERIFIED**. Production certification remains **NOT RUN / NOT VERIFIED**.
+
+These checkpoints do not change the immutable `v1.4.16` certification boundary.
