@@ -1304,3 +1304,43 @@ The dedicated HTTP scenario verified:
 **Evidence boundary:** cross-tenant marketplace purchase HTTP/API verification is **VERIFIED** for the exact PR head above and merged mainline SHA `34a0010087f7f821164ef7214f133fc83446e361`. This does not verify external customer payment, realized marketplace revenue, external seller payout execution or tax settlement. The immutable `v1.4.16` Production Certification remains unchanged; `34a0010087f7f821164ef7214f133fc83446e361` is not production-certified.
 
 **Next boundary:** the next W16 provider/commercial slice must remain isolated from this HTTP verification. External seller payout and external production Skill provider execution require separate named-provider contracts, operator-owned credentials, approval, idempotency, failure/unknown-state semantics, audit/provenance and real-provider evidence. No generic HTTP or shell execution is an acceptable substitute.
+
+
+### W16 governed marketplace payout-provider contract checkpoint — 2026-10-04
+
+PR #869 introduced the explicit provider boundary for marketplace seller payouts without executing a seller payout.
+
+Implementation boundary:
+- `MarketplacePayoutProvider` is a named provider contract with explicit payout request/result state;
+- the provider request requires proposal, settlement, seller tenant, positive amount, three-letter currency, destination reference and idempotency key;
+- operator configuration selects the provider; runtime request data cannot select a provider;
+- default provider `none` fails closed with `not_configured` and no execution;
+- deterministic `contract-test` accepts/simulates a payout request but records `executed=false` and `external_execution=false`;
+- unknown provider names fail closed;
+- no payout proposal execution state was mutated;
+- no bank, Stripe/Connect, tax engine or generic HTTP/shell execution was introduced.
+
+Exact-head evidence:
+- PR #869 exact head: `47f40a74e5910afd1aa5e172ad4443e6bd0b973c`;
+- W16 Cross-Tenant Skill Purchase Real-Stack: PASS — Run `37213503702`, Job `111469255749`;
+- the same real-stack job explicitly completed `Run focused purchase and payout-provider contracts` successfully;
+- CI: PASS — Run `37213503698`;
+- Provider Integration Contract: PASS — Run `37213503684`;
+- Architecture Guard: PASS — Run `37213503691`;
+- CodeQL: PASS — Run `37213503719`;
+- Production Hardening: PASS — Run `37213503661`;
+- Production Infrastructure Validation: PASS — Run `37213503706`;
+- Security/Privacy Compliance: PASS — Run `37213503672`.
+
+The validated PR head was squash-merged as `6f720cec7ee981afdc4e8b3c1824d60d5769c74c`.
+
+Evidence boundary:
+- governed marketplace payout-provider contract: **VERIFIED** on the exact PR head;
+- deterministic contract-test payout adapter: **VERIFIED** as non-external/simulated;
+- external seller payout execution: **NOT VERIFIED**;
+- tax calculation/settlement: **NOT VERIFIED**;
+- external customer payment / realized marketplace revenue: **NOT VERIFIED**;
+- post-merge workflow evidence for `6f720cec7ee981afdc4e8b3c1824d60d5769c74c`: **NOT RUN / NOT VERIFIED**;
+- production certification of the merge SHA: **NOT RUN / NOT VERIFIED**.
+
+The immutable `v1.4.16` production certification remains unchanged.
