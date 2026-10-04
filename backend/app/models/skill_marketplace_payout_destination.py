@@ -10,7 +10,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Index, String, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -31,7 +31,7 @@ class SkillMarketplacePayoutDestination(Base):
             "uq_skill_marketplace_payout_destination_active_seller",
             "seller_tenant_id",
             unique=True,
-            postgresql_where=__import__("sqlalchemy").text("status = 'active'"),
+            postgresql_where=text("status = 'active'"),
         ),
         Index(
             "ix_skill_marketplace_payout_destinations_seller",
