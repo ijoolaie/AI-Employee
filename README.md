@@ -4,7 +4,7 @@
 
 **Exact-SHA Production Certification:** Run `37188879277` — PASS; Job `111396657270` — PASS
 
-**Current `main`:** `434a0c4a4501af08a393faaf58092add764df2a2`
+**Current `main`:** `933fb68c8857f0b4fe939bb03351a726f3ec890b` — post-release engineering head; **NOT release-certified**
 
 **Production deployment:** **NOT CLAIMED / NOT VERIFIED**
 

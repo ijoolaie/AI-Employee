@@ -3,19 +3,19 @@
 **Reconciled:** 2026-10-04
 **Current release:** `v1.4.16`
 **Certified SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
-**Current main head:** `434a0c4a4501af08a393faaf58092add764df2a2`
-**Production Certification:** Run `37188879277` / Job `111396657270` — PASS
+**Current main head:** `933fb68c8857f0b4fe939bb03351a726f3ec890b` — post-release engineering head; **NOT release-certified**
+**Production Certification:** v1.4.16 exact-SHA Run `37188879277` / Job `111396657270` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
-**Current status:** v1.4.16 RELEASE-CERTIFIED / W10 DOGFOOD VERIFIED / EXTERNAL GATES OPEN
+**Current status:** v1.4.16 RELEASE-CERTIFIED at its immutable SHA / current main is post-release engineering / EXTERNAL GATES OPEN
 
 ## Immediate post-release priorities
 
 1. **DONE:** W16 exact-SHA Production Certification and immutable v1.4.16 release.
 2. **DONE:** W10 Internal Company Dogfood on the certified SHA.
-3. **OPEN:** Reconcile this documentation set with the actual v1.4.16 release state; do not merge stale release-candidate claims.
-4. **OPEN:** Rebase/recreate PR #836 on current `main` and require fresh validation before merge.
-5. **OPEN:** Establish GitHub `main` branch protection and required checks so release governance is enforced by repository policy, not documentation alone.
-6. **NEXT:** Select the next concrete Workforce/product slice only after the above release-governance cleanup is complete.
+3. **DONE:** Reconcile current documentation with the published v1.4.16 release and current `main` head.
+4. **DONE:** Rebase and merge PR #836 after fresh exact-head validation.
+5. **BLOCKED:** Establish GitHub `main` branch protection and required checks; the available GitHub integration lacks the required repository-rules write capability and the direct protection endpoint returned HTTP 403.
+6. **NEXT:** Verify current-main CI after the PR #836 merge, then select the next concrete Workforce/product hardening slice.
 
 
 ## Priority order
@@ -44,15 +44,15 @@ Canonical historical audit: `docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.m
 3. **DONE:** immutable evidence artifact emitted and uploaded.
 4. **DONE:** `v1.4.16` tag and GitHub Release verified against the certified SHA.
 5. **DONE:** W10 Internal Company Dogfood — Run `37189332690`, Job `111398049109`.
-6. **OPEN:** rebase/recreate PR #836 on current `main` and require fresh validation before merge.
-7. **OPEN:** establish GitHub `main` branch protection and required checks.
+6. **DONE:** PR #836 was rebased onto current `main`, freshly validated at head `ea055755498bb65042e693cf011eec3eb3801b83`, and merged as `933fb68c8857f0b4fe939bb03351a726f3ec890b`.
+7. **BLOCKED:** GitHub `main` branch protection and required checks remain **NOT ENABLED / NOT VERIFIED** because the available integration cannot modify repository rules and the direct protection endpoint returned HTTP 403.
 
 ### P1 — External production evidence
 
 External gates remain intentionally **OPEN — PENDING EXTERNAL EXECUTION** because the project is still being executed locally. They become actionable when an approved external target exists.
 
 1. Establish the approved real production target and capture infrastructure identity.
-2. Deploy the exact v1.4.11 release identity without retagging or modifying the certified snapshot.
+2. Deploy the latest approved immutable release identity only after an external target is provisioned; the current latest certified release is `v1.4.16` at exact SHA `434a0c4a4501af08a393faaf58092add764df2a2`.
 3. Capture deployment, image and migration identity/checksums.
 4. Verify production networking, TLS, ingress/egress and secret-manager lifecycle.
 5. Validate live providers, billing and integrations where applicable.
