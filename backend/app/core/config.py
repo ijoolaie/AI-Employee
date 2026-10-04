@@ -72,6 +72,10 @@ class Settings(BaseSettings):
             raise ValueError("MARKET_DATA_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
         if self.engineering_github_timeout_seconds <= 0 or self.engineering_github_timeout_seconds > 60:
             raise ValueError("ENGINEERING_GITHUB_TIMEOUT_SECONDS must be between 0 and 60")
+        if self.skill_provider_timeout_seconds <= 0 or self.skill_provider_timeout_seconds > 60:
+            raise ValueError("SKILL_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
+        if self.skill_provider_name.lower() not in {"none", "http"}:
+            raise ValueError("SKILL_PROVIDER_NAME must be one of: none, http")
         if self.zarinpal_timeout_seconds <= 0 or self.zarinpal_timeout_seconds > 60:
             raise ValueError("ZARINPAL_TIMEOUT_SECONDS must be between 0 and 60")
         if self.app_env.lower() in {"production", "prod"}:
@@ -115,6 +119,14 @@ class Settings(BaseSettings):
                 raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
             if self.market_data_provider_base_url and urlparse(self.market_data_provider_base_url).scheme != "https":
                 raise ValueError("MARKET_DATA_PROVIDER_BASE_URL must use HTTPS in production")
+            if self.skill_provider_name.lower() == "http":
+                if not self.skill_provider_base_url or not self.skill_provider_api_key:
+                    raise ValueError("SKILL_PROVIDER_BASE_URL and SKILL_PROVIDER_API_KEY are required when http skill provider is enabled")
+                parsed_skill_provider = urlparse(self.skill_provider_base_url)
+                if parsed_skill_provider.scheme != "https":
+                    raise ValueError("SKILL_PROVIDER_BASE_URL must use HTTPS in production")
+                if (parsed_skill_provider.hostname or "").lower() in {"localhost", "127.0.0.1", "::1"}:
+                    raise ValueError("SKILL_PROVIDER_BASE_URL must not point to localhost in production")
             if self.zarinpal_merchant_id and not self.local_production_allow_http:
                 if urlparse(self.zarinpal_callback_url).scheme != "https":
                     raise ValueError("ZARINPAL_CALLBACK_URL must use HTTPS in production")
@@ -206,6 +218,10 @@ class Settings(BaseSettings):
     engineering_github_repositories: dict[str, str] = {}
     engineering_github_token: str | None = None
     engineering_github_timeout_seconds: float = 10.0
+    skill_provider_name: str = "none"
+    skill_provider_base_url: str | None = None
+    skill_provider_api_key: str | None = None
+    skill_provider_timeout_seconds: float = 10.0
     sales_outreach_provider_name: str = "none"
     sales_payment_provider_name: str = "none"
     zarinpal_merchant_id: str | None = None
