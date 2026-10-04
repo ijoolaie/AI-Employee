@@ -14,9 +14,8 @@ from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.models.product import Product
-from app.models.skill_package import SkillPackage
 from app.models.tenant import Tenant
-from app.services import audit_service, edition_lifecycle_service, skill_marketplace_service
+from app.services import edition_lifecycle_service, skill_marketplace_service
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
@@ -66,6 +65,7 @@ def register(suffix: str, label: str) -> tuple[str, str]:
 
 async def create_package(
     tenant_slug: str,
+    actor_id: str,
     *,
     product: bool = False,
 ) -> tuple[str, str, str | None]:
@@ -102,7 +102,7 @@ async def create_package(
                 db,
                 tenant_id=tenant.id,
                 package_id=package.id,
-                actor_id=tenant.id,
+                actor_id=actor_id,
             )
             await db.commit()
             return str(tenant.id), str(package.id), str(product_row.id)
@@ -169,7 +169,12 @@ def main() -> int:
         employee_a = (employee_response.get("data") or {}).get("id")
         assert employee_a
 
-        _, package_a, _ = asyncio.run(create_package(tenant_a))
+        status, me_a = request("GET", "/auth/me", token=token_a)
+        assert_status(status, 200, "tenant A current-user", me_a)
+        actor_id = (me_a.get("data") or {}).get("user", {}).get("id")
+        assert actor_id
+
+        _, package_a, _ = asyncio.run(create_package(tenant_a, actor_id))
 
         status, installed = request(
             "POST",
@@ -209,7 +214,7 @@ def main() -> int:
         assert (revoked.get("data") or {}).get("status") == "revoked"
         print("SAME-TENANT SKILL REVOKE PASS")
 
-        _, commercial_package, product_id = asyncio.run(create_package(tenant_a, product=True))
+        _, commercial_package, product_id = asyncio.run(create_package(tenant_a, actor_id, product=True))
         assert product_id
 
         status, commercial = request(
