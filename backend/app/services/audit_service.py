@@ -12,7 +12,7 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -92,6 +92,7 @@ async def record(
     previous_hash = previous_result.scalar_one_or_none() or GENESIS_HASH
     created_at = datetime.now(timezone.utc)
     entry = AuditLog(
+        id=uuid4(),
         tenant_id=tenant_id,
         actor_type=actor_type,
         actor_id=actor_id,

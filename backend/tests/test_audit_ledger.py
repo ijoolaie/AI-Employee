@@ -99,6 +99,7 @@ async def test_record_starts_scoped_ledger_at_genesis():
     assert entry.ledger_sequence == 1
     assert entry.previous_hash == GENESIS_HASH
     assert entry.entry_hash == _compute_entry_hash(entry)
+    assert entry.id is not None
     assert db.added is entry
 
 
