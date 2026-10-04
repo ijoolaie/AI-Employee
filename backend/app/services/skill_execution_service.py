@@ -47,18 +47,6 @@ async def execute_installed_skill(
     if employee is None:
         raise NotFoundError("employee not found in tenant")
 
-    package = (
-        await db.execute(
-            select(SkillPackage).where(
-                SkillPackage.id == skill_package_id,
-                SkillPackage.tenant_id == tenant_id,
-                SkillPackage.status == SkillPackageStatus.PUBLISHED,
-            )
-        )
-    ).scalar_one_or_none()
-    if package is None:
-        raise NotFoundError("published skill package not found")
-
     installation = (
         await db.execute(
             select(EmployeeSkillInstallation).where(
@@ -71,6 +59,19 @@ async def execute_installed_skill(
     ).scalar_one_or_none()
     if installation is None:
         raise ConflictError("skill package is not installed for this employee")
+
+    package = (
+        await db.execute(
+            select(SkillPackage).where(
+                SkillPackage.id == skill_package_id,
+                SkillPackage.tenant_id == installation.source_owner_tenant_id,
+                SkillPackage.status == SkillPackageStatus.PUBLISHED,
+            )
+        )
+    ).scalar_one_or_none()
+    if package is None:
+        raise NotFoundError("published skill package not found")
+
 
     if package.product_id is not None:
         await assert_owned(
