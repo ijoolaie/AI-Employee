@@ -8,7 +8,7 @@ adapters with operator-owned configuration and explicit side-effect semantics.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from enum import StrEnum
 import uuid
 from typing import Protocol
@@ -100,7 +100,6 @@ class ContractTestMarketplacePayoutProvider:
         request: MarketplacePayoutRequest,
     ) -> MarketplacePayoutResult:
         _validate_request(request)
-        amount = request.amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         payout_id = f"contract-payout-{request.idempotency_key}"
         event_id = f"contract-payout-event-{request.idempotency_key}"
         return MarketplacePayoutResult(
