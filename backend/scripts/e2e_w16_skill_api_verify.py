@@ -188,7 +188,9 @@ async def settle_skill_purchase(
         assert entitlement.provider_event_id == payment_event_id
         await db.commit()
         return str(tenant.id)
-\n\ndef main() -> int:
+
+
+def main() -> int:
     suffix = str(time.time_ns())[-12:]
     slugs: list[str] = []
     try:
