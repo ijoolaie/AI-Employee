@@ -7,6 +7,13 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class CosmeticPurchase(BaseModel):
+    employee_id: UUID
+    product_id: UUID
+    cosmetic_type: str = Field(pattern="^(gender_presentation|outfit|hair_style|accessory)$")
+    cosmetic_value: str = Field(min_length=1, max_length=32)
+
+
 class BusinessDealCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     customer_name: str = Field(min_length=1, max_length=255)
@@ -20,6 +27,7 @@ class BusinessDealCreate(BaseModel):
     notes: str | None = None
     source: str | None = None
     order_id: UUID | None = None
+    cosmetic_purchase: CosmeticPurchase | None = None
 
 
 class BusinessDealStageUpdate(BaseModel):
