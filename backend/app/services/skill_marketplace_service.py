@@ -28,13 +28,34 @@ class SkillMarketplaceError(AppError):
         super().__init__("SKILL_MARKETPLACE_INVALID", message, 422)
 
 
+EXECUTION_AUTHORITY_KEYS = frozenset({
+    "allowed_tools",
+    "permissions",
+    "approval_policy",
+    "capability_contract",
+    "tool_bindings",
+})
+
+
+def _contains_execution_authority(value: object) -> bool:
+    if isinstance(value, dict):
+        if EXECUTION_AUTHORITY_KEYS.intersection(value):
+            return True
+        return any(_contains_execution_authority(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_execution_authority(item) for item in value)
+    return False
+
+
+def _validate_skill_metadata(value: dict, field_name: str) -> None:
+    if not isinstance(value, dict):
+        raise ValidationAppError(f"{field_name} must be an object")
+    if _contains_execution_authority(value):
+        raise SkillMarketplaceError(f"{field_name} cannot declare execution authority")
+
+
 def _validate_manifest(manifest: dict) -> None:
-    if not isinstance(manifest, dict):
-        raise ValidationAppError("skill manifest must be an object")
-    # A skill manifest may describe behavior/content, but never execution authority.
-    forbidden = {"allowed_tools", "permissions", "approval_policy", "capability_contract", "tool_bindings"}
-    if forbidden.intersection(manifest):
-        raise SkillMarketplaceError("skill manifest cannot declare execution authority")
+    _validate_skill_metadata(manifest, "skill manifest")
 
 
 def _validate_product_contract(product: Product | None, package: SkillPackage) -> None:
@@ -69,7 +90,11 @@ async def create_package(
     if version < 1:
         raise ValidationAppError("skill version must be at least 1")
     manifest = dict(manifest or {})
+    compatibility = dict(compatibility or {})
+    presentation_metadata = dict(presentation_metadata or {})
     _validate_manifest(manifest)
+    _validate_skill_metadata(compatibility, "skill compatibility")
+    _validate_skill_metadata(presentation_metadata, "skill presentation metadata")
     duplicate = (await db.execute(select(SkillPackage).where(
         SkillPackage.tenant_id == tenant_id,
         SkillPackage.slug == slug,
@@ -93,8 +118,8 @@ async def create_package(
         description=description,
         version=version,
         manifest=manifest,
-        compatibility=dict(compatibility or {}),
-        presentation_metadata=dict(presentation_metadata or {}),
+        compatibility=compatibility,
+        presentation_metadata=presentation_metadata,
         status=SkillPackageStatus.DRAFT,
     )
     _validate_product_contract(product, package)
@@ -119,6 +144,8 @@ async def publish_package(
     if package.status not in {SkillPackageStatus.DRAFT, SkillPackageStatus.SUSPENDED}:
         raise ConflictError("skill package is not publishable")
     _validate_manifest(package.manifest or {})
+    _validate_skill_metadata(package.compatibility or {}, "skill compatibility")
+    _validate_skill_metadata(package.presentation_metadata or {}, "skill presentation metadata")
     product = None
     if package.product_id:
         product = (await db.execute(select(Product).where(
@@ -162,6 +189,8 @@ async def install(
     if package is None:
         raise NotFoundError("published skill package not found")
     _validate_manifest(package.manifest or {})
+    _validate_skill_metadata(package.compatibility or {}, "skill compatibility")
+    _validate_skill_metadata(package.presentation_metadata or {}, "skill presentation metadata")
     if package.product_id is not None:
         raise SkillMarketplaceError("commercial skill installation requires a verified purchase entitlement")
 
@@ -222,8 +251,7 @@ async def revoke(
         raise NotFoundError("employee not found in tenant")
 
     installation = (await db.execute(select(EmployeeSkillInstallation).where(
-        EmployeeSkillInstallation.id.is_not(None),
-        EmployeeSkillInstallation.tenant_id == tenant_id,
+EmployeeSkillInstallation.tenant_id == tenant_id,
         EmployeeSkillInstallation.employee_id == employee_id,
         EmployeeSkillInstallation.skill_package_id == skill_package_id,
         EmployeeSkillInstallation.status == EmployeeSkillInstallationStatus.ACTIVE,
