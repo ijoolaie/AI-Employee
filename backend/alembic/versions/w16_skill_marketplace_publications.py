@@ -3,7 +3,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "w16_skill_marketplace_publications"
+revision = "w16_skill_mkt_publications"
 down_revision = "w16_skill_purchase_entitlement"
 branch_labels = None
 depends_on = None
