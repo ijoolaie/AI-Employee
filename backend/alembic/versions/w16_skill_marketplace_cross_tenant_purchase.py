@@ -197,9 +197,36 @@ def upgrade() -> None:
         "ix_skill_marketplace_purchases_product_id",
         "skill_marketplace_purchases", ["product_id"],
     )
+    op.execute(
+        sa.text(
+            "INSERT INTO permissions (id, code, description) "
+            "VALUES (gen_random_uuid(), 'skill_marketplace.purchase', "
+            "'Core permission: skill_marketplace.purchase') "
+            "ON CONFLICT (code) DO NOTHING"
+        )
+    )
+    op.execute(
+        sa.text(
+            "INSERT INTO role_permissions (role_id, permission_id) "
+            "SELECT r.id, p.id FROM roles r CROSS JOIN permissions p "
+            "WHERE r.name = 'Admin' AND p.code = 'skill_marketplace.purchase' "
+            "ON CONFLICT DO NOTHING"
+        )
+    )
 
 
 def downgrade() -> None:
+    op.execute(
+        sa.text(
+            "DELETE FROM role_permissions "
+            "WHERE permission_id IN (SELECT id FROM permissions WHERE code = 'skill_marketplace.purchase')"
+        )
+    )
+    op.execute(
+        sa.text(
+            "DELETE FROM permissions WHERE code = 'skill_marketplace.purchase'"
+        )
+    )
     op.drop_index("ix_skill_marketplace_purchases_product_id", table_name="skill_marketplace_purchases")
     op.drop_index("ix_skill_marketplace_purchases_skill_package_id", table_name="skill_marketplace_purchases")
     op.drop_index("ix_skill_marketplace_purchases_employee_id", table_name="skill_marketplace_purchases")
@@ -214,16 +241,6 @@ def downgrade() -> None:
     op.drop_constraint("fk_skill_purchase_entitlement_source_publication", "skill_purchase_entitlements", type_="foreignkey")
     op.drop_constraint("fk_skill_purchase_entitlement_source_package_tenant", "skill_purchase_entitlements", type_="foreignkey")
     op.drop_constraint("fk_skill_purchase_entitlement_source_owner_tenant", "skill_purchase_entitlements", type_="foreignkey")
-    op.add_column(
-        "skill_purchase_entitlements",
-        sa.Column("legacy_package_owner", postgresql.UUID(as_uuid=True), nullable=True),
-    )
-    op.execute(
-        sa.text(
-            "UPDATE skill_purchase_entitlements SET legacy_package_owner = tenant_id"
-        )
-    )
-    op.drop_constraint("fk_skill_purchase_entitlement_package_tenant", "skill_purchase_entitlements", type_="foreignkey") if False else None
     op.drop_column("skill_purchase_entitlements", "source_publication_id")
     op.drop_column("skill_purchase_entitlements", "source_owner_tenant_id")
 
