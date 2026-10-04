@@ -8,6 +8,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
+from app.models.skill_marketplace_payout_destination import (
+    SkillMarketplacePayoutDestination,
+    SkillMarketplacePayoutDestinationStatus,
+)
 from app.models.skill_marketplace_payout_proposal import (
     SkillMarketplacePayoutExecutionStatus,
     SkillMarketplacePayoutProposal,
@@ -84,11 +88,32 @@ async def create_payout_proposal(
     if settlement.seller_net_amount <= 0:
         raise ValidationAppError("marketplace settlement seller net must be positive before payout proposal")
 
+    destination = (
+        await db.execute(
+            select(SkillMarketplacePayoutDestination)
+            .where(
+                SkillMarketplacePayoutDestination.seller_tenant_id == settlement.seller_tenant_id,
+                SkillMarketplacePayoutDestination.status == SkillMarketplacePayoutDestinationStatus.ACTIVE,
+            )
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
+    if destination is None:
+        raise ValidationAppError(
+            "seller payout destination must be actively bound before payout proposal"
+        )
+
+    if destination.seller_tenant_id != settlement.seller_tenant_id:
+        raise ValidationAppError("payout destination seller tenant does not match settlement seller tenant")
+
     proposal = SkillMarketplacePayoutProposal(
         settlement_id=settlement.id,
         seller_tenant_id=settlement.seller_tenant_id,
         platform_admin_tenant_id=platform_admin_tenant_id,
         created_by_user_id=created_by_user_id,
+        destination_id=destination.id,
+        destination_provider=destination.provider,
+        destination_ref=destination.destination_ref,
         amount=Decimal(str(settlement.seller_net_amount)),
         currency=settlement.currency,
         provider="none",
@@ -98,7 +123,7 @@ async def create_payout_proposal(
             "seller_payout": "not_executed",
             "provider_execution": "not_configured",
             "tax_treatment": "not_calculated",
-            "destination": "not_configured",
+            "destination": "bound_snapshot",
             "execution_authority_changed": False,
         },
     )
@@ -115,6 +140,9 @@ async def create_payout_proposal(
         metadata={
             "settlement_id": str(settlement.id),
             "seller_tenant_id": str(settlement.seller_tenant_id),
+            "destination_id": str(destination.id),
+            "destination_provider": destination.provider,
+            "destination_bound": True,
             "amount": str(proposal.amount),
             "currency": proposal.currency,
             "provider": "none",
