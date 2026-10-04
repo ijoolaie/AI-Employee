@@ -13,6 +13,7 @@ def upgrade() -> None:
     status_enum = postgresql.ENUM(
         "active", "revoked",
         name="skillpurchaseentitlementstatus",
+        create_type=False,
     )
     status_enum.create(op.get_bind(), checkfirst=True)
 
@@ -60,6 +61,10 @@ def upgrade() -> None:
             "tenant_id", "employee_id", "skill_package_id",
             name="uq_skill_purchase_entitlement",
         ),
+        sa.UniqueConstraint(
+            "provider", "provider_event_id",
+            name="uq_skill_purchase_entitlement_provider_event",
+        ),
     )
     op.create_index(
         "ix_skill_purchase_entitlements_tenant_employee",
@@ -94,6 +99,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.drop_constraint(
+        "uq_skill_purchase_entitlement_provider_event",
+        "skill_purchase_entitlements",
+        type_="unique",
+    )
     op.drop_index("ix_skill_purchase_entitlements_source_order_id", table_name="skill_purchase_entitlements")
     op.drop_index("ix_skill_purchase_entitlements_skill_package_id", table_name="skill_purchase_entitlements")
     op.drop_index("ix_skill_purchase_entitlements_employee_id", table_name="skill_purchase_entitlements")
