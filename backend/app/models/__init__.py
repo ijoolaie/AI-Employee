@@ -66,6 +66,7 @@ from app.models.skill_marketplace_publication import SkillMarketplacePublication
 from app.models.skill_marketplace_purchase import SkillMarketplacePurchase, SkillMarketplacePurchaseStatus
 from app.models.skill_marketplace_settlement import SkillMarketplacePayoutStatus, SkillMarketplaceSettlement, SkillMarketplaceSettlementStatus
 from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutExecutionStatus, SkillMarketplacePayoutProposal, SkillMarketplacePayoutProposalStatus
+from app.models.skill_marketplace_payout_destination import SkillMarketplacePayoutDestination, SkillMarketplacePayoutDestinationStatus
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -82,5 +83,5 @@ __all__ = [
     "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",
     "TestDefinition", "TestRun", "TestRunStatus", "TestRunArtifact", "TeamDefinition", "TeamVersion",
     "TeamInstallation", "TeamEvaluation", "MarketplacePublication", "WorkloadBalanceEvent", "WorkforceDelegation", "WorkforceSLAContract",
-    "WorkforceRevenueEvent", "CosmeticEntitlement", "SkillMarketplacePublication", "SkillMarketplacePurchase", "SkillMarketplacePurchaseStatus", "SkillPackage", "SkillPackageStatus", "EmployeeSkillInstallation", "EmployeeSkillInstallationStatus",
+    "WorkforceRevenueEvent", "CosmeticEntitlement", "SkillMarketplacePublication", "SkillMarketplacePayoutDestination", "SkillMarketplacePayoutDestinationStatus", "SkillMarketplacePurchase", "SkillMarketplacePurchaseStatus", "SkillPackage", "SkillPackageStatus", "EmployeeSkillInstallation", "EmployeeSkillInstallationStatus",
 ]
