@@ -182,10 +182,6 @@ def upgrade() -> None:
         "skill_marketplace_purchases", ["seller_tenant_id"],
     )
     op.create_index(
-        "ix_skill_marketplace_purchases_publication_id",
-        "skill_marketplace_purchases", ["publication_id"],
-    )
-    op.create_index(
         "ix_skill_marketplace_purchases_employee_id",
         "skill_marketplace_purchases", ["employee_id"],
     )
@@ -230,7 +226,6 @@ def downgrade() -> None:
     op.drop_index("ix_skill_marketplace_purchases_product_id", table_name="skill_marketplace_purchases")
     op.drop_index("ix_skill_marketplace_purchases_skill_package_id", table_name="skill_marketplace_purchases")
     op.drop_index("ix_skill_marketplace_purchases_employee_id", table_name="skill_marketplace_purchases")
-    op.drop_index("ix_skill_marketplace_purchases_publication_id", table_name="skill_marketplace_purchases")
     op.drop_index("ix_skill_marketplace_purchases_seller_tenant_id", table_name="skill_marketplace_purchases")
     op.drop_index("ix_skill_marketplace_purchases_buyer_tenant_id", table_name="skill_marketplace_purchases")
     op.drop_table("skill_marketplace_purchases")
