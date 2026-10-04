@@ -630,3 +630,30 @@ def test_workforce_coordinate_content_is_read_only_and_non_approval_gated():
     assert tool.side_effects is False
     assert tool.requires_approval is False
     assert tool.required_permission == "run.execute"
+
+
+def test_workforce_execute_installed_skill_is_external_and_approval_gated():
+    tool = registry.get("workforce_execute_installed_skill")
+    assert tool.side_effects is True
+    assert tool.external_side_effects is True
+    assert tool.required_permission == "run.execute"
+    assert tool.requires_approval is True
+    assert tool.entitlement_code is None
+
+
+@pytest.mark.asyncio
+async def test_workforce_execute_installed_skill_requires_approval():
+    with pytest.raises(ValidationAppError, match="Human approval required"):
+        await registry.execute(
+            "workforce_execute_installed_skill",
+            {
+                "skill_package_id": "00000000-0000-0000-0000-000000000001",
+                "input": {},
+            },
+            permissions={"run.execute"},
+            allowed_tools={"workforce_execute_installed_skill"},
+            employee_id="00000000-0000-0000-0000-000000000002",
+            db="db",
+            tenant_id="tenant",
+            approval_granted=False,
+        )
