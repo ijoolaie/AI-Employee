@@ -11,8 +11,8 @@ from app.schemas.capacity_forecast import CapacityForecastResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
 from app.schemas.workload_balance import WorkloadBalanceEventResponse
-from app.schemas.admin_marketplace import MarketplacePayoutProposalResponse
-from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting, skill_marketplace_payout_service
+from app.schemas.admin_marketplace import MarketplaceFinancialSummaryResponse, MarketplacePayoutProposalResponse
+from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting, skill_marketplace_payout_service, skill_marketplace_reporting_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -90,6 +90,23 @@ async def list_marketplace_payout_proposals(
         data=[MarketplacePayoutProposalResponse.model_validate(item) for item in proposals],
     )
 
+
+
+@router.get("/marketplace/financial-summary", response_model=APIResponse[MarketplaceFinancialSummaryResponse])
+async def get_marketplace_financial_summary(
+    ctx: PlatformAdminContext,
+    db: DbSession,
+    seller_tenant_id: UUID | None = Query(default=None),
+):
+    data = await skill_marketplace_reporting_service.marketplace_financial_summary(
+        db,
+        platform_admin_tenant_id=ctx.tenant.id,
+        seller_tenant_id=seller_tenant_id,
+    )
+    return APIResponse(
+        success=True,
+        data=MarketplaceFinancialSummaryResponse.model_validate(data),
+    )
 
 @router.get("/billing")
 async def get_billing_summary(ctx: PlatformAdminContext, db: DbSession):
