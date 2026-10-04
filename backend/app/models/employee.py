@@ -33,7 +33,8 @@ class Employee(Base):
     scoped to that tenant only."""
 
     __tablename__ = "employees"
-    __table_args__ = (UniqueConstraint("tenant_id", "slug", name="uq_employee_tenant_slug"),)
+    __table_args__ = (UniqueConstraint("tenant_id", "slug", name="uq_employee_tenant_slug"),
+        UniqueConstraint("tenant_id", "id", name="uq_employees_tenant_id_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4

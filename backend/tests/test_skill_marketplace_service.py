@@ -71,3 +71,39 @@ async def test_create_package_rejects_non_object_skill_metadata_before_db():
             pass
         else:
             raise AssertionError(field)
+
+
+def test_w16_models_enforce_tenant_consistent_foreign_keys():
+    installation_fks = {
+        tuple(column.name for column in fk.columns)
+        for fk in EmployeeSkillInstallation.__table__.foreign_key_constraints
+    }
+    assert ("tenant_id", "employee_id") in installation_fks
+    assert ("tenant_id", "skill_package_id") in installation_fks
+
+    package_fks = {
+        tuple(column.name for column in fk.columns)
+        for fk in SkillPackage.__table__.foreign_key_constraints
+    }
+    assert ("tenant_id", "product_id") in package_fks
+
+
+def test_w16_referenced_entities_expose_composite_tenant_keys():
+    from app.models.employee import Employee
+    from app.models.product import Product
+
+    assert {"tenant_id", "id"} in {
+        frozenset(constraint.columns.keys())
+        for constraint in Employee.__table__.constraints
+        if constraint.__class__.__name__ == "UniqueConstraint"
+    }
+    assert {"tenant_id", "id"} in {
+        frozenset(constraint.columns.keys())
+        for constraint in Product.__table__.constraints
+        if constraint.__class__.__name__ == "UniqueConstraint"
+    }
+    assert {"tenant_id", "id"} in {
+        frozenset(constraint.columns.keys())
+        for constraint in SkillPackage.__table__.constraints
+        if constraint.__class__.__name__ == "UniqueConstraint"
+    }

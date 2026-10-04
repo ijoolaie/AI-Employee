@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Numeric, String, Text, func, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, Numeric, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,6 +12,7 @@ from app.core.database import Base
 class Product(Base):
     __tablename__ = "products"
     __table_args__ = (
+        UniqueConstraint("tenant_id", "id", name="uq_products_tenant_id_id"),
         Index("ix_products_tenant_active", "tenant_id", "is_active"),
         Index(
             "uq_products_tenant_normalized_sku",
