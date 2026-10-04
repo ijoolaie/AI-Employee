@@ -227,8 +227,7 @@ async def install(
                 await db.flush()
         except IntegrityError as exc:
             raise ConflictError("skill package is already installed") from exc
-    if installation.id is None:
-        await db.refresh(installation)
+    await db.flush()
     await audit_service.record(
         db,
         tenant_id=tenant_id,
