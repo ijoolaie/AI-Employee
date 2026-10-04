@@ -1,9 +1,14 @@
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
 
 from app.core.exceptions import ValidationAppError
-from app.services.skill_marketplace_payout_destination import _validate_destination
+from app.services.skill_marketplace_payout_destination import (
+    _assert_seller_actor,
+    _validate_destination,
+)
 
 
 def test_destination_validation_normalizes_provider_and_reference():
@@ -58,3 +63,28 @@ def test_destination_service_has_no_external_transport_import():
     assert "urllib" not in content
     assert "requests" not in content
     assert "stripe" not in content
+
+
+@pytest.mark.asyncio
+async def test_destination_mutation_rejects_actor_outside_seller_tenant():
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: None)
+
+    with pytest.raises(ValidationAppError, match="active user of the seller tenant"):
+        await _assert_seller_actor(
+            db,
+            seller_tenant_id=uuid4(),
+            actor_user_id=uuid4(),
+        )
+
+
+@pytest.mark.asyncio
+async def test_destination_mutation_accepts_active_seller_tenant_actor():
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: object())
+
+    await _assert_seller_actor(
+        db,
+        seller_tenant_id=uuid4(),
+        actor_user_id=uuid4(),
+    )
