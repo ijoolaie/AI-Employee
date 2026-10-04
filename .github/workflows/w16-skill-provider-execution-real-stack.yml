@@ -58,7 +58,18 @@ jobs:
           exit 1
 
       - name: Build and start API stack
-        run: docker compose up -d --build api worker beat
+        run: |
+          set -euo pipefail
+          cat > /tmp/w16-skill-provider.override.yml <<'YAML'
+          services:
+            api:
+              environment:
+                SKILL_PROVIDER_NAME: http
+                SKILL_PROVIDER_BASE_URL: http://127.0.0.1:18181/execute
+                SKILL_PROVIDER_API_KEY: ci-w16-skill-provider-key
+                SKILL_PROVIDER_TIMEOUT_SECONDS: "10"
+          YAML
+          docker compose -f docker-compose.yml -f /tmp/w16-skill-provider.override.yml up -d --build api worker beat
 
       - name: Wait for API readiness
         run: |
