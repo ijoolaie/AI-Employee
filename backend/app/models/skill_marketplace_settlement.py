@@ -32,6 +32,8 @@ class SkillMarketplaceSettlementStatus(str, enum.Enum):
 
 class SkillMarketplacePayoutStatus(str, enum.Enum):
     NOT_EXECUTED = "not_executed"
+    EXECUTED = "executed"
+    UNKNOWN = "unknown"
 
 
 class SkillMarketplaceSettlement(Base):
