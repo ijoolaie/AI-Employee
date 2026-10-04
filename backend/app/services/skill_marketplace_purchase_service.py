@@ -164,6 +164,10 @@ async def prepare_purchase(
     )
     db.add(purchase)
     await db.flush()
+    deal_metadata = dict(deal.metadata_ or {})
+    deal_metadata["skill_marketplace_purchase"]["purchase_id"] = str(purchase.id)
+    deal.metadata_ = deal_metadata
+    await db.flush()
     await audit_service.record(
         db,
         tenant_id=buyer_tenant_id,
