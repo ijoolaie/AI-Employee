@@ -285,7 +285,7 @@ The purchase entitlement ledger is presentation-only ownership state. It does no
 
 Post-merge W10 Internal Company Dogfood E2E run `37196994830` completed successfully on merge SHA `bbafa2c7b754cd69d421c6011bf42f5523fdeaa2`. This is post-release engineering evidence; it does not create a new production certification for the merge SHA.
 
-**Current boundary:** W16 commercial purchase entitlement is **VERIFIED on the real PostgreSQL stack** for the merged implementation. Third-party publishing, external skill-provider execution, and real marketplace/customer revenue remain **NOT VERIFIED**. The immutable `v1.4.16` certification remains unchanged.
+**Current boundary:** W16 commercial purchase entitlement, third-party SkillPackage publication/discovery, and governed SkillPackage provider execution are **VERIFIED on the real PostgreSQL stack** for their exact validated mainline boundaries. External production skill-provider execution and real marketplace/customer revenue remain **NOT VERIFIED**. The immutable `v1.4.16` certification remains unchanged.
 
 ## W16 third-party Skill Marketplace publication — 2026-10-04
 
@@ -317,3 +317,39 @@ The dedicated real-stack publishing scenario verified:
 The publication record is presentation/discovery metadata only. It does not create or modify permissions, allowed tools, capability contracts, approval policy, tool bindings, installation entitlement or execution authority.
 
 **Current boundary:** third-party SkillPackage publication/discovery is **VERIFIED on the real PostgreSQL stack** for the exact PR head above. External skill-provider execution and real marketplace/customer revenue remain **NOT VERIFIED**. The `v1.4.16` Production Certification remains the immutable certified release; the merge SHA above is not production-certified.
+
+## W16 governed SkillPackage provider execution — 2026-10-04
+
+PR #855, `feat(w16): add governed SkillPackage provider execution`, was validated at exact head `20727001c2f967d850bda036c53acf7ccd326f81` and merged with merge commit `659c1e757c3cdc6dcc1d7c390a5bdd74bd3feff8`.
+
+Exact-head validation completed successfully across the observed application/security gate set:
+- W16 Skill Provider Execution Real-Stack — run `37199713576`;
+- CI — run `37199713528`;
+- CodeQL — run `37199713526`;
+- Provider Integration Contract — run `37199713527`;
+- Runtime Isolation/RBAC — run `37199713590`;
+- Production Infrastructure Validation — run `37199713566`;
+- HA Failure Recovery — run `37199713653`;
+- Ephemeral DAST — run `37199713615`;
+- Architecture Guard — run `37199713621`;
+- Production Secret Management — run `37199713523`;
+- Production Observability — run `37199713593`;
+- Production Rollback & Alerting — run `37199713539`;
+- Production Hardening — run `37199713605`;
+- Phase 14.14 Security/Privacy — run `37199713604`;
+- Workforce W0-W6 Contract Gate — run `37199713600`;
+- Workforce W1/W2/W3/W4/W5/W6/W7/W8/W9/W10 real-stack gates — exact-head runs `37199713521`, `37199713613`, `37199713617`, `37199713531`, `37199713607`, `37199713575`, `37199713536`, `37199713519`, `37199713598`, `37199713599` respectively.
+
+The dedicated W16 provider execution real-stack gate verified:
+- a tenant-installed free SkillPackage reaches the operator-configured deterministic HTTP provider only after mandatory approval;
+- the provider receives tenant, employee, package and stable request correlation identity;
+- provider response execution is audited with `external_execution=true` and `executed=true`;
+- cross-tenant execution is rejected;
+- commercial SkillPackage execution fails closed without the separately verified purchase entitlement;
+- provider configuration is not selectable through runtime skill input;
+- provider redirects and oversized responses are rejected by the adapter;
+- certification-boundary assertion succeeds and the fixture is torn down.
+
+A first execution attempt exposed two real defects in CI: workflow provider settings were not injected into the API container, and the ToolRegistry workforce dispatch dropped `tool_call_id`. Both were corrected before the final exact-head validation passed.
+
+**Evidence boundary:** governed SkillPackage provider execution is **VERIFIED on the deterministic CI HTTP provider fixture** for the exact PR head above. This is not evidence of an external production provider or customer environment. External production provider execution, customer acceptance, and real marketplace revenue remain **NOT VERIFIED**. The `v1.4.16` Production Certification remains the immutable certified release; `659c1e757c3cdc6dcc1d7c390a5bdd74bd3feff8` is not production-certified.
