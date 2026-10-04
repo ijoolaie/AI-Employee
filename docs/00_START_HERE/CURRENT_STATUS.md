@@ -1,14 +1,32 @@
 # Current Status
 
-**Last reconciled:** 2026-10-03
-**Latest certified release:** `v1.4.13`
-**Certified release SHA:** `5d57d9929cc5e924c5b9147dc0b0a41d25f39d83`
-**Stable Git tag:** `v1.4.13` — PENDING MANUAL PROMOTION
-**GitHub Release:** `v1.4.13` — NOT CREATED
-**Exact-SHA Production Certification:** Run `37141161822` — PASS
-**Certification job:** `111255715821` — PASS
-**Current engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA
-**Current status:** v1.4.13 CANDIDATE CERTIFIED / RELEASE PROMOTION PENDING / EXTERNAL GATES OPEN
+**Last reconciled:** 2026-10-04
+**Latest certified release:** `v1.4.15`
+**Certified release SHA:** `226dddcfbab7abde166c8cd6967d63a03f2d4e71`
+**Stable Git tag:** `v1.4.15` — VERIFIED
+**GitHub Release:** `v1.4.15` — PUBLISHED
+**Exact-SHA Production Certification:** Run `37185102432` — PASS
+**Certification job:** `111385347811` — PASS
+**Current engineering head:** `w16-skills-marketplace` — post-`v1.4.15` branch
+**Current status:** v1.4.15 CERTIFIED / W16 FOUNDATION IN IMPLEMENTATION / EXACT-SHA W16 CERTIFICATION NOT RUN
+
+## Release boundary
+
+Certification applies only to the exact certified SHA `226dddcfbab7abde166c8cd6967d63a03f2d4e71`. W16 branch commits are post-release engineering work and do not inherit v1.4.15 certification.
+
+## Executive truth
+
+`v1.4.15` is the latest published, exact-SHA Production-Certified release. Its certification evidence reports Product Gate failures = 0, Playwright = 8 passed, and production deployment claimed = false.
+
+W15 Employee Cosmetic Entitlements is implemented and release-certified in v1.4.15. Real external customer cosmetic payment/revenue remains NOT VERIFIED.
+
+W16 Skills Marketplace has now started from the certified v1.4.15 SHA on branch `w16-skills-marketplace`. The first foundation slice adds versioned tenant-scoped skill packages and a tenant-scoped employee installation ledger. Skill manifests explicitly reject execution-authority fields, and installation audit metadata records that permissions, allowed tools, and execution authority are unchanged.
+
+**W16 exact-SHA CI, security gates, real-stack evidence, and Production Certification are NOT RUN / NOT VERIFIED.**
+
+## Current-main post-certification engineering revalidation
+
+Current-main and post-release engineering evidence must never be treated as v1.4.15 certification.
 
 ## Previous certified release boundary
 
@@ -259,3 +277,27 @@ W14 foundation is now implemented on post-v1.4.13 mainline. Employee presentatio
 Implemented: bounded gender presentation, outfit, hair style and accessory fields; tenant-scoped update endpoint; audit event; customer employee appearance controls.
 
 Exact-SHA CI/certification for W14: **NOT RUN / NOT VERIFIED**.
+
+
+## W16 Skills Marketplace — 2026-10-04
+
+**Status: FOUNDATION IMPLEMENTED — EXACT-SHA CERTIFICATION NOT RUN / NOT VERIFIED.**
+
+Implemented on post-v1.4.15 branch `w16-skills-marketplace`:
+- versioned `SkillPackage` catalog records;
+- tenant-scoped `EmployeeSkillInstallation` ownership/install ledger;
+- bounded skill manifest rule rejecting `allowed_tools`, permissions, approval policy, capability contracts, and tool bindings;
+- tenant-scoped install/revoke/list service operations;
+- employee skill install/revoke/list API endpoints;
+- audit provenance explicitly recording that installation does not change permissions, allowed tools, or execution authority;
+- migration `w16_skill_marketplace`.
+
+Not implemented by this slice:
+- automatic permission/tool/capability expansion;
+- silent changes to EmployeeVersion allowed tools;
+- provider execution of a skill;
+- verified payment-to-skill entitlement settlement;
+- third-party skill publishing;
+- exact-SHA CI/security/real-stack certification.
+
+The next W16 slice should add governed package evaluation/compatibility checks and, separately, commercial purchase/verified-payment linkage if required. No skill installation may become an authorization shortcut.
