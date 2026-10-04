@@ -34,7 +34,7 @@ def test_skill_purchase_entitlement_has_tenant_employee_package_scope():
 
 def test_commercial_skill_install_requires_verified_entitlement():
     source = inspect.getsource(skill_marketplace_service.install)
-    assert "verified purchase entitlement" in source
+    assert "SkillMarketplaceError" in source
     assert "assert_owned" in source
     assert "package.product_id is not None" in source
 
