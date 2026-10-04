@@ -36,7 +36,7 @@ def upgrade():
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["product_id"], ["products.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["product_id"], ["products.id"], ondelete="RESTRICT"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("tenant_id", "slug", "version", name="uq_skill_packages_tenant_slug_version"),
     )
