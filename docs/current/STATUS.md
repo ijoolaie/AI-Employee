@@ -392,4 +392,44 @@ The database boundary keeps buyer Employee ownership separate from seller SkillP
 
 A first validation exposed ORM/migration index-name drift; the migration and ORM declarations were reconciled before the final exact-head gate passed. The full backend CI then passed 1240 tests with the corrected W16 tenant/FK contract.
 
-**Evidence boundary:** cross-tenant marketplace purchase, verified settlement, entitlement creation, installation, revenue-event correlation and replay idempotency are **VERIFIED on the deterministic contract-test payment provider / real PostgreSQL CI stack**. This is engineering evidence, not proof of a real external customer purchase or realized customer revenue. Seller payout, platform commission accounting, tax handling and external production customer revenue remain **NOT VERIFIED**. No new Production Certification is claimed for `8487f0b1133e20c4ce142d43fffd3ee69bf010c1`.
+**Evidence boundary:** cross-tenant marketplace purchase, verified settlement, entitlement creation, installation, revenue-event correlation, replay idempotency, and deterministic gross/platform-fee/seller-net allocation are **VERIFIED on the deterministic contract-test payment provider / real PostgreSQL CI stack**. This is engineering evidence, not proof of a real external customer purchase or realized customer revenue. External seller payout execution, tax calculation/settlement, and external production customer revenue remain **NOT VERIFIED**. No new Production Certification is claimed for `8487f0b1133e20c4ce142d43fffd3ee69bf010c1`.
+
+## W16 marketplace financial allocation checkpoint — 2026-10-04
+
+PR #860, `feat(w16): add marketplace settlement allocation ledger`, was validated at exact head `26e34cca56522d13880bc1599523e01767640425` and merged with merge commit `e4084462e414cd408b7035997bbd2b469b77c14a`.
+
+Exact-head evidence:
+- W16 Cross-Tenant Skill Purchase Real-Stack — PASS — Run `37202824376`;
+- W16 Skill API Real-Stack Contract — PASS — Run `37202824326`;
+- W16 Skill Provider Execution Real-Stack — PASS — Run `37202824380`;
+- W16 Third-Party Skill Publishing Real-Stack — PASS — Run `37202824356`;
+- CI — PASS — Run `37202824398`;
+- CodeQL — PASS — Run `37202824329`;
+- Ephemeral DAST — PASS — Run `37202824343`;
+- Runtime Isolation/RBAC — PASS — Run `37202824391`;
+- Architecture Guard — PASS — Run `37202824355`;
+- Production Infrastructure Validation — PASS — Run `37202824370`;
+- HA Failure Recovery — PASS — Run `37202824314`;
+- Production Secret Management — PASS — Run `37202824344`;
+- Production Observability — PASS — Run `37202824350`;
+- Production Rollback & Alerting — PASS — Run `37202824366`;
+- Production Hardening — PASS — Run `37202824330`;
+- Phase 14.14 Security/Privacy — PASS — Run `37202824372`;
+- Provider Integration Contract — PASS — Run `37202824365`;
+- Workforce W1/W2/W3/W4/W5/W6/W8/W9 and related exact-head gates observed successful on the same head.
+
+The settlement ledger records an explicit, operator-configured marketplace financial allocation after verified payment:
+- gross payment amount;
+- platform commission in basis points;
+- platform commission amount;
+- seller net amount;
+- buyer tenant and seller tenant;
+- verified provider event correlation;
+- payout status fixed to `not_executed`;
+- tax treatment fixed to `not_calculated`.
+
+PostgreSQL constraints enforce valid fee bounds, non-negative amounts, and `platform_fee_amount + seller_net_amount = gross_amount`. The E2E gate verified the 15% CI policy fixture, seller net calculation, persistence, and one-row replay idempotency.
+
+The settlement ledger is accounting state only. It does not execute money transfer to the seller, calculate tax, or create execution authority.
+
+**Evidence boundary:** marketplace financial allocation accounting is **VERIFIED on the deterministic payment provider / real PostgreSQL CI stack** for the exact PR head above. External seller payout execution, tax calculation/settlement, external production customer payment and realized marketplace revenue remain **NOT VERIFIED**. The immutable `v1.4.16` production certification remains unchanged; merge SHA `e4084462e414cd408b7035997bbd2b469b77c14a` is not production-certified.
