@@ -1,12 +1,13 @@
 # Current Priorities
 
-**Reconciled:** 2026-10-03
-**Current release:** `v1.4.11`
-**Certified SHA:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`
+**Reconciled:** 2026-10-04
+**Latest published release:** `v1.4.15`
+**Latest certified candidate:** `v1.4.16`
+**Certified candidate SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
 **Current main head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA
 **Latest code-bearing engineering head:** PR #832 merge `b352ce41ab65031b5463542e254ddd3a2a1f459b`; current main also includes docs-only PR #833 merge `3d29aeffb44bcba7d833ca906884b6dc5fca814a`
-**Production Certification:** Run `35848311037` / Job `107139710452` — PASS
-**Current status:** v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN
+**Production Certification:** v1.4.16 candidate Run `37188879277` / Job `111396657270` — PASS
+**Current status:** v1.4.15 PUBLISHED / v1.4.16 CERTIFIED CANDIDATE / TAG AND RELEASE NOT CREATED / EXTERNAL GATES OPEN
 
 ## Priority order
 
@@ -24,6 +25,16 @@ The customer-facing product-completeness gate that preceded v1.4.11 certificatio
 8. **REGRESSION WATCH:** continue monitoring residual/non-core customer surfaces for localization, lifecycle, CRUD parity, permission, and UX-state regressions.
 
 Canonical historical audit: `docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md`. Its original findings are retained as historical evidence; this file is the current priority source.
+
+### P0 — v1.4.16 promotion
+
+`v1.4.16` is exact-SHA Production-Certified at `434a0c4a4501af08a393faaf58092add764df2a2`, but its Git tag and GitHub Release are not yet created. Promotion must use exactly this SHA. No later SHA inherits the certification.
+
+1. **DONE:** exact-SHA Production Certification — Run `37188879277`, Job `111396657270`.
+2. **DONE:** Product Gate failures = 0.
+3. **DONE:** immutable evidence artifact emitted and uploaded.
+4. **NEXT:** create the immutable `v1.4.16` Git tag and GitHub Release at exactly `434a0c4a4501af08a393faaf58092add764df2a2`.
+5. **NEXT:** verify tag target and release identity after publication.
 
 ### P1 — External production evidence
 
