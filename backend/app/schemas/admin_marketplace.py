@@ -8,6 +8,25 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict
 
 
+class MarketplacePayoutApprovalCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    decision: str = "approve"
+    reason: str | None = None
+
+
+class MarketplacePayoutApprovalResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    proposal_id: UUID
+    platform_admin_tenant_id: UUID
+    decided_by_user_id: UUID
+    status: str
+    reason: str | None
+    decided_at: datetime
+
+
 class MarketplacePayoutProposalResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -21,6 +40,8 @@ class MarketplacePayoutProposalResponse(BaseModel):
     status: str
     execution_status: str
     metadata: dict
+    provider_payout_id: str | None = None
+    executed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
