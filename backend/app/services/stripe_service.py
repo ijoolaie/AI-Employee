@@ -514,6 +514,18 @@ async def apply_verified_sales_payment(
             },
         )
         db.add(revenue_event)
+    if marketplace_purchase_id is not None:
+        from app.services.skill_marketplace_settlement_service import record_verified_payment_allocation
+        allocation = await record_verified_payment_allocation(
+            db,
+            purchase_id=marketplace_purchase_id,
+            revenue_event_id=revenue_event.id,
+            buyer_tenant_id=tenant_id,
+            provider=provider,
+            provider_event_id=provider_event_id,
+            verified_at=revenue_event.verified_at,
+        )
+        deal_metadata["skill_marketplace_settlement_id"] = str(allocation.id)
     deal_metadata["payment_provider"] = provider
     deal_metadata["payment_provider_event_id"] = provider_event_id
     deal_metadata["payment_amount"] = float(amount)
