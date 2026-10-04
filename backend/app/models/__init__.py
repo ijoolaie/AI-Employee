@@ -66,6 +66,7 @@ from app.models.skill_marketplace_publication import SkillMarketplacePublication
 from app.models.skill_marketplace_purchase import SkillMarketplacePurchase, SkillMarketplacePurchaseStatus
 from app.models.skill_marketplace_settlement import SkillMarketplacePayoutStatus, SkillMarketplaceSettlement, SkillMarketplaceSettlementStatus
 from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutExecutionStatus, SkillMarketplacePayoutProposal, SkillMarketplacePayoutProposalStatus
+from app.models.skill_marketplace_payout_approval import SkillMarketplacePayoutApproval, SkillMarketplacePayoutApprovalStatus
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
