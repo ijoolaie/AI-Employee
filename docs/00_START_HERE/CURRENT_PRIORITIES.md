@@ -1,13 +1,22 @@
 # Current Priorities
 
 **Reconciled:** 2026-10-04
-**Latest published release:** `v1.4.15`
-**Latest certified candidate:** `v1.4.16`
-**Certified candidate SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
-**Current main head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA
-**Latest code-bearing engineering head:** PR #832 merge `b352ce41ab65031b5463542e254ddd3a2a1f459b`; current main also includes docs-only PR #833 merge `3d29aeffb44bcba7d833ca906884b6dc5fca814a`
-**Production Certification:** v1.4.16 candidate Run `37188879277` / Job `111396657270` — PASS
-**Current status:** v1.4.15 PUBLISHED / v1.4.16 CERTIFIED CANDIDATE / TAG AND RELEASE NOT CREATED / EXTERNAL GATES OPEN
+**Current release:** `v1.4.16`
+**Certified SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
+**Current main head:** `434a0c4a4501af08a393faaf58092add764df2a2`
+**Production Certification:** Run `37188879277` / Job `111396657270` — PASS
+**W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
+**Current status:** v1.4.16 RELEASE-CERTIFIED / W10 DOGFOOD VERIFIED / EXTERNAL GATES OPEN
+
+## Immediate post-release priorities
+
+1. **DONE:** W16 exact-SHA Production Certification and immutable v1.4.16 release.
+2. **DONE:** W10 Internal Company Dogfood on the certified SHA.
+3. **OPEN:** Reconcile this documentation set with the actual v1.4.16 release state; do not merge stale release-candidate claims.
+4. **OPEN:** Rebase/recreate PR #836 on current `main` and require fresh validation before merge.
+5. **OPEN:** Establish GitHub `main` branch protection and required checks so release governance is enforced by repository policy, not documentation alone.
+6. **NEXT:** Select the next concrete Workforce/product slice only after the above release-governance cleanup is complete.
+
 
 ## Priority order
 
