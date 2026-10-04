@@ -115,6 +115,7 @@ async def prepare_commercial(
             EmployeeSkillInstallation(
                 tenant_id=tenant_id,
                 employee_id=employee_id,
+                source_owner_tenant_id=tenant_id,
                 skill_package_id=package.id,
                 status=EmployeeSkillInstallationStatus.ACTIVE,
             )
