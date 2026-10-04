@@ -13,8 +13,16 @@ depends_on = None
 
 
 def upgrade():
-    skill_status = postgresql.ENUM("draft", "published", "suspended", "retired", name="skillpackagestatus")
-    install_status = postgresql.ENUM("active", "revoked", name="employeeskillinstallationstatus")
+    skill_status = postgresql.ENUM(
+        "draft", "published", "suspended", "retired",
+        name="skillpackagestatus",
+        create_type=False,
+    )
+    install_status = postgresql.ENUM(
+        "active", "revoked",
+        name="employeeskillinstallationstatus",
+        create_type=False,
+    )
     skill_status.create(op.get_bind(), checkfirst=True)
     install_status.create(op.get_bind(), checkfirst=True)
 
