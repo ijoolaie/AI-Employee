@@ -59,6 +59,7 @@ from app.models.workload_balance_event import WorkloadBalanceEvent
 from app.models.workforce_delegation import WorkforceDelegation
 from app.models.workforce_sla_contract import WorkforceSLAContract
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
+from app.models.cosmetic_entitlement import CosmeticEntitlement
 
 __all__ = [
     "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
@@ -75,5 +76,5 @@ __all__ = [
     "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",
     "TestDefinition", "TestRun", "TestRunStatus", "TestRunArtifact", "TeamDefinition", "TeamVersion",
     "TeamInstallation", "TeamEvaluation", "MarketplacePublication", "WorkloadBalanceEvent", "WorkforceDelegation", "WorkforceSLAContract",
-    "WorkforceRevenueEvent",
+    "WorkforceRevenueEvent", "CosmeticEntitlement",
 ]

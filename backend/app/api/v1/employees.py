@@ -21,6 +21,7 @@ from app.schemas.employee import (
     ToolResponse,
 )
 from app.services import employee_service
+from app.services import cosmetic_entitlement_service
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
@@ -90,6 +91,26 @@ async def update_presentation(
         employee_id=employee_id,
         tenant_id=ctx.tenant_id,
         presentation_profile=payload.model_dump(),
+        actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=EmployeeResponse.model_validate(employee))
+
+
+@router.post(
+    "/{employee_id}/cosmetics/{product_id}/apply",
+    response_model=APIResponse[EmployeeResponse],
+)
+async def apply_cosmetic(
+    employee_id: UUID,
+    product_id: UUID,
+    ctx: EmployeeWriteContext,
+    db: DbSession,
+):
+    employee = await cosmetic_entitlement_service.apply_entitlement(
+        db,
+        tenant_id=ctx.tenant_id,
+        employee_id=employee_id,
+        product_id=product_id,
         actor_id=ctx.user_id,
     )
     return APIResponse(success=True, data=EmployeeResponse.model_validate(employee))

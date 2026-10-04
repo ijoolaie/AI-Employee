@@ -405,6 +405,17 @@ async def apply_verified_sales_payment(
         await db.flush()
         deal.order_id = order.id
 
+    # Cosmetic ownership is downstream of the verified provider payment and the
+    # tenant-scoped deal contract; order status alone never grants ownership.
+    if (deal.metadata_ or {}).get("cosmetic_purchase"):
+        from app.services.cosmetic_entitlement_service import grant_from_verified_payment
+        await grant_from_verified_payment(
+            db,
+            tenant_id=tenant_id,
+            deal=deal,
+            source_order_id=order.id,
+        )
+
     event_ids.append(provider_event_id)
     deal_metadata["sales_payment_event_ids"] = event_ids[-20:]
     deal_metadata["payment_verified"] = True
