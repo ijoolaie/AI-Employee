@@ -75,7 +75,7 @@ class HttpSkillProvider(SkillProvider):
         request_id: str,
     ) -> SkillProviderResult:
         settings = get_settings()
-        endpoint = settings.skill_provider_endpoints.get(tenant_id)
+        endpoint = settings.skill_provider_base_url
         api_key = settings.skill_provider_api_key
         if not endpoint or not api_key:
             raise SkillProviderError("Skill provider endpoint or API key is not configured for this tenant")
