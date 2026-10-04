@@ -481,3 +481,36 @@ Exact-head validation completed successfully for the dedicated and shared gates:
 The reporting contract is deliberately read-only and aggregates only recorded `SkillMarketplaceSettlement` rows, with seller-scoped filtering and payout-proposal counts. The real-stack gate verified gross amount, platform fee, seller net, verified settlement count, paid purchase count, seller filtering and zero-result isolation for another seller tenant. It also asserts that the reporting service contains no Stripe/ZarinPal/payment-provider calls and no create/mutation path.
 
 **Evidence boundary:** marketplace financial outcome reporting is **VERIFIED** on the real PostgreSQL CI stack for the exact PR head above. This is reporting of recorded verified engineering/settlement state, not proof of a real external customer payment, realized customer revenue, or external seller payout. The immutable `v1.4.16` Production Certification remains unchanged; `027d8005df6ac9069a4734b9679bf839d1129a35` is not production-certified.
+
+
+## W16 cross-tenant marketplace purchase HTTP API verification — 2026-10-04
+
+PR #866, `test(w16): verify cross-tenant marketplace purchase HTTP API`, was validated at exact head `a481c4093879a4e7b58cfa03b3d6ea84a377959a` and merged with merge commit `34a0010087f7f821164ef7214f133fc83446e361`.
+
+The exact-head HTTP/API verification added a real Docker Compose stack with PostgreSQL and Redis, a built API/worker/beat service, Alembic migration consistency checks, a deterministic `contract-test` payment provider, the HTTP marketplace purchase E2E, and focused purchase API contract tests.
+
+Exact-head evidence observed on the merged PR:
+- W16 Cross-Tenant Skill Purchase Real-Stack — PASS — Run `37205970070`;
+- W16 Cross-Tenant Skill Purchase API Real-Stack — PASS — Run `37205970267`;
+- CI — PASS — Run `37205970205`;
+- CodeQL — PASS — Run `37205970054`;
+- Architecture Guard — PASS — Run `37205970162`;
+- Production Infrastructure Validation — PASS — Run `37205970102`;
+- HA Failure Recovery — PASS — Run `37205970099`;
+- Ephemeral DAST — PASS — Run `37205970056`.
+
+The dedicated HTTP/API scenario verified, through the actual API boundary:
+- seller tenant publication;
+- buyer-tenant public discovery;
+- cross-tenant purchase using buyer-owned Employee identity;
+- buyer/seller tenant separation;
+- seller self-purchase rejection;
+- deterministic provider settlement state;
+- durable purchase/deal buyer-side correlation;
+- idempotent replay of the same purchase request;
+- database-level buyer/seller/package ownership assertions;
+- fixture cleanup through tenant deprovisioning.
+
+The API verification also adds explicit route-order and request-schema regression coverage for the purchase endpoint. The HTTP evidence is engineering evidence only and uses the deterministic contract-test payment provider; it does not establish external customer payment or realized marketplace revenue.
+
+**Evidence boundary:** W16 cross-tenant marketplace purchase HTTP/API verification is **VERIFIED** for exact head `a481c4093879a4e7b58cfa03b3d6ea84a377959a` and merged mainline `34a0010087f7f821164ef7214f133fc83446e361`. External customer payment, realized marketplace revenue, external seller payout execution and tax settlement remain **NOT VERIFIED**. The immutable `v1.4.16` Production Certification remains unchanged; `34a0010087f7f821164ef7214f133fc83446e361` is not production-certified.
