@@ -259,6 +259,12 @@ async def list_for_employee(
     employee_id: uuid.UUID,
     active_only: bool = True,
 ) -> list[EmployeeSkillInstallation]:
+    employee = (await db.execute(select(Employee).where(
+        Employee.id == employee_id, Employee.tenant_id == tenant_id,
+    ))).scalar_one_or_none()
+    if employee is None:
+        raise NotFoundError("employee not found in tenant")
+
     stmt = select(EmployeeSkillInstallation).where(
         EmployeeSkillInstallation.tenant_id == tenant_id,
         EmployeeSkillInstallation.employee_id == employee_id,
