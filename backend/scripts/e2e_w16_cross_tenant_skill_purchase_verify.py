@@ -17,6 +17,7 @@ from app.models.skill_package import EmployeeSkillInstallation, EmployeeSkillIns
 from app.models.skill_purchase_entitlement import SkillPurchaseEntitlement, SkillPurchaseEntitlementStatus
 from app.models.tenant import Tenant
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
+from app.models.skill_marketplace_settlement import SkillMarketplacePayoutStatus, SkillMarketplaceSettlement, SkillMarketplaceSettlementStatus
 from app.services import edition_lifecycle_service, skill_marketplace_service, stripe_service
 from app.services.skill_marketplace_publication_service import SkillMarketplacePublicationService
 from app.services.skill_marketplace_purchase_service import create_checkout
@@ -28,6 +29,8 @@ async def verify() -> None:
     buyer_slug = f"w16-marketplace-buyer-{suffix}"
     settings = get_settings()
     settings.sales_payment_provider_name = "contract-test"
+    settings.skill_marketplace_settlement_enabled = True
+    settings.skill_marketplace_platform_fee_bps = 1500
 
     async with AsyncSessionLocal() as db:
         seller = Tenant(name="W16 Marketplace Seller", slug=seller_slug)
@@ -182,6 +185,27 @@ async def verify() -> None:
         print("CROSS-TENANT MARKETPLACE PAYMENT + ENTITLEMENT + INSTALLATION PASS")
         print("CROSS-TENANT MARKETPLACE REVENUE EVENT CORRELATION PASS")
 
+        settlement = (
+            await db.execute(
+                select(SkillMarketplaceSettlement).where(
+                    SkillMarketplaceSettlement.purchase_id == purchase.id,
+                )
+            )
+        ).scalar_one()
+        assert settlement.status == SkillMarketplaceSettlementStatus.RECORDED
+        assert settlement.payout_status == SkillMarketplacePayoutStatus.NOT_EXECUTED
+        assert settlement.buyer_tenant_id == buyer.id
+        assert settlement.seller_tenant_id == seller.id
+        assert settlement.provider == "stripe"
+        assert settlement.provider_event_id == payment_event_id
+        assert settlement.gross_amount == purchase.amount
+        assert settlement.platform_fee_bps == 1500
+        assert settlement.platform_fee_amount == purchase.amount * 15 / 100
+        assert settlement.seller_net_amount == purchase.amount - settlement.platform_fee_amount
+        assert settlement.metadata_["seller_payout"] == "not_executed"
+        assert settlement.metadata_["tax_treatment"] == "not_calculated"
+        print("CROSS-TENANT MARKETPLACE SETTLEMENT SPLIT PASS")
+
         duplicate_tenant, duplicate_order = await stripe_service.apply_verified_sales_payment(
             db,
             provider="stripe",
@@ -224,7 +248,7 @@ async def verify() -> None:
                 )
             )
         ).scalar_one()
-        revenue_count = (
+        settlement_count = (            await db.execute(                select(func.count()).select_from(SkillMarketplaceSettlement).where(                    SkillMarketplaceSettlement.purchase_id == purchase.id                )            )        ).scalar_one()        revenue_count = (
             await db.execute(
                 select(func.count()).select_from(WorkforceRevenueEvent).where(
                     WorkforceRevenueEvent.provider == "stripe",
@@ -236,6 +260,7 @@ async def verify() -> None:
         assert entitlement_count == 1
         assert install_count == 1
         assert revenue_count == 1
+        assert settlement_count == 1
         print("CROSS-TENANT MARKETPLACE PAYMENT REPLAY IDEMPOTENCY PASS")
 
         try:
