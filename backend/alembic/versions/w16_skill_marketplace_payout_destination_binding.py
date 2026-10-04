@@ -3,7 +3,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "w16_skill_mkt_payout_destination_binding"
+revision = "w16_payout_dest_bind"
 down_revision = "w16_skill_mkt_payout_destination"
 branch_labels = None
 depends_on = None
