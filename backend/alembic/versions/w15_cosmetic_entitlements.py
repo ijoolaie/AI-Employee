@@ -47,19 +47,19 @@ def upgrade():
         ),
     )
     op.alter_column("cosmetic_entitlements", "status", server_default=None)
-    op.create_index("ix_cosmetic_entitlements_tenant", "cosmetic_entitlements", ["tenant_id"])
-    op.create_index("ix_cosmetic_entitlements_employee", "cosmetic_entitlements", ["employee_id"])
-    op.create_index("ix_cosmetic_entitlements_product", "cosmetic_entitlements", ["product_id"])
+    op.create_index("ix_cosmetic_entitlements_tenant_id", "cosmetic_entitlements", ["tenant_id"])
+    op.create_index("ix_cosmetic_entitlements_employee_id", "cosmetic_entitlements", ["employee_id"])
+    op.create_index("ix_cosmetic_entitlements_product_id", "cosmetic_entitlements", ["product_id"])
     op.create_index("ix_cosmetic_entitlements_tenant_employee", "cosmetic_entitlements", ["tenant_id", "employee_id"])
     op.create_index("ix_cosmetic_entitlements_tenant_status", "cosmetic_entitlements", ["tenant_id", "status"])
-    op.create_index("ix_cosmetic_entitlements_source_order", "cosmetic_entitlements", ["source_order_id"])
+    op.create_index("ix_cosmetic_entitlements_source_order_id", "cosmetic_entitlements", ["source_order_id"])
 
 
 def downgrade():
-    op.drop_index("ix_cosmetic_entitlements_source_order", table_name="cosmetic_entitlements")
+    op.drop_index("ix_cosmetic_entitlements_source_order_id", table_name="cosmetic_entitlements")
     op.drop_index("ix_cosmetic_entitlements_tenant_status", table_name="cosmetic_entitlements")
     op.drop_index("ix_cosmetic_entitlements_tenant_employee", table_name="cosmetic_entitlements")
-    op.drop_index("ix_cosmetic_entitlements_product", table_name="cosmetic_entitlements")
-    op.drop_index("ix_cosmetic_entitlements_employee", table_name="cosmetic_entitlements")
-    op.drop_index("ix_cosmetic_entitlements_tenant", table_name="cosmetic_entitlements")
+    op.drop_index("ix_cosmetic_entitlements_product_id", table_name="cosmetic_entitlements")
+    op.drop_index("ix_cosmetic_entitlements_employee_id", table_name="cosmetic_entitlements")
+    op.drop_index("ix_cosmetic_entitlements_tenant_id", table_name="cosmetic_entitlements")
     op.drop_table("cosmetic_entitlements")
