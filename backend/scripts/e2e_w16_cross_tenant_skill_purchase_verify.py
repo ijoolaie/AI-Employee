@@ -17,14 +17,18 @@ from app.models.skill_package import EmployeeSkillInstallation, EmployeeSkillIns
 from app.models.skill_purchase_entitlement import SkillPurchaseEntitlement, SkillPurchaseEntitlementStatus
 from app.models.tenant import Tenant
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
+from app.models.user import User
+from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutExecutionStatus, SkillMarketplacePayoutProposalStatus
 from app.models.skill_marketplace_settlement import SkillMarketplacePayoutStatus, SkillMarketplaceSettlement, SkillMarketplaceSettlementStatus
 from app.services import edition_lifecycle_service, skill_marketplace_service, stripe_service
 from app.services.skill_marketplace_publication_service import SkillMarketplacePublicationService
 from app.services.skill_marketplace_purchase_service import create_checkout
+from app.services.skill_marketplace_payout_service import create_payout_proposal, list_payout_proposals
 
 
 async def verify() -> None:
     suffix = str(time.time_ns())[-12:]
+    vendor_slug = f"w16-marketplace-vendor-{suffix}"
     seller_slug = f"w16-marketplace-seller-{suffix}"
     buyer_slug = f"w16-marketplace-buyer-{suffix}"
     settings = get_settings()
@@ -33,9 +37,20 @@ async def verify() -> None:
     settings.skill_marketplace_platform_fee_bps = 1500
 
     async with AsyncSessionLocal() as db:
+        vendor = Tenant(name="W16 Marketplace Vendor", slug=vendor_slug, tenant_kind="vendor")
         seller = Tenant(name="W16 Marketplace Seller", slug=seller_slug)
         buyer = Tenant(name="W16 Marketplace Buyer", slug=buyer_slug)
-        db.add_all([seller, buyer])
+        db.add_all([vendor, seller, buyer])
+        await db.flush()
+        platform_admin = User(
+            tenant_id=vendor.id,
+            email=f"w16-marketplace-admin-{suffix}@example.test",
+            password_hash="certification-fixture",
+            full_name="W16 Marketplace Platform Admin",
+            is_active=True,
+            is_platform_admin=True,
+        )
+        db.add(platform_admin)
         await db.flush()
 
         employee = Employee(
@@ -206,6 +221,38 @@ async def verify() -> None:
         assert settlement.metadata_["tax_treatment"] == "not_calculated"
         print("CROSS-TENANT MARKETPLACE SETTLEMENT SPLIT PASS")
 
+        proposal = await create_payout_proposal(
+            db,
+            settlement_id=settlement.id,
+            platform_admin_tenant_id=vendor.id,
+            created_by_user_id=platform_admin.id,
+        )
+        assert proposal.status == SkillMarketplacePayoutProposalStatus.PROPOSED
+        assert proposal.execution_status == SkillMarketplacePayoutExecutionStatus.NOT_EXECUTED
+        assert proposal.seller_tenant_id == seller.id
+        assert proposal.platform_admin_tenant_id == vendor.id
+        assert proposal.amount == settlement.seller_net_amount
+        assert proposal.currency == settlement.currency
+        assert proposal.provider == "none"
+        assert proposal.metadata_["destination"] == "not_configured"
+        assert proposal.metadata_["seller_payout"] == "not_executed"
+        print("MARKETPLACE SELLER PAYOUT PROPOSAL CREATION PASS")
+
+        replay_proposal = await create_payout_proposal(
+            db,
+            settlement_id=settlement.id,
+            platform_admin_tenant_id=vendor.id,
+            created_by_user_id=platform_admin.id,
+        )
+        assert replay_proposal.id == proposal.id
+        proposals = await list_payout_proposals(
+            db,
+            platform_admin_tenant_id=vendor.id,
+            status=SkillMarketplacePayoutProposalStatus.PROPOSED,
+        )
+        assert len(proposals) == 1
+        print("MARKETPLACE SELLER PAYOUT PROPOSAL IDEMPOTENCY PASS")
+
         duplicate_tenant, duplicate_order = await stripe_service.apply_verified_sales_payment(
             db,
             provider="stripe",
@@ -288,7 +335,7 @@ async def verify() -> None:
         tenants = list(
             (
                 await db.execute(
-                    select(Tenant).where(Tenant.slug.in_([seller_slug, buyer_slug]))
+                    select(Tenant).where(Tenant.slug.in_([vendor_slug, seller_slug, buyer_slug]))
                 )
             ).scalars().all()
         )
