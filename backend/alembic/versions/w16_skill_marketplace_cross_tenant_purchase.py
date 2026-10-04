@@ -193,6 +193,18 @@ def upgrade() -> None:
         "ix_skill_marketplace_purchases_product_id",
         "skill_marketplace_purchases", ["product_id"],
     )
+    op.create_index(
+        "ix_skill_marketplace_purchases_buyer_status",
+        "skill_marketplace_purchases", ["buyer_tenant_id", "status"],
+    )
+    op.create_index(
+        "ix_skill_marketplace_purchases_seller",
+        "skill_marketplace_purchases", ["seller_tenant_id"],
+    )
+    op.create_index(
+        "ix_skill_marketplace_purchases_publication",
+        "skill_marketplace_purchases", ["publication_id"],
+    )
     op.execute(
         sa.text(
             "INSERT INTO permissions (id, code, description) "
@@ -223,6 +235,9 @@ def downgrade() -> None:
             "DELETE FROM permissions WHERE code = 'skill_marketplace.purchase'"
         )
     )
+    op.drop_index("ix_skill_marketplace_purchases_publication", table_name="skill_marketplace_purchases")
+    op.drop_index("ix_skill_marketplace_purchases_seller", table_name="skill_marketplace_purchases")
+    op.drop_index("ix_skill_marketplace_purchases_buyer_status", table_name="skill_marketplace_purchases")
     op.drop_index("ix_skill_marketplace_purchases_product_id", table_name="skill_marketplace_purchases")
     op.drop_index("ix_skill_marketplace_purchases_skill_package_id", table_name="skill_marketplace_purchases")
     op.drop_index("ix_skill_marketplace_purchases_employee_id", table_name="skill_marketplace_purchases")
