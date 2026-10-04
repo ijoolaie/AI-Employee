@@ -1214,7 +1214,7 @@ Exact-head evidence:
 - HA Failure Recovery: PASS — Run `37203634742`;
 - Production Observability: PASS — Run `37203634636`;
 - Production Rollback & Alerting: PASS — Run `37203634710`;
-- Production Hardening / Secret / Security gates were also successful on the exact head where observed.
+- Security/Privacy: PASS — Run `37203634663`.
 
 The dedicated marketplace real-stack scenario verified proposal creation, seller-net equality, platform-admin ownership, provider `none`, destination `not_configured`, payout `not_executed`, tax `not_calculated`, proposal replay idempotency and cleanup.
 
