@@ -23,7 +23,7 @@ from jsonschema import Draft202012Validator
 from app.ai.schemas import ToolDefinition
 from app.core.config import get_settings
 from app.core.exceptions import ValidationAppError
-from app.services import workforce_semantic_domains
+from app.services import skill_execution_service, workforce_semantic_domains
 from app.services.tool_approval_policy import requires_approval
 
 
