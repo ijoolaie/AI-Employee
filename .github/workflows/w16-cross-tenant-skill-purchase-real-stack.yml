@@ -12,6 +12,9 @@ on:
       - "backend/app/services/stripe_service.py"
       - "backend/app/services/skill_marketplace_settlement_service.py"
       - "backend/app/services/skill_marketplace_payout_service.py"
+      - "backend/app/services/skill_marketplace_payout_provider.py"
+      - "backend/app/services/agent_tool_governance.py"
+      - "backend/app/ai/tool_registry.py"
       - "backend/app/models/skill_marketplace_payout_proposal.py"
       - "backend/app/schemas/admin_marketplace.py"
       - "backend/app/api/v1/admin.py"
@@ -20,6 +23,7 @@ on:
       - "backend/tests/test_skill_marketplace_payout_service.py"
       - "backend/app/services/skill_marketplace_payout_provider.py"
       - "backend/tests/test_skill_marketplace_payout_provider.py"
+      - "backend/tests/test_skill_marketplace_governed_payout_execution.py"
       - "backend/tests/test_skill_marketplace_payout_execution_ledger.py"
       - "backend/app/models/skill_marketplace_payout_destination.py"
       - "backend/app/services/skill_marketplace_payout_destination.py"
@@ -95,7 +99,7 @@ jobs:
       - name: Run cross-tenant marketplace purchase gate
         run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app python scripts/e2e_w16_cross_tenant_skill_purchase_verify.py'
       - name: Run focused purchase and payout-provider contracts
-        run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app pytest -q tests/test_skill_marketplace_purchase.py tests/test_skill_marketplace_settlement_service.py tests/test_marketplace_settlement_integration_contract.py tests/test_skill_marketplace_payout_service.py tests/test_skill_marketplace_payout_provider.py tests/test_skill_marketplace_payout_execution_ledger.py tests/test_skill_marketplace_payout_destination.py'
+        run: docker compose exec -T api sh -lc 'cd /app && PYTHONPATH=/app pytest -q tests/test_skill_marketplace_purchase.py tests/test_skill_marketplace_settlement_service.py tests/test_marketplace_settlement_integration_contract.py tests/test_skill_marketplace_payout_service.py tests/test_skill_marketplace_payout_provider.py tests/test_skill_marketplace_payout_execution_ledger.py tests/test_skill_marketplace_payout_destination.py tests/test_skill_marketplace_governed_payout_execution.py'
       - name: Dump logs on failure
         if: ${{ failure() }}
         run: docker compose logs --no-color
