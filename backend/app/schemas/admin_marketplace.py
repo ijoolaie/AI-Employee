@@ -36,7 +36,6 @@ class MarketplaceFinancialSummaryResponse(BaseModel):
     verified_settlement_count: int
     verified_paid_purchase_count: int
     payout_proposal_count: int
-    payout_executed_count: int
     by_currency: dict[str, MarketplaceFinancialCurrencySummary]
     evidence_basis: str
     external_customer_revenue_verified: bool
