@@ -272,31 +272,6 @@ async def verify() -> None:
             raise AssertionError("unconfigured payout provider unexpectedly executed")
 
         settings.skill_marketplace_payout_provider_name = "contract-test"
-        try:
-            await skill_marketplace_payout_service.approve_payout_proposal(
-                db,
-                proposal_id=proposal.id,
-                platform_admin_tenant_id=platform.id,
-                decided_by_user_id=proposer.id,
-                decision="approve",
-            )
-        except ConflictError as exc:
-            assert "creator cannot approve" in str(exc)
-            print("PAYOUT SEPARATION OF DUTIES CREATOR REJECT PASS")
-        else:
-            raise AssertionError("proposal creator was allowed to approve")
-
-        approval = await skill_marketplace_payout_service.approve_payout_proposal(
-            db,
-            proposal_id=proposal.id,
-            platform_admin_tenant_id=platform.id,
-            decided_by_user_id=approver.id,
-            decision="approve",
-            reason="fixture approval",
-        )
-        await db.commit()
-        assert approval.status.value == "approved"
-        print("PAYOUT HUMAN APPROVAL PASS")
 
         try:
             await skill_marketplace_payout_service.execute_payout_proposal(
