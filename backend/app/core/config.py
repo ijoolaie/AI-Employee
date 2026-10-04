@@ -127,6 +127,8 @@ class Settings(BaseSettings):
                 raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
             if self.market_data_provider_base_url and urlparse(self.market_data_provider_base_url).scheme != "https":
                 raise ValueError("MARKET_DATA_PROVIDER_BASE_URL must use HTTPS in production")
+            if self.skill_marketplace_payout_provider_name.lower() == "contract-test":
+                raise ValueError("SKILL_MARKETPLACE_PAYOUT_PROVIDER_NAME must not use contract-test in production")
             if self.skill_marketplace_payout_provider_name.lower() == "http":
                 if not self.skill_marketplace_payout_provider_base_url or not self.skill_marketplace_payout_provider_api_key:
                     raise ValueError("SKILL_MARKETPLACE_PAYOUT_PROVIDER_BASE_URL and SKILL_MARKETPLACE_PAYOUT_PROVIDER_API_KEY are required when marketplace payout provider http is enabled")
