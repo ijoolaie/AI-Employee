@@ -15,6 +15,13 @@ class CosmeticPurchase(BaseModel):
     cosmetic_value: str = Field(min_length=1, max_length=32)
 
 
+class SkillPurchase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    employee_id: UUID
+    product_id: UUID
+    skill_package_id: UUID
+
+
 class BusinessDealCreate(BaseModel):
     title: str = Field(min_length=1, max_length=255)
     customer_name: str = Field(min_length=1, max_length=255)
@@ -29,6 +36,7 @@ class BusinessDealCreate(BaseModel):
     source: str | None = None
     order_id: UUID | None = None
     cosmetic_purchase: CosmeticPurchase | None = None
+    skill_purchase: SkillPurchase | None = None
 
 
 class BusinessDealStageUpdate(BaseModel):
