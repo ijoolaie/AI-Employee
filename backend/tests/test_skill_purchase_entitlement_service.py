@@ -100,3 +100,19 @@ async def test_skill_grant_replay_is_blocked_by_deal_marker(monkeypatch):
         provider="stripe",
         provider_event_id="evt_test",
     ) is None
+
+
+def test_migration_creates_tenant_scoped_verified_purchase_ledger():
+    from pathlib import Path
+
+    migration = Path(__file__).resolve().parents[1] / "alembic" / "versions" / "w16_skill_purchase_entitlement.py"
+    source = migration.read_text(encoding="utf-8")
+    for marker in (
+        "skill_purchase_entitlements",
+        "uq_skill_purchase_entitlement",
+        "source_order_id",
+        "provider_event_id",
+        "skillpurchaseentitlementstatus",
+        "w16_skill_package_immutability",
+    ):
+        assert marker in source
