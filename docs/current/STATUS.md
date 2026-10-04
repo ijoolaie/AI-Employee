@@ -455,6 +455,6 @@ Exact-head W16 Cross-Tenant Skill Purchase Real-Stack Run `37203634612` complete
 and
 `MARKETPLACE SELLER PAYOUT PROPOSAL IDEMPOTENCY PASS`.
 
-The same exact head also passed W16 Skill API `37203634599`, W16 Skill Provider `372036346?`, W16 Third-Party Publication `37203634686`, CI `37203634678`, CodeQL `37203634695`, DAST `37203634654`, Runtime Isolation/RBAC `37203634634`, Architecture `37203634622`, Production Infrastructure `37203634605`, HA `37203634742`, Security/Privacy `37203634663`, Production Secret Management `372036346? `, Production Observability `37203634636`, Production Rollback & Alerting `37203634710`, and Production Hardening `372036346? ` where those runs were observed successful on the exact head.
+The same exact head also passed W16 Skill API `37203634599`, W16 Third-Party Publication `37203634686`, CI `37203634678`, CodeQL `37203634695`, DAST `37203634654`, Runtime Isolation/RBAC `37203634634`, Architecture `37203634622`, Production Infrastructure `37203634605`, HA `37203634742`, Production Observability `37203634636`, Production Rollback & Alerting `37203634710`, and Security/Privacy `37203634663`.
 
 **Evidence boundary:** seller payout proposal generation is **VERIFIED** on the deterministic CI / real PostgreSQL stack. Actual seller payout execution, payout-provider integration, tax calculation/settlement, external customer payment and realized marketplace revenue remain **NOT VERIFIED**. The immutable `v1.4.16` Production Certification remains unchanged; `c8fd849e77d2181f32700e1a7e52f03e48cd21e8` is not production-certified.
