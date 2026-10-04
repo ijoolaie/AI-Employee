@@ -66,7 +66,7 @@ async def test_create_package_rejects_non_object_skill_metadata_before_db():
     for field in ("manifest", "compatibility", "presentation_metadata"):
         kwargs = {field: []}
         try:
-            await create_package(object(), tenant_id=uuid.uuid4(), slug="bad-metadata", **kwargs)
+            await create_package(object(), tenant_id=uuid.uuid4(), slug="bad-metadata", name="Bad Metadata", **kwargs)
         except ValidationAppError:
             pass
         else:
