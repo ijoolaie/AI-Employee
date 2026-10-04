@@ -1,4 +1,4 @@
-"""Platform-admin marketplace payout proposals with execution explicitly disabled."""
+"""Platform-admin marketplace payout proposals and governed provider execution."""
 from __future__ import annotations
 
 import uuid
@@ -26,6 +26,11 @@ from app.models.skill_marketplace_settlement import (
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.services import audit_service
+from app.services.skill_marketplace_payout_provider import (
+    MarketplacePayoutRequest,
+    MarketplacePayoutStatus,
+    get_marketplace_payout_provider,
+)
 
 
 async def create_payout_proposal(
