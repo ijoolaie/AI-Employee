@@ -1,14 +1,14 @@
 # Current Project Status
 
 **Architecture baseline:** V1.5 Agentic Operating Model  
-**Certified release baseline:** `v1.4.11`  
-**Latest certified release:** `v1.4.11` — exact-SHA certification PASS  
-**Certified release commit:** `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`  
+**Certified release baseline:** `v1.4.16`  
+**Latest certified release:** `v1.4.16` — exact-SHA certification PASS  
+**Certified release commit:** `434a0c4a4501af08a393faaf58092add764df2a2`  
 **Mainline engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA  
-**Status date:** 2026-10-01  
-**Latest published release:** `v1.4.11`  
-**Latest certified release:** `v1.4.11`  
-**Certification run:** `35848311037` — PASS (exact `v1.4.11` SHA)  
+**Status date:** 2026-10-04  
+**Latest published release:** `v1.4.16`  
+**Latest certified release:** `v1.4.16`  
+**Certification run:** `37188879277` — PASS (exact `v1.4.16` SHA)  
 **Production deployment:** OPEN — PENDING EXTERNAL EXECUTION
 
 The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.11` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification documentation changes and is not itself certified.
@@ -17,16 +17,16 @@ The architecture baseline, release identity and engineering phase are independen
 
 Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. Phase 14 engineering is **COMPLETE WHERE TRACKED**.
 
-The exact-SHA Production Certification suite passed for `v1.4.11`. Certification run `35848311037` checked out SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`, recorded the required certification evidence, and completed successfully. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
+The exact-SHA Production Certification suite passed for `v1.4.16`. Certification run `37188879277` / job `111396657270` checked out SHA `434a0c4a4501af08a393faaf58092add764df2a2`, recorded the required certification evidence, and completed successfully. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
 
 ## v1.4.11 certified and published release
 
-- **Release status:** **PUBLISHED** — exact certified SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`.
-- Exact-SHA Production Certification: **PASS**, run `35848311037`, job `107139710452`.
-- Evidence artifact: `production-certification-evidence-v1.4.11-rc.1-90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`.
-- Evidence digest: `sha256:bfd75a37126bc3fcb98080d9f4a9522ae1d0c05ab05ca686f0be985f53334048`.
-- `v1.4.11` GitHub Release is published, not draft, not prerelease.
-- `v1.4.11` tag resolves to the certified SHA; post-certification documentation commits are not part of the certified snapshot.
+- **Release status:** **PUBLISHED** — exact certified SHA `434a0c4a4501af08a393faaf58092add764df2a2`.
+- Exact-SHA Production Certification: **PASS**, run `37188879277`, job `111396657270`.
+- Evidence artifact: `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`.
+- Evidence digest: `sha256:7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`.
+- `v1.4.16` tag resolves to the certified SHA; post-certification engineering commits are not part of the certified snapshot.
+- `production_deployment_claimed=false`.
 
 ## Historical releases
 
@@ -38,10 +38,10 @@ The exact-SHA Production Certification suite passed for `v1.4.11`. Certification
 
 | Item | Status | Evidence |
 |---|---|---|
-| `v1.4.11` tag | VERIFIED | Exact certified release tag resolves to `90dd5cb...` |
-| `v1.4.11` GitHub Release | PUBLISHED | Not draft, not prerelease |
-| `v1.4.11` Production Certification | PASSED | Run `35848311037` / Job `107139710452` |
-| Certified release SHA | VERIFIED | `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f` |
+| `v1.4.16` tag | VERIFIED | Exact certified release tag resolves to `434a0c4...` |
+| `v1.4.16` Production Certification | PASSED | Run `37188879277` / Job `111396657270` |
+| Certified release SHA | VERIFIED | `434a0c4a4501af08a393faaf58092add764df2a2` |
+| Production deployment claimed | FALSE | Certification evidence records `production_deployment_claimed=false` |
 | External production deployment | OPEN — PENDING EXTERNAL EXECUTION | No external target is currently in use |
 | Customer acceptance | OPEN — PENDING EXTERNAL EXECUTION | No external acceptance evidence |
 
@@ -104,7 +104,7 @@ PR #665 is merged at `7c9dd56a93fc3b4294467a55cd41b3daadf0bbbd`. Regression cove
 
 The current release frontier is `v1.4.11 RELEASE-CERTIFIED / LOCAL-ENGINEERING / EXTERNAL GATES OPEN`. Post-v1.4.11 semantic workforce engineering now includes an explicit code-reconciled binding inventory. The current source audit identifies 14 explicit Role → Operation → Tool bindings, while executable/evidenced status remains capability-specific. Unsupported workforce operations remain denied until a dedicated binding exists. No post-certification source changes are included in the certified snapshot. Continue regression watch for the audited product-completeness scope; do not reopen completed work without a regression, new requirement, or newly discovered unsupported surface.
 
-The next application-code change requires a new candidate boundary and fresh exact-SHA certification. External production evidence remains intentionally open while the project is local.
+W16 commercial skill purchase entitlement is now merged and real-stack verified on post-v1.4.16 mainline; it is not part of the immutable v1.4.16 release. The next application-code change requires a new candidate boundary and fresh exact-SHA certification. External production evidence remains intentionally open while the project is local.
 
 ## Semantic Workforce runtime evidence checkpoint — 2026-09-29
 
@@ -271,3 +271,18 @@ The delivery-event correlation includes the governed `tool_call_id`, `outbox_id`
 Status boundary: **W10 governed sales delivery/response ingestion, idempotency, and attribution mechanics are VERIFIED on the real stack for the isolated E2E SMTP provider path.** Real customer delivery, real customer response/conversation, and revenue remain **NOT VERIFIED**. The E2E sink is deterministic test infrastructure and is not evidence of real-world customer behavior or revenue.
 
 This is post-v1.4.11 mainline engineering evidence and does not modify the immutable v1.4.11 certification boundary.
+
+
+## W16 commercial skill purchase entitlement — 2026-10-04
+
+PR #851, `feat: gate W16 commercial skills on verified purchase entitlement`, was validated at exact head `0afd8d021afc5b71fb53f84d7c187a33545ec4f7` and merged with merge commit `bbafa2c7b754cd69d421c6011bf42f5523fdeaa2`.
+
+Exact-head validation before merge completed successfully across the W16 Skill API Real-Stack Contract, CI, CodeQL, Architecture Guard, Security/Privacy, Runtime Isolation/RBAC, HA Failure Recovery, Production Infrastructure, Ephemeral DAST, Provider Integration, Production Rollback & Alerting, and Production Observability gates.
+
+The W16 real-stack evidence exercised same-tenant install/list/revoke, cross-tenant list/revoke rejection, commercial skill fail-closed without an active entitlement, verified payment creating the tenant-scoped entitlement, and commercial skill installation after the verified payment.
+
+The purchase entitlement ledger is presentation-only ownership state. It does not add permissions, allowed tools, capability contracts, approval policy or tool bindings. Commercial skill installation remains fail-closed without a matching active verified entitlement.
+
+Post-merge W10 Internal Company Dogfood E2E run `37196994830` completed successfully on merge SHA `bbafa2c7b754cd69d421c6011bf42f5523fdeaa2`. This is post-release engineering evidence; it does not create a new production certification for the merge SHA.
+
+**Current boundary:** W16 commercial purchase entitlement is **VERIFIED on the real PostgreSQL stack** for the merged implementation. Third-party publishing, external skill-provider execution, and real marketplace/customer revenue remain **NOT VERIFIED**. The immutable `v1.4.16` certification remains unchanged.
