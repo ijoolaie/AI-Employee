@@ -20,13 +20,13 @@ from app.models.skill_marketplace_payout_destination import (
 
 def _validate_destination(*, provider: str, destination_ref: str) -> tuple[str, str]:
     provider_value = provider.strip().lower()
+    if any(ord(char) < 32 for char in destination_ref):
+        raise ValidationAppError("Payout destination reference must not contain control characters")
     destination_value = destination_ref.strip()
     if not provider_value or len(provider_value) > 40:
         raise ValidationAppError("Payout destination provider is required and must be at most 40 characters")
     if not destination_value or len(destination_value) > 255:
         raise ValidationAppError("Payout destination reference is required and must be at most 255 characters")
-    if any(ord(char) < 32 for char in destination_value):
-        raise ValidationAppError("Payout destination reference must not contain control characters")
     return provider_value, destination_value
 
 
