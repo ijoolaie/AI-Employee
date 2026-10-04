@@ -213,31 +213,41 @@ jobs:
             now()
           );
 
-          DO $
+          DO $$
+          DECLARE
+            rejected boolean;
           BEGIN
+            rejected := false;
             BEGIN
               UPDATE skill_packages
               SET version = 2
               WHERE id = '00000000-0000-0000-0000-000000000103';
-              RAISE EXCEPTION 'W16 immutability trigger failed to reject version mutation';
             EXCEPTION
-              WHEN check_violation THEN NULL;
+              WHEN check_violation THEN
+                rejected := true;
             END;
+            IF NOT rejected THEN
+              RAISE EXCEPTION 'W16 immutability trigger failed to reject version mutation';
+            END IF;
 
+            rejected := false;
             BEGIN
               UPDATE skill_packages
               SET manifest = '{"mutation":"rejected"}'::jsonb
               WHERE id = '00000000-0000-0000-0000-000000000103';
-              RAISE EXCEPTION 'W16 immutability trigger failed to reject manifest mutation';
             EXCEPTION
-              WHEN check_violation THEN NULL;
+              WHEN check_violation THEN
+                rejected := true;
             END;
+            IF NOT rejected THEN
+              RAISE EXCEPTION 'W16 immutability trigger failed to reject manifest mutation';
+            END IF;
 
             UPDATE skill_packages
             SET status = 'suspended'
             WHERE id = '00000000-0000-0000-0000-000000000103';
           END;
-          $;
+          $$;
 
           ROLLBACK;
           SQL
