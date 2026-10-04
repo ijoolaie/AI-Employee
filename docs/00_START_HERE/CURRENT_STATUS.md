@@ -430,8 +430,19 @@ Current evidence boundary:
 - W16 employee Skill API and entitlement gate: **VERIFIED**
 - W16 third-party publication/discovery: **VERIFIED**
 - W16 governed SkillPackage provider execution on deterministic CI HTTP provider fixture: **VERIFIED**
+- W16 cross-tenant marketplace purchase/verified settlement mechanics on deterministic payment provider: **VERIFIED**
 - external production Skill provider execution: **NOT VERIFIED**
-- real customer marketplace purchase/revenue: **NOT VERIFIED**
+- real external customer marketplace purchase/revenue: **NOT VERIFIED**
+- seller payout/platform commission/tax settlement: **NOT VERIFIED**
 - Production Certification for post-v1.4.16 W16 merge SHAs: **NOT RUN / NOT VERIFIED**
 
 All of these remain post-release engineering evidence and do not extend the immutable `v1.4.16` certification.
+
+
+## W16 cross-tenant marketplace purchase — 2026-10-04
+
+PR #857 was merged at `8487f0b1133e20c4ce142d43fffd3ee69bf010c1` after exact-head `272ce9f52b73fcd72354d2f41efe1278a921e7a8` validation.
+
+The deterministic real-stack purchase gate verified seller/buyer tenant separation, public publication purchase eligibility, buyer-side purchase idempotency, verified-payment settlement, buyer entitlement referencing the seller package/publication, buyer installation of the seller-owned package, WorkforceRevenueEvent correlation and replay idempotency.
+
+This is post-v1.4.16 engineering evidence. It does not establish a real external customer purchase, realized customer revenue, seller payout, platform commission, tax settlement or Production Certification for the merge SHA.
