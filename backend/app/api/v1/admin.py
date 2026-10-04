@@ -127,7 +127,7 @@ async def decide_marketplace_payout_approval(
     proposal_id: UUID,
     payload: MarketplacePayoutApprovalCreate,
     ctx: TenantContext = Depends(require_marketplace_payout_approver),
-    db: DbSession = None,
+    db: DbSession,
 ):
     approval = await skill_marketplace_payout_service.approve_payout_proposal(
         db,
