@@ -22,3 +22,16 @@ def test_skill_package_has_no_permission_or_tool_binding_fields():
     assert not hasattr(SkillPackage, "permission_policy")
     assert not hasattr(SkillPackage, "allowed_tools")
     assert not hasattr(SkillPackage, "capability_contract")
+
+
+def test_skill_marketplace_error_is_a_client_error():
+    error = SkillMarketplaceError("invalid skill contract")
+    assert error.code == "SKILL_MARKETPLACE_INVALID"
+    assert error.status_code == 422
+
+
+def test_skill_package_product_fk_is_not_nullable_on_delete():
+    # The SQLAlchemy model must preserve the commercial product link.
+    assert SkillPackage.__table__.c.product_id.foreign_keys
+    fk = next(iter(SkillPackage.__table__.c.product_id.foreign_keys))
+    assert fk.ondelete == "RESTRICT"
