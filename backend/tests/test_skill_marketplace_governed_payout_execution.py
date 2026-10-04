@@ -50,7 +50,7 @@ def test_payout_service_requires_durable_consumed_approval_and_no_generic_transp
     assert "ToolApprovalRequest" in source
     assert 'approval.status not in {"approved", "consumed"}' in source
     assert "approval.decided_by is None" in source
-    assert "approval.arguments != {"proposal_id": str(proposal_id)}" in source
+    assert 'approval.arguments != {"proposal_id": str(proposal_id)}' in source
     assert "get_marketplace_payout_provider()" in source
     assert "httpx" not in source
     assert "stripe" not in source.lower()
