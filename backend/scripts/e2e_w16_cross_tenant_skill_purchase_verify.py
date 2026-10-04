@@ -23,6 +23,7 @@ from app.models.skill_marketplace_settlement import SkillMarketplacePayoutStatus
 from app.services import edition_lifecycle_service, skill_marketplace_service, stripe_service
 from app.services.skill_marketplace_publication_service import SkillMarketplacePublicationService
 from app.services.skill_marketplace_purchase_service import create_checkout
+from app.services.skill_marketplace_payout_destination import bind_payout_destination, revoke_payout_destination
 from app.services.skill_marketplace_payout_service import create_payout_proposal, list_payout_proposals
 
 
@@ -41,6 +42,16 @@ async def verify() -> None:
         seller = Tenant(name="W16 Marketplace Seller", slug=seller_slug)
         buyer = Tenant(name="W16 Marketplace Buyer", slug=buyer_slug)
         db.add_all([vendor, seller, buyer])
+        await db.flush()
+        seller_actor = User(
+            tenant_id=seller.id,
+            email=f"w16-marketplace-seller-{suffix}@example.test",
+            password_hash="certification-fixture",
+            full_name="W16 Marketplace Seller Actor",
+            is_active=True,
+            is_platform_admin=False,
+        )
+        db.add(seller_actor)
         await db.flush()
         platform_admin = User(
             tenant_id=vendor.id,
@@ -221,6 +232,17 @@ async def verify() -> None:
         assert settlement.metadata_["tax_treatment"] == "not_calculated"
         print("CROSS-TENANT MARKETPLACE SETTLEMENT SPLIT PASS")
 
+        destination = await bind_payout_destination(
+            db,
+            seller_tenant_id=seller.id,
+            provider="contract-test",
+            destination_ref=f"seller-destination-{suffix}-v1",
+            actor_user_id=seller_actor.id,
+        )
+        assert destination.seller_tenant_id == seller.id
+        assert destination.provider == "contract-test"
+        print("MARKETPLACE SELLER PAYOUT DESTINATION BINDING PASS")
+
         proposal = await create_payout_proposal(
             db,
             settlement_id=settlement.id,
@@ -234,9 +256,31 @@ async def verify() -> None:
         assert proposal.amount == settlement.seller_net_amount
         assert proposal.currency == settlement.currency
         assert proposal.provider == "none"
-        assert proposal.metadata_["destination"] == "not_configured"
+        assert proposal.destination_id == destination.id
+        assert proposal.destination_provider == "contract-test"
+        assert proposal.destination_ref == f"seller-destination-{suffix}-v1"
+        assert proposal.metadata_["destination"] == "bound_snapshot"
         assert proposal.metadata_["seller_payout"] == "not_executed"
         print("MARKETPLACE SELLER PAYOUT PROPOSAL CREATION PASS")
+        await revoke_payout_destination(
+            db,
+            seller_tenant_id=seller.id,
+            actor_user_id=seller_actor.id,
+        )
+        replacement = await bind_payout_destination(
+            db,
+            seller_tenant_id=seller.id,
+            provider="contract-test",
+            destination_ref=f"seller-destination-{suffix}-v2",
+            actor_user_id=seller_actor.id,
+        )
+        assert replacement.id != destination.id
+        await db.refresh(proposal)
+        assert proposal.destination_id == destination.id
+        assert proposal.destination_ref == f"seller-destination-{suffix}-v1"
+        assert proposal.destination_ref != replacement.destination_ref
+        print("MARKETPLACE PAYOUT PROPOSAL DESTINATION IMMUTABLE SNAPSHOT PASS")
+
 
         replay_proposal = await create_payout_proposal(
             db,

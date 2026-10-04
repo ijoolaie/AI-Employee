@@ -15,6 +15,9 @@ class MarketplacePayoutProposalResponse(BaseModel):
     settlement_id: UUID
     seller_tenant_id: UUID
     platform_admin_tenant_id: UUID
+    destination_id: UUID | None
+    destination_provider: str | None
+    destination_ref: str | None
     amount: Decimal
     currency: str
     provider: str

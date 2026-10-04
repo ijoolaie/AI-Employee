@@ -27,7 +27,7 @@ class SkillMarketplacePayoutExecutionStatus(str, enum.Enum):
 
 
 class SkillMarketplacePayoutProposal(Base):
-    """Seller-net payout proposal generated from a recorded marketplace settlement."""
+    """Seller-net payout proposal with an immutable destination snapshot."""
 
     __tablename__ = "skill_marketplace_payout_proposals"
     __table_args__ = (
@@ -68,6 +68,13 @@ class SkillMarketplacePayoutProposal(Base):
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
     )
+    destination_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("skill_marketplace_payout_destinations.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
+    destination_provider: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    destination_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
     amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     currency: Mapped[str] = mapped_column(String(8), nullable=False)
     provider: Mapped[str] = mapped_column(String(40), nullable=False, default="none")
