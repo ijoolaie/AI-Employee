@@ -26,6 +26,10 @@ class SkillMarketplacePurchase(Base):
             "buyer_tenant_id", "idempotency_key",
             name="uq_skill_marketplace_purchase_buyer_idempotency",
         ),
+        UniqueConstraint(
+            "business_deal_id",
+            name="uq_skill_marketplace_purchase_business_deal",
+        ),
         ForeignKeyConstraint(
             ["buyer_tenant_id", "employee_id"],
             ["employees.tenant_id", "employees.id"],
@@ -72,7 +76,7 @@ class SkillMarketplacePurchase(Base):
     skill_package_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     product_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     business_deal_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("business_deals.id", ondelete="RESTRICT"), nullable=False, unique=True
+        UUID(as_uuid=True), ForeignKey("business_deals.id", ondelete="RESTRICT"), nullable=False
     )
     idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False)
     provider: Mapped[str | None] = mapped_column(String(40))
