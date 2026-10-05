@@ -1502,3 +1502,16 @@ W23 resumes original Phase W8 and is **IMPLEMENTED / REAL-STACK VERIFIED**.
 W23 is post-v1.4.16 mainline engineering.
 
 **Next roadmap slice:** original Phase W9 — QA & DevOps Employee.
+
+## W10 customer-outcome / verified revenue-event checkpoint — 2026-10-05
+
+The authoritative W10 next step is now evidenced for its governed mechanics.
+
+- Issue #914; PR #915; merge SHA `ecab2c23fd945b04ef82c2f21dfb6f76ca74b082`.
+- Dedicated PostgreSQL E2E on verification head `fa57a72f2379fb43d4dcc4a6acb7b33b955d479d`: Run `37326882407` — **PASS**.
+- CI `37326882501`, CodeQL `37326882588`, Architecture Guard `37326882589`, Production Infrastructure `37326882525`, HA `37326882485`, DAST `37326882662`, and W21 regression E2E `37326882714` — **PASS**.
+- Verified: governed proposal/pilot deal state, exact tenant/deal/payment correlation, verified payment-to-order settlement, `WorkforceRevenueEvent` creation, deal transition to WON and payment-event replay idempotency.
+- The payment evidence uses the deterministic `contract-test` provider. It proves the revenue-event settlement contract, **not** a real customer payment.
+- Real customer identity/qualification, real proposal/pilot acceptance, real payment and realized revenue remain **NOT VERIFIED**.
+
+W10 technical/provider evidence is therefore stronger, but the actual business outcome remains open. No new Production Certification is claimed.
