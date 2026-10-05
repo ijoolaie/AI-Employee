@@ -2,6 +2,7 @@
 from __future__ import annotations
 import asyncio,json,os,sys,time,uuid
 from urllib.request import Request,urlopen
+from urllib.error import HTTPError
 from sqlalchemy import select,delete
 PROJECT_ROOT=os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
 if PROJECT_ROOT not in sys.path: sys.path.insert(0,PROJECT_ROOT)
@@ -11,8 +12,11 @@ from app.models.role import Role,user_roles
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 def request(method,path,token,payload=None,expected=200):
     body=None if payload is None else json.dumps(payload).encode()
-    with urlopen(Request(BASE_URL+path,data=body,headers={"Accept":"application/json","Content-Type":"application/json","Authorization":f"Bearer {token}"},method=method),timeout=20) as r:
-        data=json.loads(r.read().decode()); assert r.status==expected,data; return data
+    try:
+        with urlopen(Request(BASE_URL+path,data=body,headers={"Accept":"application/json","Content-Type":"application/json","Authorization":f"Bearer {token}"},method=method),timeout=20) as r:
+            data=json.loads(r.read().decode()); assert r.status==expected,data; return data
+    except HTTPError as exc:
+        raise AssertionError(f"{method} {path} HTTP {exc.code}: {exc.read().decode(errors='replace')}") from exc
 def register(suffix):
     p={"tenant_name":f"W21 Network E2E {suffix}","tenant_slug":f"w21-network-{suffix}","email":f"w21-owner-{suffix}@example.com","password":"W21NetworkE2E-2026!","full_name":"W21 Owner"}
     d=request("POST","/auth/register",None,p,201); token=d["data"]["access_token"]; me=request("GET","/auth/me",token)
