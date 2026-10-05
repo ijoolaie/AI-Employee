@@ -132,6 +132,7 @@ def downgrade() -> None:
     op.drop_index("ix_employee_marketplace_install_buyer_tenant_id", table_name="employee_marketplace_installations")
     op.drop_table("employee_marketplace_installations")
     op.drop_index("ix_employee_marketplace_pkg_visibility", table_name="employee_marketplace_packages")
+    op.drop_index("ix_employee_marketplace_packages_source_agent_template_id", table_name="employee_marketplace_packages")
     op.drop_index("ix_employee_marketplace_pkg_owner_status", table_name="employee_marketplace_packages")
     op.drop_index("ix_employee_marketplace_pkg_owner_tenant_id", table_name="employee_marketplace_packages")
     op.drop_table("employee_marketplace_packages")
