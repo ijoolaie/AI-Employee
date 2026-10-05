@@ -24,6 +24,7 @@ class _Span:
 class _DB:
     def __init__(self, events):
         self.events = events
+        self.row = None
 
     async def commit(self):
         self.events.append("commit")
@@ -32,7 +33,7 @@ class _DB:
         self.events.append("rollback")
 
     async def get(self, *_args):
-        return None
+        return self.row
 
 
 @asynccontextmanager
@@ -52,6 +53,7 @@ async def test_non_email_outbox_commits_processing_claim_before_broker_publish(m
         attempts=1,
         status="processing",
     )
+    db.row = row
 
     async def fake_claim(_db, *, limit):
         return [row]
@@ -90,6 +92,7 @@ async def test_broker_publish_failure_retries_after_durable_claim(monkeypatch):
         attempts=1,
         status="processing",
     )
+    db.row = row
 
     async def fake_claim(_db, *, limit):
         return [row]
