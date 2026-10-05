@@ -111,6 +111,21 @@ async def publish_package(
             "template_version": template.version,
             "capability_contract": template.capability_contract or {},
             "description": template.description,
+            "template_snapshot": {
+                "slug": template.slug,
+                "name": template.name,
+                "description": template.description,
+                "version": template.version,
+                "risk_tier": template.risk_tier,
+                "capability_contract": template.capability_contract or {},
+                "permission_policy": template.permission_policy or {},
+                "approval_policy": template.approval_policy or {},
+                "evaluation_policy": template.evaluation_policy or {},
+                "install_policy": template.install_policy or {},
+            },
+            "definition_snapshot": {
+                "name": (await db.execute(select(AgentDefinition).where(AgentDefinition.id == template.agent_definition_id, AgentDefinition.tenant_id == owner_tenant_id))).scalar_one().name,
+            },
             "evaluation": {
                 "id": str(evidence.id),
                 "suite_id": evidence.suite_id,
@@ -195,35 +210,24 @@ async def install_package(
         )
         return existing
 
-    source_template = (await db.execute(select(AgentTemplate).where(
-        AgentTemplate.id == package.source_agent_template_id,
-        AgentTemplate.tenant_id == package.owner_tenant_id,
-        AgentTemplate.status == AgentTemplateStatus.PUBLISHED,
-    ))).scalar_one_or_none()
-    if source_template is None:
-        raise NotFoundError("source employee template is no longer available")
-
-    source_definition = (await db.execute(select(AgentDefinition).where(
-        AgentDefinition.id == source_template.agent_definition_id,
-        AgentDefinition.tenant_id == package.owner_tenant_id,
-        AgentDefinition.enabled.is_(True),
-    ))).scalar_one_or_none()
-    if source_definition is None:
-        raise NotFoundError("source agent definition is no longer available")
+    template_snapshot = package.employee_manifest.get("template_snapshot") or {}
+    definition_snapshot = package.employee_manifest.get("definition_snapshot") or {}
+    if not template_snapshot or not definition_snapshot:
+        raise ValidationAppError("employee marketplace package is missing immutable employee snapshot")
 
     imported_definition = AgentDefinition(
         tenant_id=buyer_tenant_id,
         slug=f"marketplace-{package.slug}-{package.version}-{uuid.uuid4().hex[:8]}"[:120],
-        name=source_definition.name,
-        description=source_definition.description,
-        version=source_definition.version,
-        capabilities=source_definition.capabilities or [],
-        allowed_tools=source_definition.allowed_tools or [],
-        model_policy=source_definition.model_policy or {},
-        input_schema=source_definition.input_schema or {},
-        output_schema=source_definition.output_schema or {},
+        name=definition_snapshot.get("name") or package.name,
+        description=definition_snapshot.get("description"),
+        version=int(definition_snapshot.get("version", 1)),
+        capabilities=definition_snapshot.get("capabilities", []),
+        allowed_tools=definition_snapshot.get("allowed_tools", []),
+        model_policy=definition_snapshot.get("model_policy", {}),
+        input_schema=definition_snapshot.get("input_schema", {}),
+        output_schema=definition_snapshot.get("output_schema", {}),
         policy_requirements={
-            **(source_definition.policy_requirements or {}),
+            **definition_snapshot.get("policy_requirements", {}),
             "marketplace_installation_id": "pending",
             "execution_authority_granted": False,
             "provider_execution": "NOT_VERIFIED",
@@ -237,14 +241,14 @@ async def install_package(
         tenant_id=buyer_tenant_id,
         agent_definition_id=imported_definition.id,
         slug=f"marketplace-{package.slug}-{package.version}-{uuid.uuid4().hex[:8]}"[:120],
-        name=package.name,
-        description=package.description,
-        version=package.version,
+        name=template_snapshot.get("name") or package.name,
+        description=template_snapshot.get("description") or package.description,
+        version=int(template_snapshot.get("version", package.version)),
         status=AgentTemplateStatus.DRAFT,
-        risk_tier=package.risk_tier,
-        capability_contract=package.employee_manifest.get("capability_contract", {}),
+        risk_tier=int(template_snapshot.get("risk_tier", package.risk_tier)),
+        capability_contract=template_snapshot.get("capability_contract", {}),
         permission_policy={
-            "requested_permissions": package.permission_manifest.get("requested_permissions", []),
+            "requested_permissions": template_snapshot.get("permission_policy", {}).get("permissions", package.permission_manifest.get("requested_permissions", [])),
             "execution_authority_granted": False,
             "marketplace_source_package_id": str(package.id),
         },
