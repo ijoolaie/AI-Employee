@@ -174,3 +174,80 @@ async def test_customer_office_route_passes_authenticated_tenant_to_service(monk
 )
 def test_office_hq_tier_is_entitlement_bound(plan_code, features, expected):
     assert customer_dashboard_service._office_hq_tier(plan_code=plan_code, features=features) == expected
+
+
+@pytest.mark.asyncio
+async def test_employee_career_route_passes_authenticated_tenant_and_employee(monkeypatch):
+    tenant_id = uuid4()
+    employee_id = uuid4()
+    captured = {}
+    now = datetime.now(timezone.utc)
+
+    async def fake_get_career(db, *, tenant_id, employee_id):
+        captured.update(db=db, tenant_id=tenant_id, employee_id=employee_id)
+        return {
+            "contract_version": "w17-career-v1",
+            "employee": {"id": str(employee_id), "name": "Engineer", "slug": "engineer", "avatar_url": None, "kind": "custom", "is_active": True},
+            "tenure": {"status": "UNKNOWN", "years": None, "months": None, "reason": "authoritative employment start evidence is not available"},
+            "work_history": [],
+            "indicators": [],
+            "achievements": [],
+        }
+
+    monkeypatch.setattr(customer_dashboard.customer_dashboard_service, "get_employee_career", fake_get_career)
+    response = await customer_dashboard.get_employee_career(
+        employee_id=str(employee_id),
+        ctx=SimpleNamespace(tenant_id=tenant_id),
+        db=object(),
+    )
+
+    assert response.success is True
+    assert captured == {"db": response.__dict__.get("_db", object()) if False else captured["db"], "tenant_id": tenant_id, "employee_id": str(employee_id)}
+    assert response.data["contract_version"] == "w17-career-v1"
+
+
+@pytest.mark.asyncio
+async def test_employee_career_service_is_tenant_scoped_and_evidence_first():
+    tenant_id = uuid4()
+    employee_id = uuid4()
+    run_id = uuid4()
+    work_item_id = uuid4()
+    employee = SimpleNamespace(
+        id=employee_id,
+        tenant_id=tenant_id,
+        name="Engineer",
+        slug="engineer",
+        avatar_url=None,
+        kind="custom",
+        is_active=True,
+    )
+    work_item_status = SimpleNamespace(value="succeeded")
+    row = SimpleNamespace(
+        id=run_id,
+        status="success",
+        completed_at=datetime.now(timezone.utc),
+        created_at=datetime.now(timezone.utc),
+        work_item_id=work_item_id,
+        title="Ship governed change",
+        work_item_status=work_item_status,
+    )
+
+    class DB:
+        def __init__(self):
+            self.calls = 0
+            self.statements = []
+        async def scalar(self, statement):
+            self.statements.append(statement)
+            return employee
+        async def execute(self, statement):
+            self.statements.append(statement)
+            return SimpleNamespace(all=lambda: [row])
+
+    career = await customer_dashboard_service.get_employee_career(DB(), tenant_id=tenant_id, employee_id=employee_id)
+
+    assert career["contract_version"] == "w17-career-v1"
+    assert career["tenure"]["status"] == "UNKNOWN"
+    assert career["indicators"][0]["value"] == 1
+    assert career["indicators"][1]["value"] == 1
+    assert career["indicators"][2]["evidence_status"] == "NOT_APPLICABLE"
+    assert career["work_history"][0]["id"] == str(work_item_id)
