@@ -18,6 +18,14 @@ def upgrade() -> None:
     with op.get_context().autocommit_block():
         pass
 
+    # The original proposal ledger hard-coded provider="none". Remove that
+    # legacy guard at the governed-execution boundary; provider choice remains
+    # operator-controlled through the named provider registry.
+    op.drop_constraint(
+        "ck_skill_marketplace_payout_proposal_provider_none",
+        "skill_marketplace_payout_proposals",
+        type_="check",
+    )
     op.drop_constraint(
         "ck_skill_marketplace_payout_proposal_not_executed",
         "skill_marketplace_payout_proposals",
@@ -39,6 +47,11 @@ def downgrade() -> None:
         "ck_skill_marketplace_payout_proposal_execution_consistency",
         "skill_marketplace_payout_proposals",
         type_="check",
+    )
+    op.create_check_constraint(
+        "ck_skill_marketplace_payout_proposal_provider_none",
+        "skill_marketplace_payout_proposals",
+        "provider = 'none'",
     )
     op.create_check_constraint(
         "ck_skill_marketplace_payout_proposal_not_executed",
