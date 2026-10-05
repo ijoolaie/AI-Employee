@@ -23,6 +23,13 @@ class MarketplacePayoutProposalResponse(BaseModel):
     provider: str
     status: str
     execution_status: str
+    idempotency_key: str | None
+    provider_payout_id: str | None
+    provider_event_id: str | None
+    failure_code: str | None
+    retryable: bool
+    executed: bool
+    external_execution: bool
     metadata: dict
     created_at: datetime
     updated_at: datetime
