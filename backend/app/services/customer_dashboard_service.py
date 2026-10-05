@@ -356,3 +356,115 @@ async def get_office(db: AsyncSession, *, tenant_id):
         "pending_approvals": pending_approvals,
         "generated_at": datetime.now(timezone.utc),
     }
+
+
+async def get_employee_career(db: AsyncSession, *, tenant_id, employee_id):
+    """Return an evidence-first, read-only career view for one tenant employee.
+
+    W17 deliberately avoids inventing employment start dates, reputation scores or
+    achievements. Career facts are derived only from the authoritative Employee,
+    Run and WorkItem records belonging to the caller tenant.
+    """
+    employee = await db.scalar(
+        select(Employee).where(
+            Employee.id == employee_id,
+            Employee.tenant_id == tenant_id,
+        )
+    )
+    if employee is None:
+        from app.core.exceptions import NotFoundError
+        raise NotFoundError("Employee not found")
+
+    runs_result = await db.execute(
+        select(
+            Run.id,
+            Run.status,
+            Run.completed_at,
+            Run.created_at,
+            Run.work_item_id,
+            WorkItem.title,
+            WorkItem.status.label("work_item_status"),
+        )
+        .outerjoin(
+            WorkItem,
+            (WorkItem.id == Run.work_item_id) & (WorkItem.tenant_id == tenant_id),
+        )
+        .where(
+            Run.tenant_id == tenant_id,
+            Run.employee_id == employee_id,
+        )
+        .order_by(Run.created_at.desc())
+        .limit(50)
+    )
+    rows = list(runs_result.all())
+
+    successful_rows = [row for row in rows if row.status == "success"]
+    completed_work_item_ids = {
+        row.work_item_id
+        for row in successful_rows
+        if row.work_item_id is not None
+        and getattr(row.work_item_status, "value", row.work_item_status) == "succeeded"
+    }
+
+    work_history = [
+        {
+            "id": str(row.work_item_id),
+            "title": row.title or "Untitled work item",
+            "status": getattr(row.work_item_status, "value", row.work_item_status) or "unknown",
+            "completed_at": row.completed_at,
+            "run_id": str(row.id),
+        }
+        for row in successful_rows
+        if row.work_item_id is not None
+        and getattr(row.work_item_status, "value", row.work_item_status) == "succeeded"
+    ][:20]
+
+    # Employee.created_at is an identity creation timestamp, not proof of employment
+    # start. Therefore tenure is explicitly UNKNOWN until a governed employment-start
+    # evidence source exists.
+    tenure = {
+        "status": "UNKNOWN",
+        "years": None,
+        "months": None,
+        "reason": "authoritative employment start evidence is not available",
+    }
+
+    indicators = [
+        {
+            "code": "successful_runs",
+            "label": "Successful governed runs",
+            "value": len(successful_rows),
+            "evidence_status": "VERIFIED",
+            "evidence_refs": [f"run:{row.id}" for row in successful_rows[:20]],
+        },
+        {
+            "code": "completed_work_items",
+            "label": "Completed work items",
+            "value": len(completed_work_item_ids),
+            "evidence_status": "VERIFIED",
+            "evidence_refs": [f"work_item:{item_id}" for item_id in sorted(completed_work_item_ids, key=str)],
+        },
+        {
+            "code": "reputation_score",
+            "label": "Reputation score",
+            "value": None,
+            "evidence_status": "NOT_APPLICABLE",
+            "evidence_refs": [],
+        },
+    ]
+
+    return {
+        "contract_version": "w17-career-v1",
+        "employee": {
+            "id": str(employee.id),
+            "name": employee.name,
+            "slug": employee.slug,
+            "avatar_url": employee.avatar_url,
+            "kind": employee.kind,
+            "is_active": employee.is_active,
+        },
+        "tenure": tenure,
+        "work_history": work_history,
+        "indicators": indicators,
+        "achievements": [],
+    }
