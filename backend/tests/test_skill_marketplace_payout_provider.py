@@ -2,6 +2,7 @@
 
 from decimal import Decimal
 import uuid
+from types import SimpleNamespace
 
 import pytest
 
@@ -143,3 +144,55 @@ def test_stripe_connect_provider_is_named_and_operator_selected():
     finally:
         settings.marketplace_payout_provider_name = original_provider
         settings.stripe_secret_key = original_key
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("error_name", "expected_status", "expected_retryable"),
+    [
+        ("APIConnectionError", MarketplacePayoutStatus.UNKNOWN, True),
+        ("RateLimitError", MarketplacePayoutStatus.UNKNOWN, True),
+        ("APIError", MarketplacePayoutStatus.UNKNOWN, True),
+        ("InvalidRequestError", MarketplacePayoutStatus.FAILED, False),
+    ],
+)
+async def test_stripe_connect_maps_provider_errors_to_durable_states(
+    monkeypatch, error_name, expected_status, expected_retryable
+):
+    error_classes = {
+        name: type(name, (Exception,), {})
+        for name in ("APIConnectionError", "RateLimitError", "APIError", "InvalidRequestError")
+    }
+    error_type = error_classes[error_name]
+
+    class Transfer:
+        @staticmethod
+        def create(**kwargs):
+            raise error_type("simulated")
+
+    fake_stripe = type(
+        "Stripe",
+        (),
+        {
+            "Transfer": Transfer,
+            "error": SimpleNamespace(**error_classes),
+        },
+    )
+    monkeypatch.setattr(
+        "app.services.skill_marketplace_payout_provider._stripe_client",
+        lambda: fake_stripe,
+    )
+
+    result = await StripeConnectMarketplacePayoutProvider().create_payout(
+        request(destination_ref="acct_123")
+    )
+
+    assert result.status == expected_status
+    assert result.failure_code == error_name
+    assert result.retryable is expected_retryable
+    assert result.executed is False
+    assert result.external_execution is False
+    assert result.provider == "stripe-connect"
+    assert result.provider_execution == (
+        "ambiguous" if expected_status == MarketplacePayoutStatus.UNKNOWN else "rejected"
+    )
