@@ -187,8 +187,20 @@ async def test_employee_career_route_passes_authenticated_tenant_and_employee(mo
         captured.update(db=db, tenant_id=tenant_id, employee_id=employee_id)
         return {
             "contract_version": "w17-career-v1",
-            "employee": {"id": str(employee_id), "name": "Engineer", "slug": "engineer", "avatar_url": None, "kind": "custom", "is_active": True},
-            "tenure": {"status": "UNKNOWN", "years": None, "months": None, "reason": "authoritative employment start evidence is not available"},
+            "employee": {
+                "id": str(employee_id),
+                "name": "Engineer",
+                "slug": "engineer",
+                "avatar_url": None,
+                "kind": "custom",
+                "is_active": True,
+            },
+            "tenure": {
+                "status": "UNKNOWN",
+                "years": None,
+                "months": None,
+                "reason": "authoritative employment start evidence is not available",
+            },
             "work_history": [],
             "indicators": [],
             "achievements": [],
@@ -196,7 +208,7 @@ async def test_employee_career_route_passes_authenticated_tenant_and_employee(mo
 
     monkeypatch.setattr(customer_dashboard.customer_dashboard_service, "get_employee_career", fake_get_career)
     response = await customer_dashboard.get_employee_career(
-        employee_id=str(employee_id),
+        employee_id=employee_id,
         ctx=SimpleNamespace(tenant_id=tenant_id),
         db=object(),
     )
