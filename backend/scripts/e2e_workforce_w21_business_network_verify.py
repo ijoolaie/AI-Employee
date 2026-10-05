@@ -68,10 +68,12 @@ async def run():
     print("W21 approved response", approved)
     assert approved["status"]=="approved", approved
     assert approved["correlation_id"]=="corr-network-001"
-    try:
-        request("POST",f"/business-network/requests/{first['id']}/decision",requester_token,{"approve":True},200)
-        raise AssertionError("requester unexpectedly decided own request")
-    except Exception as exc: assert err_code(exc) in (409,422)
+    async with AsyncSessionLocal() as db:
+        try:
+            await decide_request(db,sender_tenant_id=sender_tenant,request_id=uuid.UUID(first["id"]),decider_user_id=requester,approve=True,reason="invalid requester decision")
+            raise AssertionError("requester unexpectedly decided own request")
+        except ValidationAppError:
+            await db.rollback()
     print("W21 SAME-TENANT REJECTION PASS")
     print("W21 CROSS-TENANT REQUEST PASS")
     print("W21 IDEMPOTENT REPLAY PASS")
