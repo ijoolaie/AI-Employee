@@ -52,7 +52,7 @@ jobs:
 
       - name: Run semantic Workforce real-stack matrix
         run: |
-          docker compose exec -T api python scripts/e2e_workforce_semantic_verify.py
+          docker compose exec -T -e PYTHONPATH=/app api python scripts/e2e_workforce_semantic_verify.py
 
       - name: Collect diagnostics
         if: always()
