@@ -30,6 +30,7 @@ from app.services.skill_marketplace_payout_service import (
     create_payout_proposal,
     execute_payout_proposal,
     list_payout_proposals,
+    reconcile_unknown_payout_execution,
 )
 
 
@@ -371,6 +372,58 @@ async def verify() -> None:
         print("MARKETPLACE PAYOUT EXPLICIT APPROVAL PASS")
         print("MARKETPLACE PAYOUT GOVERNED CONTRACT-TEST EXECUTION PASS")
         print("MARKETPLACE PAYOUT EXTERNAL EXECUTION FALSE PASS")
+
+        proposal.execution_status = SkillMarketplacePayoutExecutionStatus.UNKNOWN
+        proposal.executed = False
+        proposal.external_execution = False
+        proposal.metadata_["reconciliation_required"] = True
+        await db.flush()
+
+        reconciliation_evidence_ref = f"operator-evidence://w16/{proposal.id}/{suffix}"
+        reconciliation_approval = await approval_service.create_request(
+            db,
+            run=governance_run,
+            tool_name="marketplace_reconcile_payout",
+            tool_call_id=f"w16-marketplace-reconcile-{suffix}",
+            arguments={
+                "proposal_id": str(proposal.id),
+                "outcome": "accepted",
+                "evidence_ref": reconciliation_evidence_ref,
+            },
+            continuation_messages=[],
+            tenant_id=vendor.id,
+            requested_by=platform_admin.id,
+        )
+        reconciled_approval = await approval_service.decide(
+            db,
+            approval_id=reconciliation_approval.id,
+            tenant_id=vendor.id,
+            decided_by=approval_decider.id,
+            decision="approve",
+            reason="W16 manual reconciliation fixture with explicit operator evidence",
+        )
+        assert reconciled_approval.status == "approved"
+
+        reconciled = await reconcile_unknown_payout_execution(
+            db,
+            proposal_id=proposal.id,
+            platform_admin_tenant_id=vendor.id,
+            actor_user_id=approval_decider.id,
+            approval_granted=True,
+            approval_request_id=reconciliation_approval.id,
+            outcome="accepted",
+            evidence_ref=reconciliation_evidence_ref,
+        )
+        assert reconciled.execution_status == SkillMarketplacePayoutExecutionStatus.ACCEPTED
+        assert reconciled.reconciliation_outcome == "accepted"
+        assert reconciled.reconciliation_evidence_ref == reconciliation_evidence_ref
+        assert reconciled.reconciled_by_user_id == approval_decider.id
+        assert reconciled.reconciled_at is not None
+        assert reconciled.external_execution is False
+        assert reconciled.metadata_["reconciliation_source"] == "explicit_operator_evidence"
+        assert reconciled.metadata_["execution_authority_changed"] is False
+        print("MARKETPLACE PAYOUT UNKNOWN MANUAL RECONCILIATION PASS")
+        print("MARKETPLACE PAYOUT RECONCILIATION EXTERNAL EXECUTION FALSE PASS")
 
         replay_proposal = await create_payout_proposal(
             db,
