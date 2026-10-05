@@ -189,7 +189,7 @@ The post-v1.4.11 workforce program now includes a planned Virtual AI Company Hea
 - W16 Skill marketplace: FOUNDATION IMPLEMENTED + REAL-STACK LIFECYCLE VERIFIED; exact-SHA Production Certification NOT RUN / NOT VERIFIED.
 - W17 Employee career/reputation presentation: **IMPLEMENTED / REAL-STACK VERIFIED** on post-v1.4.16 mainline; Production Certification remains NOT RUN.
 - W18 Virtual meeting rooms: **IMPLEMENTED / REAL-STACK VERIFIED** first vertical slice; Production Certification remains NOT RUN.
-- W19 Voice/TTS/real-time visual avatar: NOT IMPLEMENTED / NOT VERIFIED.
+- W19 Voice/TTS/real-time visual avatar: **DESIGN FOUNDATION ACTIVE / NOT IMPLEMENTED**; provider execution remains unconfigured.
 - W20 Third-party Employee marketplace: NOT IMPLEMENTED / NOT VERIFIED.
 - W21 AI Business Network: PLANNED / NOT IMPLEMENTED.
 - New GPU requirement: NONE introduced by this architecture.
@@ -551,3 +551,7 @@ W18 Virtual Meeting Rooms first vertical slice is **IMPLEMENTED / REAL-STACK VER
 - External deployment/customer acceptance: **NOT VERIFIED**.
 
 W18 implementation/evidence gate is closed. W19 is now the next roadmap slice.
+
+## W19 active design checkpoint — 2026-10-05
+
+W19 Voice & Visual Interaction is now the active next slice under issue #904. The provider-agnostic contract and privacy/resource boundaries are documented in `docs/current/W19_VOICE_VISUAL_INTERACTION.md`. No live voice/video provider execution, camera capture, deployment or certification is claimed.
