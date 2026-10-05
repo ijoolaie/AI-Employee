@@ -32,8 +32,12 @@ async def test_customer_meeting_route_passes_authenticated_tenant(monkeypatch):
     async def fake(db,*,tenant_id,meeting_id):
         captured.update(db=db,tenant_id=tenant_id,meeting_id=meeting_id)
         return {"contract_version":"w18-meeting-v1","meeting":{"id":str(mid),"title":"Room","description":None,"status":"scheduled","scheduled_at":now,"started_at":None,"ended_at":None,"created_at":now},"participants":[],"evidence_status":"UNKNOWN","evidence_refs":[],"provider_state":"NOT_APPLICABLE"}
-    monkeypatch.setattr(customer_dashboard.customer_dashboard_service,"get_meeting",fake)
-    response=await customer_dashboard.get_customer_meeting(meeting_id=mid,ctx=SimpleNamespace(tenant_id=t),db=object())
+    original=meeting_service.get_meeting
+    meeting_service.get_meeting=fake
+    try:
+        response=await customer_dashboard.get_customer_meeting(meeting_id=mid,ctx=SimpleNamespace(tenant_id=t),db=object())
+    finally:
+        meeting_service.get_meeting=original
     assert response.success is True
     assert captured["tenant_id"]==t
     assert captured["meeting_id"]==mid
