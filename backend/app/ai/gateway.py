@@ -164,7 +164,7 @@ class AIGateway:
     async def chat(
         self, db: AsyncSession, request: ChatRequest, *, tenant_id: uuid.UUID,
         run_id: uuid.UUID | None = None, prompt_version: str | None = None,
-        call_metadata: dict | None = None,
+        call_metadata: dict | None = None, routing_context: RoutingContext | None = None,
     ) -> ChatResult:
         req_id = request_id_var.get()
         metadata = dict(call_metadata or {})
