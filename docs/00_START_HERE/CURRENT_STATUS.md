@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-10-04
+**Last reconciled:** 2026-10-05
 **Latest certified release:** `v1.4.16`
 **Certified release SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
 **Stable Git tag:** `v1.4.16` — VERIFIED
@@ -190,7 +190,7 @@ The post-v1.4.11 workforce program now includes a planned Virtual AI Company Hea
 - W17 Employee career/reputation presentation: **IMPLEMENTED / REAL-STACK VERIFIED** on post-v1.4.16 mainline; Production Certification remains NOT RUN.
 - W18 Virtual meeting rooms: **IMPLEMENTED / REAL-STACK VERIFIED** first vertical slice; Production Certification remains NOT RUN.
 - W19 Voice/TTS/real-time visual avatar: **DESIGN FOUNDATION ACTIVE / NOT IMPLEMENTED**; provider execution remains unconfigured.
-- W20 Third-party Employee marketplace: **FIRST VERTICAL SLICE IMPLEMENTED / REAL-STACK VERIFICATION PENDING**; package publication, cross-tenant import, fail-closed execution boundary and revocation are implemented. External provider execution, marketplace revenue/payout/tax settlement and Production Certification remain NOT VERIFIED.
+- W20 Third-party Employee marketplace: **IMPLEMENTED / REAL-STACK VERIFIED** first governed vertical slice on post-v1.4.16 mainline; W20 E2E Run `37308738607` passed on verification head `fe6377abcc7f110aa83a8cff3b8a0ea7e5c10c99`. External provider execution, marketplace revenue/payout/tax settlement and Production Certification remain NOT VERIFIED.
 - W21 AI Business Network: PLANNED / NOT IMPLEMENTED.
 - New GPU requirement: NONE introduced by this architecture.
 
