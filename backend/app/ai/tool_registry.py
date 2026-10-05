@@ -105,6 +105,7 @@ class ToolRegistry:
         agent_instance_id=None,
         employee_id=None,
         tool_call_id=None,
+        approval_request_id=None,
     ) -> Any:
         tool = self.get(name)
 
@@ -274,6 +275,32 @@ class ToolRegistry:
                 tenant_id=tenant_id,
                 **extra_context,
             )
+        elif name == "marketplace_execute_payout":
+            if db is None or tenant_id is None or actor_id is None:
+                raise ValidationAppError(
+                    "marketplace_execute_payout requires an active tenant and actor context"
+                )
+            from app.services import skill_marketplace_payout_service
+            proposal = await skill_marketplace_payout_service.execute_payout_proposal(
+                db,
+                proposal_id=__import__("uuid").UUID(arguments["proposal_id"]),
+                platform_admin_tenant_id=tenant_id,
+                actor_user_id=actor_id,
+                approval_granted=approval_granted,
+                approval_request_id=approval_request_id,
+            )
+            result = {
+                "proposal_id": str(proposal.id),
+                "execution_status": proposal.execution_status.value,
+                "provider": proposal.provider,
+                "provider_payout_id": proposal.provider_payout_id,
+                "provider_event_id": proposal.provider_event_id,
+                "executed": proposal.executed,
+                "external_execution": proposal.external_execution,
+                "failure_code": proposal.failure_code,
+                "retryable": proposal.retryable,
+            }
+
         elif name == "create_invoice":
             if db is None or tenant_id is None:
                 raise ValidationAppError("create_invoice requires an active tenant Run context")
@@ -2587,6 +2614,31 @@ def build_default_registry() -> ToolRegistry:
                 actor_id=actor_id,
                 request_id=str(tool_call_id or context.get("request_id") or "direct-tool-execution"),
             ),            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="marketplace_execute_payout",
+            description="Execute one approved marketplace seller payout proposal through the operator-selected named payout provider.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "proposal_id": {
+                        "type": "string",
+                        "minLength": 36,
+                        "maxLength": 36,
+                        "pattern": "^[0-9a-fA-F-]{36}$",
+                    }
+                },
+                "required": ["proposal_id"],
+                "additionalProperties": False,
+            },
+            handler=lambda arguments, **context: None,
+            side_effects=True,
             external_side_effects=True,
             required_permission="run.execute",
             requires_approval=True,

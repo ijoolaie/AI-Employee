@@ -11,7 +11,8 @@ from app.core.config import get_settings
 from app.core.database import AsyncSessionLocal
 from app.core.exceptions import ConflictError, NotFoundError
 from app.models.business_order import BusinessOrder
-from app.models.employee import Employee
+from app.models.employee import Employee, EmployeeVersion
+from app.models.run import Run
 from app.models.skill_marketplace_purchase import SkillMarketplacePurchase, SkillMarketplacePurchaseStatus
 from app.models.skill_package import EmployeeSkillInstallation, EmployeeSkillInstallationStatus, SkillPackage, SkillPackageStatus
 from app.models.skill_purchase_entitlement import SkillPurchaseEntitlement, SkillPurchaseEntitlementStatus
@@ -24,7 +25,12 @@ from app.services import edition_lifecycle_service, skill_marketplace_service, s
 from app.services.skill_marketplace_publication_service import SkillMarketplacePublicationService
 from app.services.skill_marketplace_purchase_service import create_checkout
 from app.services.skill_marketplace_payout_destination import bind_payout_destination, revoke_payout_destination
-from app.services.skill_marketplace_payout_service import create_payout_proposal, list_payout_proposals
+from app.services import approval_service
+from app.services.skill_marketplace_payout_service import (
+    create_payout_proposal,
+    execute_payout_proposal,
+    list_payout_proposals,
+)
 
 
 async def verify() -> None:
@@ -61,7 +67,48 @@ async def verify() -> None:
             is_active=True,
             is_platform_admin=True,
         )
-        db.add(platform_admin)
+        approval_decider = User(
+            tenant_id=vendor.id,
+            email=f"w16-marketplace-approval-{suffix}@example.test",
+            password_hash="certification-fixture",
+            full_name="W16 Marketplace Approval Decider",
+            is_active=True,
+            is_platform_admin=True,
+        )
+        db.add_all([platform_admin, approval_decider])
+        await db.flush()
+
+        governance_employee = Employee(
+            tenant_id=vendor.id,
+            slug=f"w16-marketplace-payout-governance-{suffix}",
+            name="Marketplace Payout Governance Employee",
+            kind="custom",
+            is_active=True,
+        )
+        db.add(governance_employee)
+        await db.flush()
+        governance_version = EmployeeVersion(
+            employee_id=governance_employee.id,
+            version_number=1,
+            is_current=True,
+            input_schema={"type": "object"},
+            output_schema={"type": "object"},
+            prompt_template="W16 payout governance fixture",
+            allowed_tools=["marketplace_execute_payout"],
+            rules={},
+        )
+        db.add(governance_version)
+        await db.flush()
+        governance_run = Run(
+            tenant_id=vendor.id,
+            employee_id=governance_employee.id,
+            employee_version_id=governance_version.id,
+            created_by=platform_admin.id,
+            status="pending",
+            input_data={},
+            request_id=f"w16-payout-run-{suffix}",
+        )
+        db.add(governance_run)
         await db.flush()
 
         employee = Employee(
@@ -281,6 +328,49 @@ async def verify() -> None:
         assert proposal.destination_ref != replacement.destination_ref
         print("MARKETPLACE PAYOUT PROPOSAL DESTINATION IMMUTABLE SNAPSHOT PASS")
 
+
+        settings.marketplace_payout_provider_name = "contract-test"
+        approval = await approval_service.create_request(
+            db,
+            run=governance_run,
+            tool_name="marketplace_execute_payout",
+            tool_call_id=f"w16-marketplace-payout-{suffix}",
+            arguments={"proposal_id": str(proposal.id)},
+            continuation_messages=[],
+            tenant_id=vendor.id,
+            requested_by=platform_admin.id,
+        )
+        assert approval.status == "pending"
+        decided = await approval_service.decide(
+            db,
+            approval_id=approval.id,
+            tenant_id=vendor.id,
+            decided_by=approval_decider.id,
+            decision="approve",
+            reason="W16 deterministic payout execution certification fixture",
+        )
+        assert decided.status == "approved"
+
+        executed = await execute_payout_proposal(
+            db,
+            proposal_id=proposal.id,
+            platform_admin_tenant_id=vendor.id,
+            actor_user_id=approval_decider.id,
+            approval_granted=True,
+            approval_request_id=approval.id,
+        )
+        assert executed.execution_status == SkillMarketplacePayoutExecutionStatus.ACCEPTED
+        assert executed.provider == "contract-test"
+        assert executed.executed is False
+        assert executed.external_execution is False
+        assert executed.provider_payout_id == f"contract-payout-{executed.idempotency_key}"
+        assert executed.provider_event_id == f"contract-payout-event-{executed.idempotency_key}"
+        assert executed.metadata_["approval_required"] is True
+        assert executed.metadata_["approval_granted"] is True
+        assert executed.metadata_["destination"] == "bound_snapshot"
+        print("MARKETPLACE PAYOUT EXPLICIT APPROVAL PASS")
+        print("MARKETPLACE PAYOUT GOVERNED CONTRACT-TEST EXECUTION PASS")
+        print("MARKETPLACE PAYOUT EXTERNAL EXECUTION FALSE PASS")
 
         replay_proposal = await create_payout_proposal(
             db,
