@@ -190,7 +190,7 @@ The post-v1.4.11 workforce program now includes a planned Virtual AI Company Hea
 - W17 Employee career/reputation presentation: **IMPLEMENTED / REAL-STACK VERIFIED** on post-v1.4.16 mainline; Production Certification remains NOT RUN.
 - W18 Virtual meeting rooms: **IMPLEMENTED / REAL-STACK VERIFIED** first vertical slice; Production Certification remains NOT RUN.
 - W19 Voice/TTS/real-time visual avatar: **DESIGN FOUNDATION ACTIVE / NOT IMPLEMENTED**; provider execution remains unconfigured.
-- W20 Third-party Employee marketplace: NOT IMPLEMENTED / NOT VERIFIED.
+- W20 Third-party Employee marketplace: **FIRST VERTICAL SLICE IMPLEMENTED / REAL-STACK VERIFICATION PENDING**; package publication, cross-tenant import, fail-closed execution boundary and revocation are implemented. External provider execution, marketplace revenue/payout/tax settlement and Production Certification remain NOT VERIFIED.
 - W21 AI Business Network: PLANNED / NOT IMPLEMENTED.
 - New GPU requirement: NONE introduced by this architecture.
 
