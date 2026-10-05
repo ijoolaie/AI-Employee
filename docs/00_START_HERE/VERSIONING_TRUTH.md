@@ -243,9 +243,12 @@ W19 is the next product-experience implementation slice.
 W20 is post-v1.4.16 mainline engineering and is not a release version.
 
 - PR: #907.
-- First vertical slice: **IMPLEMENTED; REAL-STACK VERIFICATION PENDING**.
+- Merge SHA: `1ded1b9d33056eaf21806208aba1bebebb9fb2d8`.
+- Dedicated real-stack E2E Run `37308738607` — **PASS**.
+- Verification head: `fe6377abcc7f110aa83a8cff3b8a0ea7e5c10c99`.
+- W20 lifecycle/install/revoke/audit and governed marketplace mechanics are **REAL-STACK VERIFIED**.
+- Provider execution, external marketplace revenue, seller payout, tax settlement, production deployment and customer acceptance remain **NOT VERIFIED**.
 - Exact-SHA Production Certification: **NOT RUN**.
-- External provider execution, marketplace revenue, payout and tax settlement: **NOT VERIFIED**.
 - Any release containing W20 application code requires fresh exact-SHA certification.
 
 
