@@ -11,9 +11,10 @@ from app.ai.providers.lm_studio_provider import LMStudioProvider
 from app.core.config import get_settings
 
 
-def get_default_provider() -> AIProvider:
+def get_provider(provider: str) -> AIProvider:
+    """Resolve only named, code-registered providers; unknown names fail closed."""
     settings = get_settings()
-    provider = settings.ai_default_provider.strip().lower()
+    provider = provider.strip().lower()
     if provider in {"lm_studio", "lmstudio", "local"}:
         return LMStudioProvider(
             base_url=settings.lm_studio_base_url,
@@ -24,3 +25,8 @@ def get_default_provider() -> AIProvider:
     if provider == "deterministic":
         return DeterministicProvider()
     raise RuntimeError(f"Unsupported AI provider: {provider}")
+
+
+def get_default_provider() -> AIProvider:
+    settings = get_settings()
+    return get_provider(settings.ai_default_provider)
