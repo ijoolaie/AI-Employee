@@ -51,7 +51,10 @@ async def prepare():
         vendor = Tenant(name=f"W22 SEO Vendor {suffix}", slug=f"w22-seo-vendor-{suffix}", status="active", tenant_kind=edition_service.EDITION_VENDOR)
         db.add(vendor)
         await db.flush()
-        customer = Tenant(name=f"W22 SEO Customer {suffix}", slug=f"w22-seo-customer-{suffix}", status="active", tenant_kind=edition_service.EDITION_CUSTOMER, parent_tenant_id=vendor.id)
+        reseller = Tenant(name=f"W22 SEO Reseller {suffix}", slug=f"w22-seo-reseller-{suffix}", status="active", tenant_kind=edition_service.EDITION_RESELLER, parent_tenant_id=vendor.id)
+        db.add(reseller)
+        await db.flush()
+        customer = Tenant(name=f"W22 SEO Customer {suffix}", slug=f"w22-seo-customer-{suffix}", status="active", tenant_kind=edition_service.EDITION_CUSTOMER, parent_tenant_id=reseller.id)
         db.add(customer)
         await db.flush()
 
