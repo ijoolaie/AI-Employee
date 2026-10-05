@@ -188,7 +188,7 @@ The post-v1.4.11 workforce program now includes a planned Virtual AI Company Hea
 - W15 Clothing/cosmetic commerce: NOT IMPLEMENTED / NOT VERIFIED.
 - W16 Skill marketplace: FOUNDATION IMPLEMENTED + REAL-STACK LIFECYCLE VERIFIED; exact-SHA Production Certification NOT RUN / NOT VERIFIED.
 - W17 Employee career/reputation presentation: **IMPLEMENTED / REAL-STACK VERIFIED** on post-v1.4.16 mainline; Production Certification remains NOT RUN.
-- W18 Virtual meeting rooms: NOT IMPLEMENTED / NOT VERIFIED.
+- W18 Virtual meeting rooms: **IMPLEMENTED / REAL-STACK VERIFIED** first vertical slice; Production Certification remains NOT RUN.
 - W19 Voice/TTS/real-time visual avatar: NOT IMPLEMENTED / NOT VERIFIED.
 - W20 Third-party Employee marketplace: NOT IMPLEMENTED / NOT VERIFIED.
 - W21 AI Business Network: PLANNED / NOT IMPLEMENTED.
@@ -529,3 +529,25 @@ W17 Employee Career & Reputation is now **IMPLEMENTED / REAL-STACK VERIFIED**.
 - External deployment/customer acceptance: **NOT VERIFIED**.
 
 W17's implementation/evidence gate is closed. The next roadmap slice may proceed to W18.
+
+## W18 verification checkpoint — 2026-10-05
+
+W18 Virtual Meeting Rooms first vertical slice is **IMPLEMENTED / REAL-STACK VERIFIED**.
+
+- PR #903 merged at `a5fd482e456ba2060705aa24ff3f63de0e2a7665`.
+- Verification head: `7ae4fe590d5483185637a8f344cc592979fec8bf`.
+- Dedicated W18 real-stack E2E: Run `37299435745`, Job `111728381943` — **PASS**.
+- CI: Run `37299435606` — **PASS**.
+- CodeQL: Run `37299435510` — **PASS**.
+- Architecture Guard: Run `37299435779` — **PASS**.
+- Runtime Isolation/RBAC: Run `37299435639` — **PASS**.
+- Security/Privacy: Run `37299435958` — **PASS**.
+- DAST: Run `37299435653` — **PASS**.
+- Production Infrastructure: Run `37299435583` — **PASS**.
+- HA: Run `37299435752` — **PASS**.
+- Observability: Run `37299435621` — **PASS**.
+- Rollback/Alerting: Run `37299435625` — **PASS**.
+- Exact-SHA Production Certification: **NOT RUN**.
+- External deployment/customer acceptance: **NOT VERIFIED**.
+
+W18 implementation/evidence gate is closed. W19 is now the next roadmap slice.
