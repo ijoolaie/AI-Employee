@@ -62,18 +62,18 @@ async def run():
     print("W21 replay response", replay)
     assert replay["id"]==first["id"], replay
     async with AsyncSessionLocal() as db:
+        try:
+            await decide_request(db,sender_tenant_id=sender_tenant,request_id=uuid.UUID(first["id"]),decider_user_id=requester,approve=True,reason="invalid requester decision")
+            raise AssertionError("requester unexpectedly decided own request")
+        except ValidationAppError:
+            await db.rollback()
+    async with AsyncSessionLocal() as db:
         approved_obj=await decide_request(db,sender_tenant_id=sender_tenant,request_id=uuid.UUID(first["id"]),decider_user_id=decision_user,approve=True,reason="W21 E2E approval")
         await db.commit()
         approved={"status":approved_obj.status.value,"correlation_id":approved_obj.correlation_id}
     print("W21 approved response", approved)
     assert approved["status"]=="approved", approved
     assert approved["correlation_id"]=="corr-network-001"
-    async with AsyncSessionLocal() as db:
-        try:
-            await decide_request(db,sender_tenant_id=sender_tenant,request_id=uuid.UUID(first["id"]),decider_user_id=requester,approve=True,reason="invalid requester decision")
-            raise AssertionError("requester unexpectedly decided own request")
-        except ValidationAppError:
-            await db.rollback()
     print("W21 SAME-TENANT REJECTION PASS")
     print("W21 CROSS-TENANT REQUEST PASS")
     print("W21 IDEMPOTENT REPLAY PASS")
