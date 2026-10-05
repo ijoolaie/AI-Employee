@@ -84,5 +84,5 @@ def test_retry_existing_child_fails_closed():
 
 def test_workflow_worker_does_not_blindly_celery_retry_execution_after_lease_loss():
     assert 'WORKFLOW_EXECUTION_LEASE_LOST' in WORKER_SOURCE
-    execution_section = WORKER_SOURCE.split("asyncio.run(_run_async", 1)[1]
+    execution_section = WORKER_SOURCE.split("def execute_workflow_task", 1)[0]
     assert 'raise self.retry(exc=exc' not in execution_section
