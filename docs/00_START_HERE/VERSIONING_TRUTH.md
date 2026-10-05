@@ -247,3 +247,16 @@ W20 is post-v1.4.16 mainline engineering and is not a release version.
 - Exact-SHA Production Certification: **NOT RUN**.
 - External provider execution, marketplace revenue, payout and tax settlement: **NOT VERIFIED**.
 - Any release containing W20 application code requires fresh exact-SHA certification.
+
+
+
+## W21 versioning boundary — 2026-10-05
+
+W21 AI Business Network is **IMPLEMENTED / REAL-STACK VERIFIED** on post-v1.4.16 mainline.
+
+- PR #909; merge SHA `b6f9efdf067fdef5b9c6fad65002ee34998e5545`.
+- Dedicated E2E Run `37314768222` — PASS; CI/security/production-like gates passed.
+- W21 is not a release version and does not inherit v1.4.16 certification.
+- Exact-SHA Production Certification: **NOT RUN**.
+- External network execution, contractual commitment, financial settlement, production deployment and customer acceptance remain **NOT VERIFIED**.
+- Any future release containing W21 requires fresh exact-SHA certification.
