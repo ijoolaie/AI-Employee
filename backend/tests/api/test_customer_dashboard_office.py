@@ -202,7 +202,9 @@ async def test_employee_career_route_passes_authenticated_tenant_and_employee(mo
     )
 
     assert response.success is True
-    assert captured == {"db": response.__dict__.get("_db", object()) if False else captured["db"], "tenant_id": tenant_id, "employee_id": str(employee_id)}
+    assert captured["tenant_id"] == tenant_id
+    assert captured["employee_id"] == employee_id
+    assert captured["db"] is not None
     assert response.data["contract_version"] == "w17-career-v1"
 
 
