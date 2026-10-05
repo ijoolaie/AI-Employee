@@ -575,3 +575,8 @@ W21 first governed vertical slice is **IMPLEMENTED / REAL-STACK VERIFIED**.
 - Exact-SHA Production Certification: **NOT RUN**; W21 does not inherit v1.4.16 certification.
 
 **Next roadmap slice: W22 — to be defined by the authoritative roadmap after W21 evidence closure.**
+
+
+## W22 SEO & Growth Employee — active checkpoint — 2026-10-05
+
+W22 (the original W7 SEO & Growth phase resumed after W21) is now the active engineering slice under issue #910. The existing governed SEO/growth role and Tool Registry bindings are being verified on the real PostgreSQL stack. The first slice does not claim live search-engine execution or SEO outcome impact.
