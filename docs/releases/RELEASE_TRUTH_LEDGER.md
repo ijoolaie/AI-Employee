@@ -123,7 +123,7 @@ The experience/commerce roadmap is planned mainline work, not release-certified 
 - W14 Employee Appearance & Customization — implemented post-release; exact-SHA certification pending.
 - W15 Wardrobe / Cosmetic Marketplace — planned/not implemented.
 - W16 Skills Marketplace — implemented + hardened + real-stack evidenced across lifecycle, API, publication, provider and marketplace-finance boundaries; post-v1.4.16 certification not verified.
-- W17 Employee Career / Reputation — design foundation active; implementation not yet verified.
+- W17 Employee Career / Reputation — **IMPLEMENTED / REAL-STACK VERIFIED**; exact-SHA Production Certification not verified.
 - W18 Virtual Meeting Rooms — planned.
 - W19 Voice / Visual Interaction — planned.
 - W20 Third-party Employee Marketplace — planned.
@@ -205,3 +205,18 @@ Current evidence boundary:
 - exact-SHA Production Certification: **NOT RUN**.
 
 Therefore W17 must not yet be called Implemented/Verified or Certified.
+
+
+## W17 verification checkpoint — 2026-10-05
+
+W17 Employee Career & Reputation has completed its implementation evidence gate.
+
+- Implementation integration: `e857528167e826b335a6448cce4b5ad3240a4d46`.
+- Dedicated real-stack E2E verification: Run `37298325542`, Job `111724800314` — **PASS**.
+- Verification head: `f8b5a9734acbcc70ad165a2fbda2f326bfc2fa9a`.
+- CodeQL on verification head: Run `37298325646` — **PASS**.
+- Verification workflow reconciliation merged: `53e47d2031dfc00de1b32e8b4fc8f1be0073b139`.
+- W17 status: **IMPLEMENTED / REAL-STACK VERIFIED**.
+- Production Certification: **NOT RUN**. W17 does not inherit `v1.4.16` certification.
+
+W18 is now the next permitted product-experience implementation slice.
