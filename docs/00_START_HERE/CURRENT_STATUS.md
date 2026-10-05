@@ -187,7 +187,7 @@ The post-v1.4.11 workforce program now includes a planned Virtual AI Company Hea
 - W14 Employee appearance customization: NOT IMPLEMENTED / NOT VERIFIED.
 - W15 Clothing/cosmetic commerce: NOT IMPLEMENTED / NOT VERIFIED.
 - W16 Skill marketplace: FOUNDATION IMPLEMENTED + REAL-STACK LIFECYCLE VERIFIED; exact-SHA Production Certification NOT RUN / NOT VERIFIED.
-- W17 Employee career/reputation presentation: NOT IMPLEMENTED / NOT VERIFIED.
+- W17 Employee career/reputation presentation: **IMPLEMENTED / REAL-STACK VERIFIED** on post-v1.4.16 mainline; Production Certification remains NOT RUN.
 - W18 Virtual meeting rooms: NOT IMPLEMENTED / NOT VERIFIED.
 - W19 Voice/TTS/real-time visual avatar: NOT IMPLEMENTED / NOT VERIFIED.
 - W20 Third-party Employee marketplace: NOT IMPLEMENTED / NOT VERIFIED.
@@ -514,3 +514,18 @@ W17 is now the next active engineering slice.
 - Required exit evidence: API/schema + tenant-safe handler + negative/authorization tests + real PostgreSQL evidence + CI + documentation reconciliation.
 
 W17 is post-v1.4.16 mainline engineering and has no transferred release certification.
+
+
+## W17 verification checkpoint — 2026-10-05
+
+W17 Employee Career & Reputation is now **IMPLEMENTED / REAL-STACK VERIFIED**.
+
+- Integration commit: `e857528167e826b335a6448cce4b5ad3240a4d46`.
+- Verification PR: #901; verification head: `f8b5a9734acbcc70ad165a2fbda2f326bfc2fa9a`.
+- Dedicated W17 real-stack E2E: Run `37298325542`, Job `111724800314` — **PASS**.
+- CodeQL on the verification head: Run `37298325646` — **PASS**.
+- Verification workflow reconciliation merged as `53e47d2031dfc00de1b32e8b4fc8f1be0073b139`.
+- Exact-SHA Production Certification: **NOT RUN**; no certification is transferred from `v1.4.16`.
+- External deployment/customer acceptance: **NOT VERIFIED**.
+
+W17's implementation/evidence gate is closed. The next roadmap slice may proceed to W18.
