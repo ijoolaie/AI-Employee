@@ -66,10 +66,11 @@ from app.models.skill_marketplace_publication import SkillMarketplacePublication
 from app.models.skill_marketplace_purchase import SkillMarketplacePurchase, SkillMarketplacePurchaseStatus
 from app.models.skill_marketplace_settlement import SkillMarketplacePayoutStatus, SkillMarketplaceSettlement, SkillMarketplaceSettlementStatus
 from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutExecutionStatus, SkillMarketplacePayoutProposal, SkillMarketplacePayoutProposalStatus
+from app.models.meeting import Meeting, MeetingParticipant, MeetingStatus, MeetingParticipantRole
 from app.models.skill_marketplace_payout_destination import SkillMarketplacePayoutDestination, SkillMarketplacePayoutDestinationStatus
 
 __all__ = [
-    "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
+    "Meeting", "MeetingParticipant", "MeetingStatus", "MeetingParticipantRole", "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
     "FileObject", "Employee", "EmployeeVersion", "Run", "AIProviderCall", "ToolApprovalRequest", "ToolExecutionFence",
     "KnowledgeDocument", "KnowledgeChunk", "EmployeeMemory", "Workflow", "WorkflowVersion",
     "WorkflowRun", "WorkflowStepRun", "WorkflowParallelBranchRun", "WorkflowEventTrigger",

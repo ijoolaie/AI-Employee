@@ -8,10 +8,17 @@ from app.schemas.customer_dashboard import (
     CustomerCareerResponse,
     CustomerDashboardResponse,
     CustomerOfficeResponse,
+    CustomerMeetingResponse,
 )
 from app.services import customer_dashboard_service
 
 router = APIRouter(prefix='/customer-dashboard', tags=['customer-dashboard'])
+
+@router.get('/meetings/{meeting_id}', response_model=APIResponse[CustomerMeetingResponse])
+async def get_customer_meeting(meeting_id: UUID, ctx: AuditReadContext, db: DbSession):
+    from app.services import meeting_service
+    meeting = await meeting_service.get_meeting(db, tenant_id=ctx.tenant_id, meeting_id=meeting_id)
+    return APIResponse(success=True, data=meeting)
 
 @router.get('/office', response_model=APIResponse[CustomerOfficeResponse])
 async def get_customer_office(ctx: AuditReadContext, db: DbSession):
