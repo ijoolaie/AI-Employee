@@ -80,6 +80,8 @@ class Settings(BaseSettings):
             raise ValueError("ZARINPAL_TIMEOUT_SECONDS must be between 0 and 60")
         if self.skill_marketplace_platform_fee_bps < 0 or self.skill_marketplace_platform_fee_bps > 10_000:
             raise ValueError("SKILL_MARKETPLACE_PLATFORM_FEE_BPS must be between 0 and 10000")
+        if self.marketplace_payout_provider_name.lower() == "stripe-connect" and not self.stripe_secret_key:
+            raise ValueError("STRIPE_SECRET_KEY is required when MARKETPLACE_PAYOUT_PROVIDER_NAME=stripe-connect")
         if self.skill_marketplace_settlement_enabled and self.skill_marketplace_platform_fee_bps < 0:
             raise ValueError("SKILL_MARKETPLACE_PLATFORM_FEE_BPS must be configured when marketplace settlement is enabled")
         if self.app_env.lower() in {"production", "prod"}:
