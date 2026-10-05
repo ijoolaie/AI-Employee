@@ -1391,3 +1391,28 @@ PR #876 implements the explicit application boundary from payout proposal to app
 - Exact-head W16 provider execution Run `37266213253` / Job `111623501807`, CI Run `37266213087`, Architecture Guard Run `37266213175`, CodeQL Run `37266213215` and Security/Privacy Run `37266213156` all passed.
 
 Evidence boundary: governed deterministic payout execution is **VERIFIED** for the exact PR head; external seller payout, tax settlement and realized external marketplace revenue remain **NOT VERIFIED**. Post-merge workflow/status evidence for `edabee66012c61cbb50fb26563bea49511eef3f8` was **NOT RUN / NOT VERIFIED** at reconciliation time. The immutable `v1.4.16` certification is unchanged.
+
+
+## W17 Employee Career & Reputation — 2026-10-05
+
+**Status: DESIGN FOUNDATION — IMPLEMENTATION NOT YET VERIFIED.**
+
+W17 starts from a read-only, evidence-first contract:
+- career history derives from authoritative Employee / WorkItem / Run / Workflow / approval / audit evidence;
+- tenure is UNKNOWN when an authoritative employment start date is unavailable;
+- completed work counts only authoritative successful terminal states;
+- verified KPI indicators retain provenance and explicit VERIFIED / UNVERIFIED / UNKNOWN / NOT_APPLICABLE semantics;
+- achievements/badges are presentation metadata and require durable evidence references;
+- any future reputation score must be deterministic, versioned and explainable; no opaque LLM score;
+- W17 cannot modify tools, role bindings, approvals, quotas, billing, execution state or provider selection;
+- all reads are tenant-scoped and cross-tenant access fails closed.
+
+As-built semantic contract: `docs/current/W17_EMPLOYEE_CAREER_REPUTATION.md`.
+
+Issue: #897.
+
+### W17 Definition of Done
+
+`semantic contract → API/schema → tenant-safe handler → tests → real PostgreSQL evidence → CI → documentation reconciliation`
+
+W17 remains post-v1.4.16 mainline engineering. No certification transfers from v1.4.16.
