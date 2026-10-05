@@ -190,3 +190,18 @@ Status:
 - exact-SHA Production Certification: **NOT RUN**.
 
 The W17 contract is evidence-first and read-only for the first slice. It explicitly forbids fabricated career/reputation data and forbids W17 state from becoming an authorization or execution source.
+
+
+## W17 post-merge checkpoint — 2026-10-05
+
+W17 documentation/design (#898) and application implementation (#899) were merged into main through integration PR #900 at `e857528167e826b335a6448cce4b5ad3240a4d46`.
+
+Current evidence boundary:
+- W17 semantic contract: **MERGED**;
+- W17 application API: **MERGED**;
+- tenant/evidence unit coverage: **MERGED**;
+- dedicated W17 real-stack E2E harness/workflow: **MERGED**;
+- real PostgreSQL E2E result on the final mainline SHA: **PENDING / NOT VERIFIED**;
+- exact-SHA Production Certification: **NOT RUN**.
+
+Therefore W17 must not yet be called Implemented/Verified or Certified.
