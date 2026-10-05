@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import skill_marketplace, work_items, workspace, test_center, test_center_evidence, test_center_verification, test_center_execution, team_installations, team_execution, team_evaluations, marketplace, agent_templates, agent_governance, agent_workforce, agent_workforce_replacements, agent_delegations, workforce_delegations, ai_workforce_roles, api_keys, admin, approvals, auth, employees, feedback, files, runs, usage, knowledge, memory, workflows, workflow_events, workflow_schedules, workflow_approvals, operations, customer_dashboard, billing, billing_webhooks, invoices, orders, sales, customer_channels, public_chat, products, commerce_integrations, onboarding, inbox, customers, channel_webhooks, sales_webhooks, sales_readiness, tenant_admin, admin_providers, edition_control, license_control, zarinpal_webhooks
+from app.api.v1 import employee_marketplace, skill_marketplace, work_items, workspace, test_center, test_center_evidence, test_center_verification, test_center_execution, team_installations, team_execution, team_evaluations, marketplace, agent_templates, agent_governance, agent_workforce, agent_workforce_replacements, agent_delegations, workforce_delegations, ai_workforce_roles, api_keys, admin, approvals, auth, employees, feedback, files, runs, usage, knowledge, memory, workflows, workflow_events, workflow_schedules, workflow_approvals, operations, customer_dashboard, billing, billing_webhooks, invoices, orders, sales, customer_channels, public_chat, products, commerce_integrations, onboarding, inbox, customers, channel_webhooks, sales_webhooks, sales_readiness, tenant_admin, admin_providers, edition_control, license_control, zarinpal_webhooks
 
 api_router = APIRouter()
 api_router.include_router(work_items.router)
@@ -19,6 +19,7 @@ api_router.include_router(team_execution.router)
 api_router.include_router(team_evaluations.router)
 api_router.include_router(marketplace.router)
 api_router.include_router(skill_marketplace.router)
+api_router.include_router(employee_marketplace.router)
 api_router.include_router(agent_templates.router)
 api_router.include_router(agent_governance.router)
 api_router.include_router(agent_workforce.router)

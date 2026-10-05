@@ -857,8 +857,10 @@ The workforce product is expanding from an AI operations dashboard into a visual
 - Heavy GPU/video workloads remain isolated from core runtime.
 
 **W20 — Third-party Employee Marketplace**
-- Employee templates, specialist personas, governed skill bundles, workflows and visual packs.
-- Third-party packages require validation, versioning, permissions review and tenant isolation.
+- First vertical slice implemented: seller-evaluated AgentTemplate → versioned Employee Marketplace package → cross-tenant buyer import → explicit permission review boundary → revocation/audit.
+- Optional governed SkillPackage references reuse W16 rather than duplicating its lifecycle or financial architecture.
+- Installation never activates execution authority; imported templates remain buyer-owned and require the existing governed evaluation/promotion/activation path.
+- External provider execution and marketplace financial outcomes remain unverified until independently evidenced.
 
 **W21 — AI Business Network**
 - Future governed company-to-company workforce requests, partner/customer handoffs and controlled agent-to-agent business workflows.
