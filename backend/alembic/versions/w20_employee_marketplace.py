@@ -8,7 +8,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "w20_employee_marketplace"
-down_revision = "w19_voice_visual_contracts"
+down_revision = "w18_virtual_meeting_rooms"
 branch_labels = None
 depends_on = None
 
