@@ -260,3 +260,14 @@ W21 AI Business Network is **IMPLEMENTED / REAL-STACK VERIFIED** on post-v1.4.16
 - Exact-SHA Production Certification: **NOT RUN**.
 - External network execution, contractual commitment, financial settlement, production deployment and customer acceptance remain **NOT VERIFIED**.
 - Any future release containing W21 requires fresh exact-SHA certification.
+
+
+## 18. W22 SEO & Growth Employee
+
+W22 is post-v1.4.16 mainline engineering and is not a release version. It resumes the original W7 SEO & Growth phase after W21.
+
+- Issue: #910.
+- First slice: governed SEO/growth research artifacts and approval-gated experiment proposals.
+- Real-stack evidence workflow: `workforce-w22-e2e.yml`.
+- Live search-engine execution, ranking/traffic impact, production deployment, customer acceptance and exact-SHA Production Certification: **NOT VERIFIED / NOT RUN**.
+- Any release containing W22 application code requires fresh exact-SHA certification.
