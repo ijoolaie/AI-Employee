@@ -124,7 +124,7 @@ The experience/commerce roadmap is planned mainline work, not release-certified 
 - W15 Wardrobe / Cosmetic Marketplace — planned/not implemented.
 - W16 Skills Marketplace — implemented + hardened + real-stack evidenced across lifecycle, API, publication, provider and marketplace-finance boundaries; post-v1.4.16 certification not verified.
 - W17 Employee Career / Reputation — **IMPLEMENTED / REAL-STACK VERIFIED**; exact-SHA Production Certification not verified.
-- W18 Virtual Meeting Rooms — planned.
+- W18 Virtual Meeting Rooms — **IMPLEMENTED / REAL-STACK VERIFIED** first vertical slice; exact-SHA Production Certification not verified.
 - W19 Voice / Visual Interaction — planned.
 - W20 Third-party Employee Marketplace — planned.
 - W21 AI Business Network — planned.
@@ -220,3 +220,24 @@ W17 Employee Career & Reputation has completed its implementation evidence gate.
 - Production Certification: **NOT RUN**. W17 does not inherit `v1.4.16` certification.
 
 W18 is now the next permitted product-experience implementation slice.
+
+## W18 verification checkpoint — 2026-10-05
+
+W18 first vertical slice has completed its implementation evidence gate.
+
+- PR #903 merge: `a5fd482e456ba2060705aa24ff3f63de0e2a7665`.
+- Verification head: `7ae4fe590d5483185637a8f344cc592979fec8bf`.
+- Dedicated real-stack E2E: Run `37299435745`, Job `111728381943` — **PASS**.
+- CI: `37299435606` — PASS.
+- CodeQL: `37299435510` — PASS.
+- Architecture Guard: `37299435779` — PASS.
+- Runtime Isolation/RBAC: `37299435639` — PASS.
+- Security/Privacy: `37299435958` — PASS.
+- DAST: `37299435653` — PASS.
+- Production Infrastructure: `37299435583` — PASS.
+- HA: `37299435752` — PASS.
+- Observability: `37299435621` — PASS.
+- Rollback/Alerting: `37299435625` — PASS.
+- Production Certification: **NOT RUN**.
+
+W19 is now the next permitted product-experience slice.
