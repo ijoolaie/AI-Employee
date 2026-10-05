@@ -1,11 +1,40 @@
-name: W21 Business Network E2E
+name: W21 AI Business Network E2E
 on:
   workflow_dispatch:
   pull_request:
     branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/workforce-w21-e2e.yml"
 jobs:
-  w21:
+  w21-real-stack:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ai_employee
+          POSTGRES_PASSWORD: ai_employee
+          POSTGRES_DB: ai_employee
+        ports: ["5432:5432"]
+    env:
+      DATABASE_URL: postgresql+asyncpg://ai_employee:ai_employee@localhost:5432/ai_employee
+      SECRET_KEY: w21-e2e-secret
+      E2E_API_BASE_URL: http://127.0.0.1:8000/api/v1
     steps:
       - uses: actions/checkout@v4
-      - run: echo "W21 real-stack gate placeholder"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r backend/requirements.txt
+      - run: alembic -c alembic.ini upgrade head
+        working-directory: backend
+      - run: python -m py_compile app/models/business_network_request.py app/services/business_network_service.py app/api/v1/business_network.py app/schemas/business_network.py scripts/e2e_workforce_w21_business_network_verify.py
+        working-directory: backend
+      - run: uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/w21-api.log 2>&1 &
+        working-directory: backend
+      - run: python -c "import urllib.request,time; time.sleep(5); urllib.request.urlopen('http://127.0.0.1:8000/health')"
+      - run: python scripts/e2e_workforce_w21_business_network_verify.py
+        working-directory: backend
+      - if: failure()
+        run: cat /tmp/w21-api.log
