@@ -237,3 +237,13 @@ W18 Virtual Meeting Rooms first vertical slice is **IMPLEMENTED / REAL-STACK VER
 - Exact-SHA Production Certification, external deployment and customer acceptance remain **NOT VERIFIED**.
 
 W19 is the next product-experience implementation slice.
+
+## 17. W20 Third-party Employee Marketplace
+
+W20 is post-v1.4.16 mainline engineering and is not a release version.
+
+- PR: #907.
+- First vertical slice: **IMPLEMENTED; REAL-STACK VERIFICATION PENDING**.
+- Exact-SHA Production Certification: **NOT RUN**.
+- External provider execution, marketplace revenue, payout and tax settlement: **NOT VERIFIED**.
+- Any release containing W20 application code requires fresh exact-SHA certification.
