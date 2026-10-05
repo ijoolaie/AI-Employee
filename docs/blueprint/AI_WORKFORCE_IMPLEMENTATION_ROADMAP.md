@@ -836,8 +836,12 @@ The workforce product is expanding from an AI operations dashboard into a visual
 - Paid skills may be recurring or one-time products.
 
 **W17 — Employee Career & Reputation Presentation**
-- Work history, tenure, completed projects and verified operational KPIs.
-- Achievements/badges are presentation metadata and cannot fabricate business performance.
+- **IMPLEMENTED / REAL-STACK VERIFIED** on post-v1.4.16 mainline.
+- Work history, tenure and completed work are derived from authoritative tenant-scoped Workforce evidence.
+- Tenure remains UNKNOWN when authoritative employment-start evidence is unavailable.
+- The first slice exposes evidence-backed indicators and no opaque reputation score.
+- Dedicated PostgreSQL E2E: Run `37298325542`, Job `111724800314` — PASS.
+- Exact-SHA Production Certification: NOT RUN.
 
 **W18 — Virtual Meeting Rooms**
 - CEO-to-employee conversations and multi-employee governed sessions.
@@ -1416,3 +1420,10 @@ Issue: #897.
 `semantic contract → API/schema → tenant-safe handler → tests → real PostgreSQL evidence → CI → documentation reconciliation`
 
 W17 application implementation has been merged to main in integration commit `e857528167e826b335a6448cce4b5ad3240a4d46`. Real PostgreSQL E2E evidence is still pending; W17 is therefore not yet marked Implemented/Verified. No certification transfers from v1.4.16.
+
+
+## W17 verification checkpoint — 2026-10-05
+
+The W17 Definition-of-Done evidence gate is closed. Implementation, tenant-safe API behavior, unit coverage, dedicated real PostgreSQL E2E and CI/security verification are evidenced. W17 remains post-v1.4.16 engineering work and is not production-certified.
+
+**Next slice: W18 — Virtual Meeting Rooms.**
