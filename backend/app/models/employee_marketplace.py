@@ -36,12 +36,6 @@ class EmployeeMarketplacePackage(Base):
         UniqueConstraint("owner_tenant_id", "slug", "version", name="uq_employee_marketplace_pkg_owner_slug_version"),
         Index("ix_employee_marketplace_pkg_owner_status", "owner_tenant_id", "status"),
         Index("ix_employee_marketplace_pkg_visibility", "visibility"),
-        ForeignKeyConstraint(
-            ["owner_tenant_id", "source_agent_template_id"],
-            ["agent_templates.tenant_id", "agent_templates.id"],
-            name="fk_employee_marketplace_pkg_source_template_tenant",
-            ondelete="RESTRICT",
-        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -88,15 +82,15 @@ class EmployeeMarketplaceInstallation(Base):
             ondelete="RESTRICT",
         ),
         ForeignKeyConstraint(
-            ["buyer_tenant_id", "imported_agent_template_id"],
-            ["agent_templates.tenant_id", "agent_templates.id"],
-            name="fk_employee_marketplace_install_template_tenant",
+            ["imported_agent_template_id"],
+            ["agent_templates.id"],
+            name="fk_employee_marketplace_install_template",
             ondelete="RESTRICT",
         ),
         ForeignKeyConstraint(
-            ["buyer_tenant_id", "imported_agent_definition_id"],
-            ["agent_definitions.tenant_id", "agent_definitions.id"],
-            name="fk_employee_marketplace_install_definition_tenant",
+            ["imported_agent_definition_id"],
+            ["agent_definitions.id"],
+            name="fk_employee_marketplace_install_definition",
             ondelete="RESTRICT",
         ),
         ForeignKeyConstraint(
