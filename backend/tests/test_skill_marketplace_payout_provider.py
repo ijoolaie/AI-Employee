@@ -12,6 +12,7 @@ from app.services.skill_marketplace_payout_provider import (
     MarketplacePayoutRequest,
     MarketplacePayoutStatus,
     NoneMarketplacePayoutProvider,
+    StripeConnectMarketplacePayoutProvider,
     get_marketplace_payout_provider,
 )
 
@@ -87,3 +88,58 @@ def test_provider_selection_is_operator_configured_and_fail_closed():
             get_marketplace_payout_provider()
     finally:
         settings.marketplace_payout_provider_name = original
+
+
+@pytest.mark.asyncio
+async def test_stripe_connect_provider_submits_idempotent_transfer(monkeypatch):
+    settings = get_settings()
+    original_key = settings.stripe_secret_key
+    settings.stripe_secret_key = "sk_test_operator_configured"
+    calls = []
+
+    class Transfer:
+        @staticmethod
+        def create(**kwargs):
+            calls.append(kwargs)
+            return type("TransferResult", (), {"id": "tr_test_123"})()
+
+    fake_stripe = type("Stripe", (), {"Transfer": Transfer})
+    monkeypatch.setattr("app.services.skill_marketplace_payout_provider._stripe_client", lambda: fake_stripe)
+    try:
+        result = await StripeConnectMarketplacePayoutProvider().create_payout(
+            request(destination_ref="acct_123", currency="EUR", amount=Decimal("12.34"))
+        )
+    finally:
+        settings.stripe_secret_key = original_key
+
+    assert result.status == MarketplacePayoutStatus.ACCEPTED
+    assert result.provider == "stripe-connect"
+    assert result.provider_execution == "submitted"
+    assert result.executed is True
+    assert result.external_execution is True
+    assert result.provider_payout_id == "tr_test_123"
+    assert result.provider_event_id == "tr_test_123"
+    assert calls[0]["amount"] == 1234
+    assert calls[0]["currency"] == "eur"
+    assert calls[0]["destination"] == "acct_123"
+    assert calls[0]["idempotency_key"] == "w16-contract-payout-1"
+
+
+@pytest.mark.asyncio
+async def test_stripe_connect_rejects_non_account_destination(monkeypatch):
+    monkeypatch.setattr("app.services.skill_marketplace_payout_provider._stripe_client", lambda: object())
+    with pytest.raises(ValidationAppError):
+        await StripeConnectMarketplacePayoutProvider().create_payout(request(destination_ref="seller-destination-1"))
+
+
+def test_stripe_connect_provider_is_named_and_operator_selected():
+    settings = get_settings()
+    original_provider = settings.marketplace_payout_provider_name
+    original_key = settings.stripe_secret_key
+    try:
+        settings.marketplace_payout_provider_name = "stripe-connect"
+        settings.stripe_secret_key = "sk_test_operator_configured"
+        assert isinstance(get_marketplace_payout_provider(), StripeConnectMarketplacePayoutProvider)
+    finally:
+        settings.marketplace_payout_provider_name = original_provider
+        settings.stripe_secret_key = original_key
