@@ -52,7 +52,18 @@ def register_tenant(suffix: str):
     ) as response:
         data = json.loads(response.read().decode())
         assert response.status == 201, data
-        return uuid.UUID(data["data"]["tenant"]["id"]), uuid.UUID(data["data"]["user"]["id"]), data["data"]["access_token"]
+        token = data["data"]["access_token"]
+    with urlopen(
+        Request(
+            f"{BASE_URL}/auth/me",
+            headers={"Accept": "application/json", "Authorization": f"Bearer {token}"},
+            method="GET",
+        ),
+        timeout=20,
+    ) as response:
+        me = json.loads(response.read().decode())
+        assert response.status == 200, me
+    return uuid.UUID(me["data"]["tenant"]["id"]), uuid.UUID(me["data"]["user"]["id"]), token
 
 
 async def seed_authoritative_records(tenant_id, owner_id, suffix):
