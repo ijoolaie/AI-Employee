@@ -1,0 +1,117 @@
+name: Workforce W10 Controlled Live Payment Dogfood
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: "Live payment provider"
+        required: true
+        type: choice
+        options:
+          - zarinpal
+      customer_email:
+        description: "Explicitly authorized certification recipient email"
+        required: true
+        type: string
+      amount_irr:
+        description: "Small controlled certification amount in IRR (minimum 10000)"
+        required: true
+        default: "100000"
+        type: string
+      wait_minutes:
+        description: "Maximum time to wait for manual payment"
+        required: true
+        default: "20"
+        type: string
+      confirm_real_payment:
+        description: "Must be true to create a real gateway checkout"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: workforce-w10-controlled-live-payment
+  cancel-in-progress: false
+
+jobs:
+  live-payment:
+    if: ${{ inputs.confirm_real_payment == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      ZARINPAL_MERCHANT_ID: ${{ secrets.ZARINPAL_MERCHANT_ID }}
+      ZARINPAL_SANDBOX: ${{ secrets.ZARINPAL_SANDBOX }}
+      W10_ZARINPAL_EXTERNAL_PAYMENT_CONFIRMATION: I_UNDERSTAND_THIS_CREATES_A_REAL_ZARINPAL_CHECKOUT
+      W10_ZARINPAL_CERTIFICATION_EMAIL: ${{ inputs.customer_email }}
+      W10_ZARINPAL_AMOUNT_IRR: ${{ inputs.amount_irr }}
+      W10_ZARINPAL_WAIT_MINUTES: ${{ inputs.wait_minutes }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Fail closed if live credentials are unavailable
+        run: |
+          test -n "${ZARINPAL_MERCHANT_ID}" || {
+            echo "::error::ZARINPAL_MERCHANT_ID is not configured"
+            exit 1
+          }
+          test -n "${W10_ZARINPAL_CERTIFICATION_EMAIL}" || {
+            echo "::error::Customer email is required"
+            exit 1
+          }
+          python - <<'PY'
+          import os
+          amount = int(os.environ["W10_ZARINPAL_AMOUNT_IRR"])
+          if amount < 10000:
+              raise SystemExit("amount_irr must be at least 10000 IRR")
+          wait = int(os.environ["W10_ZARINPAL_WAIT_MINUTES"])
+          if not 1 <= wait <= 60:
+              raise SystemExit("wait_minutes must be between 1 and 60")
+          print("LIVE PAYMENT INPUT VALIDATION PASS")
+          PY
+
+      - name: Build and start isolated W10 stack
+        run: |
+          timeout 12m docker compose up -d --build postgres redis smtp-test e2e-market-provider storage-init api worker worker-outbox worker-email beat
+
+      - name: Prepare database
+        run: |
+          timeout 5m docker compose exec -T api alembic upgrade head
+          timeout 3m docker compose exec -T api alembic check
+
+      - name: Verify application health
+        run: |
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8000/health/dependencies >/dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose ps
+          docker compose logs --tail=200 api worker
+          exit 1
+
+      - name: Run controlled live ZarinPal dogfood
+        run: |
+          timeout 70m docker compose exec -T api python scripts/e2e_workforce_w10_live_zarinpal_payment_verify.py
+
+      - name: Collect evidence
+        if: always()
+        run: |
+          docker compose ps
+          docker compose logs --tail=300 api worker worker-outbox || true
+
+      - name: Shutdown
+        if: always()
+        run: |
+          timeout 3m docker compose down -v --remove-orphans || true
+
+# Safety boundary:
+# - Manual dispatch only.
+# - No card credentials are accepted by the workflow.
+# - Payment is completed manually by the explicitly authorized operator/customer.
+# - Production mode must be selected explicitly through the ZARINPAL_SANDBOX secret.
+# - A successful run is evidence for this specific live transaction only and does not
+#   create Production Certification for the repository SHA.
