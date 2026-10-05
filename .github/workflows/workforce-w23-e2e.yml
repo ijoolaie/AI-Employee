@@ -1,0 +1,64 @@
+name: Workforce W23 Customer Success E2E
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/scripts/e2e_workforce_w23_customer_success_verify.py"
+      - "backend/app/services/workforce_semantic_domains.py"
+      - "backend/app/services/ai_workforce_roles.py"
+      - "backend/app/ai/tool_registry.py"
+      - "backend/app/services/agent_tool_governance.py"
+      - "backend/app/services/license_service.py"
+      - "backend/app/services/storage.py"
+      - "docker-compose.yml"
+      - ".github/workflows/workforce-w23-e2e.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/scripts/e2e_workforce_w23_customer_success_verify.py"
+      - "backend/app/services/workforce_semantic_domains.py"
+      - "backend/app/services/ai_workforce_roles.py"
+      - "backend/app/ai/tool_registry.py"
+      - ".github/workflows/workforce-w23-e2e.yml"
+
+concurrency:
+  group: workforce-w23-e2e-${{ github.ref }}
+  cancel-in-progress: true
+permissions: { contents: read }
+
+jobs:
+  w23-real-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and start W23 stack
+        run: docker compose up -d --build postgres redis e2e-market-provider storage-init api worker worker-outbox beat
+      - name: Prepare database
+        run: |
+          docker compose exec -T api alembic upgrade head
+          docker compose exec -T api alembic check
+          test "$(docker compose exec -T api alembic heads | grep -c "(head)")" -eq 1
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8000/health/dependencies >/dev/null; then exit 0; fi
+            sleep 5
+          done
+          docker compose ps
+          docker compose logs --tail=200 api worker
+          exit 1
+      - name: Compile W23 sources
+        run: docker compose exec -T api python -m py_compile scripts/e2e_workforce_w23_customer_success_verify.py app/services/workforce_semantic_domains.py app/ai/tool_registry.py
+      - name: Run W23 real-stack verification
+        run: docker compose exec -T api python scripts/e2e_workforce_w23_customer_success_verify.py
+      - name: Collect failure diagnostics
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --tail=300 api worker postgres redis
+      - name: Shutdown
+        if: always()
+        run: docker compose down -v --remove-orphans
