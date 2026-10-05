@@ -1459,3 +1459,18 @@ W21 first governed vertical slice is **IMPLEMENTED / REAL-STACK VERIFIED**.
 - Exact-SHA Production Certification: **NOT RUN**. External company network, autonomous agent-to-agent execution, contractual commitment and financial settlement remain **NOT VERIFIED**.
 
 All W21 work is post-v1.4.16 mainline engineering and requires fresh exact-SHA certification for any future release promotion.
+
+
+## W22 — SEO & Growth Employee real-stack operationalization — 2026-10-05
+
+W22 resumes the original Phase W7 roadmap after the W17–W21 presentation/network slices. Issue #910 defines the first governed SEO & Growth evidence slice.
+
+- Existing `ai_seo_growth_employee` role, capability contracts and Tool Registry bindings are reused; no parallel execution authority is introduced.
+- The slice covers keyword research, content opportunity analysis, on-page recommendations, technical SEO checks, internal-link recommendations, content briefs, search-performance ingestion and growth reporting.
+- `seo_experiment_proposal` remains an approval-gated external-impact proposal.
+- Search/SEO provider execution remains fail-closed as `not_configured`; no ranking or traffic impact is inferred.
+- Dedicated PostgreSQL real-stack evidence is supplied by `backend/scripts/e2e_workforce_w22_seo_growth_verify.py` and `.github/workflows/workforce-w22-e2e.yml`.
+
+**Verification target:** tenant isolation + provenance + approval boundary + provider fail-closed behavior.
+
+W22 is post-v1.4.16 mainline engineering and requires fresh exact-SHA certification before any release promotion.
