@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import logging
 import uuid
+from dataclasses import replace
 from decimal import Decimal, InvalidOperation
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.providers.base import AIProvider
-from app.ai.providers.registry import get_default_provider
+from app.ai.model_router import AIModelRouter, RoutingContext
+from app.ai.providers.registry import get_default_provider, get_provider
 from app.ai.schemas import ChatRequest, ChatResult
 from app.core.database import AsyncSessionLocal
 from app.core.exceptions import ValidationAppError
@@ -151,16 +153,42 @@ async def _reserve_agent_run_budget(db: AsyncSession, *, run_id: uuid.UUID) -> t
 
 
 class AIGateway:
-    def __init__(self, provider: AIProvider | None = None):
+    def __init__(self, provider: AIProvider | None = None, router: AIModelRouter | None = None):
+        # Explicit provider injection is reserved for tests/specialized internal
+        # callers. Normal runtime execution resolves through the operator-owned
+        # router/default provider boundary.
+        self._explicit_provider = provider is not None
+        self.router = router or AIModelRouter()
         self.provider = provider or get_default_provider()
 
     async def chat(
         self, db: AsyncSession, request: ChatRequest, *, tenant_id: uuid.UUID,
         run_id: uuid.UUID | None = None, prompt_version: str | None = None,
-        call_metadata: dict | None = None,
+        call_metadata: dict | None = None, routing_context: RoutingContext | None = None,
     ) -> ChatResult:
         req_id = request_id_var.get()
-        metadata = call_metadata or {}
+        metadata = dict(call_metadata or {})
+        provider = self.provider
+        if not self._explicit_provider and self.router.enabled():
+            routing_context = routing_context or RoutingContext(
+                task=str(metadata.get("routing_task") or metadata.get("purpose") or "general"),
+                requires_tools=bool(request.tools),
+                requires_vision=bool(metadata.get("requires_vision", False)),
+                requires_json=bool(metadata.get("requires_json", False)),
+                sensitivity=str(metadata.get("sensitivity") or "normal"),
+                max_cost_tier=metadata.get("max_cost_tier"),
+            )
+            decision = self.router.select(routing_context, requested_model=request.model)
+            provider = get_provider(decision.provider)
+            request = replace(request, model=decision.model)
+            metadata.update({
+                "routing_policy": self.router.policy_version,
+                "routing_task": decision.task,
+                "routing_provider": decision.provider,
+                "routing_model": decision.model,
+                "routing_reason": decision.reason,
+                "routing_candidates_considered": decision.candidates_considered,
+            })
         budget_run: Run | None = None
         budget_reservation = Decimal("0")
         if run_id is not None:
@@ -179,30 +207,30 @@ class AIGateway:
                 raise ValidationAppError("run-scoped AI calls require a stable logical model turn")
             durable_call_id = await _prepare_durable_call(
                 tenant_id=tenant_id, run_id=run_id, logical_turn=logical_turn,
-                provider=self.provider.name, model=request.model,
+                provider=provider.name, model=request.model,
                 request_id=req_id, call_metadata=metadata,
             )
 
-        with span("aiep.ai.chat", tenant_id=str(tenant_id), provider=self.provider.name,
+        with span("aiep.ai.chat", tenant_id=str(tenant_id), provider=provider.name,
                    model=request.model, run_id=str(run_id) if run_id else None) as ai_span:
             with Timer() as timer:
                 try:
-                    result = await self.provider.chat(request)
+                    result = await provider.chat(request)
                 except Exception as exc:  # noqa: BLE001
                     if durable_call_id is not None:
                         await _mark_durable_unknown(durable_call_id, str(exc))
-                    AI_CALLS.labels(self.provider.name, "unknown" if durable_call_id else "error").inc()
+                    AI_CALLS.labels(provider.name, "unknown" if durable_call_id else "error").inc()
                     raise
 
                 latency_ms = max(0, int(timer.elapsed_ms))
                 result.latency_ms = latency_ms
-                cost = self.provider.estimate_cost_usd(request.model, result.prompt_tokens, result.completion_tokens)
+                cost = provider.estimate_cost_usd(request.model, result.prompt_tokens, result.completion_tokens)
                 result.cost_usd = cost
-                AI_CALLS.labels(self.provider.name, "success").inc()
-                AI_LATENCY.labels(self.provider.name).observe(latency_ms / 1000.0)
-                AI_TOKENS.labels(self.provider.name, "prompt").inc(result.prompt_tokens)
-                AI_TOKENS.labels(self.provider.name, "completion").inc(result.completion_tokens)
-                AI_COST.labels(self.provider.name).inc(float(cost))
+                AI_CALLS.labels(provider.name, "success").inc()
+                AI_LATENCY.labels(provider.name).observe(latency_ms / 1000.0)
+                AI_TOKENS.labels(provider.name, "prompt").inc(result.prompt_tokens)
+                AI_TOKENS.labels(provider.name, "completion").inc(result.completion_tokens)
+                AI_COST.labels(provider.name).inc(float(cost))
                 if ai_span is not None:
                     ai_span.set_attribute("ai.status", "success")
                     ai_span.set_attribute("ai.prompt_tokens", result.prompt_tokens)
@@ -212,7 +240,7 @@ class AIGateway:
 
                 if durable_call_id is not None:
                     await _finalize_durable_call(
-                        call_id=durable_call_id, result=result, provider=self.provider,
+                        call_id=durable_call_id, result=result, provider=provider,
                         model=request.model, prompt_version=prompt_version, request_id=req_id,
                         tenant_id=tenant_id, run_id=run_id,
                         call_metadata={"budget_reservation_usd": float(budget_reservation), **metadata},
@@ -236,7 +264,7 @@ class AIGateway:
                         status="success",
                         request_id=req_id,
                         metadata={
-                            "provider": self.provider.name,
+                            "provider": provider.name,
                             "model": request.model,
                             "cost_usd": cost,
                             "latency_ms": latency_ms,
@@ -248,7 +276,7 @@ class AIGateway:
                     )
                 else:
                     call_log = AIProviderCall(
-                        tenant_id=tenant_id, run_id=run_id, provider=self.provider.name,
+                        tenant_id=tenant_id, run_id=run_id, provider=provider.name,
                         model=request.model, prompt_tokens=result.prompt_tokens,
                         completion_tokens=result.completion_tokens, cost_usd=cost,
                         latency_ms=latency_ms, status="success", error_message=None,
@@ -262,19 +290,19 @@ class AIGateway:
                         category="ai_call", quantity=1,
                         prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens,
                         cost_usd=cost, source_type="ai_provider_call", source_id=str(call_log.id),
-                        metadata={"provider": self.provider.name, "model": request.model, "status": "success"},
+                        metadata={"provider": provider.name, "model": request.model, "status": "success"},
                     )
                     await audit_service.record(
                         db, action="ai.provider_call", actor_type="system", tenant_id=tenant_id,
                         resource_type="run", resource_id=run_id, status="success", request_id=req_id,
-                        metadata={"provider": self.provider.name, "model": request.model,
+                        metadata={"provider": provider.name, "model": request.model,
                                   "cost_usd": cost, "latency_ms": latency_ms,
                                   "prompt_tokens": result.prompt_tokens, "completion_tokens": result.completion_tokens,
                                   "budget_reservation_usd": float(budget_reservation), **metadata},
                     )
 
         logger.info("ai_provider_call", extra={
-            "provider": self.provider.name, "model": request.model,
+            "provider": provider.name, "model": request.model,
             "prompt_tokens": result.prompt_tokens, "completion_tokens": result.completion_tokens,
             "cost_usd": result.cost_usd, "latency_ms": result.latency_ms, "status": "success",
             "run_id": str(run_id) if run_id else None,
