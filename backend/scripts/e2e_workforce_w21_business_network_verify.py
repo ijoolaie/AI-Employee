@@ -35,22 +35,24 @@ def err_code(exc): return getattr(exc,"code",None)
 async def run():
     suffix=str(time.time_ns())[-10:]
     sender_tenant,requester,requester_token,sender_slug,_=register(suffix+"-sender")
-    recipient_tenant,_,_,_,_=register(suffix+"-recipient")
-    _,decider,_,decider_slug,decider_email=register(suffix+"-decider")
-    await move_user_to_sender(decider,sender_tenant)
+    recipient_tenant,recipient_owner,_,_,_=register(suffix+"-recipient")
+    _,sponsor,_,decider_slug,decider_email=register(suffix+"-decider")
+    _,decision_user,_,_,_=register(suffix+"-decision")
+    await move_user_to_sender(sponsor,sender_tenant)
+    await move_user_to_sender(decision_user,sender_tenant)
     # Obtain a fresh token after the tenant move.
     login=request("POST","/auth/login",None,{"email":decider_email,"password":"W21NetworkE2E-2026!","tenant_slug":sender_slug},200)
     decider_token=login["data"]["access_token"]
     same={"recipient_tenant_id":str(sender_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1"},"payload":{},"idempotency_key":"same-tenant","sponsor_user_id":str(decider)}
     async with AsyncSessionLocal() as db:
         try:
-            await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=decider,recipient_tenant_id=sender_tenant,operation="partner.handoff",capability_contract={"version":"w21-v1"},payload={},idempotency_key="same-tenant",correlation_id="corr-same")
+            await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=sponsor,recipient_tenant_id=sender_tenant,operation="partner.handoff",capability_contract={"version":"w21-v1"},payload={},idempotency_key="same-tenant",correlation_id="corr-same")
             raise AssertionError("same-tenant request unexpectedly accepted")
         except ValidationAppError:
             await db.rollback()
     payload={"recipient_tenant_id":str(recipient_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1","side_effect":"proposal_only"},"payload":{"subject":"controlled handoff"},"idempotency_key":"network-001","correlation_id":"corr-network-001","sponsor_user_id":str(decider)}
     async with AsyncSessionLocal() as db:
-        first_obj=await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=decider,recipient_tenant_id=recipient_tenant,operation=payload["operation"],capability_contract=payload["capability_contract"],payload=payload["payload"],idempotency_key=payload["idempotency_key"],correlation_id=payload["correlation_id"])
+        first_obj=await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=sponsor,recipient_tenant_id=recipient_tenant,operation=payload["operation"],capability_contract=payload["capability_contract"],payload=payload["payload"],idempotency_key=payload["idempotency_key"],correlation_id=payload["correlation_id"])
         replay_obj=await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=decider,recipient_tenant_id=recipient_tenant,operation=payload["operation"],capability_contract=payload["capability_contract"],payload=payload["payload"],idempotency_key=payload["idempotency_key"],correlation_id=payload["correlation_id"])
         await db.commit()
         first={"id":str(first_obj.id),"status":first_obj.status.value,"correlation_id":first_obj.correlation_id}
@@ -60,7 +62,7 @@ async def run():
     print("W21 replay response", replay)
     assert replay["id"]==first["id"], replay
     async with AsyncSessionLocal() as db:
-        approved_obj=await decide_request(db,sender_tenant_id=sender_tenant,request_id=uuid.UUID(first["id"]),decider_user_id=decider,approve=True,reason="W21 E2E approval")
+        approved_obj=await decide_request(db,sender_tenant_id=sender_tenant,request_id=uuid.UUID(first["id"]),decider_user_id=decision_user,approve=True,reason="W21 E2E approval")
         await db.commit()
         approved={"status":approved_obj.status.value,"correlation_id":approved_obj.correlation_id}
     print("W21 approved response", approved)
