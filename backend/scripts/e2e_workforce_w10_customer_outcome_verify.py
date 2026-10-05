@@ -14,7 +14,7 @@ from app.models.business_deal import BusinessDeal
 from app.models.business_order import BusinessOrder
 from app.models.workforce_revenue_event import WorkforceRevenueEvent
 from app.services import edition_service, license_service
-from app.services.modules.employees.sales.service import create_deal
+from app.modules.employees.sales.service import create_deal
 from app.services.stripe_service import apply_verified_sales_payment
 
 async def main():
