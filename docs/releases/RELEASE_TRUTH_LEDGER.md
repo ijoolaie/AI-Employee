@@ -126,7 +126,7 @@ The experience/commerce roadmap is planned mainline work, not release-certified 
 - W17 Employee Career / Reputation — **IMPLEMENTED / REAL-STACK VERIFIED**; exact-SHA Production Certification not verified.
 - W18 Virtual Meeting Rooms — **IMPLEMENTED / REAL-STACK VERIFIED** first vertical slice; exact-SHA Production Certification not verified.
 - W19 Voice / Visual Interaction — planned.
-- W20 Third-party Employee Marketplace — **FIRST VERTICAL SLICE IMPLEMENTED; REAL-STACK VERIFICATION PENDING**. External provider execution, marketplace revenue/payout/tax settlement and Production Certification remain NOT VERIFIED.
+- W20 Third-party Employee Marketplace — **IMPLEMENTED / REAL-STACK VERIFIED** first vertical slice on post-v1.4.16 mainline; dedicated W20 E2E Run `37308738607` passed on verification head `fe6377abcc7f110aa83a8cff3b8a0ea7e5c10c99`. External provider execution, marketplace revenue/payout/tax settlement and Production Certification remain NOT VERIFIED.
 - W21 AI Business Network — planned.
 
 Documentation of these phases does not create a release tag or certification. Any future release containing application code from these phases must be certified against its exact immutable SHA. Cosmetic/marketplace revenue is not claimed until a real commercial event is independently evidenced.
