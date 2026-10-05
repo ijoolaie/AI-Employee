@@ -13,12 +13,12 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: ai_employee
-          POSTGRES_PASSWORD: ai_employee
-          POSTGRES_DB: ai_employee
+          POSTGRES_USER: aiep
+          POSTGRES_PASSWORD: aiep
+          POSTGRES_DB: aiep
         ports: ["5432:5432"]
     env:
-      DATABASE_URL: postgresql+asyncpg://ai_employee:ai_employee@localhost:5432/ai_employee
+      DATABASE_URL: postgresql+asyncpg://aiep:aiep@localhost:5432/aiep
       SECRET_KEY: w21-e2e-secret
       E2E_API_BASE_URL: http://127.0.0.1:8000/api/v1
     steps:
