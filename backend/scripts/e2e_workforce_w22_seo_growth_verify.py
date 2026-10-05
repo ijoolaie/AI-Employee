@@ -65,7 +65,7 @@ async def prepare():
 
         await license_service.issue_license(
             db,
-            issuer=vendor,
+            issuer=reseller,
             tenant=customer,
             feature_codes=["employee.run"] + [f"tool:{tool}" for tool in TOOLS],
             metadata={"certification_fixture": True, "purpose": "W22-seo-growth-e2e"},
