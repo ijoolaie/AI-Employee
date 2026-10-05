@@ -35,7 +35,7 @@ async def main():
             title="Governed AI Workforce pilot",
             customer_name="Verified Fixture Customer",
             customer_email="customer@example.invalid",
-            amount=12500000,currency="IRR",stage="proposal",probability=50,
+            amount=12500,currency="USD",stage="proposal",probability=50,
             source="w10-dogfood",
         )
         deal_id=deal.id
@@ -45,8 +45,8 @@ async def main():
         event={
             "id":provider_event_id,
             "metadata":{"tenant_id":str(customer.id),"sales_deal_id":str(deal_id)},
-            "amount_received":12500000,
-            "currency":"IRR",
+            "amount_received":1250000,
+            "currency":"USD",
             "id":f"payment-{uuid.uuid4().hex}",
         }
         async with AsyncSessionLocal() as settle_db:
@@ -59,9 +59,9 @@ async def main():
             revenue=(await settle_db.execute(select(WorkforceRevenueEvent).where(WorkforceRevenueEvent.provider=="contract-test",WorkforceRevenueEvent.provider_event_id==provider_event_id))).scalar_one()
             assert settled.stage=="won" and settled.probability==100
             assert settled.metadata_.get("payment_verified") is True
-            assert order.status=="confirmed" and order.total==Decimal("12500000")
+            assert order.status=="confirmed" and order.total==Decimal("12500")
             assert revenue.tenant_id==customer.id and revenue.deal_id==deal_id
-            assert revenue.amount==Decimal("12500000") and revenue.currency=="IRR"
+            assert revenue.amount==Decimal("12500") and revenue.currency=="USD"
 
         async with AsyncSessionLocal() as replay_db:
             tenant_id2,order_id2=await apply_verified_sales_payment(
