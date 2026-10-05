@@ -502,18 +502,18 @@ The report is read-only and settlement-derived. It does not create payment event
 
 ## W17 Employee Career & Reputation — 2026-10-05
 
-W17 is now the next active engineering slice.
+W17 is post-v1.4.16 mainline engineering and is **IMPLEMENTED / REAL-STACK VERIFIED**.
 
 - Issue: #897.
 - Semantic design contract: `docs/current/W17_EMPLOYEE_CAREER_REPUTATION.md`.
-- Status: **IMPLEMENTATION MERGED / REAL-STACK EVIDENCE PENDING / NOT VERIFIED**.
-- Implementation is merged on main at `e857528167e826b335a6448cce4b5ad3240a4d46`; it provides a read-only, tenant-scoped career evidence API derived from authoritative Employee, WorkItem and Run records.
+- Implementation merge: `e857528167e826b335a6448cce4b5ad3240a4d46`.
+- Verification PR #901; verification head: `f8b5a9734acbcc70ad165a2fbda2f326bfc2fa9a`.
+- Dedicated real-stack E2E: Run `37298325542`, Job `111724800314` — **PASS**.
+- CodeQL: Run `37298325646` — **PASS**.
 - Missing evidence remains **UNKNOWN / UNVERIFIED**, never zero-filled or model-invented.
-- Reputation scoring is deferred until an explainable deterministic evidence model is proven.
 - No W17 state may modify permissions, tool bindings, approvals, quotas, billing, execution state or provider selection.
-- Required exit evidence: API/schema + tenant-safe handler + negative/authorization tests + real PostgreSQL evidence + CI + documentation reconciliation.
-
-W17 is post-v1.4.16 mainline engineering and has no transferred release certification.
+- Exact-SHA Production Certification: **NOT RUN**; external deployment/customer acceptance: **NOT VERIFIED**.
+- Any release containing W17 application code requires fresh exact-SHA certification.
 
 
 ## W17 verification checkpoint — 2026-10-05
@@ -619,4 +619,4 @@ W10 customer-outcome mechanics are **REAL-STACK VERIFIED** on post-v1.4.16 mainl
 - Real customer identity, qualified customer conversation, pilot acceptance and realized revenue remain **NOT VERIFIED**.
 - Exact-SHA Production Certification remains **NOT RUN**.
 
-The next W10 decision is real-world customer qualification/payment evidence only if an explicitly authorized live provider/customer test is available; otherwise the technical W10 evidence gate is complete.
+The technical W10 evidence gate is complete. Controlled live-provider/customer validation remains intentionally deferred to the final external-validation phase; no live payment or customer revenue is claimed from the current engineering mainline.
