@@ -1,5 +1,7 @@
 """Real-stack W17 Employee Career & Reputation evidence E2E.
 
+Mainline trigger reconciliation: execute this harness on push/PR for W17 evidence.
+
 Verifies tenant-scoped read-only career projection from authoritative PostgreSQL
 Employee/Run/WorkItem records. No reputation score or fabricated tenure is used.
 """
