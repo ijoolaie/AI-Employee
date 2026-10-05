@@ -134,5 +134,5 @@ class EmployeeMarketplaceInstallation(Base):
 def _reject_published_package_update(mapper, connection, target) -> None:
     history = inspect(target).attrs.status.history
     committed_status = history.deleted[0] if history.deleted else None
-    if committed_status == EmployeeMarketplacePackageStatus.PUBLISHED:
+    if target.status != EmployeeMarketplacePackageStatus.DRAFT or committed_status == EmployeeMarketplacePackageStatus.PUBLISHED:
         raise ValueError("published employee marketplace package records are immutable")
