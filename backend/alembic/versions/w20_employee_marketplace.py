@@ -76,8 +76,9 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(["buyer_tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(
-            ["buyer_tenant_id", "package_id"],
-            ["employee_marketplace_packages.owner_tenant_id", "employee_marketplace_packages.id"],
+            ["package_id"],
+            ["employee_marketplace_packages.id"],
+            name="fk_employee_marketplace_install_package",
             ondelete="RESTRICT",
         ),
         sa.ForeignKeyConstraint(
