@@ -1,7 +1,7 @@
 # Versioning Truth
 
 **Status:** CANONICAL
-**Reconciled:** 2026-10-03
+**Reconciled:** 2026-10-05
 
 This document defines the independent version axes used by the AI Employee Platform.
 
@@ -11,19 +11,19 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 ### Current release truth
 
-- Latest published release: **`v1.4.12`** (W13 candidate certified but not yet promoted)
-- Latest certified release: **`v1.4.12`**, exact certified SHA `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`.
-- `v1.4.12` Git tag: **VERIFIED**, resolving to the certified release commit.
-- `v1.4.12` GitHub Release: **PUBLISHED**, not draft, not prerelease.
-- `v1.4.12` exact-SHA Production Certification: **PASS** on run `37138840482`, job `111248877948`.
-- Evidence artifact: `production-certification-evidence-v1.4.12-rc.1-9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519`.
-- Evidence digest: `sha256:b380f8849b6347995c17bcec8a97de979b2a67b01d88dc26d0f02258b8779af1`.
+- Latest published release: **`v1.4.16`**
+- Latest certified release: **`v1.4.16`**, exact certified SHA `434a0c4a4501af08a393faaf58092add764df2a2`.
+- `v1.4.16` Git tag: **VERIFIED**, resolving to the certified release commit.
+- `v1.4.16` GitHub Release: **PUBLISHED**, not draft, not prerelease.
+- `v1.4.16` exact-SHA Production Certification: **PASS** on run `37188879277`, job `111396657270`.
+- Evidence artifact: `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`.
+- Evidence digest: `sha256:7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`
 - External production deployment: **NOT VERIFIED / not claimed by certification**.
 - Customer acceptance / live provider validation: **PENDING**.
 
-`v1.4.12` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
+`v1.4.16` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
-Current `main` contains post-v1.4.12 W13 work. The W13 candidate SHA has fresh exact-SHA certification evidence, but certification does not create a Git tag or release. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document. A new application-code release candidate must receive fresh exact-SHA certification.
+Current `main` contains post-v1.4.16 engineering work. The W13 candidate SHA has fresh exact-SHA certification evidence, but certification does not create a Git tag or release. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document. A new application-code release candidate must receive fresh exact-SHA certification.
 
 ## 2. Architecture version
 
@@ -192,3 +192,20 @@ W12 Virtual Office is therefore part of the immutable v1.4.12 release boundary. 
 - Git tag/release: **NOT CREATED** at reconciliation time.
 
 Certification is complete for the exact candidate SHA. Manual tag/release promotion is the remaining release step; no certification transfers to later SHAs.
+
+## 15. W16 post-v1.4.16 evidence reconciliation
+
+W16 Skills Marketplace is no longer merely planned. The current mainline contains lifecycle, employee Skill API, publication/discovery, governed provider execution, cross-tenant purchase/settlement, financial allocation/reporting, payout proposal/destination controls and approval-gated deterministic payout execution evidence.
+
+These are **post-v1.4.16 engineering evidence** and do not extend the immutable v1.4.16 certification. External marketplace payment/revenue, external seller payout, tax settlement and production deployment remain **NOT VERIFIED**.
+
+## 16. W17 Employee Career & Reputation
+
+W17 is the active next product-experience slice as of 2026-10-05.
+
+- Issue: #897.
+- Status: **DESIGN FOUNDATION / NOT IMPLEMENTED / NOT VERIFIED**.
+- Contract: `docs/current/W17_EMPLOYEE_CAREER_REPUTATION.md`.
+- Scope: evidence-first career history, tenure, verified operational indicators and evidence-backed achievements.
+- Hard boundary: no fabricated metrics, no opaque reputation score, no authority changes.
+- Release boundary: post-v1.4.16; fresh exact-SHA certification is mandatory before any release promotion.

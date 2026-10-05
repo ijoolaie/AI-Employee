@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-10-04
+**Last reconciled:** 2026-10-05
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -118,12 +118,12 @@ This change must not be described as `v1.4.11` functionality or certification. I
 
 The experience/commerce roadmap is planned mainline work, not release-certified functionality:
 - W11 Employee Identity / Avatar foundation — implemented post-release; exact-SHA certification pending.
-- W12 Virtual Office — planned.
-- W13 Customer HQ Progression — planned.
-- W14 Employee Appearance & Customization — planned.
-- W15 Wardrobe / Cosmetic Marketplace — planned.
-- W16 Skills Marketplace — planned.
-- W17 Employee Career / Reputation — planned.
+- W12 Virtual Office — implemented/evidenced post-release; exact-SHA certification boundary is separate from later mainline work.
+- W13 Customer HQ Progression — implemented and exact-SHA certified/published in v1.4.13.
+- W14 Employee Appearance & Customization — implemented post-release; exact-SHA certification pending.
+- W15 Wardrobe / Cosmetic Marketplace — planned/not implemented.
+- W16 Skills Marketplace — implemented + hardened + real-stack evidenced across lifecycle, API, publication, provider and marketplace-finance boundaries; post-v1.4.16 certification not verified.
+- W17 Employee Career / Reputation — design foundation active; implementation not yet verified.
 - W18 Virtual Meeting Rooms — planned.
 - W19 Voice / Visual Interaction — planned.
 - W20 Third-party Employee Marketplace — planned.
@@ -178,3 +178,15 @@ W13 Customer HQ Progression has passed fresh exact-SHA Production Certification.
 - Git tag/release: **NOT CREATED** at this checkpoint.
 
 The candidate is therefore certification-complete but not yet a published release. A manual promotion must use exactly this SHA; no later SHA inherits the evidence.
+
+## W17 active engineering checkpoint — 2026-10-05
+
+W17 Employee Career & Reputation has been opened as issue #897 and its semantic design contract has been committed on branch `feat/w17-career-reputation-2026-10-05`.
+
+Status:
+- design contract: **CREATED**;
+- application implementation: **NOT STARTED**;
+- real-stack evidence: **NOT RUN**;
+- exact-SHA Production Certification: **NOT RUN**.
+
+The W17 contract is evidence-first and read-only for the first slice. It explicitly forbids fabricated career/reputation data and forbids W17 state from becoming an authorization or execution source.

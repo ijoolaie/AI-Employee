@@ -498,3 +498,19 @@ The report is read-only and settlement-derived. It does not create payment event
 **VERIFIED:** marketplace financial outcome reporting on the real PostgreSQL CI stack.
 
 **NOT VERIFIED:** real external customer payment/revenue, external seller payout execution, tax settlement, and Production Certification of the post-v1.4.16 merge SHA.
+
+
+## W17 Employee Career & Reputation — 2026-10-05
+
+W17 is now the next active engineering slice.
+
+- Issue: #897.
+- Semantic design contract: `docs/current/W17_EMPLOYEE_CAREER_REPUTATION.md`.
+- Status: **DESIGN FOUNDATION / NOT IMPLEMENTED / NOT VERIFIED**.
+- First implementation boundary is read-only, tenant-scoped career evidence derived from authoritative Employee, WorkItem, Run, Workflow/Approval, Audit and verified KPI records.
+- Missing evidence remains **UNKNOWN / UNVERIFIED**, never zero-filled or model-invented.
+- Reputation scoring is deferred until an explainable deterministic evidence model is proven.
+- No W17 state may modify permissions, tool bindings, approvals, quotas, billing, execution state or provider selection.
+- Required exit evidence: API/schema + tenant-safe handler + negative/authorization tests + real PostgreSQL evidence + CI + documentation reconciliation.
+
+W17 is post-v1.4.16 mainline engineering and has no transferred release certification.
