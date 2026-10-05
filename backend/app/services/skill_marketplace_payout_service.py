@@ -177,6 +177,26 @@ async def list_payout_proposals(
     return list(result.scalars().all())
 
 
+async def list_payout_execution_evidence(
+    db: AsyncSession,
+    *,
+    platform_admin_tenant_id: uuid.UUID,
+    execution_status: SkillMarketplacePayoutExecutionStatus | None = None,
+    seller_tenant_id: uuid.UUID | None = None,
+) -> list[SkillMarketplacePayoutProposal]:
+    """Return read-only durable payout execution evidence for platform admins."""
+    stmt = select(SkillMarketplacePayoutProposal).where(
+        SkillMarketplacePayoutProposal.platform_admin_tenant_id == platform_admin_tenant_id
+    )
+    if execution_status is not None:
+        stmt = stmt.where(SkillMarketplacePayoutProposal.execution_status == execution_status)
+    if seller_tenant_id is not None:
+        stmt = stmt.where(SkillMarketplacePayoutProposal.seller_tenant_id == seller_tenant_id)
+    stmt = stmt.order_by(SkillMarketplacePayoutProposal.updated_at.desc())
+    result = await db.execute(stmt)
+    return list(result.scalars().all())
+
+
 async def execute_payout_proposal(
     db: AsyncSession,
     *,
