@@ -281,3 +281,15 @@ W23 is post-v1.4.16 mainline engineering and is not a release version.
 - CI/security/production-like gates passed on the verification head.
 - Live inbox/provider execution, customer outcome impact, production deployment, customer acceptance and exact-SHA Production Certification remain **NOT VERIFIED / NOT RUN**.
 - Any future release containing W23 requires fresh exact-SHA certification.
+
+## 20. W10 customer-outcome / revenue-event evidence
+
+W10 Issue #914 / PR #915 is post-v1.4.16 mainline engineering.
+
+- Merge SHA: `ecab2c23fd945b04ef82c2f21dfb6f76ca74b082`.
+- Verification head: `fa57a72f2379fb43d4dcc4a6acb7b33b955d479d`.
+- Dedicated E2E Run `37326882407` — PASS.
+- CI/security/production-like gates passed on the verification head.
+- Verified mechanics: governed proposal/pilot deal, payment correlation, order settlement, revenue-event ledger creation and replay idempotency.
+- Provider: deterministic `contract-test`; real customer payment/revenue remains NOT VERIFIED.
+- Exact-SHA Production Certification: NOT RUN.
