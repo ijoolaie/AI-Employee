@@ -1,0 +1,55 @@
+name: Workforce W10 Customer Outcome Revenue E2E
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/scripts/e2e_workforce_w10_customer_outcome_verify.py"
+      - "backend/app/services/stripe_service.py"
+      - "backend/app/services/workforce_sales_payment_provider.py"
+      - "backend/app/modules/employees/sales/service.py"
+      - "backend/app/models/workforce_revenue_event.py"
+      - "backend/app/models/business_deal.py"
+      - "backend/app/models/business_order.py"
+      - "docker-compose.yml"
+      - ".github/workflows/workforce-w10-customer-outcome-e2e.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/scripts/e2e_workforce_w10_customer_outcome_verify.py"
+      - "backend/app/services/stripe_service.py"
+      - ".github/workflows/workforce-w10-customer-outcome-e2e.yml"
+permissions: {contents: read}
+jobs:
+  w10-customer-outcome:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and start W10 stack
+        run: docker compose up -d --build postgres redis e2e-market-provider storage-init api worker worker-outbox beat
+      - name: Prepare database
+        run: |
+          docker compose exec -T api alembic upgrade head
+          docker compose exec -T api alembic check
+          test "$(docker compose exec -T api alembic heads | grep -c "(head)")" -eq 1
+      - name: Wait for health
+        run: |
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8000/health/dependencies >/dev/null; then exit 0; fi
+            sleep 5
+          done
+          docker compose ps; docker compose logs --tail=200 api worker; exit 1
+      - name: Compile
+        run: docker compose exec -T api python -m py_compile scripts/e2e_workforce_w10_customer_outcome_verify.py app/services/stripe_service.py app/modules/employees/sales/service.py
+      - name: Run customer outcome verification
+        run: docker compose exec -T api python scripts/e2e_workforce_w10_customer_outcome_verify.py
+      - name: Diagnostics
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --tail=300 api worker postgres redis
+      - name: Shutdown
+        if: always()
+        run: docker compose down -v --remove-orphans
