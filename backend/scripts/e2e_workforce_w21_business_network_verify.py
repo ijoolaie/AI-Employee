@@ -47,11 +47,14 @@ async def run():
         assert err_code(exc)==422
     payload={"recipient_tenant_id":str(recipient_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1","side_effect":"proposal_only"},"payload":{"subject":"controlled handoff"},"idempotency_key":"network-001","correlation_id":"corr-network-001","sponsor_user_id":str(decider)}
     first=request("POST","/business-network/requests",requester_token,payload,201)
-    assert first["status"]=="pending_approval"
+    print("W21 first response", first)
+    assert first["status"]=="pending_approval", first
     replay=request("POST","/business-network/requests",requester_token,payload,201)
-    assert replay["id"]==first["id"]
+    print("W21 replay response", replay)
+    assert replay["id"]==first["id"], replay
     approved=request("POST",f"/business-network/requests/{first['id']}/decision",decider_token,{"approve":True,"reason":"W21 E2E approval"},200)
-    assert approved["status"]=="approved"
+    print("W21 approved response", approved)
+    assert approved["status"]=="approved", approved
     assert approved["correlation_id"]=="corr-network-001"
     try:
         request("POST",f"/business-network/requests/{first['id']}/decision",requester_token,{"approve":True},200)
