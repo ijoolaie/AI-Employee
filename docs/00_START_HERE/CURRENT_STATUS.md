@@ -605,3 +605,18 @@ W23 Customer Success & Support Employee is **IMPLEMENTED / REAL-STACK VERIFIED**
 - Exact-SHA Production Certification, external deployment and customer acceptance remain **NOT VERIFIED**.
 
 W23 evidence gate is closed. The next slice is original Phase W9 QA & DevOps.
+
+## W10 customer-outcome / revenue-event checkpoint — 2026-10-05
+
+W10 customer-outcome mechanics are **REAL-STACK VERIFIED** on post-v1.4.16 mainline.
+
+- Issue #914; PR #915; merge SHA `ecab2c23fd945b04ef82c2f21dfb6f76ca74b082`.
+- Dedicated PostgreSQL E2E Run `37326882407` — **PASS**.
+- CI `37326882501`, CodeQL `37326882588`, Architecture Guard `37326882589`, Production Infrastructure `37326882525`, HA `37326882485`, DAST `37326882662` — **PASS**.
+- W21 regression E2E `37326882714` — **PASS**.
+- Verified: governed proposal/pilot deal, payment correlation, order settlement, revenue ledger creation and replay idempotency.
+- Provider boundary: deterministic `contract-test`; no real customer payment/revenue is claimed.
+- Real customer identity, qualified customer conversation, pilot acceptance and realized revenue remain **NOT VERIFIED**.
+- Exact-SHA Production Certification remains **NOT RUN**.
+
+The next W10 decision is real-world customer qualification/payment evidence only if an explicitly authorized live provider/customer test is available; otherwise the technical W10 evidence gate is complete.
