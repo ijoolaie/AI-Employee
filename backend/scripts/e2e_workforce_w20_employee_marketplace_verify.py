@@ -64,7 +64,7 @@ async def run():
     package=request("POST","/employee-marketplace/packages",seller_token,{
         "source_agent_template_id":str(template_id),"slug":"w20-specialist","name":"W20 Specialist",
         "version":1,"description":"Governed third-party employee package","visibility":"public",
-        "skill_package_ids":[],"workflow_refs":[],"visual_pack":{"theme":"technical"}} ,201)["data"]
+        "skill_package_ids":[],"workflow_refs":[],"visual_pack":{"theme":"technical"}} ,201)
     assert package["status"]=="published"
     assert package["permission_manifest"]["execution_authority_granted"] is False
     package_id=package["id"]
