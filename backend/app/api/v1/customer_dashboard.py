@@ -1,8 +1,14 @@
-from fastapi import APIRouter
 from uuid import UUID
+
+from fastapi import APIRouter
+
 from app.core.deps import AuditReadContext, DbSession
 from app.schemas.common import APIResponse
-from app.schemas.customer_dashboard import CustomerCareerResponse, CustomerDashboardResponse, CustomerOfficeResponse
+from app.schemas.customer_dashboard import (
+    CustomerCareerResponse,
+    CustomerDashboardResponse,
+    CustomerOfficeResponse,
+)
 from app.services import customer_dashboard_service
 
 router = APIRouter(prefix='/customer-dashboard', tags=['customer-dashboard'])
