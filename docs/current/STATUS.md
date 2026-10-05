@@ -647,3 +647,29 @@ Evidence boundary:
 - production certification of the merge SHA: **NOT RUN / NOT VERIFIED**.
 
 The immutable `v1.4.16` production certification remains unchanged. Any future real external payout requires a separate operator-configured provider, real credentials/target, explicit approval, idempotency, reconciliation and real-provider evidence; the deterministic `contract-test` result must not be represented as external payout or revenue.
+
+### W16 Stripe Connect payout provider and error-mapping checkpoint — 2026-10-05
+
+PR #890 and PR #891 extend the governed marketplace payout boundary with a named Stripe Connect provider and direct provider error-mapping regression coverage.
+
+1. **PR #890 — named Stripe Connect payout provider**
+   - Exact validated PR head before merge: `ed83fac09d08a8a9583d24ef2b89fa99f5cd1f1c`.
+   - Merge SHA: `6659d511dc3ef769dd66e2c23041b454f23c95fd`.
+   - Provider selection remains operator-controlled among `none`, `contract-test`, and `stripe-connect`; runtime payout arguments cannot select the provider.
+   - `stripe-connect` uses the existing Stripe SDK, requires operator configuration of `STRIPE_SECRET_KEY`, accepts Stripe Connect account destination references (`acct_*`), converts amounts to provider minor units, and passes the durable idempotency key to the provider.
+   - Provider outcomes distinguish accepted/submitted execution from ambiguous network/API/rate-limit failures and invalid-request rejection; ambiguous failures map to durable `UNKNOWN`/retryable semantics while invalid requests map to `FAILED`/non-retryable.
+   - Production/config validation fails closed when `stripe-connect` is selected without the required Stripe secret.
+   - Exact-head evidence: Provider Integration Contract PASS `37267253606`; W16 Cross-Tenant Skill Purchase Real-Stack PASS `37267253602` / Job `111626572916`; W16 Skill Provider Execution Real-Stack PASS `37267253698`; CI PASS `37267253626`; Architecture Guard PASS `37267253612`; CodeQL PASS `37267253646`; Security/Privacy PASS `37267253603`; Production Infrastructure PASS `37267253616`; HA Recovery PASS `37267253630`; DAST PASS `37267253633`.
+   - Post-merge workflow/status evidence for merge SHA `6659d511dc3ef769dd66e2c23041b454f23c95fd`: **NOT RUN / NOT VERIFIED**.
+
+2. **PR #891 — Stripe provider error-mapping regression coverage**
+   - Exact PR head: `0a1740684d29cd4766501ed9926e0ade09ca1a29`.
+   - Merge SHA: `a36d538e465e9ff98f613ee56586736d192257c8`.
+   - Direct tests cover `APIConnectionError`, `RateLimitError`, and `APIError` → `UNKNOWN` + retryable, and `InvalidRequestError` → `FAILED` + non-retryable, including failure code and non-external execution assertions.
+   - Exact-head evidence: Provider Integration Contract PASS `37267813957`; CI PASS `37267813967`; W16 Cross-Tenant Skill Purchase Real-Stack PASS `37267814169`; Architecture Guard PASS `37267813970`; Production Infrastructure PASS `37267813944`; HA Recovery PASS `37267814000`; CodeQL PASS `37267813989`; DAST PASS `37267813905`.
+   - Post-merge validation for `a36d538e465e9ff98f613ee56586736d192257c8`: workflow runs **NOT RUN** and combined statuses **NOT RUN** at this reconciliation; therefore post-merge validation is **NOT VERIFIED**.
+
+**Current W16 payout evidence boundary:** the named Stripe Connect transport and its error-state contracts are **IMPLEMENTED and EXACT-HEAD VERIFIED** in repository/CI evidence. This does **not** establish a real Stripe payout. No operator-configured Stripe account, live Stripe credential, real transfer, external seller payout, tax settlement, or realized external marketplace revenue has been evidenced. Those remain **NOT VERIFIED**.
+
+The immutable `v1.4.16` production certification remains unchanged. Mainline SHA `a36d538e465e9ff98f613ee56586736d192257c8` is post-certification engineering and is not production-certified.
+
