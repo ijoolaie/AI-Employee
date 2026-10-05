@@ -2,7 +2,7 @@
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-revision="w18_virtual_meeting_rooms"; down_revision="w16_skill_marketplace"; branch_labels=None; depends_on=None
+revision="w18_virtual_meeting_rooms"; down_revision="w16_payout_reconcile"; branch_labels=None; depends_on=None
 
 def upgrade():
     ms=postgresql.ENUM("scheduled","active","paused","ended","cancelled",name="meetingstatus",create_type=False)
