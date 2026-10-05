@@ -1,0 +1,76 @@
+name: Workforce W20 Third-party Employee Marketplace E2E
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/app/models/employee_marketplace.py"
+      - "backend/app/models/agent_definition.py"
+      - "backend/app/models/agent_template.py"
+      - "backend/app/services/employee_marketplace_service.py"
+      - "backend/app/api/v1/employee_marketplace.py"
+      - "backend/app/api/v1/router.py"
+      - "backend/app/schemas/employee_marketplace.py"
+      - "backend/app/models/__init__.py"
+      - "backend/alembic/versions/w20_employee_marketplace.py"
+      - "backend/scripts/e2e_workforce_w20_employee_marketplace_verify.py"
+      - "docker-compose.yml"
+      - "backend/requirements.lock"
+      - ".github/workflows/workforce-w20-e2e.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/models/employee_marketplace.py"
+      - "backend/app/services/employee_marketplace_service.py"
+      - "backend/app/api/v1/employee_marketplace.py"
+      - "backend/app/api/v1/router.py"
+      - "backend/app/schemas/employee_marketplace.py"
+      - "backend/app/models/__init__.py"
+      - "backend/alembic/versions/w20_employee_marketplace.py"
+      - "backend/scripts/e2e_workforce_w20_employee_marketplace_verify.py"
+      - ".github/workflows/workforce-w20-e2e.yml"
+
+concurrency:
+  group: workforce-w20-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  w20-real-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build and start W20 stack
+        timeout-minutes: 15
+        run: docker compose up -d --build postgres redis e2e-market-provider storage-init api worker worker-outbox beat
+      - name: Prepare stack database
+        timeout-minutes: 5
+        run: |
+          docker compose exec -T api alembic upgrade head
+          docker compose exec -T api alembic check
+          test "$(docker compose exec -T api alembic heads | grep -c "(head)")" -eq 1
+      - name: Wait for application health
+        timeout-minutes: 5
+        run: |
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8000/health/dependencies >/dev/null; then echo "API HEALTH PASS"; exit 0; fi
+            sleep 5
+          done
+          docker compose ps
+          docker compose logs --tail=200 api worker
+          exit 1
+      - name: Compile W20 sources
+        run: docker compose exec -T api python -m py_compile scripts/e2e_workforce_w20_employee_marketplace_verify.py app/models/employee_marketplace.py app/services/employee_marketplace_service.py app/api/v1/employee_marketplace.py
+      - name: Run W20 real-stack evidence
+        timeout-minutes: 8
+        run: docker compose exec -T api python scripts/e2e_workforce_w20_employee_marketplace_verify.py
+      - name: Collect failure diagnostics
+        if: failure()
+        run: docker compose ps && docker compose logs --tail=300 api worker postgres redis
+      - name: Shutdown
+        if: always()
+        run: docker compose down -v --remove-orphans
