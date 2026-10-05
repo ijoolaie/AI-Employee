@@ -8,6 +8,7 @@ from app.core.database import AsyncSessionLocal
 from app.models.agent_definition import AgentDefinition
 from app.models.agent_evaluation import AgentEvaluation,AgentEvaluationStatus
 from app.models.agent_template import AgentTemplate,AgentTemplateStatus
+from sqlalchemy import select
 from app.models.employee_marketplace import EmployeeMarketplaceInstallationStatus
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 
@@ -75,13 +76,26 @@ async def run():
     installation=request("POST",f"/employee-marketplace/packages/{package_id}/install",buyer_token,{"sponsor_user_id":str(buyer_owner)},201)["data"]
     assert installation["status"]=="active"
     assert installation["provider_execution_status"]=="NOT_VERIFIED"
+    async with AsyncSessionLocal() as db:
+        imported=(await db.execute(select(AgentTemplate).where(
+            AgentTemplate.id == uuid.UUID(installation["imported_agent_template_id"]),
+            AgentTemplate.tenant_id == buyer_tenant,
+        ))).scalar_one()
+        assert imported.status == AgentTemplateStatus.DRAFT
+        assert imported.permission_policy.get("execution_authority_granted") is False
     revoke=request("POST",f"/employee-marketplace/installations/{installation['id']}/revoke",buyer_token,None,200)["data"]
     assert revoke["status"]=="revoked"
+    reactivated=request("POST",f"/employee-marketplace/packages/{package_id}/install",buyer_token,{"sponsor_user_id":str(buyer_owner)},201)["data"]
+    assert reactivated["id"] == installation["id"]
+    assert reactivated["status"] == "active"
+    assert reactivated["provider_execution_status"] == "NOT_VERIFIED"
     print("W20 PACKAGE PUBLICATION PASS")
     print("W20 CROSS-TENANT INSTALLATION PASS")
+    print("W20 BUYER-OWNED DRAFT TEMPLATE PASS")
     print("W20 EXECUTION AUTHORITY FAIL-CLOSED PASS")
     print("W20 PROVIDER EXECUTION NOT-VERIFIED PASS")
     print("W20 REVOCATION PASS")
+    print("W20 REACTIVATION PASS")
     print("WORKFORCE W20 EMPLOYEE-MARKETPLACE REAL-STACK E2E PASS")
 
 if __name__=="__main__":
