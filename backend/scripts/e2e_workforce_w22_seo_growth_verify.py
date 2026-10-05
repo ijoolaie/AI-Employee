@@ -199,7 +199,7 @@ async def prepare():
             run_id=proposal_run.id,
             tool_name="workforce_seo_experiment_proposal",
             tool_call_id=f"w22-seo-proposal-{uuid.uuid4().hex}",
-            arguments={"topic": "governed SEO experiment"},
+            arguments={"topic": "AI workforce SaaS", "spec": {"hypothesis": "improve organic discovery"}},
             continuation_messages=[],
             iteration=0,
             status="approved",
