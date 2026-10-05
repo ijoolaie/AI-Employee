@@ -506,8 +506,8 @@ W17 is now the next active engineering slice.
 
 - Issue: #897.
 - Semantic design contract: `docs/current/W17_EMPLOYEE_CAREER_REPUTATION.md`.
-- Status: **DESIGN FOUNDATION / NOT IMPLEMENTED / NOT VERIFIED**.
-- First implementation boundary is read-only, tenant-scoped career evidence derived from authoritative Employee, WorkItem, Run, Workflow/Approval, Audit and verified KPI records.
+- Status: **IMPLEMENTATION MERGED / REAL-STACK EVIDENCE PENDING / NOT VERIFIED**.
+- Implementation is merged on main at `e857528167e826b335a6448cce4b5ad3240a4d46`; it provides a read-only, tenant-scoped career evidence API derived from authoritative Employee, WorkItem and Run records.
 - Missing evidence remains **UNKNOWN / UNVERIFIED**, never zero-filled or model-invented.
 - Reputation scoring is deferred until an explainable deterministic evidence model is proven.
 - No W17 state may modify permissions, tool bindings, approvals, quotas, billing, execution state or provider selection.
