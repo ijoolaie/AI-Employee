@@ -56,7 +56,8 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("owner_tenant_id", "slug", "version", name="uq_employee_marketplace_pkg_owner_slug_version"),
     )
-    op.create_index("ix_employee_marketplace_pkg_owner_tenant_id", "employee_marketplace_packages", ["owner_tenant_id"])
+    op.create_index("ix_employee_marketplace_packages_owner_tenant_id", "employee_marketplace_packages", ["owner_tenant_id"])
+    op.create_index("ix_employee_marketplace_packages_source_agent_template_id", "employee_marketplace_packages", ["source_agent_template_id"])
     op.create_index("ix_employee_marketplace_pkg_owner_status", "employee_marketplace_packages", ["owner_tenant_id", "status"])
     op.create_index("ix_employee_marketplace_pkg_visibility", "employee_marketplace_packages", ["visibility"])
 
@@ -96,7 +97,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("buyer_tenant_id", "package_id", name="uq_employee_marketplace_install_buyer_package"),
     )
-    op.create_index("ix_employee_marketplace_install_buyer_tenant_id", "employee_marketplace_installations", ["buyer_tenant_id"])
+    op.create_index("ix_employee_marketplace_installations_buyer_tenant_id", "employee_marketplace_installations", ["buyer_tenant_id"])
     op.create_index("ix_employee_marketplace_install_buyer_status", "employee_marketplace_installations", ["buyer_tenant_id", "status"])
     op.create_index("ix_employee_marketplace_install_package", "employee_marketplace_installations", ["package_id"])
 
