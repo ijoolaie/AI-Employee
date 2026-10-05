@@ -50,7 +50,7 @@ async def run():
             raise AssertionError("same-tenant request unexpectedly accepted")
         except ValidationAppError:
             await db.rollback()
-    payload={"recipient_tenant_id":str(recipient_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1","side_effect":"proposal_only"},"payload":{"subject":"controlled handoff"},"idempotency_key":"network-001","correlation_id":"corr-network-001","sponsor_user_id":str(decider)}
+    payload={"recipient_tenant_id":str(recipient_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1","side_effect":"proposal_only"},"payload":{"subject":"controlled handoff"},"idempotency_key":"network-001","correlation_id":"corr-network-001","sponsor_user_id":str(sponsor)}
     async with AsyncSessionLocal() as db:
         first_obj=await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=sponsor,recipient_tenant_id=recipient_tenant,operation=payload["operation"],capability_contract=payload["capability_contract"],payload=payload["payload"],idempotency_key=payload["idempotency_key"],correlation_id=payload["correlation_id"])
         replay_obj=await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=sponsor,recipient_tenant_id=recipient_tenant,operation=payload["operation"],capability_contract=payload["capability_contract"],payload=payload["payload"],idempotency_key=payload["idempotency_key"],correlation_id=payload["correlation_id"])
