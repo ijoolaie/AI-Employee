@@ -66,6 +66,14 @@ async def publish_package(
     if template is None:
         raise NotFoundError("published source agent template not found")
 
+    source_definition = (await db.execute(select(AgentDefinition).where(
+        AgentDefinition.id == template.agent_definition_id,
+        AgentDefinition.tenant_id == owner_tenant_id,
+        AgentDefinition.enabled.is_(True),
+    ))).scalar_one_or_none()
+    if source_definition is None:
+        raise NotFoundError("source agent definition not found")
+
     evidence = await assert_publishable_with_evidence(
         db, tenant_id=owner_tenant_id, template_id=template.id,
     )
@@ -124,7 +132,16 @@ async def publish_package(
                 "install_policy": template.install_policy or {},
             },
             "definition_snapshot": {
-                "name": (await db.execute(select(AgentDefinition).where(AgentDefinition.id == template.agent_definition_id, AgentDefinition.tenant_id == owner_tenant_id))).scalar_one().name,
+                "slug": source_definition.slug,
+                "name": source_definition.name,
+                "description": source_definition.description,
+                "version": source_definition.version,
+                "capabilities": source_definition.capabilities or [],
+                "allowed_tools": source_definition.allowed_tools or [],
+                "model_policy": source_definition.model_policy or {},
+                "input_schema": source_definition.input_schema or {},
+                "output_schema": source_definition.output_schema or {},
+                "policy_requirements": source_definition.policy_requirements or {},
             },
             "evaluation": {
                 "id": str(evidence.id),
