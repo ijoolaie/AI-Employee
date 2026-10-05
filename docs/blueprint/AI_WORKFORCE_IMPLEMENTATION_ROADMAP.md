@@ -844,9 +844,12 @@ The workforce product is expanding from an AI operations dashboard into a visual
 - Exact-SHA Production Certification: NOT RUN.
 
 **W18 — Virtual Meeting Rooms**
-- CEO-to-employee conversations and multi-employee governed sessions.
-- Project-focused meeting context.
-- Meeting state tied to real Workforce sessions/runs.
+- **IMPLEMENTED / REAL-STACK VERIFIED** first vertical slice on post-v1.4.16 mainline.
+- Tenant-scoped durable Meeting/MeetingParticipant lifecycle domain.
+- Read-only customer meeting-room presentation API.
+- Participant roles are presentation/session roles only and never grant execution authority.
+- Dedicated PostgreSQL E2E and CI/security gates passed.
+- Voice/video providers and real-time media remain outside W18.
 
 **W19 — Voice & Visual Interaction**
 - Voice input/output, TTS and visual/avatar providers behind explicit contracts.
@@ -1427,3 +1430,9 @@ W17 application implementation has been merged to main in integration commit `e8
 The W17 Definition-of-Done evidence gate is closed. Implementation, tenant-safe API behavior, unit coverage, dedicated real PostgreSQL E2E and CI/security verification are evidenced. W17 remains post-v1.4.16 engineering work and is not production-certified.
 
 **Next slice: W18 — Virtual Meeting Rooms.**
+
+## W18 verification checkpoint — 2026-10-05
+
+W18 first vertical slice is implemented and real-stack verified. Dedicated E2E Run `37299435745` / Job `111728381943` passed, with CI, CodeQL, Architecture Guard, Runtime/RBAC, Security/Privacy, DAST, infrastructure, HA, observability and rollback gates all passing on verification head `7ae4fe590d5483185637a8f344cc592979fec8bf`. Production Certification remains NOT RUN.
+
+**Next slice: W19 — Voice & Visual Interaction.**
