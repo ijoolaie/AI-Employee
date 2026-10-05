@@ -60,3 +60,28 @@ class CustomerDashboardResponse(BaseModel):
     usage: dict
     health: dict
     generated_at: datetime
+
+
+class CustomerCareerIndicatorResponse(BaseModel):
+    code: str
+    label: str
+    value: int | float | str | None
+    evidence_status: str
+    evidence_refs: list[str] = Field(default_factory=list)
+
+
+class CustomerCareerWorkItemResponse(BaseModel):
+    id: str
+    title: str
+    status: str
+    completed_at: datetime | None
+    run_id: str
+
+
+class CustomerCareerResponse(BaseModel):
+    contract_version: str
+    employee: dict
+    tenure: dict
+    work_history: list[CustomerCareerWorkItemResponse]
+    indicators: list[CustomerCareerIndicatorResponse]
+    achievements: list[dict] = Field(default_factory=list)
