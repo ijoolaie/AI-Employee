@@ -73,7 +73,7 @@ async def run():
         raise AssertionError("seller tenant unexpectedly installed its own package")
     except Exception as exc:
         if getattr(exc,"code",None) not in (400,409): raise
-    installation=request("POST",f"/employee-marketplace/packages/{package_id}/install",buyer_token,{"sponsor_user_id":str(buyer_owner)},201)["data"]
+    installation=request("POST",f"/employee-marketplace/packages/{package_id}/install",buyer_token,{"sponsor_user_id":str(buyer_owner)},201)
     assert installation["status"]=="active"
     assert installation["provider_execution_status"]=="NOT_VERIFIED"
     async with AsyncSessionLocal() as db:
@@ -83,9 +83,9 @@ async def run():
         ))).scalar_one()
         assert imported.status == AgentTemplateStatus.DRAFT
         assert imported.permission_policy.get("execution_authority_granted") is False
-    revoke=request("POST",f"/employee-marketplace/installations/{installation['id']}/revoke",buyer_token,None,200)["data"]
+    revoke=request("POST",f"/employee-marketplace/installations/{installation['id']}/revoke",buyer_token,None,200)
     assert revoke["status"]=="revoked"
-    reactivated=request("POST",f"/employee-marketplace/packages/{package_id}/install",buyer_token,{"sponsor_user_id":str(buyer_owner)},201)["data"]
+    reactivated=request("POST",f"/employee-marketplace/packages/{package_id}/install",buyer_token,{"sponsor_user_id":str(buyer_owner)},201)
     assert reactivated["id"] == installation["id"]
     assert reactivated["status"] == "active"
     assert reactivated["provider_execution_status"] == "NOT_VERIFIED"
