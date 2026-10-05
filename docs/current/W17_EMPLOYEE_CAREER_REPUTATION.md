@@ -1,6 +1,6 @@
 # W17 Employee Career & Reputation
 
-**Status:** DESIGN / FOUNDATION — post-v1.4.16 mainline
+**Status:** IMPLEMENTED / REAL-STACK VERIFIED — post-v1.4.16 mainline
 **Reconciled:** 2026-10-05
 **Issue:** #897
 
@@ -121,9 +121,16 @@ Minimum tests:
 
 ## 8. Real-stack evidence
 
-W17 is not implemented or verified by this document. The exit gate is:
+W17 real-stack verification passed on the dedicated PR verification head `f8b5a9734acbcc70ad165a2fbda2f326bfc2fa9a`.
 
-semantic contract → API/schema → tenant-safe handler → tests → real PostgreSQL evidence → CI → documentation reconciliation
+- Workflow: `Workforce W17 Career Reputation E2E`
+- Run: `37298325542` — PASS
+- Job: `111724800314` — PASS
+- CodeQL on the same verification head: Run `37298325646` — PASS
+- Verified path: real PostgreSQL stack → migration/head validation → application health → source compilation → W17 career API E2E → tenant isolation → clean shutdown.
+- The E2E verified successful Run/WorkItem counts, failed-record exclusion, UNKNOWN tenure, NOT_APPLICABLE reputation score and cross-tenant 404.
+
+The verification head differed from the subsequent main merge only by a workflow comment; no W17 application behavior changed. This is engineering evidence, not Production Certification.
 
 Any provider or external commercial evidence must remain separate from W17 career/reputation evidence.
 
