@@ -5,7 +5,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, ForeignKeyConstraint, Index, Integer, JSON, String, Text, UniqueConstraint, event, func
+from sqlalchemy import DateTime, Enum, ForeignKey, ForeignKeyConstraint, Index, Integer, String, Text, UniqueConstraint, event, func, inspect
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -83,9 +83,9 @@ class EmployeeMarketplaceInstallation(Base):
         Index("ix_employee_marketplace_install_buyer_status", "buyer_tenant_id", "status"),
         Index("ix_employee_marketplace_install_package", "package_id"),
         ForeignKeyConstraint(
-            ["buyer_tenant_id", "package_id"],
-            ["employee_marketplace_packages.owner_tenant_id", "employee_marketplace_packages.id"],
-            name="fk_employee_marketplace_install_package_tenant",
+            ["package_id"],
+            ["employee_marketplace_packages.id"],
+            name="fk_employee_marketplace_install_package",
             ondelete="RESTRICT",
         ),
         ForeignKeyConstraint(
@@ -132,5 +132,7 @@ class EmployeeMarketplaceInstallation(Base):
 
 @event.listens_for(EmployeeMarketplacePackage, "before_update")
 def _reject_published_package_update(mapper, connection, target) -> None:
-    if target.status != EmployeeMarketplacePackageStatus.DRAFT:
+    history = inspect(target).attrs.status.history
+    committed_status = history.deleted[0] if history.deleted else None
+    if committed_status == EmployeeMarketplacePackageStatus.PUBLISHED:
         raise ValueError("published employee marketplace package records are immutable")
