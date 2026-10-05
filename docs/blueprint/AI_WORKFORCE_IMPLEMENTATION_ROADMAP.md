@@ -1376,3 +1376,18 @@ The W16 marketplace finance implementation now has four additional explicit boun
 The next application-code boundary must not collapse proposal, approval, provider execution and reconciliation into an implicit generic payment call. Any future payout execution slice must preserve named-provider selection, explicit approval, immutable destination binding, idempotency, durable execution state, `UNKNOWN` reconciliation, tenant/actor authorization, audit/provenance and fail-closed behavior.
 
 All post-v1.4.16 work remains mainline engineering and requires fresh exact-SHA validation/certification if a new release candidate is created.
+
+
+### W16 governed payout execution checkpoint — 2026-10-05
+
+PR #876 implements the explicit application boundary from payout proposal to approval-gated governed provider execution.
+
+- Exact PR head: `3582976a0c1ae8b2654d4b23e88819b519daacb6`.
+- Merge SHA: `edabee66012c61cbb50fb26563bea49511eef3f8`.
+- `marketplace_execute_payout` is side-effecting and approval-gated, with `run.execute`, exact proposal argument binding, durable approval consumption, active vendor platform-admin authorization and immutable destination snapshot requirements.
+- Provider selection remains operator-controlled. `none` fails closed; `contract-test` is deterministic/simulated and records no external execution.
+- Execution evidence remains durable and idempotent; `UNKNOWN` requires manual reconciliation and there is no automatic retry.
+- Exact-head W16 real-stack Run `37266213297` / Job `111623501887` passed the migration graph, cross-tenant marketplace gate and focused payout contracts. The E2E output explicitly recorded approval PASS, governed contract-test execution PASS and external execution FALSE PASS; the focused suite reported 44 passed.
+- Exact-head W16 provider execution Run `37266213253` / Job `111623501807`, CI Run `37266213087`, Architecture Guard Run `37266213175`, CodeQL Run `37266213215` and Security/Privacy Run `37266213156` all passed.
+
+Evidence boundary: governed deterministic payout execution is **VERIFIED** for the exact PR head; external seller payout, tax settlement and realized external marketplace revenue remain **NOT VERIFIED**. Post-merge workflow/status evidence for `edabee66012c61cbb50fb26563bea49511eef3f8` was **NOT RUN / NOT VERIFIED** at reconciliation time. The immutable `v1.4.16` certification is unchanged.
