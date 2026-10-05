@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from uuid import UUID
 from app.core.deps import AuditReadContext, DbSession
 from app.schemas.common import APIResponse
 from app.schemas.customer_dashboard import CustomerCareerResponse, CustomerDashboardResponse, CustomerOfficeResponse
@@ -22,7 +23,7 @@ async def get_customer_dashboard(ctx: AuditReadContext, db: DbSession):
     response_model=APIResponse[CustomerCareerResponse],
 )
 async def get_employee_career(
-    employee_id: str,
+    employee_id: UUID,
     ctx: AuditReadContext,
     db: DbSession,
 ):
