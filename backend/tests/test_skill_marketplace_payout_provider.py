@@ -8,10 +8,11 @@ import pytest
 from app.core.config import get_settings
 from app.core.exceptions import ValidationAppError
 from app.services.skill_marketplace_payout_provider import (
-    ContractTestMarketplacePayoutProvider,\n    StripeConnectMarketplacePayoutProvider,
+    ContractTestMarketplacePayoutProvider,
     MarketplacePayoutRequest,
     MarketplacePayoutStatus,
     NoneMarketplacePayoutProvider,
+    StripeConnectMarketplacePayoutProvider,
     get_marketplace_payout_provider,
 )
 
