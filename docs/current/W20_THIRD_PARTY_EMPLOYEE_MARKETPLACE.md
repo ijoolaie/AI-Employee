@@ -2,7 +2,7 @@
 
 ## Status
 
-**First governed vertical slice implemented; real-stack verification pending.**
+**First governed vertical slice implemented; REAL-STACK VERIFIED.**
 
 W20 is distinct from W16 Skill Marketplace. W16 owns SkillPackage publication, skill installation, purchase entitlement and marketplace financial allocation. W20 packages a governed Employee/AgentTemplate composition and imports it into a buyer tenant without granting execution authority.
 
@@ -45,13 +45,16 @@ Dedicated workflow:
 
 `.github/workflows/workforce-w20-e2e.yml`
 
-Real-stack evidence will cover:
+Real-stack evidence covers:
 
 - package publication from an evaluated seller template;
 - cross-tenant installation;
 - self-install rejection;
 - execution-authority fail-closed semantics;
 - explicit `NOT_VERIFIED` provider boundary;
-- revocation.
+- revocation;
+- reinstallation/reactivation of the same installation ledger row.
+
+Verification: W20 E2E Run `37308738607` / Job `111757?` — PASS on verification head `fe6377abcc7f110aa83a8cff3b8a0ea7e5c10c99`.
 
 Production Certification is **NOT RUN** for W20.
