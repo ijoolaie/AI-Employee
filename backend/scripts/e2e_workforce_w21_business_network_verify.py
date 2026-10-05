@@ -33,7 +33,7 @@ async def run():
     _,decider,_,decider_slug,decider_email=register(suffix+"-decider")
     await move_user_to_sender(decider,sender_tenant)
     # Obtain a fresh token after the tenant move.
-    login=request("POST","/auth/login",None,{"email":decider_email,"password":"W21NetworkE2E-2026!","tenant_slug":decider_slug},200)
+    login=request("POST","/auth/login",None,{"email":decider_email,"password":"W21NetworkE2E-2026!","tenant_slug":sender_slug},200)
     decider_token=login["data"]["access_token"]
     same={"recipient_tenant_id":str(sender_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1"},"payload":{},"idempotency_key":"same-tenant","sponsor_user_id":str(decider)}
     try: request("POST","/business-network/requests",requester_token,same,422); raise AssertionError("same-tenant request unexpectedly accepted")
