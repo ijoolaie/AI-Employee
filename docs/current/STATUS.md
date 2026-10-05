@@ -5,7 +5,7 @@
 **Latest certified release:** `v1.4.16` — exact-SHA certification PASS  
 **Certified release commit:** `434a0c4a4501af08a393faaf58092add764df2a2`  
 **Mainline engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA  
-**Status date:** 2026-10-04  
+**Status date:** 2026-10-05  
 **Latest published release:** `v1.4.16`  
 **Latest certified release:** `v1.4.16`  
 **Certification run:** `37188879277` — PASS (exact `v1.4.16` SHA)  
@@ -607,3 +607,43 @@ The W16 marketplace finance boundary was extended through PRs #871–#874 after 
 **Evidence boundary:** payout-proposal destination binding and immutable snapshot are **VERIFIED on exact PR validation**. Post-merge validation for the merge SHA, external seller payout execution, tax settlement and real customer revenue remain **NOT VERIFIED**. Production certification remains **NOT RUN / NOT VERIFIED**.
 
 These checkpoints do not change the immutable `v1.4.16` certification boundary.
+
+
+### W16 governed payout execution checkpoint — 2026-10-05
+
+PR #876 closes the next explicit application boundary from payout proposal to approval-gated governed provider execution and durable reconciliation state.
+
+Implementation boundary:
+- `marketplace_execute_payout` is a registered side-effecting/external-side-effecting tool requiring `run.execute` and mandatory approval.
+- Execution requires a durable `ToolApprovalRequest` bound to the exact `{proposal_id}` arguments, with explicit decision actor/time; the approval is consumed at the execution boundary.
+- Execution requires an active vendor platform-admin tenant/user and the immutable seller destination snapshot stored on the proposal.
+- Provider selection remains operator-controlled; runtime arguments cannot select a provider.
+- `none` remains fail-closed; `contract-test` is deterministic/simulated only and records `executed=false` and `external_execution=false`.
+- Durable idempotency, execution state, provider IDs, failure/retry metadata and UNKNOWN/manual-reconciliation semantics are preserved; no automatic retry is introduced.
+- No generic HTTP, Stripe, bank or shell payout transport was added.
+
+Exact-head evidence:
+- PR #876 exact head: `3582976a0c1ae8b2654d4b23e88819b519daacb6`.
+- W16 Cross-Tenant Skill Purchase Real-Stack: PASS — Run `37266213297`, Job `111623501887`.
+- That exact real-stack job passed migrations, migration graph, the cross-tenant gate, and focused payout contracts; the gate printed explicit approval PASS, governed contract-test execution PASS, and external execution FALSE PASS.
+- Focused marketplace/payout suite: **44 passed in 1.07s** in the same real-stack job.
+- W16 Skill Provider Execution Real-Stack: PASS — Run `37266213253`, Job `111623501807`.
+- CI: PASS — Run `37266213087` (backend and frontend jobs PASS).
+- Architecture Guard: PASS — Run `37266213175`.
+- CodeQL: PASS — Run `37266213215`.
+- Security/Privacy: PASS — Run `37266213156`.
+- Additional repository Workforce/W16/infrastructure/recovery/DAST workflows on the exact head all completed successfully.
+
+Merge:
+- PR #876 merged successfully with expected head `3582976a0c1ae8b2654d4b23e88819b519daacb6`.
+- Merge SHA: `edabee66012c61cbb50fb26563bea49511eef3f8`.
+
+Evidence boundary:
+- governed approval + deterministic payout execution boundary: **VERIFIED** on exact PR head;
+- external seller payout execution: **NOT VERIFIED**;
+- tax calculation/settlement: **NOT VERIFIED**;
+- external customer payment / realized marketplace revenue: **NOT VERIFIED**;
+- post-merge workflow/status evidence for merge SHA `edabee66012c61cbb50fb26563bea49511eef3f8`: **NOT RUN / NOT VERIFIED** at reconciliation time;
+- production certification of the merge SHA: **NOT RUN / NOT VERIFIED**.
+
+The immutable `v1.4.16` production certification remains unchanged. Any future real external payout requires a separate operator-configured provider, real credentials/target, explicit approval, idempotency, reconciliation and real-provider evidence; the deterministic `contract-test` result must not be represented as external payout or revenue.
