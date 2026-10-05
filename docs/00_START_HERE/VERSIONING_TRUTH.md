@@ -209,3 +209,14 @@ W17 is the active next product-experience slice as of 2026-10-05.
 - Scope: evidence-first career history, tenure, verified operational indicators and evidence-backed achievements.
 - Hard boundary: no fabricated metrics, no opaque reputation score, no authority changes.
 - Release boundary: post-v1.4.16; fresh exact-SHA certification is mandatory before any release promotion.
+
+
+## W17 versioning boundary — 2026-10-05
+
+W17 Employee Career & Reputation is post-v1.4.16 mainline engineering.
+
+- Implementation integration commit: `e857528167e826b335a6448cce4b5ad3240a4d46`.
+- Dedicated real-stack E2E harness/workflow is present in main.
+- W17 is **not** a release version and does not modify the certified v1.4.16 artifact.
+- W17 remains **NOT VERIFIED** until real PostgreSQL evidence and final checks are recorded.
+- No certification, deployment, external provider execution, or customer acceptance is implied by the merge.
