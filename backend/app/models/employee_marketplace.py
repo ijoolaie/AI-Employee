@@ -34,7 +34,6 @@ class EmployeeMarketplacePackage(Base):
     __tablename__ = "employee_marketplace_packages"
     __table_args__ = (
         UniqueConstraint("owner_tenant_id", "slug", "version", name="uq_employee_marketplace_pkg_owner_slug_version"),
-        UniqueConstraint("owner_tenant_id", "id", name="uq_employee_marketplace_pkg_owner_id"),
         Index("ix_employee_marketplace_pkg_owner_status", "owner_tenant_id", "status"),
         Index("ix_employee_marketplace_pkg_visibility", "visibility"),
         ForeignKeyConstraint(
@@ -46,7 +45,7 @@ class EmployeeMarketplacePackage(Base):
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    owner_tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    owner_tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True)
     source_agent_template_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
     slug: Mapped[str] = mapped_column(String(120), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
