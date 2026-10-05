@@ -30,6 +30,10 @@ class MarketplacePayoutProposalResponse(BaseModel):
     retryable: bool
     executed: bool
     external_execution: bool
+    reconciliation_evidence_ref: str | None
+    reconciliation_outcome: str | None
+    reconciled_by_user_id: UUID | None
+    reconciled_at: datetime | None
     metadata: dict
     created_at: datetime
     updated_at: datetime
@@ -51,3 +55,10 @@ class MarketplaceFinancialSummaryResponse(BaseModel):
     external_customer_revenue_verified: bool
     external_seller_payout_verified: bool
     execution_authority_changed: bool
+
+
+class MarketplacePayoutReconciliationRequest(BaseModel):
+    proposal_id: UUID
+    approval_request_id: UUID
+    outcome: str
+    evidence_ref: str

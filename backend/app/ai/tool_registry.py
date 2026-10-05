@@ -300,6 +300,29 @@ class ToolRegistry:
                 "failure_code": proposal.failure_code,
                 "retryable": proposal.retryable,
             }
+        elif name == "marketplace_reconcile_payout":
+            if db is None or tenant_id is None or actor_id is None:
+                raise ValidationAppError(
+                    "marketplace_reconcile_payout requires an active tenant and actor context"
+                )
+            from app.services import skill_marketplace_payout_service
+            proposal = await skill_marketplace_payout_service.reconcile_unknown_payout_execution(
+                db,
+                proposal_id=__import__("uuid").UUID(arguments["proposal_id"]),
+                platform_admin_tenant_id=tenant_id,
+                actor_user_id=actor_id,
+                approval_granted=approval_granted,
+                approval_request_id=approval_request_id,
+                outcome=arguments["outcome"],
+                evidence_ref=arguments["evidence_ref"],
+            )
+            result = {
+                "proposal_id": str(proposal.id),
+                "execution_status": proposal.execution_status.value,
+                "reconciliation_outcome": proposal.reconciliation_outcome,
+                "reconciliation_evidence_ref": proposal.reconciliation_evidence_ref,
+                "external_execution": proposal.external_execution,
+            }
 
         elif name == "create_invoice":
             if db is None or tenant_id is None:
@@ -2640,6 +2663,28 @@ def build_default_registry() -> ToolRegistry:
             handler=lambda arguments, **context: None,
             side_effects=True,
             external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+
+    registry.register(
+        RegisteredTool(
+            name="marketplace_reconcile_payout",
+            description="Manually reconcile one UNKNOWN marketplace seller payout using explicit operator evidence; never invokes a payout provider.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "proposal_id": {"type": "string", "minLength": 36, "maxLength": 36, "pattern": "^[0-9a-fA-F-]{36}$"},
+                    "outcome": {"type": "string", "enum": ["accepted", "failed", "unknown"]},
+                    "evidence_ref": {"type": "string", "minLength": 1, "maxLength": 500},
+                },
+                "required": ["proposal_id", "outcome", "evidence_ref"],
+                "additionalProperties": False,
+            },
+            handler=lambda arguments, **context: None,
+            side_effects=True,
+            external_side_effects=False,
             required_permission="run.execute",
             requires_approval=True,
         )

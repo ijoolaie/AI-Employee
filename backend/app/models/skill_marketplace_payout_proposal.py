@@ -94,6 +94,12 @@ class SkillMarketplacePayoutProposal(Base):
     retryable: Mapped[bool] = mapped_column(default=False, nullable=False)
     executed: Mapped[bool] = mapped_column(default=False, nullable=False)
     external_execution: Mapped[bool] = mapped_column(default=False, nullable=False)
+    reconciliation_evidence_ref: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    reconciliation_outcome: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    reconciled_by_user_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="RESTRICT"), nullable=True
+    )
+    reconciled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     execution_status: Mapped[SkillMarketplacePayoutExecutionStatus] = mapped_column(
         Enum(
             SkillMarketplacePayoutExecutionStatus,

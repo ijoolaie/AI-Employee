@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -195,6 +196,133 @@ async def list_payout_execution_evidence(
     stmt = stmt.order_by(SkillMarketplacePayoutProposal.updated_at.desc())
     result = await db.execute(stmt)
     return list(result.scalars().all())
+
+
+async def reconcile_unknown_payout_execution(
+    db: AsyncSession,
+    *,
+    proposal_id: uuid.UUID,
+    platform_admin_tenant_id: uuid.UUID,
+    actor_user_id: uuid.UUID,
+    approval_granted: bool,
+    approval_request_id: uuid.UUID | None,
+    outcome: str,
+    evidence_ref: str,
+) -> SkillMarketplacePayoutProposal:
+    """Reconcile an UNKNOWN payout using explicit operator evidence; never calls a provider."""
+    if not approval_granted or approval_request_id is None:
+        raise ValidationAppError("payout reconciliation requires a durable explicit approval")
+    if outcome not in {"accepted", "failed", "unknown"}:
+        raise ValidationAppError("payout reconciliation outcome is invalid")
+    evidence_ref = evidence_ref.strip()
+    if not evidence_ref:
+        raise ValidationAppError("payout reconciliation requires an evidence reference")
+
+    admin_tenant = (
+        await db.execute(
+            select(Tenant).where(
+                Tenant.id == platform_admin_tenant_id,
+                Tenant.tenant_kind == "vendor",
+                Tenant.status == "active",
+            )
+        )
+    ).scalar_one_or_none()
+    if admin_tenant is None:
+        raise ValidationAppError("payout reconciliation requires an active vendor platform-admin tenant")
+
+    admin_user = (
+        await db.execute(
+            select(User).where(
+                User.id == actor_user_id,
+                User.tenant_id == platform_admin_tenant_id,
+                User.is_active.is_(True),
+                User.is_platform_admin.is_(True),
+            )
+        )
+    ).scalar_one_or_none()
+    if admin_user is None:
+        raise ValidationAppError("payout reconciliation requires an active platform administrator")
+
+    approval = (
+        await db.execute(
+            select(ToolApprovalRequest)
+            .where(
+                ToolApprovalRequest.id == approval_request_id,
+                ToolApprovalRequest.tenant_id == platform_admin_tenant_id,
+            )
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
+    if approval is None:
+        raise ValidationAppError("payout reconciliation approval request was not found")
+    if approval.tool_name != "marketplace_reconcile_payout":
+        raise ValidationAppError("approval request is bound to a different reconciliation tool")
+    expected_arguments = {
+        "proposal_id": str(proposal_id),
+        "outcome": outcome,
+        "evidence_ref": evidence_ref,
+    }
+    if approval.arguments != expected_arguments:
+        raise ValidationAppError("payout reconciliation approval arguments do not match the requested evidence")
+    if approval.status not in {"approved", "consumed"} or approval.decided_by is None or approval.decided_at is None:
+        raise ValidationAppError("payout reconciliation approval was not explicitly decided")
+    if approval.status == "approved":
+        approval.status = "consumed"
+        await db.flush()
+
+    proposal = (
+        await db.execute(
+            select(SkillMarketplacePayoutProposal)
+            .where(
+                SkillMarketplacePayoutProposal.id == proposal_id,
+                SkillMarketplacePayoutProposal.platform_admin_tenant_id == platform_admin_tenant_id,
+            )
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
+    if proposal is None:
+        raise NotFoundError("marketplace payout proposal was not found")
+    if proposal.execution_status is not SkillMarketplacePayoutExecutionStatus.UNKNOWN:
+        raise ConflictError("only UNKNOWN payout executions can be manually reconciled")
+    if proposal.reconciliation_evidence_ref is not None or proposal.reconciled_at is not None:
+        raise ConflictError("payout execution has already been manually reconciled")
+
+    proposal.reconciliation_evidence_ref = evidence_ref
+    proposal.reconciliation_outcome = outcome
+    proposal.reconciled_by_user_id = actor_user_id
+    proposal.reconciled_at = datetime.now(timezone.utc)
+    proposal.retryable = False
+    if outcome == "accepted":
+        proposal.execution_status = SkillMarketplacePayoutExecutionStatus.ACCEPTED
+    elif outcome == "failed":
+        proposal.execution_status = SkillMarketplacePayoutExecutionStatus.FAILED
+
+    proposal.metadata_ = {
+        **(proposal.metadata_ or {}),
+        "reconciliation_required": outcome == "unknown",
+        "reconciliation_outcome": outcome,
+        "reconciliation_source": "explicit_operator_evidence",
+        "reconciliation_evidence_ref": evidence_ref,
+        "external_execution": proposal.external_execution,
+        "execution_authority_changed": False,
+    }
+    await audit_service.record(
+        db,
+        tenant_id=platform_admin_tenant_id,
+        actor_id=actor_user_id,
+        action="skill_marketplace_payout.reconciled",
+        resource_type="skill_marketplace_payout_proposal",
+        resource_id=str(proposal.id),
+        metadata={
+            "execution_status": proposal.execution_status.value,
+            "reconciliation_outcome": outcome,
+            "evidence_ref": evidence_ref,
+            "external_execution": proposal.external_execution,
+            "execution_authority_changed": False,
+        },
+    )
+    await db.flush()
+    return proposal
 
 
 async def execute_payout_proposal(

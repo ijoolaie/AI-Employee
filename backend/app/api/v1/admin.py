@@ -11,7 +11,7 @@ from app.schemas.capacity_forecast import CapacityForecastResponse
 from app.schemas.common import APIResponse
 from app.schemas.feedback import ValidationSummaryResponse
 from app.schemas.workload_balance import WorkloadBalanceEventResponse
-from app.schemas.admin_marketplace import MarketplaceFinancialSummaryResponse, MarketplacePayoutProposalResponse
+from app.schemas.admin_marketplace import MarketplaceFinancialSummaryResponse, MarketplacePayoutProposalResponse, MarketplacePayoutReconciliationRequest
 from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting, skill_marketplace_payout_service, skill_marketplace_reporting_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -115,6 +115,31 @@ async def list_marketplace_payout_executions(
         seller_tenant_id=seller_tenant_id,
     )
     return APIResponse(success=True, data=[MarketplacePayoutProposalResponse.model_validate(item) for item in proposals])
+
+
+@router.post("/marketplace/payout-executions/{proposal_id}/reconcile", response_model=APIResponse[MarketplacePayoutProposalResponse])
+async def reconcile_marketplace_payout_execution(
+    proposal_id: UUID,
+    request: MarketplacePayoutReconciliationRequest,
+    ctx: PlatformAdminContext,
+    db: DbSession,
+):
+    if request.proposal_id != proposal_id:
+        raise HTTPException(status_code=422, detail="Request proposal_id does not match path proposal_id")
+    if request.outcome not in {"accepted", "failed", "unknown"}:
+        raise HTTPException(status_code=422, detail="Invalid payout reconciliation outcome")
+    proposal = await skill_marketplace_payout_service.reconcile_unknown_payout_execution(
+        db,
+        proposal_id=proposal_id,
+        platform_admin_tenant_id=ctx.tenant.id,
+        actor_user_id=ctx.user.id,
+        approval_granted=True,
+        approval_request_id=request.approval_request_id,
+        outcome=request.outcome,
+        evidence_ref=request.evidence_ref,
+    )
+    await db.commit()
+    return APIResponse(success=True, data=MarketplacePayoutProposalResponse.model_validate(proposal))
 
 
 @router.get("/marketplace/financial-summary", response_model=APIResponse[MarketplaceFinancialSummaryResponse])
