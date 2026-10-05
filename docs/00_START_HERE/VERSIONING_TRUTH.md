@@ -271,3 +271,13 @@ W22 is post-v1.4.16 mainline engineering and is not a release version. It resume
 - Real-stack evidence workflow: `workforce-w22-e2e.yml`.
 - Live search-engine execution, ranking/traffic impact, production deployment, customer acceptance and exact-SHA Production Certification: **NOT VERIFIED / NOT RUN**.
 - Any release containing W22 application code requires fresh exact-SHA certification.
+
+## 18. W22 SEO & Growth Employee — verified
+
+W22 is post-v1.4.16 mainline engineering and is not a release version.
+
+- Issue #910; PR #911; merge SHA `a4d828045ec4cc299a796edafd53eb3a79c7186d`.
+- Dedicated W22 real-stack E2E Run `37320308304` — **PASS**.
+- CI/security/production-like gates on the verification head passed.
+- Live search-engine execution, ranking/traffic impact, production deployment, customer acceptance and exact-SHA Production Certification remain **NOT VERIFIED / NOT RUN**.
+- Any future release containing W22 requires fresh exact-SHA certification.
