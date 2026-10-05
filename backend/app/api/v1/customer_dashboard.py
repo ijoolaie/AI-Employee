@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Path
+from fastapi import APIRouter
 from app.core.deps import AuditReadContext, DbSession
 from app.schemas.common import APIResponse
 from app.schemas.customer_dashboard import CustomerCareerResponse, CustomerDashboardResponse, CustomerOfficeResponse
@@ -22,9 +22,9 @@ async def get_customer_dashboard(ctx: AuditReadContext, db: DbSession):
     response_model=APIResponse[CustomerCareerResponse],
 )
 async def get_employee_career(
-    employee_id: str = Path(..., description="Tenant-scoped Employee identifier"),
-    ctx: AuditReadContext = None,
-    db: DbSession = None,
+    employee_id: str,
+    ctx: AuditReadContext,
+    db: DbSession,
 ):
     career = await customer_dashboard_service.get_employee_career(
         db,
