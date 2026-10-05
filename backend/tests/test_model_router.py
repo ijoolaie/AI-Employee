@@ -91,3 +91,12 @@ def test_router_does_not_use_runtime_provider_name():
         requested_model="anything-from-request",
     )
     assert decision.provider in {"lm_studio", "anthropic"}
+
+
+def test_settings_expose_router_and_embedding_configuration():
+    from app.core.config import Settings
+
+    settings = Settings(app_env="test")
+    assert settings.ai_router_enabled is False
+    assert settings.ai_router_allowed_providers == ["lm_studio"]
+    assert settings.ai_embedding_model == "text-embedding-nomic-embed-text-v1.5"
