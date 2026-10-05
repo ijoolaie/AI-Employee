@@ -226,10 +226,10 @@ class AIGateway:
                 result.latency_ms = latency_ms
                 cost = provider.estimate_cost_usd(request.model, result.prompt_tokens, result.completion_tokens)
                 result.cost_usd = cost
-                AI_CALLS.labels(self.provider.name, "success").inc()
+                AI_CALLS.labels(provider.name, "success").inc()
                 AI_LATENCY.labels(provider.name).observe(latency_ms / 1000.0)
                 AI_TOKENS.labels(provider.name, "prompt").inc(result.prompt_tokens)
-                AI_TOKENS.labels(self.provider.name, "completion").inc(result.completion_tokens)
+                AI_TOKENS.labels(provider.name, "completion").inc(result.completion_tokens)
                 AI_COST.labels(provider.name).inc(float(cost))
                 if ai_span is not None:
                     ai_span.set_attribute("ai.status", "success")
@@ -276,7 +276,7 @@ class AIGateway:
                     )
                 else:
                     call_log = AIProviderCall(
-                        tenant_id=tenant_id, run_id=run_id, provider=self.provider.name,
+                        tenant_id=tenant_id, run_id=run_id, provider=provider.name,
                         model=request.model, prompt_tokens=result.prompt_tokens,
                         completion_tokens=result.completion_tokens, cost_usd=cost,
                         latency_ms=latency_ms, status="success", error_message=None,
