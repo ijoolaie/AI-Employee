@@ -1,7 +1,7 @@
 """W20 third-party Employee Marketplace foundation.
 
 Revision ID: w20_employee_marketplace
-Revises: w19_voice_visual_contracts
+Revises: w18_virtual_meeting_rooms
 """
 from alembic import op
 import sqlalchemy as sa
@@ -54,7 +54,6 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("owner_tenant_id", "slug", "version", name="uq_employee_marketplace_pkg_owner_slug_version"),
-        sa.UniqueConstraint("owner_tenant_id", "id", name="uq_employee_marketplace_pkg_owner_id"),
     )
     op.create_index("ix_employee_marketplace_pkg_owner_tenant_id", "employee_marketplace_packages", ["owner_tenant_id"])
     op.create_index("ix_employee_marketplace_pkg_owner_status", "employee_marketplace_packages", ["owner_tenant_id", "status"])
