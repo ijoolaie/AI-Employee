@@ -30,6 +30,10 @@ class MarketplacePayoutProposalResponse(BaseModel):
     retryable: bool
     executed: bool
     external_execution: bool
+    reconciliation_evidence_ref: str | None
+    reconciliation_outcome: str | None
+    reconciled_by_user_id: UUID | None
+    reconciled_at: datetime | None
     metadata: dict
     created_at: datetime
     updated_at: datetime
