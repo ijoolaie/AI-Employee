@@ -92,6 +92,31 @@ async def list_marketplace_payout_proposals(
 
 
 
+@router.get("/marketplace/payout-executions", response_model=APIResponse[list[MarketplacePayoutProposalResponse]])
+async def list_marketplace_payout_executions(
+    ctx: PlatformAdminContext,
+    db: DbSession,
+    execution_status: str | None = Query(default=None),
+    seller_tenant_id: UUID | None = Query(default=None),
+):
+    from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutExecutionStatus
+
+    parsed_status = None
+    if execution_status is not None:
+        try:
+            parsed_status = SkillMarketplacePayoutExecutionStatus(execution_status)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail="Invalid payout execution status") from exc
+
+    proposals = await skill_marketplace_payout_service.list_payout_execution_evidence(
+        db,
+        platform_admin_tenant_id=ctx.tenant.id,
+        execution_status=parsed_status,
+        seller_tenant_id=seller_tenant_id,
+    )
+    return APIResponse(success=True, data=[MarketplacePayoutProposalResponse.model_validate(item) for item in proposals])
+
+
 @router.get("/marketplace/financial-summary", response_model=APIResponse[MarketplaceFinancialSummaryResponse])
 async def get_marketplace_financial_summary(
     ctx: PlatformAdminContext,
