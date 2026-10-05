@@ -16,7 +16,7 @@ def request(method,path,token,payload=None,expected=200):
 def register(suffix):
     p={"tenant_name":f"W21 Network E2E {suffix}","tenant_slug":f"w21-network-{suffix}","email":f"w21-owner-{suffix}@example.com","password":"W21NetworkE2E-2026!","full_name":"W21 Owner"}
     d=request("POST","/auth/register",None,p,201); token=d["data"]["access_token"]; me=request("GET","/auth/me",token)
-    return uuid.UUID(me["data"]["tenant"]["id"]),uuid.UUID(me["data"]["user"]["id"]),token
+    return uuid.UUID(me["data"]["tenant"]["id"]),uuid.UUID(me["data"]["user"]["id"]),token,p["tenant_slug"],p["email"]
 async def move_user_to_sender(user_id,sender_tenant):
     async with AsyncSessionLocal() as db:
         user=await db.get(User,user_id); assert user
@@ -28,12 +28,12 @@ async def move_user_to_sender(user_id,sender_tenant):
 def err_code(exc): return getattr(exc,"code",None)
 async def run():
     suffix=str(time.time_ns())[-10:]
-    sender_tenant,requester,requester_token=register(suffix+"-sender")
-    recipient_tenant,_,_=register(suffix+"-recipient")
-    _,decider,_=register(suffix+"-decider")
+    sender_tenant,requester,requester_token,sender_slug,_=register(suffix+"-sender")
+    recipient_tenant,_,_,_,_=register(suffix+"-recipient")
+    _,decider,_,decider_slug,decider_email=register(suffix+"-decider")
     await move_user_to_sender(decider,sender_tenant)
     # Obtain a fresh token after the tenant move.
-    login=request("POST","/auth/login",None,{"email":f"w21-owner-{suffix}-decider@example.com","password":"W21NetworkE2E-2026!"},200)
+    login=request("POST","/auth/login",None,{"email":decider_email,"password":"W21NetworkE2E-2026!","tenant_slug":decider_slug},200)
     decider_token=login["data"]["access_token"]
     same={"recipient_tenant_id":str(sender_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1"},"payload":{},"idempotency_key":"same-tenant","sponsor_user_id":str(decider)}
     try: request("POST","/business-network/requests",requester_token,same,422); raise AssertionError("same-tenant request unexpectedly accepted")
