@@ -9,6 +9,8 @@ if PROJECT_ROOT not in sys.path: sys.path.insert(0,PROJECT_ROOT)
 from app.core.database import AsyncSessionLocal
 from app.models.user import User
 from app.models.role import Role,user_roles
+from app.services.business_network_service import create_request
+from app.core.exceptions import ValidationAppError
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 def request(method,path,token,payload=None,expected=200):
     body=None if payload is None else json.dumps(payload).encode()
