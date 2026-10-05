@@ -85,3 +85,22 @@ class CustomerCareerResponse(BaseModel):
     work_history: list[CustomerCareerWorkItemResponse]
     indicators: list[CustomerCareerIndicatorResponse]
     achievements: list[dict] = Field(default_factory=list)
+
+
+class CustomerMeetingParticipantResponse(BaseModel):
+    id: str
+    employee_id: str
+    employee_name: str
+    employee_slug: str
+    role: str
+    joined_at: datetime | None
+    left_at: datetime | None
+    evidence_status: str
+
+class CustomerMeetingResponse(BaseModel):
+    contract_version: str
+    meeting: dict
+    participants: list[CustomerMeetingParticipantResponse]
+    evidence_status: str
+    evidence_refs: list[str] = Field(default_factory=list)
+    provider_state: str
