@@ -1395,7 +1395,7 @@ Evidence boundary: governed deterministic payout execution is **VERIFIED** for t
 
 ## W17 Employee Career & Reputation — 2026-10-05
 
-**Status: DESIGN FOUNDATION — IMPLEMENTATION NOT YET VERIFIED.**
+**Status: IMPLEMENTATION MERGED — REAL-STACK EVIDENCE PENDING.**
 
 W17 starts from a read-only, evidence-first contract:
 - career history derives from authoritative Employee / WorkItem / Run / Workflow / approval / audit evidence;
@@ -1415,4 +1415,4 @@ Issue: #897.
 
 `semantic contract → API/schema → tenant-safe handler → tests → real PostgreSQL evidence → CI → documentation reconciliation`
 
-W17 remains post-v1.4.16 mainline engineering. No certification transfers from v1.4.16.
+W17 application implementation has been merged to main in integration commit `e857528167e826b335a6448cce4b5ad3240a4d46`. Real PostgreSQL E2E evidence is still pending; W17 is therefore not yet marked Implemented/Verified. No certification transfers from v1.4.16.
