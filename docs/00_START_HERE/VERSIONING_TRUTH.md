@@ -204,7 +204,7 @@ These are **post-v1.4.16 engineering evidence** and do not extend the immutable 
 W17 is the active next product-experience slice as of 2026-10-05.
 
 - Issue: #897.
-- Status: **DESIGN FOUNDATION / NOT IMPLEMENTED / NOT VERIFIED**.
+- Status: **IMPLEMENTED / REAL-STACK VERIFIED**.
 - Contract: `docs/current/W17_EMPLOYEE_CAREER_REPUTATION.md`.
 - Scope: evidence-first career history, tenure, verified operational indicators and evidence-backed achievements.
 - Hard boundary: no fabricated metrics, no opaque reputation score, no authority changes.
@@ -218,5 +218,8 @@ W17 Employee Career & Reputation is post-v1.4.16 mainline engineering.
 - Implementation integration commit: `e857528167e826b335a6448cce4b5ad3240a4d46`.
 - Dedicated real-stack E2E harness/workflow is present in main.
 - W17 is **not** a release version and does not modify the certified v1.4.16 artifact.
-- W17 remains **NOT VERIFIED** until real PostgreSQL evidence and final checks are recorded.
-- No certification, deployment, external provider execution, or customer acceptance is implied by the merge.
+- Dedicated real-stack E2E: Run `37298325542`, Job `111724800314` — **PASS**.
+- CodeQL on the verification head: Run `37298325646` — **PASS**.
+- Verification workflow reconciliation merged as `53e47d2031dfc00de1b32e8b4fc8f1be0073b139`.
+- W17 is **IMPLEMENTED / REAL-STACK VERIFIED** on the post-v1.4.16 engineering mainline.
+- Exact-SHA Production Certification, deployment, external provider execution and customer acceptance remain **NOT VERIFIED**.
