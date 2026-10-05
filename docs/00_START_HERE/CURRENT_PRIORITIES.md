@@ -135,3 +135,17 @@ The W10 live sales engagement loop has crossed the real-provider response bounda
 Do **not** repeat the live SMTP certification solely to reproduce evidence already captured by Run `37103195020`. Any further live side effect must be explicitly operator-triggered and tied to a new evidence question.
 
 The W10 technical response loop is therefore **VERIFIED**; the business/revenue outcome remains **NOT VERIFIED**.
+
+## W10 customer-outcome checkpoint — 2026-10-05
+
+The previously open W10 items have been split into technical mechanics versus real-world business outcome:
+
+- **DONE:** governed customer/pilot deal state and proposal boundary.
+- **DONE:** exact tenant/deal/payment correlation.
+- **DONE:** verified payment → BusinessOrder → `WorkforceRevenueEvent` settlement mechanics on PostgreSQL.
+- **DONE:** payment-event replay idempotency.
+- **OPEN:** independently verify that a real responding party is an actual customer and qualify the conversation.
+- **OPEN:** execute an authorized real proposal/pilot/customer-outcome path.
+- **OPEN:** independently verify a real payment/revenue event.
+
+The W10 E2E uses deterministic `contract-test` payment evidence only. It must not be described as real customer revenue.
