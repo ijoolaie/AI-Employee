@@ -1,4 +1,5 @@
 name: Workforce W17 Career Reputation E2E
+# Verification trigger reconciliation: keep PR and main-path execution explicit.
 
 on:
   workflow_dispatch:
