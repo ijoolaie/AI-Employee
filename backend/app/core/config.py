@@ -172,7 +172,13 @@ class Settings(BaseSettings):
     storage_dir: str = "./var/storage"
     ai_default_provider: str = "lm_studio"
     ai_default_model: str = "google/gemma-4-e4b"
-    # Dynamic model routing is opt-in. Runtime callers never select a provider.\n    ai_router_enabled: bool = False\n    ai_router_allowed_providers: List[str] = ["lm_studio"]\n    ai_router_candidates: List[dict[str, Any]] = []\n    ai_router_task_preferences: dict[str, List[str]] = {}\n    ai_router_anthropic_model: str = "claude-sonnet-4-6"\n    ai_embedding_model: str = "text-embedding-nomic-embed-text-v1.5"
+    # Dynamic model routing is opt-in. Runtime callers never select a provider.
+    ai_router_enabled: bool = False
+    ai_router_allowed_providers: List[str] = ["lm_studio"]
+    ai_router_candidates: List[dict[str, Any]] = []
+    ai_router_task_preferences: dict[str, List[str]] = {}
+    ai_router_anthropic_model: str = "claude-sonnet-4-6"
+    ai_embedding_model: str = "text-embedding-nomic-embed-text-v1.5"
     anthropic_api_key: str | None = None
     lm_studio_base_url: str = "http://127.0.0.1:1234/v1"
     lm_studio_api_key: str | None = None
