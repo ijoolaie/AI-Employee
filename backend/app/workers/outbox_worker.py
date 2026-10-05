@@ -20,6 +20,14 @@ async def _dispatch_async(limit: int = 50) -> int:
         for row in rows:
             with span("aiep.outbox.dispatch", outbox_id=str(row.id), kind=row.kind, attempt=row.attempts) as current_span:
                 try:
+                    # Persist the "processing" claim before publishing any
+                    # broker message. If the worker dies after broker acceptance
+                    # but before the dispatch transaction commits, rolling the
+                    # claim back to "pending" would permit an immediate duplicate
+                    # publish. Non-email rows are deliberately recoverable after
+                    # the five-minute processing lease expires.
+                    await db.commit()
+
                     if row.kind == "workflow.execute":
                         from app.workers.workflow_worker import execute_workflow_task
                         execute_workflow_task.delay(
@@ -40,19 +48,18 @@ async def _dispatch_async(limit: int = 50) -> int:
                         )
                     elif row.kind == "email.send":
                         from app.workers.email_worker import send_email_task
-                        # Commit the durable "processing" claim before publishing
-                        # the task. Publishing first and committing second can
-                        # roll back to "pending" after the broker already accepted
-                        # the task, creating duplicate email deliveries.
-                        await db.commit()
+                        # Email has its own worker-side durable uncertain boundary.
                         send_email_task.delay(str(row.id))
                         OUTBOX_DISPATCH.labels("queued", row.kind).inc()
                         if current_span is not None:
                             current_span.set_attribute("outbox.status", "queued")
                         continue
-                    else:
-                        raise RuntimeError(f"Unknown outbox kind: {row.kind}")
 
+                    # The row is already durably "processing" while the broker
+                    # publish occurs. Marking it dispatched is a separate commit.
+                    # If the process dies in between, recovery may republish only
+                    # after the processing lease expires; downstream execution
+                    # fences/idempotency must reject blind duplicate side effects.
                     await outbox_service.mark_dispatched(db, row)
                     await db.commit()
                     OUTBOX_DISPATCH.labels("success", row.kind).inc()
