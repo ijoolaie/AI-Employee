@@ -223,3 +223,17 @@ W17 Employee Career & Reputation is post-v1.4.16 mainline engineering.
 - Verification workflow reconciliation merged as `53e47d2031dfc00de1b32e8b4fc8f1be0073b139`.
 - W17 is **IMPLEMENTED / REAL-STACK VERIFIED** on the post-v1.4.16 engineering mainline.
 - Exact-SHA Production Certification, deployment, external provider execution and customer acceptance remain **NOT VERIFIED**.
+
+
+## W18 verification boundary — 2026-10-05
+
+W18 Virtual Meeting Rooms first vertical slice is **IMPLEMENTED / REAL-STACK VERIFIED** on post-v1.4.16 mainline.
+
+- Integration merge: `a5fd482e456ba2060705aa24ff3f63de0e2a7665`.
+- Verification head: `7ae4fe590d5483185637a8f344cc592979fec8bf`.
+- Dedicated W18 E2E: Run `37299435745`, Job `111728381943` — **PASS**.
+- CI and security/production-like checks passed on the same verification head.
+- W18 is not a release version and does not inherit `v1.4.16` certification.
+- Exact-SHA Production Certification, external deployment and customer acceptance remain **NOT VERIFIED**.
+
+W19 is the next product-experience implementation slice.
