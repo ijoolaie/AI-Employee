@@ -43,7 +43,7 @@ async def run():
     # Obtain a fresh token after the tenant move.
     login=request("POST","/auth/login",None,{"email":decider_email,"password":"W21NetworkE2E-2026!","tenant_slug":sender_slug},200)
     decider_token=login["data"]["access_token"]
-    same={"recipient_tenant_id":str(sender_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1"},"payload":{},"idempotency_key":"same-tenant","sponsor_user_id":str(decider)}
+    same={"recipient_tenant_id":str(sender_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1"},"payload":{},"idempotency_key":"same-tenant","sponsor_user_id":str(sponsor)}
     async with AsyncSessionLocal() as db:
         try:
             await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=sponsor,recipient_tenant_id=sender_tenant,operation="partner.handoff",capability_contract={"version":"w21-v1"},payload={},idempotency_key="same-tenant",correlation_id="corr-same")
@@ -53,7 +53,7 @@ async def run():
     payload={"recipient_tenant_id":str(recipient_tenant),"operation":"partner.handoff","capability_contract":{"version":"w21-v1","side_effect":"proposal_only"},"payload":{"subject":"controlled handoff"},"idempotency_key":"network-001","correlation_id":"corr-network-001","sponsor_user_id":str(decider)}
     async with AsyncSessionLocal() as db:
         first_obj=await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=sponsor,recipient_tenant_id=recipient_tenant,operation=payload["operation"],capability_contract=payload["capability_contract"],payload=payload["payload"],idempotency_key=payload["idempotency_key"],correlation_id=payload["correlation_id"])
-        replay_obj=await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=decider,recipient_tenant_id=recipient_tenant,operation=payload["operation"],capability_contract=payload["capability_contract"],payload=payload["payload"],idempotency_key=payload["idempotency_key"],correlation_id=payload["correlation_id"])
+        replay_obj=await create_request(db,sender_tenant_id=sender_tenant,requester_user_id=requester,sponsor_user_id=sponsor,recipient_tenant_id=recipient_tenant,operation=payload["operation"],capability_contract=payload["capability_contract"],payload=payload["payload"],idempotency_key=payload["idempotency_key"],correlation_id=payload["correlation_id"])
         await db.commit()
         first={"id":str(first_obj.id),"status":first_obj.status.value,"correlation_id":first_obj.correlation_id}
         replay={"id":str(replay_obj.id),"status":replay_obj.status.value}
