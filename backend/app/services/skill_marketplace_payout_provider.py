@@ -8,7 +8,7 @@ adapters with operator-owned configuration and explicit side-effect semantics.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from enum import StrEnum
 import uuid
 from typing import Protocol
@@ -90,7 +90,29 @@ class NoneMarketplacePayoutProvider:
         )
 
 
-class ContractTestMarketplacePayoutProvider:
+ZERO_DECIMAL_CURRENCIES = {"bif", "clp", "djf", "gnf", "jpy", "kmf", "krw", "mga", "pyg", "rwf", "ugx", "vnd", "vuv", "xaf", "xof", "xpf"}
+
+
+def _stripe_client():
+    settings = get_settings()
+    if not settings.stripe_secret_key:
+        raise ValidationAppError("Stripe Connect payout provider is not configured: STRIPE_SECRET_KEY is required")
+    import stripe
+
+    stripe.api_key = settings.stripe_secret_key
+    return stripe
+
+
+def _minor_units(amount: Decimal, currency: str) -> int:
+    normalized = currency.lower()
+    quantum = Decimal("1") if normalized in ZERO_DECIMAL_CURRENCIES else Decimal("0.01")
+    minor = (amount / quantum).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    if minor <= 0:
+        raise ValidationAppError("Marketplace payout amount rounds to zero provider units")
+    return int(minor)
+
+
+class StripeConnectMarketplacePayoutProvider:
     """Deterministic test adapter; it never calls an external service."""
 
     name = "contract-test"
