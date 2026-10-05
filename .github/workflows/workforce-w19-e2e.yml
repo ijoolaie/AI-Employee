@@ -1,0 +1,38 @@
+name: Workforce W19 Media Contract E2E
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "backend/app/media/**"
+      - "backend/tests/unit/test_media_contracts.py"
+      - "backend/scripts/e2e_workforce_w19_media_contract_verify.py"
+      - ".github/workflows/workforce-w19-e2e.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/app/media/**"
+      - "backend/tests/unit/test_media_contracts.py"
+      - "backend/scripts/e2e_workforce_w19_media_contract_verify.py"
+      - ".github/workflows/workforce-w19-e2e.yml"
+permissions:
+  contents: read
+jobs:
+  w19-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build API stack
+        run: docker compose up -d --build postgres redis api
+      - name: Prepare database
+        run: docker compose exec -T api alembic upgrade head
+      - name: Compile W19 sources
+        run: docker compose exec -T api python -m py_compile app/media/contracts.py app/media/registry.py app/media/deterministic.py scripts/e2e_workforce_w19_media_contract_verify.py
+      - name: Unit tests
+        run: docker compose exec -T api pytest -q tests/unit/test_media_contracts.py
+      - name: Real-stack contract evidence
+        run: docker compose exec -T api python scripts/e2e_workforce_w19_media_contract_verify.py
+      - name: Shutdown
+        if: always()
+        run: docker compose down -v --remove-orphans
