@@ -47,7 +47,7 @@ jobs:
 
       - name: Verify deterministic market provider
         run: |
-          curl --fail --silent http://127.0.0.1:8090/health
+          docker compose exec -T e2e-market-provider python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=5).read()"
           docker compose exec -T api python -m py_compile scripts/e2e_workforce_semantic_verify.py scripts/e2e_market_data_provider.py
 
       - name: Run semantic Workforce real-stack matrix
