@@ -69,6 +69,7 @@ from app.models.skill_marketplace_payout_proposal import SkillMarketplacePayoutE
 from app.models.meeting import Meeting, MeetingParticipant, MeetingStatus, MeetingParticipantRole
 from app.models.skill_marketplace_payout_destination import SkillMarketplacePayoutDestination, SkillMarketplacePayoutDestinationStatus
 from app.models.employee_marketplace import EmployeeMarketplacePackage, EmployeeMarketplacePackageStatus, EmployeeMarketplaceInstallation, EmployeeMarketplaceInstallationStatus
+from app.models.business_network_request import BusinessNetworkRequest, BusinessNetworkRequestStatus
 
 __all__ = [
     "Meeting", "MeetingParticipant", "MeetingStatus", "MeetingParticipantRole", "EmployeeMarketplacePackage", "EmployeeMarketplacePackageStatus", "EmployeeMarketplaceInstallation", "EmployeeMarketplaceInstallationStatus", "Tenant", "User", "Role", "Permission", "user_roles", "role_permissions", "AuditLog",
