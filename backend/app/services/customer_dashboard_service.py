@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import NotFoundError
 from app.models.employee import Employee
 from app.models.work_item import WorkItem
 from app.models.workflow import Workflow, WorkflowRun, WorkflowStepRun
@@ -372,7 +373,6 @@ async def get_employee_career(db: AsyncSession, *, tenant_id, employee_id):
         )
     )
     if employee is None:
-        from app.core.exceptions import NotFoundError
         raise NotFoundError("Employee not found")
 
     runs_result = await db.execute(
@@ -442,7 +442,9 @@ async def get_employee_career(db: AsyncSession, *, tenant_id, employee_id):
             "label": "Completed work items",
             "value": len(completed_work_item_ids),
             "evidence_status": "VERIFIED",
-            "evidence_refs": [f"work_item:{item_id}" for item_id in sorted(completed_work_item_ids, key=str)],
+            "evidence_refs": [
+                f"work_item:{item_id}" for item_id in sorted(completed_work_item_ids, key=str)
+            ],
         },
         {
             "code": "reputation_score",
