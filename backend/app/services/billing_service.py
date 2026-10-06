@@ -34,7 +34,12 @@ async def ensure_plans(db: AsyncSession) -> None:
             async with db.begin_nested():
                 db.add(BillingPlan(**seed))
                 await db.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "billing_plans_code_key":
+                raise
             existing = (await db.execute(select(BillingPlan).where(BillingPlan.code == seed["code"]))).scalar_one_or_none()
             if existing is None:
                 raise
@@ -111,7 +116,12 @@ async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subs
             db.add(candidate)
             await db.flush()
         return candidate
-    except IntegrityError:
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name != "uq_subscription_tenant":
+            raise
         result = await db.execute(select(Subscription).where(Subscription.tenant_id == tenant_id))
         sub = result.scalar_one_or_none()
         if sub is None:
