@@ -53,10 +53,14 @@ async def receive_zarinpal_callback(
         raise HTTPException(status_code=409, detail="ZarinPal authority does not match the governed checkout")
 
     if provider_status != "OK":
+        # A pending attempt without a persisted provider authority cannot be
+        # safely correlated to a cancellation callback. Do not let an
+        # unauthenticated callback mutate the durable payment state.
         if attempt_state == "pending" and not stored_authority:
-            metadata["payment_attempt_state"] = "cancelled"
-            deal.metadata_ = metadata
-            await db.commit()
+            raise HTTPException(
+                status_code=409,
+                detail="ZarinPal cancellation outcome is unresolved; reconcile the existing attempt before mutating payment state",
+            )
         return {"success": False, "status": "cancelled", "deal_id": str(deal.id)}
 
     verification = await zarinpal_service.verify_payment(
