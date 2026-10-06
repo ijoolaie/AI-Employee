@@ -74,7 +74,12 @@ async def upsert_contract(
                 await db.flush()
             contract = candidate
             action = "workforce.sla.created"
-        except IntegrityError:
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "uq_workforce_sla_contract_tenant":
+                raise
             contract = (
                 await db.execute(
                     select(WorkforceSLAContract)
