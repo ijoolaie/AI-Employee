@@ -192,7 +192,26 @@ async def assert_users_belong_to_tenant(
 
 
 async def create_identity(db: AsyncSession, *, tenant_id: uuid.UUID, agent_instance_id: uuid.UUID, owner_user_id: uuid.UUID, sponsor_user_id: uuid.UUID, expires_at: datetime | None = None) -> AgentIdentity:
-    existing = (await db.execute(select(AgentIdentity).where(AgentIdentity.agent_instance_id == agent_instance_id, AgentIdentity.tenant_id == tenant_id))).scalar_one_or_none()
+    instance = (
+        await db.execute(
+            select(AgentInstance)
+            .where(
+                AgentInstance.id == agent_instance_id,
+                AgentInstance.tenant_id == tenant_id,
+            )
+            .with_for_update()
+        )
+    ).scalar_one_or_none()
+    if instance is None:
+        raise NotFoundError("Agent instance not found in tenant")
+    existing = (
+        await db.execute(
+            select(AgentIdentity).where(
+                AgentIdentity.agent_instance_id == instance.id,
+                AgentIdentity.tenant_id == tenant_id,
+            )
+        )
+    ).scalar_one_or_none()
     if existing is not None:
         return existing
     if not owner_user_id or not sponsor_user_id:
