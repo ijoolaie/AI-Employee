@@ -56,6 +56,8 @@ async def upsert_customer(
                 constraint_name = "uq_customers_tenant_external_key"
             if constraint_name != "uq_customers_tenant_external_key":
                 raise
+            if candidate in db:
+                db.expunge(candidate)
             customer = (
                 await db.execute(
                     select(Customer).where(
