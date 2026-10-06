@@ -43,6 +43,11 @@ async def _create_tenant(db: AsyncSession, payload: RegisterRequest) -> Tenant:
             db.add(tenant)
             await db.flush()
     except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name != "tenants_slug_key":
+            raise
         raise ConflictError("Tenant slug already exists") from exc
     return tenant
 
@@ -71,7 +76,12 @@ async def _assign_tenant_admin_role(db: AsyncSession, user: User, tenant_id: UUI
             async with db.begin_nested():
                 db.add(role)
                 await db.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "uq_role_tenant_name":
+                raise
             role = (await db.execute(select(Role).where(Role.tenant_id == tenant_id, Role.name == "Admin"))).scalar_one()
     result = await db.execute(select(Permission).where(Permission.code.in_(DEFAULT_TENANT_ADMIN_PERMISSIONS)))
     permissions = {p.code: p for p in result.scalars().all()}
