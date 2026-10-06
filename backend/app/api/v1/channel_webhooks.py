@@ -118,6 +118,8 @@ async def _enqueue_whatsapp_message(
                 constraint_name = "uq_customer_conversations_external_key"
             if constraint_name != "uq_customer_conversations_external_key":
                 raise
+            if candidate in db:
+                db.expunge(candidate)
             existing = (
                 await db.execute(
                     select(CustomerConversation).where(
