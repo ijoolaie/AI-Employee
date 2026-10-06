@@ -109,7 +109,12 @@ async def _enqueue_whatsapp_message(
                 db.add(candidate)
                 await db.flush()
             existing = candidate
-        except IntegrityError:
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "uq_customer_conversations_external_key":
+                raise
             existing = (
                 await db.execute(
                     select(CustomerConversation).where(
@@ -136,7 +141,12 @@ async def _enqueue_whatsapp_message(
         async with db.begin_nested():
             db.add(message)
             await db.flush()
-    except IntegrityError:
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name != "uq_customer_messages_provider_id":
+            raise
         if provider_message_id:
             duplicate = (
                 await db.execute(
