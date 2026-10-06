@@ -98,8 +98,14 @@ async def test_tool_permission_is_enforced():
 
 
 @pytest.mark.asyncio
-async def test_approval_required_tool_is_fail_closed_until_approved():
+async def test_approval_required_tool_is_fail_closed_until_approved(monkeypatch):
     from app.ai.tool_registry import RegisteredTool
+    from app.services import license_service
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
     name = "_test_approval_tool"
     registry.register(RegisteredTool(
         name=name, description="test gated tool",
@@ -110,7 +116,14 @@ async def test_approval_required_tool_is_fail_closed_until_approved():
     try:
         with pytest.raises(ValidationAppError):
             await registry.execute(name, {}, permissions={"run.execute"}, approval_granted=False)
-        result = await registry.execute(name, {}, permissions={"run.execute"}, approval_granted=True)
+        result = await registry.execute(
+            name,
+            {},
+            permissions={"run.execute"},
+            approval_granted=True,
+            db="db-context",
+            tenant_id="tenant-context",
+        )
         assert result == {"ok": True}
     finally:
         registry._tools.pop(name, None)
@@ -197,7 +210,14 @@ def test_workforce_assign_task_is_side_effecting_but_non_approval_gated():
 
 
 @pytest.mark.asyncio
-async def test_workforce_coordinate_handoff_requires_agent_identity():
+async def test_workforce_coordinate_handoff_requires_agent_identity(monkeypatch):
+    from app.services import license_service
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+
     with pytest.raises(ValidationAppError, match="Agent identity"):
         await registry.execute(
             "workforce_coordinate_handoff",
@@ -210,6 +230,8 @@ async def test_workforce_coordinate_handoff_requires_agent_identity():
             },
             permissions={"run.execute"},
             allowed_tools={"workforce_coordinate_handoff"},
+            db="db-context",
+            tenant_id="tenant-context",
         )
 
 
@@ -696,3 +718,43 @@ async def test_workforce_execute_installed_skill_forwards_employee_identity(monk
         "actor_id": "actor-context",
         "request_id": "tool-call-context",
     }]
+
+
+@pytest.mark.asyncio
+async def test_commercial_tool_requires_tenant_run_context_before_entitlement_check():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "create_invoice",
+            {
+                "customer_name": "Context fence",
+                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+            },
+            permissions={"run.execute"},
+            approval_granted=True,
+        )
+
+
+@pytest.mark.asyncio
+async def test_commercial_tool_requires_both_db_and_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "create_invoice",
+            {
+                "customer_name": "Context fence",
+                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+            },
+            permissions={"run.execute"},
+            approval_granted=True,
+            db="db-context",
+        )
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "create_invoice",
+            {
+                "customer_name": "Context fence",
+                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+            },
+            permissions={"run.execute"},
+            approval_granted=True,
+            tenant_id="tenant-context",
+        )

@@ -107,17 +107,6 @@ class ToolRegistry:
     ) -> Any:
         tool = self.get(name)
 
-        # Commercial entitlement is enforced at the real execution boundary
-        # when a tenant Run supplies transactional DB and tenant context.
-        if tool.entitlement_code is not None and db is not None and tenant_id is not None:
-            from app.services import license_service
-
-            await license_service.assert_feature_entitlement(
-                db,
-                tenant_id=tenant_id,
-                feature_code=tool.entitlement_code,
-            )
-
         # Employee guardrail is a separate, fail-closed capability boundary.
         # A tool must be both declared by the EmployeeVersion and permitted
         # for the executing principal. Tool visibility in the prompt is not
@@ -142,6 +131,24 @@ class ToolRegistry:
                 f"Human approval required for tool: {name}",
                 details={"tool": name, "approval_required": True},
             )
+        # Commercial entitlement is checked only after the cheaper,
+        # fail-closed policy gates above. This preserves the contract that
+        # approval/employee/permission violations are reported first while
+        # still preventing an entitled tool from reaching its handler without
+        # a durable tenant Run context.
+        if tool.entitlement_code is not None:
+            if db is None or tenant_id is None:
+                raise ValidationAppError(
+                    f"{name} requires an active tenant Run context"
+                )
+            from app.services import license_service
+
+            await license_service.assert_feature_entitlement(
+                db,
+                tenant_id=tenant_id,
+                feature_code=tool.entitlement_code,
+            )
+
         validator = Draft202012Validator(tool.input_schema)
         errors = sorted(validator.iter_errors(arguments), key=lambda e: list(e.path))
         if errors:
