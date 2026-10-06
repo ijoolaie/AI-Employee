@@ -5,6 +5,7 @@ ROOT = Path(__file__).parents[1]
 WORKFLOW_SOURCE = (ROOT / "app/services/workflow_service.py").read_text(encoding="utf-8")
 APPROVAL_SOURCE = (ROOT / "app/api/v1/workflow_approvals.py").read_text(encoding="utf-8")
 TRIGGER_SOURCE = (ROOT / "app/workers/workflow_trigger_worker.py").read_text(encoding="utf-8")
+TRIGGER_SERVICE_SOURCE = (ROOT / "app/services/workflow_trigger_service.py").read_text(encoding="utf-8")
 RUN_SOURCE = (ROOT / "app/services/run_service.py").read_text(encoding="utf-8")
 WORKER_SOURCE = (ROOT / "app/workers/workflow_worker.py").read_text(encoding="utf-8")
 
@@ -86,3 +87,10 @@ def test_workflow_worker_does_not_blindly_celery_retry_execution_after_lease_los
     assert 'WORKFLOW_EXECUTION_LEASE_LOST' in WORKER_SOURCE
     execution_section = WORKER_SOURCE.split("def execute_workflow_task", 1)[0]
     assert 'raise self.retry(exc=exc' not in execution_section
+
+
+def test_webhook_duplicate_ingestion_recovers_from_unique_race():
+    assert 'IntegrityError' in TRIGGER_SERVICE_SOURCE
+    assert 'uq_workflow_event_delivery_trigger_event' in TRIGGER_SERVICE_SOURCE
+    assert 'await db.rollback()' in TRIGGER_SERVICE_SOURCE
+    assert 'return delivery, False' in TRIGGER_SERVICE_SOURCE
