@@ -46,10 +46,21 @@ async def receive_zarinpal_callback(
     metadata = dict(deal.metadata_ or {})
     if metadata.get("payment_provider") != "zarinpal":
         raise HTTPException(status_code=409, detail="Sales deal is not bound to ZarinPal")
-    if metadata.get("payment_provider_authority") != authority:
+
+    stored_authority = metadata.get("payment_provider_authority")
+    attempt_state = metadata.get("payment_attempt_state")
+    if stored_authority and stored_authority != authority:
         raise HTTPException(status_code=409, detail="ZarinPal authority does not match the governed checkout")
 
     if provider_status != "OK":
+        # A pending attempt without a persisted provider authority cannot be
+        # safely correlated to a cancellation callback. Do not let an
+        # unauthenticated callback mutate the durable payment state.
+        if attempt_state == "pending" and not stored_authority:
+            raise HTTPException(
+                status_code=409,
+                detail="ZarinPal cancellation outcome is unresolved; reconcile the existing attempt before mutating payment state",
+            )
         return {"success": False, "status": "cancelled", "deal_id": str(deal.id)}
 
     verification = await zarinpal_service.verify_payment(
@@ -60,6 +71,14 @@ async def receive_zarinpal_callback(
     ref_id = verification.get("ref_id")
     if not ref_id:
         raise HTTPException(status_code=502, detail="ZarinPal verification returned no reference id")
+
+    if not stored_authority:
+        metadata["payment_provider_authority"] = authority
+        metadata["payment_attempt_state"] = "accepted"
+        metadata["payment_amount"] = float(deal.amount)
+        metadata["payment_currency"] = deal.currency.upper()
+        deal.metadata_ = metadata
+        await db.flush()
 
     try:
         tenant_id, order_id = await stripe_service.apply_verified_sales_payment(

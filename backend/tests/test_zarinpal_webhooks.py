@@ -49,6 +49,9 @@ class _Db:
     async def rollback(self):
         self.rollbacks += 1
 
+    async def flush(self):
+        return None
+
 
 @pytest.fixture
 def configured(monkeypatch):
@@ -301,3 +304,76 @@ async def test_zarinpal_callback_replay_reaches_idempotent_reconciliation_bounda
     assert db.commits == 2
     assert db.rollbacks == 0
 
+
+
+@pytest.mark.asyncio
+async def test_zarinpal_pending_callback_recovers_authority_after_checkout_crash(configured, monkeypatch):
+    import uuid
+
+    deal_id = uuid.uuid4()
+    tenant_id = uuid.uuid4()
+    authority = "A00000000000000000000000000000pending"
+    deal = SimpleNamespace(
+        id=deal_id,
+        tenant_id=tenant_id,
+        amount=Decimal("100000"),
+        currency="IRR",
+        metadata_={
+            "payment_provider": "zarinpal",
+            "payment_provider_idempotency_key": "zp-crash-retry",
+            "payment_attempt_state": "pending",
+        },
+    )
+    db = _Db(deal)
+    verified = {}
+
+    async def fake_verify(*, authority, amount, currency):
+        verified.update(authority=authority, amount=amount, currency=currency)
+        return {"code": 100, "ref_id": 513655104}
+
+    async def fake_reconcile(db, *, provider, provider_event_id, data):
+        return tenant_id, "order-pending-recovered"
+
+    monkeypatch.setattr(zarinpal_webhooks.zarinpal_service, "verify_payment", fake_verify)
+    monkeypatch.setattr(zarinpal_webhooks.stripe_service, "apply_verified_sales_payment", fake_reconcile)
+
+    result = await zarinpal_webhooks.receive_zarinpal_callback(
+        _request(deal_id=str(deal_id), Authority=authority, Status="OK"),
+        db,
+    )
+
+    assert result["status"] == "paid"
+    assert result["reference_id"] == "513655104"
+    assert verified == {"authority": authority, "amount": Decimal("100000"), "currency": "IRR"}
+    assert deal.metadata_["payment_provider_authority"] == authority
+    assert deal.metadata_["payment_attempt_state"] == "accepted"
+    assert db.commits == 1
+
+
+@pytest.mark.asyncio
+async def test_zarinpal_pending_uncorrelated_cancel_fails_closed(configured):
+    import uuid
+
+    deal_id = uuid.uuid4()
+    deal = SimpleNamespace(
+        id=deal_id,
+        tenant_id=uuid.uuid4(),
+        amount=Decimal("100000"),
+        currency="IRR",
+        metadata_={
+            "payment_provider": "zarinpal",
+            "payment_provider_idempotency_key": "zp-pending",
+            "payment_attempt_state": "pending",
+        },
+    )
+    db = _Db(deal)
+
+    with pytest.raises(HTTPException) as exc:
+        await zarinpal_webhooks.receive_zarinpal_callback(
+            _request(deal_id=str(deal_id), Authority="attacker", Status="NOK"),
+            db,
+        )
+
+    assert exc.value.status_code == 409
+    assert deal.metadata_["payment_attempt_state"] == "pending"
+    assert db.commits == 0
