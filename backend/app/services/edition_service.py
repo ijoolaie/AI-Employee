@@ -97,8 +97,17 @@ async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str,
     if existing is not None:
         raise HTTPException(status_code=409, detail="Tenant slug already exists")
     tenant = Tenant(name=name, slug=slug, status="active", tenant_kind=kind, parent_tenant_id=parent.id, vendor_release_tag=parent.vendor_release_tag, delivery_revision=delivery_revision, settings={"edition": kind, "control_plane_parent": str(parent.id)})
-    db.add(tenant)
-    await db.flush()
+    try:
+        async with db.begin_nested():
+            db.add(tenant)
+            await db.flush()
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name != "tenants_slug_key":
+            raise
+        raise HTTPException(status_code=409, detail="Tenant slug already exists") from exc
     user = User(tenant_id=tenant.id, email=admin_email.lower(), password_hash=hash_password(admin_password), full_name=full_name, is_active=True, is_superuser=True)
     db.add(user)
     await db.flush()

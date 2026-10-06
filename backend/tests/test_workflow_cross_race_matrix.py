@@ -159,3 +159,13 @@ def test_entitlement_delegation_recovers_from_unique_race():
     assert 'uq_tenant_entitlement_feature' in block
     assert "select(TenantEntitlement)" in block
     assert "row.quota_limit = effective_quota" in block
+
+
+def test_child_tenant_provisioning_recovers_from_slug_unique_race():
+    source = Path("app/services/edition_service.py").read_text()
+    marker = "async def provision_child_tenant("
+    block = source[source.index(marker):source.index("\n\nasync def _authorized_parent_entitlement", source.index(marker))]
+    assert "async with db.begin_nested()" in block
+    assert "IntegrityError" in block
+    assert '"tenants_slug_key"' in block
+    assert 'raise HTTPException(status_code=409, detail="Tenant slug already exists")' in block
