@@ -7,6 +7,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.logging import request_id_var
@@ -100,7 +101,7 @@ async def create_event_trigger(db: AsyncSession, *, tenant_id: uuid.UUID, workfl
     secret = secrets.token_urlsafe(32)
     trigger = WorkflowEventTrigger(tenant_id=tenant_id, workflow_id=workflow.id, event_type=event_type, webhook_secret="", webhook_secret_hash=hash_secret(secret), webhook_secret_encrypted=encrypt_secret(secret), created_by=created_by)
     db.add(trigger); await db.flush()
-    await audit_service.record(db, action="workflow.event_trigger.created", actor_id=created_by, tenant_id=tenant_id, resource_type="workflow_event_trigger", resource_id=trigger.id, request_id=request_id_var.get(), metadata={"workflow_id": str(workflow.id), "event_type": event_type})
+    await audit_service.record(db, action="workflow.event_trigger.created", actor_id=created_by, tenant_id=tenant_id, resource_type="workflow_event_trigger", resource_id=trigger.id, request_id=request_id_var.get(), metadata={"workflow_id": str(trigger.workflow_id), "event_type": event_type})
     return trigger, secret
 
 
@@ -118,7 +119,22 @@ async def receive_event(db: AsyncSession, *, trigger: WorkflowEventTrigger, even
     delivery = existing.scalar_one_or_none()
     if delivery is not None: return delivery, False
     delivery = WorkflowEventDelivery(tenant_id=trigger.tenant_id, trigger_id=trigger.id, event_id=event_id, event_type=event_type, payload=payload, status="accepted", attempts=0)
-    db.add(delivery); await db.flush()
+    db.add(delivery)
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name != "uq_workflow_event_delivery_trigger_event":
+            raise
+        await db.rollback()
+        existing = await db.execute(
+            select(WorkflowEventDelivery).where(
+                WorkflowEventDelivery.trigger_id == trigger.id,
+                WorkflowEventDelivery.event_id == event_id,
+            )
+        )
+        delivery = existing.scalar_one()
+        return delivery, False
     return delivery, True
 
 
@@ -157,6 +173,7 @@ async def create_schedule(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id
     db.add(schedule); await db.flush()
     await audit_service.record(db, action="workflow.schedule.created", actor_id=created_by, tenant_id=tenant_id, resource_type="workflow_schedule", resource_id=schedule.id, request_id=request_id_var.get(), metadata={"workflow_id": str(workflow_id), "cron": cron_expression, "timezone": timezone_name})
     return schedule
+
 
 async def claim_due_schedules(db: AsyncSession, *, now: datetime, limit: int = 50):
     from app.models.workflow_schedule import WorkflowSchedule
