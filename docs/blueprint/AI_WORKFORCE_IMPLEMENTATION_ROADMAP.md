@@ -1501,7 +1501,7 @@ W23 resumes original Phase W8 and is **IMPLEMENTED / REAL-STACK VERIFIED**.
 
 W23 is post-v1.4.16 mainline engineering.
 
-**Next roadmap slice:** original Phase W9 — QA & DevOps Employee.
+**Historical next-slice note superseded on 2026-10-06:** W9 QA & DevOps is already VERIFIED on the real stack. Do not start a duplicate W9 implementation.
 
 ## W10 customer-outcome / verified revenue-event checkpoint — 2026-10-05
 
@@ -1515,3 +1515,14 @@ The authoritative W10 next step is now evidenced for its governed mechanics.
 - Real customer identity/qualification, real proposal/pilot acceptance, real payment and realized revenue remain **NOT VERIFIED**.
 
 W10 technical/provider evidence is therefore stronger, but the actual business outcome remains open. No new Production Certification is claimed.
+
+
+## 2026-10-06 current execution reconciliation
+
+The roadmap's original W0 → W9 → W10 sequence has been reconciled against implementation evidence:
+
+- W9 QA & DevOps is **VERIFIED** on the real stack at final Run `36891616509` / Job `110468909696`, commit `5887c26c727fd2681cc1dd71fc17f0a475c9e80a`.
+- W10 is not blocked on an unimplemented W9; W10 technical mechanics have already been exercised on mainline, while real customer qualification, customer acceptance and realized external revenue remain open.
+- W17–W23 are later presentation/domain verticals with their own documented real-stack evidence and do not reopen W9.
+- An old 'next slice' note must not override current evidence. Immediate execution is hardening/reconciliation followed by only proven engineering findings.
+- External/live provider, customer, payment and production-target work remains intentionally deferred to the final external-validation phase.
