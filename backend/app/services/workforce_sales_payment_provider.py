@@ -9,12 +9,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
+from datetime import datetime, timezone
 import uuid
 
 from sqlalchemy import select
 
 from app.core.config import get_settings
-from app.core.exceptions import ValidationAppError
+from app.core.exceptions import ConflictError, ValidationAppError
 
 
 @dataclass(frozen=True)
@@ -35,8 +36,6 @@ def _minor_units(amount: Decimal, currency: str) -> int:
     if value <= 0:
         raise ValidationAppError("Commercial commitment amount must be positive")
     return int(value)
-
-
 
 
 def _major_units(amount_minor: int, currency: str) -> Decimal:
@@ -89,30 +88,76 @@ async def create_sales_checkout_session(
         if deal is None:
             raise ValidationAppError("Sales payment provider zarinpal references an unknown deal")
         metadata = dict(deal.metadata_ or {})
-        if metadata.get("payment_provider") == "zarinpal" and metadata.get("payment_provider_idempotency_key") == idempotency_key and metadata.get("payment_provider_authority"):
-            from app.services.zarinpal_service import gateway_url
-            return SalesPaymentResult(
-                "zarinpal",
-                "accepted",
-                True,
-                gateway_url(str(metadata["payment_provider_authority"])),
-                str(metadata["payment_provider_authority"]),
-            )
-        result = await create_payment_request(
-            tenant_id=tenant_id,
-            deal_id=deal_id,
-            amount=amount,
-            currency=currency,
-            customer_email=customer_email,
-            idempotency_key=idempotency_key,
-        )
+        if metadata.get("payment_provider") == "zarinpal":
+            stored_key = metadata.get("payment_provider_idempotency_key")
+            authority = metadata.get("payment_provider_authority")
+            attempt_state = metadata.get("payment_attempt_state")
+            if authority and stored_key == idempotency_key:
+                from app.services.zarinpal_service import gateway_url
+                return SalesPaymentResult(
+                    "zarinpal",
+                    "accepted",
+                    True,
+                    gateway_url(str(authority)),
+                    str(authority),
+                )
+            if attempt_state == "pending":
+                raise ConflictError(
+                    "ZarinPal payment request outcome is unresolved; reconcile the existing "
+                    "attempt before creating another checkout"
+                )
+            if authority:
+                raise ConflictError("ZarinPal checkout already exists for this deal")
+        # This commit is deliberate: the durable attempt marker must survive a
+        # process crash after ZarinPal accepts the request but before the
+        # provider authority can be persisted. A retry seeing pending must
+        # reconcile instead of issuing a second provider request.
         metadata["payment_provider"] = "zarinpal"
-        metadata["payment_provider_authority"] = result.provider_payment_id
         metadata["payment_provider_idempotency_key"] = idempotency_key
-        metadata["payment_amount"] = float(amount)
-        metadata["payment_currency"] = currency.upper()
+        metadata["payment_attempt_state"] = "pending"
+        metadata["payment_attempt_started_at"] = datetime.now(timezone.utc).isoformat()
+        metadata.pop("payment_provider_authority", None)
         deal.metadata_ = metadata
         await db.flush()
+        await db.commit()
+        try:
+            result = await create_payment_request(
+                tenant_id=tenant_id,
+                deal_id=deal_id,
+                amount=amount,
+                currency=currency,
+                customer_email=customer_email,
+                idempotency_key=idempotency_key,
+            )
+        except Exception:
+            # Keep the durable pending marker. Network failures and process
+            # crashes are ambiguous at the external boundary; retrying here
+            # could create a second checkout.
+            raise
+        persisted_deal = (
+            await db.execute(
+                select(BusinessDeal).where(
+                    BusinessDeal.id == deal_id,
+                    BusinessDeal.tenant_id == tenant_id,
+                ).with_for_update()
+            )
+        ).scalar_one_or_none()
+        if persisted_deal is None:
+            raise ValidationAppError("ZarinPal checkout deal disappeared during reconciliation")
+        persisted_metadata = dict(persisted_deal.metadata_ or {})
+        if (
+            persisted_metadata.get("payment_provider") != "zarinpal"
+            or persisted_metadata.get("payment_provider_idempotency_key") != idempotency_key
+            or persisted_metadata.get("payment_attempt_state") != "pending"
+        ):
+            raise ConflictError("ZarinPal payment attempt ownership changed during provider execution")
+        persisted_metadata["payment_provider_authority"] = result.provider_payment_id
+        persisted_metadata["payment_amount"] = float(amount)
+        persisted_metadata["payment_currency"] = currency.upper()
+        persisted_metadata["payment_attempt_state"] = "accepted"
+        persisted_deal.metadata_ = persisted_metadata
+        await db.flush()
+        await db.commit()
         return result
     if provider != "stripe":
         raise ValidationAppError(f"Unsupported sales payment provider: {provider}")
