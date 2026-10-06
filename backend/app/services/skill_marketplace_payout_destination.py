@@ -17,6 +17,7 @@ from app.models.skill_marketplace_payout_destination import (
     SkillMarketplacePayoutDestinationStatus,
 )
 from app.models.user import User
+from app.models.tenant import Tenant
 
 
 def _validate_destination(*, provider: str, destination_ref: str) -> tuple[str, str]:
@@ -82,6 +83,14 @@ async def bind_payout_destination(
         provider=provider,
         destination_ref=destination_ref,
     )
+    tenant = (
+        await db.execute(
+            select(Tenant).where(Tenant.id == seller_tenant_id).with_for_update()
+        )
+    ).scalar_one_or_none()
+    if tenant is None:
+        raise ValidationAppError("Seller tenant not found")
+
     existing = await get_active_payout_destination(
         db, seller_tenant_id=seller_tenant_id
     )
