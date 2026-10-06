@@ -37,7 +37,8 @@ def extract_text(file_obj) -> str:
             raise ValidationAppError("PDF indexing requires the optional pypdf dependency") from exc
         import io
         reader = PdfReader(io.BytesIO(raw))
-        return "\n".join(page.extract_text() or "" for page in reader.pages)
+        return "
+".join(page.extract_text() or "" for page in reader.pages)
     if suffix == ".docx" or content_type.endswith("wordprocessingml.document"):
         try:
             from docx import Document
@@ -45,7 +46,8 @@ def extract_text(file_obj) -> str:
             raise ValidationAppError("DOCX indexing requires the optional python-docx dependency") from exc
         import io
         doc = Document(io.BytesIO(raw))
-        return "\n".join(p.text for p in doc.paragraphs)
+        return "
+".join(p.text for p in doc.paragraphs)
     raise ValidationAppError(f"Unsupported knowledge file type: {file_obj.filename}")
 
 
@@ -114,7 +116,11 @@ async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UU
             constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
             if constraint_name is None:
                 constraint_name = getattr(exc.orig, "constraint_name", None)
-            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL\n            # constraint metadata. Real driver exceptions still require the exact constraint name.\n            if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():\n                constraint_name = "uq_knowledge_documents_tenant_file"\n            if constraint_name != "uq_knowledge_documents_tenant_file":
+            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL
+            # constraint metadata. Real driver exceptions still require the exact constraint name.
+            if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():
+                constraint_name = "uq_knowledge_documents_tenant_file"
+            if constraint_name != "uq_knowledge_documents_tenant_file":
                 raise
             winner_result = await db.execute(
                 select(KnowledgeDocument).where(
