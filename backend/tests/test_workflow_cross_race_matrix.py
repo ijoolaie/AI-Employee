@@ -102,3 +102,10 @@ def test_business_network_duplicate_request_recovers_from_unique_race():
     assert 'uq_business_network_sender_idempotency' in source
     assert 'async with db.begin_nested()' in source
     assert 'return existing' in source
+
+
+def test_commercial_license_issuance_serializes_on_tenant_row():
+    source = (ROOT / "app/services/license_service.py").read_text(encoding="utf-8")
+    assert 'select(Tenant).where(Tenant.id == tenant.id).with_for_update()' in source
+    assert 'select(CommercialLicense).where(' in source
+    assert 'CommercialLicense.tenant_id == tenant.id' in source
