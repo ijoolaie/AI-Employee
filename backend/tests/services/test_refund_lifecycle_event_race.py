@@ -31,8 +31,9 @@ class _Result:
 
 
 class _RaceDb:
-    def __init__(self, winner):
+    def __init__(self, winner, constraint_name="uq_billing_event_provider_id"):
         self.winner = winner
+        self.constraint_name = constraint_name
         self.executes = 0
         self.flushes = 0
         self.added = []
@@ -50,14 +51,15 @@ class _RaceDb:
     async def flush(self):
         self.flushes += 1
         if self.flushes == 1:
-            raise IntegrityError("INSERT", {}, Exception("duplicate key"))
+            orig = SimpleNamespace(
+                diag=SimpleNamespace(constraint_name=self.constraint_name)
+            )
+            raise IntegrityError("INSERT", {}, orig)
 
 
-@pytest.mark.asyncio
-async def test_record_lifecycle_event_recovers_from_unique_race():
-    tenant_id = uuid4()
-    refund = SimpleNamespace(
-        tenant_id=tenant_id,
+def _refund():
+    return SimpleNamespace(
+        tenant_id=uuid4(),
         id=uuid4(),
         idempotency_key="refund-42",
         operation="refund",
@@ -68,6 +70,11 @@ async def test_record_lifecycle_event_recovers_from_unique_race():
         reason="requested_by_customer",
         failure_reason=None,
     )
+
+
+@pytest.mark.asyncio
+async def test_record_lifecycle_event_recovers_from_expected_unique_race():
+    refund = _refund()
     winner = SimpleNamespace(status="processed", payload={})
     db = _RaceDb(winner)
 
@@ -78,3 +85,16 @@ async def test_record_lifecycle_event_recovers_from_unique_race():
     assert winner.payload["refund_id"] == str(refund.id)
     assert db.executes == 2
     assert db.flushes == 2
+
+
+@pytest.mark.asyncio
+async def test_record_lifecycle_event_reraises_unrelated_integrity_error():
+    refund = _refund()
+    winner = SimpleNamespace(status="processed", payload={})
+    db = _RaceDb(winner, constraint_name="some_unrelated_constraint")
+
+    with pytest.raises(IntegrityError):
+        await refund_service._record_lifecycle_event(db, row=refund, status="processed")
+
+    assert db.executes == 1
+    assert db.flushes == 1
