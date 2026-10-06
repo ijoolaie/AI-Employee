@@ -736,25 +736,32 @@ async def test_commercial_tool_requires_tenant_run_context_before_entitlement_ch
 
 @pytest.mark.asyncio
 async def test_commercial_tool_requires_both_db_and_tenant_context():
-    with pytest.raises(ValidationAppError, match="active tenant Run context"):
-        await registry.execute(
-            "create_invoice",
-            {
-                "customer_name": "Context fence",
-                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
-            },
-            permissions={"run.execute"},
-            approval_granted=True,
-            db="db-context",
-        )
-    with pytest.raises(ValidationAppError, match="active tenant Run context"):
-        await registry.execute(
-            "create_invoice",
-            {
-                "customer_name": "Context fence",
-                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
-            },
-            permissions={"run.execute"},
-            approval_granted=True,
-            tenant_id="tenant-context",
-        )
+    from uuid import uuid4
+    from app.services import agent_tool_governance
+
+    tenant_id, instance_id, run_id = uuid4(), uuid4(), uuid4()
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id, agent_instance_id=instance_id, run_id=run_id
+    ):
+        with pytest.raises(ValidationAppError, match="active tenant Run context"):
+            await registry.execute(
+                "create_invoice",
+                {
+                    "customer_name": "Context fence",
+                    "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+                },
+                permissions={"run.execute"},
+                approval_granted=True,
+                tenant_id=tenant_id,
+            )
+        with pytest.raises(ValidationAppError, match="active tenant Run context"):
+            await registry.execute(
+                "create_invoice",
+                {
+                    "customer_name": "Context fence",
+                    "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+                },
+                permissions={"run.execute"},
+                approval_granted=True,
+                db="db-context",
+            )
