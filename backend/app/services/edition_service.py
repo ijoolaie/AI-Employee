@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import request_id_var
@@ -128,12 +129,21 @@ async def delegate_entitlement(db: AsyncSession, *, parent: Tenant, child: Tenan
     effective_quota = await _authorized_parent_entitlement(db, parent=parent, feature_code=feature_code, requested_quota=quota_limit)
     row = (await db.execute(select(TenantEntitlement).where(TenantEntitlement.tenant_id == child.id, TenantEntitlement.feature_code == feature_code))).scalar_one_or_none()
     if row is None:
-        row = TenantEntitlement(tenant_id=child.id, delegated_from_tenant_id=parent.id, feature_code=feature_code, quota_limit=effective_quota, quota_used=0, is_enabled=True)
-        db.add(row)
-    else:
-        row.quota_limit = effective_quota
-        row.is_enabled = True
-        row.delegated_from_tenant_id = parent.id
+        try:
+            async with db.begin_nested():
+                row = TenantEntitlement(tenant_id=child.id, delegated_from_tenant_id=parent.id, feature_code=feature_code, quota_limit=effective_quota, quota_used=0, is_enabled=True)
+                db.add(row)
+                await db.flush()
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "uq_tenant_entitlement_feature":
+                raise
+            row = (await db.execute(select(TenantEntitlement).where(TenantEntitlement.tenant_id == child.id, TenantEntitlement.feature_code == feature_code))).scalar_one()
+    row.quota_limit = effective_quota
+    row.is_enabled = True
+    row.delegated_from_tenant_id = parent.id
     await record_audit(db, tenant_id=parent.id, actor_id=None, action="entitlement.delegated", resource_type="tenant_entitlement", resource_id=str(row.id), metadata={"child_tenant_id": str(child.id), "feature_code": feature_code, "quota_limit": effective_quota})
     await db.commit()
     await db.refresh(row)
