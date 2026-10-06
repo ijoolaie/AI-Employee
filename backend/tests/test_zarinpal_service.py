@@ -70,3 +70,26 @@ async def test_zarinpal_payment_request_parses_success(monkeypatch):
     assert result.executed is True
     assert result.provider_payment_id == "A-TEST-123"
     assert result.checkout_url.endswith("/A-TEST-123")
+
+
+def test_zarinpal_checkout_durably_fences_ambiguous_attempt():
+    import inspect
+    from app.services import workforce_sales_payment_provider
+
+    source = inspect.getsource(workforce_sales_payment_provider.create_sales_checkout_session)
+    assert 'metadata["payment_attempt_state"] = "pending"' in source
+    assert 'await db.commit()' in source
+    assert 'attempt_state == "pending"' in source
+    assert "outcome is unresolved" in source
+    assert "await create_payment_request" in source
+    assert source.index('await db.commit()') < source.index("await create_payment_request(")
+
+
+def test_zarinpal_checkout_persists_accepted_authority_after_external_call():
+    import inspect
+    from app.services import workforce_sales_payment_provider
+
+    source = inspect.getsource(workforce_sales_payment_provider.create_sales_checkout_session)
+    assert 'persisted_metadata["payment_provider_authority"] = result.provider_payment_id' in source
+    assert 'persisted_metadata["payment_attempt_state"] = "accepted"' in source
+    assert source.index('persisted_metadata["payment_provider_authority"]') > source.index("await create_payment_request(")
