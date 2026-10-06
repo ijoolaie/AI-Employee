@@ -112,13 +112,30 @@ async def _parallel_branch_async(branch_id: str, tenant_id: str) -> None:
 
 @celery_app.task(name="workflow.parallel_branch", bind=True, max_retries=3, default_retry_delay=10)
 def execute_parallel_branch_task(self, branch_id: str, tenant_id: str) -> None:
+    """Execute a branch under the same tenant admission limit as parent workflows.
+
+    Capacity exhaustion is safe to retry because branch execution has not
+    started. Once admitted, execution exceptions are deliberately not replayed
+    because a branch may have crossed an external side-effect boundary.
+    """
     if not tenant_id:
         raise ValueError("tenant_id is required for workflow.parallel_branch")
     try:
+        lease = acquire_tenant_resource(tenant_id)
+    except TenantResourceUnavailableError as exc:
+        raise self.retry(exc=exc, countdown=min(60, 5 * (2 ** self.request.retries)))
+    if lease is None:
+        raise self.retry(
+            exc=RuntimeError("Tenant execution capacity is currently exhausted"),
+            countdown=min(60, 5 * (2 ** self.request.retries)),
+        )
+    try:
         asyncio.run(_parallel_branch_async(branch_id, tenant_id))
-    except Exception as exc:
+    except Exception:
         # Parallel branches have the same external-effect ambiguity as the
         # parent workflow. Do not blindly replay a branch after its execution
         # boundary may already have been crossed.
         logger.exception("workflow_parallel_branch_failed", extra={"branch_id": branch_id})
         raise
+    finally:
+        release_tenant_resource(lease)
