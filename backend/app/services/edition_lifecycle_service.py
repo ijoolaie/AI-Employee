@@ -57,6 +57,9 @@ async def transition_tenant_status(
 ) -> Tenant:
     """Apply a validated lifecycle transition without deleting tenant data."""
 
+    locked_tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant.id).with_for_update())).scalar_one()
+    tenant = locked_tenant
+
     previous_status = tenant.status
     validate_transition(previous_status, target_status)
 
@@ -64,7 +67,7 @@ async def transition_tenant_status(
         children = list(
             (
                 await db.execute(
-                    select(Tenant).where(Tenant.parent_tenant_id == tenant.id)
+                    select(Tenant).where(Tenant.parent_tenant_id == tenant.id).with_for_update()
                 )
             )
             .scalars()
@@ -125,7 +128,7 @@ async def set_child_tenant_status(
 ) -> Tenant:
     child = (
         await db.execute(
-            select(Tenant).where(Tenant.id == child_id)
+            select(Tenant).where(Tenant.id == child_id).with_for_update()
         )
     ).scalar_one_or_none()
 
