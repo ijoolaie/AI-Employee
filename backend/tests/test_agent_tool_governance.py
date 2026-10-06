@@ -87,3 +87,27 @@ async def test_approval_boolean_alone_cannot_bypass_agent_boundary(monkeypatch) 
         with pytest.raises(ValidationAppError, match="Human approval required"):
             await registry.execute("send_email", {"to": ["allowed@example.com"], "subject": "x", "body": "y"}, db=Db(), tenant_id=tenant_id, approval_granted=True)
     assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_side_effect_requires_agent_run_context_even_with_db_and_tenant(monkeypatch) -> None:
+    calls = []
+
+    async def original(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {"ok": True}
+
+    monkeypatch.setattr(registry, "execute", original)
+    monkeypatch.setattr(agent_tool_governance, "_INSTALLED", False)
+    agent_tool_governance.install()
+
+    with pytest.raises(ValidationAppError, match="active Agent Run context"):
+        await registry.execute(
+            "send_email",
+            {"to": ["allowed@example.com"], "subject": "x", "body": "y"},
+            permissions={"run.execute"},
+            approval_granted=True,
+            db=object(),
+            tenant_id=uuid4(),
+        )
+    assert calls == []
