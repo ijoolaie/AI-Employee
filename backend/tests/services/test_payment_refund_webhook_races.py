@@ -104,3 +104,70 @@ async def test_request_refund_recovers_from_idempotency_unique_race(monkeypatch)
     assert row is existing
     assert db.executes == 2
     assert db.flushes == 1
+
+
+@pytest.mark.asyncio
+async def test_refund_webhook_cannot_resurrect_terminal_state():
+    row = PaymentRefund(
+        tenant_id=uuid4(),
+        operation="refund",
+        provider="stripe",
+        provider_refund_id="re_123",
+        provider_payment_intent_id="pi_123",
+        amount_cents=1000,
+        currency="usd",
+        status="succeeded",
+        idempotency_key="refund-key-terminal",
+    )
+    db = _RaceDb([row])
+
+    with pytest.raises(refund_service.ConflictError, match="Invalid refund state transition"):
+        await refund_service.reconcile_stripe_refund_event(
+            db,
+            event={
+                "data": {
+                    "object": {
+                        "id": "re_123",
+                        "status": "pending",
+                        "amount": 1000,
+                        "currency": "usd",
+                    }
+                }
+            },
+        )
+
+    assert row.status == "succeeded"
+
+
+@pytest.mark.asyncio
+async def test_refund_webhook_rejects_amount_mismatch():
+    row = PaymentRefund(
+        tenant_id=uuid4(),
+        operation="refund",
+        provider="stripe",
+        provider_refund_id="re_456",
+        provider_payment_intent_id="pi_456",
+        amount_cents=1000,
+        currency="usd",
+        status="pending",
+        idempotency_key="refund-key-amount",
+    )
+    db = _RaceDb([row])
+
+    with pytest.raises(refund_service.ConflictError, match="amount does not match"):
+        await refund_service.reconcile_stripe_refund_event(
+            db,
+            event={
+                "data": {
+                    "object": {
+                        "id": "re_456",
+                        "status": "succeeded",
+                        "amount": 900,
+                        "currency": "usd",
+                    }
+                }
+            },
+        )
+
+    assert row.status == "pending"
+    assert row.amount_cents == 1000
