@@ -3,6 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.business_network_request import BusinessNetworkRequest, BusinessNetworkRequestStatus
@@ -17,7 +18,23 @@ async def create_request(db:AsyncSession,*,sender_tenant_id:uuid.UUID,requester_
     existing=await db.scalar(select(BusinessNetworkRequest).where(BusinessNetworkRequest.sender_tenant_id==sender_tenant_id,BusinessNetworkRequest.idempotency_key==idempotency_key))
     if existing is not None: return existing
     item=BusinessNetworkRequest(sender_tenant_id=sender_tenant_id,recipient_tenant_id=recipient_tenant_id,requester_user_id=requester_user_id,sponsor_user_id=sponsor_user_id,operation=operation,capability_contract=dict(capability_contract),payload=dict(payload),idempotency_key=idempotency_key,correlation_id=correlation_id or str(uuid.uuid4()))
-    db.add(item); await db.flush()
+    try:
+        async with db.begin_nested():
+            db.add(item)
+            await db.flush()
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name != "uq_business_network_sender_idempotency":
+            raise
+        existing = await db.scalar(
+            select(BusinessNetworkRequest).where(
+                BusinessNetworkRequest.sender_tenant_id == sender_tenant_id,
+                BusinessNetworkRequest.idempotency_key == idempotency_key,
+            )
+        )
+        if existing is None:
+            raise
+        return existing
     await record(db,action="business_network.request.submitted",actor_id=requester_user_id,tenant_id=sender_tenant_id,resource_type="business_network_request",resource_id=item.id,metadata={"recipient_tenant_id":str(recipient_tenant_id),"operation":operation,"correlation_id":item.correlation_id})
     return item
 async def decide_request(db:AsyncSession,*,sender_tenant_id:uuid.UUID,request_id:uuid.UUID,decider_user_id:uuid.UUID,approve:bool,reason:str|None=None):
