@@ -107,9 +107,16 @@ class ToolRegistry:
     ) -> Any:
         tool = self.get(name)
 
-        # Commercial entitlement is enforced at the real execution boundary
-        # when a tenant Run supplies transactional DB and tenant context.
-        if tool.entitlement_code is not None and db is not None and tenant_id is not None:
+        # Commercial tools must never execute outside the durable tenant
+        # boundary. Previously entitlement checks were skipped when db/tenant
+        # context was absent, which allowed a direct registry caller to bypass
+        # the commercial entitlement boundary. Free local utilities remain
+        # executable without a Run context.
+        if tool.entitlement_code is not None:
+            if db is None or tenant_id is None:
+                raise ValidationAppError(
+                    f"{name} requires an active tenant Run context"
+                )
             from app.services import license_service
 
             await license_service.assert_feature_entitlement(
