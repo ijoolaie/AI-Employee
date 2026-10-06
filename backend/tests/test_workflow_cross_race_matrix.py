@@ -94,3 +94,11 @@ def test_webhook_duplicate_ingestion_recovers_from_unique_race():
     assert 'uq_workflow_event_delivery_trigger_event' in TRIGGER_SERVICE_SOURCE
     assert 'await db.rollback()' in TRIGGER_SERVICE_SOURCE
     assert 'return delivery, False' in TRIGGER_SERVICE_SOURCE
+
+
+def test_business_network_duplicate_request_recovers_from_unique_race():
+    source = (ROOT / "app/services/business_network_service.py").read_text(encoding="utf-8")
+    assert 'IntegrityError' in source
+    assert 'uq_business_network_sender_idempotency' in source
+    assert 'async with db.begin_nested()' in source
+    assert 'return existing' in source
