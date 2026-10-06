@@ -119,3 +119,12 @@ def test_agent_identity_creation_serializes_on_tenant_scoped_instance_row():
     assert "AgentInstance.id == agent_instance_id" in block
     assert "AgentInstance.tenant_id == tenant_id" in block
     assert ".with_for_update()" in block
+
+
+def test_payout_destination_binding_serializes_on_seller_tenant_row():
+    source = Path("app/services/skill_marketplace_payout_destination.py").read_text()
+    marker = "async def bind_payout_destination("
+    block = source[source.index(marker):source.index("\n\nasync def revoke_payout_destination", source.index(marker))]
+    assert "select(Tenant)" in block
+    assert "Tenant.id == seller_tenant_id" in block
+    assert ".with_for_update()" in block
