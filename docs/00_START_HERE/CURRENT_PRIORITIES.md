@@ -1,9 +1,9 @@
 # Current Priorities
 
-**Reconciled:** 2026-10-04
+**Reconciled:** 2026-10-06
 **Current release:** `v1.4.16`
 **Certified SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
-**Current main head:** mutable; resolve directly from Git metadata — post-release engineering; **NOT release-certified**
+**Current main head:** `600367bc20c3d9392e51d0af861d26cb326f8a4c` — post-release engineering; **NOT release-certified**
 **Production Certification:** v1.4.16 exact-SHA Run `37188879277` / Job `111396657270` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
 **Current status:** v1.4.16 RELEASE-CERTIFIED at its immutable SHA / current main is post-release engineering / EXTERNAL GATES OPEN
@@ -15,7 +15,9 @@
 3. **DONE:** Reconcile current documentation with the published v1.4.16 release and current `main` head.
 4. **DONE:** Rebase and merge PR #836 after fresh exact-head validation.
 5. **BLOCKED:** Establish GitHub `main` branch protection and required checks; the available GitHub integration lacks the required repository-rules write capability and the direct protection endpoint returned HTTP 403.
-6. **NEXT:** Verify current-main CI after the PR #836 merge, then select the next concrete Workforce/product hardening slice.
+6. **DONE:** PR #927 payout-destination race hardening was merged after exact-head validation.
+7. **DONE:** Reconcile W17–W23 and W10 evidence against the roadmap; W9 is already real-stack VERIFIED and is not a new implementation target.
+8. **NEXT:** Complete post-#927 mainline validation when a post-merge workflow is available, then continue the repository-wide proven race/idempotency/governance audit before selecting another feature slice.
 
 
 ## Priority order
@@ -149,3 +151,14 @@ The previously open W10 items have been split into technical mechanics versus re
 - **OPEN:** independently verify a real payment/revenue event.
 
 The W10 E2E uses deterministic `contract-test` payment evidence only. It must not be described as real customer revenue.
+
+
+## 2026-10-06 roadmap/evidence reconciliation
+
+- Current main is `600367bc20c3d9392e51d0af861d26cb326f8a4c` (PR #927 merge).
+- PR #927 exact-head validation passed before merge; no post-merge workflow run is currently registered for the merge SHA, so the merge SHA is **NOT post-merge verified**.
+- W17, W18, W19, W20, W21, W22 and W23 implementation/evidence gates are closed at their documented boundaries.
+- W9 QA & DevOps is **already VERIFIED on the real stack**: final Run `36891616509`, Job `110468909696`, verification commit `5887c26c727fd2681cc1dd71fc17f0a475c9e80a`. Therefore W9 must not be treated as an unimplemented next slice.
+- The roadmap W9→W10 sequence remains historically correct: W9 evidence is closed; W10 is the business-validation phase. W10 technical mechanics are now real-stack verified, while real customer qualification, real customer acceptance and realized external revenue remain open.
+- External/live work remains intentionally deferred to the final external-validation phase.
+- Immediate engineering priority: hardening/reconciliation, not duplicate W9 implementation.
