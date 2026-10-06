@@ -11,9 +11,7 @@ from __future__ import annotations
 
 import ast
 import operator
-import smtplib
 import time
-from email.message import EmailMessage
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable
@@ -187,10 +185,10 @@ class ToolRegistry:
                         details={"recipient": address},
                     )
 
-            # With a transactional context, enqueue the email for durable
-            # post-commit dispatch. Without one, execute the already-approved
-            # SMTP side effect directly; this path is primarily useful for
-            # isolated/local tool execution and unit tests.
+            # External SMTP execution is only reachable through a durable
+            # tenant Run context. This prevents callers from bypassing the
+            # transactional outbox and tenant/audit boundary by invoking the
+            # registry directly with no DB context.
             if db is not None and tenant_id is not None:
                 from app.services.outbox_service import enqueue
 
@@ -211,22 +209,9 @@ class ToolRegistry:
                     "subject": arguments["subject"],
                 }
             else:
-                message = EmailMessage()
-                message["From"] = settings.smtp_from_email
-                message["To"] = ", ".join(arguments["to"])
-                message["Subject"] = arguments["subject"]
-                message.set_content(arguments["body"])
-                with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as smtp:
-                    if settings.smtp_use_starttls:
-                        smtp.starttls()
-                    if settings.smtp_username:
-                        smtp.login(settings.smtp_username, settings.smtp_password or "")
-                    smtp.send_message(message)
-                result = {
-                    "sent": True,
-                    "recipient_count": len(arguments["to"]),
-                    "subject": arguments["subject"],
-                }
+                raise ValidationAppError(
+                    "send_email requires an active tenant Run context"
+                )
         elif name == "analyze_dataset":
             # Requires DB + tenant context, same as send_email above. This is
             # the Phase 2 "Report Employee" analysis path (report_service.py);
