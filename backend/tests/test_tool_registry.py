@@ -735,7 +735,7 @@ async def test_workforce_execute_installed_skill_forwards_employee_identity(monk
 
 @pytest.mark.asyncio
 async def test_commercial_tool_requires_tenant_run_context_before_entitlement_check():
-    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+    with pytest.raises(ValidationAppError, match="active Agent Run context"):
         await registry.execute(
             "create_invoice",
             {
