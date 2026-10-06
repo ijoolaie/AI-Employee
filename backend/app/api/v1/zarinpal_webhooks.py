@@ -59,19 +59,6 @@ async def receive_zarinpal_callback(
             await db.commit()
         return {"success": False, "status": "cancelled", "deal_id": str(deal.id)}
 
-    # The callback can arrive after provider acceptance but before the checkout
-    # creator persists the authority. Verify the callback authority against the
-    # governed amount, then bind it locally; never create another checkout.
-    if not stored_authority:
-        if attempt_state != "pending":
-            raise HTTPException(status_code=409, detail="ZarinPal checkout authority is not bound to a pending attempt")
-        metadata["payment_provider_authority"] = authority
-        metadata["payment_attempt_state"] = "accepted"
-        metadata["payment_amount"] = float(deal.amount)
-        metadata["payment_currency"] = deal.currency.upper()
-        deal.metadata_ = metadata
-        await db.flush()
-
     verification = await zarinpal_service.verify_payment(
         authority=authority,
         amount=deal.amount,
@@ -80,6 +67,14 @@ async def receive_zarinpal_callback(
     ref_id = verification.get("ref_id")
     if not ref_id:
         raise HTTPException(status_code=502, detail="ZarinPal verification returned no reference id")
+
+    if not stored_authority:
+        metadata["payment_provider_authority"] = authority
+        metadata["payment_attempt_state"] = "accepted"
+        metadata["payment_amount"] = float(deal.amount)
+        metadata["payment_currency"] = deal.currency.upper()
+        deal.metadata_ = metadata
+        await db.flush()
 
     try:
         tenant_id, order_id = await stripe_service.apply_verified_sales_payment(
