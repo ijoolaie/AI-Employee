@@ -109,3 +109,13 @@ def test_commercial_license_issuance_serializes_on_tenant_row():
     assert 'select(Tenant).where(Tenant.id == tenant.id).with_for_update()' in source
     assert 'select(CommercialLicense).where(' in source
     assert 'CommercialLicense.tenant_id == tenant.id' in source
+
+
+def test_agent_identity_creation_serializes_on_tenant_scoped_instance_row():
+    source = Path("app/services/agent_governance.py").read_text()
+    marker = "async def create_identity("
+    block = source[source.index(marker):source.index("\n\nasync def review_access", source.index(marker))]
+    assert "select(AgentInstance)" in block
+    assert "AgentInstance.id == agent_instance_id" in block
+    assert "AgentInstance.tenant_id == tenant_id" in block
+    assert ".with_for_update()" in block
