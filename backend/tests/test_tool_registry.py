@@ -211,29 +211,33 @@ def test_workforce_assign_task_is_side_effecting_but_non_approval_gated():
 
 @pytest.mark.asyncio
 async def test_workforce_coordinate_handoff_requires_agent_identity(monkeypatch):
-    from app.services import license_service
+    from app.services import agent_tool_governance, license_service
+    from uuid import uuid4
 
     async def allow_entitlement(*args, **kwargs):
         return None
 
     monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+    tenant_id = uuid4()
 
-    with pytest.raises(ValidationAppError, match="Agent identity"):
-        await registry.execute(
-            "workforce_coordinate_handoff",
-            {
-                "source_work_item_id": "00000000-0000-0000-0000-000000000001",
-                "delegate_agent_instance_id": "00000000-0000-0000-0000-000000000002",
-                "scopes": {"actions": ["run.execute"]},
-                "expires_at": "2030-01-01T00:00:00+00:00",
-                "idempotency_key": "tool-test-agent-identity-1",
-            },
-            permissions={"run.execute"},
-            allowed_tools={"workforce_coordinate_handoff"},
-            db="db-context",
-            tenant_id="tenant-context",
-        )
-
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id, agent_instance_id=uuid4(), run_id=uuid4()
+    ):
+        with pytest.raises(ValidationAppError, match="Agent identity"):
+            await registry.execute(
+                "workforce_coordinate_handoff",
+                {
+                    "source_work_item_id": "00000000-0000-0000-0000-000000000001",
+                    "delegate_agent_instance_id": "00000000-0000-0000-0000-000000000002",
+                    "scopes": {"actions": ["run.execute"]},
+                    "expires_at": "2030-01-01T00:00:00+00:00",
+                    "idempotency_key": "tool-test-agent-identity-1",
+                },
+                permissions={"run.execute"},
+                allowed_tools={"workforce_coordinate_handoff"},
+                db="db-context",
+                tenant_id=tenant_id,
+            )
 
 @pytest.mark.asyncio
 async def test_workforce_reprioritize_task_requires_tenant_context():
@@ -665,25 +669,32 @@ def test_workforce_execute_installed_skill_is_external_and_approval_gated():
 
 @pytest.mark.asyncio
 async def test_workforce_execute_installed_skill_requires_approval():
-    with pytest.raises(ValidationAppError, match="Human approval required"):
-        await registry.execute(
-            "workforce_execute_installed_skill",
-            {
-                "skill_package_id": "00000000-0000-0000-0000-000000000001",
-                "input": {},
-            },
-            permissions={"run.execute"},
-            allowed_tools={"workforce_execute_installed_skill"},
-            employee_id="00000000-0000-0000-0000-000000000002",
-            db="db",
-            tenant_id="tenant",
-            approval_granted=False,
-        )
+    from app.services import agent_tool_governance
+    from uuid import uuid4
 
+    tenant_id = uuid4()
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id, agent_instance_id=uuid4(), run_id=uuid4()
+    ):
+        with pytest.raises(ValidationAppError, match="Human approval required"):
+            await registry.execute(
+                "workforce_execute_installed_skill",
+                {
+                    "skill_package_id": "00000000-0000-0000-0000-000000000001",
+                    "input": {},
+                },
+                permissions={"run.execute"},
+                allowed_tools={"workforce_execute_installed_skill"},
+                employee_id="00000000-0000-0000-0000-000000000002",
+                db="db",
+                tenant_id=tenant_id,
+                approval_granted=False,
+            )
 
 @pytest.mark.asyncio
 async def test_workforce_execute_installed_skill_forwards_employee_identity(monkeypatch):
-    from types import SimpleNamespace
+    from app.services import agent_tool_governance
+    from uuid import uuid4
 
     calls = []
 
@@ -691,34 +702,36 @@ async def test_workforce_execute_installed_skill_forwards_employee_identity(monk
         calls.append(kwargs)
         return {"ok": True}
 
-    original = registry.get("workforce_execute_installed_skill")
     monkeypatch.setattr("app.ai.tool_registry.skill_execution_service.execute_installed_skill", fake_execute)
 
-    result = await registry.execute(
-        "workforce_execute_installed_skill",
-        {
-            "skill_package_id": "00000000-0000-0000-0000-000000000001",
-            "input": {},
-        },
-        permissions={"run.execute"},
-        allowed_tools={"workforce_execute_installed_skill"},
-        db="db-context",
-        tenant_id="tenant-context",
-        employee_id="employee-context",
-        actor_id="actor-context",
-        tool_call_id="tool-call-context",
-        approval_granted=True,
-    )
+    tenant_id = uuid4()
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id, agent_instance_id=uuid4(), run_id=uuid4()
+    ):
+        result = await registry.execute(
+            "workforce_execute_installed_skill",
+            {
+                "skill_package_id": "00000000-0000-0000-0000-000000000001",
+                "input": {},
+            },
+            permissions={"run.execute"},
+            allowed_tools={"workforce_execute_installed_skill"},
+            db="db-context",
+            tenant_id=tenant_id,
+            employee_id="employee-context",
+            actor_id="actor-context",
+            tool_call_id="tool-call-context",
+            approval_granted=True,
+        )
     assert result == {"ok": True}
     assert calls == [{
-        "tenant_id": "tenant-context",
+        "tenant_id": tenant_id,
         "employee_id": "employee-context",
         "skill_package_id": __import__("uuid").UUID("00000000-0000-0000-0000-000000000001"),
         "input_data": {},
         "actor_id": "actor-context",
         "request_id": "tool-call-context",
     }]
-
 
 @pytest.mark.asyncio
 async def test_commercial_tool_requires_tenant_run_context_before_entitlement_check():
