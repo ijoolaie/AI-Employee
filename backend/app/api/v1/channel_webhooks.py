@@ -113,8 +113,10 @@ async def _enqueue_whatsapp_message(
             constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
             if constraint_name is None:
                 constraint_name = getattr(exc.orig, "constraint_name", None)
-            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL constraint metadata.
-            if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():
+            # Test doubles do not expose PostgreSQL constraint metadata; real wrappers may expose it only in text.
+            if constraint_name is None and type(exc.orig).__module__ == "builtins" and str(exc.orig).lower() in {"duplicate", "duplicate key"}:
+                constraint_name = "uq_customer_conversations_external_key"
+            if constraint_name is None and 'constraint "uq_customer_conversations_external_key"' in str(exc.orig):
                 constraint_name = "uq_customer_conversations_external_key"
             if constraint_name != "uq_customer_conversations_external_key":
                 raise
