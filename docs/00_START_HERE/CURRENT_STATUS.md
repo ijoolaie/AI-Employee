@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-10-05
+**Last reconciled:** 2026-10-06
 **Latest certified release:** `v1.4.16`
 **Certified release SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
 **Stable Git tag:** `v1.4.16` — VERIFIED
@@ -604,7 +604,7 @@ W23 Customer Success & Support Employee is **IMPLEMENTED / REAL-STACK VERIFIED**
 - Live inbox/provider execution and customer outcome impact remain **NOT VERIFIED**.
 - Exact-SHA Production Certification, external deployment and customer acceptance remain **NOT VERIFIED**.
 
-W23 evidence gate is closed. The next slice is original Phase W9 QA & DevOps.
+W23 evidence gate is closed. W9 QA & DevOps is already VERIFIED on the real stack; the next engineering action is repository hardening/reconciliation, not a duplicate W9 implementation.
 
 ## W10 customer-outcome / revenue-event checkpoint — 2026-10-05
 
@@ -620,3 +620,14 @@ W10 customer-outcome mechanics are **REAL-STACK VERIFIED** on post-v1.4.16 mainl
 - Exact-SHA Production Certification remains **NOT RUN**.
 
 The technical W10 evidence gate is complete. Controlled live-provider/customer validation remains intentionally deferred to the final external-validation phase; no live payment or customer revenue is claimed from the current engineering mainline.
+
+
+## 2026-10-06 roadmap/evidence reconciliation
+
+- Current main is `600367bc20c3d9392e51d0af861d26cb326f8a4c` (PR #927 merge).
+- PR #927 was validated at exact head before merge; the GitHub integration currently reports **no workflow runs for the merge SHA**, so post-merge verification of this exact main SHA is **NOT VERIFIED**.
+- W9 QA & DevOps is not an outstanding implementation gap. The authoritative roadmap records final real-stack Run `36891616509`, Job `110468909696`, at commit `5887c26c727fd2681cc1dd71fc17f0a475c9e80a`, with QA/DevOps governed execution, approval governance, tenant isolation, provenance and provider fail-closed behavior verified.
+- W17, W18, W19, W20, W21, W22 and W23 have documented implementation/real-stack evidence at their respective verification boundaries. They do not inherit v1.4.16 certification.
+- W10 technical customer-outcome/revenue-event mechanics are real-stack verified using deterministic `contract-test`; real customer qualification, customer acceptance and realized external revenue remain unverified.
+- External production/live-provider/customer work remains intentionally deferred to the final external-validation phase.
+- The next engineering pass is therefore limited to evidence-backed hardening/reconciliation findings and regression verification. No new feature slice is selected from this reconciliation alone.
