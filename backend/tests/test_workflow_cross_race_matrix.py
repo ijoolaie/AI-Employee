@@ -169,3 +169,11 @@ def test_child_tenant_provisioning_recovers_from_slug_unique_race():
     assert "IntegrityError" in block
     assert '"tenants_slug_key"' in block
     assert 'raise HTTPException(status_code=409, detail="Tenant slug already exists")' in block
+
+
+def test_workforce_sla_upsert_recovers_only_expected_unique_race():
+    source = (ROOT / "app/services/workforce_sla_service.py").read_text(encoding="utf-8")
+    assert 'except IntegrityError as exc:' in source
+    assert 'constraint_name != "uq_workforce_sla_contract_tenant"' in source
+    assert 'if constraint_name != "uq_workforce_sla_contract_tenant":' in source
+    assert '.with_for_update()' in source
