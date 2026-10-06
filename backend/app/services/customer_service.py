@@ -46,7 +46,12 @@ async def upsert_customer(
             async with db.begin_nested():
                 db.add(candidate)
                 await db.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "uq_customers_tenant_external_key":
+                raise
             customer = (
                 await db.execute(
                     select(Customer).where(
