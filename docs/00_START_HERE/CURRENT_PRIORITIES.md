@@ -117,7 +117,7 @@ Stage 8/9 and future workforce work should therefore proceed only when the relev
 
 The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
 
-The latest code-bearing engineering head is PR #832 merge `b352ce41ab65031b5463542e254ddd3a2a1f459b`, containing the merged CI timeout process-termination fix lineage through PR #826 and governed Workforce runtime-binding fix from PR #827. PR #833 is documentation-only and merged at `3d29aeffb44bcba7d833ca906884b6dc5fca814a`. Mutable current-main SHA is intentionally resolved directly from the repository. Current-main validation remains engineering evidence only.
+The current engineering head is PR #927 merge `600367bc20c3d9392e51d0af861d26cb326f8a4c`. PR #927 exact-head validation passed before merge; post-merge workflow evidence for this merge SHA is currently absent. Current-main validation remains engineering evidence only and does not inherit v1.4.16 certification.
 
 
 
