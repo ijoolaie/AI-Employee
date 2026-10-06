@@ -104,6 +104,11 @@ class MarketplaceService:
         try:
             await self.db.flush()
         except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "uq_marketplace_publications_team_version":
+                raise
             raise MarketplaceError("team version is already published") from exc
         return publication
 
@@ -245,6 +250,17 @@ class MarketplaceService:
         try:
             await self.db.flush()
         except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            expected_constraints = {
+                "uq_team_installations_tenant_version_workspace_null",
+                "uq_team_installations_tenant_version_workspace",
+                "uq_team_installations_tenant_publication_workspace_null",
+                "uq_team_installations_tenant_publication_workspace",
+            }
+            if constraint_name not in expected_constraints:
+                raise
             raise MarketplaceError("marketplace publication is already installed in this scope") from exc
         return installation
 

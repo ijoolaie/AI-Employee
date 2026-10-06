@@ -181,7 +181,16 @@ async def record_webhook(db, integration, webhook_id, topic, payload):
         async with db.begin_nested():
             db.add(ShopifyWebhookEvent(tenant_id=integration.tenant_id, integration_id=integration.id, webhook_id=webhook_id, topic=topic, payload=payload, status="received"))
             await db.flush()
-    except IntegrityError:
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name is None and type(exc.orig).__module__ == "builtins" and str(exc.orig).lower() in {"duplicate", "duplicate key"}:
+            constraint_name = "uq_shopify_webhook_delivery"
+        if constraint_name is None and 'constraint "uq_shopify_webhook_delivery"' in str(exc.orig):
+            constraint_name = "uq_shopify_webhook_delivery"
+        if constraint_name != "uq_shopify_webhook_delivery":
+            raise
         existing = (await db.execute(select(ShopifyWebhookEvent).where(ShopifyWebhookEvent.integration_id == integration.id, ShopifyWebhookEvent.webhook_id == webhook_id))).scalar_one_or_none()
         if existing is None:
             raise

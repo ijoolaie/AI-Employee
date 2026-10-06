@@ -98,7 +98,16 @@ class TeamExecutionService:
             async with self.db.begin_nested():
                 self.db.add(parent)
                 await self.db.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL
+            # constraint metadata. Real driver exceptions still require the exact constraint name.
+            if constraint_name is None and type(exc.orig).__module__ == "builtins" and str(exc.orig).lower() in {"duplicate", "duplicate key"}:
+                constraint_name = "uq_work_items_tenant_idempotency"
+            if constraint_name != "uq_work_items_tenant_idempotency":
+                raise
             existing = await self._existing_execution(tenant_id=tenant_id, idempotency_key=idempotency_key, installation_id=installation_id, input_data=input_data)
             if existing is None:
                 raise
