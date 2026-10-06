@@ -119,3 +119,13 @@ def test_agent_identity_creation_serializes_on_tenant_scoped_instance_row():
     assert "AgentInstance.id == agent_instance_id" in block
     assert "AgentInstance.tenant_id == tenant_id" in block
     assert ".with_for_update()" in block
+
+
+def test_schedule_creation_serializes_on_tenant_scoped_workflow_row():
+    source = Path("app/services/workflow_trigger_service.py").read_text()
+    marker = "async def create_schedule("
+    block = source[source.index(marker):source.index("\n\nasync def claim_due_schedules", source.index(marker))]
+    assert "select(Workflow)" in block
+    assert "Workflow.id == workflow_id" in block
+    assert "Workflow.tenant_id == tenant_id" in block
+    assert ".with_for_update()" in block
