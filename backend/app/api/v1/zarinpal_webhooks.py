@@ -46,11 +46,31 @@ async def receive_zarinpal_callback(
     metadata = dict(deal.metadata_ or {})
     if metadata.get("payment_provider") != "zarinpal":
         raise HTTPException(status_code=409, detail="Sales deal is not bound to ZarinPal")
-    if metadata.get("payment_provider_authority") != authority:
+
+    stored_authority = metadata.get("payment_provider_authority")
+    attempt_state = metadata.get("payment_attempt_state")
+    if stored_authority and stored_authority != authority:
         raise HTTPException(status_code=409, detail="ZarinPal authority does not match the governed checkout")
 
     if provider_status != "OK":
+        if attempt_state == "pending" and not stored_authority:
+            metadata["payment_attempt_state"] = "cancelled"
+            deal.metadata_ = metadata
+            await db.commit()
         return {"success": False, "status": "cancelled", "deal_id": str(deal.id)}
+
+    # The callback can arrive after provider acceptance but before the checkout
+    # creator persists the authority. Verify the callback authority against the
+    # governed amount, then bind it locally; never create another checkout.
+    if not stored_authority:
+        if attempt_state != "pending":
+            raise HTTPException(status_code=409, detail="ZarinPal checkout authority is not bound to a pending attempt")
+        metadata["payment_provider_authority"] = authority
+        metadata["payment_attempt_state"] = "accepted"
+        metadata["payment_amount"] = float(deal.amount)
+        metadata["payment_currency"] = deal.currency.upper()
+        deal.metadata_ = metadata
+        await db.flush()
 
     verification = await zarinpal_service.verify_payment(
         authority=authority,
