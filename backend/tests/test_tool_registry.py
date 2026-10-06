@@ -110,7 +110,14 @@ async def test_approval_required_tool_is_fail_closed_until_approved():
     try:
         with pytest.raises(ValidationAppError):
             await registry.execute(name, {}, permissions={"run.execute"}, approval_granted=False)
-        result = await registry.execute(name, {}, permissions={"run.execute"}, approval_granted=True)
+        result = await registry.execute(
+            name,
+            {},
+            permissions={"run.execute"},
+            approval_granted=True,
+            db="db-context",
+            tenant_id="tenant-context",
+        )
         assert result == {"ok": True}
     finally:
         registry._tools.pop(name, None)
@@ -210,6 +217,8 @@ async def test_workforce_coordinate_handoff_requires_agent_identity():
             },
             permissions={"run.execute"},
             allowed_tools={"workforce_coordinate_handoff"},
+            db="db-context",
+            tenant_id="tenant-context",
         )
 
 
@@ -708,6 +717,7 @@ async def test_commercial_tool_requires_tenant_run_context_before_entitlement_ch
                 "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
             },
             permissions={"run.execute"},
+            approval_granted=True,
         )
 
 
@@ -721,6 +731,7 @@ async def test_commercial_tool_requires_both_db_and_tenant_context():
                 "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
             },
             permissions={"run.execute"},
+            approval_granted=True,
             db="db-context",
         )
     with pytest.raises(ValidationAppError, match="active tenant Run context"):
@@ -731,5 +742,6 @@ async def test_commercial_tool_requires_both_db_and_tenant_context():
                 "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
             },
             permissions={"run.execute"},
+            approval_granted=True,
             tenant_id="tenant-context",
         )
