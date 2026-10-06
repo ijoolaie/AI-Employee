@@ -696,3 +696,40 @@ async def test_workforce_execute_installed_skill_forwards_employee_identity(monk
         "actor_id": "actor-context",
         "request_id": "tool-call-context",
     }]
+
+
+@pytest.mark.asyncio
+async def test_commercial_tool_requires_tenant_run_context_before_entitlement_check():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "create_invoice",
+            {
+                "customer_name": "Context fence",
+                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+            },
+            permissions={"run.execute"},
+        )
+
+
+@pytest.mark.asyncio
+async def test_commercial_tool_requires_both_db_and_tenant_context():
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "create_invoice",
+            {
+                "customer_name": "Context fence",
+                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+            },
+            permissions={"run.execute"},
+            db="db-context",
+        )
+    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+        await registry.execute(
+            "create_invoice",
+            {
+                "customer_name": "Context fence",
+                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+            },
+            permissions={"run.execute"},
+            tenant_id="tenant-context",
+        )
