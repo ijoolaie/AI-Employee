@@ -50,14 +50,12 @@ async def upsert_customer(
             constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
             if constraint_name is None:
                 constraint_name = getattr(exc.orig, "constraint_name", None)
-            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL
-            # constraint metadata. Real driver exceptions still require the exact constraint name.
-            if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():
+            # Some driver wrappers expose the constraint only in the exception text.
+            # Accept it only when the exact expected unique constraint is identified.
+            if constraint_name is None and 'constraint "uq_customers_tenant_external_key"' in str(exc.orig):
                 constraint_name = "uq_customers_tenant_external_key"
             if constraint_name != "uq_customers_tenant_external_key":
                 raise
-            if candidate in db:
-                db.expunge(candidate)
             customer = (
                 await db.execute(
                     select(Customer).where(
