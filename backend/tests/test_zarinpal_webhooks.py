@@ -348,3 +348,32 @@ async def test_zarinpal_pending_callback_recovers_authority_after_checkout_crash
     assert deal.metadata_["payment_provider_authority"] == authority
     assert deal.metadata_["payment_attempt_state"] == "accepted"
     assert db.commits == 1
+
+
+@pytest.mark.asyncio
+async def test_zarinpal_pending_uncorrelated_cancel_fails_closed(configured):
+    import uuid
+
+    deal_id = uuid.uuid4()
+    deal = SimpleNamespace(
+        id=deal_id,
+        tenant_id=uuid.uuid4(),
+        amount=Decimal("100000"),
+        currency="IRR",
+        metadata_={
+            "payment_provider": "zarinpal",
+            "payment_provider_idempotency_key": "zp-pending",
+            "payment_attempt_state": "pending",
+        },
+    )
+    db = _Db(deal)
+
+    with pytest.raises(HTTPException) as exc:
+        await zarinpal_webhooks.receive_zarinpal_callback(
+            _request(deal_id=str(deal_id), Authority="attacker", Status="NOK"),
+            db,
+        )
+
+    assert exc.value.status_code == 409
+    assert deal.metadata_["payment_attempt_state"] == "pending"
+    assert db.commits == 0
