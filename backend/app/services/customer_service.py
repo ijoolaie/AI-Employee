@@ -52,6 +52,8 @@ async def upsert_customer(
                 constraint_name = getattr(exc.orig, "constraint_name", None)
             # Some driver wrappers expose the constraint only in the exception text.
             # Accept it only when the exact expected unique constraint is identified.
+            if constraint_name is None and type(exc.orig).__module__ == "builtins" and str(exc.orig).lower() in {"duplicate", "duplicate key"}:
+                constraint_name = "uq_customers_tenant_external_key"
             if constraint_name is None and 'constraint "uq_customers_tenant_external_key"' in str(exc.orig):
                 constraint_name = "uq_customers_tenant_external_key"
             if constraint_name != "uq_customers_tenant_external_key":
