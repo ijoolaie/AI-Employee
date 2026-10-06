@@ -720,8 +720,21 @@ async def test_workforce_execute_installed_skill_forwards_employee_identity(monk
         return None
 
     monkeypatch.setattr(agent_tool_governance, "_resolve_approval", approved)
-    monkeypatch.setattr(agent_tool_governance, "_consume_approval", lambda *args, **kwargs: None)
+    async def consume(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(agent_tool_governance, "_consume_approval", consume)
     monkeypatch.setattr(agent_tool_governance, "assert_authorized", authorized)
+    monkeypatch.setattr(
+        agent_tool_governance.tool_execution_fence,
+        "begin_tool_execution_fence",
+        lambda **kwargs: __import__("asyncio").sleep(0, result="fence"),
+    )
+    monkeypatch.setattr(
+        agent_tool_governance.tool_execution_fence,
+        "complete_tool_execution_fence",
+        lambda *args, **kwargs: __import__("asyncio").sleep(0),
+    )
 
     calls = []
 
