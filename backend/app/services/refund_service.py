@@ -253,11 +253,30 @@ async def reconcile_stripe_refund_event(db: AsyncSession, *, event: dict) -> Pay
     ).scalar_one_or_none()
     if row is None:
         return None
-    row.status = data.get("status") or row.status
+    incoming_status = data.get("status") or row.status
+    allowed_transitions = {
+        "pending": {"pending", "succeeded", "failed", "canceled"},
+        "succeeded": {"succeeded"},
+        "failed": {"failed"},
+        "canceled": {"canceled"},
+    }
+    if incoming_status not in allowed_transitions.get(row.status, {row.status}):
+        raise ConflictError(
+            f"Invalid refund state transition: {row.status} -> {incoming_status}"
+        )
+
+    incoming_currency = data.get("currency")
+    if incoming_currency and incoming_currency.lower() != row.currency.lower():
+        raise ConflictError("Stripe refund currency does not match the governed refund")
+
+    incoming_amount = data.get("amount")
+    if incoming_amount is not None:
+        incoming_amount = int(incoming_amount)
+        if row.amount_cents is not None and incoming_amount != row.amount_cents:
+            raise ConflictError("Stripe refund amount does not match the governed refund")
+        row.amount_cents = incoming_amount
+
+    row.status = incoming_status
     row.failure_reason = data.get("failure_reason")
-    if data.get("amount") is not None:
-        row.amount_cents = int(data["amount"])
-    if data.get("currency"):
-        row.currency = data["currency"].lower()
     await db.flush()
     return row
