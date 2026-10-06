@@ -179,7 +179,12 @@ async def record_event(db: AsyncSession, *, tenant_id: uuid.UUID | None, provide
         async with db.begin_nested():
             db.add(candidate)
             await db.flush()
-    except IntegrityError:
+    except IntegrityError as exc:
+        constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+        if constraint_name is None:
+            constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name != "uq_billing_event_provider_id":
+            raise
         existing = (await db.execute(select(BillingEvent).where(BillingEvent.provider == provider, BillingEvent.provider_event_id == provider_event_id))).scalar_one_or_none()
         if existing is None:
             raise
