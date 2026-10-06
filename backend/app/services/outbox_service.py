@@ -52,7 +52,11 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
             constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
             if constraint_name is None:
                 constraint_name = getattr(exc.orig, "constraint_name", None)
-            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL\n            # constraint metadata. Real driver exceptions still require the exact constraint name.\n            if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():\n                constraint_name = "uq_outbox_dedupe_key"\n            if constraint_name != "uq_outbox_dedupe_key":
+            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL
+            # constraint metadata. Real driver exceptions still require the exact constraint name.
+            if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():
+                constraint_name = "uq_outbox_dedupe_key"
+            if constraint_name != "uq_outbox_dedupe_key":
                 raise
             found = (await db.execute(
                 select(OutboxMessage).where(OutboxMessage.dedupe_key == dedupe_key)
