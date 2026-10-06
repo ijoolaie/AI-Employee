@@ -219,10 +219,8 @@ async def test_workforce_coordinate_handoff_requires_agent_identity(monkeypatch)
 
     monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
     tenant_id = uuid4()
-
-    async with agent_tool_governance.agent_tool_context(
-        tenant_id=tenant_id, agent_instance_id=uuid4(), run_id=uuid4()
-    ):
+    context_token = agent_tool_governance._AGENT_CONTEXT.set((tenant_id, None, uuid4(), None))
+    try:
         with pytest.raises(ValidationAppError, match="Agent identity"):
             await registry.execute(
                 "workforce_coordinate_handoff",
@@ -235,9 +233,12 @@ async def test_workforce_coordinate_handoff_requires_agent_identity(monkeypatch)
                 },
                 permissions={"run.execute"},
                 allowed_tools={"workforce_coordinate_handoff"},
-                db="db-context",
+                db=object(),
                 tenant_id=tenant_id,
             )
+    finally:
+        agent_tool_governance._AGENT_CONTEXT.reset(context_token)
+
 
 @pytest.mark.asyncio
 async def test_workforce_reprioritize_task_requires_tenant_context():
