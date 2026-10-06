@@ -131,6 +131,16 @@ def test_schedule_creation_serializes_on_tenant_scoped_workflow_row():
     assert ".with_for_update()" in block
 
 
+
+def test_tenant_user_role_update_serializes_on_tenant_scoped_user_row():
+    source = Path("app/api/v1/tenant_admin.py").read_text()
+    marker = '@router.post("/users/{user_id}/roles"'
+    block = source[source.index(marker):]
+    assert "select(User)" in block
+    assert "User.id == user_id" in block
+    assert "User.tenant_id == ctx.tenant_id" in block
+    assert ".with_for_update()" in block
+
 def test_payout_destination_binding_serializes_on_seller_tenant_row():
     source = Path("app/services/skill_marketplace_payout_destination.py").read_text()
     marker = "async def bind_payout_destination("
