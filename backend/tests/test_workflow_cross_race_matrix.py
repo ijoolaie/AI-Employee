@@ -148,3 +148,14 @@ def test_payout_destination_binding_serializes_on_seller_tenant_row():
     assert "select(Tenant)" in block
     assert "Tenant.id == seller_tenant_id" in block
     assert ".with_for_update()" in block
+
+
+def test_entitlement_delegation_recovers_from_unique_race():
+    source = Path("app/services/edition_service.py").read_text()
+    marker = "async def delegate_entitlement("
+    block = source[source.index(marker):source.index("\n\nasync def create_support_escalation", source.index(marker))]
+    assert "IntegrityError" in block
+    assert "async with db.begin_nested()" in block
+    assert 'uq_tenant_entitlement_feature' in block
+    assert "select(TenantEntitlement)" in block
+    assert "row.quota_limit = effective_quota" in block
