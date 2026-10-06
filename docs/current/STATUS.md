@@ -5,7 +5,7 @@
 **Latest certified release:** `v1.4.16` — exact-SHA certification PASS  
 **Certified release commit:** `434a0c4a4501af08a393faaf58092add764df2a2`  
 **Mainline engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA  
-**Status date:** 2026-10-05  
+**Status date:** 2026-10-06  
 **Latest published release:** `v1.4.16`  
 **Latest certified release:** `v1.4.16`  
 **Certification run:** `37188879277` — PASS (exact `v1.4.16` SHA)  
@@ -673,3 +673,8 @@ PR #890 and PR #891 extend the governed marketplace payout boundary with a named
 
 The immutable `v1.4.16` production certification remains unchanged. Mainline SHA `a36d538e465e9ff98f613ee56586736d192257c8` is post-certification engineering and is not production-certified.
 
+
+
+## 2026-10-06 status reconciliation
+
+W9 is already closed at its documented evidence boundary: final real-stack Run `36891616509` / Job `110468909696`, verification commit `5887c26c727fd2681cc1dd71fc17f0a475c9e80a`. The original W9→W10 roadmap ordering therefore remains valid historically, but W9 is not the next implementation task. Current main is PR #927 merge `600367bc20c3d9392e51d0af861d26cb326f8a4c`; PR #927 passed its exact-head validation before merge, while no post-merge workflow run is currently registered for the merge SHA. Therefore that main SHA is not yet post-merge verified. W17–W23 and W10 technical mechanics remain post-v1.4.16 engineering evidence, not release certification. External customer/payment/provider validation remains deferred.
