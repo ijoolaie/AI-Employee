@@ -37,8 +37,7 @@ def extract_text(file_obj) -> str:
             raise ValidationAppError("PDF indexing requires the optional pypdf dependency") from exc
         import io
         reader = PdfReader(io.BytesIO(raw))
-        return "
-".join(page.extract_text() or "" for page in reader.pages)
+        return "\n".join(page.extract_text() or "" for page in reader.pages)
     if suffix == ".docx" or content_type.endswith("wordprocessingml.document"):
         try:
             from docx import Document
@@ -46,8 +45,7 @@ def extract_text(file_obj) -> str:
             raise ValidationAppError("DOCX indexing requires the optional python-docx dependency") from exc
         import io
         doc = Document(io.BytesIO(raw))
-        return "
-".join(p.text for p in doc.paragraphs)
+        return "\n".join(p.text for p in doc.paragraphs)
     raise ValidationAppError(f"Unsupported knowledge file type: {file_obj.filename}")
 
 
