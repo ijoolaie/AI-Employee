@@ -110,7 +110,12 @@ async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UU
             async with db.begin_nested():
                 db.add(candidate)
                 await db.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "uq_knowledge_documents_tenant_file":
+                raise
             winner_result = await db.execute(
                 select(KnowledgeDocument).where(
                     KnowledgeDocument.tenant_id == tenant_id,
