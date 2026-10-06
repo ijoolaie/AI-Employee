@@ -167,7 +167,16 @@ async def create_schedule(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id
     now = datetime.now(ZoneInfo(timezone_name))
     try: next_local = next_cron_time(cron_expression, now)
     except Exception as exc: raise ValidationAppError(str(exc)) from exc
-    existing = await db.execute(select(WorkflowSchedule).where(WorkflowSchedule.tenant_id == tenant_id, WorkflowSchedule.workflow_id == workflow_id, WorkflowSchedule.cron_expression == cron_expression, WorkflowSchedule.timezone == timezone_name))
+    workflow_result = await db.execute(
+        select(Workflow)
+        .where(Workflow.id == workflow_id, Workflow.tenant_id == tenant_id)
+        .with_for_update()
+    )
+    workflow = workflow_result.scalar_one_or_none()
+    if workflow is None:
+        raise NotFoundError("Workflow not found")
+
+    existing = await db.execute(select(WorkflowSchedule).where(WorkflowSchedule.tenant_id == tenant_id, WorkflowSchedule.workflow_id == workflow.id, WorkflowSchedule.cron_expression == cron_expression, WorkflowSchedule.timezone == timezone_name))
     if existing.scalar_one_or_none(): raise ValidationAppError("Schedule already exists")
     schedule = WorkflowSchedule(tenant_id=tenant_id, workflow_id=workflow_id, cron_expression=cron_expression, timezone=timezone_name, next_run_at=next_local.astimezone(timezone.utc), created_by=created_by)
     db.add(schedule); await db.flush()
