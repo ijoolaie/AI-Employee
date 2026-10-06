@@ -48,7 +48,12 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
             async with db.begin_nested():
                 db.add(message)
                 await db.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "uq_outbox_dedupe_key":
+                raise
             found = (await db.execute(
                 select(OutboxMessage).where(OutboxMessage.dedupe_key == dedupe_key)
             )).scalar_one_or_none()
