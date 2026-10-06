@@ -98,8 +98,14 @@ async def test_tool_permission_is_enforced():
 
 
 @pytest.mark.asyncio
-async def test_approval_required_tool_is_fail_closed_until_approved():
+async def test_approval_required_tool_is_fail_closed_until_approved(monkeypatch):
     from app.ai.tool_registry import RegisteredTool
+    from app.services import license_service
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
     name = "_test_approval_tool"
     registry.register(RegisteredTool(
         name=name, description="test gated tool",
@@ -204,7 +210,14 @@ def test_workforce_assign_task_is_side_effecting_but_non_approval_gated():
 
 
 @pytest.mark.asyncio
-async def test_workforce_coordinate_handoff_requires_agent_identity():
+async def test_workforce_coordinate_handoff_requires_agent_identity(monkeypatch):
+    from app.services import license_service
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+
     with pytest.raises(ValidationAppError, match="Agent identity"):
         await registry.execute(
             "workforce_coordinate_handoff",
