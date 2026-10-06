@@ -152,6 +152,8 @@ async def _enqueue_whatsapp_message(
         constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
         if constraint_name is None:
             constraint_name = getattr(exc.orig, "constraint_name", None)
+        if constraint_name is None and 'constraint "uq_customer_messages_provider_id"' in str(exc.orig):
+            constraint_name = "uq_customer_messages_provider_id"
         if constraint_name != "uq_customer_messages_provider_id":
             raise
         if provider_message_id:
