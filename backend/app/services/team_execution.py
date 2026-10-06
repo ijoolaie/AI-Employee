@@ -102,7 +102,11 @@ class TeamExecutionService:
             constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
             if constraint_name is None:
                 constraint_name = getattr(exc.orig, "constraint_name", None)
-            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL\n            # constraint metadata. Real driver exceptions still require the exact constraint name.\n            if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():\n                constraint_name = "uq_work_items_tenant_idempotency"\n            if constraint_name != "uq_work_items_tenant_idempotency":
+            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL
+            # constraint metadata. Real driver exceptions still require the exact constraint name.
+            if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():
+                constraint_name = "uq_work_items_tenant_idempotency"
+            if constraint_name != "uq_work_items_tenant_idempotency":
                 raise
             existing = await self._existing_execution(tenant_id=tenant_id, idempotency_key=idempotency_key, installation_id=installation_id, input_data=input_data)
             if existing is None:
