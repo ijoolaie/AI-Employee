@@ -35,7 +35,8 @@ async def issue_license(
     )
     edition_service.assert_direct_child(issuer, tenant, expected_kind)
     await db.execute(select(Tenant).where(Tenant.id == tenant.id).with_for_update())
-    
+    existing = (
+        await db.execute(
             select(CommercialLicense).where(
                 CommercialLicense.tenant_id == tenant.id,
                 CommercialLicense.status == "active",
