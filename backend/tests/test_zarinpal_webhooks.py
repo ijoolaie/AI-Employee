@@ -49,6 +49,9 @@ class _Db:
     async def rollback(self):
         self.rollbacks += 1
 
+    async def flush(self):
+        return None
+
 
 @pytest.fixture
 def configured(monkeypatch):
