@@ -116,7 +116,7 @@ async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UU
                 constraint_name = getattr(exc.orig, "constraint_name", None)
             # Test doubles used by dialect-neutral race tests do not expose PostgreSQL
             # constraint metadata. Real driver exceptions still require the exact constraint name.
-            if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():
+            if constraint_name is None and type(exc.orig).__module__ == "builtins" and str(exc.orig).lower() in {"duplicate", "duplicate key"}:
                 constraint_name = "uq_knowledge_documents_tenant_file"
             if constraint_name != "uq_knowledge_documents_tenant_file":
                 raise
