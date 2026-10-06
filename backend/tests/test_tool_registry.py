@@ -672,6 +672,16 @@ async def test_workforce_execute_installed_skill_requires_approval():
     from app.services import agent_tool_governance
     from uuid import uuid4
 
+    class Db:
+        async def execute(self, statement):
+            class Result:
+                def scalars(self):
+                    class Scalars:
+                        def all(self):
+                            return []
+                    return Scalars()
+            return Result()
+
     tenant_id = uuid4()
     async with agent_tool_governance.agent_tool_context(
         tenant_id=tenant_id, agent_instance_id=uuid4(), run_id=uuid4()
@@ -686,7 +696,7 @@ async def test_workforce_execute_installed_skill_requires_approval():
                 permissions={"run.execute"},
                 allowed_tools={"workforce_execute_installed_skill"},
                 employee_id="00000000-0000-0000-0000-000000000002",
-                db="db",
+                db=Db(),
                 tenant_id=tenant_id,
                 approval_granted=False,
             )
@@ -695,6 +705,23 @@ async def test_workforce_execute_installed_skill_requires_approval():
 async def test_workforce_execute_installed_skill_forwards_employee_identity(monkeypatch):
     from app.services import agent_tool_governance
     from uuid import uuid4
+
+    class Db:
+        async def flush(self):
+            return None
+
+    async def approved(*args, **kwargs):
+        class Approval:
+            id = uuid4()
+            tool_call_id = "approved-tool-call"
+        return Approval()
+
+    async def authorized(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(agent_tool_governance, "_resolve_approval", approved)
+    monkeypatch.setattr(agent_tool_governance, "_consume_approval", lambda *args, **kwargs: None)
+    monkeypatch.setattr(agent_tool_governance, "assert_authorized", authorized)
 
     calls = []
 
@@ -716,7 +743,7 @@ async def test_workforce_execute_installed_skill_forwards_employee_identity(monk
             },
             permissions={"run.execute"},
             allowed_tools={"workforce_execute_installed_skill"},
-            db="db-context",
+            db=Db(),
             tenant_id=tenant_id,
             employee_id="employee-context",
             actor_id="actor-context",
