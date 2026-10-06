@@ -24,7 +24,7 @@ async def get_or_create(db: AsyncSession, tenant_id: uuid.UUID):
         if constraint_name is None:
             constraint_name = getattr(exc.orig, "constraint_name", None)
         # Test doubles used by dialect-neutral race tests do not expose PostgreSQL constraint metadata.
-        if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():
+        if constraint_name is None and type(exc.orig).__module__ == "builtins" and str(exc.orig).lower() in {"duplicate", "duplicate key"}:
             constraint_name = "onboarding_progress_tenant_id_key"
         if constraint_name != "onboarding_progress_tenant_id_key":
             raise
