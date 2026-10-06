@@ -77,7 +77,12 @@ async def _record_lifecycle_event(
             async with db.begin_nested():
                 db.add(candidate)
                 await db.flush()
-        except IntegrityError:
+        except IntegrityError as exc:
+            constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
+            if constraint_name is None:
+                constraint_name = getattr(exc.orig, "constraint_name", None)
+            if constraint_name != "uq_billing_event_provider_id":
+                raise
             event = (
                 await db.execute(
                     select(BillingEvent).where(
