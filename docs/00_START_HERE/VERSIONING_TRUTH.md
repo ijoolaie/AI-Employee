@@ -1,7 +1,7 @@
 # Versioning Truth
 
 **Status:** CANONICAL
-**Reconciled:** 2026-10-05
+**Reconciled:** 2026-10-07
 
 This document defines the independent version axes used by the AI Employee Platform.
 
@@ -12,6 +12,7 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 ### Current release truth
 
 - Latest published release: **`v1.4.16`**
+- Latest exact-SHA certified candidate: **`v1.4.17`** at `b403c0dcdea579e017738a6fdea138c2b1a2999c`
 - Latest certified release: **`v1.4.16`**, exact certified SHA `434a0c4a4501af08a393faaf58092add764df2a2`.
 - `v1.4.16` Git tag: **VERIFIED**, resolving to the certified release commit.
 - `v1.4.16` GitHub Release: **PUBLISHED**, not draft, not prerelease.
@@ -24,6 +25,22 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 `v1.4.16` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
 
 Current `main` contains post-v1.4.16 engineering work. The W13 candidate SHA has fresh exact-SHA certification evidence, but certification does not create a Git tag or release. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document. A new application-code release candidate must receive fresh exact-SHA certification.
+
+## 2026-10-07 v1.4.17 candidate truth
+
+- Latest published release: **v1.4.16**
+- Latest exact-SHA certified candidate: **v1.4.17**
+- Candidate SHA: **b403c0dcdea579e017738a6fdea138c2b1a2999c**
+- Certification Run: **37625345534**
+- Certification Job: **112805570856**
+- Result: **PASS**
+- Product Gate failures: **0**
+- Evidence JSON digest: **sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d**
+- Git tag/release: **not yet created/published**
+- Production deployment: **not verified / not claimed**
+- Customer acceptance/revenue: **not verified**
+
+v1.4.17 is an exact-SHA certified release candidate. Certification is bound only to the candidate SHA and does not itself create a published release or external deployment.
 
 ## 2. Architecture version
 
