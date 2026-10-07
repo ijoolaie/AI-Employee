@@ -148,6 +148,9 @@ async def _validate_steps(db: AsyncSession, *, tenant_id: uuid.UUID, steps: list
 
 
 async def create_workflow(db: AsyncSession, *, tenant_id: uuid.UUID, created_by: uuid.UUID, slug: str, name: str, steps: list[dict], trigger_type: str, max_runtime_seconds: int | None = None) -> Workflow:
+    # Keep the tenant quota lock held through workflow insertion; the quota
+    # service serializes concurrent create requests for this tenant.
+    await billing_service.enforce_workflow_quota(db, tenant_id=tenant_id)
     existing = await db.execute(select(Workflow).where(Workflow.tenant_id == tenant_id, Workflow.slug == slug))
     if existing.scalar_one_or_none():
         raise ValidationAppError(f"Workflow with slug '{slug}' already exists")
