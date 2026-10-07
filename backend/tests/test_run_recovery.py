@@ -44,6 +44,7 @@ def _run(*, started_seconds_ago: int):
         id=uuid4(),
         tenant_id=uuid4(),
         request_id=None,
+        work_item_id=None,
         status="running",
         started_at=datetime.now(timezone.utc) - timedelta(seconds=started_seconds_ago),
         completed_at=None,
@@ -97,6 +98,41 @@ async def test_stale_running_run_marks_inflight_provider_call_unknown(monkeypatc
     assert db.execute_calls == 2
     assert audits[0]["action"] == "run.execution_recovered"
     assert audits[0]["metadata"]["replay_blocked"] is True
+
+
+@pytest.mark.asyncio
+async def test_stale_running_run_projects_failure_to_bound_work_item(monkeypatch):
+    run = _run(started_seconds_ago=run_recovery.STALE_RUN_RECOVERY_SECONDS + 1)
+    run.work_item_id = uuid4()
+    call = SimpleNamespace(
+        status="in_flight",
+        prompt_tokens=0,
+        completion_tokens=0,
+        cost_usd=0,
+        raw_meta={"logical_run_id": str(run.id)},
+        error_message=None,
+    )
+    db = _Db(locked_run=run, provider_calls=[call])
+    audits = []
+    lifecycle = []
+
+    async def _audit(*_args, **kwargs):
+        audits.append(kwargs)
+
+    async def _lock_lineage(*_args, **kwargs):
+        return None
+
+    async def _sync(*_args, **kwargs):
+        lifecycle.append(kwargs)
+
+    monkeypatch.setattr(run_recovery.audit_service, "record", _audit)
+    monkeypatch.setattr(run_recovery, "_lock_work_item_lineage", _lock_lineage)
+    monkeypatch.setattr(run_recovery, "_sync_work_item_lifecycle", _sync)
+
+    assert await run_recovery.recover_stale_run_execution(db, run=run) is True
+    assert lifecycle[0]["run"] is run
+    assert lifecycle[0]["status"] == "failed"
+    assert lifecycle[0]["error"]
 
 
 @pytest.mark.asyncio
