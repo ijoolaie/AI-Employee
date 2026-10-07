@@ -15,6 +15,7 @@ from app.models.billing import BillingEvent, BillingPlan, Subscription
 from app.models.ai_provider_call import AIProviderCall
 from app.models.employee import Employee
 from app.models.run import Run
+from app.models.tenant import Tenant
 from app.models.workflow import Workflow
 from app.services import audit_service, license_service
 
@@ -226,7 +227,24 @@ async def monthly_usage(db: AsyncSession, *, tenant_id: uuid.UUID, now: datetime
     return {"calls": int(calls or 0), "tokens": int(tokens or 0), "runs": int(runs or 0), "employees": int(employees or 0), "workflows": int(workflows or 0)}
 
 
+async def _lock_tenant_for_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> Tenant:
+    """Serialize quota check + resource creation on the tenant row.
+
+    Callers must keep this transaction open through the resource insert. This
+    prevents concurrent requests from both observing the same remaining quota.
+    """
+    tenant = (
+        await db.execute(
+            select(Tenant).where(Tenant.id == tenant_id).with_for_update()
+        )
+    ).scalar_one_or_none()
+    if tenant is None:
+        raise NotFoundError("Tenant not found")
+    return tenant
+
+
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
+    await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
     if sub.status not in {"active", "trialing"}:
@@ -239,6 +257,7 @@ async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
 
 
 async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
+    await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["employees"] >= sub.plan.max_employees:
@@ -246,6 +265,7 @@ async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
 
 
 async def enforce_workflow_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
+    await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["workflows"] >= sub.plan.max_workflows:
