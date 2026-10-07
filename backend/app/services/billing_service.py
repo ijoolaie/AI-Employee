@@ -125,7 +125,7 @@ async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subs
             constraint_name = getattr(exc.orig, "constraint_name", None)
         if constraint_name != "uq_subscription_tenant":
             raise
-        result = await db.execute(select(Subscription).where(Subscription.tenant_id == tenant_id))
+        result = await db.execute(select(Subscription).where(Subscription.tenant_id == tenant_id).with_for_update())
         sub = result.scalar_one_or_none()
         if sub is None:
             raise
@@ -151,6 +151,10 @@ async def change_plan(db: AsyncSession, *, tenant_id: uuid.UUID, plan_code: str,
         raise NotFoundError("Billing plan not found")
     if sub.plan_id == plan.id and sub.status == "active":
         return sub
+    if sub.provider != "manual":
+        raise ConflictError(
+            "External-provider subscriptions must be changed through the provider portal/checkout"
+        )
     if sub.status == "canceled":
         raise ConflictError("Canceled subscription cannot be changed")
     sub.plan_id = plan.id
@@ -168,6 +172,10 @@ async def change_plan(db: AsyncSession, *, tenant_id: uuid.UUID, plan_code: str,
 
 async def cancel_subscription(db: AsyncSession, *, tenant_id: uuid.UUID, at_period_end: bool, actor_id: uuid.UUID | None = None) -> Subscription:
     sub = await ensure_subscription(db, tenant_id=tenant_id)
+    if sub.provider != "manual":
+        raise ConflictError(
+            "External-provider subscriptions must be canceled through the provider portal"
+        )
     if at_period_end:
         sub.cancel_at_period_end = True
         sub.canceled_at = None
@@ -187,8 +195,6 @@ async def record_event(db: AsyncSession, *, tenant_id: uuid.UUID | None, provide
 
     candidate = BillingEvent(tenant_id=tenant_id, provider=provider, provider_event_id=provider_event_id, event_type=event_type, payload=payload, status="processed")
     try:
-        # BillingEvent(provider, provider_event_id) is unique. Keep the race
-        # inside a SAVEPOINT so the losing webhook can re-read the winner.
         async with db.begin_nested():
             db.add(candidate)
             await db.flush()
