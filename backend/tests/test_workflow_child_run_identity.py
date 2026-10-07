@@ -78,3 +78,19 @@ def test_workflow_resolves_durable_child_before_replacement():
     assert "Run.workflow_parallel_branch_run_id == branch.id" in source
     assert "Run.workflow_parallel_branch_step_key == str(definition[\"key\"])" in source
     assert "WORKFLOW_CHILD_RETRY_UNSAFE: durable parallel branch Run ended with status" in source
+def test_workflow_child_execution_rechecks_current_entitlement():
+    source = WORKFLOW.read_text()
+    entitlement = "await billing_service.assert_run_execution_entitlement("
+    execute = "await run_service.execute_run(db, run_id=child.id)"
+
+    assert source.count(entitlement) >= 2
+    serial_start = source.index('await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)')
+    serial_check = source.index(entitlement, serial_start)
+    serial_execute = source.index(execute, serial_check)
+    assert serial_check < serial_execute
+
+    parallel_start = source.index('await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)')
+    parallel_check = source.index(entitlement, parallel_start)
+    parallel_execute = source.index(execute, parallel_check)
+    assert parallel_check < parallel_execute
+\n
