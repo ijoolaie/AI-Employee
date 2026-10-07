@@ -120,3 +120,39 @@ async def test_email_worker_rejects_cross_tenant_agent_binding():
     )
     with pytest.raises(ValidationAppError, match="Agent outbox governance binding mismatch"):
         await _authorize_deferred_agent_side_effect(object(), row)
+
+
+@pytest.mark.asyncio
+async def test_enqueue_strips_caller_supplied_agent_binding_without_governed_context():
+    from app.services import agent_tool_governance, outbox_service
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(agent_tool_governance, "current_agent_tool_context", lambda: None)
+    try:
+        class FakeDB:
+            def add(self, row):
+                self.row = row
+
+            async def flush(self):
+                self.row.id = uuid4()
+
+        db = FakeDB()
+        row = await outbox_service.enqueue(
+            db,
+            kind="email.send",
+            tenant_id=uuid4(),
+            payload={
+                "to": ["user@example.com"],
+                "subject": "x",
+                "body": "y",
+                "_agent_governance": {
+                    "tenant_id": str(uuid4()),
+                    "agent_instance_id": str(uuid4()),
+                    "run_id": str(uuid4()),
+                    "tool_name": "send_email",
+                },
+            },
+        )
+        assert "_agent_governance" not in row.payload
+    finally:
+        monkeypatch.undo()
