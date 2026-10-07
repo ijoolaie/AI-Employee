@@ -62,6 +62,6 @@ export default function BillingPage() {
         </Button>
       </CardContent>
     </Card>)}</div>}
-    {!subscription.error&&subscription.data?.status==="active"&&!subscription.data.cancel_at_period_end&&subscription.data.plan.code!=="starter"&&<Button variant="outline" disabled={cancel.isPending} onClick={()=>{if(window.confirm(m.confirmCancel))cancel.mutate(true)}}>{m.cancelAtPeriodEnd}</Button>}
+    {!subscription.error&&subscription.data?.provider==="manual"&&subscription.data?.status==="active"&&!subscription.data.cancel_at_period_end&&subscription.data.plan.code!=="starter"&&<Button variant="outline" disabled={cancel.isPending} onClick={()=>{if(window.confirm(m.confirmCancel))cancel.mutate(true)}}>{m.cancelAtPeriodEnd}</Button>}
   </div></>;
 }
