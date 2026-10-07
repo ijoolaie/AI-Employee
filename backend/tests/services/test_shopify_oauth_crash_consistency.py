@@ -86,7 +86,7 @@ async def test_shopify_oauth_commits_token_before_webhook_side_effect(monkeypatc
     )
 
     assert response.status_code == 302
-    assert db.events.index("commit") < webhook_events[0][1].index("webhooks") if "webhooks" in webhook_events[0][1] else True
+    assert webhook_events[0][1] == ["add", "flush", "commit"]
     assert webhook_events == [("webhooks", ["add", "flush", "commit"])]
 
 
