@@ -50,7 +50,7 @@ This file is the current-status authority. Historical sections below preserve pr
 
 ## Current-main post-certification engineering revalidation
 
-Current-main and post-release engineering evidence must never be treated as v1.4.16 certification. The mutable `main` branch is post-release engineering evidence only; resolve its exact SHA directly from Git metadata when reporting a point-in-time state.
+Current-main and post-release engineering evidence must never be treated as v1.4.17 certification. The mutable `main` branch is post-release engineering evidence only; resolve its exact SHA directly from Git metadata when reporting a point-in-time state.
 
 ## Previous certified release boundary
 
