@@ -70,7 +70,7 @@ Current phase truth:
 
 ## 4. Stage 9 optimization workstream
 
-Stage 9 is the optimization layer above the governed execution substrate. Its current planned slices were implemented and certified as part of the v1.4.2 release and remain included in the current v1.4.11 release:
+Stage 9 is the optimization layer above the governed execution substrate. Its current planned slices were implemented and certified as part of the v1.4.2 release and remain included in the current v1.4.17 release:
 
 1. Capability-aware workload routing.
 2. Task/risk/cost-aware model selection.
