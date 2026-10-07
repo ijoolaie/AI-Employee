@@ -92,7 +92,7 @@ async def test_canceled_subscription_does_not_auto_renew():
 @pytest.mark.asyncio
 async def test_external_subscription_cannot_be_changed_by_local_plan_mutation(monkeypatch):
     db = AsyncMock()
-    sub = SimpleNamespace(id="sub-1", plan_id="plan-old", status="active", provider="stripe", cancel_at_period_end=False, canceled_at=None)
+    sub = SimpleNamespace(id="sub-1", plan_id="plan-old", status="active", provider="stripe", cancel_at_period_end=False, canceled_at=None, current_period_end=datetime(2026, 9, 30, 23, 59, 59, 999999, tzinfo=timezone.utc), trial_ends_at=None)
     plan = SimpleNamespace(id="plan-new", code="business", is_active=True)
     monkeypatch.setattr(billing_service, "ensure_subscription", AsyncMock(return_value=sub))
     db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: plan)
