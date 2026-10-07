@@ -3,7 +3,7 @@
 **Reconciled:** 2026-10-07
 **Current release:** `v1.4.16`
 **Certified SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
-**Current main head:** `b403c0dcdea579e017738a6fdea138c2b1a2999c` — post-release engineering; **NOT release-certified**
+**Current main head:** mutable — resolve directly from Git metadata; the latest application-code merge is PR #955 at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; subsequent commits are documentation reconciliation only and are **NOT release-certified**.
 **Production Certification:** v1.4.16 exact-SHA Run `37188879277` / Job `111396657270` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
 **Current status:** v1.4.16 RELEASE-CERTIFIED at its immutable SHA / current main is post-release engineering / EXTERNAL GATES OPEN
