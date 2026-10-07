@@ -506,7 +506,14 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                             db,
                             tenant_id=parent.tenant_id,
                         )
-                        await run_service.execute_run(db, run_id=child.id)
+                        child_id = child.id
+                        await run_service.execute_run(db, run_id=child_id)
+                        child_result = await db.execute(
+                            select(Run)
+                            .where(Run.id == child_id)
+                            .execution_options(populate_existing=True)
+                        )
+                        child = child_result.scalar_one()
                         if child.status != "success":
                             raise RuntimeError(f"Employee Run ended with status {child.status}")
                         # Do not let a timeout/cancellation that becomes
@@ -748,9 +755,16 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                     await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
                     await billing_service.assert_run_execution_entitlement(
                         db,
-                        tenant_id=child.tenant_id,
+                        tenant_id=run.tenant_id,
                     )
-                    await run_service.execute_run(db, run_id=child.id)
+                    child_id = child.id
+                    await run_service.execute_run(db, run_id=child_id)
+                    child_result = await db.execute(
+                        select(Run)
+                        .where(Run.id == child_id)
+                        .execution_options(populate_existing=True)
+                    )
+                    child = child_result.scalar_one()
                     if child.status != "success":
                         raise RuntimeError(f"Employee Run ended with status {child.status}")
                     # The child execution may itself consume the remaining
