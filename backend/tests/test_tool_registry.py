@@ -211,28 +211,37 @@ def test_workforce_assign_task_is_side_effecting_but_non_approval_gated():
 
 @pytest.mark.asyncio
 async def test_workforce_coordinate_handoff_requires_agent_identity(monkeypatch):
-    from app.services import license_service
+    from app.services import agent_tool_governance, license_service
+    from uuid import uuid4
 
     async def allow_entitlement(*args, **kwargs):
         return None
 
     monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+    async def allow_authorized(*args, **kwargs):
+        return None
 
-    with pytest.raises(ValidationAppError, match="Agent identity"):
-        await registry.execute(
-            "workforce_coordinate_handoff",
-            {
-                "source_work_item_id": "00000000-0000-0000-0000-000000000001",
-                "delegate_agent_instance_id": "00000000-0000-0000-0000-000000000002",
-                "scopes": {"actions": ["run.execute"]},
-                "expires_at": "2030-01-01T00:00:00+00:00",
-                "idempotency_key": "tool-test-agent-identity-1",
-            },
-            permissions={"run.execute"},
-            allowed_tools={"workforce_coordinate_handoff"},
-            db="db-context",
-            tenant_id="tenant-context",
-        )
+    monkeypatch.setattr(agent_tool_governance, "assert_authorized", allow_authorized)
+    tenant_id = uuid4()
+    context_token = agent_tool_governance._AGENT_CONTEXT.set((tenant_id, None, uuid4(), None))
+    try:
+        with pytest.raises(ValidationAppError, match="Agent identity"):
+            await registry.execute(
+                "workforce_coordinate_handoff",
+                {
+                    "source_work_item_id": "00000000-0000-0000-0000-000000000001",
+                    "delegate_agent_instance_id": "00000000-0000-0000-0000-000000000002",
+                    "scopes": {"actions": ["run.execute"]},
+                    "expires_at": "2030-01-01T00:00:00+00:00",
+                    "idempotency_key": "tool-test-agent-identity-1",
+                },
+                permissions={"run.execute"},
+                allowed_tools={"workforce_coordinate_handoff"},
+                db=object(),
+                tenant_id=tenant_id,
+            )
+    finally:
+        agent_tool_governance._AGENT_CONTEXT.reset(context_token)
 
 
 @pytest.mark.asyncio
@@ -665,25 +674,72 @@ def test_workforce_execute_installed_skill_is_external_and_approval_gated():
 
 @pytest.mark.asyncio
 async def test_workforce_execute_installed_skill_requires_approval():
-    with pytest.raises(ValidationAppError, match="Human approval required"):
-        await registry.execute(
-            "workforce_execute_installed_skill",
-            {
-                "skill_package_id": "00000000-0000-0000-0000-000000000001",
-                "input": {},
-            },
-            permissions={"run.execute"},
-            allowed_tools={"workforce_execute_installed_skill"},
-            employee_id="00000000-0000-0000-0000-000000000002",
-            db="db",
-            tenant_id="tenant",
-            approval_granted=False,
-        )
+    from app.services import agent_tool_governance
+    from uuid import uuid4
 
+    class Db:
+        async def execute(self, statement):
+            class Result:
+                def scalars(self):
+                    class Scalars:
+                        def all(self):
+                            return []
+                    return Scalars()
+            return Result()
+
+    tenant_id = uuid4()
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id, agent_instance_id=uuid4(), run_id=uuid4()
+    ):
+        with pytest.raises(ValidationAppError, match="Human approval required"):
+            await registry.execute(
+                "workforce_execute_installed_skill",
+                {
+                    "skill_package_id": "00000000-0000-0000-0000-000000000001",
+                    "input": {},
+                },
+                permissions={"run.execute"},
+                allowed_tools={"workforce_execute_installed_skill"},
+                employee_id="00000000-0000-0000-0000-000000000002",
+                db=Db(),
+                tenant_id=tenant_id,
+                approval_granted=False,
+            )
 
 @pytest.mark.asyncio
 async def test_workforce_execute_installed_skill_forwards_employee_identity(monkeypatch):
-    from types import SimpleNamespace
+    from app.services import agent_tool_governance
+    from uuid import uuid4
+
+    class Db:
+        async def flush(self):
+            return None
+
+    async def approved(*args, **kwargs):
+        class Approval:
+            id = uuid4()
+            tool_call_id = "approved-tool-call"
+        return Approval()
+
+    async def authorized(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(agent_tool_governance, "_resolve_approval", approved)
+    async def consume(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(agent_tool_governance, "_consume_approval", consume)
+    monkeypatch.setattr(agent_tool_governance, "assert_authorized", authorized)
+    monkeypatch.setattr(
+        agent_tool_governance.tool_execution_fence,
+        "begin_tool_execution_fence",
+        lambda **kwargs: __import__("asyncio").sleep(0, result="fence"),
+    )
+    monkeypatch.setattr(
+        agent_tool_governance.tool_execution_fence,
+        "complete_tool_execution_fence",
+        lambda *args, **kwargs: __import__("asyncio").sleep(0),
+    )
 
     calls = []
 
@@ -691,27 +747,30 @@ async def test_workforce_execute_installed_skill_forwards_employee_identity(monk
         calls.append(kwargs)
         return {"ok": True}
 
-    original = registry.get("workforce_execute_installed_skill")
     monkeypatch.setattr("app.ai.tool_registry.skill_execution_service.execute_installed_skill", fake_execute)
 
-    result = await registry.execute(
-        "workforce_execute_installed_skill",
-        {
-            "skill_package_id": "00000000-0000-0000-0000-000000000001",
-            "input": {},
-        },
-        permissions={"run.execute"},
-        allowed_tools={"workforce_execute_installed_skill"},
-        db="db-context",
-        tenant_id="tenant-context",
-        employee_id="employee-context",
-        actor_id="actor-context",
-        tool_call_id="tool-call-context",
-        approval_granted=True,
-    )
+    tenant_id = uuid4()
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id, agent_instance_id=uuid4(), run_id=uuid4()
+    ):
+        result = await registry.execute(
+            "workforce_execute_installed_skill",
+            {
+                "skill_package_id": "00000000-0000-0000-0000-000000000001",
+                "input": {},
+            },
+            permissions={"run.execute"},
+            allowed_tools={"workforce_execute_installed_skill"},
+            db=Db(),
+            tenant_id=tenant_id,
+            employee_id="employee-context",
+            actor_id="actor-context",
+            tool_call_id="tool-call-context",
+            approval_granted=True,
+        )
     assert result == {"ok": True}
     assert calls == [{
-        "tenant_id": "tenant-context",
+        "tenant_id": tenant_id,
         "employee_id": "employee-context",
         "skill_package_id": __import__("uuid").UUID("00000000-0000-0000-0000-000000000001"),
         "input_data": {},
@@ -719,10 +778,9 @@ async def test_workforce_execute_installed_skill_forwards_employee_identity(monk
         "request_id": "tool-call-context",
     }]
 
-
 @pytest.mark.asyncio
 async def test_commercial_tool_requires_tenant_run_context_before_entitlement_check():
-    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+    with pytest.raises(ValidationAppError, match="active Agent Run context"):
         await registry.execute(
             "create_invoice",
             {
@@ -736,25 +794,32 @@ async def test_commercial_tool_requires_tenant_run_context_before_entitlement_ch
 
 @pytest.mark.asyncio
 async def test_commercial_tool_requires_both_db_and_tenant_context():
-    with pytest.raises(ValidationAppError, match="active tenant Run context"):
-        await registry.execute(
-            "create_invoice",
-            {
-                "customer_name": "Context fence",
-                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
-            },
-            permissions={"run.execute"},
-            approval_granted=True,
-            db="db-context",
-        )
-    with pytest.raises(ValidationAppError, match="active tenant Run context"):
-        await registry.execute(
-            "create_invoice",
-            {
-                "customer_name": "Context fence",
-                "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
-            },
-            permissions={"run.execute"},
-            approval_granted=True,
-            tenant_id="tenant-context",
-        )
+    from uuid import uuid4
+    from app.services import agent_tool_governance
+
+    tenant_id, instance_id, run_id = uuid4(), uuid4(), uuid4()
+    async with agent_tool_governance.agent_tool_context(
+        tenant_id=tenant_id, agent_instance_id=instance_id, run_id=run_id
+    ):
+        with pytest.raises(ValidationAppError, match="active tenant Run context"):
+            await registry.execute(
+                "create_invoice",
+                {
+                    "customer_name": "Context fence",
+                    "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+                },
+                permissions={"run.execute"},
+                approval_granted=True,
+                tenant_id=tenant_id,
+            )
+        with pytest.raises(ValidationAppError, match="active tenant Run context"):
+            await registry.execute(
+                "create_invoice",
+                {
+                    "customer_name": "Context fence",
+                    "line_items": [{"description": "test", "quantity": 1, "unit_price": 100}],
+                },
+                permissions={"run.execute"},
+                approval_granted=True,
+                db="db-context",
+            )

@@ -29,7 +29,7 @@ async def test_marketplace_payout_execution_rejects_without_approval():
 
 @pytest.mark.asyncio
 async def test_marketplace_payout_execution_rejects_approved_flag_without_transaction_context():
-    with pytest.raises(ValidationAppError, match="active tenant Run context"):
+    with pytest.raises(ValidationAppError, match="active Agent Run context"):
         await registry.execute(
             "marketplace_execute_payout",
             {"proposal_id": str(uuid.uuid4())},

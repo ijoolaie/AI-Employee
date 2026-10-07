@@ -13,7 +13,7 @@ def test_send_email_is_gated_and_side_effecting():
 
 @pytest.mark.asyncio
 async def test_send_email_requires_transactional_tenant_context_before_approval():
-    with pytest.raises(ValidationAppError, match="requires an active tenant Run context"):
+    with pytest.raises(ValidationAppError, match="requires an active Agent Run context"):
         await registry.execute(
             "send_email",
             {"to": ["user@example.com"], "subject": "x", "body": "y"},
@@ -31,7 +31,7 @@ async def test_send_email_cannot_bypass_side_effect_boundary_with_missing_tenant
     monkeypatch.setattr(settings, "smtp_from_email", "noreply@example.com")
     monkeypatch.setattr(settings, "smtp_allowed_recipient_domains", ["example.com"])
 
-    with pytest.raises(ValidationAppError, match="requires an active tenant Run context"):
+    with pytest.raises(ValidationAppError, match="requires an active Agent Run context"):
         await registry.execute(
             "send_email",
             {"to": ["user@example.com"], "subject": "x", "body": "y"},

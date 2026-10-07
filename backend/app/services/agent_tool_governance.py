@@ -103,11 +103,20 @@ def install() -> None:
         if tool.side_effects and db is None and tenant_id is None and not kwargs.get("approval_granted", False):
             return await original_execute(name, arguments, **kwargs)
 
-        # Approved side effects without a tenant transaction are forbidden.
-        if tool.side_effects and (db is None or tenant_id is None):
-            raise ValidationAppError(
-                f"{name} requires an active tenant Run context for side effects"
-            )
+        # Every side effect must originate from the canonical Agent Run
+        # governance context. Supplying a DB + tenant directly is not enough:
+        # otherwise a direct registry caller could bypass Agent identity,
+        # durable approval resolution, policy authorization, and the external
+        # side-effect fence by calling the original registry executor.
+        if tool.side_effects:
+            if context is None:
+                raise ValidationAppError(
+                    f"{name} requires an active Agent Run context for side effects"
+                )
+            if db is None or tenant_id is None:
+                raise ValidationAppError(
+                    f"{name} requires an active tenant Run context for side effects"
+                )
         if context is None:
             return await original_execute(name, arguments, **kwargs)
         if db is None:
