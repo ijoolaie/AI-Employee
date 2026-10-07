@@ -405,7 +405,6 @@ async def run():
                 tenant_id=tenant_id,
                 agent_instance_id=manager_id,
                 run_id=manager_run_id,
-                delegation_id=delegation_id,
             ):
                 adapter = AgentExecutionAdapter(db)
                 assigned = await adapter.execute_tool(
@@ -443,7 +442,6 @@ async def run():
                 tenant_id=tenant_id,
                 agent_instance_id=manager_id,
                 run_id=manager_run_id,
-                delegation_id=delegation_id,
             ):
                 report = await AgentExecutionAdapter(db).execute_tool(
                 agent=manager,
