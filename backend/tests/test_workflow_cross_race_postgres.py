@@ -17,6 +17,7 @@ from app.core.database import AsyncSessionLocal
 from app.models.agent_definition import AgentDefinition
 from app.models.agent_instance import AgentInstance
 from app.models.employee import Employee, EmployeeVersion
+from app.models.license import CommercialLicense
 from app.models.run import Run
 from app.models.outbox import OutboxMessage
 from app.models.tenant import Tenant
@@ -38,6 +39,20 @@ async def workflow_cross_race_setup(monkeypatch):
             status="active",
         )
         db.add(tenant)
+        await db.flush()
+
+        # The worker execution boundary now requires a current commercial
+        # license. This fixture is testing workflow race semantics, not license
+        # issuance, so install the minimal durable active license directly.
+        db.add(CommercialLicense(
+            license_key=f"LIC-{uuid.uuid4().hex}",
+            issuer_tenant_id=tenant.id,
+            tenant_id=tenant.id,
+            edition="customer",
+            status="active",
+            feature_codes=["employee.run"],
+            license_metadata={"test_fixture": True},
+        ))
         await db.flush()
 
         agent_definition = AgentDefinition(
