@@ -151,6 +151,10 @@ async def change_plan(db: AsyncSession, *, tenant_id: uuid.UUID, plan_code: str,
         raise NotFoundError("Billing plan not found")
     if sub.plan_id == plan.id and sub.status == "active":
         return sub
+    if sub.provider != "manual":
+        raise ConflictError(
+            "External-provider subscriptions must be changed through the provider portal/checkout"
+        )
     if sub.status == "canceled":
         raise ConflictError("Canceled subscription cannot be changed")
     sub.plan_id = plan.id
