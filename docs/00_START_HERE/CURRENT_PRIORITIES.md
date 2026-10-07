@@ -6,9 +6,9 @@
 **Current main head:** mutable — resolve directly from Git metadata; the latest application-code merge is PR #955 at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; subsequent commits are documentation reconciliation only and are **NOT release-certified**.
 **Production Certification:** v1.4.16 exact-SHA Run `37188879277` / Job `111396657270` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
-**Current status:** v1.4.16 RELEASE-CERTIFIED at its immutable SHA / current main is post-release engineering / EXTERNAL GATES OPEN
+**Current status:** v1.4.17 exact-SHA candidate CERTIFIED / publication and external gates OPEN
 
-## Immediate post-release priorities
+## Immediate release-candidate priorities
 
 1. **DONE:** W16 exact-SHA Production Certification and immutable v1.4.16 release.
 2. **DONE:** W10 Internal Company Dogfood on the certified SHA.
@@ -50,7 +50,16 @@ Canonical historical audit: `docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.m
 6. **DONE:** PR #836 was rebased onto current `main`, freshly validated at head `ea055755498bb65042e693cf011eec3eb3801b83`, and merged as `933fb68c8857f0b4fe939bb03351a726f3ec890b`.
 7. **BLOCKED:** GitHub `main` branch protection and required checks remain **NOT ENABLED / NOT VERIFIED** because the available integration cannot modify repository rules and the direct protection endpoint returned HTTP 403.
 
-### P1 — External production evidence
+### P0 — Release-candidate closure
+
+1. **DONE:** Exact-SHA certification of candidate **v1.4.17**.
+2. **DONE:** Exact target/checkout identity and Product Gates = 0.
+3. **DONE:** Immutable certification evidence generated and uploaded.
+4. **OPEN:** Create/verify Git tag **v1.4.17** pointing exactly to **b403c0dcdea579e017738a6fdea138c2b1a2999c**.
+5. **OPEN:** Publish GitHub Release **v1.4.17** only after explicit approval.
+6. **OPEN:** External production deployment and customer acceptance remain separate gates.
+
+## P1 — External production evidence
 
 External gates remain intentionally **OPEN — PENDING EXTERNAL EXECUTION** because the project is still being executed locally. They become actionable when an approved external target exists.
 
@@ -118,7 +127,7 @@ Stage 8/9 and future workforce work should therefore proceed only when the relev
 
 The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
 
-The current engineering head is PR #955 merge `b403c0dcdea579e017738a6fdea138c2b1a2999c`. PR #955 exact-head validation passed before merge; post-merge workflow/status evidence is currently unavailable, so no post-merge green claim is made. Current-main validation remains engineering evidence only and does not inherit v1.4.16 certification.
+The PR #955 application-code boundary is `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Its exact-SHA Production Certification has now PASSED as candidate `v1.4.17` (Run `37625345534`, Job `112805570856`). This supersedes the earlier unavailable post-merge status for the release-candidate decision. The candidate remains distinct from published `v1.4.16` until an explicit tag/release promotion is performed.
 
 
 
