@@ -704,6 +704,7 @@ async def test_workforce_execute_installed_skill_requires_approval():
                 db=Db(),
                 tenant_id=tenant_id,
                 approval_granted=False,
+                tool_call_id="approval-required-test",
             )
 
 @pytest.mark.asyncio
