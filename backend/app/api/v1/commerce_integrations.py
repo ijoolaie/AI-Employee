@@ -89,59 +89,64 @@ async def shopify_callback(shop: str, code: str, state: str, db: DbSession):
             status_code=502,
             detail="Shopify OAuth response did not contain an access token",
         )
+    # The Shopify authorization code is exchanged for an external access token before
+    # we can persist the credential. Once Shopify accepts that exchange, the token is
+    # durable provider state. Commit the credential/integration before making any
+    # follow-up webhook calls so a worker crash cannot roll back the only durable copy
+    # of the accepted token and strand the installation.
     try:
-        async with db.begin_nested():
-            credential = await store_credential(
-                db,
+        credential = await store_credential(
+            db,
+            tenant_id=tenant_id,
+            provider="shopify",
+            name=f"shopify:{shop}:access_token",
+            secret=access_token,
+        )
+        ref = credential_ref(credential)
+        cfg = {
+            "shop_domain": shop,
+            "scope": token.get("scope"),
+            "api_version": get_settings().shopify_api_version,
+            "currency": "EUR",
+            "oauth_installed": True,
+            "credential_refs": {"access_token": ref},
+        }
+        existing = (
+            await db.execute(
+                select(CommerceIntegration).where(
+                    CommerceIntegration.tenant_id == tenant_id,
+                    CommerceIntegration.provider == "shopify",
+                    CommerceIntegration.config["shop_domain"].as_string() == shop,
+                )
+            )
+        ).scalar_one_or_none()
+        if existing:
+            old_ref = (existing.config or {}).get("credential_refs", {}).get("access_token")
+            existing.config = {**(existing.config or {}), **cfg}
+            existing.status = "connected"
+            existing.is_active = True
+            row = existing
+            if old_ref and old_ref != ref and str(old_ref).startswith("cred:"):
+                try:
+                    await revoke_credential(
+                        db,
+                        tenant_id=tenant_id,
+                        credential_id=UUID(str(old_ref)[5:]),
+                    )
+                except (ValueError, HTTPException):
+                    pass
+        else:
+            row = CommerceIntegration(
                 tenant_id=tenant_id,
                 provider="shopify",
-                name=f"shopify:{shop}:access_token",
-                secret=access_token,
+                name=f"Shopify — {shop}",
+                status="connected",
+                config=cfg,
+                is_active=True,
             )
-            ref = credential_ref(credential)
-            cfg = {
-                "shop_domain": shop,
-                "scope": token.get("scope"),
-                "api_version": get_settings().shopify_api_version,
-                "currency": "EUR",
-                "oauth_installed": True,
-                "credential_refs": {"access_token": ref},
-            }
-            existing = (
-                await db.execute(
-                    select(CommerceIntegration).where(
-                        CommerceIntegration.tenant_id == tenant_id,
-                        CommerceIntegration.provider == "shopify",
-                        CommerceIntegration.config["shop_domain"].as_string() == shop,
-                    )
-                )
-            ).scalar_one_or_none()
-            if existing:
-                old_ref = (existing.config or {}).get("credential_refs", {}).get("access_token")
-                existing.config = {**(existing.config or {}), **cfg}
-                existing.status = "connected"
-                existing.is_active = True
-                row = existing
-                if old_ref and old_ref != ref and str(old_ref).startswith("cred:"):
-                    try:
-                        await revoke_credential(
-                            db,
-                            tenant_id=tenant_id,
-                            credential_id=UUID(str(old_ref)[5:]),
-                        )
-                    except (ValueError, HTTPException):
-                        pass
-            else:
-                row = CommerceIntegration(
-                    tenant_id=tenant_id,
-                    provider="shopify",
-                    name=f"Shopify — {shop}",
-                    status="connected",
-                    config=cfg,
-                    is_active=True,
-                )
-                db.add(row)
-            await db.flush()
+            db.add(row)
+        await db.flush()
+        await db.commit()
     except IntegrityError as exc:
         constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
         if constraint_name is None:
