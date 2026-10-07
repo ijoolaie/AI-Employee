@@ -93,4 +93,4 @@ def test_workflow_child_execution_rechecks_current_entitlement():
     parallel_check = source.index(entitlement, parallel_start)
     parallel_execute = source.index(execute, parallel_check)
     assert parallel_check < parallel_execute
-\n
+
