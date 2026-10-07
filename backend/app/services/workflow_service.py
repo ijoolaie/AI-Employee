@@ -587,6 +587,18 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                     branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
                 await db.commit()
                 raise
+            parent_result = await db.execute(
+                select(WorkflowRun)
+                .where(WorkflowRun.id == parent_id)
+                .execution_options(populate_existing=True)
+            )
+            parent = parent_result.scalar_one()
+            branch_result = await db.execute(
+                select(WorkflowParallelBranchRun)
+                .where(WorkflowParallelBranchRun.id == branch_id)
+                .execution_options(populate_existing=True)
+            )
+            branch = branch_result.scalar_one()
             branch.status = "failed"
             branch.error = {"code": "PARALLEL_BRANCH_FAILED", "message": str(exc)[:1000]}
             branch.completed_at = datetime.now(timezone.utc)
