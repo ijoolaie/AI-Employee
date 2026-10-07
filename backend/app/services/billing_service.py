@@ -25,7 +25,6 @@ PLAN_SEEDS = (
     {"code": "professional", "name": "Professional", "monthly_price_usd": Decimal("149.00"), "monthly_runs": 10_000, "monthly_tokens": 10_000_000, "max_employees": 100, "max_workflows": 100, "features": {"priority": "high", "analytics": True, "advanced_workflows": True}},
 )
 
-
 async def ensure_plans(db: AsyncSession) -> None:
     for seed in PLAN_SEEDS:
         existing = (await db.execute(select(BillingPlan).where(BillingPlan.code == seed["code"]))).scalar_one_or_none()
@@ -46,69 +45,40 @@ async def ensure_plans(db: AsyncSession) -> None:
                 raise
     await db.flush()
 
-
 def _period_start(now: datetime) -> datetime:
     return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
 
 def _period_end(start: datetime) -> datetime:
     last = calendar.monthrange(start.year, start.month)[1]
     return start.replace(day=last, hour=23, minute=59, second=59, microsecond=999999)
 
-
-async def process_subscription_lifecycle(
-    db: AsyncSession,
-    *,
-    subscription: Subscription,
-    now: datetime | None = None,
-) -> Subscription:
-    """Apply only provider-authoritative lifecycle transitions.
-
-    A local/manual subscription may roll into the next calendar period because
-    the platform itself owns its billing state. External-provider subscriptions
-    must be advanced by an idempotent provider webhook/event; this function will
-    never grant a paid renewal merely because a timestamp elapsed.
-    """
+async def process_subscription_lifecycle(db: AsyncSession, *, subscription: Subscription, now: datetime | None = None) -> Subscription:
+    """Apply only provider-authoritative lifecycle transitions."""
     now = now or datetime.now(timezone.utc)
     changed = False
-
-    if (
-        subscription.status == "trialing"
-        and subscription.trial_ends_at is not None
-        and subscription.trial_ends_at <= now
-    ):
+    if subscription.status == "trialing" and subscription.trial_ends_at is not None and subscription.trial_ends_at <= now:
         subscription.status = "past_due"
         changed = True
-
     if subscription.cancel_at_period_end and subscription.current_period_end <= now:
         subscription.status = "canceled"
         subscription.cancel_at_period_end = False
         subscription.canceled_at = now
         changed = True
-    elif (
-        subscription.provider == "manual"
-        and subscription.status == "active"
-        and subscription.current_period_end <= now
-    ):
+    elif subscription.provider == "manual" and subscription.status == "active" and subscription.current_period_end <= now:
         start = _period_start(now)
         subscription.current_period_start = start
         subscription.current_period_end = _period_end(start)
         subscription.canceled_at = None
         changed = True
-
     if changed:
         await db.flush()
     return subscription
 
-
 async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subscription:
-    result = await db.execute(
-        select(Subscription).where(Subscription.tenant_id == tenant_id).with_for_update()
-    )
+    result = await db.execute(select(Subscription).where(Subscription.tenant_id == tenant_id).with_for_update())
     sub = result.scalar_one_or_none()
     if sub:
         return await process_subscription_lifecycle(db, subscription=sub)
-
     await ensure_plans(db)
     plan = (await db.execute(select(BillingPlan).where(BillingPlan.code == "starter"))).scalar_one()
     now = datetime.now(timezone.utc)
@@ -131,18 +101,15 @@ async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subs
             raise
         return await process_subscription_lifecycle(db, subscription=sub)
 
-
 async def get_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subscription:
     sub = await ensure_subscription(db, tenant_id=tenant_id)
     await db.refresh(sub, ["plan"])
     return sub
 
-
 async def list_plans(db: AsyncSession) -> list[BillingPlan]:
     await ensure_plans(db)
     result = await db.execute(select(BillingPlan).where(BillingPlan.is_active.is_(True)).order_by(BillingPlan.monthly_price_usd))
     return list(result.scalars().all())
-
 
 async def change_plan(db: AsyncSession, *, tenant_id: uuid.UUID, plan_code: str, actor_id: uuid.UUID | None) -> Subscription:
     sub = await ensure_subscription(db, tenant_id=tenant_id)
@@ -152,9 +119,7 @@ async def change_plan(db: AsyncSession, *, tenant_id: uuid.UUID, plan_code: str,
     if sub.plan_id == plan.id and sub.status == "active":
         return sub
     if sub.provider != "manual":
-        raise ConflictError(
-            "External-provider subscriptions must be changed through the provider portal/checkout"
-        )
+        raise ConflictError("External-provider subscriptions must be changed through the provider portal/checkout")
     if sub.status == "canceled":
         raise ConflictError("Canceled subscription cannot be changed")
     sub.plan_id = plan.id
@@ -169,13 +134,10 @@ async def change_plan(db: AsyncSession, *, tenant_id: uuid.UUID, plan_code: str,
     await audit_service.record(db, action="billing.subscription.plan_changed", actor_type="user" if actor_id else "system", actor_id=actor_id, tenant_id=tenant_id, resource_type="subscription", resource_id=str(sub.id), metadata={"plan_code": plan.code, "status": sub.status})
     return sub
 
-
 async def cancel_subscription(db: AsyncSession, *, tenant_id: uuid.UUID, at_period_end: bool, actor_id: uuid.UUID | None = None) -> Subscription:
     sub = await ensure_subscription(db, tenant_id=tenant_id)
     if sub.provider != "manual":
-        raise ConflictError(
-            "External-provider subscriptions must be canceled through the provider portal"
-        )
+        raise ConflictError("External-provider subscriptions must be canceled through the provider portal")
     if at_period_end:
         sub.cancel_at_period_end = True
         sub.canceled_at = None
@@ -187,12 +149,10 @@ async def cancel_subscription(db: AsyncSession, *, tenant_id: uuid.UUID, at_peri
     await audit_service.record(db, action="billing.subscription.cancellation_updated", actor_type="user" if actor_id else "system", actor_id=actor_id, tenant_id=tenant_id, resource_type="subscription", resource_id=str(sub.id), metadata={"at_period_end": at_period_end, "status": sub.status, "cancel_at_period_end": sub.cancel_at_period_end})
     return sub
 
-
 async def record_event(db: AsyncSession, *, tenant_id: uuid.UUID | None, provider: str, provider_event_id: str, event_type: str, payload: dict, plan_code: str | None = None, status: str | None = None) -> BillingEvent:
     existing = (await db.execute(select(BillingEvent).where(BillingEvent.provider == provider, BillingEvent.provider_event_id == provider_event_id))).scalar_one_or_none()
     if existing:
         return existing
-
     candidate = BillingEvent(tenant_id=tenant_id, provider=provider, provider_event_id=provider_event_id, event_type=event_type, payload=payload, status="processed")
     try:
         async with db.begin_nested():
@@ -208,7 +168,6 @@ async def record_event(db: AsyncSession, *, tenant_id: uuid.UUID | None, provide
         if existing is None:
             raise
         return existing
-
     event = candidate
     if tenant_id:
         sub = await ensure_subscription(db, tenant_id=tenant_id)
@@ -223,7 +182,6 @@ async def record_event(db: AsyncSession, *, tenant_id: uuid.UUID | None, provide
         await db.flush()
     return event
 
-
 async def monthly_usage(db: AsyncSession, *, tenant_id: uuid.UUID, now: datetime | None = None) -> dict[str, int]:
     now = now or datetime.now(timezone.utc)
     start = _period_start(now)
@@ -234,28 +192,22 @@ async def monthly_usage(db: AsyncSession, *, tenant_id: uuid.UUID, now: datetime
     workflows = (await db.execute(select(func.count(Workflow.id)).where(Workflow.tenant_id == tenant_id, Workflow.is_active.is_(True)))).scalar_one()
     return {"calls": int(calls or 0), "tokens": int(tokens or 0), "runs": int(runs or 0), "employees": int(employees or 0), "workflows": int(workflows or 0)}
 
-
 async def _lock_tenant_for_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> Tenant:
-    """Serialize quota check + resource creation on the tenant row.
-
-    Callers must keep this transaction open through the resource insert. This
-    prevents concurrent requests from both observing the same remaining quota.
-    """
-    tenant = (
-        await db.execute(
-            select(Tenant).where(Tenant.id == tenant_id).with_for_update()
-        )
-    ).scalar_one_or_none()
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id).with_for_update())).scalar_one_or_none()
     if tenant is None:
         raise NotFoundError("Tenant not found")
     return tenant
-
 
 def _assert_subscription_active(sub: Subscription) -> None:
     """Fail closed for tenant resource creation outside billable/trial states."""
     if sub.status not in {"active", "trialing"}:
         raise ConflictError("Subscription is not active")
 
+async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
+    """Fail closed at the worker execution boundary without re-counting quota."""
+    await license_service.assert_execution_license(db, tenant_id=tenant_id)
+    sub = await get_subscription(db, tenant_id=tenant_id)
+    _assert_subscription_active(sub)
 
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     await _lock_tenant_for_quota(db, tenant_id=tenant_id)
@@ -268,7 +220,6 @@ async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     if usage["tokens"] >= sub.plan.monthly_tokens:
         raise ConflictError(f"Monthly token quota exceeded for {sub.plan.code} plan")
 
-
 async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
@@ -277,7 +228,6 @@ async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
     if usage["employees"] >= sub.plan.max_employees:
         raise ConflictError(f"Employee quota exceeded for {sub.plan.code} plan")
 
-
 async def enforce_workflow_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
@@ -285,7 +235,6 @@ async def enforce_workflow_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["workflows"] >= sub.plan.max_workflows:
         raise ConflictError(f"Workflow quota exceeded for {sub.plan.code} plan")
-
 
 async def platform_mrr(db: AsyncSession) -> dict[str, object]:
     result = await db.execute(select(Subscription, BillingPlan).join(BillingPlan, BillingPlan.id == Subscription.plan_id).where(Subscription.status == "active"))
