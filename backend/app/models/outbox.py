@@ -2,7 +2,7 @@
 from __future__ import annotations
 import uuid
 from datetime import datetime
-from sqlalchemy import DateTime, Integer, String, Text, func, Index, UniqueConstraint
+from sqlalchemy import DateTime, Integer, String, Text, func, Index
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from app.core.database import Base
@@ -11,10 +11,6 @@ class OutboxMessage(Base):
     __tablename__ = "outbox_messages"
 
     def __init__(self, **kwargs):
-        # SQLAlchemy's mapped_column(default=...) values are applied at INSERT
-        # time, not when constructing the Python object. Keep the in-memory
-        # object aligned with the durable defaults expected by the outbox
-        # contract and tests.
         kwargs.setdefault("status", "pending")
         kwargs.setdefault("attempts", 0)
         super().__init__(**kwargs)
@@ -33,5 +29,6 @@ class OutboxMessage(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 Index("ix_outbox_pending_available", OutboxMessage.status, OutboxMessage.available_at)
-Index("uq_outbox_dedupe_key", OutboxMessage.dedupe_key, unique=True, postgresql_where=OutboxMessage.dedupe_key.is_not(None))
+Index("uq_outbox_tenant_dedupe_key", OutboxMessage.tenant_id, OutboxMessage.dedupe_key, unique=True, postgresql_where=(OutboxMessage.tenant_id.is_not(None) & OutboxMessage.dedupe_key.is_not(None)))
+Index("uq_outbox_global_dedupe_key", OutboxMessage.dedupe_key, unique=True, postgresql_where=(OutboxMessage.tenant_id.is_(None) & OutboxMessage.dedupe_key.is_not(None)))
 Index("ix_outbox_dead_at", OutboxMessage.dead_at)
