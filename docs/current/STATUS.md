@@ -11,13 +11,13 @@
 **Certification run:** `37625345534` — PASS (exact `v1.4.17` SHA)  
 **Production deployment:** OPEN — PENDING EXTERNAL EXECUTION
 
-The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.16` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification documentation changes and is not itself certified.
+The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.17` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification documentation changes and is not itself certified.
 
 ## Executive status
 
 Phase 11 Unified Execution acceptance is **COMPLETE**. Phase 12 Test Center P12.1-P12.6 is **IMPLEMENTED / OPERATIONAL HARDENING**. Phase 13 Agent Teams & Marketplace engineering is **COMPLETE**. Phase 14 engineering is **COMPLETE WHERE TRACKED**.
 
-The exact-SHA Production Certification suite passed for `v1.4.16`. Certification run `37188879277` / job `111396657270` checked out SHA `434a0c4a4501af08a393faaf58092add764df2a2`, recorded the required certification evidence, and completed successfully. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
+The exact-SHA Production Certification suite passed for `v1.4.17`. Certification run `37625345534` / job `112805570856` checked out SHA `b403c0dcdea579e017738a6fdea138c2b1a2999c`, recorded the required certification evidence, and completed successfully. This is repository/GitHub-hosted production-like certification evidence; it does not claim external production deployment.
 
 ## v1.4.17 certified and published release
 
@@ -43,9 +43,9 @@ The release is immutable. Post-release mainline commits, including documentation
 
 | Item | Status | Evidence |
 |---|---|---|
-| `v1.4.16` tag | VERIFIED | Exact certified release tag resolves to `434a0c4...` |
-| `v1.4.16` Production Certification | PASSED | Run `37188879277` / Job `111396657270` |
-| Certified release SHA | VERIFIED | `434a0c4a4501af08a393faaf58092add764df2a2` |
+| `v1.4.17` tag | VERIFIED | Exact certified release tag resolves to `b403c0dc...` |
+| `v1.4.17` Production Certification | PASSED | Run `37625345534` / Job `112805570856` |
+| Certified release SHA | VERIFIED | `b403c0dcdea579e017738a6fdea138c2b1a2999c` |
 | Production deployment claimed | FALSE | Certification evidence records `production_deployment_claimed=false` |
 | External production deployment | OPEN — PENDING EXTERNAL EXECUTION | No external target is currently in use |
 | Customer acceptance | OPEN — PENDING EXTERNAL EXECUTION | No external acceptance evidence |
