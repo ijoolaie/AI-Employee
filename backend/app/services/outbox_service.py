@@ -8,10 +8,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.outbox import OutboxMessage
 
 
+def _dedupe_lookup(dedupe_key: str, tenant_id: uuid.UUID | None):
+    clause = (
+        OutboxMessage.tenant_id.is_(None)
+        if tenant_id is None
+        else OutboxMessage.tenant_id == tenant_id
+    )
+    return select(OutboxMessage).where(
+        OutboxMessage.dedupe_key == dedupe_key,
+        clause,
+    )
+
+
 async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid.UUID | None = None,
                   dedupe_key: str | None = None, available_at: datetime | None = None) -> OutboxMessage:
     if dedupe_key:
-        existing = await db.execute(select(OutboxMessage).where(OutboxMessage.dedupe_key == dedupe_key))
+        existing = await db.execute(_dedupe_lookup(dedupe_key, tenant_id))
         found = existing.scalar_one_or_none()
         if found is not None:
             return found
@@ -22,7 +34,6 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
     persisted_payload.pop("_agent_governance", None)
     try:
         from app.services.agent_tool_governance import current_agent_tool_context
-
         context = current_agent_tool_context()
     except (ImportError, RuntimeError):
         context = None
@@ -55,15 +66,11 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
             constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
             if constraint_name is None:
                 constraint_name = getattr(exc.orig, "constraint_name", None)
-            # Test doubles used by dialect-neutral race tests do not expose PostgreSQL
-            # constraint metadata. Real driver exceptions still require the exact constraint name.
             if constraint_name is None and type(exc.orig).__module__ == "builtins" and str(exc.orig).lower() in {"duplicate", "duplicate key"}:
-                constraint_name = "uq_outbox_dedupe_key"
-            if constraint_name != "uq_outbox_dedupe_key":
+                constraint_name = "uq_outbox_global_dedupe_key" if tenant_id is None else "uq_outbox_tenant_dedupe_key"
+            if constraint_name not in {"uq_outbox_tenant_dedupe_key", "uq_outbox_global_dedupe_key"}:
                 raise
-            found = (await db.execute(
-                select(OutboxMessage).where(OutboxMessage.dedupe_key == dedupe_key)
-            )).scalar_one_or_none()
+            found = (await db.execute(_dedupe_lookup(dedupe_key, tenant_id))).scalar_one_or_none()
             if found is None:
                 raise
             return found
@@ -76,11 +83,6 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
 
 async def claim(db: AsyncSession, *, limit: int = 50) -> list[OutboxMessage]:
     now = datetime.now(timezone.utc)
-    # Email rows are safe to recover at the dispatcher boundary because the
-    # email worker acquires the row lock and durably transitions the row to
-    # "uncertain" before SMTP. A stale "processing" row therefore either gets
-    # picked up by the already-queued worker or becomes recoverable if the
-    # dispatcher crashed before publishing the task.
     claimable = (
         (OutboxMessage.status == "pending") & (OutboxMessage.available_at <= now)
     ) | (
@@ -89,10 +91,7 @@ async def claim(db: AsyncSession, *, limit: int = 50) -> list[OutboxMessage]:
         & (OutboxMessage.kind != "email.send")
     )
     result = await db.execute(
-        select(OutboxMessage)
-        .where(claimable)
-        .with_for_update(skip_locked=True)
-        .limit(limit)
+        select(OutboxMessage).where(claimable).with_for_update(skip_locked=True).limit(limit)
     )
     rows = list(result.scalars().all())
     for row in rows:
