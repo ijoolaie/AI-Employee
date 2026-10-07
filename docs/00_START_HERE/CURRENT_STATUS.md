@@ -1,54 +1,47 @@
 # Current Status
 
 **Last reconciled:** 2026-10-07
-**Latest published release:** `v1.4.16`; **latest exact-SHA certified candidate:** `v1.4.17`
-**Published certified SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`; **certified candidate SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
-**Stable Git tag:** `v1.4.16` — VERIFIED
-**GitHub Release:** `v1.4.16` — PUBLISHED
-**Latest exact-SHA Production Certification:** v1.4.17 candidate — Run `37625345534` — PASS
+**Latest published release:** `v1.4.17`
+**Latest exact-SHA certified release:** `v1.4.17`
+**Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
+**Stable Git tag:** `v1.4.17` — VERIFIED
+**GitHub Release:** `v1.4.17` — PUBLISHED
+**Production Certification:** Run `37625345534` — PASS
 **Certification job:** `112805570856` — PASS
 **Current engineering head:** `main` — mutable; resolve directly from Git metadata
-**Current status:** v1.4.17 exact-SHA candidate CERTIFIED; publication and external-production gates remain OPEN
+**Current status:** v1.4.17 is the latest published exact-SHA certified release; external production and customer/commercial gates remain OPEN
 
 ## Release boundary
 
-Certification applies only to the exact certified SHA `434a0c4a4501af08a393faaf58092add764df2a2`. Later commits, including documentation-only changes, do not inherit v1.4.16 certification.
+Certification applies only to the exact certified SHA `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Documentation commits after the release do not inherit v1.4.17 certification.
 
 ## Executive truth
 
-`v1.4.16` is the latest published, exact-SHA Production-Certified release. Product Gate failures = 0 and `production_deployment_claimed=false`.
+`v1.4.17` is the latest published exact-SHA Production-Certified release. Product Gate failures = 0 and `production_deployment_claimed=false`.
 
-W16 Skills Marketplace engineering is post-v1.4.16 mainline work. The immutable v1.4.16 release does not include these later W16 changes. Commercial paid-skill execution remains fail-closed behind verified purchase entitlement.
+- Evidence artifact: `production-certification-evidence-v1.4.17-b403c0dcdea579e017738a6fdea138c2b1a2999c`
+- Evidence JSON SHA-256: `sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d`
+- Git tag `v1.4.17`: VERIFIED and resolves to the certified SHA.
+- GitHub Release `v1.4.17`: PUBLISHED.
+- External production deployment: NOT VERIFIED / NOT CLAIMED.
+- Customer acceptance / realized external revenue: NOT VERIFIED.
 
-W10 Internal Company Dogfood has independently passed on the same SHA:
-- Run `37189332690`
-- Job `111398049109`
-- W10 real-stack certification: **PASS**
-- Governed commercial commitment certification: **PASS**
-- Synthetic Stripe reconciliation: **PASS**
-- Synthetic ZarinPal idempotency: **PASS**
-- Governed SMTP delivery: **PASS**
-- Production deployment: **NOT CLAIMED / NOT VERIFIED**
+## 2026-10-07 v1.4.17 publication reconciliation
 
-The W10 workflow did not produce a separate artifact in the currently observed GitHub run, so no W10 artifact digest is claimed.
+The previously certified candidate was promoted without changing the certified application-code SHA.
 
-## 2026-10-07 v1.4.17 release-candidate reconciliation
-
-- Candidate release identity: **v1.4.17**
-- Exact candidate/certified SHA: **b403c0dcdea579e017738a6fdea138c2b1a2999c**
+- Release: **v1.4.17**
+- Exact certified SHA: **b403c0dcdea579e017738a6fdea138c2b1a2999c**
 - Production Certification Run: **37625345534**
 - Certification Job: **112805570856**
 - Certification result: **PASS**
 - Product Gate failures: **0**
-- Exact target/checkout SHA identity: **PASS**
-- Evidence artifact: **production-certification-evidence-v1.4.17-b403c0dcdea579e017738a6fdea138c2b1a2999c**
-- Evidence JSON SHA-256: **sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d**
-- Git tag v1.4.17: **NOT CREATED**
-- GitHub Release v1.4.17: **NOT PUBLISHED**
-- External production deployment: **NOT VERIFIED / not claimed**
+- Git tag: **VERIFIED**
+- GitHub Release: **PUBLISHED**
+- External production deployment: **NOT VERIFIED / NOT CLAIMED**
 - Customer acceptance / realized external revenue: **NOT VERIFIED**
 
-The exact-SHA candidate is certified and ready for the explicit publication decision. Certification does not create a Git tag, GitHub Release, production deployment, live-provider evidence, or customer acceptance.
+The immutable release boundary remains `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Subsequent documentation commits on `main` are not part of the certified release snapshot.
 
 ## Documentation authority
 
@@ -57,7 +50,7 @@ This file is the current-status authority. Historical sections below preserve pr
 
 ## Current-main post-certification engineering revalidation
 
-Current-main and post-release engineering evidence must never be treated as v1.4.16 certification. The mutable `main` branch is post-release engineering evidence only; resolve its exact SHA directly from Git metadata when reporting a point-in-time state.
+Current-main and post-release engineering evidence must never be treated as v1.4.17 certification. The mutable `main` branch is post-release engineering evidence only; resolve its exact SHA directly from Git metadata when reporting a point-in-time state.
 
 ## Previous certified release boundary
 

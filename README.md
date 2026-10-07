@@ -1,8 +1,8 @@
 # AI Employee Platform
 
-**Latest published/certified release:** `v1.4.16` — exact certified SHA `434a0c4a4501af08a393faaf58092add764df2a2`
+**Latest published/certified release:** `v1.4.17` — exact certified SHA `b403c0dcdea579e017738a6fdea138c2b1a2999c`
 
-**Exact-SHA Production Certification:** Run `37188879277` — PASS; Job `111396657270` — PASS
+**Exact-SHA Production Certification:** Run `37625345534` — PASS; Job `112805570856` — PASS
 
 **Current `main`:** post-release engineering head; **NOT release-certified**. Resolve the mutable branch head directly from Git metadata.
 
@@ -13,25 +13,25 @@ This repository is the vendor source of truth for the AI Employee Platform. The 
 
 ## Versioning truth
 
-- **Release:** immutable product snapshot. Latest published: `v1.4.16`.
+- **Release:** immutable product snapshot. Latest published: `v1.4.17`.
 - **Architecture:** current baseline: `V1.5`.
 - **Engineering program:** external production execution and governed Agent workforce engineering.
 
 See `docs/00_START_HERE/VERSIONING_TRUTH.md`.
 
-## v1.4.16 release truth
+## v1.4.17 release truth
 
-- Tag: `v1.4.16`
-- SHA: `434a0c4a4501af08a393faaf58092add764df2a2`
-- Certification run: `37188879277` — PASS
-- Certification job: `111396657270` — PASS
-- Evidence artifact: `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`
-- Evidence artifact SHA-256: `7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`
+- Tag: `v1.4.17`
+- SHA: `b403c0dcdea579e017738a6fdea138c2b1a2999c`
+- Certification run: `37625345534` — PASS
+- Certification job: `112805570856` — PASS
+- Evidence artifact: `production-certification-evidence-v1.4.17-b403c0dcdea579e017738a6fdea138c2b1a2999c`
+- Evidence artifact SHA-256: `c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d`
+- GitHub Release: **PUBLISHED**
 - Production deployment: **NOT CLAIMED / NOT VERIFIED**
-- W10 Internal Company Dogfood on the same SHA: **PASS** — Run `37189332690` / Job `111398049109`
+- Customer acceptance / realized external revenue: **NOT VERIFIED**
 
-Historical release records remain immutable; see `docs/releases/RELEASE_TRUTH_LEDGER.md`.
-
+The release is immutable. Post-release documentation commits on `main` do not inherit v1.4.17 certification.
 
 ## W11 Humanized Employee Identity & Visual Presentation
 

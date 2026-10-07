@@ -1,37 +1,36 @@
 # AI Employee Platform — Productization & Delivery Roadmap
 
-## Roadmap truth — 2026-09-23
+## Roadmap truth — 2026-10-07
 
 Three axes remain independent:
 
-- **Release:** `v1.4.11` at exact certified SHA `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`, certified by Production Certification Run `35848311037`.
+- **Release:** `v1.4.17` at exact certified SHA `b403c0dcdea579e017738a6fdea138c2b1a2999c`, published after exact-SHA Production Certification Run `37625345534`.
 - **Architecture:** `V1.5 Agentic Operating Model`.
-- **Engineering:** Stage 7 external production execution, Stage 8 governed Agent workforce foundation, and Stage 9 optimization/control loops.
+- **Engineering:** external production execution, governed Agent workforce hardening and operational/customer acceptance.
 
-`v1.4.11` is the latest published exact-SHA certified release. Current `main` contains post-certification source and documentation changes after the certified release SHA; those changes are not automatically certified as a new release.
+`v1.4.17` is the latest published exact-SHA certified release. The release identity is immutable; later `main` documentation/engineering commits are not automatically certified.
 
 ## Current position
 
 Phase 11 Unified Execution is complete. Phase 12 Test Center is operationally hardened. Phase 13 Agent Teams & Marketplace is engineering complete. Phase 14.1–14.16 tracked engineering is complete/reconciled.
 
-The project is now in a dedicated **Release Candidate Closure → External Production & Customer Acceptance** sequence. The audited product-completeness gate is closed for the current scope and remains under regression watch; the default next work is external evidence, deployment, security and operational validation.
+The project is now in **Post-release Reconciliation → External Production & Customer Acceptance**. The audited product-completeness gate is closed for the current scope and remains under regression watch.
 
-## 2026-10-07 release-candidate closure
+## 2026-10-07 v1.4.17 publication closure
 
-The latest published release remains **v1.4.16**. The PR #955 application-code boundary `b403c0dcdea579e017738a6fdea138c2b1a2999c` has now passed exact-SHA Production Certification as candidate **v1.4.17**.
+The PR #955 application-code boundary `b403c0dcdea579e017738a6fdea138c2b1a2999c` passed exact-SHA Production Certification and has now been published as `v1.4.17`.
 
 - Certification Run: **37625345534**
 - Certification Job: **112805570856**
 - Result: **PASS**
 - Product Gate failures: **0**
-- Exact target/checkout identity: **PASS**
-- Evidence artifact: **production-certification-evidence-v1.4.17-b403c0dcdea579e017738a6fdea138c2b1a2999c**
-- Evidence JSON digest: **sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d**
-- Git tag/release `v1.4.17`: **pending**
-- External production deployment: **pending / not claimed**
-- Customer acceptance/revenue: **pending / not verified**
+- Evidence digest: **sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d**
+- Git tag `v1.4.17`: **VERIFIED**
+- GitHub Release `v1.4.17`: **PUBLISHED**
+- External production deployment: **NOT VERIFIED / NOT CLAIMED**
+- Customer acceptance/revenue: **NOT VERIFIED**
 
-The roadmap must no longer treat the #955 boundary as uncertified. The next internal action is explicit release/tag promotion; external deployment and acceptance remain independent gates.
+No application-code change is required merely to reconcile this publication. The next work is external evidence, not another feature expansion.
 
 ## W0–W23 final evidence boundary — 2026-10-07
 
