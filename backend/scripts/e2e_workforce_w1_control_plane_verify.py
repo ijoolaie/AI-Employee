@@ -37,7 +37,7 @@ from app.models.run import Run
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
-from app.services import edition_service, license_service
+from app.services import edition_service, license_service, agent_tool_governance
 from app.services.agent_execution_adapter import AgentExecutionAdapter
 from app.services.agent_governance import governed_agent_execution, record_evaluation, review_access
 from app.services.agent_template_service import create_template, publish_template
@@ -401,15 +401,21 @@ async def run():
             employee_version_id=manager_version_id,
             delegation_id=delegation_id,
         ):
-            adapter = AgentExecutionAdapter(db)
-            assigned = await adapter.execute_tool(
+            async with agent_tool_governance.agent_tool_context(
+                tenant_id=tenant_id,
+                agent_instance_id=manager_id,
+                run_id=manager_run_id,
+                delegation_id=delegation_id,
+            ):
+                adapter = AgentExecutionAdapter(db)
+                assigned = await adapter.execute_tool(
                 agent=manager,
                 tool_name="workforce_assign_task",
                 workforce_operation="assign_task",
-                arguments={"work_item_id": str(work_item_id), "agent_instance_id": str(specialist_id)},
-            )
-            assert assigned["status"] == WorkItemStatus.ASSIGNED.value
-            await db.commit()
+                    arguments={"work_item_id": str(work_item_id), "agent_instance_id": str(specialist_id)},
+                )
+                assert assigned["status"] == WorkItemStatus.ASSIGNED.value
+                await db.commit()
 
     status, payload = req("POST", f"/work-items/{work_item_id}/dispatch", token=token)
     assert status == 200, payload
@@ -433,14 +439,20 @@ async def run():
             employee_version_id=manager_version_id,
             delegation_id=delegation_id,
         ):
-            report = await AgentExecutionAdapter(db).execute_tool(
+            async with agent_tool_governance.agent_tool_context(
+                tenant_id=tenant_id,
+                agent_instance_id=manager_id,
+                run_id=manager_run_id,
+                delegation_id=delegation_id,
+            ):
+                report = await AgentExecutionAdapter(db).execute_tool(
                 agent=manager,
                 tool_name="workforce_prepare_ceo_report",
                 workforce_operation="prepare_ceo_report",
-                arguments={"window_days": 1},
-            )
-            assert report["work_items"]["status_counts"].get("succeeded", 0) >= 1
-            await db.commit()
+                    arguments={"window_days": 1},
+                )
+                assert report["work_items"]["status_counts"].get("succeeded", 0) >= 1
+                await db.commit()
 
     print("W1 CEO DELEGATION PASS")
     print("W1 MANAGER ASSIGN_TASK PASS")
