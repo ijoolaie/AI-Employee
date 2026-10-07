@@ -30,7 +30,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.core.exceptions import ConflictError
-from app.services import billing_service, run_service
+from app.services import audit_service, billing_service, run_service
 from app.services.run_execution_fence import execute_run_locked
 
 
@@ -53,6 +53,7 @@ async def test_run_execution_fence_fails_closed_when_entitlement_is_revoked(monk
         "assert_run_execution_entitlement",
         AsyncMock(side_effect=ConflictError("Subscription is not active")),
     )
+    monkeypatch.setattr(audit_service, "record", AsyncMock())
     execute = AsyncMock()
     monkeypatch.setattr(run_service, "execute_run", execute)
 
