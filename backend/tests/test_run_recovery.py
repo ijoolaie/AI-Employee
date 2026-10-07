@@ -44,6 +44,7 @@ def _run(*, started_seconds_ago: int):
         id=uuid4(),
         tenant_id=uuid4(),
         request_id=None,
+        work_item_id=None,
         status="running",
         started_at=datetime.now(timezone.utc) - timedelta(seconds=started_seconds_ago),
         completed_at=None,
