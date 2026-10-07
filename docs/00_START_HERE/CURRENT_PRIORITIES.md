@@ -12,54 +12,27 @@
 
 1. **DONE:** W16 exact-SHA Production Certification and immutable v1.4.16 release.
 2. **DONE:** W10 Internal Company Dogfood on the certified SHA.
-3. **DONE:** Reconcile current documentation with the published v1.4.16 release and current `main` head.
-4. **DONE:** Rebase and merge PR #836 after fresh exact-head validation.
-5. **BLOCKED:** Establish GitHub `main` branch protection and required checks; the available GitHub integration lacks the required repository-rules write capability and the direct protection endpoint returned HTTP 403.
-6. **DONE:** PR #927 payout-destination race hardening was merged after exact-head validation.
-7. **DONE:** Reconcile W17–W23 and W10 evidence against the roadmap; W9 is already real-stack VERIFIED and is not a new implementation target.
-8. **DONE:** PR #936 high-risk IntegrityError recovery audit; merged at `c59c6981ebe31ba5c99320543bac5fc14e4c7046` with all required pre-merge and post-merge engineering workflows PASS.
-9. **DONE:** Repository engineering audit is now closed for the proven high-risk IntegrityError slice; no new hardening finding was confirmed through identity/provenance and retry/resume/recovery audits. **NEXT:** evidence reconciliation and release-candidate preparation; do not expand feature scope without a concrete requirement, regression, unsupported surface, or external-validation finding.
+3. **DONE:** Reconcile current documentation with the certified v1.4.17 release identity.
+4. **DONE:** Exact-SHA Production Certification of v1.4.17 — Run `37625345534` / Job `112805570856` — PASS.
+5. **DONE:** Create and verify Git tag `v1.4.17` at exact SHA `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+6. **DONE:** Publish and verify GitHub Release `v1.4.17`.
+7. **OPEN:** External production deployment, live-provider validation, security/operations evidence and customer acceptance remain separate gates.
 
+## P0 — Published-release reconciliation
 
-## Priority order
+`v1.4.17` is now the latest published exact-SHA certified release.
 
-### P0 — Product completeness regression watch
-
-The customer-facing product-completeness gate that preceded v1.4.11 certification has been closed for the current audited scope. Do not reopen completed work without a regression, new requirement, or newly discovered unsupported surface.
-
-1. **DONE:** Persian/English customer operational browser acceptance, including lang=fa / dir=rtl coverage.
-2. **DONE:** Employee Template catalog expanded to seven tenant-safe bilingual starter templates with lifecycle/installation metadata.
-3. **DONE:** Product, Customer, Order/Invoice and Schedule lifecycle parity reviewed; resource-specific non-destructive semantics are used where retention/auditability requires them.
-4. **DONE:** Customer Analytics/Reporting retry, empty-state and locale-aware formatting parity.
-5. **DONE:** Governance localization cleanup and customer operational EN/FA acceptance.
-6. **DONE:** Vendor/Reseller/Customer Test Center execution boundaries are edition-aware.
-7. **DONE:** v1.4.11 exact-SHA certification passed with Product Gate Failures = 0.
-8. **REGRESSION WATCH:** continue monitoring residual/non-core customer surfaces for localization, lifecycle, CRUD parity, permission, and UX-state regressions.
-
-Canonical historical audit: `docs/current/PRODUCT_COMPLETENESS_GATE_2026-09-21.md`. Its original findings are retained as historical evidence; this file is the current priority source.
-
-### P0 — Post-release governance cleanup
-
-`v1.4.16` is published and exact-SHA certified at `434a0c4a4501af08a393faaf58092add764df2a2`.
-
-1. **DONE:** exact-SHA Production Certification — Run `37188879277`, Job `111396657270`.
+1. **DONE:** Certified SHA = `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 2. **DONE:** Product Gate failures = 0.
-3. **DONE:** immutable evidence artifact emitted and uploaded.
-4. **DONE:** `v1.4.16` tag and GitHub Release verified against the certified SHA.
-5. **DONE:** W10 Internal Company Dogfood — Run `37189332690`, Job `111398049109`.
-6. **DONE:** PR #836 was rebased onto current `main`, freshly validated at head `ea055755498bb65042e693cf011eec3eb3801b83`, and merged as `933fb68c8857f0b4fe939bb03351a726f3ec890b`.
-7. **BLOCKED:** GitHub `main` branch protection and required checks remain **NOT ENABLED / NOT VERIFIED** because the available integration cannot modify repository rules and the direct protection endpoint returned HTTP 403.
-
-### P0 — Release-candidate closure
-
-1. **DONE:** Exact-SHA certification of candidate **v1.4.17**.
-2. **DONE:** Exact target/checkout identity and Product Gates = 0.
-3. **DONE:** Immutable certification evidence generated and uploaded.
-4. **OPEN:** Create/verify Git tag **v1.4.17** pointing exactly to **b403c0dcdea579e017738a6fdea138c2b1a2999c**.
-5. **OPEN:** Publish GitHub Release **v1.4.17** only after explicit approval.
-6. **OPEN:** External production deployment and customer acceptance remain separate gates.
+3. **DONE:** Certification evidence generated and uploaded; digest = `sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d`.
+4. **DONE:** Git tag `v1.4.17` verified against the certified SHA.
+5. **DONE:** GitHub Release `v1.4.17` published.
+6. **DONE:** Release identity preserved as immutable.
+7. **OPEN:** External production deployment and customer acceptance remain unverified.
 
 ## P1 — External production evidence
+
+
 
 External gates remain intentionally **OPEN — PENDING EXTERNAL EXECUTION** because the project is still being executed locally. They become actionable when an approved external target exists.
 
