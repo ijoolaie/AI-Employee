@@ -256,6 +256,13 @@ def _assert_subscription_active(sub: Subscription) -> None:
     if sub.status not in {"active", "trialing"}:
         raise ConflictError("Subscription is not active")
 
+    
+async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
+    """Fail closed at the worker execution boundary without re-counting quota."""
+    await license_service.assert_execution_license(db, tenant_id=tenant_id)
+    sub = await get_subscription(db, tenant_id=tenant_id)
+    _assert_subscription_active(sub)
+
 
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     await _lock_tenant_for_quota(db, tenant_id=tenant_id)

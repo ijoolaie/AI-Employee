@@ -1,6 +1,7 @@
 """Database fence for concurrent Celery Run deliveries."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -8,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.run import Run
 from app.models.work_item import WorkItem
-from app.services import run_service
+from app.core.exceptions import ConflictError
+from app.services import audit_service, billing_service, run_service
 
 
 async def _lock_work_item_lineage(db: AsyncSession, *, work_item_id: UUID, tenant_id: UUID) -> None:
@@ -74,5 +76,27 @@ async def execute_run_locked(db: AsyncSession, *, run_id: UUID) -> Run:
     locked_run = locked_result.scalar_one_or_none()
     if locked_run is None:
         return await run_service.execute_run(db, run_id=run_id)
+
+    try:
+        await billing_service.assert_run_execution_entitlement(
+            db,
+            tenant_id=locked_run.tenant_id,
+        )
+    except ConflictError as exc:
+        locked_run.status = "failed"
+        locked_run.error_message = str(exc)[:2000]
+        locked_run.completed_at = datetime.now(timezone.utc)
+        await audit_service.record(
+            db,
+            action="run.execution_entitlement_denied",
+            actor_type="system",
+            tenant_id=locked_run.tenant_id,
+            resource_type="run",
+            resource_id=locked_run.id,
+            status="failure",
+            metadata={"error": locked_run.error_message},
+        )
+        await db.flush()
+        return locked_run
 
     return await run_service.execute_run(db, run_id=run_id)
