@@ -16,7 +16,10 @@ async def enqueue(db: AsyncSession, *, kind: str, payload: dict, tenant_id: uuid
         if found is not None:
             return found
 
+    # `_agent_governance` is an internal provenance field. Never trust a
+    # caller-supplied copy: only the active governed tool context may mint it.
     persisted_payload = dict(payload)
+    persisted_payload.pop("_agent_governance", None)
     try:
         from app.services.agent_tool_governance import current_agent_tool_context
 
