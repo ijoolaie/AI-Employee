@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from uuid import UUID
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -80,13 +81,9 @@ async def execute_run_locked(db: AsyncSession, *, run_id: UUID) -> Run:
             db,
             tenant_id=locked_run.tenant_id,
         )
-    except Exception as exc:
-        from app.core.exceptions import ConflictError
-        if not isinstance(exc, ConflictError):
-            raise
+    except ConflictError as exc:
         locked_run.status = "failed"
         locked_run.error_message = str(exc)[:2000]
-        from datetime import datetime, timezone
         locked_run.completed_at = datetime.now(timezone.utc)
         await audit_service.record(
             db,
