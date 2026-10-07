@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from app.services import billing_service
 from app.services.billing_service import (
     _period_end,
     _period_start,
@@ -158,3 +159,18 @@ async def test_canceled_subscription_does_not_auto_renew():
     assert result.current_period_start == old_start
     assert result.current_period_end == old_end
     db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_external_subscription_cannot_be_changed_by_local_plan_mutation():
+    db = AsyncMock()
+    sub = _subscription(provider="stripe", status="active")
+    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(id="plan-1"))
+
+    with pytest.raises(Exception, match="External-provider subscriptions"):
+        await billing_service.change_plan(
+            db,
+            tenant_id="00000000-0000-0000-0000-000000000001",
+            plan_code="business",
+            actor_id=None,
+        )
