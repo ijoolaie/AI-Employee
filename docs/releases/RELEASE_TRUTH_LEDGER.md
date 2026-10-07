@@ -1,6 +1,6 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-10-05
+**Last reconciled:** 2026-10-07
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
 
 ## Semantics
@@ -17,6 +17,7 @@ These states are independent and must not be inferred from release names. `OPEN 
 
 | Release | Commit | Tag | Certification | Deployment | External acceptance |
 |---|---|---|---|---|---|
+| `v1.4.17` | `b403c0dcdea579e017738a6fdea138c2b1a2999c` | **VERIFIED** | **CERTIFIED** — Run `37625345534` / Job `112805570856` | **NOT VERIFIED / NOT CLAIMED** | **NOT VERIFIED** |
 | `v1.4.16` | `434a0c4a4501af08a393faaf58092add764df2a2` | **VERIFIED** | **CERTIFIED** — Run `37188879277` / Job `111396657270` | **NOT VERIFIED / NOT CLAIMED** | **NOT VERIFIED** |
 | `v1.4.15` | `226dddcfbab7abde166c8cd6967d63a03f2d4e71` | **VERIFIED** | **CERTIFIED** — Run `37185102432` / Job `111385347811` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.14` | historical | **VERIFIED** | **CERTIFIED** | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
@@ -24,22 +25,25 @@ These states are independent and must not be inferred from release names. `OPEN 
 | `v1.4.12` | `9c3f0ff7dc8fffcce8e069e18b11cf13d4dc0519` | **VERIFIED** | **CERTIFIED** — Run `37138840482` / Job `111248877948` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 | `v1.4.11` | `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f` | **VERIFIED** | **CERTIFIED** — Run `35848311037` / Job `107139710452` | **OPEN — PENDING EXTERNAL EXECUTION** | **OPEN — PENDING EXTERNAL EXECUTION** |
 
-## v1.4.16 promotion checkpoint
+## v1.4.17 promotion checkpoint
 
-`v1.4.16` is the latest published and exact-SHA certified release.
+`v1.4.17` is the latest published and exact-SHA certified release.
 
-- certified SHA: `434a0c4a4501af08a393faaf58092add764df2a2`;
-- Production Certification: Run `37188879277`, Job `111396657270` — **PASS**;
+- certified SHA: `b403c0dcdea579e017738a6fdea138c2b1a2999c`;
+- Production Certification: Run `37625345534`, Job `112805570856` — **PASS**;
 - Product Gate failures: **0**;
-- evidence artifact: `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`;
-- evidence digest: `sha256:7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`;
-- Git tag: **VERIFIED**;
+- evidence artifact: `production-certification-evidence-v1.4.17-b403c0dcdea579e017738a6fdea138c2b1a2999c`;
+- evidence digest: `sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d`;
+- Git tag: **VERIFIED** and resolves to the certified SHA;
 - GitHub Release: **PUBLISHED**;
 - production deployment: **NOT CLAIMED / NOT VERIFIED**;
-- W10 Dogfood Run `37189332690` / Job `111398049109`: **PASS**.
+- customer acceptance / realized external revenue: **NOT VERIFIED**.
 
-No later commit inherits this release certification.
+No documentation commit after this release inherits v1.4.17 certification.
 
+## v1.4.16 promotion checkpoint
+
+`v1.4.16` remains an immutable historical release. It is no longer the latest published release.
 
 ## v1.4.11 promotion checkpoint
 
