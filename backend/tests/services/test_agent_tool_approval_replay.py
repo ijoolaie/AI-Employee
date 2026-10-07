@@ -21,10 +21,20 @@ class _DB:
         self.approval = approval
         self.flush_count = 0
 
-    async def execute(self, _query):
-        if self.approval is not None and self.approval.status == "approved":
-            return _Result([self.approval])
-        return _Result([])
+    async def execute(self, query):
+        if self.approval is None or self.approval.status != "approved":
+            return _Result([])
+
+        # Model the SQL predicate for tool_call_id so this double cannot
+        # accidentally return an approval that the real query would exclude.
+        params = query.compile().params
+        call_id = next(
+            (value for key, value in params.items() if "tool_call_id" in key),
+            None,
+        )
+        if call_id != self.approval.tool_call_id:
+            return _Result([])
+        return _Result([self.approval])
 
     async def flush(self):
         self.flush_count += 1
