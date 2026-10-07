@@ -165,7 +165,12 @@ async def test_canceled_subscription_does_not_auto_renew():
 async def test_external_subscription_cannot_be_changed_by_local_plan_mutation():
     db = AsyncMock()
     sub = _subscription(provider="stripe", status="active")
-    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: SimpleNamespace(id="plan-1"))
+    plan = SimpleNamespace(id="plan-1")
+    execute_results = [
+        SimpleNamespace(scalar_one_or_none=lambda: sub),
+        SimpleNamespace(scalar_one_or_none=lambda: plan),
+    ]
+    db.execute.side_effect = execute_results
 
     with pytest.raises(Exception, match="External-provider subscriptions"):
         await billing_service.change_plan(
