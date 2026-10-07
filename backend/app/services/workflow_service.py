@@ -504,7 +504,7 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                             raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
                         await billing_service.assert_run_execution_entitlement(
                             db,
-                            tenant_id=child.tenant_id,
+                            tenant_id=parent.tenant_id,
                         )
                         await run_service.execute_run(db, run_id=child.id)
                         if child.status != "success":
