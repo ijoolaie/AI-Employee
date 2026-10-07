@@ -1,15 +1,16 @@
 """Database fence for concurrent Celery Run deliveries."""
 from __future__ import annotations
 
-from uuid import UUID
 from datetime import datetime, timezone
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.run import Run
 from app.models.work_item import WorkItem
-from app.services import run_service, billing_service, audit_service
+from app.core.exceptions import ConflictError
+from app.services import audit_service, billing_service, run_service
 
 
 async def _lock_work_item_lineage(db: AsyncSession, *, work_item_id: UUID, tenant_id: UUID) -> None:
