@@ -1,9 +1,9 @@
 # Current Priorities
 
-**Reconciled:** 2026-10-06
+**Reconciled:** 2026-10-07
 **Current release:** `v1.4.16`
 **Certified SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
-**Current main head:** `c59c6981ebe31ba5c99320543bac5fc14e4c7046` — post-release engineering; **NOT release-certified**
+**Current main head:** `b403c0dcdea579e017738a6fdea138c2b1a2999c` — post-release engineering; **NOT release-certified**
 **Production Certification:** v1.4.16 exact-SHA Run `37188879277` / Job `111396657270` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
 **Current status:** v1.4.16 RELEASE-CERTIFIED at its immutable SHA / current main is post-release engineering / EXTERNAL GATES OPEN
@@ -18,7 +18,7 @@
 6. **DONE:** PR #927 payout-destination race hardening was merged after exact-head validation.
 7. **DONE:** Reconcile W17–W23 and W10 evidence against the roadmap; W9 is already real-stack VERIFIED and is not a new implementation target.
 8. **DONE:** PR #936 high-risk IntegrityError recovery audit; merged at `c59c6981ebe31ba5c99320543bac5fc14e4c7046` with all required pre-merge and post-merge engineering workflows PASS.
-9. **NEXT:** Repository engineering audit is now closed for the proven high-risk IntegrityError slice; do not expand feature scope without a concrete requirement, regression, unsupported surface, or external-validation finding.
+9. **DONE:** Repository engineering audit is now closed for the proven high-risk IntegrityError slice; no new hardening finding was confirmed through identity/provenance and retry/resume/recovery audits. **NEXT:** evidence reconciliation and release-candidate preparation; do not expand feature scope without a concrete requirement, regression, unsupported surface, or external-validation finding.
 
 
 ## Priority order
@@ -118,7 +118,7 @@ Stage 8/9 and future workforce work should therefore proceed only when the relev
 
 The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
 
-The current engineering head is PR #936 merge `c59c6981ebe31ba5c99320543bac5fc14e4c7046`. PR #936 exact-head validation passed before merge and post-merge main validation also passed. Current-main validation remains engineering evidence only and does not inherit v1.4.16 certification.
+The current engineering head is PR #955 merge `b403c0dcdea579e017738a6fdea138c2b1a2999c`. PR #955 exact-head validation passed before merge; post-merge workflow/status evidence is currently unavailable, so no post-merge green claim is made. Current-main validation remains engineering evidence only and does not inherit v1.4.16 certification.
 
 
 
@@ -156,8 +156,8 @@ The W10 E2E uses deterministic `contract-test` payment evidence only. It must no
 
 ## 2026-10-06 roadmap/evidence reconciliation
 
-- Current main is `c59c6981ebe31ba5c99320543bac5fc14e4c7046` (PR #936 merge).
-- PR #936 exact-head validation passed before merge and all observed post-merge main workflows passed, so the merge SHA is **post-merge engineering VERIFIED**.
+- Current main is `b403c0dcdea579e017738a6fdea138c2b1a2999c` (PR #955 merge).
+- PR #955 exact-head validation passed before merge; GitHub currently reports no post-merge workflow runs/statuses for the merge SHA, so the merge SHA is **NOT post-merge verified**.
 - W17, W18, W19, W20, W21, W22 and W23 implementation/evidence gates are closed at their documented boundaries.
 - W9 QA & DevOps is **already VERIFIED on the real stack**: final Run `36891616509`, Job `110468909696`, verification commit `5887c26c727fd2681cc1dd71fc17f0a475c9e80a`. Therefore W9 must not be treated as an unimplemented next slice.
 - The roadmap W9→W10 sequence remains historically correct: W9 evidence is closed; W10 is the business-validation phase. W10 technical mechanics are now real-stack verified, while real customer qualification, real customer acceptance and realized external revenue remain open.
