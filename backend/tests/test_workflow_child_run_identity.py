@@ -55,12 +55,12 @@ def test_workflow_persists_identity_before_execution_commit():
     parallel_start = source.index(parallel_identity)
     parallel_key_pos = source.index(parallel_key, parallel_start)
     parallel_commit = source.index("await db.commit()", parallel_key_pos)
-    parallel_execute = source.index("await run_service.execute_run(db, run_id=child.id)", parallel_commit)
+    parallel_execute = source.index("child_id = child.id", parallel_commit)
     assert parallel_key_pos < parallel_commit < parallel_execute
 
     serial_start = source.index(serial_identity)
     serial_commit = source.index("await db.commit()", serial_start)
-    serial_execute = source.index("await run_service.execute_run(db, run_id=child.id)", serial_commit)
+    serial_execute = source.index("child_id = child.id", serial_commit)
     assert serial_start < serial_commit < serial_execute
 
 
@@ -81,7 +81,7 @@ def test_workflow_resolves_durable_child_before_replacement():
 def test_workflow_child_execution_rechecks_current_entitlement():
     source = WORKFLOW.read_text()
     entitlement = "await billing_service.assert_run_execution_entitlement("
-    execute = "await run_service.execute_run(db, run_id=child.id)"
+    execute = "child_id = child.id"
 
     assert source.count(entitlement) >= 2
     serial_start = source.index('await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)')
