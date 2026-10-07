@@ -61,6 +61,7 @@ async def _resolve_approval(
     tenant_id: UUID,
     run_id: UUID,
     tool_name: str,
+    tool_call_id: str,
     arguments: dict[str, Any],
 ) -> ToolApprovalRequest | None:
     """Lock and resolve exactly one approved request for one invocation."""
@@ -70,6 +71,7 @@ async def _resolve_approval(
             ToolApprovalRequest.tenant_id == tenant_id,
             ToolApprovalRequest.run_id == run_id,
             ToolApprovalRequest.tool_name == tool_name,
+            ToolApprovalRequest.tool_call_id == tool_call_id,
             ToolApprovalRequest.status == "approved",
         )
         .with_for_update()
@@ -98,16 +100,9 @@ def install() -> None:
         db = kwargs.get("db")
         tenant_id = kwargs.get("tenant_id")
 
-        # Let the canonical registry preserve its existing approval rejection.
-        # An unapproved mandatory side-effect tool never reaches its handler.
         if tool.side_effects and db is None and tenant_id is None and not kwargs.get("approval_granted", False):
             return await original_execute(name, arguments, **kwargs)
 
-        # Every side effect must originate from the canonical Agent Run
-        # governance context. Supplying a DB + tenant directly is not enough:
-        # otherwise a direct registry caller could bypass Agent identity,
-        # durable approval resolution, policy authorization, and the external
-        # side-effect fence by calling the original registry executor.
         if tool.side_effects:
             if context is None:
                 raise ValidationAppError(
@@ -128,17 +123,23 @@ def install() -> None:
         tool_call_id = kwargs.get("tool_call_id")
         fence_id = None
         if tool.requires_approval:
+            if not tool_call_id:
+                raise ValidationAppError(
+                    "Approval-gated Agent tool execution requires a stable tool_call_id",
+                    details={"tool": name, "run_id": str(run_id)},
+                )
             approval = await _resolve_approval(
                 db,
                 tenant_id=bound_tenant_id,
                 run_id=run_id,
                 tool_name=name,
+                tool_call_id=str(tool_call_id),
                 arguments=arguments,
             )
             if approval is None:
                 raise ValidationAppError(
                     "Human approval required for Agent tool execution",
-                    details={"tool": name, "run_id": str(run_id)},
+                    details={"tool": name, "run_id": str(run_id), "tool_call_id": str(tool_call_id)},
                 )
         await assert_authorized(
             db,

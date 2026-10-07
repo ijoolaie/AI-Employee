@@ -85,7 +85,14 @@ async def test_approval_boolean_alone_cannot_bypass_agent_boundary(monkeypatch) 
 
     async with agent_tool_governance.agent_tool_context(tenant_id=tenant_id, agent_instance_id=instance_id, run_id=run_id):
         with pytest.raises(ValidationAppError, match="Human approval required"):
-            await registry.execute("send_email", {"to": ["allowed@example.com"], "subject": "x", "body": "y"}, db=Db(), tenant_id=tenant_id, approval_granted=True)
+            await registry.execute(
+                "send_email",
+                {"to": ["allowed@example.com"], "subject": "x", "body": "y"},
+                db=Db(),
+                tenant_id=tenant_id,
+                tool_call_id="approval-boundary-test",
+                approval_granted=True,
+            )
     assert calls == []
 
 
