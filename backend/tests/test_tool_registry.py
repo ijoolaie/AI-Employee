@@ -106,10 +106,6 @@ async def test_approval_required_tool_is_fail_closed_until_approved(monkeypatch)
         return None
 
     monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
-    async def allow_authorized(*args, **kwargs):
-        return None
-
-    monkeypatch.setattr(agent_tool_governance, "assert_authorized", allow_authorized)
     name = "_test_approval_tool"
     registry.register(RegisteredTool(
         name=name, description="test gated tool",
@@ -222,6 +218,10 @@ async def test_workforce_coordinate_handoff_requires_agent_identity(monkeypatch)
         return None
 
     monkeypatch.setattr(license_service, "assert_feature_entitlement", allow_entitlement)
+    async def allow_authorized(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(agent_tool_governance, "assert_authorized", allow_authorized)
     tenant_id = uuid4()
     context_token = agent_tool_governance._AGENT_CONTEXT.set((tenant_id, None, uuid4(), None))
     try:
