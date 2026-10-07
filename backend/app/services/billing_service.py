@@ -251,12 +251,17 @@ async def _lock_tenant_for_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> T
     return tenant
 
 
+def _assert_subscription_active(sub: Subscription) -> None:
+    """Fail closed for tenant resource creation outside billable/trial states."""
+    if sub.status not in {"active", "trialing"}:
+        raise ConflictError("Subscription is not active")
+
+
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    if sub.status not in {"active", "trialing"}:
-        raise ConflictError("Subscription is not active")
+    _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["runs"] >= sub.plan.monthly_runs:
         raise ConflictError(f"Monthly run quota exceeded for {sub.plan.code} plan")
@@ -267,6 +272,7 @@ async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
 async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
+    _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["employees"] >= sub.plan.max_employees:
         raise ConflictError(f"Employee quota exceeded for {sub.plan.code} plan")
@@ -275,6 +281,7 @@ async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
 async def enforce_workflow_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
+    _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["workflows"] >= sub.plan.max_workflows:
         raise ConflictError(f"Workflow quota exceeded for {sub.plan.code} plan")
