@@ -1,14 +1,14 @@
 # Current Status
 
 **Last reconciled:** 2026-10-07
-**Latest certified release:** `v1.4.16`
-**Certified release SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
+**Latest published release:** `v1.4.16`; **latest exact-SHA certified candidate:** `v1.4.17`
+**Published certified SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`; **certified candidate SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
 **Stable Git tag:** `v1.4.16` — VERIFIED
 **GitHub Release:** `v1.4.16` — PUBLISHED
-**Exact-SHA Production Certification:** Run `37188879277` — PASS
-**Certification job:** `111396657270` — PASS
+**Latest exact-SHA Production Certification:** v1.4.17 candidate — Run `37625345534` — PASS
+**Certification job:** `112805570856` — PASS
 **Current engineering head:** `main` — mutable; resolve directly from Git metadata
-**Current status:** v1.4.16 CERTIFIED at its immutable SHA / current main is post-release engineering and **NOT release-certified**
+**Current status:** v1.4.17 exact-SHA candidate CERTIFIED; publication and external-production gates remain OPEN
 
 ## Release boundary
 
@@ -31,6 +31,24 @@ W10 Internal Company Dogfood has independently passed on the same SHA:
 - Production deployment: **NOT CLAIMED / NOT VERIFIED**
 
 The W10 workflow did not produce a separate artifact in the currently observed GitHub run, so no W10 artifact digest is claimed.
+
+## 2026-10-07 v1.4.17 release-candidate reconciliation
+
+- Candidate release identity: **v1.4.17**
+- Exact candidate/certified SHA: **b403c0dcdea579e017738a6fdea138c2b1a2999c**
+- Production Certification Run: **37625345534**
+- Certification Job: **112805570856**
+- Certification result: **PASS**
+- Product Gate failures: **0**
+- Exact target/checkout SHA identity: **PASS**
+- Evidence artifact: **production-certification-evidence-v1.4.17-b403c0dcdea579e017738a6fdea138c2b1a2999c**
+- Evidence JSON SHA-256: **sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d**
+- Git tag v1.4.17: **NOT CREATED**
+- GitHub Release v1.4.17: **NOT PUBLISHED**
+- External production deployment: **NOT VERIFIED / not claimed**
+- Customer acceptance / realized external revenue: **NOT VERIFIED**
+
+The exact-SHA candidate is certified and ready for the explicit publication decision. Certification does not create a Git tag, GitHub Release, production deployment, live-provider evidence, or customer acceptance.
 
 ## Documentation authority
 
