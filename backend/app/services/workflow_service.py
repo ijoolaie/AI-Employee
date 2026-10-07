@@ -502,7 +502,18 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
                         if heartbeat_lost.is_set():
                             raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
-                        await run_service.execute_run(db, run_id=child.id)
+                        await billing_service.assert_run_execution_entitlement(
+                            db,
+                            tenant_id=parent.tenant_id,
+                        )
+                        child_id = child.id
+                        await run_service.execute_run(db, run_id=child_id)
+                        child_result = await db.execute(
+                            select(Run)
+                            .where(Run.id == child_id)
+                            .execution_options(populate_existing=True)
+                        )
+                        child = child_result.scalar_one()
                         if child.status != "success":
                             raise RuntimeError(f"Employee Run ended with status {child.status}")
                         # Do not let a timeout/cancellation that becomes
@@ -576,6 +587,18 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                     branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
                 await db.commit()
                 raise
+            parent_result = await db.execute(
+                select(WorkflowRun)
+                .where(WorkflowRun.id == parent_id)
+                .execution_options(populate_existing=True)
+            )
+            parent = parent_result.scalar_one()
+            branch_result = await db.execute(
+                select(WorkflowParallelBranchRun)
+                .where(WorkflowParallelBranchRun.id == branch_id)
+                .execution_options(populate_existing=True)
+            )
+            branch = branch_result.scalar_one()
             branch.status = "failed"
             branch.error = {"code": "PARALLEL_BRANCH_FAILED", "message": str(exc)[:1000]}
             branch.completed_at = datetime.now(timezone.utc)
@@ -742,7 +765,18 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                             await db.flush()
                         return run
                     await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
-                    await run_service.execute_run(db, run_id=child.id)
+                    await billing_service.assert_run_execution_entitlement(
+                        db,
+                        tenant_id=run.tenant_id,
+                    )
+                    child_id = child.id
+                    await run_service.execute_run(db, run_id=child_id)
+                    child_result = await db.execute(
+                        select(Run)
+                        .where(Run.id == child_id)
+                        .execution_options(populate_existing=True)
+                    )
+                    child = child_result.scalar_one()
                     if child.status != "success":
                         raise RuntimeError(f"Employee Run ended with status {child.status}")
                     # The child execution may itself consume the remaining
