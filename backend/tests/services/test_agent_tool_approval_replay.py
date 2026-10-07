@@ -31,7 +31,7 @@ class _DB:
 
 
 @pytest.mark.asyncio
-async def test_approved_request_remains_approved_for_policy_resolution():
+async def test_approved_request_remains_approved_for_exact_tool_call_resolution():
     tenant_id = uuid4()
     run_id = uuid4()
     approval = SimpleNamespace(
@@ -49,6 +49,7 @@ async def test_approved_request_remains_approved_for_policy_resolution():
         tenant_id=tenant_id,
         run_id=run_id,
         tool_name="send_email",
+        tool_call_id="call-1",
         arguments=approval.arguments,
     )
 
@@ -59,6 +60,34 @@ async def test_approved_request_remains_approved_for_policy_resolution():
     await agent_tool_governance._consume_approval(db, approval)
     assert approval.status == "consumed"
     assert db.flush_count == 1
+
+
+@pytest.mark.asyncio
+async def test_approval_cannot_be_reused_for_a_different_tool_call_id():
+    tenant_id = uuid4()
+    run_id = uuid4()
+    approval = SimpleNamespace(
+        tenant_id=tenant_id,
+        run_id=run_id,
+        tool_name="send_email",
+        tool_call_id="approved-call",
+        arguments={"to": ["user@example.com"]},
+        status="approved",
+    )
+    db = _DB(approval)
+
+    resolved = await agent_tool_governance._resolve_approval(
+        db,
+        tenant_id=tenant_id,
+        run_id=run_id,
+        tool_name="send_email",
+        tool_call_id="different-call",
+        arguments=approval.arguments,
+    )
+
+    assert resolved is None
+    assert approval.status == "approved"
+    assert db.flush_count == 0
 
 
 @pytest.mark.asyncio
@@ -80,6 +109,7 @@ async def test_consumed_agent_tool_request_cannot_be_replayed():
         tenant_id=tenant_id,
         run_id=run_id,
         tool_name="send_email",
+        tool_call_id="call-1",
         arguments=approval.arguments,
     )
     await agent_tool_governance._consume_approval(db, first)
@@ -88,6 +118,7 @@ async def test_consumed_agent_tool_request_cannot_be_replayed():
         tenant_id=tenant_id,
         run_id=run_id,
         tool_name="send_email",
+        tool_call_id="call-1",
         arguments=approval.arguments,
     )
 
