@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-10-06
+**Last reconciled:** 2026-10-07
 **Latest certified release:** `v1.4.16`
 **Certified release SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
 **Stable Git tag:** `v1.4.16` — VERIFIED
@@ -624,10 +624,10 @@ The technical W10 evidence gate is complete. Controlled live-provider/customer v
 
 ## 2026-10-06 roadmap/evidence reconciliation
 
-- Current main is `600367bc20c3d9392e51d0af861d26cb326f8a4c` (PR #927 merge).
-- PR #927 was validated at exact head before merge; the GitHub integration currently reports **no workflow runs for the merge SHA**, so post-merge verification of this exact main SHA is **NOT VERIFIED**.
+- Current main is `b403c0dcdea579e017738a6fdea138c2b1a2999c` (PR #955 merge).
+- PR #955 was validated at exact head before merge; the GitHub integration currently reports **no workflow runs/statuses for the merge SHA**, so post-merge verification of this exact main SHA is **NOT VERIFIED**.
 - W9 QA & DevOps is not an outstanding implementation gap. The authoritative roadmap records final real-stack Run `36891616509`, Job `110468909696`, at commit `5887c26c727fd2681cc1dd71fc17f0a475c9e80a`, with QA/DevOps governed execution, approval governance, tenant isolation, provenance and provider fail-closed behavior verified.
 - W17, W18, W19, W20, W21, W22 and W23 have documented implementation/real-stack evidence at their respective verification boundaries. They do not inherit v1.4.16 certification.
 - W10 technical customer-outcome/revenue-event mechanics are real-stack verified using deterministic `contract-test`; real customer qualification, customer acceptance and realized external revenue remain unverified.
 - External production/live-provider/customer work remains intentionally deferred to the final external-validation phase.
-- The next engineering pass is therefore limited to evidence-backed hardening/reconciliation findings and regression verification. No new feature slice is selected from this reconciliation alone.
+- The next engineering pass is therefore limited to evidence reconciliation, release-candidate preparation, and regression verification. No new feature slice is selected from this reconciliation alone. Identity/provenance and retry/resume/recovery audits found no new confirmed engineering defect.
