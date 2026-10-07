@@ -624,8 +624,8 @@ The technical W10 evidence gate is complete. Controlled live-provider/customer v
 
 ## 2026-10-06 roadmap/evidence reconciliation
 
-- Current main is `b403c0dcdea579e017738a6fdea138c2b1a2999c` (PR #955 merge).
-- PR #955 was validated at exact head before merge; the GitHub integration currently reports **no workflow runs/statuses for the merge SHA**, so post-merge verification of this exact main SHA is **NOT VERIFIED**.
+- Current main is mutable and must be resolved directly from Git metadata. The latest application-code merge is PR #955 at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; subsequent commits are documentation reconciliation only.
+- PR #955 was validated at exact head before merge; the GitHub integration currently reports **no workflow runs/statuses for the merge SHA**, so post-merge verification of that application-code merge SHA is **NOT VERIFIED**.
 - W9 QA & DevOps is not an outstanding implementation gap. The authoritative roadmap records final real-stack Run `36891616509`, Job `110468909696`, at commit `5887c26c727fd2681cc1dd71fc17f0a475c9e80a`, with QA/DevOps governed execution, approval governance, tenant isolation, provenance and provider fail-closed behavior verified.
 - W17, W18, W19, W20, W21, W22 and W23 have documented implementation/real-stack evidence at their respective verification boundaries. They do not inherit v1.4.16 certification.
 - W10 technical customer-outcome/revenue-event mechanics are real-stack verified using deterministic `contract-test`; real customer qualification, customer acceptance and realized external revenue remain unverified.
