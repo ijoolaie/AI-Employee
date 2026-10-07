@@ -11,36 +11,34 @@ A **Release** is an immutable product snapshot identified by a Git tag and exact
 
 ### Current release truth
 
-- Latest published release: **`v1.4.16`**
-- Latest exact-SHA certified candidate: **`v1.4.17`** at `b403c0dcdea579e017738a6fdea138c2b1a2999c`
-- Latest certified release: **`v1.4.16`**, exact certified SHA `434a0c4a4501af08a393faaf58092add764df2a2`.
-- `v1.4.16` Git tag: **VERIFIED**, resolving to the certified release commit.
-- `v1.4.16` GitHub Release: **PUBLISHED**, not draft, not prerelease.
-- `v1.4.16` exact-SHA Production Certification: **PASS** on run `37188879277`, job `111396657270`.
-- Evidence artifact: `production-certification-evidence-v1.4.16-434a0c4a4501af08a393faaf58092add764df2a2`.
-- Evidence digest: `sha256:7af4640395aefcffe0485fc3b276dad0dc794a97333efe59d531ef8af74d3d70`
-- External production deployment: **NOT VERIFIED / not claimed by certification**.
-- Customer acceptance / live provider validation: **PENDING**.
+- Latest published release: **`v1.4.17`**
+- Latest exact-SHA certified release: **`v1.4.17`** at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- `v1.4.17` Git tag: **VERIFIED**, resolving to the certified release commit.
+- `v1.4.17` GitHub Release: **PUBLISHED**, not draft, not prerelease.
+- `v1.4.17` exact-SHA Production Certification: **PASS** on run `37625345534`, job `112805570856`.
+- Evidence artifact: `production-certification-evidence-v1.4.17-b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- Evidence digest: `sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d`
+- External production deployment: **NOT VERIFIED / not claimed**.
+- Customer acceptance / live provider validation / realized revenue: **NOT VERIFIED**.
 
-`v1.4.16` is the current engineering/release-certified snapshot. It must not be described as externally production-certified until target-specific evidence exists.
+`v1.4.17` is the current immutable engineering/release-certified snapshot. It must not be described as externally production-verified until target-specific evidence exists.
 
-Current `main` contains post-v1.4.16 engineering work. The W13 candidate SHA has fresh exact-SHA certification evidence, but certification does not create a Git tag or release. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document. A new application-code release candidate must receive fresh exact-SHA certification.
+Current `main` contains documentation and other post-release engineering history. The exact current Git HEAD is authoritative and must be resolved directly from Git metadata. Documentation commits after `v1.4.17` do not inherit its certification.
 
-## 2026-10-07 v1.4.17 candidate truth
+## 2026-10-07 v1.4.17 publication truth
 
-- Latest published release: **v1.4.16**
-- Latest exact-SHA certified candidate: **v1.4.17**
-- Candidate SHA: **b403c0dcdea579e017738a6fdea138c2b1a2999c**
+- Release: **v1.4.17**
+- Exact certified SHA: **b403c0dcdea579e017738a6fdea138c2b1a2999c**
 - Certification Run: **37625345534**
 - Certification Job: **112805570856**
 - Result: **PASS**
 - Product Gate failures: **0**
-- Evidence JSON digest: **sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d**
-- Git tag/release: **not yet created/published**
-- Production deployment: **not verified / not claimed**
-- Customer acceptance/revenue: **not verified**
+- Git tag: **VERIFIED**
+- GitHub Release: **PUBLISHED**
+- Production deployment: **NOT VERIFIED / NOT CLAIMED**
+- Customer acceptance/revenue: **NOT VERIFIED**
 
-v1.4.17 is an exact-SHA certified release candidate. Certification is bound only to the candidate SHA and does not itself create a published release or external deployment.
+Certification is bound only to the exact immutable release SHA. Publication did not create new application-code certification.
 
 ## 2. Architecture version
 
