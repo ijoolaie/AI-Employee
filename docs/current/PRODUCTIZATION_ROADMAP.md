@@ -14,7 +14,39 @@ Three axes remain independent:
 
 Phase 11 Unified Execution is complete. Phase 12 Test Center is operationally hardened. Phase 13 Agent Teams & Marketplace is engineering complete. Phase 14.1–14.16 tracked engineering is complete/reconciled.
 
-The project is now in a dedicated **Governed AI Workforce → Commercial Readiness & External Production** sequence. The audited product-completeness gate is closed for the current scope and remains under regression watch; the default next work is external evidence, deployment, security and operational validation.
+The project is now in a dedicated **Release Candidate Closure → External Production & Customer Acceptance** sequence. The audited product-completeness gate is closed for the current scope and remains under regression watch; the default next work is external evidence, deployment, security and operational validation.
+
+## 2026-10-07 release-candidate closure
+
+The latest published release remains **v1.4.16**. The PR #955 application-code boundary `b403c0dcdea579e017738a6fdea138c2b1a2999c` has now passed exact-SHA Production Certification as candidate **v1.4.17**.
+
+- Certification Run: **37625345534**
+- Certification Job: **112805570856**
+- Result: **PASS**
+- Product Gate failures: **0**
+- Exact target/checkout identity: **PASS**
+- Evidence artifact: **production-certification-evidence-v1.4.17-b403c0dcdea579e017738a6fdea138c2b1a2999c**
+- Evidence JSON digest: **sha256:c05d9ba79e135dfb64ffd7aed89e2fd36b1ebcb53f6ef2ddfb865e516b870e3d**
+- Git tag/release `v1.4.17`: **pending**
+- External production deployment: **pending / not claimed**
+- Customer acceptance/revenue: **pending / not verified**
+
+The roadmap must no longer treat the #955 boundary as uncertified. The next internal action is explicit release/tag promotion; external deployment and acceptance remain independent gates.
+
+## W0–W23 final evidence boundary — 2026-10-07
+
+- **W0:** implemented / baseline infrastructure.
+- **W1:** real-stack verified.
+- **W9:** real-stack verified; not a new implementation target.
+- **W10:** governed sales/payment mechanics verified; real customer qualification, acceptance and realized external revenue remain not verified.
+- **W16:** marketplace lifecycle/governed execution mechanics verified; external payout/revenue/tax settlement remain not verified.
+- **W17:** implemented / real-stack verified.
+- **W18:** implemented / real-stack verified first vertical slice.
+- **W19:** design foundation active; provider execution not implemented/configured.
+- **W20:** implemented / real-stack verified first governed vertical slice; external payout/revenue/tax/customer outcome not verified.
+- **W21:** implemented / real-stack verified; autonomous external company-network execution and financial/customer outcomes not verified.
+- **W22:** implemented / real-stack verified; live search/SEO traffic impact not verified.
+- **W23:** implemented / real-stack verified; live provider/customer outcome not verified.
 
 ## Product Completeness Gate — added 2026-09-21
 
