@@ -15,6 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.ai_provider_call import AIProviderCall
 from app.models.run import Run
 from app.services import audit_service
+from app.services.run_execution_fence import _lock_work_item_lineage
+from app.services.run_service import _sync_work_item_lifecycle
 
 # AgentRuntime currently bounds one execution operation to 300 seconds. Keep a
 # small recovery margin so a legitimate operation is not recovered at the
@@ -25,8 +27,8 @@ STALE_RUN_RECOVERY_SECONDS = 360
 async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
     """Fail closed on an abandoned running Run without replaying the provider.
 
-    The Run row is locked before the recovery transition so duplicate Celery
-    redeliveries cannot both emit recovery transitions/audit entries.
+    Recovery uses the same WorkItem -> Run lock order as execution/cancellation
+    and projects the terminal Run state onto its bound WorkItem/team parent.
     """
     if run.status != "running" or run.started_at is None:
         return False
@@ -36,6 +38,13 @@ async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
     now = datetime.now(timezone.utc)
     if now - run.started_at <= timedelta(seconds=STALE_RUN_RECOVERY_SECONDS):
         return False
+
+    if run.work_item_id is not None:
+        await _lock_work_item_lineage(
+            db,
+            work_item_id=run.work_item_id,
+            tenant_id=run.tenant_id,
+        )
 
     locked_result = await db.execute(
         select(Run).where(Run.id == run.id).with_for_update()
@@ -98,6 +107,14 @@ async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
     locked_run.status = "failed"
     locked_run.error_message = error_message[:2000]
     locked_run.completed_at = now
+
+    if locked_run.work_item_id is not None:
+        await _sync_work_item_lifecycle(
+            db,
+            run=locked_run,
+            status="failed",
+            error=error_message,
+        )
 
     await audit_service.record(
         db,
