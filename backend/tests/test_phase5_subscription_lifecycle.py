@@ -101,3 +101,29 @@ async def test_external_subscription_cannot_be_changed_by_local_plan_mutation(mo
     assert sub.plan_id == "plan-old"
     assert sub.status == "active"
     db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("at_period_end", [True, False])
+async def test_external_subscription_cannot_be_canceled_locally(monkeypatch, at_period_end):
+    db = AsyncMock()
+    sub = SimpleNamespace(
+        id="sub-1",
+        plan_id="plan-old",
+        status="active",
+        provider="stripe",
+        cancel_at_period_end=False,
+        canceled_at=None,
+    )
+    monkeypatch.setattr(billing_service, "ensure_subscription", AsyncMock(return_value=sub))
+    with pytest.raises(ConflictError, match="External-provider subscriptions"):
+        await billing_service.cancel_subscription(
+            db,
+            tenant_id="00000000-0000-0000-0000-000000000001",
+            at_period_end=at_period_end,
+            actor_id=None,
+        )
+    assert sub.status == "active"
+    assert sub.cancel_at_period_end is False
+    assert sub.canceled_at is None
+    db.flush.assert_not_awaited()
