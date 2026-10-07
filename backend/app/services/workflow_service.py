@@ -502,6 +502,10 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                         await assert_parallel_branch_execution_lease(db, branch_id=branch.id, lease_id=lease_id)
                         if heartbeat_lost.is_set():
                             raise ValidationAppError("WORKFLOW_BRANCH_EXECUTION_LEASE_LOST")
+                        await billing_service.assert_run_execution_entitlement(
+                            db,
+                            tenant_id=child.tenant_id,
+                        )
                         await run_service.execute_run(db, run_id=child.id)
                         if child.status != "success":
                             raise RuntimeError(f"Employee Run ended with status {child.status}")
@@ -742,6 +746,10 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                             await db.flush()
                         return run
                     await assert_workflow_execution_lease(db, workflow_run_id=run.id, lease_id=lease_id)
+                    await billing_service.assert_run_execution_entitlement(
+                        db,
+                        tenant_id=child.tenant_id,
+                    )
                     await run_service.execute_run(db, run_id=child.id)
                     if child.status != "success":
                         raise RuntimeError(f"Employee Run ended with status {child.status}")
