@@ -102,7 +102,9 @@ async def process_subscription_lifecycle(
 
 
 async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subscription:
-    result = await db.execute(select(Subscription).where(Subscription.tenant_id == tenant_id))
+    result = await db.execute(
+        select(Subscription).where(Subscription.tenant_id == tenant_id).with_for_update()
+    )
     sub = result.scalar_one_or_none()
     if sub:
         return await process_subscription_lifecycle(db, subscription=sub)
