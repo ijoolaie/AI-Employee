@@ -1,12 +1,12 @@
 # Current Priorities
 
 **Reconciled:** 2026-10-07
-**Current release:** `v1.4.16`
-**Certified SHA:** `434a0c4a4501af08a393faaf58092add764df2a2`
+**Current release:** `v1.4.17`
+**Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
 **Current main head:** mutable — resolve directly from Git metadata; the latest application-code merge is PR #955 at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; subsequent commits are documentation reconciliation only and are **NOT release-certified**.
-**Production Certification:** v1.4.16 exact-SHA Run `37188879277` / Job `111396657270` — PASS
+**Production Certification:** v1.4.17 exact-SHA Run `37625345534` / Job `112805570856` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
-**Current status:** v1.4.17 exact-SHA candidate CERTIFIED / publication and external gates OPEN
+**Current status:** v1.4.17 exact-SHA certified and published / external gates OPEN
 
 ## Immediate release-candidate priorities
 
@@ -37,7 +37,7 @@
 External gates remain intentionally **OPEN — PENDING EXTERNAL EXECUTION** because the project is still being executed locally. They become actionable when an approved external target exists.
 
 1. Establish the approved real production target and capture infrastructure identity.
-2. Deploy the latest approved immutable release identity only after an external target is provisioned; the current latest certified release is `v1.4.16` at exact SHA `434a0c4a4501af08a393faaf58092add764df2a2`.
+2. Deploy the latest approved immutable release identity only after an external target is provisioned; the current latest certified release is `v1.4.17` at exact SHA `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 3. Capture deployment, image and migration identity/checksums.
 4. Verify production networking, TLS, ingress/egress and secret-manager lifecycle.
 5. Validate live providers, billing and integrations where applicable.
