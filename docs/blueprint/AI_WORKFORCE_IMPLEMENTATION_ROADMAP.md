@@ -1530,57 +1530,179 @@ The roadmap's original W0 → W9 → W10 sequence has been reconciled against im
 
 # Frontend Product Experience Track — Management + World
 
-The Workforce roadmap must be paired with a frontend experience track. The existing W12/W13 Virtual Office work is the read-only foundation; the target is an explorable AI Company World over the same governed runtime.
+This track is now the authoritative frontend execution companion to the Workforce roadmap. The backend/workforce phases remain the governed execution roadmap; F0–F7 turns those capabilities into the customer-facing AI Company experience.
 
-## F0 — Dual-mode shell
+## Product target
+
+The frontend evolves from:
+
+SaaS Dashboard + Read-only Virtual Office
+
+to:
+
+AI Company Platform = Management Mode + Explorable World Mode
+
+The existing `/office` experience is retained as the authoritative read-model foundation. World Mode must not create a second execution engine, tenant system, business state store or provider boundary.
+
+## F0 — Dual-mode shell — NEXT
+
+Goal: introduce the World as a first-class customer mode without destabilizing Management Mode.
+
+Scope:
 - Management/World mode switch.
-- Dedicated World route.
-- Preserve existing customer shell, auth and management routes.
-- Responsive/mobile shell.
+- Dedicated `/world` route.
+- Full-screen responsive World shell.
+- Preserve existing customer authentication/layout/API client/React Query.
+- Mobile-first shell behavior.
+- World route access remains tenant/auth governed.
+- No fake world metrics.
+- No backend execution changes unless an observed local requirement demands them.
+
+Definition of Done:
+- authenticated customer can switch Management ↔ World;
+- existing Management routes remain unchanged;
+- World route loads in local real stack;
+- desktop/mobile responsive shell works;
+- frontend contract/unit tests pass;
+- Playwright covers route access and mode switching;
+- local real-stack smoke evidence exists.
 
 ## F1 — World renderer and movement
-- PixiJS 2D/2.5D renderer.
+
+Goal: create the smallest usable explorable HQ.
+
+Scope:
+- PixiJS 2D/2.5D.
 - Isometric coordinate system.
 - Camera pan/zoom.
 - Desktop WASD/mouse input.
-- Mobile touch/virtual-joystick input.
+- Mobile touch/virtual joystick input.
 - Collision/navigation foundation.
+- Shared World Engine with separate desktop/mobile input adapters.
+
+Definition of Done:
+- isometric map renders;
+- camera works;
+- desktop movement works;
+- mobile movement works;
+- no duplicated business state;
+- F0 remains stable;
+- contract/unit/Playwright/local real-stack checks pass.
 
 ## F2 — Real HQ projection
-- Department/building projection.
-- Employee projection from authoritative presentation state.
+
+Goal: replace placeholder world entities with authoritative platform state.
+
+Scope:
+- CEO/Command, Sales, Customer Support, Operations, Engineering departments.
+- Real employee projection.
+- Employee presentation states: IDLE, WORKING, WAITING_APPROVAL, BLOCKED, ESCALATED, COMPLETED.
 - Current WorkItem and approval indicators.
-- World interaction targets.
+- Real interaction targets.
 
-## F3 — Management bridge
-- World → Employee/WorkItem/Approval/Customer/Order/Analytics.
-- Management → Locate in HQ.
-- Contextual overlays and quick panels.
+No MEETING state or other business animation may be invented without an authoritative source.
 
-## F4 — Business outcome loop
-Prioritize the first vertical: Conversation → Lead → Qualification → Offer → Order → Revenue.
-World metrics must remain evidence-backed.
+## F3 — World ↔ Management bridge
+
+Goal: make World Mode operationally useful.
+
+World → Management:
+- employee;
+- department;
+- WorkItem;
+- approval;
+- customer;
+- order;
+- analytics/outcome.
+
+Management → World:
+- Locate in HQ for supported entities.
+
+First mandatory bridge:
+employee in World → Employee Management → return to World.
+
+## F4 — First business outcome loop
+
+Priority vertical:
+
+Conversation → Lead → Qualification → Offer → Order → Revenue
+
+Sales and Customer Support are prioritized.
+
+World metrics must be evidence-backed. Do not fabricate revenue, productivity, customer activity or ROI.
+
+Human handoff remains a first-class product capability.
 
 ## F5 — Company progression
-- Real company milestones.
-- Department/capability unlocks.
-- Activation/business missions.
-- No independent arcade economy.
+
+Scope:
+- real company milestones;
+- department/capability unlocks;
+- activation/business missions;
+- capability progression.
+
+Do not introduce an independent arcade economy.
+
+Reference-game mechanics are translated into real product concepts:
+- room → department;
+- furniture → capability/tool/knowledge/workstation;
+- rent → measurable outcome;
+- happiness → operational health;
+- repairman → reliability capability;
+- energy → real usage/plan capacity where justified;
+- diamonds → optional premium credits only if a real commercial model requires them.
 
 ## F6 — Living World
-- Day/night.
-- Ambient movement.
-- Visitors/events.
-- Background-work return summary from real platform state.
+
+Only after the real business loop is working:
+- day/night;
+- controlled ambient movement;
+- visitors/events backed by real state where applicable;
+- background-work summaries from authoritative platform activity.
+
+Ambient effects must never masquerade as business execution.
 
 ## F7 — Polish
-- Animation.
-- VFX/audio.
-- Accessibility.
-- Mobile performance.
 
-## Frontend acceptance boundary
-World Mode is not considered implemented merely because a visual scene exists. The relevant layer must preserve tenant isolation, authorization, approvals, auditability and backend truth, and must pass frontend contract/unit/browser tests plus local real-stack smoke evidence. A release promotion requires fresh exact-SHA certification.
+- animation;
+- VFX/audio;
+- accessibility;
+- mobile performance;
+- visual consistency;
+- interaction feedback.
 
-Canonical audit: docs/current/FRONTEND_WORLD_TRANSFORMATION_AUDIT.md
-Canonical gameplay specification: docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md
+Polish must not precede the first real employee/business vertical slice.
+
+## Cross-track execution order
+
+The immediate sequence is:
+
+1. F0 dual-mode shell.
+2. F1 World renderer/movement.
+3. F2 real HQ projection.
+4. F3 Management bridge.
+5. Sales + Customer Support real business loop.
+6. F4 outcome loop.
+7. F5 progression.
+8. F6 living world.
+9. F7 polish.
+
+Do not insert another broad backend feature phase ahead of F0/F1 unless a concrete blocker is discovered.
+
+## World acceptance boundary
+
+World Mode is implemented only when the relevant slice preserves:
+- tenant isolation;
+- authentication/authorization;
+- governance and approvals;
+- auditability;
+- backend source-of-truth semantics;
+- frontend contract/unit/browser tests;
+- local real-stack evidence.
+
+Release promotion requires fresh exact-SHA certification. Local evidence does not transfer certification from v1.4.17.
+
+Canonical documents:
+- `docs/current/MASTER_HANDOFF.md`
+- `docs/current/FRONTEND_WORLD_TRANSFORMATION_AUDIT.md`
+- `docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md`
