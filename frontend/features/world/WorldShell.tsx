@@ -11,6 +11,7 @@ import { WorldOutcomePanel } from "./WorldOutcomePanel";
 import { WorldProgressionPanel } from "./WorldProgressionPanel";
 import { projectWorldReadModel } from "./WorldState";
 import { WorldViewport } from "./WorldViewport";
+import { WorldStatusBar } from "./WorldStatusBar";
 import { WorldMiniMap } from "./WorldMiniMap";
 
 export function WorldShell() {
@@ -72,6 +73,7 @@ export function WorldShell() {
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
+              <WorldStatusBar world={world} />
               <WorldProgressionPanel progression={world.progression} />
               <WorldOutcomePanel data={roiQuery.data} />
             </>
