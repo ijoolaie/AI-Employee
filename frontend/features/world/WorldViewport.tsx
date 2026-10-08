@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { WorldCamera } from "./WorldCamera";
 import { WorldInput } from "./WorldInput";
 import { DEFAULT_MAP, drawEmployees, drawMap, screenPoint } from "./WorldRenderer";
+import { worldPositionForSlot } from "./WorldState";
 import type { WorldEmployee } from "./WorldState";
 export function WorldViewport({
   employees,
@@ -106,7 +107,7 @@ export function WorldViewport({
       host.removeEventListener("world:mobilemove", onMobileMove);
       input.destroy();
     };
-  }, [employees, selectedEmployeeId, onEmployeeSelect]);
+  }, [employees, selectedEmployeeId, onEmployeeSelect, handleMapToggle]);
 
   return (
     <div className="relative h-[min(72vh,720px)] min-h-[420px] w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
