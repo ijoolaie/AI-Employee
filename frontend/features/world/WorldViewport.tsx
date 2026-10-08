@@ -161,6 +161,8 @@ export function WorldViewport({
       camera.pan(-dx, -dy);
     };
 
+    const onReset = () => camera.reset();
+
     const onZoom = (event: Event) => {
       const { delta } = (event as CustomEvent<{ delta: number }>).detail;
       camera.zoomBy(delta);
@@ -183,6 +185,7 @@ export function WorldViewport({
 
     canvas.addEventListener("world:pan", onPan);
     canvas.addEventListener("world:zoom", onZoom);
+    canvas.addEventListener("world:reset", onReset);
     canvas.addEventListener("world:tap", onTap);
     canvas.addEventListener("world:map-toggle", onMapToggle);
     host.addEventListener("world:mobilemove", onMobileMove);
@@ -214,6 +217,7 @@ export function WorldViewport({
       observer.disconnect();
       canvas.removeEventListener("world:pan", onPan);
       canvas.removeEventListener("world:zoom", onZoom);
+      canvas.removeEventListener("world:reset", onReset);
       canvas.removeEventListener("world:tap", onTap);
       canvas.removeEventListener("world:map-toggle", onMapToggle);
       host.removeEventListener("world:mobilemove", onMobileMove);
@@ -224,6 +228,11 @@ export function WorldViewport({
   return (
     <div className="relative h-[min(72vh,720px)] min-h-[420px] w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
       <canvas ref={canvasRef} aria-label="AI Company World viewport" className="block h-full w-full outline-none" />
+      <div className="absolute bottom-4 left-4 z-10 flex gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1 backdrop-blur" aria-label="World camera controls">
+        <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => canvasRef.current?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }))} aria-label="Zoom in">+</button>
+        <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => canvasRef.current?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: -0.12 } }))} aria-label="Zoom out">−</button>
+        <button type="button" className="rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10" onClick={() => canvasRef.current?.dispatchEvent(new CustomEvent("world:reset"))}>Reset</button>
+      </div>
       <div className="pointer-events-none absolute left-4 top-4 rounded-xl border border-slate-700/80 bg-slate-950/80 px-3 py-2 text-xs text-slate-300 backdrop-blur">
         <div className="font-medium text-white">HQ World</div>
         <div className="hidden sm:block">WASD / Arrow keys · drag to pan · wheel to zoom</div>
