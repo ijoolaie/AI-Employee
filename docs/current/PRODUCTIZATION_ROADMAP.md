@@ -248,3 +248,58 @@ Certification never transfers automatically across SHAs.
 - `docs/engineering/STAGE_8_GOVERNANCE_AUDIT_CHECKLIST.md`
 - `docs/blueprint/STAGE_8_ENGINEERING_EXECUTION_PLAN.md`
 - `docs/releases/RELEASE_TRUTH_LEDGER.md`
+
+
+## Product Experience Track — AI Company World & Dual-Mode Frontend — 2026-10-08
+
+**Decision:** The product direction is now explicitly **Management Mode + World Mode** over one authoritative platform state. The reference gameplay is an interaction/visual benchmark, not a source-code or formula specification.
+
+### Product objective
+
+Build a real AI Company that customers can manage conventionally and explore as a living company headquarters. World Mode must make the existing governed Employee/Agent, WorkItem, Run, Workflow, Customer, Commerce, Usage and Billing capabilities visible and interactive without creating a second business state.
+
+### Canonical specification
+
+See `docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md`.
+
+### Product mapping
+
+- Building → AI Company HQ
+- Office → Department/workspace
+- Furniture → Capability/tool/knowledge/workstation resource
+- Tenant → Customer/business account
+- Rent → measurable revenue/savings/business outcome
+- Employee → governed AI Employee/Agent Instance
+- Happiness → operational health/workload/quality
+- Repair → real operational maintenance
+- Construction → department/capability unlock
+- Tasks → business missions/activation objectives
+- Player level → company progression
+- Idle income → real background business activity
+
+### Frontend target
+
+Keep Next.js/React as the management shell. Add an explorable 2D/2.5D isometric World Mode using a dedicated renderer (initial recommendation: PixiJS). Desktop and mobile share one World Engine; input adapters differ for keyboard/mouse versus touch/virtual joystick.
+
+The world is backend-driven. Employee animations and building states must derive from authoritative tenant-scoped data. No fake revenue, fake employee activity, permission bypass or game-only economy is allowed.
+
+### Implementation order
+
+1. World Foundation — renderer, isometric map, camera, movement, collision, buildings and Management↔World navigation.
+2. Real Company — department and AI Employee projections, movement, backend-driven states and interaction.
+3. Business Loop — WorkItems, customers/conversations, leads, orders, revenue/outcome and AI cost.
+4. Progression — company progression, department unlocks, capability upgrades and missions.
+5. Living World — day/night, visitors, ambient activity, events and return summary.
+6. Polish — animation, VFX, audio, accessibility and performance.
+
+### Mobile requirement
+
+Mobile is first-class, not a reduced desktop port. It must use the same backend truth and World Engine with touch-specific input and presentation adapters.
+
+### Current boundary
+
+This is a new product/design track, not a claim that interactive World Mode is already implemented. The current W12 Virtual Office foundation remains a read-only presentation surface. Any application-code implementation must be validated on mainline and receives fresh exact-SHA certification before entering a certified release.
+
+### External-production boundary
+
+External production remains independent. Product World work is allowed to proceed locally while the project remains local-first; no external production deployment or customer-revenue claim is implied by this track.
