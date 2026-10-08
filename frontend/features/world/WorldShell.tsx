@@ -4,14 +4,14 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, LayoutDashboard, Sparkles } from "lucide-react";
-import { getCustomerOffice, getErrorMessage } from "@/lib/api";
+import { getCustomerOffice, getErrorMessage, getROIAnalytics } from "@/lib/api";
 import { projectWorldReadModel } from "./WorldState";
 import { MobileInputAdapter } from "./MobileInputAdapter";
 import { WorldViewport } from "./WorldViewport";
 
 export function WorldShell() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const query = useQuery({
+  const roiQuery = useQuery({\n    queryKey: ["world-roi"],\n    queryFn: getROIAnalytics,\n    refetchInterval: 15000,\n    staleTime: 5000,\n  });\n  const query = useQuery({
     queryKey: ["customer-world-read-model"],
     queryFn: getCustomerOffice,
     refetchInterval: 5000,
@@ -118,3 +118,4 @@ export function WorldShell() {
     </main>
   );
 }
+\n\nfunction Outcome({ label, value }: { label: string; value: number }) {\n  return <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3"><p className="text-[10px] uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 text-lg font-semibold text-white">{typeof value === "number" ? value.toLocaleString() : "—"}</p></div>;\n}\n
