@@ -177,3 +177,20 @@ The next product-design/engineering frontier is no longer additional backend fea
 ### Execution boundary
 
 The project remains local-first for this work. External production is intentionally not the current execution target. Interactive World Mode is a future implementation slice and must not be represented as implemented/certified until code and evidence exist.
+
+## P4 — AI Company World F0-F7 local product track
+
+**Status on engineering branch `feat/f2-world-authoritative-state`: IMPLEMENTED through F7; final merge remains gated by exact-SHA CI and local real-stack validation.**
+
+1. **DONE:** F0 dual-mode shell and `/world` route.
+2. **DONE:** F1 isometric renderer foundation, camera, desktop/mobile input, pinch zoom and camera controls.
+3. **DONE:** F2 authoritative employee projection from `/customer-dashboard/office`.
+4. **DONE:** F3 employee interaction and World → Employee Management bridge.
+5. **DONE:** F4 recorded business outcome loop via `/analytics/roi`.
+6. **DONE:** F5 authoritative HQ tier/capacity progression presentation.
+7. **DONE:** F6 live state refresh and source-freshness visibility.
+8. **DONE:** F7 responsive/accessibility/presentation polish and component-boundary refactor.
+9. **OPEN:** Exact-SHA CI, frontend build/type/lint, Playwright World smoke, and local real-stack validation must pass before merge.
+10. **OPEN:** PixiJS dependency integration remains a renderer-specific follow-up because the repository uses locked `npm ci`; it must be introduced only with a regenerated and validated lockfile, not by hand-editing dependency metadata.
+
+Canonical implementation record: `docs/current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md`.
