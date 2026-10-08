@@ -352,3 +352,12 @@ Stage 8 is complete only when:
 12. evidence demonstrates the controls on the relevant release SHA.
 
 Documentation alone cannot satisfy these exit criteria.
+
+
+## World Mode governance boundary
+
+AI Company World is a presentation layer over governed workforce state. A visible employee, building, capability upgrade or world interaction must never grant permissions or bypass CEO approval, policy, tool authorization, tenant isolation, audit or lifecycle controls.
+
+World state must derive from authoritative workforce/WorkItem/Run/Approval state. Any action initiated from World Mode must enter the same governed execution path as the corresponding Management Mode action.
+
+World Mode specification: docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md.
