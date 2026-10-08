@@ -32,6 +32,14 @@ This is the top-level map for current project documentation.
 - `blueprint/STAGE_8_ENGINEERING_EXECUTION_PLAN.md` — governed workforce implementation plan.
 - `current/PRODUCTIZATION_ROADMAP.md` — current Agent capability phases: Tool Calling, Structured Arguments, Multi-step, Provider Validation and Release Gate.
 
+
+
+## 3A. AI Company World / Frontend product experience
+
+- `blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md` — canonical dual-mode Management/World frontend and gameplay specification.
+- `blueprint/AI_COMPANY_FOUNDING_WORKFORCE.md` — workforce roles and organizational identity used by the future HQ presentation.
+- `blueprint/AI_COMPANY_WORKFORCE_GOVERNANCE.md` — governance boundary for workforce actions initiated from World Mode.
+
 ## 4. Operations and delivery
 
 - `operations/` — operational runbooks and procedures.

@@ -348,3 +348,12 @@ Every role must define:
 The organization should not create dozens of autonomous agents merely because roles exist on an organizational chart. Roles are reusable capabilities; active instances are created only when justified by workload, customer demand or a controlled organizational decision.
 
 This supports scalable governance and reduces agent sprawl while preserving a rich marketplace catalog.
+
+
+## Presentation in AI Company World
+
+The workforce role catalog is also the organizational source for the future AI Company HQ presentation. Departments and employees may be visualized in World Mode, but the visual layer does not create or alter role authority.
+
+The mapping is organizational, not decorative: an AI Sales employee may appear in Sales, an Operations employee in Operations, and the Internal Manager in the management/command layer. Their visible state is derived from governed Agent/Employee, WorkItem, Run, Approval and workload state.
+
+World Mode specification: docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md.
