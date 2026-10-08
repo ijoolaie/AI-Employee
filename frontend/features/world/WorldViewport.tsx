@@ -117,7 +117,7 @@ export function WorldViewport({
   }, [onEmployeeSelect, handleMapToggle]);
 
   return (
-    <div className="relative h-[min(72vh,720px)] min-h-[420px] w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
+    <div className="relative min-h-[420px] w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl" style={{ height: "min(72vh, 720px)" }}>
       <canvas ref={canvasRef} aria-label="AI Company World viewport" className="block h-full w-full outline-none" />
       <div className="absolute bottom-4 left-4 z-10 flex gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1 backdrop-blur" aria-label="World camera controls">
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => canvasRef.current?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }))} aria-label="Zoom in">+</button>
