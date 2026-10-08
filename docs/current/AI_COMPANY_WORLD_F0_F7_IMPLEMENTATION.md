@@ -46,7 +46,7 @@ Customer Application Shell
 ## Phase record
 
 ### F0 — Dual-mode shell
-**Implemented:** PR #960.
+**Implemented on main:** PR #963 (rebased integration of the F0 work).
 
 - Added `/world`.
 - Added Management ↔ World mode switching.
@@ -54,7 +54,7 @@ Customer Application Shell
 - World shell contains no fabricated business data.
 
 ### F1 — Renderer / camera / input
-**Implemented foundation:** PR #961 and continued in this branch.
+**Implemented foundation on main:** PR #963. The current renderer is Canvas, not PixiJS.
 
 - Deterministic isometric HQ map.
 - Camera pan and bounded zoom.
@@ -66,10 +66,10 @@ Customer Application Shell
 - `M` toggles the presentation-only mini map.
 - Camera and input behavior are isolated from business state.
 
-**Renderer decision:** The original architecture selected PixiJS as the long-term renderer. The current implementation deliberately keeps the rendering boundary isolated so the renderer can be swapped without changing the read-model, interaction, or business layers. The current branch uses the browser Canvas renderer while dependency/lockfile installation is validated in the local environment. F1 must not be called production-complete until the local dependency/build validation confirms the chosen renderer path.
+**Renderer decision:** The original architecture selected PixiJS as a possible long-term renderer. The current implementation deliberately keeps the rendering boundary isolated so the renderer can be swapped without changing the read-model, interaction, or business layers. The current main implementation uses the browser Canvas renderer. PixiJS is **not installed or claimed as validated**. A future PixiJS migration requires a real dependency installation and regenerated lockfile.
 
 ### F2 — Real HQ projection
-**Implemented in PR #962 branch.**
+**Implemented on main:** PR #963.**
 
 - Existing tenant-scoped `/customer-dashboard/office` data is projected into World.
 - Real employees appear in the world.
@@ -108,7 +108,7 @@ Progression is derived only from existing HQ subscription/usage fields:
 There is no invented XP, coins, idle income, happiness score, or gameplay economy.
 
 ### F6 — Living World
-**Implemented.**
+**Implemented as a backend-driven live presentation layer.**
 
 - Office state refreshes every 5 seconds.
 - ROI state refreshes every 15 seconds.
@@ -116,9 +116,10 @@ There is no invented XP, coins, idle income, happiness score, or gameplay econom
 - Live status bar reports the states actually present in the read model.
 - Generated timestamp is displayed as the source freshness marker.
 - No timer fabricates activity transitions.
+- This does **not** claim autonomous ambient simulation, day/night cycles, visitors or other game-like activity.
 
 ### F7 — Product polish
-**Implemented foundation.**
+**Implemented foundation on main.**
 
 - Responsive desktop/mobile shell.
 - Keyboard and pointer navigation.
@@ -172,19 +173,19 @@ Do not introduce a global Zustand store for World business state unless a demons
 
 ## Validation contract
 
-Before merge, run the existing frontend validation sequence on the exact branch SHA:
+For any future change to this track, run the existing frontend validation sequence on the exact candidate SHA:
 
 1. frontend contract tests;
 2. governance contract tests;
 3. World unit tests;
 4. lint/typecheck/build;
 5. Playwright World shell checks (the CI frontend job now runs the dedicated `e2e/world-mode.spec.ts` smoke);
-6. local real-stack smoke with the existing LM Studio setup;
+6. local real-stack smoke with the existing LM Studio setup when the change affects runtime behavior;
 7. verify Management Mode remains unchanged;
 8. verify World employee state changes follow the existing office API;
 9. verify no second AI execution path exists.
 
-**Certification boundary:** these are engineering/local evidence only. They do not modify or extend the immutable `v1.4.17` Production Certification.
+**Certification boundary:** these are engineering evidence only. They do not modify or extend the immutable `v1.4.17` Production Certification. The merge of PR #963 does not make F0-F7 release-certified.
 
 ## Known deliberate limitation
 
