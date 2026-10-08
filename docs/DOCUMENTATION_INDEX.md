@@ -24,14 +24,23 @@ This is the top-level map for current project documentation.
 | Production certification execution | `current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` |
 | External production execution | `current/EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` |
 | Code ↔ documentation traceability | `current/CODE_DOCUMENTATION_TRACEABILITY.md` |
-| AI Company World F0–F7 implementation | `current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md` |
 | Canonical vocabulary | `current/CANONICAL_VOCABULARY.md` |
+
+| AI Company World F0–F7 implementation | `current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md` |
 
 ## 3. Agent / workforce architecture
 
 - `blueprint/V1.5_AGENTIC_OPERATING_MODEL.md` — Agentic Operating Model baseline.
 - `blueprint/STAGE_8_ENGINEERING_EXECUTION_PLAN.md` — governed workforce implementation plan.
 - `current/PRODUCTIZATION_ROADMAP.md` — current Agent capability phases: Tool Calling, Structured Arguments, Multi-step, Provider Validation and Release Gate.
+
+
+
+## 3A. AI Company World / Frontend product experience
+
+- `blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md` — canonical dual-mode Management/World frontend and gameplay specification.
+- `blueprint/AI_COMPANY_FOUNDING_WORKFORCE.md` — workforce roles and organizational identity used by the future HQ presentation.
+- `blueprint/AI_COMPANY_WORKFORCE_GOVERNANCE.md` — governance boundary for workforce actions initiated from World Mode.
 
 ## 4. Operations and delivery
 
