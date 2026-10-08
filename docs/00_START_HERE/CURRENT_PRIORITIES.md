@@ -145,3 +145,35 @@ The W10 E2E uses deterministic `contract-test` payment evidence only. It must no
 - The roadmap W9→W10 sequence remains historically correct: W9 evidence is closed; W10 is the business-validation phase. W10 technical mechanics are now real-stack verified, while real customer qualification, real customer acceptance and realized external revenue remain open.
 - External/live work remains intentionally deferred to the final external-validation phase.
 - Immediate engineering priority: hardening/reconciliation, not duplicate W9 implementation.
+
+
+## 2026-10-08 Product Experience Decision — Local-First AI Company World
+
+The next product-design/engineering frontier is no longer additional backend feature expansion. The product must convert the existing governed platform into a clear, attractive and commercially understandable AI Company experience.
+
+### New product direction
+
+1. Keep Management Mode as the conventional SaaS operating surface.
+2. Add World Mode as an explorable AI Company HQ over the same authoritative backend state.
+3. Use the mobile isometric office/tycoon reference as a visual and interaction benchmark, not as a source-code or formula specification.
+4. Make desktop and mobile first-class through one World Engine with different input adapters.
+5. Tie progression to real AI Employees, WorkItems, customers, conversations, orders, revenue, usage and capabilities.
+6. Do not introduce a fake game economy, fake business activity or permission bypass through game mechanics.
+
+### Canonical specification
+
+`docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md` is the canonical product/gameplay specification for this direction.
+
+### Immediate engineering order
+
+- World Foundation
+- Real Company projections
+- Business outcome loop
+- Company progression/capabilities
+- Living World
+- Mobile parity
+- Polish/performance
+
+### Execution boundary
+
+The project remains local-first for this work. External production is intentionally not the current execution target. Interactive World Mode is a future implementation slice and must not be represented as implemented/certified until code and evidence exist.
