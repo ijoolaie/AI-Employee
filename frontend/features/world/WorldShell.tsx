@@ -11,7 +11,13 @@ import { WorldViewport } from "./WorldViewport";
 
 export function WorldShell() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const roiQuery = useQuery({\n    queryKey: ["world-roi"],\n    queryFn: getROIAnalytics,\n    refetchInterval: 15000,\n    staleTime: 5000,\n  });\n  const query = useQuery({
+  const roiQuery = useQuery({
+    queryKey: ["world-roi"],
+    queryFn: getROIAnalytics,
+    refetchInterval: 15000,
+    staleTime: 5000,
+  });
+  const query = useQuery({
     queryKey: ["customer-world-read-model"],
     queryFn: getCustomerOffice,
     refetchInterval: 5000,
@@ -55,6 +61,7 @@ export function WorldShell() {
           {query.isLoading && (
             <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-sm text-slate-400">Loading the authoritative HQ state…</div>
           )}
+
           {query.error && (
             <div role="alert" className="rounded-2xl border border-red-500/30 bg-red-950/30 p-5 text-sm text-red-200">
               <p>{getErrorMessage(query.error)}</p>
@@ -65,17 +72,33 @@ export function WorldShell() {
           {world && (
             <>
               <div className="relative">
-                <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} />
+                <WorldViewport
+                  employees={world.employees}
+                  selectedEmployeeId={selectedEmployeeId}
+                  onEmployeeSelect={onEmployeeSelect}
+                />
                 <MobileInputAdapter />
+
                 {selectedEmployee && (
-                  <aside className="absolute bottom-4 right-4 w-[min(360px,calc(100%-2rem))] rounded-2xl border border-cyan-400/20 bg-slate-950/95 p-4 shadow-2xl backdrop-blur" aria-label="Selected employee">
+                  <aside
+                    className="absolute bottom-4 right-4 w-[min(360px,calc(100%-2rem))] rounded-2xl border border-cyan-400/20 bg-slate-950/95 p-4 shadow-2xl backdrop-blur"
+                    aria-label="Selected employee"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-white">{selectedEmployee.name}</p>
                         <p className="mt-1 text-xs text-slate-400">{selectedEmployee.kind} · {selectedEmployee.state.replaceAll("_", " ")}</p>
                       </div>
-                      <button type="button" onClick={() => setSelectedEmployeeId(null)} className="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Close employee panel">Esc</button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedEmployeeId(null)}
+                        className="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-white/10 hover:text-white"
+                        aria-label="Close employee panel"
+                      >
+                        Esc
+                      </button>
                     </div>
+
                     {selectedEmployee.currentWorkItem && (
                       <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
                         <p className="text-[10px] uppercase tracking-wide text-slate-500">Current work</p>
@@ -83,10 +106,18 @@ export function WorldShell() {
                         <p className="mt-1 text-xs text-slate-500">{selectedEmployee.currentWorkItem.status}</p>
                       </div>
                     )}
+
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                      <div className="rounded-lg border border-white/10 p-2"><span className="text-slate-500">Latest run</span><p className="mt-1 text-slate-200">{selectedEmployee.latestRunStatus ?? "None"}</p></div>
-                      <div className="rounded-lg border border-white/10 p-2"><span className="text-slate-500">Employee ID</span><p className="mt-1 truncate text-slate-200">{selectedEmployee.id}</p></div>
+                      <div className="rounded-lg border border-white/10 p-2">
+                        <span className="text-slate-500">Latest run</span>
+                        <p className="mt-1 text-slate-200">{selectedEmployee.latestRunStatus ?? "None"}</p>
+                      </div>
+                      <div className="rounded-lg border border-white/10 p-2">
+                        <span className="text-slate-500">Employee ID</span>
+                        <p className="mt-1 truncate text-slate-200">{selectedEmployee.id}</p>
+                      </div>
                     </div>
+
                     <Link href={`/employees/${selectedEmployee.id}`} className="mt-3 block rounded-lg bg-white px-3 py-2 text-center text-xs font-semibold text-slate-950 hover:bg-slate-100">
                       Open Employee Management
                     </Link>
@@ -95,18 +126,54 @@ export function WorldShell() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-                  <p className="text-xs uppercase tracking-wider text-slate-500">Workforce</p>
-                  <p className="mt-1 text-lg font-semibold">{world.progression.activeEmployees}/{world.progression.employeeLimit}</p>
-                  <p className="mt-1 text-xs text-slate-400">active employees against plan capacity</p>
+                <StatCard label="Workforce" value={`${world.progression.activeEmployees}/${world.progression.employeeLimit}`} detail="active employees against plan capacity" />
+                <StatCard label="Workflow capacity" value={`${world.progression.activeWorkflows}/${world.progression.workflowLimit}`} detail="authoritative active workflows" />
+                <StatCard label="HQ tier" value={world.progression.tier} detail={`${world.progression.completionPercent}% capacity utilization index`} />
+              </div>
+
+              <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.03] p-5">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-emerald-300">Business outcome loop</p>
+                    <h3 className="mt-1 text-lg font-semibold">World activity is tied to recorded business evidence.</h3>
+                  </div>
+                  <Link href="/analytics" className="text-xs font-medium text-emerald-200 hover:text-white">Open Analytics →</Link>
                 </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-                  <p className="text-xs uppercase tracking-wider text-slate-500">Workflow capacity</p>
-                  <p className="mt-1 text-lg font-semibold">{world.progression.activeWorkflows}/{world.progression.workflowLimit}</p>
-                  <p className="mt-1 text-xs text-slate-400">authoritative active workflows</p>
-                </div>
-                <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-                  <p className="text-xs uppercase tracking-wider text-slate-500">HQ tier</p>
-                  <p className="mt-1 text-lg font-semibold">{world.progression.tier}</p>
-                  <p className="mt-1 text-xs text-slate-400">{world.progression.completionPercent}% capacity utilization index</p>
-                </div>
+
+                {roiQuery.data ? (
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <Outcome label="Conversations" value={roiQuery.data.conversations} />
+                    <Outcome label="AI resolved" value={roiQuery.data.ai_resolved} />
+                    <Outcome label="Orders" value={roiQuery.data.orders} />
+                    <Outcome label="Influenced revenue" value={roiQuery.data.influenced_revenue} />
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm text-slate-400">No outcome data is currently available. The World does not invent revenue or productivity values.</p>
+                )}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
+      <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-semibold">{value}</p>
+      <p className="mt-1 text-xs text-slate-400">{detail}</p>
+    </div>
+  );
+}
+
+function Outcome({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
+      <p className="text-[10px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-white">{value.toLocaleString()}</p>
+    </div>
+  );
+}
