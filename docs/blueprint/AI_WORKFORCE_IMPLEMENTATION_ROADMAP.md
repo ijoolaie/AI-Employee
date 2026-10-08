@@ -1526,3 +1526,61 @@ The roadmap's original W0 → W9 → W10 sequence has been reconciled against im
 - W17–W23 are later presentation/domain verticals with their own documented real-stack evidence and do not reopen W9.
 - An old 'next slice' note must not override current evidence. Immediate execution is hardening/reconciliation followed by only proven engineering findings.
 - External/live provider, customer, payment and production-target work remains intentionally deferred to the final external-validation phase.
+
+
+# Frontend Product Experience Track — Management + World
+
+The Workforce roadmap must be paired with a frontend experience track. The existing W12/W13 Virtual Office work is the read-only foundation; the target is an explorable AI Company World over the same governed runtime.
+
+## F0 — Dual-mode shell
+- Management/World mode switch.
+- Dedicated World route.
+- Preserve existing customer shell, auth and management routes.
+- Responsive/mobile shell.
+
+## F1 — World renderer and movement
+- PixiJS 2D/2.5D renderer.
+- Isometric coordinate system.
+- Camera pan/zoom.
+- Desktop WASD/mouse input.
+- Mobile touch/virtual-joystick input.
+- Collision/navigation foundation.
+
+## F2 — Real HQ projection
+- Department/building projection.
+- Employee projection from authoritative presentation state.
+- Current WorkItem and approval indicators.
+- World interaction targets.
+
+## F3 — Management bridge
+- World → Employee/WorkItem/Approval/Customer/Order/Analytics.
+- Management → Locate in HQ.
+- Contextual overlays and quick panels.
+
+## F4 — Business outcome loop
+Prioritize the first vertical: Conversation → Lead → Qualification → Offer → Order → Revenue.
+World metrics must remain evidence-backed.
+
+## F5 — Company progression
+- Real company milestones.
+- Department/capability unlocks.
+- Activation/business missions.
+- No independent arcade economy.
+
+## F6 — Living World
+- Day/night.
+- Ambient movement.
+- Visitors/events.
+- Background-work return summary from real platform state.
+
+## F7 — Polish
+- Animation.
+- VFX/audio.
+- Accessibility.
+- Mobile performance.
+
+## Frontend acceptance boundary
+World Mode is not considered implemented merely because a visual scene exists. The relevant layer must preserve tenant isolation, authorization, approvals, auditability and backend truth, and must pass frontend contract/unit/browser tests plus local real-stack smoke evidence. A release promotion requires fresh exact-SHA certification.
+
+Canonical audit: docs/current/FRONTEND_WORLD_TRANSFORMATION_AUDIT.md
+Canonical gameplay specification: docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md
