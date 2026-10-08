@@ -642,3 +642,19 @@ The technical W10 evidence gate is complete. Controlled live-provider/customer v
 - W10 technical customer-outcome/revenue-event mechanics are real-stack verified using deterministic `contract-test`; real customer qualification, customer acceptance and realized external revenue remain unverified.
 - External production/live-provider/customer work remains intentionally deferred to the final external-validation phase.
 - The next engineering pass is therefore limited to evidence reconciliation, release-candidate preparation, and regression verification. No new feature slice is selected from this reconciliation alone. Identity/provenance and retry/resume/recovery audits found no new confirmed engineering defect.
+
+
+## 2026-10-08 AI Company World engineering track
+
+The local-first AI Company World track has been implemented through F7 on the engineering branch `feat/f2-world-authoritative-state`.
+
+- F0: dual-mode shell and `/world`.
+- F1: isometric world renderer foundation, camera and desktop/mobile input.
+- F2: authoritative workforce projection from the existing tenant-scoped office read model.
+- F3: employee interaction and management bridge.
+- F4: recorded ROI/outcome projection.
+- F5: authoritative HQ tier/capacity progression.
+- F6: live state refresh from existing backend read models.
+- F7: responsive, accessible presentation polish and separation of rendering/input/state/presentation concerns.
+
+This work is post-v1.4.17 engineering evidence and does not inherit the immutable v1.4.17 certification. The exact validation boundary is recorded in `docs/current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md`.
