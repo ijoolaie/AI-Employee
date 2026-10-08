@@ -24,6 +24,7 @@ This is the top-level map for current project documentation.
 | Production certification execution | `current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` |
 | External production execution | `current/EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` |
 | Code ↔ documentation traceability | `current/CODE_DOCUMENTATION_TRACEABILITY.md` |
+| AI Company World F0–F7 implementation | `current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md` |
 | Canonical vocabulary | `current/CANONICAL_VOCABULARY.md` |
 
 ## 3. Agent / workforce architecture
