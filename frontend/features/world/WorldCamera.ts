@@ -10,6 +10,10 @@ export class WorldCamera {
     this.state = { ...initial };
   }
 
+  reset(): void {
+    this.state = { x: 0, y: 0, zoom: 1 };
+  }
+
   getState(): WorldCameraState {
     return { ...this.state };
   }
