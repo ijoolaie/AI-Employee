@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-10-07
+**Last reconciled:** 2026-10-08
 **Latest published release:** `v1.4.17`
 **Latest exact-SHA certified release:** `v1.4.17`
 **Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
@@ -8,7 +8,7 @@
 **GitHub Release:** `v1.4.17` — PUBLISHED
 **Production Certification:** Run `37625345534` — PASS
 **Certification job:** `112805570856` — PASS
-**Current engineering head:** `main` — mutable; resolve directly from Git metadata
+**Current engineering head:** `main` — `ceefce8f43dd2479972f3c0c1629d72ebdef74e5` at this reconciliation
 **Current status:** v1.4.17 is the latest published exact-SHA certified release; external production and customer/commercial gates remain OPEN
 
 ## Release boundary
