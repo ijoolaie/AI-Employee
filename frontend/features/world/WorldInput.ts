@@ -1,9 +1,15 @@
 import type { WorldInputState } from "./worldTypes";
 
+interface PointerOrigin {
+  x: number;
+  y: number;
+  moved: boolean;
+}
+
 export class WorldInput {
   private readonly keys = new Set<string>();
   private readonly target: HTMLElement;
-  private pointer?: { x: number; y: number };
+  private pointer?: PointerOrigin;
 
   constructor(target: HTMLElement) {
     this.target = target;
@@ -54,13 +60,11 @@ export class WorldInput {
   private readonly onWheel = (event: WheelEvent) => {
     event.preventDefault();
     const direction = event.deltaY > 0 ? -1 : 1;
-    this.target.dispatchEvent(
-      new CustomEvent("world:zoom", { detail: { delta: direction * 0.08 } }),
-    );
+    this.target.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: direction * 0.08 } }));
   };
 
   private readonly onPointerDown = (event: PointerEvent) => {
-    this.pointer = { x: event.clientX, y: event.clientY };
+    this.pointer = { x: event.clientX, y: event.clientY, moved: false };
     this.target.setPointerCapture(event.pointerId);
   };
 
@@ -68,11 +72,22 @@ export class WorldInput {
     if (!this.pointer) return;
     const dx = event.clientX - this.pointer.x;
     const dy = event.clientY - this.pointer.y;
-    this.pointer = { x: event.clientX, y: event.clientY };
-    this.target.dispatchEvent(new CustomEvent("world:pan", { detail: { dx, dy } }));
+    if (Math.hypot(dx, dy) > 4) this.pointer.moved = true;
+    this.pointer.x = event.clientX;
+    this.pointer.y = event.clientY;
+    if (this.pointer.moved) {
+      this.target.dispatchEvent(new CustomEvent("world:pan", { detail: { dx, dy } }));
+    }
   };
 
-  private readonly onPointerUp = () => {
+  private readonly onPointerUp = (event: PointerEvent) => {
+    if (this.pointer && !this.pointer.moved) {
+      this.target.dispatchEvent(
+        new CustomEvent("world:tap", {
+          detail: { x: event.offsetX, y: event.offsetY },
+        }),
+      );
+    }
     this.pointer = undefined;
   };
 }
