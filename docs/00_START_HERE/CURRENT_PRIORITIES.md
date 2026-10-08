@@ -145,3 +145,21 @@ The W10 E2E uses deterministic `contract-test` payment evidence only. It must no
 - The roadmap W9→W10 sequence remains historically correct: W9 evidence is closed; W10 is the business-validation phase. W10 technical mechanics are now real-stack verified, while real customer qualification, real customer acceptance and realized external revenue remain open.
 - External/live work remains intentionally deferred to the final external-validation phase.
 - Immediate engineering priority: hardening/reconciliation, not duplicate W9 implementation.
+
+
+## P4 — AI Company World F0-F7 local product track
+
+**Status on engineering branch `feat/f2-world-authoritative-state`: IMPLEMENTED through F7; final merge remains gated by exact-SHA CI and local real-stack validation.**
+
+1. **DONE:** F0 dual-mode shell and `/world` route.
+2. **DONE:** F1 isometric renderer foundation, camera, desktop/mobile input, pinch zoom and camera controls.
+3. **DONE:** F2 authoritative employee projection from `/customer-dashboard/office`.
+4. **DONE:** F3 employee interaction and World → Employee Management bridge.
+5. **DONE:** F4 recorded business outcome loop via `/analytics/roi`.
+6. **DONE:** F5 authoritative HQ tier/capacity progression presentation.
+7. **DONE:** F6 live state refresh and source-freshness visibility.
+8. **DONE:** F7 responsive/accessibility/presentation polish and component-boundary refactor.
+9. **OPEN:** Exact-SHA CI, frontend build/type/lint, Playwright World smoke, and local real-stack validation must pass before merge.
+10. **OPEN:** PixiJS dependency integration remains a renderer-specific follow-up because the repository uses locked `npm ci`; it must be introduced only with a regenerated and validated lockfile, not by hand-editing dependency metadata.
+
+Canonical implementation record: `docs/current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md`.
