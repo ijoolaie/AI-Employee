@@ -11,13 +11,14 @@ import { WorldOutcomePanel } from "./WorldOutcomePanel";
 import { WorldProgressionPanel } from "./WorldProgressionPanel";
 import { projectWorldReadModel } from "./WorldState";
 import { WorldViewport } from "./WorldViewport";
+import { WorldMiniMap } from "./WorldMiniMap";
 
 export function WorldShell() {
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);\n  const [showMiniMap, setShowMiniMap] = useState(false);
   const officeQuery = useQuery({ queryKey: ["customer-world-read-model"], queryFn: getCustomerOffice, refetchInterval: 5000, staleTime: 2000 });
   const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
-  const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
+  const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);\n  const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
   const selectedEmployee = world?.employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
 
   useEffect(() => {
@@ -63,8 +64,8 @@ export function WorldShell() {
           {world && (
             <>
               <div className="relative">
-                <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} />
-                <MobileInputAdapter />
+                <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} onMapToggle={onMapToggle} />
+                <MobileInputAdapter />\n                {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
