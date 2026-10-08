@@ -20,8 +20,11 @@ export function WorldViewport({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const employeesRef = useRef(employees);
   const selectedEmployeeIdRef = useRef(selectedEmployeeId);
-  employeesRef.current = employees;
-  selectedEmployeeIdRef.current = selectedEmployeeId;
+
+  useEffect(() => {
+    employeesRef.current = employees;
+    selectedEmployeeIdRef.current = selectedEmployeeId;
+  }, [employees, selectedEmployeeId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
