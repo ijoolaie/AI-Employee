@@ -72,6 +72,15 @@ function normalizeState(value: string): WorldEmployeeState {
     : "IDLE";
 }
 
+export function worldPositionForSlot(slot: number, map: { columns: number; rows: number; tileWidth: number; tileHeight: number }) {
+  const col = 2 + (slot % Math.max(1, map.columns - 4));
+  const row = 3 + Math.floor(slot / Math.max(1, map.columns - 4)) % Math.max(1, map.rows - 4);
+  return {
+    x: (col - row) * (map.tileWidth / 2),
+    y: (col + row) * (map.tileHeight / 2) - 10,
+  };
+}
+
 export function projectWorldReadModel(office: CustomerOffice): WorldReadModel {
   const employees = office.employees.map((employee, index) => ({
     id: employee.id,
