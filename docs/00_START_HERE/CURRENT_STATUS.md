@@ -642,3 +642,19 @@ The technical W10 evidence gate is complete. Controlled live-provider/customer v
 - W10 technical customer-outcome/revenue-event mechanics are real-stack verified using deterministic `contract-test`; real customer qualification, customer acceptance and realized external revenue remain unverified.
 - External production/live-provider/customer work remains intentionally deferred to the final external-validation phase.
 - The next engineering pass is therefore limited to evidence reconciliation, release-candidate preparation, and regression verification. No new feature slice is selected from this reconciliation alone. Identity/provenance and retry/resume/recovery audits found no new confirmed engineering defect.
+
+
+## 2026-10-08 AI Company World product direction
+
+A canonical product/gameplay specification has been added at docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md.
+
+The target experience is dual-mode:
+
+- Management Mode: conventional SaaS operations and governance.
+- World Mode: explorable isometric/2.5D AI Company HQ driven by authoritative platform state.
+
+The World layer is explicitly not a second execution engine or game economy. It presents real Employee/Agent, WorkItem, Run, Workflow, Approval, Customer, Commerce, Usage and Billing state. Desktop and mobile share the World Engine and differ only in input/presentation adapters.
+
+Current W12 Virtual Office remains a read-only presentation foundation. Interactive World Mode is not yet claimed as implemented or release-certified.
+
+For current execution, this product track is local-first; external production remains a separate, intentionally open boundary.
