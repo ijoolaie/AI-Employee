@@ -658,3 +658,18 @@ The World layer is explicitly not a second execution engine or game economy. It 
 Current W12 Virtual Office remains a read-only presentation foundation. Interactive World Mode is not yet claimed as implemented or release-certified.
 
 For current execution, this product track is local-first; external production remains a separate, intentionally open boundary.
+
+## 2026-10-08 AI Company World engineering track
+
+The local-first AI Company World track has been implemented through F7 on the engineering branch `feat/f2-world-authoritative-state`.
+
+- F0: dual-mode shell and `/world`.
+- F1: isometric world renderer foundation, camera and desktop/mobile input.
+- F2: authoritative workforce projection from the existing tenant-scoped office read model.
+- F3: employee interaction and management bridge.
+- F4: recorded ROI/outcome projection.
+- F5: authoritative HQ tier/capacity progression.
+- F6: live state refresh from existing backend read models.
+- F7: responsive, accessible presentation polish and separation of rendering/input/state/presentation concerns.
+
+This work is post-v1.4.17 engineering evidence and does not inherit the immutable v1.4.17 certification. The exact validation boundary is recorded in `docs/current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md`.
