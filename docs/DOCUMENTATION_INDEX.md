@@ -26,6 +26,8 @@ This is the top-level map for current project documentation.
 | Code ↔ documentation traceability | `current/CODE_DOCUMENTATION_TRACEABILITY.md` |
 | Canonical vocabulary | `current/CANONICAL_VOCABULARY.md` |
 
+| AI Company World F0–F7 implementation | `current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md` |
+
 ## 3. Agent / workforce architecture
 
 - `blueprint/V1.5_AGENTIC_OPERATING_MODEL.md` — Agentic Operating Model baseline.
