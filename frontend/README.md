@@ -124,13 +124,29 @@ The Run detail page now includes an execution trace assembled by the backend fro
 - The page consumes `GET /api/v1/usage/summary` and reports AI call count, tokens, recorded cost, average latency and provider/model breakdown.
 - Usage is reporting-only in this release. Quotas, invoicing and billing enforcement remain separate planned capabilities.
 
+
+
+## AI Company World / Dual-Mode Frontend
+
+The frontend direction is now:
+
+- Management Mode: the operational SaaS workspace remains the primary management surface.
+- World Mode: an explorable isometric/2.5D company headquarters where departments and AI Employees reflect real backend state.
+- Desktop: keyboard/mouse movement and camera interaction.
+- Mobile: touch/virtual-joystick interaction using the same World Engine and backend state.
+
+World Mode must not introduce a second business/economy state or fake activity. It is a visual/interaction projection of governed Employee/Agent, WorkItem, Run, Workflow, Customer, Commerce, Usage and Billing state.
+
+Canonical specification: docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md.
+
+This is a design/implementation target, not a claim that interactive World Mode is already complete.
+
 ## Sales-readiness UX
 The customer workspace now includes `/onboarding`, `/products`, `/integrations`, and `/inbox`. These are the product foundations for onboarding a business, supplying live product context to AI Employees, connecting commerce systems, and handing customer conversations between AI and humans.
 
 ## RC3 customer operations
 
 The tenant frontend now includes Customers (CRM), WhatsApp as a customer channel option, and a full Unified Inbox transcript with human takeover and human replies. New customer-facing capabilities must be represented in navigation, the relevant dashboard/workspace, onboarding and documentation before release acceptance.
-
 
 ## AI Company World
 
