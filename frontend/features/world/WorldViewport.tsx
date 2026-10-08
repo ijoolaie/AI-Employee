@@ -126,10 +126,12 @@ export function WorldViewport({
   employees,
   selectedEmployeeId,
   onEmployeeSelect,
+  onMapToggle: handleMapToggle,
 }: {
   employees: WorldEmployee[];
   selectedEmployeeId: string | null;
   onEmployeeSelect: (employeeId: string | null) => void;
+  onMapToggle: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
