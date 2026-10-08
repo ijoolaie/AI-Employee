@@ -1,9 +1,9 @@
 # Current Priorities
 
-**Reconciled:** 2026-10-07
+**Reconciled:** 2026-10-08
 **Current release:** `v1.4.17`
 **Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
-**Current main head:** mutable — resolve directly from Git metadata; the latest application-code merge is PR #955 at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; subsequent commits are documentation reconciliation only and are **NOT release-certified**.
+**Current main head:** `ceefce8f43dd2479972f3c0c1629d72ebdef74e5` at the time of this reconciliation. This is post-release engineering work and is **NOT release-certified**.
 **Production Certification:** v1.4.17 exact-SHA Run `37625345534` / Job `112805570856` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
 **Current status:** v1.4.17 exact-SHA certified and published / external gates OPEN
@@ -180,7 +180,7 @@ The project remains local-first for this work. External production is intentiona
 
 ## P4 — AI Company World F0-F7 local product track
 
-**Status on engineering branch `feat/f2-world-authoritative-state`: IMPLEMENTED through F7; final merge remains gated by exact-SHA CI and local real-stack validation.**
+**Status on main:** F0-F7 are merged by PR #963 at `ceefce8f43dd2479972f3c0c1629d72ebdef74e5`. This is engineering evidence, not a new production certification.
 
 1. **DONE:** F0 dual-mode shell and `/world` route.
 2. **DONE:** F1 isometric renderer foundation, camera, desktop/mobile input, pinch zoom and camera controls.
@@ -190,7 +190,8 @@ The project remains local-first for this work. External production is intentiona
 6. **DONE:** F5 authoritative HQ tier/capacity progression presentation.
 7. **DONE:** F6 live state refresh and source-freshness visibility.
 8. **DONE:** F7 responsive/accessibility/presentation polish and component-boundary refactor.
-9. **OPEN:** Exact-SHA CI, frontend build/type/lint, Playwright World smoke, and local real-stack validation must pass before merge.
-10. **OPEN:** PixiJS dependency integration remains a renderer-specific follow-up because the repository uses locked `npm ci`; it must be introduced only with a regenerated and validated lockfile, not by hand-editing dependency metadata.
+9. **DONE:** PR #963 passed its required CI/security/infrastructure checks before merge.
+10. **OPEN:** A local real-stack validation should be rerun for any future runtime-affecting World change; it is not retroactively implied by the merge.
+11. **OPEN:** PixiJS dependency integration remains a renderer-specific follow-up. It must be introduced only with a regenerated and validated lockfile, not by hand-editing dependency metadata.
 
 Canonical implementation record: `docs/current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md`.
