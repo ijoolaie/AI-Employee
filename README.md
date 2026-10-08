@@ -110,6 +110,21 @@ CI, production-like infrastructure and simulated providers are engineering/relea
 
 The repository includes an Apache-2.0 `LICENSE` file.
 
+
+
+## AI Company World & Dual-Mode Frontend
+
+The product direction is now explicitly two modes over one authoritative platform state:
+
+- Management Mode — conventional SaaS operations, analytics, workflows, billing, governance and configuration.
+- World Mode — an explorable AI Company HQ with departments, governed AI Employees, interactions, movement and business-state presentation.
+
+The visual/gameplay direction is inspired by mobile isometric office/tycoon interaction patterns, but the product is not being converted into a conventional game. Business outcomes, permissions, approvals, usage and revenue remain governed platform state.
+
+Canonical product/gameplay specification: docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md.
+
+Current W12 Virtual Office is a read-only presentation foundation. Interactive World Mode is a future implementation slice and is not claimed as implemented or release-certified until exact code/evidence boundaries are established.
+
 ## Virtual AI Company Headquarters
 
 The roadmap is expanding beyond a traditional AI dashboard toward a visual AI Company Headquarters. The Presentation Layer can show the CEO office, employee departments, project rooms, meetings, real employee work states and company growth while the governed Workforce Runtime remains the single source of truth.
