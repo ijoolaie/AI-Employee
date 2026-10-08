@@ -110,12 +110,3 @@ export function WorldShell() {
                   <p className="mt-1 text-lg font-semibold">{world.progression.tier}</p>
                   <p className="mt-1 text-xs text-slate-400">{world.progression.completionPercent}% capacity utilization index</p>
                 </div>
-              </div>
-            </>
-          )}
-        </section>
-      </div>
-    </main>
-  );
-}
-\n\nfunction Outcome({ label, value }: { label: string; value: number }) {\n  return <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3"><p className="text-[10px] uppercase tracking-wide text-slate-500">{label}</p><p className="mt-1 text-lg font-semibold text-white">{typeof value === "number" ? value.toLocaleString() : "—"}</p></div>;\n}\n
