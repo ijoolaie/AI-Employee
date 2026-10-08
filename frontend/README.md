@@ -130,3 +130,21 @@ The customer workspace now includes `/onboarding`, `/products`, `/integrations`,
 ## RC3 customer operations
 
 The tenant frontend now includes Customers (CRM), WhatsApp as a customer channel option, and a full Unified Inbox transcript with human takeover and human replies. New customer-facing capabilities must be represented in navigation, the relevant dashboard/workspace, onboarding and documentation before release acceptance.
+
+
+## AI Company World
+
+World Mode is the explorable presentation layer over the existing governed customer application.
+
+- Route: `/world`
+- Read model: `getCustomerOffice()`
+- Outcome model: `getROIAnalytics()`
+- World projection: `features/world/WorldState.ts`
+- Camera/input: `features/world/WorldCamera.ts`, `WorldInput.ts`
+- Rendering surface: `WorldViewport.tsx`
+- Employee bridge: `WorldEmployeePanel.tsx`
+- Progression: `WorldProgressionPanel.tsx`
+- Outcome loop: `WorldOutcomePanel.tsx`
+- Live state: `WorldStatusBar.tsx`
+
+World Mode must not become a second source of business truth or AI execution path. See `docs/current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md` for the phase contract and anti-spaghetti rules.
