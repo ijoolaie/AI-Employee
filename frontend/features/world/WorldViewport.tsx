@@ -18,6 +18,10 @@ export function WorldViewport({
   onMapToggle: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const employeesRef = useRef(employees);
+  const selectedEmployeeIdRef = useRef(selectedEmployeeId);
+  employeesRef.current = employees;
+  selectedEmployeeIdRef.current = selectedEmployeeId;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -60,7 +64,7 @@ export function WorldViewport({
 
     const onTap = (event: Event) => {
       const { x, y } = (event as CustomEvent<{ x: number; y: number }>).detail;
-      const hit = employees.find((employee) => {
+      const hit = employeesRef.current.find((employee) => {
         const point = screenPoint(worldPositionForSlot(employee.slot, DEFAULT_MAP), camera, host.clientWidth, host.clientHeight);
         return Math.hypot(point.x - x, point.y - y) <= Math.max(20, 22 * camera.getState().zoom);
       });
@@ -90,7 +94,7 @@ export function WorldViewport({
       }
 
       drawMap(context, host.clientWidth, host.clientHeight, camera, DEFAULT_MAP);
-      drawEmployees(context, employees, camera, host.clientWidth, host.clientHeight, DEFAULT_MAP, selectedEmployeeId);
+      drawEmployees(context, employeesRef.current, camera, host.clientWidth, host.clientHeight, DEFAULT_MAP, selectedEmployeeIdRef.current);
       frame = requestAnimationFrame(tick);
     };
 
@@ -107,7 +111,7 @@ export function WorldViewport({
       host.removeEventListener("world:mobilemove", onMobileMove);
       input.destroy();
     };
-  }, [employees, selectedEmployeeId, onEmployeeSelect, handleMapToggle]);
+  }, [onEmployeeSelect, handleMapToggle]);
 
   return (
     <div className="relative h-[min(72vh,720px)] min-h-[420px] w-full overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
