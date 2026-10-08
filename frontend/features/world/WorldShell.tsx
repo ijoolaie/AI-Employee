@@ -1,31 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, LayoutDashboard, Sparkles } from "lucide-react";
 import { getCustomerOffice, getErrorMessage, getROIAnalytics } from "@/lib/api";
-import { projectWorldReadModel } from "./WorldState";
 import { MobileInputAdapter } from "./MobileInputAdapter";
+import { WorldEmployeePanel } from "./WorldEmployeePanel";
+import { WorldOutcomePanel } from "./WorldOutcomePanel";
+import { WorldProgressionPanel } from "./WorldProgressionPanel";
+import { projectWorldReadModel } from "./WorldState";
 import { WorldViewport } from "./WorldViewport";
 
 export function WorldShell() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
-  const roiQuery = useQuery({
-    queryKey: ["world-roi"],
-    queryFn: getROIAnalytics,
-    refetchInterval: 15000,
-    staleTime: 5000,
-  });
-  const query = useQuery({
-    queryKey: ["customer-world-read-model"],
-    queryFn: getCustomerOffice,
-    refetchInterval: 5000,
-    staleTime: 2000,
-  });
-  const world = useMemo(() => (query.data ? projectWorldReadModel(query.data) : null), [query.data]);
+  const officeQuery = useQuery({ queryKey: ["customer-world-read-model"], queryFn: getCustomerOffice, refetchInterval: 5000, staleTime: 2000 });
+  const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });
+  const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const selectedEmployee = world?.employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedEmployeeId(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -41,116 +42,34 @@ export function WorldShell() {
             </div>
           </div>
           <Link href="/dashboard" className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800">
-            <LayoutDashboard className="h-4 w-4" />
-            Management Mode
+            <LayoutDashboard className="h-4 w-4" /> Management Mode
           </Link>
         </header>
 
         <section className="flex flex-1 flex-col gap-5 py-5">
           <div>
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/5 px-3 py-1 text-xs text-cyan-200">
-              <Sparkles className="h-3.5 w-3.5" />
-              F2 · Authoritative HQ projection
+              <Sparkles className="h-3.5 w-3.5" /> AI Company World
             </div>
             <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Your real workforce, inside the HQ.</h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
-              Employees and runtime states are projected from the existing tenant-scoped office read model. The World layer does not create or mutate business state.
+              World Mode is a read-only presentation layer over governed business data. It never creates employees, revenue, tasks, approvals, or AI execution state.
             </p>
           </div>
 
-          {query.isLoading && (
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-sm text-slate-400">Loading the authoritative HQ state…</div>
-          )}
-
-          {query.error && (
-            <div role="alert" className="rounded-2xl border border-red-500/30 bg-red-950/30 p-5 text-sm text-red-200">
-              <p>{getErrorMessage(query.error)}</p>
-              <button type="button" onClick={() => void query.refetch()} className="mt-3 rounded-lg border border-red-400/30 px-3 py-2 text-xs hover:bg-red-900/30">Retry</button>
-            </div>
-          )}
+          {officeQuery.isLoading && <LoadingState />}
+          {officeQuery.error && <ErrorState message={getErrorMessage(officeQuery.error)} onRetry={() => void officeQuery.refetch()} />}
 
           {world && (
             <>
               <div className="relative">
-                <WorldViewport
-                  employees={world.employees}
-                  selectedEmployeeId={selectedEmployeeId}
-                  onEmployeeSelect={onEmployeeSelect}
-                />
+                <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} />
                 <MobileInputAdapter />
-
-                {selectedEmployee && (
-                  <aside
-                    className="absolute bottom-4 right-4 w-[min(360px,calc(100%-2rem))] rounded-2xl border border-cyan-400/20 bg-slate-950/95 p-4 shadow-2xl backdrop-blur"
-                    aria-label="Selected employee"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-white">{selectedEmployee.name}</p>
-                        <p className="mt-1 text-xs text-slate-400">{selectedEmployee.kind} · {selectedEmployee.state.replaceAll("_", " ")}</p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedEmployeeId(null)}
-                        className="rounded-lg px-2 py-1 text-xs text-slate-400 hover:bg-white/10 hover:text-white"
-                        aria-label="Close employee panel"
-                      >
-                        Esc
-                      </button>
-                    </div>
-
-                    {selectedEmployee.currentWorkItem && (
-                      <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-                        <p className="text-[10px] uppercase tracking-wide text-slate-500">Current work</p>
-                        <p className="mt-1 text-sm text-slate-200">{selectedEmployee.currentWorkItem.title}</p>
-                        <p className="mt-1 text-xs text-slate-500">{selectedEmployee.currentWorkItem.status}</p>
-                      </div>
-                    )}
-
-                    <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                      <div className="rounded-lg border border-white/10 p-2">
-                        <span className="text-slate-500">Latest run</span>
-                        <p className="mt-1 text-slate-200">{selectedEmployee.latestRunStatus ?? "None"}</p>
-                      </div>
-                      <div className="rounded-lg border border-white/10 p-2">
-                        <span className="text-slate-500">Employee ID</span>
-                        <p className="mt-1 truncate text-slate-200">{selectedEmployee.id}</p>
-                      </div>
-                    </div>
-
-                    <Link href={`/employees/${selectedEmployee.id}`} className="mt-3 block rounded-lg bg-white px-3 py-2 text-center text-xs font-semibold text-slate-950 hover:bg-slate-100">
-                      Open Employee Management
-                    </Link>
-                  </aside>
-                )}
+                {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <StatCard label="Workforce" value={`${world.progression.activeEmployees}/${world.progression.employeeLimit}`} detail="active employees against plan capacity" />
-                <StatCard label="Workflow capacity" value={`${world.progression.activeWorkflows}/${world.progression.workflowLimit}`} detail="authoritative active workflows" />
-                <StatCard label="HQ tier" value={world.progression.tier} detail={`${world.progression.completionPercent}% capacity utilization index`} />
-              </div>
-
-              <div className="rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.03] p-5">
-                <div className="flex flex-wrap items-end justify-between gap-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-emerald-300">Business outcome loop</p>
-                    <h3 className="mt-1 text-lg font-semibold">World activity is tied to recorded business evidence.</h3>
-                  </div>
-                  <Link href="/analytics" className="text-xs font-medium text-emerald-200 hover:text-white">Open Analytics →</Link>
-                </div>
-
-                {roiQuery.data ? (
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <Outcome label="Conversations" value={roiQuery.data.conversations} />
-                    <Outcome label="AI resolved" value={roiQuery.data.ai_resolved} />
-                    <Outcome label="Orders" value={roiQuery.data.orders} />
-                    <Outcome label="Influenced revenue" value={roiQuery.data.influenced_revenue} />
-                  </div>
-                ) : (
-                  <p className="mt-3 text-sm text-slate-400">No outcome data is currently available. The World does not invent revenue or productivity values.</p>
-                )}
-              </div>
+              <WorldProgressionPanel progression={world.progression} />
+              <WorldOutcomePanel data={roiQuery.data} />
             </>
           )}
         </section>
@@ -159,21 +78,15 @@ export function WorldShell() {
   );
 }
 
-function StatCard({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4">
-      <p className="text-xs uppercase tracking-wider text-slate-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
-      <p className="mt-1 text-xs text-slate-400">{detail}</p>
-    </div>
-  );
+function LoadingState() {
+  return <div role="status" className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-sm text-slate-400">Loading the authoritative HQ state…</div>;
 }
 
-function Outcome({ label, value }: { label: string; value: number }) {
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
-      <p className="text-[10px] uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-white">{value.toLocaleString()}</p>
+    <div role="alert" className="rounded-2xl border border-red-500/30 bg-red-950/30 p-5 text-sm text-red-200">
+      <p>{message}</p>
+      <button type="button" onClick={onRetry} className="mt-3 rounded-lg border border-red-400/30 px-3 py-2 text-xs hover:bg-red-900/30">Retry</button>
     </div>
   );
 }
