@@ -309,3 +309,19 @@ jobs:
       - name: Production build
         working-directory: frontend
         run: npm run build
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install chromium
+      - name: Start frontend for World E2E
+        working-directory: frontend
+        run: |
+          nohup npm run start -- --hostname 127.0.0.1 --port 3000 >/tmp/frontend-world-e2e.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:3000/login >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/frontend-world-e2e.log
+          exit 1
+      - name: World Mode Playwright smoke
+        working-directory: frontend
+        run: npx playwright test e2e/world-mode.spec.ts
