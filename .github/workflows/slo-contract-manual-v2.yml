@@ -24,7 +24,7 @@ jobs:
       - name: Hash evidence
         run: sha256sum slo-error-budget-evidence.json > slo-error-budget-evidence.sha256
       - name: Upload evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: slo-contract-manual-v2-evidence
           path: |

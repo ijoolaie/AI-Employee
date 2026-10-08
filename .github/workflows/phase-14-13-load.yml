@@ -58,7 +58,7 @@ jobs:
           date -u +%Y-%m-%dT%H:%M:%SZ > phase-14-13-evidence/timestamp.txt
           printf 'scope=synthetic-bounded-ci-evidence\nexternal_certification=not_claimed\n' >> phase-14-13-evidence/identity.env
       - name: Upload load evidence artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: phase-14-13-load-capacity-${{ github.sha }}
           path: phase-14-13-evidence/

@@ -104,7 +104,7 @@ jobs:
         run: python scripts/validate_edition_packages.py "dist/editions/${{ steps.release.outputs.version }}"
 
       - name: Upload base runtime package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ai-employee-${{ steps.release.outputs.version }}-runtime
           path: |
@@ -115,7 +115,7 @@ jobs:
           retention-days: 90
 
       - name: Upload four edition packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ai-employee-${{ steps.release.outputs.version }}-editions
           path: dist/editions/${{ steps.release.outputs.version }}/

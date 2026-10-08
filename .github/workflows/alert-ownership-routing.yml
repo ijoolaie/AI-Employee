@@ -25,7 +25,7 @@ jobs:
       - name: Hash evidence
         run: sha256sum artifacts/alerting/alert-ownership-routing-evidence.json
       - name: Upload engineering evidence
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v6
         with:
           name: alert-ownership-routing-evidence
           path: artifacts/alerting/alert-ownership-routing-evidence.json

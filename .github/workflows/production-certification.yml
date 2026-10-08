@@ -214,7 +214,7 @@ jobs:
           cat certification-evidence.json.sha256
       - name: Upload immutable certification evidence
         if: ${{ success() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: production-certification-evidence-${{ env.RELEASE_VERSION }}-${{ env.TARGET_SHA }}
           path: |

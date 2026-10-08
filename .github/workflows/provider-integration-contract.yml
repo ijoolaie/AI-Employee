@@ -30,7 +30,7 @@ jobs:
       - name: Hash evidence
         run: sha256sum provider-integration-evidence.json
       - name: Upload contract evidence
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v6
         with:
           name: provider-integration-contract-evidence
           path: provider-integration-evidence.json

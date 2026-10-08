@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload recovery evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ha-failure-recovery-evidence
           path: artifacts/ha/
