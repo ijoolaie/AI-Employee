@@ -62,15 +62,47 @@ test("World Mode renders authoritative employee projection and management bridge
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, data: { conversations: 4, ai_resolved: 3, human_handoffs: 1, runs: 2, successful_runs: 2, orders: 1, revenue: 100, influenced_orders: 1, influenced_revenue: 100, ai_resolution_rate: 75, handoff_rate: 25 } }),
+      body: JSON.stringify({
+        success: true,
+        data: {
+          conversations: 4,
+          ai_resolved: 3,
+          human_handoffs: 1,
+          runs: 2,
+          successful_runs: 2,
+          orders: 1,
+          revenue: 100,
+          influenced_orders: 1,
+          influenced_revenue: 100,
+          ai_resolution_rate: 75,
+          handoff_rate: 25,
+        },
+      }),
     });
   });
 
   await page.goto("/world");
   await expect(page.getByRole("heading", { name: "World Mode" })).toBeVisible();
-  await expect(page.getByText("Sales AI")).toBeVisible();
+  await expect(page.getByRole("status")).toBeVisible();
   await expect(page.getByText("WORKING")).toBeVisible();
-  await expect(page.getByText("Qualify lead")).toBeVisible();
   await expect(page.getByRole("link", { name: /Management Mode/i })).toHaveAttribute("href", "/dashboard");
+
+  const canvas = page.getByLabel("AI Company World viewport");
+  await expect(canvas).toBeVisible();
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("World canvas has no bounding box");
+
+  // Slot 0 is deterministically projected at world (-36, 80) from the centered camera.
+  await canvas.click({
+    position: {
+      x: box.width / 2 - 36,
+      y: box.height / 2 + 80,
+    },
+  });
+
+  await expect(page.getByRole("complementary", { name: "Selected employee" })).toBeVisible();
+  await expect(page.getByText("Sales AI")).toBeVisible();
+  await expect(page.getByText("Qualify lead")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Employee Management" })).toHaveAttribute("href", "/employees/employee-e2e");
   await expect(page.getByText("Business outcome loop")).toBeVisible();
 });
