@@ -166,7 +166,9 @@ export function WorldViewport({
       camera.zoomBy(delta);
     };
 
-    const onMapToggle = () => handleMapToggle();\n\n    const onMobileMove = (event: Event) => {
+    const onMapToggle = () => handleMapToggle();
+
+    const onMobileMove = (event: Event) => {
       mobileMove = (event as CustomEvent<{ x: number; y: number }>).detail;
     };
 
@@ -181,7 +183,8 @@ export function WorldViewport({
 
     canvas.addEventListener("world:pan", onPan);
     canvas.addEventListener("world:zoom", onZoom);
-    canvas.addEventListener("world:tap", onTap);\n    canvas.addEventListener("world:map-toggle", onMapToggle);
+    canvas.addEventListener("world:tap", onTap);
+    canvas.addEventListener("world:map-toggle", onMapToggle);
     host.addEventListener("world:mobilemove", onMobileMove);
 
     const observer = new ResizeObserver(resize);
@@ -211,7 +214,8 @@ export function WorldViewport({
       observer.disconnect();
       canvas.removeEventListener("world:pan", onPan);
       canvas.removeEventListener("world:zoom", onZoom);
-      canvas.removeEventListener("world:tap", onTap);\n      canvas.removeEventListener("world:map-toggle", onMapToggle);
+      canvas.removeEventListener("world:tap", onTap);
+      canvas.removeEventListener("world:map-toggle", onMapToggle);
       host.removeEventListener("world:mobilemove", onMobileMove);
       input.destroy();
     };
