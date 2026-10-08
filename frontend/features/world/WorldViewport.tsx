@@ -164,7 +164,7 @@ export function WorldViewport({
       camera.zoomBy(delta);
     };
 
-    const onMapToggle = () => onMapToggle();\n\n    const onMobileMove = (event: Event) => {
+    const onMapToggle = () => handleMapToggle();\n\n    const onMobileMove = (event: Event) => {
       mobileMove = (event as CustomEvent<{ x: number; y: number }>).detail;
     };
 
