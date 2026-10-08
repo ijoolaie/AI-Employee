@@ -178,7 +178,7 @@ Before merge, run the existing frontend validation sequence on the exact branch 
 2. governance contract tests;
 3. World unit tests;
 4. lint/typecheck/build;
-5. Playwright World shell checks;
+5. Playwright World shell checks (the CI frontend job now runs the dedicated `e2e/world-mode.spec.ts` smoke);
 6. local real-stack smoke with the existing LM Studio setup;
 7. verify Management Mode remains unchanged;
 8. verify World employee state changes follow the existing office API;
