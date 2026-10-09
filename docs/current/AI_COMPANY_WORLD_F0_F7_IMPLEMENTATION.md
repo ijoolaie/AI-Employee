@@ -190,3 +190,17 @@ For any future change to this track, run the existing frontend validation sequen
 ## Known deliberate limitation
 
 The current backend office contract does not expose authoritative employee department/location coordinates. Therefore the World uses deterministic presentation zones and slots without claiming that those are real employee locations. A future backend contract may add department/location metadata; the World projection layer is intentionally isolated so that enhancement can be made without rewriting rendering or interaction code.
+
+
+## Multi-touch pointer lifecycle follow-up — 2026-10-09
+
+**Change under review:** branch `fix/world-multitouch-pointer-lifecycle`.
+
+Code inspection found two related input-lifecycle edge cases in `WorldInput`:
+
+- Only the first active pointer was captured, so a second touch could stop being tracked when it moved outside the canvas.
+- If the first pointer was released during a two-pointer gesture, the remaining pointer could be misclassified as a single tap.
+
+The follow-up captures each active pointer and ties tap recognition to the original single pointer ID. Regression tests cover both a two-pointer gesture ending without a tap and a normal single-pointer tap.
+
+**Validation status:** tests and exact-head CI are pending review; no local test execution or passing CI is claimed in this record. Do not merge until the frontend unit tests, lint/typecheck/build, and relevant World browser smoke pass on the exact PR head. This is a post-release engineering change and does not extend the `v1.4.17` certification.
