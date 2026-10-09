@@ -61,4 +61,31 @@ describe("WorldInput pointer lifecycle", () => {
 
     expect(taps).toEqual([{ x: 14, y: 22 }]);
   });
+
+  it("does not emit a tap when a pointer gesture is cancelled", () => {
+    const target = new InputTarget();
+    const taps: Array<{ x: number; y: number }> = [];
+    target.addEventListener("world:tap", (event) => {
+      taps.push((event as CustomEvent<{ x: number; y: number }>).detail);
+    });
+    input = new WorldInput(target as unknown as HTMLElement);
+
+    target.dispatchEvent(new PointerInputEvent("pointerdown", 3, 14, 22, 14, 22));
+    target.dispatchEvent(new PointerInputEvent("pointercancel", 3, 14, 22, 14, 22));
+
+    expect(taps).toEqual([]);
+  });
+
+  it("clears held movement keys when the browser window loses focus", () => {
+    const target = new InputTarget();
+    input = new WorldInput(target as unknown as HTMLElement);
+
+    target.dispatchEvent(new KeyboardEvent("keydown", { key: "w" }));
+    expect(input.consume().moveY).toBe(-1);
+
+    window.dispatchEvent(new Event("blur"));
+
+    expect(input.consume()).toEqual({ moveX: 0, moveY: 0, zoomDelta: 0 });
+  });
+
 });
