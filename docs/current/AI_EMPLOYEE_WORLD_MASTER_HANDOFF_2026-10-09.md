@@ -5,8 +5,8 @@
 **Working branch:** `feat/world-3d-office`  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
 **Base:** `main`  
-**Last workflow-inspected head:** `c18e022821235f65a9d2c8126d82e0c1ae911d3c`  
-**Later documentation-only commits:** `bfe78345fcc40967aa45c307682bcf9a57bb740c` (handoff reconciliation), then `544c3b58168d7c23f70ce46ec46ea8be9a856b28` (changelog reconciliation).  
+**Latest PR head inspected:** `3b79869a3a5be2426a043f48fbfcba2b2256a513`  
+**Validation runs:** CI `37954944334`; CodeQL `37954944282`; HA recovery `37954944382`; ephemeral DAST `37954944237`; production infrastructure `37954944352`.  
 **Previous implementation/docs head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
 **Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
 
@@ -57,27 +57,28 @@ Primary implementation:
 | `5efbf2ceb2fd6a7e6684446eb5e6e80119805b91` | Make blur listener compatible with non-browser test environment |
 | `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Previous docs head; its workflow results are historical for the current branch |
 
-The branch head advanced with documentation-only follow-ups after these checks were inspected. The workflow states below belong to `c18e022821235f65a9d2c8126d82e0c1ae911d3c`, not to a later documentation commit. Always distinguish the SHA actually tested from the latest PR head.
+The validation evidence below was retrieved for the exact PR head `3b79869a3a5be2426a043f48fbfcba2b2256a513`. All five workflow runs completed successfully on that SHA. Historical results on earlier commits are retained only as history.
 
-## 4. Validation evidence — current head
+## 4. Validation evidence — latest inspected PR head
 
-**Last workflow-inspected code head:** `c18e022821235f65a9d2c8126d82e0c1ae911d3c`  
-**Latest branch head observed after documentation updates:** `544c3b58168d7c23f70ce46ec46ea8be9a856b28`. The workflow wrapper returned no PR-triggered runs for this SHA at inspection time. Re-query the actual PR head and its checks before claiming the gate is complete.  
-**Status captured for c18e022:** workflow checks had not yet completed at the last inspection. Do not treat these results as passes.
+**Exact tested PR head:** `3b79869a3a5be2426a043f48fbfcba2b2256a513`  
+**Captured:** 2026-10-09. All five required workflow runs below completed with `success` and are associated with this exact SHA.
 
 | Check | Observed state | Evidence |
 |---|---|---|
-| CI | Backend job in progress; frontend job succeeded | [Run 37954560646](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560646) |
-| CodeQL | Python analysis in progress; JavaScript/TypeScript analysis succeeded | [Run 37954560810](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560810) |
-| HA Failure Recovery Validation | In progress | [Run 37954560624](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560624) |
-| Ephemeral DAST Validation | In progress | [Run 37954560894](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560894) |
-| Production Infrastructure Validation | In progress | [Run 37954560853](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560853) |
+| CI — frontend and backend | Success. Frontend Lint, Contract tests, Unit tests, Production build, Playwright Chromium install and World Mode Playwright smoke all succeeded; backend compile, Ruff, migration gates and backend tests succeeded. | [Run 37954944334](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944334) |
+| CodeQL — JavaScript/TypeScript and Python | Both analysis jobs succeeded. | [Run 37954944282](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944282) |
+| HA Failure Recovery Validation | Recovery rehearsal, Compose validation and image build succeeded. | [Run 37954944382](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944382) |
+| Ephemeral DAST Validation | OWASP ZAP baseline scan and ephemeral stack lifecycle succeeded. | [Run 37954944237](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944237) |
+| Production Infrastructure Validation | Compose contract, production image build, service lifecycle, database migration gate, backup and isolated restore succeeded. | [Run 37954944352](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944352) |
+
+**Interpretation:** automated CI/security/infrastructure gates listed above are green on the inspected SHA. This is not a claim of manual cross-device visual QA or production release certification. If the PR head changes, re-check the new SHA before treating these results as current.
 
 ### Known prior CI failure and correction
 
 An earlier CI run on `4107c4d75cbfc0313c71b6d5165423256197a0c7` failed in the blur regression test with `ReferenceError: KeyboardEvent is not defined`; 37/38 frontend unit tests passed, while lint, contract tests and backend validation passed. The test was revised to dispatch a plain `Event("keydown")` with a defined `key` property. The current test also verifies that pressing `w` yields `moveY = -1` and that window blur resets movement to zero.
 
-This is a plausible test-environment correction, not proof of success by itself. The latest CI run on the current head must finish successfully before the issue is marked resolved.
+The correction is now covered by a successful CI run on `3b79869a3a5be2426a043f48fbfcba2b2256a513`, including the frontend unit-test and World Mode Playwright smoke steps. The earlier failure remains historical context.
 
 ### Validation policy
 
@@ -88,13 +89,11 @@ This is a plausible test-environment correction, not proof of success by itself.
 
 ## 5. Immediate next actions
 
-1. Re-check the five workflow runs listed above and confirm their commit SHA matches the current PR head.
-2. If any check fails, inspect the failing job logs, fix the root cause, add or preserve regression coverage, and re-run all relevant checks on the new head.
-3. Confirm CI explicitly includes lint, unit tests, production build, and the Playwright World Mode E2E contract; report each result only if the run exposes evidence for it.
-4. Perform/record a real browser smoke test for pinch zoom, pointer cancellation, keyboard movement, focus loss, employee selection, and Escape.
-5. Review the rendered scene at desktop and narrow viewport sizes for legibility, selection accuracy and visual hierarchy.
-6. Keep this handoff, `CHANGELOG.md`, `DOCUMENTATION_INDEX.md`, and the PR body synchronized with the current head and observed evidence.
-7. Keep PR #983 open and Draft. Do not merge or mark ready for review without explicit authorization.
+1. Re-check the five workflow runs if the PR head changes; current evidence is green on `3b79869a3a5be2426a043f48fbfcba2b2256a513`.
+2. Perform/record manual browser smoke tests for pinch zoom, pointer cancellation, keyboard movement, focus loss, employee selection, and Escape.
+3. Review the rendered scene at desktop and narrow viewport sizes for legibility, selection accuracy and visual hierarchy.
+4. Keep this handoff, `CHANGELOG.md`, `DOCUMENTATION_INDEX.md`, and the PR body synchronized with the current head and observed evidence.
+5. Keep PR #983 open and Draft. Do not merge or mark ready for review without explicit authorization.
 
 ## 6. Scope / non-goals
 
