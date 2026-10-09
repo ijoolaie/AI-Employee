@@ -8,7 +8,7 @@
 **GitHub Release:** `v1.4.17` — PUBLISHED
 **Production Certification:** Run `37625345534` — PASS
 **Certification job:** `112805570856` — PASS
-**Current engineering head:** `main` — `ceefce8f43dd2479972f3c0c1629d72ebdef74e5` at this reconciliation
+**Current engineering head:** `main` — `8663912b9f6b1ed05cfd118f270b51e26387f66a` (includes PR #966; post-release engineering only, NOT release-certified)
 **Current status:** v1.4.17 is the latest published exact-SHA certified release; external production and customer/commercial gates remain OPEN
 
 ## Release boundary
