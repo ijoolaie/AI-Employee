@@ -5,7 +5,8 @@
 **Working branch:** `feat/world-3d-office`  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
 **Base:** `main`  
-**Current head at this handoff:** `c18e022821235f65a9d2c8126d82e0c1ae911d3c`  
+**Last workflow-inspected head:** `c18e022821235f65a9d2c8126d82e0c1ae911d3c`  
+**Later documentation-only commits:** `bfe78345fcc40967aa45c307682bcf9a57bb740c` (handoff reconciliation), then `544c3b58168d7c23f70ce46ec46ea8be9a856b28` (changelog reconciliation).  
 **Previous implementation/docs head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
 **Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
 
@@ -56,12 +57,13 @@ Primary implementation:
 | `5efbf2ceb2fd6a7e6684446eb5e6e80119805b91` | Make blur listener compatible with non-browser test environment |
 | `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Previous docs head; its workflow results are historical for the current branch |
 
-The current branch head advanced when the handoff was corrected. The handoff must always distinguish the current head from the SHA whose workflow results are being described.
+The branch head advanced with documentation-only follow-ups after these checks were inspected. The workflow states below belong to `c18e022821235f65a9d2c8126d82e0c1ae911d3c`, not to a later documentation commit. Always distinguish the SHA actually tested from the latest PR head.
 
 ## 4. Validation evidence — current head
 
-**Current head:** `c18e022821235f65a9d2c8126d82e0c1ae911d3c`  
-**Status captured:** workflow checks had not yet completed at the last inspection. Do not treat these results as passes.
+**Last workflow-inspected code head:** `c18e022821235f65a9d2c8126d82e0c1ae911d3c`  
+**Latest branch head observed after documentation updates:** `544c3b58168d7c23f70ce46ec46ea8be9a856b28`. The workflow wrapper returned no PR-triggered runs for this SHA at inspection time. Re-query the actual PR head and its checks before claiming the gate is complete.  
+**Status captured for c18e022:** workflow checks had not yet completed at the last inspection. Do not treat these results as passes.
 
 | Check | Observed state | Evidence |
 |---|---|---|
