@@ -5,9 +5,8 @@
 **Working branch:** `feat/world-3d-office`  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
 **Base:** `main`  
-**Latest fully validated implementation head:** `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`  
-**Current branch head at handoff edit:** `e8e9b8d2d4ea62653ead913a306cacadbce04e6f` (documentation-only follow-up; checks pending).  
-**Validation runs on the exact head above:** CI `37969649696`; CodeQL `37969649529`; HA recovery `37969649702`; ephemeral DAST `37969649484`; production infrastructure `37969649788`.  
+**Latest verified PR head:** `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71` (all five workflow gates passed).  
+**Validation runs on this exact SHA:** CI `37973946846`; CodeQL `37973946857`; HA recovery `37973946919`; ephemeral DAST `37973946737`; production infrastructure `37973946723`.  
 **Previous implementation/docs head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
 **Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
 
@@ -58,20 +57,20 @@ Primary implementation:
 | `5efbf2ceb2fd6a7e6684446eb5e6e80119805b91` | Make blur listener compatible with non-browser test environment |
 | `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Previous docs head; its workflow results are historical for the current branch |
 
-The validation evidence below was retrieved for exact PR head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`, the latest fully validated implementation head at the time of this update. A later documentation-only branch head exists; its checks must complete before this is considered current-head validation. Historical results on earlier commits are retained only as history.
+The validation evidence below was retrieved for exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`. All five workflow runs and every job within them completed successfully on this exact SHA. A subsequent documentation update creates a new head and therefore requires a fresh exact-head check.
 
 ## 4. Validation evidence — latest inspected PR head
 
-**Exact tested implementation head:** `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`  
+**Exact tested PR head:** `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`  
 **Captured:** 2026-10-09. All five required workflow runs and all jobs within them completed with `success` on this exact SHA.
 
 | Check | Observed state | Evidence |
 |---|---|---|
-| CI — frontend and backend | Success. Frontend Lint, Contract tests, Unit tests, Production build, Playwright Chromium install and World Mode Playwright smoke all succeeded; backend compile, Ruff, migration gates and backend tests succeeded. | [Run 37969649696](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649696) |
-| CodeQL — JavaScript/TypeScript and Python | Both analysis jobs succeeded. | [Run 37969649529](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649529) |
-| HA Failure Recovery Validation | Recovery rehearsal, Compose validation and image build succeeded. | [Run 37969649702](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649702) |
-| Ephemeral DAST Validation | OWASP ZAP baseline scan, ephemeral stack lifecycle and cleanup succeeded. | [Run 37969649484](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649484) |
-| Production Infrastructure Validation | Compose contract, production image build, service lifecycle, database migration gate, backup and isolated restore succeeded. | [Run 37969649788](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649788) |
+| CI — frontend and backend | Success. Frontend Lint, Contract tests, Unit tests, Production build, Playwright Chromium install and World Mode Playwright smoke all succeeded; backend compile, Ruff, migration gates and backend tests succeeded. | [Run 37973946846](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946846) |
+| CodeQL — JavaScript/TypeScript and Python | Both analysis jobs succeeded. | [Run 37973946857](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649529) |
+| HA Failure Recovery Validation | Recovery rehearsal, Compose validation and image build succeeded. | [Run 37973946919](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649702) |
+| Ephemeral DAST Validation | OWASP ZAP baseline scan, ephemeral stack lifecycle and cleanup succeeded. | [Run 37973946737](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649484) |
+| Production Infrastructure Validation | Compose contract, production image build, service lifecycle, database migration gate, backup and isolated restore succeeded. | [Run 37973946723](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649788) |
 
 **Interpretation:** all five automated CI/security/infrastructure gates listed above are green on the inspected SHA. This is not a claim of manual cross-device visual QA or production release certification. Any later commit requires checking the new head before treating these results as current.
 
@@ -79,11 +78,11 @@ The validation evidence below was retrieved for exact PR head `aa16cbba6c869017c
 
 An earlier CI run on `4107c4d75cbfc0313c71b6d5165423256197a0c7` failed in the blur regression test with `ReferenceError: KeyboardEvent is not defined`; 37/38 frontend unit tests passed, while lint, contract tests and backend validation passed. The test was revised to dispatch a plain `Event("keydown")` with a defined `key` property. The current test also verifies that pressing `w` yields `moveY = -1` and that window blur resets movement to zero.
 
-The correction is now covered by a successful CI run on `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`, including the frontend unit-test and World Mode Playwright smoke steps. The earlier failure remains historical context.
+The correction is now covered by a successful CI run on `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`, including the frontend unit-test and World Mode Playwright smoke steps. The earlier failure remains historical context.
 
-### Latest pointer-cancellation regression fix (validation pending)
+### Latest pointer-cancellation regression fix (validated)
 
-A code review identified a gesture edge case: if a second pointer joined a pinch and was then cancelled before the first pointer ended, the first pointer could still qualify as a tap because the single-pointer origin had not been marked as moved. The input handler now marks the gesture as non-tappable when the second pointer joins, and frontend/__tests__/world-input.test.ts adds a regression test for cancelling the second pinch pointer. This is a code-level correction; automated validation must be checked against the newest branch head after the documentation updates.
+A code review identified a gesture edge case: if a second pointer joined a pinch and was then cancelled before the first pointer ended, the first pointer could still qualify as a tap because the single-pointer origin had not been marked as moved. The input handler now marks the gesture as non-tappable when the second pointer joins, and frontend/__tests__/world-input.test.ts adds a regression test for cancelling the second pinch pointer. This correction and its regression test are included in exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`; CI, CodeQL, HA recovery, DAST, and production infrastructure validation all passed on that SHA.
 
 ### Validation policy
 
@@ -94,7 +93,7 @@ A code review identified a gesture edge case: if a second pointer joined a pinch
 
 ## 5. Immediate next actions
 
-1. Automated CI/security/infrastructure validation passed on implementation head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8` and documentation head `d31c87b0abbc121738ffaf23ee8773642aa01932`. A subsequent pointer-cancellation fix and regression test have been added; their newest-head workflows remain pending until confirmed.
+1. Automated CI/security/infrastructure validation passed on exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`, including the pointer-cancellation fix and its regression test. This handoff update will create a new branch head, so re-check all five gates after the documentation commit.
 2. Perform/record manual browser smoke tests for pinch zoom, pointer cancellation, keyboard movement, focus loss, employee selection, and Escape.
 3. Review the rendered scene at desktop and narrow viewport sizes for legibility, selection accuracy and visual hierarchy.
 4. Keep this handoff, `CHANGELOG.md`, `DOCUMENTATION_INDEX.md`, and the PR body synchronized with the current head and observed evidence.
