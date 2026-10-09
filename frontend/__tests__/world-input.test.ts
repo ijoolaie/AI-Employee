@@ -81,7 +81,9 @@ describe("WorldInput pointer lifecycle", () => {
     const target = new InputTarget();
     input = new WorldInput(target as unknown as HTMLElement);
 
-    target.dispatchEvent(new KeyboardEvent("keydown", { key: "w" }));
+    const keydown = new Event("keydown");
+    Object.defineProperty(keydown, "key", { value: "w" });
+    target.dispatchEvent(keydown);
     expect(input.consume().moveY).toBe(-1);
 
     (target.ownerDocument.defaultView as EventTarget).dispatchEvent(new Event("blur"));
