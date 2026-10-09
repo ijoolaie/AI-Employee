@@ -22,7 +22,8 @@ export class WorldInput {
     target.addEventListener("pointerdown", this.onPointerDown);
     target.addEventListener("pointermove", this.onPointerMove);
     target.addEventListener("pointerup", this.onPointerUp);
-    target.addEventListener("pointercancel", this.onPointerUp);
+    target.addEventListener("pointercancel", this.onPointerCancel);
+    window.addEventListener("blur", this.onBlur);
     target.tabIndex = 0;
   }
 
@@ -33,8 +34,12 @@ export class WorldInput {
     this.target.removeEventListener("pointerdown", this.onPointerDown);
     this.target.removeEventListener("pointermove", this.onPointerMove);
     this.target.removeEventListener("pointerup", this.onPointerUp);
-    this.target.removeEventListener("pointercancel", this.onPointerUp);
+    this.target.removeEventListener("pointercancel", this.onPointerCancel);
+    window.removeEventListener("blur", this.onBlur);
+    this.keys.clear();
     this.pointers.clear();
+    this.pointer = undefined;
+    this.pinchDistance = null;
   }
 
   consume(): WorldInputState {
@@ -45,6 +50,14 @@ export class WorldInput {
 
     return { moveX: Number(right) - Number(left), moveY: Number(down) - Number(up), zoomDelta: 0 };
   }
+
+  private readonly onBlur = () => {
+    // Avoid stuck movement if the browser loses focus while a key is held.
+    this.keys.clear();
+    this.pointers.clear();
+    this.pointer = undefined;
+    this.pinchDistance = null;
+  };
 
   private readonly onKeyDown = (event: KeyboardEvent) => {
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
@@ -95,6 +108,13 @@ export class WorldInput {
     this.pointer.x = event.clientX;
     this.pointer.y = event.clientY;
     if (this.pointer.moved) this.target.dispatchEvent(new CustomEvent("world:pan", { detail: { dx, dy } }));
+  };
+
+  private readonly onPointerCancel = (event: PointerEvent) => {
+    // A cancelled gesture is not a tap; clear it without selecting an employee.
+    this.pointers.delete(event.pointerId);
+    if (this.pointer?.pointerId === event.pointerId) this.pointer = undefined;
+    if (this.pointers.size < 2) this.pinchDistance = null;
   };
 
   private readonly onPointerUp = (event: PointerEvent) => {
