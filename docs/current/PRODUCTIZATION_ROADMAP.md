@@ -1,6 +1,6 @@
 # AI Employee Platform — Productization & Delivery Roadmap
 
-## Roadmap truth — 2026-10-07
+## Roadmap truth — 2026-10-09
 
 Three axes remain independent:
 
@@ -14,7 +14,14 @@ Three axes remain independent:
 
 Phase 11 Unified Execution is complete. Phase 12 Test Center is operationally hardened. Phase 13 Agent Teams & Marketplace is engineering complete. Phase 14.1–14.16 tracked engineering is complete/reconciled.
 
-The project is now in **Post-release Reconciliation → External Production & Customer Acceptance**. The audited product-completeness gate is closed for the current scope and remains under regression watch.
+The project is now in **Post-release Reconciliation → External Production & Customer Acceptance**, with repository governance hardening tracked separately in Issue #975. The audited product-completeness gate is closed for the current scope and remains under regression watch.
+
+## Current engineering checkpoint — 2026-10-09
+
+- AI Company World F8 is merged in PR #977. Employee visual slots are stable by immutable employee ID; `departmentId` remains `null` until an authoritative tenant-scoped assignment contract exists. Do not infer organizational placement from names, roles, runs, work items, or API ordering.
+- PR #978 reconciled the master implementation hand-off; PR #979 reconciled current status/priority documents after F8. These are engineering/documentation changes, not new production certification.
+- `main` branch protection/rulesets remain unconfigured in the evidence available here. Owner/admin configuration and a test-PR verification are tracked by [Issue #975](https://github.com/ijoolaie/AI-Employee/issues/975).
+- The immutable latest published/certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Engineering commits after that SHA do not inherit certification.
 
 ## 2026-10-07 v1.4.17 publication closure
 
@@ -76,7 +83,7 @@ Prove that the certified product can be operated safely, observably and recovera
 1. **Readiness audit** — inspect application, security, database, deployment, secrets, monitoring, DR, providers, billing, Agent governance, tenant isolation and customer UX/support readiness.
 2. **Blocker register** — classify every finding as blocker, required-before-launch, follow-up, or ready/evidenced.
 3. **Production target** — provision and harden the actual target; record infrastructure identity and configuration evidence.
-4. **Exact release deployment** — deploy the accepted v1.4.11 release identity and preserve immutable deployment evidence.
+4. **Exact release deployment** — deploy the currently approved immutable release identity (`v1.4.17`, SHA `b403c0dcdea579e017738a6fdea138c2b1a2999c`) only after the real external target is provisioned; preserve deployment evidence.
 5. **Security/network validation** — verify TLS, ingress/egress, firewall, secret lifecycle, credential rotation and relevant attack surfaces.
 6. **Data protection** — validate backup integrity, restore procedure and migration/recovery behavior.
 7. **DR measurement** — perform real recovery drills and record measured RPO/RTO.
@@ -101,7 +108,7 @@ A passing repository certification is necessary but does not prove real deployme
 
 | Priority | Work package | Status |
 |---|---|---|
-| P0 | Immutable release identity | `v1.4.11` published and exact-SHA certified |
+| P0 | Immutable release identity | `v1.4.17` published and exact-SHA certified at `b403c0dcdea579e017738a6fdea138c2b1a2999c` |
 | P0 | External production deployment | Pending real infrastructure |
 | P0 | Backup/restore & DR | Pending target evidence and measured RPO/RTO |
 | P0 | Production SLO/SLI | Engineering contract exists; target measurement pending |
@@ -167,7 +174,7 @@ The following post-release engineering slices are now merged on mainline and rem
 
 No slice above provisions or activates an AgentInstance by itself, and none changes the immutable v1.4.11 release.
 
-### Next engineering order
+### Historical next engineering order (superseded by the 2026-09-29 checkpoint below)
 
 1. Define explicit role-specific capability/tool bindings where concrete tools exist; do not infer role authority from tool names.
 2. Add tenant-owned SLA target configuration and make dashboard compliance conditional on an explicit target.
@@ -199,9 +206,9 @@ Repository audit conclusion:
 4. Continue the independent external-production sequence separately; repository engineering evidence does not close external deployment, live-provider, SLO/DR, security-review or customer-acceptance gates.
 ## Stage 9 — Autonomous Workforce Optimization
 
-**Class:** PRODUCT / ENGINEERING — **CURRENT PLANNED SLICES IMPLEMENTED; PRESENT IN v1.4.11**
+**Class:** PRODUCT / ENGINEERING — **CURRENT PLANNED SLICES IMPLEMENTED; INCLUDED IN THE v1.4.17 RELEASE LINE**
 
-The planned Stage 9 slices were implemented and exact-SHA certified in v1.4.2 and remain part of the current v1.4.11 release:
+The planned Stage 9 slices were implemented and exact-SHA certified in v1.4.2; they remain part of the current v1.4.17 release line:
 
 1. capability-aware workload routing;
 2. task/risk/cost-aware model selection;
