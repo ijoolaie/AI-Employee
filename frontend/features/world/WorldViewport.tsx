@@ -374,9 +374,11 @@ export function WorldViewport({
         });
       }
       workers.length = 0;
+      // Seat each worker slightly forward of the chair center so their hands reach the keyboard.
+      // Characters face -Z, while the workstation controls sit on the near half of the desk.
       const desks: [number, number][] = DEPARTMENTS.flatMap((dept) => [
-        [dept.x - 1.65, dept.z - 0.2 + 1.35] as [number, number],
-        [dept.x + 1.65, dept.z + 1.5 + 1.35] as [number, number],
+        [dept.x - 1.65, dept.z - 0.2 + 1.05] as [number, number],
+        [dept.x + 1.65, dept.z + 1.5 + 1.05] as [number, number],
       ]);
       next.forEach((employee, index) => {
         const worker = addWorker(scene, employee);
