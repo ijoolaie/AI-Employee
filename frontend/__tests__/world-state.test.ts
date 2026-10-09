@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectWorldReadModel, stableWorldSlotForEmployeeId } from "../features/world/WorldState";
+import { projectWorldReadModel, stableWorldSlotsForEmployeeIds } from "../features/world/WorldState";
 import type { CustomerOffice } from "../types";
 
 const office: CustomerOffice = {
@@ -80,8 +80,10 @@ describe("projectWorldReadModel", () => {
 
     expect(reversedSlots).toEqual(originalSlots);
     expect(original.employees.every((employee) => employee.departmentId === null)).toBe(true);
-    expect(stableWorldSlotForEmployeeId("employee-a")).toBe(stableWorldSlotForEmployeeId("employee-a"));
-    expect(stableWorldSlotForEmployeeId("employee-a")).not.toBe(stableWorldSlotForEmployeeId("employee-b"));
+    expect(stableWorldSlotsForEmployeeIds(["employee-b", "employee-a"])).toEqual(
+      stableWorldSlotsForEmployeeIds(["employee-a", "employee-b"]),
+    );
+    expect([...stableWorldSlotsForEmployeeIds(["employee-b", "employee-a"]).values()]).toEqual([0, 1]);
   });
 
   it("derives only presentation capacity metadata from authoritative limits", () => {
