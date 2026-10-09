@@ -437,6 +437,19 @@ export function WorldViewport({
   return (
     <div className="relative min-h-[420px] w-full overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl" style={{ height: "min(72vh, 760px)" }}>
       <div ref={mountRef} className="absolute inset-0" />
+      <div className="sr-only" aria-label="Office employees">
+        {employees.map((employee) => (
+          <button
+            key={employee.id}
+            type="button"
+            aria-label={`Select ${employee.name}`}
+            aria-pressed={selectedEmployeeId === employee.id}
+            onClick={() => onEmployeeSelect(employee.id)}
+          >
+            {employee.name} — {employee.state}
+          </button>
+        ))}
+      </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/60 to-transparent" />
       <div className="absolute bottom-4 left-4 z-10 flex gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1 backdrop-blur" aria-label="World camera controls">
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }))} aria-label="Zoom in">+</button>
