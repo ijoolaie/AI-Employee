@@ -3,9 +3,10 @@
 - Fixed an edge case where cancelling the second pointer during a pinch could leave the first pointer eligible to emit a tap on release.
 - Marked the active gesture as non-tappable as soon as a second pointer joins.
 - Added a focused regression test to frontend/__tests__/world-input.test.ts.
-- Automated validation for the final documentation-updated branch head must be confirmed before treating this change as validated.
+- Confirmed all five automated workflow gates passed on exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`: CI [37973946846](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946846), CodeQL [37973946857](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946857), HA recovery [37973946919](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946919), DAST [37973946737](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946737), and production infrastructure [37973946723](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946723).
+- The master handoff and changelog are being reconciled after that validated head; because documentation commits create a new SHA, the final documentation-updated head must be checked independently.
 
-## 2026-10-09 — AI Employee World exact-head validation refreshed
+## 2026-10-09 — AI Employee World exact-head validation refreshed (historical)
 
 - Re-ran the workflow lookup for current PR head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`; all five workflows completed successfully on that exact SHA.
 - CI run [37969649696](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649696): frontend lint, contract tests, unit tests, production build and World Mode Playwright smoke passed; backend compile, Ruff, migration checks and backend tests passed.
