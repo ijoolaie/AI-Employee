@@ -147,6 +147,9 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
   sphere(group, 0.34, [0, 1.67, -0.02], 0xf0c8a5, [1, 1.03, 0.96]);
   // Hair cap, ears, nose and shirt details make each procedural worker read as a person.
   sphere(group, 0.37, [0, 1.86, -0.08], 0x51413b, [1, 0.52, 0.95]);
+  sphere(group, 0.19, [0, 1.79, 0.235], 0x51413b, [1.25, 0.48, 0.45]);
+  box(group, [0.16, 0.035, 0.045], [-0.115, 1.75, 0.287], 0x51413b);
+  box(group, [0.16, 0.035, 0.045], [0.115, 1.75, 0.287], 0x51413b);
   sphere(group, 0.075, [-0.325, 1.65, -0.015], 0xe8b594, [0.75, 1, 0.8]);
   sphere(group, 0.075, [0.325, 1.65, -0.015], 0xe8b594, [0.75, 1, 0.8]);
   sphere(group, 0.052, [0, 1.61, 0.305], 0xe8b594, [0.8, 0.85, 1.1]);
@@ -162,12 +165,20 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
   box(group, [0.25, 0.13, 0.34], [0.2, 0.2, 0.3], 0x293545);
 
   // Arms angle toward the desk so the employee appears to be using the workstation.
-  const leftArm = cylinder(group, 0.095, 0.12, 0.48, [-0.31, 1.12, 0.17], 0xf0c8a5, 10);
+  const leftSleeve = cylinder(group, 0.12, 0.15, 0.34, [-0.29, 1.19, 0.11], color, 10);
+  leftSleeve.rotation.x = 0.72;
+  leftSleeve.rotation.z = -0.24;
+  const rightSleeve = cylinder(group, 0.12, 0.15, 0.34, [0.29, 1.19, 0.11], color, 10);
+  rightSleeve.rotation.x = 0.72;
+  rightSleeve.rotation.z = 0.24;
+  const leftArm = cylinder(group, 0.075, 0.09, 0.3, [-0.31, 1.02, 0.31], 0xf0c8a5, 10);
   leftArm.rotation.x = 0.72;
-  leftArm.rotation.z = -0.24;
-  const rightArm = cylinder(group, 0.095, 0.12, 0.48, [0.31, 1.12, 0.17], 0xf0c8a5, 10);
+  leftArm.rotation.z = -0.18;
+  const rightArm = cylinder(group, 0.075, 0.09, 0.3, [0.31, 1.02, 0.31], 0xf0c8a5, 10);
   rightArm.rotation.x = 0.72;
-  rightArm.rotation.z = 0.24;
+  rightArm.rotation.z = 0.18;
+  sphere(group, 0.09, [-0.31, 0.9, 0.43], 0xf0c8a5, [1, 0.7, 1.1]);
+  sphere(group, 0.09, [0.31, 0.9, 0.43], 0xf0c8a5, [1, 0.7, 1.1]);
 
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.82, 0.05, 8, 32),
