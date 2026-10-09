@@ -3,7 +3,7 @@
 **Last hand-off reconciliation:** 2026-10-09  
 **Latest published and exact-SHA certified release:** `v1.4.17`  
 **Certified release SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`  
-**Mutable engineering baseline at last verified checkpoint:** `12c93e6809a659e0ee8251385a101fb1b309094a`  
+**Mutable engineering baseline at last verified checkpoint:** `7adeacfeca998df9af78be157bb032a9ea0a8dd8`  
 **Release boundary:** engineering commits on `main` are not release-certified unless a new exact-SHA certification and release promotion explicitly says so.
 
 This is the repository's master implementation and hand-off guide. For the current release/certification truth, defer to `docs/00_START_HERE/CURRENT_STATUS.md`; for near-term priorities, use `docs/00_START_HERE/CURRENT_PRIORITIES.md`. Resolve the live `main` SHA from Git metadata before starting work; the SHA above is a dated snapshot, not a claim that it remains the live head.
@@ -13,22 +13,22 @@ This is the repository's master implementation and hand-off guide. For the curre
 
 ### Completed repository hygiene
 - Dependency PR triage completed: no open PRs remained at the 2026-10-08 checkpoint. Four compatible updates were merged; three incompatible/conflicted PRs were closed with reasons recorded in their discussions.
-- At the verified engineering checkpoint `12c93e6809a659e0ee8251385a101fb1b309094a`, all 10 reported check runs completed successfully. This is engineering CI evidence only, not production certification.
+- At the 2026-10-09 engineering checkpoint `12c93e6809a659e0ee8251385a101fb1b309094a`, all 10 reported check runs completed successfully. F8 PR #977 subsequently passed CI (frontend/backend), CodeQL (JavaScript/TypeScript and Python), DAST, infrastructure validation, and HA recovery validation on head `6b56f403f0e4daa4e191e226999ba0b15a0af7ad`, then merged as `7adeacfeca998df9af78be157bb032a9ea0a8dd8`. This is engineering CI evidence only, not production certification.
 - Issue [#975](https://github.com/ijoolaie/AI-Employee/issues/975) tracks the missing `main` branch protection/ruleset. Protection was not enabled by the connected integration; a repository owner/admin must configure it and verify the required PR check contexts.
 
 ### AI Company World — next product slice
 - F0–F7 are engineering implementation; the renderer remains Canvas. PixiJS is not installed and must not be claimed as validated.
 - The office endpoint `GET /api/v1/customer-dashboard/office` is tenant-scoped and read-only. Its current employee contract has identity, kind, activity/presentation state, latest run, and current work item, but **no authoritative department/team/location assignment**.
 - Do not infer department from employee name, slug, `kind`, role, work item, run, or array order. World department zones are presentation-only.
-- F8 issue: [#976 — authoritative department projection and employee placement contract](https://github.com/ijoolaie/AI-Employee/issues/976). The first safe frontend step is stable employee-ID-based visual placement and an explicit unassigned department value; this does not create backend organizational truth. A domain-owned assignment field/API is a separate decision requiring a tenant-safe source model and tests.
+- F8 first slice merged in [PR #977](https://github.com/ijoolaie/AI-Employee/pull/977): stable unique presentation slots are derived from sorted employee IDs, independent of API response order, and the projected `departmentId` is explicitly `null` until an authoritative tenant-scoped assignment exists. This does not create backend organizational truth. Any later domain-owned assignment field/API is a separate decision requiring a justified source model, migration/API contract, and tenant-isolation tests.
 - Required validation for the F8 change: World unit/contract tests, lint/typecheck/build, Playwright World smoke, tenant-isolation tests if the backend contract changes, and confirm Management Mode is unchanged. No local runtime execution is claimed from this GitHub-only hand-off.
 - No new production certification is implied. `v1.4.17` certification remains bound only to `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ### Next actions
-1. Finish F8 through a reviewable PR; inspect the exact PR-triggered CI results before merge.
-2. Decide explicitly whether a real domain-owned employee department assignment is justified. If no source of truth exists, keep `departmentId = null` and visual placement presentation-only.
-3. Complete Issue #975 with an owner/admin enabling and verifying branch protection.
-4. Reconcile current-priority/status docs using dated checkpoints instead of repeatedly hard-coding a mutable `main` SHA.
+1. Decide explicitly whether a real domain-owned employee department assignment is justified. Until a source of truth exists, keep `departmentId = null` and visual placement presentation-only.
+2. Complete Issue #975 with an owner/admin enabling and verifying branch protection.
+3. Reconcile current-priority/status docs using dated checkpoints instead of repeatedly hard-coding a mutable `main` SHA.
+4. Resolve the live `main` SHA from Git metadata before the next implementation; this hand-off SHA is a dated checkpoint.
 
 ## Release and productization topology
 
