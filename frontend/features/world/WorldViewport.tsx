@@ -165,20 +165,21 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
   box(group, [0.25, 0.13, 0.34], [0.2, 0.2, 0.3], 0x293545);
 
   // Arms angle toward the desk so the employee appears to be using the workstation.
-  const leftSleeve = cylinder(group, 0.12, 0.15, 0.34, [-0.29, 1.19, 0.11], color, 10);
+  const leftSleeve = cylinder(group, 0.12, 0.15, 0.34, [-0.29, 1.29, 0.15], color, 10);
   leftSleeve.rotation.x = 0.72;
   leftSleeve.rotation.z = -0.24;
-  const rightSleeve = cylinder(group, 0.12, 0.15, 0.34, [0.29, 1.19, 0.11], color, 10);
+  const rightSleeve = cylinder(group, 0.12, 0.15, 0.34, [0.29, 1.29, 0.15], color, 10);
   rightSleeve.rotation.x = 0.72;
   rightSleeve.rotation.z = 0.24;
-  const leftArm = cylinder(group, 0.075, 0.09, 0.3, [-0.31, 1.02, 0.31], 0xf0c8a5, 10);
+  // Raise the forearms to desk height and extend the hands over the keyboard plane.
+  const leftArm = cylinder(group, 0.075, 0.09, 0.3, [-0.31, 1.4, 0.48], 0xf0c8a5, 10);
   leftArm.rotation.x = 0.72;
   leftArm.rotation.z = -0.18;
-  const rightArm = cylinder(group, 0.075, 0.09, 0.3, [0.31, 1.02, 0.31], 0xf0c8a5, 10);
+  const rightArm = cylinder(group, 0.075, 0.09, 0.3, [0.31, 1.4, 0.48], 0xf0c8a5, 10);
   rightArm.rotation.x = 0.72;
   rightArm.rotation.z = 0.18;
-  sphere(group, 0.09, [-0.31, 0.9, 0.43], 0xf0c8a5, [1, 0.7, 1.1]);
-  sphere(group, 0.09, [0.31, 0.9, 0.43], 0xf0c8a5, [1, 0.7, 1.1]);
+  sphere(group, 0.09, [-0.31, 1.46, 0.77], 0xf0c8a5, [1, 0.7, 1.1]);
+  sphere(group, 0.09, [0.31, 1.46, 0.77], 0xf0c8a5, [1, 0.7, 1.1]);
 
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.82, 0.05, 8, 32),
