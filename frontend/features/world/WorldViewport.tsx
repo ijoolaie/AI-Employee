@@ -119,51 +119,63 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
 }
 
 function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
+  // A seated, desk-facing character reads more like an office-management game than a standing token.
   const group = new THREE.Group();
-  group.position.set(0, 0, 0);
   group.userData.employeeId = employee.id;
   parent.add(group);
 
   const palette = [0x557ca5, 0x6b9b82, 0xc78360, 0x8b78b6, 0x4e9aab, 0xc28b4c];
   const color = palette[Math.abs(hash(employee.id)) % palette.length];
-  const body = cylinder(group, 0.42, 0.5, 0.95, [0, 1.03, 0], color, 14);
-  body.userData.employeeId = employee.id;
-  sphere(group, 0.37, [0, 1.82, 0], 0xf0c8a5, [1, 1.04, 0.96]);
-  sphere(group, 0.39, [0, 2.02, -0.035], 0x51413b, [1, 0.55, 0.95]);
-  sphere(group, 0.055, [-0.12, 1.84, 0.325], 0x26313a, [0.8, 1, 0.5]);
-  sphere(group, 0.055, [0.12, 1.84, 0.325], 0x26313a, [0.8, 1, 0.5]);
-  cylinder(group, 0.13, 0.14, 0.58, [-0.49, 1.1, 0], 0xf0c8a5, 10).rotation.z = -0.35;
-  cylinder(group, 0.13, 0.14, 0.58, [0.49, 1.1, 0], 0xf0c8a5, 10).rotation.z = 0.35;
-  cylinder(group, 0.17, 0.18, 0.48, [-0.22, 0.36, 0], 0x33445b, 10);
-  cylinder(group, 0.17, 0.18, 0.48, [0.22, 0.36, 0], 0x33445b, 10);
+
+  // Compact stylized body, positioned in the chair in front of the monitor.
+  cylinder(group, 0.34, 0.42, 0.78, [0, 1.0, 0.02], color, 14);
+  sphere(group, 0.34, [0, 1.67, -0.02], 0xf0c8a5, [1, 1.03, 0.96]);
+  sphere(group, 0.37, [0, 1.86, -0.08], 0x51413b, [1, 0.52, 0.95]);
+  sphere(group, 0.045, [-0.115, 1.68, 0.285], 0x26313a, [0.8, 1, 0.5]);
+  sphere(group, 0.045, [0.115, 1.68, 0.285], 0x26313a, [0.8, 1, 0.5]);
+
+  // Bent legs and small shoes create a seated silhouette.
+  cylinder(group, 0.14, 0.15, 0.42, [-0.2, 0.48, -0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
+  cylinder(group, 0.14, 0.15, 0.42, [0.2, 0.48, -0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
+  box(group, [0.25, 0.13, 0.34], [-0.2, 0.2, -0.3], 0x293545);
+  box(group, [0.25, 0.13, 0.34], [0.2, 0.2, -0.3], 0x293545);
+
+  // Arms angle toward the desk so the employee appears to be using the workstation.
+  const leftArm = cylinder(group, 0.095, 0.12, 0.48, [-0.31, 1.12, -0.17], 0xf0c8a5, 10);
+  leftArm.rotation.x = 0.72;
+  leftArm.rotation.z = -0.24;
+  const rightArm = cylinder(group, 0.095, 0.12, 0.48, [0.31, 1.12, -0.17], 0xf0c8a5, 10);
+  rightArm.rotation.x = 0.72;
+  rightArm.rotation.z = 0.24;
 
   const ring = new THREE.Mesh(
-    new THREE.TorusGeometry(0.86, 0.055, 8, 32),
+    new THREE.TorusGeometry(0.82, 0.05, 8, 32),
     new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.92 }),
   );
   ring.rotation.x = -Math.PI / 2;
   ring.position.y = 0.07;
   group.add(ring);
 
+  const statusColor = STATE_COLOR[employee.state];
   const status = new THREE.Mesh(
-    new THREE.SphereGeometry(0.16, 12, 10),
-    new THREE.MeshStandardMaterial({ color: STATE_COLOR[employee.state], emissive: STATE_COLOR[employee.state], emissiveIntensity: 0.32 }),
+    new THREE.SphereGeometry(0.14, 12, 10),
+    new THREE.MeshStandardMaterial({ color: statusColor, emissive: statusColor, emissiveIntensity: 0.32 }),
   );
-  status.position.set(0.48, 2.45, 0);
+  status.position.set(0.42, 2.2, 0);
   group.add(status);
 
   const hit = new THREE.Mesh(
-    new THREE.SphereGeometry(1.18, 12, 10),
+    new THREE.SphereGeometry(1.05, 12, 10),
     new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
   );
-  hit.position.y = 1.15;
+  hit.position.y = 1.0;
   hit.userData.employeeId = employee.id;
   group.add(hit);
 
   const label = makeLabel(employee.name.slice(0, 24), "#f7fafc");
   if (label) {
-    label.position.set(0, 3.02, 0);
-    label.scale.set(3.8, 0.95, 1);
+    label.position.set(0, 2.72, 0);
+    label.scale.set(3.5, 0.86, 1);
     group.add(label);
   }
   group.userData.state = employee.state;
@@ -179,14 +191,14 @@ function hash(value: string) {
 function buildOffice(scene: any) {
   const floor = new THREE.Group();
   scene.add(floor);
-  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0xc9c8bd);
+  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e);
   for (let x = -19; x <= 19; x += 2) {
     for (let z = -14; z <= 14; z += 2) {
-      box(floor, [1.96, 0.025, 1.96], [x, -0.045, z], (Math.abs(x / 2 + z / 2) % 2 === 0) ? 0xe6e1d5 : 0xded9cd);
+      box(floor, [1.96, 0.025, 1.96], [x, -0.045, z], (Math.abs(x / 2 + z / 2) % 2 === 0) ? 0xc99b6d : 0xb9895c);
     }
   }
 
-  // Low pastel department platforms make the floor plan readable without hiding the characters.
+  // Warm, compact office shell: the rear windows and wood floor make the scene feel like a tycoon office.\n  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe7e4dc);\n  for (let x = -17.5; x <= 17.5; x += 5) {\n    box(scene, [3.9, 2.7, 0.08], [x, 2.55, -14.79], 0x9ec8dc, { roughness: 0.35, metalness: 0.05, emissive: 0x2c5364, emissiveIntensity: 0.08 });\n    box(scene, [0.09, 2.9, 0.12], [x - 1.98, 2.55, -14.72], 0xf7f3e9);\n    box(scene, [0.09, 2.9, 0.12], [x + 1.98, 2.55, -14.72], 0xf7f3e9);\n  }\n  box(scene, [40, 0.18, 0.5], [0, 0.12, -14.72], 0xd1cfc6);\n\n  // Low pastel department platforms make the floor plan readable without hiding the characters.
   for (const dept of DEPARTMENTS) {
     box(scene, [9.2, 0.12, 8.1], [dept.x, 0.03, dept.z], dept.color);
     const label = makeLabel(dept.name, "#ffffff");
@@ -280,7 +292,7 @@ export function WorldViewport({
     const target = new THREE.Vector3(0, 0, 0);
     let distance = 43;
     const updateCamera = () => {
-      camera.position.set(target.x + distance * 0.58, distance * 0.72, target.z + distance * 0.68);
+      camera.position.set(target.x + distance * 0.58, distance * 1.08, target.z + distance * 0.68);
       camera.lookAt(target.x, 0.8, target.z);
       camera.updateProjectionMatrix();
     };
@@ -309,10 +321,10 @@ export function WorldViewport({
       if (signature === nextSignature) return;
       for (const worker of workers) scene.remove(worker.group);
       workers.length = 0;
-      const desks = [
-        [-12.3, -8.5], [-9.1, -6.8], [-1.3, -8.4], [2, -6.2], [9.7, -8.4], [12.6, -6.2],
-        [-8.6, 4.5], [-5.2, 6.3], [4.5, 4.6], [7.7, 6.3], [0, 2.4], [2.6, 2.8],
-      ];
+      const desks: [number, number][] = DEPARTMENTS.flatMap((dept) => [
+        [dept.x - 1.65, dept.z - 0.2 + 1.35] as [number, number],
+        [dept.x + 1.65, dept.z + 1.5 + 1.35] as [number, number],
+      ]);
       next.forEach((employee, index) => {
         const worker = addWorker(scene, employee);
         const place = desks[index % desks.length];
