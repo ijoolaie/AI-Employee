@@ -225,11 +225,38 @@ function buildOffice(scene: any) {
   const floor = new THREE.Group();
   scene.add(floor);
   box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e);
+  // Batch the checkerboard planks into two instanced meshes to reduce hundreds of draw calls.
+  const lightTiles = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(1.96, 0.025, 1.96),
+    new THREE.MeshStandardMaterial({ color: 0xc99b6d, roughness: 0.78 }),
+    150,
+  );
+  const darkTiles = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(1.96, 0.025, 1.96),
+    new THREE.MeshStandardMaterial({ color: 0xb9895c, roughness: 0.78 }),
+    150,
+  );
+  const tileTransform = new THREE.Object3D();
+  let lightIndex = 0;
+  let darkIndex = 0;
   for (let x = -19; x <= 19; x += 2) {
     for (let z = -14; z <= 14; z += 2) {
-      box(floor, [1.96, 0.025, 1.96], [x, -0.045, z], (Math.abs(x / 2 + z / 2) % 2 === 0) ? 0xc99b6d : 0xb9895c, { castShadow: false, receiveShadow: false });
+      tileTransform.position.set(x, -0.045, z);
+      tileTransform.updateMatrix();
+      if (Math.abs(x / 2 + z / 2) % 2 === 0) {
+        lightTiles.setMatrixAt(lightIndex++, tileTransform.matrix);
+      } else {
+        darkTiles.setMatrixAt(darkIndex++, tileTransform.matrix);
+      }
     }
   }
+  lightTiles.castShadow = false;
+  lightTiles.receiveShadow = false;
+  darkTiles.castShadow = false;
+  darkTiles.receiveShadow = false;
+  lightTiles.instanceMatrix.needsUpdate = true;
+  darkTiles.instanceMatrix.needsUpdate = true;
+  floor.add(lightTiles, darkTiles);
 
   // Warm, compact office shell: rear windows and a wood floor establish a tycoon-office look.
   box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe7e4dc);
