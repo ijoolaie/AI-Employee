@@ -399,6 +399,7 @@ export function WorldViewport({
     let frame = 0;
     let last = performance.now();
     let isRendering = !document.hidden;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let mobileMove = { x: 0, y: 0 };
 
     const onPan = (event: Event) => {
@@ -473,9 +474,13 @@ export function WorldViewport({
         worker.status.material.color.setHex(STATE_COLOR[worker.state as WorldEmployee["state"]] ?? 0x9aa8bb);
         worker.status.material.emissive.setHex(STATE_COLOR[worker.state as WorldEmployee["state"]] ?? 0x9aa8bb);
         worker.group.position.y = 0;
-        const activityPulse = worker.state === "WORKING" ? 1 + (Math.sin(now * 0.003 + (Math.abs(hash(worker.id)) % 20)) + 1) * 0.06 : 1;
+        const activityPulse = worker.state === "WORKING" && !reducedMotion.matches
+          ? 1 + (Math.sin(now * 0.003 + (Math.abs(hash(worker.id)) % 20)) + 1) * 0.06
+          : 1;
         worker.status.scale.setScalar(activityPulse);
-        worker.status.material.emissiveIntensity = worker.state === "WORKING" ? 0.28 + (activityPulse - 1) * 0.8 : 0.18;
+        worker.status.material.emissiveIntensity = worker.state === "WORKING" && !reducedMotion.matches
+          ? 0.28 + (activityPulse - 1) * 0.8
+          : 0.18;
       }
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);
