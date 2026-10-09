@@ -1,3 +1,11 @@
+## 2026-10-09 — World Mode input regression validation
+
+- Confirmed all five workflow gates passed on exact code head `1bf75228bac2c37d693a4b21305fe0bd302e0a4a`, which includes the cancelled-pinch and inactive-pointer-hover regression fixes.
+- CI [37980135919](https://github.com/ijoolaie/AI-Employee/actions/runs/37980135919): frontend and backend jobs succeeded.
+- CodeQL [37980135968](https://github.com/ijoolaie/AI-Employee/actions/runs/37980135968): JavaScript/TypeScript and Python analysis succeeded.
+- HA recovery [37980135924](https://github.com/ijoolaie/AI-Employee/actions/runs/37980135924), DAST [37980136044](https://github.com/ijoolaie/AI-Employee/actions/runs/37980136044), and production infrastructure [37980135852](https://github.com/ijoolaie/AI-Employee/actions/runs/37980135852) all succeeded.
+- The handoff update is a new commit and requires its own exact-head validation. Manual cross-device visual QA remains outstanding.
+
 ## 2026-10-09 — World Mode stray pointer-hover guard
 
 - Prevented pointer-move events from hover/stray pointer IDs from entering the active gesture map before a matching pointer-down.
