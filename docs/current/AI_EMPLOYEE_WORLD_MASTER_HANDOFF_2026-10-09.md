@@ -5,7 +5,8 @@
 **Working branch:** `feat/world-3d-office`  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
 **Base:** `main`  
-**Latest validated PR head:** `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`  
+**Latest fully validated implementation head:** `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`  
+**Current branch head at handoff edit:** `e8e9b8d2d4ea62653ead913a306cacadbce04e6f` (documentation-only follow-up; checks pending).  
 **Validation runs on the exact head above:** CI `37969649696`; CodeQL `37969649529`; HA recovery `37969649702`; ephemeral DAST `37969649484`; production infrastructure `37969649788`.  
 **Previous implementation/docs head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
 **Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
@@ -57,11 +58,11 @@ Primary implementation:
 | `5efbf2ceb2fd6a7e6684446eb5e6e80119805b91` | Make blur listener compatible with non-browser test environment |
 | `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Previous docs head; its workflow results are historical for the current branch |
 
-The validation evidence below was retrieved for the exact current PR head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`. All five workflow runs and every job within them completed successfully on that SHA. Historical results on earlier commits are retained only as history.
+The validation evidence below was retrieved for exact PR head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`, the latest fully validated implementation head at the time of this update. A later documentation-only branch head exists; its checks must complete before this is considered current-head validation. Historical results on earlier commits are retained only as history.
 
 ## 4. Validation evidence — latest inspected PR head
 
-**Exact tested PR head:** `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`  
+**Exact tested implementation head:** `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`  
 **Captured:** 2026-10-09. All five required workflow runs and all jobs within them completed with `success` on this exact SHA.
 
 | Check | Observed state | Evidence |
@@ -89,7 +90,7 @@ The correction is now covered by a successful CI run on `aa16cbba6c869017cda0cf8
 
 ## 5. Immediate next actions
 
-1. Automated CI/security/infrastructure validation is green on `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`; re-check all five gates if the PR head changes.
+1. Automated CI/security/infrastructure validation is green on implementation head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`; the newer documentation-only branch head must pass its own workflows before current-head validation can be claimed.
 2. Perform/record manual browser smoke tests for pinch zoom, pointer cancellation, keyboard movement, focus loss, employee selection, and Escape.
 3. Review the rendered scene at desktop and narrow viewport sizes for legibility, selection accuracy and visual hierarchy.
 4. Keep this handoff, `CHANGELOG.md`, `DOCUMENTATION_INDEX.md`, and the PR body synchronized with the current head and observed evidence.
