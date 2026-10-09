@@ -203,4 +203,4 @@ Code inspection found two related input-lifecycle edge cases in `WorldInput`:
 
 The follow-up captures each active pointer and ties tap recognition to the original single pointer ID. Regression tests cover both a two-pointer gesture ending without a tap and a normal single-pointer tap.
 
-undefined
+**Validation status (2026-10-09):** the final PR head `d3c14624f51138e36552b268fe52025657ba184a` passed frontend/backend CI, frontend lint, contract tests, unit tests, production build, Playwright World Mode smoke, CodeQL for JavaScript/TypeScript and Python, Production Infrastructure Validation, Ephemeral DAST Validation, and HA Failure Recovery Validation. The merge commit is `35df568aa8b00811a91bd0c33679857d6ccb84b5`. No local test execution is claimed; the local real-stack smoke remains outstanding. The documentation follow-up commit `ad5d9fdf9b3c82bcba7ffb419404a89cab181c1b` has its own CI/CodeQL runs underway at the time of this update. This is post-release engineering work and does not extend the `v1.4.17` certification.
