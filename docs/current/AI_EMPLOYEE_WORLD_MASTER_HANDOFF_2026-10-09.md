@@ -55,6 +55,8 @@ Primary implementation:
 | `af19167b5390f009fb3edbcf10339debd062522f` | E2E accessibility contract for selection and Escape |
 | `9293314bdfa4570ca2f8b04a1da0fb814e613086` | Add pointer lifecycle regression tests |
 | `5efbf2ceb2fd6a7e6684446eb5e6e80119805b91` | Make blur listener compatible with non-browser test environment |
+| `ae666379386ae1f2625617e83fa255c7ab75ce11` | Ignore pointer-move events from pointers without an active pointer-down |
+| `92951f79751c2c69811e7ed249aa2ee8b25ec3b2` | Add regression coverage for hover moves during a single-pointer tap |
 | `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Previous docs head; its workflow results are historical for the current branch |
 
 The validation evidence below was retrieved for exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`. All five workflow runs and every job within them completed successfully on this exact SHA. A subsequent documentation update creates a new head and therefore requires a fresh exact-head check.
@@ -84,6 +86,10 @@ The correction is now covered by a successful CI run on `feb07a6f2c8226ca1dba59f
 
 A code review identified a gesture edge case: if a second pointer joined a pinch and was then cancelled before the first pointer ended, the first pointer could still qualify as a tap because the single-pointer origin had not been marked as moved. The input handler now marks the gesture as non-tappable when the second pointer joins, and frontend/__tests__/world-input.test.ts adds a regression test for cancelling the second pinch pointer. This correction and its regression test are included in exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`; CI, CodeQL, HA recovery, DAST, and production infrastructure validation all passed on that SHA.
 
+### Stray pointer-hover regression fix (validation pending)
+
+A second review found that `onPointerMove` was adding any pointer ID to the active-pointer map, including hover movement from a mouse or stylus that had not started a gesture with `pointerdown`. While another pointer was held, this could falsely look like a multi-pointer gesture and suppress a legitimate tap. The handler now ignores moves from pointer IDs that are not active, and a regression test confirms that a stray hover move does not prevent the active single pointer from selecting. Validation must be checked on the newest branch head after the docs updates.
+
 ### Validation policy
 
 - All five checks must be inspected against the same exact commit SHA.
@@ -93,7 +99,7 @@ A code review identified a gesture edge case: if a second pointer joined a pinch
 
 ## 5. Immediate next actions
 
-1. Automated CI/security/infrastructure validation passed on exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`, including the pointer-cancellation fix and its regression test. This handoff update will create a new branch head, so re-check all five gates after the documentation commit.
+1. All five automated gates passed on exact head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`, including the cancelled-pinch fix. A further pointer-hover guard and regression test were added afterward; validate the final docs-updated head against all five gates before treating the branch as current.
 2. Perform/record manual browser smoke tests for pinch zoom, pointer cancellation, keyboard movement, focus loss, employee selection, and Escape.
 3. Review the rendered scene at desktop and narrow viewport sizes for legibility, selection accuracy and visual hierarchy.
 4. Keep this handoff, `CHANGELOG.md`, `DOCUMENTATION_INDEX.md`, and the PR body synchronized with the current head and observed evidence.
