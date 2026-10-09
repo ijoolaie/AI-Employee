@@ -19,7 +19,8 @@ The project is now in **Post-release Reconciliation → External Production & Cu
 ## Current engineering checkpoint — 2026-10-09
 
 - AI Company World F8 is merged in PR #977. Employee visual slots are stable by immutable employee ID; `departmentId` remains `null` until an authoritative tenant-scoped assignment contract exists. Do not infer organizational placement from names, roles, runs, work items, or API ordering.
-- PR #978 reconciled the master implementation hand-off; PR #979 reconciled current status/priority documents after F8. These are engineering/documentation changes, not new production certification.
+- PR #978 reconciled the master implementation hand-off; PR #979 reconciled current status/priority documents after F8; PR #980 reconciled this roadmap's release truth. These are engineering/documentation changes, not new production certification.
+- Last verified live `main` checkpoint after PR #980: `4492ad2c3d3d0f6c2b91189e37a7614fa5ca1259`; re-resolve Git metadata before future work.
 - `main` branch protection/rulesets remain unconfigured in the evidence available here. Owner/admin configuration and a test-PR verification are tracked by [Issue #975](https://github.com/ijoolaie/AI-Employee/issues/975).
 - The immutable latest published/certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Engineering commits after that SHA do not inherit certification.
 
