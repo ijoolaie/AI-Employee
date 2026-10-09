@@ -8,15 +8,16 @@
 **GitHub Release:** `v1.4.17` — PUBLISHED
 **Production Certification:** Run `37625345534` — PASS
 **Certification job:** `112805570856` — PASS
-**Current engineering head at this checkpoint:** `main` — `da7ff67faf534d0f1e51f8d39ff233a2131a467c` (includes PR #978; post-release engineering only, NOT release-certified)
+**Last verified live engineering head before this documentation PR:** `main` — `4492ad2c3d3d0f6c2b91189e37a7614fa5ca1259` (includes PR #980; post-release engineering only, NOT release-certified)
 **Current status:** v1.4.17 is the latest published exact-SHA certified release; external production and customer/commercial gates remain OPEN
 
 ## 2026-10-09 current engineering checkpoint
 
-- Live `main` was resolved from Git metadata to `da7ff67faf534d0f1e51f8d39ff233a2131a467c`. This mutable engineering head is not release-certified.
+- Live `main` was resolved from Git metadata to `4492ad2c3d3d0f6c2b91189e37a7614fa5ca1259` after PR #980. This mutable engineering head is not release-certified.
 - PR #977 merged the AI Company World F8 presentation contract: stable unique visual slots derive from sorted immutable employee IDs; `departmentId` is explicitly `null` until an authoritative tenant-scoped assignment exists.
 - The current office API contract does not establish authoritative department/team/location assignment. No new domain field or migration is justified by the evidence currently available; do not infer assignment from employee name, role, activity, work item, run, or array order.
 - PR #978 reconciled the master implementation hand-off after F8.
+- PR #979 reconciled this status/priority snapshot; PR #980 reconciled the productization roadmap. These documentation commits do not change release certification.
 - `main` branch protection remains unconfigured in the evidence available here. Track owner/admin action and test-PR verification in [Issue #975](https://github.com/ijoolaie/AI-Employee/issues/975).
 - The latest published exact-SHA certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; this engineering checkpoint does not change certification.
 
