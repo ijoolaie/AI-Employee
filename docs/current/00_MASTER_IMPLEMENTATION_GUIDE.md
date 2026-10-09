@@ -1,7 +1,34 @@
 # AI Employee Platform — Master Implementation & Delivery Guide
-## Published release: 1.0.1
 
-This document is the current implementation guide for the AI Employee Platform. The published `v1.0.1` release is the immutable baseline; `main` may contain subsequent development and must not be treated as part of the release until explicitly tagged.
+**Last hand-off reconciliation:** 2026-10-09  
+**Latest published and exact-SHA certified release:** `v1.4.17`  
+**Certified release SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`  
+**Mutable engineering baseline at last verified checkpoint:** `12c93e6809a659e0ee8251385a101fb1b309094a`  
+**Release boundary:** engineering commits on `main` are not release-certified unless a new exact-SHA certification and release promotion explicitly says so.
+
+This is the repository's master implementation and hand-off guide. For the current release/certification truth, defer to `docs/00_START_HERE/CURRENT_STATUS.md`; for near-term priorities, use `docs/00_START_HERE/CURRENT_PRIORITIES.md`. Resolve the live `main` SHA from Git metadata before starting work; the SHA above is a dated snapshot, not a claim that it remains the live head.
+
+
+## Current engineering hand-off — 2026-10-09
+
+### Completed repository hygiene
+- Dependency PR triage completed: no open PRs remained at the 2026-10-08 checkpoint. Four compatible updates were merged; three incompatible/conflicted PRs were closed with reasons recorded in their discussions.
+- At the verified engineering checkpoint `12c93e6809a659e0ee8251385a101fb1b309094a`, all 10 reported check runs completed successfully. This is engineering CI evidence only, not production certification.
+- Issue [#975](https://github.com/ijoolaie/AI-Employee/issues/975) tracks the missing `main` branch protection/ruleset. Protection was not enabled by the connected integration; a repository owner/admin must configure it and verify the required PR check contexts.
+
+### AI Company World — next product slice
+- F0–F7 are engineering implementation; the renderer remains Canvas. PixiJS is not installed and must not be claimed as validated.
+- The office endpoint `GET /api/v1/customer-dashboard/office` is tenant-scoped and read-only. Its current employee contract has identity, kind, activity/presentation state, latest run, and current work item, but **no authoritative department/team/location assignment**.
+- Do not infer department from employee name, slug, `kind`, role, work item, run, or array order. World department zones are presentation-only.
+- F8 issue: [#976 — authoritative department projection and employee placement contract](https://github.com/ijoolaie/AI-Employee/issues/976). The first safe frontend step is stable employee-ID-based visual placement and an explicit unassigned department value; this does not create backend organizational truth. A domain-owned assignment field/API is a separate decision requiring a tenant-safe source model and tests.
+- Required validation for the F8 change: World unit/contract tests, lint/typecheck/build, Playwright World smoke, tenant-isolation tests if the backend contract changes, and confirm Management Mode is unchanged. No local runtime execution is claimed from this GitHub-only hand-off.
+- No new production certification is implied. `v1.4.17` certification remains bound only to `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+### Next actions
+1. Finish F8 through a reviewable PR; inspect the exact PR-triggered CI results before merge.
+2. Decide explicitly whether a real domain-owned employee department assignment is justified. If no source of truth exists, keep `departmentId = null` and visual placement presentation-only.
+3. Complete Issue #975 with an owner/admin enabling and verifying branch protection.
+4. Reconcile current-priority/status docs using dated checkpoints instead of repeatedly hard-coding a mutable `main` SHA.
 
 ## Release and productization topology
 
