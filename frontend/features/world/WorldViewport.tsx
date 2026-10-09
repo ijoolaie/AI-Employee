@@ -104,9 +104,23 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
   for (const dx of [-1.35, 1.35]) {
     for (const dz of [-0.62, 0.62]) box(desk, [0.12, 1.28, 0.12], [dx, 0.64, dz], 0x806044);
   }
+  // Monitor housing, illuminated display, stand and foot read as a complete workstation.
   box(desk, [1.18, 0.86, 0.12], [0, 1.92, -0.46], 0x34465a);
-  box(desk, [1.03, 0.68, 0.035], [0, 1.93, -0.385], accent, { emissive: accent, emissiveIntensity: 0.22, roughness: 0.4 });
-  box(desk, [0.9, 0.055, 0.32], [0, 1.45, 0.28], 0x354150);
+  box(desk, [1.03, 0.68, 0.035], [0, 1.93, -0.385], 0x20354a, { roughness: 0.42 });
+  box(desk, [0.88, 0.53, 0.018], [0, 1.96, -0.362], accent, { emissive: accent, emissiveIntensity: 0.22, roughness: 0.4 });
+  box(desk, [0.12, 0.22, 0.12], [0, 1.47, -0.43], 0x526273);
+  box(desk, [0.5, 0.055, 0.24], [0, 1.39, -0.34], 0x526273);
+  // Keyboard, mouse and a small stack of notes break up the empty desk surface.
+  box(desk, [0.94, 0.045, 0.28], [0, 1.45, 0.24], 0x354150);
+  for (let key = 0; key < 9; key += 1) {
+    box(desk, [0.065, 0.012, 0.035], [-0.36 + key * 0.09, 1.478, 0.19], 0xaebbc5);
+  }
+  box(desk, [0.28, 0.035, 0.22], [0.82, 1.43, 0.22], 0xeee7d9);
+  box(desk, [0.28, 0.035, 0.22], [0.82, 1.46, 0.22], 0xfaf6ed);
+  const mouse = sphere(desk, 0.105, [0.62, 1.49, 0.27], 0xd8e0e5, [0.72, 0.55, 1.1]);
+  mouse.castShadow = true;
+  box(desk, [0.48, 0.035, 0.34], [-1.03, 1.43, 0.28], 0x6b8caa);
+  box(desk, [0.42, 0.025, 0.29], [-1.03, 1.46, 0.28], 0xf0e4c9);
   const mug = cylinder(desk, 0.12, 0.12, 0.22, [1.08, 1.51, 0.35], 0xf7f0df, 12);
   mug.castShadow = true;
   const chair = new THREE.Group();
