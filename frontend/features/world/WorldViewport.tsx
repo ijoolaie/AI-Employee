@@ -342,7 +342,19 @@ export function WorldViewport({
       const next = employeesRef.current;
       const nextSignature = next.map((e) => [e.id, e.name, e.state, e.slot].join(":")).join("|");
       if (signature === nextSignature) return;
-      for (const worker of workers) scene.remove(worker.group);
+      for (const worker of workers) {
+        scene.remove(worker.group);
+        worker.group.traverse((object: any) => {
+          if (object.geometry?.dispose) object.geometry.dispose();
+          if (object.material) {
+            const materials = Array.isArray(object.material) ? object.material : [object.material];
+            for (const material of materials) {
+              if (material.map) material.map.dispose();
+              material.dispose?.();
+            }
+          }
+        });
+      }
       workers.length = 0;
       const desks: [number, number][] = DEPARTMENTS.flatMap((dept) => [
         [dept.x - 1.65, dept.z - 0.2 + 1.35] as [number, number],
