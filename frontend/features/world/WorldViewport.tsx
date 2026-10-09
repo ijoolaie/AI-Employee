@@ -36,15 +36,15 @@ function box(
   size: [number, number, number],
   position: [number, number, number],
   color: number,
-  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number } = {},
+  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number; castShadow?: boolean; receiveShadow?: boolean } = {},
 ) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(...size),
     new THREE.MeshStandardMaterial({ color, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
   );
   mesh.position.set(...position);
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
+  mesh.castShadow = options.castShadow ?? true;
+  mesh.receiveShadow = options.receiveShadow ?? true;
   parent.add(mesh);
   return mesh;
 }
@@ -227,7 +227,7 @@ function buildOffice(scene: any) {
   box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e);
   for (let x = -19; x <= 19; x += 2) {
     for (let z = -14; z <= 14; z += 2) {
-      box(floor, [1.96, 0.025, 1.96], [x, -0.045, z], (Math.abs(x / 2 + z / 2) % 2 === 0) ? 0xc99b6d : 0xb9895c);
+      box(floor, [1.96, 0.025, 1.96], [x, -0.045, z], (Math.abs(x / 2 + z / 2) % 2 === 0) ? 0xc99b6d : 0xb9895c, { castShadow: false, receiveShadow: false });
     }
   }
 
