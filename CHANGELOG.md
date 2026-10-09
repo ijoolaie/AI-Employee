@@ -1,3 +1,10 @@
+## 2026-10-09 — AI Employee World visual experience and input hardening
+
+- Added the current World Mode master handoff at `docs/current/AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-09.md` and indexed it in `docs/DOCUMENTATION_INDEX.md`.
+- Documented the procedural office visual work, employee selection/accessibility contracts, input lifecycle hardening, reduced-motion behavior, background rendering pause and floor instancing.
+- Recorded the exact CI status for the latest observed input-test commit. CodeQL, HA recovery, ephemeral DAST and production infrastructure checks passed; CI failed in the focus-loss unit test because the runner lacked the global `KeyboardEvent`.
+- Explicitly marked the latest CI failure as an open validation gate; no production-readiness or full-CI pass is claimed.
+
 ## 2026-08-12 — RC8 Docker Compose interpolation hardening
 
 - Escaped Docker Compose shell variables in the frontend healthcheck (`$$HOSTNAME`, `$$HOST_IP`) so Compose no longer attempts to substitute them from the host environment.
