@@ -398,6 +398,7 @@ export function WorldViewport({
     const cameraInput = new WorldInput(renderer.domElement);
     let frame = 0;
     let last = performance.now();
+    let isRendering = !document.hidden;
     let mobileMove = { x: 0, y: 0 };
 
     const onPan = (event: Event) => {
@@ -451,6 +452,7 @@ export function WorldViewport({
     camera.updateProjectionMatrix();
 
     const tick = (now: number) => {
+      if (!isRendering) return;
       const delta = Math.min(64, now - last);
       last = now;
       syncWorkers();
@@ -478,10 +480,22 @@ export function WorldViewport({
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);
     };
-    frame = requestAnimationFrame(tick);
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        isRendering = false;
+        cancelAnimationFrame(frame);
+        return;
+      }
+      isRendering = true;
+      last = performance.now();
+      frame = requestAnimationFrame(tick);
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    if (isRendering) frame = requestAnimationFrame(tick);
 
     return () => {
       cancelAnimationFrame(frame);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       observer.disconnect();
       cameraInput.destroy();
       renderer.domElement.removeEventListener("world:pan", onPan);
