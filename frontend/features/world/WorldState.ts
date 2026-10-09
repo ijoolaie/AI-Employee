@@ -91,7 +91,7 @@ export function stableWorldSlotsForEmployeeIds(employeeIds: string[]): Map<strin
   return new Map(
     [...new Set(employeeIds)]
       .sort((left, right) => left.localeCompare(right))
-      .map((employeeId, index) => [employeeId, index]),
+      .map((employeeId, index) => [employeeId, index] as const),
   );
 }
 
