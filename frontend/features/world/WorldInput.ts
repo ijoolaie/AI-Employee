@@ -96,6 +96,8 @@ export class WorldInput {
   };
 
   private readonly onPointerMove = (event: PointerEvent) => {
+    // Ignore hover/stray moves: only pointers that began with pointerdown are active gestures.
+    if (!this.pointers.has(event.pointerId)) return;
     this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
     if (this.pointers.size >= 2) {
