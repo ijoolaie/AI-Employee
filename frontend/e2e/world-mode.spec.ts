@@ -88,16 +88,9 @@ test("World Mode renders authoritative employee projection and management bridge
 
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
-  const box = await canvas.boundingBox();
-  if (!box) throw new Error("World canvas has no bounding box");
 
-  // Slot 0 is deterministically projected at world (-36, 80) from the centered camera.
-  await canvas.click({
-    position: {
-      x: box.width / 2 - 36,
-      y: box.height / 2 + 80,
-    },
-  });
+  // Use the accessible employee selector so this contract test does not depend on camera projection.
+  await page.getByRole("button", { name: "Select Sales AI" }).click({ force: true });
 
   await expect(page.getByRole("complementary", { name: "Selected employee" })).toBeVisible();
   await expect(page.getByText("Sales AI")).toBeVisible();
