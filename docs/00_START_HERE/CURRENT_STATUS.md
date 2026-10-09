@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-10-08
+**Last reconciled:** 2026-10-09
 **Latest published release:** `v1.4.17`
 **Latest exact-SHA certified release:** `v1.4.17`
 **Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
@@ -8,8 +8,17 @@
 **GitHub Release:** `v1.4.17` — PUBLISHED
 **Production Certification:** Run `37625345534` — PASS
 **Certification job:** `112805570856` — PASS
-**Current engineering head:** `main` — `8663912b9f6b1ed05cfd118f270b51e26387f66a` (includes PR #966; post-release engineering only, NOT release-certified)
+**Current engineering head at this checkpoint:** `main` — `da7ff67faf534d0f1e51f8d39ff233a2131a467c` (includes PR #978; post-release engineering only, NOT release-certified)
 **Current status:** v1.4.17 is the latest published exact-SHA certified release; external production and customer/commercial gates remain OPEN
+
+## 2026-10-09 current engineering checkpoint
+
+- Live `main` was resolved from Git metadata to `da7ff67faf534d0f1e51f8d39ff233a2131a467c`. This mutable engineering head is not release-certified.
+- PR #977 merged the AI Company World F8 presentation contract: stable unique visual slots derive from sorted immutable employee IDs; `departmentId` is explicitly `null` until an authoritative tenant-scoped assignment exists.
+- The current office API contract does not establish authoritative department/team/location assignment. No new domain field or migration is justified by the evidence currently available; do not infer assignment from employee name, role, activity, work item, run, or array order.
+- PR #978 reconciled the master implementation hand-off after F8.
+- `main` branch protection remains unconfigured in the evidence available here. Track owner/admin action and test-PR verification in [Issue #975](https://github.com/ijoolaie/AI-Employee/issues/975).
+- The latest published exact-SHA certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; this engineering checkpoint does not change certification.
 
 ## Release boundary
 
