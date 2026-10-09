@@ -1,3 +1,10 @@
+## 2026-10-09 — World Mode cancelled-pinch tap regression
+
+- Fixed an edge case where cancelling the second pointer during a pinch could leave the first pointer eligible to emit a tap on release.
+- Marked the active gesture as non-tappable as soon as a second pointer joins.
+- Added a focused regression test to frontend/__tests__/world-input.test.ts.
+- Automated validation for the final documentation-updated branch head must be confirmed before treating this change as validated.
+
 ## 2026-10-09 — AI Employee World exact-head validation refreshed
 
 - Re-ran the workflow lookup for current PR head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`; all five workflows completed successfully on that exact SHA.
