@@ -5,6 +5,7 @@
 **Working branch:** `feat/world-3d-office`  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
 **Base:** `main`  
+**Verified head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
 **Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
 
 ## 1. Goal and product boundary
@@ -52,36 +53,33 @@ Primary implementation:
 | `af19167b5390f009fb3edbcf10339debd062522f` | E2E accessibility contract for selection and Escape |
 | `9293314bdfa4570ca2f8b04a1da0fb814e613086` | Add pointer lifecycle regression tests |
 | `5efbf2ceb2fd6a7e6684446eb5e6e80119805b91` | Make blur listener compatible with non-browser test environment |
-| `4107c4d75cbfc0313c71b6d5165423256197a0c7` | Model document window in input lifecycle test |
+| `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Current verified documentation/head commit |
 
-The branch has also accumulated visual refinements to character proportions, desk alignment, hands/keyboard alignment, reduced motion and background rendering. See the PR commit history for the complete audit trail.
+The branch also includes visual refinements to character proportions, desk alignment, hands/keyboard alignment, reduced motion and background rendering. See the PR commit history for the complete audit trail.
 
-## 4. Latest CI evidence and current gate
+## 4. Validation evidence for exact head
 
-For commit `4107c4d75cbfc0313c71b6d5165423256197a0c7`, the observed workflow results are:
+The GitHub Actions workflow runs associated with `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` have now completed successfully:
 
 | Check | Result | Evidence |
 |---|---|---|
-| CI | **Failed** | [Run 37951309925](https://github.com/ijoolaie/AI-Employee/actions/runs/37951309925) |
-| CodeQL | Passed | [Run 37951309858](https://github.com/ijoolaie/AI-Employee/actions/runs/37951309858) |
-| HA Failure Recovery Validation | Passed | [Run 37951310035](https://github.com/ijoolaie/AI-Employee/actions/runs/37951310035) |
-| Ephemeral DAST Validation | Passed | [Run 37951309993](https://github.com/ijoolaie/AI-Employee/actions/runs/37951309993) |
-| Production Infrastructure Validation | Passed | [Run 37951309920](https://github.com/ijoolaie/AI-Employee/actions/runs/37951309920) |
+| CI | **Passed** | [Run 37953789905](https://github.com/ijoolaie/AI-Employee/actions/runs/37953789905) |
+| CodeQL | **Passed** | [Run 37953790305](https://github.com/ijoolaie/AI-Employee/actions/runs/37953790305) |
+| HA Failure Recovery Validation | **Passed** | [Run 37953789754](https://github.com/ijoolaie/AI-Employee/actions/runs/37953789754) |
+| Ephemeral DAST Validation | **Passed** | [Run 37953789758](https://github.com/ijoolaie/AI-Employee/actions/runs/37953789758) |
+| Production Infrastructure Validation | **Passed** | [Run 37953789757](https://github.com/ijoolaie/AI-Employee/actions/runs/37953789757) |
 
-### CI failure diagnosis
+The earlier CI failure on `4107c4d75cbfc0313c71b6d5165423256197a0c7` was caused by the test runner not providing a global `KeyboardEvent`. The current regression test creates a plain `Event("keydown")` and defines its `key` property, then verifies that `w` produces `moveY = -1` and window blur resets movement to zero. The CI workflow on the exact head above has since passed.
 
-The frontend lint and contract tests passed; backend validation and backend tests passed. Frontend unit tests reported 37 passed and 1 failed out of 38. The failing test was the focus-loss regression in `world-input.test.ts`; the runner reported `ReferenceError: KeyboardEvent is not defined`. The production build and Playwright smoke stages were skipped after the unit-test failure.
-
-The current branch file content has since been observed using a plain `Event("keydown")` with a defined `key` property, rather than relying on a global `KeyboardEvent`. However, **that content is not yet certified by a successful CI run**. The next step is to ensure the exact branch head includes this test-environment-safe implementation, push a new commit if needed, and verify the entire CI workflow on that exact SHA.
+These results verify the listed workflows for this SHA; they do not by themselves constitute manual cross-device visual QA or a production release certification.
 
 ## 5. Immediate next actions
 
-1. Reconcile the exact branch head and the contents used by the failed CI run.
-2. Ensure the focus-loss test constructs keyboard input without relying on browser globals, while still verifying that `w` sets `moveY = -1` and blur resets movement to zero.
-3. Run frontend unit tests, lint, production build and World Mode Playwright smoke through CI.
-4. Inspect all five workflow results for the same exact head SHA; do not infer a pass from an earlier commit.
-5. Update this handoff and the PR description with the verified SHA and links to the final results.
-6. Keep PR #983 open and Draft. Do not merge or mark ready for review without explicit authorization.
+1. Perform/record a real browser smoke test for World Mode, especially pinch zoom, pointer cancellation, keyboard movement and focus loss.
+2. Review the rendered scene at desktop and narrow viewport sizes for legibility, employee selection accuracy and visual hierarchy.
+3. If code changes are needed, make focused changes with regression coverage and rerun the five workflows against the new exact head SHA.
+4. Keep this handoff and the PR description aligned with actual code and current workflow evidence.
+5. Keep PR #983 open and Draft. Do not merge or mark ready for review without explicit authorization.
 
 ## 6. Scope / non-goals
 
