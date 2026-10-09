@@ -87,7 +87,12 @@ export class WorldInput {
     if (this.pointers.size === 1) {
       this.pointer = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
     }
-    if (this.pointers.size === 2) this.pinchDistance = this.distanceBetweenPointers();
+    if (this.pointers.size === 2) {
+      // Once a second pointer joins, the gesture can never become a single tap,
+      // even if that second pointer is cancelled before the first pointer ends.
+      if (this.pointer) this.pointer.moved = true;
+      this.pinchDistance = this.distanceBetweenPointers();
+    }
   };
 
   private readonly onPointerMove = (event: PointerEvent) => {
