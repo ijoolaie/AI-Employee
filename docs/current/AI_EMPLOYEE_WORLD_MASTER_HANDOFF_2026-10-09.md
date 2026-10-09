@@ -5,8 +5,8 @@
 **Working branch:** `feat/world-3d-office`  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
 **Base:** `main`  
-**Latest verified PR head:** `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71` (all five workflow gates passed).  
-**Validation runs on this exact SHA:** CI `37973946846`; CodeQL `37973946857`; HA recovery `37973946919`; ephemeral DAST `37973946737`; production infrastructure `37973946723`.  
+**Latest fully validated code head:** `1bf75228bac2c37d693a4b21305fe0bd302e0a4a` (all five workflow gates passed, including the active-pointer hover guard and regression test).  
+**Validation runs on this exact SHA:** CI `37980135919`; CodeQL `37980135968`; HA recovery `37980135924`; ephemeral DAST `37980136044`; production infrastructure `37980135852`.  
 **Previous implementation/docs head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
 **Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
 
@@ -59,20 +59,20 @@ Primary implementation:
 | `92951f79751c2c69811e7ed249aa2ee8b25ec3b2` | Add regression coverage for hover moves during a single-pointer tap |
 | `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Previous docs head; its workflow results are historical for the current branch |
 
-The validation evidence below was retrieved for exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`. All five workflow runs and every job within them completed successfully on this exact SHA. A subsequent documentation update creates a new head and therefore requires a fresh exact-head check.
+The validation evidence below was retrieved for exact PR head `1bf75228bac2c37d693a4b21305fe0bd302e0a4a`. All five workflow runs and every job within them completed successfully on this exact SHA. A subsequent documentation update creates a new head and therefore requires a fresh exact-head check.
 
 ## 4. Validation evidence — latest inspected PR head
 
-**Exact tested PR head:** `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`  
+**Exact tested PR head:** `1bf75228bac2c37d693a4b21305fe0bd302e0a4a`  
 **Captured:** 2026-10-09. All five required workflow runs and all jobs within them completed with `success` on this exact SHA.
 
 | Check | Observed state | Evidence |
 |---|---|---|
-| CI — frontend and backend | Success. Frontend Lint, Contract tests, Unit tests, Production build, Playwright Chromium install and World Mode Playwright smoke all succeeded; backend compile, Ruff, migration gates and backend tests succeeded. | [Run 37973946846](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946846) |
-| CodeQL — JavaScript/TypeScript and Python | Both analysis jobs succeeded. | [Run 37973946857](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649529) |
-| HA Failure Recovery Validation | Recovery rehearsal, Compose validation and image build succeeded. | [Run 37973946919](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649702) |
-| Ephemeral DAST Validation | OWASP ZAP baseline scan, ephemeral stack lifecycle and cleanup succeeded. | [Run 37973946737](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649484) |
-| Production Infrastructure Validation | Compose contract, production image build, service lifecycle, database migration gate, backup and isolated restore succeeded. | [Run 37973946723](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649788) |
+| CI — frontend and backend | Success. Frontend Lint, Contract tests, Unit tests, Production build, Playwright Chromium install and World Mode Playwright smoke all succeeded; backend compile, Ruff, migration gates and backend tests succeeded. | [Run 37980135919](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946846) |
+| CodeQL — JavaScript/TypeScript and Python | Both analysis jobs succeeded. | [Run 37980135968](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649529) |
+| HA Failure Recovery Validation | Recovery rehearsal, Compose validation and image build succeeded. | [Run 37980135924](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649702) |
+| Ephemeral DAST Validation | OWASP ZAP baseline scan, ephemeral stack lifecycle and cleanup succeeded. | [Run 37980136044](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649484) |
+| Production Infrastructure Validation | Compose contract, production image build, service lifecycle, database migration gate, backup and isolated restore succeeded. | [Run 37980135852](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649788) |
 
 **Interpretation:** all five automated CI/security/infrastructure gates listed above are green on the inspected SHA. This is not a claim of manual cross-device visual QA or production release certification. Any later commit requires checking the new head before treating these results as current.
 
@@ -86,9 +86,9 @@ The correction is now covered by a successful CI run on `feb07a6f2c8226ca1dba59f
 
 A code review identified a gesture edge case: if a second pointer joined a pinch and was then cancelled before the first pointer ended, the first pointer could still qualify as a tap because the single-pointer origin had not been marked as moved. The input handler now marks the gesture as non-tappable when the second pointer joins, and frontend/__tests__/world-input.test.ts adds a regression test for cancelling the second pinch pointer. This correction and its regression test are included in exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`; CI, CodeQL, HA recovery, DAST, and production infrastructure validation all passed on that SHA.
 
-### Stray pointer-hover regression fix (validation pending)
+### Stray pointer-hover regression fix (validated)
 
-A second review found that `onPointerMove` was adding any pointer ID to the active-pointer map, including hover movement from a mouse or stylus that had not started a gesture with `pointerdown`. While another pointer was held, this could falsely look like a multi-pointer gesture and suppress a legitimate tap. The handler now ignores moves from pointer IDs that are not active, and a regression test confirms that a stray hover move does not prevent the active single pointer from selecting. Validation must be checked on the newest branch head after the docs updates.
+A second review found that `onPointerMove` was adding any pointer ID to the active-pointer map, including hover movement from a mouse or stylus that had not started a gesture with `pointerdown`. While another pointer was held, this could falsely look like a multi-pointer gesture and suppress a legitimate tap. The handler now ignores moves from pointer IDs that are not active, and a regression test confirms that a stray hover move does not prevent the active single pointer from selecting. This fix and its regression test are included in exact PR head `1bf75228bac2c37d693a4b21305fe0bd302e0a4a`; all five automated gates passed on that SHA.
 
 ### Validation policy
 
@@ -99,7 +99,7 @@ A second review found that `onPointerMove` was adding any pointer ID to the acti
 
 ## 5. Immediate next actions
 
-1. All five automated gates passed on exact head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`, including the cancelled-pinch fix. A further pointer-hover guard and regression test were added afterward; validate the final docs-updated head against all five gates before treating the branch as current.
+1. All five automated gates passed on exact code head `1bf75228bac2c37d693a4b21305fe0bd302e0a4a`, including both pointer-cancellation and stray-hover regressions. This documentation reconciliation creates a new head, so re-check all five gates after the commit.
 2. Perform/record manual browser smoke tests for pinch zoom, pointer cancellation, keyboard movement, focus loss, employee selection, and Escape.
 3. Review the rendered scene at desktop and narrow viewport sizes for legibility, selection accuracy and visual hierarchy.
 4. Keep this handoff, `CHANGELOG.md`, `DOCUMENTATION_INDEX.md`, and the PR body synchronized with the current head and observed evidence.
