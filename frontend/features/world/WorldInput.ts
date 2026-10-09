@@ -100,7 +100,8 @@ export class WorldInput {
   private readonly onPointerUp = (event: PointerEvent) => {
     const wasSingleTap =
       this.pointers.size === 1 &&
-      this.pointer?.pointerId === event.pointerId &&
+      this.pointer !== undefined &&
+      this.pointer.pointerId === event.pointerId &&
       !this.pointer.moved;
     if (wasSingleTap) {
       this.target.dispatchEvent(new CustomEvent("world:tap", { detail: { x: event.offsetX, y: event.offsetY } }));
