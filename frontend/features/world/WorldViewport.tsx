@@ -437,7 +437,10 @@ export function WorldViewport({
         worker.ring.scale.setScalar(selected ? 1.14 : 1);
         worker.status.material.color.setHex(STATE_COLOR[worker.state as WorldEmployee["state"]] ?? 0x9aa8bb);
         worker.status.material.emissive.setHex(STATE_COLOR[worker.state as WorldEmployee["state"]] ?? 0x9aa8bb);
-        worker.group.position.y = Math.sin(now * 0.0018 + hash(worker.id) % 20) * 0.035;
+        worker.group.position.y = 0;
+        const activityPulse = worker.state === "WORKING" ? 1 + (Math.sin(now * 0.003 + (Math.abs(hash(worker.id)) % 20)) + 1) * 0.06 : 1;
+        worker.status.scale.setScalar(activityPulse);
+        worker.status.material.emissiveIntensity = worker.state === "WORKING" ? 0.28 + (activityPulse - 1) * 0.8 : 0.18;
       }
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);
