@@ -98,6 +98,12 @@ test("World Mode renders authoritative employee projection and management bridge
   await expect(employeePanel).toBeVisible();
   await expect(employeePanel.getByText("Sales AI", { exact: true })).toBeVisible();
   await expect(employeePanel.getByText("Qualify lead", { exact: true })).toBeVisible();
+  await expect(employeeSelector).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("link", { name: "Open Employee Management" })).toHaveAttribute("href", "/employees/employee-e2e");
+
+  // Selection is keyboard-accessible and Escape returns the world to its unselected state.
+  await page.keyboard.press("Escape");
+  await expect(employeePanel).toBeHidden();
+  await expect(employeeSelector).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByText("Business outcome loop")).toBeVisible();
 });
