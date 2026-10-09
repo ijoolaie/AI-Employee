@@ -135,16 +135,16 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
   sphere(group, 0.045, [0.115, 1.68, 0.285], 0x26313a, [0.8, 1, 0.5]);
 
   // Bent legs and small shoes create a seated silhouette.
-  cylinder(group, 0.14, 0.15, 0.42, [-0.2, 0.48, -0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
-  cylinder(group, 0.14, 0.15, 0.42, [0.2, 0.48, -0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
-  box(group, [0.25, 0.13, 0.34], [-0.2, 0.2, -0.3], 0x293545);
-  box(group, [0.25, 0.13, 0.34], [0.2, 0.2, -0.3], 0x293545);
+  cylinder(group, 0.14, 0.15, 0.42, [-0.2, 0.48, 0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
+  cylinder(group, 0.14, 0.15, 0.42, [0.2, 0.48, 0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
+  box(group, [0.25, 0.13, 0.34], [-0.2, 0.2, 0.3], 0x293545);
+  box(group, [0.25, 0.13, 0.34], [0.2, 0.2, 0.3], 0x293545);
 
   // Arms angle toward the desk so the employee appears to be using the workstation.
-  const leftArm = cylinder(group, 0.095, 0.12, 0.48, [-0.31, 1.12, -0.17], 0xf0c8a5, 10);
+  const leftArm = cylinder(group, 0.095, 0.12, 0.48, [-0.31, 1.12, 0.17], 0xf0c8a5, 10);
   leftArm.rotation.x = 0.72;
   leftArm.rotation.z = -0.24;
-  const rightArm = cylinder(group, 0.095, 0.12, 0.48, [0.31, 1.12, -0.17], 0xf0c8a5, 10);
+  const rightArm = cylinder(group, 0.095, 0.12, 0.48, [0.31, 1.12, 0.17], 0xf0c8a5, 10);
   rightArm.rotation.x = 0.72;
   rightArm.rotation.z = 0.24;
 
