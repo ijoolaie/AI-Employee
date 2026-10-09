@@ -1,6 +1,6 @@
 # AI Company World — F0–F7 Implementation Record
 
-**Status:** IMPLEMENTED IN ENGINEERING BRANCH — local-first validation required before merge  
+**Status:** IMPLEMENTED ON MAIN — exact-head CI passed; local real-stack smoke remains outstanding for the multi-touch runtime change  
 **Branch:** `feat/f2-world-authoritative-state`  
 **Base:** `main` at `f45f8220c329813f9d642162e30fc7e6689adf1b`  
 **Release boundary:** This work is post-`v1.4.17` engineering work and does not inherit the certified release claim.
@@ -194,7 +194,7 @@ The current backend office contract does not expose authoritative employee depar
 
 ## Multi-touch pointer lifecycle follow-up — 2026-10-09
 
-**Change under review:** branch `fix/world-multitouch-pointer-lifecycle`.
+**Merged:** PR [#982](https://github.com/ijoolaie/AI-Employee/pull/982), squash commit `35df568aa8b00811a91bd0c33679857d6ccb84b5`.
 
 Code inspection found two related input-lifecycle edge cases in `WorldInput`:
 
@@ -203,4 +203,4 @@ Code inspection found two related input-lifecycle edge cases in `WorldInput`:
 
 The follow-up captures each active pointer and ties tap recognition to the original single pointer ID. Regression tests cover both a two-pointer gesture ending without a tap and a normal single-pointer tap.
 
-**Validation status (exact PR head `1da4ed9e4574bb775460ae5e5ea0ea052994add7`, checked 2026-10-09):** GitHub Actions reports success for frontend and backend CI, including frontend lint, contract tests, unit tests, production build, and Playwright World Mode smoke; CodeQL (JavaScript/TypeScript and Python); Production Infrastructure Validation; Ephemeral DAST Validation; and HA Failure Recovery Validation. This confirms CI validation only; no local test execution is claimed. The PR remains open and has no recorded reviews. This is a post-release engineering change and does not extend the `v1.4.17` certification.
+undefined
