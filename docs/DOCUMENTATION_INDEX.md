@@ -17,6 +17,7 @@ This is the top-level map for current project documentation.
 | Topic | Canonical document |
 |---|---|
 | Implementation / verification | `current/STATUS.md` |
+| AI Employee World — current branch implementation, CI evidence and next steps | `current/AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-09.md` |
 | Delivery roadmap | `current/PRODUCTIZATION_ROADMAP.md` |
 | Current documentation set | `current/README.md` |
 | Production server sizing/baseline | `current/PRODUCTION_SERVER_BASELINE.md` |
