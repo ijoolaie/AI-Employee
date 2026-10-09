@@ -1,12 +1,20 @@
 # Current Priorities
 
-**Reconciled:** 2026-10-08
+**Reconciled:** 2026-10-09
 **Current release:** `v1.4.17`
 **Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
-**Current main head:** `8663912b9f6b1ed05cfd118f270b51e26387f66a` (PR #966 merged). This is post-release engineering work and is **NOT release-certified**.
+**Current main head at this checkpoint:** `da7ff67faf534d0f1e51f8d39ff233a2131a467c` (PR #978 merged). This is post-release engineering work and is **NOT release-certified**.
 **Production Certification:** v1.4.17 exact-SHA Run `37625345534` / Job `112805570856` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
 **Current status:** v1.4.17 exact-SHA certified and published / external gates OPEN
+
+## 2026-10-09 current engineering checkpoint
+
+- Live `main` was resolved from Git metadata to `da7ff67faf534d0f1e51f8d39ff233a2131a467c`; this is an engineering head, not a release-certified SHA.
+- AI Company World F8 is merged in PR #977 (`7adeacfeca998df9af78be157bb032a9ea0a8dd8`): employee presentation slots are deterministic by immutable employee ID and `departmentId` remains `null` because the tenant-scoped office contract has no authoritative department/team/location assignment.
+- PR #978 reconciled the master hand-off after F8. Do not infer organizational assignments from names, roles, work items, runs, or response order.
+- Branch protection remains **OPEN** in [Issue #975](https://github.com/ijoolaie/AI-Employee/issues/975); the connected integration cannot apply repository admin settings. Owner/admin action and a test-PR verification are required.
+- No new production certification is implied. `v1.4.17` remains certified only at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ## Immediate release-candidate priorities
 
@@ -98,9 +106,7 @@ Stage 8/9 and future workforce work should therefore proceed only when the relev
 
 ## Current engineering state
 
-The v1.4.11 release has passed repository engineering gates and exact-SHA Production Certification. The audited product-completeness work is closed for the current scope and remains under regression watch. External production evidence is intentionally still open because no external target exists.
-
-The PR #955 application-code boundary is `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Its exact-SHA Production Certification has now PASSED as candidate `v1.4.17` (Run `37625345534`, Job `112805570856`). This supersedes the earlier unavailable post-merge status for the release-candidate decision. The candidate remains distinct from published `v1.4.16` until an explicit tag/release promotion is performed.
+Historical checkpoint text below preserves the earlier v1.4.11/v1.4.16 context and should not override the current release identity at the top of this file. The current published and exact-SHA certified release is `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c` (Run `37625345534`, Job `112805570856`). External production evidence remains open because no external target has been verified.
 
 
 
