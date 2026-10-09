@@ -92,9 +92,10 @@ test("World Mode renders authoritative employee projection and management bridge
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   await page.getByRole("button", { name: "Select Sales AI" }).click({ force: true });
 
-  await expect(page.getByRole("complementary", { name: "Selected employee" })).toBeVisible();
-  await expect(page.getByText("Sales AI")).toBeVisible();
-  await expect(page.getByText("Qualify lead")).toBeVisible();
+  const employeePanel = page.getByRole("complementary", { name: "Selected employee" });
+  await expect(employeePanel).toBeVisible();
+  await expect(employeePanel.getByText("Sales AI", { exact: true })).toBeVisible();
+  await expect(employeePanel.getByText("Qualify lead", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Open Employee Management" })).toHaveAttribute("href", "/employees/employee-e2e");
   await expect(page.getByText("Business outcome loop")).toBeVisible();
 });
