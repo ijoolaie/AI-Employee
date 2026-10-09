@@ -81,6 +81,10 @@ An earlier CI run on `4107c4d75cbfc0313c71b6d5165423256197a0c7` failed in the bl
 
 The correction is now covered by a successful CI run on `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`, including the frontend unit-test and World Mode Playwright smoke steps. The earlier failure remains historical context.
 
+### Latest pointer-cancellation regression fix (validation pending)
+
+A code review identified a gesture edge case: if a second pointer joined a pinch and was then cancelled before the first pointer ended, the first pointer could still qualify as a tap because the single-pointer origin had not been marked as moved. The input handler now marks the gesture as non-tappable when the second pointer joins, and frontend/__tests__/world-input.test.ts adds a regression test for cancelling the second pinch pointer. This is a code-level correction; automated validation must be checked against the newest branch head after the documentation updates.
+
 ### Validation policy
 
 - All five checks must be inspected against the same exact commit SHA.
@@ -90,7 +94,7 @@ The correction is now covered by a successful CI run on `aa16cbba6c869017cda0cf8
 
 ## 5. Immediate next actions
 
-1. Automated CI/security/infrastructure validation is green on implementation head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`; the newer documentation-only branch head must pass its own workflows before current-head validation can be claimed.
+1. Automated CI/security/infrastructure validation passed on implementation head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8` and documentation head `d31c87b0abbc121738ffaf23ee8773642aa01932`. A subsequent pointer-cancellation fix and regression test have been added; their newest-head workflows remain pending until confirmed.
 2. Perform/record manual browser smoke tests for pinch zoom, pointer cancellation, keyboard movement, focus loss, employee selection, and Escape.
 3. Review the rendered scene at desktop and narrow viewport sizes for legibility, selection accuracy and visual hierarchy.
 4. Keep this handoff, `CHANGELOG.md`, `DOCUMENTATION_INDEX.md`, and the PR body synchronized with the current head and observed evidence.
