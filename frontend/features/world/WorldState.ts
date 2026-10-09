@@ -84,19 +84,19 @@ export function worldPositionForSlot(slot: number, map: { columns: number; rows:
 }
 
 /**
- * Stable presentation slot derived from the immutable employee identifier.
- * This is visual placement only; it is not a department, role, or permission.
+ * Assign presentation slots from sorted immutable employee IDs, never API array order.
+ * Slots are presentation-only and may be recalculated when the tenant's roster changes.
  */
-export function stableWorldSlotForEmployeeId(employeeId: string): number {
-  let hash = 2166136261;
-  for (let index = 0; index < employeeId.length; index += 1) {
-    hash ^= employeeId.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
+export function stableWorldSlotsForEmployeeIds(employeeIds: string[]): Map<string, number> {
+  return new Map(
+    [...new Set(employeeIds)]
+      .sort((left, right) => left.localeCompare(right))
+      .map((employeeId, index) => [employeeId, index]),
+  );
 }
 
 export function projectWorldReadModel(office: CustomerOffice): WorldReadModel {
+  const slotsByEmployeeId = stableWorldSlotsForEmployeeIds(office.employees.map((employee) => employee.id));
   const employees = office.employees.map((employee) => ({
     id: employee.id,
     name: employee.name,
@@ -109,7 +109,7 @@ export function projectWorldReadModel(office: CustomerOffice): WorldReadModel {
     latestRunId: employee.latest_run_id,
     latestRunStatus: employee.latest_run_status,
     latestRunCreatedAt: employee.latest_run_created_at,
-    slot: stableWorldSlotForEmployeeId(employee.id),
+    slot: slotsByEmployeeId.get(employee.id) ?? 0,
   }));
 
   const limits = [
