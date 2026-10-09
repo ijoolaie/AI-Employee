@@ -3,7 +3,7 @@
 **Reconciled:** 2026-10-08
 **Current release:** `v1.4.17`
 **Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
-**Current main head:** `ceefce8f43dd2479972f3c0c1629d72ebdef74e5` at the time of this reconciliation. This is post-release engineering work and is **NOT release-certified**.
+**Current main head:** `8663912b9f6b1ed05cfd118f270b51e26387f66a` (PR #966 merged). This is post-release engineering work and is **NOT release-certified**.
 **Production Certification:** v1.4.17 exact-SHA Run `37625345534` / Job `112805570856` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
 **Current status:** v1.4.17 exact-SHA certified and published / external gates OPEN
