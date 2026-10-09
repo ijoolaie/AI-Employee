@@ -17,6 +17,7 @@ class PointerInputEvent extends Event {
 class InputTarget extends EventTarget {
   tabIndex = -1;
   capturedPointers: number[] = [];
+  ownerDocument = { defaultView: new EventTarget() };
 
   setPointerCapture(pointerId: number) {
     this.capturedPointers.push(pointerId);
@@ -83,7 +84,7 @@ describe("WorldInput pointer lifecycle", () => {
     target.dispatchEvent(new KeyboardEvent("keydown", { key: "w" }));
     expect(input.consume().moveY).toBe(-1);
 
-    window.dispatchEvent(new Event("blur"));
+    (target.ownerDocument.defaultView as EventTarget).dispatchEvent(new Event("blur"));
 
     expect(input.consume()).toEqual({ moveX: 0, moveY: 0, zoomDelta: 0 });
   });
