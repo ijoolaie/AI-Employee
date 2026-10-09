@@ -1,6 +1,7 @@
 import type { WorldInputState } from "./worldTypes";
 
 interface PointerOrigin {
+  pointerId: number;
   x: number;
   y: number;
   moved: boolean;
@@ -66,9 +67,10 @@ export class WorldInput {
 
   private readonly onPointerDown = (event: PointerEvent) => {
     this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    // Capture every active pointer so both fingers remain tracked during pinch zoom.
+    this.target.setPointerCapture(event.pointerId);
     if (this.pointers.size === 1) {
-      this.pointer = { x: event.clientX, y: event.clientY, moved: false };
-      this.target.setPointerCapture(event.pointerId);
+      this.pointer = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
     }
     if (this.pointers.size === 2) this.pinchDistance = this.distanceBetweenPointers();
   };
@@ -96,13 +98,16 @@ export class WorldInput {
   };
 
   private readonly onPointerUp = (event: PointerEvent) => {
-    const wasSingleTap = this.pointers.size === 1 && this.pointer && !this.pointer.moved;
+    const wasSingleTap =
+      this.pointers.size === 1 &&
+      this.pointer?.pointerId === event.pointerId &&
+      !this.pointer.moved;
     if (wasSingleTap) {
       this.target.dispatchEvent(new CustomEvent("world:tap", { detail: { x: event.offsetX, y: event.offsetY } }));
     }
     this.pointers.delete(event.pointerId);
+    if (this.pointer?.pointerId === event.pointerId) this.pointer = undefined;
     if (this.pointers.size < 2) this.pinchDistance = null;
-    if (this.pointers.size === 0) this.pointer = undefined;
   };
 
   private distanceBetweenPointers(): number {
