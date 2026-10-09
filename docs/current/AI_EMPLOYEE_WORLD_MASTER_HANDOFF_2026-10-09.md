@@ -57,20 +57,20 @@ Primary implementation:
 | `5efbf2ceb2fd6a7e6684446eb5e6e80119805b91` | Make blur listener compatible with non-browser test environment |
 | `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Previous docs head; its workflow results are historical for the current branch |
 
-The validation evidence below was retrieved for the exact PR head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`. All five workflow runs completed successfully on that SHA. Historical results on earlier commits are retained only as history.
+The validation evidence below was retrieved for the exact current PR head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`. All five workflow runs and every job within them completed successfully on that SHA. Historical results on earlier commits are retained only as history.
 
 ## 4. Validation evidence — latest inspected PR head
 
 **Exact tested PR head:** `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`  
-**Captured:** 2026-10-09. All five required workflow runs completed with `success` on this exact SHA.
+**Captured:** 2026-10-09. All five required workflow runs and all jobs within them completed with `success` on this exact SHA.
 
 | Check | Observed state | Evidence |
 |---|---|---|
-| CI — frontend and backend | Success. Frontend Lint, Contract tests, Unit tests, Production build, Playwright Chromium install and World Mode Playwright smoke all succeeded; backend compile, Ruff, migration gates and backend tests succeeded. | [Run 37969649696](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719875) |
-| CodeQL — JavaScript/TypeScript and Python | Both analysis jobs succeeded. | [Run 37969649529](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719872) |
-| HA Failure Recovery Validation | Recovery rehearsal, Compose validation and image build succeeded. | [Run 37969649702](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719747) |
-| Ephemeral DAST Validation | OWASP ZAP baseline scan, ephemeral stack lifecycle and cleanup succeeded. | [Run 37969649484](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719511) |
-| Production Infrastructure Validation | Compose contract, production image build, service lifecycle, database migration gate, backup and isolated restore succeeded. | [Run 37969649788](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719593) |
+| CI — frontend and backend | Success. Frontend Lint, Contract tests, Unit tests, Production build, Playwright Chromium install and World Mode Playwright smoke all succeeded; backend compile, Ruff, migration gates and backend tests succeeded. | [Run 37969649696](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649696) |
+| CodeQL — JavaScript/TypeScript and Python | Both analysis jobs succeeded. | [Run 37969649529](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649529) |
+| HA Failure Recovery Validation | Recovery rehearsal, Compose validation and image build succeeded. | [Run 37969649702](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649702) |
+| Ephemeral DAST Validation | OWASP ZAP baseline scan, ephemeral stack lifecycle and cleanup succeeded. | [Run 37969649484](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649484) |
+| Production Infrastructure Validation | Compose contract, production image build, service lifecycle, database migration gate, backup and isolated restore succeeded. | [Run 37969649788](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649788) |
 
 **Interpretation:** all five automated CI/security/infrastructure gates listed above are green on the inspected SHA. This is not a claim of manual cross-device visual QA or production release certification. Any later commit requires checking the new head before treating these results as current.
 
