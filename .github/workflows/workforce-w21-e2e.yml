@@ -22,7 +22,7 @@ jobs:
       SECRET_KEY: w21-e2e-secret
       E2E_API_BASE_URL: http://127.0.0.1:8000/api/v1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
