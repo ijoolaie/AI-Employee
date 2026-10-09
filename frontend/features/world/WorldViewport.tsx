@@ -143,8 +143,15 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
 
   // Compact stylized body, positioned in the chair in front of the monitor.
   cylinder(group, 0.34, 0.42, 0.78, [0, 1.0, 0.02], color, 14);
+  cylinder(group, 0.13, 0.15, 0.2, [0, 1.39, -0.01], 0xf0c8a5, 10);
   sphere(group, 0.34, [0, 1.67, -0.02], 0xf0c8a5, [1, 1.03, 0.96]);
+  // Hair cap, ears, nose and shirt details make each procedural worker read as a person.
   sphere(group, 0.37, [0, 1.86, -0.08], 0x51413b, [1, 0.52, 0.95]);
+  sphere(group, 0.075, [-0.325, 1.65, -0.015], 0xe8b594, [0.75, 1, 0.8]);
+  sphere(group, 0.075, [0.325, 1.65, -0.015], 0xe8b594, [0.75, 1, 0.8]);
+  sphere(group, 0.052, [0, 1.61, 0.305], 0xe8b594, [0.8, 0.85, 1.1]);
+  box(group, [0.34, 0.09, 0.08], [0, 1.34, 0.32], 0xf0c8a5);
+  box(group, [0.11, 0.24, 0.055], [0, 1.19, 0.39], 0xf3d6a0);
   sphere(group, 0.045, [-0.115, 1.68, 0.285], 0x26313a, [0.8, 1, 0.5]);
   sphere(group, 0.045, [0.115, 1.68, 0.285], 0x26313a, [0.8, 1, 0.5]);
 
