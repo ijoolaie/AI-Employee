@@ -10,12 +10,14 @@ interface PointerOrigin {
 export class WorldInput {
   private readonly keys = new Set<string>();
   private readonly target: HTMLElement;
+  private readonly view: Pick<Window, "addEventListener" | "removeEventListener"> | null;
   private readonly pointers = new Map<number, { x: number; y: number }>();
   private pointer?: PointerOrigin;
   private pinchDistance: number | null = null;
 
   constructor(target: HTMLElement) {
     this.target = target;
+    this.view = target.ownerDocument?.defaultView ?? (typeof window !== "undefined" ? window : null);
     target.addEventListener("keydown", this.onKeyDown);
     target.addEventListener("keyup", this.onKeyUp);
     target.addEventListener("wheel", this.onWheel, { passive: false });
@@ -23,7 +25,7 @@ export class WorldInput {
     target.addEventListener("pointermove", this.onPointerMove);
     target.addEventListener("pointerup", this.onPointerUp);
     target.addEventListener("pointercancel", this.onPointerCancel);
-    window.addEventListener("blur", this.onBlur);
+    this.view?.addEventListener("blur", this.onBlur);
     target.tabIndex = 0;
   }
 
@@ -35,7 +37,7 @@ export class WorldInput {
     this.target.removeEventListener("pointermove", this.onPointerMove);
     this.target.removeEventListener("pointerup", this.onPointerUp);
     this.target.removeEventListener("pointercancel", this.onPointerCancel);
-    window.removeEventListener("blur", this.onBlur);
+    this.view?.removeEventListener("blur", this.onBlur);
     this.keys.clear();
     this.pointers.clear();
     this.pointer = undefined;
