@@ -378,7 +378,6 @@ export function WorldViewport({
       camera.updateProjectionMatrix();
     });
     observer.observe(host);
-    observer.callback?.([]);
     renderer.setSize(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight), false);
     camera.aspect = Math.max(1, host.clientWidth) / Math.max(1, host.clientHeight);
     camera.updateProjectionMatrix();
