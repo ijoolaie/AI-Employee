@@ -1,3 +1,10 @@
+## 2026-10-09 — World Mode stray pointer-hover guard
+
+- Prevented pointer-move events from hover/stray pointer IDs from entering the active gesture map before a matching pointer-down.
+- Added a regression test proving an unrelated hover move cannot suppress a valid single-pointer tap/selection.
+- Code commits: `ae666379386ae1f2625617e83fa255c7ab75ce11`; regression test: `92951f79751c2c69811e7ed249aa2ee8b25ec3b2`.
+- The prior cancelled-pinch fix passed all five automated gates on `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`; this newer fix and subsequent documentation-updated head need fresh exact-head validation.
+
 ## 2026-10-09 — World Mode cancelled-pinch tap regression
 
 - Fixed an edge case where cancelling the second pointer during a pinch could leave the first pointer eligible to emit a tap on release.
