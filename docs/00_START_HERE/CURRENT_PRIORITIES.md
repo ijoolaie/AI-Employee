@@ -3,16 +3,16 @@
 **Reconciled:** 2026-10-09
 **Current release:** `v1.4.17`
 **Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
-**Current main head at this checkpoint:** `da7ff67faf534d0f1e51f8d39ff233a2131a467c` (PR #978 merged). This is post-release engineering work and is **NOT release-certified**.
+**Last verified live main before this documentation PR:** `4492ad2c3d3d0f6c2b91189e37a7614fa5ca1259` (PR #980 merged). This is post-release engineering work and is **NOT release-certified**.
 **Production Certification:** v1.4.17 exact-SHA Run `37625345534` / Job `112805570856` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
 **Current status:** v1.4.17 exact-SHA certified and published / external gates OPEN
 
 ## 2026-10-09 current engineering checkpoint
 
-- Live `main` was resolved from Git metadata to `da7ff67faf534d0f1e51f8d39ff233a2131a467c`; this is an engineering head, not a release-certified SHA.
+- Live `main` was resolved from Git metadata to `4492ad2c3d3d0f6c2b91189e37a7614fa5ca1259` after PR #980; this is an engineering head, not a release-certified SHA.
 - AI Company World F8 is merged in PR #977 (`7adeacfeca998df9af78be157bb032a9ea0a8dd8`): employee presentation slots are deterministic by immutable employee ID and `departmentId` remains `null` because the tenant-scoped office contract has no authoritative department/team/location assignment.
-- PR #978 reconciled the master hand-off after F8. Do not infer organizational assignments from names, roles, work items, runs, or response order.
+- PR #978 reconciled the master hand-off after F8; PR #979 reconciled status/priority docs; PR #980 reconciled the productization roadmap. Do not infer organizational assignments from names, roles, work items, runs, or response order.
 - Branch protection remains **OPEN** in [Issue #975](https://github.com/ijoolaie/AI-Employee/issues/975); the connected integration cannot apply repository admin settings. Owner/admin action and a test-PR verification are required.
 - No new production certification is implied. `v1.4.17` remains certified only at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
