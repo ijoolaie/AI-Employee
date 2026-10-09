@@ -23,6 +23,8 @@ export interface WorldEmployee {
   avatarUrl: string | null;
   state: WorldEmployeeState;
   currentWorkItem: CustomerOfficeEmployee["current_work_item"];
+  /** Null until the backend exposes an authoritative tenant-scoped assignment. */
+  departmentId: WorldDepartmentId | null;
   latestRunId: string | null;
   latestRunStatus: string | null;
   latestRunCreatedAt: string | null;
@@ -81,8 +83,21 @@ export function worldPositionForSlot(slot: number, map: { columns: number; rows:
   };
 }
 
+/**
+ * Assign presentation slots from sorted immutable employee IDs, never API array order.
+ * Slots are presentation-only and may be recalculated when the tenant's roster changes.
+ */
+export function stableWorldSlotsForEmployeeIds(employeeIds: string[]): Map<string, number> {
+  return new Map(
+    [...new Set(employeeIds)]
+      .sort((left, right) => left.localeCompare(right))
+      .map((employeeId, index) => [employeeId, index] as const),
+  );
+}
+
 export function projectWorldReadModel(office: CustomerOffice): WorldReadModel {
-  const employees = office.employees.map((employee, index) => ({
+  const slotsByEmployeeId = stableWorldSlotsForEmployeeIds(office.employees.map((employee) => employee.id));
+  const employees = office.employees.map((employee) => ({
     id: employee.id,
     name: employee.name,
     slug: employee.slug,
@@ -90,10 +105,11 @@ export function projectWorldReadModel(office: CustomerOffice): WorldReadModel {
     avatarUrl: employee.avatar_url,
     state: normalizeState(employee.presentation_state),
     currentWorkItem: employee.current_work_item,
+    departmentId: null,
     latestRunId: employee.latest_run_id,
     latestRunStatus: employee.latest_run_status,
     latestRunCreatedAt: employee.latest_run_created_at,
-    slot: index,
+    slot: slotsByEmployeeId.get(employee.id) ?? 0,
   }));
 
   const limits = [

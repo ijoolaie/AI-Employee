@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectWorldReadModel } from "../features/world/WorldState";
+import { projectWorldReadModel, stableWorldSlotsForEmployeeIds } from "../features/world/WorldState";
 import type { CustomerOffice } from "../types";
 
 const office: CustomerOffice = {
@@ -67,6 +67,23 @@ describe("projectWorldReadModel", () => {
       latestRunId: "r1",
     });
     expect(world.employees[1].state).toBe("IDLE");
+  });
+
+  it("uses stable employee-id placement independent of API array order", () => {
+    const original = projectWorldReadModel(office);
+    const reversed = projectWorldReadModel({
+      ...office,
+      employees: [...office.employees].reverse(),
+    });
+    const originalSlots = Object.fromEntries(original.employees.map((employee) => [employee.id, employee.slot]));
+    const reversedSlots = Object.fromEntries(reversed.employees.map((employee) => [employee.id, employee.slot]));
+
+    expect(reversedSlots).toEqual(originalSlots);
+    expect(original.employees.every((employee) => employee.departmentId === null)).toBe(true);
+    expect(stableWorldSlotsForEmployeeIds(["employee-b", "employee-a"])).toEqual(
+      stableWorldSlotsForEmployeeIds(["employee-a", "employee-b"]),
+    );
+    expect([...stableWorldSlotsForEmployeeIds(["employee-b", "employee-a"]).values()]).toEqual([0, 1]);
   });
 
   it("derives only presentation capacity metadata from authoritative limits", () => {
