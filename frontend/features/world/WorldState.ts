@@ -23,6 +23,8 @@ export interface WorldEmployee {
   avatarUrl: string | null;
   state: WorldEmployeeState;
   currentWorkItem: CustomerOfficeEmployee["current_work_item"];
+  /** Null until the backend exposes an authoritative tenant-scoped assignment. */
+  departmentId: WorldDepartmentId | null;
   latestRunId: string | null;
   latestRunStatus: string | null;
   latestRunCreatedAt: string | null;
@@ -81,8 +83,21 @@ export function worldPositionForSlot(slot: number, map: { columns: number; rows:
   };
 }
 
+/**
+ * Stable presentation slot derived from the immutable employee identifier.
+ * This is visual placement only; it is not a department, role, or permission.
+ */
+export function stableWorldSlotForEmployeeId(employeeId: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < employeeId.length; index += 1) {
+    hash ^= employeeId.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
 export function projectWorldReadModel(office: CustomerOffice): WorldReadModel {
-  const employees = office.employees.map((employee, index) => ({
+  const employees = office.employees.map((employee) => ({
     id: employee.id,
     name: employee.name,
     slug: employee.slug,
@@ -90,10 +105,11 @@ export function projectWorldReadModel(office: CustomerOffice): WorldReadModel {
     avatarUrl: employee.avatar_url,
     state: normalizeState(employee.presentation_state),
     currentWorkItem: employee.current_work_item,
+    departmentId: null,
     latestRunId: employee.latest_run_id,
     latestRunStatus: employee.latest_run_status,
     latestRunCreatedAt: employee.latest_run_created_at,
-    slot: index,
+    slot: stableWorldSlotForEmployeeId(employee.id),
   }));
 
   const limits = [
