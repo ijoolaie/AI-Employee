@@ -5,7 +5,8 @@
 **Working branch:** `feat/world-3d-office`  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
 **Base:** `main`  
-**Verified head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
+**Current head at this handoff:** `c18e022821235f65a9d2c8126d82e0c1ae911d3c`  
+**Previous implementation/docs head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
 **Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
 
 ## 1. Goal and product boundary
@@ -53,33 +54,45 @@ Primary implementation:
 | `af19167b5390f009fb3edbcf10339debd062522f` | E2E accessibility contract for selection and Escape |
 | `9293314bdfa4570ca2f8b04a1da0fb814e613086` | Add pointer lifecycle regression tests |
 | `5efbf2ceb2fd6a7e6684446eb5e6e80119805b91` | Make blur listener compatible with non-browser test environment |
-| `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Current verified documentation/head commit |
+| `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` | Previous docs head; its workflow results are historical for the current branch |
 
-The branch also includes visual refinements to character proportions, desk alignment, hands/keyboard alignment, reduced motion and background rendering. See the PR commit history for the complete audit trail.
+The current branch head advanced when the handoff was corrected. The handoff must always distinguish the current head from the SHA whose workflow results are being described.
 
-## 4. Validation evidence for exact head
+## 4. Validation evidence — current head
 
-The GitHub Actions workflow runs associated with `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8` have now completed successfully:
+**Current head:** `c18e022821235f65a9d2c8126d82e0c1ae911d3c`  
+**Status captured:** workflow checks had not yet completed at the last inspection. Do not treat these results as passes.
 
-| Check | Result | Evidence |
+| Check | Observed state | Evidence |
 |---|---|---|
-| CI | **Passed** | [Run 37953789905](https://github.com/ijoolaie/AI-Employee/actions/runs/37953789905) |
-| CodeQL | **Passed** | [Run 37953790305](https://github.com/ijoolaie/AI-Employee/actions/runs/37953790305) |
-| HA Failure Recovery Validation | **Passed** | [Run 37953789754](https://github.com/ijoolaie/AI-Employee/actions/runs/37953789754) |
-| Ephemeral DAST Validation | **Passed** | [Run 37953789758](https://github.com/ijoolaie/AI-Employee/actions/runs/37953789758) |
-| Production Infrastructure Validation | **Passed** | [Run 37953789757](https://github.com/ijoolaie/AI-Employee/actions/runs/37953789757) |
+| CI | Backend job in progress; frontend job succeeded | [Run 37954560646](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560646) |
+| CodeQL | Python analysis in progress; JavaScript/TypeScript analysis succeeded | [Run 37954560810](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560810) |
+| HA Failure Recovery Validation | In progress | [Run 37954560624](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560624) |
+| Ephemeral DAST Validation | In progress | [Run 37954560894](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560894) |
+| Production Infrastructure Validation | In progress | [Run 37954560853](https://github.com/ijoolaie/AI-Employee/actions/runs/37954560853) |
 
-The earlier CI failure on `4107c4d75cbfc0313c71b6d5165423256197a0c7` was caused by the test runner not providing a global `KeyboardEvent`. The current regression test creates a plain `Event("keydown")` and defines its `key` property, then verifies that `w` produces `moveY = -1` and window blur resets movement to zero. The CI workflow on the exact head above has since passed.
+### Known prior CI failure and correction
 
-These results verify the listed workflows for this SHA; they do not by themselves constitute manual cross-device visual QA or a production release certification.
+An earlier CI run on `4107c4d75cbfc0313c71b6d5165423256197a0c7` failed in the blur regression test with `ReferenceError: KeyboardEvent is not defined`; 37/38 frontend unit tests passed, while lint, contract tests and backend validation passed. The test was revised to dispatch a plain `Event("keydown")` with a defined `key` property. The current test also verifies that pressing `w` yields `moveY = -1` and that window blur resets movement to zero.
+
+This is a plausible test-environment correction, not proof of success by itself. The latest CI run on the current head must finish successfully before the issue is marked resolved.
+
+### Validation policy
+
+- All five checks must be inspected against the same exact commit SHA.
+- A successful job on a prior SHA is historical evidence only.
+- A partially completed workflow is not a pass.
+- These automated checks do not constitute manual cross-device visual QA or production release certification.
 
 ## 5. Immediate next actions
 
-1. Perform/record a real browser smoke test for World Mode, especially pinch zoom, pointer cancellation, keyboard movement and focus loss.
-2. Review the rendered scene at desktop and narrow viewport sizes for legibility, employee selection accuracy and visual hierarchy.
-3. If code changes are needed, make focused changes with regression coverage and rerun the five workflows against the new exact head SHA.
-4. Keep this handoff and the PR description aligned with actual code and current workflow evidence.
-5. Keep PR #983 open and Draft. Do not merge or mark ready for review without explicit authorization.
+1. Re-check the five workflow runs listed above and confirm their commit SHA matches the current PR head.
+2. If any check fails, inspect the failing job logs, fix the root cause, add or preserve regression coverage, and re-run all relevant checks on the new head.
+3. Confirm CI explicitly includes lint, unit tests, production build, and the Playwright World Mode E2E contract; report each result only if the run exposes evidence for it.
+4. Perform/record a real browser smoke test for pinch zoom, pointer cancellation, keyboard movement, focus loss, employee selection, and Escape.
+5. Review the rendered scene at desktop and narrow viewport sizes for legibility, selection accuracy and visual hierarchy.
+6. Keep this handoff, `CHANGELOG.md`, `DOCUMENTATION_INDEX.md`, and the PR body synchronized with the current head and observed evidence.
+7. Keep PR #983 open and Draft. Do not merge or mark ready for review without explicit authorization.
 
 ## 6. Scope / non-goals
 
