@@ -198,7 +198,16 @@ function buildOffice(scene: any) {
     }
   }
 
-  // Warm, compact office shell: the rear windows and wood floor make the scene feel like a tycoon office.\n  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe7e4dc);\n  for (let x = -17.5; x <= 17.5; x += 5) {\n    box(scene, [3.9, 2.7, 0.08], [x, 2.55, -14.79], 0x9ec8dc, { roughness: 0.35, metalness: 0.05, emissive: 0x2c5364, emissiveIntensity: 0.08 });\n    box(scene, [0.09, 2.9, 0.12], [x - 1.98, 2.55, -14.72], 0xf7f3e9);\n    box(scene, [0.09, 2.9, 0.12], [x + 1.98, 2.55, -14.72], 0xf7f3e9);\n  }\n  box(scene, [40, 0.18, 0.5], [0, 0.12, -14.72], 0xd1cfc6);\n\n  // Low pastel department platforms make the floor plan readable without hiding the characters.
+  // Warm, compact office shell: rear windows and a wood floor establish a tycoon-office look.
+  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe7e4dc);
+  for (let x = -17.5; x <= 17.5; x += 5) {
+    box(scene, [3.9, 2.7, 0.08], [x, 2.55, -14.79], 0x9ec8dc, { roughness: 0.35, metalness: 0.05, emissive: 0x2c5364, emissiveIntensity: 0.08 });
+    box(scene, [0.09, 2.9, 0.12], [x - 1.98, 2.55, -14.72], 0xf7f3e9);
+    box(scene, [0.09, 2.9, 0.12], [x + 1.98, 2.55, -14.72], 0xf7f3e9);
+  }
+  box(scene, [40, 0.18, 0.5], [0, 0.12, -14.72], 0xd1cfc6);
+
+  // Low pastel department platforms make the floor plan readable without hiding the characters.
   for (const dept of DEPARTMENTS) {
     box(scene, [9.2, 0.12, 8.1], [dept.x, 0.03, dept.z], dept.color);
     const label = makeLabel(dept.name, "#ffffff");
