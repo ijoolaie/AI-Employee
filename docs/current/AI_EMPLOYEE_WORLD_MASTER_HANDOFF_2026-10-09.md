@@ -5,8 +5,8 @@
 **Working branch:** `feat/world-3d-office`  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
 **Base:** `main`  
-**Latest PR head inspected:** `3b79869a3a5be2426a043f48fbfcba2b2256a513`  
-**Validation runs:** CI `37954944334`; CodeQL `37954944282`; HA recovery `37954944382`; ephemeral DAST `37954944237`; production infrastructure `37954944352`.  
+**Latest validated PR head:** `06114954723840ffc9a835ba63b1d9c7117af77d`  
+**Validation runs:** CI `37966719875`; CodeQL `37966719872`; HA recovery `37966719747`; ephemeral DAST `37966719511`; production infrastructure `37966719593`.  
 **Previous implementation/docs head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
 **Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
 
@@ -61,18 +61,18 @@ The validation evidence below was retrieved for the exact PR head `3b79869a3a5be
 
 ## 4. Validation evidence — latest inspected PR head
 
-**Exact tested PR head:** `3b79869a3a5be2426a043f48fbfcba2b2256a513`  
-**Captured:** 2026-10-09. All five required workflow runs below completed with `success` and are associated with this exact SHA.
+**Exact tested PR head:** `06114954723840ffc9a835ba63b1d9c7117af77d`  
+**Captured:** 2026-10-09. All five required workflow runs completed with `success` on this exact SHA.
 
 | Check | Observed state | Evidence |
 |---|---|---|
-| CI — frontend and backend | Success. Frontend Lint, Contract tests, Unit tests, Production build, Playwright Chromium install and World Mode Playwright smoke all succeeded; backend compile, Ruff, migration gates and backend tests succeeded. | [Run 37954944334](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944334) |
-| CodeQL — JavaScript/TypeScript and Python | Both analysis jobs succeeded. | [Run 37954944282](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944282) |
-| HA Failure Recovery Validation | Recovery rehearsal, Compose validation and image build succeeded. | [Run 37954944382](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944382) |
-| Ephemeral DAST Validation | OWASP ZAP baseline scan and ephemeral stack lifecycle succeeded. | [Run 37954944237](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944237) |
-| Production Infrastructure Validation | Compose contract, production image build, service lifecycle, database migration gate, backup and isolated restore succeeded. | [Run 37954944352](https://github.com/ijoolaie/AI-Employee/actions/runs/37954944352) |
+| CI — frontend and backend | Success. Frontend Lint, Contract tests, Unit tests, Production build, Playwright Chromium install and World Mode Playwright smoke all succeeded; backend compile, Ruff, migration gates and backend tests succeeded. | [Run 37966719875](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719875) |
+| CodeQL — JavaScript/TypeScript and Python | Both analysis jobs succeeded. | [Run 37966719872](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719872) |
+| HA Failure Recovery Validation | Recovery rehearsal, Compose validation and image build succeeded. | [Run 37966719747](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719747) |
+| Ephemeral DAST Validation | OWASP ZAP baseline scan, ephemeral stack lifecycle and cleanup succeeded. | [Run 37966719511](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719511) |
+| Production Infrastructure Validation | Compose contract, production image build, service lifecycle, database migration gate, backup and isolated restore succeeded. | [Run 37966719593](https://github.com/ijoolaie/AI-Employee/actions/runs/37966719593) |
 
-**Interpretation:** automated CI/security/infrastructure gates listed above are green on the inspected SHA. This is not a claim of manual cross-device visual QA or production release certification. If the PR head changes, re-check the new SHA before treating these results as current.
+**Interpretation:** all five automated CI/security/infrastructure gates listed above are green on the inspected SHA. This is not a claim of manual cross-device visual QA or production release certification. Any later commit requires checking the new head before treating these results as current.
 
 ### Known prior CI failure and correction
 
@@ -89,7 +89,7 @@ The correction is now covered by a successful CI run on `3b79869a3a5be2426a043f4
 
 ## 5. Immediate next actions
 
-1. Re-check the five workflow runs if the PR head changes; current evidence is green on `3b79869a3a5be2426a043f48fbfcba2b2256a513`.
+1. Automated CI/security/infrastructure validation is green on `06114954723840ffc9a835ba63b1d9c7117af77d`; re-check all five gates if the PR head changes.
 2. Perform/record manual browser smoke tests for pinch zoom, pointer cancellation, keyboard movement, focus loss, employee selection, and Escape.
 3. Review the rendered scene at desktop and narrow viewport sizes for legibility, selection accuracy and visual hierarchy.
 4. Keep this handoff, `CHANGELOG.md`, `DOCUMENTATION_INDEX.md`, and the PR body synchronized with the current head and observed evidence.
