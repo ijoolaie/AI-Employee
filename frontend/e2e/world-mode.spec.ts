@@ -83,7 +83,7 @@ test("World Mode renders authoritative employee projection and management bridge
 
   await page.goto("/world");
   await expect(page.getByRole("heading", { name: "World Mode" })).toBeVisible();
-  await expect(page.getByText("WORKING")).toBeVisible();
+  await expect(page.getByText("WORKING 1", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: /Management Mode/i })).toHaveAttribute("href", "/dashboard");
 
   const canvas = page.getByLabel("AI Company World viewport");
