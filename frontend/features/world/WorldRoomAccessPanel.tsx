@@ -1,7 +1,8 @@
 "use client";
 
-type AccessState = "loading" | "unavailable" | "granted";
 import { getRoomLeaseExpiryStatus } from "./world-room-expiry";
+
+type AccessState = "loading" | "unavailable" | "granted";
 
 export function WorldRoomAccessPanel({
   state,
