@@ -1,6 +1,6 @@
 "use client";
 
-type AccessState = "loading" | "unavailable" | "granted";
+type AccessState = "loading" | "unavailable" | "denied" | "granted";
 
 export function WorldRoomAccessPanel({
   state,
@@ -9,6 +9,7 @@ export function WorldRoomAccessPanel({
   roomInstanceId,
   onClose,
   onRetry,
+  onRent,
 }: {
   state: AccessState;
   itemCode: string;
@@ -16,6 +17,7 @@ export function WorldRoomAccessPanel({
   roomInstanceId: string | null;
   onClose: () => void;
   onRetry: () => void;
+  onRent: () => void;
 }) {
   const expiry = expiresAt
     ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(expiresAt))
@@ -36,6 +38,12 @@ export function WorldRoomAccessPanel({
         <div className="mt-4 rounded-lg border border-amber-400/30 bg-amber-950/20 p-3 text-sm text-amber-100">
           <p role="alert">وضعیت مجوز از سرور قابل تأیید نیست. دسترسی اتاق مسدود می‌ماند.</p>
           <button type="button" onClick={onRetry} className="mt-3 rounded-lg border border-amber-200/30 px-3 py-2 text-xs hover:bg-amber-900/30">بررسی دوباره</button>
+        </div>
+      )}
+      {state === "denied" && (
+        <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900 p-3 text-sm text-slate-200">
+          <p role="status">برای این اتاق نمونهٔ موجودی با مجوز فعال پیدا نشد؛ اتاق همچنان قفل است.</p>
+          <button type="button" onClick={onRent} className="mt-3 rounded-lg border border-amber-200/30 px-3 py-2 text-xs text-amber-100 hover:bg-amber-900/30">مشاهده پیشنهاد اجاره</button>
         </div>
       )}
       {state === "granted" && (
