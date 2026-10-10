@@ -6,7 +6,9 @@ from decimal import Decimal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
-from typing import Annotated
+from typing import Annotated, Literal
+
+from pydantic import model_validator
 
 
 ShortKey = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=128)]
@@ -130,3 +132,39 @@ class WorldSupportDiagnosticsResponse(BaseModel):
     active_entitlement_count: int
     recent_orders: list[WorldSupportOrderSummary]
     entitlements: list[WorldSupportEntitlementSummary]
+
+
+class WorldCataloguePriceOption(BaseModel):
+    """Server-managed price and allowed checkout choices for one currency."""
+    model_config = ConfigDict(extra="forbid")
+    amount: Decimal = Field(gt=0, max_digits=24, decimal_places=8)
+    providers: list[ShortKey] = Field(min_length=1, max_length=12)
+    payment_methods: list[Literal["manual_transfer", "gateway", "crypto"]] = Field(min_length=1, max_length=3)
+
+    @model_validator(mode="after")
+    def require_unique_choices(self):
+        if len(set(self.providers)) != len(self.providers):
+            raise ValueError("providers must be unique")
+        if len(set(self.payment_methods)) != len(self.payment_methods):
+            raise ValueError("payment_methods must be unique")
+        return self
+
+
+class WorldCatalogueAdminWriteRequest(BaseModel):
+    """Full replacement/create payload; never accepts client-owned database fields."""
+    model_config = ConfigDict(extra="forbid")
+    code: Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=100, pattern=r"^[a-zA-Z0-9][a-zA-Z0-9._-]*$")]
+    item_type: Literal["room", "layout", "appearance", "personality", "furniture", "facility", "support"]
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=160)]
+    description: str | None = Field(default=None, max_length=4000)
+    price_options: dict[Literal["IRR", "USD", "USDT"], WorldCataloguePriceOption] = Field(default_factory=dict)
+    is_free: bool = False
+    is_active: bool = True
+
+    @model_validator(mode="after")
+    def validate_price_options(self):
+        if self.is_free and self.price_options:
+            raise ValueError("free catalogue items must not define paid price options")
+        if not self.is_free and not self.price_options:
+            raise ValueError("paid catalogue items require at least one configured currency")
+        return self
