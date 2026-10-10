@@ -214,3 +214,65 @@ test("World room offer loads server prices and creates an order without charging
   expect(orderPayload).toHaveProperty("idempotency_key");
   expect(orderPayload).not.toHaveProperty("amount");
 });
+
+
+test("World room scene opens only when server inventory authorization grants access", async ({ page }) => {
+  await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), authState);
+  await page.route("**/customer-dashboard/office", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(office) });
+  });
+  await page.route("**/analytics/roi", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: { conversations: 0, ai_resolved: 0, human_handoffs: 0, runs: 0, successful_runs: 0, orders: 0, revenue: 0, influenced_orders: 0, influenced_revenue: 0, ai_resolution_rate: 0, handoff_rate: 0 } }),
+    });
+  });
+  await page.route("**/world-commerce/catalogue", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: [{
+        id: "room-offer-e2e",
+        code: "room_monthly",
+        item_type: "room",
+        name: "اتاق توسعه",
+        description: "اتاق اجاره‌شده",
+        is_free: false,
+        price_options: { IRR: { amount: "2500000", providers: ["manual"], payment_methods: ["manual_transfer"] } },
+      }] }),
+    });
+  });
+  await page.route("**/world-commerce/room-inventory/room_monthly/access", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          item_code: "room_monthly",
+          granted: true,
+          reason: "active",
+          room_instance_id: "room-instance-e2e-001",
+          expires_at: "2026-11-10T12:00:00Z",
+        },
+      }),
+    });
+  });
+
+  await page.goto("/world");
+  const canvas = page.getByLabel("AI Company World viewport");
+  await expect(canvas).toBeVisible();
+  await canvas.focus();
+  await page.keyboard.down("s");
+  await page.waitForTimeout(900);
+  await page.keyboard.up("s");
+  const inspectRoom = page.getByRole("button", { name: /Locked room nearby · Access authorized/ });
+  await expect(inspectRoom).toBeVisible({ timeout: 5000 });
+  await canvas.press("e");
+
+  const accessPanel = page.getByRole("dialog", { name: "دسترسی اتاق شرکت" });
+  await expect(accessPanel).toBeVisible();
+  await expect(accessPanel.getByText("room-instance-e2e-001")).toBeVisible();
+  await expect(accessPanel.getByText(/فضای سه‌بعدی اتاق در صحنه نمایش داده می‌شود/)).toBeVisible();
+});
