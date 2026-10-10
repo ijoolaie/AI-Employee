@@ -217,3 +217,13 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - Latest branch commit: `ef87d977aa224571aa2f0b48b868337dffdd50bf`. CI/security workflows for that exact commit have not yet completed at documentation time.
 - Still no provider verification/webhooks, virtual wallet ledger, customer-facing support sessions, lease and furniture fulfillment, or live-scene customization integration. Vendor access check is an entitlement primitive, not yet a fully implemented diagnostic/support workspace.
 - PR #983 remains open and Draft; do not merge or mark ready without explicit approval.
+
+
+## 15. AI Employee World — vendor support diagnostics checkpoint (2026-10-10)
+
+- Added `GET /world-commerce/vendor/tenants/{tenant_id}/diagnostics` as a read-only support endpoint: order counts by status, recent order summaries, and tenant entitlements. It intentionally omits buyer PII and payment transaction references.
+- Non-platform-admin callers must be in a vendor tenant, hold `world.support.view`, and request a tenant in their own descendant scope. Platform admins can inspect existing tenants. Every view is recorded in the existing audit ledger.
+- Added Alembic revision `20261010_world_support` to seed the separate support-view permission and tests for permission denial and cross-tenant isolation.
+- Latest implementation has not yet been validated by CI at documentation time. Inspect all workflows against the latest branch SHA before reporting success; do not infer success from the previous commit's CI.
+- This is not a full support workspace: no support sessions/tickets, time-limited grants, impersonation, or privileged mutation endpoints. Payment provider verification, wallet ledger, leases/furniture fulfillment, and actual 3D scene customization remain unimplemented.
+- PR #983 remains open and Draft. Do not merge or mark ready without explicit user approval.
