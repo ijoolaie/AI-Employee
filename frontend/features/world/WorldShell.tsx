@@ -15,6 +15,7 @@ import { WorldCustomizationPanel } from "./WorldCustomizationPanel";
 import { WorldRoomOfferPanel } from "./WorldRoomOfferPanel";
 import { WorldStatusBar } from "./WorldStatusBar";
 import { WorldMiniMap } from "./WorldMiniMap";
+import { WorldRoomAccessPanel } from "./WorldRoomAccessPanel";
 
 type WorldEntitlement = {
   item_code: string;
@@ -24,6 +25,9 @@ type WorldEntitlement = {
 };
 
 type APIResponse<T> = { success: boolean; data?: T };
+type WorldCatalogueItem = { code: string; item_type: string; is_free: boolean };
+type WorldFeatureAccess = { item_code: string; granted: boolean; access_source: string; item_type: string };
+
 
 export function WorldShell() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
@@ -31,6 +35,7 @@ export function WorldShell() {
   const [showCustomization, setShowCustomization] = useState(false);
   const [nearLockedRoom, setNearLockedRoom] = useState(false);
   const [showRoomOffer, setShowRoomOffer] = useState(false);
+  const [showRoomAccess, setShowRoomAccess] = useState(false);
   const officeQuery = useQuery({ queryKey: ["customer-world-read-model"], queryFn: getCustomerOffice, refetchInterval: 5000, staleTime: 2000 });
   const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });
   const entitlementsQuery = useQuery({
@@ -47,11 +52,43 @@ export function WorldShell() {
     retry: 1,
   });
   const activeRoomLease = entitlementsQuery.data?.find((entitlement) => entitlement.item_type === "room" && entitlement.status === "active") ?? null;
+  const roomCatalogueQuery = useQuery({
+    queryKey: ["world-room-access-catalogue"],
+    queryFn: async () => {
+      const response = await api.get<APIResponse<WorldCatalogueItem[]>>("/world-commerce/catalogue");
+      if (!response.data.success || !Array.isArray(response.data.data)) throw new Error("کاتالوگ اتاق معتبر نیست.");
+      return response.data.data.find((item) => item.item_type === "room" && !item.is_free)?.code ?? null;
+    },
+    staleTime: 30_000,
+    retry: 1,
+  });
+  const roomAccessQuery = useQuery({
+    queryKey: ["world-room-feature-access", roomCatalogueQuery.data],
+    enabled: Boolean(roomCatalogueQuery.data),
+    queryFn: async () => {
+      const response = await api.get<APIResponse<WorldFeatureAccess>>(`/world-commerce/access/${encodeURIComponent(roomCatalogueQuery.data!)}`);
+      if (!response.data.success || !response.data.data) throw new Error("وضعیت دسترسی اتاق معتبر نیست.");
+      return response.data.data;
+    },
+    refetchInterval: 30_000,
+    staleTime: 10_000,
+    retry: 1,
+  });
+  const roomAccessGranted = roomAccessQuery.data?.granted === true && roomAccessQuery.data.item_type === "room";
+  const roomAccessUnavailable = Boolean(roomCatalogueQuery.error || roomAccessQuery.error || (!roomCatalogueQuery.isLoading && roomCatalogueQuery.data === null));
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
   const onRoomProximity = useCallback((near: boolean) => setNearLockedRoom(near), []);
-  const onRoomInteract = useCallback(() => setShowRoomOffer(true), []);
+  const onRoomInteract = useCallback(() => {
+    if (roomAccessGranted) {
+      setShowRoomOffer(false);
+      setShowRoomAccess(true);
+    } else {
+      setShowRoomAccess(false);
+      setShowRoomOffer(true);
+    }
+  }, [roomAccessGranted]);
   const selectedEmployee = world?.employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
 
   useEffect(() => {
@@ -100,8 +137,9 @@ export function WorldShell() {
                 <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} onMapToggle={onMapToggle} onRoomProximity={onRoomProximity} onRoomInteract={onRoomInteract} />
                 <MobileInputAdapter />
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
-                {nearLockedRoom && !showRoomOffer && !showCustomization && <button type="button" onClick={() => setShowRoomOffer(true)} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">Locked room nearby · Press E or inspect</button>}
+                {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Authorized room nearby · Press E or inspect" : "Room nearby · Press E to inspect access or rent"}</button>}
                 {showRoomOffer && <WorldRoomOfferPanel onClose={() => setShowRoomOffer(false)} />}
+                {showRoomAccess && <WorldRoomAccessPanel itemCode={roomAccessQuery.data?.item_code ?? roomCatalogueQuery.data ?? ""} expiresAt={activeRoomLease?.expires_at ?? null} onClose={() => setShowRoomAccess(false)} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
