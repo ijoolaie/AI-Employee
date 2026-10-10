@@ -178,3 +178,18 @@ A delivery is complete only when the exact commit/tag, manifest, evidence, editi
 - [ ] Merge only when the change is reviewed and validation supports it.
 - [ ] Update docs only when a durable decision or checkpoint changed; use dated checkpoints and always resolve live `main` before future work.
 - [ ] Report merged SHA, evidence, remaining blockers, and what is *not* certified or externally verified.
+
+
+## 12. AI Employee World — first playable prototype checkpoint (2026-10-10)
+
+Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
+
+- Added a procedural player-controlled CEO avatar and bounded keyboard/mobile movement in the World viewport.
+- Added one visually locked adjacent room, a near-room prompt and an informational one-month / one-employee offer panel. The panel is explicitly preview-only because server catalogue/order/payment verification are not connected.
+- Added a customization entry point with free and premium office-layout and CEO appearance/presentation choices. The current panel is a front-end prototype: account persistence and applying the chosen appearance/layout to the live 3D scene remain unfinished; premium items cannot be purchased or activated.
+- Added the `E` interaction event to the World input adapter.
+- Updated `docs/current/AI_EMPLOYEE_WORLD_HYBRID_ECONOMY_DESIGN.md` with IRR/USD/USDT requirements, multiple provider adapters, Vendor support/approval workflow, and auditable separation between payment approver and feature activator.
+- Not implemented: World wallet/ledger and orders, monthly lease persistence, live payment adapters, USDT network policy, Vendor approval/activation APIs and append-only audit records, durable customization, employee placement/room inventory fulfillment, or other facilities.
+- Do not treat the front-end prototype as a working commerce flow. No real payments are accepted and no paid feature is activated by the UI.
+- CI, CodeQL, HA recovery, DAST and infrastructure checks have been triggered for the latest branch head; record their final outcomes before claiming validation. Manual browser/mobile QA remains outstanding.
+- Keep PR #983 open and Draft; do not merge or mark ready without explicit user approval.
