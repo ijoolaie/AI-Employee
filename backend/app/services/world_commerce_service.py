@@ -301,3 +301,23 @@ async def mark_fulfilled(
                  actor_username=activator.email, from_status=old_status, to_status=order.status,
                  details={"item_code": order.item_code_snapshot, "entitlement_id": str(entitlement.id)})
     return order
+
+
+async def record_support_diagnostics_view(
+    db: AsyncSession,
+    *,
+    tenant_id: UUID,
+    actor: User,
+    is_platform_admin: bool,
+) -> None:
+    """Audit vendor/platform support access without exposing payment references."""
+    await audit_service.record(
+        db,
+        tenant_id=tenant_id,
+        actor_type="user",
+        actor_id=actor.id,
+        action="world.support.diagnostics_viewed",
+        resource_type="tenant",
+        resource_id=str(tenant_id),
+        metadata={"is_platform_admin": is_platform_admin},
+    )
