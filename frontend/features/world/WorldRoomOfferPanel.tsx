@@ -117,7 +117,7 @@ export function WorldRoomOfferPanel({ onClose }: { onClose: () => void }) {
     <section role="dialog" aria-modal="true" aria-labelledby="world-room-offer-title" className="absolute bottom-4 left-4 right-4 z-30 mx-auto max-w-lg rounded-2xl border border-amber-300/30 bg-slate-950/95 p-5 text-slate-100 shadow-2xl backdrop-blur-xl">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-amber-200">Expansion opportunity</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-amber-200">Room lease options</p>
           <h3 id="world-room-offer-title" className="mt-1 text-lg font-semibold">اجاره یا تمدید اتاق شرکت</h3>
         </div>
         <button type="button" onClick={onClose} className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm">بستن</button>
