@@ -760,6 +760,10 @@ export async function listResellerSupportEscalations() {
   return unwrap(await api.get<APIResponse<SupportEscalation[]>>("/edition/reseller/support/escalations"));
 }
 
+export async function listResellerSentSupportEscalations() {
+  return unwrap(await api.get<APIResponse<SupportEscalation[]>>("/edition/reseller/support/escalations/sent"));
+}
+
 export async function listResellerSupportEscalationMessages(escalationId: string) {
   return unwrap(await api.get<APIResponse<SupportEscalationMessage[]>>(`/edition/reseller/support/escalations/${escalationId}/messages`));
 }
