@@ -12,7 +12,7 @@ from pydantic import ValidationError
 from app.api.v1 import world_commerce
 from app.api.v1.world_commerce import feature_access, vendor_tenant_diagnostics
 from app.schemas.world_commerce import WorldOrderCreateRequest, WorldPaymentSubmission
-from app.services.world_commerce_service import approve_payment, create_order, mark_fulfilled
+from app.services.world_commerce_service import approve_payment, create_order, mark_fulfilled, submit_payment
 
 
 def test_order_request_accepts_supported_currency_and_no_client_price():
@@ -428,3 +428,71 @@ async def test_create_order_rejects_reused_idempotency_key_with_different_inputs
     assert exc.value.status_code == 409
     db.flush.assert_not_awaited()
 
+
+
+@pytest.mark.asyncio
+async def test_payment_reference_submission_is_only_a_claim_not_payment_approval(monkeypatch):
+    from app.services import world_commerce_service as commerce
+
+    buyer_id = uuid4()
+    order = SimpleNamespace(
+        id=uuid4(),
+        tenant_id=uuid4(),
+        buyer_user_id=buyer_id,
+        status="pending_payment",
+        payment_provider="manual",
+        provider_transaction_ref=None,
+        payment_submitted_at=None,
+    )
+    db = AsyncMock()
+    db.scalar.return_value = order
+    event = AsyncMock()
+    monkeypatch.setattr(commerce, "_event", event)
+
+    result = await submit_payment(
+        db,
+        order_id=order.id,
+        tenant_id=order.tenant_id,
+        actor=SimpleNamespace(id=buyer_id, email="buyer@example.test"),
+        provider_transaction_ref="  transfer-reference-123  ",
+    )
+
+    assert result is order
+    assert order.provider_transaction_ref == "transfer-reference-123"
+    assert order.status == "payment_submitted"
+    assert not hasattr(order, "approved_at")
+    assert not hasattr(order, "activated_at")
+    db.flush.assert_awaited_once()
+    event.assert_awaited_once()
+    assert event.await_args.kwargs["event_type"] == "payment_submitted"
+    assert event.await_args.kwargs["to_status"] == "payment_submitted"
+
+
+@pytest.mark.asyncio
+async def test_payment_reference_submission_is_restricted_to_order_buyer():
+    buyer_id = uuid4()
+    order = SimpleNamespace(
+        id=uuid4(),
+        tenant_id=uuid4(),
+        buyer_user_id=buyer_id,
+        status="pending_payment",
+        payment_provider="manual",
+        provider_transaction_ref=None,
+        payment_submitted_at=None,
+    )
+    db = AsyncMock()
+    db.scalar.return_value = order
+
+    with pytest.raises(HTTPException) as exc:
+        await submit_payment(
+            db,
+            order_id=order.id,
+            tenant_id=order.tenant_id,
+            actor=SimpleNamespace(id=uuid4(), email="other@example.test"),
+            provider_transaction_ref="transfer-reference-123",
+        )
+
+    assert exc.value.status_code == 403
+    assert order.status == "pending_payment"
+    assert order.provider_transaction_ref is None
+    db.flush.assert_not_awaited()
