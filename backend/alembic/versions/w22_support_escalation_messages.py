@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 revision = "w22_support_escalation_messages"
-down_revision = "w21_ai_business_network"
+down_revision = "20261010_world_room_inventory"
 branch_labels = None
 depends_on = None
 
