@@ -270,3 +270,10 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - Exact implementation head 33411a4b95aa3a5ebd2deb265800fd250066b60a passed all listed automated workflows at inspection: CI, CodeQL, HA recovery, ephemeral DAST and production infrastructure. The subsequent documentation commit creates a new SHA and must be checked before merge.
 - Not implemented: live provider/webhook verification, World wallet/ledger, lease expiry/renewal automation, fulfillment/inventory integration, persistent customization-to-3D-scene wiring, support reply threads/attachments, impersonation or temporary support grants.
 - Merge was explicitly requested by the user; merge only after the documentation-updated exact head's required checks are green. Manual cross-device visual QA and production release certification remain separate.
+
+
+## 18. AI Employee World — merge completed (2026-10-10)
+
+- PR #983 was squash-merged into main as commit f3f7ad6c169a5e31b1773b4a280af43b49c020c7.
+- The documentation-updated PR head a0952cc44444e5c04c4c245653e59227b3a88a82 passed all 17 workflows before merge, including CI, CodeQL, HA recovery, ephemeral DAST, production infrastructure, and the supporting E2E/security contracts.
+- The merge does not imply production certification or manual visual QA. Remaining limitations are recorded in the World hybrid-economy design and master handoff.
