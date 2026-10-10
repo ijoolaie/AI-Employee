@@ -756,3 +756,10 @@ last Phase 1 baseline; historical As-Built snapshots remain preserved.
 - Added incoming support escalation inboxes for vendor/reseller tenants and audited status transitions (open, in_progress, resolved) with tenant-scoped lookups and invalid-transition rejection.
 - Exact implementation head before documentation reconciliation: 33411a4b95aa3a5ebd2deb265800fd250066b60a. At inspection, CI, CodeQL, HA recovery, DAST and production infrastructure workflows all completed successfully on that SHA.
 - Documentation changes require validation on the resulting branch head before merge. Manual browser/mobile visual QA and production release certification remain outstanding.
+
+
+## 2026-10-10 — PR #983 merged
+
+- PR #983 was merged into main with squash merge commit f3f7ad6c169a5e31b1773b4a280af43b49c020c7.
+- All 17 workflows on the documentation-updated PR head a0952cc44444e5c04c4c245653e59227b3a88a82 completed successfully before merge, including CI, CodeQL, HA recovery, DAST and production infrastructure validation.
+- Manual desktop/mobile visual QA and production release certification remain outstanding. Live payment verification, wallet/ledger, lease/fulfillment automation, persistent 3D customization, support replies/attachments and impersonation remain unimplemented.
