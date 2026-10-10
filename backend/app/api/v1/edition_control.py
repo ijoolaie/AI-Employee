@@ -17,6 +17,7 @@ from app.schemas.edition import (
     EntitlementResponse,
     SupportEscalationRequest,
     SupportEscalationResponse,
+    SupportEscalationStatusRequest,
     TenantSummary,
 )
 from app.services import edition_lifecycle_service, edition_service
@@ -181,6 +182,67 @@ async def list_vendor_support_escalations(ctx: VendorAdminContext, db: DbSession
 async def list_reseller_support_escalations(ctx: ResellerAdminContext, db: DbSession):
     """List only support escalations addressed to this reseller tenant."""
     return await _list_incoming_support_escalations(db, ctx.tenant_id)
+
+
+async def _update_incoming_support_escalation(
+    escalation_id: UUID,
+    payload: SupportEscalationStatusRequest,
+    ctx,
+    db: DbSession,
+):
+    result = await db.execute(
+        select(SupportEscalation).where(
+            SupportEscalation.id == escalation_id,
+            SupportEscalation.to_tenant_id == ctx.tenant_id,
+        )
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Support escalation not found")
+    allowed_transitions = {
+        "open": {"in_progress", "resolved"},
+        "in_progress": {"open", "resolved"},
+        "resolved": {"open"},
+    }
+    if payload.status == row.status:
+        return APIResponse(success=True, data=SupportEscalationResponse.model_validate(row, from_attributes=True))
+    if payload.status not in allowed_transitions.get(row.status, set()):
+        raise HTTPException(status_code=409, detail="Invalid support escalation status transition")
+    previous_status = row.status
+    row.status = payload.status
+    await edition_service.record_audit(
+        db,
+        tenant_id=ctx.tenant_id,
+        actor_id=ctx.user_id,
+        action="support.escalation.status_changed",
+        resource_type="support_escalation",
+        resource_id=str(row.id),
+        metadata={"from_status": previous_status, "to_status": payload.status},
+    )
+    await db.refresh(row)
+    return APIResponse(success=True, data=SupportEscalationResponse.model_validate(row, from_attributes=True))
+
+
+@router.patch("/vendor/support/escalations/{escalation_id}/status", response_model=APIResponse[SupportEscalationResponse])
+async def update_vendor_support_escalation_status(
+    escalation_id: UUID,
+    payload: SupportEscalationStatusRequest,
+    ctx: VendorAdminContext,
+    db: DbSession,
+):
+    """Change status only for escalations addressed to this vendor tenant."""
+    return await _update_incoming_support_escalation(escalation_id, payload, ctx, db)
+
+
+@router.patch("/reseller/support/escalations/{escalation_id}/status", response_model=APIResponse[SupportEscalationResponse])
+async def update_reseller_support_escalation_status(
+    escalation_id: UUID,
+    payload: SupportEscalationStatusRequest,
+    ctx: ResellerAdminContext,
+    db: DbSession,
+):
+    """Change status only for escalations addressed to this reseller tenant."""
+    return await _update_incoming_support_escalation(escalation_id, payload, ctx, db)
 
 
 @router.post("/support/escalations", response_model=APIResponse[SupportEscalationResponse], status_code=201)
