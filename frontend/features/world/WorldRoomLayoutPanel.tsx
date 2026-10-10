@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, getErrorMessage } from "@/lib/api";
 import type { RoomEmployeePlacement, RoomFurnitureKind, RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
 
@@ -18,6 +18,7 @@ const KIND_LABELS: Record<RoomFurnitureKind, string> = {
 export function WorldRoomLayoutPanel({
   itemCode,
   roomInstanceId,
+  initialUpdatedAt,
   employees,
   initialConfig,
   onClose,
@@ -25,6 +26,7 @@ export function WorldRoomLayoutPanel({
 }: {
   itemCode: string;
   roomInstanceId: string;
+  initialUpdatedAt: string;
   employees: Array<{ id: string; name: string }>;
   initialConfig: WorldRoomSceneConfig;
   onClose: () => void;
@@ -32,6 +34,11 @@ export function WorldRoomLayoutPanel({
 }) {
   const [furniture, setFurniture] = useState<RoomFurniturePlacement[]>(initialConfig.furniture);
   const [employeePlacements, setEmployeePlacements] = useState<RoomEmployeePlacement[]>(initialConfig.employee_placements);
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(initialUpdatedAt);
+  useEffect(() => {
+    const activeIds = new Set(employees.map((employee) => employee.id));
+    setEmployeePlacements((current) => current.filter((placement) => activeIds.has(placement.employee_id)));
+  }, [employees]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -77,16 +84,18 @@ export function WorldRoomLayoutPanel({
     setError("");
     try {
       const response = await api.put<APIResponse<SceneConfigResponse>>(
-        `/world-commerce/room-inventory/${encodeURIComponent(itemCode)}/scene-config`,
+        `/world-commerce/room-inventory/${encodeURIComponent(itemCode)}/scene-config?expected_updated_at=${encodeURIComponent(expectedUpdatedAt)}`,
         { schema_version: 1, layout_preset: "starter", furniture, employee_placements: employeePlacements },
       );
       if (!response.data.success || !response.data.data) {
         throw new Error("The server did not confirm that the room layout was saved.");
       }
       onSaved(response.data.data.scene_config);
+      setExpectedUpdatedAt(response.data.data.updated_at);
       setMessage("Room layout saved to the server.");
     } catch (caught) {
-      setError(getErrorMessage(caught));
+      const status = (caught as { response?: { status?: number } })?.response?.status;
+      setError(status === 409 ? "This room layout changed elsewhere. Close this editor and reopen it to load the latest version before saving." : getErrorMessage(caught));
     } finally {
       setSaving(false);
     }
