@@ -104,8 +104,6 @@ def upgrade() -> None:
         sa.Column("details", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
     )
-    op.create_index("ix_world_commerce_events_tenant_id", "world_commerce_events", ["tenant_id"])
-    op.create_index("ix_world_commerce_events_order_id", "world_commerce_events", ["order_id"])
     op.create_index("ix_world_commerce_events_tenant_created", "world_commerce_events", ["tenant_id", "created_at"])
     op.create_index("ix_world_commerce_events_order_created", "world_commerce_events", ["order_id", "created_at"])
 
