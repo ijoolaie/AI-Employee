@@ -94,6 +94,16 @@ class SupportEscalationStatusRequest(BaseModel):
 
 class SupportEscalationMessageRequest(BaseModel):
     body: str = Field(min_length=1, max_length=10000)
+    attachment_file_ids: list[UUID] = Field(default_factory=list, max_length=5)
+
+
+class SupportEscalationMessageAttachmentResponse(BaseModel):
+    id: UUID
+    file_id: UUID
+    filename: str
+    content_type: str | None
+    size_bytes: int
+    created_at: datetime
 
 
 class SupportEscalationMessageResponse(BaseModel):
@@ -103,5 +113,6 @@ class SupportEscalationMessageResponse(BaseModel):
     author_user_id: UUID | None
     body: str
     created_at: datetime
+    attachments: list[SupportEscalationMessageAttachmentResponse] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}

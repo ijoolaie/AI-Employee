@@ -8,17 +8,26 @@ from fastapi import HTTPException
 
 from app.api.v1.edition_control import (
     _create_support_escalation_message,
+    _download_support_escalation_attachment,
     _list_support_escalation_messages,
 )
 from app.models.support_escalation_message import SupportEscalationMessage
+from app.models.support_escalation_message_attachment import SupportEscalationMessageAttachment
 from app.schemas.edition import SupportEscalationMessageRequest
-from app.services import edition_service
+from app.services import edition_service, storage
 
 
-def _result(ticket=None, rows=None):
+def _result(ticket=None, rows=None, pairs=None, values=None):
+    if pairs is not None:
+        return SimpleNamespace(all=lambda: pairs)
+    if values is not None:
+        return SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: values))
     if rows is not None:
-        return SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: rows))
-    return SimpleNamespace(scalar_one_or_none=lambda: ticket)
+        return SimpleNamespace(
+            scalars=lambda: SimpleNamespace(all=lambda: rows),
+            all=lambda: rows,
+        )
+    return SimpleNamespace(scalar_one_or_none=lambda: ticket, scalars=lambda: SimpleNamespace(all=lambda: []))
 
 
 @pytest.mark.asyncio
@@ -34,7 +43,7 @@ async def test_support_message_thread_is_scoped_to_ticket_participants():
         created_at=datetime.now(timezone.utc),
     )
     db = AsyncMock()
-    db.execute.side_effect = [_result(ticket), _result(rows=[message])]
+    db.execute.side_effect = [_result(ticket), _result(rows=[message]), _result(pairs=[])]
     ctx = SimpleNamespace(tenant_id=tenant_id, user_id=message.author_user_id)
 
     response = await _list_support_escalation_messages(ticket.id, ctx, db)
@@ -89,6 +98,51 @@ async def test_support_message_reply_is_audited_and_keeps_body_out_of_audit_meta
 
 
 @pytest.mark.asyncio
+async def test_support_message_rejects_attachment_not_owned_by_author_tenant(monkeypatch):
+    tenant_id = uuid4()
+    file_id = uuid4()
+    ticket = SimpleNamespace(id=uuid4(), from_tenant_id=tenant_id, to_tenant_id=uuid4(), status="open")
+    db = AsyncMock()
+    db.execute.side_effect = [_result(ticket=ticket), _result(rows=[])]
+    audit = AsyncMock()
+    monkeypatch.setattr(edition_service, "record_audit", audit)
+    ctx = SimpleNamespace(tenant_id=tenant_id, user_id=uuid4())
+
+    with pytest.raises(HTTPException) as exc:
+        await _create_support_escalation_message(
+            ticket.id,
+            SupportEscalationMessageRequest(body="Please review this file.", attachment_file_ids=[file_id]),
+            ctx,
+            db,
+        )
+
+    assert exc.value.status_code == 404
+    db.add.assert_not_called()
+    audit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_support_message_rejects_duplicate_attachment_ids():
+    tenant_id = uuid4()
+    ticket = SimpleNamespace(id=uuid4(), from_tenant_id=tenant_id, to_tenant_id=uuid4(), status="open")
+    file_id = uuid4()
+    db = AsyncMock()
+    db.execute.return_value = _result(ticket=ticket)
+    ctx = SimpleNamespace(tenant_id=tenant_id, user_id=uuid4())
+
+    with pytest.raises(HTTPException) as exc:
+        await _create_support_escalation_message(
+            ticket.id,
+            SupportEscalationMessageRequest(body="Duplicate file.", attachment_file_ids=[file_id, file_id]),
+            ctx,
+            db,
+        )
+
+    assert exc.value.status_code == 422
+    db.add.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_support_message_cannot_be_added_to_resolved_ticket(monkeypatch):
     tenant_id = uuid4()
     ticket = SimpleNamespace(id=uuid4(), from_tenant_id=tenant_id, to_tenant_id=uuid4(), status="resolved")
@@ -111,8 +165,47 @@ async def test_support_message_cannot_be_added_to_resolved_ticket(monkeypatch):
     audit.assert_not_awaited()
 
 
-def test_support_message_model_is_append_only_without_attachment_or_authority_fields():
+@pytest.mark.asyncio
+async def test_support_attachment_download_hides_nonparticipant_ticket(monkeypatch):
+    db = AsyncMock()
+    db.execute.return_value = _result(ticket=None)
+    ctx = SimpleNamespace(tenant_id=uuid4(), user_id=uuid4())
+    backend = SimpleNamespace(open=pytest.fail)
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: backend)
+
+    with pytest.raises(HTTPException) as exc:
+        await _download_support_escalation_attachment(uuid4(), uuid4(), ctx, db)
+
+    assert exc.value.status_code == 404
+    db.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_support_attachment_download_rejects_attachment_from_another_ticket(monkeypatch):
+    tenant_id = uuid4()
+    ticket = SimpleNamespace(id=uuid4(), from_tenant_id=tenant_id, to_tenant_id=uuid4(), status="open")
+    db = AsyncMock()
+    db.execute.side_effect = [_result(ticket=ticket), SimpleNamespace(one_or_none=lambda: None)]
+    ctx = SimpleNamespace(tenant_id=tenant_id, user_id=uuid4())
+    backend = SimpleNamespace(open=pytest.fail)
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: backend)
+
+    with pytest.raises(HTTPException) as exc:
+        await _download_support_escalation_attachment(ticket.id, uuid4(), ctx, db)
+
+    assert exc.value.status_code == 404
+    assert db.execute.await_count == 2
+
+
+def test_support_message_model_does_not_store_public_attachment_urls():
     fields = set(SupportEscalationMessage.__table__.columns.keys())
     assert {"id", "escalation_id", "author_tenant_id", "author_user_id", "body", "created_at"} <= fields
     assert "attachment_url" not in fields
     assert "status" not in fields
+
+
+def test_support_attachment_model_prevents_reusing_one_file_across_messages():
+    fields = set(SupportEscalationMessageAttachment.__table__.columns.keys())
+    assert {"id", "message_id", "file_id", "created_at"} <= fields
+    constraints = {constraint.name for constraint in SupportEscalationMessageAttachment.__table__.constraints}
+    assert "uq_support_message_attachment_file" in constraints
