@@ -750,4 +750,9 @@ last Phase 1 baseline; historical As-Built snapshots remain preserved.
 ## Certification Gates 4–9 Audit Pass (2026-08-12)
 - Added fail-closed gate runners for E2E, security, integrations, DR, performance, and final certification.
 - Recorded Gate 4–9 evidence and blockers in `docs/audit/PRODUCTION_READINESS_AUDIT_V2_GATES4_9.md`.
-- Verified backend compile and frontend contract suite: 127/127 passed.
+- Verified backend compile and frontend contract suite: 127/127 passed.## 2026-10-10 — World commerce and support workflow checkpoint
+
+- Added the World commerce foundation: catalogue, tenant-scoped orders, append-only commerce events, feature entitlements, split approval/activation permissions, access checks, and read-only vendor diagnostics. This is backend infrastructure, not a live payment integration.
+- Added incoming support escalation inboxes for vendor/reseller tenants and audited status transitions (open, in_progress, resolved) with tenant-scoped lookups and invalid-transition rejection.
+- Exact implementation head before documentation reconciliation: 33411a4b95aa3a5ebd2deb265800fd250066b60a. At inspection, CI, CodeQL, HA recovery, DAST and production infrastructure workflows all completed successfully on that SHA.
+- Documentation changes require validation on the resulting branch head before merge. Manual browser/mobile visual QA and production release certification remain outstanding.
