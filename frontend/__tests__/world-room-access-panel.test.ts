@@ -32,6 +32,7 @@ describe("World room access gate contracts", () => {
     expect(viewport).toContain("const roomGranted = roomAccessRef.current.granted && Boolean(roomAccessRef.current.roomInstanceId);");
     expect(viewport).toContain("roomInterior.visible = roomGranted;");
     expect(viewport).toContain("roomEntrance.userData.door.rotation.y = roomGranted ? Math.PI / 2 : 0;");
+    expect(viewport).toContain("roomEntrance.userData.doorway.visible = !roomGranted;");
     expect(panel).toContain("ذخیره‌سازی سفارشی‌سازی‌ها و چیدمان اختصاصی هنوز تکمیل نشده است");
   });
 
