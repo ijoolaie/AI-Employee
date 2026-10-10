@@ -439,6 +439,9 @@ export function WorldViewport({
     scene.add(fill);
 
     buildOffice(scene);
+    const ceoAvatar = addCEOAvatar(scene);
+    addLockedRoom(scene);
+    let wasNearRoom = false;
     const workers: WorkerVisual[] = [];
     let signature = "";
     const syncWorkers = () => {
@@ -550,8 +553,13 @@ export function WorldViewport({
       const moveY = keyboard.moveY || mobileMove.y;
       if (moveX || moveY) {
         const length = Math.hypot(moveX, moveY) || 1;
-        target.x += (moveX / length) * delta * 0.008 * distance / 2;
-        target.z += (moveY / length) * delta * 0.008 * distance / 2;
+        const stepX = (moveX / length) * delta * 0.008 * distance / 2;
+        const stepZ = (moveY / length) * delta * 0.008 * distance / 2;
+        ceoAvatar.position.x = Math.max(-16, Math.min(16, ceoAvatar.position.x + stepX));
+        ceoAvatar.position.z = Math.max(-10, Math.min(9.2, ceoAvatar.position.z + stepZ));
+        target.x = ceoAvatar.position.x;
+        target.z = ceoAvatar.position.z - 2.5;
+        ceoAvatar.rotation.y = Math.atan2(moveX, moveY || 0.0001);
         updateCamera();
       }
       for (const worker of workers) {
