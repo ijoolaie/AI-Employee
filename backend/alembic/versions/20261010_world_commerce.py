@@ -13,7 +13,33 @@ branch_labels = None
 depends_on = None
 
 
+PERMISSIONS = (
+    ("world.commerce.approve", "Review and approve World Mode manual payment submissions"),
+    ("world.commerce.activate", "Activate approved World Mode purchases and entitlements"),
+)
+
+
 def upgrade() -> None:
+    for code, description in PERMISSIONS:
+        op.execute(sa.text("""
+            INSERT INTO permissions (id, code, description)
+            VALUES (gen_random_uuid(), :code, :description)
+            ON CONFLICT (code) DO NOTHING
+        """).bindparams(code=code, description=description))
+
+    permission_codes = ", ".join(f"'{code}'" for code, _ in PERMISSIONS)
+    op.execute(sa.text(f"""
+        INSERT INTO role_permissions (role_id, permission_id)
+        SELECT r.id, p.id
+        FROM roles r
+        CROSS JOIN permissions p
+        WHERE lower(r.name) IN ('owner', 'admin', 'tenant_admin')
+          AND p.code IN ({permission_codes})
+          AND NOT EXISTS (
+              SELECT 1 FROM role_permissions rp
+              WHERE rp.role_id = r.id AND rp.permission_id = p.id
+          )
+    """))
     op.create_table(
         "world_catalogue_items",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
@@ -124,6 +150,14 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    permission_codes = ", ".join(f"'{code}'" for code, _ in PERMISSIONS)
+    op.execute(sa.text(f"""
+        DELETE FROM role_permissions
+        WHERE permission_id IN (
+            SELECT id FROM permissions WHERE code IN ({permission_codes})
+        )
+    """))
+    op.execute(sa.text(f"DELETE FROM permissions WHERE code IN ({permission_codes})"))
     op.execute("DROP TRIGGER IF EXISTS trg_world_commerce_events_append_only ON world_commerce_events")
     op.execute("DROP FUNCTION IF EXISTS prevent_world_commerce_event_mutation()")
     op.drop_table("world_commerce_events")
