@@ -839,7 +839,7 @@ async def test_room_inventory_access_denies_invalid_lease_state(
     assert result.data.reason == expected_reason
 
 def test_room_scene_config_is_versioned_bounded_and_rejects_duplicate_placement_ids():
-    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
+    from app.schemas.world_commerce import WorldRoomSceneConfig
 
     config = WorldRoomSceneConfig.model_validate({
         "schema_version": 1,
@@ -973,7 +973,7 @@ async def test_room_scene_config_update_hides_inventory_owned_by_another_tenant(
     db.commit.assert_not_awaited()
 
 def test_room_scene_config_rejects_duplicate_employee_placements():
-    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
+    from app.schemas.world_commerce import WorldRoomSceneConfig
 
     employee_id = uuid4()
     payload = {
