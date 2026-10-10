@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, LayoutDashboard, Sparkles } from "lucide-react";
+import { Building2, LayoutDashboard, Palette, Sparkles } from "lucide-react";
 import { getCustomerOffice, getErrorMessage, getROIAnalytics } from "@/lib/api";
 import { MobileInputAdapter } from "./MobileInputAdapter";
 import { WorldEmployeePanel } from "./WorldEmployeePanel";
@@ -11,12 +11,14 @@ import { WorldOutcomePanel } from "./WorldOutcomePanel";
 import { WorldProgressionPanel } from "./WorldProgressionPanel";
 import { projectWorldReadModel } from "./WorldState";
 import { WorldViewport } from "./WorldViewport";
+import { WorldCustomizationPanel } from "./WorldCustomizationPanel";
 import { WorldStatusBar } from "./WorldStatusBar";
 import { WorldMiniMap } from "./WorldMiniMap";
 
 export function WorldShell() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [showMiniMap, setShowMiniMap] = useState(false);
+  const [showCustomization, setShowCustomization] = useState(false);
   const officeQuery = useQuery({ queryKey: ["customer-world-read-model"], queryFn: getCustomerOffice, refetchInterval: 5000, staleTime: 2000 });
   const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
