@@ -158,3 +158,8 @@ Still not implemented: wallet balance/ledger and virtual-credit debit, real paym
 The backend now includes a read-only vendor diagnostics endpoint at `GET /world-commerce/vendor/tenants/{tenant_id}/diagnostics`. It returns per-status order counts, up to 20 recent order summaries, and tenant entitlements without exposing buyer identity or payment transaction references. Access is limited to platform admins or vendor tenants holding the separate `world.support.view` permission, and non-admin vendor access is constrained to the vendor tenant and its descendants. Each diagnostics view writes an entry to the existing audit ledger. A new Alembic revision seeds the permission for owner/admin/tenant-admin roles; permission assignment and vendor hierarchy policy must still be reviewed before production enablement.
 
 This is a read-only diagnostics primitive, not a complete support-ticket/session system. No temporary support grants, customer impersonation, payment provider verification, wallet ledger, lease automation, or 3D scene entitlement wiring is enabled. Tests were added for permission enforcement and unrelated-tenant isolation; verify CI on the latest branch head before treating them as passing.
+
+
+### Diagnostics data-minimization regression test (2026-10-10)
+
+A schema regression test now asserts that vendor support order summaries omit buyer user IDs and provider transaction references. The summary deliberately contains only the order identifier, catalogue code snapshot, amount/currency, status and timestamps. Re-run CI against the current head after this test-only change; the previously green CI applies to the earlier SHA only.
