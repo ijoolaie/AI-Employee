@@ -33,6 +33,6 @@ describe("World room access gate contracts", () => {
 
   it("allows retrying failed server authorization without granting access optimistically", () => {
     expect(panel).toContain('onClick={onRetry}');
-    expect(shell).toContain("void roomCatalogueQuery.refetch(); void roomAccessQuery.refetch();");
+    expect(shell).toContain("void roomCatalogueQuery.refetch(); if (roomCatalogueQuery.data) void roomAccessQuery.refetch();");
   });
 });
