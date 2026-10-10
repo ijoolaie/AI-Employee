@@ -196,7 +196,7 @@ test("World room offer loads server prices and creates an order without charging
   await expect(inspectRoom).toBeVisible({ timeout: 5000 });
   await canvas.press("e");
 
-  const offer = page.getByRole("dialog", { name: "اتاق بعدی شرکت" });
+  const offer = page.getByRole("dialog", { name: "اجاره یا تمدید اتاق شرکت" });
   await expect(offer).toBeVisible();
   await expect(offer.getByText("اتاق توسعه", { exact: true })).toBeVisible();
   await expect(offer.getByText("2500000 IRR", { exact: true })).toBeVisible();
@@ -235,7 +235,19 @@ async function mockRoomSceneAccess(page: import("@playwright/test").Page, expire
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, data: [{ code: "room_monthly", item_type: "room", is_free: false }] }),
+      body: JSON.stringify({ success: true, data: [{
+        id: "room-offer-e2e",
+        code: "room_monthly",
+        item_type: "room",
+        name: "اتاق توسعه",
+        description: "پیشنهاد آزمایشی",
+        is_free: false,
+        price_options: {
+          IRR: { amount: "2500000", providers: ["manual"], payment_methods: ["manual_transfer"] },
+          USD: { amount: "12", providers: ["sandbox"], payment_methods: ["gateway"] },
+          USDT: { amount: "10", providers: ["crypto-sandbox"], payment_methods: ["crypto"] },
+        },
+      }] }),
     });
   });
   await page.route("**/world-commerce/room-inventory", async (route) => {
@@ -269,6 +281,25 @@ test("World 3D room stays locked when a grant has expired", async ({ page }) => 
   await expect(canvas).toBeVisible();
   await expect(canvas).toHaveAttribute("data-room-access-state", "denied");
   await expect(canvas).not.toHaveAttribute("data-room-instance-id", /.+/);
+});
+
+test("expired room access offers a renewal order without opening the 3D scene", async ({ page }) => {
+  await mockRoomSceneAccess(page, "2020-01-01T00:00:00.000Z", true);
+  const canvas = page.getByLabel("AI Company World viewport");
+  await expect(canvas).toHaveAttribute("data-room-access-state", "denied");
+
+  await canvas.focus();
+  await page.keyboard.down("s");
+  await page.waitForTimeout(900);
+  await page.keyboard.up("s");
+  await expect(page.getByRole("button", { name: /Locked room nearby/ })).toBeVisible({ timeout: 5000 });
+  await canvas.press("e");
+
+  const access = page.getByRole("dialog", { name: "دسترسی اتاق شرکت" });
+  await expect(access.getByRole("alert")).toContainText("اجاره اتاق منقضی شده است");
+  await access.getByRole("button", { name: "ثبت سفارش تمدید اجاره" }).click();
+  await expect(page.getByRole("dialog", { name: "اجاره یا تمدید اتاق شرکت" })).toBeVisible();
+  await expect(canvas).toHaveAttribute("data-room-access-state", "denied");
 });
 
 test("World room layout editor persists and applies furniture placements", async ({ page }) => {

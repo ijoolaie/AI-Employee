@@ -117,6 +117,11 @@ export function WorldShell() {
     sceneConfig: roomSceneConfig,
   };
   const roomAccessGranted = isRoomSceneAccessUsable(roomSceneAccess, roomAccessUnavailable);
+  const expiryTimestamp = roomAccessQuery.data?.expires_at ? Date.parse(roomAccessQuery.data.expires_at) : Number.NaN;
+  const roomAccessExpired = !roomAccessUnavailable && (
+    roomAccessQuery.data?.reason === "lease_expired" ||
+    (roomAccessQuery.data?.granted === true && Number.isFinite(expiryTimestamp) && expiryTimestamp <= Date.now())
+  );
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
@@ -125,14 +130,14 @@ export function WorldShell() {
     if (roomInventoryQuery.isLoading || roomAccessQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessUnavailable) {
       setShowRoomOffer(false);
       setShowRoomAccess(true);
-    } else if (roomAccessGranted) {
+    } else if (roomAccessGranted || roomAccessExpired) {
       setShowRoomOffer(false);
       setShowRoomAccess(true);
     } else {
       setShowRoomAccess(false);
       setShowRoomOffer(true);
     }
-  }, [roomInventoryQuery.isLoading, roomAccessQuery.isLoading, roomCatalogueQuery.isLoading, roomAccessUnavailable, roomAccessGranted]);
+  }, [roomInventoryQuery.isLoading, roomAccessQuery.isLoading, roomCatalogueQuery.isLoading, roomAccessUnavailable, roomAccessGranted, roomAccessExpired]);
   useEffect(() => {
     const expiresAt = roomAccessQuery.data?.expires_at;
     if (roomAccessQuery.data?.granted !== true || !expiresAt) return;
@@ -204,7 +209,7 @@ export function WorldShell() {
                 {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect" : "Locked room nearby · Press E to inspect access or rent"}</button>}
                 {showCustomization && roomAccessGranted && roomSceneAccess.roomInstanceId && <WorldRoomLayoutPanel key={roomSceneAccess.roomInstanceId} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} roomInstanceId={roomSceneAccess.roomInstanceId} employees={(officeQuery.data?.employees ?? []).filter((employee) => employee.is_active).map((employee) => ({ id: employee.id, name: employee.name }))} initialConfig={roomSceneConfig} initialUpdatedAt={roomSceneConfigUpdatedAt} currentUpdatedAt={roomSceneConfigUpdatedAt} onClose={() => setShowCustomization(false)} onSaved={(config, updatedAt) => setRoomSceneConfigOverride({ roomInstanceId: roomSceneAccess.roomInstanceId!, config, updatedAt })} />}
                 {showRoomOffer && <WorldRoomOfferPanel onClose={() => setShowRoomOffer(false)} />}
-                {showRoomAccess && <WorldRoomAccessPanel state={roomInventoryQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessQuery.isLoading ? "loading" : roomAccessUnavailable ? "unavailable" : roomAccessGranted ? "granted" : "unavailable"} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? null} roomInstanceId={roomAccessQuery.data?.room_instance_id ?? null} onRetry={() => { void roomInventoryQuery.refetch(); void roomCatalogueQuery.refetch(); if (roomAccessItemCode) void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
+                {showRoomAccess && <WorldRoomAccessPanel state={roomInventoryQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessQuery.isLoading ? "loading" : roomAccessUnavailable ? "unavailable" : roomAccessExpired ? "expired" : roomAccessGranted ? "granted" : "unavailable"} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? null} roomInstanceId={roomAccessQuery.data?.room_instance_id ?? null} onRetry={() => { void roomInventoryQuery.refetch(); void roomCatalogueQuery.refetch(); if (roomAccessItemCode) void roomAccessQuery.refetch(); }} onRenew={() => { setShowRoomAccess(false); setShowRoomOffer(true); }} onClose={() => setShowRoomAccess(false)} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
@@ -213,6 +218,7 @@ export function WorldShell() {
                 unavailable={roomAccessUnavailable}
                 access={roomAccessQuery.data ?? null}
                 granted={roomAccessGranted}
+                expired={roomAccessExpired}
               />
               <WorldStatusBar world={world} />
               <WorldProgressionPanel progression={world.progression} />
@@ -238,7 +244,7 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   );
 }
 
-function RoomLeaseStatus({ loading, unavailable, access, granted }: { loading: boolean; unavailable: boolean; access: WorldRoomInventoryAccess | null; granted: boolean }) {
+function RoomLeaseStatus({ loading, unavailable, access, granted, expired }: { loading: boolean; unavailable: boolean; access: WorldRoomInventoryAccess | null; granted: boolean; expired: boolean }) {
   const expiry = access?.expires_at ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(access.expires_at)) : null;
   return (
     <section aria-label="World room lease status" className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3">
@@ -248,7 +254,8 @@ function RoomLeaseStatus({ loading, unavailable, access, granted }: { loading: b
       {!loading && !unavailable && granted && access?.room_instance_id && (
         <p className="mt-1 text-sm text-emerald-200">اتاق «{access.item_code}» از سرور تأیید شد{expiry ? ` تا ${expiry}` : ""}. شناسه نمونه: <span className="font-mono">{access.room_instance_id}</span>. صحنه فقط تا پایان اعتبار مجاز نمایش داده می‌شود.</p>
       )}
-      {!loading && !unavailable && !granted && <p className="mt-1 text-sm text-slate-400">نمونه اتاق دارای مجوز معتبر برای این مستأجر پیدا نشد.</p>}
+      {!loading && !unavailable && expired && <p className="mt-1 text-sm text-amber-200">اجاره اتاق منقضی شده است؛ برای تمدید، سفارش جدید ثبت کنید. دسترسی پس از تأیید و فعال‌سازی باز می‌شود.</p>}
+      {!loading && !unavailable && !expired && !granted && <p className="mt-1 text-sm text-slate-400">نمونه اتاق دارای مجوز معتبر برای این مستأجر پیدا نشد.</p>}
     </section>
   );
 }
