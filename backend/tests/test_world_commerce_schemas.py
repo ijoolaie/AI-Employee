@@ -972,3 +972,80 @@ async def test_room_scene_config_update_hides_inventory_owned_by_another_tenant(
     assert exc.value.status_code == 404
     db.commit.assert_not_awaited()
 
+def test_room_scene_config_rejects_duplicate_employee_placements():
+    from app.schemas.world_commerce import WorldRoomSceneConfig
+
+    employee_id = uuid4()
+    payload = {
+        "schema_version": 1,
+        "layout_preset": "starter",
+        "employee_placements": [
+            {"employee_id": str(employee_id), "x": 0, "z": 0, "rotation": 0},
+            {"employee_id": str(employee_id), "x": 1, "z": 1, "rotation": 90},
+        ],
+    }
+    with pytest.raises(ValidationError, match="employee_id values must be unique"):
+        WorldRoomSceneConfig.model_validate(payload)
+
+
+@pytest.mark.asyncio
+async def test_room_scene_config_update_allows_only_active_employees_from_same_tenant():
+    from datetime import timedelta
+    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.api.v1.world_commerce import update_room_scene_config
+
+    tenant_id = uuid4()
+    employee_id = uuid4()
+    now = datetime.now(timezone.utc)
+    inventory = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter",
+        status="provisioned", scene_config={}, updated_at=now,
+    )
+    entitlement = SimpleNamespace(tenant_id=tenant_id, status="active", expires_at=now + timedelta(days=2))
+    catalogue = SimpleNamespace(item_type="room", is_active=True)
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement, catalogue))
+    db.scalars.return_value = SimpleNamespace(all=lambda: [employee_id])
+    payload = WorldRoomSceneConfig.model_validate({
+        "schema_version": 1,
+        "layout_preset": "starter",
+        "employee_placements": [{"employee_id": str(employee_id), "x": 1.5, "z": -1, "rotation": 180}],
+    })
+
+    result = await update_room_scene_config("room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db)
+
+    assert result.success is True
+    assert result.data.scene_config.employee_placements[0].employee_id == employee_id
+    assert inventory.scene_config["employee_placements"][0]["employee_id"] == str(employee_id)
+    db.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_room_scene_config_update_rejects_employee_not_active_in_current_tenant():
+    from datetime import timedelta
+    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.api.v1.world_commerce import update_room_scene_config
+
+    tenant_id = uuid4()
+    now = datetime.now(timezone.utc)
+    inventory = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter",
+        status="provisioned", scene_config={}, updated_at=now,
+    )
+    entitlement = SimpleNamespace(tenant_id=tenant_id, status="active", expires_at=now + timedelta(days=2))
+    catalogue = SimpleNamespace(item_type="room", is_active=True)
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement, catalogue))
+    db.scalars.return_value = SimpleNamespace(all=lambda: [])
+    payload = WorldRoomSceneConfig.model_validate({
+        "schema_version": 1,
+        "layout_preset": "starter",
+        "employee_placements": [{"employee_id": str(uuid4()), "x": 0, "z": 0, "rotation": 0}],
+    })
+
+    with pytest.raises(HTTPException) as exc:
+        await update_room_scene_config("room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db)
+
+    assert exc.value.status_code == 422
+    db.commit.assert_not_awaited()
+
