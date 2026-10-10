@@ -211,3 +211,10 @@ No real payments or paid feature activation should be claimed from the current p
 - Corrected lockfile commit pushed to PR #984: `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890`.
 - The lockfile now derives from `main` and changes only `node_modules/source-map-js` to 1.2.2; Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4 remain present. This removes the unintended Tailwind v4 drift without dropping the intended security fix.
 - The old failures were observed on superseded head `5287581895464c2942dc4ae4b3f21949e51322a7`. All five workflows have been triggered on the corrected SHA; their final exact-head outcomes are pending. Do not merge until all required checks pass.
+
+
+### PR #984 latest-head correction — 2026-10-10
+
+- CI on the intermediate lockfile-only commit showed `npm ci` still failed because the PR branch's `frontend/package.json` also requested Tailwind v4. The correction was therefore extended to restore that manifest to `main`'s Tailwind v3 declaration.
+- Latest correction commit: `072e0c077ad18b7cb2afea1c50b8b68aa99be857`. Manifest and lockfile now agree on Tailwind v3; lockfile resolves Tailwind 3.4.19, retains `postcss-selector-parser` 6.1.4, and updates `source-map-js` to 1.2.2.
+- CI, CodeQL, Production Infrastructure, HA Recovery and Ephemeral DAST are pending on this exact head. Keep the PR open and unmerged until every required check is green.
