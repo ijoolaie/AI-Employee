@@ -19,7 +19,9 @@ describe("World room access gate contracts", () => {
     expect(shell).toContain('roomAccessQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessUnavailable');
     expect(panel).toContain('state === "loading"');
     expect(panel).toContain('state === "unavailable"');
+    expect(panel).toContain('state === "denied"');
     expect(panel).toContain("دسترسی اتاق مسدود می‌ماند");
+    expect(panel).toContain("onClick={onRent}");
   });
 
   it("only presents the room access confirmation when the server grants access", () => {
