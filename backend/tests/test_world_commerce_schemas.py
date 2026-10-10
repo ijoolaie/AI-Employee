@@ -655,7 +655,7 @@ async def test_room_fulfillment_requires_configured_lease_duration(monkeypatch):
     )
     item = SimpleNamespace(id=order.catalogue_item_id, item_type="room", is_free=False, lease_duration_days=None)
     db = AsyncMock()
-    db.scalar.side_effect = [order, item]
+    db.scalar.side_effect = [order, item, None]
     event = AsyncMock()
     monkeypatch.setattr(commerce, "_event", event)
 
