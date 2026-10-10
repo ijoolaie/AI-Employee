@@ -11,6 +11,18 @@
 **AI Employee World engineering checkpoint:** PR #983 merged into `main` as `f3f7ad6c169a5e31b1773b4a280af43b49c020c7`; its documentation-updated PR head `a0952cc44444e5c04c4c245653e59227b3a88a82` passed all 17 workflows. Later documentation-only commits reconcile the handoff; none is production-certified.
 **Current status:** v1.4.17 is the latest published exact-SHA certified release; external production and customer/commercial gates remain OPEN
 
+
+
+## World commerce payment-claim boundary — 2026-10-10 (PR #996)
+
+- PR [#996](https://github.com/ijoolaie/AI-Employee/pull/996) merged at `f92cadcc593fea3caa464c8dd9012e78390c20e8` after all 11 reported checks passed on exact PR head `9617afab06a936cdfc47575d86e306a714305e11`.
+- Added service-level tests proving that a buyer-submitted provider reference is an unverified claim: it moves the order only to `payment_submitted`, records the event, and does not approve payment or activate fulfillment. A non-buyer is forbidden from submitting a reference for the order.
+- This is trust-boundary test coverage only. No live provider adapter, signed webhook, settlement proof, wallet ledger, or room activation is added or verified.
+- PR #994's post-merge checks were also reviewed: all 10 reported checks passed on merge SHA `682ee6d13173673ec4ad06dea36b6d7a6750f7a7`. PR #995 reconciled the preceding checkpoint.
+- Next: add provider confirmation only alongside a real provider-specific contract, signature validation, replay protection, amount/currency/order matching, and failure/duplicate-event tests. Keep World Credit disabled until durable atomic ledger accounting exists.
+- Still open: manual desktop/mobile World QA; lease/entitlement expiry and fulfillment; employee placement and persistent customization-to-scene integration; support reply/thread/attachment workflows.
+- Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. CI and merge evidence do not certify production readiness or activate real payments.
+
 ## 2026-10-10 current engineering checkpoint
 
 - PR #983 delivered the stylized AI Employee World office, World commerce foundation, vendor diagnostics and tenant-scoped support escalation status workflow. All 17 automated workflows passed on exact PR head `a0952cc44444e5c04c4c245653e59227b3a88a82` before squash merge (`f3f7ad6c169a5e31b1773b4a280af43b49c020c7`).
