@@ -176,3 +176,18 @@ class WorldCatalogueAdminWriteRequest(BaseModel):
         if self.item_type != "room" and self.lease_duration_days is not None:
             raise ValueError("lease_duration_days is only valid for room items")
         return self
+
+class WorldRoomInventoryResponse(BaseModel):
+    room_instance_id: UUID
+    item_code: str
+    status: str
+    expires_at: datetime | None = None
+    scene_config: dict = Field(default_factory=dict)
+
+
+class WorldRoomInventoryAccessResponse(BaseModel):
+    item_code: str
+    granted: bool
+    reason: str
+    room_instance_id: UUID | None = None
+    expires_at: datetime | None = None
