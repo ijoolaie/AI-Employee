@@ -837,3 +837,138 @@ async def test_room_inventory_access_denies_invalid_lease_state(
 
     assert result.data.granted is False
     assert result.data.reason == expected_reason
+
+def test_room_scene_config_is_versioned_bounded_and_rejects_duplicate_placement_ids():
+    from app.schemas.world_commerce import WorldRoomSceneConfig
+
+    config = WorldRoomSceneConfig.model_validate({
+        "schema_version": 1,
+        "layout_preset": "starter",
+        "furniture": [
+            {"placement_id": "desk-1", "kind": "desk", "x": 0, "z": 1, "rotation": 90},
+            {"placement_id": "plant-1", "kind": "plant", "x": 3, "z": -2},
+        ],
+    })
+    assert config.schema_version == 1
+    assert len(config.furniture) == 2
+
+    with pytest.raises(ValidationError, match="unique"):
+        WorldRoomSceneConfig.model_validate({
+            "schema_version": 1,
+            "layout_preset": "starter",
+            "furniture": [
+                {"placement_id": "same", "kind": "desk", "x": 0, "z": 0},
+                {"placement_id": "same", "kind": "plant", "x": 1, "z": 1},
+            ],
+        })
+
+    with pytest.raises(ValidationError):
+        WorldRoomSceneConfig.model_validate({
+            "schema_version": 1,
+            "layout_preset": "executive",
+            "furniture": [],
+        })
+
+    with pytest.raises(ValidationError):
+        WorldRoomSceneConfig.model_validate({
+            "schema_version": 1,
+            "layout_preset": "starter",
+            "furniture": [{"placement_id": "outside", "kind": "desk", "x": 999, "z": 0}],
+        })
+
+
+@pytest.mark.asyncio
+async def test_room_scene_config_update_requires_valid_tenant_lease_and_persists_config():
+    from datetime import timedelta
+    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.api.v1.world_commerce import update_room_scene_config
+
+    tenant_id = uuid4()
+    now = datetime.now(timezone.utc)
+    inventory = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter",
+        status="provisioned", scene_config={}, updated_at=now,
+    )
+    entitlement = SimpleNamespace(
+        tenant_id=tenant_id, status="active", expires_at=now + timedelta(days=3),
+    )
+    catalogue = SimpleNamespace(item_type="room", is_active=True)
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement, catalogue))
+    ctx = SimpleNamespace(tenant_id=tenant_id)
+    config = WorldRoomSceneConfig.model_validate({
+        "schema_version": 1,
+        "layout_preset": "starter",
+        "furniture": [{"placement_id": "desk-1", "kind": "desk", "x": 2, "z": -1, "rotation": 45}],
+    })
+
+    result = await update_room_scene_config("room.starter", config, ctx, db)
+
+    assert result.success is True
+    assert result.data.room_instance_id == inventory.id
+    assert result.data.scene_config.furniture[0].placement_id == "desk-1"
+    assert inventory.scene_config["schema_version"] == 1
+    assert inventory.scene_config["furniture"][0]["x"] == 2
+    db.flush.assert_awaited_once()
+    db.commit.assert_awaited_once()
+    db.refresh.assert_awaited_once_with(inventory)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("inventory_status", "entitlement_status", "expires_at", "catalogue_active"),
+    [
+        ("suspended", "active", datetime(2099, 1, 1, tzinfo=timezone.utc), True),
+        ("provisioned", "revoked", datetime(2099, 1, 1, tzinfo=timezone.utc), True),
+        ("provisioned", "active", datetime(2020, 1, 1, tzinfo=timezone.utc), True),
+        ("provisioned", "active", datetime(2099, 1, 1, tzinfo=timezone.utc), False),
+        ("provisioned", "active", None, True),
+    ],
+)
+async def test_room_scene_config_update_denies_suspended_or_invalid_access(
+    inventory_status, entitlement_status, expires_at, catalogue_active,
+):
+    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.api.v1.world_commerce import update_room_scene_config
+
+    tenant_id = uuid4()
+    inventory = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter",
+        status=inventory_status, scene_config={}, updated_at=datetime.now(timezone.utc),
+    )
+    entitlement = SimpleNamespace(tenant_id=tenant_id, status=entitlement_status, expires_at=expires_at)
+    catalogue = SimpleNamespace(item_type="room", is_active=catalogue_active)
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement, catalogue))
+
+    with pytest.raises(HTTPException) as exc:
+        await update_room_scene_config(
+            "room.starter",
+            WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"}),
+            SimpleNamespace(tenant_id=tenant_id),
+            db,
+        )
+
+    assert exc.value.status_code == 403
+    db.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_room_scene_config_update_hides_inventory_owned_by_another_tenant():
+    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.api.v1.world_commerce import update_room_scene_config
+
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(first=lambda: None)
+
+    with pytest.raises(HTTPException) as exc:
+        await update_room_scene_config(
+            "room.starter",
+            WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"}),
+            SimpleNamespace(tenant_id=uuid4()),
+            db,
+        )
+
+    assert exc.value.status_code == 404
+    db.commit.assert_not_awaited()
+
