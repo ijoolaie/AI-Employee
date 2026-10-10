@@ -1,6 +1,6 @@
 # AI Employee World — Economy & Room Progression Design
 
-**Status:** Approved product direction; implementation not yet started
+**Status:** Approved product direction; initial front-end prototype underway
 **Branch:** `feat/world-3d-office`
 **Scope:** First playable company-world slice, room unlocks, employee placement, upgrades, and hybrid economy
 **Decision:** Hybrid economy — virtual currency plus real-money purchases; real-money currency is intentionally undecided.
@@ -100,7 +100,9 @@ Expected API surface (names are proposals, not committed contracts):
 
 ## Current implementation status
 
-This document records the selected product direction and security boundaries. It does **not** claim that wallet, World orders, room leases, player movement, one-time World checkout or fulfillment APIs have been implemented. Existing Stripe subscription billing is present in the repository, but it is not proof that World one-time purchases are implemented or externally certified.
+Implemented on the feature branch as a first front-end prototype: a procedural CEO avatar, keyboard-driven avatar movement with bounded coordinates, one visually locked adjacent room, a proximity prompt and an informational room offer panel, plus a customization panel with free/premium office and CEO presentation choices. The current customization selections are not account-persisted and do not yet reconfigure the 3D scene; premium options are locked and cannot be purchased. The existing workforce visualization remains present, so this is not yet the final isolated one-room onboarding experience.
+
+Not implemented yet: server-authoritative wallet/ledger, World orders and lease persistence, provider adapters for IRR/USD/USDT, real payment verification, vendor manual payment approval, vendor/reseller/customer support entitlements, append-only payment/activation audit records, server-persisted CEO/employee customization, paid office layouts/cosmetics, and room/furniture fulfillment. No real payment is accepted and no room is activated by the current panel. Existing Stripe subscription billing is present in the repository, but it is not proof that World one-time purchases are implemented or externally certified.
 
 
 ## Additional approved product requirements — currencies, office/CEO customization, vendor support
