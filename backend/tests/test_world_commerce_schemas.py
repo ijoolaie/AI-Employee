@@ -172,3 +172,25 @@ async def test_vendor_support_diagnostics_cannot_access_unrelated_tenant(monkeyp
         await vendor_tenant_diagnostics(unrelated_tenant_id, ctx, db)
     assert exc.value.status_code == 404
     db.execute.assert_awaited_once()
+
+
+
+def test_support_diagnostics_order_summary_omits_buyer_and_payment_reference():
+    from app.schemas.world_commerce import WorldSupportOrderSummary
+
+    order_id = uuid4()
+    summary = WorldSupportOrderSummary(
+        id=order_id,
+        item_code_snapshot="room.executive",
+        amount="12.50",
+        currency="USD",
+        status="payment_submitted",
+        created_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+        updated_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+        buyer_user_id=uuid4(),
+        provider_transaction_ref="private-payment-reference",
+    )
+    data = summary.model_dump()
+    assert "buyer_user_id" not in data
+    assert "provider_transaction_ref" not in data
+    assert data["id"] == order_id
