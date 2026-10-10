@@ -17,7 +17,7 @@ from app.models.workflow_approval import WorkflowApproval
 from app.models.outbox import OutboxMessage
 from app.models.feedback import Feedback
 from app.models.billing import BillingPlan, Subscription, BillingEvent
-from app.models.world_commerce import WorldCatalogueItem, WorldOrder, WorldCommerceEvent, WorldFeatureEntitlement
+from app.models.world_commerce import WorldCatalogueItem, WorldOrder, WorldCommerceEvent, WorldFeatureEntitlement, WorldRoomInventory
 from app.models.refund import PaymentRefund
 from app.models.usage import UsageEvent
 from app.models.business_invoice import BusinessInvoice

@@ -16,6 +16,7 @@ from app.models.world_commerce import (
     WorldCommerceEvent,
     WorldFeatureEntitlement,
     WorldOrder,
+    WorldRoomInventory,
 )
 from app.schemas.common import APIResponse
 from app.schemas.world_commerce import (
@@ -23,6 +24,8 @@ from app.schemas.world_commerce import (
     WorldCommerceEventResponse,
     WorldFeatureAccessResponse,
     WorldFeatureEntitlementResponse,
+    WorldRoomInventoryAccessResponse,
+    WorldRoomInventoryResponse,
     WorldOrderCreateRequest,
     WorldOrderResponse,
     WorldPaymentDecision,
@@ -121,6 +124,94 @@ async def my_entitlements(ctx: CurrentContext, db: DbSession):
     return APIResponse(success=True, data=[
         WorldFeatureEntitlementResponse.model_validate(row, from_attributes=True) for row in rows.all()
     ])
+
+
+@router.get("/room-inventory", response_model=APIResponse[list[WorldRoomInventoryResponse]])
+async def my_room_inventory(ctx: CurrentContext, db: DbSession):
+    """List only this tenant's provisioned rooms with currently valid leases."""
+    now = datetime.now(timezone.utc)
+    rows = await db.execute(
+        select(WorldRoomInventory, WorldFeatureEntitlement).join(
+            WorldFeatureEntitlement,
+            WorldFeatureEntitlement.id == WorldRoomInventory.entitlement_id,
+        ).join(
+            WorldCatalogueItem,
+            WorldCatalogueItem.code == WorldRoomInventory.item_code,
+        ).where(
+            WorldRoomInventory.tenant_id == ctx.tenant_id,
+            WorldRoomInventory.status == "provisioned",
+            WorldFeatureEntitlement.tenant_id == ctx.tenant_id,
+            WorldFeatureEntitlement.status == "active",
+            WorldFeatureEntitlement.item_type == "room",
+            WorldFeatureEntitlement.expires_at.is_not(None),
+            WorldFeatureEntitlement.expires_at > now,
+            WorldCatalogueItem.item_type == "room",
+            WorldCatalogueItem.is_active.is_(True),
+        ).order_by(WorldRoomInventory.created_at.asc())
+    )
+    return APIResponse(success=True, data=[
+        WorldRoomInventoryResponse(
+            room_instance_id=inventory.id,
+            item_code=inventory.item_code,
+            status=inventory.status,
+            expires_at=entitlement.expires_at,
+            scene_config=inventory.scene_config,
+        )
+        for inventory, entitlement in rows.all()
+    ])
+
+
+@router.get(
+    "/room-inventory/{item_code}/access",
+    response_model=APIResponse[WorldRoomInventoryAccessResponse],
+)
+async def room_inventory_access(item_code: str, ctx: CurrentContext, db: DbSession):
+    """Server-authoritative room access decision; never trusts client state."""
+    item = await db.scalar(select(WorldCatalogueItem).where(
+        WorldCatalogueItem.code == item_code,
+        WorldCatalogueItem.item_type == "room",
+    ))
+    if item is None:
+        raise HTTPException(status_code=404, detail="World room not found")
+
+    pair = await db.execute(
+        select(WorldRoomInventory, WorldFeatureEntitlement).join(
+            WorldFeatureEntitlement,
+            WorldFeatureEntitlement.id == WorldRoomInventory.entitlement_id,
+        ).where(
+            WorldRoomInventory.tenant_id == ctx.tenant_id,
+            WorldRoomInventory.item_code == item_code,
+            WorldFeatureEntitlement.tenant_id == ctx.tenant_id,
+        )
+    )
+    row = pair.first()
+    if row is None:
+        return APIResponse(success=True, data=WorldRoomInventoryAccessResponse(
+            item_code=item_code, granted=False, reason="not_provisioned",
+        ))
+
+    inventory, entitlement = row
+    now = datetime.now(timezone.utc)
+    reason = "active"
+    granted = True
+    if not item.is_active:
+        granted, reason = False, "catalogue_inactive"
+    elif inventory.status != "provisioned":
+        granted, reason = False, "inventory_suspended"
+    elif entitlement.status != "active":
+        granted, reason = False, "entitlement_inactive"
+    elif entitlement.expires_at is None:
+        granted, reason = False, "lease_unreconciled"
+    elif entitlement.expires_at <= now:
+        granted, reason = False, "lease_expired"
+
+    return APIResponse(success=True, data=WorldRoomInventoryAccessResponse(
+        item_code=item_code,
+        granted=granted,
+        reason=reason,
+        room_instance_id=inventory.id,
+        expires_at=entitlement.expires_at,
+    ))
 
 
 @router.post("/orders", response_model=APIResponse[WorldOrderResponse])

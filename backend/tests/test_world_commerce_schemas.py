@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app.api.v1 import world_commerce
-from app.api.v1.world_commerce import feature_access, vendor_tenant_diagnostics
+from app.api.v1.world_commerce import feature_access, room_inventory_access, vendor_tenant_diagnostics
 from app.schemas.world_commerce import WorldOrderCreateRequest, WorldPaymentSubmission
 from app.services.world_commerce_service import approve_payment, create_order, mark_fulfilled, submit_payment
 
@@ -689,7 +689,7 @@ async def test_room_fulfillment_persists_expiry_from_server_catalogue_duration(m
         id=order.catalogue_item_id, item_type="room", is_free=False, lease_duration_days=30,
     )
     db = AsyncMock()
-    db.scalar.side_effect = [order, item, None]
+    db.scalar.side_effect = [order, item, None, None]
     event = AsyncMock()
     monkeypatch.setattr(commerce, "_event", event)
 
@@ -698,11 +698,21 @@ async def test_room_fulfillment_persists_expiry_from_server_catalogue_duration(m
         activator=SimpleNamespace(id=uuid4(), email="activator@example.test"),
     )
 
+    from app.models.world_commerce import WorldRoomInventory
+
     entitlement = next(
         call.args[0] for call in db.add.call_args_list
         if isinstance(call.args[0], WorldFeatureEntitlement)
     )
+    inventory = next(
+        call.args[0] for call in db.add.call_args_list
+        if isinstance(call.args[0], WorldRoomInventory)
+    )
     assert result.status == "fulfilled"
+    assert inventory.tenant_id == tenant_id
+    assert inventory.item_code == "room.starter"
+    assert inventory.entitlement_id == entitlement.id
+    assert inventory.status == "provisioned"
     assert entitlement.status == "active"
     assert entitlement.expires_at is not None
     assert 29 <= (entitlement.expires_at - entitlement.activated_at).days <= 30
@@ -734,7 +744,11 @@ async def test_room_fulfillment_renews_active_paid_lease_from_existing_expiry(mo
         metadata_={}, revoked_at=None,
     )
     db = AsyncMock()
-    db.scalar.side_effect = [order, item, entitlement]
+    inventory = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter",
+        entitlement_id=entitlement.id, status="provisioned",
+    )
+    db.scalar.side_effect = [order, item, entitlement, inventory]
     event = AsyncMock()
     monkeypatch.setattr(commerce, "_event", event)
 
@@ -750,3 +764,76 @@ async def test_room_fulfillment_renews_active_paid_lease_from_existing_expiry(mo
     assert entitlement.metadata_["lease_duration_days"] == 30
     db.flush.assert_awaited_once()
     event.assert_awaited_once()
+
+@pytest.mark.asyncio
+async def test_room_inventory_access_fails_closed_when_no_tenant_inventory_exists():
+    tenant_id = uuid4()
+    room = SimpleNamespace(code="room.starter", item_type="room", is_active=True)
+    db = AsyncMock()
+    db.scalar.return_value = room
+    db.execute.return_value = SimpleNamespace(first=lambda: None)
+    ctx = SimpleNamespace(tenant_id=tenant_id)
+
+    result = await room_inventory_access("room.starter", ctx, db)
+
+    assert result.data.granted is False
+    assert result.data.reason == "not_provisioned"
+    assert result.data.room_instance_id is None
+
+
+@pytest.mark.asyncio
+async def test_room_inventory_access_grants_only_a_provisioned_unexpired_lease():
+    from datetime import timedelta
+
+    tenant_id = uuid4()
+    expiry = datetime.now(timezone.utc) + timedelta(days=3)
+    room = SimpleNamespace(code="room.starter", item_type="room", is_active=True)
+    inventory = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter", status="provisioned",
+    )
+    entitlement = SimpleNamespace(
+        tenant_id=tenant_id, status="active", item_type="room", expires_at=expiry,
+    )
+    db = AsyncMock()
+    db.scalar.return_value = room
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement))
+    ctx = SimpleNamespace(tenant_id=tenant_id)
+
+    result = await room_inventory_access("room.starter", ctx, db)
+
+    assert result.data.granted is True
+    assert result.data.reason == "active"
+    assert result.data.room_instance_id == inventory.id
+    assert result.data.expires_at == expiry
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("inventory_status", "entitlement_status", "expires_at", "expected_reason"),
+    [
+        ("provisioned", "active", None, "lease_unreconciled"),
+        ("provisioned", "active", datetime(2020, 1, 1, tzinfo=timezone.utc), "lease_expired"),
+        ("suspended", "active", datetime(2099, 1, 1, tzinfo=timezone.utc), "inventory_suspended"),
+        ("provisioned", "revoked", datetime(2099, 1, 1, tzinfo=timezone.utc), "entitlement_inactive"),
+    ],
+)
+async def test_room_inventory_access_denies_invalid_lease_state(
+    inventory_status, entitlement_status, expires_at, expected_reason,
+):
+    tenant_id = uuid4()
+    room = SimpleNamespace(code="room.starter", item_type="room", is_active=True)
+    inventory = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter", status=inventory_status,
+    )
+    entitlement = SimpleNamespace(
+        tenant_id=tenant_id, status=entitlement_status, item_type="room", expires_at=expires_at,
+    )
+    db = AsyncMock()
+    db.scalar.return_value = room
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement))
+    ctx = SimpleNamespace(tenant_id=tenant_id)
+
+    result = await room_inventory_access("room.starter", ctx, db)
+
+    assert result.data.granted is False
+    assert result.data.reason == expected_reason
