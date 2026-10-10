@@ -7,12 +7,12 @@
 - Regression coverage includes foreign-tenant file rejection, duplicate attachment IDs, nonparticipant download denial and cross-ticket attachment denial.
 - This is post-release engineering only. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; merge/green CI does not certify a new release.
 
-### Next support-workflow actions
+### Support workflow status and next actions
 
-1. Add support frontend integration for message listing/reply and attachment upload/download using the server API; preserve the generic `/files` tenant boundary.
-2. Extend tests for both legitimate ticket participants' download access, deleted-file behavior, count limit, unsupported type/oversize constraints, and storage missing-object behavior.
-3. Consider translating a concurrent unique-file attachment race into a stable 409 response instead of an unhandled database error.
-4. Keep manual World desktop/mobile QA, provider-specific payment verification, explicit USDT network policy, durable World Credit ledger, and room lease/fulfillment integration as separate open gates.
+- PR #1035 adds the reseller message/thread workspace; PR #1036 makes reseller-originated tickets persistent across reloads. PR #1036's exact tested head passed all 14 reported checks and was merged at `87c1719d1e2522912e8f55f8bc8d8c2956ea0eaa`.
+- Secure message attachments are implemented server-side by PR #1033; reseller UI can attach existing active tenant files and download authorized attachments. This does not yet mean every upload flow or every customer/vendor UI is complete.
+- Next: verify legitimate downloads for both ticket participants; deleted-file behavior; attachment count/type/size constraints where applicable; storage missing-object behavior; and stable handling of concurrent unique-file attachment races.
+- End-to-end manual QA remains required for create → reload → open thread → reply → authorized attachment download, including foreign-tenant denial. Keep manual World desktop/mobile QA, provider-specific payment verification, explicit USDT network policy, durable World Credit ledger, and room lease/fulfillment integration as separate open gates.
 
 
 ## Latest World room lease UX checkpoint — 2026-10-10
