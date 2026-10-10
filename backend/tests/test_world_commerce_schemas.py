@@ -496,3 +496,65 @@ async def test_payment_reference_submission_is_restricted_to_order_buyer():
     assert order.status == "pending_payment"
     assert order.provider_transaction_ref is None
     db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("payment_method", ["gateway", "crypto"])
+async def test_approve_payment_blocks_unverified_non_manual_provider_methods(monkeypatch, payment_method):
+    from app.services import world_commerce_service as commerce
+
+    order = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), status="payment_submitted",
+        payment_method=payment_method, approved_by_user_id=None,
+        approved_at=None,
+    )
+    db = AsyncMock()
+    db.scalar.return_value = order
+    event = AsyncMock()
+    monkeypatch.setattr(commerce, "_event", event)
+
+    with pytest.raises(HTTPException) as exc:
+        await commerce.approve_payment(
+            db, order_id=order.id, tenant_id=order.tenant_id,
+            approver=SimpleNamespace(id=uuid4(), email="reviewer@example.test"),
+        )
+
+    assert exc.value.status_code == 409
+    assert "verification is not implemented" in exc.value.detail
+    assert order.status == "payment_submitted"
+    assert order.approved_by_user_id is None
+    assert order.approved_at is None
+    db.flush.assert_not_awaited()
+    event.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_approve_payment_allows_manual_transfer_review_with_audit_event(monkeypatch):
+    from app.services import world_commerce_service as commerce
+
+    approver_id = uuid4()
+    order = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), status="payment_submitted",
+        payment_method="manual_transfer", approved_by_user_id=None,
+        approved_by_username=None, approved_at=None,
+    )
+    db = AsyncMock()
+    db.scalar.return_value = order
+    event = AsyncMock()
+    monkeypatch.setattr(commerce, "_event", event)
+
+    result = await commerce.approve_payment(
+        db, order_id=order.id, tenant_id=order.tenant_id,
+        approver=SimpleNamespace(id=approver_id, email="reviewer@example.test"),
+    )
+
+    assert result is order
+    assert order.status == "approved"
+    assert order.approved_by_user_id == approver_id
+    assert order.approved_by_username == "reviewer@example.test"
+    assert order.approved_at is not None
+    db.flush.assert_awaited_once()
+    event.assert_awaited_once()
+    assert event.await_args.kwargs["event_type"] == "payment_approved"
+    assert event.await_args.kwargs["from_status"] == "payment_submitted"
+    assert event.await_args.kwargs["to_status"] == "approved"
