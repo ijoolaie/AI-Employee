@@ -278,3 +278,12 @@ The dependency PR's security update is desirable, but its current lockfile/build
 2. **P1 / OPEN — payment trust boundary:** provider-specific gateway/crypto adapters, signed webhook validation, replay protection and explicit USDT network policy. Do not treat provider labels or manually submitted references as verified payments.
 3. **P1 / OPEN — durable financial/fulfillment model:** wallet ledger and replay-safe atomic balance mutations before World Credit; entitlement-backed room inventory, lease duration/renewal/expiry, employee placement and persistent customization-to-scene integration.
 4. **P2 / OPEN — support and release:** support reply/thread/attachment workflows; review post-merge CI on merge SHA `74224ef253a1bb3d990347e34e41dbe31827b97d`; keep production deployment and release certification separate from PR checks. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+
+## Priority update — 2026-10-10: room offer E2E coverage
+
+1. **Completed:** PR #992 merged at `2e8531a4495cf80ee32994d23e965c67afea6f0a`. The Playwright test covers locked-room approach, offer dialog, currency-specific catalogue pricing, and idempotent order submission with no client amount.
+2. **Verify next:** wait for and inspect all post-merge checks on the merge commit; do not infer production readiness from pre-merge CI alone.
+3. **Next implementation slice:** use the E2E contract as a baseline, then add provider-specific payment lifecycle tests only alongside actual adapters, signature verification, replay protection, and failure/duplicate-webhook cases.
+4. **Hard boundary:** the current browser test mocks commerce APIs. No live payment, settlement, wallet ledger, or room activation is proven. Do not enable World Credit until durable atomic ledger/balance accounting exists.
+5. **Manual acceptance remains open:** desktop and mobile movement/interactions, accessibility, responsiveness, and actual scene integration of room/employee entitlements.
