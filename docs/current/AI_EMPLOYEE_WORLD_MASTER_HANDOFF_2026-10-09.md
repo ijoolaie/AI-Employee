@@ -226,3 +226,42 @@ No real payments or paid feature activation should be claimed from the current p
 - The corrected PR head `072e0c077ad18b7cb2afea1c50b8b68aa99be857` passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST before merge.
 - Final dependency scope: update `source-map-js` to 1.2.2; preserve Tailwind v3 and `postcss-selector-parser` 6.1.4. No Tailwind v4 migration was included.
 - Keep World manual QA and all external production/release acceptance gates open until independently completed and documented.
+
+
+## 2026-10-10 follow-through — catalogue-backed currency offer (PR #986)
+
+### Verified merge
+
+- PR: [#986](https://github.com/ijoolaie/AI-Employee/pull/986) — `feat(world): show server catalogue prices by currency`.
+- Merge commit: `c0a2b063012263114bd195b68612a423610474d3`.
+- Tested PR head: `825155d36e4b1d813b248232a309f8c4d6988720`.
+- All eight reported checks passed on that exact head: frontend, backend, infrastructure, CodeQL, CodeQL JavaScript/TypeScript, CodeQL Python, DAST and recovery. Frontend lint, contract tests, unit tests, production build and World Mode Playwright smoke passed.
+
+### What changed
+
+- Replaced the hard-coded room offer placeholder with `frontend/features/world/WorldRoomOfferPanel.tsx`.
+- Reads active catalogue data from `GET /world-commerce/catalogue` and offers IRR, USD and USDT selection.
+- Only shows server-configured price/provider/payment-method values; missing price is stated as missing, not replaced with a fabricated value.
+- Error/loading/empty states are handled. The UI explicitly says it is preview-only.
+
+### Boundaries that remain
+
+- The panel does not create an order, submit a payment reference, verify a provider/webhook, or activate a room.
+- Catalogue provider/method labels are configuration data, not evidence of live provider connectivity.
+- No World Credit until the wallet ledger, atomic balance mutations, idempotency and replay handling are implemented and tested.
+- No live gateway/crypto claims until provider-specific verification, webhook signature/replay controls and USDT network policy are delivered.
+- Entitlements still need to drive room inventory/leases/renewals/expiry, employee placement and persistent customization-to-3D-scene state.
+- Manual desktop/mobile visual QA remains open; this merge is not production certification. Latest certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+### Next recommended implementation slice
+
+Inspect and use the existing order API contract to add an explicit customer order-creation step to the room offer. The server must remain authoritative for price and validate item/currency/provider/payment method; client requests must include a stable idempotency key. Do not create an order for a currency/provider/method absent from the selected catalogue option. Keep provider verification and fulfillment as distinct future slices unless their end-to-end contracts and tests are completed.
+
+
+### Follow-up contract audit — catalogue setup is a prerequisite
+
+- The current Alembic migration creates `world_catalogue_items` but does not seed a paid room catalogue entry.
+- The current `GET /world-commerce/catalogue` API is read-only; no catalogue create/update API was found in the inspected World commerce router.
+- Consequence: the new offer panel is structurally connected to the server but may correctly show an empty catalogue until a catalogue item is configured. This is not a frontend price bug and must not be worked around with hard-coded fallback prices.
+- Next implementation should provide a tightly authorized platform-admin catalogue configuration path (or use an explicitly approved seed/config process), validating per-currency amount, provider allowlist and payment-method allowlist. Keep real provider readiness distinct from configuration, and do not choose a USDT network or invent price points.
+- Once a valid item is configured, proceed to customer order creation through the existing API with an idempotency key; the backend must continue to calculate the final amount from server-owned catalogue data.

@@ -719,3 +719,13 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - Corrected PR head `072e0c077ad18b7cb2afea1c50b8b68aa99be857` passed all five required workflows: CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST Validation.
 - PR #984 was squash-merged after those exact-head checks passed. Merge commit: `36817a54475051ac42a7a445b56a3245845dbfe8`.
 - This closes the dependency PR blocker. It does not certify a new production release; release certification remains a separate exact-SHA gate.
+
+
+## World commerce UI checkpoint — 2026-10-10 (PR #986 merged)
+
+- PR #986 ([catalogue-backed room offer with currency selection](https://github.com/ijoolaie/AI-Employee/pull/986)) was squash-merged to `main` at `c0a2b063012263114bd195b68612a423610474d3`.
+- Exact PR head `825155d36e4b1d813b248232a309f8c4d6988720` passed all eight reported checks: frontend, backend, infrastructure, CodeQL, CodeQL JavaScript/TypeScript, CodeQL Python, DAST, and recovery. Frontend lint, contract/unit tests, production build and World Mode Playwright smoke passed.
+- World room offer now reads the active server catalogue and lets the user select IRR, USD or USDT. Missing prices are not fabricated. Provider/method labels are catalogue configuration only.
+- This is a preview only. No order is created, no payment is processed/verified, and no room is activated by this UI. Manual desktop/mobile visual QA remains open.
+- Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; this merge is not production certification.
+- Next engineering slice: inspect the current catalogue and order contracts, then implement a guarded customer order-creation step with server-owned amount, selected currency/provider/method and idempotency. Keep gateway/webhook verification, World Credit ledger and room fulfillment explicitly gated.

@@ -238,3 +238,19 @@ The dependency PR's security update is desirable, but its current lockfile/build
 - **MERGED:** `source-map-js` 1.2.2 security update; Tailwind v3 configuration retained. PR #984: https://github.com/ijoolaie/AI-Employee/pull/984
 - All five required workflows passed on corrected PR head `072e0c077ad18b7cb2afea1c50b8b68aa99be857` before merge. Merge commit: `36817a54475051ac42a7a445b56a3245845dbfe8`.
 - Remaining priorities are World desktop/mobile manual QA, validating payment provider/webhook behavior, ledger/idempotency, entitlement/lease integration, support workflow completion and separate release certification.
+
+
+## Priority update — 2026-10-10: World commerce UI
+
+1. **Completed:** PR #986 merged as `c0a2b063012263114bd195b68612a423610474d3`; catalogue-backed room offer supports IRR/USD/USDT selection and only displays server-configured prices.
+2. **Next implementation slice:** connect the offer to the existing tenant-scoped order-create API only after verifying its request/response contract and catalogue provider/method options. Require idempotency and rely on the server to compute the amount; do not accept client prices.
+3. **Hard boundaries:** do not enable World Credit until a durable wallet ledger/replay-safe balance accounting exists. Do not present gateway/crypto as verified without provider-specific adapters, webhook/signature verification, replay protection and USDT network policy.
+4. **Fulfillment:** approved entitlements still need room inventory/lease duration, renewal/expiry, employee placement and persistent customization-to-scene integration.
+5. **Acceptance:** manual desktop/mobile World QA and production certification remain separate open gates.
+
+
+### Catalogue configuration dependency found during follow-up review
+
+- The World commerce migration creates the catalogue table but does not seed a paid room item, and the inspected API currently exposes catalogue reads but no catalogue create/update endpoint.
+- Therefore the next safe slice is **platform-admin catalogue configuration** (server-side validation of prices and allowed provider/method combinations), or an explicitly approved seed/configuration process. Do not fabricate production prices, provider names, payment methods or a USDT network.
+- Only after a real catalogue entry is configured should the customer order-creation UI be connected to `POST /world-commerce/orders` with an idempotency key; server-side amount calculation remains authoritative.
