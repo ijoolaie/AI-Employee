@@ -19,6 +19,7 @@ from app.schemas.world_commerce import (
 from app.services import world_commerce_service as commerce
 
 router = APIRouter(prefix="/world-commerce", tags=["world-commerce"])
+VENDOR_INCLUDED_ITEM_TYPES = {"layout", "appearance", "personality", "support"}
 
 
 async def _vendor_tenant_scope(ctx: CurrentContext, db: AsyncSession) -> set[UUID]:
@@ -66,7 +67,7 @@ async def feature_access(item_code: str, ctx: CurrentContext, db: DbSession):
             item_code=item.code, granted=True, access_source="catalog_free",
             item_type=item.item_type,
         )
-    elif ctx.tenant.tenant_kind == "vendor":
+    elif ctx.tenant.tenant_kind == "vendor" and item.item_type in VENDOR_INCLUDED_ITEM_TYPES:
         data = WorldFeatureAccessResponse(
             item_code=item.code, granted=True, access_source="vendor_included",
             item_type=item.item_type,
