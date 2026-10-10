@@ -7,7 +7,7 @@
 5. **World Credit ledger.** Disabled until durable append-only accounting and atomic replay-safe debit/credit are implemented and tested.
 6. **Support workflow completion** and **manual desktop/mobile QA/release certification** remain outstanding.
 
-PR #1009 merged at `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903`. All 20 reported pre-merge checks passed; verify post-merge checks on the exact merge SHA separately. Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+PR #1009 merged at `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903`. All 20 reported PR-head checks and all 12 post-merge checks on exact merge SHA `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903` completed successfully. Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ## Priority reconciliation — after PR #1006 (2026-10-10)
 
