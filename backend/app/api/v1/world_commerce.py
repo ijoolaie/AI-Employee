@@ -26,6 +26,9 @@ from app.schemas.world_commerce import (
     WorldFeatureEntitlementResponse,
     WorldRoomInventoryAccessResponse,
     WorldRoomInventoryResponse,
+    WorldRoomSceneConfig,
+    WorldRoomSceneConfigRequest,
+    WorldRoomSceneConfigResponse,
     WorldOrderCreateRequest,
     WorldOrderResponse,
     WorldPaymentDecision,
@@ -213,6 +216,64 @@ async def room_inventory_access(item_code: str, ctx: CurrentContext, db: DbSessi
         expires_at=entitlement.expires_at,
     ))
 
+
+
+
+@router.put(
+    "/room-inventory/{item_code}/scene-config",
+    response_model=APIResponse[WorldRoomSceneConfigResponse],
+)
+async def update_room_scene_config(
+    item_code: str,
+    payload: WorldRoomSceneConfig,
+    ctx: CurrentContext,
+    db: DbSession,
+):
+    """Persist a bounded room layout only while this tenant has a valid room lease."""
+    now = datetime.now(timezone.utc)
+    result = await db.execute(
+        select(WorldRoomInventory, WorldFeatureEntitlement, WorldCatalogueItem)
+        .join(
+            WorldFeatureEntitlement,
+            WorldFeatureEntitlement.id == WorldRoomInventory.entitlement_id,
+        )
+        .join(
+            WorldCatalogueItem,
+            WorldCatalogueItem.code == WorldRoomInventory.item_code,
+        )
+        .where(
+            WorldRoomInventory.tenant_id == ctx.tenant_id,
+            WorldRoomInventory.item_code == item_code,
+            WorldFeatureEntitlement.tenant_id == ctx.tenant_id,
+        )
+        .with_for_update()
+    )
+    row = result.first()
+    if row is None:
+        # Do not disclose whether another tenant owns an inventory row.
+        raise HTTPException(status_code=404, detail="World room not found")
+
+    inventory, entitlement, catalogue_item = row
+    if (
+        catalogue_item.item_type != "room"
+        or not catalogue_item.is_active
+        or inventory.status != "provisioned"
+        or entitlement.status != "active"
+        or entitlement.expires_at is None
+        or entitlement.expires_at <= now
+    ):
+        raise HTTPException(status_code=403, detail="Active room access is required to update the scene")
+
+    inventory.scene_config = payload.model_dump(mode="json")
+    await db.flush()
+    await db.commit()
+    await db.refresh(inventory)
+    return APIResponse(success=True, data=WorldRoomSceneConfigResponse(
+        room_instance_id=inventory.id,
+        item_code=inventory.item_code,
+        scene_config=WorldRoomSceneConfig.model_validate(inventory.scene_config),
+        updated_at=inventory.updated_at,
+    ))
 
 @router.post("/orders", response_model=APIResponse[WorldOrderResponse])
 async def create_order(payload: WorldOrderCreateRequest, ctx: CurrentContext, db: DbSession):
