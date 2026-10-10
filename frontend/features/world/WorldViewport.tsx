@@ -448,8 +448,6 @@ export function WorldViewport({
       const next = employeesRef.current;
       const nextSignature = next.map((e) => [e.id, e.name, e.state, e.slot].join(":")).join("|");
       if (signature === nextSignature) return;
-      const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;
-      if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }
       for (const worker of workers) {
         scene.remove(worker.group);
         worker.group.traverse((object: any) => {
@@ -562,6 +560,8 @@ export function WorldViewport({
         ceoAvatar.rotation.y = Math.atan2(moveX, moveY || 0.0001);
         updateCamera();
       }
+      const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;
+      if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }
       for (const worker of workers) {
         const selected = worker.id === selectedEmployeeIdRef.current;
         worker.ring.material.color.setHex(selected ? 0x4fd1c5 : 0xffffff);
