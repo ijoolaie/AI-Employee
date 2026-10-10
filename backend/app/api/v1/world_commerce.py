@@ -29,6 +29,7 @@ from app.schemas.world_commerce import (
     WorldRoomInventoryResponse,
     WorldRoomSceneConfig,
     WorldRoomSceneConfigResponse,
+    WorldRoomSceneConfigUpdateRequest,
     WorldOrderCreateRequest,
     WorldOrderResponse,
     WorldPaymentDecision,
@@ -158,6 +159,7 @@ async def my_room_inventory(ctx: CurrentContext, db: DbSession):
             item_code=inventory.item_code,
             status=inventory.status,
             expires_at=entitlement.expires_at,
+            updated_at=inventory.updated_at,
             scene_config=inventory.scene_config,
         )
         for inventory, entitlement in rows.all()
@@ -225,7 +227,7 @@ async def room_inventory_access(item_code: str, ctx: CurrentContext, db: DbSessi
 )
 async def update_room_scene_config(
     item_code: str,
-    payload: WorldRoomSceneConfig,
+    payload: WorldRoomSceneConfigUpdateRequest,
     ctx: CurrentContext,
     db: DbSession,
 ):
@@ -264,7 +266,11 @@ async def update_room_scene_config(
     ):
         raise HTTPException(status_code=403, detail="Active room access is required to update the scene")
 
-    employee_ids = {placement.employee_id for placement in payload.employee_placements}
+    if payload.expected_updated_at != inventory.updated_at:
+        raise HTTPException(status_code=409, detail="Room layout changed since it was loaded; refresh before saving")
+
+    scene_config = payload.scene_config
+    employee_ids = {placement.employee_id for placement in scene_config.employee_placements}
     if employee_ids:
         active_employee_result = await db.scalars(
             select(Employee.id).where(
@@ -278,7 +284,7 @@ async def update_room_scene_config(
             # Never reveal whether an invalid ID belongs to another tenant.
             raise HTTPException(status_code=422, detail="Employee placements must reference active employees in this tenant")
 
-    inventory.scene_config = payload.model_dump(mode="json")
+    inventory.scene_config = scene_config.model_dump(mode="json")
     await db.flush()
     await db.commit()
     await db.refresh(inventory)

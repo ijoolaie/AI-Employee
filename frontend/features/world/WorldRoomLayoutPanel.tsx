@@ -20,6 +20,8 @@ export function WorldRoomLayoutPanel({
   roomInstanceId,
   employees,
   initialConfig,
+  initialUpdatedAt,
+  currentUpdatedAt,
   onClose,
   onSaved,
 }: {
@@ -27,11 +29,15 @@ export function WorldRoomLayoutPanel({
   roomInstanceId: string;
   employees: Array<{ id: string; name: string }>;
   initialConfig: WorldRoomSceneConfig;
+  initialUpdatedAt: string;
+  currentUpdatedAt: string;
   onClose: () => void;
-  onSaved: (config: WorldRoomSceneConfig) => void;
+  onSaved: (config: WorldRoomSceneConfig, updatedAt: string) => void;
 }) {
   const [furniture, setFurniture] = useState<RoomFurniturePlacement[]>(initialConfig.furniture);
   const [employeePlacements, setEmployeePlacements] = useState<RoomEmployeePlacement[]>(initialConfig.employee_placements);
+  const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(initialUpdatedAt);
+  const isStale = !Number.isFinite(Date.parse(currentUpdatedAt)) || !Number.isFinite(Date.parse(expectedUpdatedAt)) || Date.parse(currentUpdatedAt) !== Date.parse(expectedUpdatedAt);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -78,12 +84,13 @@ export function WorldRoomLayoutPanel({
     try {
       const response = await api.put<APIResponse<SceneConfigResponse>>(
         `/world-commerce/room-inventory/${encodeURIComponent(itemCode)}/scene-config`,
-        { schema_version: 1, layout_preset: "starter", furniture, employee_placements: employeePlacements },
+        { expected_updated_at: expectedUpdatedAt, scene_config: { schema_version: 1, layout_preset: "starter", furniture, employee_placements: employeePlacements } },
       );
       if (!response.data.success || !response.data.data) {
         throw new Error("The server did not confirm that the room layout was saved.");
       }
-      onSaved(response.data.data.scene_config);
+      setExpectedUpdatedAt(response.data.data.updated_at);
+      onSaved(response.data.data.scene_config, response.data.data.updated_at);
       setMessage("Room layout saved to the server.");
     } catch (caught) {
       setError(getErrorMessage(caught));
@@ -166,12 +173,13 @@ export function WorldRoomLayoutPanel({
         </div>
       </section>
 
+      {isStale && <p role="alert" className="mt-4 rounded-lg border border-amber-400/30 bg-amber-950/30 p-3 text-sm text-amber-200">This layout changed on the server after you opened it. Close and reopen the editor to load the latest version before saving.</p>}
       {message && <p role="status" className="mt-4 rounded-lg border border-emerald-400/30 bg-emerald-950/30 p-3 text-sm text-emerald-200">{message}</p>}
       {error && <p role="alert" className="mt-4 rounded-lg border border-red-400/30 bg-red-950/30 p-3 text-sm text-red-200">{error}</p>}
 
       <footer className="mt-5 flex flex-wrap justify-end gap-2 border-t border-slate-800 pt-4">
         <button type="button" disabled={saving} onClick={onClose} className="rounded-lg border border-slate-700 px-4 py-2 text-sm disabled:opacity-50">Cancel</button>
-        <button type="button" disabled={saving} onClick={() => void save()} className="rounded-lg bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-50">{saving ? "Saving…" : "Save layout"}</button>
+        <button type="button" disabled={saving || isStale} onClick={() => void save()} className="rounded-lg bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-50">{saving ? "Saving…" : "Save layout"}</button>
       </footer>
     </section>
   );

@@ -182,6 +182,7 @@ class WorldRoomInventoryResponse(BaseModel):
     item_code: str
     status: str
     expires_at: datetime | None = None
+    updated_at: datetime
     scene_config: dict = Field(default_factory=dict)
 
 
@@ -228,6 +229,13 @@ class WorldRoomSceneConfig(BaseModel):
         if len(employee_ids) != len(set(employee_ids)):
             raise ValueError("employee_id values must be unique in employee_placements")
         return self
+
+
+class WorldRoomSceneConfigUpdateRequest(BaseModel):
+    """Compare-and-swap request so stale browser edits cannot overwrite newer layouts."""
+    model_config = ConfigDict(extra="forbid")
+    expected_updated_at: datetime
+    scene_config: WorldRoomSceneConfig
 
 
 class WorldRoomSceneConfigResponse(BaseModel):
