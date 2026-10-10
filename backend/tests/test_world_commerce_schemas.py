@@ -195,3 +195,39 @@ def test_support_diagnostics_order_summary_omits_buyer_and_payment_reference():
     assert "buyer_user_id" not in data
     assert "provider_transaction_ref" not in data
     assert data["id"] == order_id
+
+
+@pytest.mark.asyncio
+async def test_successful_vendor_diagnostics_records_audit_and_returns_minimal_data(monkeypatch):
+    async def allow_permission(_ctx, _permission):
+        return True
+
+    monkeypatch.setattr(world_commerce, "has_permission", allow_permission)
+    audit = AsyncMock()
+    monkeypatch.setattr(world_commerce.commerce, "record_support_diagnostics_view", audit)
+
+    tenant_id = uuid4()
+    ctx = SimpleNamespace(
+        user=SimpleNamespace(is_platform_admin=False, id=uuid4(), email="support@example.test"),
+        tenant=SimpleNamespace(tenant_kind="vendor"),
+        tenant_id=tenant_id,
+    )
+    scope_result = SimpleNamespace(all=lambda: [(tenant_id,)])
+    count_result = SimpleNamespace(all=lambda: [("pending_payment", 2), ("fulfilled", 1)])
+    order_rows = SimpleNamespace(all=lambda: [])
+    entitlement_rows = SimpleNamespace(all=lambda: [])
+    db = AsyncMock()
+    db.execute.side_effect = [scope_result, count_result]
+    db.scalar.return_value = 0
+    db.scalars.side_effect = [order_rows, entitlement_rows]
+
+    result = await vendor_tenant_diagnostics(tenant_id, ctx, db)
+
+    assert result.data.tenant_id == tenant_id
+    assert result.data.order_counts_by_status == {"pending_payment": 2, "fulfilled": 1}
+    assert result.data.recent_orders == []
+    assert result.data.entitlements == []
+    audit.assert_awaited_once_with(
+        db, tenant_id=tenant_id, actor=ctx.user, is_platform_admin=False
+    )
+    db.commit.assert_awaited_once()
