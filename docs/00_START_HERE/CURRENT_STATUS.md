@@ -1,3 +1,21 @@
+## Current engineering status — 2026-10-10 — PR #1033 merged
+
+- Support message threads are available from PR #1031; secure file attachments are now merged from PR #1033.
+- PR #1033 merge commit: `f7a443f11f1c2fdab71ee7c303b6c18a0cb70cb0`; exact tested head: `6de18ff840d8cd5087debe5461b056ff12415883`.
+- All 19 checks on the exact PR head completed successfully before merge.
+- W23 adds a relation between support messages and existing `files` objects. The API accepts at most five active file IDs owned by the posting tenant, rejects duplicate IDs and prevents reusing a file across support messages.
+- Attachment listing returns metadata only. Downloads require access to the parent escalation and a valid attachment-to-message-to-escalation relationship; inactive/deleted files are not downloadable. Storage keys and public URLs are not returned.
+- Automated regression tests cover foreign-tenant attachment IDs, duplicate IDs, nonparticipant denial and cross-ticket attachment denial.
+- No support frontend integration is included yet. The new API does not establish live payment capability, room fulfillment, production deployment or release certification.
+- Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+### Next steps
+
+1. Integrate the support message/attachment APIs into the support UI.
+2. Add coverage for allowed downloads by both participants, deleted files, attachment count/type/size limits, and storage-object-not-found handling.
+3. Evaluate concurrent attachment reuse so a uniqueness race returns a stable conflict response.
+4. Keep manual desktop/mobile World QA and all external production/release acceptance gates open.
+
 ## Latest World room lease UX checkpoint — 2026-10-10
 
 - PR [#1028](https://github.com/ijoolaie/AI-Employee/pull/1028) merged at `128a8ca55395ddc749fa207c99780504cb7dee81`. Exact-head `9749c56526ad033625eeec0238cb98e550f7577d` passed frontend/backend CI, CodeQL, recovery, ephemeral DAST and infrastructure checks.
