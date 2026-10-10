@@ -1,6 +1,6 @@
 ## Latest World room layout checkpoint — 2026-10-10
 
-- Current `main` includes the merged room-access gate (#1016), scene-config API (#1018), furniture editor (#1019), and tenant-scoped employee placements (#1021).
+- Current `main` includes the merged room-access gate (#1016), scene-config API (#1018), furniture editor (#1019), tenant-scoped employee placements (#1021), and stale-layout conflict protection (#1023).
 - PR [#1016](https://github.com/ijoolaie/AI-Employee/pull/1016) merged at `c5a7dc43ca361814543ae5657a06a8469ac26c47` after exact-head CI, both CodeQL analyses, infrastructure, recovery and DAST checks passed. Room access fails closed on query errors and requires a valid future server expiry and room-instance ID; expiry is enforced at the Three.js scene boundary.
 - PR [#1018](https://github.com/ijoolaie/AI-Employee/pull/1018) merged as `8c8c62e9c7b9e01f9c99d81035d6da9a557e0e2c`. The backend provides a versioned, bounded scene-config contract and tenant-scoped update endpoint; writes require matching tenant inventory, active catalogue item, active entitlement and unexpired lease.
 - PR [#1019](https://github.com/ijoolaie/AI-Employee/pull/1019) merged at `cc58accefb9ec8c2c7c6d1ed579471bcc164b401` after all 14 exact-head checks passed. Main now includes the starter room furniture editor, validated saved-layout rendering and Playwright coverage. The UI supports only the starter preset and bounded built-in furniture placements.
