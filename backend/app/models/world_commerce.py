@@ -54,6 +54,7 @@ class WorldOrder(Base):
         ),
         CheckConstraint("amount >= 0", name="ck_world_order_amount_nonnegative"),
         UniqueConstraint("tenant_id", "idempotency_key", name="uq_world_order_tenant_idempotency"),
+        UniqueConstraint("payment_provider", "provider_transaction_ref", name="uq_world_order_provider_transaction_ref"),
         Index("ix_world_orders_tenant_status_created", "tenant_id", "status", "created_at"),
         Index("ix_world_orders_status_created", "status", "created_at"),
     )
