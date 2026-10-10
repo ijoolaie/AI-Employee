@@ -81,14 +81,17 @@ export function WorldShell() {
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
   const onRoomProximity = useCallback((near: boolean) => setNearLockedRoom(near), []);
   const onRoomInteract = useCallback(() => {
-    if (roomAccessGranted) {
+    if (roomAccessQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessUnavailable) {
+      setShowRoomOffer(false);
+      setShowRoomAccess(true);
+    } else if (roomAccessGranted) {
       setShowRoomOffer(false);
       setShowRoomAccess(true);
     } else {
       setShowRoomAccess(false);
       setShowRoomOffer(true);
     }
-  }, [roomAccessGranted]);
+  }, [roomAccessQuery.isLoading, roomCatalogueQuery.isLoading, roomAccessUnavailable, roomAccessGranted]);
   const selectedEmployee = world?.employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
 
   useEffect(() => {
@@ -139,7 +142,7 @@ export function WorldShell() {
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
                 {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Authorized room nearby · Press E or inspect" : "Room nearby · Press E to inspect access or rent"}</button>}
                 {showRoomOffer && <WorldRoomOfferPanel onClose={() => setShowRoomOffer(false)} />}
-                {showRoomAccess && <WorldRoomAccessPanel itemCode={roomAccessQuery.data?.item_code ?? roomCatalogueQuery.data ?? ""} expiresAt={activeRoomLease?.expires_at ?? null} onClose={() => setShowRoomAccess(false)} />}
+                {showRoomAccess && <WorldRoomAccessPanel state={roomAccessQuery.isLoading || roomCatalogueQuery.isLoading ? "loading" : roomAccessUnavailable || !roomAccessQuery.data ? "unavailable" : roomAccessGranted ? "granted" : "unavailable"} itemCode={roomAccessQuery.data?.item_code ?? roomCatalogueQuery.data ?? ""} expiresAt={activeRoomLease?.expires_at ?? null} onRetry={() => { void roomCatalogueQuery.refetch(); void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
