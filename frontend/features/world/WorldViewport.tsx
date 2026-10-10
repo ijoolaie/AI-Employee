@@ -415,7 +415,7 @@ export function WorldViewport({
     scene.fog = new THREE.Fog(0x182331, 42, 86);
 
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 180);
-    const target = new THREE.Vector3(0, 0, 0);
+    const target = new THREE.Vector3(0, 0, 1.5);
     let distance = 35;
     const updateCamera = () => {
       camera.position.set(target.x + distance * 0.58, distance * 1.08, target.z + distance * 0.68);
