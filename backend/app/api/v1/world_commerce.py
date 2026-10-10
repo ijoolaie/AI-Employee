@@ -4,11 +4,12 @@ Manual approval is deliberately separate from activation. Provider callbacks
 are not wired here, so a submitted reference is a claim awaiting vendor review.
 """
 from datetime import datetime, timezone
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import and_, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from app.core.deps import CurrentContext, DbSession, has_permission
 from app.models.employee import Employee
@@ -20,6 +21,7 @@ from app.models.world_commerce import (
     WorldRoomInventory,
 )
 from app.schemas.common import APIResponse
+from app.services import audit_service
 from app.schemas.world_commerce import (
     WorldCatalogueItemResponse,
     WorldCommerceEventResponse,
@@ -27,6 +29,9 @@ from app.schemas.world_commerce import (
     WorldFeatureEntitlementResponse,
     WorldRoomInventoryAccessResponse,
     WorldRoomInventoryResponse,
+    WorldRoomInventoryReconciliationRequest,
+    WorldRoomInventoryReconciliationResponse,
+    WorldRoomInventoryReconciliationCandidate,
     WorldRoomSceneConfig,
     WorldRoomSceneConfigResponse,
     WorldRoomSceneConfigUpdateRequest,
@@ -164,6 +169,149 @@ async def my_room_inventory(ctx: CurrentContext, db: DbSession):
         )
         for inventory, entitlement in rows.all()
     ])
+
+
+@router.post(
+    "/vendor/room-inventory/reconcile",
+    response_model=APIResponse[WorldRoomInventoryReconciliationResponse],
+)
+async def reconcile_legacy_room_inventory(
+    payload: WorldRoomInventoryReconciliationRequest,
+    ctx: CurrentContext,
+    db: DbSession,
+):
+    """Preview or explicitly apply a bounded, audited reconciliation of valid legacy room leases."""
+    if not ctx.user.is_platform_admin:
+        raise HTTPException(status_code=403, detail="Platform administrator access is required")
+
+    if not payload.dry_run and payload.confirmation != "RECONCILE_WORLD_ROOM_INVENTORY":
+        raise HTTPException(
+            status_code=409,
+            detail="Explicit reconciliation confirmation is required before applying changes",
+        )
+
+    now = datetime.now(timezone.utc)
+    statement = (
+        select(WorldFeatureEntitlement)
+        .join(
+            WorldCatalogueItem,
+            and_(
+                WorldCatalogueItem.code == WorldFeatureEntitlement.item_code,
+                WorldCatalogueItem.item_type == "room",
+                WorldCatalogueItem.is_active.is_(True),
+            ),
+        )
+        .outerjoin(
+            WorldRoomInventory,
+            or_(
+                and_(
+                    WorldRoomInventory.tenant_id == WorldFeatureEntitlement.tenant_id,
+                    WorldRoomInventory.item_code == WorldFeatureEntitlement.item_code,
+                ),
+                WorldRoomInventory.entitlement_id == WorldFeatureEntitlement.id,
+            ),
+        )
+        .where(
+            WorldFeatureEntitlement.item_type == "room",
+            WorldFeatureEntitlement.status == "active",
+            WorldFeatureEntitlement.expires_at.is_not(None),
+            WorldFeatureEntitlement.expires_at > now,
+            WorldRoomInventory.id.is_(None),
+        )
+        .order_by(WorldFeatureEntitlement.activated_at.asc(), WorldFeatureEntitlement.id.asc())
+        .limit(payload.limit + 1)
+    )
+    if not payload.dry_run:
+        statement = statement.with_for_update(of=WorldFeatureEntitlement, skip_locked=True)
+
+    result = await db.execute(statement)
+    fetched = list(result.scalars().all())
+    has_more = len(fetched) > payload.limit
+    candidates = fetched[:payload.limit]
+    created_count = 0
+    skipped_conflict_count = 0
+
+    if payload.dry_run:
+        await audit_service.record(
+            db,
+            tenant_id=None,
+            actor_type="user",
+            actor_id=ctx.user.id,
+            action="world.room_inventory.reconcile.preview",
+            resource_type="world_room_inventory_batch",
+            metadata={
+                "candidate_count": len(candidates),
+                "limit": payload.limit,
+                "has_more": has_more,
+                "eligible_only": True,
+            },
+        )
+    else:
+        for entitlement in candidates:
+            inserted_id = await db.scalar(
+                pg_insert(WorldRoomInventory)
+                .values(
+                    id=uuid4(),
+                    tenant_id=entitlement.tenant_id,
+                    entitlement_id=entitlement.id,
+                    item_code=entitlement.item_code,
+                    status="provisioned",
+                    scene_config={},
+                )
+                .on_conflict_do_nothing()
+                .returning(WorldRoomInventory.id)
+            )
+            if inserted_id is None:
+                skipped_conflict_count += 1
+                continue
+            created_count += 1
+            await audit_service.record(
+                db,
+                tenant_id=entitlement.tenant_id,
+                actor_type="user",
+                actor_id=ctx.user.id,
+                action="world.room_inventory.reconcile.create",
+                resource_type="world_room_inventory",
+                resource_id=str(inserted_id),
+                metadata={
+                    "entitlement_id": str(entitlement.id),
+                    "item_code": entitlement.item_code,
+                    "expires_at": entitlement.expires_at.isoformat(),
+                },
+            )
+        await audit_service.record(
+            db,
+            tenant_id=None,
+            actor_type="user",
+            actor_id=ctx.user.id,
+            action="world.room_inventory.reconcile.apply",
+            resource_type="world_room_inventory_batch",
+            metadata={
+                "candidate_count": len(candidates),
+                "created_count": created_count,
+                "skipped_conflict_count": skipped_conflict_count,
+                "limit": payload.limit,
+                "has_more": has_more,
+            },
+        )
+
+    await db.commit()
+    return APIResponse(success=True, data=WorldRoomInventoryReconciliationResponse(
+        dry_run=payload.dry_run,
+        candidate_count=len(candidates),
+        candidates=[
+            WorldRoomInventoryReconciliationCandidate(
+                tenant_id=row.tenant_id,
+                entitlement_id=row.id,
+                item_code=row.item_code,
+                expires_at=row.expires_at,
+            )
+            for row in candidates
+        ],
+        has_more=has_more,
+        created_count=created_count,
+        skipped_conflict_count=skipped_conflict_count,
+    ))
 
 
 @router.get(
