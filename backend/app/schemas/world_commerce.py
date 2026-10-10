@@ -88,3 +88,17 @@ class WorldFeatureAccessResponse(BaseModel):
     access_source: str
     entitlement_id: UUID | None = None
     item_type: str | None = None
+
+
+class WorldCommerceEventResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    order_id: UUID
+    event_type: str
+    actor_user_id: UUID | None
+    actor_username: str | None
+    from_status: str | None
+    to_status: str | None
+    details: dict
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
