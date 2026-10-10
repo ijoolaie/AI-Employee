@@ -392,3 +392,25 @@ Inspect and use the existing order API contract to add an explicit customer orde
 
 - This is post-release engineering, not a new production-certified release. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 - Live payment provider verification, signed/replay-safe webhooks, explicit USDT network policy, durable World Credit ledger, room fulfillment and employee placement/customization-to-scene integration, and manual desktop/mobile QA remain independent gates.
+
+
+## 2026-10-10 follow-through — reseller ticket persistence (PR #1036 merged)
+
+### Verified merge and exact-head checks
+
+- PR [#1036](https://github.com/ijoolaie/AI-Employee/pull/1036) — `fix(support): retain reseller-created tickets across sessions` — merged to `main` at `87c1719d1e2522912e8f55f8bc8d8c2956ea0eaa`.
+- Exact tested PR head: `0cf6785f4e82fd33fbbbda320d42dbd57a8dc45f`.
+- All 14 checks passed on that exact head: backend, frontend, CodeQL, DAST, semantic E2E, recovery, W21 real-stack, rollback contract, infrastructure, tenant hierarchy/RBAC, architecture and observability.
+
+### Behavior and security
+
+- Added `GET /edition/reseller/support/escalations/sent`, filtering outgoing escalations by the authenticated reseller tenant's `from_tenant_id`.
+- The reseller support page fetches incoming and sent escalations, merges them with newly created tickets, de-duplicates by ID, and invalidates the sent list after creation so tickets remain visible across reloads.
+- Added a regression test for the outgoing tenant filter. Message and attachment authorization remain governed by existing participant/ticket checks.
+- PR merge is verified; do not treat this as proof of production deployment or live runtime validation.
+
+### Next hand-off
+
+1. Verify the merged implementation and the three documentation updates on `main`.
+2. Continue testing the reseller support workspace end-to-end: create a ticket, reload, open the thread, reply, and download an authorized attachment; verify foreign-tenant access remains denied.
+3. Keep the master hand-off explicit about merged code versus deployed/production-verified behavior.
