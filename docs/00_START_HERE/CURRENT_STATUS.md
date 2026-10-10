@@ -688,3 +688,13 @@ The local-first AI Company World track has been implemented through F7 on the en
 - F7: responsive, accessible presentation polish and separation of rendering/input/state/presentation concerns.
 
 This work is post-v1.4.17 engineering evidence and does not inherit the immutable v1.4.17 certification. The exact validation boundary is recorded in `docs/current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md`.
+
+
+## 2026-10-10 follow-up — Dependabot PR #984 validation gate
+
+- PR [#984](https://github.com/ijoolaie/AI-Employee/pull/984) remains **OPEN / NOT MERGEABLE BY POLICY** until its exact head passes required validation; do not merge based only on CodeQL.
+- Inspected PR head: `5287581895464c2942dc4ae4b3f21949e51322a7`. GitHub Actions results: CodeQL **PASS**; CI, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST Validation **FAIL**.
+- Root cause confirmed from the PR diff and repository configuration: `frontend/package.json` still declares Tailwind `^3.4.16`; `frontend/postcss.config.mjs` uses the Tailwind v3 PostCSS plugin; the PR lockfile changes the resolved Tailwind package to `^4.3.3`. The CI build error says Tailwind v4 cannot be used as the old direct PostCSS plugin.
+- A formal `REQUEST_CHANGES` review and explanatory PR comment were already submitted. Required remediation: regenerate the lockfile without an unintended Tailwind major-version migration, or separately implement and test a deliberate Tailwind v4 migration. Then rerun all required workflows on the exact new head.
+- Security intent remains valid: `source-map-js` 1.2.2 includes the upstream fix for CVE-2026-93749 and CSP compatibility. Preserve the security fix without accepting a broken production build.
+- This PR does not change the release boundary: `v1.4.17` remains certified only at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. World manual desktop/mobile QA and external production gates remain open.
