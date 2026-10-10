@@ -12,7 +12,9 @@ describe("World room inventory access status", () => {
   });
 
   it("does not display access as granted when the latest query is unavailable", () => {
-    expect(source).toContain("roomInventoryQuery.error || roomCatalogueQuery.error || roomAccessQuery.error");
+    expect(source).toContain("roomInventoryQuery.error");
+    expect(source).toContain("roomCatalogueQuery.error");
+    expect(source).toContain("roomAccessQuery.error");
     expect(source).toContain("unavailable={roomAccessUnavailable}");
     expect(source).toContain("granted={roomAccessGranted}");
     expect(source).toContain("وضعیت موجودی یا مجوز قابل بررسی نیست؛ دسترسی مسدود می‌ماند.");
