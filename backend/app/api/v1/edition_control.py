@@ -192,6 +192,25 @@ async def list_reseller_support_escalations(ctx: ResellerAdminContext, db: DbSes
     return await _list_incoming_support_escalations(db, ctx.tenant_id)
 
 
+async def _list_outgoing_support_escalations(db: DbSession, tenant_id: UUID):
+    rows = await db.execute(
+        select(SupportEscalation)
+        .where(SupportEscalation.from_tenant_id == tenant_id)
+        .order_by(SupportEscalation.created_at.desc())
+        .limit(100)
+    )
+    return APIResponse(success=True, data=[
+        SupportEscalationResponse.model_validate(row, from_attributes=True)
+        for row in rows.scalars().all()
+    ])
+
+
+@router.get("/reseller/support/escalations/sent", response_model=APIResponse[list[SupportEscalationResponse]])
+async def list_reseller_sent_support_escalations(ctx: ResellerAdminContext, db: DbSession):
+    """List support escalations opened by this reseller tenant."""
+    return await _list_outgoing_support_escalations(db, ctx.tenant_id)
+
+
 async def _update_incoming_support_escalation(
     escalation_id: UUID,
     payload: SupportEscalationStatusRequest,
