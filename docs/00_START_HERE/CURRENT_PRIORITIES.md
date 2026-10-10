@@ -1,3 +1,11 @@
+## Priority update — 2026-10-10: provider approval guard
+
+1. **Completed:** PR #998 merged at `88fe8472864f41538b7249b8d013f4f73682ed85`; all 11 pre-merge checks passed on exact PR head `cde9c78b64a977251b3c5198d56adf6fed07267e`.
+2. **Verify next:** inspect all post-merge check runs on the merge SHA. Pre-merge success does not replace post-merge validation or release certification.
+3. **Next implementation slice:** add provider-specific payment verification only with a real adapter/contract, signed webhook validation, replay protection, order/amount/currency matching, and duplicate/failure-event tests. Never treat a customer-submitted transaction reference as proof of payment.
+4. **Hard boundary:** gateway/crypto manual approval is blocked until verification exists; manual transfer remains an audited review path. No live payment, settlement, wallet ledger, or room activation is proven. Keep World Credit disabled until durable atomic ledger/balance accounting exists.
+5. **Still open:** manual desktop/mobile World QA; room entitlements, lease renewal/expiry, employee placement and customization-to-scene integration; support reply/thread/attachment workflow. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 # Current Priorities
 
 **Reconciled:** 2026-10-10
