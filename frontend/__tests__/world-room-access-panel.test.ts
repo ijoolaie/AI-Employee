@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const shell = readFileSync("features/world/WorldShell.tsx", "utf8");
 const panel = readFileSync("features/world/WorldRoomAccessPanel.tsx", "utf8");
+const viewport = readFileSync("features/world/WorldViewport.tsx", "utf8");
 
 describe("World room access gate contracts", () => {
   it("checks the server access endpoint for the configured paid room", () => {
@@ -34,5 +35,11 @@ describe("World room access gate contracts", () => {
   it("allows retrying failed server authorization without granting access optimistically", () => {
     expect(panel).toContain('onClick={onRetry}');
     expect(shell).toContain("void roomCatalogueQuery.refetch(); if (roomCatalogueQuery.data) void roomAccessQuery.refetch();");
+  });
+
+  it("refreshes the latest room authorization callback after server state changes", () => {
+    expect(viewport).toContain("roomInteractRef.current = onRoomInteract;");
+    expect(viewport).toContain("roomProximityRef.current = onRoomProximity;");
+    expect(viewport).toContain("onRoomProximity, onRoomInteract");
   });
 });
