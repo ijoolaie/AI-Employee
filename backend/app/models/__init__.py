@@ -36,6 +36,7 @@ from app.models.shopify_oauth_state import ShopifyOAuthState
 from app.models.password_reset_token import PasswordResetToken
 from app.models.tenant_entitlement import TenantEntitlement
 from app.models.support_escalation import SupportEscalation
+from app.models.support_escalation_message import SupportEscalationMessage
 from app.models.license import CommercialLicense
 from app.models.work_item import WorkItem, WorkItemStatus, ExecutorType
 from app.models.agent_definition import AgentDefinition
@@ -81,7 +82,7 @@ __all__ = [
     "BillingPlan", "Subscription", "BillingEvent", "WorldCatalogueItem", "WorldOrder", "WorldCommerceEvent", "WorldFeatureEntitlement", "PaymentRefund", "UsageEvent", "BusinessInvoice", "CustomerChannel",
     "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "Credential", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "ShopifyOAuthState", "PasswordResetToken",
-    "TenantEntitlement", "SkillPurchaseEntitlement", "SkillPurchaseEntitlementStatus", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
+    "TenantEntitlement", "SkillPurchaseEntitlement", "SkillPurchaseEntitlementStatus", "SupportEscalation", "SupportEscalationMessage", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
     "AgentDefinition", "AgentTemplate", "AgentTemplateStatus", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding",
     "AgentEvaluation", "AgentEvaluationStatus", "AgentIdentity", "AgentAccessReview", "AgentAccessReviewDecision",
     "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",

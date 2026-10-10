@@ -1,6 +1,6 @@
 """Vendor/reseller/customer runtime control-plane boundaries."""
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
@@ -9,6 +9,7 @@ from app.core.deps import DbSession
 from app.core.edition_deps import CustomerAdminContext, ResellerAdminContext, VendorAdminContext
 from app.models.tenant import Tenant
 from app.models.support_escalation import SupportEscalation
+from app.models.support_escalation_message import SupportEscalationMessage
 from app.models.tenant_entitlement import TenantEntitlement
 from app.schemas.common import APIResponse
 from app.schemas.edition import (
@@ -18,6 +19,8 @@ from app.schemas.edition import (
     SupportEscalationRequest,
     SupportEscalationResponse,
     SupportEscalationStatusRequest,
+    SupportEscalationMessageRequest,
+    SupportEscalationMessageResponse,
     TenantSummary,
 )
 from app.services import edition_lifecycle_service, edition_service
@@ -267,6 +270,102 @@ async def create_reseller_escalation(payload: SupportEscalationRequest, ctx: Res
         description=payload.description,
     )
     return APIResponse(success=True, data=row)
+
+
+async def _get_participant_support_escalation(escalation_id: UUID, ctx, db: DbSession):
+    result = await db.execute(
+        select(SupportEscalation).where(
+            SupportEscalation.id == escalation_id,
+            (SupportEscalation.from_tenant_id == ctx.tenant_id)
+            | (SupportEscalation.to_tenant_id == ctx.tenant_id),
+        )
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Support escalation not found")
+    return row
+
+
+async def _list_support_escalation_messages(escalation_id: UUID, ctx, db: DbSession):
+    await _get_participant_support_escalation(escalation_id, ctx, db)
+    result = await db.execute(
+        select(SupportEscalationMessage)
+        .where(SupportEscalationMessage.escalation_id == escalation_id)
+        .order_by(SupportEscalationMessage.created_at.desc())
+        .limit(200)
+    )
+    rows = list(result.scalars().all())
+    rows.reverse()
+    return APIResponse(
+        success=True,
+        data=[SupportEscalationMessageResponse.model_validate(row, from_attributes=True) for row in rows],
+    )
+
+
+async def _create_support_escalation_message(
+    escalation_id: UUID,
+    payload: SupportEscalationMessageRequest,
+    ctx,
+    db: DbSession,
+):
+    ticket = await _get_participant_support_escalation(escalation_id, ctx, db)
+    if ticket.status == "resolved":
+        raise HTTPException(status_code=409, detail="Reopen the support escalation before replying")
+    message = SupportEscalationMessage(
+        id=uuid4(),
+        escalation_id=ticket.id,
+        author_tenant_id=ctx.tenant_id,
+        author_user_id=ctx.user_id,
+        body=payload.body.strip(),
+    )
+    if not message.body:
+        raise HTTPException(status_code=422, detail="Message body must not be blank")
+    db.add(message)
+    await db.flush()
+    await db.refresh(message)
+    await edition_service.record_audit(
+        db,
+        tenant_id=ctx.tenant_id,
+        actor_id=ctx.user_id,
+        action="support.escalation.message_created",
+        resource_type="support_escalation_message",
+        resource_id=str(message.id),
+        metadata={"escalation_id": str(ticket.id)},
+    )
+    return APIResponse(
+        success=True,
+        data=SupportEscalationMessageResponse.model_validate(message, from_attributes=True),
+    )
+
+
+@router.get("/vendor/support/escalations/{escalation_id}/messages", response_model=APIResponse[list[SupportEscalationMessageResponse]])
+async def list_vendor_support_escalation_messages(escalation_id: UUID, ctx: VendorAdminContext, db: DbSession):
+    return await _list_support_escalation_messages(escalation_id, ctx, db)
+
+
+@router.post("/vendor/support/escalations/{escalation_id}/messages", response_model=APIResponse[SupportEscalationMessageResponse], status_code=201)
+async def create_vendor_support_escalation_message(escalation_id: UUID, payload: SupportEscalationMessageRequest, ctx: VendorAdminContext, db: DbSession):
+    return await _create_support_escalation_message(escalation_id, payload, ctx, db)
+
+
+@router.get("/reseller/support/escalations/{escalation_id}/messages", response_model=APIResponse[list[SupportEscalationMessageResponse]])
+async def list_reseller_support_escalation_messages(escalation_id: UUID, ctx: ResellerAdminContext, db: DbSession):
+    return await _list_support_escalation_messages(escalation_id, ctx, db)
+
+
+@router.post("/reseller/support/escalations/{escalation_id}/messages", response_model=APIResponse[SupportEscalationMessageResponse], status_code=201)
+async def create_reseller_support_escalation_message(escalation_id: UUID, payload: SupportEscalationMessageRequest, ctx: ResellerAdminContext, db: DbSession):
+    return await _create_support_escalation_message(escalation_id, payload, ctx, db)
+
+
+@router.get("/support/escalations/{escalation_id}/messages", response_model=APIResponse[list[SupportEscalationMessageResponse]])
+async def list_customer_support_escalation_messages(escalation_id: UUID, ctx: CustomerAdminContext, db: DbSession):
+    return await _list_support_escalation_messages(escalation_id, ctx, db)
+
+
+@router.post("/support/escalations/{escalation_id}/messages", response_model=APIResponse[SupportEscalationMessageResponse], status_code=201)
+async def create_customer_support_escalation_message(escalation_id: UUID, payload: SupportEscalationMessageRequest, ctx: CustomerAdminContext, db: DbSession):
+    return await _create_support_escalation_message(escalation_id, payload, ctx, db)
 
 
 @router.get("/customer/{customer_id}/entitlements", response_model=APIResponse[list[EntitlementResponse]])
