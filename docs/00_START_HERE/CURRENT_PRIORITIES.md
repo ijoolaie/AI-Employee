@@ -13,7 +13,10 @@
 - Payment boundary unchanged: provider-specific signed/authoritative verification, replay protection and amount/currency/order matching remain blocked. World Credit remains disabled until a durable append-only ledger and atomic replay-safe debit/credit exist.
 - Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Engineering merges and green CI do not certify a new release or enable production payments.
 
-## Priority reconciliation — after PR #1009 (2026-10-10)
+
+> Historical priority sections below are retained for audit context and are superseded by the latest checkpoint above.
+
+## Historical priority reconciliation — after PR #1009 (superseded by latest checkpoint)
 
 1. **Next: connect World Mode room interaction to server authorization.** PR [#1009](https://github.com/ijoolaie/AI-Employee/pull/1009) added persistent tenant-scoped room inventory and an access decision endpoint. The Three.js scene is not yet wired to it. Query `/world-commerce/room-inventory/{item_code}/access` before opening/representing a room as available; deny on missing response, expired/unreconciled lease, inactive entitlement, suspended inventory or inactive catalogue. Add Playwright coverage for active, expired, missing and API-error cases.
 2. **Legacy lease reconciliation.** Existing entitlements are not automatically backfilled to inventory. Define an audited and tenant-safe reconciliation path before granting scene access to old records.
@@ -24,7 +27,7 @@
 
 PR #1009 merged at `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903`. All 20 reported PR-head checks and all 12 post-merge checks on exact merge SHA `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903` completed successfully. Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
-## Priority reconciliation — after PR #1006 (2026-10-10)
+## Historical priority reconciliation — after PR #1006 (superseded by latest checkpoint)
 
 1. **Next: room entitlement → inventory/3D scene integration.** PR [#1006](https://github.com/ijoolaie/AI-Employee/pull/1006) now displays the tenant's server-backed room entitlement and expiry, but the 3D room remains visually locked/offer-only. Implement tenant-scoped server authorization and room inventory/scene lifecycle; deny access on expired, missing, legacy-unreconciled, or unavailable entitlement state. Add backend/API, real-stack, and E2E regression coverage.
 2. **Customer renewal UX and expiry communication.** Build on the existing paid-room renewal service only after scene authorization is reliable. Renewal order creation is not payment proof or activation; preserve manual review/two-person activation and provider-verification guards. Define a reliable scheduler before promising expiry reminders.
@@ -35,7 +38,7 @@ PR #1009 merged at `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903`. All 20 reported P
 
 PR #1006 merged at `ad381ed17c5f8dedd140644f975647d3ac53b925`; its pre-merge checks passed. All 9 post-merge checks on the exact merge SHA completed successfully: frontend, backend, infrastructure, DAST, both CodeQL analyses, Validate SLO contract, validate, and validate-and-package. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
-## Priority reconciliation — after PR #1004 (2026-10-10)
+## Historical priority reconciliation — after PR #1004 (superseded by latest checkpoint)
 
 1. **Room entitlement → inventory/3D scene integration:** use server-owned active entitlement and expiry as the authority for room access; tenant-scope all inventory/scene state, fail closed on expired or unreconciled legacy leases, and add backend/API plus real-stack/E2E regression coverage.
 2. **Customer renewal UX and expiry communication:** expose lease expiry and renewal eligibility to the tenant, prevent renewal UI from implying payment/activation before the existing approval and activation controls complete, and add expiry reminders only once a reliable scheduler/notification path is defined.
@@ -46,7 +49,7 @@ PR #1006 merged at `ad381ed17c5f8dedd140644f975647d3ac53b925`; its pre-merge che
 
 PR #1004 is merged at `4e490100d31a81e93e331dfa8b3da62f23e4a883`; its 15 PR-head checks and all 10 post-merge checks passed. This is engineering evidence only. The latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
-## Priority update — 2026-10-10: fulfillment transition guard
+## Historical priority update — 2026-10-10: fulfillment transition guard (superseded)
 
 1. **Completed:** PR #1000 merged at `aaae36a488cadd72b59ce22d00579438edd1a233`; all 11 reported checks passed on exact PR head `ac69a6240ba1aa4cc2fa09e6a03c5d38153de45c`.
 2. **Completed:** regression tests protect approval-before-fulfillment and the two-person control separating payment approval from activation.
@@ -55,7 +58,7 @@ PR #1004 is merged at `4e490100d31a81e93e331dfa8b3da62f23e4a883`; its 15 PR-head
 5. **Still open:** provider-specific verification/webhooks and replay protection; durable wallet ledger before World Credit; room inventory and lease lifecycle; employee placement and persisted customization-to-scene integration; manual desktop/mobile World QA; support reply/thread/attachment workflows.
 6. **Boundary:** green CI does not mean live payment verification, room activation, or new release certification. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
-## Priority update — 2026-10-10: provider approval guard
+## Historical priority update — 2026-10-10: provider approval guard (superseded)
 
 1. **Completed:** PR #998 merged at `88fe8472864f41538b7249b8d013f4f73682ed85`; all 11 pre-merge checks passed on exact PR head `cde9c78b64a977251b3c5198d56adf6fed07267e`.
 2. **Verify next:** inspect all post-merge check runs on the merge SHA. Pre-merge success does not replace post-merge validation or release certification.
