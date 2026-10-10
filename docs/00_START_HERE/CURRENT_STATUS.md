@@ -705,3 +705,10 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - A lockfile correction was pushed to PR #984 as commit `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890`. The new lockfile is based on `main` and changes only the `node_modules/source-map-js` entry to 1.2.2, preserving Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4.
 - The earlier CI failures belong to the previous head `5287581895464c2942dc4ae4b3f21949e51322a7`. They must not be attributed to the corrected head unless rerun there.
 - At the time of this checkpoint, CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST Validation had been triggered for `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890`; outcomes are pending. PR #984 remains open and unmerged until those exact-head checks finish successfully.
+
+
+## PR #984 latest-head correction — 2026-10-10
+
+- Further inspection of the PR diff and CI logs found that Dependabot had changed both the lockfile and `frontend/package.json` to Tailwind v4. The first correction restored the lockfile but correctly failed `npm ci` because the PR manifest still required Tailwind 4.
+- The manifest has now also been restored to the `main` version (`tailwindcss: ^3.4.16`) in commit `072e0c077ad18b7cb2afea1c50b8b68aa99be857`. Current PR files are coherent: manifest/lock metadata use Tailwind v3, resolved Tailwind is 3.4.19, `postcss-selector-parser` remains 6.1.4, and `source-map-js` is 1.2.2.
+- Five workflows were triggered on this newest head; final outcomes are pending. Keep PR #984 open and unmerged until all required checks pass on `072e0c077ad18b7cb2afea1c50b8b68aa99be857`.
