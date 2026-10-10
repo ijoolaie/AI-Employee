@@ -732,7 +732,7 @@ export interface SupportEscalation {
   id: string;
   from_tenant_id: string;
   to_tenant_id: string;
-  status: "open" | "in_progress" | "resolved";
+  status: string;
   subject: string;
   description: string;
 }
