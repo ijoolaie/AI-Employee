@@ -1,3 +1,17 @@
+## 2026-10-10 checkpoint — reseller support tickets persist across sessions (PR #1036 merged)
+
+
+- PR [#1036](https://github.com/ijoolaie/AI-Employee/pull/1036) — `fix(support): retain reseller-created tickets across sessions` — merged at `87c1719d1e2522912e8f55f8bc8d8c2956ea0eaa`; tested head `0cf6785f4e82fd33fbbbda320d42dbd57a8dc45f`.
+- All 11 reported workflow runs on the exact tested head completed successfully: backend/frontend CI, CodeQL, DAST, architecture, infrastructure, rollback/alerting, observability, HA recovery, tenant isolation/RBAC, W21 network E2E and workforce real-stack E2E.
+- Reseller support workspace now loads both incoming escalations and escalations created by the authenticated reseller; results are merged with ID-based deduplication, and creation invalidates the sent-ticket query. The outgoing endpoint filters by the authenticated tenant's `from_tenant_id`.
+- This fixes reload persistence for the sent-ticket list; it does not certify a production release. Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+### Next support-workflow actions
+
+1. Manually verify the reseller workflow end-to-end: create a ticket, reload the page, confirm it remains visible, reply, and verify the thread and authorized attachments.
+2. Continue support attachment coverage for legitimate downloads by both participants, deleted files, attachment limits/policy, and missing storage objects; evaluate stable 409 handling for concurrent file reuse.
+3. Keep manual World desktop/mobile QA, payment-provider verification, USDT network policy, durable World Credit ledger, and room lease/fulfillment integration as separate open gates.
+
 ## 2026-10-10 checkpoint — secure support message attachments merged (PR #1033)
 
 - PR [#1033](https://github.com/ijoolaie/AI-Employee/pull/1033) merged to `main` at `f7a443f11f1c2fdab71ee7c303b6c18a0cb70cb0`.

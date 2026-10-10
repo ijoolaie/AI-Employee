@@ -1,3 +1,13 @@
+## Current engineering status — 2026-10-10 — PR #1036 merged
+
+
+- PR #1031 introduced tenant-scoped support escalation message threads; PR #1033 added secure message attachments; PR #1035 added the reseller support conversation workspace; PR #1036 fixes persistence of reseller-created tickets across reloads.
+- PR [#1036](https://github.com/ijoolaie/AI-Employee/pull/1036) merged at `87c1719d1e2522912e8f55f8bc8d8c2956ea0eaa`. Exact tested head: `0cf6785f4e82fd33fbbbda320d42dbd57a8dc45f`.
+- All 11 workflow runs on that exact head completed successfully, including backend/frontend CI, CodeQL, DAST, architecture, infrastructure, recovery, observability, rollback, tenant/RBAC and real-stack checks.
+- The reseller workspace combines incoming and sent escalations and deduplicates by ticket ID. The sent endpoint is scoped to the authenticated reseller tenant via `from_tenant_id`; the sent-ticket query is invalidated after ticket creation.
+- Next: manually verify create → reload → ticket remains visible → reply/thread/attachment behavior. Existing attachment follow-up coverage and the separate production/release gates remain open.
+- This merge is not a production release certification. Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 ## Current engineering status — 2026-10-10 — PR #1033 merged
 
 - Support message threads are available from PR #1031; secure file attachments are now merged from PR #1033.
