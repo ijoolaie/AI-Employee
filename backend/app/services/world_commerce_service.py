@@ -207,9 +207,6 @@ async def reject_payment(
     old_status = order.status
     order.status = "rejected"
     order.rejection_reason = clean_reason
-    order.approved_by_user_id = approver.id
-    order.approved_by_username = approver.email
-    order.approved_at = _utcnow()
     await db.flush()
     await _event(db, order=order, event_type="payment_rejected", actor_id=approver.id,
                  actor_username=approver.email, from_status=old_status, to_status=order.status,
