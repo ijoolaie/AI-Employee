@@ -260,3 +260,13 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - Update lookup is tenant-scoped using both escalation ID and authenticated `to_tenant_id`; missing or cross-tenant IDs return 404.
 - Successful transitions are audited with the actor and previous/new status. Regression tests cover both edition routes, tenant isolation, audit call, and invalid transitions.
 - Replies/message threads, attachments, and impersonation are still not implemented. CI must validate the exact branch head.
+
+
+## 17. AI Employee World — commerce, diagnostics and support workflow (2026-10-10)
+
+- World commerce backend foundation includes catalogue items, tenant orders, immutable commerce event history and persistent feature entitlements. Payment approval and feature activation use distinct permissions and authenticated actors.
+- Access checks distinguish free catalogue items, vendor-included access and paid entitlements. Vendor diagnostics are read-only, tenant-hierarchy scoped, audited and minimize buyer/payment-reference data.
+- Incoming support escalations reuse the existing model. Vendor/reseller inboxes are filtered by authenticated receiving tenant; status changes support open, in_progress, resolved, enforce the documented transition graph, and are audited.
+- Exact implementation head 33411a4b95aa3a5ebd2deb265800fd250066b60a passed all listed automated workflows at inspection: CI, CodeQL, HA recovery, ephemeral DAST and production infrastructure. The subsequent documentation commit creates a new SHA and must be checked before merge.
+- Not implemented: live provider/webhook verification, World wallet/ledger, lease expiry/renewal automation, fulfillment/inventory integration, persistent customization-to-3D-scene wiring, support reply threads/attachments, impersonation or temporary support grants.
+- Merge was explicitly requested by the user; merge only after the documentation-updated exact head's required checks are green. Manual cross-device visual QA and production release certification remain separate.
