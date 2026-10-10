@@ -165,3 +165,15 @@ A second review found that `onPointerMove` was adding any pointer ID to the acti
 2. Merge PR #983 only if those checks are green; the user's merge authorization is explicit.
 3. Verify the PR's merged state and merge commit SHA from GitHub.
 4. Report the merge SHA, exact-head CI evidence, documented limitations, and follow-up work. Do not claim live payment or production certification.
+
+
+## Merge result — 2026-10-10 (verified)
+
+- PR #983: https://github.com/ijoolaie/AI-Employee/pull/983
+- State: closed and merged into main; no longer Draft.
+- Squash merge commit: f3f7ad6c169a5e31b1773b4a280af43b49c020c7.
+- Validated PR head before merge: a0952cc44444e5c04c4c245653e59227b3a88a82.
+- All 17 automated workflows passed on that exact PR head: CI, CodeQL, HA recovery, ephemeral DAST, production infrastructure, and the supporting product/security E2E workflows.
+- Frontend CI lint, contract tests, unit tests, production build and World Mode Playwright smoke passed. Backend migration checks and backend tests passed, including the support inbox status-transition regression tests.
+- Follow-up limitations: no live payment gateway/webhook verification or wallet/ledger; no lease expiry/renewal or fulfillment automation; no persistent customization wired to the live 3D scene; no support reply threads, attachments, impersonation or temporary support grants. Manual desktop/mobile visual QA and production release certification are still outstanding.
+- Next session should resolve the current main SHA, read this handoff and the current status/priority documents, then continue from the remaining limitations rather than treating this merge as production release approval.
