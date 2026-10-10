@@ -85,7 +85,8 @@ export function WorldShell() {
     () => normalizeRoomSceneConfig(matchingRoomInventory?.scene_config),
     [matchingRoomInventory?.scene_config],
   );
-  const roomSceneConfig = roomSceneConfigOverride?.roomInstanceId === roomAccessQuery.data?.room_instance_id &&
+  const roomSceneConfig = roomSceneConfigOverride &&
+    roomSceneConfigOverride.roomInstanceId === roomAccessQuery.data?.room_instance_id &&
     JSON.stringify(roomSceneConfigFromServer) !== JSON.stringify(roomSceneConfigOverride.config)
     ? roomSceneConfigOverride.config
     : roomSceneConfigFromServer;
