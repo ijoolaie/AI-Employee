@@ -37,7 +37,7 @@ export function WorldRoomLayoutPanel({
   const [furniture, setFurniture] = useState<RoomFurniturePlacement[]>(initialConfig.furniture);
   const [employeePlacements, setEmployeePlacements] = useState<RoomEmployeePlacement[]>(initialConfig.employee_placements);
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(initialUpdatedAt);
-  const isStale = currentUpdatedAt !== expectedUpdatedAt;
+  const isStale = !Number.isFinite(Date.parse(currentUpdatedAt)) || !Number.isFinite(Date.parse(expectedUpdatedAt)) || Date.parse(currentUpdatedAt) !== Date.parse(expectedUpdatedAt);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
