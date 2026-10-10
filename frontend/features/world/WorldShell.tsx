@@ -26,7 +26,8 @@ type WorldEntitlement = {
 
 type APIResponse<T> = { success: boolean; data?: T };
 type WorldCatalogueItem = { code: string; item_type: string; is_free: boolean };
-type WorldFeatureAccess = { item_code: string; granted: boolean; access_source: string; item_type: string };
+type WorldRoomInventory = { room_instance_id: string; item_code: string; status: string; expires_at: string | null };
+type WorldRoomInventoryAccess = { item_code: string; granted: boolean; reason: string; room_instance_id: string | null; expires_at: string | null };
 
 
 export function WorldShell() {
@@ -62,26 +63,38 @@ export function WorldShell() {
     staleTime: 30_000,
     retry: 1,
   });
-  const roomAccessQuery = useQuery({
-    queryKey: ["world-room-feature-access", roomCatalogueQuery.data],
-    enabled: Boolean(roomCatalogueQuery.data),
+  const roomInventoryQuery = useQuery({
+    queryKey: ["world-room-inventory"],
     queryFn: async () => {
-      const response = await api.get<APIResponse<WorldFeatureAccess>>(`/world-commerce/access/${encodeURIComponent(roomCatalogueQuery.data!)}`);
+      const response = await api.get<APIResponse<WorldRoomInventory[]>>("/world-commerce/room-inventory");
+      if (!response.data.success || !Array.isArray(response.data.data)) throw new Error("موجودی اتاق معتبر نیست.");
+      return response.data.data;
+    },
+    refetchInterval: 15_000,
+    staleTime: 5_000,
+    retry: 1,
+  });
+  const roomAccessItemCode = roomInventoryQuery.data?.[0]?.item_code ?? roomCatalogueQuery.data;
+  const roomAccessQuery = useQuery({
+    queryKey: ["world-room-inventory-access", roomAccessItemCode],
+    enabled: Boolean(roomAccessItemCode) && !roomInventoryQuery.isLoading && !roomInventoryQuery.error,
+    queryFn: async () => {
+      const response = await api.get<APIResponse<WorldRoomInventoryAccess>>(`/world-commerce/room-inventory/${encodeURIComponent(roomAccessItemCode!)}/access`);
       if (!response.data.success || !response.data.data) throw new Error("وضعیت دسترسی اتاق معتبر نیست.");
       return response.data.data;
     },
-    refetchInterval: 30_000,
-    staleTime: 10_000,
+    refetchInterval: 15_000,
+    staleTime: 5_000,
     retry: 1,
   });
-  const roomAccessGranted = roomAccessQuery.data?.granted === true && roomAccessQuery.data.item_type === "room";
-  const roomAccessUnavailable = Boolean(roomCatalogueQuery.error || roomAccessQuery.error || (!roomCatalogueQuery.isLoading && roomCatalogueQuery.data === null));
+  const roomAccessGranted = roomAccessQuery.data?.granted === true && Boolean(roomAccessQuery.data.room_instance_id);
+  const roomAccessUnavailable = Boolean(roomInventoryQuery.error || roomCatalogueQuery.error || roomAccessQuery.error || (!roomCatalogueQuery.isLoading && roomCatalogueQuery.data === null));
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
   const onRoomProximity = useCallback((near: boolean) => setNearLockedRoom(near), []);
   const onRoomInteract = useCallback(() => {
-    if (roomAccessQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessUnavailable) {
+    if (roomInventoryQuery.isLoading || roomAccessQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessUnavailable) {
       setShowRoomOffer(false);
       setShowRoomAccess(true);
     } else if (roomAccessGranted) {
@@ -91,7 +104,7 @@ export function WorldShell() {
       setShowRoomAccess(false);
       setShowRoomOffer(true);
     }
-  }, [roomAccessQuery.isLoading, roomCatalogueQuery.isLoading, roomAccessUnavailable, roomAccessGranted]);
+  }, [roomInventoryQuery.isLoading, roomAccessQuery.isLoading, roomCatalogueQuery.isLoading, roomAccessUnavailable, roomAccessGranted]);
   const selectedEmployee = world?.employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
 
   useEffect(() => {
@@ -142,7 +155,7 @@ export function WorldShell() {
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
                 {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect" : "Locked room nearby · Press E to inspect access or rent"}</button>}
                 {showRoomOffer && <WorldRoomOfferPanel onClose={() => setShowRoomOffer(false)} />}
-                {showRoomAccess && <WorldRoomAccessPanel state={roomAccessQuery.isLoading || roomCatalogueQuery.isLoading ? "loading" : roomAccessUnavailable || !roomAccessQuery.data ? "unavailable" : roomAccessGranted ? "granted" : "unavailable"} itemCode={roomAccessQuery.data?.item_code ?? roomCatalogueQuery.data ?? ""} expiresAt={activeRoomLease?.expires_at ?? null} onRetry={() => { void roomCatalogueQuery.refetch(); if (roomCatalogueQuery.data) void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
+                {showRoomAccess && <WorldRoomAccessPanel state={roomInventoryQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessQuery.isLoading ? "loading" : roomAccessUnavailable || !roomAccessQuery.data || !roomAccessGranted ? "unavailable" : "granted"} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? activeRoomLease?.expires_at ?? null} onRetry={() => { void roomInventoryQuery.refetch(); void roomCatalogueQuery.refetch(); if (roomAccessItemCode) void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
