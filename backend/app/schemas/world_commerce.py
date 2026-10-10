@@ -24,6 +24,7 @@ class WorldCatalogueItemResponse(BaseModel):
 
 
 class WorldOrderCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     item_code: ShortKey
     currency: str = Field(pattern="^(IRR|USD|USDT|WORLD_CREDIT)$")
     payment_method: str = Field(pattern="^(manual_transfer|gateway|crypto|world_credit)$")
@@ -32,10 +33,12 @@ class WorldOrderCreateRequest(BaseModel):
 
 
 class WorldPaymentSubmission(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     provider_transaction_ref: str = Field(min_length=1, max_length=255)
 
 
 class WorldPaymentDecision(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     reason: str | None = Field(default=None, max_length=2000)
 
 
