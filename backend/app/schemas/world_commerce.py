@@ -191,3 +191,35 @@ class WorldRoomInventoryAccessResponse(BaseModel):
     reason: str
     room_instance_id: UUID | None = None
     expires_at: datetime | None = None
+
+class WorldRoomFurniturePlacement(BaseModel):
+    """A bounded placement of a built-in, non-executable room prop."""
+    model_config = ConfigDict(extra="forbid")
+    placement_id: str = Field(min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
+    kind: Literal["desk", "chair", "plant", "cabinet", "meeting_table"]
+    x: float = Field(ge=-20, le=20)
+    z: float = Field(ge=-20, le=20)
+    rotation: int = Field(default=0, ge=0, le=359)
+
+
+class WorldRoomSceneConfig(BaseModel):
+    """Versioned, bounded client-renderable room configuration; never an access grant."""
+    model_config = ConfigDict(extra="forbid")
+    schema_version: Literal[1] = 1
+    layout_preset: Literal["starter"] = "starter"
+    furniture: list[WorldRoomFurniturePlacement] = Field(default_factory=list, max_length=40)
+
+    @model_validator(mode="after")
+    def validate_unique_placement_ids(self):
+        ids = [item.placement_id for item in self.furniture]
+        if len(ids) != len(set(ids)):
+            raise ValueError("placement_id values must be unique")
+        return self
+
+
+class WorldRoomSceneConfigResponse(BaseModel):
+    room_instance_id: UUID
+    item_code: str
+    scene_config: WorldRoomSceneConfig
+    updated_at: datetime
+
