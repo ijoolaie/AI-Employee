@@ -176,7 +176,17 @@ async def submit_payment(
     order.provider_transaction_ref = ref
     order.payment_submitted_at = _utcnow()
     order.status = "payment_submitted"
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError:
+        await db.rollback()
+        duplicate = await db.scalar(select(WorldOrder.id).where(
+            WorldOrder.payment_provider == order.payment_provider,
+            WorldOrder.provider_transaction_ref == ref,
+        ))
+        if duplicate is not None:
+            raise HTTPException(status_code=409, detail="This provider transaction reference is already attached to an order")
+        raise
     await _event(db, order=order, event_type="payment_submitted", actor_id=actor.id,
                  actor_username=actor.email, from_status=old_status, to_status=order.status,
                  details={"provider_transaction_ref": ref})
