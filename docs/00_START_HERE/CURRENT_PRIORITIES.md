@@ -7,7 +7,7 @@
 5. **Support workflow completion.** Reply threads, attachments, scoped support sessions and auditable temporary grants remain outstanding.
 6. **Manual desktop/mobile QA and release certification.** Do not infer visual acceptance or a new certified release from CI.
 
-PR #1006 merged at `ad381ed17c5f8dedd140644f975647d3ac53b925`; its pre-merge checks passed. Review post-merge checks on the exact merge SHA before claiming post-merge validation complete. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+PR #1006 merged at `ad381ed17c5f8dedd140644f975647d3ac53b925`; its pre-merge checks passed. All 9 post-merge checks on the exact merge SHA completed successfully: frontend, backend, infrastructure, DAST, both CodeQL analyses, Validate SLO contract, validate, and validate-and-package. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ## Priority reconciliation — after PR #1004 (2026-10-10)
 
