@@ -159,6 +159,7 @@ async def my_room_inventory(ctx: CurrentContext, db: DbSession):
             status=inventory.status,
             expires_at=entitlement.expires_at,
             scene_config=inventory.scene_config,
+            updated_at=inventory.updated_at,
         )
         for inventory, entitlement in rows.all()
     ])
@@ -228,8 +229,9 @@ async def update_room_scene_config(
     payload: WorldRoomSceneConfig,
     ctx: CurrentContext,
     db: DbSession,
+    expected_updated_at: datetime = Query(...),
 ):
-    """Persist a bounded room layout only while this tenant has a valid room lease."""
+    """Persist a bounded room layout only while this tenant has a valid room lease and current revision."""
     now = datetime.now(timezone.utc)
     result = await db.execute(
         select(WorldRoomInventory, WorldFeatureEntitlement, WorldCatalogueItem)
@@ -254,6 +256,9 @@ async def update_room_scene_config(
         raise HTTPException(status_code=404, detail="World room not found")
 
     inventory, entitlement, catalogue_item = row
+    if inventory.updated_at != expected_updated_at:
+        raise HTTPException(status_code=409, detail="Room layout changed since it was opened. Close the editor and reopen the latest layout before saving.")
+
     if (
         catalogue_item.item_type != "room"
         or not catalogue_item.is_active
