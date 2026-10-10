@@ -190,6 +190,9 @@ async def reconcile_legacy_room_inventory(
             detail="Explicit reconciliation confirmation is required before applying changes",
         )
 
+    if not payload.dry_run and payload.offset != 0:
+        raise HTTPException(status_code=422, detail="Apply runs must start at offset zero; rerun after each bounded batch")
+
     now = datetime.now(timezone.utc)
     statement = (
         select(WorldFeatureEntitlement)
@@ -219,7 +222,7 @@ async def reconcile_legacy_room_inventory(
             WorldRoomInventory.id.is_(None),
         )
         .order_by(WorldFeatureEntitlement.activated_at.asc(), WorldFeatureEntitlement.id.asc())
-        .limit(payload.limit + 1)
+        .offset(payload.offset).limit(payload.limit + 1)
     )
     if not payload.dry_run:
         statement = statement.with_for_update(of=WorldFeatureEntitlement, skip_locked=True)
@@ -242,6 +245,7 @@ async def reconcile_legacy_room_inventory(
             metadata={
                 "candidate_count": len(candidates),
                 "limit": payload.limit,
+                "offset": payload.offset,
                 "has_more": has_more,
                 "eligible_only": True,
             },
@@ -311,6 +315,7 @@ async def reconcile_legacy_room_inventory(
         has_more=has_more,
         created_count=created_count,
         skipped_conflict_count=skipped_conflict_count,
+        next_offset=(payload.offset + len(candidates)) if payload.dry_run and has_more else None,
     ))
 
 
