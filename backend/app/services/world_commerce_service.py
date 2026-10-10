@@ -267,12 +267,21 @@ async def mark_fulfilled(
     activated_at = _utcnow()
     if item.item_type == "room" and not item.is_free and not item.lease_duration_days:
         raise HTTPException(status_code=409, detail="Paid room lease duration is not configured")
+    # A separately approved paid room order renews an unexpired lease by
+    # extending its current expiry. Other active entitlements remain non-duplicable.
+    # Legacy room entitlements with no expiry can be repaired by this activation;
+    # expired leases restart from now rather than accumulating unused time.
+    lease_start = activated_at
     if entitlement is not None and entitlement.status == "active":
-        if item.item_type != "room" or (entitlement.expires_at is not None and entitlement.expires_at > activated_at):
+        if item.item_type != "room":
             raise HTTPException(status_code=409, detail="Tenant already has this feature entitlement")
+        if entitlement.expires_at is not None and entitlement.expires_at > activated_at:
+            if item.is_free or not item.lease_duration_days:
+                raise HTTPException(status_code=409, detail="Tenant already has this feature entitlement")
+            lease_start = entitlement.expires_at
 
     expires_at = (
-        activated_at + timedelta(days=item.lease_duration_days)
+        lease_start + timedelta(days=item.lease_duration_days)
         if item.item_type == "room" and not item.is_free and item.lease_duration_days
         else None
     )

@@ -709,3 +709,44 @@ async def test_room_fulfillment_persists_expiry_from_server_catalogue_duration(m
     assert entitlement.metadata_["lease_duration_days"] == 30
     db.flush.assert_awaited_once()
     event.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_room_fulfillment_renews_active_paid_lease_from_existing_expiry(monkeypatch):
+    from datetime import timedelta
+    from app.services import world_commerce_service as commerce
+
+    tenant_id = uuid4()
+    approver_id = uuid4()
+    previous_expiry = datetime.now(timezone.utc) + timedelta(days=10)
+    order = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, status="approved",
+        approved_by_user_id=approver_id, catalogue_item_id=uuid4(),
+        item_code_snapshot="room.starter", activated_by_user_id=None,
+        activated_by_username=None, activated_at=None,
+    )
+    item = SimpleNamespace(
+        id=order.catalogue_item_id, item_type="room", is_free=False, lease_duration_days=30,
+    )
+    entitlement = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter",
+        item_type="room", status="active", expires_at=previous_expiry,
+        metadata_={}, revoked_at=None,
+    )
+    db = AsyncMock()
+    db.scalar.side_effect = [order, item, entitlement]
+    event = AsyncMock()
+    monkeypatch.setattr(commerce, "_event", event)
+
+    result = await commerce.mark_fulfilled(
+        db, order_id=order.id, tenant_id=tenant_id,
+        activator=SimpleNamespace(id=uuid4(), email="renewal-activator@example.test"),
+    )
+
+    assert result.status == "fulfilled"
+    assert entitlement.expires_at == previous_expiry + timedelta(days=30)
+    assert entitlement.source_order_id == order.id
+    assert entitlement.status == "active"
+    assert entitlement.metadata_["lease_duration_days"] == 30
+    db.flush.assert_awaited_once()
+    event.assert_awaited_once()
