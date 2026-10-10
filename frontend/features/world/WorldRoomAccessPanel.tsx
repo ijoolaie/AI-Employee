@@ -6,12 +6,14 @@ export function WorldRoomAccessPanel({
   state,
   itemCode,
   expiresAt,
+  roomInstanceId,
   onClose,
   onRetry,
 }: {
   state: AccessState;
   itemCode: string;
   expiresAt: string | null;
+  roomInstanceId: string | null;
   onClose: () => void;
   onRetry: () => void;
 }) {
@@ -38,9 +40,10 @@ export function WorldRoomAccessPanel({
       )}
       {state === "granted" && (
         <div className="mt-4 space-y-3 text-sm">
-          <p className="text-emerald-200">سرور مجوز فعال این اتاق را تأیید کرده است.</p>
+          <p className="text-emerald-200">سرور مجوز و نمونهٔ اتاق را تأیید کرده است؛ فضای سه‌بعدی تا پایان اعتبار نمایش داده می‌شود.</p>
           <p className="text-slate-300">کد اتاق: <span className="font-mono">{itemCode}</span>{expiry ? ` · اعتبار تا ${expiry}` : ""}</p>
-          <p className="rounded-lg border border-slate-700 bg-slate-900 p-3 leading-6 text-slate-300">اتصال مجوز به نمونهٔ اختصاصی اتاق و محتوای قابل‌استفاده در صحنهٔ سه‌بعدی هنوز کامل نشده است؛ این پیام فقط تأیید مجوز سرور است و ادعای بازشدن اتاق نیست.</p>
+          {roomInstanceId && <p className="text-slate-300">شناسه نمونه: <span className="font-mono">{roomInstanceId}</span></p>}
+          <p className="rounded-lg border border-slate-700 bg-slate-900 p-3 leading-6 text-slate-300">نمایش فعلی از یک فضای رویه‌ای متصل به شناسه نمونهٔ مجاز استفاده می‌کند؛ ذخیره‌سازی چیدمان و سفارشی‌سازی اختصاصی هنوز تکمیل نشده است.</p>
         </div>
       )}
     </section>
