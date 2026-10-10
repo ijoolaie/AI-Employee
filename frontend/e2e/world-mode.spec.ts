@@ -36,7 +36,7 @@ const office = {
     blocked_count: 0,
     escalated_count: 0,
     employees: [{
-      id: "employee-e2e",
+      id: "2e3f1a10-0e6a-4e9d-8b9a-32c5d37f0b11",
       name: "Sales AI",
       slug: "sales-ai",
       avatar_url: null,
@@ -99,7 +99,7 @@ test("World Mode renders authoritative employee projection and management bridge
   await expect(employeePanel.getByText("Sales AI", { exact: true })).toBeVisible();
   await expect(employeePanel.getByText("Qualify lead", { exact: true })).toBeVisible();
   await expect(employeeSelector).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("link", { name: "Open Employee Management" })).toHaveAttribute("href", "/employees/employee-e2e");
+  await expect(page.getByRole("link", { name: "Open Employee Management" })).toHaveAttribute("href", "/employees/2e3f1a10-0e6a-4e9d-8b9a-32c5d37f0b11");
 
   // Selection is keyboard-accessible and Escape returns the world to its unselected state.
   await page.keyboard.press("Escape");
@@ -308,4 +308,40 @@ test("World room layout editor persists and applies furniture placements", async
   expect(savedPayload.layout_preset).toBe("starter");
   expect(savedPayload.furniture).toHaveLength(3);
   expect(savedPayload.furniture.every((item) => item.x >= -2.2 && item.x <= 2.2 && item.z >= -2.2 && item.z <= 2.2)).toBe(true);
+});
+
+test("World room editor persists an active tenant employee placement", async ({ page }) => {
+  await mockRoomSceneAccess(page, "2035-01-01T00:00:00.000Z", true);
+  const canvas = page.getByLabel("AI Company World viewport");
+  await expect(canvas).toHaveAttribute("data-room-access-state", "granted");
+  await expect(canvas).toHaveAttribute("data-room-employee-count", "0");
+
+  const savedPayloads: Array<{ schema_version: number; layout_preset: string; furniture: unknown[]; employee_placements: Array<{ employee_id: string; x: number; z: number; rotation: number }> }> = [];
+  await page.route("**/world-commerce/room-inventory/room_monthly/scene-config", async (route) => {
+    savedPayloads.push(route.request().postDataJSON());
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          room_instance_id: "room-instance-e2e-001",
+          item_code: "room_monthly",
+          scene_config: savedPayloads[0],
+          updated_at: "2035-01-01T00:00:00.000Z",
+        },
+      }),
+    });
+  });
+
+  await page.getByRole("button", { name: "Customize room" }).click();
+  const editor = page.getByRole("dialog", { name: "Customize your room" });
+  await editor.getByRole("button", { name: "Place in room" }).click();
+  await editor.getByRole("button", { name: "Save layout" }).click();
+  await expect(editor.getByRole("status")).toContainText("Room layout saved to the server.");
+  await expect(canvas).toHaveAttribute("data-room-employee-count", "1");
+  expect(savedPayloads).toHaveLength(1);
+  expect(savedPayloads[0].employee_placements).toEqual([
+    { employee_id: "2e3f1a10-0e6a-4e9d-8b9a-32c5d37f0b11", x: 0, z: 0, rotation: 0 },
+  ]);
 });
