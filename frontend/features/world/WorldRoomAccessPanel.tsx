@@ -1,6 +1,6 @@
 "use client";
 
-type AccessState = "loading" | "unavailable" | "granted";
+type AccessState = "loading" | "unavailable" | "granted" | "expired";
 
 export function WorldRoomAccessPanel({
   state,
@@ -9,6 +9,7 @@ export function WorldRoomAccessPanel({
   roomInstanceId,
   onClose,
   onRetry,
+  onRenew,
 }: {
   state: AccessState;
   itemCode: string;
@@ -16,6 +17,7 @@ export function WorldRoomAccessPanel({
   roomInstanceId: string | null;
   onClose: () => void;
   onRetry: () => void;
+  onRenew: () => void;
 }) {
   const expiry = expiresAt
     ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(expiresAt))
@@ -38,12 +40,20 @@ export function WorldRoomAccessPanel({
           <button type="button" onClick={onRetry} className="mt-3 rounded-lg border border-amber-200/30 px-3 py-2 text-xs hover:bg-amber-900/30">بررسی دوباره</button>
         </div>
       )}
+      {state === "expired" && (
+        <div className="mt-4 space-y-3 text-sm">
+          <p role="alert" className="rounded-lg border border-amber-400/30 bg-amber-950/20 p-3 text-amber-100">اجاره اتاق منقضی شده است؛ دسترسی و صحنه سه‌بعدی بسته می‌مانند.</p>
+          <p className="text-slate-300">کد اتاق: <span className="font-mono">{itemCode}</span>{expiry ? ` · اعتبار قبلی تا ${expiry}` : ""}</p>
+          <p className="text-slate-300">ثبت سفارش به‌تنهایی دسترسی را فعال نمی‌کند؛ اجاره پس از تأیید و فعال‌سازی سفارش از سمت سرور اعمال می‌شود.</p>
+          <button type="button" onClick={onRenew} className="w-full rounded-lg bg-amber-200 px-4 py-2.5 font-semibold text-slate-950 hover:bg-amber-100">ثبت سفارش تمدید اجاره</button>
+        </div>
+      )}
       {state === "granted" && (
         <div className="mt-4 space-y-3 text-sm">
           <p className="text-emerald-200">سرور مجوز و نمونهٔ اتاق را تأیید کرده است؛ فضای سه‌بعدی تا پایان اعتبار نمایش داده می‌شود.</p>
           <p className="text-slate-300">کد اتاق: <span className="font-mono">{itemCode}</span>{expiry ? ` · اعتبار تا ${expiry}` : ""}</p>
           {roomInstanceId && <p className="text-slate-300">شناسه نمونه: <span className="font-mono">{roomInstanceId}</span></p>}
-          <p className="rounded-lg border border-slate-700 bg-slate-900 p-3 leading-6 text-slate-300">چیدمان مبلمان این اتاق از سرور بارگذاری و ذخیره می‌شود؛ جایگذاری کارمندان و سفارشی‌سازی پایدار مدیر هنوز تکمیل نشده است.</p>
+          <p className="rounded-lg border border-slate-700 bg-slate-900 p-3 leading-6 text-slate-300">چیدمان مبلمان و جایگاه کارمندان فعال این مستأجر از سرور بارگذاری و ذخیره می‌شود. این تنظیمات فقط نمایشی هستند و وضعیت کارمند، مجوزها یا اجرای کار را تغییر نمی‌دهند.</p>
         </div>
       )}
     </section>
