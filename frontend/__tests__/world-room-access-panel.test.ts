@@ -36,7 +36,18 @@ describe("World room access gate contracts", () => {
     expect(viewport).toContain("roomInterior.userData.roomInstanceId = authorizedInstanceId");
     expect(viewport).toContain("roomInterior.userData.roomInstanceId === authorizedInstanceId");
     expect(panel).toContain("شناسه نمونه");
-    expect(panel).toContain("جایگذاری کارمندان و سفارشی‌سازی پایدار مدیر هنوز تکمیل نشده است");
+    expect(panel).toContain("جایگاه کارمندان فعال این مستأجر");
+  });
+
+
+  it("distinguishes an expired lease and offers a renewal order without granting access", () => {
+    expect(shell).toContain('roomAccessQuery.data?.reason === "lease_expired"');
+    expect(shell).toContain("roomAccessGranted || roomAccessExpired");
+    expect(shell).toContain('roomAccessExpired ? "expired"');
+    expect(panel).toContain('state === "expired"');
+    expect(panel).toContain("onClick={onRenew}");
+    expect(panel).toContain("ثبت سفارش تمدید اجاره");
+    expect(panel).toContain("دسترسی و صحنه سه‌بعدی بسته می‌مانند");
   });
 
   it("keeps retry and denied/unavailable messaging non-optimistic", () => {
