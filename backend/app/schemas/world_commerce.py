@@ -200,6 +200,7 @@ class WorldRoomInventoryReconciliationRequest(BaseModel):
     dry_run: bool = True
     confirmation: Literal["RECONCILE_WORLD_ROOM_INVENTORY"] | None = None
     limit: int = Field(default=100, ge=1, le=500)
+    offset: int = Field(default=0, ge=0, le=1000000)
 
 
 class WorldRoomInventoryReconciliationCandidate(BaseModel):
@@ -216,6 +217,7 @@ class WorldRoomInventoryReconciliationResponse(BaseModel):
     has_more: bool
     created_count: int = 0
     skipped_conflict_count: int = 0
+    next_offset: int | None = None
 
 
 
