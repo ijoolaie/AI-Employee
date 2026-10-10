@@ -1,3 +1,14 @@
+## Priority reconciliation — after PR #1004 (2026-10-10)
+
+1. **Room entitlement → inventory/3D scene integration:** use server-owned active entitlement and expiry as the authority for room access; tenant-scope all inventory/scene state, fail closed on expired or unreconciled legacy leases, and add backend/API plus real-stack/E2E regression coverage.
+2. **Customer renewal UX and expiry communication:** expose lease expiry and renewal eligibility to the tenant, prevent renewal UI from implying payment/activation before the existing approval and activation controls complete, and add expiry reminders only once a reliable scheduler/notification path is defined.
+3. **Provider-specific payment verification:** still blocked on selecting the actual fiat provider and/or crypto network/token policy. Require signed webhook or authoritative status verification, replay protection, amount/currency/order matching, and duplicate/failure/refund tests before allowing provider approval. Keep `gateway` and `crypto` manual approval blocked until implemented.
+4. **World Credit ledger:** disabled until durable append-only accounting and atomic idempotent debit/credit with replay protection are implemented and tested.
+5. **Support workflow completion:** reply threads, attachments, scoped support sessions and auditable temporary grants remain outstanding.
+6. **Manual desktop/mobile QA and release certification:** do not infer visual acceptance or a new certified release from CI.
+
+PR #1004 is merged at `4e490100d31a81e93e331dfa8b3da62f23e4a883`; its 15 PR-head checks and all 10 post-merge checks passed. This is engineering evidence only. The latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 ## Priority update — 2026-10-10: fulfillment transition guard
 
 1. **Completed:** PR #1000 merged at `aaae36a488cadd72b59ce22d00579438edd1a233`; all 11 reported checks passed on exact PR head `ac69a6240ba1aa4cc2fa09e6a03c5d38153de45c`.
