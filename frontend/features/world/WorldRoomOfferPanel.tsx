@@ -46,8 +46,9 @@ export function WorldRoomOfferPanel({ onClose }: { onClose: () => void }) {
     [catalogueQuery.data],
   );
   const priceOption = room && isRecord(room.price_options[currency]) ? room.price_options[currency] : null;
-  const amount = priceOption && typeof priceOption.amount === "string" || typeof priceOption?.amount === "number"
-    ? String(priceOption.amount)
+  const amountValue = priceOption?.amount;
+  const amount = typeof amountValue === "string" || typeof amountValue === "number"
+    ? String(amountValue)
     : null;
   const providers = priceOption && Array.isArray(priceOption.providers)
     ? priceOption.providers.filter((provider): provider is string => typeof provider === "string")
