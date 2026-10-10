@@ -1,6 +1,6 @@
 # Current Status
 
-**Last reconciled:** 2026-10-09
+**Last reconciled:** 2026-10-10
 **Latest published release:** `v1.4.17`
 **Latest exact-SHA certified release:** `v1.4.17`
 **Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
@@ -8,8 +8,13 @@
 **GitHub Release:** `v1.4.17` — PUBLISHED
 **Production Certification:** Run `37625345534` — PASS
 **Certification job:** `112805570856` — PASS
-**Last verified live engineering head before this documentation PR:** `main` — `4492ad2c3d3d0f6c2b91189e37a7614fa5ca1259` (includes PR #980; post-release engineering only, NOT release-certified)
+**AI Employee World engineering checkpoint:** PR #983 merged into `main` as `f3f7ad6c169a5e31b1773b4a280af43b49c020c7`; its documentation-updated PR head `a0952cc44444e5c04c4c245653e59227b3a88a82` passed all 17 workflows. Later documentation-only commits reconcile the handoff; none is production-certified.
 **Current status:** v1.4.17 is the latest published exact-SHA certified release; external production and customer/commercial gates remain OPEN
+
+## 2026-10-10 current engineering checkpoint
+
+- PR #983 delivered the stylized AI Employee World office, World commerce foundation, vendor diagnostics and tenant-scoped support escalation status workflow. All 17 automated workflows passed on exact PR head `a0952cc44444e5c04c4c245653e59227b3a88a82` before squash merge (`f3f7ad6c169a5e31b1773b4a280af43b49c020c7`).
+- Manual desktop/mobile visual QA and production release certification remain outstanding. The latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ## 2026-10-09 current engineering checkpoint
 
