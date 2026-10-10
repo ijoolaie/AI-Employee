@@ -11,6 +11,7 @@ from sqlalchemy import and_, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import CurrentContext, DbSession, has_permission
+from app.models.employee import Employee
 from app.models.world_commerce import (
     WorldCatalogueItem,
     WorldCommerceEvent,
@@ -262,6 +263,23 @@ async def update_room_scene_config(
         or entitlement.expires_at <= now
     ):
         raise HTTPException(status_code=403, detail="Active room access is required to update the scene")
+
+    employee_ids = {placement.employee_id for placement in payload.employee_placements}
+    if employee_ids:
+        active_employee_ids = set(
+            (
+                await db.scalars(
+                    select(Employee.id).where(
+                        Employee.tenant_id == ctx.tenant_id,
+                        Employee.is_active.is_(True),
+                        Employee.id.in_(employee_ids),
+                    )
+                )
+            ).all()
+        )
+        if active_employee_ids != employee_ids:
+            # Never reveal whether an invalid ID belongs to another tenant.
+            raise HTTPException(status_code=422, detail="Employee placements must reference active employees in this tenant")
 
     inventory.scene_config = payload.model_dump(mode="json")
     await db.flush()
