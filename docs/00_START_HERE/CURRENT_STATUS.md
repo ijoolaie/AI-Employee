@@ -1,3 +1,13 @@
+## World commerce provider-approval boundary — 2026-10-10 (PR #998)
+
+- PR [#998](https://github.com/ijoolaie/AI-Employee/pull/998) merged at `88fe8472864f41538b7249b8d013f4f73682ed85`; all 11 reported checks passed on exact PR head `cde9c78b64a977251b3c5198d56adf6fed07267e` before merge.
+- Added service-level regression tests proving that `gateway` and `crypto` orders cannot be manually approved while provider verification is unimplemented; rejected attempts do not mutate approval state, flush, or emit an approval event.
+- The supported `manual_transfer` review path is covered, including approver metadata and its audit event.
+- This is test coverage and a fail-closed guard only. No provider adapter, signed webhook, settlement proof, wallet ledger, or room activation was added. Post-merge checks on the merge SHA must be reviewed separately.
+- Next: inspect post-merge checks; then implement provider verification only with a provider-specific contract, signed webhook validation, replay protection, amount/currency/order matching, and duplicate/failure tests. Keep World Credit disabled until durable atomic ledger accounting exists.
+- Still open: manual desktop/mobile World QA; lease/entitlement expiry and fulfillment; employee placement and persistent customization-to-scene integration; support reply/thread/attachment workflows.
+- Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Merge/CI evidence does not certify production readiness or activate real payments.
+
 # Current Status
 
 **Last reconciled:** 2026-10-10
