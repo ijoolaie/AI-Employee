@@ -27,7 +27,6 @@ from app.schemas.world_commerce import (
     WorldRoomInventoryAccessResponse,
     WorldRoomInventoryResponse,
     WorldRoomSceneConfig,
-    WorldRoomSceneConfigRequest,
     WorldRoomSceneConfigResponse,
     WorldOrderCreateRequest,
     WorldOrderResponse,
