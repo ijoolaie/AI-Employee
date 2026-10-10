@@ -1049,3 +1049,30 @@ async def test_room_scene_config_update_rejects_employee_not_active_in_current_t
     assert exc.value.status_code == 422
     db.commit.assert_not_awaited()
 
+@pytest.mark.asyncio
+async def test_room_scene_config_update_rejects_stale_expected_updated_at():
+    from datetime import timedelta
+    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
+    from app.api.v1.world_commerce import update_room_scene_config
+
+    tenant_id = uuid4()
+    now = datetime.now(timezone.utc)
+    inventory = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter",
+        status="provisioned", scene_config={}, updated_at=now,
+    )
+    entitlement = SimpleNamespace(tenant_id=tenant_id, status="active", expires_at=now + timedelta(days=2))
+    catalogue = SimpleNamespace(item_type="room", is_active=True)
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement, catalogue))
+    payload = WorldRoomSceneConfigUpdateRequest(
+        expected_updated_at=now - timedelta(seconds=1),
+        scene_config=WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"}),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await update_room_scene_config("room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db)
+
+    assert exc.value.status_code == 409
+    db.commit.assert_not_awaited()
+
