@@ -1,3 +1,14 @@
+## Priority reconciliation — after PR #1006 (2026-10-10)
+
+1. **Next: room entitlement → inventory/3D scene integration.** PR [#1006](https://github.com/ijoolaie/AI-Employee/pull/1006) now displays the tenant's server-backed room entitlement and expiry, but the 3D room remains visually locked/offer-only. Implement tenant-scoped server authorization and room inventory/scene lifecycle; deny access on expired, missing, legacy-unreconciled, or unavailable entitlement state. Add backend/API, real-stack, and E2E regression coverage.
+2. **Customer renewal UX and expiry communication.** Build on the existing paid-room renewal service only after scene authorization is reliable. Renewal order creation is not payment proof or activation; preserve manual review/two-person activation and provider-verification guards. Define a reliable scheduler before promising expiry reminders.
+3. **Provider-specific payment verification.** Still blocked on selecting the actual fiat provider and/or crypto network/token policy. Require signed webhook or authoritative status verification, replay protection, amount/currency/order matching, and duplicate/failure/refund tests before provider approval. Keep `gateway` and `crypto` manual approval blocked until implemented.
+4. **World Credit ledger.** Disabled until durable append-only accounting and atomic idempotent debit/credit with replay protection are implemented and tested.
+5. **Support workflow completion.** Reply threads, attachments, scoped support sessions and auditable temporary grants remain outstanding.
+6. **Manual desktop/mobile QA and release certification.** Do not infer visual acceptance or a new certified release from CI.
+
+PR #1006 merged at `ad381ed17c5f8dedd140644f975647d3ac53b925`; its pre-merge checks passed. Review post-merge checks on the exact merge SHA before claiming post-merge validation complete. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 ## Priority reconciliation — after PR #1004 (2026-10-10)
 
 1. **Room entitlement → inventory/3D scene integration:** use server-owned active entitlement and expiry as the authority for room access; tenant-scope all inventory/scene state, fail closed on expired or unreconciled legacy leases, and add backend/API plus real-stack/E2E regression coverage.
