@@ -97,6 +97,51 @@ async def test_support_message_reply_is_audited_and_keeps_body_out_of_audit_meta
 
 
 @pytest.mark.asyncio
+async def test_support_message_rejects_attachment_not_owned_by_author_tenant(monkeypatch):
+    tenant_id = uuid4()
+    file_id = uuid4()
+    ticket = SimpleNamespace(id=uuid4(), from_tenant_id=tenant_id, to_tenant_id=uuid4(), status="open")
+    db = AsyncMock()
+    db.execute.side_effect = [_result(ticket=ticket), _result(rows=[])]
+    audit = AsyncMock()
+    monkeypatch.setattr(edition_service, "record_audit", audit)
+    ctx = SimpleNamespace(tenant_id=tenant_id, user_id=uuid4())
+
+    with pytest.raises(HTTPException) as exc:
+        await _create_support_escalation_message(
+            ticket.id,
+            SupportEscalationMessageRequest(body="Please review this file.", attachment_file_ids=[file_id]),
+            ctx,
+            db,
+        )
+
+    assert exc.value.status_code == 404
+    db.add.assert_not_called()
+    audit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_support_message_rejects_duplicate_attachment_ids():
+    tenant_id = uuid4()
+    ticket = SimpleNamespace(id=uuid4(), from_tenant_id=tenant_id, to_tenant_id=uuid4(), status="open")
+    file_id = uuid4()
+    db = AsyncMock()
+    db.execute.return_value = _result(ticket=ticket)
+    ctx = SimpleNamespace(tenant_id=tenant_id, user_id=uuid4())
+
+    with pytest.raises(HTTPException) as exc:
+        await _create_support_escalation_message(
+            ticket.id,
+            SupportEscalationMessageRequest(body="Duplicate file.", attachment_file_ids=[file_id, file_id]),
+            ctx,
+            db,
+        )
+
+    assert exc.value.status_code == 422
+    db.add.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_support_message_cannot_be_added_to_resolved_ticket(monkeypatch):
     tenant_id = uuid4()
     ticket = SimpleNamespace(id=uuid4(), from_tenant_id=tenant_id, to_tenant_id=uuid4(), status="resolved")
