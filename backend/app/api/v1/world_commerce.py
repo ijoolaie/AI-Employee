@@ -13,7 +13,7 @@ from app.core.deps import CurrentContext, DbSession, has_permission
 from app.models.world_commerce import WorldCatalogueItem, WorldFeatureEntitlement, WorldOrder
 from app.schemas.common import APIResponse
 from app.schemas.world_commerce import (
-    WorldCatalogueItemResponse, WorldFeatureEntitlementResponse, WorldOrderCreateRequest, WorldOrderResponse,
+    WorldCatalogueItemResponse, WorldFeatureAccessResponse, WorldFeatureEntitlementResponse, WorldOrderCreateRequest, WorldOrderResponse,
     WorldPaymentDecision, WorldPaymentSubmission,
 )
 from app.services import world_commerce_service as commerce
@@ -50,6 +50,35 @@ async def catalogue(ctx: CurrentContext, db: DbSession):
     return APIResponse(success=True, data=[
         WorldCatalogueItemResponse.model_validate(row, from_attributes=True) for row in rows.all()
     ])
+
+
+@router.get("/access/{item_code}", response_model=APIResponse[WorldFeatureAccessResponse])
+async def feature_access(item_code: str, ctx: CurrentContext, db: DbSession):
+    item = await db.scalar(select(WorldCatalogueItem).where(
+        WorldCatalogueItem.code == item_code,
+        WorldCatalogueItem.is_active.is_(True),
+    ))
+    if item is None:
+        raise HTTPException(status_code=404, detail="World catalogue item not found")
+    # Vendor support access is role/tenant based, not a fabricated purchase.
+    if ctx.tenant.tenant_kind == "vendor":
+        data = WorldFeatureAccessResponse(
+            item_code=item.code, granted=True, access_source="vendor_included",
+            item_type=item.item_type,
+        )
+    else:
+        entitlement = await db.scalar(select(WorldFeatureEntitlement).where(
+            WorldFeatureEntitlement.tenant_id == ctx.tenant_id,
+            WorldFeatureEntitlement.item_code == item.code,
+            WorldFeatureEntitlement.status == "active",
+        ))
+        data = WorldFeatureAccessResponse(
+            item_code=item.code, granted=entitlement is not None,
+            access_source="entitlement" if entitlement else "not_entitled",
+            entitlement_id=entitlement.id if entitlement else None,
+            item_type=item.item_type,
+        )
+    return APIResponse(success=True, data=data)
 
 
 @router.get("/entitlements", response_model=APIResponse[list[WorldFeatureEntitlementResponse]])
