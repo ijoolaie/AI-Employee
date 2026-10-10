@@ -830,7 +830,7 @@ async def test_room_inventory_access_denies_invalid_lease_state(
     )
     db = AsyncMock()
     db.scalar.return_value = room
-    db.execute.return_value.first.return_value = (inventory, entitlement)
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement))
     ctx = SimpleNamespace(tenant_id=tenant_id)
 
     result = await room_inventory_access("room.starter", ctx, db)
