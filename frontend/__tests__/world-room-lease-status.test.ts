@@ -12,14 +12,17 @@ describe("World room inventory access status", () => {
   });
 
   it("does not display access as granted when the latest query is unavailable", () => {
-    expect(source).toContain("roomInventoryQuery.error || roomCatalogueQuery.error || roomAccessQuery.error");
+    expect(source).toContain("roomInventoryQuery.error");
+    expect(source).toContain("roomCatalogueQuery.error");
+    expect(source).toContain("roomAccessQuery.error");
     expect(source).toContain("unavailable={roomAccessUnavailable}");
     expect(source).toContain("granted={roomAccessGranted}");
     expect(source).toContain("وضعیت موجودی یا مجوز قابل بررسی نیست؛ دسترسی مسدود می‌ماند.");
   });
 
   it("schedules a re-check at server expiry and passes expiry to the scene", () => {
-    expect(source).toContain("window.setTimeout(() => { void roomAccessQuery.refetch(); }, delay)");
+    expect(source).toContain("window.setTimeout(scheduleExpiryCheck, Math.min(delay, 2_147_000_000))");
+    expect(source).toContain("window.setTimeout(scheduleExpiryCheck, Math.min(remaining, 2_147_000_000))");
     expect(source).toContain("expiresAt: roomAccessQuery.data?.expires_at ?? null");
     expect(source).toContain("roomAccess={roomSceneAccess}");
   });

@@ -43,7 +43,7 @@ export function WorldRoomAccessPanel({
           <p className="text-emerald-200">سرور مجوز و نمونهٔ اتاق را تأیید کرده است؛ فضای سه‌بعدی تا پایان اعتبار نمایش داده می‌شود.</p>
           <p className="text-slate-300">کد اتاق: <span className="font-mono">{itemCode}</span>{expiry ? ` · اعتبار تا ${expiry}` : ""}</p>
           {roomInstanceId && <p className="text-slate-300">شناسه نمونه: <span className="font-mono">{roomInstanceId}</span></p>}
-          <p className="rounded-lg border border-slate-700 bg-slate-900 p-3 leading-6 text-slate-300">نمایش فعلی از یک فضای رویه‌ای متصل به شناسه نمونهٔ مجاز استفاده می‌کند؛ ذخیره‌سازی چیدمان و سفارشی‌سازی اختصاصی هنوز تکمیل نشده است.</p>
+          <p className="rounded-lg border border-slate-700 bg-slate-900 p-3 leading-6 text-slate-300">چیدمان مبلمان این اتاق از سرور بارگذاری و ذخیره می‌شود؛ جایگذاری کارمندان و سفارشی‌سازی پایدار مدیر هنوز تکمیل نشده است.</p>
         </div>
       )}
     </section>

@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { WorldInput } from "./WorldInput";
 import type { WorldEmployee } from "./WorldState";
 import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
+import type { RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
 
 type WorkerVisual = {
   id: string;
@@ -275,14 +276,71 @@ function addAuthorizedRoomInterior(scene: any) {
   box(interior, [8, 3.5, 0.2], [0, 1.75, 21.2], 0x536575);
   box(interior, [0.2, 3.5, 8.2], [-4, 1.75, 17.1], 0x536575);
   box(interior, [0.2, 3.5, 8.2], [4, 1.75, 17.1], 0x536575);
-  addDesk(interior, 0, 15.8, 0x60b89c);
-  cylinder(interior, 0.32, 0.36, 0.42, [3.1, 0.29, 19.3], 0xc17f55, 12);
-  cylinder(interior, 0.09, 0.04, 1.05, [3.1, 1.02, 19.3], 0x4f8b65, 8);
-  sphere(interior, 0.42, [3.1, 1.7, 19.3], 0x68a77a, [1.1, 1.2, 0.85]);
+  const furnitureGroup = new THREE.Group();
+  furnitureGroup.name = "room-configured-furniture";
+  interior.add(furnitureGroup);
   const label = makeLabel("AUTHORIZED ROOM INSTANCE", "#f5d9a4");
   if (label) { label.position.set(0, 3.3, 19.8); label.scale.set(4.6, 0.9, 1); interior.add(label); }
+  interior.userData.furnitureGroup = furnitureGroup;
   scene.add(interior);
   return interior;
+}
+
+function disposeGroupChildren(group: any) {
+  while (group.children.length > 0) {
+    const child = group.children[0];
+    group.remove(child);
+    child.traverse((object: any) => {
+      if (object.geometry?.dispose) object.geometry.dispose();
+      if (object.material) {
+        const materials = Array.isArray(object.material) ? object.material : [object.material];
+        for (const material of materials) {
+          if (material.map) material.map.dispose();
+          material.dispose?.();
+        }
+      }
+    });
+  }
+}
+
+function addConfiguredFurniture(parent: any, placement: RoomFurniturePlacement) {
+  const item = new THREE.Group();
+  item.position.set(placement.x, 0, 17.1 + placement.z);
+  item.rotation.y = (placement.rotation * Math.PI) / 180;
+  parent.add(item);
+
+  switch (placement.kind) {
+    case "desk":
+      addDesk(item, 0, 0, 0x60b89c);
+      break;
+    case "chair":
+      cylinder(item, 0.5, 0.52, 0.16, [0, 0.72, 0], 0x526c80, 16);
+      box(item, [0.92, 0.95, 0.16], [0, 1.2, -0.42], 0x526c80);
+      cylinder(item, 0.12, 0.15, 0.58, [0, 0.36, 0], 0x48596a, 10);
+      break;
+    case "plant":
+      cylinder(item, 0.32, 0.36, 0.42, [0, 0.29, 0], 0xc17f55, 12);
+      cylinder(item, 0.09, 0.04, 1.05, [0, 1.02, 0], 0x4f8b65, 8);
+      sphere(item, 0.42, [0, 1.7, 0], 0x68a77a, [1.1, 1.2, 0.85]);
+      sphere(item, 0.34, [0.28, 1.55, -0.12], 0x76b184, [1, 1.1, 0.9]);
+      break;
+    case "cabinet":
+      box(item, [1.2, 1.7, 0.65], [0, 0.85, 0], 0x8b7765);
+      box(item, [0.04, 1.45, 0.04], [-0.22, 0.85, 0.34], 0xe9d6ad);
+      box(item, [0.04, 1.45, 0.04], [0.22, 0.85, 0.34], 0xe9d6ad);
+      break;
+    case "meeting_table":
+      box(item, [2.6, 0.16, 1.4], [0, 0.95, 0], 0xc99564);
+      for (const x of [-1.1, 1.1]) {
+        for (const z of [-0.5, 0.5]) box(item, [0.12, 0.9, 0.12], [x, 0.45, z], 0x806044);
+      }
+      break;
+  }
+}
+
+function applyRoomSceneConfig(furnitureGroup: any, config: WorldRoomSceneConfig) {
+  disposeGroupChildren(furnitureGroup);
+  for (const placement of config.furniture) addConfiguredFurniture(furnitureGroup, placement);
 }
 
 function hash(value: string) {
@@ -386,7 +444,7 @@ export function WorldViewport({
   onMapToggle: () => void;
   onRoomProximity: (near: boolean) => void;
   onRoomInteract: () => void;
-  roomAccess: { granted: boolean; roomInstanceId: string | null; expiresAt: string | null; unavailable: boolean };
+  roomAccess: { granted: boolean; roomInstanceId: string | null; expiresAt: string | null; unavailable: boolean; sceneConfig: WorldRoomSceneConfig };
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -477,7 +535,9 @@ export function WorldViewport({
     const ceoAvatar = addCEOAvatar(scene);
     const roomEntrance = addLockedRoom(scene);
     const roomInterior = addAuthorizedRoomInterior(scene);
+    const roomFurnitureGroup = roomInterior.userData.furnitureGroup;
     let renderedRoomInstanceId: string | null = null;
+    let renderedSceneConfigKey = "";
     let wasNearRoom = false;
     const workers: WorkerVisual[] = [];
     let signature = "";
@@ -608,7 +668,13 @@ export function WorldViewport({
         renderedRoomInstanceId = authorizedInstanceId;
         roomInterior.userData.roomInstanceId = authorizedInstanceId;
       }
+      const sceneConfigKey = authorizedInstanceId ? `${authorizedInstanceId}:${JSON.stringify(access.sceneConfig)}` : "";
+      if (roomGranted && authorizedInstanceId && sceneConfigKey !== renderedSceneConfigKey) {
+        applyRoomSceneConfig(roomFurnitureGroup, access.sceneConfig);
+        renderedSceneConfigKey = sceneConfigKey;
+      }
       roomInterior.visible = roomGranted && roomInterior.userData.roomInstanceId === authorizedInstanceId;
+      renderer.domElement.dataset.roomFurnitureCount = roomInterior.visible ? String(roomFurnitureGroup.children.length) : "0";
       renderer.domElement.dataset.roomAccessState = roomInterior.visible ? "granted" : "denied";
       if (roomInterior.visible && authorizedInstanceId) renderer.domElement.dataset.roomInstanceId = authorizedInstanceId;
       else renderer.domElement.removeAttribute("data-room-instance-id");

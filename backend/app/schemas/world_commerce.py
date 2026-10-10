@@ -197,8 +197,8 @@ class WorldRoomFurniturePlacement(BaseModel):
     model_config = ConfigDict(extra="forbid")
     placement_id: str = Field(min_length=1, max_length=64, pattern=r"^[a-zA-Z0-9_-]+$")
     kind: Literal["desk", "chair", "plant", "cabinet", "meeting_table"]
-    x: float = Field(ge=-20, le=20)
-    z: float = Field(ge=-20, le=20)
+    x: float = Field(ge=-2.2, le=2.2)
+    z: float = Field(ge=-2.2, le=2.2)
     rotation: int = Field(default=0, ge=0, le=359)
 
 

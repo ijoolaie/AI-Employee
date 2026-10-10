@@ -17,7 +17,9 @@ describe("World room access gate contracts", () => {
   });
 
   it("fails closed after query errors even if TanStack Query retains prior data", () => {
-    expect(shell).toContain("roomInventoryQuery.error || roomCatalogueQuery.error || roomAccessQuery.error");
+    expect(shell).toContain("roomInventoryQuery.error");
+    expect(shell).toContain("roomCatalogueQuery.error");
+    expect(shell).toContain("roomAccessQuery.error");
     expect(shell).toContain("isRoomSceneAccessUsable(roomSceneAccess, roomAccessUnavailable)");
     expect(access).toContain("if (unavailable || access?.granted !== true) return false;");
   });
@@ -26,14 +28,15 @@ describe("World room access gate contracts", () => {
     expect(viewport).toContain("isRoomSceneAccessUsable(access, access.unavailable)");
     expect(viewport).toContain("roomInterior.visible = roomGranted");
     expect(viewport).toContain("roomEntrance.userData.door.rotation.y = roomGranted ? Math.PI / 2 : 0");
-    expect(shell).toContain("window.setTimeout(() => { void roomAccessQuery.refetch(); }, delay)");
+    expect(shell).toContain("window.setTimeout(scheduleExpiryCheck, Math.min(delay, 2_147_000_000))");
+    expect(shell).toContain("window.setTimeout(scheduleExpiryCheck, Math.min(remaining, 2_147_000_000))");
   });
 
   it("binds the visible procedural scene to the authorized room instance ID", () => {
     expect(viewport).toContain("roomInterior.userData.roomInstanceId = authorizedInstanceId");
     expect(viewport).toContain("roomInterior.userData.roomInstanceId === authorizedInstanceId");
     expect(panel).toContain("شناسه نمونه");
-    expect(panel).toContain("ذخیره‌سازی چیدمان و سفارشی‌سازی اختصاصی هنوز تکمیل نشده است");
+    expect(panel).toContain("جایگذاری کارمندان و سفارشی‌سازی پایدار مدیر هنوز تکمیل نشده است");
   });
 
   it("keeps retry and denied/unavailable messaging non-optimistic", () => {

@@ -11,7 +11,8 @@ import { WorldOutcomePanel } from "./WorldOutcomePanel";
 import { WorldProgressionPanel } from "./WorldProgressionPanel";
 import { projectWorldReadModel } from "./WorldState";
 import { WorldViewport } from "./WorldViewport";
-import { WorldCustomizationPanel } from "./WorldCustomizationPanel";
+import { WorldRoomLayoutPanel } from "./WorldRoomLayoutPanel";
+import { normalizeRoomSceneConfig, type WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
 import { WorldRoomOfferPanel } from "./WorldRoomOfferPanel";
 import { WorldStatusBar } from "./WorldStatusBar";
 import { WorldMiniMap } from "./WorldMiniMap";
@@ -20,7 +21,7 @@ import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
 
 type APIResponse<T> = { success: boolean; data?: T };
 type WorldCatalogueItem = { code: string; item_type: string; is_free: boolean };
-type WorldRoomInventory = { room_instance_id: string; item_code: string; status: string; expires_at: string | null };
+type WorldRoomInventory = { room_instance_id: string; item_code: string; status: string; expires_at: string | null; scene_config?: unknown };
 type WorldRoomInventoryAccess = { item_code: string; granted: boolean; reason: string; room_instance_id: string | null; expires_at: string | null };
 
 
@@ -31,6 +32,7 @@ export function WorldShell() {
   const [nearLockedRoom, setNearLockedRoom] = useState(false);
   const [showRoomOffer, setShowRoomOffer] = useState(false);
   const [showRoomAccess, setShowRoomAccess] = useState(false);
+  const [roomSceneConfigOverride, setRoomSceneConfigOverride] = useState<{ roomInstanceId: string; config: WorldRoomSceneConfig } | null>(null);
   const officeQuery = useQuery({ queryKey: ["customer-world-read-model"], queryFn: getCustomerOffice, refetchInterval: 5000, staleTime: 2000 });
   const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });
   const roomCatalogueQuery = useQuery({
@@ -67,12 +69,33 @@ export function WorldShell() {
     staleTime: 5_000,
     retry: 1,
   });
-  const roomAccessUnavailable = Boolean(roomInventoryQuery.error || roomCatalogueQuery.error || roomAccessQuery.error || (!roomCatalogueQuery.isLoading && roomCatalogueQuery.data === null));
+  const matchingRoomInventory = roomInventoryQuery.data?.find((item) =>
+    item.room_instance_id === roomAccessQuery.data?.room_instance_id &&
+    item.item_code === roomAccessQuery.data?.item_code &&
+    item.status === "provisioned"
+  ) ?? null;
+  const roomAccessUnavailable = Boolean(
+    roomInventoryQuery.error ||
+    roomCatalogueQuery.error ||
+    roomAccessQuery.error ||
+    (!roomCatalogueQuery.isLoading && roomCatalogueQuery.data === null) ||
+    (roomAccessQuery.data?.granted === true && !roomInventoryQuery.isLoading && !matchingRoomInventory)
+  );
+  const roomSceneConfigFromServer = useMemo(
+    () => normalizeRoomSceneConfig(matchingRoomInventory?.scene_config),
+    [matchingRoomInventory?.scene_config],
+  );
+  const roomSceneConfig = roomSceneConfigOverride &&
+    roomSceneConfigOverride.roomInstanceId === roomAccessQuery.data?.room_instance_id &&
+    JSON.stringify(roomSceneConfigFromServer) !== JSON.stringify(roomSceneConfigOverride.config)
+    ? roomSceneConfigOverride.config
+    : roomSceneConfigFromServer;
   const roomSceneAccess = {
-    granted: roomAccessQuery.data?.granted === true,
+    granted: roomAccessQuery.data?.granted === true && Boolean(matchingRoomInventory),
     roomInstanceId: roomAccessQuery.data?.room_instance_id ?? null,
     expiresAt: roomAccessQuery.data?.expires_at ?? null,
     unavailable: roomAccessUnavailable,
+    sceneConfig: roomSceneConfig,
   };
   const roomAccessGranted = isRoomSceneAccessUsable(roomSceneAccess, roomAccessUnavailable);
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
@@ -97,8 +120,17 @@ export function WorldShell() {
 
     const delay = Date.parse(expiresAt) - Date.now();
     if (!Number.isFinite(delay) || delay <= 0) return;
-    const timeout = window.setTimeout(() => { void roomAccessQuery.refetch(); }, delay);
-    return () => window.clearTimeout(timeout);
+    let timeout: number | undefined;
+    const scheduleExpiryCheck = () => {
+      const remaining = Date.parse(expiresAt) - Date.now();
+      if (!Number.isFinite(remaining) || remaining <= 0) {
+        void roomAccessQuery.refetch();
+        return;
+      }
+      timeout = window.setTimeout(scheduleExpiryCheck, Math.min(remaining, 2_147_000_000));
+    };
+    timeout = window.setTimeout(scheduleExpiryCheck, Math.min(delay, 2_147_000_000));
+    return () => { if (timeout !== undefined) window.clearTimeout(timeout); };
   }, [roomAccessQuery.data?.expires_at, roomAccessQuery.data?.granted, roomAccessQuery.refetch]);
 
   const selectedEmployee = world?.employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
@@ -149,7 +181,9 @@ export function WorldShell() {
                 <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} onMapToggle={onMapToggle} onRoomProximity={onRoomProximity} onRoomInteract={onRoomInteract} roomAccess={roomSceneAccess} />
                 <MobileInputAdapter />
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
+                {roomAccessGranted && !showCustomization && <button type="button" onClick={() => setShowCustomization(true)} className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-xl border border-cyan-300/40 bg-slate-950/90 px-3 py-2 text-sm text-cyan-100 shadow-xl backdrop-blur"><Palette className="h-4 w-4" /> Customize room</button>}
                 {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect" : "Locked room nearby · Press E to inspect access or rent"}</button>}
+                {showCustomization && roomAccessGranted && roomSceneAccess.roomInstanceId && <WorldRoomLayoutPanel key={roomSceneAccess.roomInstanceId} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} roomInstanceId={roomSceneAccess.roomInstanceId} initialConfig={roomSceneConfig} onClose={() => setShowCustomization(false)} onSaved={(config) => setRoomSceneConfigOverride({ roomInstanceId: roomSceneAccess.roomInstanceId!, config })} />}
                 {showRoomOffer && <WorldRoomOfferPanel onClose={() => setShowRoomOffer(false)} />}
                 {showRoomAccess && <WorldRoomAccessPanel state={roomInventoryQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessQuery.isLoading ? "loading" : roomAccessUnavailable ? "unavailable" : roomAccessGranted ? "granted" : "unavailable"} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? null} roomInstanceId={roomAccessQuery.data?.room_instance_id ?? null} onRetry={() => { void roomInventoryQuery.refetch(); void roomCatalogueQuery.refetch(); if (roomAccessItemCode) void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}

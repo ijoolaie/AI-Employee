@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isRoomSceneAccessUsable } from "../features/world/WorldRoomSceneAccess";
+import { DEFAULT_ROOM_SCENE_CONFIG, normalizeRoomSceneConfig } from "../features/world/WorldRoomSceneConfig";
 
 const futureExpiry = "2035-01-01T00:00:00.000Z";
 const now = Date.parse("2030-01-01T00:00:00.000Z");
@@ -24,3 +25,38 @@ describe("isRoomSceneAccessUsable", () => {
     expect(isRoomSceneAccessUsable({ granted: false, roomInstanceId: "room-1", expiresAt: futureExpiry }, false, now)).toBe(false);
   });
 });
+
+describe("normalizeRoomSceneConfig", () => {
+  it("uses the safe starter layout for legacy empty scene_config", () => {
+    expect(normalizeRoomSceneConfig({})).toEqual(DEFAULT_ROOM_SCENE_CONFIG);
+  });
+
+  it("preserves a valid versioned room layout", () => {
+    const config = normalizeRoomSceneConfig({
+      schema_version: 1,
+      layout_preset: "starter",
+      furniture: [{ placement_id: "desk-1", kind: "desk", x: 1, z: -2, rotation: 90 }],
+    });
+    expect(config.furniture).toEqual([{ placement_id: "desk-1", kind: "desk", x: 1, z: -2, rotation: 90 }]);
+  });
+
+  it("filters unknown, duplicate, malformed and out-of-bounds placements", () => {
+    const config = normalizeRoomSceneConfig({
+      schema_version: 1,
+      layout_preset: "starter",
+      furniture: [
+        { placement_id: "valid", kind: "plant", x: 2, z: 2, rotation: 0 },
+        { placement_id: "valid", kind: "desk", x: 0, z: 0, rotation: 0 },
+        { placement_id: "outside", kind: "desk", x: 2.3, z: 0, rotation: 0 },
+        { placement_id: "unknown", kind: "script", x: 0, z: 0, rotation: 0 },
+        { placement_id: "bad-rotation", kind: "chair", x: 0, z: 0, rotation: 360 },
+      ],
+    });
+    expect(config.furniture).toEqual([{ placement_id: "valid", kind: "plant", x: 2, z: 2, rotation: 0 }]);
+  });
+
+  it("does not pass through unsupported schema versions", () => {
+    expect(normalizeRoomSceneConfig({ schema_version: 99, layout_preset: "custom", furniture: [] })).toEqual(DEFAULT_ROOM_SCENE_CONFIG);
+  });
+});
+

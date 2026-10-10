@@ -242,7 +242,7 @@ async function mockRoomSceneAccess(page: import("@playwright/test").Page, expire
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, data: [{ room_instance_id: "room-instance-e2e-001", item_code: "room_monthly", status: "active", expires_at: expiresAt }] }),
+      body: JSON.stringify({ success: true, data: [{ room_instance_id: "room-instance-e2e-001", item_code: "room_monthly", status: "provisioned", expires_at: expiresAt, scene_config: {} }] }),
     });
   });
   await page.route("**/world-commerce/room-inventory/room_monthly/access", async (route) => {
@@ -269,4 +269,43 @@ test("World 3D room stays locked when a grant has expired", async ({ page }) => 
   await expect(canvas).toBeVisible();
   await expect(canvas).toHaveAttribute("data-room-access-state", "denied");
   await expect(canvas).not.toHaveAttribute("data-room-instance-id", /.+/);
+});
+
+test("World room layout editor persists and applies furniture placements", async ({ page }) => {
+  await mockRoomSceneAccess(page, "2035-01-01T00:00:00.000Z", true);
+  const canvas = page.getByLabel("AI Company World viewport");
+  await expect(canvas).toHaveAttribute("data-room-access-state", "granted");
+  await expect(canvas).toHaveAttribute("data-room-furniture-count", "2");
+
+  const savedPayloads: Array<{ schema_version: number; layout_preset: string; furniture: Array<{ placement_id: string; kind: string; x: number; z: number; rotation: number }> }> = [];
+  await page.route("**/world-commerce/room-inventory/room_monthly/scene-config", async (route) => {
+    savedPayloads.push(route.request().postDataJSON());
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          room_instance_id: "room-instance-e2e-001",
+          item_code: "room_monthly",
+          scene_config: savedPayloads[0],
+          updated_at: "2035-01-01T00:00:00.000Z",
+        },
+      }),
+    });
+  });
+
+  await page.getByRole("button", { name: "Customize room" }).click();
+  const editor = page.getByRole("dialog", { name: "Customize your room" });
+  await expect(editor).toBeVisible();
+  await editor.getByRole("button", { name: /Add chair/ }).click();
+  await editor.getByRole("button", { name: "Save layout" }).click();
+  await expect(editor.getByRole("status")).toContainText("Room layout saved to the server.");
+  await expect(canvas).toHaveAttribute("data-room-furniture-count", "3");
+  expect(savedPayloads).toHaveLength(1);
+  const savedPayload = savedPayloads[0];
+  expect(savedPayload.schema_version).toBe(1);
+  expect(savedPayload.layout_preset).toBe("starter");
+  expect(savedPayload.furniture).toHaveLength(3);
+  expect(savedPayload.furniture.every((item) => item.x >= -2.2 && item.x <= 2.2 && item.z >= -2.2 && item.z <= 2.2)).toBe(true);
 });
