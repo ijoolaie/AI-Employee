@@ -753,3 +753,11 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - The test mocks catalogue and order APIs. It verifies the UI says payment has not occurred and does **not** certify a real provider, webhook, settlement, or room activation.
 - Post-merge checks were still running at the time of this reconciliation. The latest published and certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; this merge is post-release engineering work, not a new production certification.
 - Remaining gates: manual desktop/mobile World QA; durable atomic wallet ledger before World Credit; provider-specific payment adapters and signed/replay-safe webhook verification; explicit USDT network policy; and room entitlement/lease/expiry/employee-placement integration.
+
+
+## World commerce service idempotency tests — 2026-10-10 (PR #994)
+
+- PR #994 (https://github.com/ijoolaie/AI-Employee/pull/994) was squash-merged at `682ee6d13173673ec4ad06dea36b6d7a6750f7a7` after all 11 reported PR checks passed on exact head `18a3b395da634e32a4d68bb3d79ee6dfd9378a27`.
+- Added service-level contract coverage for server-owned catalogue pricing, returning the existing order on a matching tenant-scoped idempotency retry, and HTTP 409 for reusing a key with different inputs.
+- These are mocked/service-contract tests only. They do not verify a live payment provider, signed webhook, settlement, wallet ledger, or room fulfillment.
+- Post-merge checks on the merge commit were queued at the time of this update and must be reviewed separately. The latest published exact-SHA certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; PR #994 does not change release certification.

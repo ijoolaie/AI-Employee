@@ -287,3 +287,12 @@ The dependency PR's security update is desirable, but its current lockfile/build
 3. **Next implementation slice:** use the E2E contract as a baseline, then add provider-specific payment lifecycle tests only alongside actual adapters, signature verification, replay protection, and failure/duplicate-webhook cases.
 4. **Hard boundary:** the current browser test mocks commerce APIs. No live payment, settlement, wallet ledger, or room activation is proven. Do not enable World Credit until durable atomic ledger/balance accounting exists.
 5. **Manual acceptance remains open:** desktop and mobile movement/interactions, accessibility, responsiveness, and actual scene integration of room/employee entitlements.
+
+
+## Priority update — 2026-10-10: order idempotency service tests
+
+1. **Completed:** PR #994 merged at `682ee6d13173673ec4ad06dea36b6d7a6750f7a7` after all 11 pre-merge checks passed on exact head `18a3b395da634e32a4d68bb3d79ee6dfd9378a27`.
+2. **Verify next:** inspect post-merge checks on the merge commit; do not infer release certification from the merge or pre-merge CI.
+3. **Next implementation slice:** add provider lifecycle tests only with real provider adapters, signed webhook validation, replay protection, and duplicate/failure cases.
+4. **Hard boundary:** current tests cover server pricing and idempotent order service behavior, not live payment, settlement, wallet ledger, or room activation. Do not enable World Credit until durable atomic ledger/balance accounting exists.
+5. **Still open:** manual desktop/mobile World QA; room entitlements, lease renewal/expiry, employee placement and customization-to-scene integration; support reply/thread/attachment workflow; production release certification remains separate.
