@@ -558,3 +558,46 @@ async def test_approve_payment_allows_manual_transfer_review_with_audit_event(mo
     assert event.await_args.kwargs["event_type"] == "payment_approved"
     assert event.await_args.kwargs["from_status"] == "payment_submitted"
     assert event.await_args.kwargs["to_status"] == "approved"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("status", ["pending_payment", "payment_submitted", "rejected", "cancelled", "fulfilled"])
+async def test_fulfillment_rejects_orders_not_approved(status):
+    tenant_id = uuid4()
+    order = SimpleNamespace(id=uuid4(), tenant_id=tenant_id, status=status)
+    db = AsyncMock()
+    db.scalar.return_value = order
+
+    with pytest.raises(HTTPException) as exc:
+        await mark_fulfilled(
+            db, order_id=order.id, tenant_id=tenant_id,
+            activator=SimpleNamespace(id=uuid4(), email="activator@example.test"),
+        )
+
+    assert exc.value.status_code == 409
+    assert "Only approved orders can be activated" in exc.value.detail
+    db.add.assert_not_called()
+    db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_fulfillment_requires_a_different_user_than_payment_approver():
+    user_id = uuid4()
+    tenant_id = uuid4()
+    order = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, status="approved",
+        approved_by_user_id=user_id,
+    )
+    db = AsyncMock()
+    db.scalar.return_value = order
+
+    with pytest.raises(HTTPException) as exc:
+        await mark_fulfilled(
+            db, order_id=order.id, tenant_id=tenant_id,
+            activator=SimpleNamespace(id=user_id, email="same-person@example.test"),
+        )
+
+    assert exc.value.status_code == 409
+    assert "different authorized user" in exc.value.detail
+    db.add.assert_not_called()
+    db.flush.assert_not_awaited()
