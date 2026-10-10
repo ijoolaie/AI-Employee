@@ -61,7 +61,12 @@ async def feature_access(item_code: str, ctx: CurrentContext, db: DbSession):
     if item is None:
         raise HTTPException(status_code=404, detail="World catalogue item not found")
     # Vendor support access is role/tenant based, not a fabricated purchase.
-    if ctx.tenant.tenant_kind == "vendor":
+    if item.is_free:
+        data = WorldFeatureAccessResponse(
+            item_code=item.code, granted=True, access_source="catalog_free",
+            item_type=item.item_type,
+        )
+    elif ctx.tenant.tenant_kind == "vendor":
         data = WorldFeatureAccessResponse(
             item_code=item.code, granted=True, access_source="vendor_included",
             item_type=item.item_type,
@@ -136,6 +141,14 @@ async def vendor_orders(
     status: str = Query(default="payment_submitted", pattern="^(payment_submitted|approved|rejected|fulfilled)$"),
 ):
     scopes = await _vendor_tenant_scope(ctx, db)
+    if not ctx.user.is_platform_admin:
+        required_permission = (
+            "world.commerce.activate" if status == "approved"
+            else "world.commerce.approve" if status in {"payment_submitted", "rejected"}
+            else None
+        )
+        if required_permission and not await has_permission(ctx, required_permission):
+            raise HTTPException(status_code=403, detail=f"Missing permission: {required_permission}")
     if not scopes:
         return APIResponse(success=True, data=[])
     rows = await db.scalars(
