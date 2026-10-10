@@ -1,3 +1,16 @@
+## Implementation checkpoint — paid room lease renewal (PR #1004, 2026-10-10)
+
+PR [#1004](https://github.com/ijoolaie/AI-Employee/pull/1004) merged to `main` at `4e490100d31a81e93e331dfa8b3da62f23e4a883`. All 15 reported PR-head checks and all 10 post-merge checks on the exact merge SHA passed.
+
+- When an approved paid room order is fulfilled while the tenant has an active room entitlement with a future expiry, the new lease duration is added to the existing expiry, preserving unused time.
+- An expired lease restarts from the current activation time. A legacy active room entitlement with `expires_at = NULL` can be repaired by a new activation. Non-room entitlements remain non-duplicable.
+- Renewal fails closed when a room's server catalogue duration is missing or when attempting free-room renewal. The duration remains server-owned catalogue data, bounded by the existing lease-duration validation.
+- Regression test: `test_room_fulfillment_renews_active_paid_lease_from_existing_expiry` verifies the expiry extension, new-order association, active state, and 30-day duration metadata.
+- Existing approval and separate activation controls still apply. This is not customer self-service renewal and does not verify payment-provider callbacks or enable automatic fulfillment.
+- Remaining work: integrate entitlement/expiry with room inventory and the 3D scene; add customer-facing renewal and expiry notices; implement provider-specific verification only after choosing a provider/network contract; keep World Credit disabled until durable replay-safe ledger accounting exists.
+
+Release boundary: this engineering merge does not certify a new release. The latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 # AI Employee World — Economy & Room Progression Design
 
 **Status:** Approved product direction; front-end prototype plus initial backend commerce foundation underway
