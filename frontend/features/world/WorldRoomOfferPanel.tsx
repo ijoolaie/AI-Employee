@@ -129,7 +129,7 @@ export function WorldRoomOfferPanel({ onClose }: { onClose: () => void }) {
         <p className="mb-2 text-sm font-medium">واحد پول</p>
         <div className="grid grid-cols-3 gap-2">
           {CURRENCIES.map((item) => (
-            <button key={item.code} type="button" aria-pressed={currency === item.code}
+            <button key={item.code} type="button" disabled={createOrderMutation.isPending} aria-pressed={currency === item.code}
               onClick={() => { setCurrency(item.code); setSelectedProvider(""); setSelectedMethod(""); resetCheckoutChoice(); }}
               className={`rounded-lg border px-3 py-2 text-sm ${currency === item.code ? "border-amber-200 bg-amber-200/10 text-amber-100" : "border-slate-700 bg-slate-900 text-slate-300"}`}>
               {item.label}
@@ -162,14 +162,14 @@ export function WorldRoomOfferPanel({ onClose }: { onClose: () => void }) {
             <div className="mt-4 grid gap-3">
               <label className="grid gap-1 text-sm text-slate-300">
                 ارائه‌دهنده پرداخت
-                <select value={provider} onChange={(event) => { setSelectedProvider(event.target.value); resetCheckoutChoice(); }}
+                <select disabled={createOrderMutation.isPending} value={provider} onChange={(event) => { setSelectedProvider(event.target.value); resetCheckoutChoice(); }}
                   className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100">
                   {providers.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
               </label>
               <label className="grid gap-1 text-sm text-slate-300">
                 روش پرداخت
-                <select value={paymentMethod} onChange={(event) => { setSelectedMethod(event.target.value); resetCheckoutChoice(); }}
+                <select disabled={createOrderMutation.isPending} value={paymentMethod} onChange={(event) => { setSelectedMethod(event.target.value); resetCheckoutChoice(); }}
                   className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100">
                   {paymentMethods.map((item) => <option key={item} value={item}>{PAYMENT_METHOD_LABELS[item] ?? item}</option>)}
                 </select>
