@@ -423,3 +423,12 @@ The dependency PR's security update is desirable, but its current lockfile/build
 3. **Delivered:** append-only support message storage and migration; bounded thread reads (latest 200, returned chronologically); customer/reseller/vendor reply endpoints; ticket-participant tenant isolation with 404 for foreign tickets; audit events without message bodies; replies blocked on resolved tickets; regression tests.
 4. **Next implementation slice:** securely attach existing tenant-owned uploaded files to support messages. Reuse existing upload policy and storage abstractions, but add ticket-participant-authorized download access; never expose raw storage keys or public URLs. Enforce active-file ownership at attachment time, a small per-message attachment limit, and tests for cross-tenant access, deleted files, unsupported types/oversize uploads, and unauthorized downloads.
 5. **Still open:** support frontend workflow, secure attachment workflow, manual desktop/mobile World QA, payment provider verification and signed/replay-safe webhooks, World Credit ledger, and durable room/employee scene integration. Release certification remains separate; latest published certified release is still `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+
+## 2026-10-10 checkpoint — reseller-created support tickets persist (PR #1036)
+
+- PR [#1036](https://github.com/ijoolaie/AI-Employee/pull/1036) merged to `main` at `87c1719d1e2522912e8f55f8bc8d8c2956ea0eaa`; exact tested head: `0cf6785f4e82fd33fbbbda320d42dbd57a8dc45f`.
+- All 14 reported checks passed on the exact PR head: backend, frontend, both CodeQL analyses, DAST, semantic E2E, recovery, W21 real-stack, rollback contract, infrastructure, tenant hierarchy/RBAC, architecture, and observability.
+- Reseller support workspace now loads both incoming and reseller-originated escalations from tenant-scoped APIs, merges newly created items, de-duplicates by ID, and invalidates the sent-ticket query after ticket creation.
+- Regression test asserts the outgoing query filters on `from_tenant_id` and does not filter the result set by `to_tenant_id`.
+- Next: continue support-workspace verification against the merged main branch and keep attachment/message authorization checks intact. Do not claim production deployment solely from PR merge.
