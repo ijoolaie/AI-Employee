@@ -30,7 +30,7 @@ export function WorldRoomLayoutPanel({
   employees: Array<{ id: string; name: string }>;
   initialConfig: WorldRoomSceneConfig;
   onClose: () => void;
-  onSaved: (config: WorldRoomSceneConfig) => void;
+  onSaved: (config: WorldRoomSceneConfig, updatedAt: string) => void;
 }) {
   const [furniture, setFurniture] = useState<RoomFurniturePlacement[]>(initialConfig.furniture);
   const [employeePlacements, setEmployeePlacements] = useState<RoomEmployeePlacement[]>(initialConfig.employee_placements);
@@ -93,7 +93,7 @@ export function WorldRoomLayoutPanel({
       if (!response.data.success || !response.data.data) {
         throw new Error("The server did not confirm that the room layout was saved.");
       }
-      onSaved(response.data.data.scene_config);
+      onSaved(response.data.data.scene_config, response.data.data.updated_at);
       setExpectedUpdatedAt(response.data.data.updated_at);
       setMessage("Room layout saved to the server.");
     } catch (caught) {
