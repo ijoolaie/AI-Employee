@@ -77,7 +77,7 @@ export class WorldInput {
 
   private readonly onWheel = (event: WheelEvent) => {
     event.preventDefault();
-    this.target.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: event.deltaY > 0 ? -0.08 : 0.08 } }));
+    this.target.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: event.deltaY > 0 ? -0.12 : 0.12 } }));
   };
 
   private readonly onPointerDown = (event: PointerEvent) => {
