@@ -1195,7 +1195,7 @@ async def test_legacy_room_inventory_reconciliation_dry_run_paginates_candidates
         expires_at=now + timedelta(days=5), activated_at=now, status="active", item_type="room",
     )
     db = AsyncMock()
-    db.execute.return_value.scalars.return_value.all.return_value = [first, second]
+    db.execute.return_value = SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [first, second]))
     audit = AsyncMock()
     monkeypatch.setattr(world_commerce.audit_service, "record", audit)
     ctx = SimpleNamespace(user=SimpleNamespace(is_platform_admin=True, id=uuid4()))
