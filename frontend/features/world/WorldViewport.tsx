@@ -215,6 +215,49 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
   return { id: employee.id, group, hit, ring, status, state: employee.state };
 }
 
+function addCEOAvatar(scene: any) {
+  const avatar = new THREE.Group();
+  avatar.name = "player-ceo-avatar";
+  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.62, 4, 10), new THREE.MeshStandardMaterial({ color: 0x287f87, roughness: 0.7 }));
+  body.position.y = 0.95;
+  body.castShadow = true;
+  avatar.add(body);
+  sphere(avatar, 0.29, [0, 1.62, 0], 0xf0c8a5, [1, 1.05, 0.95]);
+  sphere(avatar, 0.31, [0, 1.79, -0.04], 0x3d302c, [1, 0.45, 0.95]);
+  box(avatar, [0.22, 0.045, 0.045], [-0.09, 1.64, 0.26], 0x27313b);
+  box(avatar, [0.22, 0.045, 0.045], [0.09, 1.64, 0.26], 0x27313b);
+  const legs = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.48, 0.24), new THREE.MeshStandardMaterial({ color: 0x26384a }));
+  legs.position.set(-0.14, 0.26, 0);
+  legs.castShadow = true;
+  avatar.add(legs);
+  const secondLeg = legs.clone();
+  secondLeg.position.x = 0.14;
+  avatar.add(secondLeg);
+  const marker = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.045, 8, 28), new THREE.MeshBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.9 }));
+  marker.rotation.x = -Math.PI / 2;
+  marker.position.y = 0.07;
+  avatar.add(marker);
+  avatar.position.set(0, 0, 3.5);
+  scene.add(avatar);
+  return avatar;
+}
+
+function addLockedRoom(scene: any) {
+  const room = new THREE.Group();
+  room.name = "locked-room-offer";
+  // A single adjacent room entrance; this is a visual offer only until server-backed orders exist.
+  box(room, [8.2, 3.5, 0.28], [0, 1.75, 0], 0x38495a);
+  box(room, [2.1, 2.75, 0.16], [0, 1.38, 0.22], 0x1b2938);
+  box(room, [1.65, 2.35, 0.1], [0, 1.25, 0.31], 0x526c80, { metalness: 0.15 });
+  sphere(room, 0.07, [0.58, 1.22, 0.39], 0xf5cf77);
+  box(room, [2.4, 0.14, 0.22], [0, 2.9, 0.34], 0xf5cf77, { emissive: 0x7a5b22, emissiveIntensity: 0.2 });
+  const label = makeLabel("LOCKED ROOM  •  E TO INSPECT", "#f5d9a4");
+  if (label) { label.position.set(0, 4.05, 0.2); label.scale.set(5.2, 1.1, 1); room.add(label); }
+  room.position.set(0, 0, 12.4);
+  scene.add(room);
+  return room;
+}
+
 function hash(value: string) {
   let result = 0;
   for (let i = 0; i < value.length; i += 1) result = (result * 31 + value.charCodeAt(i)) | 0;
@@ -324,7 +367,7 @@ export function WorldViewport({
   const employeesRef = useRef(employees);
   const selectedEmployeeIdRef = useRef(selectedEmployeeId);
   const selectRef = useRef(onEmployeeSelect);
-  const mapToggleRef = useRef(handleMapToggle);
+  const mapToggleRef = useRef(handleMapToggle);\n  const roomProximityRef = useRef(onRoomProximity);\n  const roomInteractRef = useRef(onRoomInteract);
 
   useEffect(() => {
     employeesRef.current = employees;
@@ -396,7 +439,7 @@ export function WorldViewport({
       const next = employeesRef.current;
       const nextSignature = next.map((e) => [e.id, e.name, e.state, e.slot].join(":")).join("|");
       if (signature === nextSignature) return;
-      for (const worker of workers) {
+      const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;\n      if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }\n      for (const worker of workers) {
         scene.remove(worker.group);
         worker.group.traverse((object: any) => {
           if (object.geometry?.dispose) object.geometry.dispose();
@@ -454,7 +497,7 @@ export function WorldViewport({
       distance = Math.max(11, Math.min(92, distance * (1 - delta)));
       updateCamera();
     };
-    const onMapToggle = () => mapToggleRef.current();
+    const onMapToggle = () => mapToggleRef.current();\n    const onRoomInteractEvent = () => { if (wasNearRoom) roomInteractRef.current(); };
     const onMobileMove = (event: Event) => {
       mobileMove = (event as CustomEvent<{ x: number; y: number }>).detail;
     };
@@ -472,7 +515,7 @@ export function WorldViewport({
     renderer.domElement.addEventListener("world:zoom", onZoom);
     renderer.domElement.addEventListener("world:reset", onReset);
     renderer.domElement.addEventListener("world:tap", onTap);
-    renderer.domElement.addEventListener("world:map-toggle", onMapToggle);
+    renderer.domElement.addEventListener("world:map-toggle", onMapToggle);\n    renderer.domElement.addEventListener("world:interact", onRoomInteractEvent);
     host.addEventListener("world:mobilemove", onMobileMove);
 
     const observer = new ResizeObserver(() => {
@@ -542,7 +585,7 @@ export function WorldViewport({
       renderer.domElement.removeEventListener("world:zoom", onZoom);
       renderer.domElement.removeEventListener("world:reset", onReset);
       renderer.domElement.removeEventListener("world:tap", onTap);
-      renderer.domElement.removeEventListener("world:map-toggle", onMapToggle);
+      renderer.domElement.removeEventListener("world:map-toggle", onMapToggle);\n      renderer.domElement.removeEventListener("world:interact", onRoomInteractEvent);
       host.removeEventListener("world:mobilemove", onMobileMove);
       scene.traverse((object: any) => {
         if (object.geometry?.dispose) object.geometry.dispose();
