@@ -327,7 +327,7 @@ test("World room editor persists an active tenant employee placement", async ({ 
         data: {
           room_instance_id: "room-instance-e2e-001",
           item_code: "room_monthly",
-          scene_config: savedPayloads[0],
+          scene_config: savedPayloads[0].scene_config,
           updated_at: "2035-01-01T00:00:00.000Z",
         },
       }),
