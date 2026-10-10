@@ -234,3 +234,11 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - Added a schema regression test proving vendor diagnostics order summaries do not serialize buyer user IDs or provider transaction references.
 - The last known fully green CI/security set was on commit `f9864ffec2fdfd62c77de77cc8704542ec580c43`. Since then, a focused test and documentation commits were added; do not carry forward the earlier green status as proof for the current branch head.
 - PR #983 remains open and Draft; no merge or ready-for-review transition without explicit user approval.
+
+
+### World support diagnostics regression update (2026-10-10)
+
+- Added a success-path test confirming vendor diagnostics return the minimal tenant-scoped summary, preserve grouped order counts, call the support-access audit recorder, and commit the request transaction.
+- Existing coverage also checks explicit permission denial, denial for unrelated tenants, and omission of buyer user IDs/payment transaction references from diagnostic order summaries.
+- The diagnostics endpoint remains read-only. A full ticket/session workspace, impersonation, temporary access grants, and support-driven commerce mutations are not implemented.
+- Validation must be read from CI for the exact latest PR head; do not infer test success from the commit itself.
