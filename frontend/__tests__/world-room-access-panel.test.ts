@@ -8,7 +8,7 @@ const access = readFileSync("features/world/WorldRoomSceneAccess.ts", "utf8");
 
 describe("World room access gate contracts", () => {
   it("uses tenant-scoped inventory access and requires a room instance", () => {
-    expect(shell).toContain('" /world-commerce/room-inventory"'.trim());
+    expect(shell).toContain('"/world-commerce/room-inventory"');
     expect(shell).toContain("/world-commerce/room-inventory/");
     expect(shell).toContain("/access`");
     expect(shell).toContain("roomAccessQuery.data?.granted === true");
