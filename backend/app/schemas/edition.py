@@ -86,3 +86,7 @@ class SupportEscalationResponse(BaseModel):
     description: str
 
     model_config = {"from_attributes": True}
+
+
+class SupportEscalationStatusRequest(BaseModel):
+    status: str = Field(pattern=r"^(open|in_progress|resolved)$")

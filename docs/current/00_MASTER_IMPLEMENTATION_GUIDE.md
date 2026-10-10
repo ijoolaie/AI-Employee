@@ -178,3 +178,95 @@ A delivery is complete only when the exact commit/tag, manifest, evidence, editi
 - [ ] Merge only when the change is reviewed and validation supports it.
 - [ ] Update docs only when a durable decision or checkpoint changed; use dated checkpoints and always resolve live `main` before future work.
 - [ ] Report merged SHA, evidence, remaining blockers, and what is *not* certified or externally verified.
+
+
+## 12. AI Employee World — first playable prototype checkpoint (2026-10-10)
+
+Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
+
+- Added a procedural player-controlled CEO avatar and bounded keyboard/mobile movement in the World viewport.
+- Added one visually locked adjacent room, a near-room prompt and an informational one-month / one-employee offer panel. The panel is explicitly preview-only because server catalogue/order/payment verification are not connected.
+- Added a customization entry point with free and premium office-layout and CEO appearance/presentation choices. The current panel is a front-end prototype: account persistence and applying the chosen appearance/layout to the live 3D scene remain unfinished; premium items cannot be purchased or activated.
+- Added the `E` interaction event to the World input adapter.
+- Updated `docs/current/AI_EMPLOYEE_WORLD_HYBRID_ECONOMY_DESIGN.md` with IRR/USD/USDT requirements, multiple provider adapters, Vendor support/approval workflow, and auditable separation between payment approver and feature activator.
+- Not implemented: World wallet/ledger and orders, monthly lease persistence, live payment adapters, USDT network policy, Vendor approval/activation APIs and append-only audit records, durable customization, employee placement/room inventory fulfillment, or other facilities.
+- Do not treat the front-end prototype as a working commerce flow. No real payments are accepted and no paid feature is activated by the UI.
+- CI, CodeQL, HA recovery, DAST and infrastructure checks have been triggered for the latest branch head; record their final outcomes before claiming validation. Manual browser/mobile QA remains outstanding.
+- Keep PR #983 open and Draft; do not merge or mark ready without explicit user approval.
+
+
+## 13. AI Employee World — backend commerce foundation checkpoint (2026-10-10)
+
+Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
+
+- Added `WorldCatalogueItem`, `WorldOrder`, `WorldCommerceEvent`, and `WorldFeatureEntitlement` models plus Alembic migration `20261010_world_commerce`.
+- Added authenticated World commerce APIs for active catalogue, tenant orders, payment-reference submission, tenant-owned entitlements, and vendor-scoped order review/approval/rejection/activation.
+- Server computes order amount from catalogue price options and rejects mismatched currencies/providers, client-supplied price/tenant/verification fields, and attempts to use World Credit before a wallet ledger exists.
+- Payment approval and feature activation are distinct authenticated identities with separate username snapshots and timestamps. Commerce events are protected by a database trigger against UPDATE/DELETE and also write to the existing audit ledger.
+- Activating an approved order now grants a persistent tenant feature entitlement in the same transaction; this is not yet wired to 3D rendering, room inventory, employee placement, or customization state.
+- No live gateway, crypto network, payment verification webhook, wallet ledger, lease expiry/renewal, support-session entitlement, or seeded vendor permission policy has been configured. Do not accept real payments or claim provider verification based on this API.
+- Added schema tests for currency validation and rejecting client-supplied authoritative fields; CI results for this backend addition must be checked against the exact latest commit before claiming it passes.
+- Keep PR #983 open and Draft; do not merge or mark ready without explicit user approval.
+
+
+## 14. AI Employee World — entitlement checks and vendor RBAC checkpoint (2026-10-10)
+
+- Added `GET /world-commerce/access/{item_code}`: catalogue-free items are available to all tenants, vendor tenants receive included access without synthetic payment records, and other tenants require an active feature entitlement.
+- Vendor order-list access distinguishes payment review from activation permission; migration seeds `world.commerce.approve` and `world.commerce.activate` for existing owner/admin/tenant-admin roles. Endpoints still enforce vendor tenant hierarchy.
+- Added service tests for blocking unverified gateway approval and requiring the approver and activator to be different users.
+- Latest branch commit: `ef87d977aa224571aa2f0b48b868337dffdd50bf`. CI/security workflows for that exact commit have not yet completed at documentation time.
+- Still no provider verification/webhooks, virtual wallet ledger, customer-facing support sessions, lease and furniture fulfillment, or live-scene customization integration. Vendor access check is an entitlement primitive, not yet a fully implemented diagnostic/support workspace.
+- PR #983 remains open and Draft; do not merge or mark ready without explicit approval.
+
+
+## 15. AI Employee World — vendor support diagnostics checkpoint (2026-10-10)
+
+- Added `GET /world-commerce/vendor/tenants/{tenant_id}/diagnostics` as a read-only support endpoint: order counts by status, recent order summaries, and tenant entitlements. It intentionally omits buyer PII and payment transaction references.
+- Non-platform-admin callers must be in a vendor tenant, hold `world.support.view`, and request a tenant in their own descendant scope. Platform admins can inspect existing tenants. Every view is recorded in the existing audit ledger.
+- Added Alembic revision `20261010_world_support` to seed the separate support-view permission and tests for permission denial and cross-tenant isolation.
+- Latest implementation has not yet been validated by CI at documentation time. Inspect all workflows against the latest branch SHA before reporting success; do not infer success from the previous commit's CI.
+- This is not a full support workspace: no support sessions/tickets, time-limited grants, impersonation, or privileged mutation endpoints. Payment provider verification, wallet ledger, leases/furniture fulfillment, and actual 3D scene customization remain unimplemented.
+- PR #983 remains open and Draft. Do not merge or mark ready without explicit user approval.
+
+
+## 16. AI Employee World — diagnostics data-minimization checkpoint (2026-10-10)
+
+- Added a schema regression test proving vendor diagnostics order summaries do not serialize buyer user IDs or provider transaction references.
+- The last known fully green CI/security set was on commit `f9864ffec2fdfd62c77de77cc8704542ec580c43`. Since then, a focused test and documentation commits were added; do not carry forward the earlier green status as proof for the current branch head.
+- PR #983 remains open and Draft; no merge or ready-for-review transition without explicit user approval.
+
+
+### World support diagnostics regression update (2026-10-10)
+
+- Added a success-path test confirming vendor diagnostics return the minimal tenant-scoped summary, preserve grouped order counts, call the support-access audit recorder, and commit the request transaction.
+- Existing coverage also checks explicit permission denial, denial for unrelated tenants, and omission of buyer user IDs/payment transaction references from diagnostic order summaries.
+- The diagnostics endpoint remains read-only. A full ticket/session workspace, impersonation, temporary access grants, and support-driven commerce mutations are not implemented.
+- Validation must be read from CI for the exact latest PR head; do not infer test success from the commit itself.
+
+
+### Incoming support escalation inbox (2026-10-10)
+
+- Added read-only `GET /edition/vendor/support/escalations` and `GET /edition/reseller/support/escalations` endpoints using the existing `SupportEscalation` model.
+- Queries are scoped to the authenticated receiving tenant (`to_tenant_id`), sorted newest first, and capped at 100 records. No new migration or duplicate ticket table was introduced.
+- Added parameterized tests for both edition inbox routes and their tenant-scoped query contract.
+- Replies, status transitions, attachments, support sessions, impersonation and support-driven commerce mutations remain out of scope for this slice.
+- CI must be checked on the exact latest branch SHA; do not treat earlier green checks as validating these additions.
+
+
+### Support escalation workflow update (2026-10-10)
+
+- Added validated status updates for incoming support escalations through vendor/reseller edition endpoints.
+- Statuses: `open`, `in_progress`, `resolved`; invalid transitions are rejected, and resolved tickets can be reopened explicitly.
+- Update lookup is tenant-scoped using both escalation ID and authenticated `to_tenant_id`; missing or cross-tenant IDs return 404.
+- Successful transitions are audited with the actor and previous/new status. Regression tests cover both edition routes, tenant isolation, audit call, and invalid transitions.
+- Replies/message threads, attachments, and impersonation are still not implemented. CI must validate the exact branch head.
+
+
+## 17. AI Employee World — commerce, diagnostics and support workflow (2026-10-10)
+
+- World commerce backend foundation includes catalogue items, tenant orders, immutable commerce event history and persistent feature entitlements. Payment approval and feature activation use distinct permissions and authenticated actors.
+- Access checks distinguish free catalogue items, vendor-included access and paid entitlements. Vendor diagnostics are read-only, tenant-hierarchy scoped, audited and minimize buyer/payment-reference data.
+- Incoming support escalations reuse the existing model. Vendor/reseller inboxes are filtered by authenticated receiving tenant; status changes support open, in_progress, resolved, enforce the documented transition graph, and are audited.
+- Exact implementation head 33411a4b95aa3a5ebd2deb265800fd250066b60a passed all listed automated workflows at inspection: CI, CodeQL, HA recovery, ephemeral DAST and production infrastructure. The subsequent documentation commit creates a new SHA and must be checked before merge.
+- Not implemented: live provider/webhook verification, World wallet/ledger, lease expiry/renewal automation, fulfillment/inventory integration, persistent customization-to-3D-scene wiring, support reply threads/attachments, impersonation or temporary support grants.
+- Merge was explicitly requested by the user; merge only after the documentation-updated exact head's required checks are green. Manual cross-device visual QA and production release certification remain separate.

@@ -17,6 +17,7 @@ class PointerInputEvent extends Event {
 class InputTarget extends EventTarget {
   tabIndex = -1;
   capturedPointers: number[] = [];
+  ownerDocument = { defaultView: new EventTarget() };
 
   setPointerCapture(pointerId: number) {
     this.capturedPointers.push(pointerId);
@@ -61,4 +62,65 @@ describe("WorldInput pointer lifecycle", () => {
 
     expect(taps).toEqual([{ x: 14, y: 22 }]);
   });
+
+  it("does not emit a tap when a pointer gesture is cancelled", () => {
+    const target = new InputTarget();
+    const taps: Array<{ x: number; y: number }> = [];
+    target.addEventListener("world:tap", (event) => {
+      taps.push((event as CustomEvent<{ x: number; y: number }>).detail);
+    });
+    input = new WorldInput(target as unknown as HTMLElement);
+
+    target.dispatchEvent(new PointerInputEvent("pointerdown", 3, 14, 22, 14, 22));
+    target.dispatchEvent(new PointerInputEvent("pointercancel", 3, 14, 22, 14, 22));
+
+    expect(taps).toEqual([]);
+  });
+
+  it("ignores hover moves from pointers that are not active", () => {
+    const target = new InputTarget();
+    const taps: Array<{ x: number; y: number }> = [];
+    target.addEventListener("world:tap", (event) => {
+      taps.push((event as CustomEvent<{ x: number; y: number }>).detail);
+    });
+    input = new WorldInput(target as unknown as HTMLElement);
+
+    target.dispatchEvent(new PointerInputEvent("pointerdown", 21, 10, 10, 10, 10));
+    // A mouse/stylus hover move must not be interpreted as a second pinch pointer.
+    target.dispatchEvent(new PointerInputEvent("pointermove", 99, 40, 10, 40, 10));
+    target.dispatchEvent(new PointerInputEvent("pointerup", 21, 10, 10, 10, 10));
+
+    expect(taps).toEqual([{ x: 10, y: 10 }]);
+  });
+
+  it("does not emit a tap if the second pinch pointer is cancelled", () => {
+    const target = new InputTarget();
+    const taps: Array<{ x: number; y: number }> = [];
+    target.addEventListener("world:tap", (event) => {
+      taps.push((event as CustomEvent<{ x: number; y: number }>).detail);
+    });
+    input = new WorldInput(target as unknown as HTMLElement);
+
+    target.dispatchEvent(new PointerInputEvent("pointerdown", 11, 10, 10, 10, 10));
+    target.dispatchEvent(new PointerInputEvent("pointerdown", 12, 30, 10, 30, 10));
+    target.dispatchEvent(new PointerInputEvent("pointercancel", 12, 30, 10, 30, 10));
+    target.dispatchEvent(new PointerInputEvent("pointerup", 11, 10, 10, 10, 10));
+
+    expect(taps).toEqual([]);
+  });
+
+  it("clears held movement keys when the browser window loses focus", () => {
+    const target = new InputTarget();
+    input = new WorldInput(target as unknown as HTMLElement);
+
+    const keydown = new Event("keydown");
+    Object.defineProperty(keydown, "key", { value: "w" });
+    target.dispatchEvent(keydown);
+    expect(input.consume().moveY).toBe(-1);
+
+    (target.ownerDocument.defaultView as EventTarget).dispatchEvent(new Event("blur"));
+
+    expect(input.consume()).toEqual({ moveX: 0, moveY: 0, zoomDelta: 0 });
+  });
+
 });

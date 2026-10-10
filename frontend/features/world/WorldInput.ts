@@ -10,19 +10,22 @@ interface PointerOrigin {
 export class WorldInput {
   private readonly keys = new Set<string>();
   private readonly target: HTMLElement;
+  private readonly view: Pick<Window, "addEventListener" | "removeEventListener"> | null;
   private readonly pointers = new Map<number, { x: number; y: number }>();
   private pointer?: PointerOrigin;
   private pinchDistance: number | null = null;
 
   constructor(target: HTMLElement) {
     this.target = target;
+    this.view = target.ownerDocument?.defaultView ?? (typeof window !== "undefined" ? window : null);
     target.addEventListener("keydown", this.onKeyDown);
     target.addEventListener("keyup", this.onKeyUp);
     target.addEventListener("wheel", this.onWheel, { passive: false });
     target.addEventListener("pointerdown", this.onPointerDown);
     target.addEventListener("pointermove", this.onPointerMove);
     target.addEventListener("pointerup", this.onPointerUp);
-    target.addEventListener("pointercancel", this.onPointerUp);
+    target.addEventListener("pointercancel", this.onPointerCancel);
+    this.view?.addEventListener("blur", this.onBlur);
     target.tabIndex = 0;
   }
 
@@ -33,8 +36,12 @@ export class WorldInput {
     this.target.removeEventListener("pointerdown", this.onPointerDown);
     this.target.removeEventListener("pointermove", this.onPointerMove);
     this.target.removeEventListener("pointerup", this.onPointerUp);
-    this.target.removeEventListener("pointercancel", this.onPointerUp);
+    this.target.removeEventListener("pointercancel", this.onPointerCancel);
+    this.view?.removeEventListener("blur", this.onBlur);
+    this.keys.clear();
     this.pointers.clear();
+    this.pointer = undefined;
+    this.pinchDistance = null;
   }
 
   consume(): WorldInputState {
@@ -46,8 +53,21 @@ export class WorldInput {
     return { moveX: Number(right) - Number(left), moveY: Number(down) - Number(up), zoomDelta: 0 };
   }
 
+  private readonly onBlur = () => {
+    // Avoid stuck movement if the browser loses focus while a key is held.
+    this.keys.clear();
+    this.pointers.clear();
+    this.pointer = undefined;
+    this.pinchDistance = null;
+  };
+
   private readonly onKeyDown = (event: KeyboardEvent) => {
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
+    if (event.key.toLowerCase() === "e") {
+      event.preventDefault();
+      this.target.dispatchEvent(new CustomEvent("world:interact"));
+      return;
+    }
     if (event.key.toLowerCase() === "m") {
       event.preventDefault();
       this.target.dispatchEvent(new CustomEvent("world:map-toggle"));
@@ -62,7 +82,7 @@ export class WorldInput {
 
   private readonly onWheel = (event: WheelEvent) => {
     event.preventDefault();
-    this.target.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: event.deltaY > 0 ? -0.08 : 0.08 } }));
+    this.target.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: event.deltaY > 0 ? -0.12 : 0.12 } }));
   };
 
   private readonly onPointerDown = (event: PointerEvent) => {
@@ -72,10 +92,17 @@ export class WorldInput {
     if (this.pointers.size === 1) {
       this.pointer = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, moved: false };
     }
-    if (this.pointers.size === 2) this.pinchDistance = this.distanceBetweenPointers();
+    if (this.pointers.size === 2) {
+      // Once a second pointer joins, the gesture can never become a single tap,
+      // even if that second pointer is cancelled before the first pointer ends.
+      if (this.pointer) this.pointer.moved = true;
+      this.pinchDistance = this.distanceBetweenPointers();
+    }
   };
 
   private readonly onPointerMove = (event: PointerEvent) => {
+    // Ignore hover/stray moves: only pointers that began with pointerdown are active gestures.
+    if (!this.pointers.has(event.pointerId)) return;
     this.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
     if (this.pointers.size >= 2) {
@@ -95,6 +122,13 @@ export class WorldInput {
     this.pointer.x = event.clientX;
     this.pointer.y = event.clientY;
     if (this.pointer.moved) this.target.dispatchEvent(new CustomEvent("world:pan", { detail: { dx, dy } }));
+  };
+
+  private readonly onPointerCancel = (event: PointerEvent) => {
+    // A cancelled gesture is not a tap; clear it without selecting an employee.
+    this.pointers.delete(event.pointerId);
+    if (this.pointer?.pointerId === event.pointerId) this.pointer = undefined;
+    if (this.pointers.size < 2) this.pinchDistance = null;
   };
 
   private readonly onPointerUp = (event: PointerEvent) => {

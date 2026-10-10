@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, LayoutDashboard, Sparkles } from "lucide-react";
+import { Building2, LayoutDashboard, Palette, Sparkles } from "lucide-react";
 import { getCustomerOffice, getErrorMessage, getROIAnalytics } from "@/lib/api";
 import { MobileInputAdapter } from "./MobileInputAdapter";
 import { WorldEmployeePanel } from "./WorldEmployeePanel";
@@ -11,17 +11,23 @@ import { WorldOutcomePanel } from "./WorldOutcomePanel";
 import { WorldProgressionPanel } from "./WorldProgressionPanel";
 import { projectWorldReadModel } from "./WorldState";
 import { WorldViewport } from "./WorldViewport";
+import { WorldCustomizationPanel } from "./WorldCustomizationPanel";
 import { WorldStatusBar } from "./WorldStatusBar";
 import { WorldMiniMap } from "./WorldMiniMap";
 
 export function WorldShell() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [showMiniMap, setShowMiniMap] = useState(false);
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [nearLockedRoom, setNearLockedRoom] = useState(false);
+  const [showRoomOffer, setShowRoomOffer] = useState(false);
   const officeQuery = useQuery({ queryKey: ["customer-world-read-model"], queryFn: getCustomerOffice, refetchInterval: 5000, staleTime: 2000 });
   const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
+  const onRoomProximity = useCallback((near: boolean) => setNearLockedRoom(near), []);
+  const onRoomInteract = useCallback(() => setShowRoomOffer(true), []);
   const selectedEmployee = world?.employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
 
   useEffect(() => {
@@ -67,9 +73,11 @@ export function WorldShell() {
           {world && (
             <>
               <div className="relative">
-                <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} onMapToggle={onMapToggle} />
+                <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} onMapToggle={onMapToggle} onRoomProximity={onRoomProximity} onRoomInteract={onRoomInteract} />
                 <MobileInputAdapter />
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
+                {nearLockedRoom && !showRoomOffer && !showCustomization && <button type="button" onClick={() => setShowRoomOffer(true)} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">Locked room nearby · Press E or inspect</button>}
+                {showRoomOffer && <section role="dialog" aria-modal="true" aria-labelledby="world-room-offer-title" className="absolute bottom-4 left-4 right-4 z-30 mx-auto max-w-lg rounded-2xl border border-amber-300/30 bg-slate-950/95 p-5 text-slate-100 shadow-2xl backdrop-blur-xl"><div className="flex items-start justify-between gap-3"><div><p className="text-xs uppercase tracking-[0.2em] text-amber-200">Expansion opportunity</p><h3 id="world-room-offer-title" className="mt-1 text-lg font-semibold">Your next office room</h3></div><button type="button" onClick={() => setShowRoomOffer(false)} className="rounded-lg border border-slate-700 px-3 py-1.5 text-sm">Close</button></div><p className="mt-3 text-sm leading-6 text-slate-300">You can rent this room for 1 month with 1 employee. Starter desk, chair and computer are planned for the room.</p><p className="mt-3 rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm text-amber-100">Price and payment options will appear when the server catalogue and verified order flow are connected.</p><div className="mt-4 flex flex-wrap items-center justify-between gap-3"><span className="text-xs text-slate-500">Preview only · no payment or room activation occurs</span><button type="button" onClick={() => setShowRoomOffer(false)} className="rounded-lg bg-amber-200 px-4 py-2 text-sm font-semibold text-slate-950">Got it</button></div></section>}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 

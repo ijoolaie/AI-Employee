@@ -83,25 +83,27 @@ test("World Mode renders authoritative employee projection and management bridge
 
   await page.goto("/world");
   await expect(page.getByRole("heading", { name: "World Mode" })).toBeVisible();
-  await expect(page.getByText("WORKING")).toBeVisible();
+  await expect(page.getByText("WORKING 1", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: /Management Mode/i })).toHaveAttribute("href", "/dashboard");
 
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
-  const box = await canvas.boundingBox();
-  if (!box) throw new Error("World canvas has no bounding box");
 
-  // Slot 0 is deterministically projected at world (-36, 80) from the centered camera.
-  await canvas.click({
-    position: {
-      x: box.width / 2 - 36,
-      y: box.height / 2 + 80,
-    },
-  });
+  // Use the accessible employee selector so this contract test does not depend on camera projection.
+  const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
+  await employeeSelector.focus();
+  await employeeSelector.press("Enter");
 
-  await expect(page.getByRole("complementary", { name: "Selected employee" })).toBeVisible();
-  await expect(page.getByText("Sales AI")).toBeVisible();
-  await expect(page.getByText("Qualify lead")).toBeVisible();
+  const employeePanel = page.getByRole("complementary", { name: "Selected employee" });
+  await expect(employeePanel).toBeVisible();
+  await expect(employeePanel.getByText("Sales AI", { exact: true })).toBeVisible();
+  await expect(employeePanel.getByText("Qualify lead", { exact: true })).toBeVisible();
+  await expect(employeeSelector).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("link", { name: "Open Employee Management" })).toHaveAttribute("href", "/employees/employee-e2e");
+
+  // Selection is keyboard-accessible and Escape returns the world to its unselected state.
+  await page.keyboard.press("Escape");
+  await expect(employeePanel).toBeHidden();
+  await expect(employeeSelector).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByText("Business outcome loop")).toBeVisible();
 });

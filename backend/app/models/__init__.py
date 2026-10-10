@@ -17,6 +17,7 @@ from app.models.workflow_approval import WorkflowApproval
 from app.models.outbox import OutboxMessage
 from app.models.feedback import Feedback
 from app.models.billing import BillingPlan, Subscription, BillingEvent
+from app.models.world_commerce import WorldCatalogueItem, WorldOrder, WorldCommerceEvent, WorldFeatureEntitlement
 from app.models.refund import PaymentRefund
 from app.models.usage import UsageEvent
 from app.models.business_invoice import BusinessInvoice
@@ -77,7 +78,7 @@ __all__ = [
     "KnowledgeDocument", "KnowledgeChunk", "EmployeeMemory", "Workflow", "WorkflowVersion",
     "WorkflowRun", "WorkflowStepRun", "WorkflowParallelBranchRun", "WorkflowEventTrigger",
     "WorkflowEventDelivery", "WorkflowSchedule", "WorkflowApproval", "OutboxMessage", "Feedback",
-    "BillingPlan", "Subscription", "BillingEvent", "PaymentRefund", "UsageEvent", "BusinessInvoice", "CustomerChannel",
+    "BillingPlan", "Subscription", "BillingEvent", "WorldCatalogueItem", "WorldOrder", "WorldCommerceEvent", "WorldFeatureEntitlement", "PaymentRefund", "UsageEvent", "BusinessInvoice", "CustomerChannel",
     "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "Credential", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "ShopifyOAuthState", "PasswordResetToken",
     "TenantEntitlement", "SkillPurchaseEntitlement", "SkillPurchaseEntitlementStatus", "SupportEscalation", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",

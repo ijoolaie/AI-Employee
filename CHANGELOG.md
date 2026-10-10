@@ -1,3 +1,70 @@
+## 2026-10-10 — World Mode exact-head validation
+
+- Confirmed all five automated workflow gates and every job succeeded on exact PR head `d2be7e38047af0b23a799d6df2a5961597730cd5`.
+- CI [37980678249](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678249): frontend and backend jobs passed, including the World Mode Playwright smoke test.
+- CodeQL [37980677995](https://github.com/ijoolaie/AI-Employee/actions/runs/37980677995): Python and JavaScript/TypeScript analysis passed.
+- HA recovery [37980678205](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678205), ephemeral DAST [37980678086](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678086), and production infrastructure [37980678035](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678035) all passed.
+- Updated the master handoff with this evidence. The resulting docs commit requires its own exact-head workflow validation.
+- Manual desktop/mobile visual QA remains outstanding; automated CI is not a visual review or production release certification.
+
+## 2026-10-09 — World Mode input regression validation
+
+- Confirmed all five workflow gates passed on exact code head `1bf75228bac2c37d693a4b21305fe0bd302e0a4a`, which includes the cancelled-pinch and inactive-pointer-hover regression fixes.
+- CI [37980135919](https://github.com/ijoolaie/AI-Employee/actions/runs/37980135919): frontend and backend jobs succeeded.
+- CodeQL [37980135968](https://github.com/ijoolaie/AI-Employee/actions/runs/37980135968): JavaScript/TypeScript and Python analysis succeeded.
+- HA recovery [37980135924](https://github.com/ijoolaie/AI-Employee/actions/runs/37980135924), DAST [37980136044](https://github.com/ijoolaie/AI-Employee/actions/runs/37980136044), and production infrastructure [37980135852](https://github.com/ijoolaie/AI-Employee/actions/runs/37980135852) all succeeded.
+- The handoff update is a new commit and requires its own exact-head validation. Manual cross-device visual QA remains outstanding.
+
+## 2026-10-09 — World Mode stray pointer-hover guard
+
+- Prevented pointer-move events from hover/stray pointer IDs from entering the active gesture map before a matching pointer-down.
+- Added a regression test proving an unrelated hover move cannot suppress a valid single-pointer tap/selection.
+- Code commits: `ae666379386ae1f2625617e83fa255c7ab75ce11`; regression test: `92951f79751c2c69811e7ed249aa2ee8b25ec3b2`.
+- The prior cancelled-pinch fix passed all five automated gates on `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`; this newer fix and subsequent documentation-updated head need fresh exact-head validation.
+
+## 2026-10-09 — World Mode cancelled-pinch tap regression
+
+- Fixed an edge case where cancelling the second pointer during a pinch could leave the first pointer eligible to emit a tap on release.
+- Marked the active gesture as non-tappable as soon as a second pointer joins.
+- Added a focused regression test to frontend/__tests__/world-input.test.ts.
+- Confirmed all five automated workflow gates passed on exact PR head `feb07a6f2c8226ca1dba59fbc83b49fec0e93b71`: CI [37973946846](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946846), CodeQL [37973946857](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946857), HA recovery [37973946919](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946919), DAST [37973946737](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946737), and production infrastructure [37973946723](https://github.com/ijoolaie/AI-Employee/actions/runs/37973946723).
+- The master handoff and changelog are being reconciled after that validated head; because documentation commits create a new SHA, the final documentation-updated head must be checked independently.
+
+## 2026-10-09 — AI Employee World exact-head validation refreshed (historical)
+
+- Re-ran the workflow lookup for current PR head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`; all five workflows completed successfully on that exact SHA.
+- CI run [37969649696](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649696): frontend lint, contract tests, unit tests, production build and World Mode Playwright smoke passed; backend compile, Ruff, migration checks and backend tests passed.
+- CodeQL run [37969649529](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649529): Python and JavaScript/TypeScript analysis jobs passed.
+- HA recovery run [37969649702](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649702), ephemeral DAST run [37969649484](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649484), and production infrastructure run [37969649788](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649788) all passed, including their listed validation and cleanup steps.
+- Automated workflow success does not replace manual cross-device visual QA or production release certification. PR #983 remains open and Draft.
+
+## 2026-10-09 — AI Employee World exact-head validation refresh
+
+- Re-checked PR #983 at exact head `aa16cbba6c869017cda0cf82f4df7ea06542c9e8`; all five pull-request workflows completed successfully on that SHA.
+- CI frontend and backend jobs passed, including lint, contract/unit tests, production build, World Mode Playwright smoke, backend compilation, Ruff, migration gates and backend tests.
+- CodeQL Python and JavaScript/TypeScript analyses passed; HA recovery rehearsal, ephemeral OWASP ZAP baseline scan/cleanup, and production infrastructure lifecycle plus backup/isolated restore passed.
+- Evidence: [CI 37969649696](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649696), [CodeQL 37969649529](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649529), [HA recovery 37969649702](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649702), [DAST 37969649484](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649484), [production infrastructure 37969649788](https://github.com/ijoolaie/AI-Employee/actions/runs/37969649788).
+- These results do not substitute for manual cross-device visual QA or production release certification. This documentation update creates a new branch head, so the new head must be checked independently before calling its CI current.
+
+## 2026-10-09 — AI Employee World current-head validation confirmed
+
+- Verified all five automated workflows passed on PR head `06114954723840ffc9a835ba63b1d9c7117af77d`: CI, CodeQL, HA Failure Recovery Validation, Ephemeral DAST Validation, and Production Infrastructure Validation.
+- CI passed frontend lint, contract tests, unit tests, production build, Playwright Chromium setup, and World Mode Playwright smoke; backend compile, Ruff, migration gates, and backend tests passed.
+- Both CodeQL language jobs succeeded; HA recovery rehearsal succeeded; OWASP ZAP baseline scan and ephemeral environment cleanup succeeded; production infrastructure lifecycle and PostgreSQL backup/isolated restore succeeded.
+- Master handoff records the exact validated SHA and links to each workflow run. Manual cross-device visual QA and production release certification remain separate and are not claimed.
+- Documentation-only follow-up commits must be revalidated on their own SHA before considering checks current again.
+
+## 2026-10-09 — AI Employee World handoff reconciliation (historical)
+
+- Reconciled the World master handoff with the then-current PR head `c18e022821235f65a9d2c8126d82e0c1ae911d3c`.
+- At that earlier inspection, CI backend, CodeQL Python, HA recovery, ephemeral DAST, and production infrastructure were still running; this is historical evidence only and not the current validation state.
+
+## 2026-10-09 — AI Employee World visual experience and input hardening
+
+- Added the World Mode master handoff at `docs/current/AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-09.md` and indexed it in `docs/DOCUMENTATION_INDEX.md`.
+- Documented procedural office visuals, employee selection/accessibility contracts, input lifecycle hardening, reduced-motion behavior, background rendering pause, and floor instancing.
+- Recorded the initial focus-loss unit-test failure caused by missing global `KeyboardEvent`; the plain-`Event` correction subsequently passed CI on SHA `06114954723840ffc9a835ba63b1d9c7117af77d`.
+
 ## 2026-08-12 — RC8 Docker Compose interpolation hardening
 
 - Escaped Docker Compose shell variables in the frontend healthcheck (`$$HOSTNAME`, `$$HOST_IP`) so Compose no longer attempts to substitute them from the host environment.
@@ -683,4 +750,9 @@ last Phase 1 baseline; historical As-Built snapshots remain preserved.
 ## Certification Gates 4–9 Audit Pass (2026-08-12)
 - Added fail-closed gate runners for E2E, security, integrations, DR, performance, and final certification.
 - Recorded Gate 4–9 evidence and blockers in `docs/audit/PRODUCTION_READINESS_AUDIT_V2_GATES4_9.md`.
-- Verified backend compile and frontend contract suite: 127/127 passed.
+- Verified backend compile and frontend contract suite: 127/127 passed.## 2026-10-10 — World commerce and support workflow checkpoint
+
+- Added the World commerce foundation: catalogue, tenant-scoped orders, append-only commerce events, feature entitlements, split approval/activation permissions, access checks, and read-only vendor diagnostics. This is backend infrastructure, not a live payment integration.
+- Added incoming support escalation inboxes for vendor/reseller tenants and audited status transitions (open, in_progress, resolved) with tenant-scoped lookups and invalid-transition rejection.
+- Exact implementation head before documentation reconciliation: 33411a4b95aa3a5ebd2deb265800fd250066b60a. At inspection, CI, CodeQL, HA recovery, DAST and production infrastructure workflows all completed successfully on that SHA.
+- Documentation changes require validation on the resulting branch head before merge. Manual browser/mobile visual QA and production release certification remain outstanding.
