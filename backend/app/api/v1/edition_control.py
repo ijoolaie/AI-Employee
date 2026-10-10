@@ -2,12 +2,13 @@
 
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
 
 from app.core.deps import DbSession
 from app.core.edition_deps import CustomerAdminContext, ResellerAdminContext, VendorAdminContext
 from app.models.tenant import Tenant
+from app.models.support_escalation import SupportEscalation
 from app.models.tenant_entitlement import TenantEntitlement
 from app.schemas.common import APIResponse
 from app.schemas.edition import (
@@ -155,6 +156,31 @@ async def delegate_customer_entitlement(customer_id: UUID, payload: EntitlementD
     edition_service.assert_direct_child(ctx.tenant, child, edition_service.EDITION_CUSTOMER)
     row = await edition_service.delegate_entitlement(db, parent=ctx.tenant, child=child, feature_code=payload.feature_code, quota_limit=payload.quota_limit)
     return APIResponse(success=True, data=row)
+
+
+async def _list_incoming_support_escalations(db: DbSession, tenant_id: UUID):
+    rows = await db.execute(
+        select(SupportEscalation)
+        .where(SupportEscalation.to_tenant_id == tenant_id)
+        .order_by(SupportEscalation.created_at.desc())
+        .limit(100)
+    )
+    return APIResponse(success=True, data=[
+        SupportEscalationResponse.model_validate(row, from_attributes=True)
+        for row in rows.scalars().all()
+    ])
+
+
+@router.get("/vendor/support/escalations", response_model=APIResponse[list[SupportEscalationResponse]])
+async def list_vendor_support_escalations(ctx: VendorAdminContext, db: DbSession):
+    """List only support escalations addressed to this vendor tenant."""
+    return await _list_incoming_support_escalations(db, ctx.tenant_id)
+
+
+@router.get("/reseller/support/escalations", response_model=APIResponse[list[SupportEscalationResponse]])
+async def list_reseller_support_escalations(ctx: ResellerAdminContext, db: DbSession):
+    """List only support escalations addressed to this reseller tenant."""
+    return await _list_incoming_support_escalations(db, ctx.tenant_id)
 
 
 @router.post("/support/escalations", response_model=APIResponse[SupportEscalationResponse], status_code=201)
