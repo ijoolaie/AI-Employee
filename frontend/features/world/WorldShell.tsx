@@ -12,7 +12,7 @@ import { WorldProgressionPanel } from "./WorldProgressionPanel";
 import { projectWorldReadModel } from "./WorldState";
 import { WorldViewport } from "./WorldViewport";
 import { WorldRoomLayoutPanel } from "./WorldRoomLayoutPanel";
-import { DEFAULT_ROOM_SCENE_CONFIG, normalizeRoomSceneConfig, type WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
+import { normalizeRoomSceneConfig, type WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
 import { WorldRoomOfferPanel } from "./WorldRoomOfferPanel";
 import { WorldStatusBar } from "./WorldStatusBar";
 import { WorldMiniMap } from "./WorldMiniMap";
