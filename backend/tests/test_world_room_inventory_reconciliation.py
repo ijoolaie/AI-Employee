@@ -7,13 +7,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-_UNSET = object()
-
 from scripts.reconcile_world_room_inventory import (
     classify_room_entitlement,
     parse_args,
     reconcile_room_inventory,
 )
+
+_UNSET = object()
 
 
 def _fixtures(*, status="active", expires_at=_UNSET, catalogue_active=True, inventory_status=None):
