@@ -30,7 +30,7 @@ export function WorldRoomAccessPanel({
   onClose: () => void;
   onRetry: () => void;
 }) {
-  const expiry = expiresAt
+  const expiry = expiresAt && getRoomLeaseExpiryStatus(expiresAt).kind !== "unknown"
     ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(expiresAt))
     : null;
   const expiryStatus = getRoomLeaseExpiryStatus(expiresAt);
