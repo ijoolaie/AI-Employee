@@ -120,8 +120,17 @@ export function WorldShell() {
 
     const delay = Date.parse(expiresAt) - Date.now();
     if (!Number.isFinite(delay) || delay <= 0) return;
-    const timeout = window.setTimeout(() => { void roomAccessQuery.refetch(); }, Math.min(delay, 2_147_000_000));
-    return () => window.clearTimeout(timeout);
+    let timeout: number | undefined;
+    const scheduleExpiryCheck = () => {
+      const remaining = Date.parse(expiresAt) - Date.now();
+      if (!Number.isFinite(remaining) || remaining <= 0) {
+        void roomAccessQuery.refetch();
+        return;
+      }
+      timeout = window.setTimeout(scheduleExpiryCheck, Math.min(remaining, 2_147_000_000));
+    };
+    timeout = window.setTimeout(scheduleExpiryCheck, Math.min(delay, 2_147_000_000));
+    return () => { if (timeout !== undefined) window.clearTimeout(timeout); };
   }, [roomAccessQuery.data?.expires_at, roomAccessQuery.data?.granted, roomAccessQuery.refetch]);
 
   const selectedEmployee = world?.employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
