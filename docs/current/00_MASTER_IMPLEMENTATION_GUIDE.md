@@ -242,3 +242,12 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - Existing coverage also checks explicit permission denial, denial for unrelated tenants, and omission of buyer user IDs/payment transaction references from diagnostic order summaries.
 - The diagnostics endpoint remains read-only. A full ticket/session workspace, impersonation, temporary access grants, and support-driven commerce mutations are not implemented.
 - Validation must be read from CI for the exact latest PR head; do not infer test success from the commit itself.
+
+
+### Incoming support escalation inbox (2026-10-10)
+
+- Added read-only `GET /edition/vendor/support/escalations` and `GET /edition/reseller/support/escalations` endpoints using the existing `SupportEscalation` model.
+- Queries are scoped to the authenticated receiving tenant (`to_tenant_id`), sorted newest first, and capped at 100 records. No new migration or duplicate ticket table was introduced.
+- Added parameterized tests for both edition inbox routes and their tenant-scoped query contract.
+- Replies, status transitions, attachments, support sessions, impersonation and support-driven commerce mutations remain out of scope for this slice.
+- CI must be checked on the exact latest branch SHA; do not treat earlier green checks as validating these additions.
