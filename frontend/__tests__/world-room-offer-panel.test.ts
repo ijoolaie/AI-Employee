@@ -32,6 +32,12 @@ describe("World room offer panel contracts", () => {
     expect(source).toContain("هیچ مبلغی کسر نشده و اتاقی فعال نشده است.");
   });
 
+  it("describes the offer as lease renewal and does not imply immediate access", () => {
+    expect(source).toContain("اجاره یا تمدید اتاق شرکت");
+    expect(source).toContain("پس از تأیید و فعال‌سازی سمت سرور");
+    expect(source).toContain("اتاق فعال نشده است.");
+  });
+
   it("blocks incomplete orders and locks choices during submission", () => {
     expect(source).toContain("if (!room || !amount || !provider || !paymentMethod || createOrderMutation.isPending) return;");
     expect(source).toContain("disabled={!amount || !provider || !paymentMethod || createOrderMutation.isPending}");
