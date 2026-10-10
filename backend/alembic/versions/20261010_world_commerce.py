@@ -129,5 +129,6 @@ def downgrade() -> None:
     op.execute("DROP TRIGGER IF EXISTS trg_world_commerce_events_append_only ON world_commerce_events")
     op.execute("DROP FUNCTION IF EXISTS prevent_world_commerce_event_mutation()")
     op.drop_table("world_commerce_events")
+    op.drop_table("world_feature_entitlements")
     op.drop_table("world_orders")
     op.drop_table("world_catalogue_items")
