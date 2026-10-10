@@ -177,6 +177,8 @@ async def approve_payment(
         raise HTTPException(status_code=404, detail="World order not found")
     if order.status != "payment_submitted":
         raise HTTPException(status_code=409, detail="Only submitted payments can be approved")
+    if order.payment_method != "manual_transfer":
+        raise HTTPException(status_code=409, detail="Provider verification is not implemented for this payment method; approval is blocked")
     old_status = order.status
     order.status = "approved"
     order.approved_by_user_id = approver.id
@@ -226,6 +228,8 @@ async def mark_fulfilled(
         raise HTTPException(status_code=404, detail="World order not found")
     if order.status != "approved":
         raise HTTPException(status_code=409, detail="Only approved orders can be activated")
+    if order.approved_by_user_id == activator.id:
+        raise HTTPException(status_code=409, detail="A different authorized user must activate the approved order")
     item = await db.scalar(select(WorldCatalogueItem).where(
         WorldCatalogueItem.id == order.catalogue_item_id
     ))
