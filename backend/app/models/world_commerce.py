@@ -137,3 +137,28 @@ class WorldFeatureEntitlement(Base):
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+class WorldRoomInventory(Base):
+    """Persistent tenant-owned room slot provisioned from a room entitlement.
+
+    This record is inventory metadata, not proof that a 3D scene has loaded.
+    Scene access must still be checked against the linked entitlement on the server.
+    """
+
+    __tablename__ = "world_room_inventory"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "item_code", name="uq_world_room_inventory_tenant_item"),
+        UniqueConstraint("entitlement_id", name="uq_world_room_inventory_entitlement"),
+        CheckConstraint("status IN ('provisioned', 'suspended')", name="ck_world_room_inventory_status"),
+        Index("ix_world_room_inventory_tenant_status", "tenant_id", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False)
+    entitlement_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("world_feature_entitlements.id", ondelete="RESTRICT"), nullable=False)
+    item_code: Mapped[str] = mapped_column(String(100), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="provisioned")
+    # Server-owned scene customization/instance metadata; never an authorization source.
+    scene_config: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
