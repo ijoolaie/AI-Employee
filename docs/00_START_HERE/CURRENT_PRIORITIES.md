@@ -1,3 +1,11 @@
+## Latest World room lease UX checkpoint — 2026-10-10
+
+- PR [#1028](https://github.com/ijoolaie/AI-Employee/pull/1028) merged at `128a8ca55395ddc749fa207c99780504cb7dee81`. Exact-head `9749c56526ad033625eeec0238cb98e550f7577d` passed frontend/backend CI, CodeQL, recovery, ephemeral DAST and infrastructure checks.
+- The room access panel now classifies lease expiry as unknown, expired, urgent (7 days or less), or future/normal. Copy explicitly states that an order alone does not prove payment or renew access. This is informational UI only: no entitlement, payment, order, or activation state is changed.
+- Existing backend fulfillment already extends an active, unexpired paid room lease from its current expiry after the separately approved order reaches the separately controlled activation step. Expired leases restart at activation time. This is not customer self-service renewal.
+- Next priorities: (1) manually validate World Mode on desktop and mobile, recording viewport/device, keyboard/touch behavior, accessibility and console errors; (2) implement support reply/thread/attachment workflow with tenant scoping and audit; (3) keep live provider verification, USDT network policy, and World Credit blocked until signed/authoritative verification and a durable replay-safe ledger are implemented.
+- Do not claim scheduled/proactive expiry reminders, customer self-service renewal, live payment verification, or production certification. Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 ## Latest World room layout checkpoint — 2026-10-10
 
 - Current `main` includes the merged room-access gate (#1016), scene-config API (#1018), furniture editor (#1019), tenant-scoped employee placements (#1021), and stale-layout conflict protection (#1023).
