@@ -217,3 +217,10 @@ Canonical implementation record: `docs/current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTA
 4. **P2 / OPEN — release and external evidence:** do not claim production deployment or new release certification from PR merges or CI. Keep the exact certified release at `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c` until a new exact-SHA certification is performed.
 
 The dependency PR's security update is desirable, but its current lockfile/build regression blocks merge. Keep the existing Tailwind v3 configuration coherent unless a separately scoped v4 migration updates package metadata, PostCSS configuration, Tailwind config/content scanning, and tests together.
+
+
+## PR #984 correction update — 2026-10-10
+
+- **FIX PUSHED / VALIDATION PENDING:** commit `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890` restores a lockfile coherent with Tailwind v3 while updating only `source-map-js` to 1.2.2. Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4 are retained.
+- The prior failures were for `5287581895464c2942dc4ae4b3f21949e51322a7`; they are historical evidence, not the result for the corrected head.
+- Next: inspect all five required workflow outcomes for `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890`. Do not merge until CI, CodeQL, infrastructure, HA recovery and DAST pass on this exact SHA.
