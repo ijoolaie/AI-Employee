@@ -66,6 +66,20 @@ export function WorldShell() {
     granted: roomAccessGranted,
     roomInstanceId: roomAccessQuery.data?.room_instance_id ?? null,
   };
+
+  useEffect(() => {
+    if (
+      showRoomAccess &&
+      !roomCatalogueQuery.isLoading &&
+      !roomAccessQuery.isLoading &&
+      !roomAccessUnavailable &&
+      roomAccessQuery.data &&
+      !roomAccessGranted
+    ) {
+      setShowRoomAccess(false);
+      setShowRoomOffer(true);
+    }
+  }, [showRoomAccess, roomCatalogueQuery.isLoading, roomAccessQuery.isLoading, roomAccessUnavailable, roomAccessQuery.data, roomAccessGranted]);
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
