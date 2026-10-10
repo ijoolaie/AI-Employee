@@ -862,3 +862,13 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - Migration: `20261010_world_room_lease` (down revision `20261010_world_support`). Existing active room entitlements with NULL expiry are denied access by design until explicitly reconciled; pre-existing paid room catalogue entries need an admin-configured lease duration before fulfillment.
 - Still not implemented: live payment provider verification/signed webhooks/replay protection; World Credit wallet ledger; automated renewal notifications or self-service renewal; room inventory and employee placement; persisted customization applied to the live 3D scene; support replies/threads/attachments; manual desktop/mobile visual QA.
 - Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. PR merge and CI do not certify a new release or enable live payments.
+
+
+## Support message threads — PR #1031 (2026-10-10)
+
+- PR [#1031](https://github.com/ijoolaie/AI-Employee/pull/1031) merged to `main` as `fce3bcb97ebedfa697e95a0d36e665c6af1690cf`; all 18 reported checks passed on exact PR head `160c02eb86331d620e07d4b8ab84d1d19a1d6e80`.
+- Added append-only support escalation messages and Alembic revision `w22_support_escalation_messages`, chained after `20261010_world_room_inventory`; message list/reply APIs are available for customer, reseller, and vendor participants.
+- Ticket access is limited to the two participating tenants; foreign ticket IDs return 404. Lists are capped at 200 messages, replies to resolved tickets return 409, and audit metadata excludes message content.
+- Post-merge workflows on `fce3bcb97ebedfa697e95a0d36e665c6af1690cf` were still running when recorded; recheck them before claiming post-merge validation complete.
+- Attachments and the support UI are still not implemented. Next: link active files uploaded by the message author to a message, then provide downloads only after rechecking ticket-participant access; never use public file URLs or trust client storage keys. Existing generic file APIs are tenant-scoped and should not be weakened to implement support sharing.
+- No new release certification: latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
