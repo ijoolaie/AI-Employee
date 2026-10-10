@@ -1,3 +1,14 @@
+## Consolidated World room access checkpoint — 2026-10-10
+
+- Current `main` checkpoint: `536d5e0b1b916634b271f2433de7dbb084523a37`; PR [#1012](https://github.com/ijoolaie/AI-Employee/pull/1012) connected World Mode to tenant-scoped room inventory and access endpoints.
+- Engineering follow-up: [PR #1016](https://github.com/ijoolaie/AI-Employee/pull/1016) is open as a **Draft** and is not merged. It adds a fail-closed access predicate requiring a positive server grant, non-empty room-instance ID, and valid future expiry; query errors override retained successful query data; the Three.js gate rechecks expiry each frame; and a timer requests server revalidation at expiry.
+- Regression tests have been authored for explicit denial, stale-grant/query-error behavior, missing/invalid/expired leases, and active room grants. Treat these tests as **pending CI validation** until exact-head checks complete; no passing result is claimed in this checkpoint.
+- The scene still uses procedural geometry. PR [#1018](https://github.com/ijoolaie/AI-Employee/pull/1018) is a separate Draft proposing a versioned, tenant-scoped room scene-config persistence API; it is not merged or validated yet. Frontend loading/rendering of persisted placements, durable per-instance content provisioning, employee placement, and persisted customization are **not implemented**. Do not describe this as a fully provisioned persistent room.
+- The old open documentation PRs #1013, #1014 and #1015 overlap in status/priority summaries. Consolidate their non-conflicting content into this checkpoint rather than merging multiple historical snapshots.
+- Next: complete #1016 exact-head CI and review; resolve or supersede stale PR #1011 only after the replacement is validated; validate #1018's schema/API contract, then connect its persisted config to the frontend editor and Three.js renderer with active/expired/cross-tenant tests. Follow with audited legacy-inventory reconciliation, employee placement/customization persistence, renewal/expiry UX, support workflow completion, and manual desktop/mobile QA.
+- Payment boundary unchanged: provider-specific signed/authoritative verification, replay protection and amount/currency/order matching remain blocked. World Credit remains disabled until a durable append-only ledger and atomic replay-safe debit/credit exist.
+- Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. An open PR, authored tests, or green CI alone does not certify a release or enable production payments.
+
 ## Implementation checkpoint — paid room lease renewal (PR #1004, 2026-10-10)
 
 PR [#1004](https://github.com/ijoolaie/AI-Employee/pull/1004) merged to `main` at `4e490100d31a81e93e331dfa8b3da62f23e4a883`. All 15 reported PR-head checks and all 10 post-merge checks on the exact merge SHA passed.
