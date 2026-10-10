@@ -17,7 +17,9 @@ describe("World room access gate contracts", () => {
   });
 
   it("fails closed after query errors even if TanStack Query retains prior data", () => {
-    expect(shell).toContain("roomInventoryQuery.error || roomCatalogueQuery.error || roomAccessQuery.error");
+    expect(shell).toContain("roomInventoryQuery.error");
+    expect(shell).toContain("roomCatalogueQuery.error");
+    expect(shell).toContain("roomAccessQuery.error");
     expect(shell).toContain("isRoomSceneAccessUsable(roomSceneAccess, roomAccessUnavailable)");
     expect(access).toContain("if (unavailable || access?.granted !== true) return false;");
   });
