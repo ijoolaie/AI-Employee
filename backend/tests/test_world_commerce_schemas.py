@@ -7,7 +7,8 @@ from uuid import uuid4
 from fastapi import HTTPException
 from pydantic import ValidationError
 
-from app.api.v1.world_commerce import feature_access
+from app.api.v1 import world_commerce
+from app.api.v1.world_commerce import feature_access, vendor_tenant_diagnostics
 from app.schemas.world_commerce import WorldOrderCreateRequest, WorldPaymentSubmission
 from app.services.world_commerce_service import approve_payment, create_order, mark_fulfilled
 
@@ -131,3 +132,43 @@ async def test_vendor_does_not_get_room_rental_for_free():
     result = await feature_access("room.executive", ctx, db)
     assert result.data.granted is False
     assert result.data.access_source == "not_entitled"
+
+
+@pytest.mark.asyncio
+async def test_vendor_support_diagnostics_requires_explicit_permission(monkeypatch):
+    async def deny_permission(_ctx, _permission):
+        return False
+
+    monkeypatch.setattr(world_commerce, "has_permission", deny_permission)
+    ctx = SimpleNamespace(
+        user=SimpleNamespace(is_platform_admin=False, id=uuid4(), email="support@example.test"),
+        tenant=SimpleNamespace(tenant_kind="vendor"),
+        tenant_id=uuid4(),
+    )
+    db = AsyncMock()
+    with pytest.raises(HTTPException) as exc:
+        await vendor_tenant_diagnostics(uuid4(), ctx, db)
+    assert exc.value.status_code == 403
+    db.execute.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_vendor_support_diagnostics_cannot_access_unrelated_tenant(monkeypatch):
+    async def allow_permission(_ctx, _permission):
+        return True
+
+    monkeypatch.setattr(world_commerce, "has_permission", allow_permission)
+    root_id = uuid4()
+    unrelated_tenant_id = uuid4()
+    ctx = SimpleNamespace(
+        user=SimpleNamespace(is_platform_admin=False, id=uuid4(), email="support@example.test"),
+        tenant=SimpleNamespace(tenant_kind="vendor"),
+        tenant_id=root_id,
+    )
+    result = SimpleNamespace(all=lambda: [(root_id,)])
+    db = AsyncMock()
+    db.execute.return_value = result
+    with pytest.raises(HTTPException) as exc:
+        await vendor_tenant_diagnostics(unrelated_tenant_id, ctx, db)
+    assert exc.value.status_code == 404
+    db.execute.assert_awaited_once()
