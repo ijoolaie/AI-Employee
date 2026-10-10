@@ -112,7 +112,7 @@ class WorldFeatureEntitlement(Base):
         UniqueConstraint("tenant_id", "item_code", name="uq_world_entitlement_tenant_item"),
         UniqueConstraint("source_order_id", name="uq_world_entitlement_source_order"),
         CheckConstraint("status IN ('active', 'revoked')", name="ck_world_entitlement_status"),
-        Index("ix_world_entitlements_tenant_status", "tenant_id", "status"),
+        Index("ix_world_feature_entitlements_tenant_status", "tenant_id", "status"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
