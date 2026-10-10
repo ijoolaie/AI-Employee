@@ -256,8 +256,18 @@ The dependency PR's security update is desirable, but its current lockfile/build
 - Only after a real catalogue entry is configured should the customer order-creation UI be connected to `POST /world-commerce/orders` with an idempotency key; server-side amount calculation remains authoritative.
 
 
-### In review — platform-admin catalogue configuration
+### Platform-admin catalogue configuration — merged
 
-- Feature branch `feat/world-admin-catalogue-config` adds platform-admin-only catalogue list/create/replace endpoints under `/admin/world-commerce/catalogue`.
-- Request schemas validate item codes/types, supported currencies (IRR/USD/USDT), positive decimal prices, non-empty provider/method choices, and free-vs-paid consistency. Create/update operations write audit-ledger entries.
-- Provider names remain configuration labels only. No payment adapter, webhook verification, USDT network policy, wallet ledger, or fulfillment is implied by these endpoints. Do not merge until CI and security checks pass.
+- PR #988: https://github.com/ijoolaie/AI-Employee/pull/988
+- Squash merge commit: `e8239e563aef2904fc26fe617e3e3f470819c941`.
+- Exact PR head `2c7941b14940660285e8d53098abfe4aeba7f7b2`: all 16 reported checks passed.
+- Platform-admin-only catalogue list/create/replace endpoints validate item codes/types, IRR/USD/USDT options, positive decimal prices, configured provider/method choices, and free-versus-paid consistency. Mutations are audited.
+- Provider names/methods remain configuration labels, not proof of live payment integration.
+
+### Next slice — customer room order creation (under review)
+
+- Connect `WorldRoomOfferPanel` to `POST /world-commerce/orders`, using only the selected server-configured currency/provider/method and a stable idempotency key.
+- The backend remains authoritative for price; client input must never set the order amount.
+- The UI must distinguish order creation from payment, payment verification, and room activation.
+- Keep gateway/webhook verification, USDT network policy, World Credit ledger, lease/renewal/fulfillment and persistent customization-to-scene integration as separate open gates.
+- Manual desktop/mobile visual QA and production release certification remain open. Latest certified release stays `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.

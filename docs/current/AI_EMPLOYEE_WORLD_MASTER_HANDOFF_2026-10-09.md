@@ -267,11 +267,18 @@ Inspect and use the existing order API contract to add an explicit customer orde
 - Once a valid item is configured, proceed to customer order creation through the existing API with an idempotency key; the backend must continue to calculate the final amount from server-owned catalogue data.
 
 
-### Follow-through — platform-admin catalogue configuration (PR in review)
+### Follow-through — platform-admin catalogue configuration (PR #988 merged)
 
-- Branch: `feat/world-admin-catalogue-config`.
-- Adds platform-admin-only list/create/replace endpoints under `/admin/world-commerce/catalogue` using the repository's existing platform-admin guard.
-- Adds Pydantic request contracts for allowed item types, IRR/USD/USDT price options, positive decimal amounts, non-empty and unique provider/payment-method choices, and consistency between free items and paid prices. Client-supplied IDs, activation actors and other database-owned fields are not accepted.
-- Create/replace writes audit-ledger records in the same database transaction. Duplicate item codes are handled as conflicts.
-- Provider names/methods are only configured catalogue choices; they are not proof of live provider connectivity. Gateway/crypto verification, webhook replay protection, USDT network policy, World Credit ledger and room fulfillment remain out of scope.
-- This branch is not merged yet. Re-check CI on its final head before considering the configuration path available in main.
+- PR #988: https://github.com/ijoolaie/AI-Employee/pull/988
+- Squash merge: `e8239e563aef2904fc26fe617e3e3f470819c941`; exact PR head `2c7941b14940660285e8d53098abfe4aeba7f7b2` passed all 16 reported checks.
+- Added platform-admin-only list/create/replace endpoints under `/admin/world-commerce/catalogue`, strict request validation for item types/codes and IRR/USD/USDT price options, positive decimal amounts, provider/method choices, free-versus-paid consistency, duplicate-code handling and audit-ledger events.
+- Provider/method values are configured choices only. No live payment processing, webhook verification, USDT network policy, World Credit ledger or room fulfillment was added.
+
+### Latest follow-through — customer order intent (PR preparation)
+
+- Branch: `feat/world-room-order-intent`.
+- `WorldRoomOfferPanel` is being wired to `POST /world-commerce/orders`. It uses the selected currency/provider/method from the active server catalogue and a stable client idempotency key; the server computes the amount from catalogue data.
+- The UI describes the action as “create order (no payment)” and reports the resulting order ID/status without claiming money moved or the room was activated.
+- CI/security checks for this branch must pass on its final exact head before merge. Manual desktop/mobile QA remains outstanding.
+- Still open: provider-specific payment verification/webhooks, explicit USDT network policy, durable wallet ledger before World Credit, room lease expiry/renewal and fulfillment, employee placement, durable customization-to-3D-scene state, and support reply/thread/attachment workflow.
+- Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; these post-release engineering changes do not inherit its certification.
