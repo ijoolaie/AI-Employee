@@ -316,3 +316,10 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - PR #984 was squash-merged as `36817a54475051ac42a7a445b56a3245845dbfe8` after all five required workflows passed on corrected head `072e0c077ad18b7cb2afea1c50b8b68aa99be857`.
 - The merge updates `source-map-js` to 1.2.2 while keeping Tailwind v3 and its existing PostCSS/configuration coherent. The accidental Tailwind v4 migration was excluded.
 - Release certification is unchanged; the merge is not a new production certification.
+
+
+## 2026-10-10 World catalogue currency UI checkpoint
+
+PR #986 was squash-merged as `c0a2b063012263114bd195b68612a423610474d3` after all eight reported checks passed on exact PR head `825155d36e4b1d813b248232a309f8c4d6988720`. The World room offer fetches active catalogue items and exposes IRR/USD/USDT selection without inventing missing prices. It displays configured provider/payment-method metadata only; this is not proof of a live integration.
+
+The component remains preview-only: no order creation, payment verification, or room activation occurs from this UI. Next slice is a server-authoritative order-create flow using the existing API, catalogue price, selected supported currency/provider/method and idempotency key. Wallet/ledger, provider webhooks and USDT network policy, room lease/fulfillment and persistent scene customization remain open. Manual desktop/mobile QA and release certification are not closed by this merge. The latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
