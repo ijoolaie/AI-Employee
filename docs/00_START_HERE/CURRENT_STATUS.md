@@ -698,3 +698,10 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - A formal `REQUEST_CHANGES` review and explanatory PR comment were already submitted. Required remediation: regenerate the lockfile without an unintended Tailwind major-version migration, or separately implement and test a deliberate Tailwind v4 migration. Then rerun all required workflows on the exact new head.
 - Security intent remains valid: `source-map-js` 1.2.2 includes the upstream fix for CVE-2026-93749 and CSP compatibility. Preserve the security fix without accepting a broken production build.
 - This PR does not change the release boundary: `v1.4.17` remains certified only at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. World manual desktop/mobile QA and external production gates remain open.
+
+
+## 2026-10-10 follow-up — PR #984 corrected head submitted for validation
+
+- A lockfile correction was pushed to PR #984 as commit `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890`. The new lockfile is based on `main` and changes only the `node_modules/source-map-js` entry to 1.2.2, preserving Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4.
+- The earlier CI failures belong to the previous head `5287581895464c2942dc4ae4b3f21949e51322a7`. They must not be attributed to the corrected head unless rerun there.
+- At the time of this checkpoint, CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST Validation had been triggered for `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890`; outcomes are pending. PR #984 remains open and unmerged until those exact-head checks finish successfully.
