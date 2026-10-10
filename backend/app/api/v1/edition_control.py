@@ -1,6 +1,6 @@
 """Vendor/reseller/customer runtime control-plane boundaries."""
 
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
@@ -312,6 +312,7 @@ async def _create_support_escalation_message(
     if ticket.status == "resolved":
         raise HTTPException(status_code=409, detail="Reopen the support escalation before replying")
     message = SupportEscalationMessage(
+        id=uuid4(),
         escalation_id=ticket.id,
         author_tenant_id=ctx.tenant_id,
         author_user_id=ctx.user_id,
