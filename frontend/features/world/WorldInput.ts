@@ -63,7 +63,7 @@ export class WorldInput {
 
   private readonly onKeyDown = (event: KeyboardEvent) => {
     if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(event.key)) event.preventDefault();
-    if (event.key.toLowerCase() === "m") {
+    if (event.key.toLowerCase() === "e") {\n      event.preventDefault();\n      this.target.dispatchEvent(new CustomEvent("world:interact"));\n      return;\n    }\n    if (event.key.toLowerCase() === "m") {
       event.preventDefault();
       this.target.dispatchEvent(new CustomEvent("world:map-toggle"));
       return;
