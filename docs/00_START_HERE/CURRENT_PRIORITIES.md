@@ -296,3 +296,14 @@ The dependency PR's security update is desirable, but its current lockfile/build
 3. **Next implementation slice:** add provider lifecycle tests only with real provider adapters, signed webhook validation, replay protection, and duplicate/failure cases.
 4. **Hard boundary:** current tests cover server pricing and idempotent order service behavior, not live payment, settlement, wallet ledger, or room activation. Do not enable World Credit until durable atomic ledger/balance accounting exists.
 5. **Still open:** manual desktop/mobile World QA; room entitlements, lease renewal/expiry, employee placement and customization-to-scene integration; support reply/thread/attachment workflow; production release certification remains separate.
+
+
+## World commerce payment-claim boundary — 2026-10-10 (PR #996)
+
+- PR [#996](https://github.com/ijoolaie/AI-Employee/pull/996) merged at `f92cadcc593fea3caa464c8dd9012e78390c20e8` after all 11 reported checks passed on exact PR head `9617afab06a936cdfc47575d86e306a714305e11`.
+- Added service-level tests proving that a buyer-submitted provider reference is an unverified claim: it moves the order only to `payment_submitted`, records the event, and does not approve payment or activate fulfillment. A non-buyer is forbidden from submitting a reference for the order.
+- This is trust-boundary test coverage only. No live provider adapter, signed webhook, settlement proof, wallet ledger, or room activation is added or verified.
+- PR #994's post-merge checks were also reviewed: all 10 reported checks passed on merge SHA `682ee6d13173673ec4ad06dea36b6d7a6750f7a7`. PR #995 reconciled the preceding checkpoint.
+- Next: add provider confirmation only alongside a real provider-specific contract, signature validation, replay protection, amount/currency/order matching, and failure/duplicate-event tests. Keep World Credit disabled until durable atomic ledger accounting exists.
+- Still open: manual desktop/mobile World QA; lease/entitlement expiry and fulfillment; employee placement and persistent customization-to-scene integration; support reply/thread/attachment workflows.
+- Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. CI and merge evidence do not certify production readiness or activate real payments.
