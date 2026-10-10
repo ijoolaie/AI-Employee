@@ -256,3 +256,12 @@ No real payments or paid feature activation should be claimed from the current p
 ### Next recommended implementation slice
 
 Inspect and use the existing order API contract to add an explicit customer order-creation step to the room offer. The server must remain authoritative for price and validate item/currency/provider/payment method; client requests must include a stable idempotency key. Do not create an order for a currency/provider/method absent from the selected catalogue option. Keep provider verification and fulfillment as distinct future slices unless their end-to-end contracts and tests are completed.
+
+
+### Follow-up contract audit — catalogue setup is a prerequisite
+
+- The current Alembic migration creates `world_catalogue_items` but does not seed a paid room catalogue entry.
+- The current `GET /world-commerce/catalogue` API is read-only; no catalogue create/update API was found in the inspected World commerce router.
+- Consequence: the new offer panel is structurally connected to the server but may correctly show an empty catalogue until a catalogue item is configured. This is not a frontend price bug and must not be worked around with hard-coded fallback prices.
+- Next implementation should provide a tightly authorized platform-admin catalogue configuration path (or use an explicitly approved seed/config process), validating per-currency amount, provider allowlist and payment-method allowlist. Keep real provider readiness distinct from configuration, and do not choose a USDT network or invent price points.
+- Once a valid item is configured, proceed to customer order creation through the existing API with an idempotency key; the backend must continue to calculate the final amount from server-owned catalogue data.
