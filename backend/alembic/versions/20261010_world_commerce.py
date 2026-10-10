@@ -71,6 +71,27 @@ def upgrade() -> None:
     op.create_index("ix_world_orders_status_created", "world_orders", ["status", "created_at"])
 
     op.create_table(
+        "world_feature_entitlements",
+        sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
+        sa.Column("tenant_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False),
+        sa.Column("item_code", sa.String(100), nullable=False),
+        sa.Column("item_type", sa.String(24), nullable=False),
+        sa.Column("source_order_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("world_orders.id", ondelete="RESTRICT"), nullable=False),
+        sa.Column("status", sa.String(16), nullable=False, server_default="active"),
+        sa.Column("activated_by_user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column("activated_by_username", sa.String(320), nullable=True),
+        sa.Column("activated_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("revoked_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=False, server_default=sa.text("'{}'::jsonb")),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()),
+        sa.CheckConstraint("status IN ('active', 'revoked')", name="ck_world_entitlement_status"),
+        sa.UniqueConstraint("tenant_id", "item_code", name="uq_world_entitlement_tenant_item"),
+        sa.UniqueConstraint("source_order_id", name="uq_world_entitlement_source_order"),
+    )
+    op.create_index("ix_world_feature_entitlements_tenant_status", "world_feature_entitlements", ["tenant_id", "status"])
+
+    op.create_table(
         "world_commerce_events",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True, nullable=False),
         sa.Column("tenant_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False),
