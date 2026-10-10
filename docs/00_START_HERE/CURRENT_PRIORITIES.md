@@ -1,3 +1,15 @@
+## Priority reconciliation — after PR #1012 (2026-10-10)
+
+1. **Next: provision and gate the actual 3D room instance.** PR [#1012](https://github.com/ijoolaie/AI-Employee/pull/1012) connects World Mode room interaction to the tenant-scoped inventory/access API and only shows authorization when the server returns `granted=true` plus a room-instance ID. The usable interior/Three.js scene and lifecycle are still incomplete. Do not claim scene unlocking from an authorization response alone.
+2. **Scene security and regression coverage.** The scene must validate tenant ownership, active inventory, active entitlement, catalogue availability and lease expiry; deny on missing room instance, expired/unreconciled lease, suspended inventory, tenant mismatch or API failure. Add real-stack and E2E cases for active, expired, missing, unavailable and unauthorized access.
+3. **Legacy inventory reconciliation.** Existing leases are not automatically backfilled into room inventory. Define a reviewed, audited, tenant-safe reconciliation workflow before granting old records access.
+4. **Customer renewal UX and expiry communication.** Build on the paid-room renewal service only after scene authorization and instance provisioning are reliable. Order creation remains distinct from payment proof and activation.
+5. **Provider-specific payment verification.** Still blocked pending a concrete fiat provider and crypto network/token policy. Require authoritative/signed verification, replay protection, amount/currency/order matching, and duplicate/failure/refund tests. Keep `gateway` and `crypto` manual approval blocked until implemented.
+6. **World Credit ledger.** Disabled until durable append-only accounting and atomic replay-safe debit/credit are implemented and tested.
+7. **Support workflow completion and manual desktop/mobile QA/release certification** remain outstanding.
+
+PR #1012 merged at `536d5e0b1b916634b271f2433de7dbb084523a37`; all 9 checks on the exact merge SHA completed successfully. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 ## Priority reconciliation — after PR #1009 (2026-10-10)
 
 1. **Next: connect World Mode room interaction to server authorization.** PR [#1009](https://github.com/ijoolaie/AI-Employee/pull/1009) added persistent tenant-scoped room inventory and an access decision endpoint. The Three.js scene is not yet wired to it. Query `/world-commerce/room-inventory/{item_code}/access` before opening/representing a room as available; deny on missing response, expired/unreconciled lease, inactive entitlement, suspended inventory or inactive catalogue. Add Playwright coverage for active, expired, missing and API-error cases.
