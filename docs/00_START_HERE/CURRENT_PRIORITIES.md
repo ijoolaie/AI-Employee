@@ -333,3 +333,13 @@ The dependency PR's security update is desirable, but its current lockfile/build
 3. **Next implementation priority:** entitlement-backed room fulfillment: define room inventory and lease duration, renewal/expiry semantics, persist entitlements, and enforce activation only from an approved order. Keep transitions auditable and tenant-scoped.
 4. **Still open:** live provider adapters and signed/replay-safe webhook verification; amount/currency/order matching; durable atomic wallet ledger before World Credit; employee placement and customization persistence into the 3D scene; manual desktop/mobile accessibility and interaction QA; support reply/thread/attachment workflow.
 5. **Hard boundary:** PR #1000 adds tests for existing state/approver guards only. It does not implement lease/entitlement fulfillment or prove live payments. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+
+## Priority update — 2026-10-10: room lease expiry (PR #1002)
+
+1. **Completed on main:** PR #1002 merged as `14bff7bebdd2568e4e16e6b0ecf141111562ca26`; exact PR head `7918b75dddb370d13d6f637008186b79e8af51f1` passed 20/20 pre-merge checks.
+2. **Immediate verification:** post-merge checks on the merge SHA were 2/10 success and 8 pending/in progress at last observation; inspect again before considering post-merge validation complete.
+3. **Lease behavior now implemented:** paid room catalogue entries require server-configured `lease_duration_days` (1–3650 days); fulfillment snapshots `expires_at`; expired or legacy NULL-expiry room entitlements fail closed for access; expired entitlements can be reissued through a new approved order. Configure existing paid room catalogue rows before trying to fulfill them.
+4. **Next implementation priority:** close the real-payment trust boundary only with a selected provider contract, server-side signature/status verification, replay protection, and amount/currency/order matching. Keep gateway/crypto approval blocked until verification exists. Keep World Credit disabled until an append-only durable ledger and atomic replay-safe debit exist.
+5. **Still open:** room inventory/employee placement; customization persistence and application to the 3D scene; automated renewal/expiry messaging and self-service renewal; support reply/thread/attachment workflow; manual desktop/mobile accessibility and interaction QA.
+6. **Hard boundary:** no real payment verification, settlement, wallet ledger or production deployment is established by PR #1002. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
