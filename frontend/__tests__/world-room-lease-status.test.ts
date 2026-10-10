@@ -5,7 +5,7 @@ const source = readFileSync("features/world/WorldShell.tsx", "utf8");
 
 describe("World room inventory access status", () => {
   it("reads access from tenant-scoped room inventory and access endpoints", () => {
-    expect(source).toContain('" /world-commerce/room-inventory"'.trim());
+    expect(source).toContain('"/world-commerce/room-inventory"');
     expect(source).toContain("/world-commerce/room-inventory/");
     expect(source).toContain("roomAccessQuery.data?.granted === true");
     expect(source).toContain("roomAccessQuery.data?.expires_at ?? null");
