@@ -133,3 +133,35 @@ A second review found that `onPointerMove` was adding any pointer ID to the acti
 - [WorldInput.ts](https://github.com/ijoolaie/AI-Employee/blob/feat/world-3d-office/frontend/features/world/WorldInput.ts)
 - [World input tests](https://github.com/ijoolaie/AI-Employee/blob/feat/world-3d-office/frontend/__tests__/world-input.test.ts)
 - [World Mode E2E](https://github.com/ijoolaie/AI-Employee/blob/feat/world-3d-office/frontend/e2e/world-mode.spec.ts)
+
+
+## Latest implementation handoff — 2026-10-10
+
+### Current repository target
+
+- Repository: ijoolaie/AI-Employee
+- Working branch / PR: feat/world-3d-office / [PR #983](https://github.com/ijoolaie/AI-Employee/pull/983)
+- Implementation head at this handoff refresh: 33411a4b95aa3a5ebd2deb265800fd250066b60a
+- The user explicitly authorized merging PR #983. Do not interpret the older historical “do not merge without approval” notes above as overriding this newer authorization; still require the documentation-updated exact head's checks to finish successfully before merge.
+
+### Delivered in this implementation slice
+
+- Playable 3D/isometric World presentation and input/accessibility hardening while preserving the read-only boundary over governed workforce/company data.
+- World catalogue, orders, append-only commerce events and feature entitlements; split payment approval from feature activation; tenant-scoped access checks.
+- Read-only vendor tenant diagnostics with hierarchy restrictions, data minimization and audit logging.
+- Vendor/reseller incoming support escalation inboxes and audited, tenant-scoped status transitions (open, in_progress, resolved).
+- At the implementation head above, all 17 workflow runs inspected were successful, including CI backend/frontend, CodeQL, HA recovery, ephemeral DAST, production infrastructure and supporting product/security gates. Documentation updates create a new commit; verify the exact new head before merging.
+
+### Remaining limitations / next work
+
+- No live payment gateway/webhook verification, USDT network policy or wallet/ledger.
+- No room lease expiry/renewal, furniture/employee placement fulfillment, or persistent customization applied to the live 3D scene.
+- No support reply/message threads, attachments, impersonation or temporary support grants.
+- Manual desktop/mobile visual QA is still outstanding; automated CI is not production certification.
+
+### Merge and handoff sequence
+
+1. Verify every required workflow against the documentation-updated PR head.
+2. Merge PR #983 only if those checks are green; the user's merge authorization is explicit.
+3. Verify the PR's merged state and merge commit SHA from GitHub.
+4. Report the merge SHA, exact-head CI evidence, documented limitations, and follow-up work. Do not claim live payment or production certification.
