@@ -26,6 +26,11 @@ class WorldCatalogueItem(Base):
             "item_type IN ('room', 'layout', 'appearance', 'personality', 'furniture', 'facility', 'support')",
             name="ck_world_catalogue_item_type",
         ),
+        CheckConstraint(
+            "(lease_duration_days IS NULL OR lease_duration_days BETWEEN 1 AND 3650) "
+            "AND (item_type = 'room' OR lease_duration_days IS NULL)",
+            name="ck_world_catalogue_lease_duration",
+        ),
         Index("ix_world_catalogue_active_type", "is_active", "item_type"),
     )
 
