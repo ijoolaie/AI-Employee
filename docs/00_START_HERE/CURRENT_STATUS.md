@@ -802,3 +802,13 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - This is test coverage for existing guards only. It does not implement lease duration/expiry/renewal, room inventory, entitlement persistence, employee placement, customization-to-scene persistence, live payment verification, settlement, or wallet ledger.
 - Next engineering work should remain evidence-led: review post-merge checks; then address durable entitlement/lease fulfillment or manually validate the World UI. Do not claim live payments or production readiness from CI.
 - Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. This engineering merge is not a new release certification.
+
+
+## World room lease expiry — PR #1002 (2026-10-10)
+
+- PR [#1002](https://github.com/ijoolaie/AI-Employee/pull/1002) merged into `main` as `14bff7bebdd2568e4e16e6b0ecf141111562ca26`; exact PR head `7918b75dddb370d13d6f637008186b79e8af51f1` passed all 20 reported checks before merge.
+- Post-merge checks on merge SHA `14bff7bebdd2568e4e16e6b0ecf141111562ca26` were still running at this documentation checkpoint: 2/10 success, 8 pending/in progress. Recheck before declaring post-merge validation complete.
+- Added server-owned `lease_duration_days` for catalogue room items (1–3650 days), validation requiring it for paid rooms, persisted entitlement `expires_at`, and expiry-aware access/list/diagnostic queries. Paid-room fulfillment fails closed if duration is missing; a new approved order can renew/reissue an expired entitlement.
+- Migration: `20261010_world_room_lease` (down revision `20261010_world_support`). Existing active room entitlements with NULL expiry are denied access by design until explicitly reconciled; pre-existing paid room catalogue entries need an admin-configured lease duration before fulfillment.
+- Still not implemented: live payment provider verification/signed webhooks/replay protection; World Credit wallet ledger; automated renewal notifications or self-service renewal; room inventory and employee placement; persisted customization applied to the live 3D scene; support replies/threads/attachments; manual desktop/mobile visual QA.
+- Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. PR merge and CI do not certify a new release or enable live payments.
