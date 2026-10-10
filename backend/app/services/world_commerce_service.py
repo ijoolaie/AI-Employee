@@ -16,7 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
-from app.models.world_commerce import WorldCatalogueItem, WorldCommerceEvent, WorldOrder
+from app.models.world_commerce import WorldCatalogueItem, WorldCommerceEvent, WorldFeatureEntitlement, WorldOrder
 from app.services import audit_service
 
 SUPPORTED_CURRENCIES = {"IRR", "USD", "USDT", "WORLD_CREDIT"}
@@ -78,6 +78,8 @@ async def create_order(
         raise HTTPException(status_code=422, detail="Unsupported currency")
     if payment_method not in PAYMENT_METHODS:
         raise HTTPException(status_code=422, detail="Unsupported payment method")
+    if currency == "WORLD_CREDIT" or payment_method == "world_credit":
+        raise HTTPException(status_code=409, detail="World Credit purchases are disabled until the wallet ledger is implemented")
     if not idempotency_key or len(idempotency_key) > 128:
         raise HTTPException(status_code=422, detail="A valid idempotency key is required")
 
@@ -224,12 +226,50 @@ async def mark_fulfilled(
         raise HTTPException(status_code=404, detail="World order not found")
     if order.status != "approved":
         raise HTTPException(status_code=409, detail="Only approved orders can be activated")
+    item = await db.scalar(select(WorldCatalogueItem).where(
+        WorldCatalogueItem.id == order.catalogue_item_id
+    ))
+    if item is None:
+        raise HTTPException(status_code=409, detail="Catalogue item is no longer available for fulfillment")
+
+    entitlement = await db.scalar(select(WorldFeatureEntitlement).where(
+        WorldFeatureEntitlement.tenant_id == tenant_id,
+        WorldFeatureEntitlement.item_code == order.item_code_snapshot,
+    ).with_for_update())
+    if entitlement is not None and entitlement.status == "active":
+        raise HTTPException(status_code=409, detail="Tenant already has this feature entitlement")
+
+    activated_at = _utcnow()
+    if entitlement is None:
+        entitlement = WorldFeatureEntitlement(
+            tenant_id=tenant_id,
+            item_code=order.item_code_snapshot,
+            item_type=item.item_type,
+            source_order_id=order.id,
+            status="active",
+            activated_by_user_id=activator.id,
+            activated_by_username=activator.email,
+            activated_at=activated_at,
+            metadata_={"catalogue_item_id": str(item.id)},
+        )
+        db.add(entitlement)
+    else:
+        entitlement.source_order_id = order.id
+        entitlement.item_type = item.item_type
+        entitlement.status = "active"
+        entitlement.activated_by_user_id = activator.id
+        entitlement.activated_by_username = activator.email
+        entitlement.activated_at = activated_at
+        entitlement.revoked_at = None
+        entitlement.metadata_ = {"catalogue_item_id": str(item.id)}
+
     old_status = order.status
     order.status = "fulfilled"
     order.activated_by_user_id = activator.id
     order.activated_by_username = activator.email
-    order.activated_at = _utcnow()
+    order.activated_at = activated_at
     await db.flush()
     await _event(db, order=order, event_type="feature_activated", actor_id=activator.id,
-                 actor_username=activator.email, from_status=old_status, to_status=order.status)
+                 actor_username=activator.email, from_status=old_status, to_status=order.status,
+                 details={"item_code": order.item_code_snapshot, "entitlement_id": str(entitlement.id)})
     return order
