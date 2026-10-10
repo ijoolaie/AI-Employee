@@ -207,3 +207,13 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - No live gateway, crypto network, payment verification webhook, wallet ledger, lease expiry/renewal, support-session entitlement, or seeded vendor permission policy has been configured. Do not accept real payments or claim provider verification based on this API.
 - Added schema tests for currency validation and rejecting client-supplied authoritative fields; CI results for this backend addition must be checked against the exact latest commit before claiming it passes.
 - Keep PR #983 open and Draft; do not merge or mark ready without explicit user approval.
+
+
+## 14. AI Employee World — entitlement checks and vendor RBAC checkpoint (2026-10-10)
+
+- Added `GET /world-commerce/access/{item_code}`: catalogue-free items are available to all tenants, vendor tenants receive included access without synthetic payment records, and other tenants require an active feature entitlement.
+- Vendor order-list access distinguishes payment review from activation permission; migration seeds `world.commerce.approve` and `world.commerce.activate` for existing owner/admin/tenant-admin roles. Endpoints still enforce vendor tenant hierarchy.
+- Added service tests for blocking unverified gateway approval and requiring the approver and activator to be different users.
+- Latest branch commit: `ef87d977aa224571aa2f0b48b868337dffdd50bf`. CI/security workflows for that exact commit have not yet completed at documentation time.
+- Still no provider verification/webhooks, virtual wallet ledger, customer-facing support sessions, lease and furniture fulfillment, or live-scene customization integration. Vendor access check is an entitlement primitive, not yet a fully implemented diagnostic/support workspace.
+- PR #983 remains open and Draft; do not merge or mark ready without explicit approval.
