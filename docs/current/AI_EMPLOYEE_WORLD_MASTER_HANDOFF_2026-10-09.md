@@ -1,3 +1,14 @@
+## Latest engineering checkpoint — persistent room inventory (2026-10-10, PR #1009)
+
+- PR [#1009](https://github.com/ijoolaie/AI-Employee/pull/1009) merged to `main` as `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903`.
+- Added the `WorldRoomInventory` model and Alembic revision `20261010_world_room_inventory`, with a tenant-owned room slot tied one-to-one to a World feature entitlement.
+- Approved room activation provisions a room inventory row. Renewal reuses the existing tenant/item slot. The DB enforces tenant/item uniqueness and entitlement uniqueness.
+- Added `GET /world-commerce/room-inventory` to list the authenticated tenant's currently valid provisioned rooms, and `GET /world-commerce/room-inventory/{item_code}/access` for a server-side access decision. The latter denies missing inventory, suspended inventory, inactive/revoked entitlement, inactive catalogue item, expired lease, and a room lease with no expiry.
+- All 20 reported PR-head checks passed, including backend regression tests, migration graph/upgrade/consistency, frontend smoke, both CodeQL analyses, DAST, infrastructure, RBAC and real-stack workflows. Post-merge exact-SHA checks must be completed before this handoff claims post-merge validation.
+- **Not yet implemented:** WorldViewport/Three.js does not call this endpoint yet, so the actual room scene is not unlocked or gated by it. This change is durable inventory plus API authorization only. Existing legacy entitlements are not bulk-backfilled into inventory and remain fail-closed until reconciled.
+- **Next slice:** connect World Mode room interaction to the authenticated access endpoint and represent room availability only after a positive server response. Treat loading/error/unknown as denied, refresh around expiry, and add E2E tests for active lease, expired lease, missing inventory, cross-tenant access and API failure. Then design a separately audited legacy-inventory reconciliation operation.
+- Release boundary unchanged: `v1.4.17` remains the latest published exact-SHA certified release at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; green CI and merged code are not release certification.
+
 ## Latest engineering checkpoint — room lease status UI (2026-10-10, PR #1006)
 
 - PR [#1006](https://github.com/ijoolaie/AI-Employee/pull/1006) merged to `main` as `ad381ed17c5f8dedd140644f975647d3ac53b925`.
