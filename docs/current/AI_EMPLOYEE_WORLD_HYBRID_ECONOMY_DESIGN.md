@@ -173,3 +173,8 @@ A success-path regression test now verifies that vendor diagnostics return only 
 ### Incoming support escalation inbox (2026-10-10)
 
 The existing edition support-escalation model is now surfaced through read-only incoming-inbox endpoints for vendor and reseller administrators: `GET /edition/vendor/support/escalations` and `GET /edition/reseller/support/escalations`. Each query filters strictly on the authenticated receiving tenant's `to_tenant_id`, orders newest first, and caps results at 100. This reuses the existing escalation table and avoids a parallel World-only ticket store. It is an inbox/read surface only: replies, status transitions, attachments, support sessions, impersonation, and support-driven commerce mutations are not included. Tests cover both receiving edition routes and the tenant filter.
+
+
+### Support escalation status workflow (2026-10-10)
+
+Vendor and reseller receiving tenants can now update the status of escalations addressed to them using `PATCH /edition/vendor/support/escalations/{escalation_id}/status` and `PATCH /edition/reseller/support/escalations/{escalation_id}/status`. Status values are constrained to `open`, `in_progress`, and `resolved`; supported transitions are open→in_progress/resolved, in_progress→open/resolved, and resolved→open. The query scopes the escalation by both ID and the authenticated receiving tenant. Successful changes write an audit event with previous and new status. A missing or foreign-tenant escalation returns 404; an invalid transition returns 409. Tests cover tenant isolation, auditing, and transition rejection. Reply threads, attachments, and support impersonation remain unimplemented.
