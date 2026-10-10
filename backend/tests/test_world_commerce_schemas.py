@@ -1,8 +1,12 @@
 """Validation tests for World Mode commerce request contracts."""
 import pytest
+from types import SimpleNamespace
+from uuid import uuid4
+from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app.schemas.world_commerce import WorldOrderCreateRequest, WorldPaymentSubmission
+from app.services.world_commerce_service import create_order
 
 
 def test_order_request_accepts_supported_currency_and_no_client_price():
@@ -49,3 +53,21 @@ def test_payment_submission_rejects_extra_verification_claims():
             verified=True,
             approved_by="customer",
         )
+
+
+@pytest.mark.asyncio
+async def test_world_credit_is_blocked_until_wallet_ledger_exists():
+    tenant_id = uuid4()
+    buyer = SimpleNamespace(tenant_id=tenant_id, id=uuid4())
+    with pytest.raises(HTTPException) as exc:
+        await create_order(
+            object(),
+            tenant_id=tenant_id,
+            buyer=buyer,
+            item_code="room.starter",
+            currency="WORLD_CREDIT",
+            payment_method="world_credit",
+            payment_provider="internal",
+            idempotency_key="world-credit-disabled",
+        )
+    assert exc.value.status_code == 409
