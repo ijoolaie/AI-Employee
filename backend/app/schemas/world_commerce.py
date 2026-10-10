@@ -193,6 +193,32 @@ class WorldRoomInventoryAccessResponse(BaseModel):
     room_instance_id: UUID | None = None
     expires_at: datetime | None = None
 
+
+class WorldRoomInventoryReconciliationRequest(BaseModel):
+    """Explicitly gated request for audited legacy room inventory reconciliation."""
+    model_config = ConfigDict(extra="forbid")
+    dry_run: bool = True
+    confirmation: Literal["RECONCILE_WORLD_ROOM_INVENTORY"] | None = None
+    limit: int = Field(default=100, ge=1, le=500)
+
+
+class WorldRoomInventoryReconciliationCandidate(BaseModel):
+    tenant_id: UUID
+    entitlement_id: UUID
+    item_code: str
+    expires_at: datetime
+
+
+class WorldRoomInventoryReconciliationResponse(BaseModel):
+    dry_run: bool
+    candidate_count: int
+    candidates: list[WorldRoomInventoryReconciliationCandidate]
+    has_more: bool
+    created_count: int = 0
+    skipped_conflict_count: int = 0
+
+
+
 class WorldRoomFurniturePlacement(BaseModel):
     """A bounded placement of a built-in, non-executable room prop."""
     model_config = ConfigDict(extra="forbid")
