@@ -265,3 +265,13 @@ Inspect and use the existing order API contract to add an explicit customer orde
 - Consequence: the new offer panel is structurally connected to the server but may correctly show an empty catalogue until a catalogue item is configured. This is not a frontend price bug and must not be worked around with hard-coded fallback prices.
 - Next implementation should provide a tightly authorized platform-admin catalogue configuration path (or use an explicitly approved seed/config process), validating per-currency amount, provider allowlist and payment-method allowlist. Keep real provider readiness distinct from configuration, and do not choose a USDT network or invent price points.
 - Once a valid item is configured, proceed to customer order creation through the existing API with an idempotency key; the backend must continue to calculate the final amount from server-owned catalogue data.
+
+
+### Follow-through — platform-admin catalogue configuration (PR in review)
+
+- Branch: `feat/world-admin-catalogue-config`.
+- Adds platform-admin-only list/create/replace endpoints under `/admin/world-commerce/catalogue` using the repository's existing platform-admin guard.
+- Adds Pydantic request contracts for allowed item types, IRR/USD/USDT price options, positive decimal amounts, non-empty and unique provider/payment-method choices, and consistency between free items and paid prices. Client-supplied IDs, activation actors and other database-owned fields are not accepted.
+- Create/replace writes audit-ledger records in the same database transaction. Duplicate item codes are handled as conflicts.
+- Provider names/methods are only configured catalogue choices; they are not proof of live provider connectivity. Gateway/crypto verification, webhook replay protection, USDT network policy, World Credit ledger and room fulfillment remain out of scope.
+- This branch is not merged yet. Re-check CI on its final head before considering the configuration path available in main.

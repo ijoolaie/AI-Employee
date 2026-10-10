@@ -9,6 +9,9 @@ from app.schemas.agent_promotion_evidence import AgentPromotionEvidenceResponse
 from app.schemas.agent_version_fitness import AgentVersionFitnessResponse
 from app.schemas.capacity_forecast import CapacityForecastResponse
 from app.schemas.common import APIResponse
+from app.schemas.world_commerce import WorldCatalogueAdminWriteRequest, WorldCatalogueItemResponse
+from app.models.world_commerce import WorldCatalogueItem
+from app.services import audit_service
 from app.schemas.feedback import ValidationSummaryResponse
 from app.schemas.workload_balance import WorkloadBalanceEventResponse
 from app.schemas.admin_marketplace import MarketplaceFinancialSummaryResponse, MarketplacePayoutProposalResponse, MarketplacePayoutReconciliationRequest
@@ -253,3 +256,97 @@ async def get_capacity_forecast(
         horizon_days=horizon_days,
     )
     return APIResponse(success=True, data=CapacityForecastResponse.model_validate(data))
+
+
+@router.get("/world-commerce/catalogue", response_model=APIResponse[list[WorldCatalogueItemResponse]])
+async def list_world_catalogue_admin(ctx: PlatformAdminContext, db: DbSession):
+    """List active and inactive catalogue items for platform-admin configuration."""
+    from sqlalchemy import select
+
+    rows = await db.scalars(select(WorldCatalogueItem).order_by(WorldCatalogueItem.item_type, WorldCatalogueItem.code))
+    return APIResponse(success=True, data=[
+        WorldCatalogueItemResponse.model_validate(item, from_attributes=True) for item in rows.all()
+    ])
+
+
+@router.post("/world-commerce/catalogue", response_model=APIResponse[WorldCatalogueItemResponse], status_code=201)
+async def create_world_catalogue_item(
+    payload: WorldCatalogueAdminWriteRequest,
+    ctx: PlatformAdminContext,
+    db: DbSession,
+):
+    """Create a catalogue entry; configured providers are labels, not verified integrations."""
+    from sqlalchemy import select
+    from sqlalchemy.exc import IntegrityError
+
+    existing = await db.scalar(select(WorldCatalogueItem.id).where(WorldCatalogueItem.code == payload.code))
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="Catalogue item code already exists")
+    item = WorldCatalogueItem(
+        code=payload.code,
+        item_type=payload.item_type,
+        name=payload.name,
+        description=payload.description,
+        price_options={currency: option.model_dump(mode="json") for currency, option in payload.price_options.items()},
+        is_free=payload.is_free,
+        is_active=payload.is_active,
+    )
+    db.add(item)
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Catalogue item code already exists") from exc
+    await audit_service.record(
+        db, tenant_id=ctx.tenant.id, actor_type="user", actor_id=ctx.user.id,
+        action="world.catalogue.created", resource_type="world_catalogue_item",
+        resource_id=str(item.id),
+        metadata={"code": item.code, "item_type": item.item_type, "currencies": sorted(item.price_options)},
+    )
+    await db.commit()
+    await db.refresh(item)
+    return APIResponse(success=True, data=WorldCatalogueItemResponse.model_validate(item, from_attributes=True))
+
+
+@router.put("/world-commerce/catalogue/{item_id}", response_model=APIResponse[WorldCatalogueItemResponse])
+async def replace_world_catalogue_item(
+    item_id: UUID,
+    payload: WorldCatalogueAdminWriteRequest,
+    ctx: PlatformAdminContext,
+    db: DbSession,
+):
+    """Replace catalogue configuration and audit the changed public configuration."""
+    from sqlalchemy import select
+    from sqlalchemy.exc import IntegrityError
+
+    item = await db.scalar(select(WorldCatalogueItem).where(WorldCatalogueItem.id == item_id).with_for_update())
+    if item is None:
+        raise HTTPException(status_code=404, detail="World catalogue item not found")
+    duplicate = await db.scalar(select(WorldCatalogueItem.id).where(
+        WorldCatalogueItem.code == payload.code, WorldCatalogueItem.id != item_id
+    ))
+    if duplicate is not None:
+        raise HTTPException(status_code=409, detail="Catalogue item code already exists")
+    old_code = item.code
+    item.code = payload.code
+    item.item_type = payload.item_type
+    item.name = payload.name
+    item.description = payload.description
+    item.price_options = {currency: option.model_dump(mode="json") for currency, option in payload.price_options.items()}
+    item.is_free = payload.is_free
+    item.is_active = payload.is_active
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="Catalogue item code already exists") from exc
+    await audit_service.record(
+        db, tenant_id=ctx.tenant.id, actor_type="user", actor_id=ctx.user.id,
+        action="world.catalogue.updated", resource_type="world_catalogue_item",
+        resource_id=str(item.id),
+        metadata={"previous_code": old_code, "code": item.code, "item_type": item.item_type,
+                  "currencies": sorted(item.price_options)},
+    )
+    await db.commit()
+    await db.refresh(item)
+    return APIResponse(success=True, data=WorldCatalogueItemResponse.model_validate(item, from_attributes=True))

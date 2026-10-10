@@ -1,5 +1,6 @@
 """Validation tests for World Mode commerce request contracts."""
 from datetime import datetime, timezone
+from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -231,3 +232,96 @@ async def test_successful_vendor_diagnostics_records_audit_and_returns_minimal_d
         db, tenant_id=tenant_id, actor=ctx.user, is_platform_admin=False
     )
     db.commit.assert_awaited_once()
+
+
+def test_catalogue_admin_requires_positive_price_and_supported_choices():
+    from app.schemas.world_commerce import WorldCatalogueAdminWriteRequest
+
+    payload = WorldCatalogueAdminWriteRequest(
+        code="room.starter",
+        item_type="room",
+        name="Starter Room",
+        price_options={
+            "IRR": {
+                "amount": "2500000",
+                "providers": ["manual"],
+                "payment_methods": ["manual_transfer"],
+            },
+            "USD": {
+                "amount": "19.99",
+                "providers": ["example_gateway"],
+                "payment_methods": ["gateway"],
+            },
+        },
+    )
+    assert payload.price_options["IRR"].amount == Decimal("2500000")
+    assert set(payload.price_options) == {"IRR", "USD"}
+
+
+def test_catalogue_admin_rejects_free_item_with_prices():
+    from app.schemas.world_commerce import WorldCatalogueAdminWriteRequest
+
+    with pytest.raises(ValidationError):
+        WorldCatalogueAdminWriteRequest(
+            code="room.free",
+            item_type="room",
+            name="Free Room",
+            is_free=True,
+            price_options={
+                "IRR": {
+                    "amount": "1",
+                    "providers": ["manual"],
+                    "payment_methods": ["manual_transfer"],
+                }
+            },
+        )
+
+
+def test_catalogue_admin_rejects_paid_item_without_price_options():
+    from app.schemas.world_commerce import WorldCatalogueAdminWriteRequest
+
+    with pytest.raises(ValidationError):
+        WorldCatalogueAdminWriteRequest(
+            code="room.missing-price",
+            item_type="room",
+            name="Missing Price",
+        )
+
+
+@pytest.mark.parametrize("option", [
+    {"amount": "0", "providers": ["manual"], "payment_methods": ["manual_transfer"]},
+    {"amount": "10", "providers": [], "payment_methods": ["manual_transfer"]},
+    {"amount": "10", "providers": ["manual"], "payment_methods": ["world_credit"]},
+    {"amount": "10", "providers": ["manual", "manual"], "payment_methods": ["manual_transfer"]},
+])
+def test_catalogue_admin_rejects_invalid_price_options(option):
+    from app.schemas.world_commerce import WorldCatalogueAdminWriteRequest
+
+    with pytest.raises(ValidationError):
+        WorldCatalogueAdminWriteRequest(
+            code="room.invalid",
+            item_type="room",
+            name="Invalid",
+            price_options={"IRR": option},
+        )
+
+
+def test_catalogue_admin_rejects_unsupported_currency_and_extra_fields():
+    from app.schemas.world_commerce import WorldCatalogueAdminWriteRequest
+
+    base = {
+        "code": "room.invalid",
+        "item_type": "room",
+        "name": "Invalid",
+        "price_options": {
+            "IRR": {
+                "amount": "100",
+                "providers": ["manual"],
+                "payment_methods": ["manual_transfer"],
+            }
+        },
+    }
+    with pytest.raises(ValidationError):
+        WorldCatalogueAdminWriteRequest(**{**base, "price_options": {"EUR": base["price_options"]["IRR"]}})
+    with pytest.raises(ValidationError):
+        WorldCatalogueAdminWriteRequest(**{**base, "tenant_id": "attacker-controlled"})
