@@ -13,6 +13,7 @@ from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
@@ -130,7 +131,22 @@ async def create_order(
         status="pending_payment",
     )
     db.add(order)
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError:
+        # Concurrent retries can race past the initial lookup; resolve the
+        # tenant-scoped idempotency constraint without creating a second order.
+        await db.rollback()
+        existing = await db.scalar(select(WorldOrder).where(
+            WorldOrder.tenant_id == tenant_id,
+            WorldOrder.idempotency_key == idempotency_key,
+        ))
+        if existing is None:
+            raise
+        if (existing.item_code_snapshot != item_code or existing.currency != currency
+                or existing.payment_method != payment_method or existing.payment_provider != payment_provider):
+            raise HTTPException(status_code=409, detail="Idempotency key was already used for a different order")
+        return existing
     await _event(
         db, order=order, event_type="order_created", actor_id=buyer.id,
         actor_username=buyer.email, from_status=None, to_status=order.status,
