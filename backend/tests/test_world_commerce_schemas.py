@@ -902,7 +902,7 @@ async def test_room_scene_config_update_requires_valid_tenant_lease_and_persists
         "furniture": [{"placement_id": "desk-1", "kind": "desk", "x": 2, "z": -1, "rotation": 45}],
     })
 
-    result = await update_room_scene_config("room.starter", config, ctx, db)
+    result = await update_room_scene_config("room.starter", config, ctx, db, expected_updated_at=now)
 
     assert result.success is True
     assert result.data.room_instance_id == inventory.id
@@ -947,6 +947,7 @@ async def test_room_scene_config_update_denies_suspended_or_invalid_access(
             WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"}),
             SimpleNamespace(tenant_id=tenant_id),
             db,
+            expected_updated_at=inventory.updated_at,
         )
 
     assert exc.value.status_code == 403
@@ -967,6 +968,7 @@ async def test_room_scene_config_update_hides_inventory_owned_by_another_tenant(
             WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"}),
             SimpleNamespace(tenant_id=uuid4()),
             db,
+            expected_updated_at=datetime.now(timezone.utc),
         )
 
     assert exc.value.status_code == 404
@@ -1012,7 +1014,7 @@ async def test_room_scene_config_update_allows_only_active_employees_from_same_t
         "employee_placements": [{"employee_id": str(employee_id), "x": 1.5, "z": -1, "rotation": 180}],
     })
 
-    result = await update_room_scene_config("room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db)
+    result = await update_room_scene_config("room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db, expected_updated_at=now)
 
     assert result.success is True
     assert result.data.scene_config.employee_placements[0].employee_id == employee_id
