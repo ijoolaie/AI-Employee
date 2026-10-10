@@ -96,10 +96,7 @@ export function WorldShell() {
     if (roomAccessQuery.data?.granted !== true || !expiresAt) return;
 
     const delay = Date.parse(expiresAt) - Date.now();
-    if (!Number.isFinite(delay) || delay <= 0) {
-      void roomAccessQuery.refetch();
-      return;
-    }
+    if (!Number.isFinite(delay) || delay <= 0) return;
     const timeout = window.setTimeout(() => { void roomAccessQuery.refetch(); }, delay);
     return () => window.clearTimeout(timeout);
   }, [roomAccessQuery.data?.expires_at, roomAccessQuery.data?.granted, roomAccessQuery.refetch]);
