@@ -58,7 +58,7 @@ export function WorldRoomAccessPanel({
           <p className="text-slate-300">کد اتاق: <span className="font-mono">{itemCode}</span>{expiry ? ` · اعتبار تا ${expiry}` : ""}</p>
           {expiryStatus.kind === "urgent" && (
             <p role="status" className="rounded-lg border border-amber-400/40 bg-amber-950/30 p-3 leading-6 text-amber-100">
-              اعتبار اتاق ${expiryStatus.daysRemaining} روز دیگر پایان می‌یابد. تمدید خودکار فعال نیست؛ ثبت سفارش به‌تنهایی پرداخت یا تمدید را انجام نمی‌دهد.
+              اعتبار اتاق {expiryStatus.daysRemaining} روز دیگر پایان می‌یابد. تمدید خودکار فعال نیست؛ ثبت سفارش به‌تنهایی پرداخت یا تمدید را انجام نمی‌دهد.
             </p>
           )}
           {expiryStatus.kind === "expired" && (
