@@ -242,7 +242,7 @@ async function mockRoomSceneAccess(page: import("@playwright/test").Page, expire
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, data: [{ room_instance_id: "room-instance-e2e-001", item_code: "room_monthly", status: "provisioned", expires_at: expiresAt, scene_config: {} }] }),
+      body: JSON.stringify({ success: true, data: [{ room_instance_id: "room-instance-e2e-001", item_code: "room_monthly", status: "provisioned", expires_at: expiresAt, scene_config: {}, updated_at: "2034-12-01T00:00:00.000Z" }] }),
     });
   });
   await page.route("**/world-commerce/room-inventory/room_monthly/access", async (route) => {
@@ -278,7 +278,7 @@ test("World room layout editor persists and applies furniture placements", async
   await expect(canvas).toHaveAttribute("data-room-furniture-count", "2");
 
   const savedPayloads: Array<{ schema_version: number; layout_preset: string; furniture: Array<{ placement_id: string; kind: string; x: number; z: number; rotation: number }>; employee_placements: Array<{ employee_id: string; x: number; z: number; rotation: number }> }> = [];
-  await page.route("**/world-commerce/room-inventory/room_monthly/scene-config", async (route) => {
+  await page.route("**/world-commerce/room-inventory/room_monthly/scene-config**", async (route) => {
     savedPayloads.push(route.request().postDataJSON());
     await route.fulfill({
       status: 200,
@@ -317,7 +317,7 @@ test("World room editor persists an active tenant employee placement", async ({ 
   await expect(canvas).toHaveAttribute("data-room-employee-count", "0");
 
   const savedPayloads: Array<{ schema_version: number; layout_preset: string; furniture: unknown[]; employee_placements: Array<{ employee_id: string; x: number; z: number; rotation: number }> }> = [];
-  await page.route("**/world-commerce/room-inventory/room_monthly/scene-config", async (route) => {
+  await page.route("**/world-commerce/room-inventory/room_monthly/scene-config**", async (route) => {
     savedPayloads.push(route.request().postDataJSON());
     await route.fulfill({
       status: 200,
