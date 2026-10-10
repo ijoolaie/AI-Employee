@@ -87,6 +87,7 @@ def upgrade() -> None:
         sa.CheckConstraint("status IN ('pending_payment', 'payment_submitted', 'approved', 'rejected', 'fulfilled', 'cancelled')", name="ck_world_order_status"),
         sa.CheckConstraint("amount >= 0", name="ck_world_order_amount_nonnegative"),
         sa.UniqueConstraint("tenant_id", "idempotency_key", name="uq_world_order_tenant_idempotency"),
+        sa.UniqueConstraint("payment_provider", "provider_transaction_ref", name="uq_world_order_provider_transaction_ref"),
     )
     op.create_index("ix_world_orders_tenant_id", "world_orders", ["tenant_id"])
     op.create_index("ix_world_orders_buyer_user_id", "world_orders", ["buyer_user_id"])
