@@ -21,7 +21,7 @@ describe("World room inventory access status", () => {
   });
 
   it("schedules a re-check at server expiry and passes expiry to the scene", () => {
-    expect(source).toContain("window.setTimeout(() => { void roomAccessQuery.refetch(); }, delay)");
+    expect(source).toContain("window.setTimeout(() => { void roomAccessQuery.refetch(); }, Math.min(delay, 2_147_000_000))");
     expect(source).toContain("expiresAt: roomAccessQuery.data?.expires_at ?? null");
     expect(source).toContain("roomAccess={roomSceneAccess}");
   });
