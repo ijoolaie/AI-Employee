@@ -28,7 +28,7 @@ from app.models import (  # noqa: F401 — register models on Base.metadata
     WorkflowStepRun,
     Feedback,
     BillingPlan, Subscription, BillingEvent,
-    WorldCatalogueItem, WorldOrder, WorldCommerceEvent,
+    WorldCatalogueItem, WorldOrder, WorldCommerceEvent, WorldFeatureEntitlement,
     TeamInstallation,
 )
 
