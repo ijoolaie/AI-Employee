@@ -70,7 +70,7 @@ async def test_support_inbox_status_change_is_tenant_scoped_and_audited(endpoint
         description="A detailed support request.",
     )
     db = AsyncMock()
-    db.execute.return_value.scalar_one_or_none.return_value = ticket
+    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: ticket)
     audit = AsyncMock()
     monkeypatch.setattr(edition_service, "record_audit", audit)
     ctx = SimpleNamespace(tenant_id=tenant_id, user_id=actor_id, tenant=SimpleNamespace(tenant_kind=tenant_kind))
@@ -95,7 +95,7 @@ async def test_support_inbox_status_change_is_tenant_scoped_and_audited(endpoint
 @pytest.mark.asyncio
 async def test_support_inbox_cannot_update_escalation_for_another_tenant(monkeypatch):
     db = AsyncMock()
-    db.execute.return_value.scalar_one_or_none.return_value = None
+    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: None)
     ctx = SimpleNamespace(tenant_id=uuid4(), user_id=uuid4(), tenant=SimpleNamespace(tenant_kind="vendor"))
     with pytest.raises(HTTPException) as exc:
         await update_vendor_support_escalation_status(
