@@ -277,7 +277,7 @@ test("World room layout editor persists and applies furniture placements", async
   await expect(canvas).toHaveAttribute("data-room-access-state", "granted");
   await expect(canvas).toHaveAttribute("data-room-furniture-count", "2");
 
-  const savedPayloads: Array<{ schema_version: number; layout_preset: string; furniture: Array<{ placement_id: string; kind: string; x: number; z: number; rotation: number }> }> = [];
+  const savedPayloads: Array<{ schema_version: number; layout_preset: string; furniture: Array<{ placement_id: string; kind: string; x: number; z: number; rotation: number }>; employee_placements: Array<{ employee_id: string; x: number; z: number; rotation: number }> }> = [];
   await page.route("**/world-commerce/room-inventory/room_monthly/scene-config", async (route) => {
     savedPayloads.push(route.request().postDataJSON());
     await route.fulfill({
