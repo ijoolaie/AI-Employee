@@ -175,13 +175,14 @@ async def submit_payment(
     old_status = order.status
     order.provider_transaction_ref = ref
     order.payment_submitted_at = _utcnow()
+    provider = order.payment_provider
     order.status = "payment_submitted"
     try:
         await db.flush()
     except IntegrityError:
         await db.rollback()
         duplicate = await db.scalar(select(WorldOrder.id).where(
-            WorldOrder.payment_provider == order.payment_provider,
+            WorldOrder.payment_provider == provider,
             WorldOrder.provider_transaction_ref == ref,
         ))
         if duplicate is not None:
