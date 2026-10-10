@@ -264,10 +264,17 @@ The dependency PR's security update is desirable, but its current lockfile/build
 - Platform-admin-only catalogue list/create/replace endpoints validate item codes/types, IRR/USD/USDT options, positive decimal prices, configured provider/method choices, and free-versus-paid consistency. Mutations are audited.
 - Provider names/methods remain configuration labels, not proof of live payment integration.
 
-### Next slice — customer room order creation (under review)
+### Customer room order creation — merged
 
-- Connect `WorldRoomOfferPanel` to `POST /world-commerce/orders`, using only the selected server-configured currency/provider/method and a stable idempotency key.
-- The backend remains authoritative for price; client input must never set the order amount.
-- The UI must distinguish order creation from payment, payment verification, and room activation.
-- Keep gateway/webhook verification, USDT network policy, World Credit ledger, lease/renewal/fulfillment and persistent customization-to-scene integration as separate open gates.
-- Manual desktop/mobile visual QA and production release certification remain open. Latest certified release stays `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- PR #989: https://github.com/ijoolaie/AI-Employee/pull/989
+- Squash merge commit: `74224ef253a1bb3d990347e34e41dbe31827b97d`; exact PR head `8e538976163aae3bffc5ef88067a2e08987ca673` passed all 8 reported checks.
+- `WorldRoomOfferPanel` now sends item code, currency, configured payment method/provider and a stable idempotency key to `POST /world-commerce/orders`. It never submits the amount.
+- Backend contract review confirms server-owned pricing and per-item/currency provider-method allowlists, plus tenant-scoped idempotency conflict protection. World Credit is rejected until a wallet ledger exists.
+- Order creation is not payment, payment verification or room activation.
+
+### Next priorities
+
+1. **P1 / OPEN — World manual QA:** desktop and mobile viewports, keyboard/touch input, room interaction, employee selection, customization panel, responsive layout, accessibility and console errors. Record browser/device, steps and evidence.
+2. **P1 / OPEN — payment trust boundary:** provider-specific gateway/crypto adapters, signed webhook validation, replay protection and explicit USDT network policy. Do not treat provider labels or manually submitted references as verified payments.
+3. **P1 / OPEN — durable financial/fulfillment model:** wallet ledger and replay-safe atomic balance mutations before World Credit; entitlement-backed room inventory, lease duration/renewal/expiry, employee placement and persistent customization-to-scene integration.
+4. **P2 / OPEN — support and release:** support reply/thread/attachment workflows; review post-merge CI on merge SHA `74224ef253a1bb3d990347e34e41dbe31827b97d`; keep production deployment and release certification separate from PR checks. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.

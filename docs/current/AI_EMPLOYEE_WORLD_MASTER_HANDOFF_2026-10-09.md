@@ -274,11 +274,20 @@ Inspect and use the existing order API contract to add an explicit customer orde
 - Added platform-admin-only list/create/replace endpoints under `/admin/world-commerce/catalogue`, strict request validation for item types/codes and IRR/USD/USDT price options, positive decimal amounts, provider/method choices, free-versus-paid consistency, duplicate-code handling and audit-ledger events.
 - Provider/method values are configured choices only. No live payment processing, webhook verification, USDT network policy, World Credit ledger or room fulfillment was added.
 
-### Latest follow-through — customer order intent (PR preparation)
+### Follow-through — customer order intent (PR #989 merged)
 
-- Branch: `feat/world-room-order-intent`.
-- `WorldRoomOfferPanel` is being wired to `POST /world-commerce/orders`. It uses the selected currency/provider/method from the active server catalogue and a stable client idempotency key; the server computes the amount from catalogue data.
-- The UI describes the action as “create order (no payment)” and reports the resulting order ID/status without claiming money moved or the room was activated.
-- CI/security checks for this branch must pass on its final exact head before merge. Manual desktop/mobile QA remains outstanding.
-- Still open: provider-specific payment verification/webhooks, explicit USDT network policy, durable wallet ledger before World Credit, room lease expiry/renewal and fulfillment, employee placement, durable customization-to-3D-scene state, and support reply/thread/attachment workflow.
-- Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; these post-release engineering changes do not inherit its certification.
+- PR #989: https://github.com/ijoolaie/AI-Employee/pull/989
+- Squash merge: `74224ef253a1bb3d990347e34e41dbe31827b97d`; exact PR head `8e538976163aae3bffc5ef88067a2e08987ca673` passed all 8 reported checks.
+- `WorldRoomOfferPanel` now calls `POST /world-commerce/orders` with the selected server-configured item code, currency, payment provider/method and a stable idempotency key. No client-owned amount is sent.
+- Backend `create_order` inspection confirms that the service loads the active catalogue item, validates currency/provider/method against its server-owned price option, calculates the amount from that option, rejects disabled World Credit, and scopes idempotency by tenant. A reused key with mismatched inputs returns conflict; concurrent retries are handled through the unique-constraint recovery path.
+- The UI labels the action as order creation without payment, and shows the order ID/status without claiming that money moved or the room activated.
+- Post-merge CI was triggered on merge SHA `74224ef253a1bb3d990347e34e41dbe31827b97d`; inspect its final outcomes before relying on that post-merge run as additional evidence.
+
+### Remaining hard gates
+
+- Provider-specific payment verification, signed webhooks and replay controls; explicit USDT network policy.
+- Durable wallet ledger and replay-safe atomic balance accounting before enabling World Credit.
+- Entitlement-backed room inventory, lease expiry/renewal, employee placement, fulfillment and durable customization-to-3D-scene state.
+- Support reply/thread/attachment workflow.
+- Manual desktop/mobile QA and independent production release certification remain outstanding.
+- Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; the merge does not inherit that certification.
