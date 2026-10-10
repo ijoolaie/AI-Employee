@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { api, getErrorMessage } from "@/lib/api";
 import type { RoomFurnitureKind, RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
 
@@ -32,17 +32,6 @@ export function WorldRoomLayoutPanel({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const roomKey = `${itemCode}:${roomInstanceId}`;
-  const previousRoomKey = useRef(roomKey);
-
-  useEffect(() => {
-    setFurniture(initialConfig.furniture);
-    if (previousRoomKey.current !== roomKey) {
-      previousRoomKey.current = roomKey;
-      setMessage("");
-      setError("");
-    }
-  }, [itemCode, roomInstanceId, initialConfig, roomKey]);
 
   const addFurniture = (kind: RoomFurnitureKind) => {
     if (furniture.length >= 40) {
