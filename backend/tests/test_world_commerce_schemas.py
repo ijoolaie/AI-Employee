@@ -839,7 +839,7 @@ async def test_room_inventory_access_denies_invalid_lease_state(
     assert result.data.reason == expected_reason
 
 def test_room_scene_config_is_versioned_bounded_and_rejects_duplicate_placement_ids():
-    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
 
     config = WorldRoomSceneConfig.model_validate({
         "schema_version": 1,
@@ -880,7 +880,7 @@ def test_room_scene_config_is_versioned_bounded_and_rejects_duplicate_placement_
 @pytest.mark.asyncio
 async def test_room_scene_config_update_requires_valid_tenant_lease_and_persists_config():
     from datetime import timedelta
-    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
     from app.api.v1.world_commerce import update_room_scene_config
 
     tenant_id = uuid4()
@@ -902,7 +902,7 @@ async def test_room_scene_config_update_requires_valid_tenant_lease_and_persists
         "furniture": [{"placement_id": "desk-1", "kind": "desk", "x": 2, "z": -1, "rotation": 45}],
     })
 
-    result = await update_room_scene_config("room.starter", config, ctx, db)
+    result = await update_room_scene_config("room.starter", WorldRoomSceneConfigUpdateRequest(expected_updated_at=inventory.updated_at, scene_config=config), ctx, db)
 
     assert result.success is True
     assert result.data.room_instance_id == inventory.id
@@ -928,7 +928,7 @@ async def test_room_scene_config_update_requires_valid_tenant_lease_and_persists
 async def test_room_scene_config_update_denies_suspended_or_invalid_access(
     inventory_status, entitlement_status, expires_at, catalogue_active,
 ):
-    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
     from app.api.v1.world_commerce import update_room_scene_config
 
     tenant_id = uuid4()
@@ -944,7 +944,7 @@ async def test_room_scene_config_update_denies_suspended_or_invalid_access(
     with pytest.raises(HTTPException) as exc:
         await update_room_scene_config(
             "room.starter",
-            WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"}),
+            WorldRoomSceneConfigUpdateRequest(expected_updated_at=inventory.updated_at, scene_config=WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"})),
             SimpleNamespace(tenant_id=tenant_id),
             db,
         )
@@ -955,7 +955,7 @@ async def test_room_scene_config_update_denies_suspended_or_invalid_access(
 
 @pytest.mark.asyncio
 async def test_room_scene_config_update_hides_inventory_owned_by_another_tenant():
-    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
     from app.api.v1.world_commerce import update_room_scene_config
 
     db = AsyncMock()
@@ -964,7 +964,7 @@ async def test_room_scene_config_update_hides_inventory_owned_by_another_tenant(
     with pytest.raises(HTTPException) as exc:
         await update_room_scene_config(
             "room.starter",
-            WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"}),
+            WorldRoomSceneConfigUpdateRequest(expected_updated_at=datetime.now(timezone.utc), scene_config=WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"})),
             SimpleNamespace(tenant_id=uuid4()),
             db,
         )
@@ -973,7 +973,7 @@ async def test_room_scene_config_update_hides_inventory_owned_by_another_tenant(
     db.commit.assert_not_awaited()
 
 def test_room_scene_config_rejects_duplicate_employee_placements():
-    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
 
     employee_id = uuid4()
     payload = {
@@ -991,7 +991,7 @@ def test_room_scene_config_rejects_duplicate_employee_placements():
 @pytest.mark.asyncio
 async def test_room_scene_config_update_allows_only_active_employees_from_same_tenant():
     from datetime import timedelta
-    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
     from app.api.v1.world_commerce import update_room_scene_config
 
     tenant_id = uuid4()
@@ -1012,7 +1012,7 @@ async def test_room_scene_config_update_allows_only_active_employees_from_same_t
         "employee_placements": [{"employee_id": str(employee_id), "x": 1.5, "z": -1, "rotation": 180}],
     })
 
-    result = await update_room_scene_config("room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db)
+    result = await update_room_scene_config("room.starter", WorldRoomSceneConfigUpdateRequest(expected_updated_at=inventory.updated_at, scene_config=payload), SimpleNamespace(tenant_id=tenant_id), db)
 
     assert result.success is True
     assert result.data.scene_config.employee_placements[0].employee_id == employee_id
@@ -1023,7 +1023,7 @@ async def test_room_scene_config_update_allows_only_active_employees_from_same_t
 @pytest.mark.asyncio
 async def test_room_scene_config_update_rejects_employee_not_active_in_current_tenant():
     from datetime import timedelta
-    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.schemas.world_commerce import WorldRoomSceneConfig, WorldRoomSceneConfigUpdateRequest
     from app.api.v1.world_commerce import update_room_scene_config
 
     tenant_id = uuid4()
@@ -1044,7 +1044,7 @@ async def test_room_scene_config_update_rejects_employee_not_active_in_current_t
     })
 
     with pytest.raises(HTTPException) as exc:
-        await update_room_scene_config("room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db)
+        await update_room_scene_config("room.starter", WorldRoomSceneConfigUpdateRequest(expected_updated_at=inventory.updated_at, scene_config=payload), SimpleNamespace(tenant_id=tenant_id), db)
 
     assert exc.value.status_code == 422
     db.commit.assert_not_awaited()
