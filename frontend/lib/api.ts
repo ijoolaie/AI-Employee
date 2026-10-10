@@ -727,6 +727,74 @@ export async function createResellerSupportEscalation(payload: { subject: string
   return unwrap(await api.post<APIResponse<{ id: string; from_tenant_id: string; to_tenant_id: string; status: string; subject: string; description: string }>>("/edition/reseller/support/escalations", payload));
 }
 
+// ── Support escalation message threads ─────────────────
+export interface SupportEscalation {
+  id: string;
+  from_tenant_id: string;
+  to_tenant_id: string;
+  status: "open" | "in_progress" | "resolved";
+  subject: string;
+  description: string;
+}
+
+export interface SupportMessageAttachment {
+  id: string;
+  file_id: string;
+  filename: string;
+  content_type: string | null;
+  size_bytes: number;
+  created_at: string;
+}
+
+export interface SupportEscalationMessage {
+  id: string;
+  escalation_id: string;
+  author_tenant_id: string;
+  author_user_id: string | null;
+  body: string;
+  created_at: string;
+  attachments: SupportMessageAttachment[];
+}
+
+export async function listResellerSupportEscalations() {
+  return unwrap(await api.get<APIResponse<SupportEscalation[]>>("/edition/reseller/support/escalations"));
+}
+
+export async function listResellerSupportEscalationMessages(escalationId: string) {
+  return unwrap(await api.get<APIResponse<SupportEscalationMessage[]>>(`/edition/reseller/support/escalations/${escalationId}/messages`));
+}
+
+export async function createResellerSupportEscalationMessage(
+  escalationId: string,
+  payload: { body: string; attachment_file_ids: string[] },
+) {
+  return unwrap(await api.post<APIResponse<SupportEscalationMessage>>(
+    `/edition/reseller/support/escalations/${escalationId}/messages`,
+    payload,
+  ));
+}
+
+export async function downloadResellerSupportAttachment(
+  escalationId: string,
+  messageId: string,
+  attachmentId: string,
+  filename: string,
+) {
+  const res = await api.get(
+    `/edition/reseller/support/escalations/${escalationId}/messages/${messageId}/attachments/${attachmentId}/download`,
+    { responseType: "blob" },
+  );
+  const url = window.URL.createObjectURL(res.data as Blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+
 export async function listTenantUsers() { return unwrap(await api.get<APIResponse<import("@/types").TenantUser[]>>("/tenant-admin/users")); }
 export async function listTenantRoles() { return unwrap(await api.get<APIResponse<import("@/types").TenantRole[]>>("/tenant-admin/roles")); }
 export async function updateTenantUserStatus(id: string, is_active: boolean) { return unwrap(await api.post<APIResponse<import("@/types").TenantUser>>(`/tenant-admin/users/${id}/status`, { is_active })); }
