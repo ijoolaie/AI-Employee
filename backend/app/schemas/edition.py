@@ -90,3 +90,18 @@ class SupportEscalationResponse(BaseModel):
 
 class SupportEscalationStatusRequest(BaseModel):
     status: str = Field(pattern=r"^(open|in_progress|resolved)$")
+
+
+class SupportEscalationMessageRequest(BaseModel):
+    body: str = Field(min_length=1, max_length=10000)
+
+
+class SupportEscalationMessageResponse(BaseModel):
+    id: UUID
+    escalation_id: UUID
+    author_tenant_id: UUID
+    author_user_id: UUID | None
+    body: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
