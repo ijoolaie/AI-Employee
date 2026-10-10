@@ -771,7 +771,7 @@ async def test_room_inventory_access_fails_closed_when_no_tenant_inventory_exist
     room = SimpleNamespace(code="room.starter", item_type="room", is_active=True)
     db = AsyncMock()
     db.scalar.return_value = room
-    db.execute.return_value.first.return_value = None
+    db.execute.return_value = SimpleNamespace(first=lambda: None)
     ctx = SimpleNamespace(tenant_id=tenant_id)
 
     result = await room_inventory_access("room.starter", ctx, db)
@@ -796,7 +796,7 @@ async def test_room_inventory_access_grants_only_a_provisioned_unexpired_lease()
     )
     db = AsyncMock()
     db.scalar.return_value = room
-    db.execute.return_value.first.return_value = (inventory, entitlement)
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement))
     ctx = SimpleNamespace(tenant_id=tenant_id)
 
     result = await room_inventory_access("room.starter", ctx, db)
