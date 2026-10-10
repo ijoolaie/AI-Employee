@@ -295,3 +295,10 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - This is post-release engineering, not a new production-certified release. Latest certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 - Manual desktop/mobile QA is still required. Live provider/webhook verification, wallet/ledger, lease and fulfillment automation, persistent 3D customization, and support replies/threads/attachments remain unimplemented.
 - For the next session, inspect live main and open PRs first, check workflow status against each exact head, and do not carry success across SHAs.
+
+
+### PR #984 correction submitted — exact-head validation pending (2026-10-10)
+
+- Commit `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890` replaces the accidental Tailwind v4 lockfile drift with a lockfile based on `main`, changing only `node_modules/source-map-js` to 1.2.2. Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4 remain aligned with the existing v3 config.
+- The prior failures belong to superseded head `5287581895464c2942dc4ae4b3f21949e51322a7`. CI, CodeQL, Production Infrastructure, HA Recovery and Ephemeral DAST have been triggered on the corrected head; their final outcomes must be checked before any merge decision.
+- PR #984 remains open and unmerged. No new release certification is implied.
