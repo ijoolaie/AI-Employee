@@ -1,3 +1,27 @@
+## 2026-10-10 follow-through — reseller support ticket persistence (PR #1036 merged)
+
+
+### Verified merge and exact-head checks
+
+- PR [#1036](https://github.com/ijoolaie/AI-Employee/pull/1036) — `fix(support): retain reseller-created tickets across sessions` — merged to `main` at `87c1719d1e2522912e8f55f8bc8d8c2956ea0eaa`.
+- Exact PR head: `0cf6785f4e82fd33fbbbda320d42dbd57a8dc45f`.
+- All 11 reported workflow runs on that exact head completed successfully: backend/frontend CI, CodeQL, ephemeral DAST, architecture guard, infrastructure validation, HA recovery, production observability, rollback/alerting, runtime isolation/RBAC, W21 AI Business Network E2E and Workforce Semantic Real-Stack E2E.
+
+### Delivered
+
+- Added a tenant-scoped `GET /reseller/support/escalations/sent` endpoint for tickets opened by the current reseller.
+- Added a regression test asserting that outgoing ticket selection is filtered by `support_escalations.from_tenant_id` for the authenticated tenant.
+- Reseller UI now fetches incoming and sent tickets, merges them with ID-based deduplication, and includes tickets created during the current session without relying on component-only state.
+- Ticket creation invalidates the sent-ticket query, so the persisted server list is refreshed after creation. Message and attachment authorization continue to rely on the existing participant and tenant checks.
+
+### Remaining verification / next steps
+
+1. Manually verify create → reload → ticket remains visible, and confirm reply/thread/attachment behavior end-to-end in the reseller UI.
+2. Continue attachment regression coverage for valid downloads by both participants, deleted files, file-count/policy limits and missing storage objects; consider mapping concurrent attachment reuse to a stable 409.
+3. This engineering merge does not certify a new production release. Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+4. Keep manual desktop/mobile World QA, authoritative payment-provider/webhook verification, explicit USDT network policy, durable World Credit ledger and room lease/fulfillment integration as separate open gates.
+
+
 ## 2026-10-10 follow-through — secure support message attachments (PR #1033 merged)
 
 ### Verified merge and exact-head checks
