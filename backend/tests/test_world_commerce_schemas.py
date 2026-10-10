@@ -1178,3 +1178,57 @@ async def test_legacy_room_inventory_reconciliation_apply_creates_and_audits_onl
     assert audit.await_args_list[0].kwargs["tenant_id"] == entitlement.tenant_id
     assert audit.await_args_list[1].kwargs["action"] == "world.room_inventory.reconcile.apply"
     assert audit.await_args_list[1].kwargs["tenant_id"] is None
+
+@pytest.mark.asyncio
+async def test_legacy_room_inventory_reconciliation_dry_run_paginates_candidates(monkeypatch):
+    from datetime import timedelta
+    from app.schemas.world_commerce import WorldRoomInventoryReconciliationRequest
+    from app.api.v1 import world_commerce
+
+    now = datetime.now(timezone.utc)
+    first = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), item_code="room.first",
+        expires_at=now + timedelta(days=4), activated_at=now, status="active", item_type="room",
+    )
+    second = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), item_code="room.second",
+        expires_at=now + timedelta(days=5), activated_at=now, status="active", item_type="room",
+    )
+    db = AsyncMock()
+    db.execute.return_value.scalars.return_value.all.return_value = [first, second]
+    audit = AsyncMock()
+    monkeypatch.setattr(world_commerce.audit_service, "record", audit)
+    ctx = SimpleNamespace(user=SimpleNamespace(is_platform_admin=True, id=uuid4()))
+
+    result = await world_commerce.reconcile_legacy_room_inventory(
+        WorldRoomInventoryReconciliationRequest(dry_run=True, limit=1, offset=5),
+        ctx,
+        db,
+    )
+
+    assert result.data.candidate_count == 1
+    assert result.data.has_more is True
+    assert result.data.next_offset == 6
+    assert audit.await_args.kwargs["metadata"]["offset"] == 5
+
+
+@pytest.mark.asyncio
+async def test_legacy_room_inventory_reconciliation_apply_rejects_nonzero_offset():
+    from app.schemas.world_commerce import WorldRoomInventoryReconciliationRequest
+    from app.api.v1.world_commerce import reconcile_legacy_room_inventory
+
+    db = AsyncMock()
+    ctx = SimpleNamespace(user=SimpleNamespace(is_platform_admin=True, id=uuid4()))
+    payload = WorldRoomInventoryReconciliationRequest(
+        dry_run=False,
+        confirmation="RECONCILE_WORLD_ROOM_INVENTORY",
+        offset=1,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await reconcile_legacy_room_inventory(payload, ctx, db)
+
+    assert exc.value.status_code == 422
+    db.execute.assert_not_awaited()
+    db.commit.assert_not_awaited()
+
