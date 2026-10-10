@@ -1,12 +1,14 @@
 """Validation tests for World Mode commerce request contracts."""
-import pytest
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
+
+import pytest
 from uuid import uuid4
 from fastapi import HTTPException
 from pydantic import ValidationError
 
 from app.schemas.world_commerce import WorldOrderCreateRequest, WorldPaymentSubmission
-from app.services.world_commerce_service import create_order
+from app.services.world_commerce_service import approve_payment, create_order, mark_fulfilled
 
 
 def test_order_request_accepts_supported_currency_and_no_client_price():
@@ -71,3 +73,38 @@ async def test_world_credit_is_blocked_until_wallet_ledger_exists():
             idempotency_key="world-credit-disabled",
         )
     assert exc.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_approval_blocks_unverified_gateway_payment():
+    order = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), status="payment_submitted",
+        payment_method="gateway",
+    )
+    db = AsyncMock()
+    db.scalar.return_value = order
+    with pytest.raises(HTTPException) as exc:
+        await approve_payment(
+            db, order_id=order.id, tenant_id=order.tenant_id,
+            approver=SimpleNamespace(id=uuid4(), email="vendor@example.test"),
+        )
+    assert exc.value.status_code == 409
+    db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_activator_must_differ_from_payment_approver():
+    actor_id = uuid4()
+    order = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), status="approved",
+        approved_by_user_id=actor_id,
+    )
+    db = AsyncMock()
+    db.scalar.return_value = order
+    with pytest.raises(HTTPException) as exc:
+        await mark_fulfilled(
+            db, order_id=order.id, tenant_id=order.tenant_id,
+            activator=SimpleNamespace(id=actor_id, email="vendor@example.test"),
+        )
+    assert exc.value.status_code == 409
+    db.flush.assert_not_awaited()
