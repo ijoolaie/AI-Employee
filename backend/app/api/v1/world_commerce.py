@@ -223,6 +223,10 @@ async def vendor_tenant_diagnostics(
         select(func.count()).select_from(WorldFeatureEntitlement).where(
             WorldFeatureEntitlement.tenant_id == tenant_id,
             WorldFeatureEntitlement.status == "active",
+            or_(
+                and_(WorldFeatureEntitlement.item_type != "room", WorldFeatureEntitlement.expires_at.is_(None)),
+                WorldFeatureEntitlement.expires_at > datetime.now(timezone.utc),
+            ),
         )
     ) or 0)
     orders = await db.scalars(
