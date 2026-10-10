@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { WorldInput } from "./WorldInput";
 import type { WorldEmployee } from "./WorldState";
+import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
 
 type WorkerVisual = {
   id: string;
@@ -244,18 +245,44 @@ function addCEOAvatar(scene: any) {
 
 function addLockedRoom(scene: any) {
   const room = new THREE.Group();
-  room.name = "locked-room-offer";
-  // A single adjacent room entrance; this is a visual offer only until server-backed orders exist.
-  box(room, [8.2, 3.5, 0.28], [0, 1.75, 0], 0x38495a);
-  box(room, [2.1, 2.75, 0.16], [0, 1.38, 0.22], 0x1b2938);
-  box(room, [1.65, 2.35, 0.1], [0, 1.25, 0.31], 0x526c80, { metalness: 0.15 });
+  room.name = "room-entrance";
+  // Keep the room physically closed until a current, unexpired server authorization exists.
+  box(room, [3.05, 3.5, 0.28], [-2.575, 1.75, 0], 0x38495a);
+  box(room, [3.05, 3.5, 0.28], [2.575, 1.75, 0], 0x38495a);
+  box(room, [2.1, 0.75, 0.28], [0, 3.125, 0], 0x38495a);
+  const doorway = box(room, [2.1, 2.75, 0.08], [0, 1.38, 0.17], 0x1b2938);
+  const door = box(room, [1.65, 2.35, 0.1], [0, 1.25, 0.31], 0x526c80, { metalness: 0.15 });
   sphere(room, 0.07, [0.58, 1.22, 0.39], 0xf5cf77);
   box(room, [2.4, 0.14, 0.22], [0, 2.9, 0.34], 0xf5cf77, { emissive: 0x7a5b22, emissiveIntensity: 0.2 });
-  const label = makeLabel("LOCKED ROOM  •  E TO INSPECT", "#f5d9a4");
-  if (label) { label.position.set(0, 4.05, 0.2); label.scale.set(5.2, 1.1, 1); room.add(label); }
+  const lockedLabel = makeLabel("LOCKED ROOM  •  E TO INSPECT", "#f5d9a4");
+  if (lockedLabel) { lockedLabel.position.set(0, 4.05, 0.2); lockedLabel.scale.set(5.2, 1.1, 1); room.add(lockedLabel); }
+  const activeLabel = makeLabel("AUTHORIZED ROOM", "#baf4d8");
+  if (activeLabel) { activeLabel.position.set(0, 4.05, 0.2); activeLabel.scale.set(5.2, 1.1, 1); activeLabel.visible = false; room.add(activeLabel); }
+  room.userData.door = door;
+  room.userData.doorway = doorway;
+  room.userData.lockedLabel = lockedLabel;
+  room.userData.activeLabel = activeLabel;
   room.position.set(0, 0, 12.4);
   scene.add(room);
   return room;
+}
+
+function addAuthorizedRoomInterior(scene: any) {
+  const interior = new THREE.Group();
+  interior.name = "authorized-room-interior";
+  interior.visible = false;
+  box(interior, [8, 0.16, 8.2], [0, 0.08, 17.1], 0xdce7df);
+  box(interior, [8, 3.5, 0.2], [0, 1.75, 21.2], 0x536575);
+  box(interior, [0.2, 3.5, 8.2], [-4, 1.75, 17.1], 0x536575);
+  box(interior, [0.2, 3.5, 8.2], [4, 1.75, 17.1], 0x536575);
+  addDesk(interior, 0, 15.8, 0x60b89c);
+  cylinder(interior, 0.32, 0.36, 0.42, [3.1, 0.29, 19.3], 0xc17f55, 12);
+  cylinder(interior, 0.09, 0.04, 1.05, [3.1, 1.02, 19.3], 0x4f8b65, 8);
+  sphere(interior, 0.42, [3.1, 1.7, 19.3], 0x68a77a, [1.1, 1.2, 0.85]);
+  const label = makeLabel("AUTHORIZED ROOM INSTANCE", "#f5d9a4");
+  if (label) { label.position.set(0, 3.3, 19.8); label.scale.set(4.6, 0.9, 1); interior.add(label); }
+  scene.add(interior);
+  return interior;
 }
 
 function hash(value: string) {
@@ -351,6 +378,7 @@ export function WorldViewport({
   onMapToggle: handleMapToggle,
   onRoomProximity,
   onRoomInteract,
+  roomAccess,
 }: {
   employees: WorldEmployee[];
   selectedEmployeeId: string | null;
@@ -358,6 +386,7 @@ export function WorldViewport({
   onMapToggle: () => void;
   onRoomProximity: (near: boolean) => void;
   onRoomInteract: () => void;
+  roomAccess: { granted: boolean; roomInstanceId: string | null; expiresAt: string | null; unavailable: boolean };
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -374,6 +403,7 @@ export function WorldViewport({
   const mapToggleRef = useRef(handleMapToggle);
   const roomProximityRef = useRef(onRoomProximity);
   const roomInteractRef = useRef(onRoomInteract);
+  const roomAccessRef = useRef(roomAccess);
 
   useEffect(() => {
     employeesRef.current = employees;
@@ -382,7 +412,8 @@ export function WorldViewport({
     mapToggleRef.current = handleMapToggle;
     roomProximityRef.current = onRoomProximity;
     roomInteractRef.current = onRoomInteract;
-  }, [employees, selectedEmployeeId, onEmployeeSelect, handleMapToggle, onRoomProximity, onRoomInteract]);
+    roomAccessRef.current = roomAccess;
+  }, [employees, selectedEmployeeId, onEmployeeSelect, handleMapToggle, onRoomProximity, onRoomInteract, roomAccess]);
 
   useEffect(() => {
     const host = mountRef.current;
@@ -442,7 +473,9 @@ export function WorldViewport({
 
     buildOffice(scene);
     const ceoAvatar = addCEOAvatar(scene);
-    addLockedRoom(scene);
+    const roomEntrance = addLockedRoom(scene);
+    const roomInterior = addAuthorizedRoomInterior(scene);
+    let renderedRoomInstanceId: string | null = null;
     let wasNearRoom = false;
     const workers: WorkerVisual[] = [];
     let signature = "";
@@ -564,6 +597,21 @@ export function WorldViewport({
       }
       const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;
       if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }
+
+      // Re-evaluate the lease every frame so expiry or a query error closes the room immediately.
+      const access = roomAccessRef.current;
+      const roomGranted = isRoomSceneAccessUsable(access, access.unavailable);
+      const authorizedInstanceId = roomGranted ? access.roomInstanceId : null;
+      if (authorizedInstanceId !== renderedRoomInstanceId) {
+        renderedRoomInstanceId = authorizedInstanceId;
+        roomInterior.userData.roomInstanceId = authorizedInstanceId;
+      }
+      roomInterior.visible = roomGranted && roomInterior.userData.roomInstanceId === authorizedInstanceId;
+      roomEntrance.userData.door.rotation.y = roomGranted ? Math.PI / 2 : 0;
+      if (roomEntrance.userData.doorway) roomEntrance.userData.doorway.visible = !roomGranted;
+      if (roomEntrance.userData.lockedLabel) roomEntrance.userData.lockedLabel.visible = !roomGranted;
+      if (roomEntrance.userData.activeLabel) roomEntrance.userData.activeLabel.visible = roomGranted;
+
       for (const worker of workers) {
         const selected = worker.id === selectedEmployeeIdRef.current;
         worker.ring.material.color.setHex(selected ? 0x4fd1c5 : 0xffffff);
