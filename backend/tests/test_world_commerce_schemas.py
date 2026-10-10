@@ -1,4 +1,5 @@
 """Validation tests for World Mode commerce request contracts."""
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -185,8 +186,8 @@ def test_support_diagnostics_order_summary_omits_buyer_and_payment_reference():
         amount="12.50",
         currency="USD",
         status="payment_submitted",
-        created_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
-        updated_at=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
         buyer_user_id=uuid4(),
         provider_transaction_ref="private-payment-reference",
     )
