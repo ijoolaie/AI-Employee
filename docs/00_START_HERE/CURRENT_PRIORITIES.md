@@ -315,3 +315,12 @@ The dependency PR's security update is desirable, but its current lockfile/build
 - Next: add provider confirmation only alongside a real provider-specific contract, signature validation, replay protection, amount/currency/order matching, and failure/duplicate-event tests. Keep World Credit disabled until durable atomic ledger accounting exists.
 - Still open: manual desktop/mobile World QA; lease/entitlement expiry and fulfillment; employee placement and persistent customization-to-scene integration; support reply/thread/attachment workflows.
 - Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. CI and merge evidence do not certify production readiness or activate real payments.
+
+
+## Priority update — 2026-10-10: fulfillment transition guard
+
+1. **Completed:** PR #1000 merged at `aaae36a488cadd72b59ce22d00579438edd1a233`; all 11 checks passed on exact PR head `ac69a6240ba1aa4cc2fa09e6a03c5d38153de45c` before merge.
+2. **Verify next:** review all post-merge checks on the merge SHA. The initial post-merge snapshot had checks still in progress; merge is not the same as post-merge verification.
+3. **Next implementation priority:** entitlement-backed room fulfillment: define room inventory and lease duration, renewal/expiry semantics, persist entitlements, and enforce activation only from an approved order. Keep transitions auditable and tenant-scoped.
+4. **Still open:** live provider adapters and signed/replay-safe webhook verification; amount/currency/order matching; durable atomic wallet ledger before World Credit; employee placement and customization persistence into the 3D scene; manual desktop/mobile accessibility and interaction QA; support reply/thread/attachment workflow.
+5. **Hard boundary:** PR #1000 adds tests for existing state/approver guards only. It does not implement lease/entitlement fulfillment or prove live payments. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
