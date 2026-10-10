@@ -107,3 +107,96 @@ test("World Mode renders authoritative employee projection and management bridge
   await expect(employeeSelector).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByText("Business outcome loop")).toBeVisible();
 });
+
+
+test("World room offer loads server prices and creates an order without charging", async ({ page }) => {
+  await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), authState);
+  await page.route("**/customer-dashboard/office", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(office) });
+  });
+  await page.route("**/analytics/roi", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: { conversations: 0, ai_resolved: 0, human_handoffs: 0, runs: 0, successful_runs: 0, orders: 0, revenue: 0, influenced_orders: 0, influenced_revenue: 0, ai_resolution_rate: 0, handoff_rate: 0 } }),
+    });
+  });
+  await page.route("**/world-commerce/catalogue", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: [{
+          id: "room-offer-e2e",
+          code: "room_monthly",
+          item_type: "room",
+          name: "اتاق توسعه",
+          description: "پیشنهاد آزمایشی",
+          is_free: false,
+          price_options: {
+            IRR: { amount: "2500000", providers: ["manual"], payment_methods: ["manual_transfer"] },
+            USD: { amount: "12", providers: ["sandbox"], payment_methods: ["gateway"] },
+            USDT: { amount: "10", providers: ["crypto-sandbox"], payment_methods: ["crypto"] },
+          },
+        }],
+      }),
+    });
+  });
+
+  let orderPayload: Record<string, unknown> | null = null;
+  await page.route("**/world-commerce/orders", async (route) => {
+    orderPayload = route.request().postDataJSON() as Record<string, unknown>;
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          id: "order-e2e-001",
+          item_code_snapshot: "room_monthly",
+          amount: "12",
+          currency: "USD",
+          payment_method: "gateway",
+          payment_provider: "sandbox",
+          status: "pending",
+        },
+      }),
+    });
+  });
+
+  await page.goto("/world");
+  await expect(page.getByRole("heading", { name: "World Mode" })).toBeVisible();
+  const canvas = page.getByLabel("AI Company World viewport");
+  await expect(canvas).toBeVisible();
+
+  // Walk toward the locked-room entrance; avoid relying on a 3D pixel coordinate.
+  await canvas.focus();
+  await page.keyboard.down("s");
+  await page.waitForTimeout(900);
+  await page.keyboard.up("s");
+  const inspectRoom = page.getByRole("button", { name: /Locked room nearby/ });
+  await expect(inspectRoom).toBeVisible({ timeout: 5000 });
+  await canvas.press("e");
+
+  const offer = page.getByRole("dialog", { name: "اتاق بعدی شرکت" });
+  await expect(offer).toBeVisible();
+  await expect(offer.getByText("اتاق توسعه", { exact: true })).toBeVisible();
+  await expect(offer.getByText("2500000 IRR", { exact: true })).toBeVisible();
+
+  await offer.getByRole("button", { name: "دلار آمریکا" }).click();
+  await expect(offer.getByText("12 USD", { exact: true })).toBeVisible();
+  await offer.getByRole("button", { name: "ثبت سفارش (بدون پرداخت)" }).click();
+  await expect(offer.getByText("سفارش ثبت شد؛ پرداخت انجام نشده است.")).toBeVisible();
+  await expect(offer.getByText("شناسه سفارش: order-e2e-001")).toBeVisible();
+
+  expect(orderPayload).not.toBeNull();
+  expect(orderPayload).toMatchObject({
+    item_code: "room_monthly",
+    currency: "USD",
+    payment_method: "gateway",
+    payment_provider: "sandbox",
+  });
+  expect(orderPayload).toHaveProperty("idempotency_key");
+  expect(orderPayload).not.toHaveProperty("amount");
+});
