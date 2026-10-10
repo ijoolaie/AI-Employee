@@ -108,7 +108,7 @@ async def create_order(
     providers = option.get("providers", [])
     if not isinstance(providers, list) or payment_provider not in providers:
         raise HTTPException(status_code=422, detail="Payment provider is not enabled for this currency and item")
-    if payment_method not in option.get("payment_methods", [payment_method]):
+    if payment_method not in option.get("payment_methods", []):
         raise HTTPException(status_code=422, detail="Payment method is not enabled for this currency and item")
     try:
         amount = Decimal(str(option["amount"]))
