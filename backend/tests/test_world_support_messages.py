@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from app.api.v1.edition_control import (
     _create_support_escalation_message,
     _download_support_escalation_attachment,
+    _list_outgoing_support_escalations,
     _list_support_escalation_messages,
 )
 from app.models.support_escalation_message import SupportEscalationMessage
@@ -28,6 +29,32 @@ def _result(ticket=None, rows=None, pairs=None, values=None):
             all=lambda: rows,
         )
     return SimpleNamespace(scalar_one_or_none=lambda: ticket, scalars=lambda: SimpleNamespace(all=lambda: []))
+
+
+@pytest.mark.asyncio
+async def test_reseller_sent_escalation_list_is_scoped_to_originating_tenant():
+    tenant_id = uuid4()
+    ticket = SimpleNamespace(
+        id=uuid4(),
+        from_tenant_id=tenant_id,
+        to_tenant_id=uuid4(),
+        opened_by=uuid4(),
+        subject="Persistent support history",
+        description="A reseller-created escalation",
+        status="open",
+        extra_data={},
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+    db = AsyncMock()
+    db.execute.return_value = _result(values=[ticket])
+
+    response = await _list_outgoing_support_escalations(db, tenant_id)
+
+    assert [row.id for row in response.data] == [ticket.id]
+    query = str(db.execute.await_args.args[0])
+    assert "support_escalations.from_tenant_id" in query
+    assert "support_escalations.to_tenant_id" not in query
 
 
 @pytest.mark.asyncio
