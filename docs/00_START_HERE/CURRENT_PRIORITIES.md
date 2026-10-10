@@ -207,3 +207,13 @@ The project remains local-first for this work. External production is intentiona
 11. **OPEN:** PixiJS dependency integration remains a renderer-specific follow-up. It must be introduced only with a regenerated and validated lockfile, not by hand-editing dependency metadata.
 
 Canonical implementation record: `docs/current/AI_COMPANY_WORLD_F0_F7_IMPLEMENTATION.md`.
+
+
+## 2026-10-10 follow-up priorities — dependency PR and World QA
+
+1. **P0 / BLOCKED — PR #984:** fix the unintended Tailwind v4 lockfile resolution while retaining the `source-map-js@1.2.2` security update. The inspected head `5287581895464c2942dc4ae4b3f21949e51322a7` has CodeQL PASS but CI, Production Infrastructure, HA Recovery and Ephemeral DAST FAIL. Do not merge until a corrected exact head passes required checks.
+2. **P1 / OPEN — World manual QA:** exercise desktop and mobile viewport, keyboard and touch controls, room interaction, employee selection, customization panel, responsive layout and accessibility/console errors. Record device/browser, steps, expected/actual result and evidence. Automated CI is not a substitute for this.
+3. **P1 / OPEN — commerce completeness:** implement and validate real provider verification/webhooks, wallet ledger and idempotency, lease expiry/renewal and fulfillment, durable customization-to-3D-scene integration, and remaining support reply/thread/attachment workflows only as separate reviewable slices.
+4. **P2 / OPEN — release and external evidence:** do not claim production deployment or new release certification from PR merges or CI. Keep the exact certified release at `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c` until a new exact-SHA certification is performed.
+
+The dependency PR's security update is desirable, but its current lockfile/build regression blocks merge. Keep the existing Tailwind v3 configuration coherent unless a separately scoped v4 migration updates package metadata, PostCSS configuration, Tailwind config/content scanning, and tests together.
