@@ -1,3 +1,13 @@
+## World Mode room inventory authorization — PR #1012 (2026-10-10)
+
+- PR [#1012](https://github.com/ijoolaie/AI-Employee/pull/1012) merged into `main` as `536d5e0b1b916634b271f2433de7dbb084523a37`.
+- World Mode now uses the tenant-scoped room inventory endpoints: `GET /world-commerce/room-inventory` and `GET /world-commerce/room-inventory/{item_code}/access`. The UI only presents the server-authorized state when the response grants access and includes a server room-instance ID.
+- Inventory, catalogue and access failures remain fail-closed. The UI refreshes server state periodically and provides an explicit retry. Contract tests and World Mode Playwright E2E mocks were updated for the inventory API.
+- All 9 checks on the exact merge SHA completed successfully: frontend, backend, infrastructure, DAST, both CodeQL analyses, SLO contract validation, general validation, and package validation.
+- **Still not implemented:** the persistent room authorization is connected to World Mode interaction, but the actual usable interior/3D room scene and its scene-instance lifecycle are not yet provisioned/unlocked. Do not represent the room as opened solely because the access panel confirms authorization. Legacy leases without inventory remain denied until an audited reconciliation path exists.
+- Next priority: implement/verify actual room-instance provisioning and Three.js scene gating against this server decision; fail closed on expiry, missing instance, tenant mismatch, suspended inventory, and API errors. Then add active/expired/missing/error real-stack and E2E coverage. Customer renewal UX and expiry notifications follow.
+- Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Green CI and engineering merges do not certify a new release or prove external production readiness.
+
 ## Persistent World room inventory and access contract — PR #1009 (2026-10-10)
 
 - PR [#1009](https://github.com/ijoolaie/AI-Employee/pull/1009) merged as `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903`.
