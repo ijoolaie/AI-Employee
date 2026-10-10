@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getRoomLeaseExpiryStatus } from "../features/world/WorldRoomAccessPanel";
+import { getRoomLeaseExpiryStatus } from "../features/world/world-room-expiry";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const NOW = Date.parse("2026-10-10T12:00:00.000Z");
