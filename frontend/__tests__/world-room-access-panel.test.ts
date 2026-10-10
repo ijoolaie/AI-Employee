@@ -25,7 +25,7 @@ describe("World room access gate contracts", () => {
 
   it("only presents the room access confirmation when the server grants access", () => {
     expect(shell).toContain('roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect"');
-    expect(shell).toContain('roomAccessGranted ? "granted" : "unavailable"');
+    expect(shell).toContain('!roomAccessGranted ? "unavailable" : "granted"');
     expect(panel).toContain("سرور مجوز فعال این اتاق را تأیید کرده است");
   });
 
