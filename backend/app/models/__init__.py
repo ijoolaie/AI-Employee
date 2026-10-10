@@ -37,6 +37,7 @@ from app.models.password_reset_token import PasswordResetToken
 from app.models.tenant_entitlement import TenantEntitlement
 from app.models.support_escalation import SupportEscalation
 from app.models.support_escalation_message import SupportEscalationMessage
+from app.models.support_escalation_message_attachment import SupportEscalationMessageAttachment
 from app.models.license import CommercialLicense
 from app.models.work_item import WorkItem, WorkItemStatus, ExecutorType
 from app.models.agent_definition import AgentDefinition
