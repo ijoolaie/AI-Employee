@@ -1,6 +1,19 @@
 "use client";
 
 type AccessState = "loading" | "unavailable" | "granted";
+type LeaseExpiryStatus = { kind: "unknown" | "expired" | "urgent" | "active"; daysRemaining: number | null };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function getRoomLeaseExpiryStatus(expiresAt: string | null, now = Date.now()): LeaseExpiryStatus {
+  if (!expiresAt) return { kind: "unknown", daysRemaining: null };
+  const expiryTime = new Date(expiresAt).getTime();
+  if (!Number.isFinite(expiryTime)) return { kind: "unknown", daysRemaining: null };
+  const daysRemaining = Math.ceil((expiryTime - now) / DAY_MS);
+  if (daysRemaining <= 0) return { kind: "expired", daysRemaining: 0 };
+  if (daysRemaining <= 7) return { kind: "urgent", daysRemaining };
+  return { kind: "active", daysRemaining };
+}
 
 export function WorldRoomAccessPanel({
   state,
@@ -20,6 +33,7 @@ export function WorldRoomAccessPanel({
   const expiry = expiresAt
     ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(expiresAt))
     : null;
+  const expiryStatus = getRoomLeaseExpiryStatus(expiresAt);
 
   return (
     <section role="dialog" aria-modal="true" aria-labelledby="world-room-access-title" className="absolute bottom-4 left-4 right-4 z-30 mx-auto max-w-lg rounded-2xl border border-cyan-300/30 bg-slate-950/95 p-5 text-slate-100 shadow-2xl backdrop-blur-xl">
@@ -42,6 +56,21 @@ export function WorldRoomAccessPanel({
         <div className="mt-4 space-y-3 text-sm">
           <p className="text-emerald-200">سرور مجوز و نمونهٔ اتاق را تأیید کرده است؛ فضای سه‌بعدی تا پایان اعتبار نمایش داده می‌شود.</p>
           <p className="text-slate-300">کد اتاق: <span className="font-mono">{itemCode}</span>{expiry ? ` · اعتبار تا ${expiry}` : ""}</p>
+          {expiryStatus.kind === "urgent" && (
+            <p role="status" className="rounded-lg border border-amber-400/40 bg-amber-950/30 p-3 leading-6 text-amber-100">
+              اعتبار اتاق ${expiryStatus.daysRemaining} روز دیگر پایان می‌یابد. تمدید خودکار فعال نیست؛ ثبت سفارش به‌تنهایی پرداخت یا تمدید را انجام نمی‌دهد.
+            </p>
+          )}
+          {expiryStatus.kind === "expired" && (
+            <p role="alert" className="rounded-lg border border-red-400/40 bg-red-950/30 p-3 leading-6 text-red-100">
+              زمان اعتبار ثبت‌شده گذشته است. برای تأیید وضعیت جاری، دسترسی را دوباره از سرور بررسی کنید؛ این پیام به‌تنهایی مجوز را تمدید نمی‌کند.
+            </p>
+          )}
+          {expiryStatus.kind === "unknown" && (
+            <p role="alert" className="rounded-lg border border-amber-400/40 bg-amber-950/30 p-3 leading-6 text-amber-100">
+              تاریخ پایان اعتبار مشخص نیست؛ برای وضعیت معتبر به پاسخ تازهٔ سرور نیاز است.
+            </p>
+          )}
           {roomInstanceId && <p className="text-slate-300">شناسه نمونه: <span className="font-mono">{roomInstanceId}</span></p>}
           <p className="rounded-lg border border-slate-700 bg-slate-900 p-3 leading-6 text-slate-300">چیدمان مبلمان این اتاق از سرور بارگذاری و ذخیره می‌شود؛ جایگذاری کارمندان و سفارشی‌سازی پایدار مدیر هنوز تکمیل نشده است.</p>
         </div>
