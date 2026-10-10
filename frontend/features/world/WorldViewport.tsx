@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { WorldInput } from "./WorldInput";
 import type { WorldEmployee } from "./WorldState";
@@ -313,6 +313,14 @@ export function WorldViewport({
   onMapToggle: () => void;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === viewportRef.current);
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    return () => document.removeEventListener("fullscreenchange", syncFullscreen);
+  }, []);
+
   const employeesRef = useRef(employees);
   const selectedEmployeeIdRef = useRef(selectedEmployeeId);
   const selectRef = useRef(onEmployeeSelect);
@@ -357,9 +365,9 @@ export function WorldViewport({
     scene.background = new THREE.Color(0x182331);
     scene.fog = new THREE.Fog(0x182331, 42, 86);
 
-    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 180);
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 180);
     const target = new THREE.Vector3(0, 0, 0);
-    let distance = 43;
+    let distance = 35;
     const updateCamera = () => {
       camera.position.set(target.x + distance * 0.58, distance * 1.08, target.z + distance * 0.68);
       camera.lookAt(target.x, 0.8, target.z);
@@ -438,12 +446,12 @@ export function WorldViewport({
     };
     const onReset = () => {
       target.set(0, 0, 0);
-      distance = 43;
+      distance = 35;
       updateCamera();
     };
     const onZoom = (event: Event) => {
       const { delta } = (event as CustomEvent<{ delta: number }>).detail;
-      distance = Math.max(25, Math.min(66, distance * (1 - delta)));
+      distance = Math.max(11, Math.min(92, distance * (1 - delta)));
       updateCamera();
     };
     const onMapToggle = () => mapToggleRef.current();
@@ -552,7 +560,7 @@ export function WorldViewport({
   }, []);
 
   return (
-    <div className="relative min-h-[420px] w-full overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl" style={{ height: "min(72vh, 760px)" }}>
+    <div ref={viewportRef} className={`relative w-full overflow-hidden bg-slate-900 shadow-2xl ${isFullscreen ? "h-screen rounded-none border-0" : "min-h-[420px] rounded-2xl border border-slate-700/80"}`} style={{ height: isFullscreen ? "100dvh" : "min(80vh, 900px)" }}>
       <div ref={mountRef} className="absolute inset-0" />
       <div className="sr-only" aria-label="Office employees">
         {employees.map((employee) => (
@@ -572,6 +580,7 @@ export function WorldViewport({
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }))} aria-label="Zoom in">+</button>
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: -0.12 } }))} aria-label="Zoom out">−</button>
         <button type="button" className="rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:reset"))}>Reset view</button>
+        <button type="button" className="rounded-lg px-2 text-xs text-slate-100 hover:bg-white/10" onClick={() => { if (document.fullscreenElement === viewportRef.current) { void document.exitFullscreen(); } else { void viewportRef.current?.requestFullscreen(); } }} aria-label={isFullscreen ? "Exit fullscreen world view" : "Show world in fullscreen"} aria-pressed={isFullscreen}>{isFullscreen ? "⤢ Exit full screen" : "⛶ Full screen"}</button>
       </div>
       <div className="pointer-events-none absolute left-4 top-4 rounded-xl border border-white/10 bg-slate-950/75 px-3 py-2 text-xs text-slate-200 backdrop-blur">
         <div className="font-semibold tracking-wide text-amber-100">AI COMPANY HQ</div>
