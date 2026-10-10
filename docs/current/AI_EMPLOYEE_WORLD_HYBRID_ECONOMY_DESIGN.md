@@ -211,3 +211,13 @@ The following updates supersede earlier status statements in this design documen
 - Migration revision: `20261010_world_room_lease`, down revision `20261010_world_support`. Existing room entitlements with NULL expiry are intentionally denied access until reconciled; existing paid room catalogue rows need an admin-configured duration.
 - **Still open:** scheduled expiry processing/notifications, customer-facing renewal UX, room inventory and employee placement, durable World Credit ledger, provider-specific payment verification/webhooks/replay protection, and persistence/application of customization to the 3D scene.
 - This implementation is an engineering change only. It does not verify live payments, enable World Credit, or certify a new release. Latest exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+
+## Implementation checkpoint — inventory-backed room authorization (#1008, #1012; 2026-10-10)
+
+- PR #1008 merged as `e7bb7e23ecbd3174ce465c1fbde0d00c8f657188`; its exact PR head `7dfd45704802be88b152ca966f6a4dc3ec6d10fe` passed 8/8 checks.
+- PR #1012 merged as `536d5e0b1b916634b271f2433de7dbb084523a37`; exact PR head `9c1f3de1cfdc4160977efd48327be54577614d6c` passed 8/8 checks and merge-SHA post-merge checks passed 9/9.
+- World Mode room interaction is now connected to server-side inventory/access authorization and fails closed when the server cannot confirm access. This is not equivalent to provisioning a persistent room instance or opening its content in the live 3D scene.
+- The next engineering slice is tenant-safe persistent room-instance provisioning and actual 3D scene/content gating, using server-owned entitlement expiry and inventory state. Tests must cover missing inventory, expired entitlement, cross-tenant access denial, and unavailable authorization service.
+- Still unimplemented/blocked: provider-specific payment verification/webhooks/replay protection; durable World Credit ledger; customer self-service renewal and expiry notifications; employee placement and persisted customization applied to the scene; support replies/threads/attachments; manual desktop/mobile visual QA.
+- No release status change: latest exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. CI success is not production certification or payment approval.
