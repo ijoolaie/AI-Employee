@@ -1,3 +1,31 @@
+## 2026-10-10 follow-through — secure support message attachments (PR #1033 merged)
+
+### Verified merge and exact-head checks
+
+- PR [#1033](https://github.com/ijoolaie/AI-Employee/pull/1033) — `feat(support): add tenant-safe message attachments` — merged to `main` at `f7a443f11f1c2fdab71ee7c303b6c18a0cb70cb0`.
+- Exact PR head: `6de18ff840d8cd5087debe5461b056ff12415883`.
+- All 19 reported checks passed on that exact head, including backend, frontend, CodeQL parent and Python/JavaScript analyses, DAST, recovery, infrastructure, architecture, observability, rollback contract, tenant hierarchy/RBAC and W16/W18/W20/W21/W22 real-stack checks.
+- This is an engineering merge, not a new production-certified release. Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+### Delivered
+
+- Added `SupportEscalationMessageAttachment` and migration `w23_support_message_attachments`, chained after `w22_support_escalation_messages`.
+- Message creation accepts up to five active existing file IDs, only if each file belongs to the posting tenant. Duplicate IDs are rejected, and a unique constraint prevents one file from being attached to multiple support messages.
+- Message list/create responses return safe attachment metadata: attachment/file IDs, filename, content type, size and creation time. Storage keys and public URLs are never returned.
+- Vendor, reseller and customer download routes verify the requested message ID matches the attachment's actual message, and the shared download helper checks ticket participation, attachment linkage to the exact escalation and active file status.
+- Downloads stream through the existing storage abstraction with generic binary media type, encoded filename, `X-Content-Type-Options: nosniff`, and `Cache-Control: private, no-store`.
+- Added regression tests for foreign-tenant file rejection, duplicate IDs, nonparticipant download denial and cross-ticket attachment denial.
+- Reviewed integration contracts: `FileObject` maps to `files`, and the existing storage abstraction provides `get_storage_backend().open(storage_key)`.
+
+### Follow-up work / remaining gaps
+
+1. Build the support frontend for thread display, reply composition, attachment selection and authorized download; keep this separate from backend authorization.
+2. Add tests for legitimate download access by both escalation participants, deleted-file behavior, five-file bound, generic file policy enforcement and missing storage objects.
+3. Consider handling the rare race where two concurrent messages attempt to attach the same file, mapping the unique-constraint violation to a stable 409 and preserving transaction rollback.
+4. Do not treat the attachment API as a complete support workspace: scoped support sessions, impersonation/temporary grants and operational support UI are not delivered by this PR.
+5. Keep manual desktop/mobile World QA, live payment provider/webhook verification, explicit USDT network policy, durable World Credit ledger, room lease/fulfillment and independent production release certification as separate open gates.
+
+
 ## Latest World room lease UX checkpoint — 2026-10-10
 
 - PR [#1028](https://github.com/ijoolaie/AI-Employee/pull/1028) merged at `128a8ca55395ddc749fa207c99780504cb7dee81`. Exact-head `9749c56526ad033625eeec0238cb98e550f7577d` passed frontend/backend CI, CodeQL, recovery, ephemeral DAST and infrastructure checks.
