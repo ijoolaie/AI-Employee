@@ -730,10 +730,16 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - The room offer reads server-owned catalogue data and supports IRR/USD/USDT selection. Platform-admin catalogue endpoints validate item definitions, positive decimal prices and configured provider/payment-method choices, and write audit events.
 - Provider/method labels are configuration only; this does not verify any live gateway or crypto provider.
 
-### Current review — customer order creation
+### Customer order creation — merged
 
-- PR for this slice is being prepared from branch `feat/world-room-order-intent`.
-- The room offer is being connected to `POST /world-commerce/orders` using the existing server-authoritative price contract and a stable idempotency key. The UI explicitly reports that creating an order is not payment or room activation.
+- PR #989 merged at `74224ef253a1bb3d990347e34e41dbe31827b97d`; exact PR head `8e538976163aae3bffc5ef88067a2e08987ca673` passed all 8 reported checks (including frontend, backend, infrastructure, CodeQL, DAST and recovery).
+- `WorldRoomOfferPanel` now posts to `POST /world-commerce/orders` using the selected server-configured item code, currency, provider and payment method, plus a stable idempotency key. The client does not submit an amount.
+- Backend inspection confirms the order service computes the amount from the active catalogue entry, validates the provider/method for that currency/item, rejects disabled World Credit, and returns the same order for a matching tenant-scoped idempotency key. Reusing the key with different order inputs conflicts.
+- Order creation remains distinct from payment, provider verification and fulfillment. No money movement or room activation is claimed.
+
+### Remaining work and release boundaries
+
 - Live provider/webhook verification, USDT network policy, World Credit ledger, room lease/renewal/fulfillment and durable customization-to-scene state remain open.
 - Manual desktop/mobile visual QA and production release certification remain separate gates.
+- Post-merge checks have been triggered on merge commit `74224ef253a1bb3d990347e34e41dbe31827b97d`; outcomes must be reviewed before treating the merged state as validated by those runs.
 - Latest published exact-SHA certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; these engineering merges do not change its certification boundary.
