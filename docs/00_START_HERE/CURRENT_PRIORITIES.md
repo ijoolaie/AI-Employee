@@ -224,3 +224,10 @@ The dependency PR's security update is desirable, but its current lockfile/build
 - **FIX PUSHED / VALIDATION PENDING:** commit `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890` restores a lockfile coherent with Tailwind v3 while updating only `source-map-js` to 1.2.2. Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4 are retained.
 - The prior failures were for `5287581895464c2942dc4ae4b3f21949e51322a7`; they are historical evidence, not the result for the corrected head.
 - Next: inspect all five required workflow outcomes for `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890`. Do not merge until CI, CodeQL, infrastructure, HA recovery and DAST pass on this exact SHA.
+
+
+## PR #984 latest correction — 2026-10-10
+
+- **CORRECTION PUSHED / VALIDATION PENDING:** CI showed that the earlier lockfile-only correction was insufficient because the Dependabot branch also changed `frontend/package.json` to Tailwind v4. Commit `072e0c077ad18b7cb2afea1c50b8b68aa99be857` restores the manifest to `tailwindcss: ^3.4.16` so it matches the corrected lockfile and existing v3 PostCSS/config setup.
+- Current lockfile retains Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4 while upgrading `source-map-js` to 1.2.2.
+- Re-check CI, CodeQL, infrastructure, HA recovery and DAST on exact head `072e0c077ad18b7cb2afea1c50b8b68aa99be857`. Earlier failures apply to superseded heads; do not merge until the latest required checks are green.
