@@ -6,7 +6,7 @@ are not wired here, so a submitted reference is a claim awaiting vendor review.
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import CurrentContext, DbSession, has_permission
@@ -26,6 +26,9 @@ from app.schemas.world_commerce import (
     WorldOrderResponse,
     WorldPaymentDecision,
     WorldPaymentSubmission,
+    WorldSupportDiagnosticsResponse,
+    WorldSupportEntitlementSummary,
+    WorldSupportOrderSummary,
 )
 from app.services import world_commerce_service as commerce
 
@@ -164,6 +167,83 @@ async def submit_payment(order_id: UUID, payload: WorldPaymentSubmission, ctx: C
     await db.commit()
     await db.refresh(row)
     return APIResponse(success=True, data=WorldOrderResponse.model_validate(row, from_attributes=True))
+
+
+@router.get(
+    "/vendor/tenants/{tenant_id}/diagnostics",
+    response_model=APIResponse[WorldSupportDiagnosticsResponse],
+)
+async def vendor_tenant_diagnostics(
+    tenant_id: UUID,
+    ctx: CurrentContext,
+    db: DbSession,
+):
+    """Read-only, tenant-scoped diagnostics for vendor support staff."""
+    if not ctx.user.is_platform_admin:
+        if ctx.tenant.tenant_kind != "vendor":
+            raise HTTPException(status_code=403, detail="Vendor tenant required")
+        if not await has_permission(ctx, "world.support.view"):
+            raise HTTPException(status_code=403, detail="Missing World support permission")
+        scope_result = await db.execute(text("""
+            WITH RECURSIVE descendants(id) AS (
+                SELECT id FROM tenants WHERE id = :root_id
+                UNION
+                SELECT child.id FROM tenants AS child
+                JOIN descendants AS parent ON child.parent_tenant_id = parent.id
+            )
+            SELECT id FROM descendants
+        """), {"root_id": str(ctx.tenant_id)})
+        allowed_tenants = {UUID(str(row[0])) for row in scope_result.all()}
+        if tenant_id not in allowed_tenants:
+            raise HTTPException(status_code=404, detail="Tenant not found")
+    else:
+        tenant_exists = await db.scalar(
+            text("SELECT id FROM tenants WHERE id = :tenant_id"),
+            {"tenant_id": str(tenant_id)},
+        )
+        if tenant_exists is None:
+            raise HTTPException(status_code=404, detail="Tenant not found")
+
+    count_rows = await db.execute(
+        select(WorldOrder.status, func.count())
+        .where(WorldOrder.tenant_id == tenant_id)
+        .group_by(WorldOrder.status)
+    )
+    order_counts = {str(status): int(count) for status, count in count_rows.all()}
+    active_entitlement_count = int(await db.scalar(
+        select(func.count()).select_from(WorldFeatureEntitlement).where(
+            WorldFeatureEntitlement.tenant_id == tenant_id,
+            WorldFeatureEntitlement.status == "active",
+        )
+    ) or 0)
+    orders = await db.scalars(
+        select(WorldOrder).where(WorldOrder.tenant_id == tenant_id)
+        .order_by(WorldOrder.created_at.desc()).limit(20)
+    )
+    entitlements = await db.scalars(
+        select(WorldFeatureEntitlement).where(
+            WorldFeatureEntitlement.tenant_id == tenant_id
+        ).order_by(WorldFeatureEntitlement.activated_at.desc()).limit(100)
+    )
+    diagnostics = WorldSupportDiagnosticsResponse(
+        tenant_id=tenant_id,
+        order_counts_by_status=order_counts,
+        active_entitlement_count=active_entitlement_count,
+        recent_orders=[
+            WorldSupportOrderSummary.model_validate(row, from_attributes=True)
+            for row in orders.all()
+        ],
+        entitlements=[
+            WorldSupportEntitlementSummary.model_validate(row, from_attributes=True)
+            for row in entitlements.all()
+        ],
+    )
+    await commerce.record_support_diagnostics_view(
+        db, tenant_id=tenant_id, actor=ctx.user,
+        is_platform_admin=ctx.user.is_platform_admin,
+    )
+    await db.commit()
+    return APIResponse(success=True, data=diagnostics)
 
 
 @router.get("/vendor/orders", response_model=APIResponse[list[WorldOrderResponse]])
