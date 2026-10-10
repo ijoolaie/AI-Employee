@@ -28,7 +28,7 @@ describe("World room offer panel contracts", () => {
   it("preserves the idempotency key and distinguishes order from payment", () => {
     expect(source).toContain("const key = idempotencyKey ?? crypto.randomUUID();");
     expect(source).toContain("setIdempotencyKey(key);");
-    expect(source).toContain("ثبت سفارش شد؛ پرداخت انجام نشده است.");
+    expect(source).toContain("سفارش ثبت شد؛ پرداخت انجام نشده است.");
     expect(source).toContain("هیچ مبلغی کسر نشده و اتاقی فعال نشده است.");
   });
 
