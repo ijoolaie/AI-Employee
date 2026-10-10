@@ -721,11 +721,19 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - This closes the dependency PR blocker. It does not certify a new production release; release certification remains a separate exact-SHA gate.
 
 
-## World commerce UI checkpoint — 2026-10-10 (PR #986 merged)
+## World commerce progress — 2026-10-10
 
-- PR #986 ([catalogue-backed room offer with currency selection](https://github.com/ijoolaie/AI-Employee/pull/986)) was squash-merged to `main` at `c0a2b063012263114bd195b68612a423610474d3`.
-- Exact PR head `825155d36e4b1d813b248232a309f8c4d6988720` passed all eight reported checks: frontend, backend, infrastructure, CodeQL, CodeQL JavaScript/TypeScript, CodeQL Python, DAST, and recovery. Frontend lint, contract/unit tests, production build and World Mode Playwright smoke passed.
-- World room offer now reads the active server catalogue and lets the user select IRR, USD or USDT. Missing prices are not fabricated. Provider/method labels are catalogue configuration only.
-- This is a preview only. No order is created, no payment is processed/verified, and no room is activated by this UI. Manual desktop/mobile visual QA remains open.
-- Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; this merge is not production certification.
-- Next engineering slice: inspect the current catalogue and order contracts, then implement a guarded customer order-creation step with server-owned amount, selected currency/provider/method and idempotency. Keep gateway/webhook verification, World Credit ledger and room fulfillment explicitly gated.
+### Catalogue-backed offer and audited catalogue configuration
+
+- PR #986 merged at `c0a2b063012263114bd195b68612a423610474d3`; its exact PR head passed all eight reported checks.
+- PR #988 merged at `e8239e563aef2904fc26fe617e3e3f470819c941`. All 16 reported checks passed on exact PR head `2c7941b14940660285e8d53098abfe4aeba7f7b2`.
+- The room offer reads server-owned catalogue data and supports IRR/USD/USDT selection. Platform-admin catalogue endpoints validate item definitions, positive decimal prices and configured provider/payment-method choices, and write audit events.
+- Provider/method labels are configuration only; this does not verify any live gateway or crypto provider.
+
+### Current review — customer order creation
+
+- PR for this slice is being prepared from branch `feat/world-room-order-intent`.
+- The room offer is being connected to `POST /world-commerce/orders` using the existing server-authoritative price contract and a stable idempotency key. The UI explicitly reports that creating an order is not payment or room activation.
+- Live provider/webhook verification, USDT network policy, World Credit ledger, room lease/renewal/fulfillment and durable customization-to-scene state remain open.
+- Manual desktop/mobile visual QA and production release certification remain separate gates.
+- Latest published exact-SHA certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; these engineering merges do not change its certification boundary.
