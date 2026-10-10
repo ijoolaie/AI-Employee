@@ -1,3 +1,20 @@
+## 2026-10-10 checkpoint — secure support message attachments merged (PR #1033)
+
+- PR [#1033](https://github.com/ijoolaie/AI-Employee/pull/1033) merged to `main` at `f7a443f11f1c2fdab71ee7c303b6c18a0cb70cb0`.
+- Exact PR head `6de18ff840d8cd5087debe5461b056ff12415883` passed all 19 reported checks, including backend/frontend, both CodeQL analyses, DAST, recovery, infrastructure, architecture, tenant hierarchy/RBAC and real-stack checks.
+- Adds `support_escalation_message_attachments` (W23 migration after W22), up to five active files per message, tenant ownership validation, duplicate-ID rejection, one-message-per-file constraint, safe metadata and participant-scoped streaming downloads.
+- Download requires participation in the exact escalation, attachment linkage to a message in that escalation, matching message/attachment IDs in the route, and active file status. Storage keys are never exposed; responses use `application/octet-stream`, `nosniff`, and private/no-store cache policy.
+- Regression coverage includes foreign-tenant file rejection, duplicate attachment IDs, nonparticipant download denial and cross-ticket attachment denial.
+- This is post-release engineering only. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; merge/green CI does not certify a new release.
+
+### Next support-workflow actions
+
+1. Add support frontend integration for message listing/reply and attachment upload/download using the server API; preserve the generic `/files` tenant boundary.
+2. Extend tests for both legitimate ticket participants' download access, deleted-file behavior, count limit, unsupported type/oversize constraints, and storage missing-object behavior.
+3. Consider translating a concurrent unique-file attachment race into a stable 409 response instead of an unhandled database error.
+4. Keep manual World desktop/mobile QA, provider-specific payment verification, explicit USDT network policy, durable World Credit ledger, and room lease/fulfillment integration as separate open gates.
+
+
 ## Latest World room lease UX checkpoint — 2026-10-10
 
 - PR [#1028](https://github.com/ijoolaie/AI-Employee/pull/1028) merged at `128a8ca55395ddc749fa207c99780504cb7dee81`. Exact-head `9749c56526ad033625eeec0238cb98e550f7577d` passed frontend/backend CI, CodeQL, recovery, ephemeral DAST and infrastructure checks.
