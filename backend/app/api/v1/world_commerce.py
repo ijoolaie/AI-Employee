@@ -32,7 +32,7 @@ async def _vendor_tenant_scope(ctx: CurrentContext, db: AsyncSession) -> set[UUI
     result = await db.execute(text("""
         WITH RECURSIVE descendants(id) AS (
             SELECT id FROM tenants WHERE id = :root_id
-            UNION ALL
+            UNION
             SELECT child.id FROM tenants AS child
             JOIN descendants AS parent ON child.parent_tenant_id = parent.id
         )
