@@ -266,17 +266,14 @@ async def update_room_scene_config(
 
     employee_ids = {placement.employee_id for placement in payload.employee_placements}
     if employee_ids:
-        active_employee_ids = set(
-            (
-                await db.scalars(
-                    select(Employee.id).where(
-                        Employee.tenant_id == ctx.tenant_id,
-                        Employee.is_active.is_(True),
-                        Employee.id.in_(employee_ids),
-                    )
-                )
-            ).all()
+        active_employee_result = await db.scalars(
+            select(Employee.id).where(
+                Employee.tenant_id == ctx.tenant_id,
+                Employee.is_active.is_(True),
+                Employee.id.in_(employee_ids),
+            )
         )
+        active_employee_ids = set(active_employee_result.all())
         if active_employee_ids != employee_ids:
             # Never reveal whether an invalid ID belongs to another tenant.
             raise HTTPException(status_code=422, detail="Employee placements must reference active employees in this tenant")
