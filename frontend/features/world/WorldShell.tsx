@@ -81,14 +81,23 @@ export function WorldShell() {
     (!roomCatalogueQuery.isLoading && roomCatalogueQuery.data === null) ||
     (roomAccessQuery.data?.granted === true && !roomInventoryQuery.isLoading && !matchingRoomInventory)
   );
+  const activeEmployeeIds = useMemo(
+    () => new Set((officeQuery.data?.employees ?? []).filter((employee) => employee.is_active).map((employee) => employee.id)),
+    [officeQuery.data?.employees],
+  );
   const roomSceneConfigFromServer = useMemo(
-    () => normalizeRoomSceneConfig(matchingRoomInventory?.scene_config),
-    [matchingRoomInventory?.scene_config],
+    () => normalizeRoomSceneConfig(matchingRoomInventory?.scene_config, activeEmployeeIds),
+    [matchingRoomInventory?.scene_config, activeEmployeeIds],
+  );
+  const roomSceneConfigOverrideNormalized = useMemo(
+    () => roomSceneConfigOverride ? normalizeRoomSceneConfig(roomSceneConfigOverride.config, activeEmployeeIds) : null,
+    [roomSceneConfigOverride, activeEmployeeIds],
   );
   const roomSceneConfig = roomSceneConfigOverride &&
     roomSceneConfigOverride.roomInstanceId === roomAccessQuery.data?.room_instance_id &&
-    JSON.stringify(roomSceneConfigFromServer) !== JSON.stringify(roomSceneConfigOverride.config)
-    ? roomSceneConfigOverride.config
+    roomSceneConfigOverrideNormalized &&
+    JSON.stringify(roomSceneConfigFromServer) !== JSON.stringify(roomSceneConfigOverrideNormalized)
+    ? roomSceneConfigOverrideNormalized
     : roomSceneConfigFromServer;
   const roomSceneAccess = {
     granted: roomAccessQuery.data?.granted === true && Boolean(matchingRoomInventory),
@@ -183,7 +192,7 @@ export function WorldShell() {
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
                 {roomAccessGranted && !showCustomization && <button type="button" onClick={() => setShowCustomization(true)} className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-xl border border-cyan-300/40 bg-slate-950/90 px-3 py-2 text-sm text-cyan-100 shadow-xl backdrop-blur"><Palette className="h-4 w-4" /> Customize room</button>}
                 {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect" : "Locked room nearby · Press E to inspect access or rent"}</button>}
-                {showCustomization && roomAccessGranted && roomSceneAccess.roomInstanceId && <WorldRoomLayoutPanel key={roomSceneAccess.roomInstanceId} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} roomInstanceId={roomSceneAccess.roomInstanceId} initialConfig={roomSceneConfig} onClose={() => setShowCustomization(false)} onSaved={(config) => setRoomSceneConfigOverride({ roomInstanceId: roomSceneAccess.roomInstanceId!, config })} />}
+                {showCustomization && roomAccessGranted && roomSceneAccess.roomInstanceId && <WorldRoomLayoutPanel key={roomSceneAccess.roomInstanceId} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} roomInstanceId={roomSceneAccess.roomInstanceId} employees={(officeQuery.data?.employees ?? []).filter((employee) => employee.is_active).map((employee) => ({ id: employee.id, name: employee.name }))} initialConfig={roomSceneConfig} onClose={() => setShowCustomization(false)} onSaved={(config) => setRoomSceneConfigOverride({ roomInstanceId: roomSceneAccess.roomInstanceId!, config })} />}
                 {showRoomOffer && <WorldRoomOfferPanel onClose={() => setShowRoomOffer(false)} />}
                 {showRoomAccess && <WorldRoomAccessPanel state={roomInventoryQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessQuery.isLoading ? "loading" : roomAccessUnavailable ? "unavailable" : roomAccessGranted ? "granted" : "unavailable"} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? null} roomInstanceId={roomAccessQuery.data?.room_instance_id ?? null} onRetry={() => { void roomInventoryQuery.refetch(); void roomCatalogueQuery.refetch(); if (roomAccessItemCode) void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}

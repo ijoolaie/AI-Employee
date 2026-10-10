@@ -202,18 +202,31 @@ class WorldRoomFurniturePlacement(BaseModel):
     rotation: int = Field(default=0, ge=0, le=359)
 
 
+class WorldRoomEmployeePlacement(BaseModel):
+    """A tenant-owned employee's visual position inside the leased room."""
+    model_config = ConfigDict(extra="forbid")
+    employee_id: UUID
+    x: float = Field(ge=-2.2, le=2.2)
+    z: float = Field(ge=-2.2, le=2.2)
+    rotation: int = Field(default=0, ge=0, le=359)
+
+
 class WorldRoomSceneConfig(BaseModel):
     """Versioned, bounded client-renderable room configuration; never an access grant."""
     model_config = ConfigDict(extra="forbid")
     schema_version: Literal[1] = 1
     layout_preset: Literal["starter"] = "starter"
     furniture: list[WorldRoomFurniturePlacement] = Field(default_factory=list, max_length=40)
+    employee_placements: list[WorldRoomEmployeePlacement] = Field(default_factory=list, max_length=100)
 
     @model_validator(mode="after")
     def validate_unique_placement_ids(self):
         ids = [item.placement_id for item in self.furniture]
         if len(ids) != len(set(ids)):
             raise ValueError("placement_id values must be unique")
+        employee_ids = [item.employee_id for item in self.employee_placements]
+        if len(employee_ids) != len(set(employee_ids)):
+            raise ValueError("employee_id values must be unique in employee_placements")
         return self
 
 

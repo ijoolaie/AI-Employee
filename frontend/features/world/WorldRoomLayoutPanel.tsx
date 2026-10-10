@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { api, getErrorMessage } from "@/lib/api";
-import type { RoomFurnitureKind, RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
+import type { RoomEmployeePlacement, RoomFurnitureKind, RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
 
 type APIResponse<T> = { success: boolean; data?: T };
 type SceneConfigResponse = { room_instance_id: string; item_code: string; scene_config: WorldRoomSceneConfig; updated_at: string };
@@ -18,17 +18,20 @@ const KIND_LABELS: Record<RoomFurnitureKind, string> = {
 export function WorldRoomLayoutPanel({
   itemCode,
   roomInstanceId,
+  employees,
   initialConfig,
   onClose,
   onSaved,
 }: {
   itemCode: string;
   roomInstanceId: string;
+  employees: Array<{ id: string; name: string }>;
   initialConfig: WorldRoomSceneConfig;
   onClose: () => void;
   onSaved: (config: WorldRoomSceneConfig) => void;
 }) {
   const [furniture, setFurniture] = useState<RoomFurniturePlacement[]>(initialConfig.furniture);
+  const [employeePlacements, setEmployeePlacements] = useState<RoomEmployeePlacement[]>(initialConfig.employee_placements);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -54,6 +57,20 @@ export function WorldRoomLayoutPanel({
     setError("");
   };
 
+  const toggleEmployeePlacement = (employeeId: string) => {
+    setEmployeePlacements((current) => current.some((item) => item.employee_id === employeeId)
+      ? current.filter((item) => item.employee_id !== employeeId)
+      : [...current, { employee_id: employeeId, x: 0, z: 0, rotation: 0 }]);
+    setMessage("");
+    setError("");
+  };
+
+  const updateEmployeePlacement = (employeeId: string, patch: Partial<Pick<RoomEmployeePlacement, "x" | "z" | "rotation">>) => {
+    setEmployeePlacements((current) => current.map((item) => item.employee_id === employeeId ? { ...item, ...patch } : item));
+    setMessage("");
+    setError("");
+  };
+
   const save = async () => {
     setSaving(true);
     setMessage("");
@@ -61,7 +78,7 @@ export function WorldRoomLayoutPanel({
     try {
       const response = await api.put<APIResponse<SceneConfigResponse>>(
         `/world-commerce/room-inventory/${encodeURIComponent(itemCode)}/scene-config`,
-        { schema_version: 1, layout_preset: "starter", furniture },
+        { schema_version: 1, layout_preset: "starter", furniture, employee_placements: employeePlacements },
       );
       if (!response.data.success || !response.data.data) {
         throw new Error("The server did not confirm that the room layout was saved.");
@@ -117,6 +134,37 @@ export function WorldRoomLayoutPanel({
           </div>
         ))}
       </div>
+
+      <section className="mt-6 border-t border-slate-800 pt-5">
+        <h4 className="text-base font-semibold">Employee positions</h4>
+        <p className="mt-1 text-sm text-slate-400">Only active employees in this tenant&apos;s roster are listed. These positions affect the room presentation only; they do not change work execution or permissions.</p>
+        <div className="mt-3 space-y-3">
+          {employees.length === 0 && <p className="rounded-lg border border-slate-800 bg-slate-900 p-3 text-sm text-slate-400">No active tenant employees are available to place.</p>}
+          {employees.map((employee) => {
+            const placement = employeePlacements.find((item) => item.employee_id === employee.id);
+            return (
+              <div key={employee.id} className="grid gap-3 rounded-xl border border-slate-800 bg-slate-900 p-3 sm:grid-cols-[minmax(0,1fr)_auto_100px_100px_100px] sm:items-end">
+                <div>
+                  <p className="text-sm font-medium">{employee.name}</p>
+                  <p className="mt-1 break-all font-mono text-xs text-slate-500">{employee.id}</p>
+                </div>
+                <button type="button" disabled={saving} onClick={() => toggleEmployeePlacement(employee.id)} className="rounded-lg border border-cyan-300/30 px-3 py-2 text-sm text-cyan-100 disabled:opacity-50">{placement ? "Remove from room" : "Place in room"}</button>
+                {placement && <>
+                  <label className="text-xs text-slate-400">X
+                    <input aria-label={`${employee.name} room X`} type="number" min={-2.2} max={2.2} step={0.5} value={placement.x} disabled={saving} onChange={(event) => updateEmployeePlacement(employee.id, { x: Math.max(-2.2, Math.min(2.2, Number(event.target.value))) })} className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-slate-100" />
+                  </label>
+                  <label className="text-xs text-slate-400">Z
+                    <input aria-label={`${employee.name} room Z`} type="number" min={-2.2} max={2.2} step={0.5} value={placement.z} disabled={saving} onChange={(event) => updateEmployeePlacement(employee.id, { z: Math.max(-2.2, Math.min(2.2, Number(event.target.value))) })} className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-slate-100" />
+                  </label>
+                  <label className="text-xs text-slate-400">Rotation
+                    <input aria-label={`${employee.name} room rotation`} type="number" min={0} max={359} step={15} value={placement.rotation} disabled={saving} onChange={(event) => updateEmployeePlacement(employee.id, { rotation: Math.max(0, Math.min(359, Math.trunc(Number(event.target.value)))) })} className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-slate-100" />
+                  </label>
+                </>}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {message && <p role="status" className="mt-4 rounded-lg border border-emerald-400/30 bg-emerald-950/30 p-3 text-sm text-emerald-200">{message}</p>}
       {error && <p role="alert" className="mt-4 rounded-lg border border-red-400/30 bg-red-950/30 p-3 text-sm text-red-200">{error}</p>}

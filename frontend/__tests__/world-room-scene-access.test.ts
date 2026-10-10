@@ -60,3 +60,23 @@ describe("normalizeRoomSceneConfig", () => {
   });
 });
 
+describe("room employee placement normalization", () => {
+  it("keeps only unique active tenant employee IDs within room bounds", () => {
+    const allowedId = "2e3f1a10-0e6a-4e9d-8b9a-32c5d37f0b11";
+    const otherId = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
+    const config = normalizeRoomSceneConfig({
+      schema_version: 1,
+      layout_preset: "starter",
+      furniture: [],
+      employee_placements: [
+        { employee_id: allowedId, x: 1, z: -1, rotation: 90 },
+        { employee_id: allowedId, x: 2, z: 2, rotation: 0 },
+        { employee_id: otherId, x: 0, z: 0, rotation: 0 },
+        { employee_id: "not-a-uuid", x: 0, z: 0, rotation: 0 },
+        { employee_id: allowedId, x: 2.3, z: 0, rotation: 0 },
+      ],
+    }, new Set([allowedId]));
+    expect(config.employee_placements).toEqual([{ employee_id: allowedId, x: 1, z: -1, rotation: 90 }]);
+  });
+});
+

@@ -571,6 +571,8 @@ export function WorldViewport({
         const extraRow = Math.floor(index / desks.length);
         worker.group.position.set(place[0], 0, place[1] + extraRow * 2.3);
         worker.group.rotation.y = Math.PI + 0.2;
+        worker.group.userData.homePosition = worker.group.position.clone();
+        worker.group.userData.homeRotationY = worker.group.rotation.y;
         workers.push(worker);
       });
       signature = nextSignature;
@@ -675,6 +677,7 @@ export function WorldViewport({
       }
       roomInterior.visible = roomGranted && roomInterior.userData.roomInstanceId === authorizedInstanceId;
       renderer.domElement.dataset.roomFurnitureCount = roomInterior.visible ? String(roomFurnitureGroup.children.length) : "0";
+      renderer.domElement.dataset.roomEmployeeCount = roomInterior.visible ? String(access.sceneConfig.employee_placements.length) : "0";
       renderer.domElement.dataset.roomAccessState = roomInterior.visible ? "granted" : "denied";
       if (roomInterior.visible && authorizedInstanceId) renderer.domElement.dataset.roomInstanceId = authorizedInstanceId;
       else renderer.domElement.removeAttribute("data-room-instance-id");
@@ -685,6 +688,17 @@ export function WorldViewport({
 
       for (const worker of workers) {
         const selected = worker.id === selectedEmployeeIdRef.current;
+        const employeePlacement = roomInterior.visible
+          ? access.sceneConfig.employee_placements.find((placement) => placement.employee_id === worker.id)
+          : undefined;
+        const homePosition = worker.group.userData.homePosition;
+        if (employeePlacement) {
+          worker.group.position.set(employeePlacement.x, 0, 17.1 + employeePlacement.z);
+          worker.group.rotation.y = (employeePlacement.rotation * Math.PI) / 180;
+        } else if (homePosition) {
+          worker.group.position.copy(homePosition);
+          worker.group.rotation.y = worker.group.userData.homeRotationY ?? Math.PI + 0.2;
+        }
         worker.ring.material.color.setHex(selected ? 0x4fd1c5 : 0xffffff);
         worker.ring.material.opacity = selected ? 1 : 0.28;
         worker.ring.scale.setScalar(selected ? 1.14 : 1);
