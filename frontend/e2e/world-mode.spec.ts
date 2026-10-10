@@ -306,5 +306,5 @@ test("World room layout editor persists and applies furniture placements", async
   expect(savedPayload?.schema_version).toBe(1);
   expect(savedPayload?.layout_preset).toBe("starter");
   expect(savedPayload?.furniture).toHaveLength(3);
-  expect(savedPayload?.furniture.every((item) => item.x >= -3.5 && item.x <= 3.5 && item.z >= -3.5 && item.z <= 3.5)).toBe(true);
+  expect(savedPayload?.furniture.every((item) => item.x >= -2.2 && item.x <= 2.2 && item.z >= -2.2 && item.z <= 2.2)).toBe(true);
 });
