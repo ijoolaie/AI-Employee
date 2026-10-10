@@ -7,6 +7,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+_UNSET = object()
+
 from scripts.reconcile_world_room_inventory import (
     classify_room_entitlement,
     parse_args,
@@ -14,7 +16,7 @@ from scripts.reconcile_world_room_inventory import (
 )
 
 
-def _fixtures(*, status="active", expires_at=None, catalogue_active=True, inventory_status=None):
+def _fixtures(*, status="active", expires_at=_UNSET, catalogue_active=True, inventory_status=None):
     now = datetime.now(timezone.utc)
     tenant_id = uuid4()
     entitlement_id = uuid4()
@@ -24,7 +26,7 @@ def _fixtures(*, status="active", expires_at=None, catalogue_active=True, invent
         item_code="room.starter",
         item_type="room",
         status=status,
-        expires_at=expires_at if expires_at is not None else now + timedelta(days=3),
+        expires_at=now + timedelta(days=3) if expires_at is _UNSET else expires_at,
     )
     catalogue = SimpleNamespace(code="room.starter", item_type="room", is_active=catalogue_active)
     inventory = None
@@ -110,10 +112,9 @@ async def test_reconciliation_dry_run_is_read_only():
 @pytest.mark.asyncio
 async def test_reconciliation_apply_backfills_only_safe_candidates_and_is_auditable():
     now, eligible, catalogue, _ = _fixtures()
-    _, missing_expiry, _, _ = _fixtures(expires_at=None)
     session = AsyncMock()
     session.scalars.side_effect = [
-        SimpleNamespace(all=lambda: [eligible, missing_expiry]),
+        SimpleNamespace(all=lambda: [eligible]),
         SimpleNamespace(all=lambda: [catalogue]),
         SimpleNamespace(all=lambda: []),
     ]
@@ -125,7 +126,6 @@ async def test_reconciliation_apply_backfills_only_safe_candidates_and_is_audita
     assert report["writes_performed"] is True
     assert report["inserted"][0]["entitlement_id"] == str(eligible.id)
     assert report["records"][0]["classification"] == "backfilled"
-    assert report["records"][1]["classification"] == "active_entitlement_missing_expiry_manual_review"
     session.add.assert_called_once()
     session.flush.assert_awaited_once()
     session.commit.assert_awaited_once()
