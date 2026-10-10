@@ -2,7 +2,7 @@
 
 - PR [#1006](https://github.com/ijoolaie/AI-Employee/pull/1006) merged to `main` as `ad381ed17c5f8dedd140644f975647d3ac53b925`.
 - The UI reads the authenticated tenant's entitlement list from `GET /world-commerce/entitlements`, displays the active room item code and server-provided expiry, refreshes periodically, and fails closed when the entitlement query fails.
-- All 8 reported PR-head checks passed before merge. Post-merge checks on the exact merge SHA are being reconciled separately; do not treat pending checks as successful.
+- All 8 reported PR-head checks passed before merge. All 9 post-merge checks on the exact merge SHA completed successfully: frontend, backend, infrastructure, DAST, JavaScript/TypeScript CodeQL, Python CodeQL, Validate SLO contract, validate, and validate-and-package.
 - Explicit limitation: this is read-only status presentation. It does **not** connect entitlements to room inventory, unlock/open the 3D room, or implement scene-level authorization. The UI discloses that boundary rather than claiming the scene is unlocked.
 - Next priority remains tenant-safe server-authoritative room inventory and 3D scene access that denies expired/unreconciled leases, with backend/API and real-stack/E2E regression coverage. Customer renewal UX and expiry notifications follow once that access path is reliable.
 - Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Green CI and merged engineering changes do not certify a new release or prove external production readiness.
