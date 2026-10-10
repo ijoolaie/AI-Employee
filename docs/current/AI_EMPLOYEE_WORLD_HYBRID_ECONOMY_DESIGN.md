@@ -168,3 +168,8 @@ A schema regression test now asserts that vendor support order summaries omit bu
 ### Support diagnostics audit regression coverage (2026-10-10)
 
 A success-path regression test now verifies that vendor diagnostics return only the minimal summary contract, preserve order counts, invoke the support-access audit recorder with the viewed tenant and actor, and commit the audit record with the response. This complements the permission-denial, unrelated-tenant denial, and sensitive-field omission tests. This remains a read-only diagnostic surface; it does not create support tickets, support sessions, impersonation, temporary grants, or commerce mutations.
+
+
+### Incoming support escalation inbox (2026-10-10)
+
+The existing edition support-escalation model is now surfaced through read-only incoming-inbox endpoints for vendor and reseller administrators: `GET /edition/vendor/support/escalations` and `GET /edition/reseller/support/escalations`. Each query filters strictly on the authenticated receiving tenant's `to_tenant_id`, orders newest first, and caps results at 100. This reuses the existing escalation table and avoids a parallel World-only ticket store. It is an inbox/read surface only: replies, status transitions, attachments, support sessions, impersonation, and support-driven commerce mutations are not included. Tests cover both receiving edition routes and the tenant filter.
