@@ -1,0 +1,154 @@
+"""World Mode catalogue and one-time commerce endpoints.
+
+Manual approval is deliberately separate from activation. Provider callbacks
+are not wired here, so a submitted reference is a claim awaiting vendor review.
+"""
+from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.deps import CurrentContext, DbSession, has_permission
+from app.models.world_commerce import WorldCatalogueItem, WorldOrder
+from app.schemas.common import APIResponse
+from app.schemas.world_commerce import (
+    WorldCatalogueItemResponse, WorldOrderCreateRequest, WorldOrderResponse,
+    WorldPaymentDecision, WorldPaymentSubmission,
+)
+from app.services import world_commerce_service as commerce
+
+router = APIRouter(prefix="/world-commerce", tags=["world-commerce"])
+
+
+async def _vendor_tenant_scope(ctx: CurrentContext, db: AsyncSession) -> set[UUID]:
+    if ctx.user.is_platform_admin:
+        rows = await db.scalars(select(WorldOrder.tenant_id).distinct())
+        return set(rows.all())
+    if ctx.tenant.tenant_kind != "vendor":
+        raise HTTPException(status_code=403, detail="Vendor tenant required")
+    if not await has_permission(ctx, "world.commerce.approve") and not await has_permission(ctx, "world.commerce.activate"):
+        raise HTTPException(status_code=403, detail="Missing World commerce vendor permission")
+    result = await db.execute(text("""
+        WITH RECURSIVE descendants(id) AS (
+            SELECT id FROM tenants WHERE id = :root_id
+            UNION ALL
+            SELECT child.id FROM tenants AS child
+            JOIN descendants AS parent ON child.parent_tenant_id = parent.id
+        )
+        SELECT id FROM descendants
+    """), {"root_id": str(ctx.tenant_id)})
+    return {UUID(str(row[0])) for row in result.all()}
+
+
+@router.get("/catalogue", response_model=APIResponse[list[WorldCatalogueItemResponse]])
+async def catalogue(ctx: CurrentContext, db: DbSession):
+    rows = await db.scalars(
+        select(WorldCatalogueItem).where(WorldCatalogueItem.is_active.is_(True))
+        .order_by(WorldCatalogueItem.item_type, WorldCatalogueItem.code)
+    )
+    return APIResponse(success=True, data=[
+        WorldCatalogueItemResponse.model_validate(row, from_attributes=True) for row in rows.all()
+    ])
+
+
+@router.post("/orders", response_model=APIResponse[WorldOrderResponse])
+async def create_order(payload: WorldOrderCreateRequest, ctx: CurrentContext, db: DbSession):
+    row = await commerce.create_order(
+        db, tenant_id=ctx.tenant_id, buyer=ctx.user,
+        item_code=payload.item_code, currency=payload.currency,
+        payment_method=payload.payment_method, payment_provider=payload.payment_provider,
+        idempotency_key=payload.idempotency_key,
+    )
+    await db.commit()
+    await db.refresh(row)
+    return APIResponse(success=True, data=WorldOrderResponse.model_validate(row, from_attributes=True))
+
+
+@router.get("/orders", response_model=APIResponse[list[WorldOrderResponse]])
+async def my_orders(ctx: CurrentContext, db: DbSession):
+    rows = await db.scalars(
+        select(WorldOrder).where(WorldOrder.tenant_id == ctx.tenant_id)
+        .order_by(WorldOrder.created_at.desc()).limit(100)
+    )
+    return APIResponse(success=True, data=[
+        WorldOrderResponse.model_validate(row, from_attributes=True) for row in rows.all()
+    ])
+
+
+@router.post("/orders/{order_id}/payment-submission", response_model=APIResponse[WorldOrderResponse])
+async def submit_payment(order_id: UUID, payload: WorldPaymentSubmission, ctx: CurrentContext, db: DbSession):
+    row = await commerce.submit_payment(
+        db, order_id=order_id, tenant_id=ctx.tenant_id, actor=ctx.user,
+        provider_transaction_ref=payload.provider_transaction_ref,
+    )
+    await db.commit()
+    await db.refresh(row)
+    return APIResponse(success=True, data=WorldOrderResponse.model_validate(row, from_attributes=True))
+
+
+@router.get("/vendor/orders", response_model=APIResponse[list[WorldOrderResponse]])
+async def vendor_orders(
+    ctx: CurrentContext,
+    db: DbSession,
+    status: str = Query(default="payment_submitted", pattern="^(payment_submitted|approved|rejected|fulfilled)$"),
+):
+    scopes = await _vendor_tenant_scope(ctx, db)
+    if not scopes:
+        return APIResponse(success=True, data=[])
+    rows = await db.scalars(
+        select(WorldOrder).where(WorldOrder.tenant_id.in_(scopes), WorldOrder.status == status)
+        .order_by(WorldOrder.created_at.asc()).limit(250)
+    )
+    return APIResponse(success=True, data=[
+        WorldOrderResponse.model_validate(row, from_attributes=True) for row in rows.all()
+    ])
+
+
+async def _load_vendor_order(order_id: UUID, ctx: CurrentContext, db: AsyncSession) -> WorldOrder:
+    scopes = await _vendor_tenant_scope(ctx, db)
+    row = await db.scalar(select(WorldOrder).where(WorldOrder.id == order_id).with_for_update())
+    if row is None or row.tenant_id not in scopes:
+        raise HTTPException(status_code=404, detail="World order not found")
+    return row
+
+
+@router.post("/vendor/orders/{order_id}/approve", response_model=APIResponse[WorldOrderResponse])
+async def approve_order(order_id: UUID, ctx: CurrentContext, db: DbSession):
+    if not ctx.user.is_platform_admin and not await has_permission(ctx, "world.commerce.approve"):
+        raise HTTPException(status_code=403, detail="Missing World commerce approval permission")
+    order = await _load_vendor_order(order_id, ctx, db)
+    row = await commerce.approve_payment(
+        db, order_id=order.id, tenant_id=order.tenant_id, approver=ctx.user
+    )
+    await db.commit()
+    await db.refresh(row)
+    return APIResponse(success=True, data=WorldOrderResponse.model_validate(row, from_attributes=True))
+
+
+@router.post("/vendor/orders/{order_id}/reject", response_model=APIResponse[WorldOrderResponse])
+async def reject_order(order_id: UUID, payload: WorldPaymentDecision, ctx: CurrentContext, db: DbSession):
+    if not ctx.user.is_platform_admin and not await has_permission(ctx, "world.commerce.approve"):
+        raise HTTPException(status_code=403, detail="Missing World commerce approval permission")
+    if not payload.reason:
+        raise HTTPException(status_code=422, detail="A rejection reason is required")
+    order = await _load_vendor_order(order_id, ctx, db)
+    row = await commerce.reject_payment(
+        db, order_id=order.id, tenant_id=order.tenant_id, approver=ctx.user, reason=payload.reason
+    )
+    await db.commit()
+    await db.refresh(row)
+    return APIResponse(success=True, data=WorldOrderResponse.model_validate(row, from_attributes=True))
+
+
+@router.post("/vendor/orders/{order_id}/activate", response_model=APIResponse[WorldOrderResponse])
+async def activate_order(order_id: UUID, ctx: CurrentContext, db: DbSession):
+    if not ctx.user.is_platform_admin and not await has_permission(ctx, "world.commerce.activate"):
+        raise HTTPException(status_code=403, detail="Missing World commerce activation permission")
+    order = await _load_vendor_order(order_id, ctx, db)
+    row = await commerce.mark_fulfilled(
+        db, order_id=order.id, tenant_id=order.tenant_id, activator=ctx.user
+    )
+    await db.commit()
+    await db.refresh(row)
+    return APIResponse(success=True, data=WorldOrderResponse.model_validate(row, from_attributes=True))
