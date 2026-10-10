@@ -3,11 +3,16 @@ from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
+from fastapi import HTTPException
 
 from app.api.v1.edition_control import (
     list_reseller_support_escalations,
     list_vendor_support_escalations,
+    update_reseller_support_escalation_status,
+    update_vendor_support_escalation_status,
 )
+from app.schemas.edition import SupportEscalationStatusRequest
+from app.services import edition_service
 
 
 @pytest.mark.asyncio
@@ -43,14 +48,6 @@ async def test_support_inbox_lists_only_escalations_addressed_to_current_tenant(
     assert "support_escalations.created_at" in statement
 
 
-from fastapi import HTTPException
-
-from app.api.v1.edition_control import (
-    update_reseller_support_escalation_status,
-    update_vendor_support_escalation_status,
-)
-from app.schemas.edition import SupportEscalationStatusRequest
-from app.services import edition_service
 
 
 @pytest.mark.asyncio
