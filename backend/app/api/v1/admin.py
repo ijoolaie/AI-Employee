@@ -290,6 +290,7 @@ async def create_world_catalogue_item(
         price_options={currency: option.model_dump(mode="json") for currency, option in payload.price_options.items()},
         is_free=payload.is_free,
         is_active=payload.is_active,
+        lease_duration_days=payload.lease_duration_days,
     )
     db.add(item)
     try:
@@ -335,6 +336,7 @@ async def replace_world_catalogue_item(
     item.price_options = {currency: option.model_dump(mode="json") for currency, option in payload.price_options.items()}
     item.is_free = payload.is_free
     item.is_active = payload.is_active
+    item.lease_duration_days = payload.lease_duration_days
     try:
         await db.flush()
     except IntegrityError as exc:
