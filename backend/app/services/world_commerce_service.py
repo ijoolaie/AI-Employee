@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -17,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.user import User
-from app.models.world_commerce import WorldCatalogueItem, WorldCommerceEvent, WorldFeatureEntitlement, WorldOrder
+from app.models.world_commerce import WorldCatalogueItem, WorldCommerceEvent, WorldFeatureEntitlement, WorldOrder, WorldRoomInventory
 from app.services import audit_service
 
 SUPPORTED_CURRENCIES = {"IRR", "USD", "USDT", "WORLD_CREDIT"}
@@ -287,6 +287,7 @@ async def mark_fulfilled(
     )
     if entitlement is None:
         entitlement = WorldFeatureEntitlement(
+            id=uuid4(),
             tenant_id=tenant_id,
             item_code=order.item_code_snapshot,
             item_type=item.item_type,
@@ -309,6 +310,24 @@ async def mark_fulfilled(
         entitlement.revoked_at = None
         entitlement.expires_at = expires_at
         entitlement.metadata_ = {"catalogue_item_id": str(item.id), "lease_duration_days": item.lease_duration_days}
+
+    if item.item_type == "room":
+        inventory = await db.scalar(select(WorldRoomInventory).where(
+            WorldRoomInventory.tenant_id == tenant_id,
+            WorldRoomInventory.item_code == order.item_code_snapshot,
+        ).with_for_update())
+        if inventory is None:
+            db.add(WorldRoomInventory(
+                tenant_id=tenant_id,
+                entitlement_id=entitlement.id,
+                item_code=order.item_code_snapshot,
+                status="provisioned",
+                scene_config={},
+            ))
+        else:
+            # A renewal reuses the same tenant-owned room slot; it never creates duplicates.
+            inventory.entitlement_id = entitlement.id
+            inventory.status = "provisioned"
 
     old_status = order.status
     order.status = "fulfilled"
