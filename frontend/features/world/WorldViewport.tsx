@@ -367,7 +367,9 @@ export function WorldViewport({
   const employeesRef = useRef(employees);
   const selectedEmployeeIdRef = useRef(selectedEmployeeId);
   const selectRef = useRef(onEmployeeSelect);
-  const mapToggleRef = useRef(handleMapToggle);\n  const roomProximityRef = useRef(onRoomProximity);\n  const roomInteractRef = useRef(onRoomInteract);
+  const mapToggleRef = useRef(handleMapToggle);
+  const roomProximityRef = useRef(onRoomProximity);
+  const roomInteractRef = useRef(onRoomInteract);
 
   useEffect(() => {
     employeesRef.current = employees;
@@ -439,7 +441,9 @@ export function WorldViewport({
       const next = employeesRef.current;
       const nextSignature = next.map((e) => [e.id, e.name, e.state, e.slot].join(":")).join("|");
       if (signature === nextSignature) return;
-      const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;\n      if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }\n      for (const worker of workers) {
+      const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;
+      if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }
+      for (const worker of workers) {
         scene.remove(worker.group);
         worker.group.traverse((object: any) => {
           if (object.geometry?.dispose) object.geometry.dispose();
@@ -497,7 +501,8 @@ export function WorldViewport({
       distance = Math.max(11, Math.min(92, distance * (1 - delta)));
       updateCamera();
     };
-    const onMapToggle = () => mapToggleRef.current();\n    const onRoomInteractEvent = () => { if (wasNearRoom) roomInteractRef.current(); };
+    const onMapToggle = () => mapToggleRef.current();
+    const onRoomInteractEvent = () => { if (wasNearRoom) roomInteractRef.current(); };
     const onMobileMove = (event: Event) => {
       mobileMove = (event as CustomEvent<{ x: number; y: number }>).detail;
     };
@@ -515,7 +520,8 @@ export function WorldViewport({
     renderer.domElement.addEventListener("world:zoom", onZoom);
     renderer.domElement.addEventListener("world:reset", onReset);
     renderer.domElement.addEventListener("world:tap", onTap);
-    renderer.domElement.addEventListener("world:map-toggle", onMapToggle);\n    renderer.domElement.addEventListener("world:interact", onRoomInteractEvent);
+    renderer.domElement.addEventListener("world:map-toggle", onMapToggle);
+    renderer.domElement.addEventListener("world:interact", onRoomInteractEvent);
     host.addEventListener("world:mobilemove", onMobileMove);
 
     const observer = new ResizeObserver(() => {
@@ -585,7 +591,8 @@ export function WorldViewport({
       renderer.domElement.removeEventListener("world:zoom", onZoom);
       renderer.domElement.removeEventListener("world:reset", onReset);
       renderer.domElement.removeEventListener("world:tap", onTap);
-      renderer.domElement.removeEventListener("world:map-toggle", onMapToggle);\n      renderer.domElement.removeEventListener("world:interact", onRoomInteractEvent);
+      renderer.domElement.removeEventListener("world:map-toggle", onMapToggle);
+      renderer.domElement.removeEventListener("world:interact", onRoomInteractEvent);
       host.removeEventListener("world:mobilemove", onMobileMove);
       scene.traverse((object: any) => {
         if (object.geometry?.dispose) object.geometry.dispose();
