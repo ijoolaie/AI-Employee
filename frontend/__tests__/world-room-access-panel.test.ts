@@ -33,7 +33,7 @@ describe("World room access gate contracts", () => {
     expect(viewport).toContain("roomInterior.userData.roomInstanceId = authorizedInstanceId");
     expect(viewport).toContain("roomInterior.userData.roomInstanceId === authorizedInstanceId");
     expect(panel).toContain("شناسه نمونه");
-    expect(panel).toContain("ذخیره‌سازی چیدمان و سفارشی‌سازی اختصاصی هنوز تکمیل نشده است");
+    expect(panel).toContain("جایگذاری کارمندان و سفارشی‌سازی پایدار مدیر هنوز تکمیل نشده است");
   });
 
   it("keeps retry and denied/unavailable messaging non-optimistic", () => {
