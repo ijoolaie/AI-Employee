@@ -349,11 +349,15 @@ export function WorldViewport({
   selectedEmployeeId,
   onEmployeeSelect,
   onMapToggle: handleMapToggle,
+  onRoomProximity,
+  onRoomInteract,
 }: {
   employees: WorldEmployee[];
   selectedEmployeeId: string | null;
   onEmployeeSelect: (employeeId: string | null) => void;
   onMapToggle: () => void;
+  onRoomProximity: (near: boolean) => void;
+  onRoomInteract: () => void;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
