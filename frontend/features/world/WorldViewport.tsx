@@ -245,8 +245,11 @@ function addCEOAvatar(scene: any) {
 function addLockedRoom(scene: any) {
   const room = new THREE.Group();
   room.name = "room-entrance";
-  box(room, [8.2, 3.5, 0.28], [0, 1.75, 0], 0x38495a);
-  box(room, [2.1, 2.75, 0.16], [0, 1.38, 0.22], 0x1b2938);
+  // Split the front wall around a real doorway so authorized users can see into the room.
+  box(room, [3.05, 3.5, 0.28], [-2.575, 1.75, 0], 0x38495a);
+  box(room, [3.05, 3.5, 0.28], [2.575, 1.75, 0], 0x38495a);
+  box(room, [2.1, 0.75, 0.28], [0, 3.125, 0], 0x38495a);
+  const doorway = box(room, [2.1, 2.75, 0.08], [0, 1.38, 0.17], 0x1b2938);
   const door = box(room, [1.65, 2.35, 0.1], [0, 1.25, 0.31], 0x526c80, { metalness: 0.15 });
   sphere(room, 0.07, [0.58, 1.22, 0.39], 0xf5cf77);
   box(room, [2.4, 0.14, 0.22], [0, 2.9, 0.34], 0xf5cf77, { emissive: 0x7a5b22, emissiveIntensity: 0.2 });
@@ -255,6 +258,7 @@ function addLockedRoom(scene: any) {
   const activeLabel = makeLabel("AUTHORIZED ROOM", "#baf4d8");
   if (activeLabel) { activeLabel.position.set(0, 4.05, 0.2); activeLabel.scale.set(5.2, 1.1, 1); activeLabel.visible = false; room.add(activeLabel); }
   room.userData.door = door;
+  room.userData.doorway = doorway;
   room.userData.lockedLabel = lockedLabel;
   room.userData.activeLabel = activeLabel;
   room.position.set(0, 0, 12.4);
@@ -594,6 +598,7 @@ export function WorldViewport({
       const roomGranted = roomAccessRef.current.granted && Boolean(roomAccessRef.current.roomInstanceId);
       roomInterior.visible = roomGranted;
       roomEntrance.userData.door.rotation.y = roomGranted ? Math.PI / 2 : 0;
+      if (roomEntrance.userData.doorway) roomEntrance.userData.doorway.visible = !roomGranted;
       if (roomEntrance.userData.lockedLabel) roomEntrance.userData.lockedLabel.visible = !roomGranted;
       if (roomEntrance.userData.activeLabel) roomEntrance.userData.activeLabel.visible = roomGranted;
       for (const worker of workers) {
