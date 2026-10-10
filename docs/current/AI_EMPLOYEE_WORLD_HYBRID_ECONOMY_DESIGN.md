@@ -178,3 +178,12 @@ The existing edition support-escalation model is now surfaced through read-only 
 ### Support escalation status workflow (2026-10-10)
 
 Vendor and reseller receiving tenants can now update the status of escalations addressed to them using `PATCH /edition/vendor/support/escalations/{escalation_id}/status` and `PATCH /edition/reseller/support/escalations/{escalation_id}/status`. Status values are constrained to `open`, `in_progress`, and `resolved`; supported transitions are open→in_progress/resolved, in_progress→open/resolved, and resolved→open. The query scopes the escalation by both ID and the authenticated receiving tenant. Successful changes write an audit event with previous and new status. A missing or foreign-tenant escalation returns 404; an invalid transition returns 409. Tests cover tenant isolation, auditing, and transition rejection. Reply threads, attachments, and support impersonation remain unimplemented.
+
+
+## Implementation checkpoint — commerce and support status workflow (2026-10-10)
+
+The World backend now has catalogue/order/entitlement primitives, append-only commerce events, vendor diagnostics, and incoming support escalation inboxes for vendor and reseller editions. Support status updates are tenant-scoped and audited, with the supported transitions open → in_progress/resolved, in_progress → open/resolved, and resolved → open. Missing or cross-tenant tickets return 404; invalid transitions return 409.
+
+The current commerce layer does not verify real payment provider callbacks or crypto network transfers, provide a wallet ledger, automate room leases/fulfillment, or persist customization into the live 3D scene. Support reply threads, attachments, impersonation and temporary grants are also not implemented. Do not accept real payments or present these primitives as production-ready commerce.
+
+At inspection, implementation head 33411a4b95aa3a5ebd2deb265800fd250066b60a passed CI, CodeQL, HA recovery, DAST and production infrastructure checks. The documentation-updated head must be revalidated before merge. Automated checks do not replace manual desktop/mobile visual QA or release certification.
