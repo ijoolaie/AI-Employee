@@ -345,3 +345,20 @@ test("World room editor persists an active tenant employee placement", async ({ 
     { employee_id: "2e3f1a10-0e6a-4e9d-8b9a-32c5d37f0b11", x: 0, z: 0, rotation: 0 },
   ]);
 });
+
+test("World room editor refuses to overwrite a newer saved layout", async ({ page }) => {
+  await mockRoomSceneAccess(page, "2035-01-01T00:00:00.000Z", true);
+  await page.route("**/world-commerce/room-inventory/room_monthly/scene-config**", async (route) => {
+    await route.fulfill({
+      status: 409,
+      contentType: "application/json",
+      body: JSON.stringify({ detail: "Room layout changed since it was opened. Close the editor and reopen the latest layout before saving." }),
+    });
+  });
+
+  await page.getByRole("button", { name: "Customize room" }).click();
+  const editor = page.getByRole("dialog", { name: "Customize your room" });
+  await editor.getByRole("button", { name: /Add chair/ }).click();
+  await editor.getByRole("button", { name: "Save layout" }).click();
+  await expect(editor.getByRole("alert")).toContainText("changed elsewhere");
+});
