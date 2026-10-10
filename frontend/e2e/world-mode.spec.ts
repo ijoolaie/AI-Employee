@@ -242,7 +242,7 @@ async function mockRoomSceneAccess(page: import("@playwright/test").Page, expire
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, data: [{ room_instance_id: "room-instance-e2e-001", item_code: "room_monthly", status: "provisioned", expires_at: expiresAt, scene_config: {} }] }),
+      body: JSON.stringify({ success: true, data: [{ room_instance_id: "room-instance-e2e-001", item_code: "room_monthly", status: "provisioned", expires_at: expiresAt, updated_at: "2030-01-01T00:00:00.000Z", scene_config: {} }] }),
     });
   });
   await page.route("**/world-commerce/room-inventory/room_monthly/access", async (route) => {
@@ -277,7 +277,7 @@ test("World room layout editor persists and applies furniture placements", async
   await expect(canvas).toHaveAttribute("data-room-access-state", "granted");
   await expect(canvas).toHaveAttribute("data-room-furniture-count", "2");
 
-  const savedPayloads: Array<{ schema_version: number; layout_preset: string; furniture: Array<{ placement_id: string; kind: string; x: number; z: number; rotation: number }>; employee_placements: Array<{ employee_id: string; x: number; z: number; rotation: number }> }> = [];
+  const savedPayloads: Array<{ expected_updated_at: string; scene_config: { schema_version: number; layout_preset: string; furniture: Array<{ placement_id: string; kind: string; x: number; z: number; rotation: number }>; employee_placements: Array<{ employee_id: string; x: number; z: number; rotation: number }> } }> = [];
   await page.route("**/world-commerce/room-inventory/room_monthly/scene-config", async (route) => {
     savedPayloads.push(route.request().postDataJSON());
     await route.fulfill({
@@ -288,7 +288,7 @@ test("World room layout editor persists and applies furniture placements", async
         data: {
           room_instance_id: "room-instance-e2e-001",
           item_code: "room_monthly",
-          scene_config: savedPayloads[0],
+          scene_config: savedPayloads[0].scene_config,
           updated_at: "2035-01-01T00:00:00.000Z",
         },
       }),
@@ -304,10 +304,10 @@ test("World room layout editor persists and applies furniture placements", async
   await expect(canvas).toHaveAttribute("data-room-furniture-count", "3");
   expect(savedPayloads).toHaveLength(1);
   const savedPayload = savedPayloads[0];
-  expect(savedPayload.schema_version).toBe(1);
-  expect(savedPayload.layout_preset).toBe("starter");
-  expect(savedPayload.furniture).toHaveLength(3);
-  expect(savedPayload.furniture.every((item) => item.x >= -2.2 && item.x <= 2.2 && item.z >= -2.2 && item.z <= 2.2)).toBe(true);
+  expect(savedPayload.scene_config.schema_version).toBe(1);
+  expect(savedPayload.scene_config.layout_preset).toBe("starter");
+  expect(savedPayload.scene_config.furniture).toHaveLength(3);
+  expect(savedPayload.scene_config.furniture.every((item) => item.x >= -2.2 && item.x <= 2.2 && item.z >= -2.2 && item.z <= 2.2)).toBe(true);
 });
 
 test("World room editor persists an active tenant employee placement", async ({ page }) => {
@@ -316,7 +316,7 @@ test("World room editor persists an active tenant employee placement", async ({ 
   await expect(canvas).toHaveAttribute("data-room-access-state", "granted");
   await expect(canvas).toHaveAttribute("data-room-employee-count", "0");
 
-  const savedPayloads: Array<{ schema_version: number; layout_preset: string; furniture: unknown[]; employee_placements: Array<{ employee_id: string; x: number; z: number; rotation: number }> }> = [];
+  const savedPayloads: Array<{ expected_updated_at: string; scene_config: { schema_version: number; layout_preset: string; furniture: unknown[]; employee_placements: Array<{ employee_id: string; x: number; z: number; rotation: number }> } }> = [];
   await page.route("**/world-commerce/room-inventory/room_monthly/scene-config", async (route) => {
     savedPayloads.push(route.request().postDataJSON());
     await route.fulfill({
@@ -341,7 +341,7 @@ test("World room editor persists an active tenant employee placement", async ({ 
   await expect(editor.getByRole("status")).toContainText("Room layout saved to the server.");
   await expect(canvas).toHaveAttribute("data-room-employee-count", "1");
   expect(savedPayloads).toHaveLength(1);
-  expect(savedPayloads[0].employee_placements).toEqual([
+  expect(savedPayloads[0].scene_config.employee_placements).toEqual([
     { employee_id: "2e3f1a10-0e6a-4e9d-8b9a-32c5d37f0b11", x: 0, z: 0, rotation: 0 },
   ]);
 });
