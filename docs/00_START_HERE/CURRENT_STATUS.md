@@ -743,3 +743,13 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - Manual desktop/mobile visual QA and production release certification remain separate gates.
 - Post-merge checks have been triggered on merge commit `74224ef253a1bb3d990347e34e41dbe31827b97d`; outcomes must be reviewed before treating the merged state as validated by those runs.
 - Latest published exact-SHA certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; these engineering merges do not change its certification boundary.
+
+
+## World room offer order-flow E2E checkpoint — 2026-10-10 (PR #992)
+
+- PR #992 (https://github.com/ijoolaie/AI-Employee/pull/992) was squash-merged at `2e8531a4495cf80ee32994d23e965c67afea6f0a`.
+- Exact PR head `b8549dd64f799487c6d5e5deb60ee0a0256aa0ea` passed all eight PR checks before merge: frontend, backend, infrastructure, DAST, recovery, CodeQL Python, CodeQL JavaScript/TypeScript, and CodeQL.
+- Added a Playwright browser-level test for approaching a locked room, opening the offer panel, checking server-catalogue prices for IRR/USD/USDT selection (including USD price assertion), and submitting an idempotent order request without a client-supplied amount.
+- The test mocks catalogue and order APIs. It verifies the UI says payment has not occurred and does **not** certify a real provider, webhook, settlement, or room activation.
+- Post-merge checks were still running at the time of this reconciliation. The latest published and certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; this merge is post-release engineering work, not a new production certification.
+- Remaining gates: manual desktop/mobile World QA; durable atomic wallet ledger before World Credit; provider-specific payment adapters and signed/replay-safe webhook verification; explicit USDT network policy; and room entitlement/lease/expiry/employee-placement integration.
