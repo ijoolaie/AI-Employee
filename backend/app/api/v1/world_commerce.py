@@ -10,10 +10,10 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import CurrentContext, DbSession, has_permission
-from app.models.world_commerce import WorldCatalogueItem, WorldOrder
+from app.models.world_commerce import WorldCatalogueItem, WorldFeatureEntitlement, WorldOrder
 from app.schemas.common import APIResponse
 from app.schemas.world_commerce import (
-    WorldCatalogueItemResponse, WorldOrderCreateRequest, WorldOrderResponse,
+    WorldCatalogueItemResponse, WorldFeatureEntitlementResponse, WorldOrderCreateRequest, WorldOrderResponse,
     WorldPaymentDecision, WorldPaymentSubmission,
 )
 from app.services import world_commerce_service as commerce
@@ -49,6 +49,19 @@ async def catalogue(ctx: CurrentContext, db: DbSession):
     )
     return APIResponse(success=True, data=[
         WorldCatalogueItemResponse.model_validate(row, from_attributes=True) for row in rows.all()
+    ])
+
+
+@router.get("/entitlements", response_model=APIResponse[list[WorldFeatureEntitlementResponse]])
+async def my_entitlements(ctx: CurrentContext, db: DbSession):
+    rows = await db.scalars(
+        select(WorldFeatureEntitlement).where(
+            WorldFeatureEntitlement.tenant_id == ctx.tenant_id,
+            WorldFeatureEntitlement.status == "active",
+        ).order_by(WorldFeatureEntitlement.activated_at.desc())
+    )
+    return APIResponse(success=True, data=[
+        WorldFeatureEntitlementResponse.model_validate(row, from_attributes=True) for row in rows.all()
     ])
 
 
