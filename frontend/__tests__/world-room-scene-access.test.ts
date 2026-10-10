@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isRoomSceneAccessUsable } from "../features/world/WorldRoomSceneAccess";
+import { DEFAULT_ROOM_SCENE_CONFIG, normalizeRoomSceneConfig } from "../features/world/WorldRoomSceneConfig";
 
 const futureExpiry = "2035-01-01T00:00:00.000Z";
 const now = Date.parse("2030-01-01T00:00:00.000Z");
@@ -24,8 +25,6 @@ describe("isRoomSceneAccessUsable", () => {
     expect(isRoomSceneAccessUsable({ granted: false, roomInstanceId: "room-1", expiresAt: futureExpiry }, false, now)).toBe(false);
   });
 });
-
-import { DEFAULT_ROOM_SCENE_CONFIG, normalizeRoomSceneConfig } from "../features/world/WorldRoomSceneConfig";
 
 describe("normalizeRoomSceneConfig", () => {
   it("uses the safe starter layout for legacy empty scene_config", () => {
