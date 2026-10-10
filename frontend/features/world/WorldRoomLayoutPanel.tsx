@@ -86,7 +86,7 @@ export function WorldRoomLayoutPanel({
         <button type="button" onClick={onClose} className="rounded-lg border border-slate-700 px-3 py-2 text-sm">Close</button>
       </header>
 
-      <p className="mt-4 text-sm leading-6 text-slate-300">Move built-in furniture within the room footprint. Changes are saved only after the server confirms your active room lease.</p>
+      <p className="mt-4 text-sm leading-6 text-slate-300">Adjust built-in furniture positions within the room footprint, then save; the scene updates after the server confirms your active room lease.</p>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {(Object.keys(KIND_LABELS) as RoomFurnitureKind[]).map((kind) => (
