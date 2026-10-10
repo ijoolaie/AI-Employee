@@ -712,3 +712,10 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - Further inspection of the PR diff and CI logs found that Dependabot had changed both the lockfile and `frontend/package.json` to Tailwind v4. The first correction restored the lockfile but correctly failed `npm ci` because the PR manifest still required Tailwind 4.
 - The manifest has now also been restored to the `main` version (`tailwindcss: ^3.4.16`) in commit `072e0c077ad18b7cb2afea1c50b8b68aa99be857`. Current PR files are coherent: manifest/lock metadata use Tailwind v3, resolved Tailwind is 3.4.19, `postcss-selector-parser` remains 6.1.4, and `source-map-js` is 1.2.2.
 - Five workflows were triggered on this newest head; final outcomes are pending. Keep PR #984 open and unmerged until all required checks pass on `072e0c077ad18b7cb2afea1c50b8b68aa99be857`.
+
+
+## PR #984 final result — 2026-10-10
+
+- Corrected PR head `072e0c077ad18b7cb2afea1c50b8b68aa99be857` passed all five required workflows: CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST Validation.
+- PR #984 was squash-merged after those exact-head checks passed. Merge commit: `36817a54475051ac42a7a445b56a3245845dbfe8`.
+- This closes the dependency PR blocker. It does not certify a new production release; release certification remains a separate exact-SHA gate.
