@@ -102,3 +102,29 @@ class WorldCommerceEvent(Base):
     to_status: Mapped[str | None] = mapped_column(String(24))
     details: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class WorldFeatureEntitlement(Base):
+    """Persistent ownership granted only by successful World order fulfillment."""
+
+    __tablename__ = "world_feature_entitlements"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "item_code", name="uq_world_entitlement_tenant_item"),
+        UniqueConstraint("source_order_id", name="uq_world_entitlement_source_order"),
+        CheckConstraint("status IN ('active', 'revoked')", name="ck_world_entitlement_status"),
+        Index("ix_world_entitlements_tenant_status", "tenant_id", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False)
+    item_code: Mapped[str] = mapped_column(String(100), nullable=False)
+    item_type: Mapped[str] = mapped_column(String(24), nullable=False)
+    source_order_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("world_orders.id", ondelete="RESTRICT"), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="active")
+    activated_by_user_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
+    activated_by_username: Mapped[str | None] = mapped_column(String(320))
+    activated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
