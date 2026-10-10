@@ -7,6 +7,7 @@ from uuid import uuid4
 from fastapi import HTTPException
 from pydantic import ValidationError
 
+from app.api.v1.world_commerce import feature_access
 from app.schemas.world_commerce import WorldOrderCreateRequest, WorldPaymentSubmission
 from app.services.world_commerce_service import approve_payment, create_order, mark_fulfilled
 
@@ -108,3 +109,25 @@ async def test_activator_must_differ_from_payment_approver():
         )
     assert exc.value.status_code == 409
     db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_vendor_gets_included_access_to_customization_items():
+    item = SimpleNamespace(code="layout.modern", is_active=True, is_free=False, item_type="layout")
+    db = AsyncMock()
+    db.scalar.return_value = item
+    ctx = SimpleNamespace(tenant_id=uuid4(), tenant=SimpleNamespace(tenant_kind="vendor"))
+    result = await feature_access("layout.modern", ctx, db)
+    assert result.data.granted is True
+    assert result.data.access_source == "vendor_included"
+
+
+@pytest.mark.asyncio
+async def test_vendor_does_not_get_room_rental_for_free():
+    item = SimpleNamespace(code="room.executive", is_active=True, is_free=False, item_type="room")
+    db = AsyncMock()
+    db.scalar.side_effect = [item, None]
+    ctx = SimpleNamespace(tenant_id=uuid4(), tenant=SimpleNamespace(tenant_kind="vendor"))
+    result = await feature_access("room.executive", ctx, db)
+    assert result.data.granted is False
+    assert result.data.access_source == "not_entitled"
