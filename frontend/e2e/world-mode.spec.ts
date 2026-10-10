@@ -217,3 +217,56 @@ test("World room offer loads server prices and creates an order without charging
   expect(orderPayload).toHaveProperty("idempotency_key");
   expect(orderPayload).not.toHaveProperty("amount");
 });
+
+// Regression: the Three.js scene must deny access even when the API returns a stale/expired grant.
+async function mockRoomSceneAccess(page: import("@playwright/test").Page, expiresAt: string, granted = true) {
+  await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), authState);
+  await page.route("**/customer-dashboard/office", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(office) });
+  });
+  await page.route("**/analytics/roi", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: { conversations: 0, ai_resolved: 0, human_handoffs: 0, runs: 0, successful_runs: 0, orders: 0, revenue: 0, influenced_orders: 0, influenced_revenue: 0, ai_resolution_rate: 0, handoff_rate: 0 } }),
+    });
+  });
+  await page.route("**/world-commerce/catalogue", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: [{ code: "room_monthly", item_type: "room", is_free: false }] }),
+    });
+  });
+  await page.route("**/world-commerce/room-inventory", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: [{ room_instance_id: "room-instance-e2e-001", item_code: "room_monthly", status: "active", expires_at: expiresAt }] }),
+    });
+  });
+  await page.route("**/world-commerce/room-inventory/room_monthly/access", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: { item_code: "room_monthly", granted, reason: granted ? "active" : "not_entitled", room_instance_id: "room-instance-e2e-001", expires_at: expiresAt } }),
+    });
+  });
+  await page.goto("/world");
+}
+
+test("World 3D room opens only for an unexpired server authorization", async ({ page }) => {
+  await mockRoomSceneAccess(page, "2035-01-01T00:00:00.000Z", true);
+  const canvas = page.getByLabel("AI Company World viewport");
+  await expect(canvas).toBeVisible();
+  await expect(canvas).toHaveAttribute("data-room-access-state", "granted");
+  await expect(canvas).toHaveAttribute("data-room-instance-id", "room-instance-e2e-001");
+});
+
+test("World 3D room stays locked when a grant has expired", async ({ page }) => {
+  await mockRoomSceneAccess(page, "2020-01-01T00:00:00.000Z", true);
+  const canvas = page.getByLabel("AI Company World viewport");
+  await expect(canvas).toBeVisible();
+  await expect(canvas).toHaveAttribute("data-room-access-state", "denied");
+  await expect(canvas).not.toHaveAttribute("data-room-instance-id", /.+/);
+});

@@ -3,20 +3,24 @@ import { describe, expect, it } from "vitest";
 
 const source = readFileSync("features/world/WorldShell.tsx", "utf8");
 
-describe("World room lease status", () => {
-  it("reads active entitlements from the tenant-scoped server endpoint", () => {
-    expect(source).toContain('"/world-commerce/entitlements"');
-    expect(source).toContain('entitlement.item_type === "room"');
-    expect(source).toContain('entitlement.status === "active"');
+describe("World room inventory access status", () => {
+  it("reads access from tenant-scoped room inventory and access endpoints", () => {
+    expect(source).toContain('"/world-commerce/room-inventory"');
+    expect(source).toContain("/world-commerce/room-inventory/");
+    expect(source).toContain("roomAccessQuery.data?.granted === true");
+    expect(source).toContain("roomAccessQuery.data?.expires_at ?? null");
   });
 
-  it("shows server expiry and explicitly distinguishes entitlement from scene integration", () => {
-    expect(source).toContain("lease.expires_at");
-    expect(source).toContain("اتصال این اعتبار به بازشدن صحنهٔ سه‌بعدی هنوز تکمیل نشده است");
+  it("does not display access as granted when the latest query is unavailable", () => {
+    expect(source).toContain("roomInventoryQuery.error || roomCatalogueQuery.error || roomAccessQuery.error");
+    expect(source).toContain("unavailable={roomAccessUnavailable}");
+    expect(source).toContain("granted={roomAccessGranted}");
+    expect(source).toContain("وضعیت موجودی یا مجوز قابل بررسی نیست؛ دسترسی مسدود می‌ماند.");
   });
 
-  it("fails closed in the UI when entitlement status cannot be loaded", () => {
-    expect(source).toContain("وضعیت اعتبار قابل بررسی نیست؛ دسترسی فعال فرض نمی‌شود.");
-    expect(source).toContain("وضعیت از فهرست اعتبارهای معتبر سرور خوانده شده است.");
+  it("schedules a re-check at server expiry and passes expiry to the scene", () => {
+    expect(source).toContain("window.setTimeout(() => { void roomAccessQuery.refetch(); }, delay)");
+    expect(source).toContain("expiresAt: roomAccessQuery.data?.expires_at ?? null");
+    expect(source).toContain("roomAccess={roomSceneAccess}");
   });
 });
