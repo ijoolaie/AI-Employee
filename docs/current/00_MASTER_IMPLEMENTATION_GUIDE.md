@@ -278,3 +278,20 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - PR #983 was squash-merged into main as commit f3f7ad6c169a5e31b1773b4a280af43b49c020c7.
 - The documentation-updated PR head a0952cc44444e5c04c4c245653e59227b3a88a82 passed all 17 workflows before merge, including CI, CodeQL, HA recovery, ephemeral DAST, production infrastructure, and the supporting E2E/security contracts.
 - The merge does not imply production certification or manual visual QA. Remaining limitations are recorded in the World hybrid-economy design and master handoff.
+
+
+## 2026-10-10 hand-off addendum — PR #984 and World follow-through
+
+### Dependency/security PR #984 — blocked
+
+- Current inspected head: `5287581895464c2942dc4ae4b3f21949e51322a7`.
+- Exact-head workflow outcomes: CodeQL PASS; CI, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST Validation FAIL.
+- Confirmed mismatch: package manifest and PostCSS configuration remain Tailwind v3, but the PR lockfile resolves Tailwind v4. CI reports the v4 PostCSS plugin migration error. A `REQUEST_CHANGES` review and PR conversation comment have been posted.
+- Next action: preserve the `source-map-js@1.2.2` security update and regenerate a coherent lockfile retaining Tailwind v3, or propose a separate intentional v4 migration. Do not merge until all required workflows pass on the exact latest head.
+
+### World follow-through
+
+- PR #983 is documented as merged to main at `f3f7ad6c169a5e31b1773b4a280af43b49c020c7`; its exact PR head `a0952cc44444e5c04c4c245653e59227b3a88a82` passed 17 automated workflows before merge.
+- This is post-release engineering, not a new production-certified release. Latest certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- Manual desktop/mobile QA is still required. Live provider/webhook verification, wallet/ledger, lease and fulfillment automation, persistent 3D customization, and support replies/threads/attachments remain unimplemented.
+- For the next session, inspect live main and open PRs first, check workflow status against each exact head, and do not carry success across SHAs.
