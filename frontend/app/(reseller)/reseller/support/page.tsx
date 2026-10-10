@@ -14,6 +14,7 @@ import {
   getErrorMessage,
   listFiles,
   listResellerSupportEscalations,
+  listResellerSentSupportEscalations,
   listResellerSupportEscalationMessages,
   type SupportEscalation,
 } from "@/lib/api";
@@ -36,8 +37,8 @@ export default function ResellerSupportPage() {
         submitting: "در حال ثبت…",
         created: "ارجاع با موفقیت ثبت شد.",
         error: "عملیات انجام نشد.",
-        tickets: "تیکت‌های دریافتی",
-        emptyTickets: "هنوز تیکت دریافتی وجود ندارد.",
+        tickets: "تیکت‌های پشتیبانی",
+        emptyTickets: "هنوز تیکت پشتیبانی وجود ندارد.",
         thread: "گفت‌وگو",
         chooseTicket: "برای مشاهده گفت‌وگو یک تیکت انتخاب کنید.",
         reply: "پاسخ شما",
@@ -65,8 +66,8 @@ export default function ResellerSupportPage() {
         submitting: "Creating…",
         created: "Escalation created successfully.",
         error: "The operation could not be completed.",
-        tickets: "Incoming tickets",
-        emptyTickets: "There are no incoming tickets yet.",
+        tickets: "Support tickets",
+        emptyTickets: "There are no support tickets yet.",
         thread: "Conversation",
         chooseTicket: "Select a ticket to view its conversation.",
         reply: "Your reply",
@@ -96,10 +97,15 @@ export default function ResellerSupportPage() {
     queryKey: ["reseller-support-escalations"],
     queryFn: listResellerSupportEscalations,
   });
+  const sentTicketsQuery = useQuery({
+    queryKey: ["reseller-support-escalations-sent"],
+    queryFn: listResellerSentSupportEscalations,
+  });
   const tickets = [
     ...createdTickets,
-    ...(ticketsQuery.data ?? []).filter((ticket) => !createdTickets.some((created) => created.id === ticket.id)),
-  ];
+    ...(ticketsQuery.data ?? []),
+    ...(sentTicketsQuery.data ?? []),
+  ].filter((ticket, index, all) => all.findIndex((candidate) => candidate.id === ticket.id) === index);
   const selectedTicket = tickets.find((ticket) => ticket.id === selectedId) ?? tickets[0];
 
   const messagesQuery = useQuery({
@@ -120,6 +126,7 @@ export default function ResellerSupportPage() {
       setFeedback(m.created);
       setFeedbackIsError(false);
       void qc.invalidateQueries({ queryKey: ["reseller-support-escalations"] });
+      void qc.invalidateQueries({ queryKey: ["reseller-support-escalations-sent"] });
     },
     onError: (error) => {
       setFeedback(getErrorMessage(error) || m.error);
