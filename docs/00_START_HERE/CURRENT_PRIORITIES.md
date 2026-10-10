@@ -248,3 +248,9 @@ The dependency PR's security update is desirable, but its current lockfile/build
 4. **Fulfillment:** approved entitlements still need room inventory/lease duration, renewal/expiry, employee placement and persistent customization-to-scene integration.
 5. **Acceptance:** manual desktop/mobile World QA and production certification remain separate open gates.
 
+
+### Catalogue configuration dependency found during follow-up review
+
+- The World commerce migration creates the catalogue table but does not seed a paid room item, and the inspected API currently exposes catalogue reads but no catalogue create/update endpoint.
+- Therefore the next safe slice is **platform-admin catalogue configuration** (server-side validation of prices and allowed provider/method combinations), or an explicitly approved seed/configuration process. Do not fabricate production prices, provider names, payment methods or a USDT network.
+- Only after a real catalogue entry is configured should the customer order-creation UI be connected to `POST /world-commerce/orders` with an idempotency key; server-side amount calculation remains authoritative.
