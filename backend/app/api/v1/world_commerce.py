@@ -10,10 +10,10 @@ from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import CurrentContext, DbSession, has_permission
-from app.models.world_commerce import WorldCatalogueItem, WorldFeatureEntitlement, WorldOrder
+from app.models.world_commerce import WorldCatalogueItem, WorldCommerceEvent, WorldFeatureEntitlement, WorldOrder
 from app.schemas.common import APIResponse
 from app.schemas.world_commerce import (
-    WorldCatalogueItemResponse, WorldFeatureAccessResponse, WorldFeatureEntitlementResponse, WorldOrderCreateRequest, WorldOrderResponse,
+    WorldCatalogueItemResponse, WorldCommerceEventResponse, WorldFeatureAccessResponse, WorldFeatureEntitlementResponse, WorldOrderCreateRequest, WorldOrderResponse,
     WorldPaymentDecision, WorldPaymentSubmission,
 )
 from app.services import world_commerce_service as commerce
@@ -121,6 +121,26 @@ async def my_orders(ctx: CurrentContext, db: DbSession):
     )
     return APIResponse(success=True, data=[
         WorldOrderResponse.model_validate(row, from_attributes=True) for row in rows.all()
+    ])
+
+
+@router.get("/orders/{order_id}/events", response_model=APIResponse[list[WorldCommerceEventResponse]])
+async def order_events(order_id: UUID, ctx: CurrentContext, db: DbSession):
+    order = await db.scalar(select(WorldOrder).where(WorldOrder.id == order_id))
+    if order is None:
+        raise HTTPException(status_code=404, detail="World order not found")
+    if order.tenant_id != ctx.tenant_id:
+        scopes = await _vendor_tenant_scope(ctx, db)
+        if order.tenant_id not in scopes:
+            raise HTTPException(status_code=404, detail="World order not found")
+    events = await db.scalars(
+        select(WorldCommerceEvent).where(
+            WorldCommerceEvent.order_id == order_id,
+            WorldCommerceEvent.tenant_id == order.tenant_id,
+        ).order_by(WorldCommerceEvent.created_at.asc()).limit(500)
+    )
+    return APIResponse(success=True, data=[
+        WorldCommerceEventResponse.model_validate(row, from_attributes=True) for row in events.all()
     ])
 
 
