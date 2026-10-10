@@ -176,3 +176,31 @@ A second review found that `onPointerMove` was adding any pointer ID to the acti
 - Frontend CI lint, contract tests, unit tests, production build and World Mode Playwright smoke passed. Backend migration checks and backend tests passed, including the support inbox status-transition regression tests.
 - Follow-up limitations: no live payment gateway/webhook verification or wallet/ledger; no lease expiry/renewal or fulfillment automation; no persistent customization wired to the live 3D scene; no support reply threads, attachments, impersonation or temporary support grants. Manual desktop/mobile visual QA and production release certification are still outstanding.
 - Next session should resolve the current main SHA, read this handoff and the current status/priority documents, then continue from the remaining limitations rather than treating this merge as production release approval.
+
+
+## 2026-10-10 follow-up checkpoint — validation and next actions
+
+### Repository / release boundary
+
+- PR #983 is merged to `main` at `f3f7ad6c169a5e31b1773b4a280af43b49c020c7`. The PR head `a0952cc44444e5c04c4c245653e59227b3a88a82` passed all 17 workflows before merge.
+- Latest published exact-SHA certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. The World merge is not a new production certification.
+
+### Blocking dependency PR #984
+
+- Inspected PR head: `5287581895464c2942dc4ae4b3f21949e51322a7`.
+- CodeQL passed; CI, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST Validation failed.
+- Root cause: the lockfile resolves Tailwind v4 while `frontend/package.json` and `frontend/postcss.config.mjs` still use Tailwind v3 conventions. CI build fails with the Tailwind PostCSS plugin migration error.
+- A formal request-changes review and conversation comment have been posted. Retain the `source-map-js@1.2.2` security update, fix the lockfile/configuration mismatch, and require all mandatory checks green on the exact corrected head before merge.
+
+### World acceptance checklist — still open
+
+- [ ] Manual desktop visual QA, including keyboard navigation, movement, room prompts, employee selection and customization panel.
+- [ ] Manual mobile QA, including touch movement, joystick, pinch/zoom cancellation edge cases, responsive layout and touch target behavior.
+- [ ] Record browsers/devices, steps, results and screenshots/video; automated CI does not close this gate.
+- [ ] Implement and test live payment provider/webhook verification and explicit network/provider policy for USDT before any real-payment claim.
+- [ ] Implement wallet ledger, transaction idempotency/replay handling and auditable balance changes before enabling World Credit.
+- [ ] Connect approved entitlements to actual room inventory, leases/renewals/expiry, employee placement and durable customization-to-3D-scene state.
+- [ ] Complete support reply/thread/attachment workflow; do not imply read-only escalation inboxes are a full support workspace.
+- [ ] Re-check all CI/security workflows against the exact current branch head; never inherit previous-SHA success.
+
+No real payments or paid feature activation should be claimed from the current prototype/API foundations. Keep release certification and external deployment/acceptance gates separate.
