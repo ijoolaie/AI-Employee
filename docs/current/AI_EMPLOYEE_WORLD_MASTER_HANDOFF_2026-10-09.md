@@ -333,3 +333,34 @@ Inspect and use the existing order API contract to add an explicit customer orde
 - Support reply/thread/attachment workflow.
 - Manual desktop/mobile QA and independent production release certification remain outstanding.
 - Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; the merge does not inherit that certification.
+
+
+## 2026-10-10 follow-through — support message threads (PR #1031)
+
+### Verified merge and exact-head checks
+
+- PR [#1031](https://github.com/ijoolaie/AI-Employee/pull/1031) — `feat(support): add tenant-scoped escalation message threads` — squash-merged to `main` at `fce3bcb97ebedfa697e95a0d36e665c6af1690cf`.
+- Exact PR head `160c02eb86331d620e07d4b8ab84d1d19a1d6e80` passed all 18 reported checks: backend, frontend, CodeQL Python and JavaScript/TypeScript, semantic E2E, infrastructure, DAST, recovery, architecture, observability, rollback contract, tenant hierarchy/RBAC and W16/W18/W20/W21/W22 real-stack checks.
+- Post-merge checks on the merge SHA were still in progress at the time this note was written. Recheck the merge SHA independently; pre-merge success does not imply post-merge success.
+
+### Delivered
+
+- Added `support_escalation_messages` and migration `w22_support_escalation_messages`, chained after `20261010_world_room_inventory`.
+- Added bounded list/reply APIs for customer, reseller, and vendor participants. Lists return at most 200 messages in chronological order.
+- Every read/reply first checks that the current tenant is either `from_tenant_id` or `to_tenant_id`; unrelated ticket IDs return 404.
+- Message bodies are not copied into audit metadata. Replies to resolved tickets return 409 until the ticket is reopened.
+- Added regression tests for participant scoping, foreign-ticket concealment, audit payload boundaries, and resolved-ticket behavior.
+
+### Next implementation slice — secure support attachments
+
+- Reuse existing `FileObject`, `file_service`, `file_policy`, and storage abstraction; do not weaken generic `/files` tenant isolation.
+- Accept attachment references only when each file is active and owned by the posting tenant. Enforce a small explicit per-message count and retain existing allowlisted file extensions/MIME types, maximum size and tenant quota.
+- Add a message-attachment relation and expose only safe metadata (file ID, sanitized filename, content type, byte size); never return storage keys or public URLs.
+- For attachment download, verify the requester is a participant in the parent escalation and that the file is linked to a message in that exact escalation. Return 404 for foreign/unlinked IDs; never authorize by possession of a file UUID alone.
+- Test sender ownership, both ticket participants' download access, non-participant denial, cross-ticket attachment denial, deleted-file behavior, unsupported types/oversize upload rejection, count bounds and audit metadata. Preserve compensating storage cleanup and avoid exposing file bodies in audit logs.
+- Keep support frontend integration as a separate slice after the API contract and isolation tests pass.
+
+### Boundaries unchanged
+
+- This is post-release engineering, not a new production-certified release. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- Live payment provider verification, signed/replay-safe webhooks, explicit USDT network policy, durable World Credit ledger, room fulfillment and employee placement/customization-to-scene integration, and manual desktop/mobile QA remain independent gates.
