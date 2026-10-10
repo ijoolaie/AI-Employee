@@ -890,3 +890,12 @@ This work is post-v1.4.17 engineering evidence and does not inherit the immutabl
 - Post-merge workflows on `fce3bcb97ebedfa697e95a0d36e665c6af1690cf` were still running when recorded; recheck them before claiming post-merge validation complete.
 - Attachments and the support UI are still not implemented. Next: link active files uploaded by the message author to a message, then provide downloads only after rechecking ticket-participant access; never use public file URLs or trust client storage keys. Existing generic file APIs are tenant-scoped and should not be weakened to implement support sharing.
 - No new release certification: latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+
+## Current engineering status — 2026-10-10 — PR #1036 merged
+
+- PR [#1036](https://github.com/ijoolaie/AI-Employee/pull/1036) merged to `main` at `87c1719d1e2522912e8f55f8bc8d8c2956ea0eaa` (tested head `0cf6785f4e82fd33fbbbda320d42dbd57a8dc45f`).
+- All 14 checks on that exact head passed, including backend/frontend, semantic E2E, W21 real-stack, recovery, DAST, CodeQL, architecture, infrastructure, observability, rollback contract and tenant hierarchy/RBAC.
+- Reseller-created support tickets now remain visible after reload because the page fetches the tenant-scoped outgoing list in addition to incoming tickets; results are merged and de-duplicated by ticket ID.
+- The new `GET /edition/reseller/support/escalations/sent` endpoint scopes outgoing escalations to the authenticated reseller tenant. Existing participant checks continue to govern message and attachment access.
+- PR merge is verified; production deployment/runtime behavior is not asserted by this merge alone.
