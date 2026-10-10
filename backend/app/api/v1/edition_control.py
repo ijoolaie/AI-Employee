@@ -1,8 +1,10 @@
 """Vendor/reseller/customer runtime control-plane boundaries."""
 
 from uuid import UUID, uuid4
+from urllib.parse import quote
 
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
 from app.core.deps import DbSession
@@ -10,6 +12,8 @@ from app.core.edition_deps import CustomerAdminContext, ResellerAdminContext, Ve
 from app.models.tenant import Tenant
 from app.models.support_escalation import SupportEscalation
 from app.models.support_escalation_message import SupportEscalationMessage
+from app.models.support_escalation_message_attachment import SupportEscalationMessageAttachment
+from app.models.file import FileObject
 from app.models.tenant_entitlement import TenantEntitlement
 from app.schemas.common import APIResponse
 from app.schemas.edition import (
@@ -21,9 +25,10 @@ from app.schemas.edition import (
     SupportEscalationStatusRequest,
     SupportEscalationMessageRequest,
     SupportEscalationMessageResponse,
+    SupportEscalationMessageAttachmentResponse,
     TenantSummary,
 )
-from app.services import edition_lifecycle_service, edition_service
+from app.services import edition_lifecycle_service, edition_service, storage
 
 router = APIRouter(prefix="/edition", tags=["edition-control"])
 
@@ -296,10 +301,36 @@ async def _list_support_escalation_messages(escalation_id: UUID, ctx, db: DbSess
     )
     rows = list(result.scalars().all())
     rows.reverse()
-    return APIResponse(
-        success=True,
-        data=[SupportEscalationMessageResponse.model_validate(row, from_attributes=True) for row in rows],
-    )
+    attachments_by_message: dict[UUID, list[SupportEscalationMessageAttachmentResponse]] = {
+        row.id: [] for row in rows
+    }
+    if rows:
+        attachment_result = await db.execute(
+            select(SupportEscalationMessageAttachment, FileObject)
+            .join(FileObject, FileObject.id == SupportEscalationMessageAttachment.file_id)
+            .where(
+                SupportEscalationMessageAttachment.message_id.in_([row.id for row in rows]),
+                FileObject.status == "active",
+            )
+            .order_by(SupportEscalationMessageAttachment.created_at)
+        )
+        for attachment, file_obj in attachment_result.all():
+            attachments_by_message[attachment.message_id].append(
+                SupportEscalationMessageAttachmentResponse(
+                    id=attachment.id,
+                    file_id=file_obj.id,
+                    filename=file_obj.filename,
+                    content_type=file_obj.content_type,
+                    size_bytes=file_obj.size_bytes,
+                    created_at=attachment.created_at,
+                )
+            )
+    data = []
+    for row in rows:
+        item = SupportEscalationMessageResponse.model_validate(row, from_attributes=True)
+        item.attachments = attachments_by_message[row.id]
+        data.append(item)
+    return APIResponse(success=True, data=data)
 
 
 async def _create_support_escalation_message(
@@ -311,16 +342,48 @@ async def _create_support_escalation_message(
     ticket = await _get_participant_support_escalation(escalation_id, ctx, db)
     if ticket.status == "resolved":
         raise HTTPException(status_code=409, detail="Reopen the support escalation before replying")
+    message_body = payload.body.strip()
+    if not message_body:
+        raise HTTPException(status_code=422, detail="Message body must not be blank")
+    file_ids = payload.attachment_file_ids
+    if len(set(file_ids)) != len(file_ids):
+        raise HTTPException(status_code=422, detail="Duplicate attachment file IDs are not allowed")
+    files_by_id: dict[UUID, FileObject] = {}
+    if file_ids:
+        file_result = await db.execute(
+            select(FileObject).where(
+                FileObject.id.in_(file_ids),
+                FileObject.tenant_id == ctx.tenant_id,
+                FileObject.status == "active",
+            )
+        )
+        files_by_id = {file_obj.id: file_obj for file_obj in file_result.scalars().all()}
+        if len(files_by_id) != len(file_ids):
+            raise HTTPException(status_code=404, detail="One or more attachment files not found")
+        existing_result = await db.execute(
+            select(SupportEscalationMessageAttachment.file_id).where(
+                SupportEscalationMessageAttachment.file_id.in_(file_ids)
+            )
+        )
+        if existing_result.scalars().all():
+            raise HTTPException(status_code=409, detail="A file can only be attached to one support message")
     message = SupportEscalationMessage(
         id=uuid4(),
         escalation_id=ticket.id,
         author_tenant_id=ctx.tenant_id,
         author_user_id=ctx.user_id,
-        body=payload.body.strip(),
+        body=message_body,
     )
-    if not message.body:
-        raise HTTPException(status_code=422, detail="Message body must not be blank")
     db.add(message)
+    await db.flush()
+    for file_id in file_ids:
+        db.add(
+            SupportEscalationMessageAttachment(
+                id=uuid4(),
+                message_id=message.id,
+                file_id=file_id,
+            )
+        )
     await db.flush()
     await db.refresh(message)
     await edition_service.record_audit(
@@ -332,10 +395,95 @@ async def _create_support_escalation_message(
         resource_id=str(message.id),
         metadata={"escalation_id": str(ticket.id)},
     )
-    return APIResponse(
-        success=True,
-        data=SupportEscalationMessageResponse.model_validate(message, from_attributes=True),
+    response = SupportEscalationMessageResponse.model_validate(message, from_attributes=True)
+    response.attachments = [
+        SupportEscalationMessageAttachmentResponse(
+            id=attachment.id,
+            file_id=files_by_id[attachment.file_id].id,
+            filename=files_by_id[attachment.file_id].filename,
+            content_type=files_by_id[attachment.file_id].content_type,
+            size_bytes=files_by_id[attachment.file_id].size_bytes,
+            created_at=attachment.created_at,
+        )
+        for attachment in []
+    ]
+    if file_ids:
+        attachment_result = await db.execute(
+            select(SupportEscalationMessageAttachment)
+            .where(SupportEscalationMessageAttachment.message_id == message.id)
+            .order_by(SupportEscalationMessageAttachment.created_at)
+        )
+        response.attachments = [
+            SupportEscalationMessageAttachmentResponse(
+                id=attachment.id,
+                file_id=files_by_id[attachment.file_id].id,
+                filename=files_by_id[attachment.file_id].filename,
+                content_type=files_by_id[attachment.file_id].content_type,
+                size_bytes=files_by_id[attachment.file_id].size_bytes,
+                created_at=attachment.created_at,
+            )
+            for attachment in attachment_result.scalars().all()
+        ]
+    return APIResponse(success=True, data=response)
+
+
+async def _download_support_escalation_attachment(
+    escalation_id: UUID, attachment_id: UUID, ctx, db: DbSession
+):
+    await _get_participant_support_escalation(escalation_id, ctx, db)
+    result = await db.execute(
+        select(SupportEscalationMessageAttachment, FileObject)
+        .join(SupportEscalationMessage, SupportEscalationMessage.id == SupportEscalationMessageAttachment.message_id)
+        .join(FileObject, FileObject.id == SupportEscalationMessageAttachment.file_id)
+        .where(
+            SupportEscalationMessageAttachment.id == attachment_id,
+            SupportEscalationMessage.escalation_id == escalation_id,
+            FileObject.status == "active",
+        )
     )
+    pair = result.one_or_none()
+    if pair is None:
+        raise HTTPException(status_code=404, detail="Support attachment not found")
+    _, file_obj = pair
+    try:
+        stream = storage.get_storage_backend().open(file_obj.storage_key)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Support attachment not found") from exc
+    safe_filename = quote(file_obj.filename, safe="")
+    return StreamingResponse(
+        stream,
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": f"attachment; filename*=UTF-8''{safe_filename}",
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "private, no-store",
+        },
+    )
+
+
+@router.get("/vendor/support/escalations/{escalation_id}/messages/{message_id}/attachments/{attachment_id}/download")
+async def download_vendor_support_escalation_attachment(escalation_id: UUID, message_id: UUID, attachment_id: UUID, ctx: VendorAdminContext, db: DbSession):
+    # message_id is included in the URL and must match the attachment's actual message.
+    result = await db.execute(select(SupportEscalationMessageAttachment.message_id).where(SupportEscalationMessageAttachment.id == attachment_id))
+    if result.scalar_one_or_none() != message_id:
+        raise HTTPException(status_code=404, detail="Support attachment not found")
+    return await _download_support_escalation_attachment(escalation_id, attachment_id, ctx, db)
+
+
+@router.get("/reseller/support/escalations/{escalation_id}/messages/{message_id}/attachments/{attachment_id}/download")
+async def download_reseller_support_escalation_attachment(escalation_id: UUID, message_id: UUID, attachment_id: UUID, ctx: ResellerAdminContext, db: DbSession):
+    result = await db.execute(select(SupportEscalationMessageAttachment.message_id).where(SupportEscalationMessageAttachment.id == attachment_id))
+    if result.scalar_one_or_none() != message_id:
+        raise HTTPException(status_code=404, detail="Support attachment not found")
+    return await _download_support_escalation_attachment(escalation_id, attachment_id, ctx, db)
+
+
+@router.get("/support/escalations/{escalation_id}/messages/{message_id}/attachments/{attachment_id}/download")
+async def download_customer_support_escalation_attachment(escalation_id: UUID, message_id: UUID, attachment_id: UUID, ctx: CustomerAdminContext, db: DbSession):
+    result = await db.execute(select(SupportEscalationMessageAttachment.message_id).where(SupportEscalationMessageAttachment.id == attachment_id))
+    if result.scalar_one_or_none() != message_id:
+        raise HTTPException(status_code=404, detail="Support attachment not found")
+    return await _download_support_escalation_attachment(escalation_id, attachment_id, ctx, db)
 
 
 @router.get("/vendor/support/escalations/{escalation_id}/messages", response_model=APIResponse[list[SupportEscalationMessageResponse]])
