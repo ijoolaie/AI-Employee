@@ -16,14 +16,37 @@ import { WorldRoomOfferPanel } from "./WorldRoomOfferPanel";
 import { WorldStatusBar } from "./WorldStatusBar";
 import { WorldMiniMap } from "./WorldMiniMap";
 
-type WorldEntitlement = {\n  item_code: string;\n  item_type: string;\n  status: string;\n  expires_at: string | null;\n};\n\ntype APIResponse<T> = { success: boolean; data?: T };\n\nexport function WorldShell() {
+type WorldEntitlement = {
+  item_code: string;
+  item_type: string;
+  status: string;
+  expires_at: string | null;
+};
+
+type APIResponse<T> = { success: boolean; data?: T };
+
+export function WorldShell() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [showMiniMap, setShowMiniMap] = useState(false);
   const [showCustomization, setShowCustomization] = useState(false);
   const [nearLockedRoom, setNearLockedRoom] = useState(false);
   const [showRoomOffer, setShowRoomOffer] = useState(false);
   const officeQuery = useQuery({ queryKey: ["customer-world-read-model"], queryFn: getCustomerOffice, refetchInterval: 5000, staleTime: 2000 });
-  const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });\n  const entitlementsQuery = useQuery({\n    queryKey: ["world-entitlements"],\n    queryFn: async () => {\n      const response = await api.get<APIResponse<WorldEntitlement[]>>("/world-commerce/entitlements");\n      if (!response.data.success || !Array.isArray(response.data.data)) {\n        throw new Error("پاسخ اعتبارهای World معتبر نیست.");\n      }\n      return response.data.data;\n    },\n    refetchInterval: 30_000,\n    staleTime: 10_000,\n    retry: 1,\n  });\n  const activeRoomLease = entitlementsQuery.data?.find((entitlement) => entitlement.item_type === "room" && entitlement.status === "active") ?? null;
+  const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });
+  const entitlementsQuery = useQuery({
+    queryKey: ["world-entitlements"],
+    queryFn: async () => {
+      const response = await api.get<APIResponse<WorldEntitlement[]>>("/world-commerce/entitlements");
+      if (!response.data.success || !Array.isArray(response.data.data)) {
+        throw new Error("پاسخ اعتبارهای World معتبر نیست.");
+      }
+      return response.data.data;
+    },
+    refetchInterval: 30_000,
+    staleTime: 10_000,
+    retry: 1,
+  });
+  const activeRoomLease = entitlementsQuery.data?.find((entitlement) => entitlement.item_type === "room" && entitlement.status === "active") ?? null;
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
@@ -82,7 +105,12 @@ type WorldEntitlement = {\n  item_code: string;\n  item_type: string;\n  status:
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
-              <RoomLeaseStatus\n                loading={entitlementsQuery.isLoading}\n                unavailable={Boolean(entitlementsQuery.error)}\n                lease={activeRoomLease}\n              />\n              <WorldStatusBar world={world} />
+              <RoomLeaseStatus
+                loading={entitlementsQuery.isLoading}
+                unavailable={Boolean(entitlementsQuery.error)}
+                lease={activeRoomLease}
+              />
+              <WorldStatusBar world={world} />
               <WorldProgressionPanel progression={world.progression} />
               <WorldOutcomePanel data={roiQuery.data} />
             </>
@@ -105,4 +133,18 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
     </div>
   );
 }
-\nfunction RoomLeaseStatus({ loading, unavailable, lease }: { loading: boolean; unavailable: boolean; lease: WorldEntitlement | null }) {\n  const expiry = lease?.expires_at ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lease.expires_at)) : null;\n  return (\n    <section aria-label="World room lease status" className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3">\n      <p className="text-xs font-semibold text-slate-300">وضعیت اعتبار اتاق</p>\n      {loading && <p role="status" className="mt-1 text-sm text-slate-400">در حال بررسی اعتبار از سرور…</p>}\n      {unavailable && <p role="alert" className="mt-1 text-sm text-amber-200">وضعیت اعتبار قابل بررسی نیست؛ دسترسی فعال فرض نمی‌شود.</p>}\n      {!loading && !unavailable && lease && (\n        <p className="mt-1 text-sm text-emerald-200">اعتبار اتاق «{lease.item_code}» فعال است{expiry ? ` تا ${expiry}` : ""}. اتصال این اعتبار به بازشدن صحنهٔ سه‌بعدی هنوز تکمیل نشده است.</p>\n      )}\n      {!loading && !unavailable && !lease && <p className="mt-1 text-sm text-slate-400">اعتبار فعال اتاق پولی پیدا نشد. وضعیت از فهرست اعتبارهای معتبر سرور خوانده شده است.</p>}\n    </section>\n  );\n}\n
+
+function RoomLeaseStatus({ loading, unavailable, lease }: { loading: boolean; unavailable: boolean; lease: WorldEntitlement | null }) {
+  const expiry = lease?.expires_at ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lease.expires_at)) : null;
+  return (
+    <section aria-label="World room lease status" className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3">
+      <p className="text-xs font-semibold text-slate-300">وضعیت اعتبار اتاق</p>
+      {loading && <p role="status" className="mt-1 text-sm text-slate-400">در حال بررسی اعتبار از سرور…</p>}
+      {unavailable && <p role="alert" className="mt-1 text-sm text-amber-200">وضعیت اعتبار قابل بررسی نیست؛ دسترسی فعال فرض نمی‌شود.</p>}
+      {!loading && !unavailable && lease && (
+        <p className="mt-1 text-sm text-emerald-200">اعتبار اتاق «{lease.item_code}» فعال است{expiry ? ` تا ${expiry}` : ""}. اتصال این اعتبار به بازشدن صحنهٔ سه‌بعدی هنوز تکمیل نشده است.</p>
+      )}
+      {!loading && !unavailable && !lease && <p className="mt-1 text-sm text-slate-400">اعتبار فعال اتاق پولی پیدا نشد. وضعیت از فهرست اعتبارهای معتبر سرور خوانده شده است.</p>}
+    </section>
+  );
+}
