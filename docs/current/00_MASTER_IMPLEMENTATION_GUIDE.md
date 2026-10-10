@@ -193,3 +193,17 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - Do not treat the front-end prototype as a working commerce flow. No real payments are accepted and no paid feature is activated by the UI.
 - CI, CodeQL, HA recovery, DAST and infrastructure checks have been triggered for the latest branch head; record their final outcomes before claiming validation. Manual browser/mobile QA remains outstanding.
 - Keep PR #983 open and Draft; do not merge or mark ready without explicit user approval.
+
+
+## 13. AI Employee World — backend commerce foundation checkpoint (2026-10-10)
+
+Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
+
+- Added `WorldCatalogueItem`, `WorldOrder`, `WorldCommerceEvent`, and `WorldFeatureEntitlement` models plus Alembic migration `20261010_world_commerce`.
+- Added authenticated World commerce APIs for active catalogue, tenant orders, payment-reference submission, tenant-owned entitlements, and vendor-scoped order review/approval/rejection/activation.
+- Server computes order amount from catalogue price options and rejects mismatched currencies/providers, client-supplied price/tenant/verification fields, and attempts to use World Credit before a wallet ledger exists.
+- Payment approval and feature activation are distinct authenticated identities with separate username snapshots and timestamps. Commerce events are protected by a database trigger against UPDATE/DELETE and also write to the existing audit ledger.
+- Activating an approved order now grants a persistent tenant feature entitlement in the same transaction; this is not yet wired to 3D rendering, room inventory, employee placement, or customization state.
+- No live gateway, crypto network, payment verification webhook, wallet ledger, lease expiry/renewal, support-session entitlement, or seeded vendor permission policy has been configured. Do not accept real payments or claim provider verification based on this API.
+- Added schema tests for currency validation and rejecting client-supplied authoritative fields; CI results for this backend addition must be checked against the exact latest commit before claiming it passes.
+- Keep PR #983 open and Draft; do not merge or mark ready without explicit user approval.
