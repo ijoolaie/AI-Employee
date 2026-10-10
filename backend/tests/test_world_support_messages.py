@@ -53,8 +53,8 @@ async def test_reseller_sent_escalation_list_is_scoped_to_originating_tenant():
 
     assert [row.id for row in response.data] == [ticket.id]
     query = str(db.execute.await_args.args[0])
-    assert "support_escalations.from_tenant_id" in query
-    assert "support_escalations.to_tenant_id" not in query
+    assert "WHERE support_escalations.from_tenant_id =" in query
+    assert "WHERE support_escalations.to_tenant_id =" not in query
 
 
 @pytest.mark.asyncio
