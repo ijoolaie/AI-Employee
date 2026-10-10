@@ -204,3 +204,10 @@ A second review found that `onPointerMove` was adding any pointer ID to the acti
 - [ ] Re-check all CI/security workflows against the exact current branch head; never inherit previous-SHA success.
 
 No real payments or paid feature activation should be claimed from the current prototype/API foundations. Keep release certification and external deployment/acceptance gates separate.
+
+
+### Dependency PR #984 correction update — 2026-10-10
+
+- Corrected lockfile commit pushed to PR #984: `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890`.
+- The lockfile now derives from `main` and changes only `node_modules/source-map-js` to 1.2.2; Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4 remain present. This removes the unintended Tailwind v4 drift without dropping the intended security fix.
+- The old failures were observed on superseded head `5287581895464c2942dc4ae4b3f21949e51322a7`. All five workflows have been triggered on the corrected SHA; their final exact-head outcomes are pending. Do not merge until all required checks pass.
