@@ -187,3 +187,14 @@ The World backend now has catalogue/order/entitlement primitives, append-only co
 The current commerce layer does not verify real payment provider callbacks or crypto network transfers, provide a wallet ledger, automate room leases/fulfillment, or persist customization into the live 3D scene. Support reply threads, attachments, impersonation and temporary grants are also not implemented. Do not accept real payments or present these primitives as production-ready commerce.
 
 At inspection, implementation head 33411a4b95aa3a5ebd2deb265800fd250066b60a passed CI, CodeQL, HA recovery, DAST and production infrastructure checks. The documentation-updated head must be revalidated before merge. Automated checks do not replace manual desktop/mobile visual QA or release certification.
+
+
+## Implementation checkpoint — room lease duration and expiry (PR #1002, 2026-10-10)
+
+The following updates supersede earlier status statements in this design document that described lease expiry as wholly unimplemented. PR #1002 merged into `main` as `14bff7bebdd2568e4e16e6b0ecf141111562ca26`; all 20 reported PR-head checks passed before merge. Post-merge checks were still running when this checkpoint was written and must be rechecked separately.
+
+- The server catalogue supports `lease_duration_days` for room items, bounded to 1–3650 days. Paid room catalogue writes require a duration; non-room items reject it.
+- Paid-room fulfillment snapshots `expires_at` onto the entitlement. Feature access, active entitlement listings and support counts exclude expired room entitlements. A paid room without configured duration cannot be fulfilled. A new approved order may reissue an expired entitlement.
+- Migration revision: `20261010_world_room_lease`, down revision `20261010_world_support`. Existing room entitlements with NULL expiry are intentionally denied access until reconciled; existing paid room catalogue rows need an admin-configured duration.
+- **Still open:** scheduled expiry processing/notifications, customer-facing renewal UX, room inventory and employee placement, durable World Credit ledger, provider-specific payment verification/webhooks/replay protection, and persistence/application of customization to the 3D scene.
+- This implementation is an engineering change only. It does not verify live payments, enable World Credit, or certify a new release. Latest exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
