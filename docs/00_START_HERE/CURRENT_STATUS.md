@@ -1,3 +1,13 @@
+## Persistent World room inventory and access contract — PR #1009 (2026-10-10)
+
+- PR [#1009](https://github.com/ijoolaie/AI-Employee/pull/1009) merged as `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903`.
+- Added `world_room_inventory`, a persistent tenant-owned room slot tied to a World room entitlement. Approved room activation provisions the slot; renewals reuse the existing row rather than duplicating inventory.
+- Added tenant-scoped `GET /world-commerce/room-inventory` and `GET /world-commerce/room-inventory/{item_code}/access`. The server evaluates catalogue activity, inventory status, entitlement status and expiry; missing or unreconciled state fails closed.
+- All 20 reported PR-head checks and all 12 post-merge checks on exact merge SHA `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903` completed successfully. Post-merge evidence includes backend, frontend, infrastructure, DAST, both CodeQL analyses, SLO validation, package validation, architecture and W18/W20 real-stack checks.
+- **Still not implemented:** the Three.js scene does not yet call the room-access endpoint; this PR establishes durable inventory and the server access contract, not visual room unlocking. No historical room inventory is backfilled automatically; legacy leases without a reconciled inventory row remain denied until safely reconciled.
+- Next priority: wire World Mode room interaction/scene state to the server access endpoint, with loading/error denial, expiry refresh and E2E coverage. Never unlock from client-only state or from an order/payment claim.
+- Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Engineering merges and green CI do not certify a new release.
+
 ## World room lease status UI — PR #1006 (2026-10-10)
 
 - PR [#1006](https://github.com/ijoolaie/AI-Employee/pull/1006) merged to `main` as `ad381ed17c5f8dedd140644f975647d3ac53b925`.

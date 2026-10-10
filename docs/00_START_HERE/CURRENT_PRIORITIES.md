@@ -1,3 +1,14 @@
+## Priority reconciliation — after PR #1009 (2026-10-10)
+
+1. **Next: connect World Mode room interaction to server authorization.** PR [#1009](https://github.com/ijoolaie/AI-Employee/pull/1009) added persistent tenant-scoped room inventory and an access decision endpoint. The Three.js scene is not yet wired to it. Query `/world-commerce/room-inventory/{item_code}/access` before opening/representing a room as available; deny on missing response, expired/unreconciled lease, inactive entitlement, suspended inventory or inactive catalogue. Add Playwright coverage for active, expired, missing and API-error cases.
+2. **Legacy lease reconciliation.** Existing entitlements are not automatically backfilled to inventory. Define an audited and tenant-safe reconciliation path before granting scene access to old records.
+3. **Customer renewal UX and expiry communication.** Build on the existing paid-room renewal service only after scene authorization is reliable. Order creation is not payment proof or activation; preserve separate approval/activation.
+4. **Provider-specific payment verification.** Still blocked pending actual fiat provider and crypto network/token policy. Require signed/authoritative verification, replay protection, amount/currency/order matching and duplicate/failure/refund tests. Keep `gateway` and `crypto` manual approval blocked until implemented.
+5. **World Credit ledger.** Disabled until durable append-only accounting and atomic replay-safe debit/credit are implemented and tested.
+6. **Support workflow completion** and **manual desktop/mobile QA/release certification** remain outstanding.
+
+PR #1009 merged at `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903`. All 20 reported PR-head checks and all 12 post-merge checks on exact merge SHA `e838c2e9a99dbc01a2e777724cc7d63c5b4a0903` completed successfully. Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 ## Priority reconciliation — after PR #1006 (2026-10-10)
 
 1. **Next: room entitlement → inventory/3D scene integration.** PR [#1006](https://github.com/ijoolaie/AI-Employee/pull/1006) now displays the tenant's server-backed room entitlement and expiry, but the 3D room remains visually locked/offer-only. Implement tenant-scoped server authorization and room inventory/scene lifecycle; deny access on expired, missing, legacy-unreconciled, or unavailable entitlement state. Add backend/API, real-stack, and E2E regression coverage.
