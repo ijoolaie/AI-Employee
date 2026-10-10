@@ -32,7 +32,7 @@ export function WorldShell() {
   const [nearLockedRoom, setNearLockedRoom] = useState(false);
   const [showRoomOffer, setShowRoomOffer] = useState(false);
   const [showRoomAccess, setShowRoomAccess] = useState(false);
-  const [roomSceneConfigOverride, setRoomSceneConfigOverride] = useState<{ roomInstanceId: string; config: WorldRoomSceneConfig; inventoryUpdatedAt: number } | null>(null);
+  const [roomSceneConfigOverride, setRoomSceneConfigOverride] = useState<{ roomInstanceId: string; config: WorldRoomSceneConfig } | null>(null);
   const officeQuery = useQuery({ queryKey: ["customer-world-read-model"], queryFn: getCustomerOffice, refetchInterval: 5000, staleTime: 2000 });
   const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });
   const roomCatalogueQuery = useQuery({
@@ -85,7 +85,8 @@ export function WorldShell() {
     () => normalizeRoomSceneConfig(matchingRoomInventory?.scene_config),
     [matchingRoomInventory?.scene_config],
   );
-  const roomSceneConfig = roomSceneConfigOverride?.roomInstanceId === roomAccessQuery.data?.room_instance_id && roomSceneConfigOverride.inventoryUpdatedAt === roomInventoryQuery.dataUpdatedAt
+  const roomSceneConfig = roomSceneConfigOverride?.roomInstanceId === roomAccessQuery.data?.room_instance_id &&
+    JSON.stringify(roomSceneConfigFromServer) !== JSON.stringify(roomSceneConfigOverride.config)
     ? roomSceneConfigOverride.config
     : roomSceneConfigFromServer;
   const roomSceneAccess = {
@@ -172,7 +173,7 @@ export function WorldShell() {
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
                 {roomAccessGranted && !showCustomization && <button type="button" onClick={() => setShowCustomization(true)} className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-xl border border-cyan-300/40 bg-slate-950/90 px-3 py-2 text-sm text-cyan-100 shadow-xl backdrop-blur"><Palette className="h-4 w-4" /> Customize room</button>}
                 {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect" : "Locked room nearby · Press E to inspect access or rent"}</button>}
-                {showCustomization && roomAccessGranted && roomSceneAccess.roomInstanceId && <WorldRoomLayoutPanel key={roomSceneAccess.roomInstanceId} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} roomInstanceId={roomSceneAccess.roomInstanceId} initialConfig={roomSceneConfig} onClose={() => setShowCustomization(false)} onSaved={(config) => setRoomSceneConfigOverride({ roomInstanceId: roomSceneAccess.roomInstanceId!, config, inventoryUpdatedAt: roomInventoryQuery.dataUpdatedAt })} />}
+                {showCustomization && roomAccessGranted && roomSceneAccess.roomInstanceId && <WorldRoomLayoutPanel key={roomSceneAccess.roomInstanceId} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} roomInstanceId={roomSceneAccess.roomInstanceId} initialConfig={roomSceneConfig} onClose={() => setShowCustomization(false)} onSaved={(config) => setRoomSceneConfigOverride({ roomInstanceId: roomSceneAccess.roomInstanceId!, config })} />}
                 {showRoomOffer && <WorldRoomOfferPanel onClose={() => setShowRoomOffer(false)} />}
                 {showRoomAccess && <WorldRoomAccessPanel state={roomInventoryQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessQuery.isLoading ? "loading" : roomAccessUnavailable ? "unavailable" : roomAccessGranted ? "granted" : "unavailable"} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? null} roomInstanceId={roomAccessQuery.data?.room_instance_id ?? null} onRetry={() => { void roomInventoryQuery.refetch(); void roomCatalogueQuery.refetch(); if (roomAccessItemCode) void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
