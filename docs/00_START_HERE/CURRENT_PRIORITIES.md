@@ -1,12 +1,18 @@
 # Current Priorities
 
-**Reconciled:** 2026-10-09
+**Reconciled:** 2026-10-10
 **Current release:** `v1.4.17`
 **Certified SHA:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`
-**Last verified live main before this documentation PR:** `4492ad2c3d3d0f6c2b91189e37a7614fa5ca1259` (PR #980 merged). This is post-release engineering work and is **NOT release-certified**.
+**AI Employee World PR #983:** merged as `f3f7ad6c169a5e31b1773b4a280af43b49c020c7`; all 17 workflows passed on its exact PR head `a0952cc44444e5c04c4c245653e59227b3a88a82` before merge. This is post-release engineering work and is **NOT release-certified**.
 **Production Certification:** v1.4.17 exact-SHA Run `37625345534` / Job `112805570856` — PASS
 **W10 Internal Company Dogfood:** Run `37189332690` / Job `111398049109` — PASS
 **Current status:** v1.4.17 exact-SHA certified and published / external gates OPEN
+
+## 2026-10-10 current engineering checkpoint
+
+- PR #983 merged the AI Employee World visual slice plus commerce, vendor diagnostics and support escalation status APIs. All 17 automated workflows passed on exact PR head `a0952cc44444e5c04c4c245653e59227b3a88a82` before merge.
+- Manual cross-device visual QA, live payment provider/webhook verification, wallet/ledger, room lease/fulfillment automation, persistent 3D customization and support reply threads remain outstanding. Do not infer production readiness from merge/CI.
+- The published exact-SHA certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; PR #983 does not change that certification boundary.
 
 ## 2026-10-09 current engineering checkpoint
 
