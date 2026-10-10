@@ -19,7 +19,7 @@ export const DEFAULT_ROOM_SCENE_CONFIG: WorldRoomSceneConfig = {
   layout_preset: "starter",
   furniture: [
     { placement_id: "starter-desk", kind: "desk", x: 0, z: -1.3, rotation: 0 },
-    { placement_id: "starter-plant", kind: "plant", x: 3.1, z: 2.2, rotation: 0 },
+    { placement_id: "starter-plant", kind: "plant", x: 2.2, z: 2.2, rotation: 0 },
   ],
 };
 
@@ -42,8 +42,8 @@ export function normalizeRoomSceneConfig(value: unknown): WorldRoomSceneConfig {
       ids.has(item.placement_id) ||
       typeof item.kind !== "string" ||
       !FURNITURE_KINDS.has(item.kind as RoomFurnitureKind) ||
-      typeof item.x !== "number" || !Number.isFinite(item.x) || item.x < -3.5 || item.x > 3.5 ||
-      typeof item.z !== "number" || !Number.isFinite(item.z) || item.z < -3.5 || item.z > 3.5 ||
+      typeof item.x !== "number" || !Number.isFinite(item.x) || item.x < -2.2 || item.x > 2.2 ||
+      typeof item.z !== "number" || !Number.isFinite(item.z) || item.z < -2.2 || item.z > 2.2 ||
       typeof item.rotation !== "number" || !Number.isInteger(item.rotation) || item.rotation < 0 || item.rotation > 359
     ) continue;
     ids.add(item.placement_id);
