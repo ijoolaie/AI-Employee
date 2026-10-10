@@ -218,3 +218,11 @@ No real payments or paid feature activation should be claimed from the current p
 - CI on the intermediate lockfile-only commit showed `npm ci` still failed because the PR branch's `frontend/package.json` also requested Tailwind v4. The correction was therefore extended to restore that manifest to `main`'s Tailwind v3 declaration.
 - Latest correction commit: `072e0c077ad18b7cb2afea1c50b8b68aa99be857`. Manifest and lockfile now agree on Tailwind v3; lockfile resolves Tailwind 3.4.19, retains `postcss-selector-parser` 6.1.4, and updates `source-map-js` to 1.2.2.
 - CI, CodeQL, Production Infrastructure, HA Recovery and Ephemeral DAST are pending on this exact head. Keep the PR open and unmerged until every required check is green.
+
+
+### PR #984 final disposition — 2026-10-10
+
+- PR #984 is merged: `36817a54475051ac42a7a445b56a3245845dbfe8`.
+- The corrected PR head `072e0c077ad18b7cb2afea1c50b8b68aa99be857` passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST before merge.
+- Final dependency scope: update `source-map-js` to 1.2.2; preserve Tailwind v3 and `postcss-selector-parser` 6.1.4. No Tailwind v4 migration was included.
+- Keep World manual QA and all external production/release acceptance gates open until independently completed and documented.
