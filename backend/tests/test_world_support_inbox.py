@@ -112,7 +112,7 @@ async def test_support_inbox_rejects_invalid_status_transition(monkeypatch):
         status="resolved", subject="Need help", description="A detailed support request.",
     )
     db = AsyncMock()
-    db.execute.return_value.scalar_one_or_none.return_value = ticket
+    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: ticket)
     audit = AsyncMock()
     monkeypatch.setattr(edition_service, "record_audit", audit)
     ctx = SimpleNamespace(tenant_id=tenant_id, user_id=uuid4(), tenant=SimpleNamespace(tenant_kind="vendor"))
