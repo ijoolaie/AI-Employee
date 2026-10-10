@@ -434,6 +434,8 @@ export function WorldViewport({
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.12;
     renderer.domElement.setAttribute("aria-label", "AI Company World viewport");
+    renderer.domElement.dataset.roomAccessState = "denied";
+    renderer.domElement.removeAttribute("data-room-instance-id");
     renderer.domElement.setAttribute("role", "img");
     renderer.domElement.tabIndex = 0;
     renderer.domElement.style.display = "block";
@@ -607,6 +609,9 @@ export function WorldViewport({
         roomInterior.userData.roomInstanceId = authorizedInstanceId;
       }
       roomInterior.visible = roomGranted && roomInterior.userData.roomInstanceId === authorizedInstanceId;
+      renderer.domElement.dataset.roomAccessState = roomInterior.visible ? "granted" : "denied";
+      if (roomInterior.visible && authorizedInstanceId) renderer.domElement.dataset.roomInstanceId = authorizedInstanceId;
+      else renderer.domElement.removeAttribute("data-room-instance-id");
       roomEntrance.userData.door.rotation.y = roomGranted ? Math.PI / 2 : 0;
       if (roomEntrance.userData.doorway) roomEntrance.userData.doorway.visible = !roomGranted;
       if (roomEntrance.userData.lockedLabel) roomEntrance.userData.lockedLabel.visible = !roomGranted;
