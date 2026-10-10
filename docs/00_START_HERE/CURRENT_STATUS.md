@@ -1,3 +1,13 @@
+## World room paid lease renewal — post-merge verified (2026-10-10, PR #1004)
+
+- PR [#1004](https://github.com/ijoolaie/AI-Employee/pull/1004) merged to `main` as `4e490100d31a81e93e331dfa8b3da62f23e4a883`.
+- All 15 reported PR-head checks passed before merge; all 10 post-merge checks on the exact merge SHA are now completed successfully: validate, frontend, backend, DAST, infrastructure, Validate SLO contract, JavaScript/TypeScript CodeQL, architecture, Python CodeQL, and validate-and-package.
+- Paid room renewal extends a still-active entitlement from its existing future expiry by the configured server-owned `lease_duration_days`; expired leases restart from the current activation time. Legacy active room entitlements with NULL expiry may be repaired through a new activation. Non-room active entitlements remain non-duplicable; room renewal without a configured duration and free-room renewal are rejected.
+- Regression coverage verifies the active paid lease expiry is extended by 30 days, the entitlement is linked to the new order, and the entitlement remains active.
+- The change does not implement provider verification, automatic fulfillment, customer self-service renewal, expiry notifications, World Credit, room inventory, employee placement, or persistent customization-to-scene wiring.
+- Next engineering priority: wire the existing entitlement/lease state into room inventory and the 3D scene with tenant-safe authorization; then customer-facing renewal and expiry notifications. Provider verification remains blocked until a concrete provider/network contract and replay-safe verification path are selected. World Credit stays disabled until a durable append-only ledger with atomic replay-safe debit exists.
+- Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Green CI and merged engineering changes do not certify a new release or prove external production readiness.
+
 ## World commerce fulfillment transition guard — 2026-10-10 (PR #1000)
 
 - PR [#1000](https://github.com/ijoolaie/AI-Employee/pull/1000) merged at `aaae36a488cadd72b59ce22d00579438edd1a233`; all 11 reported checks passed on exact PR head `ac69a6240ba1aa4cc2fa09e6a03c5d38153de45c`.
