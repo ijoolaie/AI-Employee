@@ -2,17 +2,16 @@
 
 **Updated:** 2026-10-10  
 **Repository:** `ijoolaie/AI-Employee`  
-**Working branch:** `feat/world-3d-office`  
+**Status (2026-10-10):** PR #983 is merged into `main`.  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
-**Base:** `main`  
-**Latest fully validated code head:** `1bf75228bac2c37d693a4b21305fe0bd302e0a4a` (all five workflow gates passed, including the active-pointer hover guard and regression test).  
-**Validation runs on this exact SHA:** CI `37980135919`; CodeQL `37980135968`; HA recovery `37980135924`; ephemeral DAST `37980136044`; production infrastructure `37980135852`.  
-**Previous implementation/docs head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
-**Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
+**Squash merge commit:** `f3f7ad6c169a5e31b1773b4a280af43b49c020c7`  
+**Documentation-updated PR head validated before merge:** `a0952cc44444e5c04c4c245653e59227b3a88a82` (all 17 automated workflows succeeded).  
+**Latest `main` head inspected after merge/docs reconciliation:** `e8ec6eae8801ce1c8e709262c7d1d070b0d218aa`. Its docs-head workflow runs: Delivery Manifest Bundle `38036176393`, SLO Contract Manual v2 `38036176381`, CodeQL `38036176360` (all succeeded).  
+**Remaining release boundary:** manual desktop/mobile visual QA and production release certification are not complete; merge does not imply production readiness.
 
 ## Current verification update — 2026-10-10
 
-**Exact PR head inspected:** `d2be7e38047af0b23a799d6df2a5961597730cd5`. All five required automated workflows and every job completed successfully on this exact SHA:
+**Merged code head:** `a0952cc44444e5c04c4c245653e59227b3a88a82`. All 17 automated workflows completed successfully on this exact PR head before squash merge:
 
 - CI: [37980678249](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678249) — frontend lint, contract/unit tests, production build, World Mode Playwright smoke, backend compile, Ruff, migration gates and backend tests passed.
 - CodeQL: [37980677995](https://github.com/ijoolaie/AI-Employee/actions/runs/37980677995) — Python and JavaScript/TypeScript analyses passed.
@@ -20,9 +19,9 @@
 - Ephemeral DAST: [37980678086](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678086) — OWASP ZAP baseline scan and cleanup passed.
 - Production infrastructure: [37980678035](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678035) — service lifecycle, migration gate, PostgreSQL backup and isolated restore passed.
 
-This evidence supersedes older SHA-specific status statements below for current automated validation. The docs reconciliation commit that updates this handoff will create a new branch head, so its own exact-head workflows must be checked before current validation is claimed again.
+This evidence supersedes older SHA-specific status statements below for the merged code. The merge commit is `f3f7ad6c169a5e31b1773b4a280af43b49c020c7`; the later documentation-only `main` head inspected is `e8ec6eae8801ce1c8e709262c7d1d070b0d218aa`. Three workflows triggered for that docs-only head (Delivery Manifest Bundle, SLO Contract Manual v2, CodeQL) all succeeded. Other workflows were validated against the exact PR code head before merge.
 
-**Not yet performed:** manual visual QA across desktop and narrow/mobile viewports. CI's Playwright smoke is automated functional coverage, not a substitute for visual inspection. Keep PR #983 open and Draft; do not merge or mark ready without explicit approval.
+**Not yet performed:** manual visual QA across desktop and narrow/mobile viewports. CI's Playwright smoke is automated functional coverage, not a substitute for visual inspection. PR #983 is merged. Future changes should use a new branch/PR and must not treat merge as production release approval.
 
 ## 1. Goal and product boundary
 
