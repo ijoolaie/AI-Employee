@@ -50,7 +50,7 @@ export function WorldRoomLayoutPanel({
     const offset = ((furniture.length % 5) - 2) * 0.5;
     setFurniture((current) => [
       ...current,
-      { placement_id: placementId, kind, x: Math.max(-3.5, Math.min(3.5, offset)), z: Math.max(-3.5, Math.min(3.5, offset)), rotation: 0 },
+      { placement_id: placementId, kind, x: Math.max(-2.2, Math.min(2.2, offset)), z: Math.max(-3.5, Math.min(3.5, offset)), rotation: 0 },
     ]);
   };
 
@@ -110,10 +110,10 @@ export function WorldRoomLayoutPanel({
               <p className="text-sm font-medium">{KIND_LABELS[item.kind]}</p>
               <p className="mt-1 break-all font-mono text-xs text-slate-500">{item.placement_id}</p>
             </div>
-            <label className="text-xs text-slate-400">X (-3.5 to 3.5)
-              <input aria-label={`${item.placement_id} X`} type="number" min={-3.5} max={3.5} step={0.5} value={item.x} disabled={saving} onChange={(event) => updatePlacement(item.placement_id, { x: Math.max(-3.5, Math.min(3.5, Number(event.target.value))) })} className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-slate-100" />
+            <label className="text-xs text-slate-400">X (-2.2 to 2.2)
+              <input aria-label={`${item.placement_id} X`} type="number" min={-2.2} max={2.2} step={0.5} value={item.x} disabled={saving} onChange={(event) => updatePlacement(item.placement_id, { x: Math.max(-2.2, Math.min(2.2, Number(event.target.value))) })} className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-slate-100" />
             </label>
-            <label className="text-xs text-slate-400">Z (-3.5 to 3.5)
+            <label className="text-xs text-slate-400">Z (-2.2 to 2.2)
               <input aria-label={`${item.placement_id} Z`} type="number" min={-3.5} max={3.5} step={0.5} value={item.z} disabled={saving} onChange={(event) => updatePlacement(item.placement_id, { z: Math.max(-3.5, Math.min(3.5, Number(event.target.value))) })} className="mt-1 block w-full rounded-lg border border-slate-700 bg-slate-950 px-2 py-2 text-sm text-slate-100" />
             </label>
             <label className="text-xs text-slate-400">Rotation
