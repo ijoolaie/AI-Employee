@@ -1076,3 +1076,159 @@ async def test_room_scene_config_update_rejects_stale_expected_updated_at():
     assert exc.value.status_code == 409
     db.commit.assert_not_awaited()
 
+@pytest.mark.asyncio
+async def test_legacy_room_inventory_reconciliation_is_platform_admin_only():
+    from app.schemas.world_commerce import WorldRoomInventoryReconciliationRequest
+    from app.api.v1.world_commerce import reconcile_legacy_room_inventory
+
+    db = AsyncMock()
+    payload = WorldRoomInventoryReconciliationRequest()
+    ctx = SimpleNamespace(user=SimpleNamespace(is_platform_admin=False, id=uuid4()))
+
+    with pytest.raises(HTTPException) as exc:
+        await reconcile_legacy_room_inventory(payload, ctx, db)
+
+    assert exc.value.status_code == 403
+    db.execute.assert_not_awaited()
+    db.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_legacy_room_inventory_reconciliation_dry_run_is_read_only_and_audited(monkeypatch):
+    from datetime import timedelta
+    from app.schemas.world_commerce import WorldRoomInventoryReconciliationRequest
+    from app.api.v1.world_commerce import reconcile_legacy_room_inventory
+
+    now = datetime.now(timezone.utc)
+    entitlement = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), item_code="room.starter",
+        expires_at=now + timedelta(days=7), status="active", item_type="room",
+    )
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [entitlement]))
+    audit = AsyncMock()
+    monkeypatch.setattr(world_commerce.audit_service, "record", audit)
+    ctx = SimpleNamespace(user=SimpleNamespace(is_platform_admin=True, id=uuid4()))
+
+    result = await reconcile_legacy_room_inventory(WorldRoomInventoryReconciliationRequest(dry_run=True), ctx, db)
+
+    assert result.success is True
+    assert result.data.dry_run is True
+    assert result.data.candidate_count == 1
+    assert result.data.created_count == 0
+    assert result.data.candidates[0].tenant_id == entitlement.tenant_id
+    db.scalar.assert_not_awaited()
+    db.add.assert_not_called()
+    db.commit.assert_awaited_once()
+    audit.assert_awaited_once()
+    assert audit.await_args.kwargs["action"] == "world.room_inventory.reconcile.preview"
+    assert audit.await_args.kwargs["tenant_id"] is None
+
+
+@pytest.mark.asyncio
+async def test_legacy_room_inventory_reconciliation_apply_requires_explicit_confirmation():
+    from app.schemas.world_commerce import WorldRoomInventoryReconciliationRequest
+    from app.api.v1.world_commerce import reconcile_legacy_room_inventory
+
+    db = AsyncMock()
+    ctx = SimpleNamespace(user=SimpleNamespace(is_platform_admin=True, id=uuid4()))
+
+    with pytest.raises(HTTPException) as exc:
+        await reconcile_legacy_room_inventory(
+            WorldRoomInventoryReconciliationRequest(dry_run=False), ctx, db,
+        )
+
+    assert exc.value.status_code == 409
+    db.execute.assert_not_awaited()
+    db.commit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_legacy_room_inventory_reconciliation_apply_creates_and_audits_only_candidates(monkeypatch):
+    from datetime import timedelta
+    from app.schemas.world_commerce import WorldRoomInventoryReconciliationRequest
+    from app.api.v1.world_commerce import reconcile_legacy_room_inventory
+
+    now = datetime.now(timezone.utc)
+    entitlement = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), item_code="room.starter",
+        expires_at=now + timedelta(days=7), status="active", item_type="room",
+    )
+    inventory_id = uuid4()
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [entitlement]))
+    db.scalar.return_value = inventory_id
+    audit = AsyncMock()
+    monkeypatch.setattr(world_commerce.audit_service, "record", audit)
+    ctx = SimpleNamespace(user=SimpleNamespace(is_platform_admin=True, id=uuid4()))
+    payload = WorldRoomInventoryReconciliationRequest(
+        dry_run=False, confirmation="RECONCILE_WORLD_ROOM_INVENTORY", limit=25,
+    )
+
+    result = await reconcile_legacy_room_inventory(payload, ctx, db)
+
+    assert result.success is True
+    assert result.data.dry_run is False
+    assert result.data.created_count == 1
+    assert result.data.skipped_conflict_count == 0
+    db.scalar.assert_awaited_once()
+    db.commit.assert_awaited_once()
+    assert audit.await_count == 2
+    assert audit.await_args_list[0].kwargs["action"] == "world.room_inventory.reconcile.create"
+    assert audit.await_args_list[0].kwargs["tenant_id"] == entitlement.tenant_id
+    assert audit.await_args_list[1].kwargs["action"] == "world.room_inventory.reconcile.apply"
+    assert audit.await_args_list[1].kwargs["tenant_id"] is None
+
+@pytest.mark.asyncio
+async def test_legacy_room_inventory_reconciliation_dry_run_paginates_candidates(monkeypatch):
+    from datetime import timedelta
+    from app.schemas.world_commerce import WorldRoomInventoryReconciliationRequest
+    from app.api.v1 import world_commerce
+
+    now = datetime.now(timezone.utc)
+    first = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), item_code="room.first",
+        expires_at=now + timedelta(days=4), activated_at=now, status="active", item_type="room",
+    )
+    second = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), item_code="room.second",
+        expires_at=now + timedelta(days=5), activated_at=now, status="active", item_type="room",
+    )
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [first, second]))
+    audit = AsyncMock()
+    monkeypatch.setattr(world_commerce.audit_service, "record", audit)
+    ctx = SimpleNamespace(user=SimpleNamespace(is_platform_admin=True, id=uuid4()))
+
+    result = await world_commerce.reconcile_legacy_room_inventory(
+        WorldRoomInventoryReconciliationRequest(dry_run=True, limit=1, offset=5),
+        ctx,
+        db,
+    )
+
+    assert result.data.candidate_count == 1
+    assert result.data.has_more is True
+    assert result.data.next_offset == 6
+    assert audit.await_args.kwargs["metadata"]["offset"] == 5
+
+
+@pytest.mark.asyncio
+async def test_legacy_room_inventory_reconciliation_apply_rejects_nonzero_offset():
+    from app.schemas.world_commerce import WorldRoomInventoryReconciliationRequest
+    from app.api.v1.world_commerce import reconcile_legacy_room_inventory
+
+    db = AsyncMock()
+    ctx = SimpleNamespace(user=SimpleNamespace(is_platform_admin=True, id=uuid4()))
+    payload = WorldRoomInventoryReconciliationRequest(
+        dry_run=False,
+        confirmation="RECONCILE_WORLD_ROOM_INVENTORY",
+        offset=1,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await reconcile_legacy_room_inventory(payload, ctx, db)
+
+    assert exc.value.status_code == 422
+    db.execute.assert_not_awaited()
+    db.commit.assert_not_awaited()
+
