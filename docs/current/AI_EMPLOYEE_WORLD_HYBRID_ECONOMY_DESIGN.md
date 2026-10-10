@@ -163,3 +163,8 @@ This is a read-only diagnostics primitive, not a complete support-ticket/session
 ### Diagnostics data-minimization regression test (2026-10-10)
 
 A schema regression test now asserts that vendor support order summaries omit buyer user IDs and provider transaction references. The summary deliberately contains only the order identifier, catalogue code snapshot, amount/currency, status and timestamps. Re-run CI against the current head after this test-only change; the previously green CI applies to the earlier SHA only.
+
+
+### Support diagnostics audit regression coverage (2026-10-10)
+
+A success-path regression test now verifies that vendor diagnostics return only the minimal summary contract, preserve order counts, invoke the support-access audit recorder with the viewed tenant and actor, and commit the audit record with the response. This complements the permission-denial, unrelated-tenant denial, and sensitive-field omission tests. This remains a read-only diagnostic surface; it does not create support tickets, support sessions, impersonation, temporary grants, or commerce mutations.
