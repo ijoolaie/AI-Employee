@@ -8,12 +8,13 @@ from fastapi import HTTPException
 
 from app.api.v1.edition_control import (
     _create_support_escalation_message,
+    _download_support_escalation_attachment,
     _list_support_escalation_messages,
 )
 from app.models.support_escalation_message import SupportEscalationMessage
 from app.models.support_escalation_message_attachment import SupportEscalationMessageAttachment
 from app.schemas.edition import SupportEscalationMessageRequest
-from app.services import edition_service
+from app.services import edition_service, storage
 
 
 def _result(ticket=None, rows=None, pairs=None, values=None):
@@ -162,6 +163,38 @@ async def test_support_message_cannot_be_added_to_resolved_ticket(monkeypatch):
     assert exc.value.status_code == 409
     db.add.assert_not_called()
     audit.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_support_attachment_download_hides_nonparticipant_ticket(monkeypatch):
+    db = AsyncMock()
+    db.execute.return_value = _result(ticket=None)
+    ctx = SimpleNamespace(tenant_id=uuid4(), user_id=uuid4())
+    backend = SimpleNamespace(open=pytest.fail)
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: backend)
+
+    with pytest.raises(HTTPException) as exc:
+        await _download_support_escalation_attachment(uuid4(), uuid4(), ctx, db)
+
+    assert exc.value.status_code == 404
+    db.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_support_attachment_download_rejects_attachment_from_another_ticket(monkeypatch):
+    tenant_id = uuid4()
+    ticket = SimpleNamespace(id=uuid4(), from_tenant_id=tenant_id, to_tenant_id=uuid4(), status="open")
+    db = AsyncMock()
+    db.execute.side_effect = [_result(ticket=ticket), SimpleNamespace(one_or_none=lambda: None)]
+    ctx = SimpleNamespace(tenant_id=tenant_id, user_id=uuid4())
+    backend = SimpleNamespace(open=pytest.fail)
+    monkeypatch.setattr(storage, "get_storage_backend", lambda: backend)
+
+    with pytest.raises(HTTPException) as exc:
+        await _download_support_escalation_attachment(ticket.id, uuid4(), ctx, db)
+
+    assert exc.value.status_code == 404
+    assert db.execute.await_count == 2
 
 
 def test_support_message_model_does_not_store_public_attachment_urls():
