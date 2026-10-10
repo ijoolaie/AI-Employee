@@ -3,10 +3,11 @@
 Manual approval is deliberately separate from activation. Provider callbacks
 are not wired here, so a submitted reference is a claim awaiting vendor review.
 """
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import func, select, text
+from sqlalchemy import and_, func, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.deps import CurrentContext, DbSession, has_permission
@@ -91,6 +92,10 @@ async def feature_access(item_code: str, ctx: CurrentContext, db: DbSession):
             WorldFeatureEntitlement.tenant_id == ctx.tenant_id,
             WorldFeatureEntitlement.item_code == item.code,
             WorldFeatureEntitlement.status == "active",
+            or_(
+                and_(WorldFeatureEntitlement.item_type != "room", WorldFeatureEntitlement.expires_at.is_(None)),
+                WorldFeatureEntitlement.expires_at > datetime.now(timezone.utc),
+            ),
         ))
         data = WorldFeatureAccessResponse(
             item_code=item.code, granted=entitlement is not None,
@@ -107,6 +112,10 @@ async def my_entitlements(ctx: CurrentContext, db: DbSession):
         select(WorldFeatureEntitlement).where(
             WorldFeatureEntitlement.tenant_id == ctx.tenant_id,
             WorldFeatureEntitlement.status == "active",
+            or_(
+                and_(WorldFeatureEntitlement.item_type != "room", WorldFeatureEntitlement.expires_at.is_(None)),
+                WorldFeatureEntitlement.expires_at > datetime.now(timezone.utc),
+            ),
         ).order_by(WorldFeatureEntitlement.activated_at.desc())
     )
     return APIResponse(success=True, data=[
