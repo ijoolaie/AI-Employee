@@ -37,7 +37,10 @@ export function WorldRoomLayoutPanel({
   const [expectedUpdatedAt, setExpectedUpdatedAt] = useState(initialUpdatedAt);
   useEffect(() => {
     const activeIds = new Set(employees.map((employee) => employee.id));
-    setEmployeePlacements((current) => current.filter((placement) => activeIds.has(placement.employee_id)));
+    setEmployeePlacements((current) => {
+      const next = current.filter((placement) => activeIds.has(placement.employee_id));
+      return next.length === current.length ? current : next;
+    });
   }, [employees]);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
