@@ -101,3 +101,49 @@ Expected API surface (names are proposals, not committed contracts):
 ## Current implementation status
 
 This document records the selected product direction and security boundaries. It does **not** claim that wallet, World orders, room leases, player movement, one-time World checkout or fulfillment APIs have been implemented. Existing Stripe subscription billing is present in the repository, but it is not proof that World one-time purchases are implemented or externally certified.
+
+
+## Additional approved product requirements — currencies, office/CEO customization, vendor support
+
+### Customer-selected payment currency and multiple gateways
+
+- The buyer must be able to choose among **Iranian rial (IRR), US dollar (USD), and Tether (USDT)** where that currency and at least one compatible payment provider are enabled for the buyer's market/account.
+- Treat IRR, USD and USDT as distinct settlement rails, not interchangeable display labels. Never silently convert one into another or infer an exchange rate. If conversion is later offered, show the source amount, destination amount, rate, fee and quote expiry before confirmation.
+- Build a provider-adapter registry so multiple gateways can be configured per supported currency. Each provider/currency pair has explicit enabled state, environment (test/live), merchant configuration reference, limits, fees where known, health status and priority/fallback policy. Do not expose secrets to the frontend or store credentials in the World catalogue.
+- At checkout, show only providers that are currently enabled and compatible with the selected currency, order, region and account. The server validates the chosen provider/currency pair and freezes the payable quote into the order.
+- Payment verification must be provider-specific and server-side. For fiat gateways, verify signed callbacks or query the provider's authoritative status API. For USDT, do not treat a screenshot, transaction hash supplied by the buyer, or a frontend callback as confirmation: define the supported network(s), token contract(s), confirmation/finality threshold, amount, destination wallet and transaction-replay protections before implementation. No chain/network is chosen by this requirement.
+- Payment is not fulfilled merely because a user reports payment. The vendor's manual review/approval flow described below is an additional authorization step where required; it does not replace technical verification or override a failed, mismatched, refunded or otherwise invalid provider result.
+- Before live implementation, decide legal/compliance, accounting, refund, chargeback, exchange-rate, USDT custody/wallet and supported-network policies. Until then, use test mode or manual approval records without moving real funds. No production prices or live provider credentials are defined here.
+
+### CEO identity, avatar and office customization
+
+- The player is the tenant's CEO/manager avatar, separate from the operational employee roster. On first entry, offer a customization step for both CEO **appearance/personality presentation** and the initial office.
+- CEO customization includes safe baseline options such as name/display label, avatar body/style options, hair/skin/clothing palettes where supported, and presentation traits/personality descriptors. These are visual/product preferences only and must not alter authorization, billing privileges, real employee permissions, or AI execution policy.
+- Provide several free default CEO looks/personality presets and office-layout templates. Premium/paid clothing, luxury appearance themes, expanded office layouts and premium furniture/decor can be offered through the server-owned catalogue.
+- Let the user select an initial office layout before entering the world. Include a useful free starter layout and multiple purchasable larger/luxury layouts. Catalogue metadata must identify footprint, supported furniture anchors, accessibility/navigation constraints, included assets and price/payment rails. Do not let a client-supplied layout bypass room bounds, collision, entitlements or purchase checks.
+- The office layout and purchased cosmetic inventory should persist to the tenant's World state and be recoverable across sessions/devices. A user may preview paid options, but the selected paid option is applied only after entitlement or confirmed purchase is established.
+- At employee onboarding/room assignment, allow customization of the employee's supported appearance and personality presentation, with several free presets and paid special/luxury clothing and decor options. Store this as presentation metadata linked to the real employee. It must not rewrite job descriptions, alter permissions, change evaluation data or infer protected/sensitive traits.
+- Separate the **visual personality preset** from the employee's actual configured personality, job description, memory, and execution configuration. Only an explicit authorized workflow can change operational employee settings.
+- A vendor/support role may preview all catalogue options, including paid room templates, clothing and equipment, without charge for vendor-owned support/testing contexts. This vendor entitlement must not accidentally make the same items free for reseller or customer tenants.
+
+### Vendor-assisted troubleshooting, payment approval and audit trail
+
+- Provide a vendor-only support workflow allowing authorized vendor staff to inspect and troubleshoot every supported World feature for a reseller or customer, including premium layouts, avatar/employee cosmetics, rooms, furniture, equipment, and related feature flags.
+- Resellers and customers remain subject to normal catalogue prices and entitlements. A vendor may grant or activate a paid feature for a reseller/customer only through a privileged, explicit support action with a recorded reason and an applicable authorization path (verified payment approval, documented complimentary grant, or another separately configured policy). Do not provide a hidden client-side bypass.
+- For orders requiring manual payment approval, the **vendor** must explicitly review and approve the payment before the associated paid feature is activated. Record payment verification status separately from vendor approval status. Approval must not be possible for a provider-verified failure, amount/currency mismatch, duplicate/replayed transaction, refund, or other invalid state.
+- Every approval and feature activation must create an append-only audit record with at least: tenant/customer/reseller ID; order/payment ID; feature and target entity; payment currency and amount; provider and provider transaction/reference ID when applicable; verification evidence/reference; decision (approved/rejected/revoked); reason/support ticket; timestamp; authenticated vendor user ID and displayed username for the approver; authenticated user ID and displayed username for the person who activated the feature; activation timestamp; and prior/new entitlement state. If one person performs both actions, record both roles explicitly rather than collapsing them into a generic “admin” event.
+- The audit UI must visibly show **who verified/approved the payment and who activated the feature**, with names/usernames, roles and timestamps. Never rely on a free-text name alone: bind the record to the authenticated account ID and retain a display-name snapshot for historical readability.
+- Separate capabilities/permissions for payment reviewer, feature activator, and auditor where practical. Enforce server-side authorization, tenant scoping, reason capture, idempotency, and conflict-of-interest policy. Define whether the same vendor user may approve and activate the same order before production; default to requiring a second authorized person for high-risk/manual exceptions if the business policy has not yet been approved.
+- Support actions must be auditable and reversible where appropriate. Revocation must append a new event and preserve prior history; never edit/delete an old approval record to hide it. A support grant must not change the underlying payment record or falsely label an unpaid order as paid.
+- Vendor support access must be time-bound or ticket-scoped where possible, least-privilege, and logged. Do not expose unrelated tenant data or secrets while troubleshooting. All access to customer/reseller World state and all privileged feature changes should be recorded.
+
+### Additional acceptance criteria
+
+13. Checkout supports buyer selection of IRR, USD or USDT only when an enabled compatible provider/rail exists; currency/provider mismatch is rejected server-side.
+14. Multiple providers can be configured independently per currency, with test/live separation and no client exposure of secrets.
+15. A new CEO can choose a free or paid initial office template and customize a free/premium avatar look; paid selections cannot be applied without an entitlement.
+16. CEO and employee appearance/personality presentation settings persist and remain separate from operational permissions and employee execution configuration.
+17. Vendor-owned support/testing context can preview all catalogue items without charge, while reseller/customer entitlements remain unchanged.
+18. Vendor manual payment approval is required where configured, and cannot override a technically invalid or failed payment.
+19. The audit trail identifies, by authenticated account ID and displayed username, both the payment approver and the feature activator, including timestamps, reasons and order/feature references.
+20. Privileged support grants, approvals, activations and revocations are append-only, tenant-scoped, idempotent and reviewable; no grant silently changes an unpaid order to paid.
