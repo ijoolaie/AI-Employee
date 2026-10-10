@@ -254,3 +254,10 @@ The dependency PR's security update is desirable, but its current lockfile/build
 - The World commerce migration creates the catalogue table but does not seed a paid room item, and the inspected API currently exposes catalogue reads but no catalogue create/update endpoint.
 - Therefore the next safe slice is **platform-admin catalogue configuration** (server-side validation of prices and allowed provider/method combinations), or an explicitly approved seed/configuration process. Do not fabricate production prices, provider names, payment methods or a USDT network.
 - Only after a real catalogue entry is configured should the customer order-creation UI be connected to `POST /world-commerce/orders` with an idempotency key; server-side amount calculation remains authoritative.
+
+
+### In review — platform-admin catalogue configuration
+
+- Feature branch `feat/world-admin-catalogue-config` adds platform-admin-only catalogue list/create/replace endpoints under `/admin/world-commerce/catalogue`.
+- Request schemas validate item codes/types, supported currencies (IRR/USD/USDT), positive decimal prices, non-empty provider/method choices, and free-vs-paid consistency. Create/update operations write audit-ledger entries.
+- Provider names remain configuration labels only. No payment adapter, webhook verification, USDT network policy, wallet ledger, or fulfillment is implied by these endpoints. Do not merge until CI and security checks pass.
