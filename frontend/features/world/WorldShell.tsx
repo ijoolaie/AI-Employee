@@ -16,13 +16,7 @@ import { WorldRoomOfferPanel } from "./WorldRoomOfferPanel";
 import { WorldStatusBar } from "./WorldStatusBar";
 import { WorldMiniMap } from "./WorldMiniMap";
 import { WorldRoomAccessPanel } from "./WorldRoomAccessPanel";
-
-type WorldEntitlement = {
-  item_code: string;
-  item_type: string;
-  status: string;
-  expires_at: string | null;
-};
+import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
 
 type APIResponse<T> = { success: boolean; data?: T };
 type WorldCatalogueItem = { code: string; item_type: string; is_free: boolean };
@@ -39,20 +33,6 @@ export function WorldShell() {
   const [showRoomAccess, setShowRoomAccess] = useState(false);
   const officeQuery = useQuery({ queryKey: ["customer-world-read-model"], queryFn: getCustomerOffice, refetchInterval: 5000, staleTime: 2000 });
   const roiQuery = useQuery({ queryKey: ["world-roi"], queryFn: getROIAnalytics, refetchInterval: 15000, staleTime: 5000 });
-  const entitlementsQuery = useQuery({
-    queryKey: ["world-entitlements"],
-    queryFn: async () => {
-      const response = await api.get<APIResponse<WorldEntitlement[]>>("/world-commerce/entitlements");
-      if (!response.data.success || !Array.isArray(response.data.data)) {
-        throw new Error("پاسخ اعتبارهای World معتبر نیست.");
-      }
-      return response.data.data;
-    },
-    refetchInterval: 30_000,
-    staleTime: 10_000,
-    retry: 1,
-  });
-  const activeRoomLease = entitlementsQuery.data?.find((entitlement) => entitlement.item_type === "room" && entitlement.status === "active") ?? null;
   const roomCatalogueQuery = useQuery({
     queryKey: ["world-room-access-catalogue"],
     queryFn: async () => {
@@ -87,8 +67,14 @@ export function WorldShell() {
     staleTime: 5_000,
     retry: 1,
   });
-  const roomAccessGranted = roomAccessQuery.data?.granted === true && Boolean(roomAccessQuery.data.room_instance_id);
   const roomAccessUnavailable = Boolean(roomInventoryQuery.error || roomCatalogueQuery.error || roomAccessQuery.error || (!roomCatalogueQuery.isLoading && roomCatalogueQuery.data === null));
+  const roomSceneAccess = {
+    granted: roomAccessQuery.data?.granted === true,
+    roomInstanceId: roomAccessQuery.data?.room_instance_id ?? null,
+    expiresAt: roomAccessQuery.data?.expires_at ?? null,
+    unavailable: roomAccessUnavailable,
+  };
+  const roomAccessGranted = isRoomSceneAccessUsable(roomSceneAccess, roomAccessUnavailable);
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
@@ -105,6 +91,19 @@ export function WorldShell() {
       setShowRoomOffer(true);
     }
   }, [roomInventoryQuery.isLoading, roomAccessQuery.isLoading, roomCatalogueQuery.isLoading, roomAccessUnavailable, roomAccessGranted]);
+  useEffect(() => {
+    const expiresAt = roomAccessQuery.data?.expires_at;
+    if (roomAccessQuery.data?.granted !== true || !expiresAt) return;
+
+    const delay = Date.parse(expiresAt) - Date.now();
+    if (!Number.isFinite(delay) || delay <= 0) {
+      void roomAccessQuery.refetch();
+      return;
+    }
+    const timeout = window.setTimeout(() => { void roomAccessQuery.refetch(); }, delay);
+    return () => window.clearTimeout(timeout);
+  }, [roomAccessQuery.data?.expires_at, roomAccessQuery.data?.granted, roomAccessQuery.refetch]);
+
   const selectedEmployee = world?.employees.find((employee) => employee.id === selectedEmployeeId) ?? null;
 
   useEffect(() => {
@@ -150,19 +149,20 @@ export function WorldShell() {
           {world && (
             <>
               <div className="relative">
-                <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} onMapToggle={onMapToggle} onRoomProximity={onRoomProximity} onRoomInteract={onRoomInteract} />
+                <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} onMapToggle={onMapToggle} onRoomProximity={onRoomProximity} onRoomInteract={onRoomInteract} roomAccess={roomSceneAccess} />
                 <MobileInputAdapter />
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
                 {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect" : "Locked room nearby · Press E to inspect access or rent"}</button>}
                 {showRoomOffer && <WorldRoomOfferPanel onClose={() => setShowRoomOffer(false)} />}
-                {showRoomAccess && <WorldRoomAccessPanel state={roomInventoryQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessQuery.isLoading ? "loading" : roomAccessUnavailable || !roomAccessQuery.data || !roomAccessGranted ? "unavailable" : "granted"} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? activeRoomLease?.expires_at ?? null} onRetry={() => { void roomInventoryQuery.refetch(); void roomCatalogueQuery.refetch(); if (roomAccessItemCode) void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
+                {showRoomAccess && <WorldRoomAccessPanel state={roomInventoryQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessQuery.isLoading ? "loading" : roomAccessUnavailable ? "unavailable" : roomAccessGranted ? "granted" : "unavailable"} itemCode={roomAccessQuery.data?.item_code ?? roomAccessItemCode ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? null} onRetry={() => { void roomInventoryQuery.refetch(); void roomCatalogueQuery.refetch(); if (roomAccessItemCode) void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
               <RoomLeaseStatus
-                loading={entitlementsQuery.isLoading}
-                unavailable={Boolean(entitlementsQuery.error)}
-                lease={activeRoomLease}
+                loading={roomInventoryQuery.isLoading || roomCatalogueQuery.isLoading || roomAccessQuery.isLoading}
+                unavailable={roomAccessUnavailable}
+                access={roomAccessQuery.data ?? null}
+                granted={roomAccessGranted}
               />
               <WorldStatusBar world={world} />
               <WorldProgressionPanel progression={world.progression} />
@@ -188,17 +188,17 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
   );
 }
 
-function RoomLeaseStatus({ loading, unavailable, lease }: { loading: boolean; unavailable: boolean; lease: WorldEntitlement | null }) {
-  const expiry = lease?.expires_at ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(lease.expires_at)) : null;
+function RoomLeaseStatus({ loading, unavailable, access, granted }: { loading: boolean; unavailable: boolean; access: WorldRoomInventoryAccess | null; granted: boolean }) {
+  const expiry = access?.expires_at ? new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(access.expires_at)) : null;
   return (
     <section aria-label="World room lease status" className="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3">
-      <p className="text-xs font-semibold text-slate-300">وضعیت اعتبار اتاق</p>
-      {loading && <p role="status" className="mt-1 text-sm text-slate-400">در حال بررسی اعتبار از سرور…</p>}
-      {unavailable && <p role="alert" className="mt-1 text-sm text-amber-200">وضعیت اعتبار قابل بررسی نیست؛ دسترسی فعال فرض نمی‌شود.</p>}
-      {!loading && !unavailable && lease && (
-        <p className="mt-1 text-sm text-emerald-200">اعتبار اتاق «{lease.item_code}» فعال است{expiry ? ` تا ${expiry}` : ""}. اتصال این اعتبار به بازشدن صحنهٔ سه‌بعدی هنوز تکمیل نشده است.</p>
+      <p className="text-xs font-semibold text-slate-300">وضعیت موجودی و دسترسی اتاق</p>
+      {loading && <p role="status" className="mt-1 text-sm text-slate-400">در حال بررسی موجودی و مجوز اتاق از سرور…</p>}
+      {unavailable && <p role="alert" className="mt-1 text-sm text-amber-200">وضعیت موجودی یا مجوز قابل بررسی نیست؛ دسترسی مسدود می‌ماند.</p>}
+      {!loading && !unavailable && granted && access?.room_instance_id && (
+        <p className="mt-1 text-sm text-emerald-200">اتاق «{access.item_code}» از سرور تأیید شد{expiry ? ` تا ${expiry}` : ""}. شناسه نمونه: <span className="font-mono">{access.room_instance_id}</span>. صحنه فقط تا پایان اعتبار مجاز نمایش داده می‌شود.</p>
       )}
-      {!loading && !unavailable && !lease && <p className="mt-1 text-sm text-slate-400">اعتبار فعال اتاق پولی پیدا نشد. وضعیت از فهرست اعتبارهای معتبر سرور خوانده شده است.</p>}
+      {!loading && !unavailable && !granted && <p className="mt-1 text-sm text-slate-400">نمونه اتاق دارای مجوز معتبر برای این مستأجر پیدا نشد.</p>}
     </section>
   );
 }
