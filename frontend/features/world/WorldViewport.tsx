@@ -380,7 +380,9 @@ export function WorldViewport({
     selectedEmployeeIdRef.current = selectedEmployeeId;
     selectRef.current = onEmployeeSelect;
     mapToggleRef.current = handleMapToggle;
-  }, [employees, selectedEmployeeId, onEmployeeSelect, handleMapToggle]);
+    roomProximityRef.current = onRoomProximity;
+    roomInteractRef.current = onRoomInteract;
+  }, [employees, selectedEmployeeId, onEmployeeSelect, handleMapToggle, onRoomProximity, onRoomInteract]);
 
   useEffect(() => {
     const host = mountRef.current;
