@@ -256,9 +256,6 @@ async def update_room_scene_config(
         raise HTTPException(status_code=404, detail="World room not found")
 
     inventory, entitlement, catalogue_item = row
-    if inventory.updated_at != expected_updated_at:
-        raise HTTPException(status_code=409, detail="Room layout changed since it was opened. Close the editor and reopen the latest layout before saving.")
-
     if (
         catalogue_item.item_type != "room"
         or not catalogue_item.is_active
@@ -268,6 +265,9 @@ async def update_room_scene_config(
         or entitlement.expires_at <= now
     ):
         raise HTTPException(status_code=403, detail="Active room access is required to update the scene")
+
+    if inventory.updated_at != expected_updated_at:
+        raise HTTPException(status_code=409, detail="Room layout changed since it was opened. Close the editor and reopen the latest layout before saving.")
 
     employee_ids = {placement.employee_id for placement in payload.employee_placements}
     if employee_ids:
