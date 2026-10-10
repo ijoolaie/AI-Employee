@@ -183,6 +183,7 @@ class WorldRoomInventoryResponse(BaseModel):
     status: str
     expires_at: datetime | None = None
     scene_config: dict = Field(default_factory=dict)
+    updated_at: datetime
 
 
 class WorldRoomInventoryAccessResponse(BaseModel):
