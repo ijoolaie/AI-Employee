@@ -396,17 +396,7 @@ async def _create_support_escalation_message(
         metadata={"escalation_id": str(ticket.id)},
     )
     response = SupportEscalationMessageResponse.model_validate(message, from_attributes=True)
-    response.attachments = [
-        SupportEscalationMessageAttachmentResponse(
-            id=attachment.id,
-            file_id=files_by_id[attachment.file_id].id,
-            filename=files_by_id[attachment.file_id].filename,
-            content_type=files_by_id[attachment.file_id].content_type,
-            size_bytes=files_by_id[attachment.file_id].size_bytes,
-            created_at=attachment.created_at,
-        )
-        for attachment in []
-    ]
+    response.attachments = []
     if file_ids:
         attachment_result = await db.execute(
             select(SupportEscalationMessageAttachment)
