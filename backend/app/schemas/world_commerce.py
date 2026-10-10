@@ -64,3 +64,19 @@ class WorldOrderResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class WorldFeatureEntitlementResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    item_code: str
+    item_type: str
+    source_order_id: UUID
+    status: str
+    activated_by_user_id: UUID | None
+    activated_by_username: str | None
+    activated_at: datetime
+    revoked_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
