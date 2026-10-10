@@ -1,3 +1,12 @@
+## World commerce fulfillment transition guard — 2026-10-10 (PR #1000)
+
+- PR [#1000](https://github.com/ijoolaie/AI-Employee/pull/1000) merged at `aaae36a488cadd72b59ce22d00579438edd1a233`; all 11 reported checks passed on exact PR head `ac69a6240ba1aa4cc2fa09e6a03c5d38153de45c`.
+- Regression tests cover rejection of fulfillment from `pending_payment`, `payment_submitted`, `rejected`, `cancelled`, and `fulfilled` states, without persisting/flushing invalid transitions.
+- A two-person-control test confirms the payment approver cannot also activate fulfillment for the same order.
+- Post-merge checks: PR #1000 head checks 11/11 success; PR #999 merge SHA `b928aca46f46d005045e48201cadb3ec8c5d1e0b` checks 4/4 success.
+- Tests protect existing guards; they do not implement room inventory, lease/entitlement expiry or renewal, employee placement, or durable customization-to-scene integration.
+- Release boundary unchanged: latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Merge/CI evidence does not certify production readiness or activate real payments.
+
 ## World commerce provider-approval boundary — 2026-10-10 (PR #998)
 
 - PR [#998](https://github.com/ijoolaie/AI-Employee/pull/998) merged at `88fe8472864f41538b7249b8d013f4f73682ed85`; all 11 reported checks passed on exact PR head `cde9c78b64a977251b3c5198d56adf6fed07267e` before merge.
