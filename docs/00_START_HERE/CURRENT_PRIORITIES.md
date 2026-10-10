@@ -231,3 +231,10 @@ The dependency PR's security update is desirable, but its current lockfile/build
 - **CORRECTION PUSHED / VALIDATION PENDING:** CI showed that the earlier lockfile-only correction was insufficient because the Dependabot branch also changed `frontend/package.json` to Tailwind v4. Commit `072e0c077ad18b7cb2afea1c50b8b68aa99be857` restores the manifest to `tailwindcss: ^3.4.16` so it matches the corrected lockfile and existing v3 PostCSS/config setup.
 - Current lockfile retains Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4 while upgrading `source-map-js` to 1.2.2.
 - Re-check CI, CodeQL, infrastructure, HA recovery and DAST on exact head `072e0c077ad18b7cb2afea1c50b8b68aa99be857`. Earlier failures apply to superseded heads; do not merge until the latest required checks are green.
+
+
+## Dependency PR #984 — completed 2026-10-10
+
+- **MERGED:** `source-map-js` 1.2.2 security update; Tailwind v3 configuration retained. PR #984: https://github.com/ijoolaie/AI-Employee/pull/984
+- All five required workflows passed on corrected PR head `072e0c077ad18b7cb2afea1c50b8b68aa99be857` before merge. Merge commit: `36817a54475051ac42a7a445b56a3245845dbfe8`.
+- Remaining priorities are World desktop/mobile manual QA, validating payment provider/webhook behavior, ledger/idempotency, entitlement/lease integration, support workflow completion and separate release certification.
