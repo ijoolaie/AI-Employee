@@ -955,6 +955,37 @@ async def test_room_scene_config_update_denies_suspended_or_invalid_access(
 
 
 @pytest.mark.asyncio
+@pytest.mark.asyncio
+async def test_room_scene_config_update_rejects_stale_revision_without_overwriting():
+    from datetime import timedelta
+    from app.schemas.world_commerce import WorldRoomSceneConfig
+    from app.api.v1.world_commerce import update_room_scene_config
+
+    tenant_id = uuid4()
+    current_revision = datetime.now(timezone.utc)
+    inventory = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, item_code="room.starter",
+        status="provisioned", scene_config={"schema_version": 1, "layout_preset": "starter", "furniture": []},
+        updated_at=current_revision,
+    )
+    entitlement = SimpleNamespace(tenant_id=tenant_id, status="active", expires_at=current_revision + timedelta(days=2))
+    catalogue = SimpleNamespace(item_type="room", is_active=True)
+    db = AsyncMock()
+    db.execute.return_value = SimpleNamespace(first=lambda: (inventory, entitlement, catalogue))
+    payload = WorldRoomSceneConfig.model_validate({"schema_version": 1, "layout_preset": "starter"})
+
+    with pytest.raises(HTTPException) as exc:
+        await update_room_scene_config(
+            "room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db,
+            expected_updated_at=current_revision - timedelta(seconds=1),
+        )
+
+    assert exc.value.status_code == 409
+    assert "changed since it was opened" in exc.value.detail
+    assert inventory.scene_config["furniture"] == []
+    db.commit.assert_not_awaited()
+
+
 async def test_room_scene_config_update_hides_inventory_owned_by_another_tenant():
     from app.schemas.world_commerce import WorldRoomSceneConfig
     from app.api.v1.world_commerce import update_room_scene_config
@@ -1046,7 +1077,7 @@ async def test_room_scene_config_update_rejects_employee_not_active_in_current_t
     })
 
     with pytest.raises(HTTPException) as exc:
-        await update_room_scene_config("room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db)
+        await update_room_scene_config("room.starter", payload, SimpleNamespace(tenant_id=tenant_id), db, expected_updated_at=now)
 
     assert exc.value.status_code == 422
     db.commit.assert_not_awaited()
