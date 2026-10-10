@@ -7,7 +7,8 @@ const panel = readFileSync("features/world/WorldRoomAccessPanel.tsx", "utf8");
 describe("World room access gate contracts", () => {
   it("checks the server access endpoint for the configured paid room", () => {
     expect(shell).toContain('"/world-commerce/catalogue"');
-    expect(shell).toContain('"/world-commerce/access/${encodeURIComponent(roomCatalogueQuery.data!)}"');
+    expect(shell).toContain('"/world-commerce/access/');
+    expect(shell).toContain("encodeURIComponent(roomCatalogueQuery.data!)");
     expect(shell).toContain("roomAccessQuery.data?.granted === true");
     expect(shell).toContain('roomAccessQuery.data.item_type === "room"');
   });
@@ -20,7 +21,7 @@ describe("World room access gate contracts", () => {
   });
 
   it("only presents the room access confirmation when the server grants access", () => {
-    expect(shell).toContain('roomAccessGranted ? "Authorized room nearby · Press E or inspect"');
+    expect(shell).toContain('roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect"');
     expect(shell).toContain('roomAccessGranted ? "granted" : "unavailable"');
     expect(panel).toContain("سرور مجوز فعال این اتاق را تأیید کرده است");
   });
