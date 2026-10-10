@@ -325,3 +325,106 @@ def test_catalogue_admin_rejects_unsupported_currency_and_extra_fields():
         WorldCatalogueAdminWriteRequest(**{**base, "price_options": {"EUR": base["price_options"]["IRR"]}})
     with pytest.raises(ValidationError):
         WorldCatalogueAdminWriteRequest(**{**base, "tenant_id": "attacker-controlled"})
+
+@pytest.mark.asyncio
+async def test_create_order_uses_server_catalogue_price(monkeypatch):
+    from app.services import world_commerce_service as commerce
+
+    tenant_id = uuid4()
+    buyer = SimpleNamespace(tenant_id=tenant_id, id=uuid4(), email="buyer@example.test")
+    item = SimpleNamespace(
+        id=uuid4(),
+        code="room.starter",
+        is_active=True,
+        is_free=False,
+        price_options={
+            "USD": {
+                "amount": "12.50",
+                "providers": ["example_gateway"],
+                "payment_methods": ["gateway"],
+            }
+        },
+    )
+    db = AsyncMock()
+    db.scalar.side_effect = [None, item]
+    event = AsyncMock()
+    monkeypatch.setattr(commerce, "_event", event)
+
+    order = await create_order(
+        db,
+        tenant_id=tenant_id,
+        buyer=buyer,
+        item_code="room.starter",
+        currency="USD",
+        payment_method="gateway",
+        payment_provider="example_gateway",
+        idempotency_key="order-server-price-001",
+    )
+
+    assert order.amount == Decimal("12.50")
+    assert order.currency == "USD"
+    assert order.tenant_id == tenant_id
+    assert order.idempotency_key == "order-server-price-001"
+    event.assert_awaited_once()
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_create_order_returns_existing_order_for_matching_idempotency_key():
+    tenant_id = uuid4()
+    existing = SimpleNamespace(
+        tenant_id=tenant_id,
+        item_code_snapshot="room.starter",
+        currency="USD",
+        payment_method="gateway",
+        payment_provider="example_gateway",
+        idempotency_key="order-retry-001",
+    )
+    db = AsyncMock()
+    db.scalar.return_value = existing
+
+    result = await create_order(
+        db,
+        tenant_id=tenant_id,
+        buyer=SimpleNamespace(tenant_id=tenant_id, id=uuid4(), email="buyer@example.test"),
+        item_code="room.starter",
+        currency="USD",
+        payment_method="gateway",
+        payment_provider="example_gateway",
+        idempotency_key="order-retry-001",
+    )
+
+    assert result is existing
+    db.flush.assert_not_awaited()
+    db.add.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_create_order_rejects_reused_idempotency_key_with_different_inputs():
+    tenant_id = uuid4()
+    existing = SimpleNamespace(
+        tenant_id=tenant_id,
+        item_code_snapshot="room.starter",
+        currency="IRR",
+        payment_method="manual_transfer",
+        payment_provider="manual",
+        idempotency_key="order-retry-conflict",
+    )
+    db = AsyncMock()
+    db.scalar.return_value = existing
+
+    with pytest.raises(HTTPException) as exc:
+        await create_order(
+            db,
+            tenant_id=tenant_id,
+            buyer=SimpleNamespace(tenant_id=tenant_id, id=uuid4(), email="buyer@example.test"),
+            item_code="room.starter",
+            currency="USD",
+            payment_method="gateway",
+            payment_provider="example_gateway",
+            idempotency_key="order-retry-conflict",
+        )
+
+    assert exc.value.status_code == 409
+    db.flush.assert_not_awaited()
+
