@@ -277,9 +277,9 @@ test("World room layout editor persists and applies furniture placements", async
   await expect(canvas).toHaveAttribute("data-room-access-state", "granted");
   await expect(canvas).toHaveAttribute("data-room-furniture-count", "2");
 
-  let savedPayload: { schema_version: number; layout_preset: string; furniture: Array<{ placement_id: string; kind: string; x: number; z: number; rotation: number }> } | null = null;
+  const savedPayloads: Array<{ schema_version: number; layout_preset: string; furniture: Array<{ placement_id: string; kind: string; x: number; z: number; rotation: number }> }> = [];
   await page.route("**/world-commerce/room-inventory/room_monthly/scene-config", async (route) => {
-    savedPayload = route.request().postDataJSON();
+    savedPayloads.push(route.request().postDataJSON());
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -288,7 +288,7 @@ test("World room layout editor persists and applies furniture placements", async
         data: {
           room_instance_id: "room-instance-e2e-001",
           item_code: "room_monthly",
-          scene_config: savedPayload,
+          scene_config: savedPayloads[0],
           updated_at: "2035-01-01T00:00:00.000Z",
         },
       }),
@@ -302,9 +302,10 @@ test("World room layout editor persists and applies furniture placements", async
   await editor.getByRole("button", { name: "Save layout" }).click();
   await expect(editor.getByRole("status")).toContainText("Room layout saved to the server.");
   await expect(canvas).toHaveAttribute("data-room-furniture-count", "3");
-  expect(savedPayload).not.toBeNull();
-  expect(savedPayload?.schema_version).toBe(1);
-  expect(savedPayload?.layout_preset).toBe("starter");
-  expect(savedPayload?.furniture).toHaveLength(3);
-  expect(savedPayload?.furniture.every((item) => item.x >= -2.2 && item.x <= 2.2 && item.z >= -2.2 && item.z <= 2.2)).toBe(true);
+  expect(savedPayloads).toHaveLength(1);
+  const savedPayload = savedPayloads[0];
+  expect(savedPayload.schema_version).toBe(1);
+  expect(savedPayload.layout_preset).toBe("starter");
+  expect(savedPayload.furniture).toHaveLength(3);
+  expect(savedPayload.furniture.every((item) => item.x >= -2.2 && item.x <= 2.2 && item.z >= -2.2 && item.z <= 2.2)).toBe(true);
 });
