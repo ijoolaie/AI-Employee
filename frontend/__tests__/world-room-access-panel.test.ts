@@ -7,7 +7,7 @@ const panel = readFileSync("features/world/WorldRoomAccessPanel.tsx", "utf8");
 describe("World room access gate contracts", () => {
   it("checks the server access endpoint for the configured paid room", () => {
     expect(shell).toContain('"/world-commerce/catalogue"');
-    expect(shell).toContain('"/world-commerce/access/');
+    expect(shell).toContain("/world-commerce/access/");
     expect(shell).toContain("encodeURIComponent(roomCatalogueQuery.data!)");
     expect(shell).toContain("roomAccessQuery.data?.granted === true");
     expect(shell).toContain('roomAccessQuery.data.item_type === "room"');
