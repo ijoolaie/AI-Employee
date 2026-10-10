@@ -302,3 +302,10 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - Commit `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890` replaces the accidental Tailwind v4 lockfile drift with a lockfile based on `main`, changing only `node_modules/source-map-js` to 1.2.2. Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4 remain aligned with the existing v3 config.
 - The prior failures belong to superseded head `5287581895464c2942dc4ae4b3f21949e51322a7`. CI, CodeQL, Production Infrastructure, HA Recovery and Ephemeral DAST have been triggered on the corrected head; their final outcomes must be checked before any merge decision.
 - PR #984 remains open and unmerged. No new release certification is implied.
+
+
+### PR #984 latest-head correction — 2026-10-10
+
+- The first lockfile-only correction exposed a second mismatch: Dependabot had also changed `frontend/package.json` to Tailwind v4. The exact-head `npm ci` failure confirmed this manifest/lock mismatch.
+- Commit `072e0c077ad18b7cb2afea1c50b8b68aa99be857` restores `frontend/package.json` to the base `tailwindcss: ^3.4.16`, aligned with the lockfile (Tailwind 3.4.19) and existing Tailwind v3 PostCSS/config. The intended `source-map-js` 1.2.2 update and `postcss-selector-parser` 6.1.4 are retained.
+- All five required workflows have been triggered on this newest exact head. Final outcomes are pending; PR #984 remains unmerged.
