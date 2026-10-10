@@ -1,6 +1,6 @@
 # AI Employee World — Master Handoff
 
-**Updated:** 2026-10-09  
+**Updated:** 2026-10-10  
 **Repository:** `ijoolaie/AI-Employee`  
 **Working branch:** `feat/world-3d-office`  
 **Pull request:** [#983 — stylized 3D AI office](https://github.com/ijoolaie/AI-Employee/pull/983)  
@@ -9,6 +9,20 @@
 **Validation runs on this exact SHA:** CI `37980135919`; CodeQL `37980135968`; HA recovery `37980135924`; ephemeral DAST `37980136044`; production infrastructure `37980135852`.  
 **Previous implementation/docs head:** `7143aff6680938b2d0b11e43c9dc07c0fc12c1d8`  
 **Workflow rule:** keep the PR open and Draft; do not merge or mark ready without explicit approval.
+
+## Current verification update — 2026-10-10
+
+**Exact PR head inspected:** `d2be7e38047af0b23a799d6df2a5961597730cd5`. All five required automated workflows and every job completed successfully on this exact SHA:
+
+- CI: [37980678249](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678249) — frontend lint, contract/unit tests, production build, World Mode Playwright smoke, backend compile, Ruff, migration gates and backend tests passed.
+- CodeQL: [37980677995](https://github.com/ijoolaie/AI-Employee/actions/runs/37980677995) — Python and JavaScript/TypeScript analyses passed.
+- HA recovery: [37980678205](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678205) — recovery rehearsal and cleanup passed.
+- Ephemeral DAST: [37980678086](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678086) — OWASP ZAP baseline scan and cleanup passed.
+- Production infrastructure: [37980678035](https://github.com/ijoolaie/AI-Employee/actions/runs/37980678035) — service lifecycle, migration gate, PostgreSQL backup and isolated restore passed.
+
+This evidence supersedes older SHA-specific status statements below for current automated validation. The docs reconciliation commit that updates this handoff will create a new branch head, so its own exact-head workflows must be checked before current validation is claimed again.
+
+**Not yet performed:** manual visual QA across desktop and narrow/mobile viewports. CI's Playwright smoke is automated functional coverage, not a substitute for visual inspection. Keep PR #983 open and Draft; do not merge or mark ready without explicit approval.
 
 ## 1. Goal and product boundary
 
