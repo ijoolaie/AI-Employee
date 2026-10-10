@@ -251,3 +251,12 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - Added parameterized tests for both edition inbox routes and their tenant-scoped query contract.
 - Replies, status transitions, attachments, support sessions, impersonation and support-driven commerce mutations remain out of scope for this slice.
 - CI must be checked on the exact latest branch SHA; do not treat earlier green checks as validating these additions.
+
+
+### Support escalation workflow update (2026-10-10)
+
+- Added validated status updates for incoming support escalations through vendor/reseller edition endpoints.
+- Statuses: `open`, `in_progress`, `resolved`; invalid transitions are rejected, and resolved tickets can be reopened explicitly.
+- Update lookup is tenant-scoped using both escalation ID and authenticated `to_tenant_id`; missing or cross-tenant IDs return 404.
+- Successful transitions are audited with the actor and previous/new status. Regression tests cover both edition routes, tenant isolation, audit call, and invalid transitions.
+- Replies/message threads, attachments, and impersonation are still not implemented. CI must validate the exact branch head.
