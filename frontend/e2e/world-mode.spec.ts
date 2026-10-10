@@ -128,11 +128,11 @@ test("World room offer loads server prices and creates an order without charging
       body: JSON.stringify({ success: true, data: [] }),
     });
   });
-  await page.route("**/world-commerce/access/room_monthly", async (route) => {
+  await page.route("**/world-commerce/room-inventory/room_monthly/access", async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, data: { item_code: "room_monthly", granted: false, access_source: "not_entitled", item_type: "room" } }),
+      body: JSON.stringify({ success: true, data: { item_code: "room_monthly", granted: false, reason: "not_provisioned", room_instance_id: null, expires_at: null } }),
     });
   });
   await page.route("**/world-commerce/catalogue", async (route) => {
