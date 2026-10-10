@@ -278,3 +278,41 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - PR #983 was squash-merged into main as commit f3f7ad6c169a5e31b1773b4a280af43b49c020c7.
 - The documentation-updated PR head a0952cc44444e5c04c4c245653e59227b3a88a82 passed all 17 workflows before merge, including CI, CodeQL, HA recovery, ephemeral DAST, production infrastructure, and the supporting E2E/security contracts.
 - The merge does not imply production certification or manual visual QA. Remaining limitations are recorded in the World hybrid-economy design and master handoff.
+
+
+## 2026-10-10 hand-off addendum — PR #984 and World follow-through
+
+### Dependency/security PR #984 — blocked
+
+- Current inspected head: `5287581895464c2942dc4ae4b3f21949e51322a7`.
+- Exact-head workflow outcomes: CodeQL PASS; CI, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST Validation FAIL.
+- Confirmed mismatch: package manifest and PostCSS configuration remain Tailwind v3, but the PR lockfile resolves Tailwind v4. CI reports the v4 PostCSS plugin migration error. A `REQUEST_CHANGES` review and PR conversation comment have been posted.
+- Next action: preserve the `source-map-js@1.2.2` security update and regenerate a coherent lockfile retaining Tailwind v3, or propose a separate intentional v4 migration. Do not merge until all required workflows pass on the exact latest head.
+
+### World follow-through
+
+- PR #983 is documented as merged to main at `f3f7ad6c169a5e31b1773b4a280af43b49c020c7`; its exact PR head `a0952cc44444e5c04c4c245653e59227b3a88a82` passed 17 automated workflows before merge.
+- This is post-release engineering, not a new production-certified release. Latest certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- Manual desktop/mobile QA is still required. Live provider/webhook verification, wallet/ledger, lease and fulfillment automation, persistent 3D customization, and support replies/threads/attachments remain unimplemented.
+- For the next session, inspect live main and open PRs first, check workflow status against each exact head, and do not carry success across SHAs.
+
+
+### PR #984 correction submitted — exact-head validation pending (2026-10-10)
+
+- Commit `de9dabe66a0916ab2b2d8644cd0ef27d3eed0890` replaces the accidental Tailwind v4 lockfile drift with a lockfile based on `main`, changing only `node_modules/source-map-js` to 1.2.2. Tailwind 3.4.19 and `postcss-selector-parser` 6.1.4 remain aligned with the existing v3 config.
+- The prior failures belong to superseded head `5287581895464c2942dc4ae4b3f21949e51322a7`. CI, CodeQL, Production Infrastructure, HA Recovery and Ephemeral DAST have been triggered on the corrected head; their final outcomes must be checked before any merge decision.
+- PR #984 remains open and unmerged. No new release certification is implied.
+
+
+### PR #984 latest-head correction — 2026-10-10
+
+- The first lockfile-only correction exposed a second mismatch: Dependabot had also changed `frontend/package.json` to Tailwind v4. The exact-head `npm ci` failure confirmed this manifest/lock mismatch.
+- Commit `072e0c077ad18b7cb2afea1c50b8b68aa99be857` restores `frontend/package.json` to the base `tailwindcss: ^3.4.16`, aligned with the lockfile (Tailwind 3.4.19) and existing Tailwind v3 PostCSS/config. The intended `source-map-js` 1.2.2 update and `postcss-selector-parser` 6.1.4 are retained.
+- All five required workflows have been triggered on this newest exact head. Final outcomes are pending; PR #984 remains unmerged.
+
+
+### PR #984 — merged after corrected exact-head validation (2026-10-10)
+
+- PR #984 was squash-merged as `36817a54475051ac42a7a445b56a3245845dbfe8` after all five required workflows passed on corrected head `072e0c077ad18b7cb2afea1c50b8b68aa99be857`.
+- The merge updates `source-map-js` to 1.2.2 while keeping Tailwind v3 and its existing PostCSS/configuration coherent. The accidental Tailwind v4 migration was excluded.
+- Release certification is unchanged; the merge is not a new production certification.
