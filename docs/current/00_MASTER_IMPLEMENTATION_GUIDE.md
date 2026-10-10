@@ -227,3 +227,10 @@ Branch: `feat/world-3d-office` · PR #983 remains open and Draft.
 - Latest implementation has not yet been validated by CI at documentation time. Inspect all workflows against the latest branch SHA before reporting success; do not infer success from the previous commit's CI.
 - This is not a full support workspace: no support sessions/tickets, time-limited grants, impersonation, or privileged mutation endpoints. Payment provider verification, wallet ledger, leases/furniture fulfillment, and actual 3D scene customization remain unimplemented.
 - PR #983 remains open and Draft. Do not merge or mark ready without explicit user approval.
+
+
+## 16. AI Employee World — diagnostics data-minimization checkpoint (2026-10-10)
+
+- Added a schema regression test proving vendor diagnostics order summaries do not serialize buyer user IDs or provider transaction references.
+- The last known fully green CI/security set was on commit `f9864ffec2fdfd62c77de77cc8704542ec580c43`. Since then, a focused test and documentation commits were added; do not carry forward the earlier green status as proof for the current branch head.
+- PR #983 remains open and Draft; no merge or ready-for-review transition without explicit user approval.
