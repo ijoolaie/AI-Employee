@@ -6,7 +6,7 @@ must be implemented separately before any automated verification is enabled.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any
 from uuid import UUID
@@ -264,10 +264,18 @@ async def mark_fulfilled(
         WorldFeatureEntitlement.tenant_id == tenant_id,
         WorldFeatureEntitlement.item_code == order.item_code_snapshot,
     ).with_for_update())
-    if entitlement is not None and entitlement.status == "active":
-        raise HTTPException(status_code=409, detail="Tenant already has this feature entitlement")
-
     activated_at = _utcnow()
+    if item.item_type == "room" and not item.is_free and not item.lease_duration_days:
+        raise HTTPException(status_code=409, detail="Paid room lease duration is not configured")
+    if entitlement is not None and entitlement.status == "active":
+        if item.item_type != "room" or (entitlement.expires_at is not None and entitlement.expires_at > activated_at):
+            raise HTTPException(status_code=409, detail="Tenant already has this feature entitlement")
+
+    expires_at = (
+        activated_at + timedelta(days=item.lease_duration_days)
+        if item.item_type == "room" and not item.is_free and item.lease_duration_days
+        else None
+    )
     if entitlement is None:
         entitlement = WorldFeatureEntitlement(
             tenant_id=tenant_id,
@@ -278,7 +286,8 @@ async def mark_fulfilled(
             activated_by_user_id=activator.id,
             activated_by_username=activator.email,
             activated_at=activated_at,
-            metadata_={"catalogue_item_id": str(item.id)},
+            expires_at=expires_at,
+            metadata_={"catalogue_item_id": str(item.id), "lease_duration_days": item.lease_duration_days},
         )
         db.add(entitlement)
     else:
@@ -289,7 +298,8 @@ async def mark_fulfilled(
         entitlement.activated_by_username = activator.email
         entitlement.activated_at = activated_at
         entitlement.revoked_at = None
-        entitlement.metadata_ = {"catalogue_item_id": str(item.id)}
+        entitlement.expires_at = expires_at
+        entitlement.metadata_ = {"catalogue_item_id": str(item.id), "lease_duration_days": item.lease_duration_days}
 
     old_status = order.status
     order.status = "fulfilled"

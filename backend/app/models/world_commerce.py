@@ -10,7 +10,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    CheckConstraint, DateTime, ForeignKey, Index, Numeric, String, Text,
+    CheckConstraint, DateTime, ForeignKey, Index, Integer, Numeric, String, Text,
     UniqueConstraint, func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -26,6 +26,11 @@ class WorldCatalogueItem(Base):
             "item_type IN ('room', 'layout', 'appearance', 'personality', 'furniture', 'facility', 'support')",
             name="ck_world_catalogue_item_type",
         ),
+        CheckConstraint(
+            "(lease_duration_days IS NULL OR lease_duration_days BETWEEN 1 AND 3650) "
+            "AND (item_type = 'room' OR lease_duration_days IS NULL)",
+            name="ck_world_catalogue_lease_duration",
+        ),
         Index("ix_world_catalogue_active_type", "is_active", "item_type"),
     )
 
@@ -38,6 +43,8 @@ class WorldCatalogueItem(Base):
     # Never accept these values from a client request.
     price_options: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     is_free: Mapped[bool] = mapped_column(default=False, nullable=False)
+    # Required for paid room items; snapshots the configured lease length at fulfillment.
+    lease_duration_days: Mapped[int | None] = mapped_column(Integer, nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False, index=True)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -126,6 +133,7 @@ class WorldFeatureEntitlement(Base):
     activated_by_username: Mapped[str | None] = mapped_column(String(320))
     activated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     metadata_: Mapped[dict] = mapped_column("metadata", JSONB, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

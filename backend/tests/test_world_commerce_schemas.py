@@ -241,6 +241,7 @@ def test_catalogue_admin_requires_positive_price_and_supported_choices():
         code="room.starter",
         item_type="room",
         name="Starter Room",
+        lease_duration_days=30,
         price_options={
             "IRR": {
                 "amount": "2500000",
@@ -601,3 +602,110 @@ async def test_fulfillment_requires_a_different_user_than_payment_approver():
     assert "different authorized user" in exc.value.detail
     db.add.assert_not_called()
     db.flush.assert_not_awaited()
+
+
+
+def test_catalogue_admin_requires_lease_duration_for_paid_rooms():
+    from app.schemas.world_commerce import WorldCatalogueAdminWriteRequest
+
+    with pytest.raises(ValidationError, match="lease_duration_days"):
+        WorldCatalogueAdminWriteRequest(
+            code="room.no-lease",
+            item_type="room",
+            name="No Lease",
+            price_options={
+                "IRR": {
+                    "amount": "100",
+                    "providers": ["manual"],
+                    "payment_methods": ["manual_transfer"],
+                }
+            },
+        )
+
+
+def test_catalogue_admin_rejects_lease_duration_for_non_room_items():
+    from app.schemas.world_commerce import WorldCatalogueAdminWriteRequest
+
+    with pytest.raises(ValidationError, match="only valid for room items"):
+        WorldCatalogueAdminWriteRequest(
+            code="furniture.chair",
+            item_type="furniture",
+            name="Chair",
+            lease_duration_days=30,
+            price_options={
+                "USD": {
+                    "amount": "10",
+                    "providers": ["manual"],
+                    "payment_methods": ["manual_transfer"],
+                }
+            },
+        )
+
+
+@pytest.mark.asyncio
+async def test_room_fulfillment_requires_configured_lease_duration(monkeypatch):
+    from app.services import world_commerce_service as commerce
+
+    tenant_id = uuid4()
+    approver_id = uuid4()
+    order = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, status="approved",
+        approved_by_user_id=approver_id, catalogue_item_id=uuid4(),
+        item_code_snapshot="room.starter",
+    )
+    item = SimpleNamespace(id=order.catalogue_item_id, item_type="room", is_free=False, lease_duration_days=None)
+    db = AsyncMock()
+    db.scalar.side_effect = [order, item, None]
+    event = AsyncMock()
+    monkeypatch.setattr(commerce, "_event", event)
+
+    with pytest.raises(HTTPException) as exc:
+        await commerce.mark_fulfilled(
+            db, order_id=order.id, tenant_id=tenant_id,
+            activator=SimpleNamespace(id=uuid4(), email="activator@example.test"),
+        )
+
+    assert exc.value.status_code == 409
+    assert "lease duration is not configured" in exc.value.detail
+    db.add.assert_not_called()
+    db.flush.assert_not_awaited()
+    event.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_room_fulfillment_persists_expiry_from_server_catalogue_duration(monkeypatch):
+    from app.models.world_commerce import WorldFeatureEntitlement
+    from app.services import world_commerce_service as commerce
+
+    tenant_id = uuid4()
+    approver_id = uuid4()
+    order = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, status="approved",
+        approved_by_user_id=approver_id, catalogue_item_id=uuid4(),
+        item_code_snapshot="room.starter", activated_by_user_id=None,
+        activated_by_username=None, activated_at=None,
+    )
+    item = SimpleNamespace(
+        id=order.catalogue_item_id, item_type="room", is_free=False, lease_duration_days=30,
+    )
+    db = AsyncMock()
+    db.scalar.side_effect = [order, item, None]
+    event = AsyncMock()
+    monkeypatch.setattr(commerce, "_event", event)
+
+    result = await commerce.mark_fulfilled(
+        db, order_id=order.id, tenant_id=tenant_id,
+        activator=SimpleNamespace(id=uuid4(), email="activator@example.test"),
+    )
+
+    entitlement = next(
+        call.args[0] for call in db.add.call_args_list
+        if isinstance(call.args[0], WorldFeatureEntitlement)
+    )
+    assert result.status == "fulfilled"
+    assert entitlement.status == "active"
+    assert entitlement.expires_at is not None
+    assert 29 <= (entitlement.expires_at - entitlement.activated_at).days <= 30
+    assert entitlement.metadata_["lease_duration_days"] == 30
+    db.flush.assert_awaited_once()
+    event.assert_awaited_once()

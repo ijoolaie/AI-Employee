@@ -22,6 +22,7 @@ class WorldCatalogueItemResponse(BaseModel):
     description: str | None
     price_options: dict
     is_free: bool
+    lease_duration_days: int | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -79,6 +80,7 @@ class WorldFeatureEntitlementResponse(BaseModel):
     activated_by_username: str | None
     activated_at: datetime
     revoked_at: datetime | None
+    expires_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
@@ -123,6 +125,7 @@ class WorldSupportEntitlementSummary(BaseModel):
     status: str
     activated_at: datetime
     revoked_at: datetime | None
+    expires_at: datetime | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -160,6 +163,7 @@ class WorldCatalogueAdminWriteRequest(BaseModel):
     price_options: dict[Literal["IRR", "USD", "USDT"], WorldCataloguePriceOption] = Field(default_factory=dict)
     is_free: bool = False
     is_active: bool = True
+    lease_duration_days: int | None = Field(default=None, ge=1, le=3650)
 
     @model_validator(mode="after")
     def validate_price_options(self):
@@ -167,4 +171,8 @@ class WorldCatalogueAdminWriteRequest(BaseModel):
             raise ValueError("free catalogue items must not define paid price options")
         if not self.is_free and not self.price_options:
             raise ValueError("paid catalogue items require at least one configured currency")
+        if self.item_type == "room" and not self.is_free and self.lease_duration_days is None:
+            raise ValueError("paid room items require lease_duration_days")
+        if self.item_type != "room" and self.lease_duration_days is not None:
+            raise ValueError("lease_duration_days is only valid for room items")
         return self
