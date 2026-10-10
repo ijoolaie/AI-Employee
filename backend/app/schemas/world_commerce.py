@@ -80,3 +80,11 @@ class WorldFeatureEntitlementResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class WorldFeatureAccessResponse(BaseModel):
+    item_code: str
+    granted: bool
+    access_source: str
+    entitlement_id: UUID | None = None
+    item_type: str | None = None
