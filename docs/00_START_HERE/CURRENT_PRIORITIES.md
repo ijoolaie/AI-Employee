@@ -1,3 +1,12 @@
+## Priority update — 2026-10-10: fulfillment transition guard
+
+1. **Completed:** PR #1000 merged at `aaae36a488cadd72b59ce22d00579438edd1a233`; all 11 reported checks passed on exact PR head `ac69a6240ba1aa4cc2fa09e6a03c5d38153de45c`.
+2. **Completed:** regression tests protect approval-before-fulfillment and the two-person control separating payment approval from activation.
+3. **Completed:** post-merge checks reviewed: PR #1000 head 11/11 success; PR #999 merge SHA `b928aca46f46d005045e48201cadb3ec8c5d1e0b` 4/4 success.
+4. **Next:** implement authoritative room entitlement/lease lifecycle (grant, duration, renewal, expiry, revocation, tenant/order correlation) with durable state and tests before connecting fulfillment to the 3D scene.
+5. **Still open:** provider-specific verification/webhooks and replay protection; durable wallet ledger before World Credit; room inventory and lease lifecycle; employee placement and persisted customization-to-scene integration; manual desktop/mobile World QA; support reply/thread/attachment workflows.
+6. **Boundary:** green CI does not mean live payment verification, room activation, or new release certification. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 ## Priority update — 2026-10-10: provider approval guard
 
 1. **Completed:** PR #998 merged at `88fe8472864f41538b7249b8d013f4f73682ed85`; all 11 pre-merge checks passed on exact PR head `cde9c78b64a977251b3c5198d56adf6fed07267e`.
