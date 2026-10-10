@@ -28,7 +28,7 @@ describe("World room access gate contracts", () => {
     expect(viewport).toContain("isRoomSceneAccessUsable(access, access.unavailable)");
     expect(viewport).toContain("roomInterior.visible = roomGranted");
     expect(viewport).toContain("roomEntrance.userData.door.rotation.y = roomGranted ? Math.PI / 2 : 0");
-    expect(shell).toContain("window.setTimeout(() => { void roomAccessQuery.refetch(); }, delay)");
+    expect(shell).toContain("window.setTimeout(() => { void roomAccessQuery.refetch(); }, Math.min(delay, 2_147_000_000))");
   });
 
   it("binds the visible procedural scene to the authorized room instance ID", () => {
