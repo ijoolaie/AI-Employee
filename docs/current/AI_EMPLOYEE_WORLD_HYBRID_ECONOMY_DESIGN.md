@@ -1,6 +1,6 @@
 # AI Employee World — Economy & Room Progression Design
 
-**Status:** Approved product direction; initial front-end prototype underway
+**Status:** Approved product direction; front-end prototype plus initial backend commerce foundation underway
 **Branch:** `feat/world-3d-office`
 **Scope:** First playable company-world slice, room unlocks, employee placement, upgrades, and hybrid economy
 **Decision:** Hybrid economy — virtual currency plus real-money purchases; real-money currency is intentionally undecided.
@@ -100,9 +100,11 @@ Expected API surface (names are proposals, not committed contracts):
 
 ## Current implementation status
 
-Implemented on the feature branch as a first front-end prototype: a procedural CEO avatar, keyboard-driven avatar movement with bounded coordinates, one visually locked adjacent room, a proximity prompt and an informational room offer panel, plus a customization panel with free/premium office and CEO presentation choices. The current customization selections are not account-persisted and do not yet reconfigure the 3D scene; premium options are locked and cannot be purchased. The existing workforce visualization remains present, so this is not yet the final isolated one-room onboarding experience.
+Implemented on the feature branch: a procedural CEO avatar, bounded movement, one visually locked adjacent room, a proximity prompt and preview-only room offer, plus a front-end customization panel. The current customization selections are not account-persisted and do not yet reconfigure the 3D scene; premium options remain locked. The existing workforce visualization remains present, so this is not yet the final isolated one-room onboarding experience.
 
-Not implemented yet: server-authoritative wallet/ledger, World orders and lease persistence, provider adapters for IRR/USD/USDT, real payment verification, vendor manual payment approval, vendor/reseller/customer support entitlements, append-only payment/activation audit records, server-persisted CEO/employee customization, paid office layouts/cosmetics, and room/furniture fulfillment. No real payment is accepted and no room is activated by the current panel. Existing Stripe subscription billing is present in the repository, but it is not proof that World one-time purchases are implemented or externally certified.
+Backend foundation now includes a server-owned World catalogue, one-time order records distinct from SaaS subscriptions, per-currency price/provider configuration stored in catalogue data, tenant-scoped order APIs, payment-reference submission, vendor-scoped order review endpoints, separate approver and activator user IDs/username snapshots/timestamps, a commerce event timeline protected against UPDATE/DELETE, and persistent tenant feature entitlements granted only when an approved order is activated. Request schemas reject client-supplied price/tenant/verification fields, and order creation reads amount/provider eligibility from the server catalogue.
+
+Still not implemented: wallet balance/ledger and virtual-credit debit, real payment-provider adapters or provider verification/webhooks, production-ready currency/provider/network configuration (including the USDT network), seeded vendor RBAC permissions and support-session entitlements, lease expiration/renewal policy, room/furniture/employee placement fulfillment, and persistence/application of CEO/employee customization to the live scene. The entitlement record currently captures purchased item ownership but does not yet drive the 3D renderer or create room inventory. World Credit purchases are explicitly disabled until a wallet ledger exists. No real payments are processed by this implementation, and the frontend offer panel is still preview-only. Existing Stripe subscription billing is not reused for World one-time purchases.
 
 
 ## Additional approved product requirements — currencies, office/CEO customization, vendor support
