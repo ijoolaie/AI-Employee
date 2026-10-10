@@ -67,19 +67,6 @@ export function WorldShell() {
     roomInstanceId: roomAccessQuery.data?.room_instance_id ?? null,
   };
 
-  useEffect(() => {
-    if (
-      showRoomAccess &&
-      !roomCatalogueQuery.isLoading &&
-      !roomAccessQuery.isLoading &&
-      !roomAccessUnavailable &&
-      roomAccessQuery.data &&
-      !roomAccessGranted
-    ) {
-      setShowRoomAccess(false);
-      setShowRoomOffer(true);
-    }
-  }, [showRoomAccess, roomCatalogueQuery.isLoading, roomAccessQuery.isLoading, roomAccessUnavailable, roomAccessQuery.data, roomAccessGranted]);
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
@@ -146,7 +133,7 @@ export function WorldShell() {
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
                 {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect" : "Locked room nearby · Press E to inspect access or rent"}</button>}
                 {showRoomOffer && <WorldRoomOfferPanel onClose={() => setShowRoomOffer(false)} />}
-                {showRoomAccess && <WorldRoomAccessPanel state={roomAccessQuery.isLoading || roomCatalogueQuery.isLoading ? "loading" : roomAccessUnavailable || !roomAccessQuery.data ? "unavailable" : roomAccessGranted ? "granted" : "unavailable"} itemCode={roomAccessQuery.data?.item_code ?? roomCatalogueQuery.data ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? null} roomInstanceId={roomAccessQuery.data?.room_instance_id ?? null} onRetry={() => { void roomCatalogueQuery.refetch(); if (roomCatalogueQuery.data) void roomAccessQuery.refetch(); }} onClose={() => setShowRoomAccess(false)} />}
+                {showRoomAccess && <WorldRoomAccessPanel state={roomAccessQuery.isLoading || roomCatalogueQuery.isLoading ? "loading" : roomAccessUnavailable || !roomAccessQuery.data ? "unavailable" : roomAccessGranted ? "granted" : "denied"} itemCode={roomAccessQuery.data?.item_code ?? roomCatalogueQuery.data ?? ""} expiresAt={roomAccessQuery.data?.expires_at ?? null} roomInstanceId={roomAccessQuery.data?.room_instance_id ?? null} onRetry={() => { void roomCatalogueQuery.refetch(); if (roomCatalogueQuery.data) void roomAccessQuery.refetch(); }} onRent={() => { setShowRoomAccess(false); setShowRoomOffer(true); }} onClose={() => setShowRoomAccess(false)} />}
                 {selectedEmployee && <WorldEmployeePanel employee={selectedEmployee} onClose={() => setSelectedEmployeeId(null)} />}
               </div>
 
