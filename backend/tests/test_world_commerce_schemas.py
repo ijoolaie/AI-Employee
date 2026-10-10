@@ -846,7 +846,7 @@ def test_room_scene_config_is_versioned_bounded_and_rejects_duplicate_placement_
         "layout_preset": "starter",
         "furniture": [
             {"placement_id": "desk-1", "kind": "desk", "x": 0, "z": 1, "rotation": 90},
-            {"placement_id": "plant-1", "kind": "plant", "x": 3, "z": -2},
+            {"placement_id": "plant-1", "kind": "plant", "x": 2, "z": -2},
         ],
     })
     assert config.schema_version == 1
