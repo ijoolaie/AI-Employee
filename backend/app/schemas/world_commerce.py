@@ -102,3 +102,31 @@ class WorldCommerceEventResponse(BaseModel):
     details: dict
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
+
+
+class WorldSupportOrderSummary(BaseModel):
+    id: UUID
+    item_code_snapshot: str
+    amount: Decimal
+    currency: str
+    status: str
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorldSupportEntitlementSummary(BaseModel):
+    item_code: str
+    item_type: str
+    status: str
+    activated_at: datetime
+    revoked_at: datetime | None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WorldSupportDiagnosticsResponse(BaseModel):
+    tenant_id: UUID
+    order_counts_by_status: dict[str, int]
+    active_entitlement_count: int
+    recent_orders: list[WorldSupportOrderSummary]
+    entitlements: list[WorldSupportEntitlementSummary]
