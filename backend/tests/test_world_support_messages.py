@@ -266,7 +266,11 @@ async def test_support_message_returns_conflict_when_attachment_is_reused_concur
     ]
     db.flush.side_effect = [
         None,
-        IntegrityError("INSERT attachment", {}, Exception("unique constraint")),
+        IntegrityError(
+            "INSERT attachment",
+            {},
+            SimpleNamespace(diag=SimpleNamespace(constraint_name="uq_support_message_attachment_file")),
+        ),
     ]
     audit = AsyncMock()
     monkeypatch.setattr(edition_service, "record_audit", audit)
