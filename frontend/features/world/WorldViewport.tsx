@@ -416,9 +416,9 @@ function buildOffice(scene: any) {
   }
 
   // A clear central circulation spine and inset team borders give the HQ a designed, game-like floor plan.
-  box(scene, [3.2, 0.045, 24], [0, 0.11, -1.1], 0xd7d4c9, { castShadow: false, receiveShadow: false });
-  box(scene, [0.12, 0.025, 23.8], [-1.52, 0.145, -1.1], 0xb8b8b0, { castShadow: false, receiveShadow: false });
-  box(scene, [0.12, 0.025, 23.8], [1.52, 0.145, -1.1], 0xb8b8b0, { castShadow: false, receiveShadow: false });
+  box(scene, [30, 0.045, 2.8], [0, 0.11, -0.5], 0xd7d4c9, { castShadow: false, receiveShadow: false });
+  box(scene, [29.8, 0.025, 0.1], [0, 0.145, -1.85], 0xb8b8b0, { castShadow: false, receiveShadow: false });
+  box(scene, [29.8, 0.025, 0.1], [0, 0.145, 0.85], 0xb8b8b0, { castShadow: false, receiveShadow: false });
 
   // Department platforms receive a colored perimeter, corner markers and task-light fixtures.
   for (const dept of DEPARTMENTS) {
