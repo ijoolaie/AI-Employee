@@ -35,11 +35,11 @@ matplotlib==3.9.0
 openpyxl==3.1.0
 reportlab==4.2.0
 prometheus-client==0.21.0
-opentelemetry-api==1.29.0
-opentelemetry-sdk==1.29.0
-opentelemetry-instrumentation-fastapi==0.50b0
-opentelemetry-instrumentation-sqlalchemy==0.50b0
-opentelemetry-exporter-otlp-proto-http==1.29.0
+opentelemetry-api==1.43.0
+opentelemetry-sdk==1.43.0
+opentelemetry-instrumentation-fastapi==0.64b0
+opentelemetry-instrumentation-sqlalchemy==0.64b0
+opentelemetry-exporter-otlp-proto-http==1.43.0
 stripe==11.0.0
 pytesseract==0.3.13
 pdf2image==1.17.0
