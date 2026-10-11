@@ -262,13 +262,41 @@ function addCEOAvatar(scene: any) {
   sphere(avatar, 0.31, [0, 1.79, -0.04], 0x3d302c, [1, 0.45, 0.95]);
   box(avatar, [0.22, 0.045, 0.045], [-0.09, 1.64, 0.26], 0x27313b);
   box(avatar, [0.22, 0.045, 0.045], [0.09, 1.64, 0.26], 0x27313b);
-  const legs = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.48, 0.24), new THREE.MeshStandardMaterial({ color: 0x26384a }));
-  legs.position.set(-0.14, 0.26, 0);
-  legs.castShadow = true;
-  avatar.add(legs);
-  const secondLeg = legs.clone();
-  secondLeg.position.x = 0.14;
-  avatar.add(secondLeg);
+  // Articulated hips and shoulders let the avatar walk instead of sliding as one rigid object.
+  const limbMaterial = new THREE.MeshStandardMaterial({ color: 0x26384a, roughness: 0.78 });
+  const leftLeg = new THREE.Group();
+  leftLeg.position.set(-0.14, 0.5, 0);
+  avatar.add(leftLeg);
+  const leftThigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.105, 0.25, 3, 8), limbMaterial);
+  leftThigh.position.y = -0.13;
+  leftThigh.castShadow = true;
+  leftLeg.add(leftThigh);
+  const leftFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), new THREE.MeshStandardMaterial({ color: 0x202a36, roughness: 0.72 }));
+  leftFoot.position.set(0, -0.29, 0.1);
+  leftFoot.castShadow = true;
+  leftLeg.add(leftFoot);
+  const rightLeg = leftLeg.clone();
+  rightLeg.position.x = 0.14;
+  avatar.add(rightLeg);
+
+  const leftArm = new THREE.Group();
+  leftArm.position.set(-0.36, 1.24, 0);
+  avatar.add(leftArm);
+  const armGeometry = new THREE.CapsuleGeometry(0.085, 0.29, 3, 8);
+  const armMaterial = new THREE.MeshStandardMaterial({ color: 0x287f87, roughness: 0.76 });
+  const leftArmMesh = new THREE.Mesh(armGeometry, armMaterial);
+  leftArmMesh.position.y = -0.19;
+  leftArmMesh.castShadow = true;
+  leftArm.add(leftArmMesh);
+  const hand = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf0c8a5, roughness: 0.82 }));
+  hand.position.set(0, -0.37, 0.025);
+  leftArm.add(hand);
+  const rightArm = leftArm.clone();
+  rightArm.position.x = 0.36;
+  avatar.add(rightArm);
+  avatar.userData.walkRig = { leftLeg, rightLeg, leftArm, rightArm };
+  avatar.userData.walkPhase = 0;
+  avatar.userData.body = body;
   const marker = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.045, 8, 28), new THREE.MeshBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.9 }));
   marker.rotation.x = -Math.PI / 2;
   marker.position.y = 0.07;
@@ -770,16 +798,37 @@ export function WorldViewport({
       const keyboard = cameraInput.consume();
       const moveX = keyboard.moveX || mobileMove.x;
       const moveY = keyboard.moveY || mobileMove.y;
-      if (moveX || moveY) {
-        const length = Math.hypot(moveX, moveY) || 1;
-        const stepX = (moveX / length) * delta * 0.008 * distance / 2;
-        const stepZ = (moveY / length) * delta * 0.008 * distance / 2;
-        ceoAvatar.position.x = Math.max(-16, Math.min(16, ceoAvatar.position.x + stepX));
-        ceoAvatar.position.z = Math.max(-10, Math.min(9.2, ceoAvatar.position.z + stepZ));
-        target.x = ceoAvatar.position.x;
-        target.z = ceoAvatar.position.z - 2.5;
-        ceoAvatar.rotation.y = Math.atan2(moveX, moveY || 0.0001);
-        updateCamera();
+      const seconds = delta / 1000;
+      const inputLength = Math.hypot(moveX, moveY);
+      const desiredX = inputLength > 0 ? (moveX / inputLength) * 3.8 : 0;
+      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 3.8 : 0;
+      const velocity = ceoAvatar.userData.velocity ?? (ceoAvatar.userData.velocity = new THREE.Vector2());
+      const responsiveness = inputLength > 0 ? 8 : 11;
+      velocity.lerp(new THREE.Vector2(desiredX, desiredZ), Math.min(1, seconds * responsiveness));
+      const speed = velocity.length();
+      if (speed > 0.025) {
+        ceoAvatar.position.x = Math.max(-16, Math.min(16, ceoAvatar.position.x + velocity.x * seconds));
+        ceoAvatar.position.z = Math.max(-10, Math.min(9.2, ceoAvatar.position.z + velocity.y * seconds));
+        const desiredRotation = Math.atan2(velocity.x, velocity.y);
+        const rotationDelta = Math.atan2(Math.sin(desiredRotation - ceoAvatar.rotation.y), Math.cos(desiredRotation - ceoAvatar.rotation.y));
+        ceoAvatar.rotation.y += rotationDelta * Math.min(1, seconds * 10);
+      }
+      target.x += (ceoAvatar.position.x - target.x) * Math.min(1, seconds * 5);
+      target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 5);
+      updateCamera();
+
+      const walkRig = ceoAvatar.userData.walkRig;
+      if (walkRig) {
+        const walking = speed > 0.22 && !reducedMotion.matches;
+        ceoAvatar.userData.walkPhase += speed * seconds * 2.7;
+        const phase = ceoAvatar.userData.walkPhase;
+        const swing = walking ? Math.sin(phase) * 0.48 : 0;
+        walkRig.leftLeg.rotation.x += (swing - walkRig.leftLeg.rotation.x) * Math.min(1, seconds * 12);
+        walkRig.rightLeg.rotation.x += (-swing - walkRig.rightLeg.rotation.x) * Math.min(1, seconds * 12);
+        walkRig.leftArm.rotation.x += (-swing * 0.72 - walkRig.leftArm.rotation.x) * Math.min(1, seconds * 12);
+        walkRig.rightArm.rotation.x += (swing * 0.72 - walkRig.rightArm.rotation.x) * Math.min(1, seconds * 12);
+        const bodyBob = walking ? Math.abs(Math.sin(phase * 2)) * 0.045 : 0;
+        ceoAvatar.position.y += (bodyBob - ceoAvatar.position.y) * Math.min(1, seconds * 14);
       }
       const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;
       if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }
