@@ -1,9 +1,9 @@
-## Current priority checkpoint — 2026-10-11 after PR #1039
+## Current priority checkpoint — 2026-10-11 after PR #1039 and PR #1041 validation
 
 - PR #1039 merged at `27c44ac33a92c636e552950cdfa2f983255e40a8`; exact PR head `9febc1124b28f53b8b8b4ba5c09a8f26bb978dfa` passed CI, including isolated PostgreSQL persistence/isolation regression, frontend lint/build and Playwright.
 - Support chain merged: #1031 threads, #1033 tenant-safe attachments, #1035 reseller conversation UI, #1036 sent-ticket persistence, #1039 regression coverage. Remaining support work: manual create → reload → reply/thread → authorized attachment QA; test both participants, deleted/missing files, policy limits and concurrent attachment conflicts.
-- World room access/layout/employee placements/reconciliation are merged (#1016, #1018, #1019, #1021, #1023, #1025); expiry communication is merged (#1028). Renewal UX #1029 remains draft: its React render-purity lint error was patched, but the branch is behind current `main` and needs reconciliation and fresh exact-head CI.
-- Next: reconcile #1029, then manually test World Mode on desktop/mobile. Keep live payment verification, explicit USDT network policy and World Credit blocked until authoritative verification, replay protection and a durable ledger exist.
+- World room access/layout/employee placements/reconciliation are merged (#1016, #1018, #1019, #1021, #1023, #1025); expiry communication is merged (#1028). Current-main renewal replacement PR #1041 (`528750ce9fbac51690d3da6a660394ed6896cbb8`) passed CI, CodeQL, infrastructure, HA recovery and DAST; the backend `lease_expired` response is confirmed. It remains open/unmerged pending review and explicit merge approval. Stale PR #1029 remains draft and should not be merged.
+- Next: review PR #1041 and obtain merge approval; then manually test World Mode on desktop/mobile. Keep live payment verification, explicit USDT network policy and World Credit blocked until authoritative verification, replay protection and a durable ledger exist.
 - Engineering merges/green CI are not production certification. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ---
