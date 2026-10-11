@@ -336,6 +336,6 @@ jobs:
           done
           cat /tmp/frontend-world-e2e.log
           exit 1
-      - name: World Mode Playwright smoke
+      - name: Playwright browser regressions
         working-directory: frontend
-        run: npx playwright test e2e/world-mode.spec.ts
+        run: npx playwright test e2e/world-mode.spec.ts e2e/support-persistence.spec.ts
