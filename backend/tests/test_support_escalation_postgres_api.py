@@ -12,35 +12,45 @@ from httpx import ASGITransport, AsyncClient
 
 
 def _validated_test_urls() -> tuple[str, str]:
-    """Fail closed unless both configured URLs target the isolated test database."""
-    async_url = os.environ.get("DATABASE_URL", "")
-    sync_url = os.environ.get("DATABASE_URL_SYNC", "")
+    """Fail closed unless both URLs target the dedicated local support_test database."""
+    async_url = os.environ.get("SUPPORT_TEST_DATABASE_URL") or os.environ.get(
+        "DATABASE_URL", ""
+    )
+    sync_url = os.environ.get("SUPPORT_TEST_DATABASE_URL_SYNC") or os.environ.get(
+        "DATABASE_URL_SYNC", ""
+    )
     if not async_url or not sync_url:
         raise RuntimeError("Test database URLs are required; refusing to run.")
 
     async_parsed = make_url(async_url)
     sync_parsed = make_url(sync_url)
 
-    expected = {
-        "username": "support_test_user",
-        "host": "127.0.0.1",
-        "port": 15433,
-        "database": "support_test",
-    }
+    allowed_hosts = {"127.0.0.1", "localhost"}
+    allowed_ports = {5432, 15433}
+    allowed_usernames = {"support_test_user", "aiep"}
     for label, parsed, driver in (
-        ("DATABASE_URL", async_parsed, "postgresql+asyncpg"),
-        ("DATABASE_URL_SYNC", sync_parsed, "postgresql+psycopg2"),
+        ("SUPPORT_TEST_DATABASE_URL", async_parsed, "postgresql+asyncpg"),
+        ("SUPPORT_TEST_DATABASE_URL_SYNC", sync_parsed, "postgresql+psycopg2"),
     ):
-        actual = {
-            "username": parsed.username,
-            "host": parsed.host,
-            "port": parsed.port,
-            "database": parsed.database,
-        }
-        if parsed.drivername != driver or actual != expected or not parsed.password:
+        if (
+            parsed.drivername != driver
+            or parsed.username not in allowed_usernames
+            or parsed.host not in allowed_hosts
+            or parsed.port not in allowed_ports
+            or parsed.database != "support_test"
+            or not parsed.password
+        ):
             raise RuntimeError(
-                f"{label} does not point to the isolated support_test database; refusing to run."
+                f"{label} does not point to the dedicated local support_test database; refusing to run."
             )
+
+    if (
+        async_parsed.username != sync_parsed.username
+        or async_parsed.host != sync_parsed.host
+        or async_parsed.port != sync_parsed.port
+        or async_parsed.database != sync_parsed.database
+    ):
+        raise RuntimeError("Async and sync test URLs must target the same database.")
 
     return async_url, sync_url
 
