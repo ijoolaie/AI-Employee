@@ -84,3 +84,10 @@ Do not merge or certify this work without explicit user approval after the visua
 - Corrected two visible layout collisions in the current procedural scene: department planters were placed beside the second desk/chair approach, and the left lobby planter nearly touched the sofa. Planters now use the rear-right corner of each department and the lobby planters sit outside the reception/sofa footprint.
 - Made the locked-room Playwright regression wait for the actual proximity affordance while movement is held, rather than stopping after a fixed 900 ms. The movement change uses acceleration/easing, so a fixed short hold was brittle.
 - Exact-head CI is running for the follow-up commit. These changes are source-level corrections only; they do **not** establish that the scene has been visually approved. No real-browser screenshot/video has been captured from this session, and the cast/furniture still uses procedural primitives rather than authored GLTF assets. Keep both visual PRs Draft pending visual evidence and the remaining redesign work.
+
+## 2026-10-11 additional source corrections
+
+- Reworked the department workstations into a compact 2×2 grid (four actual desk/chair assemblies per department, 20 authored stations total). Each seated worker anchor now corresponds to a station coordinate instead of the previous arrangement where the second desk could sit in front of the first desk's chair.
+- Employees beyond the 20 authored stations are placed in a separate staging row rather than being silently stacked into the desk grid. This is a fallback presentation only; the staging area still needs explicit visual treatment and a capacity indicator.
+- Improved procedural face readability with iris color variation, eye catchlights, and a curved smile. This is a small source-level refinement, **not** a replacement for authored character assets or proof that the approved reference has been matched.
+- Workflow lookup did not return runs for the latest branch head after these follow-up commits. The exact latest head remains unverified by CI, and no real-browser screenshot/video is available in this session. Keep the PR Draft and do not merge.
