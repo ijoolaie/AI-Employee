@@ -409,12 +409,16 @@ async def _create_support_escalation_message(
     except IntegrityError as exc:
         # The pre-check above is not sufficient under concurrent requests. The
         # unique database constraint is authoritative; roll back the message
-        # and attachment together, then return a stable conflict response.
+        # and attachment together before translating only that specific race.
         await db.rollback()
-        raise HTTPException(
-            status_code=409,
-            detail="A file can only be attached to one support message",
-        ) from exc
+        original_error = getattr(exc, "orig", None)
+        diagnostic = getattr(original_error, "diag", None)
+        if getattr(diagnostic, "constraint_name", None) == "uq_support_message_attachment_file":
+            raise HTTPException(
+                status_code=409,
+                detail="A file can only be attached to one support message",
+            ) from exc
+        raise
     await db.refresh(message)
     await edition_service.record_audit(
         db,
