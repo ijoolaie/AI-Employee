@@ -415,6 +415,51 @@ function buildOffice(scene: any) {
     addDesk(scene, dept.x + 1.65, dept.z + 1.5, dept.accent);
   }
 
+  // A clear central circulation spine and inset team borders give the HQ a designed, game-like floor plan.
+  box(scene, [3.2, 0.045, 24], [0, 0.11, -1.1], 0xd7d4c9, { castShadow: false, receiveShadow: false });
+  box(scene, [0.12, 0.025, 23.8], [-1.52, 0.145, -1.1], 0xb8b8b0, { castShadow: false, receiveShadow: false });
+  box(scene, [0.12, 0.025, 23.8], [1.52, 0.145, -1.1], 0xb8b8b0, { castShadow: false, receiveShadow: false });
+
+  // Department platforms receive a colored perimeter, corner markers and task-light fixtures.
+  for (const dept of DEPARTMENTS) {
+    const edgeY = 0.105;
+    const edgeColor = dept.accent;
+    box(scene, [9.1, 0.045, 0.12], [dept.x, edgeY, dept.z - 4.02], edgeColor, { emissive: edgeColor, emissiveIntensity: 0.08, castShadow: false });
+    box(scene, [9.1, 0.045, 0.12], [dept.x, edgeY, dept.z + 4.02], edgeColor, { emissive: edgeColor, emissiveIntensity: 0.08, castShadow: false });
+    box(scene, [0.12, 0.045, 7.95], [dept.x - 4.54, edgeY, dept.z], edgeColor, { emissive: edgeColor, emissiveIntensity: 0.08, castShadow: false });
+    box(scene, [0.12, 0.045, 7.95], [dept.x + 4.54, edgeY, dept.z], edgeColor, { emissive: edgeColor, emissiveIntensity: 0.08, castShadow: false });
+
+    // A subtle round meeting marker makes each team zone distinct without inventing activity metrics.
+    const rug = new THREE.Mesh(
+      new THREE.CircleGeometry(1.05, 32),
+      new THREE.MeshStandardMaterial({ color: edgeColor, roughness: 0.94, transparent: true, opacity: 0.2 }),
+    );
+    rug.rotation.x = -Math.PI / 2;
+    rug.position.set(dept.x - 3.05, 0.105, dept.z - 2.55);
+    rug.receiveShadow = false;
+    scene.add(rug);
+
+    // Slim pendant rods and warm light housings add depth while keeping the top-down view open.
+    box(scene, [0.055, 0.9, 0.055], [dept.x - 3.25, 3.35, dept.z - 2.85], 0x647487, { castShadow: false });
+    box(scene, [0.9, 0.12, 0.42], [dept.x - 3.25, 2.86, dept.z - 2.85], 0xffe3a1, { emissive: 0xffc85a, emissiveIntensity: 0.35, castShadow: false });
+  }
+
+  // Window mullions and structural columns make the perimeter feel like a coherent office rather than a flat box.
+  box(scene, [0.35, 4.7, 0.5], [-19.65, 2.05, 0], 0xe7e4dc);
+  box(scene, [0.35, 4.7, 0.5], [19.65, 2.05, 0], 0xe7e4dc);
+  for (const z of [-10, -2, 6, 13]) {
+    box(scene, [0.3, 4.2, 0.34], [-19.35, 1.95, z], 0xd0d0c8);
+    box(scene, [0.3, 4.2, 0.34], [19.35, 1.95, z], 0xd0d0c8);
+  }
+
+  // A few compact lobby details establish scale and make the entrance read as a destination.
+  for (const x of [-5.8, 5.8]) {
+    cylinder(scene, 0.52, 0.56, 0.38, [x, 0.27, 2.2], 0xb8a38b, 18);
+    cylinder(scene, 0.1, 0.07, 1.25, [x, 1.05, 2.2], 0x4f8b65, 10);
+    sphere(scene, 0.48, [x - 0.18, 1.78, 2.2], 0x6fa77b, [1, 1.12, 0.9]);
+    sphere(scene, 0.38, [x + 0.2, 1.62, 2.38], 0x86b987, [1.05, 1.1, 0.9]);
+  }
+
   // Reception island, sofa and meeting table add a recognizable HQ focal point.
   box(scene, [4.3, 0.45, 1.5], [0, 0.48, 0.1], 0x667f92);
   box(scene, [3.8, 0.16, 1.15], [0, 0.78, 0.1], 0xe6c18c);
