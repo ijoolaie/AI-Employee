@@ -30,7 +30,7 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 
 ## Open work / acceptance gates
 
-1. **PR #1041 — renewal UX replacement:** created from current main rather than merging the diverged #1029 branch. Exact head `528750ce9fbac51690d3da6a660394ed6896cbb8` passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Backend `room_inventory_access` returns `granted=false, reason=lease_expired` for expired leases. Review remains required; do not merge without explicit approval. The stale #1029 branch remains draft and should not be merged.
+1. **PR #1041 — renewal UX replacement:** created from current main rather than merging the diverged #1029 branch. Exact head `528750ce9fbac51690d3da6a660394ed6896cbb8` passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Backend `room_inventory_access` returns `granted=false, reason=lease_expired` for expired leases. Review remains required; do not merge without explicit approval. PR #1029 is closed as superseded and was not merged.
 2. **Support manual acceptance:** verify create → reload → reply/thread → attachment download. Test both ticket participants, foreign tenant denial, deleted/missing files, count/type/size policy, and concurrent attachment reuse/conflict handling.
 3. **World manual QA:** test desktop and mobile viewport, keyboard/touch controls, accessibility, console errors and room lease expiry behavior.
 4. **Payments / wallet:** live provider verification, signed/replay-safe callbacks, explicit USDT network policy, and World Credit remain blocked until authoritative verification and a durable append-only ledger with atomic replay-safe accounting are implemented.
@@ -42,11 +42,11 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - #1027: closed as an outdated draft; its legacy-inventory feature remains merged in #1025. A current-main documentation reconciliation is tracked in PR #1040.
 - #1029: closed as superseded, not merged; PR #1041 is the reconciled replacement and has passed exact-head automated checks.
 - #1041: open, ready for review, unmerged; exact-head CI/security/infrastructure/recovery/DAST checks passed and backend expiry contract was verified. Await review and explicit merge approval.
-- #1040: open documentation PR; update CURRENT_STATUS and CURRENT_PRIORITIES after #1039 and preserve the release/validation boundaries.
+- #1040: open documentation PR; reconciles CURRENT_STATUS, CURRENT_PRIORITIES and this hand-off after #1039/#1041 while preserving release/validation boundaries. Latest CodeQL on head `cc1c07219ed637baf93a8cadfb13f21012b16792` passed.
 
 ## Next recommended sequence
 
 1. Review PR #1041 diff and successful exact-head CI, preserving #1028 expiry status and fail-closed access behavior; wait for explicit merge approval.
 2. Manually validate World Mode expiry/renewal and desktop/mobile behavior; CI is not a substitute for local visual QA.
 3. Complete manual support acceptance: create → reload → reply/thread → authorized attachment download, including both participants, foreign-tenant denial, missing/deleted files, limits and concurrency.
-4. Complete manual support and World Mode acceptance QA, then update this hand-off with observed results rather than inferred status.
+4. Update this hand-off with observed manual QA results rather than inferred status.
