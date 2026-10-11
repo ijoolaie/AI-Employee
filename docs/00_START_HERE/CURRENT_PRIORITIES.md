@@ -1,3 +1,33 @@
+## Current priority checkpoint — 2026-10-11 after PR #1041/#1042 merge and visual PR disposition
+
+- PR #1041 is merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; its exact-head CI, CodeQL, infrastructure, HA recovery and DAST checks passed. Server-side room authorization remains fail-closed; a renewal order does not grant access.
+- PR #1042 is merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`; all 11 exact-head workflows passed, plus backend (1452 passed, 1 deselected), local Docker build, 13 support-message tests, and a real PostgreSQL + HTTP API concurrency regression. Still required: manual support workflow and attachment-policy QA.
+- PR #1045 was closed unmerged because the user rejected its local visual result. PR #1046 is the corrective combined diff against `main`; all five workflows passed on exact head `7f456bda345053e3ff2caf7697a1bc2a36199b19`, but the PR remains Draft until actual desktop/mobile runtime screenshots and visual acceptance exist.
+- Visual gaps remain material: most worker/furniture geometry is primitive-built, collision-aware navigation is absent, and overflow staging is unfinished. Do not claim a finished redesign.
+- PR #1040 is the remaining documentation reconciliation PR; refresh its exact-head workflow status after the current documentation commits.
+- Next: finish manual support acceptance; produce real World desktop/mobile screenshots, fix visual/layout/movement defects, and preserve room authorization/accessibility. Keep live payment verification, explicit USDT network policy and World Credit blocked until authoritative verification, replay protection and durable-ledger requirements are met.
+
+---
+
+## 2026-10-11 checkpoint — customer support entry gap and World visual gap
+
+- Investigation of the running tenant dashboard confirmed that the generic sidebar exposes Unified Inbox/Conversations but no support-ticket entry. These are customer-channel conversations, not support escalations.
+- The support ticket UI currently exists at `/reseller/support` under the reseller route group. `frontend/app/(reseller)/layout.tsx` explicitly redirects any tenant whose `tenant_kind` is not `reseller` to `/dashboard`; the generic tenant sidebar does not expose this route. Do not tell customer tenants to use the reseller endpoint or weaken the tenant-kind guard.
+- Issue [#1043](https://github.com/ijoolaie/AI-Employee/issues/1043) tracks a correctly authorized customer-tenant support entry/workflow, distinct from Unified Inbox and preserving tenant isolation, thread persistence and attachment authorization.
+- The canonical gameplay spec requires a polished isometric 2.5D tycoon-style office. The current `frontend/features/world/WorldViewport.tsx` still renders the scene from basic Three.js box primitives and simple worker geometry. PR #1041 concerns lease-renewal UX, not a material visual redesign; therefore the user's report that the graphics look unchanged is consistent with the current source.
+- Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) tracks the visual upgrade, with before/after desktop/mobile screenshots and preservation of room authorization/input behavior as acceptance gates.
+- Manual customer support workflow acceptance and manual World visual QA remain open. Do not claim either is complete until validated in the actual local stack.
+
+## Current priority checkpoint — 2026-10-11 after PR #1039 and PR #1041 validation
+
+- PR #1039 merged at `27c44ac33a92c636e552950cdfa2f983255e40a8`; exact PR head `9febc1124b28f53b8b8b4ba5c09a8f26bb978dfa` passed CI, including isolated PostgreSQL persistence/isolation regression, frontend lint/build and Playwright.
+- Support chain merged: #1031 threads, #1033 tenant-safe attachments, #1035 reseller conversation UI, #1036 sent-ticket persistence, #1039 regression coverage. PR #1042 adds safe conflict handling for concurrent attachment reuse; exact head `4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e` passed all 11 workflows, 13 support-message unit tests, and the real PostgreSQL + HTTP API concurrency regression locally (1 passed in 2.63s). Remaining support work: manual create → reload → reply/thread → authorized attachment QA; test both participants, deleted/missing files and policy limits.
+- World room access/layout/employee placements/reconciliation are merged (#1016, #1018, #1019, #1021, #1023, #1025); expiry communication is merged (#1028). Current-main renewal replacement PR #1041 (`528750ce9fbac51690d3da6a660394ed6896cbb8`) passed CI, CodeQL, infrastructure, HA recovery and DAST; the backend `lease_expired` response is confirmed. It remains open/unmerged pending review and explicit merge approval. Stale PR #1029 is closed as superseded by #1041 and was not merged.
+- Next: review PR #1041 and #1042; both remain unmerged pending explicit approval (#1042 remains Draft). Then manually test World Mode on desktop/mobile and finish support workflow acceptance. Keep live payment verification, explicit USDT network policy and World Credit blocked until authoritative verification, replay protection and a durable ledger exist.
+- Engineering merges/green CI are not production certification. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## 2026-10-10 checkpoint — reseller support tickets persist across sessions (PR #1036 merged)
 
 
