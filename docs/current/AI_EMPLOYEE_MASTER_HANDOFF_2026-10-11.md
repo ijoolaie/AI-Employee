@@ -1,5 +1,14 @@
 # AI-Employee Master Hand-off — 2026-10-11
 
+
+## World visual-polish implementation slice — 2026-10-11
+
+- Draft PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) on branch `feat/world-visual-polish-1044` adds a clearer circulation aisle, department perimeter accents, subtle floor markers, pendant fixtures, perimeter columns and lobby planters in `frontend/features/world/WorldViewport.tsx`.
+- This is an initial visual polish slice against issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044), not the full canonical isometric tycoon redesign. It deliberately leaves employee selection, input adapters, room authorization and authoritative room configuration logic unchanged.
+- Exact head `541111d2d9c613169460db9b5eb629a9ac2919ad`; CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST were queued at this checkpoint. Do not call validation complete until they finish.
+- Local build/lint/unit tests, real browser inspection, desktop/mobile before/after screenshots and console checks have not yet been performed in this workflow. PR #1045 must remain Draft until these acceptance gates pass.
+- No release certification changes; latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 ## Latest checkpoint — 2026-10-11 16:21 +03:30
 
 ### User-observed UI gaps (verified against current source)
