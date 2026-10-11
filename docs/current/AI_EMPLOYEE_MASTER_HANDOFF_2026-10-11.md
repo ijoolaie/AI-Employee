@@ -43,11 +43,12 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - #1029: closed as superseded, not merged; PR #1041 is the reconciled replacement and has passed exact-head automated checks.
 - #1041: open, ready for review, unmerged; exact-head CI/security/infrastructure/recovery/DAST checks passed and backend expiry contract was verified. No submitted reviews or inline review threads are present as of this check. Await review and explicit merge approval.
 - #1042: open Draft, unmerged; exact head `4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e` passed all 11 workflow runs, backend suite (1452 passed, 1 deselected), local Docker build, 13 support-message unit tests, and the local real PostgreSQL + HTTP API concurrency regression (1 passed in 2.63s). No schema/migration changes. Await review and explicit merge approval.
-- #1040: open documentation PR; reconciles CURRENT_STATUS, CURRENT_PRIORITIES and this hand-off after #1039/#1041 while preserving release/validation boundaries. Current head `4579a4beeb39969890a10eb8d288fe4f4aecea82` has a successful CodeQL workflow run.
+- #1040: open documentation PR; reconciles CURRENT_STATUS, CURRENT_PRIORITIES, Changelog and this hand-off after #1039/#1041/#1042 while preserving release/validation boundaries. Current head `8a844330e0ce01962f1fdd9c47bcd3c05bf313e4` has a successful CodeQL workflow run `38134175993`.
 
 ## Next recommended sequence
 
-1. Review PR #1041 diff and successful exact-head CI, preserving #1028 expiry status and fail-closed access behavior; wait for explicit merge approval.
-2. Manually validate World Mode expiry/renewal and desktop/mobile behavior; CI is not a substitute for local visual QA.
-3. Complete manual support acceptance: create → reload → reply/thread → authorized attachment download, including both participants, foreign-tenant denial, missing/deleted files, limits and concurrency.
-4. Update this hand-off with observed manual QA results rather than inferred status.
+1. Code review the PR #1042 race fix and confirm exact-head checks; automated/local regression is green, but keep it Draft until explicit user approval.
+2. Review PR #1041 diff and successful exact-head CI, preserving #1028 expiry status and fail-closed access behavior; wait for explicit merge approval.
+3. Manually validate World Mode expiry/renewal and desktop/mobile behavior; CI is not a substitute for local visual QA.
+4. Complete manual support acceptance: create → reload → reply/thread → authorized attachment download, including both participants, foreign-tenant denial, missing/deleted files and policy limits. Concurrency is covered by automated/local PostgreSQL regression.
+5. Update this hand-off with observed manual QA results rather than inferred status.
