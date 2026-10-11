@@ -412,8 +412,13 @@ async def _create_support_escalation_message(
         # and attachment together before translating only that specific race.
         await db.rollback()
         original_error = getattr(exc, "orig", None)
+        # asyncpg exposes constraint_name directly, while psycopg exposes
+        # it through orig.diag.constraint_name. Support both driver shapes.
         diagnostic = getattr(original_error, "diag", None)
-        if getattr(diagnostic, "constraint_name", None) == "uq_support_message_attachment_file":
+        constraint_name = getattr(original_error, "constraint_name", None) or getattr(
+            diagnostic, "constraint_name", None
+        )
+        if constraint_name == "uq_support_message_attachment_file":
             raise HTTPException(
                 status_code=409,
                 detail="A file can only be attached to one support message",
