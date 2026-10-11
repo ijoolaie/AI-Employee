@@ -427,6 +427,13 @@ function buildOffice(scene: any) {
     box(scene, [0.09, 2.9, 0.12], [x - 1.98, 2.55, -14.72], 0xf7f3e9);
     box(scene, [0.09, 2.9, 0.12], [x + 1.98, 2.55, -14.72], 0xf7f3e9);
   }
+  // Horizontal glazing rails and fine mullions add scale to the rear windows.
+  for (let x = -17.5; x <= 17.5; x += 5) {
+    box(scene, [3.9, 0.075, 0.14], [x, 2.45, -14.67], 0xf7f3e9, { castShadow: false });
+    box(scene, [3.9, 0.055, 0.14], [x, 3.73, -14.67], 0xf7f3e9, { castShadow: false });
+    box(scene, [0.045, 2.55, 0.16], [x, 2.55, -14.63], 0x7e9eae, { castShadow: false });
+    box(scene, [3.9, 0.11, 0.28], [x, 1.12, -14.57], 0xd5c8b4, { castShadow: false });
+  }
   box(scene, [40, 0.18, 0.5], [0, 0.12, -14.72], 0xd1cfc6);
 
   // Low pastel department platforms make the floor plan readable without hiding the characters.
@@ -486,6 +493,22 @@ function buildOffice(scene: any) {
     box(scene, [0.3, 4.2, 0.34], [19.35, 1.95, z], 0xd0d0c8);
   }
 
+  // Wall-mounted acoustic panels and framed abstract team artwork add an office finish.
+  for (let x = -14; x <= 14; x += 7) {
+    box(scene, [3.2, 1.15, 0.12], [x, 3.55, -14.58], 0xc5d0d1, { castShadow: false });
+    box(scene, [2.85, 0.075, 0.04], [x, 3.88, -14.49], 0xf4efe4, { castShadow: false });
+    box(scene, [2.85, 0.075, 0.04], [x, 3.22, -14.49], 0xf4efe4, { castShadow: false });
+    box(scene, [0.075, 0.72, 0.04], [x - 1.42, 3.55, -14.49], 0xf4efe4, { castShadow: false });
+    box(scene, [0.075, 0.72, 0.04], [x + 1.42, 3.55, -14.49], 0xf4efe4, { castShadow: false });
+    box(scene, [1.1, 0.12, 0.025], [x - 0.42, 3.66, -14.45], 0x7b9d9b, { castShadow: false });
+    box(scene, [0.7, 0.12, 0.025], [x + 0.42, 3.43, -14.45], 0xd6ae78, { castShadow: false });
+  }
+
+  // A warm inset border visually finishes the exposed front edge of the office floor.
+  box(scene, [39.5, 0.08, 0.16], [0, -0.02, 15.28], 0xd5b58d, { castShadow: false, receiveShadow: false });
+  box(scene, [0.16, 0.08, 30.5], [-19.9, -0.02, 0], 0xd5b58d, { castShadow: false, receiveShadow: false });
+  box(scene, [0.16, 0.08, 30.5], [19.9, -0.02, 0], 0xd5b58d, { castShadow: false, receiveShadow: false });
+
   // A few compact lobby details establish scale and make the entrance read as a destination.
   for (const x of [-5.8, 5.8]) {
     cylinder(scene, 0.52, 0.56, 0.38, [x, 0.27, 2.2], 0xb8a38b, 18);
@@ -500,6 +523,26 @@ function buildOffice(scene: any) {
   box(scene, [4.2, 0.9, 0.22], [-8, 0.52, 1.6], 0x6e8999);
   box(scene, [1.1, 0.55, 2.5], [-9.55, 0.32, 1.5], 0x809aab);
   box(scene, [1.1, 0.55, 2.5], [-6.45, 0.32, 1.5], 0x809aab);
+  // A circular inset rug and low coffee table soften the reception zone and distinguish it from desk rows.
+  const lobbyRug = new THREE.Mesh(
+    new THREE.CircleGeometry(3.1, 48),
+    new THREE.MeshStandardMaterial({ color: 0x78949b, roughness: 0.96 }),
+  );
+  lobbyRug.rotation.x = -Math.PI / 2;
+  lobbyRug.position.set(0, 0.08, 0.15);
+  lobbyRug.receiveShadow = true;
+  scene.add(lobbyRug);
+  const lobbyRugInset = new THREE.Mesh(
+    new THREE.RingGeometry(2.55, 2.68, 48),
+    new THREE.MeshStandardMaterial({ color: 0xe1c49a, roughness: 0.9 }),
+  );
+  lobbyRugInset.rotation.x = -Math.PI / 2;
+  lobbyRugInset.position.set(0, 0.09, 0.15);
+  scene.add(lobbyRugInset);
+  cylinder(scene, 0.72, 0.76, 0.16, [0, 0.28, 2.75], 0xc99564, 32);
+  cylinder(scene, 0.14, 0.16, 0.24, [0, 0.1, 2.75], 0x806044, 16);
+  cylinder(scene, 0.12, 0.12, 0.025, [0, 0.375, 2.75], 0xf1e4d0, 16);
+
   const title = makeLabel("AI COMPANY  •  HEADQUARTERS", "#f5d9a4");
   if (title) {
     title.position.set(0, 4.3, 0);
