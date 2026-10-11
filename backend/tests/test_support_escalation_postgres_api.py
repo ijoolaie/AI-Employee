@@ -13,26 +13,6 @@ from sqlalchemy.pool import NullPool
 from httpx import ASGITransport, AsyncClient
 
 
-class _AttachmentRaceSession(AsyncSession):
-    """Test session that synchronizes concurrent attachment pre-checks."""
-
-    attachment_check_barrier: asyncio.Barrier | None = None
-
-    async def execute(self, statement, *args, **kwargs):
-        # Pause both requests before the attachment pre-check reaches PostgreSQL.
-        # Waiting before execution ensures neither request can observe the
-        # other's inserted link and move past the check first.
-        barrier = type(self).attachment_check_barrier
-        statement_text = str(statement).lower()
-        if (
-            barrier is not None
-            and "support_escalation_message_attachments" in statement_text
-            and "file_id" in statement_text
-        ):
-            await asyncio.wait_for(barrier.wait(), timeout=10)
-        return await super().execute(statement, *args, **kwargs)
-
-
 def _validated_test_urls() -> tuple[str, str]:
     """Fail closed unless both URLs target the dedicated local support_test database."""
     async_url = os.environ.get("SUPPORT_TEST_DATABASE_URL") or os.environ.get(
@@ -78,13 +58,14 @@ def _validated_test_urls() -> tuple[str, str]:
 
 
 @pytest.mark.asyncio
-async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated():
+async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(monkeypatch):
     async_url, _ = _validated_test_urls()
 
     # Import the application only after validating the test DB environment.
     from app.core.database import get_db
     from app.core.security import create_access_token
     from app.main import app
+    from app.api.v1 import edition_control
     from app.models.file import FileObject
     from app.models.role import Role
     from app.models.support_escalation import SupportEscalation
@@ -96,7 +77,7 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
     engine = create_async_engine(async_url, poolclass=NullPool)
     sessions = async_sessionmaker(
         engine,
-        class_=_AttachmentRaceSession,
+        class_=AsyncSession,
         expire_on_commit=False,
         autoflush=False,
     )
@@ -330,7 +311,17 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                 f"Concurrent attachment contender A {run_id}",
                 f"Concurrent attachment contender B {run_id}",
             ]
-            _AttachmentRaceSession.attachment_check_barrier = asyncio.Barrier(2)
+            # Synchronize at the service boundary, not by matching generated SQL.
+            # SQL-text matching was brittle and could leave the test waiting forever.
+            original_create_message = edition_control._create_support_escalation_message
+            race_barrier = asyncio.Barrier(2)
+
+            async def synchronized_create_message(escalation_id, payload, ctx, db):
+                if payload.attachment_file_ids:
+                    await asyncio.wait_for(race_barrier.wait(), timeout=10)
+                return await original_create_message(escalation_id, payload, ctx, db)
+
+            monkeypatch.setattr(edition_control, "_create_support_escalation_message", synchronized_create_message)
             try:
                 race_responses = await asyncio.wait_for(
                     asyncio.gather(
@@ -348,7 +339,7 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                     timeout=20,
                 )
             finally:
-                _AttachmentRaceSession.attachment_check_barrier = None
+                monkeypatch.setattr(edition_control, "_create_support_escalation_message", original_create_message)
 
             assert sorted(response.status_code for response in race_responses) == [201, 409], [
                 (response.status_code, response.text) for response in race_responses
@@ -375,7 +366,6 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                 assert race_messages[0].body in race_bodies
 
     finally:
-        _AttachmentRaceSession.attachment_check_barrier = None
         if previous_get_db_override is missing_override:
             app.dependency_overrides.pop(get_db, None)
         else:
