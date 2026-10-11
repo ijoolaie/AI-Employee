@@ -476,10 +476,13 @@ function buildOffice(scene: any) {
     // Rounded-looking partitions and plant pots around each team area.
     box(scene, [8.8, 0.8, 0.16], [dept.x, 0.45, dept.z + 4], 0xb8b6ab);
     box(scene, [0.16, 0.8, 7.9], [dept.x - 4.5, 0.45, dept.z], 0xb8b6ab);
-    cylinder(scene, 0.38, 0.42, 0.52, [dept.x + 3.55, 0.32, dept.z + 2.75], 0xc17f55, 12);
-    cylinder(scene, 0.11, 0.05, 1.2, [dept.x + 3.55, 1.05, dept.z + 2.75], 0x4f8b65, 8);
-    sphere(scene, 0.5, [dept.x + 3.25, 1.7, dept.z + 2.7], 0x68a77a, [1.1, 1.2, 0.85]);
-    sphere(scene, 0.42, [dept.x + 3.8, 1.55, dept.z + 2.45], 0x76b184, [1, 1.1, 0.9]);
+    // Keep decor in the back-right corner, away from the desk's chair and keyboard approach.
+    const plantX = dept.x + 3.45;
+    const plantZ = dept.z - 2.75;
+    cylinder(scene, 0.38, 0.42, 0.52, [plantX, 0.32, plantZ], 0xc17f55, 12);
+    cylinder(scene, 0.11, 0.05, 1.2, [plantX, 1.05, plantZ], 0x4f8b65, 8);
+    sphere(scene, 0.5, [plantX - 0.3, 1.7, plantZ - 0.05], 0x68a77a, [1.1, 1.2, 0.85]);
+    sphere(scene, 0.42, [plantX + 0.25, 1.55, plantZ + 0.2], 0x76b184, [1, 1.1, 0.9]);
     addDesk(scene, dept.x - 1.65, dept.z - 0.2, dept.accent);
     addDesk(scene, dept.x + 1.65, dept.z + 1.5, dept.accent);
   }
@@ -538,7 +541,8 @@ function buildOffice(scene: any) {
   box(scene, [0.16, 0.08, 30.5], [19.9, -0.02, 0], 0xd5b58d, { castShadow: false, receiveShadow: false });
 
   // A few compact lobby details establish scale and make the entrance read as a destination.
-  for (const x of [-5.8, 5.8]) {
+  for (const x of [-11.5, 11.5]) {
+    // The lobby planters sit outside the sofa/reception footprint and preserve a clear approach.
     cylinder(scene, 0.52, 0.56, 0.38, [x, 0.27, 2.2], 0xb8a38b, 18);
     cylinder(scene, 0.1, 0.07, 1.25, [x, 1.05, 2.2], 0x4f8b65, 10);
     sphere(scene, 0.48, [x - 0.18, 1.78, 2.2], 0x6fa77b, [1, 1.12, 0.9]);
