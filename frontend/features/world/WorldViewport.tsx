@@ -493,15 +493,15 @@ function buildOffice(scene: any) {
     box(scene, [0.3, 4.2, 0.34], [19.35, 1.95, z], 0xd0d0c8);
   }
 
-  // Wall-mounted acoustic panels and framed abstract team artwork add an office finish.
-  for (let x = -14; x <= 14; x += 7) {
-    box(scene, [3.2, 1.15, 0.12], [x, 3.55, -14.58], 0xc5d0d1, { castShadow: false });
-    box(scene, [2.85, 0.075, 0.04], [x, 3.88, -14.49], 0xf4efe4, { castShadow: false });
-    box(scene, [2.85, 0.075, 0.04], [x, 3.22, -14.49], 0xf4efe4, { castShadow: false });
-    box(scene, [0.075, 0.72, 0.04], [x - 1.42, 3.55, -14.49], 0xf4efe4, { castShadow: false });
-    box(scene, [0.075, 0.72, 0.04], [x + 1.42, 3.55, -14.49], 0xf4efe4, { castShadow: false });
-    box(scene, [1.1, 0.12, 0.025], [x - 0.42, 3.66, -14.45], 0x7b9d9b, { castShadow: false });
-    box(scene, [0.7, 0.12, 0.025], [x + 0.42, 3.43, -14.45], 0xd6ae78, { castShadow: false });
+  // Framed abstract artwork on the side walls adds a finished office feel without covering the windows.
+  for (const side of [-1, 1]) {
+    for (const z of [-6, 2, 10]) {
+      const x = side * 19.2;
+      box(scene, [0.12, 1.05, 2.65], [x, 3.25, z], 0xf4efe4, { castShadow: false });
+      box(scene, [0.06, 0.82, 2.42], [x + side * 0.07, 3.25, z], 0xc5d0d1, { castShadow: false });
+      box(scene, [0.035, 0.12, 1.0], [x + side * 0.11, 3.43, z - 0.32], 0x7b9d9b, { castShadow: false });
+      box(scene, [0.035, 0.12, 0.68], [x + side * 0.11, 3.16, z + 0.38], 0xd6ae78, { castShadow: false });
+    }
   }
 
   // A warm inset border visually finishes the exposed front edge of the office floor.
