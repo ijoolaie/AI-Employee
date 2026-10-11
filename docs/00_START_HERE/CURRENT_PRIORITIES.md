@@ -1,3 +1,12 @@
+## 2026-10-11 checkpoint — customer support entry gap and World visual gap
+
+- Investigation of the running tenant dashboard confirmed that the generic sidebar exposes Unified Inbox/Conversations but no support-ticket entry. These are customer-channel conversations, not support escalations.
+- The support ticket UI currently exists at `/reseller/support` under the reseller route group. `frontend/app/(reseller)/layout.tsx` explicitly redirects any tenant whose `tenant_kind` is not `reseller` to `/dashboard`; the generic tenant sidebar does not expose this route. Do not tell customer tenants to use the reseller endpoint or weaken the tenant-kind guard.
+- Issue [#1043](https://github.com/ijoolaie/AI-Employee/issues/1043) tracks a correctly authorized customer-tenant support entry/workflow, distinct from Unified Inbox and preserving tenant isolation, thread persistence and attachment authorization.
+- The canonical gameplay spec requires a polished isometric 2.5D tycoon-style office. The current `frontend/features/world/WorldViewport.tsx` still renders the scene from basic Three.js box primitives and simple worker geometry. PR #1041 concerns lease-renewal UX, not a material visual redesign; therefore the user's report that the graphics look unchanged is consistent with the current source.
+- Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) tracks the visual upgrade, with before/after desktop/mobile screenshots and preservation of room authorization/input behavior as acceptance gates.
+- Manual customer support workflow acceptance and manual World visual QA remain open. Do not claim either is complete until validated in the actual local stack.
+
 ## Current priority checkpoint — 2026-10-11 after PR #1039 and PR #1041 validation
 
 - PR #1039 merged at `27c44ac33a92c636e552950cdfa2f983255e40a8`; exact PR head `9febc1124b28f53b8b8b4ba5c09a8f26bb978dfa` passed CI, including isolated PostgreSQL persistence/isolation regression, frontend lint/build and Playwright.
