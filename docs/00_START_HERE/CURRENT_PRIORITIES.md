@@ -1,7 +1,9 @@
-## 2026-10-11 — World visual polish implementation started
+## 2026-10-11 — Approved World art direction and character-model pass
 
-- Draft PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) starts the visual-polish work tracked in [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044): department edge accents, a central aisle between department rows, subtle floor markers, warm fixtures, perimeter structure and lobby planters.
-- This is not the full World redesign. The branch has not yet passed CI/CodeQL/infrastructure/recovery/DAST, and local desktop/mobile visual QA plus before/after screenshots remain required. Keep PR #1045 Draft until evidence is captured and checks pass.
+- User approved the existing Idle Company Tycoon / Agent Office-like direction: polished stylized isometric 3D office, friendly cartoon employees, detailed workstations and rooms, warm/cool lighting, soft shadows and coherent materials. This is a visual reference only; do not copy proprietary assets or game source.
+- Draft PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) now contains the first environment-polish slice (department edge accents, central circulation aisle, floor markers, pendant fixtures, perimeter structure and lobby planters) plus a procedural employee-character pass: deterministic variation in skin tone, hair style/color, eye whites/pupils, brows, smile, clothing collar, tie/scarf and employee badge.
+- The character changes are committed at `94767f34c8a34278ee4081ac3c4e1c9885f89678`. Automated CI, CodeQL, infrastructure, recovery and DAST were queued/running at this checkpoint; do not claim their result until exact-head workflows complete.
+- This remains an implementation slice, not a completed art overhaul. Local browser rendering, desktop/mobile before/after screenshots, performance review and interaction regressions remain required. Keep PR #1045 Draft until evidence is captured and checks pass.
 - Preserve tenant authorization, room expiry fail-closed behavior, employee selection and keyboard/touch controls. No production release status changes.
 
 ---
