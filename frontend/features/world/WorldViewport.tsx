@@ -183,14 +183,26 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
     sphere(group, 0.12, [-0.22, 1.86, 0.16], hair, [0.8, 0.75, 0.6]);
   }
 
-  // Visible whites, pupils, brows and a smile give each tiny face expression and contrast at game zoom.
+  // Layered eyes with tiny catchlights read more clearly at an isometric camera distance.
+  const irisPalette = [0x4d786e, 0x4a617f, 0x765342, 0x596b87];
+  const iris = irisPalette[Math.floor(seed / 23) % irisPalette.length];
   for (const side of [-1, 1]) {
-    sphere(group, 0.071, [side * 0.12, 1.69, 0.292], 0xfffbf3, [1, 1.05, 0.5]);
-    sphere(group, 0.039, [side * 0.115, 1.685, 0.326], 0x29313a, [0.95, 1.1, 0.5]);
+    sphere(group, 0.073, [side * 0.12, 1.69, 0.292], 0xfffbf3, [1, 1.05, 0.5]);
+    sphere(group, 0.041, [side * 0.115, 1.685, 0.326], iris, [0.95, 1.1, 0.5]);
+    sphere(group, 0.022, [side * 0.115, 1.686, 0.345], 0x202a32, [0.9, 1.05, 0.5]);
+    sphere(group, 0.012, [side * 0.128, 1.704, 0.354], 0xffffff, [1, 1, 0.5]);
     box(group, [0.14, 0.028, 0.035], [side * 0.12, 1.79, 0.285], hair);
   }
   sphere(group, 0.048, [0, 1.61, 0.325], skin, [0.78, 0.82, 1.1]);
-  box(group, [0.12, 0.025, 0.025], [0, 1.555, 0.317], 0x9a5c51);
+  const smile = new THREE.Mesh(
+    new THREE.TorusGeometry(0.073, 0.012, 6, 18, Math.PI),
+    new THREE.MeshStandardMaterial({ color: 0x9a5c51, roughness: 0.9 }),
+  );
+  // Flip the half-ring so its ends rise gently into a friendly smile.
+  smile.rotation.z = Math.PI;
+  smile.scale.set(1.2, 0.72, 1);
+  smile.position.set(0, 1.56, 0.326);
+  group.add(smile);
   // Subtle cheeks make the style friendly without turning the employees into oversized mascots.
   sphere(group, 0.045, [-0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
   sphere(group, 0.045, [0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
