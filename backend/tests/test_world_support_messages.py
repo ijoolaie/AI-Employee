@@ -269,7 +269,13 @@ async def test_support_message_returns_conflict_when_attachment_is_reused_concur
         IntegrityError(
             "INSERT attachment",
             {},
-            SimpleNamespace(diag=SimpleNamespace(constraint_name="uq_support_message_attachment_file")),
+            # SQLAlchemy's asyncpg adapter can wrap the native exception;
+            # the constraint name may live on the nested driver exception.
+            SimpleNamespace(
+                __cause__=SimpleNamespace(
+                    constraint_name="uq_support_message_attachment_file"
+                )
+            ),
         ),
     ]
     audit = AsyncMock()
