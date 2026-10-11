@@ -1,4 +1,15 @@
-## 2026-10-11 — Approved World art direction and character-model pass
+## 2026-10-11 — Approved World art direction and active visual implementation
+
+- User approved an Idle Company Tycoon / Agent Office-like visual direction: stylized isometric 3D office, friendly varied cartoon employees, detailed workstations and rooms, warm/cool lighting, soft shadows and coherent materials. These are visual references only; do not copy proprietary assets or source.
+- Draft PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) for issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) now contains employee-character variation (skin tone, hairstyle/hair color, facial features, workwear/badges), department perimeter accents, circulation aisle, floor markers, pendant fixtures, perimeter structure, lobby planters, window rails/mullions, side-wall abstract art, floor edge trim, and a reception rug/coffee table.
+- Latest code changes: `11baed5f53d988addd757e07c88954cbae66d5a6` fixes wall-art placement so decorative art does not cover the rear window glazing. New exact-head CI/CodeQL/infrastructure/recovery/DAST results must be checked after the last code and documentation commits.
+- The latest completed workflow set on the previous code/doc head passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Those results do not certify the newest head and do not replace local browser review.
+- This is still an implementation slice, not the full art overhaul. Browser rendering, desktop/mobile before/after screenshots, performance and console review, and regressions for employee selection, keyboard/touch controls, accessibility and room authorization remain required. Keep PR #1045 Draft until those acceptance gates are evidenced.
+- Preserve fail-closed room authorization and authoritative room scene configuration. No release certification changes; latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
+
 
 - User approved the existing Idle Company Tycoon / Agent Office-like direction: polished stylized isometric 3D office, friendly cartoon employees, detailed workstations and rooms, warm/cool lighting, soft shadows and coherent materials. This is a visual reference only; do not copy proprietary assets or game source.
 - Draft PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) now contains the first environment-polish slice (department edge accents, central circulation aisle, floor markers, pendant fixtures, perimeter structure and lobby planters) plus a procedural employee-character pass: deterministic variation in skin tone, hair style/color, eye whites/pupils, brows, smile, clothing collar, tie/scarf and employee badge.
