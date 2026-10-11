@@ -42,7 +42,7 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - #1027: closed as an outdated draft; its legacy-inventory feature remains merged in #1025. A current-main documentation reconciliation is tracked in PR #1040.
 - #1029: closed as superseded, not merged; PR #1041 is the reconciled replacement and has passed exact-head automated checks.
 - #1041: open, ready for review, unmerged; exact-head CI/security/infrastructure/recovery/DAST checks passed and backend expiry contract was verified. Await review and explicit merge approval.
-- #1040: open documentation PR; reconciles CURRENT_STATUS, CURRENT_PRIORITIES and this hand-off after #1039/#1041 while preserving release/validation boundaries. Latest CodeQL on head `cc1c07219ed637baf93a8cadfb13f21012b16792` passed.
+- #1040: open documentation PR; reconciles CURRENT_STATUS, CURRENT_PRIORITIES and this hand-off after #1039/#1041 while preserving release/validation boundaries. The current PR #1040 head `42432ee6f82f92683eac57ebd77416a0c2acb92b` has a successful CodeQL workflow run; verify checks again if the branch head changes.
 
 ## Next recommended sequence
 
