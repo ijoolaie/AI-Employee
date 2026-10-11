@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
@@ -99,6 +99,7 @@ async def test_support_message_reply_is_audited_and_keeps_body_out_of_audit_meta
     actor_id = uuid4()
     ticket = SimpleNamespace(id=uuid4(), from_tenant_id=tenant_id, to_tenant_id=uuid4(), status="in_progress")
     db = AsyncMock()
+    db.add = Mock()
     db.execute.return_value = _result(ticket=ticket)
 
     async def refresh(message):
