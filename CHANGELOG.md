@@ -1,9 +1,10 @@
-## 2026-10-11 — Support attachment concurrency race validation
+## 2026-10-11 — PR #1041 and #1042 merged; visual PR disposition
 
-- PR #1042 (`4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e`) converts the named attachment uniqueness race into HTTP 409 and rolls back the failed message/attachment transaction together.
-- Exact-head CI completed all 11 workflow runs successfully; backend suite: 1452 passed, 1 deselected, 22 warnings.
-- Local workstation validation: Docker backend image build succeeded, `tests/test_world_support_messages.py` passed 13 tests, and `tests/test_support_escalation_postgres_api.py` passed against the dedicated PostgreSQL test container (1 passed in 2.63s).
-- PR remains Draft/open/unmerged pending explicit approval; no schema or migration changes. This does not certify production release or replace manual support workflow QA.
+- PR #1041 merged at `e1633e9bf000af045e2571d930b4eeefec30883f`. Exact PR head passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Renewal remains an order request; server authorization stays fail-closed.
+- PR #1042 merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`. Exact head passed all 11 workflows; backend suite 1452 passed, 1 deselected; local Docker build, 13 support-message tests and real PostgreSQL + HTTP API concurrency regression passed.
+- PR #1045 was closed unmerged after the user rejected its visual result; PR #1046 is the corrective Draft PR and all five exact-head workflows passed on `7f456bda345053e3ff2caf7697a1bc2a36199b19`. Browser screenshots and visual acceptance remain outstanding.
+- PR #1040 remains the documentation reconciliation PR and must be validated on its final updated head. Manual support acceptance and World desktop/mobile visual QA remain outstanding. Latest certified release remains `v1.4.17`.
+
 
 ## 2026-10-11 — Support persistence regression and current hand-off
 
