@@ -117,11 +117,9 @@ export function WorldShell() {
     sceneConfig: roomSceneConfig,
   };
   const roomAccessGranted = isRoomSceneAccessUsable(roomSceneAccess, roomAccessUnavailable);
-  const expiryTimestamp = roomAccessQuery.data?.expires_at ? Date.parse(roomAccessQuery.data.expires_at) : Number.NaN;
-  const roomAccessExpired = !roomAccessUnavailable && (
-    roomAccessQuery.data?.reason === "lease_expired" ||
-    (roomAccessQuery.data?.granted === true && Number.isFinite(expiryTimestamp) && expiryTimestamp <= Date.now())
-  );
+  // Render the server's explicit expiry classification; time checks stay in effects.
+  const roomAccessExpired = !roomAccessUnavailable &&
+    roomAccessQuery.data?.reason === "lease_expired";
   const world = useMemo(() => (officeQuery.data ? projectWorldReadModel(officeQuery.data) : null), [officeQuery.data]);
   const onEmployeeSelect = useCallback((id: string | null) => setSelectedEmployeeId(id), []);
   const onMapToggle = useCallback(() => setShowMiniMap((value) => !value), []);
@@ -143,7 +141,11 @@ export function WorldShell() {
     if (roomAccessQuery.data?.granted !== true || !expiresAt) return;
 
     const delay = Date.parse(expiresAt) - Date.now();
-    if (!Number.isFinite(delay) || delay <= 0) return;
+    if (!Number.isFinite(delay)) return;
+    if (delay <= 0) {
+      void roomAccessQuery.refetch();
+      return;
+    }
     let timeout: number | undefined;
     const scheduleExpiryCheck = () => {
       const remaining = Date.parse(expiresAt) - Date.now();
