@@ -26,7 +26,7 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - #1023: stale layout write protection.
 - #1025: audited, dry-run-first legacy room inventory reconciliation.
 - #1028: room lease expiry communication.
-- #1029 remains a stale draft for renewal UX and must not be merged. Its current-main replacement is PR #1041.
+- #1029: closed as superseded by PR #1041; it was not merged. Its stale branch is not a source of truth.
 
 ## Open work / acceptance gates
 
@@ -40,7 +40,7 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 
 - #1039: merged.
 - #1027: closed as an outdated draft; its legacy-inventory feature remains merged in #1025. A current-main documentation reconciliation is tracked in PR #1040.
-- #1029: open, draft, diverged/stale; do not merge. PR #1041 is the reconciled replacement and has passed exact-head automated checks.
+- #1029: closed as superseded, not merged; PR #1041 is the reconciled replacement and has passed exact-head automated checks.
 - #1041: open, ready for review, unmerged; exact-head CI/security/infrastructure/recovery/DAST checks passed and backend expiry contract was verified. Await review and explicit merge approval.
 - #1040: open documentation PR; update CURRENT_STATUS and CURRENT_PRIORITIES after #1039 and preserve the release/validation boundaries.
 
