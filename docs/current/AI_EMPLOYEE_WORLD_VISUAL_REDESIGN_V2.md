@@ -2,8 +2,8 @@
 
 **Status:** Design/implementation contract; not evidence of completed visual work.  
 **Date:** 2026-10-11  
-**Parent work:** PR #1045 / issue #1044  
-**Current decision:** Keep #1045 Draft and do not merge based on CI alone. The user ran the build locally and rejected the visual result: the office still looks primitive, employee faces do not match the approved reference direction, movement looks unnatural, and props are placed incoherently.
+**Tracking:** Issue #1044; corrective PR #1046 is now based on `main` and contains the combined diff from the earlier #1045 branch plus V2 corrections, so repository pull-request workflows can validate it.  
+**Current decision:** PR #1045 remains Draft and must not be merged as visual approval. The user ran the earlier build locally and rejected the result: the office still looks primitive, employee faces do not match the approved reference direction, movement looks unnatural, and props are placed incoherently. PR #1046 also remains Draft and unmerged.
 
 ## Outcome we are building toward
 
@@ -14,9 +14,9 @@ A polished, stylized isometric 3D office-management game presentation: readable 
 The current `frontend/features/world/WorldViewport.tsx` builds most objects from primitive `BoxGeometry`, `SphereGeometry`, and `CylinderGeometry`. Adding more primitives and color accents did not produce the requested character art or environmental detail.
 
 - `addWorker` builds the face/hair/outfit from separate primitive meshes. Variation is largely deterministic palette/shape variation, not a designed character model with a coherent silhouette.
-- `addCEOAvatar` is a capsule/body plus a few simple shapes and has no walk-cycle rig.
-- The input loop translates the CEO avatar by changing its position and rotation. It does not animate coordinated legs/arms, foot planting, body weight, acceleration, deceleration, or collision-aware navigation; visually this can read as sliding.
-- Employee workstation positions are generated from a fixed list and overflow rows. This does not validate chair/desk occupancy, aisle clearance, collisions, or whether a worker's pose aligns with the keyboard.
+- Initial diagnosis before the V2 corrective commits: `addCEOAvatar` used a capsule/body plus simple shapes and had no coordinated walk-cycle rig. V2 now adds articulated pivots and a basic time-based walk cycle, but this has not been visually validated and does not establish foot planting or natural weight transfer.
+- V2 adds movement easing and smoother facing/camera follow. Collision-aware navigation/pathfinding is still absent, so the avatar can still approach or cross obstacles unnaturally.
+- V2 arranges 20 desk/chair assemblies in a 2×2 grid per department and maps the first 20 worker anchors to those stations. The layout is still hard-coded and has no automated validation for bounds, overlap, aisle clearance, or duplicate occupancy. Employees beyond 20 are placed in an unlabelled staging row; that is not an accepted final capacity design.
 - The scene is composed from hard-coded coordinates and independent decorative additions, so props can overlap circulation areas or be visually unrelated to the room function.
 
 ## Implementation sequence
@@ -88,6 +88,14 @@ Do not merge or certify this work without explicit user approval after the visua
 ## 2026-10-11 additional source corrections
 
 - Reworked the department workstations into a compact 2×2 grid (four actual desk/chair assemblies per department, 20 authored stations total). Each seated worker anchor now corresponds to a station coordinate instead of the previous arrangement where the second desk could sit in front of the first desk's chair.
-- Employees beyond the 20 authored stations are placed in a separate staging row rather than being silently stacked into the desk grid. This is a fallback presentation only; the staging area still needs explicit visual treatment and a capacity indicator.
+- Employees beyond the 20 authored stations are placed in a separate staging row rather than being silently stacked into the desk grid. This fallback is not visually designed or labelled yet and still needs a capacity indicator.
 - Improved procedural face readability with iris color variation, eye catchlights, and a curved smile. This is a small source-level refinement, **not** a replacement for authored character assets or proof that the approved reference has been matched.
 - Workflow lookup did not return runs for the latest branch head after these follow-up commits. The exact latest head remains unverified by CI, and no real-browser screenshot/video is available in this session. Keep the PR Draft and do not merge.
+
+
+## 2026-10-11 PR validation routing correction
+
+- PR #1046 was retargeted from `feat/world-visual-polish-1044` to `main` because `.github/workflows/ci.yml` and `.github/workflows/codeql.yml` restrict pull-request base branches. The prior base was excluded, so no workflow run for the latest head was not a passing result.
+- PR #1046 now compares 18 commits against `main` and includes four changed files: `docs/00_START_HERE/CURRENT_PRIORITIES.md`, this contract, `frontend/e2e/world-mode.spec.ts`, and `frontend/features/world/WorldViewport.tsx`. This is a combined successor diff; inspect it as a whole.
+- At the time of this update, exact-head workflow lookup returned no PR-triggered runs and combined commit status was empty. Recheck after GitHub processes the base change/new commit; do not infer success from an empty status.
+- This session has no access to the user's local Windows browser/runtime, so it has not captured or verified actual desktop/mobile screenshots. Keep the PR Draft until exact-head checks and real visual evidence are available.
