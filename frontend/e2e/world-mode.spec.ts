@@ -249,7 +249,7 @@ async function mockRoomSceneAccess(page: import("@playwright/test").Page, expire
     await route.fulfill({
       status: 200,
       contentType: "application/json",
-      body: JSON.stringify({ success: true, data: { item_code: "room_monthly", granted, reason: granted ? "active" : "not_entitled", room_instance_id: "room-instance-e2e-001", expires_at: expiresAt } }),
+      body: JSON.stringify({ success: true, data: { item_code: "room_monthly", granted, reason: granted && Date.parse(expiresAt) <= Date.now() ? "lease_expired" : granted ? "active" : "not_entitled", room_instance_id: "room-instance-e2e-001", expires_at: expiresAt } }),
     });
   });
   await page.goto("/world");
