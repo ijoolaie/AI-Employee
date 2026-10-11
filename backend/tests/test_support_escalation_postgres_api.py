@@ -28,7 +28,6 @@ class _AttachmentRaceSession(AsyncSession):
             barrier is not None
             and "support_escalation_message_attachments" in statement_text
             and "file_id" in statement_text
-            and statement_text.lstrip().startswith("select")
         ):
             await asyncio.wait_for(barrier.wait(), timeout=10)
         return await super().execute(statement, *args, **kwargs)
