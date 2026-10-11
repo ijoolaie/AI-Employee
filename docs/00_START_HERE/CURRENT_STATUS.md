@@ -1,3 +1,9 @@
+## Current engineering status — 2026-10-11 after PR #1039
+
+PR #1039 merged at `27c44ac33a92c636e552950cdfa2f983255e40a8`. Support ticket persistence regression tests and tenant-isolation checks passed on the exact tested head. Remaining gates: manually validate the support reply/attachment workflow, manually QA World Mode on desktop and mobile, and reconcile draft PR #1029 with current main before fresh CI. Keep live payment verification and World Credit blocked until their authoritative verification and durable-ledger requirements are satisfied. Latest certified release remains `v1.4.17`.
+
+---
+
 ## Current engineering status — 2026-10-10 — PR #1036 merged
 
 
