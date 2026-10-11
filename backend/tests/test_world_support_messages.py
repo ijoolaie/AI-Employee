@@ -293,3 +293,55 @@ async def test_support_message_returns_conflict_when_attachment_is_reused_concur
     db.refresh.assert_not_awaited()
     audit.assert_not_awaited()
 
+@pytest.mark.asyncio
+async def test_support_message_does_not_mask_unrelated_integrity_errors(monkeypatch):
+    tenant_id = uuid4()
+    file_id = uuid4()
+    ticket = SimpleNamespace(
+        id=uuid4(),
+        from_tenant_id=tenant_id,
+        to_tenant_id=uuid4(),
+        status="open",
+    )
+    file_obj = SimpleNamespace(
+        id=file_id,
+        tenant_id=tenant_id,
+        status="active",
+        filename="report.pdf",
+        content_type="application/pdf",
+        size_bytes=128,
+    )
+    db = AsyncMock()
+    db.add = Mock()
+    db.execute.side_effect = [
+        _result(ticket=ticket),
+        _result(rows=[file_obj]),
+        _result(values=[]),
+    ]
+    db.flush.side_effect = [
+        None,
+        IntegrityError(
+            "INSERT attachment",
+            {},
+            SimpleNamespace(diag=SimpleNamespace(constraint_name="some_other_constraint")),
+        ),
+    ]
+    audit = AsyncMock()
+    monkeypatch.setattr(edition_service, "record_audit", audit)
+    ctx = SimpleNamespace(tenant_id=tenant_id, user_id=uuid4())
+
+    with pytest.raises(IntegrityError):
+        await _create_support_escalation_message(
+            ticket.id,
+            SupportEscalationMessageRequest(
+                body="Please review the report.",
+                attachment_file_ids=[file_id],
+            ),
+            ctx,
+            db,
+        )
+
+    db.rollback.assert_awaited_once()
+    db.refresh.assert_not_awaited()
+    audit.assert_not_awaited()
+
