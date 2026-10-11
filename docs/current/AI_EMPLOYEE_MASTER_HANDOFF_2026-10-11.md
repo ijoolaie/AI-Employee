@@ -1,13 +1,13 @@
 # AI-Employee Master Hand-off — 2026-10-11
 
 
-## World visual-polish implementation slice — 2026-10-11
+## World visual redesign — approved art direction and active implementation — 2026-10-11
 
-- Draft PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) on branch `feat/world-visual-polish-1044` adds a clearer circulation aisle, department perimeter accents, subtle floor markers, pendant fixtures, perimeter columns and lobby planters in `frontend/features/world/WorldViewport.tsx`.
-- This is an initial visual polish slice against issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044), not the full canonical isometric tycoon redesign. It deliberately leaves employee selection, input adapters, room authorization and authoritative room configuration logic unchanged.
-- Exact head `541111d2d9c613169460db9b5eb629a9ac2919ad`; CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST were queued at this checkpoint. Do not call validation complete until they finish.
-- Local build/lint/unit tests, real browser inspection, desktop/mobile before/after screenshots and console checks have not yet been performed in this workflow. PR #1045 must remain Draft until these acceptance gates pass.
-- No release certification changes; latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- The user explicitly approved an Idle Company Tycoon / Agent Office-like visual direction: polished stylized isometric 3D office, friendly varied cartoon employees, detailed workstations and rooms, warm/cool lighting, soft shadows and coherent materials. These games are visual references only; no proprietary assets or source code are to be copied.
+- Draft PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) on `feat/world-visual-polish-1044` is the active implementation branch for issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044). It adds department perimeter accents, a circulation aisle, subtle floor markers, pendant fixtures, perimeter structure and lobby planters, and upgrades procedural employee models with deterministic skin/hair variation, visible eye whites/pupils, brows, smiles, clothing collars, tie/scarf and employee badges.
+- Character-model code commit: `94767f34c8a34278ee4081ac3c4e1c9885f89678`. PR branch documentation checkpoint: `4501f17e385bb43f1e74011286aa06fc987cbdd9`. Exact-head CI, CodeQL, infrastructure, recovery and DAST were running on the character code SHA; later documentation commits require their own exact-head checks. Verify PR #1045's current head before quoting final validation status.
+- This is still an implementation slice, not a claim that the complete art overhaul is finished. Local browser rendering, desktop/mobile before/after screenshots, performance review, console inspection and regression checks remain outstanding. Keep PR #1045 Draft until these acceptance gates pass.
+- Preserve employee selection, keyboard/touch input, accessibility, tenant authorization, fail-closed room expiry/API-error behavior and authoritative room-scene configuration. No release certification changes; latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ## Latest checkpoint — 2026-10-11 16:21 +03:30
 
