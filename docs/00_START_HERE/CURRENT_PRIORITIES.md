@@ -1,3 +1,14 @@
+## Current priority checkpoint — 2026-10-11 after PR #1041/#1042 merge and visual PR disposition
+
+- PR #1041 is merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; its exact-head CI, CodeQL, infrastructure, HA recovery and DAST checks passed. Server-side room authorization remains fail-closed; a renewal order does not grant access.
+- PR #1042 is merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`; all 11 exact-head workflows passed, plus backend (1452 passed, 1 deselected), local Docker build, 13 support-message tests, and a real PostgreSQL + HTTP API concurrency regression. Still required: manual support workflow and attachment-policy QA.
+- PR #1045 was closed unmerged because the user rejected its local visual result. PR #1046 is the corrective combined diff against `main`; all five workflows passed on exact head `7f456bda345053e3ff2caf7697a1bc2a36199b19`, but the PR remains Draft until actual desktop/mobile runtime screenshots and visual acceptance exist.
+- Visual gaps remain material: most worker/furniture geometry is primitive-built, collision-aware navigation is absent, and overflow staging is unfinished. Do not claim a finished redesign.
+- PR #1040 is the remaining documentation reconciliation PR; refresh its exact-head workflow status after the current documentation commits.
+- Next: finish manual support acceptance; produce real World desktop/mobile screenshots, fix visual/layout/movement defects, and preserve room authorization/accessibility. Keep live payment verification, explicit USDT network policy and World Credit blocked until authoritative verification, replay protection and durable-ledger requirements are met.
+
+---
+
 ## 2026-10-11 checkpoint — customer support entry gap and World visual gap
 
 - Investigation of the running tenant dashboard confirmed that the generic sidebar exposes Unified Inbox/Conversations but no support-ticket entry. These are customer-channel conversations, not support escalations.
