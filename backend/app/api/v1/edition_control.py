@@ -6,6 +6,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from app.core.deps import DbSession
 from app.core.edition_deps import CustomerAdminContext, ResellerAdminContext, VendorAdminContext
@@ -403,7 +404,42 @@ async def _create_support_escalation_message(
                 file_id=file_id,
             )
         )
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        # The pre-check above is not sufficient under concurrent requests. The
+        # unique database constraint is authoritative; roll back the message
+        # and attachment together before translating only that specific race.
+        await db.rollback()
+        # Driver adapters may wrap the native asyncpg exception. Walk the
+        # exception chain so both the SQLAlchemy DBAPI wrapper and the native
+        # driver exception are inspected; psycopg exposes the name via .diag.
+        constraint_name = None
+        pending_errors = [getattr(exc, "orig", None)]
+        seen_error_ids: set[int] = set()
+        while pending_errors and constraint_name is None:
+            current_error = pending_errors.pop()
+            if current_error is None or id(current_error) in seen_error_ids:
+                continue
+            seen_error_ids.add(id(current_error))
+            diagnostic = getattr(current_error, "diag", None)
+            constraint_name = (
+                getattr(current_error, "constraint_name", None)
+                or getattr(diagnostic, "constraint_name", None)
+            )
+            for nested_error in (
+                getattr(current_error, "orig", None),
+                getattr(current_error, "__cause__", None),
+                getattr(current_error, "__context__", None),
+            ):
+                if nested_error is not None and id(nested_error) not in seen_error_ids:
+                    pending_errors.append(nested_error)
+        if constraint_name == "uq_support_message_attachment_file":
+            raise HTTPException(
+                status_code=409,
+                detail="A file can only be attached to one support message",
+            ) from exc
+        raise
     await db.refresh(message)
     await edition_service.record_audit(
         db,

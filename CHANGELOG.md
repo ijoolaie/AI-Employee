@@ -1,3 +1,18 @@
+## 2026-10-11 — PR #1041 and #1042 merged; visual PR disposition
+
+- PR #1041 merged at `e1633e9bf000af045e2571d930b4eeefec30883f`. Exact PR head passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Renewal remains an order request; server authorization stays fail-closed.
+- PR #1042 merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`. Exact head passed all 11 workflows; backend suite 1452 passed, 1 deselected; local Docker build, 13 support-message tests and real PostgreSQL + HTTP API concurrency regression passed.
+- PR #1045 was closed unmerged after the user rejected its visual result; PR #1046 is the corrective Draft PR and all five exact-head workflows passed on `7f456bda345053e3ff2caf7697a1bc2a36199b19`. Browser screenshots and visual acceptance remain outstanding.
+- PR #1040 merged at `467e6266540cd429b6e4156ac1a3f9ca00d96759`; CodeQL passed on its final PR head `6a5126d6aad9f88ccd29b91b2e66070272108c7a`. Manual support acceptance and World desktop/mobile visual QA remain outstanding. Latest certified release remains `v1.4.17`.
+
+
+## 2026-10-11 — Support persistence regression and current hand-off
+
+- Merged PR #1039 at `27c44ac33a92c636e552950cdfa2f983255e40a8`; exact tested head passed backend/frontend CI, PostgreSQL persistence and tenant-isolation regression, Playwright, CodeQL, DAST and architecture/infrastructure gates.
+- Added `docs/current/AI_EMPLOYEE_MASTER_HANDOFF_2026-10-11.md` with verified merge status, coverage boundaries, remaining QA gates and PR disposition; indexed it in `docs/DOCUMENTATION_INDEX.md`.
+- Updated current status/priorities after #1039. PR #1027 was closed as an outdated draft; its implemented legacy reconciliation remains merged in #1025. PR #1029 was closed as superseded by current-main PR #1041 and was not merged.
+- This is engineering status only; the latest published certified release remains `v1.4.17`.
+
 ## 2026-10-10 — World Mode exact-head validation
 
 - Confirmed all five automated workflow gates and every job succeeded on exact PR head `d2be7e38047af0b23a799d6df2a5961597730cd5`.
