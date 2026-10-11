@@ -30,6 +30,7 @@ class _AttachmentRaceSession(AsyncSession):
             # Wait after the SELECT executes so both transactions have already
             # observed that the file is unlinked before either proceeds to INSERT.
             await asyncio.wait_for(barrier.wait(), timeout=10)
+            type(self).attachment_check_barrier = None
         return result
 
 def _validated_test_urls() -> tuple[str, str]:
@@ -77,14 +78,13 @@ def _validated_test_urls() -> tuple[str, str]:
 
 
 @pytest.mark.asyncio
-async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(monkeypatch):
+async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated():
     async_url, _ = _validated_test_urls()
 
     # Import the application only after validating the test DB environment.
     from app.core.database import get_db
     from app.core.security import create_access_token
     from app.main import app
-    from app.api.v1 import edition_control
     from app.models.file import FileObject
     from app.models.role import Role
     from app.models.support_escalation import SupportEscalation
@@ -330,18 +330,7 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                 f"Concurrent attachment contender A {run_id}",
                 f"Concurrent attachment contender B {run_id}",
             ]
-            # Synchronize at the service boundary, not by matching generated SQL.
-            # SQL-text matching was brittle and could leave the test waiting forever.
-            original_create_message = edition_control._create_support_escalation_message
-            race_barrier = asyncio.Barrier(2)
-            _AttachmentRaceSession.attachment_check_barrier = race_barrier
-
-            async def synchronized_create_message(escalation_id, payload, ctx, db):
-                if payload.attachment_file_ids:
-                    await asyncio.wait_for(race_barrier.wait(), timeout=10)
-                return await original_create_message(escalation_id, payload, ctx, db)
-
-            monkeypatch.setattr(edition_control, "_create_support_escalation_message", synchronized_create_message)
+            _AttachmentRaceSession.attachment_check_barrier = asyncio.Barrier(2)
             try:
                 race_responses = await asyncio.wait_for(
                     asyncio.gather(
@@ -359,9 +348,7 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                     timeout=20,
                 )
             finally:
-                monkeypatch.setattr(edition_control, "_create_support_escalation_message", original_create_message)
                 _AttachmentRaceSession.attachment_check_barrier = None
-
             assert sorted(response.status_code for response in race_responses) == [201, 409], [
                 (response.status_code, response.text) for response in race_responses
             ]
