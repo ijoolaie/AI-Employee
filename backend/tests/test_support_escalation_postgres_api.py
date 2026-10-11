@@ -1,14 +1,32 @@
 ﻿"""Real PostgreSQL + HTTP API regression test for support escalation persistence."""
 
+import asyncio
 import os
 import uuid
 from collections.abc import AsyncIterator
 
 import pytest
+from sqlalchemy import func, select
 from sqlalchemy.engine import make_url
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 from httpx import ASGITransport, AsyncClient
+
+
+class _AttachmentRaceSession(AsyncSession):
+    """Test session that synchronizes concurrent attachment pre-checks."""
+
+    attachment_check_barrier: asyncio.Barrier | None = None
+
+    async def execute(self, statement, *args, **kwargs):
+        result = await super().execute(statement, *args, **kwargs)
+        barrier = type(self).attachment_check_barrier
+        if (
+            barrier is not None
+            and "support_escalation_message_attachments.file_id" in str(statement)
+        ):
+            await asyncio.wait_for(barrier.wait(), timeout=10)
+        return result
 
 
 def _validated_test_urls() -> tuple[str, str]:
@@ -63,14 +81,21 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
     from app.core.database import get_db
     from app.core.security import create_access_token
     from app.main import app
+    from app.models.file import FileObject
     from app.models.role import Role
     from app.models.support_escalation import SupportEscalation
     from app.models.support_escalation_message import SupportEscalationMessage
+    from app.models.support_escalation_message_attachment import SupportEscalationMessageAttachment
     from app.models.tenant import Tenant
     from app.models.user import User
 
     engine = create_async_engine(async_url, poolclass=NullPool)
-    sessions = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
+    sessions = async_sessionmaker(
+        engine,
+        class_=_AttachmentRaceSession,
+        expire_on_commit=False,
+        autoflush=False,
+    )
 
     run_id = uuid.uuid4().hex
     vendor_id = uuid.uuid4()
@@ -156,6 +181,17 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
             )
             source_user.roles.append(source_role)
             unrelated_user.roles.append(unrelated_role)
+            race_file_id = uuid.uuid4()
+            race_file = FileObject(
+                id=race_file_id,
+                tenant_id=source_tenant_id,
+                uploaded_by=source_user_id,
+                filename="concurrent-report.pdf",
+                content_type="application/pdf",
+                size_bytes=128,
+                storage_key=f"{source_tenant_id}/pgtest/{run_id}/concurrent-report.pdf",
+                status="active",
+            )
 
             session.add_all(
                 [
@@ -166,6 +202,7 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                     unrelated_role,
                     source_user,
                     unrelated_user,
+                    race_file,
                 ]
             )
             await session.commit()
@@ -280,7 +317,58 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
             )
             assert foreign_status.status_code == 404, foreign_status.text
 
+            # 6. Force two real HTTP requests past the attachment pre-check before
+            # either request can insert its link. PostgreSQL must allow exactly one.
+            race_bodies = [
+                f"Concurrent attachment contender A {run_id}",
+                f"Concurrent attachment contender B {run_id}",
+            ]
+            _AttachmentRaceSession.attachment_check_barrier = asyncio.Barrier(2)
+            try:
+                race_responses = await asyncio.wait_for(
+                    asyncio.gather(
+                        client.post(
+                            messages_url,
+                            headers=source_headers,
+                            json={"body": race_bodies[0], "attachment_file_ids": [str(race_file_id)]},
+                        ),
+                        client.post(
+                            messages_url,
+                            headers=source_headers,
+                            json={"body": race_bodies[1], "attachment_file_ids": [str(race_file_id)]},
+                        ),
+                    ),
+                    timeout=20,
+                )
+            finally:
+                _AttachmentRaceSession.attachment_check_barrier = None
+
+            assert sorted(response.status_code for response in race_responses) == [201, 409], [
+                (response.status_code, response.text) for response in race_responses
+            ]
+            conflict_response = next(response for response in race_responses if response.status_code == 409)
+            assert conflict_response.json()["detail"] == "A file can only be attached to one support message"
+
+            # The losing request must roll back its message as well as its attachment.
+            async with sessions() as verification_session:
+                attachment_count = await verification_session.scalar(
+                    select(func.count())
+                    .select_from(SupportEscalationMessageAttachment)
+                    .where(SupportEscalationMessageAttachment.file_id == race_file_id)
+                )
+                race_messages = (
+                    await verification_session.execute(
+                        select(SupportEscalationMessage).where(
+                            SupportEscalationMessage.body.in_(race_bodies)
+                        )
+                    )
+                ).scalars().all()
+                assert attachment_count == 1
+                assert len(race_messages) == 1
+                assert race_messages[0].body in race_bodies
+
     finally:
+        _AttachmentRaceSession.attachment_check_barrier = None
         if previous_get_db_override is missing_override:
             app.dependency_overrides.pop(get_db, None)
         else:
