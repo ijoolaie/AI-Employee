@@ -1,23 +1,39 @@
-## 2026-10-11 — World visual redesign V2 (not visually approved)
+## World visual redesign checkpoint — 2026-10-11 (not accepted yet)
 
-- User approved the broad art direction: polished stylized isometric 3D office, varied friendly cartoon employees, detailed workstations/rooms, coherent placement, warm/cool lighting, soft shadows, and natural movement. Idle Company Tycoon / Agent Office are references only; do not copy proprietary assets or source.
-- User reviewed the local result from PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) and rejected it: the environment remained primitive, faces did not match the approved direction, movement felt unnatural, and props were incoherently placed. Do not merge #1045 as a completed redesign.
-- Follow-up [PR #1046](https://github.com/ijoolaie/AI-Employee/pull/1046) remains **Draft and unmerged**. It is now based on `main` and carries the combined diff (the prior #1045 history plus corrective V2 changes) so repository PR workflow base-branch filters can run.
-- V2 code corrections include a basic articulated CEO walk cycle with movement easing, a 2×2 workstation grid (20 desk/chair stations), worker anchors mapped to those stations, moved planters, and a Playwright wait for the locked-room proximity affordance. These are source changes, not proof of visual quality.
-- Known gaps: most character/furniture geometry is still primitive-built; obstacle-aware pathfinding/collision avoidance is absent; overflow employees remain in an unlabelled staging row; the new CEO walk cycle has not been visually confirmed as natural.
-- Exact head `6185fcdb8c62f223f3391fb52474a90fb1929145` subsequently passed all five reported PR workflows: CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST Validation. This applies only to that exact head and automated checks; it does not replace visual QA. A documentation-only follow-up is now being committed, so recheck its new head before any readiness decision.
-- Required before marking ready: actual running-browser screenshots at 1440×900 and 390×844, same camera/fixtures for comparison; inspect console and performance; verify employee selection, keyboard/touch movement, room access/authorization and reduced motion; address authored/licensed assets and layout validation. Do not use concept renders as runtime evidence.
-- Preserve fail-closed room authorization and authoritative room scene configuration. No release certification changes; latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- The user rejected the local result from [PR #1045](https://github.com/ijoolaie/AI-Employee/pull/1045); it is now closed unmerged and is not a completed redesign.
+- [PR #1046](https://github.com/ijoolaie/AI-Employee/pull/1046) carries the combined #1045 history plus V2 corrections. CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST all passed on exact head `7f456bda345053e3ff2caf7697a1bc2a36199b19`; this does not constitute visual approval.
+- The repository's recursive main tree currently has no `.glb`, `.gltf`, `.fbx`, `.obj`, `.blend`, or raster image assets. The renderer remains primitive-built. Authored/licensed assets, actual desktop/mobile browser screenshots, natural movement, collision-aware navigation, layout validation and visual acceptance remain blockers. Keep #1046 Draft; do not merge as complete.
+- PR #1046 needs its current-main documentation conflict reconciled after the #1040 merge; re-run workflows on any new head.
 
 ---
 
+## Current priority checkpoint — 2026-10-11 after PR #1041/#1042 merge and visual PR disposition
 
+- PR #1041 is merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; its exact-head CI, CodeQL, infrastructure, HA recovery and DAST checks passed. Server-side room authorization remains fail-closed; a renewal order does not grant access.
+- PR #1042 is merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`; all 11 exact-head workflows passed, plus backend (1452 passed, 1 deselected), local Docker build, 13 support-message tests, and a real PostgreSQL + HTTP API concurrency regression. Still required: manual support workflow and attachment-policy QA.
+- PR #1045 was closed unmerged because the user rejected its local visual result. PR #1046 is the corrective combined diff against `main`; all five workflows passed on exact head `7f456bda345053e3ff2caf7697a1bc2a36199b19`, but the PR remains Draft until actual desktop/mobile runtime screenshots and visual acceptance exist.
+- Visual gaps remain material: most worker/furniture geometry is primitive-built, collision-aware navigation is absent, and overflow staging is unfinished. Do not claim a finished redesign.
+- PR #1040 documentation reconciliation merged at `467e6266540cd429b6e4156ac1a3f9ca00d96759`; its CodeQL passed on the final PR head before merge.
+- Next: finish manual support acceptance; produce real World desktop/mobile screenshots, fix visual/layout/movement defects, and preserve room authorization/accessibility. Keep live payment verification, explicit USDT network policy and World Credit blocked until authoritative verification, replay protection and durable-ledger requirements are met.
 
-- User approved the existing Idle Company Tycoon / Agent Office-like direction: polished stylized isometric 3D office, friendly cartoon employees, detailed workstations and rooms, warm/cool lighting, soft shadows and coherent materials. This is a visual reference only; do not copy proprietary assets or game source.
-- Draft PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) now contains the first environment-polish slice (department edge accents, central circulation aisle, floor markers, pendant fixtures, perimeter structure and lobby planters) plus a procedural employee-character pass: deterministic variation in skin tone, hair style/color, eye whites/pupils, brows, smile, clothing collar, tie/scarf and employee badge.
-- The character changes are committed at `94767f34c8a34278ee4081ac3c4e1c9885f89678`. Automated CI, CodeQL, infrastructure, recovery and DAST were queued/running at this checkpoint; do not claim their result until exact-head workflows complete.
-- This remains an implementation slice, not a completed art overhaul. Local browser rendering, desktop/mobile before/after screenshots, performance review and interaction regressions remain required. Keep PR #1045 Draft until evidence is captured and checks pass.
-- Preserve tenant authorization, room expiry fail-closed behavior, employee selection and keyboard/touch controls. No production release status changes.
+---
+
+## 2026-10-11 checkpoint — customer support entry gap and World visual gap
+
+- Investigation of the running tenant dashboard confirmed that the generic sidebar exposes Unified Inbox/Conversations but no support-ticket entry. These are customer-channel conversations, not support escalations.
+- The support ticket UI currently exists at `/reseller/support` under the reseller route group. `frontend/app/(reseller)/layout.tsx` explicitly redirects any tenant whose `tenant_kind` is not `reseller` to `/dashboard`; the generic tenant sidebar does not expose this route. Do not tell customer tenants to use the reseller endpoint or weaken the tenant-kind guard.
+- Issue [#1043](https://github.com/ijoolaie/AI-Employee/issues/1043) tracks a correctly authorized customer-tenant support entry/workflow, distinct from Unified Inbox and preserving tenant isolation, thread persistence and attachment authorization.
+- The canonical gameplay spec requires a polished isometric 2.5D tycoon-style office. The current `frontend/features/world/WorldViewport.tsx` still renders the scene from basic Three.js box primitives and simple worker geometry. PR #1041 concerns lease-renewal UX, not a material visual redesign; therefore the user's report that the graphics look unchanged is consistent with the current source.
+- Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) tracks the visual upgrade, with before/after desktop/mobile screenshots and preservation of room authorization/input behavior as acceptance gates.
+- Manual customer support workflow acceptance and manual World visual QA remain open. Do not claim either is complete until validated in the actual local stack.
+
+## Current priority checkpoint — 2026-10-11 after PR #1039 and PR #1041 validation
+
+- PR #1039 merged at `27c44ac33a92c636e552950cdfa2f983255e40a8`; exact PR head `9febc1124b28f53b8b8b4ba5c09a8f26bb978dfa` passed CI, including isolated PostgreSQL persistence/isolation regression, frontend lint/build and Playwright.
+- Support chain merged: #1031 threads, #1033 tenant-safe attachments, #1035 reseller conversation UI, #1036 sent-ticket persistence, #1039 regression coverage. PR #1042 adds safe conflict handling for concurrent attachment reuse; exact head `4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e` passed all 11 workflows, 13 support-message unit tests, and the real PostgreSQL + HTTP API concurrency regression locally (1 passed in 2.63s). Remaining support work: manual create → reload → reply/thread → authorized attachment QA; test both participants, deleted/missing files and policy limits.
+- World room access/layout/employee placements/reconciliation are merged (#1016, #1018, #1019, #1021, #1023, #1025); expiry communication is merged (#1028). Current-main renewal replacement PR #1041 (`528750ce9fbac51690d3da6a660394ed6896cbb8`) passed CI, CodeQL, infrastructure, HA recovery and DAST; the backend `lease_expired` response is confirmed. It remains open/unmerged pending review and explicit merge approval. Stale PR #1029 is closed as superseded by #1041 and was not merged.
+- Next: review PR #1041 and #1042; both remain unmerged pending explicit approval (#1042 remains Draft). Then manually test World Mode on desktop/mobile and finish support workflow acceptance. Keep live payment verification, explicit USDT network policy and World Credit blocked until authoritative verification, replay protection and a durable ledger exist.
+- Engineering merges/green CI are not production certification. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ---
 
