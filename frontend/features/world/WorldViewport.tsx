@@ -135,53 +135,87 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
 }
 
 function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
-  // A seated, desk-facing character reads more like an office-management game than a standing token.
+  // Build a warm, toy-like 3D character with an individually varied face, hairstyle and work outfit.
   const group = new THREE.Group();
   group.userData.employeeId = employee.id;
   parent.add(group);
 
-  const palette = [0x557ca5, 0x6b9b82, 0xc78360, 0x8b78b6, 0x4e9aab, 0xc28b4c];
-  const color = palette[Math.abs(hash(employee.id)) % palette.length];
+  const outfitPalette = [0x557ca5, 0x6b9b82, 0xc78360, 0x8b78b6, 0x4e9aab, 0xc28b4c];
+  const skinPalette = [0xf0c8a5, 0xdca47e, 0xb97855, 0xf3d8bd, 0x8f5d45, 0xe8b594];
+  const hairPalette = [0x51413b, 0x302c2b, 0x7b5034, 0x9b744a, 0x454b55, 0x6b3731];
+  const seed = Math.abs(hash(employee.id));
+  const color = outfitPalette[seed % outfitPalette.length];
+  const skin = skinPalette[Math.floor(seed / 7) % skinPalette.length];
+  const hair = hairPalette[Math.floor(seed / 13) % hairPalette.length];
+  const hairstyle = Math.floor(seed / 19) % 4;
 
-  // Compact stylized body, positioned in the chair in front of the monitor.
-  cylinder(group, 0.34, 0.42, 0.78, [0, 1.0, 0.02], color, 14);
-  cylinder(group, 0.13, 0.15, 0.2, [0, 1.39, -0.01], 0xf0c8a5, 10);
-  sphere(group, 0.34, [0, 1.67, -0.02], 0xf0c8a5, [1, 1.03, 0.96]);
-  // Hair cap, ears, nose and shirt details make each procedural worker read as a person.
-  sphere(group, 0.37, [0, 1.86, -0.08], 0x51413b, [1, 0.52, 0.95]);
-  sphere(group, 0.19, [0, 1.79, 0.235], 0x51413b, [1.25, 0.48, 0.45]);
-  box(group, [0.16, 0.035, 0.045], [-0.115, 1.75, 0.287], 0x51413b);
-  box(group, [0.16, 0.035, 0.045], [0.115, 1.75, 0.287], 0x51413b);
-  sphere(group, 0.075, [-0.325, 1.65, -0.015], 0xe8b594, [0.75, 1, 0.8]);
-  sphere(group, 0.075, [0.325, 1.65, -0.015], 0xe8b594, [0.75, 1, 0.8]);
-  sphere(group, 0.052, [0, 1.61, 0.305], 0xe8b594, [0.8, 0.85, 1.1]);
-  box(group, [0.34, 0.09, 0.08], [0, 1.34, 0.32], 0xf0c8a5);
-  box(group, [0.11, 0.24, 0.055], [0, 1.19, 0.39], 0xf3d6a0);
-  sphere(group, 0.045, [-0.115, 1.68, 0.285], 0x26313a, [0.8, 1, 0.5]);
-  sphere(group, 0.045, [0.115, 1.68, 0.285], 0x26313a, [0.8, 1, 0.5]);
+  // Rounded torso, shoulders and a contrasting collar make the silhouette read as a character, not a token.
+  cylinder(group, 0.34, 0.42, 0.78, [0, 1.0, 0.02], color, 18);
+  sphere(group, 0.22, [-0.27, 1.25, 0.02], color, [1.1, 0.82, 1]);
+  sphere(group, 0.22, [0.27, 1.25, 0.02], color, [1.1, 0.82, 1]);
+  cylinder(group, 0.13, 0.15, 0.2, [0, 1.39, -0.01], skin, 12);
+  // Shirt collar, tie/scarf and a small employee badge add readable workwear detail.
+  box(group, [0.16, 0.12, 0.09], [-0.095, 1.34, 0.31], 0xf5eee2);
+  box(group, [0.16, 0.12, 0.09], [0.095, 1.34, 0.31], 0xf5eee2);
+  box(group, [0.075, 0.24, 0.045], [0, 1.22, 0.365], seed % 2 ? 0xe9c46a : 0xd7e7f0);
+  box(group, [0.12, 0.14, 0.035], [0.23, 1.08, 0.345], 0xf4eee1);
+  box(group, [0.055, 0.055, 0.025], [0.23, 1.08, 0.368], 0x4f9b87);
 
-  // Bent legs and small shoes create a seated silhouette.
-  cylinder(group, 0.14, 0.15, 0.42, [-0.2, 0.48, 0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
-  cylinder(group, 0.14, 0.15, 0.42, [0.2, 0.48, 0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
+  // Head and ears use a wider, softly rounded silhouette.
+  sphere(group, 0.35, [0, 1.68, -0.02], skin, [1.02, 1.04, 0.98]);
+  sphere(group, 0.075, [-0.335, 1.65, -0.015], skin, [0.78, 1, 0.82]);
+  sphere(group, 0.075, [0.335, 1.65, -0.015], skin, [0.78, 1, 0.82]);
+
+  // Four deterministic hairstyles vary the cast while remaining inexpensive procedural geometry.
+  sphere(group, 0.37, [0, 1.86, -0.085], hair, [1.02, 0.52, 0.98]);
+  if (hairstyle === 0) {
+    sphere(group, 0.19, [0, 1.79, 0.235], hair, [1.25, 0.48, 0.45]);
+    sphere(group, 0.12, [-0.25, 1.78, 0.12], hair, [0.85, 0.95, 0.72]);
+  } else if (hairstyle === 1) {
+    sphere(group, 0.2, [-0.12, 1.91, 0.15], hair, [1.05, 0.68, 0.62]);
+    sphere(group, 0.17, [0.18, 1.91, 0.13], hair, [1.0, 0.6, 0.6]);
+  } else if (hairstyle === 2) {
+    sphere(group, 0.12, [-0.29, 1.7, 0.04], hair, [0.75, 1.15, 0.7]);
+    sphere(group, 0.12, [0.29, 1.7, 0.04], hair, [0.75, 1.15, 0.7]);
+    sphere(group, 0.16, [0.02, 1.96, -0.02], hair, [1.0, 0.52, 0.9]);
+  } else {
+    sphere(group, 0.16, [0.12, 1.96, 0.12], hair, [1.05, 0.55, 0.8]);
+    sphere(group, 0.12, [-0.22, 1.86, 0.16], hair, [0.8, 0.75, 0.6]);
+  }
+
+  // Visible whites, pupils, brows and a smile give each tiny face expression and contrast at game zoom.
+  for (const side of [-1, 1]) {
+    sphere(group, 0.071, [side * 0.12, 1.69, 0.292], 0xfffbf3, [1, 1.05, 0.5]);
+    sphere(group, 0.039, [side * 0.115, 1.685, 0.326], 0x29313a, [0.95, 1.1, 0.5]);
+    box(group, [0.14, 0.028, 0.035], [side * 0.12, 1.79, 0.285], hair);
+  }
+  sphere(group, 0.048, [0, 1.61, 0.325], skin, [0.78, 0.82, 1.1]);
+  box(group, [0.12, 0.025, 0.025], [0, 1.555, 0.317], 0x9a5c51);
+  // Subtle cheeks make the style friendly without turning the employees into oversized mascots.
+  sphere(group, 0.045, [-0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
+  sphere(group, 0.045, [0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
+
+  // Bent legs and shoes create a compact seated silhouette beneath the desk.
+  cylinder(group, 0.14, 0.15, 0.42, [-0.2, 0.48, 0.05], 0x33445b, 12).rotation.x = Math.PI / 2;
+  cylinder(group, 0.14, 0.15, 0.42, [0.2, 0.48, 0.05], 0x33445b, 12).rotation.x = Math.PI / 2;
   box(group, [0.25, 0.13, 0.34], [-0.2, 0.2, 0.3], 0x293545);
   box(group, [0.25, 0.13, 0.34], [0.2, 0.2, 0.3], 0x293545);
 
-  // Arms angle toward the desk so the employee appears to be using the workstation.
-  const leftSleeve = cylinder(group, 0.12, 0.15, 0.34, [-0.29, 1.29, 0.15], color, 10);
+  // Sleeves and skin-toned forearms angle toward the keyboard.
+  const leftSleeve = cylinder(group, 0.12, 0.15, 0.34, [-0.29, 1.29, 0.15], color, 12);
   leftSleeve.rotation.x = 0.72;
   leftSleeve.rotation.z = -0.24;
-  const rightSleeve = cylinder(group, 0.12, 0.15, 0.34, [0.29, 1.29, 0.15], color, 10);
+  const rightSleeve = cylinder(group, 0.12, 0.15, 0.34, [0.29, 1.29, 0.15], color, 12);
   rightSleeve.rotation.x = 0.72;
   rightSleeve.rotation.z = 0.24;
-  // Raise the forearms to desk height and extend the hands over the keyboard plane.
-  const leftArm = cylinder(group, 0.075, 0.09, 0.3, [-0.31, 1.4, 0.48], 0xf0c8a5, 10);
+  const leftArm = cylinder(group, 0.075, 0.09, 0.3, [-0.31, 1.4, 0.48], skin, 12);
   leftArm.rotation.x = 0.72;
   leftArm.rotation.z = -0.18;
-  const rightArm = cylinder(group, 0.075, 0.09, 0.3, [0.31, 1.4, 0.48], 0xf0c8a5, 10);
+  const rightArm = cylinder(group, 0.075, 0.09, 0.3, [0.31, 1.4, 0.48], skin, 12);
   rightArm.rotation.x = 0.72;
   rightArm.rotation.z = 0.18;
-  sphere(group, 0.09, [-0.31, 1.46, 0.77], 0xf0c8a5, [1, 0.7, 1.1]);
-  sphere(group, 0.09, [0.31, 1.46, 0.77], 0xf0c8a5, [1, 0.7, 1.1]);
+  sphere(group, 0.09, [-0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
+  sphere(group, 0.09, [0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
 
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.82, 0.05, 8, 32),
