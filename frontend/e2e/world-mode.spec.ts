@@ -190,10 +190,11 @@ test("World room offer loads server prices and creates an order without charging
   // Walk toward the locked-room entrance; avoid relying on a 3D pixel coordinate.
   await canvas.focus();
   await page.keyboard.down("s");
-  await page.waitForTimeout(900);
-  await page.keyboard.up("s");
   const inspectRoom = page.getByRole("button", { name: /Locked room nearby/ });
-  await expect(inspectRoom).toBeVisible({ timeout: 5000 });
+  // Keep moving until the proximity affordance appears; fixed short holds are brittle
+  // when movement uses acceleration and frame-rate-independent velocity.
+  await expect(inspectRoom).toBeVisible({ timeout: 7000 });
+  await page.keyboard.up("s");
   await canvas.press("e");
 
   const offer = page.getByRole("dialog", { name: "اتاق بعدی شرکت" });
