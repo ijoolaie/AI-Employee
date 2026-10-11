@@ -1,3 +1,13 @@
+## Latest verified checkpoint — 2026-10-11 after PR #1040/#1041/#1042 merges
+
+- PR #1040 documentation reconciliation merged at `467e6266540cd429b6e4156ac1a3f9ca00d96759`; CodeQL passed on its final PR head `6a5126d6aad9f88ccd29b91b2e66070272108c7a`.
+- PR #1041 merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; exact-head CI, CodeQL, infrastructure, HA recovery and DAST passed. Expired room access remains server-authoritative and fail-closed.
+- PR #1042 merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`; all 11 exact-head workflows passed, along with backend (1452 passed, 1 deselected), local Docker build, 13 support-message tests, and real PostgreSQL + HTTP API concurrency regression.
+- PR #1045 is closed unmerged after the user rejected its local visual result. PR #1046 remains Draft/unmerged; all five workflows passed on exact head `7f456bda345053e3ff2caf7697a1bc2a36199b19`, but actual desktop/mobile browser screenshots and visual acceptance are still missing. The repository has no GLB/GLTF/FBX/OBJ/BLEND or raster image assets; the current renderer remains primitive-built.
+- Remaining gates: manual support create/reload/reply/authorized-attachment QA; customer-tenant support entry point tracked by #1043; and authored/licensed World assets plus actual-browser desktop/mobile visual QA tracked by #1044. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Latest verified checkpoint — 2026-10-11 after PR #1041/#1042 merges
 
 - PR #1041 merged to `main` at `e1633e9bf000af045e2571d930b4eeefec30883f`. Exact head `528750ce9fbac51690d3da6a660394ed6896cbb8` passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. The server remains authoritative; a renewal order does not itself grant room access.
@@ -31,7 +41,7 @@
 
 ### Current open PR disposition (checked at this checkpoint)
 
-- [#1040 docs](https://github.com/ijoolaie/AI-Employee/pull/1040): open, non-Draft, documentation-only. The branch was updated after #1041/#1042 merged; check the new exact head's workflow status before merge. No runtime test claim.
+- [#1040 docs](https://github.com/ijoolaie/AI-Employee/pull/1040): merged at `467e6266540cd429b6e4156ac1a3f9ca00d96759`; final documentation head CodeQL passed. No runtime test claim.
 - [#1041 World lease renewal](https://github.com/ijoolaie/AI-Employee/pull/1041): merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; exact PR head passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Functional renewal UX only; visual redesign remains separate.
 - [#1042 support attachment concurrency](https://github.com/ijoolaie/AI-Employee/pull/1042): merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`. Exact head passed all 11 workflows; backend suite 1452 passed, 1 deselected; local Docker build, 13 support-message tests, and real PostgreSQL + HTTP API race regression passed. No schema/migration changes. This does not solve the missing customer support navigation in #1043.
 
@@ -81,7 +91,7 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - #1029: closed as superseded, not merged; PR #1041 is the reconciled replacement and has passed exact-head automated checks.
 - #1041: merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; exact-head CI/security/infrastructure/recovery/DAST checks passed.
 - #1042: merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`; exact head passed all 11 workflow runs, backend suite (1452 passed, 1 deselected), local Docker build, 13 support-message unit tests, and real PostgreSQL + HTTP API concurrency regression (1 passed). No schema/migration changes.
-- #1040: open documentation PR; reconciles CURRENT_STATUS, CURRENT_PRIORITIES, Changelog and this hand-off after #1039/#1041/#1042 while preserving release/validation boundaries. Current head `8a844330e0ce01962f1fdd9c47bcd3c05bf313e4` has a successful CodeQL workflow run `38134175993`.
+- #1040: merged documentation reconciliation PR at `467e6266540cd429b6e4156ac1a3f9ca00d96759`; final exact head `6a5126d6aad9f88ccd29b91b2e66070272108c7a` passed CodeQL run `38164377498`.
 
 ## Next recommended sequence
 
