@@ -202,9 +202,12 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                     unrelated_role,
                     source_user,
                     unrelated_user,
-                    race_file,
                 ]
             )
+            # Commit FK parents first: FileObject has FK columns but no ORM
+            # relationship that guarantees unit-of-work insert ordering.
+            await session.commit()
+            session.add(race_file)
             await session.commit()
 
         source_token = create_access_token(
