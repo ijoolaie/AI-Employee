@@ -6,6 +6,7 @@ from urllib.parse import quote
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from app.core.deps import DbSession
 from app.core.edition_deps import CustomerAdminContext, ResellerAdminContext, VendorAdminContext
@@ -403,7 +404,17 @@ async def _create_support_escalation_message(
                 file_id=file_id,
             )
         )
-    await db.flush()
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        # The pre-check above is not sufficient under concurrent requests. The
+        # unique database constraint is authoritative; roll back the message
+        # and attachment together, then return a stable conflict response.
+        await db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="A file can only be attached to one support message",
+        ) from exc
     await db.refresh(message)
     await edition_service.record_audit(
         db,
