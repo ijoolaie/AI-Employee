@@ -1,4 +1,4 @@
-﻿"""Real PostgreSQL + HTTP API regression test for support escalation persistence."""
+"""Real PostgreSQL + HTTP API regression test for support escalation persistence."""
 
 import asyncio
 import os
@@ -19,14 +19,19 @@ class _AttachmentRaceSession(AsyncSession):
     attachment_check_barrier: asyncio.Barrier | None = None
 
     async def execute(self, statement, *args, **kwargs):
-        result = await super().execute(statement, *args, **kwargs)
+        # Pause both requests before the attachment pre-check reaches PostgreSQL.
+        # Waiting before execution ensures neither request can observe the
+        # other's inserted link and move past the check first.
         barrier = type(self).attachment_check_barrier
+        statement_text = str(statement).lower()
         if (
             barrier is not None
-            and "support_escalation_message_attachments.file_id" in str(statement)
+            and "support_escalation_message_attachments" in statement_text
+            and "file_id" in statement_text
+            and statement_text.lstrip().startswith("select")
         ):
             await asyncio.wait_for(barrier.wait(), timeout=10)
-        return result
+        return await super().execute(statement, *args, **kwargs)
 
 
 def _validated_test_urls() -> tuple[str, str]:
