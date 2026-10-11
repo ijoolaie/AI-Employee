@@ -1,12 +1,22 @@
+## Latest verified checkpoint — 2026-10-11 after PR #1041/#1042 merges
+
+- PR #1041 merged to `main` at `e1633e9bf000af045e2571d930b4eeefec30883f`. Exact head `528750ce9fbac51690d3da6a660394ed6896cbb8` passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. The server remains authoritative; a renewal order does not itself grant room access.
+- PR #1042 merged to `main` at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`. Exact head `4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e` passed all 11 workflow runs; backend suite 1452 passed, 1 deselected; local Docker build, 13 support-message tests, and real PostgreSQL + HTTP API concurrency regression passed. Manual support workflow/attachment QA is still outstanding.
+- PR #1045 was closed unmerged after the user rejected its local visual result. It is not a completed redesign. PR #1046 carries the combined corrective diff against `main`; all five workflows passed on exact head `7f456bda345053e3ff2caf7697a1bc2a36199b19`, but it remains Draft because actual desktop/mobile browser screenshots and user visual acceptance are missing.
+- World visual gaps remain: most employee/furniture geometry is primitive-built, collision-aware pathfinding is absent, and overflow staging is not a final design. Preserve the user's rejection as the acceptance boundary; do not merge #1046 as complete until runtime evidence and visual quality are addressed.
+- PR #1040 remains the documentation reconciliation PR; its head was updated to record these dispositions and must be validated on its latest SHA. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 # AI-Employee Master Hand-off — 2026-10-11
 
 
 ## World visual redesign — approved art direction and active implementation — 2026-10-11
 
 - The user explicitly approved an Idle Company Tycoon / Agent Office-like visual direction: polished stylized isometric 3D office, friendly varied cartoon employees, detailed workstations and rooms, warm/cool lighting, soft shadows and coherent materials. These games are visual references only; no proprietary assets or source code are to be copied.
-- Draft PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) on `feat/world-visual-polish-1044` is the active implementation branch for issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044). It adds department perimeter accents, a circulation aisle, subtle floor markers, pendant fixtures, perimeter structure, lobby planters, window rails/mullions, side-wall abstract artwork, front floor-edge trim, and a reception rug/coffee table. Procedural employee models now vary deterministically by skin tone, hair style/color, face details and workwear/badges.
+- PR [#1045](https://github.com/ijoolaie/AI-Employee/pull/1045) was closed unmerged after the user rejected its local visual result. Its implementation history is included in the combined corrective diff of [#1046](https://github.com/ijoolaie/AI-Employee/pull/1046); do not treat #1045 as a completed redesign.
 - Latest noted code commit: `11baed5f53d988addd757e07c88954cbae66d5a6` (moves decorative wall art to side walls so it does not cover rear glazing). Follow-on documentation commits exist on the PR branch; check the current PR head and exact-head workflows before reporting final validation.
-- The preceding code/doc head passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. These results do not validate later commits. This remains an implementation slice, not a claim that the complete art overhaul is finished. Local browser rendering, desktop/mobile before/after screenshots, performance/console inspection and employee/input/accessibility/room-authorization regressions remain outstanding. Keep PR #1045 Draft until those acceptance gates pass.
+- PR #1046 exact head `7f456bda345053e3ff2caf7697a1bc2a36199b19` passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Automated success does not validate visual quality. Real-browser desktop/mobile screenshots, console/performance inspection, and employee/input/accessibility/room-authorization regression checks remain outstanding. Keep #1046 Draft until those acceptance gates pass.
 - Preserve employee selection, keyboard/touch input, accessibility, tenant authorization, fail-closed room expiry/API-error behavior and authoritative room-scene configuration. No release certification changes; latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ## Latest checkpoint — 2026-10-11 16:21 +03:30
@@ -21,17 +31,17 @@
 
 ### Current open PR disposition (checked at this checkpoint)
 
-- [#1040 docs](https://github.com/ijoolaie/AI-Employee/pull/1040): open, non-Draft, mergeable. Current head `783e5cc9feb266d01013ed6325ea31008949a939`; exact-head CodeQL run `38136817003` completed successfully. Documentation-only; no runtime test claim. Recommended disposition: ready for final review/merge, but do not merge without explicit approval.
-- [#1041 World lease renewal](https://github.com/ijoolaie/AI-Employee/pull/1041): open, non-Draft, mergeable. Exact head `528750ce9fbac51690d3da6a660394ed6896cbb8`; CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST all succeeded. No submitted reviews or inline threads were present at this check. Functional renewal UX only; World visual redesign and local visual QA remain outstanding. Recommended disposition: review-ready, but do not merge without explicit approval.
-- [#1042 support attachment concurrency](https://github.com/ijoolaie/AI-Employee/pull/1042): open, Draft, mergeable. Exact head `4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e`; all 11 workflow runs succeeded; backend suite 1452 passed, 1 deselected; workstation Docker build succeeded, 13 support-message tests passed and real PostgreSQL + HTTP API race regression passed (1 test, 2.63s). No schema/migration changes. Recommended disposition: technically validated but keep Draft pending explicit approval/review. This does not solve the missing customer support navigation in #1043.
+- [#1040 docs](https://github.com/ijoolaie/AI-Employee/pull/1040): open, non-Draft, documentation-only. The branch was updated after #1041/#1042 merged; check the new exact head's workflow status before merge. No runtime test claim.
+- [#1041 World lease renewal](https://github.com/ijoolaie/AI-Employee/pull/1041): merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; exact PR head passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Functional renewal UX only; visual redesign remains separate.
+- [#1042 support attachment concurrency](https://github.com/ijoolaie/AI-Employee/pull/1042): merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`. Exact head passed all 11 workflows; backend suite 1452 passed, 1 deselected; local Docker build, 13 support-message tests, and real PostgreSQL + HTTP API race regression passed. No schema/migration changes. This does not solve the missing customer support navigation in #1043.
 
-No PR was merged during this checkpoint. The latest certified release remains `v1.4.17`; CI success is not production certification.
+PR #1041 and #1042 have since been merged as recorded in the latest checkpoint above. The latest certified release remains `v1.4.17`; CI success is not production certification.
 
 
 ## Current verified repository state
 
 - Repository: `ijoolaie/AI-Employee`
-- Latest merged work in this hand-off: PR #1039, squash merge commit `27c44ac33a92c636e552950cdfa2f983255e40a8`. PRs #1040 (docs), #1041 (World lease renewal UX), and #1042 (support attachment concurrency) remain open and unmerged.
+- PR #1039 merged at `27c44ac33a92c636e552950cdfa2f983255e40a8`; subsequent merges: #1041 at `e1633e9bf000af045e2571d930b4eeefec30883f` and #1042 at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`. PR #1040 remains open for documentation reconciliation.
 - PR #1039 exact tested head: `9febc1124b28f53b8b8b4ba5c09a8f26bb978dfa`; reported CI passed, including isolated PostgreSQL migration/persistence tests, backend tests, frontend lint/build, Playwright browser regressions, CodeQL, DAST, architecture, security/privacy and infrastructure checks.
 - Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Engineering merges and green CI are not production deployment or release certification.
 
@@ -58,7 +68,7 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 
 ## Open work / acceptance gates
 
-1. **PR #1041 — renewal UX replacement:** created from current main rather than merging the diverged #1029 branch. Exact head `528750ce9fbac51690d3da6a660394ed6896cbb8` passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Backend `room_inventory_access` returns `granted=false, reason=lease_expired` for expired leases. Review remains required; do not merge without explicit approval. PR #1029 is closed as superseded and was not merged.
+1. **PR #1041 — renewal UX replacement:** merged at `e1633e9bf000af045e2571d930b4eeefec30883f`. Exact head passed all five automated workflow gates. The backend returns `granted=false, reason=lease_expired` for expired leases. PR #1029 remains closed as superseded and was not merged.
 2. **Support manual acceptance:** verify create → reload → reply/thread → attachment download. Automated tests now cover concurrent attachment reuse: PR #1042 exact head `4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e` passed local Docker unit tests (13 passed) and the real PostgreSQL + HTTP API race regression (1 passed). Still manually test both ticket participants, foreign-tenant denial, deleted/missing files, and count/type/size policy.
 3. **World manual QA:** test desktop and mobile viewport, keyboard/touch controls, accessibility, console errors and room lease expiry behavior.
 4. **Payments / wallet:** live provider verification, signed/replay-safe callbacks, explicit USDT network policy, and World Credit remain blocked until authoritative verification and a durable append-only ledger with atomic replay-safe accounting are implemented.
@@ -69,14 +79,14 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - #1039: merged.
 - #1027: closed as an outdated draft; its legacy-inventory feature remains merged in #1025. A current-main documentation reconciliation is tracked in PR #1040.
 - #1029: closed as superseded, not merged; PR #1041 is the reconciled replacement and has passed exact-head automated checks.
-- #1041: open, ready for review, unmerged; exact-head CI/security/infrastructure/recovery/DAST checks passed and backend expiry contract was verified. No submitted reviews or inline review threads are present as of this check. Await review and explicit merge approval.
-- #1042: open Draft, unmerged; exact head `4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e` passed all 11 workflow runs, backend suite (1452 passed, 1 deselected), local Docker build, 13 support-message unit tests, and the local real PostgreSQL + HTTP API concurrency regression (1 passed in 2.63s). No schema/migration changes. Await review and explicit merge approval.
+- #1041: merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; exact-head CI/security/infrastructure/recovery/DAST checks passed.
+- #1042: merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`; exact head passed all 11 workflow runs, backend suite (1452 passed, 1 deselected), local Docker build, 13 support-message unit tests, and real PostgreSQL + HTTP API concurrency regression (1 passed). No schema/migration changes.
 - #1040: open documentation PR; reconciles CURRENT_STATUS, CURRENT_PRIORITIES, Changelog and this hand-off after #1039/#1041/#1042 while preserving release/validation boundaries. Current head `8a844330e0ce01962f1fdd9c47bcd3c05bf313e4` has a successful CodeQL workflow run `38134175993`.
 
 ## Next recommended sequence
 
-1. Code review the PR #1042 race fix and confirm exact-head checks; automated/local regression is green, but keep it Draft until explicit user approval.
-2. Review PR #1041 diff and successful exact-head CI, preserving #1028 expiry status and fail-closed access behavior; wait for explicit merge approval.
+1. PR #1042 is merged; next finish manual support acceptance: create → reload → reply/thread → authorized attachment download, including both participants, foreign-tenant denial, missing/deleted files and policy limits.
+2. PR #1041 is merged; manually verify expiry/renewal UX and preserve #1028 expiry status plus fail-closed access behavior.
 3. Manually validate World Mode expiry/renewal and desktop/mobile behavior; CI is not a substitute for local visual QA.
 4. Complete manual support acceptance: create → reload → reply/thread → authorized attachment download, including both participants, foreign-tenant denial, missing/deleted files and policy limits. Concurrency is covered by automated/local PostgreSQL regression.
 5. Update this hand-off with observed manual QA results rather than inferred status.
