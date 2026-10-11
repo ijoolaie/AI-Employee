@@ -2,7 +2,7 @@
 
 - Merged PR #1039 at `27c44ac33a92c636e552950cdfa2f983255e40a8`; exact tested head passed backend/frontend CI, PostgreSQL persistence and tenant-isolation regression, Playwright, CodeQL, DAST and architecture/infrastructure gates.
 - Added `docs/current/AI_EMPLOYEE_MASTER_HANDOFF_2026-10-11.md` with verified merge status, coverage boundaries, remaining QA gates and PR disposition; indexed it in `docs/DOCUMENTATION_INDEX.md`.
-- Updated current status/priorities after #1039. PR #1027 was closed as an outdated draft; its implemented legacy reconciliation remains merged in #1025. PR #1029 remains draft pending current-main reconciliation and fresh CI.
+- Updated current status/priorities after #1039. PR #1027 was closed as an outdated draft; its implemented legacy reconciliation remains merged in #1025. PR #1029 was closed as superseded by current-main PR #1041 and was not merged.
 - This is engineering status only; the latest published certified release remains `v1.4.17`.
 
 ## 2026-10-10 — World Mode exact-head validation
