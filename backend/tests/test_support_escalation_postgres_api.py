@@ -13,6 +13,25 @@ from sqlalchemy.pool import NullPool
 from httpx import ASGITransport, AsyncClient
 
 
+class _AttachmentRaceSession(AsyncSession):
+    """Synchronize after both attachment pre-checks have returned."""
+
+    attachment_check_barrier: asyncio.Barrier | None = None
+
+    async def execute(self, statement, *args, **kwargs):
+        result = await super().execute(statement, *args, **kwargs)
+        barrier = type(self).attachment_check_barrier
+        statement_text = str(statement).lower()
+        if (
+            barrier is not None
+            and "support_escalation_message_attachments" in statement_text
+            and "file_id" in statement_text
+        ):
+            # Wait after the SELECT executes so both transactions have already
+            # observed that the file is unlinked before either proceeds to INSERT.
+            await asyncio.wait_for(barrier.wait(), timeout=10)
+        return result
+
 def _validated_test_urls() -> tuple[str, str]:
     """Fail closed unless both URLs target the dedicated local support_test database."""
     async_url = os.environ.get("SUPPORT_TEST_DATABASE_URL") or os.environ.get(
@@ -77,7 +96,7 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
     engine = create_async_engine(async_url, poolclass=NullPool)
     sessions = async_sessionmaker(
         engine,
-        class_=AsyncSession,
+        class_=_AttachmentRaceSession,
         expire_on_commit=False,
         autoflush=False,
     )
@@ -315,6 +334,7 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
             # SQL-text matching was brittle and could leave the test waiting forever.
             original_create_message = edition_control._create_support_escalation_message
             race_barrier = asyncio.Barrier(2)
+            _AttachmentRaceSession.attachment_check_barrier = race_barrier
 
             async def synchronized_create_message(escalation_id, payload, ctx, db):
                 if payload.attachment_file_ids:
@@ -340,12 +360,13 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                 )
             finally:
                 monkeypatch.setattr(edition_control, "_create_support_escalation_message", original_create_message)
+                _AttachmentRaceSession.attachment_check_barrier = None
 
             assert sorted(response.status_code for response in race_responses) == [201, 409], [
                 (response.status_code, response.text) for response in race_responses
             ]
             conflict_response = next(response for response in race_responses if response.status_code == 409)
-            assert conflict_response.json()["detail"] == "A file can only be attached to one support message"
+            assert conflict_response.json()["error"]["message"] == "A file can only be attached to one support message", conflict_response.text
 
             # The losing request must roll back its message as well as its attachment.
             async with sessions() as verification_session:
@@ -366,6 +387,7 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                 assert race_messages[0].body in race_bodies
 
     finally:
+        _AttachmentRaceSession.attachment_check_barrier = None
         if previous_get_db_override is missing_override:
             app.dependency_overrides.pop(get_db, None)
         else:
