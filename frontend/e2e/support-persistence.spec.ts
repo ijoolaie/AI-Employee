@@ -18,7 +18,7 @@ const authState = JSON.stringify({
   version: 0,
 });
 
-test("created support escalation persists after reload", async ({ page }) => {
+test("support escalation remains visible after reload with mocked API", async ({ page }) => {
   const subject = "Support ticket persistence regression";
   const description = "Regression test for support ticket persistence.";
   let createdTicket: Record<string, unknown> | null = null;
