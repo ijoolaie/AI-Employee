@@ -1,6 +1,6 @@
 # AI-Employee Master Hand-off — 2026-10-11
 
-## Latest checkpoint — 2026-10-11 15:15 +03:30
+## Latest checkpoint — 2026-10-11 16:21 +03:30
 
 ### User-observed UI gaps (verified against current source)
 
@@ -12,7 +12,7 @@
 
 ### Current open PR disposition (checked at this checkpoint)
 
-- [#1040 docs](https://github.com/ijoolaie/AI-Employee/pull/1040): open, non-Draft, mergeable. Current head `cc42f93cb1bd204f9aea601185a2091f10f44507`; exact-head CodeQL run `38136433721` succeeded. Documentation-only; no runtime test claim. Recommended disposition: ready for review/merge, but do not merge without explicit approval.
+- [#1040 docs](https://github.com/ijoolaie/AI-Employee/pull/1040): open, non-Draft, mergeable. Current head `783e5cc9feb266d01013ed6325ea31008949a939`; exact-head CodeQL run `38136817003` completed successfully. Documentation-only; no runtime test claim. Recommended disposition: ready for final review/merge, but do not merge without explicit approval.
 - [#1041 World lease renewal](https://github.com/ijoolaie/AI-Employee/pull/1041): open, non-Draft, mergeable. Exact head `528750ce9fbac51690d3da6a660394ed6896cbb8`; CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST all succeeded. No submitted reviews or inline threads were present at this check. Functional renewal UX only; World visual redesign and local visual QA remain outstanding. Recommended disposition: review-ready, but do not merge without explicit approval.
 - [#1042 support attachment concurrency](https://github.com/ijoolaie/AI-Employee/pull/1042): open, Draft, mergeable. Exact head `4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e`; all 11 workflow runs succeeded; backend suite 1452 passed, 1 deselected; workstation Docker build succeeded, 13 support-message tests passed and real PostgreSQL + HTTP API race regression passed (1 test, 2.63s). No schema/migration changes. Recommended disposition: technically validated but keep Draft pending explicit approval/review. This does not solve the missing customer support navigation in #1043.
 
