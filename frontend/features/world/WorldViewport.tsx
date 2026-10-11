@@ -495,8 +495,9 @@ function buildOffice(scene: any) {
     cylinder(scene, 0.11, 0.05, 1.2, [plantX, 1.05, plantZ], 0x4f8b65, 8);
     sphere(scene, 0.5, [plantX - 0.3, 1.7, plantZ - 0.05], 0x68a77a, [1.1, 1.2, 0.85]);
     sphere(scene, 0.42, [plantX + 0.25, 1.55, plantZ + 0.2], 0x76b184, [1, 1.1, 0.9]);
-    addDesk(scene, dept.x - 1.65, dept.z - 0.2, dept.accent);
-    addDesk(scene, dept.x + 1.65, dept.z + 1.5, dept.accent);
+    // Two side-by-side stations share one row; this keeps each chair behind its own desk.
+    addDesk(scene, dept.x - 1.8, dept.z - 0.2, dept.accent);
+    addDesk(scene, dept.x + 1.8, dept.z - 0.2, dept.accent);
   }
 
   // A clear central circulation spine and inset team borders give the HQ a designed, game-like floor plan.
@@ -725,17 +726,20 @@ export function WorldViewport({
         });
       }
       workers.length = 0;
-      // Seat each worker slightly forward of the chair center so their hands reach the keyboard.
-      // Characters face -Z, while the workstation controls sit on the near half of the desk.
+      // Match each employee to the same-row desk/chair assembly; characters face -Z.
       const desks: [number, number][] = DEPARTMENTS.flatMap((dept) => [
-        [dept.x - 1.65, dept.z - 0.2 + 1.05] as [number, number],
-        [dept.x + 1.65, dept.z + 1.5 + 1.05] as [number, number],
+        [dept.x - 1.8, dept.z - 0.2 + 1.05] as [number, number],
+        [dept.x + 1.8, dept.z - 0.2 + 1.05] as [number, number],
       ]);
       next.forEach((employee, index) => {
         const worker = addWorker(scene, employee);
         const place = desks[index % desks.length];
         const extraRow = Math.floor(index / desks.length);
-        worker.group.position.set(place[0], 0, place[1] + extraRow * 2.3);
+        // Do not silently place extra employees inside unrelated furniture: reserve overflow
+        // rows within the department's footprint until a dedicated capacity layout is available.
+        const overflowX = extraRow > 0 ? ((extraRow - 1) % 2 === 0 ? -0.65 : 0.65) : 0;
+        const overflowZ = extraRow > 0 ? Math.ceil(extraRow / 2) * 2.0 : 0;
+        worker.group.position.set(place[0] + overflowX, 0, place[1] + overflowZ);
         worker.group.rotation.y = Math.PI + 0.2;
         worker.group.userData.homePosition = worker.group.position.clone();
         worker.group.userData.homeRotationY = worker.group.rotation.y;
