@@ -1,3 +1,10 @@
+## 2026-10-11 — Support attachment concurrency race validation
+
+- PR #1042 (`4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e`) converts the named attachment uniqueness race into HTTP 409 and rolls back the failed message/attachment transaction together.
+- Exact-head CI completed all 11 workflow runs successfully; backend suite: 1452 passed, 1 deselected, 22 warnings.
+- Local workstation validation: Docker backend image build succeeded, `tests/test_world_support_messages.py` passed 13 tests, and `tests/test_support_escalation_postgres_api.py` passed against the dedicated PostgreSQL test container (1 passed in 2.63s).
+- PR remains Draft/open/unmerged pending explicit approval; no schema or migration changes. This does not certify production release or replace manual support workflow QA.
+
 ## 2026-10-11 — Support persistence regression and current hand-off
 
 - Merged PR #1039 at `27c44ac33a92c636e552950cdfa2f983255e40a8`; exact tested head passed backend/frontend CI, PostgreSQL persistence and tenant-isolation regression, Playwright, CodeQL, DAST and architecture/infrastructure gates.
