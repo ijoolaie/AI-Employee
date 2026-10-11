@@ -744,9 +744,9 @@ export function WorldViewport({
           // Employees beyond the 20 authored stations wait in a separate front staging row
           // rather than being silently stacked into occupied workstations.
           const overflowIndex = index - desks.length;
-          const column = overflowIndex % 5;
-          const row = Math.floor(overflowIndex / 5);
-          worker.group.position.set(-12 + column * 6, 0, Math.min(14, 12 + row * 1.6));
+          const column = overflowIndex % 7;
+          const row = Math.floor(overflowIndex / 7);
+          worker.group.position.set(-18 + column * 6, 0, 11.5 + row * 1.25);
         }
         worker.group.rotation.y = Math.PI + 0.2;
         worker.group.userData.homePosition = worker.group.position.clone();
