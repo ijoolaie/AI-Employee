@@ -489,15 +489,18 @@ function buildOffice(scene: any) {
     box(scene, [8.8, 0.8, 0.16], [dept.x, 0.45, dept.z + 4], 0xb8b6ab);
     box(scene, [0.16, 0.8, 7.9], [dept.x - 4.5, 0.45, dept.z], 0xb8b6ab);
     // Keep decor in the back-right corner, away from the desk's chair and keyboard approach.
-    const plantX = dept.x + 3.45;
-    const plantZ = dept.z - 2.75;
+    const plantX = dept.x - 3.45;
+    const plantZ = dept.z + 2.95;
     cylinder(scene, 0.38, 0.42, 0.52, [plantX, 0.32, plantZ], 0xc17f55, 12);
     cylinder(scene, 0.11, 0.05, 1.2, [plantX, 1.05, plantZ], 0x4f8b65, 8);
     sphere(scene, 0.5, [plantX - 0.3, 1.7, plantZ - 0.05], 0x68a77a, [1.1, 1.2, 0.85]);
     sphere(scene, 0.42, [plantX + 0.25, 1.55, plantZ + 0.2], 0x76b184, [1, 1.1, 0.9]);
-    // Two side-by-side stations share one row; this keeps each chair behind its own desk.
-    addDesk(scene, dept.x - 1.8, dept.z - 0.2, dept.accent);
-    addDesk(scene, dept.x + 1.8, dept.z - 0.2, dept.accent);
+    // A compact 2x2 workstation grid gives up to four employees a real desk/chair pair.
+    for (const xOffset of [-1.8, 1.8]) {
+      for (const zOffset of [-2.15, 1.0]) {
+        addDesk(scene, dept.x + xOffset, dept.z + zOffset, dept.accent);
+      }
+    }
   }
 
   // A clear central circulation spine and inset team borders give the HQ a designed, game-like floor plan.
@@ -726,20 +729,25 @@ export function WorldViewport({
         });
       }
       workers.length = 0;
-      // Match each employee to the same-row desk/chair assembly; characters face -Z.
-      const desks: [number, number][] = DEPARTMENTS.flatMap((dept) => [
-        [dept.x - 1.8, dept.z - 0.2 + 1.05] as [number, number],
-        [dept.x + 1.8, dept.z - 0.2 + 1.05] as [number, number],
-      ]);
+      // Match each employee to an actual desk/chair assembly; characters face -Z.
+      const desks: [number, number][] = DEPARTMENTS.flatMap((dept) =>
+        [-2.15, 1.0].flatMap((zOffset) =>
+          [-1.8, 1.8].map((xOffset) => [dept.x + xOffset, dept.z + zOffset + 1.05] as [number, number]),
+        ),
+      );
       next.forEach((employee, index) => {
         const worker = addWorker(scene, employee);
-        const place = desks[index % desks.length];
-        const extraRow = Math.floor(index / desks.length);
-        // Do not silently place extra employees inside unrelated furniture: reserve overflow
-        // rows within the department's footprint until a dedicated capacity layout is available.
-        const overflowX = extraRow > 0 ? ((extraRow - 1) % 2 === 0 ? -0.65 : 0.65) : 0;
-        const overflowZ = extraRow > 0 ? Math.ceil(extraRow / 2) * 2.0 : 0;
-        worker.group.position.set(place[0] + overflowX, 0, place[1] + overflowZ);
+        if (index < desks.length) {
+          const place = desks[index];
+          worker.group.position.set(place[0], 0, place[1]);
+        } else {
+          // Employees beyond the 20 authored stations wait in a separate front staging row
+          // rather than being silently stacked into occupied workstations.
+          const overflowIndex = index - desks.length;
+          const column = overflowIndex % 5;
+          const row = Math.floor(overflowIndex / 5);
+          worker.group.position.set(-12 + column * 6, 0, Math.min(14, 12 + row * 1.6));
+        }
         worker.group.rotation.y = Math.PI + 0.2;
         worker.group.userData.homePosition = worker.group.position.clone();
         worker.group.userData.homeRotationY = worker.group.rotation.y;
