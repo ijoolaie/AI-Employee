@@ -78,3 +78,9 @@ The current `frontend/features/world/WorldViewport.tsx` builds most objects from
 6. Capture comparison screenshots, run regressions, update the master handoff, and request user review.
 
 Do not merge or certify this work without explicit user approval after the visual evidence is reviewed.
+
+## 2026-10-11 implementation follow-up
+
+- Corrected two visible layout collisions in the current procedural scene: department planters were placed beside the second desk/chair approach, and the left lobby planter nearly touched the sofa. Planters now use the rear-right corner of each department and the lobby planters sit outside the reception/sofa footprint.
+- Made the locked-room Playwright regression wait for the actual proximity affordance while movement is held, rather than stopping after a fixed 900 ms. The movement change uses acceleration/easing, so a fixed short hold was brittle.
+- Exact-head CI is running for the follow-up commit. These changes are source-level corrections only; they do **not** establish that the scene has been visually approved. No real-browser screenshot/video has been captured from this session, and the cast/furniture still uses procedural primitives rather than authored GLTF assets. Keep both visual PRs Draft pending visual evidence and the remaining redesign work.
