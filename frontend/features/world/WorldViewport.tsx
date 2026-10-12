@@ -753,6 +753,7 @@ export function WorldViewport({
     let disposed = false;
     // Load the licensed, rigged low-poly employee model asynchronously. Keep the procedural
     // avatar as a resilient fallback if the asset cannot be loaded for any reason.
+    if (viewportRef.current) delete viewportRef.current.dataset.playerAssetLoaded;
     new GLTFLoader().load(
       "/assets/world/employee-base.glb",
       (gltf) => {
@@ -799,9 +800,11 @@ export function WorldViewport({
         const walkAction = walkClip ? mixer.clipAction(walkClip) : null;
         idleAction?.play();
         ceoAvatar.userData.assetAnimator = { mixer, idleAction, walkAction, currentAction: idleAction };
+        if (viewportRef.current) viewportRef.current.dataset.playerAssetLoaded = "true";
       },
       undefined,
       () => {
+        if (viewportRef.current) viewportRef.current.dataset.playerAssetLoaded = "fallback";
         // Keep the lightweight procedural avatar visible if the local asset is unavailable.
       },
     );
