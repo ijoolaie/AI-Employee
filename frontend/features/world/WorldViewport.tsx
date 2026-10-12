@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { WorldInput } from "./WorldInput";
 import type { WorldEmployee } from "./WorldState";
 import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
@@ -313,6 +314,7 @@ function addCEOAvatar(scene: any) {
   marker.rotation.x = -Math.PI / 2;
   marker.position.y = 0.07;
   avatar.add(marker);
+  avatar.userData.selectionMarker = marker;
   // Spawn just beyond the lobby coffee-table footprint so collision never traps the player at startup.
   avatar.position.set(0, 0, 4.4);
   scene.add(avatar);
@@ -748,6 +750,61 @@ export function WorldViewport({
 
     buildOffice(scene);
     const ceoAvatar = addCEOAvatar(scene);
+    let disposed = false;
+    // Load the licensed, rigged low-poly employee model asynchronously. Keep the procedural
+    // avatar as a resilient fallback if the asset cannot be loaded for any reason.
+    new GLTFLoader().load(
+      "/assets/world/employee-base.glb",
+      (gltf) => {
+        if (disposed) {
+          gltf.scene.traverse((object: any) => {
+            if (object.geometry?.dispose) object.geometry.dispose();
+            if (object.material) {
+              const materials = Array.isArray(object.material) ? object.material : [object.material];
+              for (const material of materials) material.dispose?.();
+            }
+          });
+          return;
+        }
+        const model = gltf.scene;
+        model.scale.setScalar(0.289); // source documentation: approximately 1.60 m at this scale
+        model.updateMatrixWorld(true);
+        const bounds = new THREE.Box3().setFromObject(model);
+        const center = bounds.getCenter(new THREE.Vector3());
+        model.position.x -= center.x;
+        model.position.z -= center.z;
+        model.position.y -= bounds.min.y;
+        model.traverse((object: any) => {
+          if (object.isMesh) {
+            object.castShadow = true;
+            object.receiveShadow = true;
+          }
+        });
+        for (const child of [...ceoAvatar.children]) {
+          if (child === ceoAvatar.userData.selectionMarker) continue;
+          ceoAvatar.remove(child);
+          child.traverse((object: any) => {
+            if (object.geometry?.dispose) object.geometry.dispose();
+            if (object.material) {
+              const materials = Array.isArray(object.material) ? object.material : [object.material];
+              for (const material of materials) material.dispose?.();
+            }
+          });
+        }
+        ceoAvatar.add(model);
+        const mixer = new THREE.AnimationMixer(model);
+        const idleClip = gltf.animations.find((clip) => /idle/i.test(clip.name)) ?? gltf.animations[0];
+        const walkClip = gltf.animations.find((clip) => /walk/i.test(clip.name)) ?? gltf.animations.find((clip) => /run/i.test(clip.name));
+        const idleAction = idleClip ? mixer.clipAction(idleClip) : null;
+        const walkAction = walkClip ? mixer.clipAction(walkClip) : null;
+        idleAction?.play();
+        ceoAvatar.userData.assetAnimator = { mixer, idleAction, walkAction, currentAction: idleAction };
+      },
+      undefined,
+      () => {
+        // Keep the lightweight procedural avatar visible if the local asset is unavailable.
+      },
+    );
     const walkBlockers = getWalkBlockers();
     const roomEntrance = addLockedRoom(scene);
     const roomInterior = addAuthorizedRoomInterior(scene);
@@ -894,18 +951,29 @@ export function WorldViewport({
       target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 5);
       updateCamera();
 
-      const walkRig = ceoAvatar.userData.walkRig;
-      if (walkRig) {
-        const walking = speed > 0.22 && !reducedMotion.matches;
-        ceoAvatar.userData.walkPhase += speed * seconds * 2.7;
-        const phase = ceoAvatar.userData.walkPhase;
-        const swing = walking ? Math.sin(phase) * 0.48 : 0;
-        walkRig.leftLeg.rotation.x += (swing - walkRig.leftLeg.rotation.x) * Math.min(1, seconds * 12);
-        walkRig.rightLeg.rotation.x += (-swing - walkRig.rightLeg.rotation.x) * Math.min(1, seconds * 12);
-        walkRig.leftArm.rotation.x += (-swing * 0.72 - walkRig.leftArm.rotation.x) * Math.min(1, seconds * 12);
-        walkRig.rightArm.rotation.x += (swing * 0.72 - walkRig.rightArm.rotation.x) * Math.min(1, seconds * 12);
-        const bodyBob = walking ? Math.abs(Math.sin(phase * 2)) * 0.045 : 0;
-        ceoAvatar.position.y += (bodyBob - ceoAvatar.position.y) * Math.min(1, seconds * 14);
+      const walking = speed > 0.22 && !reducedMotion.matches;
+      const assetAnimator = ceoAvatar.userData.assetAnimator;
+      if (assetAnimator) {
+        const nextAction = walking ? (assetAnimator.walkAction ?? assetAnimator.idleAction) : assetAnimator.idleAction;
+        if (nextAction && nextAction !== assetAnimator.currentAction) {
+          assetAnimator.currentAction?.fadeOut(0.18);
+          nextAction.reset().fadeIn(0.18).play();
+          assetAnimator.currentAction = nextAction;
+        }
+        assetAnimator.mixer.update(seconds);
+      } else {
+        const walkRig = ceoAvatar.userData.walkRig;
+        if (walkRig) {
+          ceoAvatar.userData.walkPhase += speed * seconds * 2.7;
+          const phase = ceoAvatar.userData.walkPhase;
+          const swing = walking ? Math.sin(phase) * 0.48 : 0;
+          walkRig.leftLeg.rotation.x += (swing - walkRig.leftLeg.rotation.x) * Math.min(1, seconds * 12);
+          walkRig.rightLeg.rotation.x += (-swing - walkRig.rightLeg.rotation.x) * Math.min(1, seconds * 12);
+          walkRig.leftArm.rotation.x += (-swing * 0.72 - walkRig.leftArm.rotation.x) * Math.min(1, seconds * 12);
+          walkRig.rightArm.rotation.x += (swing * 0.72 - walkRig.rightArm.rotation.x) * Math.min(1, seconds * 12);
+          const bodyBob = walking ? Math.abs(Math.sin(phase * 2)) * 0.045 : 0;
+          ceoAvatar.position.y += (bodyBob - ceoAvatar.position.y) * Math.min(1, seconds * 14);
+        }
       }
       const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;
       if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }
@@ -978,6 +1046,7 @@ export function WorldViewport({
     if (isRendering) frame = requestAnimationFrame(tick);
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(frame);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       observer.disconnect();
