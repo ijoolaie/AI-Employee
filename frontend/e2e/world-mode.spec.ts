@@ -98,7 +98,12 @@ test("World Mode renders authoritative employee projection and management bridge
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: false });
+  // Add a focused view so reviewers can inspect the loaded player model rather than judging only map scale.
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.48 } })));
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-avatar-closeup.png", fullPage: false });
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  await page.waitForTimeout(700);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: false });
