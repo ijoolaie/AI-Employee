@@ -34,16 +34,102 @@ const DEPARTMENTS = [
   { name: "ENGINEERING", x: 6, z: 6, color: 0xe9e2f0, accent: 0x9c78c7 },
 ];
 
+type SurfaceTexture = "wood" | "fabric" | "plaster" | "stone";
+const surfaceTextureCache = new Map<SurfaceTexture, THREE.CanvasTexture>();
+
+/**
+ * Small seamless canvas textures add actual surface detail without shipping large
+ * image files. They are deliberately subtle: texture should enrich the authored
+ * palette, not look like a noisy filter at the isometric camera distance.
+ */
+function getSurfaceTexture(kind: SurfaceTexture): THREE.CanvasTexture {
+  const cached = surfaceTextureCache.get(kind);
+  if (cached) return cached;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 256;
+  canvas.height = 256;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Canvas 2D is required to create World surface textures");
+
+  const base = kind === "wood" ? "#b98558" : kind === "fabric" ? "#8799a6" : kind === "stone" ? "#b9b7ae" : "#e8e4db";
+  context.fillStyle = base;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Fixed-seed pseudo-random noise keeps each material stable between renders.
+  let seed = kind.length * 7919;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+
+  if (kind === "wood") {
+    for (let row = 0; row < 34; row += 1) {
+      const y = row * 8 + random() * 4;
+      context.strokeStyle = row % 3 === 0 ? "rgba(79,45,25,.20)" : "rgba(244,204,154,.22)";
+      context.lineWidth = row % 5 === 0 ? 2 : 1;
+      context.beginPath();
+      context.moveTo(0, y);
+      for (let x = 0; x <= 256; x += 16) {
+        context.lineTo(x, y + Math.sin(x * 0.035 + row) * (1 + random() * 2));
+      }
+      context.stroke();
+    }
+    for (let knot = 0; knot < 5; knot += 1) {
+      const x = 20 + random() * 216;
+      const y = 20 + random() * 216;
+      context.strokeStyle = "rgba(85,48,27,.17)";
+      context.beginPath();
+      context.ellipse(x, y, 5 + random() * 8, 2 + random() * 4, 0, 0, Math.PI * 2);
+      context.stroke();
+    }
+  } else if (kind === "fabric") {
+    for (let offset = 0; offset < 256; offset += 4) {
+      context.strokeStyle = offset % 8 === 0 ? "rgba(255,255,255,.13)" : "rgba(27,43,57,.08)";
+      context.lineWidth = 1;
+      context.beginPath(); context.moveTo(offset, 0); context.lineTo(offset, 256); context.stroke();
+      context.beginPath(); context.moveTo(0, offset); context.lineTo(256, offset); context.stroke();
+    }
+  } else {
+    for (let i = 0; i < 1500; i += 1) {
+      const shade = random() > 0.5 ? 255 : 35;
+      const alpha = kind === "stone" ? 0.035 : 0.025;
+      context.fillStyle = `rgba(${shade},${shade},${shade},${alpha})`;
+      const size = kind === "stone" ? 1 + random() * 5 : 1 + random() * 2;
+      context.fillRect(random() * 256, random() * 256, size, size);
+    }
+    if (kind === "stone") {
+      for (let y = 24; y < 256; y += 48) {
+        context.strokeStyle = "rgba(80,80,74,.12)";
+        context.lineWidth = 1;
+        context.beginPath(); context.moveTo(0, y); context.lineTo(256, y + random() * 8); context.stroke();
+      }
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.generateMipmaps = true;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.repeat.set(kind === "wood" ? 1.8 : 1, kind === "wood" ? 1 : 1);
+  surfaceTextureCache.set(kind, texture);
+  return texture;
+}
+
+
 function box(
   parent: any,
   size: [number, number, number],
   position: [number, number, number],
   color: number,
-  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number; castShadow?: boolean; receiveShadow?: boolean } = {},
+  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number; castShadow?: boolean; receiveShadow?: boolean; texture?: SurfaceTexture } = {},
 ) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(...size),
-    new THREE.MeshStandardMaterial({ color, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
+    new THREE.MeshStandardMaterial({ color, map: options.texture ? getSurfaceTexture(options.texture) : undefined, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
   );
   mesh.position.set(...position);
   mesh.castShadow = options.castShadow ?? true;
@@ -103,7 +189,7 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
   const desk = new THREE.Group();
   desk.position.set(x, 0, z);
   parent.add(desk);
-  box(desk, [3.15, 0.18, 1.65], [0, 1.32, 0], 0xc99564);
+  box(desk, [3.15, 0.18, 1.65], [0, 1.32, 0], 0xffffff, { texture: "wood", roughness: 0.68 });
   for (const dx of [-1.35, 1.35]) {
     for (const dz of [-0.62, 0.62]) box(desk, [0.12, 1.28, 0.12], [dx, 0.64, dz], 0x806044);
   }
@@ -130,7 +216,7 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
   chair.position.set(0, 0, 1.35);
   desk.add(chair);
   cylinder(chair, 0.5, 0.52, 0.16, [0, 0.72, 0], 0x526c80, 16);
-  box(chair, [0.92, 0.95, 0.16], [0, 1.2, 0.42], 0x526c80);
+  box(chair, [0.92, 0.95, 0.16], [0, 1.2, 0.42], 0x8799a6, { texture: "fabric", roughness: 0.96 });
   cylinder(chair, 0.12, 0.15, 0.58, [0, 0.36, 0], 0x48596a, 10);
   return desk;
 }
@@ -461,7 +547,7 @@ function canOccupyGround(x: number, z: number, blockers: WalkBlocker[], radius =
 function buildOffice(scene: any) {
   const floor = new THREE.Group();
   scene.add(floor);
-  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e);
+  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e, { texture: "wood", roughness: 0.92 });
   // Batch the checkerboard planks into two instanced meshes to reduce hundreds of draw calls.
   const lightTiles = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1.96, 0.025, 1.96),
@@ -496,7 +582,7 @@ function buildOffice(scene: any) {
   floor.add(lightTiles, darkTiles);
 
   // Warm, compact office shell: rear windows and a wood floor establish a tycoon-office look.
-  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe7e4dc);
+  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe8e4db, { texture: "plaster", roughness: 0.95 });
   for (let x = -17.5; x <= 17.5; x += 5) {
     box(scene, [3.9, 2.7, 0.08], [x, 2.55, -14.79], 0x9ec8dc, { roughness: 0.35, metalness: 0.05, emissive: 0x2c5364, emissiveIntensity: 0.08 });
     box(scene, [0.09, 2.9, 0.12], [x - 1.98, 2.55, -14.72], 0xf7f3e9);
@@ -513,7 +599,7 @@ function buildOffice(scene: any) {
 
   // Low pastel department platforms make the floor plan readable without hiding the characters.
   for (const dept of DEPARTMENTS) {
-    box(scene, [9.2, 0.12, 8.1], [dept.x, 0.03, dept.z], dept.color);
+    box(scene, [9.2, 0.12, 8.1], [dept.x, 0.03, dept.z], dept.color, { texture: "stone", roughness: 0.98 });
     const label = makeLabel(dept.name, "#ffffff");
     if (label) {
       label.position.set(dept.x, 3.9, dept.z - 3.35);
@@ -603,9 +689,9 @@ function buildOffice(scene: any) {
   // Reception island, sofa and meeting table add a recognizable HQ focal point.
   box(scene, [4.3, 0.45, 1.5], [0, 0.48, 0.1], 0x667f92);
   box(scene, [3.8, 0.16, 1.15], [0, 0.78, 0.1], 0xe6c18c);
-  box(scene, [4.2, 0.9, 0.22], [-8, 0.52, 1.6], 0x6e8999);
-  box(scene, [1.1, 0.55, 2.5], [-9.55, 0.32, 1.5], 0x809aab);
-  box(scene, [1.1, 0.55, 2.5], [-6.45, 0.32, 1.5], 0x809aab);
+  box(scene, [4.2, 0.9, 0.22], [-8, 0.52, 1.6], 0x8799a6, { texture: "fabric", roughness: 0.96 });
+  box(scene, [1.1, 0.55, 2.5], [-9.55, 0.32, 1.5], 0x8799a6, { texture: "fabric", roughness: 0.96 });
+  box(scene, [1.1, 0.55, 2.5], [-6.45, 0.32, 1.5], 0x8799a6, { texture: "fabric", roughness: 0.96 });
   // A circular inset rug and low coffee table soften the reception zone and distinguish it from desk rows.
   const lobbyRug = new THREE.Mesh(
     new THREE.CircleGeometry(3.1, 48),
