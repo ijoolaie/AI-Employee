@@ -1,3 +1,15 @@
+## Current World execution checkpoint — 2026-10-12 after #1057 merged
+
+1. **Reconcile the only open World PR (#1055) with current `main`.** Its head `004530abe6628d477a925cc1026f3b043f4c4280` is 14 commits ahead and 2 behind `main` (`de053b24d045d17d0e447e29140cfd4728ade4c8`); it is diverged. Do not merge as-is or trust its exact-head checks as validation of the combined code.
+2. **Resolve runtime asset truth.** #1057 records a GLB employee asset and attribution/license information, but current `WorldViewport.tsx` `addWorker` still builds regular employees from primitives and has no GLTF loader. Verify whether another runtime component loads that asset; if not, wire it into the renderer with safe loading/fallback/disposal or explicitly retain it as unused inventory.
+3. **Fix screenshot-observed UI defects.** PR #1055 screenshots reported upper-left control/status overlap and clipped department labels. Re-capture the actual route at 1440×900 and 390×844 after rebasing and correct safe areas, label bounds, responsive scaling and overlay hierarchy.
+4. **Keep movement improvements and test them against current-main geometry.** Port the projected-ground-plane pointer-pan utility/tests, time-based CEO movement, smooth facing/camera follow and articulated executive rig only after checking collision, room proximity, touch/keyboard input and reduced-motion behavior.
+5. **Implement navigation and layout integrity.** Static collision guards are not pathfinding. Define walkable routes/obstacle avoidance and validate bounds, aisle/door clearance, employee/workstation placement and overflow capacity.
+6. **Validate exact combined head.** Run frontend lint, unit/contracts, build, relevant World Playwright tests, CodeQL and required CI checks; review the exact-head screenshot artifact and console/errors. Keep PR Draft until visual review gates pass.
+
+Separate ongoing gates: customer-tenant support entry/workflow (#1043), manual support message/attachment acceptance, and live payment verification/replay-safe webhooks/durable World Credit ledger. Do not mix those into the World art PR unless a separate approved scope calls for it.
+
+---
 ## World visual direction checkpoint — 2026-10-12 (user reference accepted)
 
 - Canonical spec updated: [AI_COMPANY_WORLD_GAMEPLAY_SPEC.md §30](../blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md#30-approved-visual-reference--office-management-tycoon-presentation-2026-10-12). The target reference is a colorful, polished isometric office-management scene with room detail, warm/cool material contrast, varied stylized employees, detailed workstations, soft shadows and a compact readable mobile HUD.
