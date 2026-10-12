@@ -715,15 +715,14 @@ export function WorldViewport({
     const target = new THREE.Vector3(0, 0, 1.5);
     let distance = 35;
     const updateCamera = () => {
-      // Keep the office's horizontal framing consistent on narrow portrait screens.
-      // The world remains perspective/isometric; only the camera pull-back adapts to aspect ratio.
+      // Desktop keeps the full HQ overview. Portrait screens intentionally frame a closer,
+      // pannable section; increasing camera distance on narrow screens made the office tiny.
       const aspect = Math.max(0.35, camera.aspect || 1);
-      // Keep desktop framing unchanged; portrait screens show a closer, pannable portion of the office.
-      const responsiveScale = aspect < 1 ? 1.5 / aspect : 1;
+      const responsiveScale = aspect < 1 ? Math.max(0.78, aspect * 1.1) : 1;
       const effectiveDistance = distance * responsiveScale;
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
-        // Keep the scene visible when portrait framing pulls the camera back.
+        // Keep fog bounds proportional to the responsive camera distance.
         scene.fog.near = 42 * fogScale;
         scene.fog.far = 86 * fogScale;
       }
