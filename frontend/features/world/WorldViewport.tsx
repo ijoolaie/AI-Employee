@@ -776,10 +776,38 @@ export function WorldViewport({
         model.position.z -= center.z;
         model.position.y -= bounds.min.y;
         model.traverse((object: any) => {
-          if (object.isMesh) {
-            object.castShadow = true;
-            object.receiveShadow = true;
+          if (!object.isMesh) return;
+          object.castShadow = true;
+          object.receiveShadow = true;
+          // The source GLB intentionally ships without texture images. Add a deterministic
+          // stylized palette by vertex height so clothing, skin and hair remain distinguishable.
+          const geometry = object.geometry as THREE.BufferGeometry;
+          const positions = geometry.attributes.position as THREE.BufferAttribute;
+          geometry.computeBoundingBox();
+          const minY = geometry.boundingBox?.min.y ?? 0;
+          const maxY = geometry.boundingBox?.max.y ?? 1;
+          const height = Math.max(0.0001, maxY - minY);
+          const colorAttribute = new Float32Array(positions.count * 3);
+          const palette = {
+            shoes: new THREE.Color(0x202a36),
+            trousers: new THREE.Color(0x33445b),
+            shirt: new THREE.Color(0x287f87),
+            skin: new THREE.Color(0xf0c8a5),
+            hair: new THREE.Color(0x3d302c),
+          };
+          for (let i = 0; i < positions.count; i += 1) {
+            const normalizedY = (positions.getY(i) - minY) / height;
+            const color = normalizedY < 0.09 ? palette.shoes
+              : normalizedY < 0.38 ? palette.trousers
+              : normalizedY < 0.68 ? palette.shirt
+              : normalizedY < 0.89 ? palette.skin
+              : palette.hair;
+            colorAttribute[i * 3] = color.r;
+            colorAttribute[i * 3 + 1] = color.g;
+            colorAttribute[i * 3 + 2] = color.b;
           }
+          geometry.setAttribute("color", new THREE.BufferAttribute(colorAttribute, 3));
+          object.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0.02 });
         });
         for (const child of [...ceoAvatar.children]) {
           if (child === ceoAvatar.userData.selectionMarker) continue;
