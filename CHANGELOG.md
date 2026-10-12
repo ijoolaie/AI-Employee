@@ -1,3 +1,14 @@
+## 2026-10-12 — World viewport consolidation merged (#1062)
+
+- Merged PR [#1062](https://github.com/ijoolaie/AI-Employee/pull/1062) as `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; exact validated code head was `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2`.
+- All five exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198575), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198505), [DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198517), [HA recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198352), and [infrastructure validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198497).
+- Reviewed exact-head artifact `world-visual-review-10d00b30be9cfc784398ed8a3c4380328684ee3f` at 1440×900 and 390×844. Desktop office perimeter/front floor edge has margin; all five department platforms fit in portrait; HUD, compact camera controls and joystick are separated.
+- Playwright now checks responsive bounds, real pointer-drag pan, console/page errors and unexpected 5xx responses. Collision footprints are unit-tested in `WorldNavigation.ts`; this is not full pathfinding.
+- PRs #1059/#1060 were closed as superseded; dependency PRs #1063/#1066/#1065/#1064 were merged after exact-head checks passed.
+- Employee models remain procedural; GLB/GLTF runtime loading and obstacle-aware pathfinding are not claimed. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. This code merge is not a new release certification.
+
+---
+
 ## 2026-10-12 — World V2 screenshot review and responsive corrections
 
 - PR #1050 is the current Draft visual-review candidate at exact head `8a7de75a8d49b4e1489b00353615f7a1f3808f87`; all five exact-head workflows passed (CI 38213177840, CodeQL 38213177820, infrastructure 38213177945, HA recovery 38213177822, DAST 38213177856).
