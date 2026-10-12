@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, LayoutDashboard, Palette, Sparkles } from "lucide-react";
 import { api, getCustomerOffice, getErrorMessage, getROIAnalytics } from "@/lib/api";
-import { MobileInputAdapter } from "./MobileInputAdapter";
 import { WorldEmployeePanel } from "./WorldEmployeePanel";
 import { WorldOutcomePanel } from "./WorldOutcomePanel";
 import { WorldProgressionPanel } from "./WorldProgressionPanel";
@@ -204,7 +203,6 @@ export function WorldShell() {
             <>
               <div className="relative">
                 <WorldViewport employees={world.employees} selectedEmployeeId={selectedEmployeeId} onEmployeeSelect={onEmployeeSelect} onMapToggle={onMapToggle} onRoomProximity={onRoomProximity} onRoomInteract={onRoomInteract} roomAccess={roomSceneAccess} />
-                <MobileInputAdapter />
                 {showMiniMap && <WorldMiniMap employeeCount={world.employees.length} />}
                 {roomAccessGranted && !showCustomization && <button type="button" onClick={() => setShowCustomization(true)} className="absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-xl border border-cyan-300/40 bg-slate-950/90 px-3 py-2 text-sm text-cyan-100 shadow-xl backdrop-blur"><Palette className="h-4 w-4" /> Customize room</button>}
                 {nearLockedRoom && !showRoomOffer && !showRoomAccess && !showCustomization && <button type="button" onClick={onRoomInteract} className="absolute bottom-20 left-1/2 z-20 -translate-x-1/2 rounded-xl border border-amber-300/40 bg-slate-950/90 px-4 py-3 text-sm text-amber-100 shadow-xl backdrop-blur">{roomAccessGranted ? "Locked room nearby · Access authorized · Press E or inspect" : "Locked room nearby · Press E to inspect access or rent"}</button>}
