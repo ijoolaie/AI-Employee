@@ -116,10 +116,16 @@ test("World Mode renders authoritative employee projection and management bridge
   const joystickBox = await joystick.boundingBox();
   expect(hudBox && controlsBox && joystickBox).toBeTruthy();
   if (hudBox && controlsBox && joystickBox) {
-    expect(controlsBox.y).toBeGreaterThanOrEqual(hudBox.y + hudBox.height);
+    const overlaps = (a: NonNullable<typeof hudBox>, b: NonNullable<typeof controlsBox>) =>
+      a.x < b.x + b.width && a.x + a.width > b.x &&
+      a.y < b.y + b.height && a.y + a.height > b.y;
+    // HUD and camera controls share the top band on mobile but must occupy separate horizontal areas.
+    expect(overlaps(hudBox, controlsBox), "mobile HUD and camera controls overlap").toBe(false);
+    expect(controlsBox.x).toBeGreaterThanOrEqual(0);
     expect(controlsBox.x + controlsBox.width).toBeLessThanOrEqual(390);
+    expect(joystickBox.x).toBeGreaterThanOrEqual(0);
     expect(joystickBox.x + joystickBox.width).toBeLessThanOrEqual(390);
-    expect(joystickBox.y).toBeGreaterThan(controlsBox.y + controlsBox.height);
+    expect(overlaps(joystickBox, controlsBox), "mobile joystick and camera controls overlap").toBe(false);
   }
   await page.setViewportSize({ width: 1440, height: 900 });
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
