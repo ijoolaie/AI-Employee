@@ -1,3 +1,13 @@
+## 2026-10-12 handoff correction — current main after PR #1057
+
+- Current main includes #1057 at `de053b24d045d17d0e447e29140cfd4728ade4c8`. It adds the warm isometric palette, rear window blinds, responsive framing and a GLB employee asset with attribution/license information. Do not redo those same changes without a demonstrated remaining defect.
+- Only open PR returned by current open-PR search is #1055. Head `004530abe6628d477a925cc1026f3b043f4c4280` is 14 commits ahead / 2 behind current main and diverged from it. Its five listed workflows passed for its own head, but the PR's own body says screenshots show upper-left overlay overlap and clipped department labels. Rebase/port its unique changes onto current main and rerun all checks; do not merge it as-is.
+- Important implementation discrepancy: current `frontend/features/world/WorldViewport.tsx` still builds ordinary employees procedurally in `addWorker` and contains no GLTF/GLB loader. Verify whether the asset is used elsewhere. Do not claim employee GLB integration until the running renderer demonstrably loads it.
+- Next work: (1) reconcile #1055 unique pan/movement/executive model/procedural texture/test/screenshot changes on current main; (2) fix mobile/desktop overlay and label clipping from actual screenshots; (3) verify or wire the GLB asset and fallback/disposal; (4) improve obstacle-aware pathfinding and overflow placement; (5) exact-head tests and human screenshot review.
+- Canonical visual reference and anti-copy/authoritative-backend guardrails remain in `docs/blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md` §30. World remains a projection of authorized business state; no fake economy/activity.
+- Do not claim visual acceptance or production certification based on CI alone. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
 ## Latest user direction — 2026-10-12: World visual reference locked
 
 - User supplied two screenshots: current desktop AI Company HQ (before-state) and a portrait mobile office-management tycoon game (target art-direction reference).
