@@ -352,7 +352,8 @@ function addCEOAvatar(scene: any) {
   marker.rotation.x = -Math.PI / 2;
   marker.position.y = 0.07;
   avatar.add(marker);
-  avatar.position.set(0, 0, 3.5);
+  // Spawn beyond the coffee-table blocker so the player can move toward the locked-room entrance.
+  avatar.position.set(0, 0, 4.4);
   scene.add(avatar);
   return avatar;
 }
