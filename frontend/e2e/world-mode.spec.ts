@@ -55,6 +55,7 @@ const office = {
 };
 
 test("World Mode renders authoritative employee projection and management bridge", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), authState);
   await page.route("**/customer-dashboard/office", async (route) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(office) });
@@ -81,6 +82,38 @@ test("World Mode renders authoritative employee projection and management bridge
       }),
     });
   });
+  await page.route("**/world-commerce/catalogue", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: [{ code: "room-e2e", item_type: "room", is_free: false }] }),
+    });
+  });
+  await page.route("**/world-commerce/room-inventory", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: [] }),
+    });
+  });
+  await page.route("**/world-commerce/room-inventory/room-e2e/access", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { item_code: "room-e2e", granted: false, reason: "not_owned", room_instance_id: null, expires_at: null },
+      }),
+    });
+  });
+
+  const browserErrors: string[] = [];
+  const serverErrors: string[] = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+  page.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
+  page.on("response", (response) => {
+    if (response.status() >= 500) serverErrors.push(`${response.status()} ${response.url()}`);
+  });
 
   await page.goto("/world");
   await expect(page.getByRole("heading", { name: "World Mode" })).toBeVisible();
@@ -90,23 +123,11 @@ test("World Mode renders authoritative employee projection and management bridge
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
 
-  // Capture real-browser visual evidence from the same deterministic fixture at both target sizes.
-  // These artifacts support human review; they do not constitute visual acceptance by themselves.
-  await mkdir("artifacts/world-visual-review", { recursive: true });
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.waitForTimeout(1200);
-  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: false });
-  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.waitForTimeout(1200);
-  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: false });
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
-
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
-  await employeeSelector.focus();
-  await employeeSelector.press("Enter");
+  await employeeSelector.evaluate((element) => (element as HTMLButtonElement).focus());
+  await expect(employeeSelector).toBeFocused();
+  await page.keyboard.press("Enter");
 
   const employeePanel = page.getByRole("complementary", { name: "Selected employee" });
   await expect(employeePanel).toBeVisible();
@@ -119,7 +140,72 @@ test("World Mode renders authoritative employee projection and management bridge
   await page.keyboard.press("Escape");
   await expect(employeePanel).toBeHidden();
   await expect(employeeSelector).toHaveAttribute("aria-pressed", "false");
+
+
+  // Capture real-browser visual evidence from the same deterministic fixture at both target sizes.
+  // These artifacts support human review; they do not constitute visual acceptance by themselves.
+  await mkdir("artifacts/world-visual-review", { recursive: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: false });
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: false });
+
+  const hud = page.getByTestId("world-viewport-hud");
+  const cameraControls = page.getByRole("group", { name: "World camera controls" });
+  const joystick = page.getByLabel("World movement joystick");
+  await expect(hud).toBeVisible();
+  await expect(cameraControls).toBeVisible();
+  await expect(joystick).toBeVisible();
+  const hudBox = await hud.boundingBox();
+  const controlsBox = await cameraControls.boundingBox();
+  const joystickBox = await joystick.boundingBox();
+  expect(hudBox && controlsBox && joystickBox).toBeTruthy();
+  if (hudBox && controlsBox && joystickBox) {
+    const overlaps = (a: NonNullable<typeof hudBox>, b: NonNullable<typeof controlsBox>) =>
+      a.x < b.x + b.width && a.x + a.width > b.x &&
+      a.y < b.y + b.height && a.y + a.height > b.y;
+    // HUD and camera controls share the top band on mobile but must occupy separate horizontal areas.
+    expect(overlaps(hudBox, controlsBox), "mobile HUD and camera controls overlap").toBe(false);
+    expect(controlsBox.x).toBeGreaterThanOrEqual(0);
+    expect(controlsBox.x + controlsBox.width).toBeLessThanOrEqual(390);
+    expect(joystickBox.x).toBeGreaterThanOrEqual(0);
+    expect(joystickBox.x + joystickBox.width).toBeLessThanOrEqual(390);
+    expect(overlaps(joystickBox, controlsBox), "mobile joystick and camera controls overlap").toBe(false);
+    expect(overlaps(joystickBox, hudBox), "mobile joystick and HUD overlap").toBe(false);
+  }
+
+  // Exercise real pointer dragging and prove that the rendered 3D view responds.
+  const beforePan = await canvas.screenshot();
+  const mobileCanvasBox = await canvas.boundingBox();
+  expect(mobileCanvasBox).toBeTruthy();
+  if (mobileCanvasBox) {
+    await page.mouse.move(mobileCanvasBox.x + mobileCanvasBox.width * 0.55, mobileCanvasBox.y + mobileCanvasBox.height * 0.55);
+    await page.mouse.down();
+    await page.mouse.move(mobileCanvasBox.x + mobileCanvasBox.width * 0.68, mobileCanvasBox.y + mobileCanvasBox.height * 0.61, { steps: 5 });
+    await page.mouse.up();
+    await page.waitForTimeout(250);
+    const afterPan = await canvas.screenshot();
+    expect(afterPan.equals(beforePan), "dragging the viewport should pan the rendered office").toBe(false);
+  }
+
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(250);
+  const desktopCanvasBox = await canvas.boundingBox();
+  const desktopControlsBox = await cameraControls.boundingBox();
+  expect(desktopCanvasBox && desktopControlsBox).toBeTruthy();
+  if (desktopCanvasBox && desktopControlsBox) {
+    expect(desktopControlsBox.x).toBeLessThanOrEqual(desktopCanvasBox.x + 24);
+    expect(desktopControlsBox.y).toBeGreaterThan(desktopCanvasBox.y + desktopCanvasBox.height / 2);
+  }
+  await expect(hud.getByText(/WASD/)).toBeVisible();
+
   await expect(page.getByText("Business outcome loop")).toBeVisible();
+  expect(browserErrors, "browser console/page errors during World viewport smoke").toEqual([]);
+  expect(serverErrors, "unexpected 5xx responses during World viewport smoke").toEqual([]);
 });
 
 

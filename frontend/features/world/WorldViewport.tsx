@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { WorldInput } from "./WorldInput";
+import { MobileInputAdapter } from "./MobileInputAdapter";
+import { screenPanToWorldDelta } from "./WorldPan";
+import { canOccupyGround, getWalkBlockers } from "./WorldNavigation";
 import type { WorldEmployee } from "./WorldState";
 import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
 import type { RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
@@ -33,16 +36,65 @@ const DEPARTMENTS = [
   { name: "ENGINEERING", x: 6, z: 6, color: 0xe9e2f0, accent: 0x9c78c7 },
 ];
 
+type SurfaceTexture = "wood" | "fabric" | "plaster" | "stone";
+const surfaceTextureCache = new Map<SurfaceTexture, any>();
+
+function getSurfaceTexture(kind: SurfaceTexture): any {
+  const cached = surfaceTextureCache.get(kind);
+  if (cached) return cached;
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D is required for World surface materials");
+  const base = kind === "wood" ? "#b98558" : kind === "fabric" ? "#8799a6" : kind === "stone" ? "#b9b7ae" : "#e8e4db";
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 128, 128);
+  let seed = kind.length * 7919;
+  const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  if (kind === "wood") {
+    for (let row = 0; row < 22; row += 1) {
+      const y = row * 6 + random() * 3;
+      ctx.strokeStyle = row % 3 === 0 ? "rgba(79,45,25,.2)" : "rgba(244,204,154,.22)";
+      ctx.beginPath(); ctx.moveTo(0, y);
+      for (let x = 0; x <= 128; x += 8) ctx.lineTo(x, y + Math.sin(x * 0.07 + row) * (1 + random()));
+      ctx.stroke();
+    }
+  } else if (kind === "fabric") {
+    for (let offset = 0; offset < 128; offset += 4) {
+      ctx.strokeStyle = offset % 8 === 0 ? "rgba(255,255,255,.13)" : "rgba(27,43,57,.08)";
+      ctx.beginPath(); ctx.moveTo(offset, 0); ctx.lineTo(offset, 128); ctx.moveTo(0, offset); ctx.lineTo(128, offset); ctx.stroke();
+    }
+  } else {
+    for (let i = 0; i < 500; i += 1) {
+      const shade = random() > 0.5 ? 255 : 35;
+      ctx.fillStyle = `rgba(${shade},${shade},${shade},${kind === "stone" ? 0.04 : 0.025})`;
+      const size = kind === "stone" ? 1 + random() * 3 : 1 + random();
+      ctx.fillRect(random() * 128, random() * 128, size, size);
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.repeat.set(kind === "wood" ? 1.6 : 1, 1);
+  surfaceTextureCache.set(kind, texture);
+  return texture;
+}
+
+
 function box(
   parent: any,
   size: [number, number, number],
   position: [number, number, number],
   color: number,
-  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number; castShadow?: boolean; receiveShadow?: boolean } = {},
+  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number; castShadow?: boolean; receiveShadow?: boolean; texture?: SurfaceTexture } = {},
 ) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(...size),
-    new THREE.MeshStandardMaterial({ color, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
+    new THREE.MeshStandardMaterial({ color, map: options.texture ? getSurfaceTexture(options.texture) : undefined, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
   );
   mesh.position.set(...position);
   mesh.castShadow = options.castShadow ?? true;
@@ -102,7 +154,7 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
   const desk = new THREE.Group();
   desk.position.set(x, 0, z);
   parent.add(desk);
-  box(desk, [3.15, 0.18, 1.65], [0, 1.32, 0], 0xc99564);
+  box(desk, [3.15, 0.18, 1.65], [0, 1.32, 0], 0xffffff, { texture: "wood", roughness: 0.68 });
   for (const dx of [-1.35, 1.35]) {
     for (const dz of [-0.62, 0.62]) box(desk, [0.12, 1.28, 0.12], [dx, 0.64, dz], 0x806044);
   }
@@ -129,7 +181,7 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
   chair.position.set(0, 0, 1.35);
   desk.add(chair);
   cylinder(chair, 0.5, 0.52, 0.16, [0, 0.72, 0], 0x526c80, 16);
-  box(chair, [0.92, 0.95, 0.16], [0, 1.2, 0.42], 0x526c80);
+  box(chair, [0.92, 0.95, 0.16], [0, 1.2, 0.42], 0x8799a6, { texture: "fabric", roughness: 0.96 });
   cylinder(chair, 0.12, 0.15, 0.58, [0, 0.36, 0], 0x48596a, 10);
   return desk;
 }
@@ -266,59 +318,96 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
 function addCEOAvatar(scene: any) {
   const avatar = new THREE.Group();
   avatar.name = "player-ceo-avatar";
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.62, 4, 10), new THREE.MeshStandardMaterial({ color: 0x287f87, roughness: 0.7 }));
-  body.position.y = 0.95;
-  body.castShadow = true;
-  avatar.add(body);
-  sphere(avatar, 0.29, [0, 1.62, 0], 0xf0c8a5, [1, 1.05, 0.95]);
-  sphere(avatar, 0.31, [0, 1.79, -0.04], 0x3d302c, [1, 0.45, 0.95]);
-  box(avatar, [0.22, 0.045, 0.045], [-0.09, 1.64, 0.26], 0x27313b);
-  box(avatar, [0.22, 0.045, 0.045], [0.09, 1.64, 0.26], 0x27313b);
-  // Articulated hips and shoulders let the avatar walk instead of sliding as one rigid object.
-  const limbMaterial = new THREE.MeshStandardMaterial({ color: 0x26384a, roughness: 0.78 });
+  const material = (color: number, roughness = 0.76, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
+  const suit = material(0x243c55, 0.72);
+  const suitLight = material(0x315b72, 0.74);
+  const skin = material(0xe7b995, 0.84);
+  const hair = material(0x342b2a, 0.9);
+  const shirt = material(0xf4f0e7, 0.72);
+  const tie = material(0xd6a64f, 0.62);
+  const shoe = material(0x1a2633, 0.66);
+  const eye = material(0x25313a, 0.8);
+  const accent = material(0x62d5c2, 0.45, 0.08);
+  const addMesh = (geometry: any, mat: any, position: [number, number, number], parent: any = avatar) => {
+    const mesh = new THREE.Mesh(geometry, mat);
+    mesh.position.set(...position);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  };
+  const addSphere = (radius: number, position: [number, number, number], mat: any, scale: [number, number, number] = [1, 1, 1]) => {
+    const mesh = addMesh(new THREE.SphereGeometry(radius, 20, 14), mat, position);
+    mesh.scale.set(...scale);
+    return mesh;
+  };
+
+  addMesh(new THREE.CylinderGeometry(0.12, 0.14, 0.2, 16), skin, [0, 1.43, 0]);
+  const body = addMesh(new THREE.CapsuleGeometry(0.39, 0.6, 5, 12), suit, [0, 0.99, 0]);
+  body.name = "ceo-tailored-jacket";
+  addMesh(new THREE.CapsuleGeometry(0.205, 0.42, 3, 10), shirt, [0, 1.12, 0.265]);
+  addMesh(new THREE.CylinderGeometry(0.045, 0.075, 0.34, 5), tie, [0, 1.12, 0.34]);
+  const lapelGeometry = new THREE.BufferGeometry();
+  lapelGeometry.setAttribute("position", new THREE.Float32BufferAttribute([
+    0, 1.36, 0.36, -0.19, 1.28, 0.29, -0.055, 1.02, 0.39,
+    0, 1.36, 0.36, 0.19, 1.28, 0.29, 0.055, 1.02, 0.39,
+  ], 3));
+  lapelGeometry.computeVertexNormals();
+  addMesh(lapelGeometry, suitLight, [0, 0, 0]);
+  addMesh(new THREE.BoxGeometry(0.16, 0.07, 0.035), accent, [-0.24, 1.06, 0.31]);
+  addMesh(new THREE.BoxGeometry(0.11, 0.045, 0.035), tie, [0.21, 0.94, 0.34]);
+
+  addSphere(0.29, [0, 1.72, 0.02], skin, [0.98, 1.08, 0.94]);
+  addSphere(0.075, [-0.285, 1.69, 0.02], skin, [0.72, 1, 0.8]);
+  addSphere(0.075, [0.285, 1.69, 0.02], skin, [0.72, 1, 0.8]);
+  addSphere(0.30, [0, 1.91, -0.055], hair, [1.02, 0.58, 0.96]);
+  addSphere(0.19, [-0.13, 1.94, 0.13], hair, [1.05, 0.62, 0.72]);
+  addSphere(0.15, [0.08, 1.98, 0.12], hair, [1.05, 0.56, 0.72]);
+  addSphere(0.095, [0.24, 1.86, 0.04], hair, [0.72, 1.0, 0.8]);
+  for (const side of [-1, 1]) {
+    addSphere(0.058, [side * 0.105, 1.735, 0.282], shirt, [1, 1.05, 0.5]);
+    addSphere(0.029, [side * 0.105, 1.733, 0.309], eye, [1, 1, 0.55]);
+    addSphere(0.011, [side * 0.115, 1.747, 0.319], shirt, [1, 1, 0.5]);
+    const brow = addMesh(new THREE.BoxGeometry(0.13, 0.026, 0.035), hair, [side * 0.105, 1.815, 0.277]);
+    brow.rotation.z = side * -0.08;
+  }
+  addSphere(0.043, [0, 1.675, 0.302], skin, [0.82, 0.86, 1]);
+  const smile = addMesh(new THREE.TorusGeometry(0.06, 0.01, 6, 18, Math.PI), material(0x985e50, 0.92), [0, 1.625, 0.291]);
+  smile.rotation.z = Math.PI;
+  smile.scale.set(1.1, 0.72, 1);
+
+  const limbMaterial = material(0x26384a, 0.78);
   const leftLeg = new THREE.Group();
-  leftLeg.position.set(-0.14, 0.5, 0);
+  leftLeg.position.set(-0.15, 0.52, 0);
   avatar.add(leftLeg);
-  const leftThigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.105, 0.25, 3, 8), limbMaterial);
-  leftThigh.position.y = -0.13;
-  leftThigh.castShadow = true;
-  leftLeg.add(leftThigh);
-  const leftFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), new THREE.MeshStandardMaterial({ color: 0x202a36, roughness: 0.72 }));
-  leftFoot.position.set(0, -0.29, 0.1);
-  leftFoot.castShadow = true;
-  leftLeg.add(leftFoot);
+  addMesh(new THREE.CapsuleGeometry(0.105, 0.25, 3, 9), limbMaterial, [0, -0.13, 0], leftLeg);
+  addMesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), shoe, [0, -0.29, 0.105], leftLeg);
   const rightLeg = leftLeg.clone();
-  rightLeg.position.x = 0.14;
+  rightLeg.position.x = 0.15;
   avatar.add(rightLeg);
 
   const leftArm = new THREE.Group();
-  leftArm.position.set(-0.36, 1.24, 0);
+  leftArm.position.set(-0.36, 1.25, 0);
   avatar.add(leftArm);
-  const armGeometry = new THREE.CapsuleGeometry(0.085, 0.29, 3, 8);
-  const armMaterial = new THREE.MeshStandardMaterial({ color: 0x287f87, roughness: 0.76 });
-  const leftArmMesh = new THREE.Mesh(armGeometry, armMaterial);
-  leftArmMesh.position.y = -0.19;
-  leftArmMesh.castShadow = true;
-  leftArm.add(leftArmMesh);
-  const hand = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf0c8a5, roughness: 0.82 }));
-  hand.position.set(0, -0.37, 0.025);
-  leftArm.add(hand);
+  addMesh(new THREE.CapsuleGeometry(0.105, 0.27, 3, 9), suitLight, [0, -0.17, 0.015], leftArm);
+  addMesh(new THREE.SphereGeometry(0.072, 12, 10), skin, [0, -0.36, 0.055], leftArm);
   const rightArm = leftArm.clone();
   rightArm.position.x = 0.36;
   avatar.add(rightArm);
   avatar.userData.walkRig = { leftLeg, rightLeg, leftArm, rightArm };
   avatar.userData.walkPhase = 0;
   avatar.userData.body = body;
+  avatar.userData.artStyle = "stylized-executive-v2";
+
   const marker = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.045, 8, 28), new THREE.MeshBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.9 }));
   marker.rotation.x = -Math.PI / 2;
   marker.position.y = 0.07;
   avatar.add(marker);
-  // Spawn just beyond the lobby coffee-table footprint so collision never traps the player at startup.
+  // Spawn beyond the coffee-table blocker so the player can move toward the locked-room entrance.
   avatar.position.set(0, 0, 4.4);
   scene.add(avatar);
   return avatar;
 }
-
 function addLockedRoom(scene: any) {
   const room = new THREE.Group();
   room.name = "room-entrance";
@@ -424,43 +513,11 @@ function hash(value: string) {
   return result;
 }
 
-type WalkBlocker = { x: number; z: number; halfWidth: number; halfDepth: number };
-
-// Conservative ground-plane footprints for fixed office furniture. The player resolves
-// X and Z independently so movement slides along furniture edges instead of tunnelling.
-function getWalkBlockers(): WalkBlocker[] {
-  const desks: WalkBlocker[] = DEPARTMENTS.flatMap((dept) =>
-    [-2.15, 1.0].flatMap((zOffset) =>
-      [-1.8, 1.8].map((xOffset) => ({
-        x: dept.x + xOffset,
-        z: dept.z + zOffset + 0.25,
-        halfWidth: 1.68,
-        halfDepth: 1.45,
-      })),
-    ),
-  );
-  return [
-    ...desks,
-    { x: 0, z: 0.1, halfWidth: 2.35, halfDepth: 0.95 }, // reception island
-    { x: -8, z: 1.6, halfWidth: 2.25, halfDepth: 1.55 }, // sofa and arms
-    { x: 0, z: 2.75, halfWidth: 0.95, halfDepth: 0.95 }, // coffee table
-    { x: -11.5, z: 2.2, halfWidth: 0.82, halfDepth: 0.82 },
-    { x: 11.5, z: 2.2, halfWidth: 0.82, halfDepth: 0.82 },
-  ];
-}
-
-function canOccupyGround(x: number, z: number, blockers: WalkBlocker[], radius = 0.43): boolean {
-  if (x < -16 || x > 16 || z < -10 || z > 9.2) return false;
-  return !blockers.some((item) =>
-    Math.abs(x - item.x) < item.halfWidth + radius &&
-    Math.abs(z - item.z) < item.halfDepth + radius,
-  );
-}
 
 function buildOffice(scene: any) {
   const floor = new THREE.Group();
   scene.add(floor);
-  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e);
+  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0xd0a092, { roughness: 0.92 });
   // Batch the checkerboard planks into two instanced meshes to reduce hundreds of draw calls.
   const lightTiles = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1.96, 0.025, 1.96),
@@ -495,7 +552,7 @@ function buildOffice(scene: any) {
   floor.add(lightTiles, darkTiles);
 
   // Warm, compact office shell: rear windows and a wood floor establish a tycoon-office look.
-  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe7e4dc);
+  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe8e4db, { texture: "plaster", roughness: 0.95 });
   for (let x = -17.5; x <= 17.5; x += 5) {
     box(scene, [3.9, 2.7, 0.08], [x, 2.55, -14.79], 0x9ec8dc, { roughness: 0.35, metalness: 0.05, emissive: 0x2c5364, emissiveIntensity: 0.08 });
     box(scene, [0.09, 2.9, 0.12], [x - 1.98, 2.55, -14.72], 0xf7f3e9);
@@ -577,7 +634,12 @@ function buildOffice(scene: any) {
     box(scene, [0.9, 0.12, 0.42], [dept.x - 3.25, 2.86, dept.z - 2.85], 0xffe3a1, { emissive: 0xffc85a, emissiveIntensity: 0.35, castShadow: false });
   }
 
-  // Window mullions and structural columns make the perimeter feel like a coherent office rather than a flat box.
+  // Continuous side-wall backing prevents the perimeter from reading as disconnected
+  // floating posts when the camera pans or crops the office at narrower aspect ratios.
+  box(scene, [0.42, 4.7, 30.5], [-19.78, 2.05, 0], 0xe8e4db, { texture: "plaster", roughness: 0.95 });
+  box(scene, [0.42, 4.7, 30.5], [19.78, 2.05, 0], 0xe8e4db, { texture: "plaster", roughness: 0.95 });
+
+  // Window mullions and structural columns finish the continuous side-wall perimeter.
   box(scene, [0.35, 4.7, 0.5], [-19.65, 2.05, 0], 0xe7e4dc);
   box(scene, [0.35, 4.7, 0.5], [19.65, 2.05, 0], 0xe7e4dc);
   for (const z of [-10, -2, 6, 13]) {
@@ -636,12 +698,7 @@ function buildOffice(scene: any) {
   cylinder(scene, 0.14, 0.16, 0.24, [0, 0.1, 2.75], 0x806044, 16);
   cylinder(scene, 0.12, 0.12, 0.025, [0, 0.375, 2.75], 0xf1e4d0, 16);
 
-  const title = makeLabel("AI COMPANY  •  HEADQUARTERS", "#f5d9a4");
-  if (title) {
-    title.position.set(0, 4.3, 0);
-    title.scale.set(8.5, 1.5, 1);
-    scene.add(title);
-  }
+  // Keep the center sightline clear; the persistent HTML HUD already identifies HQ.
 }
 
 export function WorldViewport({
@@ -724,20 +781,27 @@ export function WorldViewport({
 
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 220);
     const target = new THREE.Vector3(0, 0, 1.5);
-    let distance = 35;
+    let distance = 31;
     const updateCamera = () => {
-      // Desktop keeps the full HQ overview. Portrait screens intentionally frame a closer,
-      // pannable section; increasing camera distance on narrow screens made the office tiny.
+      // Desktop keeps the full HQ overview. Portrait screens use a closer, pannable crop
+      // so department labels and employees remain legible instead of shrinking to fit the full office.
       const aspect = Math.max(0.35, camera.aspect || 1);
-      const responsiveScale = aspect < 1 ? 1.35 : 1;
-      const effectiveDistance = distance * responsiveScale;
+      const portrait = aspect < 1;
+      // Portrait uses a more top-down composition rather than merely zooming the
+      // desktop camera out; this reduces diagonal skew and keeps the office center readable.
+      const responsiveScale = portrait ? 1.65 : 1;
+      const effectiveDistance = distance * (portrait ? responsiveScale : 1.12);
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
         // Keep fog bounds proportional to the responsive camera distance.
         scene.fog.near = 42 * fogScale;
         scene.fog.far = 86 * fogScale;
       }
-      camera.position.set(target.x + effectiveDistance * 0.58, effectiveDistance * 1.08, target.z + effectiveDistance * 0.68);
+      camera.position.set(
+        target.x + effectiveDistance * (portrait ? 0.32 : 0.58),
+        effectiveDistance * (portrait ? 1.55 : 1.08),
+        target.z + effectiveDistance * (portrait ? 0.42 : 0.68),
+      );
       camera.lookAt(target.x, 0.8, target.z);
       camera.updateProjectionMatrix();
     };
@@ -759,7 +823,7 @@ export function WorldViewport({
 
     buildOffice(scene);
     const ceoAvatar = addCEOAvatar(scene);
-    const walkBlockers = getWalkBlockers();
+    const walkBlockers = getWalkBlockers(DEPARTMENTS);
     const roomEntrance = addLockedRoom(scene);
     const roomInterior = addAuthorizedRoomInterior(scene);
     const roomFurnitureGroup = roomInterior.userData.furnitureGroup;
@@ -825,14 +889,31 @@ export function WorldViewport({
 
     const onPan = (event: Event) => {
       const { dx, dy } = (event as CustomEvent<{ dx: number; dy: number }>).detail;
-      const scale = distance * 0.00135;
-      target.x -= dx * scale;
-      target.z -= dy * scale;
+      const rect = renderer.domElement.getBoundingClientRect();
+      const cameraDistance = camera.position.distanceTo(new THREE.Vector3(target.x, 0.8, target.z));
+      const worldPerPixel =
+        (2 * cameraDistance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) /
+        Math.max(1, rect.height);
+      const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      cameraRight.y = 0;
+      cameraRight.normalize();
+      const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+      cameraUp.y = 0;
+      cameraUp.normalize();
+      const pan = screenPanToWorldDelta(
+        dx,
+        dy,
+        worldPerPixel,
+        { x: cameraRight.x, z: cameraRight.z },
+        { x: cameraUp.x, z: cameraUp.z },
+      );
+      target.x += pan.x;
+      target.z += pan.z;
       updateCamera();
     };
     const onReset = () => {
       target.set(0, 0, 0);
-      distance = 35;
+      distance = 31;
       updateCamera();
     };
     const onZoom = (event: Event) => {
@@ -1005,7 +1086,8 @@ export function WorldViewport({
         if (object.material) {
           const materials = Array.isArray(object.material) ? object.material : [object.material];
           for (const material of materials) {
-            if (material.map) material.map.dispose();
+            // Shared procedural maps are cached across viewport remounts.
+            if (material.map && !Array.from(surfaceTextureCache.values()).includes(material.map as any)) material.map.dispose();
             material.dispose?.();
           }
         }
@@ -1018,6 +1100,7 @@ export function WorldViewport({
   return (
     <div ref={viewportRef} className={`world-viewport relative w-full overflow-hidden bg-slate-900 shadow-2xl ${isFullscreen ? "world-viewport-fullscreen h-screen rounded-none border-0" : "min-h-[420px] rounded-2xl border border-slate-700/80"}`} style={{ height: isFullscreen ? "100dvh" : "min(68vh, 760px)" }}>
       <div ref={mountRef} className="absolute inset-0" />
+      <MobileInputAdapter />
       <div className="sr-only" aria-label="Office employees">
         {employees.map((employee) => (
           <button
@@ -1032,13 +1115,13 @@ export function WorldViewport({
         ))}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/60 to-transparent" />
-      <div className="z-10 flex gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur" style={{ position: "absolute", left: 16, bottom: 16, maxWidth: "calc(100% - 32px)" }} aria-label="World camera controls">
+      <div className="world-camera-controls absolute right-3 top-24 z-10 flex max-w-[calc(100%-24px)] gap-1 rounded-xl border border-white/10 bg-slate-950/95 p-1 shadow-xl backdrop-blur sm:bottom-4 sm:left-4 sm:right-auto sm:top-auto sm:max-w-[calc(100%-32px)]" role="group" aria-label="World camera controls">
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }))} aria-label="Zoom in">+</button>
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: -0.12 } }))} aria-label="Zoom out">−</button>
-        <button type="button" className="rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:reset"))}>Reset view</button>
-        <button type="button" className="rounded-lg px-2 text-xs text-slate-100 hover:bg-white/10" onClick={() => { if (document.fullscreenElement === viewportRef.current) { void document.exitFullscreen(); } else { void viewportRef.current?.requestFullscreen(); } }} aria-label={isFullscreen ? "Exit fullscreen world view" : "Show world in fullscreen"} aria-pressed={isFullscreen}>{isFullscreen ? "⤢ Exit full screen" : "⛶ Full screen"}</button>
+        <button type="button" className="rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:reset"))}><span className="hidden sm:inline">Reset view</span><span className="sm:hidden">Reset</span></button>
+        <button type="button" className="rounded-lg px-2 text-xs text-slate-100 hover:bg-white/10" onClick={() => { if (document.fullscreenElement === viewportRef.current) { void document.exitFullscreen(); } else { void viewportRef.current?.requestFullscreen(); } }} aria-label={isFullscreen ? "Exit fullscreen world view" : "Show world in fullscreen"} aria-pressed={isFullscreen}>{isFullscreen ? <><span className="hidden sm:inline">⤢ Exit full screen</span><span className="sm:hidden">Full</span></> : <><span className="hidden sm:inline">⛶ Full screen</span><span className="sm:hidden">Full</span></>}</button>
       </div>
-      <div className="pointer-events-none rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-200 backdrop-blur" style={{ position: "absolute", left: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
+      <div data-testid="world-viewport-hud" className="pointer-events-none rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-200 backdrop-blur" style={{ position: "absolute", left: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
         <div className="font-semibold tracking-wide text-amber-100">AI COMPANY HQ</div>
         <div className="mt-1 hidden sm:block text-slate-300">WASD / arrows · drag to pan · wheel to zoom</div>
         <div className="mt-1 sm:hidden text-slate-300">Joystick · drag to pan</div>
