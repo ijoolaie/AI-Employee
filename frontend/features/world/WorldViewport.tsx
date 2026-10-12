@@ -89,7 +89,7 @@ function makeLabel(text: string, color: string) {
   ctx.font = "bold 34px system-ui, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(text, 256, 64);
+  ctx.fillText(text, 256, 64, 460);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
