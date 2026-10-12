@@ -7,7 +7,7 @@ export function MobileInputAdapter() {
 
   return (
     <div
-      className="absolute bottom-36 left-4 z-20 h-28 w-28 touch-none rounded-full border border-white/20 bg-slate-950/85 p-2 shadow-xl backdrop-blur md:hidden"
+      className="absolute bottom-20 left-4 z-20 h-28 w-28 touch-none rounded-full border border-white/20 bg-slate-950/85 p-2 shadow-xl backdrop-blur md:hidden"
       aria-label="World movement joystick"
       onPointerDown={(event) => {
         start.current = { x: event.clientX, y: event.clientY };
