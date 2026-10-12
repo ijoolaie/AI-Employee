@@ -1,6 +1,6 @@
 # AI Employee World — Visual Follow-up
 **Date:** 2026-10-12  
-**Code status:** PR #1062 merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; post-merge test stabilization is ongoing in PRs #1068 and #1069.  
+**Code status:** PR #1062 merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; post-merge test stabilization is ongoing in PR #1069 (merged) and #1071.  
 **Validated source head:** `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2`
 
 ## Outcome
