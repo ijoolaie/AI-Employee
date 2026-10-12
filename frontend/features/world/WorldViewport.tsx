@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { WorldInput } from "./WorldInput";
+import { screenPanToWorldDelta } from "./WorldPan";
 import type { WorldEmployee } from "./WorldState";
 import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
 import type { RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
@@ -266,59 +267,95 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
 function addCEOAvatar(scene: any) {
   const avatar = new THREE.Group();
   avatar.name = "player-ceo-avatar";
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.62, 4, 10), new THREE.MeshStandardMaterial({ color: 0x287f87, roughness: 0.7 }));
-  body.position.y = 0.95;
-  body.castShadow = true;
-  avatar.add(body);
-  sphere(avatar, 0.29, [0, 1.62, 0], 0xf0c8a5, [1, 1.05, 0.95]);
-  sphere(avatar, 0.31, [0, 1.79, -0.04], 0x3d302c, [1, 0.45, 0.95]);
-  box(avatar, [0.22, 0.045, 0.045], [-0.09, 1.64, 0.26], 0x27313b);
-  box(avatar, [0.22, 0.045, 0.045], [0.09, 1.64, 0.26], 0x27313b);
-  // Articulated hips and shoulders let the avatar walk instead of sliding as one rigid object.
-  const limbMaterial = new THREE.MeshStandardMaterial({ color: 0x26384a, roughness: 0.78 });
+  const material = (color: number, roughness = 0.76, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
+  const suit = material(0x243c55, 0.72);
+  const suitLight = material(0x315b72, 0.74);
+  const skin = material(0xe7b995, 0.84);
+  const hair = material(0x342b2a, 0.9);
+  const shirt = material(0xf4f0e7, 0.72);
+  const tie = material(0xd6a64f, 0.62);
+  const shoe = material(0x1a2633, 0.66);
+  const eye = material(0x25313a, 0.8);
+  const accent = material(0x62d5c2, 0.45, 0.08);
+  const addMesh = (geometry: any, mat: any, position: [number, number, number], parent: any = avatar) => {
+    const mesh = new THREE.Mesh(geometry, mat);
+    mesh.position.set(...position);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  };
+  const addSphere = (radius: number, position: [number, number, number], mat: any, scale: [number, number, number] = [1, 1, 1]) => {
+    const mesh = addMesh(new THREE.SphereGeometry(radius, 20, 14), mat, position);
+    mesh.scale.set(...scale);
+    return mesh;
+  };
+
+  addMesh(new THREE.CylinderGeometry(0.12, 0.14, 0.2, 16), skin, [0, 1.43, 0]);
+  const body = addMesh(new THREE.CapsuleGeometry(0.39, 0.6, 5, 12), suit, [0, 0.99, 0]);
+  body.name = "ceo-tailored-jacket";
+  addMesh(new THREE.CapsuleGeometry(0.205, 0.42, 3, 10), shirt, [0, 1.12, 0.265]);
+  addMesh(new THREE.CylinderGeometry(0.045, 0.075, 0.34, 5), tie, [0, 1.12, 0.34]);
+  const lapelGeometry = new THREE.BufferGeometry();
+  lapelGeometry.setAttribute("position", new THREE.Float32BufferAttribute([
+    0, 1.36, 0.36, -0.19, 1.28, 0.29, -0.055, 1.02, 0.39,
+    0, 1.36, 0.36, 0.19, 1.28, 0.29, 0.055, 1.02, 0.39,
+  ], 3));
+  lapelGeometry.computeVertexNormals();
+  addMesh(lapelGeometry, suitLight, [0, 0, 0]);
+  addMesh(new THREE.BoxGeometry(0.16, 0.07, 0.035), accent, [-0.24, 1.06, 0.31]);
+  addMesh(new THREE.BoxGeometry(0.11, 0.045, 0.035), tie, [0.21, 0.94, 0.34]);
+
+  addSphere(0.29, [0, 1.72, 0.02], skin, [0.98, 1.08, 0.94]);
+  addSphere(0.075, [-0.285, 1.69, 0.02], skin, [0.72, 1, 0.8]);
+  addSphere(0.075, [0.285, 1.69, 0.02], skin, [0.72, 1, 0.8]);
+  addSphere(0.30, [0, 1.91, -0.055], hair, [1.02, 0.58, 0.96]);
+  addSphere(0.19, [-0.13, 1.94, 0.13], hair, [1.05, 0.62, 0.72]);
+  addSphere(0.15, [0.08, 1.98, 0.12], hair, [1.05, 0.56, 0.72]);
+  addSphere(0.095, [0.24, 1.86, 0.04], hair, [0.72, 1.0, 0.8]);
+  for (const side of [-1, 1]) {
+    addSphere(0.058, [side * 0.105, 1.735, 0.282], shirt, [1, 1.05, 0.5]);
+    addSphere(0.029, [side * 0.105, 1.733, 0.309], eye, [1, 1, 0.55]);
+    addSphere(0.011, [side * 0.115, 1.747, 0.319], shirt, [1, 1, 0.5]);
+    const brow = addMesh(new THREE.BoxGeometry(0.13, 0.026, 0.035), hair, [side * 0.105, 1.815, 0.277]);
+    brow.rotation.z = side * -0.08;
+  }
+  addSphere(0.043, [0, 1.675, 0.302], skin, [0.82, 0.86, 1]);
+  const smile = addMesh(new THREE.TorusGeometry(0.06, 0.01, 6, 18, Math.PI), material(0x985e50, 0.92), [0, 1.625, 0.291]);
+  smile.rotation.z = Math.PI;
+  smile.scale.set(1.1, 0.72, 1);
+
+  const limbMaterial = material(0x26384a, 0.78);
   const leftLeg = new THREE.Group();
-  leftLeg.position.set(-0.14, 0.5, 0);
+  leftLeg.position.set(-0.15, 0.52, 0);
   avatar.add(leftLeg);
-  const leftThigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.105, 0.25, 3, 8), limbMaterial);
-  leftThigh.position.y = -0.13;
-  leftThigh.castShadow = true;
-  leftLeg.add(leftThigh);
-  const leftFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), new THREE.MeshStandardMaterial({ color: 0x202a36, roughness: 0.72 }));
-  leftFoot.position.set(0, -0.29, 0.1);
-  leftFoot.castShadow = true;
-  leftLeg.add(leftFoot);
+  addMesh(new THREE.CapsuleGeometry(0.105, 0.25, 3, 9), limbMaterial, [0, -0.13, 0], leftLeg);
+  addMesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), shoe, [0, -0.29, 0.105], leftLeg);
   const rightLeg = leftLeg.clone();
-  rightLeg.position.x = 0.14;
+  rightLeg.position.x = 0.15;
   avatar.add(rightLeg);
 
   const leftArm = new THREE.Group();
-  leftArm.position.set(-0.36, 1.24, 0);
+  leftArm.position.set(-0.36, 1.25, 0);
   avatar.add(leftArm);
-  const armGeometry = new THREE.CapsuleGeometry(0.085, 0.29, 3, 8);
-  const armMaterial = new THREE.MeshStandardMaterial({ color: 0x287f87, roughness: 0.76 });
-  const leftArmMesh = new THREE.Mesh(armGeometry, armMaterial);
-  leftArmMesh.position.y = -0.19;
-  leftArmMesh.castShadow = true;
-  leftArm.add(leftArmMesh);
-  const hand = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf0c8a5, roughness: 0.82 }));
-  hand.position.set(0, -0.37, 0.025);
-  leftArm.add(hand);
+  addMesh(new THREE.CapsuleGeometry(0.105, 0.27, 3, 9), suitLight, [0, -0.17, 0.015], leftArm);
+  addMesh(new THREE.SphereGeometry(0.072, 12, 10), skin, [0, -0.36, 0.055], leftArm);
   const rightArm = leftArm.clone();
   rightArm.position.x = 0.36;
   avatar.add(rightArm);
   avatar.userData.walkRig = { leftLeg, rightLeg, leftArm, rightArm };
   avatar.userData.walkPhase = 0;
   avatar.userData.body = body;
+  avatar.userData.artStyle = "stylized-executive-v2";
+
   const marker = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.045, 8, 28), new THREE.MeshBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.9 }));
   marker.rotation.x = -Math.PI / 2;
   marker.position.y = 0.07;
   avatar.add(marker);
-  // Spawn just beyond the lobby coffee-table footprint so collision never traps the player at startup.
-  avatar.position.set(0, 0, 4.4);
+  avatar.position.set(0, 0, 3.5);
   scene.add(avatar);
   return avatar;
 }
-
 function addLockedRoom(scene: any) {
   const room = new THREE.Group();
   room.name = "room-entrance";
@@ -825,9 +862,26 @@ export function WorldViewport({
 
     const onPan = (event: Event) => {
       const { dx, dy } = (event as CustomEvent<{ dx: number; dy: number }>).detail;
-      const scale = distance * 0.00135;
-      target.x -= dx * scale;
-      target.z -= dy * scale;
+      const rect = renderer.domElement.getBoundingClientRect();
+      const cameraDistance = camera.position.distanceTo(new THREE.Vector3(target.x, 0.8, target.z));
+      const worldPerPixel =
+        (2 * cameraDistance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) /
+        Math.max(1, rect.height);
+      const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      cameraRight.y = 0;
+      cameraRight.normalize();
+      const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+      cameraUp.y = 0;
+      cameraUp.normalize();
+      const pan = screenPanToWorldDelta(
+        dx,
+        dy,
+        worldPerPixel,
+        { x: cameraRight.x, z: cameraRight.z },
+        { x: cameraUp.x, z: cameraUp.z },
+      );
+      target.x += pan.x;
+      target.z += pan.z;
       updateCamera();
     };
     const onReset = () => {
@@ -885,10 +939,10 @@ export function WorldViewport({
       const moveY = keyboard.moveY || mobileMove.y;
       const seconds = delta / 1000;
       const inputLength = Math.hypot(moveX, moveY);
-      const desiredX = inputLength > 0 ? (moveX / inputLength) * 3.8 : 0;
-      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 3.8 : 0;
+      const desiredX = inputLength > 0 ? (moveX / inputLength) * 8.5 : 0;
+      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 8.5 : 0;
       const velocity = ceoAvatar.userData.velocity ?? (ceoAvatar.userData.velocity = new THREE.Vector2());
-      const responsiveness = inputLength > 0 ? 8 : 11;
+      const responsiveness = inputLength > 0 ? 12 : 14;
       velocity.lerp(new THREE.Vector2(desiredX, desiredZ), Math.min(1, seconds * responsiveness));
       const speed = velocity.length();
       if (speed > 0.025) {
@@ -901,14 +955,14 @@ export function WorldViewport({
         const rotationDelta = Math.atan2(Math.sin(desiredRotation - ceoAvatar.rotation.y), Math.cos(desiredRotation - ceoAvatar.rotation.y));
         ceoAvatar.rotation.y += rotationDelta * Math.min(1, seconds * 10);
       }
-      target.x += (ceoAvatar.position.x - target.x) * Math.min(1, seconds * 5);
-      target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 5);
+      target.x += (ceoAvatar.position.x - target.x) * Math.min(1, seconds * 8);
+      target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 8);
       updateCamera();
 
       const walkRig = ceoAvatar.userData.walkRig;
       if (walkRig) {
         const walking = speed > 0.22 && !reducedMotion.matches;
-        ceoAvatar.userData.walkPhase += speed * seconds * 2.7;
+        ceoAvatar.userData.walkPhase += speed * seconds * 3.1;
         const phase = ceoAvatar.userData.walkPhase;
         const swing = walking ? Math.sin(phase) * 0.48 : 0;
         walkRig.leftLeg.rotation.x += (swing - walkRig.leftLeg.rotation.x) * Math.min(1, seconds * 12);
