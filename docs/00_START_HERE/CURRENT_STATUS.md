@@ -5,7 +5,7 @@
 - The exact source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2` passed CI/Playwright, CodeQL, Ephemeral DAST, HA Failure Recovery and Production Infrastructure Validation. Links and detailed evidence are in [World Master Handoff](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md).
 - Reviewed screenshot artifact `world-visual-review-10d00b30be9cfc784398ed8a3c4380328684ee3f`: desktop 1440×900 and mobile 390×844. Desktop floor/front edge has margin; all five departments fit the portrait view; HUD, camera controls and joystick are separated.
 - Dependency PRs #1063 (Playwright), #1066 (lucide-react), #1065 (eslint-config-next) and #1064 (Next.js) were merged after their exact-head checks passed.
-- The older documentation PR #1058 is stale and will be superseded by a fresh documentation PR based on current `main`.
+- The stale documentation PR #1058 was closed; PR #1067 is the fresh documentation reconciliation based on current main and remains Draft pending check review.
 
 ## Implemented in the World viewport
 - Responsive Tailwind scanning includes `frontend/features/**`.
