@@ -15,8 +15,11 @@ export function screenPanToWorldDelta(
   cameraRight: GroundDirection,
   cameraUp: GroundDirection,
 ): GroundDirection {
+  const x = -dx * worldPerPixel * cameraRight.x + dy * worldPerPixel * cameraUp.x;
+  const z = -dx * worldPerPixel * cameraRight.z + dy * worldPerPixel * cameraUp.z;
+  // Normalize negative zero so stationary input has a stable, exact representation.
   return {
-    x: -dx * worldPerPixel * cameraRight.x + dy * worldPerPixel * cameraUp.x,
-    z: -dx * worldPerPixel * cameraRight.z + dy * worldPerPixel * cameraUp.z,
+    x: Object.is(x, -0) ? 0 : x,
+    z: Object.is(z, -0) ? 0 : z,
   };
 }
