@@ -1,3 +1,12 @@
+## World visual direction checkpoint — 2026-10-12 (user reference accepted)
+
+- Canonical spec updated: [AI_COMPANY_WORLD_GAMEPLAY_SPEC.md §30](../blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md#30-approved-visual-reference--office-management-tycoon-presentation-2026-10-12). The target reference is a colorful, polished isometric office-management scene with room detail, warm/cool material contrast, varied stylized employees, detailed workstations, soft shadows and a compact readable mobile HUD.
+- The existing wide HQ screenshot is the before-state; the portrait game screenshot is a direction reference only. Do not copy its proprietary assets, exact HUD, characters, branding or map.
+- Next implementation sequence: (1) layout, room/floor/wall/window/door composition and viewport framing; (2) authored/licensed characters and workstations with provenance; (3) obstacle-aware pathfinding and interaction regression; (4) responsive HUD, readability and accessibility; (5) actual desktop/mobile route screenshots and review.
+- Keep World data a pure projection of authorized backend truth. Do not fabricate employee assignments, status, revenue, idle income, gems, energy, or game-only economy.
+- PR #1050 remains Draft/unmerged until visual acceptance, navigation and regression gates are satisfied. Automated CI success alone is not sufficient.
+
+---
 ## Current priority checkpoint — 2026-10-12, World V2 visual-review candidate
 
 - PR #1050 remains Draft/unmerged at exact head `8a7de75a8d49b4e1489b00353615f7a1f3808f87`; all five exact-head workflows passed (CI 38213177840, CodeQL 38213177820, infrastructure 38213177945, HA recovery 38213177822, DAST 38213177856).
