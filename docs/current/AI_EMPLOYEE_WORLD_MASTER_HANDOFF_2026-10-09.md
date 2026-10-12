@@ -416,3 +416,13 @@ Inspect and use the existing order API contract to add an explicit customer orde
 
 - This is post-release engineering, not a new production-certified release. Latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 - Live payment provider verification, signed/replay-safe webhooks, explicit USDT network policy, durable World Credit ledger, room fulfillment and employee placement/customization-to-scene integration, and manual desktop/mobile QA remain independent gates.
+
+## 2026-10-12 visual follow-up — viewport composition correction
+
+- User supplied a fresh screenshot of the current World viewport and requested a code/documentation-based diagnosis against the intended isometric office direction.
+- Confirmed in `frontend/features/world/WorldViewport.tsx`: the scene had a large floating `AI COMPANY • HEADQUARTERS` sprite centered above the lobby, duplicating the HTML HUD and obscuring the scene's central sightline. Removed that world-space banner; the persistent HUD remains the single HQ identifier.
+- Reduced the default camera distance from 35 to 31 world units to improve readability of workstations and employees while retaining the overall HQ view. Reduced portrait responsive distance multiplier from 1.35 to 1.12 so mobile framing is less zoomed-out; this remains pannable and requires fresh mobile screenshot review.
+- Changes are on branch `fix/world-viewport-composition-followup`, commit `17d636be47f1d30e5caec9c97a1fd91fbc6e85c7`. This is not yet merged; CI and fresh desktop/mobile Playwright artifacts must be checked before considering merge.
+- Important limitation: the checked-in `WorldViewport.tsx` still builds employee/CEO visuals procedurally. Repository search did not locate the referenced employee GLB asset by the searched filename, and an actual GLTF loader path was not present in the viewport module. Do not claim a GLB character is live until the asset path, license manifest, loader integration and runtime rendering are all verified.
+- Remaining visual gates: inspect fresh desktop/mobile screenshots, ensure labels stay within the scene bounds, validate camera pan alignment and movement/collision, and confirm there are no console/runtime errors. Automated CI passing is not visual acceptance.
+
