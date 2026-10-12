@@ -813,10 +813,10 @@ export function WorldViewport({
     const target = new THREE.Vector3(0, 0, 1.5);
     let distance = 35;
     const updateCamera = () => {
-      // Desktop keeps the full HQ overview. Portrait screens intentionally frame a closer,
-      // pannable section; increasing camera distance on narrow screens made the office tiny.
+      // Desktop keeps the full HQ overview. Portrait screens use a closer, pannable crop
+      // so department labels and employees remain legible instead of shrinking to fit the full office.
       const aspect = Math.max(0.35, camera.aspect || 1);
-      const responsiveScale = aspect < 1 ? 1.35 : 1;
+      const responsiveScale = aspect < 1 ? 0.92 : 1;
       const effectiveDistance = distance * responsiveScale;
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
