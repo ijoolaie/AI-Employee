@@ -34,3 +34,11 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+
+/* Keep the World viewport tall enough to feel like a game on portrait screens. */
+@media (max-width: 639px) {
+  .world-viewport:not(.world-viewport-fullscreen) {
+    height: min(58vh, 620px) !important;
+  }
+}
