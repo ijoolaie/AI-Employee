@@ -38,3 +38,7 @@
 ## Scope boundary
 
 The World viewport remains a read-only presentation of governed business data. Visual changes must not create employees, revenue, orders, approvals, entitlements or room access client-side. Server authorization remains the only source of truth for the locked room.
+
+## Latest screenshot-driven correction — 2026-10-12
+
+The CI artifact `world-visual-review-9cd73e9fbbd5591efa5d09efdad740ad8cc5891c` was downloaded and inspected after the procedural surface-map change. Desktop remains coherent, but portrait framing scales the whole office too far down and leaves labels too small. The cause was the portrait `responsiveScale = 1.35`, which increases camera distance despite a comment promising a closer crop. The value is now `0.92` in commit `f42a0d3e45ce7d90a50b15fb47de54a98bfa7567`, so the mobile view should prioritize a closer pannable crop. This is a code-level correction only; its fresh CI run and replacement screenshots must pass review before acceptance.
