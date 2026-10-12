@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
 
 const authState = JSON.stringify({
   state: {
@@ -91,6 +92,7 @@ test("World Mode renders authoritative employee projection and management bridge
 
   // Capture real-browser visual evidence from the same deterministic fixture at both target sizes.
   // These artifacts support human review; they do not constitute visual acceptance by themselves.
+  await mkdir("artifacts/world-visual-review", { recursive: true });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: true });
