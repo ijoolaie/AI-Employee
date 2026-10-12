@@ -18,7 +18,7 @@
 ## What changed
 - Fixed Tailwind scanning to include `frontend/features/**`, which had omitted responsive utility styles from feature components.
 - Consolidated the procedural executive avatar, procedural surface materials, camera pan helper and tests, consistent reset/default camera distance, continuous side-wall backing and floor palette correction.
-- Desktop and portrait camera framing were adjusted, but screenshots from the earlier exact-head run showed remaining tight/cropped edges. Current final framing is not accepted yet; a later adjustment increased the camera margin and requires fresh artifacts.
+- Desktop and portrait camera framing were adjusted, but the latest reviewed artifact still showed the front floor edge clipped on desktop and the far-right department tight on portrait. PR #1070 increases the multipliers to 1.22 desktop / 1.85 portrait; visual acceptance remains pending fresh artifacts.
 - Mobile camera controls use compact Reset/Full labels in the upper-right; the HUD stays upper-left and joystick stays bottom-left. Pointer cancellation resets movement.
 - Extracted ground collision footprints into `frontend/features/world/WorldNavigation.ts`.
 
@@ -36,9 +36,9 @@
 - World remains a read-only projection of authorized business data. Do not invent employees, revenue, orders, approvals, entitlements or room access client-side.
 
 ## Next actions
-1. Fix and validate the World E2E test timeout through PRs #1068/#1069; do not merge until exact-head checks pass.
-2. Generate and inspect fresh desktop/mobile artifacts; leave visual acceptance pending until the office bounds and control spacing are acceptable.
+1. PR #1069 is merged; PR #1068 was closed as superseded. The pan smoke now checks pointer-event wiring rather than relying on WebGL canvas screenshots; unit tests cover pan projection math.
+2. Validate PR #1070 camera margins at 1.22 desktop / 1.85 portrait with fresh exact-head screenshots and all five workflows.
 3. Reconcile this handoff with final code/test results before merging documentation PR #1067.
-2. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
-3. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
-4. Keep release certification separate from World code merges.
+4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
+5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
+6. Keep release certification separate from World code merges.
