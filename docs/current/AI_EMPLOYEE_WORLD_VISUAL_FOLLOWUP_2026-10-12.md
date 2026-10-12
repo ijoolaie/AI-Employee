@@ -25,3 +25,9 @@
 2. Downloadable desktop/mobile screenshot artifacts exist for this exact head and are reviewed for framing, clipping, character readability and material quality.
 3. Pointer drag direction and sensitivity, CEO movement speed, start/stop and reduced-motion behavior are checked in a real browser.
 4. Only then decide whether to merge. Keep Draft if any gate is incomplete.
+
+## CI findings and fixes — 2026-10-12
+
+- First CI run exposed a strict unit-test mismatch: stationary pointer deltas produced JavaScript negative zero (`-0`). Normalized zero values in `WorldPan.ts`.
+- The production build also exposed that this repository's current Three.js declarations do not export the type names used by the new annotations. Replaced those annotations with compatible structural/loose types while preserving runtime constructors.
+- That CI run therefore **failed** and produced no screenshot artifacts; do not treat it as accepted evidence. The fixes are now committed on the same branch. A fresh CI run for the latest head must pass before review continues.
