@@ -811,7 +811,7 @@ export function WorldViewport({
       // Desktop keeps the full HQ overview. Portrait screens use a closer, pannable crop
       // so department labels and employees remain legible instead of shrinking to fit the full office.
       const aspect = Math.max(0.35, camera.aspect || 1);
-      const responsiveScale = aspect < 1 ? 1.55 : 1;
+      const responsiveScale = aspect < 1 ? 1.3 : 1;
       const effectiveDistance = distance * responsiveScale;
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
@@ -931,7 +931,7 @@ export function WorldViewport({
     };
     const onReset = () => {
       target.set(0, 0, 0);
-      distance = 35;
+      distance = 31;
       updateCamera();
     };
     const onZoom = (event: Event) => {
