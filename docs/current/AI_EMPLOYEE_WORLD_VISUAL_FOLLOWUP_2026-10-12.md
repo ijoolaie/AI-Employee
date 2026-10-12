@@ -19,7 +19,7 @@ Reviewed artifact: [`world-visual-review-10d00b30be9cfc784398ed8a3c4380328684ee3
 ## Implemented
 - Tailwind content scanning now includes feature components, restoring responsive utility classes that were not previously generated.
 - Mobile controls are placed in distinct safe areas: HUD upper-left, compact camera controls upper-right and joystick bottom-left.
-- Desktop camera framing adds a small distance margin; portrait framing uses a 1.65 multiplier.
+- Desktop camera framing has been iterated through 1.22, 1.35 and 1.55; the 1.55 artifact still clipped the front floor edge. Current PR #1071 candidate uses 1.85 desktop / 1.85 portrait, pending fresh exact-head screenshot review.
 - The original real-drag assertion depended on taking WebGL canvas screenshots and timed out on CI. PR #1069 now checks that pointer dragging emits `world:pan`; `WorldPan` unit tests validate the projection math. This is input-path coverage, not visual acceptance of the camera result.
 - The browser smoke checks page/console errors and unexpected 5xx responses using deterministic commerce read fixtures.
 
