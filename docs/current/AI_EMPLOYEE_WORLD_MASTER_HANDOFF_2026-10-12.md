@@ -1,6 +1,6 @@
 # AI Employee World — Master Handoff
 **Updated:** 2026-10-12  
-**Status:** World viewport framing accepted on exact-head CI screenshots; follow-up engineering remains open.
+**Status:** Viewport changes are merged, but visual acceptance remains pending; follow-up CI uncovered a flaky WebGL screenshot assertion and the desktop framing still needs human confirmation.
 
 ## Current source of truth
 - `main` contains PR [#1062](https://github.com/ijoolaie/AI-Employee/pull/1062), merged as `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`.
@@ -18,16 +18,16 @@
 ## What changed
 - Fixed Tailwind scanning to include `frontend/features/**`, which had omitted responsive utility styles from feature components.
 - Consolidated the procedural executive avatar, procedural surface materials, camera pan helper and tests, consistent reset/default camera distance, continuous side-wall backing and floor palette correction.
-- Desktop framing now leaves margin around the office perimeter/front floor edge. Portrait multiplier is 1.65; the mobile view fits all five department platforms in the reviewed screenshot.
+- Desktop and portrait camera framing were adjusted, but screenshots from the earlier exact-head run showed remaining tight/cropped edges. Current final framing is not accepted yet; a later adjustment increased the camera margin and requires fresh artifacts.
 - Mobile camera controls use compact Reset/Full labels in the upper-right; the HUD stays upper-left and joystick stays bottom-left. Pointer cancellation resets movement.
 - Extracted ground collision footprints into `frontend/features/world/WorldNavigation.ts`.
 
 ## Verification actually present
 - Playwright checks mobile HUD/camera/joystick bounds, console/page errors and unexpected HTTP 5xx responses.
-- Playwright performs a real pointer drag and checks that the rendered 3D canvas changes.
+- The original canvas-screenshot comparison for pointer drag timed out on software-rendered CI. Follow-up PR #1069 replaces that brittle screenshot comparison with a real pointer-gesture event assertion; `WorldPan` unit tests cover the projection math. This does not by itself certify visual camera movement.
 - Existing World E2E coverage checks keyboard movement to locked-room proximity, room offer/renewal flows and server-authorized room access.
 - Unit tests cover coffee-table/workstation footprints, walkable aisle space and office bounds.
-- These checks passed on the exact code head listed above. The CI screenshot review establishes responsive framing, not every gameplay/navigation behavior.
+- The five workflows passed on the historical code head listed above, but a subsequent CI run on current `main` failed in the World Playwright test (run [38292598819](https://github.com/ijoolaie/AI-Employee/actions/runs/38292598819)). PRs #1068/#1069 are follow-ups; revalidate all required checks on the final exact head before calling this stable.
 
 ## Explicit limitations — do not overstate completion
 - Employee models remain procedural. A GLB/GLTF employee runtime loader is not implemented or claimed.
@@ -36,7 +36,9 @@
 - World remains a read-only projection of authorized business data. Do not invent employees, revenue, orders, approvals, entitlements or room access client-side.
 
 ## Next actions
-1. Merge documentation PR #1067 after its checks pass; stale documentation PR #1058 has been closed as superseded.
+1. Fix and validate the World E2E test timeout through PRs #1068/#1069; do not merge until exact-head checks pass.
+2. Generate and inspect fresh desktop/mobile artifacts; leave visual acceptance pending until the office bounds and control spacing are acceptable.
+3. Reconcile this handoff with final code/test results before merging documentation PR #1067.
 2. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 3. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
 4. Keep release certification separate from World code merges.
