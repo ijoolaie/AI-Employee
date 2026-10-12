@@ -1006,7 +1006,7 @@ export function WorldViewport({
   }, []);
 
   return (
-    <div ref={viewportRef} className={`relative w-full overflow-hidden bg-slate-900 shadow-2xl ${isFullscreen ? "h-screen rounded-none border-0" : "min-h-[420px] rounded-2xl border border-slate-700/80"}`} style={{ height: isFullscreen ? "100dvh" : "min(80vh, 900px)" }}>
+    <div ref={viewportRef} className={`relative w-full overflow-hidden bg-slate-900 shadow-2xl ${isFullscreen ? "h-screen rounded-none border-0" : "min-h-[420px] h-[min(58vh,620px)] sm:h-[min(80vh,900px)] rounded-2xl border border-slate-700/80"}`} style={isFullscreen ? { height: "100dvh" } : undefined}>
       <div ref={mountRef} className="absolute inset-0" />
       <div className="sr-only" aria-label="Office employees">
         {employees.map((employee) => (
