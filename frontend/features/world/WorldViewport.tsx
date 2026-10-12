@@ -315,6 +315,19 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
   rightArm.rotation.z = 0.18;
   sphere(group, 0.09, [-0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
   sphere(group, 0.09, [0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
+  // Keep the forearms in a small reusable rig so working employees have life
+  // beyond a pulsing status light, without moving their assigned desk anchors.
+  group.userData.workRig = {
+    leftSleeve,
+    rightSleeve,
+    leftArm,
+    rightArm,
+    baseLeftSleeveX: leftSleeve.rotation.x,
+    baseRightSleeveX: rightSleeve.rotation.x,
+    baseLeftArmX: leftArm.rotation.x,
+    baseRightArmX: rightArm.rotation.x,
+    phase: (Math.abs(hash(employee.id)) % 100) / 100 * Math.PI * 2,
+  };
 
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.82, 0.05, 8, 32),
@@ -1068,6 +1081,18 @@ export function WorldViewport({
         worker.status.material.emissiveIntensity = worker.state === "WORKING" && !reducedMotion.matches
           ? 0.28 + (activityPulse - 1) * 0.8
           : 0.18;
+
+        const workRig = worker.group.userData.workRig;
+        if (workRig) {
+          const typing = worker.state === "WORKING" && !reducedMotion.matches
+            ? Math.sin(now * 0.009 + workRig.phase) * 0.055
+            : 0;
+          const settle = Math.min(1, seconds * 10);
+          workRig.leftSleeve.rotation.x += (workRig.baseLeftSleeveX + typing - workRig.leftSleeve.rotation.x) * settle;
+          workRig.rightSleeve.rotation.x += (workRig.baseRightSleeveX - typing - workRig.rightSleeve.rotation.x) * settle;
+          workRig.leftArm.rotation.x += (workRig.baseLeftArmX + typing * 0.8 - workRig.leftArm.rotation.x) * settle;
+          workRig.rightArm.rotation.x += (workRig.baseRightArmX - typing * 0.8 - workRig.rightArm.rotation.x) * settle;
+        }
       }
       renderer.render(scene, camera);
       frame = requestAnimationFrame(tick);
