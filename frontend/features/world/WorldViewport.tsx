@@ -1152,7 +1152,7 @@ export function WorldViewport({
         <button type="button" className="rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:reset"))}>Reset view</button>
         <button type="button" className="rounded-lg px-2 text-xs text-slate-100 hover:bg-white/10" onClick={() => { if (document.fullscreenElement === viewportRef.current) { void document.exitFullscreen(); } else { void viewportRef.current?.requestFullscreen(); } }} aria-label={isFullscreen ? "Exit fullscreen world view" : "Show world in fullscreen"} aria-pressed={isFullscreen}>{isFullscreen ? "⤢ Exit full screen" : "⛶ Full screen"}</button>
       </div>
-      <div className="pointer-events-none rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-200 backdrop-blur" style={{ position: "absolute", left: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
+      <div data-testid="world-viewport-hud" className="pointer-events-none rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-200 backdrop-blur" style={{ position: "absolute", left: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
         <div className="font-semibold tracking-wide text-amber-100">AI COMPANY HQ</div>
         <div className="mt-1 hidden sm:block text-slate-300">WASD / arrows · drag to pan · wheel to zoom</div>
         <div className="mt-1 sm:hidden text-slate-300">Joystick · drag to pan</div>
