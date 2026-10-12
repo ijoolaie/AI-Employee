@@ -718,7 +718,7 @@ export function WorldViewport({
       // Desktop keeps the full HQ overview. Portrait screens intentionally frame a closer,
       // pannable section; increasing camera distance on narrow screens made the office tiny.
       const aspect = Math.max(0.35, camera.aspect || 1);
-      const responsiveScale = aspect < 1 ? Math.max(0.78, aspect * 1.1) : 1;
+      const responsiveScale = aspect < 1 ? 1.35 : 1;
       const effectiveDistance = distance * responsiveScale;
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
@@ -1005,7 +1005,7 @@ export function WorldViewport({
   }, []);
 
   return (
-    <div ref={viewportRef} className={`world-viewport relative w-full overflow-hidden bg-slate-900 shadow-2xl ${isFullscreen ? "world-viewport-fullscreen h-screen rounded-none border-0" : "min-h-[420px] rounded-2xl border border-slate-700/80"}`} style={{ height: isFullscreen ? "100dvh" : "min(80vh, 900px)" }}>
+    <div ref={viewportRef} className={`world-viewport relative w-full overflow-hidden bg-slate-900 shadow-2xl ${isFullscreen ? "world-viewport-fullscreen h-screen rounded-none border-0" : "min-h-[420px] rounded-2xl border border-slate-700/80"}`} style={{ height: isFullscreen ? "100dvh" : "min(68vh, 760px)" }}>
       <div ref={mountRef} className="absolute inset-0" />
       <div className="sr-only" aria-label="Office employees">
         {employees.map((employee) => (
@@ -1032,7 +1032,7 @@ export function WorldViewport({
         <div className="mt-1 hidden sm:block text-slate-300">WASD / arrows · drag to pan · wheel to zoom</div>
         <div className="mt-1 sm:hidden text-slate-300">Joystick · drag to pan</div>
       </div>
-      <div className="pointer-events-none rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-300 backdrop-blur" style={{ position: "absolute", right: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
+      <div className="pointer-events-none hidden sm:block rounded-xl border border-white/10 bg-slate-950/95 px-3 py-2 text-xs text-slate-300 backdrop-blur" style={{ position: "absolute", right: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
         <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-400" />Working
         <span className="mx-2 text-slate-500">•</span>
         <span className="mr-2 inline-block h-2 w-2 rounded-full bg-amber-400" />Approval
