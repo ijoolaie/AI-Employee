@@ -55,6 +55,7 @@ const office = {
 };
 
 test("World Mode renders authoritative employee projection and management bridge", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), authState);
   await page.route("**/customer-dashboard/office", async (route) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(office) });
@@ -154,8 +155,35 @@ test("World Mode renders authoritative employee projection and management bridge
     expect(joystickBox.x).toBeGreaterThanOrEqual(0);
     expect(joystickBox.x + joystickBox.width).toBeLessThanOrEqual(390);
     expect(overlaps(joystickBox, controlsBox), "mobile joystick and camera controls overlap").toBe(false);
+    expect(overlaps(joystickBox, hudBox), "mobile joystick and HUD overlap").toBe(false);
   }
+
+  // Exercise real pointer dragging and prove that the rendered 3D view responds.
+  const beforePan = await canvas.screenshot();
+  const mobileCanvasBox = await canvas.boundingBox();
+  expect(mobileCanvasBox).toBeTruthy();
+  if (mobileCanvasBox) {
+    await page.mouse.move(mobileCanvasBox.x + mobileCanvasBox.width * 0.55, mobileCanvasBox.y + mobileCanvasBox.height * 0.55);
+    await page.mouse.down();
+    await page.mouse.move(mobileCanvasBox.x + mobileCanvasBox.width * 0.68, mobileCanvasBox.y + mobileCanvasBox.height * 0.61, { steps: 5 });
+    await page.mouse.up();
+    await page.waitForTimeout(250);
+    const afterPan = await canvas.screenshot();
+    expect(afterPan.equals(beforePan), "dragging the viewport should pan the rendered office").toBe(false);
+  }
+
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(250);
+  const desktopCanvasBox = await canvas.boundingBox();
+  const desktopControlsBox = await cameraControls.boundingBox();
+  expect(desktopCanvasBox && desktopControlsBox).toBeTruthy();
+  if (desktopCanvasBox && desktopControlsBox) {
+    expect(desktopControlsBox.x).toBeLessThanOrEqual(desktopCanvasBox.x + 24);
+    expect(desktopControlsBox.y).toBeGreaterThan(desktopCanvasBox.y + desktopCanvasBox.height / 2);
+  }
+  await expect(hud.getByText(/WASD/)).toBeVisible();
+  await expect(page.getByText("Working", { exact: true })).toBeVisible();
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
 
   // Use the accessible employee selector so this contract test does not depend on camera projection.
