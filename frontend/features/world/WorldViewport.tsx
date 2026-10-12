@@ -718,7 +718,9 @@ export function WorldViewport({
       // Keep the office's horizontal framing consistent on narrow portrait screens.
       // The world remains perspective/isometric; only the camera pull-back adapts to aspect ratio.
       const aspect = Math.max(0.35, camera.aspect || 1);
-      const effectiveDistance = distance * (1.9 / Math.min(1.9, aspect));
+      // Keep desktop framing unchanged; portrait screens show a closer, pannable portion of the office.
+      const responsiveScale = aspect < 1 ? 1.5 / aspect : 1;
+      const effectiveDistance = distance * responsiveScale;
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
         // Keep the scene visible when portrait framing pulls the camera back.
