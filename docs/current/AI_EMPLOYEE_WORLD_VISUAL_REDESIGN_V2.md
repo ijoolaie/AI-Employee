@@ -110,3 +110,12 @@ The user reports that pointer movement still feels disconnected from the scene, 
 - **Character/material fidelity:** the current cast, CEO and most furniture are still constructed from Three.js primitive geometry and basic standard materials. The code contains no authored character GLTF rig or real texture/asset pipeline. More procedural details or color changes cannot deliver the agreed reference-level result. Properly licensed authored assets and material textures remain required; do not mark the art redesign complete on the basis of this movement fix.
 
 **Validation status:** automated source changes and unit tests have been added, but tests have not been executed in the user's local runtime by this session. No actual browser screenshots were available for this review. Keep the visual redesign PR Draft and unmerged until exact-head CI, runtime screenshots, and user visual acceptance are complete.
+
+
+## 2026-10-12 follow-up implementation — surface detail and employee activity
+
+- Added cached, deterministic canvas-generated wood, fabric, plaster and stone surface maps. The first applications are the floor, desk tops, department platforms, office shell and lobby upholstery. These are lightweight procedural material maps, not externally sourced image assets; they improve surface response/detail but do not replace authored PBR textures or licensed models.
+- Added subtle time-based forearm/arm movement to seated workers in the `WORKING` state. Motion respects `prefers-reduced-motion` and does not change employee position, work state or assignment.
+- The CEO walk cycle and pointer-pan corrections remain source changes awaiting exact-head CI and real-runtime review.
+- No authored GLTF/GLB assets are present in the repository tree at this checkpoint. A proper stylized character and furniture asset pipeline is still the main visual-quality blocker; no claim of reference-level art fidelity is made.
+- Current branch/PR for the corrective code: `fix/world-pan-speed-and-visual-gap`, [PR #1054](https://github.com/ijoolaie/AI-Employee/pull/1054), still Draft. Keep #1046 and #1054 unmerged until checks pass and actual desktop/mobile screenshots are reviewed.
