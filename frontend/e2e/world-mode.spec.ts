@@ -186,8 +186,9 @@ test("World Mode renders authoritative employee projection and management bridge
 
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
-  await employeeSelector.focus();
-  await employeeSelector.press("Enter");
+  await employeeSelector.evaluate((element) => (element as HTMLButtonElement).focus());
+  await expect(employeeSelector).toBeFocused();
+  await page.keyboard.press("Enter");
 
   const employeePanel = page.getByRole("complementary", { name: "Selected employee" });
   await expect(employeePanel).toBeVisible();
