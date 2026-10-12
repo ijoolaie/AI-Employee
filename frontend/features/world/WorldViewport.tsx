@@ -35,9 +35,9 @@ const DEPARTMENTS = [
 ];
 
 type SurfaceTexture = "wood" | "fabric" | "plaster" | "stone";
-const surfaceTextureCache = new Map<SurfaceTexture, THREE.CanvasTexture>();
+const surfaceTextureCache = new Map<SurfaceTexture, any>();
 
-function getSurfaceTexture(kind: SurfaceTexture): THREE.CanvasTexture {
+function getSurfaceTexture(kind: SurfaceTexture): any {
   const cached = surfaceTextureCache.get(kind);
   if (cached) return cached;
   const canvas = document.createElement("canvas");
@@ -280,7 +280,7 @@ function addCEOAvatar(scene: any) {
   const shoe = material(0x1a2633, 0.66);
   const eye = material(0x25313a, 0.8);
   const accent = material(0x62d5c2, 0.45, 0.08);
-  const addMesh = (geometry: THREE.BufferGeometry, mat: THREE.Material, position: [number, number, number], parent: THREE.Object3D = avatar) => {
+  const addMesh = (geometry: any, mat: any, position: [number, number, number], parent: any = avatar) => {
     const mesh = new THREE.Mesh(geometry, mat);
     mesh.position.set(...position);
     mesh.castShadow = true;
@@ -288,7 +288,7 @@ function addCEOAvatar(scene: any) {
     parent.add(mesh);
     return mesh;
   };
-  const addSphere = (radius: number, position: [number, number, number], mat: THREE.Material, scale: [number, number, number] = [1, 1, 1]) => {
+  const addSphere = (radius: number, position: [number, number, number], mat: any, scale: [number, number, number] = [1, 1, 1]) => {
     const mesh = addMesh(new THREE.SphereGeometry(radius, 20, 14), mat, position);
     mesh.scale.set(...scale);
     return mesh;
@@ -899,7 +899,7 @@ export function WorldViewport({
           for (const material of materials) {
             // Shared procedural surface maps live in a module cache and must survive
             // viewport unmount/remount cycles; only dispose per-object maps here.
-            if (material.map && !Array.from(surfaceTextureCache.values()).includes(material.map as THREE.CanvasTexture)) {
+            if (material.map && !Array.from(surfaceTextureCache.values()).includes(material.map as any)) {
               material.map.dispose();
             }
             material.dispose?.();
