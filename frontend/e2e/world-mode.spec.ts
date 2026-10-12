@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
 
 const authState = JSON.stringify({
   state: {
@@ -88,6 +89,19 @@ test("World Mode renders authoritative employee projection and management bridge
 
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
+
+  // Capture runtime screenshots from the actual deterministic browser fixture.
+  // These are human-review evidence, not an automated visual-acceptance verdict.
+  await mkdir("artifacts/world-visual-review", { recursive: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: true });
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
 
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
