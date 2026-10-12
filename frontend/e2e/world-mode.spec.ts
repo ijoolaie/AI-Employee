@@ -82,6 +82,10 @@ test("World Mode renders authoritative employee projection and management bridge
     });
   });
 
+  const browserErrors: string[] = [];
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+  page.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
+
   await page.goto("/world");
   await expect(page.getByRole("heading", { name: "World Mode" })).toBeVisible();
   await expect(page.getByText("WORKING 1", { exact: true })).toBeVisible();
@@ -100,6 +104,23 @@ test("World Mode renders authoritative employee projection and management bridge
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: false });
+
+  const hud = page.getByTestId("world-viewport-hud");
+  const cameraControls = page.getByRole("group", { name: "World camera controls" });
+  const joystick = page.getByLabel("World movement joystick");
+  await expect(hud).toBeVisible();
+  await expect(cameraControls).toBeVisible();
+  await expect(joystick).toBeVisible();
+  const hudBox = await hud.boundingBox();
+  const controlsBox = await cameraControls.boundingBox();
+  const joystickBox = await joystick.boundingBox();
+  expect(hudBox && controlsBox && joystickBox).toBeTruthy();
+  if (hudBox && controlsBox && joystickBox) {
+    expect(controlsBox.y).toBeGreaterThanOrEqual(hudBox.y + hudBox.height);
+    expect(controlsBox.x + controlsBox.width).toBeLessThanOrEqual(390);
+    expect(joystickBox.x + joystickBox.width).toBeLessThanOrEqual(390);
+    expect(joystickBox.y).toBeGreaterThan(controlsBox.y + controlsBox.height);
+  }
   await page.setViewportSize({ width: 1440, height: 900 });
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
 
@@ -120,6 +141,7 @@ test("World Mode renders authoritative employee projection and management bridge
   await expect(employeePanel).toBeHidden();
   await expect(employeeSelector).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByText("Business outcome loop")).toBeVisible();
+  expect(browserErrors, "browser console/page errors during World viewport smoke").toEqual([]);
 });
 
 
