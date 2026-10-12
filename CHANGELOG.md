@@ -1,3 +1,10 @@
+## 2026-10-12 — World V2 visual review preparation
+
+- PR #1046 stays Draft/unmerged at exact head `8f5be2a45200d75b5a2f09fe71d6c69b54de319b`; CI, CodeQL, production infrastructure, HA recovery and DAST all passed on the exact head.
+- Added Playwright screenshot capture and CI artifact upload for desktop (1440×900) and mobile (390×844) World Mode views. Artifact: `world-visual-review-6b9d9afd2b567487f624e3e7e258e2ab08991e4a`, [CI run](https://github.com/ijoolaie/AI-Employee/actions/runs/38211542565).
+- Improved responsive camera/fog framing, fixed overlay control placement, mobile viewport height, and first-pass static furniture collision checks. Screenshot review still shows procedural characters/furniture and remaining signage/layout limitations; no visual acceptance is claimed.
+- Updated current status, priorities and master handoff. Latest certified release remains `v1.4.17`.
+
 ## 2026-10-11 — PR #1041 and #1042 merged; visual PR disposition
 
 - PR #1041 merged at `e1633e9bf000af045e2571d930b4eeefec30883f`. Exact PR head passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation and Ephemeral DAST. Renewal remains an order request; server authorization stays fail-closed.
