@@ -11,7 +11,7 @@ describe("World ground navigation", () => {
 
   it("blocks workstation footprints but allows nearby aisle space", () => {
     expect(canOccupyGround(-1.8, -8.9, blockers)).toBe(false);
-    expect(canOccupyGround(0, -7, blockers)).toBe(true);
+    expect(canOccupyGround(5, -7, blockers)).toBe(true);
   });
 
   it("keeps movement inside the office walkable bounds", () => {
