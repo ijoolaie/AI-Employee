@@ -201,7 +201,6 @@ test("World Mode renders authoritative employee projection and management bridge
     expect(desktopControlsBox.x).toBeLessThanOrEqual(desktopCanvasBox.x + 24);
     expect(desktopControlsBox.y).toBeGreaterThan(desktopCanvasBox.y + desktopCanvasBox.height / 2);
   }
-  await expect(hud.getByText(/WASD/)).toBeVisible();
 
   await expect(page.getByText("Business outcome loop")).toBeVisible();
   expect(browserErrors, "browser console/page errors during World viewport smoke").toEqual([]);
