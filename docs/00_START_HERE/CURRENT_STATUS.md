@@ -1,3 +1,13 @@
+## Latest execution update — 2026-10-12, PR #1059 opened from current main
+
+- PR [#1059](https://github.com/ijoolaie/AI-Employee/pull/1059) was created from current main (`de053b24d045d17d0e447e29140cfd4728ade4c8`) to port the unique camera-pan and executive-motion changes from the diverged #1055 without carrying its stale branch history.
+- #1059 includes the tailored articulated executive avatar, camera-projected ground-plane pan utility with unit tests, more responsive time-based movement while preserving current-main axis-separated furniture collision checks, smoother camera follow, walk-cycle cadence adjustment, and cached-texture cleanup protection.
+- Latest exact head checked in this pass: `05e6bee5534a242bb567f00e6c7ab7e24cb2d660`. At check time, HA recovery was in progress, CodeQL queued, and CI / infrastructure / DAST pending. No test result is claimed until these runs finish.
+- #1055 remains stale/diverged until #1059's unique scope and checks are reviewed. Its earlier green checks are not transferable to #1059. Once the new branch's complete diff is verified, close #1055 as superseded to prevent competing branches.
+- Current-main `WorldViewport.tsx` still has no GLTF/GLB loader reference for regular employee characters. Confirm actual runtime usage of the GLB asset before calling employee asset integration complete.
+- Remaining gates: fix and review actual desktop/mobile overlay and label clipping; verify employee asset runtime loading/fallback/disposal; implement obstacle-aware navigation and intentional overflow handling; review walk quality/reduced motion; pass exact-head checks and inspect the screenshot artifact.
+
+---
 ## Current mainline reconciliation — 2026-10-12 after World PR #1057 merge
 
 - Current `main` includes PR #1057 at merge commit `de053b24d045d17d0e447e29140cfd4728ade4c8`. That implementation adds the warmer office palette, rear window blinds, responsive framing and a GLB employee asset with attribution/license information. Do not describe #1057 as still open or ask for its original changes to be implemented again.
