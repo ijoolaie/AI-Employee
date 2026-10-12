@@ -719,6 +719,12 @@ export function WorldViewport({
       // The world remains perspective/isometric; only the camera pull-back adapts to aspect ratio.
       const aspect = Math.max(0.35, camera.aspect || 1);
       const effectiveDistance = distance * (1.9 / Math.min(1.9, aspect));
+      const fogScale = effectiveDistance / distance;
+      if (scene.fog instanceof THREE.Fog) {
+        // Keep the scene visible when portrait framing pulls the camera back.
+        scene.fog.near = 42 * fogScale;
+        scene.fog.far = 86 * fogScale;
+      }
       camera.position.set(target.x + effectiveDistance * 0.58, effectiveDistance * 1.08, target.z + effectiveDistance * 0.68);
       camera.lookAt(target.x, 0.8, target.z);
       camera.updateProjectionMatrix();
