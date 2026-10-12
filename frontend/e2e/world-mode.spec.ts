@@ -81,10 +81,38 @@ test("World Mode renders authoritative employee projection and management bridge
       }),
     });
   });
+  await page.route("**/world-commerce/catalogue", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: [{ code: "room-e2e", item_type: "room", is_free: false }] }),
+    });
+  });
+  await page.route("**/world-commerce/room-inventory", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true, data: [] }),
+    });
+  });
+  await page.route("**/world-commerce/room-inventory/room-e2e/access", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: { item_code: "room-e2e", granted: false, reason: "not_owned", room_instance_id: null, expires_at: null },
+      }),
+    });
+  });
 
   const browserErrors: string[] = [];
+  const serverErrors: string[] = [];
   page.on("pageerror", (error) => browserErrors.push(error.message));
   page.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
+  page.on("response", (response) => {
+    if (response.status() >= 500) serverErrors.push(`${response.status()} ${response.url()}`);
+  });
 
   await page.goto("/world");
   await expect(page.getByRole("heading", { name: "World Mode" })).toBeVisible();
@@ -148,6 +176,7 @@ test("World Mode renders authoritative employee projection and management bridge
   await expect(employeeSelector).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByText("Business outcome loop")).toBeVisible();
   expect(browserErrors, "browser console/page errors during World viewport smoke").toEqual([]);
+  expect(serverErrors, "unexpected 5xx responses during World viewport smoke").toEqual([]);
 });
 
 
