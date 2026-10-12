@@ -313,7 +313,8 @@ function addCEOAvatar(scene: any) {
   marker.rotation.x = -Math.PI / 2;
   marker.position.y = 0.07;
   avatar.add(marker);
-  avatar.position.set(0, 0, 3.5);
+  // Spawn just beyond the lobby coffee-table footprint so collision never traps the player at startup.
+  avatar.position.set(0, 0, 4.4);
   scene.add(avatar);
   return avatar;
 }
