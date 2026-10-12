@@ -897,7 +897,11 @@ export function WorldViewport({
         if (object.material) {
           const materials = Array.isArray(object.material) ? object.material : [object.material];
           for (const material of materials) {
-            if (material.map) material.map.dispose();
+            // Shared procedural surface maps live in a module cache and must survive
+            // viewport unmount/remount cycles; only dispose per-object maps here.
+            if (material.map && !Array.from(surfaceTextureCache.values()).includes(material.map as THREE.CanvasTexture)) {
+              material.map.dispose();
+            }
             material.dispose?.();
           }
         }
