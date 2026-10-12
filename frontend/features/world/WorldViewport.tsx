@@ -547,7 +547,7 @@ function canOccupyGround(x: number, z: number, blockers: WalkBlocker[], radius =
 function buildOffice(scene: any) {
   const floor = new THREE.Group();
   scene.add(floor);
-  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e, { roughness: 0.92 });
+  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0xd0a092, { roughness: 0.92 });
   // Batch the checkerboard planks into two instanced meshes to reduce hundreds of draw calls.
   const lightTiles = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1.96, 0.025, 1.96),
