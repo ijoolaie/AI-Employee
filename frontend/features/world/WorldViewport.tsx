@@ -89,7 +89,7 @@ function makeLabel(text: string, color: string) {
   ctx.font = "bold 34px system-ui, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillText(text, 256, 64);
+  ctx.fillText(text, 256, 64, 460);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
@@ -135,53 +135,99 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
 }
 
 function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
-  // A seated, desk-facing character reads more like an office-management game than a standing token.
+  // Build a warm, toy-like 3D character with an individually varied face, hairstyle and work outfit.
   const group = new THREE.Group();
   group.userData.employeeId = employee.id;
   parent.add(group);
 
-  const palette = [0x557ca5, 0x6b9b82, 0xc78360, 0x8b78b6, 0x4e9aab, 0xc28b4c];
-  const color = palette[Math.abs(hash(employee.id)) % palette.length];
+  const outfitPalette = [0x557ca5, 0x6b9b82, 0xc78360, 0x8b78b6, 0x4e9aab, 0xc28b4c];
+  const skinPalette = [0xf0c8a5, 0xdca47e, 0xb97855, 0xf3d8bd, 0x8f5d45, 0xe8b594];
+  const hairPalette = [0x51413b, 0x302c2b, 0x7b5034, 0x9b744a, 0x454b55, 0x6b3731];
+  const seed = Math.abs(hash(employee.id));
+  const color = outfitPalette[seed % outfitPalette.length];
+  const skin = skinPalette[Math.floor(seed / 7) % skinPalette.length];
+  const hair = hairPalette[Math.floor(seed / 13) % hairPalette.length];
+  const hairstyle = Math.floor(seed / 19) % 4;
 
-  // Compact stylized body, positioned in the chair in front of the monitor.
-  cylinder(group, 0.34, 0.42, 0.78, [0, 1.0, 0.02], color, 14);
-  cylinder(group, 0.13, 0.15, 0.2, [0, 1.39, -0.01], 0xf0c8a5, 10);
-  sphere(group, 0.34, [0, 1.67, -0.02], 0xf0c8a5, [1, 1.03, 0.96]);
-  // Hair cap, ears, nose and shirt details make each procedural worker read as a person.
-  sphere(group, 0.37, [0, 1.86, -0.08], 0x51413b, [1, 0.52, 0.95]);
-  sphere(group, 0.19, [0, 1.79, 0.235], 0x51413b, [1.25, 0.48, 0.45]);
-  box(group, [0.16, 0.035, 0.045], [-0.115, 1.75, 0.287], 0x51413b);
-  box(group, [0.16, 0.035, 0.045], [0.115, 1.75, 0.287], 0x51413b);
-  sphere(group, 0.075, [-0.325, 1.65, -0.015], 0xe8b594, [0.75, 1, 0.8]);
-  sphere(group, 0.075, [0.325, 1.65, -0.015], 0xe8b594, [0.75, 1, 0.8]);
-  sphere(group, 0.052, [0, 1.61, 0.305], 0xe8b594, [0.8, 0.85, 1.1]);
-  box(group, [0.34, 0.09, 0.08], [0, 1.34, 0.32], 0xf0c8a5);
-  box(group, [0.11, 0.24, 0.055], [0, 1.19, 0.39], 0xf3d6a0);
-  sphere(group, 0.045, [-0.115, 1.68, 0.285], 0x26313a, [0.8, 1, 0.5]);
-  sphere(group, 0.045, [0.115, 1.68, 0.285], 0x26313a, [0.8, 1, 0.5]);
+  // Rounded torso, shoulders and a contrasting collar make the silhouette read as a character, not a token.
+  cylinder(group, 0.34, 0.42, 0.78, [0, 1.0, 0.02], color, 18);
+  sphere(group, 0.22, [-0.27, 1.25, 0.02], color, [1.1, 0.82, 1]);
+  sphere(group, 0.22, [0.27, 1.25, 0.02], color, [1.1, 0.82, 1]);
+  cylinder(group, 0.13, 0.15, 0.2, [0, 1.39, -0.01], skin, 12);
+  // Shirt collar, tie/scarf and a small employee badge add readable workwear detail.
+  box(group, [0.16, 0.12, 0.09], [-0.095, 1.34, 0.31], 0xf5eee2);
+  box(group, [0.16, 0.12, 0.09], [0.095, 1.34, 0.31], 0xf5eee2);
+  box(group, [0.075, 0.24, 0.045], [0, 1.22, 0.365], seed % 2 ? 0xe9c46a : 0xd7e7f0);
+  box(group, [0.12, 0.14, 0.035], [0.23, 1.08, 0.345], 0xf4eee1);
+  box(group, [0.055, 0.055, 0.025], [0.23, 1.08, 0.368], 0x4f9b87);
 
-  // Bent legs and small shoes create a seated silhouette.
-  cylinder(group, 0.14, 0.15, 0.42, [-0.2, 0.48, 0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
-  cylinder(group, 0.14, 0.15, 0.42, [0.2, 0.48, 0.05], 0x33445b, 10).rotation.x = Math.PI / 2;
+  // Head and ears use a wider, softly rounded silhouette.
+  sphere(group, 0.35, [0, 1.68, -0.02], skin, [1.02, 1.04, 0.98]);
+  sphere(group, 0.075, [-0.335, 1.65, -0.015], skin, [0.78, 1, 0.82]);
+  sphere(group, 0.075, [0.335, 1.65, -0.015], skin, [0.78, 1, 0.82]);
+
+  // Four deterministic hairstyles vary the cast while remaining inexpensive procedural geometry.
+  sphere(group, 0.37, [0, 1.86, -0.085], hair, [1.02, 0.52, 0.98]);
+  if (hairstyle === 0) {
+    sphere(group, 0.19, [0, 1.79, 0.235], hair, [1.25, 0.48, 0.45]);
+    sphere(group, 0.12, [-0.25, 1.78, 0.12], hair, [0.85, 0.95, 0.72]);
+  } else if (hairstyle === 1) {
+    sphere(group, 0.2, [-0.12, 1.91, 0.15], hair, [1.05, 0.68, 0.62]);
+    sphere(group, 0.17, [0.18, 1.91, 0.13], hair, [1.0, 0.6, 0.6]);
+  } else if (hairstyle === 2) {
+    sphere(group, 0.12, [-0.29, 1.7, 0.04], hair, [0.75, 1.15, 0.7]);
+    sphere(group, 0.12, [0.29, 1.7, 0.04], hair, [0.75, 1.15, 0.7]);
+    sphere(group, 0.16, [0.02, 1.96, -0.02], hair, [1.0, 0.52, 0.9]);
+  } else {
+    sphere(group, 0.16, [0.12, 1.96, 0.12], hair, [1.05, 0.55, 0.8]);
+    sphere(group, 0.12, [-0.22, 1.86, 0.16], hair, [0.8, 0.75, 0.6]);
+  }
+
+  // Layered eyes with tiny catchlights read more clearly at an isometric camera distance.
+  const irisPalette = [0x4d786e, 0x4a617f, 0x765342, 0x596b87];
+  const iris = irisPalette[Math.floor(seed / 23) % irisPalette.length];
+  for (const side of [-1, 1]) {
+    sphere(group, 0.073, [side * 0.12, 1.69, 0.292], 0xfffbf3, [1, 1.05, 0.5]);
+    sphere(group, 0.041, [side * 0.115, 1.685, 0.326], iris, [0.95, 1.1, 0.5]);
+    sphere(group, 0.022, [side * 0.115, 1.686, 0.345], 0x202a32, [0.9, 1.05, 0.5]);
+    sphere(group, 0.012, [side * 0.128, 1.704, 0.354], 0xffffff, [1, 1, 0.5]);
+    box(group, [0.14, 0.028, 0.035], [side * 0.12, 1.79, 0.285], hair);
+  }
+  sphere(group, 0.048, [0, 1.61, 0.325], skin, [0.78, 0.82, 1.1]);
+  const smile = new THREE.Mesh(
+    new THREE.TorusGeometry(0.073, 0.012, 6, 18, Math.PI),
+    new THREE.MeshStandardMaterial({ color: 0x9a5c51, roughness: 0.9 }),
+  );
+  // Flip the half-ring so its ends rise gently into a friendly smile.
+  smile.rotation.z = Math.PI;
+  smile.scale.set(1.2, 0.72, 1);
+  smile.position.set(0, 1.56, 0.326);
+  group.add(smile);
+  // Subtle cheeks make the style friendly without turning the employees into oversized mascots.
+  sphere(group, 0.045, [-0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
+  sphere(group, 0.045, [0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
+
+  // Bent legs and shoes create a compact seated silhouette beneath the desk.
+  cylinder(group, 0.14, 0.15, 0.42, [-0.2, 0.48, 0.05], 0x33445b, 12).rotation.x = Math.PI / 2;
+  cylinder(group, 0.14, 0.15, 0.42, [0.2, 0.48, 0.05], 0x33445b, 12).rotation.x = Math.PI / 2;
   box(group, [0.25, 0.13, 0.34], [-0.2, 0.2, 0.3], 0x293545);
   box(group, [0.25, 0.13, 0.34], [0.2, 0.2, 0.3], 0x293545);
 
-  // Arms angle toward the desk so the employee appears to be using the workstation.
-  const leftSleeve = cylinder(group, 0.12, 0.15, 0.34, [-0.29, 1.29, 0.15], color, 10);
+  // Sleeves and skin-toned forearms angle toward the keyboard.
+  const leftSleeve = cylinder(group, 0.12, 0.15, 0.34, [-0.29, 1.29, 0.15], color, 12);
   leftSleeve.rotation.x = 0.72;
   leftSleeve.rotation.z = -0.24;
-  const rightSleeve = cylinder(group, 0.12, 0.15, 0.34, [0.29, 1.29, 0.15], color, 10);
+  const rightSleeve = cylinder(group, 0.12, 0.15, 0.34, [0.29, 1.29, 0.15], color, 12);
   rightSleeve.rotation.x = 0.72;
   rightSleeve.rotation.z = 0.24;
-  // Raise the forearms to desk height and extend the hands over the keyboard plane.
-  const leftArm = cylinder(group, 0.075, 0.09, 0.3, [-0.31, 1.4, 0.48], 0xf0c8a5, 10);
+  const leftArm = cylinder(group, 0.075, 0.09, 0.3, [-0.31, 1.4, 0.48], skin, 12);
   leftArm.rotation.x = 0.72;
   leftArm.rotation.z = -0.18;
-  const rightArm = cylinder(group, 0.075, 0.09, 0.3, [0.31, 1.4, 0.48], 0xf0c8a5, 10);
+  const rightArm = cylinder(group, 0.075, 0.09, 0.3, [0.31, 1.4, 0.48], skin, 12);
   rightArm.rotation.x = 0.72;
   rightArm.rotation.z = 0.18;
-  sphere(group, 0.09, [-0.31, 1.46, 0.77], 0xf0c8a5, [1, 0.7, 1.1]);
-  sphere(group, 0.09, [0.31, 1.46, 0.77], 0xf0c8a5, [1, 0.7, 1.1]);
+  sphere(group, 0.09, [-0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
+  sphere(group, 0.09, [0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
 
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.82, 0.05, 8, 32),
@@ -228,18 +274,47 @@ function addCEOAvatar(scene: any) {
   sphere(avatar, 0.31, [0, 1.79, -0.04], 0x3d302c, [1, 0.45, 0.95]);
   box(avatar, [0.22, 0.045, 0.045], [-0.09, 1.64, 0.26], 0x27313b);
   box(avatar, [0.22, 0.045, 0.045], [0.09, 1.64, 0.26], 0x27313b);
-  const legs = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.48, 0.24), new THREE.MeshStandardMaterial({ color: 0x26384a }));
-  legs.position.set(-0.14, 0.26, 0);
-  legs.castShadow = true;
-  avatar.add(legs);
-  const secondLeg = legs.clone();
-  secondLeg.position.x = 0.14;
-  avatar.add(secondLeg);
+  // Articulated hips and shoulders let the avatar walk instead of sliding as one rigid object.
+  const limbMaterial = new THREE.MeshStandardMaterial({ color: 0x26384a, roughness: 0.78 });
+  const leftLeg = new THREE.Group();
+  leftLeg.position.set(-0.14, 0.5, 0);
+  avatar.add(leftLeg);
+  const leftThigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.105, 0.25, 3, 8), limbMaterial);
+  leftThigh.position.y = -0.13;
+  leftThigh.castShadow = true;
+  leftLeg.add(leftThigh);
+  const leftFoot = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), new THREE.MeshStandardMaterial({ color: 0x202a36, roughness: 0.72 }));
+  leftFoot.position.set(0, -0.29, 0.1);
+  leftFoot.castShadow = true;
+  leftLeg.add(leftFoot);
+  const rightLeg = leftLeg.clone();
+  rightLeg.position.x = 0.14;
+  avatar.add(rightLeg);
+
+  const leftArm = new THREE.Group();
+  leftArm.position.set(-0.36, 1.24, 0);
+  avatar.add(leftArm);
+  const armGeometry = new THREE.CapsuleGeometry(0.085, 0.29, 3, 8);
+  const armMaterial = new THREE.MeshStandardMaterial({ color: 0x287f87, roughness: 0.76 });
+  const leftArmMesh = new THREE.Mesh(armGeometry, armMaterial);
+  leftArmMesh.position.y = -0.19;
+  leftArmMesh.castShadow = true;
+  leftArm.add(leftArmMesh);
+  const hand = new THREE.Mesh(new THREE.SphereGeometry(0.085, 12, 10), new THREE.MeshStandardMaterial({ color: 0xf0c8a5, roughness: 0.82 }));
+  hand.position.set(0, -0.37, 0.025);
+  leftArm.add(hand);
+  const rightArm = leftArm.clone();
+  rightArm.position.x = 0.36;
+  avatar.add(rightArm);
+  avatar.userData.walkRig = { leftLeg, rightLeg, leftArm, rightArm };
+  avatar.userData.walkPhase = 0;
+  avatar.userData.body = body;
   const marker = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.045, 8, 28), new THREE.MeshBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.9 }));
   marker.rotation.x = -Math.PI / 2;
   marker.position.y = 0.07;
   avatar.add(marker);
-  avatar.position.set(0, 0, 3.5);
+  // Spawn just beyond the lobby coffee-table footprint so collision never traps the player at startup.
+  avatar.position.set(0, 0, 4.4);
   scene.add(avatar);
   return avatar;
 }
@@ -349,6 +424,39 @@ function hash(value: string) {
   return result;
 }
 
+type WalkBlocker = { x: number; z: number; halfWidth: number; halfDepth: number };
+
+// Conservative ground-plane footprints for fixed office furniture. The player resolves
+// X and Z independently so movement slides along furniture edges instead of tunnelling.
+function getWalkBlockers(): WalkBlocker[] {
+  const desks: WalkBlocker[] = DEPARTMENTS.flatMap((dept) =>
+    [-2.15, 1.0].flatMap((zOffset) =>
+      [-1.8, 1.8].map((xOffset) => ({
+        x: dept.x + xOffset,
+        z: dept.z + zOffset + 0.25,
+        halfWidth: 1.68,
+        halfDepth: 1.45,
+      })),
+    ),
+  );
+  return [
+    ...desks,
+    { x: 0, z: 0.1, halfWidth: 2.35, halfDepth: 0.95 }, // reception island
+    { x: -8, z: 1.6, halfWidth: 2.25, halfDepth: 1.55 }, // sofa and arms
+    { x: 0, z: 2.75, halfWidth: 0.95, halfDepth: 0.95 }, // coffee table
+    { x: -11.5, z: 2.2, halfWidth: 0.82, halfDepth: 0.82 },
+    { x: 11.5, z: 2.2, halfWidth: 0.82, halfDepth: 0.82 },
+  ];
+}
+
+function canOccupyGround(x: number, z: number, blockers: WalkBlocker[], radius = 0.43): boolean {
+  if (x < -16 || x > 16 || z < -10 || z > 9.2) return false;
+  return !blockers.some((item) =>
+    Math.abs(x - item.x) < item.halfWidth + radius &&
+    Math.abs(z - item.z) < item.halfDepth + radius,
+  );
+}
+
 function buildOffice(scene: any) {
   const floor = new THREE.Group();
   scene.add(floor);
@@ -356,12 +464,12 @@ function buildOffice(scene: any) {
   // Batch the checkerboard planks into two instanced meshes to reduce hundreds of draw calls.
   const lightTiles = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1.96, 0.025, 1.96),
-    new THREE.MeshStandardMaterial({ color: 0xc99b6d, roughness: 0.78 }),
+    new THREE.MeshStandardMaterial({ color: 0xd7b1a2, roughness: 0.82 }),
     150,
   );
   const darkTiles = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1.96, 0.025, 1.96),
-    new THREE.MeshStandardMaterial({ color: 0xb9895c, roughness: 0.78 }),
+    new THREE.MeshStandardMaterial({ color: 0xc88f80, roughness: 0.84 }),
     150,
   );
   const tileTransform = new THREE.Object3D();
@@ -393,7 +501,25 @@ function buildOffice(scene: any) {
     box(scene, [0.09, 2.9, 0.12], [x - 1.98, 2.55, -14.72], 0xf7f3e9);
     box(scene, [0.09, 2.9, 0.12], [x + 1.98, 2.55, -14.72], 0xf7f3e9);
   }
+  // Horizontal glazing rails and fine mullions add scale to the rear windows.
+  for (let x = -17.5; x <= 17.5; x += 5) {
+    box(scene, [3.9, 0.075, 0.14], [x, 2.45, -14.67], 0xf7f3e9, { castShadow: false });
+    box(scene, [3.9, 0.055, 0.14], [x, 3.73, -14.67], 0xf7f3e9, { castShadow: false });
+    box(scene, [0.045, 2.55, 0.16], [x, 2.55, -14.63], 0x7e9eae, { castShadow: false });
+    box(scene, [3.9, 0.11, 0.28], [x, 1.12, -14.57], 0xd5c8b4, { castShadow: false });
+  }
   box(scene, [40, 0.18, 0.5], [0, 0.12, -14.72], 0xd1cfc6);
+
+
+  // Warm timber blinds echo the mobile reference while leaving enough glazing visible to read as windows.
+  for (let x = -17.5; x <= 17.5; x += 5) {
+    for (let slat = 0; slat < 6; slat += 1) {
+      const y = 2.82 + slat * 0.17;
+      box(scene, [3.55, 0.055, 0.13], [x, y, -14.53], slat % 2 === 0 ? 0xe5c39a : 0xd7ad7e, { castShadow: false, receiveShadow: false });
+    }
+    // A short pull cord gives the blind assembly a crafted, office-interior detail.
+    box(scene, [0.035, 0.62, 0.035], [x + 1.52, 2.48, -14.48], 0xb58b62, { castShadow: false, receiveShadow: false });
+  }
 
   // Low pastel department platforms make the floor plan readable without hiding the characters.
   for (const dept of DEPARTMENTS) {
@@ -407,12 +533,81 @@ function buildOffice(scene: any) {
     // Rounded-looking partitions and plant pots around each team area.
     box(scene, [8.8, 0.8, 0.16], [dept.x, 0.45, dept.z + 4], 0xb8b6ab);
     box(scene, [0.16, 0.8, 7.9], [dept.x - 4.5, 0.45, dept.z], 0xb8b6ab);
-    cylinder(scene, 0.38, 0.42, 0.52, [dept.x + 3.55, 0.32, dept.z + 2.75], 0xc17f55, 12);
-    cylinder(scene, 0.11, 0.05, 1.2, [dept.x + 3.55, 1.05, dept.z + 2.75], 0x4f8b65, 8);
-    sphere(scene, 0.5, [dept.x + 3.25, 1.7, dept.z + 2.7], 0x68a77a, [1.1, 1.2, 0.85]);
-    sphere(scene, 0.42, [dept.x + 3.8, 1.55, dept.z + 2.45], 0x76b184, [1, 1.1, 0.9]);
-    addDesk(scene, dept.x - 1.65, dept.z - 0.2, dept.accent);
-    addDesk(scene, dept.x + 1.65, dept.z + 1.5, dept.accent);
+    // Keep decor in the back-right corner, away from the desk's chair and keyboard approach.
+    const plantX = dept.x - 3.45;
+    const plantZ = dept.z + 2.95;
+    cylinder(scene, 0.38, 0.42, 0.52, [plantX, 0.32, plantZ], 0xc17f55, 12);
+    cylinder(scene, 0.11, 0.05, 1.2, [plantX, 1.05, plantZ], 0x4f8b65, 8);
+    sphere(scene, 0.5, [plantX - 0.3, 1.7, plantZ - 0.05], 0x68a77a, [1.1, 1.2, 0.85]);
+    sphere(scene, 0.42, [plantX + 0.25, 1.55, plantZ + 0.2], 0x76b184, [1, 1.1, 0.9]);
+    // A compact 2x2 workstation grid gives up to four employees a real desk/chair pair.
+    for (const xOffset of [-1.8, 1.8]) {
+      for (const zOffset of [-2.15, 1.0]) {
+        addDesk(scene, dept.x + xOffset, dept.z + zOffset, dept.accent);
+      }
+    }
+  }
+
+  // A clear central circulation spine and inset team borders give the HQ a designed, game-like floor plan.
+  box(scene, [30, 0.045, 2.8], [0, 0.11, -0.5], 0xd7d4c9, { castShadow: false, receiveShadow: false });
+  box(scene, [29.8, 0.025, 0.1], [0, 0.145, -1.85], 0xb8b8b0, { castShadow: false, receiveShadow: false });
+  box(scene, [29.8, 0.025, 0.1], [0, 0.145, 0.85], 0xb8b8b0, { castShadow: false, receiveShadow: false });
+
+  // Department platforms receive a colored perimeter, corner markers and task-light fixtures.
+  for (const dept of DEPARTMENTS) {
+    const edgeY = 0.105;
+    const edgeColor = dept.accent;
+    box(scene, [9.1, 0.045, 0.12], [dept.x, edgeY, dept.z - 4.02], edgeColor, { emissive: edgeColor, emissiveIntensity: 0.08, castShadow: false });
+    box(scene, [9.1, 0.045, 0.12], [dept.x, edgeY, dept.z + 4.02], edgeColor, { emissive: edgeColor, emissiveIntensity: 0.08, castShadow: false });
+    box(scene, [0.12, 0.045, 7.95], [dept.x - 4.54, edgeY, dept.z], edgeColor, { emissive: edgeColor, emissiveIntensity: 0.08, castShadow: false });
+    box(scene, [0.12, 0.045, 7.95], [dept.x + 4.54, edgeY, dept.z], edgeColor, { emissive: edgeColor, emissiveIntensity: 0.08, castShadow: false });
+
+    // A subtle round meeting marker makes each team zone distinct without inventing activity metrics.
+    const rug = new THREE.Mesh(
+      new THREE.CircleGeometry(1.05, 32),
+      new THREE.MeshStandardMaterial({ color: edgeColor, roughness: 0.94, transparent: true, opacity: 0.2 }),
+    );
+    rug.rotation.x = -Math.PI / 2;
+    rug.position.set(dept.x - 3.05, 0.105, dept.z - 2.55);
+    rug.receiveShadow = false;
+    scene.add(rug);
+
+    // Slim pendant rods and warm light housings add depth while keeping the top-down view open.
+    box(scene, [0.055, 0.9, 0.055], [dept.x - 3.25, 3.35, dept.z - 2.85], 0x647487, { castShadow: false });
+    box(scene, [0.9, 0.12, 0.42], [dept.x - 3.25, 2.86, dept.z - 2.85], 0xffe3a1, { emissive: 0xffc85a, emissiveIntensity: 0.35, castShadow: false });
+  }
+
+  // Window mullions and structural columns make the perimeter feel like a coherent office rather than a flat box.
+  box(scene, [0.35, 4.7, 0.5], [-19.65, 2.05, 0], 0xe7e4dc);
+  box(scene, [0.35, 4.7, 0.5], [19.65, 2.05, 0], 0xe7e4dc);
+  for (const z of [-10, -2, 6, 13]) {
+    box(scene, [0.3, 4.2, 0.34], [-19.35, 1.95, z], 0xd0d0c8);
+    box(scene, [0.3, 4.2, 0.34], [19.35, 1.95, z], 0xd0d0c8);
+  }
+
+  // Framed abstract artwork on the side walls adds a finished office feel without covering the windows.
+  for (const side of [-1, 1]) {
+    for (const z of [-6, 2, 10]) {
+      const x = side * 19.2;
+      box(scene, [0.12, 1.05, 2.65], [x, 3.25, z], 0xf4efe4, { castShadow: false });
+      box(scene, [0.06, 0.82, 2.42], [x + side * 0.07, 3.25, z], 0xc5d0d1, { castShadow: false });
+      box(scene, [0.035, 0.12, 1.0], [x + side * 0.11, 3.43, z - 0.32], 0x7b9d9b, { castShadow: false });
+      box(scene, [0.035, 0.12, 0.68], [x + side * 0.11, 3.16, z + 0.38], 0xd6ae78, { castShadow: false });
+    }
+  }
+
+  // A warm inset border visually finishes the exposed front edge of the office floor.
+  box(scene, [39.5, 0.08, 0.16], [0, -0.02, 15.28], 0xd5b58d, { castShadow: false, receiveShadow: false });
+  box(scene, [0.16, 0.08, 30.5], [-19.9, -0.02, 0], 0xd5b58d, { castShadow: false, receiveShadow: false });
+  box(scene, [0.16, 0.08, 30.5], [19.9, -0.02, 0], 0xd5b58d, { castShadow: false, receiveShadow: false });
+
+  // A few compact lobby details establish scale and make the entrance read as a destination.
+  for (const x of [-11.5, 11.5]) {
+    // The lobby planters sit outside the sofa/reception footprint and preserve a clear approach.
+    cylinder(scene, 0.52, 0.56, 0.38, [x, 0.27, 2.2], 0xb8a38b, 18);
+    cylinder(scene, 0.1, 0.07, 1.25, [x, 1.05, 2.2], 0x4f8b65, 10);
+    sphere(scene, 0.48, [x - 0.18, 1.78, 2.2], 0x6fa77b, [1, 1.12, 0.9]);
+    sphere(scene, 0.38, [x + 0.2, 1.62, 2.38], 0x86b987, [1.05, 1.1, 0.9]);
   }
 
   // Reception island, sofa and meeting table add a recognizable HQ focal point.
@@ -421,6 +616,26 @@ function buildOffice(scene: any) {
   box(scene, [4.2, 0.9, 0.22], [-8, 0.52, 1.6], 0x6e8999);
   box(scene, [1.1, 0.55, 2.5], [-9.55, 0.32, 1.5], 0x809aab);
   box(scene, [1.1, 0.55, 2.5], [-6.45, 0.32, 1.5], 0x809aab);
+  // A circular inset rug and low coffee table soften the reception zone and distinguish it from desk rows.
+  const lobbyRug = new THREE.Mesh(
+    new THREE.CircleGeometry(3.1, 48),
+    new THREE.MeshStandardMaterial({ color: 0x78949b, roughness: 0.96 }),
+  );
+  lobbyRug.rotation.x = -Math.PI / 2;
+  lobbyRug.position.set(0, 0.08, 0.15);
+  lobbyRug.receiveShadow = true;
+  scene.add(lobbyRug);
+  const lobbyRugInset = new THREE.Mesh(
+    new THREE.RingGeometry(2.55, 2.68, 48),
+    new THREE.MeshStandardMaterial({ color: 0xe1c49a, roughness: 0.9 }),
+  );
+  lobbyRugInset.rotation.x = -Math.PI / 2;
+  lobbyRugInset.position.set(0, 0.09, 0.15);
+  scene.add(lobbyRugInset);
+  cylinder(scene, 0.72, 0.76, 0.16, [0, 0.28, 2.75], 0xc99564, 32);
+  cylinder(scene, 0.14, 0.16, 0.24, [0, 0.1, 2.75], 0x806044, 16);
+  cylinder(scene, 0.12, 0.12, 0.025, [0, 0.375, 2.75], 0xf1e4d0, 16);
+
   const title = makeLabel("AI COMPANY  •  HEADQUARTERS", "#f5d9a4");
   if (title) {
     title.position.set(0, 4.3, 0);
@@ -507,11 +722,22 @@ export function WorldViewport({
     scene.background = new THREE.Color(0x182331);
     scene.fog = new THREE.Fog(0x182331, 42, 86);
 
-    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 180);
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 220);
     const target = new THREE.Vector3(0, 0, 1.5);
     let distance = 35;
     const updateCamera = () => {
-      camera.position.set(target.x + distance * 0.58, distance * 1.08, target.z + distance * 0.68);
+      // Desktop keeps the full HQ overview. Portrait screens intentionally frame a closer,
+      // pannable section; increasing camera distance on narrow screens made the office tiny.
+      const aspect = Math.max(0.35, camera.aspect || 1);
+      const responsiveScale = aspect < 1 ? 1.35 : 1;
+      const effectiveDistance = distance * responsiveScale;
+      const fogScale = effectiveDistance / distance;
+      if (scene.fog instanceof THREE.Fog) {
+        // Keep fog bounds proportional to the responsive camera distance.
+        scene.fog.near = 42 * fogScale;
+        scene.fog.far = 86 * fogScale;
+      }
+      camera.position.set(target.x + effectiveDistance * 0.58, effectiveDistance * 1.08, target.z + effectiveDistance * 0.68);
       camera.lookAt(target.x, 0.8, target.z);
       camera.updateProjectionMatrix();
     };
@@ -533,6 +759,7 @@ export function WorldViewport({
 
     buildOffice(scene);
     const ceoAvatar = addCEOAvatar(scene);
+    const walkBlockers = getWalkBlockers();
     const roomEntrance = addLockedRoom(scene);
     const roomInterior = addAuthorizedRoomInterior(scene);
     const roomFurnitureGroup = roomInterior.userData.furnitureGroup;
@@ -559,17 +786,25 @@ export function WorldViewport({
         });
       }
       workers.length = 0;
-      // Seat each worker slightly forward of the chair center so their hands reach the keyboard.
-      // Characters face -Z, while the workstation controls sit on the near half of the desk.
-      const desks: [number, number][] = DEPARTMENTS.flatMap((dept) => [
-        [dept.x - 1.65, dept.z - 0.2 + 1.05] as [number, number],
-        [dept.x + 1.65, dept.z + 1.5 + 1.05] as [number, number],
-      ]);
+      // Match each employee to an actual desk/chair assembly; characters face -Z.
+      const desks: [number, number][] = DEPARTMENTS.flatMap((dept) =>
+        [-2.15, 1.0].flatMap((zOffset) =>
+          [-1.8, 1.8].map((xOffset) => [dept.x + xOffset, dept.z + zOffset + 1.05] as [number, number]),
+        ),
+      );
       next.forEach((employee, index) => {
         const worker = addWorker(scene, employee);
-        const place = desks[index % desks.length];
-        const extraRow = Math.floor(index / desks.length);
-        worker.group.position.set(place[0], 0, place[1] + extraRow * 2.3);
+        if (index < desks.length) {
+          const place = desks[index];
+          worker.group.position.set(place[0], 0, place[1]);
+        } else {
+          // Employees beyond the 20 authored stations wait in a separate front staging row
+          // rather than being silently stacked into occupied workstations.
+          const overflowIndex = index - desks.length;
+          const column = overflowIndex % 7;
+          const row = Math.floor(overflowIndex / 7);
+          worker.group.position.set(-18 + column * 6, 0, 11.5 + row * 1.25);
+        }
         worker.group.rotation.y = Math.PI + 0.2;
         worker.group.userData.homePosition = worker.group.position.clone();
         worker.group.userData.homeRotationY = worker.group.rotation.y;
@@ -633,7 +868,7 @@ export function WorldViewport({
       const height = Math.max(1, host.clientHeight);
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
-      camera.updateProjectionMatrix();
+      updateCamera();
     });
     observer.observe(host);
     renderer.setSize(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight), false);
@@ -648,16 +883,40 @@ export function WorldViewport({
       const keyboard = cameraInput.consume();
       const moveX = keyboard.moveX || mobileMove.x;
       const moveY = keyboard.moveY || mobileMove.y;
-      if (moveX || moveY) {
-        const length = Math.hypot(moveX, moveY) || 1;
-        const stepX = (moveX / length) * delta * 0.008 * distance / 2;
-        const stepZ = (moveY / length) * delta * 0.008 * distance / 2;
-        ceoAvatar.position.x = Math.max(-16, Math.min(16, ceoAvatar.position.x + stepX));
-        ceoAvatar.position.z = Math.max(-10, Math.min(9.2, ceoAvatar.position.z + stepZ));
-        target.x = ceoAvatar.position.x;
-        target.z = ceoAvatar.position.z - 2.5;
-        ceoAvatar.rotation.y = Math.atan2(moveX, moveY || 0.0001);
-        updateCamera();
+      const seconds = delta / 1000;
+      const inputLength = Math.hypot(moveX, moveY);
+      const desiredX = inputLength > 0 ? (moveX / inputLength) * 3.8 : 0;
+      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 3.8 : 0;
+      const velocity = ceoAvatar.userData.velocity ?? (ceoAvatar.userData.velocity = new THREE.Vector2());
+      const responsiveness = inputLength > 0 ? 8 : 11;
+      velocity.lerp(new THREE.Vector2(desiredX, desiredZ), Math.min(1, seconds * responsiveness));
+      const speed = velocity.length();
+      if (speed > 0.025) {
+        const nextX = ceoAvatar.position.x + velocity.x * seconds;
+        const nextZ = ceoAvatar.position.z + velocity.y * seconds;
+        // Axis-separated collision permits wall-sliding and prevents crossing fixed furniture.
+        if (canOccupyGround(nextX, ceoAvatar.position.z, walkBlockers)) ceoAvatar.position.x = nextX;
+        if (canOccupyGround(ceoAvatar.position.x, nextZ, walkBlockers)) ceoAvatar.position.z = nextZ;
+        const desiredRotation = Math.atan2(velocity.x, velocity.y);
+        const rotationDelta = Math.atan2(Math.sin(desiredRotation - ceoAvatar.rotation.y), Math.cos(desiredRotation - ceoAvatar.rotation.y));
+        ceoAvatar.rotation.y += rotationDelta * Math.min(1, seconds * 10);
+      }
+      target.x += (ceoAvatar.position.x - target.x) * Math.min(1, seconds * 5);
+      target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 5);
+      updateCamera();
+
+      const walkRig = ceoAvatar.userData.walkRig;
+      if (walkRig) {
+        const walking = speed > 0.22 && !reducedMotion.matches;
+        ceoAvatar.userData.walkPhase += speed * seconds * 2.7;
+        const phase = ceoAvatar.userData.walkPhase;
+        const swing = walking ? Math.sin(phase) * 0.48 : 0;
+        walkRig.leftLeg.rotation.x += (swing - walkRig.leftLeg.rotation.x) * Math.min(1, seconds * 12);
+        walkRig.rightLeg.rotation.x += (-swing - walkRig.rightLeg.rotation.x) * Math.min(1, seconds * 12);
+        walkRig.leftArm.rotation.x += (-swing * 0.72 - walkRig.leftArm.rotation.x) * Math.min(1, seconds * 12);
+        walkRig.rightArm.rotation.x += (swing * 0.72 - walkRig.rightArm.rotation.x) * Math.min(1, seconds * 12);
+        const bodyBob = walking ? Math.abs(Math.sin(phase * 2)) * 0.045 : 0;
+        ceoAvatar.position.y += (bodyBob - ceoAvatar.position.y) * Math.min(1, seconds * 14);
       }
       const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;
       if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }
@@ -757,7 +1016,7 @@ export function WorldViewport({
   }, []);
 
   return (
-    <div ref={viewportRef} className={`relative w-full overflow-hidden bg-slate-900 shadow-2xl ${isFullscreen ? "h-screen rounded-none border-0" : "min-h-[420px] rounded-2xl border border-slate-700/80"}`} style={{ height: isFullscreen ? "100dvh" : "min(80vh, 900px)" }}>
+    <div ref={viewportRef} className={`world-viewport relative w-full overflow-hidden bg-slate-900 shadow-2xl ${isFullscreen ? "world-viewport-fullscreen h-screen rounded-none border-0" : "min-h-[420px] rounded-2xl border border-slate-700/80"}`} style={{ height: isFullscreen ? "100dvh" : "min(68vh, 760px)" }}>
       <div ref={mountRef} className="absolute inset-0" />
       <div className="sr-only" aria-label="Office employees">
         {employees.map((employee) => (
@@ -773,18 +1032,18 @@ export function WorldViewport({
         ))}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/60 to-transparent" />
-      <div className="absolute bottom-4 left-4 z-10 flex gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1 backdrop-blur" aria-label="World camera controls">
+      <div className="z-10 flex gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur" style={{ position: "absolute", left: 16, bottom: 16, maxWidth: "calc(100% - 32px)" }} aria-label="World camera controls">
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }))} aria-label="Zoom in">+</button>
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: -0.12 } }))} aria-label="Zoom out">−</button>
         <button type="button" className="rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:reset"))}>Reset view</button>
         <button type="button" className="rounded-lg px-2 text-xs text-slate-100 hover:bg-white/10" onClick={() => { if (document.fullscreenElement === viewportRef.current) { void document.exitFullscreen(); } else { void viewportRef.current?.requestFullscreen(); } }} aria-label={isFullscreen ? "Exit fullscreen world view" : "Show world in fullscreen"} aria-pressed={isFullscreen}>{isFullscreen ? "⤢ Exit full screen" : "⛶ Full screen"}</button>
       </div>
-      <div className="pointer-events-none absolute left-4 top-4 rounded-xl border border-white/10 bg-slate-950/75 px-3 py-2 text-xs text-slate-200 backdrop-blur">
+      <div className="pointer-events-none rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-200 backdrop-blur" style={{ position: "absolute", left: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
         <div className="font-semibold tracking-wide text-amber-100">AI COMPANY HQ</div>
         <div className="mt-1 hidden sm:block text-slate-300">WASD / arrows · drag to pan · wheel to zoom</div>
         <div className="mt-1 sm:hidden text-slate-300">Joystick · drag to pan</div>
       </div>
-      <div className="pointer-events-none absolute right-4 top-4 rounded-xl border border-white/10 bg-slate-950/75 px-3 py-2 text-xs text-slate-300 backdrop-blur">
+      <div className="pointer-events-none hidden sm:block rounded-xl border border-white/10 bg-slate-950/95 px-3 py-2 text-xs text-slate-300 backdrop-blur" style={{ position: "absolute", right: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
         <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-400" />Working
         <span className="mx-2 text-slate-500">•</span>
         <span className="mr-2 inline-block h-2 w-2 rounded-full bg-amber-400" />Approval
