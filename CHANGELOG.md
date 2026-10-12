@@ -1,3 +1,10 @@
+## 2026-10-12 — Reconcile World follow-up after #1057 merge
+
+- Current `main` includes #1057 at `de053b24d045d17d0e447e29140cfd4728ade4c8`; the warm palette, rear window blinds, responsive viewport framing and employee GLB/provenance assets are already present in the merged history.
+- #1055 remains the only open PR found in the current open-PR search. Its head `004530abe6628d477a925cc1026f3b043f4c4280` is diverged from main (14 ahead, 2 behind) and its own screenshot review records top-left overlay overlap and clipped department labels. Its successful workflow results apply to that exact stale head only.
+- Source inspection found that `WorldViewport.tsx` still creates regular employees procedurally and contains no GLTF/GLB loader reference. The GLB asset's runtime integration is therefore unproven and must be verified before documenting it as delivered behavior.
+- Next: port unique pan/CEO motion/texture/test changes to a branch based on current main, fix screenshot defects, verify or wire GLB loading, add/verify obstacle-aware navigation, then rerun exact-head tests and review actual desktop/mobile artifacts. No visual acceptance or production certification is claimed.
+
 ## 2026-10-12 — World V2 screenshot review and responsive corrections
 
 - PR #1050 is the current Draft visual-review candidate at exact head `8a7de75a8d49b4e1489b00353615f7a1f3808f87`; all five exact-head workflows passed (CI 38213177840, CodeQL 38213177820, infrastructure 38213177945, HA recovery 38213177822, DAST 38213177856).
