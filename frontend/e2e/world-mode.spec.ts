@@ -89,6 +89,8 @@ test("World Mode renders authoritative employee projection and management bridge
 
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
+  // The visual review must exercise the authored local GLB, not silently pass on the primitive fallback.
+  await expect(page.locator(".world-viewport")).toHaveAttribute("data-player-asset-loaded", "true", { timeout: 10000 });
 
   // Capture real-browser visual evidence from the same deterministic fixture at both target sizes.
   // These artifacts support human review; they do not constitute visual acceptance by themselves.
