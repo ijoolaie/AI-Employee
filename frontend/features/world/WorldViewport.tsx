@@ -816,8 +816,7 @@ export function WorldViewport({
           if (object.material) {
             const materials = Array.isArray(object.material) ? object.material : [object.material];
             for (const material of materials) {
-              // Cached procedural surface maps are shared across remounts; dispose only per-object maps.
-            if (material.map && !Array.from(surfaceTextureCache.values()).includes(material.map as any)) material.map.dispose();
+              if (material.map) material.map.dispose();
               material.dispose?.();
             }
           }
