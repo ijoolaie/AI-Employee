@@ -665,7 +665,12 @@ function buildOffice(scene: any) {
     box(scene, [0.9, 0.12, 0.42], [dept.x - 3.25, 2.86, dept.z - 2.85], 0xffe3a1, { emissive: 0xffc85a, emissiveIntensity: 0.35, castShadow: false });
   }
 
-  // Window mullions and structural columns make the perimeter feel like a coherent office rather than a flat box.
+  // Continuous side-wall backing prevents the perimeter from reading as disconnected
+  // floating posts when the camera pans or crops the office at narrower aspect ratios.
+  box(scene, [0.42, 4.7, 30.5], [-19.78, 2.05, 0], 0xe8e4db, { texture: "plaster", roughness: 0.95 });
+  box(scene, [0.42, 4.7, 30.5], [19.78, 2.05, 0], 0xe8e4db, { texture: "plaster", roughness: 0.95 });
+
+  // Window mullions and structural columns finish the continuous side-wall perimeter.
   box(scene, [0.35, 4.7, 0.5], [-19.65, 2.05, 0], 0xe7e4dc);
   box(scene, [0.35, 4.7, 0.5], [19.65, 2.05, 0], 0xe7e4dc);
   for (const z of [-10, -2, 6, 13]) {
@@ -812,7 +817,10 @@ export function WorldViewport({
       // Desktop keeps the full HQ overview. Portrait screens use a closer, pannable crop
       // so department labels and employees remain legible instead of shrinking to fit the full office.
       const aspect = Math.max(0.35, camera.aspect || 1);
-      const responsiveScale = aspect < 1 ? 1.65 : 1;
+      const portrait = aspect < 1;
+      // Portrait uses a more top-down composition rather than merely zooming the
+      // desktop camera out; this reduces diagonal skew and keeps the office center readable.
+      const responsiveScale = portrait ? 1.45 : 1;
       const effectiveDistance = distance * responsiveScale;
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
@@ -820,7 +828,11 @@ export function WorldViewport({
         scene.fog.near = 42 * fogScale;
         scene.fog.far = 86 * fogScale;
       }
-      camera.position.set(target.x + effectiveDistance * 0.58, effectiveDistance * 1.08, target.z + effectiveDistance * 0.68);
+      camera.position.set(
+        target.x + effectiveDistance * (portrait ? 0.32 : 0.58),
+        effectiveDistance * (portrait ? 1.55 : 1.08),
+        target.z + effectiveDistance * (portrait ? 0.42 : 0.68),
+      );
       camera.lookAt(target.x, 0.8, target.z);
       camera.updateProjectionMatrix();
     };
