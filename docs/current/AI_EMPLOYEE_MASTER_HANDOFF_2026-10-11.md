@@ -1,6 +1,6 @@
 ## Latest verified handoff — 2026-10-12 after PR #1062 merge
 
-The current source of truth is [AI Employee World Master Handoff 2026-10-12](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md). PR #1062 merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038` after all five exact-head workflow groups passed for source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2`. The exact-head desktop/mobile screenshot artifact was reviewed and responsive framing gates were met.
+The current source of truth is [AI Employee World Master Handoff 2026-10-12](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md). PR #1062 merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038` after all five exact-head workflow groups passed for source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2`. The exact-head desktop/mobile screenshot artifact was reviewed, but later follow-up artifacts showed the desktop front edge and portrait boundary were clipped. Visual acceptance remains pending; see the current World Master Handoff and Visual Follow-up for the latest exact-head evidence.
 
 Do not infer that authored GLB employee models, full pathfinding, foot planting or a production release are complete. Characters remain procedural; collision checks cover static footprints only; latest certified release remains `v1.4.17`.
 
