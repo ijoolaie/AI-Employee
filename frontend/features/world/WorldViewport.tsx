@@ -423,6 +423,39 @@ function hash(value: string) {
   return result;
 }
 
+type WalkBlocker = { x: number; z: number; halfWidth: number; halfDepth: number };
+
+// Conservative ground-plane footprints for fixed office furniture. The player resolves
+// X and Z independently so movement slides along furniture edges instead of tunnelling.
+function getWalkBlockers(): WalkBlocker[] {
+  const desks: WalkBlocker[] = DEPARTMENTS.flatMap((dept) =>
+    [-2.15, 1.0].flatMap((zOffset) =>
+      [-1.8, 1.8].map((xOffset) => ({
+        x: dept.x + xOffset,
+        z: dept.z + zOffset + 0.25,
+        halfWidth: 1.68,
+        halfDepth: 1.45,
+      })),
+    ),
+  );
+  return [
+    ...desks,
+    { x: 0, z: 0.1, halfWidth: 2.35, halfDepth: 0.95 }, // reception island
+    { x: -8, z: 1.6, halfWidth: 2.25, halfDepth: 1.55 }, // sofa and arms
+    { x: 0, z: 2.75, halfWidth: 0.95, halfDepth: 0.95 }, // coffee table
+    { x: -11.5, z: 2.2, halfWidth: 0.82, halfDepth: 0.82 },
+    { x: 11.5, z: 2.2, halfWidth: 0.82, halfDepth: 0.82 },
+  ];
+}
+
+function canOccupyGround(x: number, z: number, blockers: WalkBlocker[], radius = 0.43): boolean {
+  if (x < -16 || x > 16 || z < -10 || z > 9.2) return false;
+  return !blockers.some((item) =>
+    Math.abs(x - item.x) < item.halfWidth + radius &&
+    Math.abs(z - item.z) < item.halfDepth + radius,
+  );
+}
+
 function buildOffice(scene: any) {
   const floor = new THREE.Group();
   scene.add(floor);
@@ -703,6 +736,7 @@ export function WorldViewport({
 
     buildOffice(scene);
     const ceoAvatar = addCEOAvatar(scene);
+    const walkBlockers = getWalkBlockers();
     const roomEntrance = addLockedRoom(scene);
     const roomInterior = addAuthorizedRoomInterior(scene);
     const roomFurnitureGroup = roomInterior.userData.furnitureGroup;
@@ -835,8 +869,11 @@ export function WorldViewport({
       velocity.lerp(new THREE.Vector2(desiredX, desiredZ), Math.min(1, seconds * responsiveness));
       const speed = velocity.length();
       if (speed > 0.025) {
-        ceoAvatar.position.x = Math.max(-16, Math.min(16, ceoAvatar.position.x + velocity.x * seconds));
-        ceoAvatar.position.z = Math.max(-10, Math.min(9.2, ceoAvatar.position.z + velocity.y * seconds));
+        const nextX = ceoAvatar.position.x + velocity.x * seconds;
+        const nextZ = ceoAvatar.position.z + velocity.y * seconds;
+        // Axis-separated collision permits wall-sliding and prevents crossing fixed furniture.
+        if (canOccupyGround(nextX, ceoAvatar.position.z, walkBlockers)) ceoAvatar.position.x = nextX;
+        if (canOccupyGround(ceoAvatar.position.x, nextZ, walkBlockers)) ceoAvatar.position.z = nextZ;
         const desiredRotation = Math.atan2(velocity.x, velocity.y);
         const rotationDelta = Math.atan2(Math.sin(desiredRotation - ceoAvatar.rotation.y), Math.cos(desiredRotation - ceoAvatar.rotation.y));
         ceoAvatar.rotation.y += rotationDelta * Math.min(1, seconds * 10);
