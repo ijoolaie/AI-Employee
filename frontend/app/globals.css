@@ -42,3 +42,22 @@ body {
     height: min(58vh, 620px) !important;
   }
 }
+
+
+/* World mobile controls use explicit safe-area positions so HUD and controls stay distinct. */
+@media (max-width: 639px) {
+  .world-viewport .world-camera-controls {
+    top: 84px !important;
+    right: 12px !important;
+    left: auto !important;
+    bottom: auto !important;
+    max-width: calc(100% - 24px);
+  }
+
+  .world-viewport .world-movement-joystick {
+    top: auto !important;
+    right: auto !important;
+    bottom: 16px !important;
+    left: 16px !important;
+  }
+}
