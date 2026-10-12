@@ -1,13 +1,14 @@
 ## Latest verified checkpoint — 2026-10-12, World V2 visual review candidate
 
-- PR [#1050](https://github.com/ijoolaie/AI-Employee/pull/1050) is the current Draft/unmerged review candidate on current `main`, exact head `c03dc95db96fade9cd30ce36d57b5c74bba8e928`. All five exact-head workflows passed on `c03dc95db96fade9cd30ce36d57b5c74bba8e928`: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233176), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233247), [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233168), [HA Failure Recovery Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233268), and [Ephemeral DAST Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233184).
-- PR #1046 was closed unmerged as superseded; its latest source, Playwright screenshot capture, responsive viewport and static collision changes were carried into #1050.
-- CI run 38212233176 produced artifact `world-visual-review-c3883a003fbd606d6f45b95411929a911a67183e` with desktop (1440×900) and mobile (390×844) screenshots. These are actual Playwright browser captures with deterministic mocked tenant/employee data.
-- The screenshots are now ready for human review, but are not evidence of completed visual acceptance. Most character/furniture geometry remains procedural, some room signage clips at the current angle, and movement still lacks full pathfinding/obstacle avoidance.
-- Do not merge #1050 until the user reviews the actual visuals. Next implementation gate after review: licensed authored assets, character/prop refinement, navigation and signage/layout corrections, then recapture.
-- Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- PR [#1050](https://github.com/ijoolaie/AI-Employee/pull/1050) is open, Draft and unmerged on current `main`, exact head `8a7de75a8d49b4e1489b00353615f7a1f3808f87`. All five exact-head workflows passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177840), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177820), [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177945), [HA Failure Recovery Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177822), and [Ephemeral DAST Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177856).
+- CI produced artifact `world-visual-review-1e43f2d0cd75d04671bf8b71d9e7f54f848f15ef` with actual Playwright screenshots at desktop 1440×900 and mobile 390×844: [CI run / artifacts](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177840).
+- Screenshot review found and corrected a mobile camera inversion, switched screenshots from full-page to exact viewport capture, reduced desktop viewport height to keep controls visible, and hid the mobile status overlay to prevent overlap. The current artifact shows the desktop composition and controls within the target viewport and a coherent mobile view.
+- Visual acceptance is **not complete**: most character/furniture geometry remains procedural, facial/prop quality still falls short of the target stylized tycoon look, mobile labels are small, and static collision guards are not full pathfinding. Screenshots are evidence for review, not proof of a finished redesign. Do not merge #1050 until the visual direction is accepted and the remaining art/navigation gaps are resolved.
+- PR #1046 was closed unmerged as superseded by #1050. PR #1045 remains closed unmerged after the user rejected its result.
+- Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; these checks do not certify a new release.
 
 ---
+
 
 ## Latest verified checkpoint — 2026-10-11 after PR #1040/#1041/#1042 merges
 
