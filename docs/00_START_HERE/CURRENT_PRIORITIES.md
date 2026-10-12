@@ -1,10 +1,12 @@
 ## Current priority checkpoint — 2026-10-12, World V2 visual review
 
-- PR #1046 remains Draft/unmerged at exact head `8f5be2a45200d75b5a2f09fe71d6c69b54de319b`; all five exact-head workflows passed (CI 38211542565, CodeQL 38211542533, Production Infrastructure 38211542617, HA Recovery 38211542538, DAST 38211542592).
-- A real-browser desktop (1440×900) and mobile (390×844) screenshot pair was captured by Playwright and uploaded as artifact `world-visual-review-6b9d9afd2b567487f624e3e7e258e2ab08991e4a` on [CI run 38211542565](https://github.com/ijoolaie/AI-Employee/actions/runs/38211542565). The screenshot artifact uses deterministic mocked data and is not an automated visual-quality verdict.
-- Camera controls and mobile framing have been corrected; first-pass fixed-furniture collision checks are present. Remaining visual gaps are significant: authored/stylized character and furniture assets are not yet integrated, static collision checks are not full pathfinding, and some room signage remains clipped from the current camera angle.
-- Next: collect explicit user visual review against the screenshots; then replace key primitive assets, improve movement/navigation, fix signage and recapture screenshots. Keep #1046 Draft until user acceptance. Do not claim a finished redesign.
-- Latest certified release remains `v1.4.17`; engineering CI success is not release certification.
+- PR #1050 is the only open PR and remains Draft at exact head `c03dc95db96fade9cd30ce36d57b5c74bba8e928`. All five exact-head workflows passed on `c03dc95db96fade9cd30ce36d57b5c74bba8e928`: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233176), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233247), [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233168), [HA Failure Recovery Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233268), and [Ephemeral DAST Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233184).
+- Playwright captured desktop (1440×900) and mobile (390×844) screenshots in artifact `world-visual-review-c3883a003fbd606d6f45b95411929a911a67183e` on [CI run 38212233176](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233176).
+- PR #1046 was closed unmerged as superseded by #1050. The candidate is conflict-free against current main and all five workflows passed.
+- The review screenshots still show procedural characters/furniture and some signage/layout limitations. User visual approval is not complete; static collision guards are not pathfinding.
+- Next: collect explicit visual feedback, integrate licensed authored assets, improve navigation/signage, and recapture screenshots. Keep #1050 Draft until user acceptance.
+
+---
 
 ---
 

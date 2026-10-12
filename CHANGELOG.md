@@ -1,3 +1,10 @@
+## 2026-10-12 — World V2 review candidate rebased on current main
+
+- PR #1050 is the current Draft visual-review candidate at exact head `c03dc95db96fade9cd30ce36d57b5c74bba8e928`; all five exact-head workflows passed (CI 38212233176, CodeQL 38212233247, infrastructure 38212233168, HA recovery 38212233268, DAST 38212233184).
+- Playwright captured desktop and mobile screenshots in artifact `world-visual-review-c3883a003fbd606d6f45b95411929a911a67183e` on [CI run 38212233176](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233176).
+- PR #1046 was closed unmerged as superseded by the conflict-free #1050 branch. The visual acceptance gate remains open: procedural characters/furniture, clipped signage and incomplete pathfinding remain.
+- Latest certified release remains `v1.4.17`.
+
 ## 2026-10-12 — World V2 visual review preparation
 
 - PR #1046 stays Draft/unmerged at exact head `8f5be2a45200d75b5a2f09fe71d6c69b54de319b`; CI, CodeQL, production infrastructure, HA recovery and DAST all passed on the exact head.
