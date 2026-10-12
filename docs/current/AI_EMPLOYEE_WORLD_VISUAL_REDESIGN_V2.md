@@ -1,6 +1,6 @@
 ## Latest implementation checkpoint — 2026-10-12
 
-The viewport-framing portion of this V2 visual contract was accepted on the exact-head CI artifact for PR #1062, merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`. The reviewed 1440×900 desktop screenshot keeps the office perimeter/front floor edge in frame; the 390×844 portrait screenshot fits all five department platforms and keeps the HUD, camera controls and joystick distinct. Exact-head workflow evidence is recorded in [World Master Handoff](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md).
+The viewport-framing portion of this V2 visual contract is **not yet accepted**. Although PR #1062 was merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`, subsequent exact-head CI artifacts showed the desktop front floor edge clipped. PR #1071 is adjusting desktop/portrait camera distance; the latest attempted 1.35 desktop / 1.85 portrait framing still clipped the floor, so the current follow-up is 1.55 desktop / 1.85 portrait. Keep visual acceptance pending until fresh exact-head screenshots are reviewed. Exact-head workflow evidence is recorded in [World Master Handoff](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md).
 
 This acceptance is limited to viewport framing/responsive controls and the implemented tests. Employees remain procedural; GLB/GLTF runtime integration, obstacle-aware pathfinding, richer authored workstations and foot-planting animation remain unimplemented. Do not interpret this checkpoint as full visual/gameplay completion or release certification.
 
