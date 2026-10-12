@@ -47,7 +47,7 @@ body {
 /* World mobile controls use explicit safe-area positions so HUD and controls stay distinct. */
 @media (max-width: 639px) {
   .world-viewport .world-camera-controls {
-    top: 84px !important;
+    top: 12px !important;
     right: 12px !important;
     left: auto !important;
     bottom: auto !important;
