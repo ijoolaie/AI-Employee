@@ -1,3 +1,13 @@
+## Current mainline reconciliation — 2026-10-12 after World PR #1057 merge
+
+- Current `main` includes PR #1057 at merge commit `de053b24d045d17d0e447e29140cfd4728ade4c8`. That implementation adds the warmer office palette, rear window blinds, responsive framing and a GLB employee asset with attribution/license information. Do not describe #1057 as still open or ask for its original changes to be implemented again.
+- PR #1055 is the only open PR returned by the current repository open-PR search. Its head `004530abe6628d477a925cc1026f3b043f4c4280` has five reported successful workflows, but it is **diverged from current main**: 14 commits ahead, 2 behind, merge base `73673cf4766a503ffa9d9ad3fae2516f227421c6`. Its own description reports clipping/overlap in the screenshots. Passing checks on this stale head do not validate the combined current-main result.
+- PR #1056's user-approved art-direction requirements are already represented in the canonical gameplay spec and this status checkpoint. Search no longer lists #1056 as open; verify its merged/closed disposition in the PR timeline before assuming a pending documentation change.
+- Current `frontend/features/world/WorldViewport.tsx` still builds regular employees from procedural primitives in `addWorker`; it contains no GLTF/GLB loader reference. Although #1057 introduced an employee GLB asset and provenance information, the actual runtime use of that asset is **not demonstrated by the current viewport source** and must be checked before claiming authored employee models are integrated.
+- Remaining World gaps: reconcile #1055 onto current main; fix HUD/status and department-label clipping using actual runtime screenshots; verify the GLB asset is actually wired into the employee renderer or explicitly mark it as unused asset inventory; implement obstacle-aware pathfinding and intentional overflow/capacity handling; review motion/foot planting and reduced-motion behavior.
+- Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. World code merges and successful engineering workflows do not certify a new production release.
+
+---
 ## User-approved World visual direction — 2026-10-12
 
 - The user supplied a current desktop AI Company HQ screenshot and a target mobile office-tycoon screenshot. The target direction is now documented in the canonical [AI Company World & Gameplay Specification, §30](../blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md#30-approved-visual-reference--office-management-tycoon-presentation-2026-10-12).
