@@ -1,7 +1,7 @@
 # AI Company World & Gameplay Specification
 
 Status: CANONICAL PRODUCT / UX / GAMEPLAY SPECIFICATION — DESIGN BASELINE
-Reconciled: 2026-10-08
+Reconciled: 2026-10-12 — user-approved visual reference refinement
 
 ## 1. Purpose
 
@@ -279,3 +279,62 @@ This specification extends rather than replaces V1.4 platform architecture, V1.5
 Strategic model: Human CEO → AI Company → Departments → AI Employees/Agents → WorkItems → Tools + Knowledge + Policies → Execution → Business Outcomes → Revenue/Savings/Growth → Company Progression.
 
 World Mode is the visual and interactive representation of that system.
+## 30. Approved visual reference — office-management tycoon presentation (2026-10-12)
+
+### Reference intent
+
+The user supplied two visual references for the AI Company World redesign:
+
+- **Current product screenshot:** a wide desktop, 3/4 isometric office HQ with department zones (Command, Sales, Operations, Customer Care, Engineering), a large tiled floor, simple desks/chairs/monitors, floating department labels, a central HQ label, a small player/worker avatar, and minimal top/bottom controls. This is the baseline to improve, not the desired final art quality.
+- **Target gameplay screenshot:** a portrait mobile office-management/tycoon scene with warm cream walls, salmon/red room flooring, teal/blue partitions, large windows with blinds, doors, framed wall decor, detailed desks/computers and storage, several visibly different human-like employees in varied outfits/hairstyles, clear isometric depth and soft shadows, and a compact high-contrast HUD for resources/time/status plus contextual action buttons.
+
+Treat the second screenshot as the **visual direction**, not as a pixel-perfect layout to copy. It is a reference for readability, art quality, material/color contrast, room detail, character variety and mobile game composition. Do not copy proprietary game assets, branding, UI artwork, characters, maps, or source code.
+
+### Target art direction
+
+- **Camera and composition:** consistent 3/4 top-down isometric view with stable perspective, clear room boundaries and an immediately readable floor plan. Desktop may show the full HQ; mobile should frame a useful playable area without shrinking labels into illegibility.
+- **Architecture:** replace the empty warehouse-like impression with warm, designed office interiors: distinct floor materials/colors per room, cream/light neutral walls, window bays with frames/blinds, doors, wall art/signage and tasteful trim. Keep the existing named AI-Employee departments and make them easy to identify.
+- **Workstations and props:** create coherent desk sets with monitor, keyboard, chair and small office objects; add cabinets, plants, dividers, meeting furniture and department-specific props. Props must not obstruct paths, employee selection, labels or controls.
+- **Palette and materials:** warm coral/terracotta floor accents, cream walls, teal/blue partitions and furniture accents, restrained department color identity, consistent material response and soft contact shadows. Maintain sufficient contrast for text and interactive targets.
+- **Employees:** use varied, friendly, stylized low-poly/cartoon characters with readable silhouettes, differing hair, clothing colors and body/accessory details. Avoid repeated capsule/box figures as the final presentation. Use original or properly licensed assets and record source/license/provenance; no unlicensed extracted sprites or copied characters.
+- **Animation and life:** idle/work/walk/approval states may use subtle, reduced-motion-aware animation only when supported by actual employee/run/approval state. Ambient motion must not imply fake business activity.
+- **HUD:** preserve a restrained enterprise product identity while borrowing the reference's compact, high-contrast hierarchy: company/status summary, authoritative resource/usage information, current time only if it is a real world clock, and contextual actions. Do not add fictional coins, gems, energy, income or arcade progression. Do not reproduce the reference's exact HUD, icons or text.
+- **Lighting and depth:** coherent light direction, soft shadows, layered walls/furniture and subtle highlights; avoid excessive bloom, noisy decoration or low-contrast UI.
+
+### AI-Employee semantic mapping
+
+| Visual reference element | AI-Employee representation |
+|---|---|
+| Room / office | Existing tenant-scoped department/workspace projection |
+| Desk / computer | Workstation presentation; not a new permission or capability source |
+| Character | Real governed Employee/Agent identity and configured avatar where available |
+| Working/waiting character pose | Authoritative supported employee/run/approval state only |
+| Room label | Existing AI-Employee department identity; no fabricated department metrics |
+| HUD resources | Existing plan, usage, capacity and recorded outcome fields only |
+| Lock/door/access affordance | Existing server-authoritative entitlement and tenant-scoped room access |
+| Upgrade/unlock affordance | Real capability, entitlement or configuration workflow; never cosmetic authority |
+
+The currently available office read model may not expose authoritative employee department/location ownership. Until that contract exists, department zones are presentation-only and must not falsely imply employee assignment or access rights.
+
+### Implementation priorities
+
+1. **P0 — Scene composition and legibility:** establish a deliberate isometric room plan, improve floor/wall/window/door composition, retain clear department identities, fix clipping/overlap, and ensure desktop/mobile camera framing.
+2. **P1 — Character and workstation quality:** replace the most visible primitive-built workers and furniture with authored original/licensed assets or deliberately modeled, cohesive procedural art; vary employee silhouettes and desk details.
+3. **P2 — Interaction and navigation:** keep movement, camera, employee selection, contextual interaction, room lock/expiry and keyboard/touch controls functional. Implement and test obstacle-aware navigation rather than relying only on static collision guards.
+4. **P3 — HUD and accessibility:** improve mobile label sizing/contrast, safe-area placement, focus/keyboard behavior, touch target size and reduced-motion handling.
+5. **P4 — Finish and evidence:** add restrained shadows/material polish and optional ambient details; capture actual route screenshots at desktop 1440×900 and mobile 390×844, inspect console/layout/input behavior, and record the results in the implementation handoff.
+
+### Acceptance gates
+
+- The actual /world route is materially and visibly improved relative to the current procedural box-built scene; an isolated mockup or generated concept image is not implementation evidence.
+- Desktop and mobile screenshots are captured from the running application after the change and reviewed against this section.
+- Department labels, employees, workstations, doors, HUD and controls remain readable and do not overlap or clip at supported viewport sizes.
+- Employee states, metrics, entitlements, room access and approvals remain grounded in authorized backend read models. No fake economy or activity is introduced.
+- Mouse/keyboard and touch controls, employee selection, room lock/expiry, tenant isolation, accessibility and reduced-motion behavior continue to work.
+- Authored asset licenses/provenance are recorded. No proprietary reference assets or source code are copied.
+- Frontend lint, unit/contracts, build and relevant Playwright tests pass; relevant real-stack smoke checks are recorded.
+- Keep the redesign PR Draft/unmerged until visual acceptance is explicit. Green CI is necessary but not sufficient and does not certify a production release.
+
+### Current evidence boundary — 2026-10-12
+
+PR #1050 is the active World V2 visual-review candidate and remains Draft/unmerged. Its recorded automated checks and viewport screenshots are engineering evidence only. The approved target direction has now been clarified by the user's reference screenshots; the remaining implementation must be measured against this section. The redesign is **not considered complete** until the acceptance gates above are met.
