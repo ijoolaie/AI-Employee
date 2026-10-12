@@ -34,16 +34,65 @@ const DEPARTMENTS = [
   { name: "ENGINEERING", x: 6, z: 6, color: 0xe9e2f0, accent: 0x9c78c7 },
 ];
 
+type SurfaceTexture = "wood" | "fabric" | "plaster" | "stone";
+const surfaceTextureCache = new Map<SurfaceTexture, any>();
+
+function getSurfaceTexture(kind: SurfaceTexture): any {
+  const cached = surfaceTextureCache.get(kind);
+  if (cached) return cached;
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D is required for World surface materials");
+  const base = kind === "wood" ? "#b98558" : kind === "fabric" ? "#8799a6" : kind === "stone" ? "#b9b7ae" : "#e8e4db";
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 128, 128);
+  let seed = kind.length * 7919;
+  const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  if (kind === "wood") {
+    for (let row = 0; row < 22; row += 1) {
+      const y = row * 6 + random() * 3;
+      ctx.strokeStyle = row % 3 === 0 ? "rgba(79,45,25,.2)" : "rgba(244,204,154,.22)";
+      ctx.beginPath(); ctx.moveTo(0, y);
+      for (let x = 0; x <= 128; x += 8) ctx.lineTo(x, y + Math.sin(x * 0.07 + row) * (1 + random()));
+      ctx.stroke();
+    }
+  } else if (kind === "fabric") {
+    for (let offset = 0; offset < 128; offset += 4) {
+      ctx.strokeStyle = offset % 8 === 0 ? "rgba(255,255,255,.13)" : "rgba(27,43,57,.08)";
+      ctx.beginPath(); ctx.moveTo(offset, 0); ctx.lineTo(offset, 128); ctx.moveTo(0, offset); ctx.lineTo(128, offset); ctx.stroke();
+    }
+  } else {
+    for (let i = 0; i < 500; i += 1) {
+      const shade = random() > 0.5 ? 255 : 35;
+      ctx.fillStyle = `rgba(${shade},${shade},${shade},${kind === "stone" ? 0.04 : 0.025})`;
+      const size = kind === "stone" ? 1 + random() * 3 : 1 + random();
+      ctx.fillRect(random() * 128, random() * 128, size, size);
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.repeat.set(kind === "wood" ? 1.6 : 1, 1);
+  surfaceTextureCache.set(kind, texture);
+  return texture;
+}
+
+
 function box(
   parent: any,
   size: [number, number, number],
   position: [number, number, number],
   color: number,
-  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number; castShadow?: boolean; receiveShadow?: boolean } = {},
+  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number; castShadow?: boolean; receiveShadow?: boolean; texture?: SurfaceTexture } = {},
 ) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(...size),
-    new THREE.MeshStandardMaterial({ color, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
+    new THREE.MeshStandardMaterial({ color, map: options.texture ? getSurfaceTexture(options.texture) : undefined, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
   );
   mesh.position.set(...position);
   mesh.castShadow = options.castShadow ?? true;
@@ -103,7 +152,7 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
   const desk = new THREE.Group();
   desk.position.set(x, 0, z);
   parent.add(desk);
-  box(desk, [3.15, 0.18, 1.65], [0, 1.32, 0], 0xc99564);
+  box(desk, [3.15, 0.18, 1.65], [0, 1.32, 0], 0xffffff, { texture: "wood", roughness: 0.68 });
   for (const dx of [-1.35, 1.35]) {
     for (const dz of [-0.62, 0.62]) box(desk, [0.12, 1.28, 0.12], [dx, 0.64, dz], 0x806044);
   }
@@ -130,7 +179,7 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
   chair.position.set(0, 0, 1.35);
   desk.add(chair);
   cylinder(chair, 0.5, 0.52, 0.16, [0, 0.72, 0], 0x526c80, 16);
-  box(chair, [0.92, 0.95, 0.16], [0, 1.2, 0.42], 0x526c80);
+  box(chair, [0.92, 0.95, 0.16], [0, 1.2, 0.42], 0x8799a6, { texture: "fabric", roughness: 0.96 });
   cylinder(chair, 0.12, 0.15, 0.58, [0, 0.36, 0], 0x48596a, 10);
   return desk;
 }
@@ -498,7 +547,7 @@ function canOccupyGround(x: number, z: number, blockers: WalkBlocker[], radius =
 function buildOffice(scene: any) {
   const floor = new THREE.Group();
   scene.add(floor);
-  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e);
+  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e, { texture: "wood", roughness: 0.92 });
   // Batch the checkerboard planks into two instanced meshes to reduce hundreds of draw calls.
   const lightTiles = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1.96, 0.025, 1.96),
@@ -533,7 +582,7 @@ function buildOffice(scene: any) {
   floor.add(lightTiles, darkTiles);
 
   // Warm, compact office shell: rear windows and a wood floor establish a tycoon-office look.
-  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe7e4dc);
+  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe8e4db, { texture: "plaster", roughness: 0.95 });
   for (let x = -17.5; x <= 17.5; x += 5) {
     box(scene, [3.9, 2.7, 0.08], [x, 2.55, -14.79], 0x9ec8dc, { roughness: 0.35, metalness: 0.05, emissive: 0x2c5364, emissiveIntensity: 0.08 });
     box(scene, [0.09, 2.9, 0.12], [x - 1.98, 2.55, -14.72], 0xf7f3e9);
@@ -1060,7 +1109,8 @@ export function WorldViewport({
         if (object.material) {
           const materials = Array.isArray(object.material) ? object.material : [object.material];
           for (const material of materials) {
-            if (material.map) material.map.dispose();
+            // Shared procedural maps are cached across viewport remounts.
+            if (material.map && !Array.from(surfaceTextureCache.values()).includes(material.map as any)) material.map.dispose();
             material.dispose?.();
           }
         }
