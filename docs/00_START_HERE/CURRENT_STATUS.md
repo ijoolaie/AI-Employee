@@ -1,3 +1,10 @@
+## Current engineering status — 2026-10-12, World V2 exact-head validation
+
+- PR [#1046](https://github.com/ijoolaie/AI-Employee/pull/1046) remains **Draft and unmerged** at exact head `0ac94e76d57ab1e8ccb2c00271ac7f35b85b33cb`. CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation, and Ephemeral DAST all completed successfully on that exact SHA. Workflow run links and the remaining visual acceptance gates are recorded in [AI_EMPLOYEE_WORLD_V2_VALIDATION_2026-10-12.md](../current/AI_EMPLOYEE_WORLD_V2_VALIDATION_2026-10-12.md).
+- Green automated checks do not resolve the user's prior rejection of the visual result. No actual desktop/mobile runtime screenshots or visual approval are recorded for this head. Most character/furniture geometry remains procedural; obstacle-aware navigation and intentional overflow capacity design remain incomplete. Do not merge #1046 as accepted visual work.
+- PR #1045 remains closed unmerged after user rejection. PRs #1040, #1041, #1042, and #1047 are merged as recorded below.
+- Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; these engineering checks do not certify a new production release.
+
 ## Current engineering status — 2026-10-11, after PR #1041 and #1042 merges
 
 - PR #1041 merged to main at `e1633e9bf000af045e2571d930b4eeefec30883f`. The exact PR head `528750ce9fbac51690d3da6a660394ed6896cbb8` passed CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation, and Ephemeral DAST. Expired room access remains server-authoritative and fail-closed; renewal creates an order and does not activate access by itself.
