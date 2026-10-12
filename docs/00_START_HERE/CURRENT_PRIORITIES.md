@@ -1,12 +1,14 @@
-## Current priority checkpoint — 2026-10-12, World V2 visual review
+## Current priority checkpoint — 2026-10-12, World V2 visual-review candidate
 
-- PR #1050 is the only open PR and remains Draft at exact head `c03dc95db96fade9cd30ce36d57b5c74bba8e928`. All five exact-head workflows passed on `c03dc95db96fade9cd30ce36d57b5c74bba8e928`: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233176), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233247), [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233168), [HA Failure Recovery Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233268), and [Ephemeral DAST Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233184).
-- Playwright captured desktop (1440×900) and mobile (390×844) screenshots in artifact `world-visual-review-c3883a003fbd606d6f45b95411929a911a67183e` on [CI run 38212233176](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233176).
-- PR #1046 was closed unmerged as superseded by #1050. The candidate is conflict-free against current main and all five workflows passed.
-- The review screenshots still show procedural characters/furniture and some signage/layout limitations. User visual approval is not complete; static collision guards are not pathfinding.
-- Next: collect explicit visual feedback, integrate licensed authored assets, improve navigation/signage, and recapture screenshots. Keep #1050 Draft until user acceptance.
+- PR #1050 remains Draft/unmerged at exact head `8a7de75a8d49b4e1489b00353615f7a1f3808f87`; all five exact-head workflows passed (CI 38213177840, CodeQL 38213177820, infrastructure 38213177945, HA recovery 38213177822, DAST 38213177856).
+- Review artifact `world-visual-review-1e43f2d0cd75d04671bf8b71d9e7f54f848f15ef` contains viewport-sized desktop/mobile captures. Mobile framing and overlay overlap have been corrected.
+- Before visual acceptance: replace the most visible primitive characters/furniture with properly licensed authored assets and record provenance; improve mobile label legibility; correct any clipping/overlap found in review; implement/verify obstacle-aware navigation; recapture screenshots after changes.
+- Keep #1050 Draft and unmerged until the visual direction is acceptable. CI success is not visual acceptance.
+- Continue separate open gates: manual support create/reload/reply/authorized-attachment QA and the customer-tenant support entry point tracked by #1043. Keep payment verification, USDT network policy and World Credit blocked until authoritative verification, replay protection and a durable ledger are present.
 
 ---
+
+
 
 ---
 
