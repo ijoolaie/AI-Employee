@@ -339,3 +339,10 @@ jobs:
       - name: Playwright browser regressions
         working-directory: frontend
         run: npx playwright test e2e/world-mode.spec.ts e2e/support-persistence.spec.ts
+      - name: Upload World desktop/mobile visual review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-visual-review-${{ github.sha }}
+          path: frontend/artifacts/world-visual-review/*.png
+          if-no-files-found: warn
