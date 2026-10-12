@@ -148,14 +148,26 @@ test("World Mode renders authoritative employee projection and management bridge
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: false });
+
+  const hud = page.getByTestId("world-viewport-hud");
+  const cameraControls = page.getByRole("group", { name: "World camera controls" });
+  const joystick = page.getByLabel("World movement joystick");
+  await expect(hud).toBeVisible();
+  await expect(cameraControls).toBeVisible();
+  const desktopCanvasBox = await canvas.boundingBox();
+  const desktopControlsBox = await cameraControls.boundingBox();
+  expect(desktopCanvasBox && desktopControlsBox).toBeTruthy();
+  if (desktopCanvasBox && desktopControlsBox) {
+    expect(desktopControlsBox.x).toBeLessThanOrEqual(desktopCanvasBox.x + 24);
+    expect(desktopControlsBox.y).toBeGreaterThan(desktopCanvasBox.y + desktopCanvasBox.height / 2);
+  }
+  await expect(hud.getByText(/WASD/)).toBeVisible();
+
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: false });
 
-  const hud = page.getByTestId("world-viewport-hud");
-  const cameraControls = page.getByRole("group", { name: "World camera controls" });
-  const joystick = page.getByLabel("World movement joystick");
   await expect(hud).toBeVisible();
   await expect(cameraControls).toBeVisible();
   await expect(joystick).toBeVisible();
@@ -190,18 +202,6 @@ test("World Mode renders authoritative employee projection and management bridge
     const afterPan = await canvas.screenshot();
     expect(afterPan.equals(beforePan), "dragging the viewport should pan the rendered office").toBe(false);
   }
-
-  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.waitForTimeout(250);
-  const desktopCanvasBox = await canvas.boundingBox();
-  const desktopControlsBox = await cameraControls.boundingBox();
-  expect(desktopCanvasBox && desktopControlsBox).toBeTruthy();
-  if (desktopCanvasBox && desktopControlsBox) {
-    expect(desktopControlsBox.x).toBeLessThanOrEqual(desktopCanvasBox.x + 24);
-    expect(desktopControlsBox.y).toBeGreaterThan(desktopCanvasBox.y + desktopCanvasBox.height / 2);
-  }
-  await expect(hud.getByText(/WASD/)).toBeVisible();
 
   await expect(page.getByText("Business outcome loop")).toBeVisible();
   expect(browserErrors, "browser console/page errors during World viewport smoke").toEqual([]);
