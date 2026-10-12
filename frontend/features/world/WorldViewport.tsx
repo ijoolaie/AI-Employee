@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { WorldInput } from "./WorldInput";
+import { screenPanToWorldDelta } from "./WorldPan";
 import type { WorldEmployee } from "./WorldState";
 import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
 import type { RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
@@ -33,16 +34,65 @@ const DEPARTMENTS = [
   { name: "ENGINEERING", x: 6, z: 6, color: 0xe9e2f0, accent: 0x9c78c7 },
 ];
 
+type SurfaceTexture = "wood" | "fabric" | "plaster" | "stone";
+const surfaceTextureCache = new Map<SurfaceTexture, THREE.CanvasTexture>();
+
+function getSurfaceTexture(kind: SurfaceTexture): THREE.CanvasTexture {
+  const cached = surfaceTextureCache.get(kind);
+  if (cached) return cached;
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D is required for World surface materials");
+  const base = kind === "wood" ? "#b98558" : kind === "fabric" ? "#8799a6" : kind === "stone" ? "#b9b7ae" : "#e8e4db";
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 128, 128);
+  let seed = kind.length * 7919;
+  const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  if (kind === "wood") {
+    for (let row = 0; row < 22; row += 1) {
+      const y = row * 6 + random() * 3;
+      ctx.strokeStyle = row % 3 === 0 ? "rgba(79,45,25,.2)" : "rgba(244,204,154,.22)";
+      ctx.beginPath(); ctx.moveTo(0, y);
+      for (let x = 0; x <= 128; x += 8) ctx.lineTo(x, y + Math.sin(x * 0.07 + row) * (1 + random()));
+      ctx.stroke();
+    }
+  } else if (kind === "fabric") {
+    for (let offset = 0; offset < 128; offset += 4) {
+      ctx.strokeStyle = offset % 8 === 0 ? "rgba(255,255,255,.13)" : "rgba(27,43,57,.08)";
+      ctx.beginPath(); ctx.moveTo(offset, 0); ctx.lineTo(offset, 128); ctx.moveTo(0, offset); ctx.lineTo(128, offset); ctx.stroke();
+    }
+  } else {
+    for (let i = 0; i < 500; i += 1) {
+      const shade = random() > 0.5 ? 255 : 35;
+      ctx.fillStyle = `rgba(${shade},${shade},${shade},${kind === "stone" ? 0.04 : 0.025})`;
+      const size = kind === "stone" ? 1 + random() * 3 : 1 + random();
+      ctx.fillRect(random() * 128, random() * 128, size, size);
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.repeat.set(kind === "wood" ? 1.6 : 1, 1);
+  surfaceTextureCache.set(kind, texture);
+  return texture;
+}
+
+
 function box(
   parent: any,
   size: [number, number, number],
   position: [number, number, number],
   color: number,
-  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number; castShadow?: boolean; receiveShadow?: boolean } = {},
+  options: { roughness?: number; metalness?: number; emissive?: number; emissiveIntensity?: number; castShadow?: boolean; receiveShadow?: boolean; texture?: SurfaceTexture } = {},
 ) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(...size),
-    new THREE.MeshStandardMaterial({ color, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
+    new THREE.MeshStandardMaterial({ color, map: options.texture ? getSurfaceTexture(options.texture) : undefined, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
   );
   mesh.position.set(...position);
   mesh.castShadow = options.castShadow ?? true;
@@ -102,7 +152,7 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
   const desk = new THREE.Group();
   desk.position.set(x, 0, z);
   parent.add(desk);
-  box(desk, [3.15, 0.18, 1.65], [0, 1.32, 0], 0xc99564);
+  box(desk, [3.15, 0.18, 1.65], [0, 1.32, 0], 0xffffff, { texture: "wood", roughness: 0.68 });
   for (const dx of [-1.35, 1.35]) {
     for (const dz of [-0.62, 0.62]) box(desk, [0.12, 1.28, 0.12], [dx, 0.64, dz], 0x806044);
   }
@@ -129,7 +179,7 @@ function addDesk(parent: any, x: number, z: number, accent: number) {
   chair.position.set(0, 0, 1.35);
   desk.add(chair);
   cylinder(chair, 0.5, 0.52, 0.16, [0, 0.72, 0], 0x526c80, 16);
-  box(chair, [0.92, 0.95, 0.16], [0, 1.2, 0.42], 0x526c80);
+  box(chair, [0.92, 0.95, 0.16], [0, 1.2, 0.42], 0x8799a6, { texture: "fabric", roughness: 0.96 });
   cylinder(chair, 0.12, 0.15, 0.58, [0, 0.36, 0], 0x48596a, 10);
   return desk;
 }
@@ -220,21 +270,87 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
 function addCEOAvatar(scene: any) {
   const avatar = new THREE.Group();
   avatar.name = "player-ceo-avatar";
-  const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.38, 0.62, 4, 10), new THREE.MeshStandardMaterial({ color: 0x287f87, roughness: 0.7 }));
-  body.position.y = 0.95;
-  body.castShadow = true;
-  avatar.add(body);
-  sphere(avatar, 0.29, [0, 1.62, 0], 0xf0c8a5, [1, 1.05, 0.95]);
-  sphere(avatar, 0.31, [0, 1.79, -0.04], 0x3d302c, [1, 0.45, 0.95]);
-  box(avatar, [0.22, 0.045, 0.045], [-0.09, 1.64, 0.26], 0x27313b);
-  box(avatar, [0.22, 0.045, 0.045], [0.09, 1.64, 0.26], 0x27313b);
-  const legs = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.48, 0.24), new THREE.MeshStandardMaterial({ color: 0x26384a }));
-  legs.position.set(-0.14, 0.26, 0);
-  legs.castShadow = true;
-  avatar.add(legs);
-  const secondLeg = legs.clone();
-  secondLeg.position.x = 0.14;
-  avatar.add(secondLeg);
+  const material = (color: number, roughness = 0.76, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
+  const suit = material(0x243c55, 0.72);
+  const suitLight = material(0x315b72, 0.74);
+  const skin = material(0xe7b995, 0.84);
+  const hair = material(0x342b2a, 0.9);
+  const shirt = material(0xf4f0e7, 0.72);
+  const tie = material(0xd6a64f, 0.62);
+  const shoe = material(0x1a2633, 0.66);
+  const eye = material(0x25313a, 0.8);
+  const accent = material(0x62d5c2, 0.45, 0.08);
+  const addMesh = (geometry: THREE.BufferGeometry, mat: THREE.Material, position: [number, number, number], parent: THREE.Object3D = avatar) => {
+    const mesh = new THREE.Mesh(geometry, mat);
+    mesh.position.set(...position);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    parent.add(mesh);
+    return mesh;
+  };
+  const addSphere = (radius: number, position: [number, number, number], mat: THREE.Material, scale: [number, number, number] = [1, 1, 1]) => {
+    const mesh = addMesh(new THREE.SphereGeometry(radius, 20, 14), mat, position);
+    mesh.scale.set(...scale);
+    return mesh;
+  };
+
+  addMesh(new THREE.CylinderGeometry(0.12, 0.14, 0.2, 16), skin, [0, 1.43, 0]);
+  const body = addMesh(new THREE.CapsuleGeometry(0.39, 0.6, 5, 12), suit, [0, 0.99, 0]);
+  body.name = "ceo-tailored-jacket";
+  addMesh(new THREE.CapsuleGeometry(0.205, 0.42, 3, 10), shirt, [0, 1.12, 0.265]);
+  addMesh(new THREE.CylinderGeometry(0.045, 0.075, 0.34, 5), tie, [0, 1.12, 0.34]);
+  const lapelGeometry = new THREE.BufferGeometry();
+  lapelGeometry.setAttribute("position", new THREE.Float32BufferAttribute([
+    0, 1.36, 0.36, -0.19, 1.28, 0.29, -0.055, 1.02, 0.39,
+    0, 1.36, 0.36, 0.19, 1.28, 0.29, 0.055, 1.02, 0.39,
+  ], 3));
+  lapelGeometry.computeVertexNormals();
+  addMesh(lapelGeometry, suitLight, [0, 0, 0]);
+  addMesh(new THREE.BoxGeometry(0.16, 0.07, 0.035), accent, [-0.24, 1.06, 0.31]);
+  addMesh(new THREE.BoxGeometry(0.11, 0.045, 0.035), tie, [0.21, 0.94, 0.34]);
+
+  addSphere(0.29, [0, 1.72, 0.02], skin, [0.98, 1.08, 0.94]);
+  addSphere(0.075, [-0.285, 1.69, 0.02], skin, [0.72, 1, 0.8]);
+  addSphere(0.075, [0.285, 1.69, 0.02], skin, [0.72, 1, 0.8]);
+  addSphere(0.30, [0, 1.91, -0.055], hair, [1.02, 0.58, 0.96]);
+  addSphere(0.19, [-0.13, 1.94, 0.13], hair, [1.05, 0.62, 0.72]);
+  addSphere(0.15, [0.08, 1.98, 0.12], hair, [1.05, 0.56, 0.72]);
+  addSphere(0.095, [0.24, 1.86, 0.04], hair, [0.72, 1.0, 0.8]);
+  for (const side of [-1, 1]) {
+    addSphere(0.058, [side * 0.105, 1.735, 0.282], shirt, [1, 1.05, 0.5]);
+    addSphere(0.029, [side * 0.105, 1.733, 0.309], eye, [1, 1, 0.55]);
+    addSphere(0.011, [side * 0.115, 1.747, 0.319], shirt, [1, 1, 0.5]);
+    const brow = addMesh(new THREE.BoxGeometry(0.13, 0.026, 0.035), hair, [side * 0.105, 1.815, 0.277]);
+    brow.rotation.z = side * -0.08;
+  }
+  addSphere(0.043, [0, 1.675, 0.302], skin, [0.82, 0.86, 1]);
+  const smile = addMesh(new THREE.TorusGeometry(0.06, 0.01, 6, 18, Math.PI), material(0x985e50, 0.92), [0, 1.625, 0.291]);
+  smile.rotation.z = Math.PI;
+  smile.scale.set(1.1, 0.72, 1);
+
+  const limbMaterial = material(0x26384a, 0.78);
+  const leftLeg = new THREE.Group();
+  leftLeg.position.set(-0.15, 0.52, 0);
+  avatar.add(leftLeg);
+  addMesh(new THREE.CapsuleGeometry(0.105, 0.25, 3, 9), limbMaterial, [0, -0.13, 0], leftLeg);
+  addMesh(new THREE.BoxGeometry(0.22, 0.12, 0.34), shoe, [0, -0.29, 0.105], leftLeg);
+  const rightLeg = leftLeg.clone();
+  rightLeg.position.x = 0.15;
+  avatar.add(rightLeg);
+
+  const leftArm = new THREE.Group();
+  leftArm.position.set(-0.36, 1.25, 0);
+  avatar.add(leftArm);
+  addMesh(new THREE.CapsuleGeometry(0.105, 0.27, 3, 9), suitLight, [0, -0.17, 0.015], leftArm);
+  addMesh(new THREE.SphereGeometry(0.072, 12, 10), skin, [0, -0.36, 0.055], leftArm);
+  const rightArm = leftArm.clone();
+  rightArm.position.x = 0.36;
+  avatar.add(rightArm);
+  avatar.userData.walkRig = { leftLeg, rightLeg, leftArm, rightArm };
+  avatar.userData.walkPhase = 0;
+  avatar.userData.body = body;
+  avatar.userData.artStyle = "stylized-executive-v2";
+
   const marker = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.045, 8, 28), new THREE.MeshBasicMaterial({ color: 0x5eead4, transparent: true, opacity: 0.9 }));
   marker.rotation.x = -Math.PI / 2;
   marker.position.y = 0.07;
@@ -243,7 +359,6 @@ function addCEOAvatar(scene: any) {
   scene.add(avatar);
   return avatar;
 }
-
 function addLockedRoom(scene: any) {
   const room = new THREE.Group();
   room.name = "room-entrance";
@@ -352,7 +467,7 @@ function hash(value: string) {
 function buildOffice(scene: any) {
   const floor = new THREE.Group();
   scene.add(floor);
-  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e);
+  box(floor, [40, 0.5, 31], [0, -0.32, 0], 0x9a704e, { texture: "wood", roughness: 0.92 });
   // Batch the checkerboard planks into two instanced meshes to reduce hundreds of draw calls.
   const lightTiles = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1.96, 0.025, 1.96),
@@ -387,7 +502,7 @@ function buildOffice(scene: any) {
   floor.add(lightTiles, darkTiles);
 
   // Warm, compact office shell: rear windows and a wood floor establish a tycoon-office look.
-  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe7e4dc);
+  box(scene, [40, 4.8, 0.42], [0, 2.08, -15.05], 0xe8e4db, { texture: "plaster", roughness: 0.95 });
   for (let x = -17.5; x <= 17.5; x += 5) {
     box(scene, [3.9, 2.7, 0.08], [x, 2.55, -14.79], 0x9ec8dc, { roughness: 0.35, metalness: 0.05, emissive: 0x2c5364, emissiveIntensity: 0.08 });
     box(scene, [0.09, 2.9, 0.12], [x - 1.98, 2.55, -14.72], 0xf7f3e9);
@@ -590,9 +705,26 @@ export function WorldViewport({
 
     const onPan = (event: Event) => {
       const { dx, dy } = (event as CustomEvent<{ dx: number; dy: number }>).detail;
-      const scale = distance * 0.00135;
-      target.x -= dx * scale;
-      target.z -= dy * scale;
+      const rect = renderer.domElement.getBoundingClientRect();
+      const cameraDistance = camera.position.distanceTo(new THREE.Vector3(target.x, 0.8, target.z));
+      const worldPerPixel =
+        (2 * cameraDistance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) /
+        Math.max(1, rect.height);
+      const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      cameraRight.y = 0;
+      cameraRight.normalize();
+      const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+      cameraUp.y = 0;
+      cameraUp.normalize();
+      const pan = screenPanToWorldDelta(
+        dx,
+        dy,
+        worldPerPixel,
+        { x: cameraRight.x, z: cameraRight.z },
+        { x: cameraUp.x, z: cameraUp.z },
+      );
+      target.x += pan.x;
+      target.z += pan.z;
       updateCamera();
     };
     const onReset = () => {
@@ -648,16 +780,35 @@ export function WorldViewport({
       const keyboard = cameraInput.consume();
       const moveX = keyboard.moveX || mobileMove.x;
       const moveY = keyboard.moveY || mobileMove.y;
-      if (moveX || moveY) {
-        const length = Math.hypot(moveX, moveY) || 1;
-        const stepX = (moveX / length) * delta * 0.008 * distance / 2;
-        const stepZ = (moveY / length) * delta * 0.008 * distance / 2;
-        ceoAvatar.position.x = Math.max(-16, Math.min(16, ceoAvatar.position.x + stepX));
-        ceoAvatar.position.z = Math.max(-10, Math.min(9.2, ceoAvatar.position.z + stepZ));
-        target.x = ceoAvatar.position.x;
-        target.z = ceoAvatar.position.z - 2.5;
-        ceoAvatar.rotation.y = Math.atan2(moveX, moveY || 0.0001);
-        updateCamera();
+      const seconds = delta / 1000;
+      const inputLength = Math.hypot(moveX, moveY);
+      const desiredX = inputLength > 0 ? (moveX / inputLength) * 6.2 : 0;
+      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 6.2 : 0;
+      const velocity = ceoAvatar.userData.velocity ?? (ceoAvatar.userData.velocity = new THREE.Vector2());
+      velocity.lerp(new THREE.Vector2(desiredX, desiredZ), Math.min(1, seconds * (inputLength > 0 ? 12 : 14)));
+      const speed = velocity.length();
+      if (speed > 0.025) {
+        ceoAvatar.position.x = Math.max(-16, Math.min(16, ceoAvatar.position.x + velocity.x * seconds));
+        ceoAvatar.position.z = Math.max(-10, Math.min(9.2, ceoAvatar.position.z + velocity.y * seconds));
+        const desiredRotation = Math.atan2(velocity.x, velocity.y);
+        const rotationDelta = Math.atan2(Math.sin(desiredRotation - ceoAvatar.rotation.y), Math.cos(desiredRotation - ceoAvatar.rotation.y));
+        ceoAvatar.rotation.y += rotationDelta * Math.min(1, seconds * 10);
+      }
+      target.x += (ceoAvatar.position.x - target.x) * Math.min(1, seconds * 8);
+      target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 8);
+      updateCamera();
+      const walkRig = ceoAvatar.userData.walkRig;
+      if (walkRig) {
+        const walking = speed > 0.22 && !reducedMotion.matches;
+        ceoAvatar.userData.walkPhase += speed * seconds * 3.1;
+        const phase = ceoAvatar.userData.walkPhase;
+        const swing = walking ? Math.sin(phase) * 0.48 : 0;
+        walkRig.leftLeg.rotation.x += (swing - walkRig.leftLeg.rotation.x) * Math.min(1, seconds * 12);
+        walkRig.rightLeg.rotation.x += (-swing - walkRig.rightLeg.rotation.x) * Math.min(1, seconds * 12);
+        walkRig.leftArm.rotation.x += (-swing * 0.72 - walkRig.leftArm.rotation.x) * Math.min(1, seconds * 12);
+        walkRig.rightArm.rotation.x += (swing * 0.72 - walkRig.rightArm.rotation.x) * Math.min(1, seconds * 12);
+        const bodyBob = walking ? Math.abs(Math.sin(phase * 2)) * 0.045 : 0;
+        ceoAvatar.position.y += (bodyBob - ceoAvatar.position.y) * Math.min(1, seconds * 14);
       }
       const nearRoom = Math.hypot(ceoAvatar.position.x, ceoAvatar.position.z - 9.4) < 3.1;
       if (nearRoom !== wasNearRoom) { wasNearRoom = nearRoom; roomProximityRef.current(nearRoom); }
