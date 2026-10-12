@@ -711,11 +711,15 @@ export function WorldViewport({
     scene.background = new THREE.Color(0x182331);
     scene.fog = new THREE.Fog(0x182331, 42, 86);
 
-    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 180);
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 220);
     const target = new THREE.Vector3(0, 0, 1.5);
     let distance = 35;
     const updateCamera = () => {
-      camera.position.set(target.x + distance * 0.58, distance * 1.08, target.z + distance * 0.68);
+      // Keep the office's horizontal framing consistent on narrow portrait screens.
+      // The world remains perspective/isometric; only the camera pull-back adapts to aspect ratio.
+      const aspect = Math.max(0.35, camera.aspect || 1);
+      const effectiveDistance = distance * (1.9 / Math.min(1.9, aspect));
+      camera.position.set(target.x + effectiveDistance * 0.58, effectiveDistance * 1.08, target.z + effectiveDistance * 0.68);
       camera.lookAt(target.x, 0.8, target.z);
       camera.updateProjectionMatrix();
     };
@@ -846,7 +850,7 @@ export function WorldViewport({
       const height = Math.max(1, host.clientHeight);
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
-      camera.updateProjectionMatrix();
+      updateCamera();
     });
     observer.observe(host);
     renderer.setSize(Math.max(1, host.clientWidth), Math.max(1, host.clientHeight), false);
@@ -1010,18 +1014,18 @@ export function WorldViewport({
         ))}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/60 to-transparent" />
-      <div className="absolute bottom-4 left-4 z-10 flex gap-1 rounded-xl border border-white/10 bg-slate-950/80 p-1 backdrop-blur" aria-label="World camera controls">
+      <div className="z-10 flex gap-1 rounded-xl border border-white/10 bg-slate-950/90 p-1 backdrop-blur" style={{ position: "absolute", left: 16, bottom: 16, maxWidth: "calc(100% - 32px)" }} aria-label="World camera controls">
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }))} aria-label="Zoom in">+</button>
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: -0.12 } }))} aria-label="Zoom out">−</button>
         <button type="button" className="rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:reset"))}>Reset view</button>
         <button type="button" className="rounded-lg px-2 text-xs text-slate-100 hover:bg-white/10" onClick={() => { if (document.fullscreenElement === viewportRef.current) { void document.exitFullscreen(); } else { void viewportRef.current?.requestFullscreen(); } }} aria-label={isFullscreen ? "Exit fullscreen world view" : "Show world in fullscreen"} aria-pressed={isFullscreen}>{isFullscreen ? "⤢ Exit full screen" : "⛶ Full screen"}</button>
       </div>
-      <div className="pointer-events-none absolute left-4 top-4 rounded-xl border border-white/10 bg-slate-950/75 px-3 py-2 text-xs text-slate-200 backdrop-blur">
+      <div className="pointer-events-none rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-200 backdrop-blur" style={{ position: "absolute", left: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
         <div className="font-semibold tracking-wide text-amber-100">AI COMPANY HQ</div>
         <div className="mt-1 hidden sm:block text-slate-300">WASD / arrows · drag to pan · wheel to zoom</div>
         <div className="mt-1 sm:hidden text-slate-300">Joystick · drag to pan</div>
       </div>
-      <div className="pointer-events-none absolute right-4 top-4 rounded-xl border border-white/10 bg-slate-950/75 px-3 py-2 text-xs text-slate-300 backdrop-blur">
+      <div className="pointer-events-none rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-300 backdrop-blur" style={{ position: "absolute", right: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
         <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-400" />Working
         <span className="mx-2 text-slate-500">•</span>
         <span className="mr-2 inline-block h-2 w-2 rounded-full bg-amber-400" />Approval
