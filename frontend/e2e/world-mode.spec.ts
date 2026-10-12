@@ -95,11 +95,11 @@ test("World Mode renders authoritative employee projection and management bridge
   await mkdir("artifacts/world-visual-review", { recursive: true });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: true });
+  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: false });
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1200);
-  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: true });
+  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: false });
   await page.setViewportSize({ width: 1440, height: 900 });
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
 
