@@ -89,6 +89,18 @@ test("World Mode renders authoritative employee projection and management bridge
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
 
+  // Capture real-browser visual evidence from the same deterministic fixture at both target sizes.
+  // These artifacts support human review; they do not constitute visual acceptance by themselves.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: true });
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
   await employeeSelector.focus();
