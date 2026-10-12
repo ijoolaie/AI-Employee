@@ -123,6 +123,25 @@ test("World Mode renders authoritative employee projection and management bridge
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
 
+  // Use the accessible employee selector so this contract test does not depend on camera projection.
+  const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
+  await employeeSelector.evaluate((element) => (element as HTMLButtonElement).focus());
+  await expect(employeeSelector).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  const employeePanel = page.getByRole("complementary", { name: "Selected employee" });
+  await expect(employeePanel).toBeVisible();
+  await expect(employeePanel.getByText("Sales AI", { exact: true })).toBeVisible();
+  await expect(employeePanel.getByText("Qualify lead", { exact: true })).toBeVisible();
+  await expect(employeeSelector).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("link", { name: "Open Employee Management" })).toHaveAttribute("href", "/employees/2e3f1a10-0e6a-4e9d-8b9a-32c5d37f0b11");
+
+  // Selection is keyboard-accessible and Escape returns the world to its unselected state.
+  await page.keyboard.press("Escape");
+  await expect(employeePanel).toBeHidden();
+  await expect(employeeSelector).toHaveAttribute("aria-pressed", "false");
+
+
   // Capture real-browser visual evidence from the same deterministic fixture at both target sizes.
   // These artifacts support human review; they do not constitute visual acceptance by themselves.
   await mkdir("artifacts/world-visual-review", { recursive: true });
@@ -184,23 +203,6 @@ test("World Mode renders authoritative employee projection and management bridge
   }
   await expect(hud.getByText(/WASD/)).toBeVisible();
 
-  // Use the accessible employee selector so this contract test does not depend on camera projection.
-  const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
-  await employeeSelector.evaluate((element) => (element as HTMLButtonElement).focus());
-  await expect(employeeSelector).toBeFocused();
-  await page.keyboard.press("Enter");
-
-  const employeePanel = page.getByRole("complementary", { name: "Selected employee" });
-  await expect(employeePanel).toBeVisible();
-  await expect(employeePanel.getByText("Sales AI", { exact: true })).toBeVisible();
-  await expect(employeePanel.getByText("Qualify lead", { exact: true })).toBeVisible();
-  await expect(employeeSelector).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("link", { name: "Open Employee Management" })).toHaveAttribute("href", "/employees/2e3f1a10-0e6a-4e9d-8b9a-32c5d37f0b11");
-
-  // Selection is keyboard-accessible and Escape returns the world to its unselected state.
-  await page.keyboard.press("Escape");
-  await expect(employeePanel).toBeHidden();
-  await expect(employeeSelector).toHaveAttribute("aria-pressed", "false");
   await expect(page.getByText("Business outcome loop")).toBeVisible();
   expect(browserErrors, "browser console/page errors during World viewport smoke").toEqual([]);
   expect(serverErrors, "unexpected 5xx responses during World viewport smoke").toEqual([]);
