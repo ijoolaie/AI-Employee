@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { WorldInput } from "./WorldInput";
+import { MobileInputAdapter } from "./MobileInputAdapter";
 import { screenPanToWorldDelta } from "./WorldPan";
 import type { WorldEmployee } from "./WorldState";
 import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
@@ -1118,6 +1119,7 @@ export function WorldViewport({
   return (
     <div ref={viewportRef} className={`world-viewport relative w-full overflow-hidden bg-slate-900 shadow-2xl ${isFullscreen ? "world-viewport-fullscreen h-screen rounded-none border-0" : "min-h-[420px] rounded-2xl border border-slate-700/80"}`} style={{ height: isFullscreen ? "100dvh" : "min(68vh, 760px)" }}>
       <div ref={mountRef} className="absolute inset-0" />
+      <MobileInputAdapter />
       <div className="sr-only" aria-label="Office employees">
         {employees.map((employee) => (
           <button
