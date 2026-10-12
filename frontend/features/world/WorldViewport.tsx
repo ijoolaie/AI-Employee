@@ -781,8 +781,8 @@ export function WorldViewport({
           object.receiveShadow = true;
           // The source GLB intentionally ships without texture images. Add a deterministic
           // stylized palette by vertex height so clothing, skin and hair remain distinguishable.
-          const geometry = object.geometry as THREE.BufferGeometry;
-          const positions = geometry.attributes.position as THREE.BufferAttribute;
+          const geometry: any = object.geometry;
+          const positions: any = geometry.attributes.position;
           geometry.computeBoundingBox();
           const minY = geometry.boundingBox?.min.y ?? 0;
           const maxY = geometry.boundingBox?.max.y ?? 1;
@@ -806,7 +806,7 @@ export function WorldViewport({
             colorAttribute[i * 3 + 1] = color.g;
             colorAttribute[i * 3 + 2] = color.b;
           }
-          geometry.setAttribute("color", new THREE.BufferAttribute(colorAttribute, 3));
+          geometry.setAttribute("color", new (THREE as any).BufferAttribute(colorAttribute, 3));
           object.material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0.02 });
         });
         for (const child of [...ceoAvatar.children]) {
