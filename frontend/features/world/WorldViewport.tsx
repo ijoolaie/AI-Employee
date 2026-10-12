@@ -728,7 +728,7 @@ export function WorldViewport({
       // Portrait screens remain pannable, but avoid scaling the camera so far away that
       // furniture and the player become miniature. Narrow viewports need a tighter frame.
       const aspect = Math.max(0.35, camera.aspect || 1);
-      const responsiveScale = aspect < 1 ? 1.12 : 1;
+      const responsiveScale = aspect < 1 ? 1.5 : 1;
       const effectiveDistance = distance * responsiveScale;
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
