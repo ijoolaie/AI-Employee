@@ -7,7 +7,7 @@ export function MobileInputAdapter() {
 
   return (
     <div
-      className="absolute bottom-4 left-4 h-28 w-28 touch-none rounded-full border border-white/15 bg-slate-950/50 p-2 backdrop-blur md:hidden"
+      className="absolute bottom-20 left-4 z-20 h-28 w-28 touch-none rounded-full border border-white/15 bg-slate-950/75 p-2 shadow-lg backdrop-blur md:hidden"
       onPointerDown={(event) => {
         start.current = { x: event.clientX, y: event.clientY };
         event.currentTarget.setPointerCapture(event.pointerId);
@@ -27,8 +27,11 @@ export function MobileInputAdapter() {
           new CustomEvent("world:mobilemove", { bubbles: true, detail: { x: 0, y: 0 } }),
         );
       }}
-      onPointerCancel={() => {
+      onPointerCancel={(event) => {
         start.current = null;
+        event.currentTarget.dispatchEvent(
+          new CustomEvent("world:mobilemove", { bubbles: true, detail: { x: 0, y: 0 } }),
+        );
       }}
     >
       <div className="flex h-full items-center justify-center">
