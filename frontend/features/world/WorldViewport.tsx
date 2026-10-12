@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { WorldInput } from "./WorldInput";
+import { screenPanToWorldDelta } from "./WorldPan";
 import type { WorldEmployee } from "./WorldState";
 import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
 import type { RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSceneConfig";
@@ -829,8 +830,15 @@ export function WorldViewport({
       const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
       cameraUp.y = 0;
       cameraUp.normalize();
-      target.x += -dx * worldPerPixel * cameraRight.x + dy * worldPerPixel * cameraUp.x;
-      target.z += -dx * worldPerPixel * cameraRight.z + dy * worldPerPixel * cameraUp.z;
+      const pan = screenPanToWorldDelta(
+        dx,
+        dy,
+        worldPerPixel,
+        { x: cameraRight.x, z: cameraRight.z },
+        { x: cameraUp.x, z: cameraUp.z },
+      );
+      target.x += pan.x;
+      target.z += pan.z;
       updateCamera();
     };
     const onReset = () => {
