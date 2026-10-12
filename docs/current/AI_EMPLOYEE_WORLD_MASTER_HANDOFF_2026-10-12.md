@@ -18,7 +18,7 @@
 ## What changed
 - Fixed Tailwind scanning to include `frontend/features/**`, which had omitted responsive utility styles from feature components.
 - Consolidated the procedural executive avatar, procedural surface materials, camera pan helper and tests, consistent reset/default camera distance, continuous side-wall backing and floor palette correction.
-- Desktop and portrait camera framing were adjusted, but the latest reviewed artifact still showed the front floor edge clipped on desktop and the far-right department tight on portrait. PR #1071 increases the multipliers to 1.35 desktop / 1.85 portrait; visual acceptance remains pending fresh artifacts.
+- Desktop and portrait camera framing were adjusted, but the latest reviewed artifact still showed the front floor edge clipped on desktop and the far-right department tight on portrait. PR #1071 now tests 1.55 desktop / 1.85 portrait after the 1.35 desktop artifact still clipped the front floor edge; fresh exact-head artifacts and visual acceptance remain pending.
 - Mobile camera controls use compact Reset/Full labels in the upper-right; the HUD stays upper-left and joystick stays bottom-left. Pointer cancellation resets movement.
 - Extracted ground collision footprints into `frontend/features/world/WorldNavigation.ts`.
 
@@ -37,7 +37,7 @@
 
 ## Next actions
 1. PR #1069 is merged; PR #1068 was closed as superseded. The pan smoke now checks pointer-event wiring rather than relying on WebGL canvas screenshots; unit tests cover pan projection math.
-2. Validate PR #1071 camera margins at 1.35 desktop / 1.85 portrait with fresh exact-head screenshots and all five workflows.
+2. Validate PR #1071 camera margins at 1.55 desktop / 1.85 portrait with fresh exact-head screenshots and all five workflows.
 3. Reconcile this handoff with final code/test results before merging documentation PR #1067.
 4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
