@@ -476,3 +476,10 @@ The dependency PR's security update is desirable, but its current lockfile/build
 3. **Delivered:** append-only support message storage and migration; bounded thread reads (latest 200, returned chronologically); customer/reseller/vendor reply endpoints; ticket-participant tenant isolation with 404 for foreign tickets; audit events without message bodies; replies blocked on resolved tickets; regression tests.
 4. **Next implementation slice:** securely attach existing tenant-owned uploaded files to support messages. Reuse existing upload policy and storage abstractions, but add ticket-participant-authorized download access; never expose raw storage keys or public URLs. Enforce active-file ownership at attachment time, a small per-message attachment limit, and tests for cross-tenant access, deleted files, unsupported types/oversize uploads, and unauthorized downloads.
 5. **Still open:** support frontend workflow, secure attachment workflow, manual desktop/mobile World QA, payment provider verification and signed/replay-safe webhooks, World Credit ledger, and durable room/employee scene integration. Release certification remains separate; latest published certified release is still `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+
+## 2026-10-12 World visual follow-up (PR #1054, not yet validated)
+
+- Added camera-basis pointer pan conversion, a faster CEO movement target (6.2 world units/second), cached procedural surface maps for wood/fabric/plaster/stone, and subtle seated-worker typing gestures.
+- These are incremental source improvements, not visual acceptance. Exact-head CI and runtime confirmation remain outstanding; user reported no screenshot upload is available at present.
+- Major remaining blocker: no authored/licensed GLTF/GLB character or furniture assets are present. Procedural texture maps and primitive geometry do not meet the final game-like art target. Keep PR #1046 and #1054 Draft/unmerged pending asset work, CI, and real desktop/mobile screenshots.
