@@ -36,7 +36,7 @@
 - World remains a read-only projection of authorized business data. Do not invent employees, revenue, orders, approvals, entitlements or room access client-side.
 
 ## Next actions
-1. Reconcile and merge the fresh documentation-only PR after its checks pass; the older #1058 docs branch is stale and will be superseded.
+1. Merge documentation PR #1067 after its checks pass; stale documentation PR #1058 has been closed as superseded.
 2. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 3. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
 4. Keep release certification separate from World code merges.
