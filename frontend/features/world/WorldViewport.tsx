@@ -636,12 +636,9 @@ function buildOffice(scene: any) {
   cylinder(scene, 0.14, 0.16, 0.24, [0, 0.1, 2.75], 0x806044, 16);
   cylinder(scene, 0.12, 0.12, 0.025, [0, 0.375, 2.75], 0xf1e4d0, 16);
 
-  const title = makeLabel("AI COMPANY  •  HEADQUARTERS", "#f5d9a4");
-  if (title) {
-    title.position.set(0, 4.3, 0);
-    title.scale.set(8.5, 1.5, 1);
-    scene.add(title);
-  }
+  // Keep the scene center free of a floating headquarters banner. The persistent
+  // HTML HUD already identifies the world, while this sprite obscured the lobby
+  // and overlapped the employee/camera sightline in desktop and mobile captures.
 }
 
 export function WorldViewport({
@@ -724,12 +721,14 @@ export function WorldViewport({
 
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 220);
     const target = new THREE.Vector3(0, 0, 1.5);
-    let distance = 35;
+    // The previous 35-unit default left too much empty floor around the office on desktop.
+    // A modestly closer default improves desk/character readability without sacrificing the HQ overview.
+    let distance = 31;
     const updateCamera = () => {
-      // Desktop keeps the full HQ overview. Portrait screens intentionally frame a closer,
-      // pannable section; increasing camera distance on narrow screens made the office tiny.
+      // Portrait screens remain pannable, but avoid scaling the camera so far away that
+      // furniture and the player become miniature. Narrow viewports need a tighter frame.
       const aspect = Math.max(0.35, camera.aspect || 1);
-      const responsiveScale = aspect < 1 ? 1.35 : 1;
+      const responsiveScale = aspect < 1 ? 1.12 : 1;
       const effectiveDistance = distance * responsiveScale;
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
