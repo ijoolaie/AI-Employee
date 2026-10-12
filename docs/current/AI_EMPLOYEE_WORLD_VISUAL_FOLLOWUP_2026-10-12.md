@@ -7,7 +7,7 @@
 ## Delivered in this slice
 
 - Pointer panning converts screen-space drag through the camera's projected ground-plane axes, with sensitivity scaled to camera distance and viewport height.
-- CEO movement uses time-based target velocity at 6.2 world units/second, eased acceleration/deceleration, smooth facing and camera follow, plus an articulated low-poly walk cycle.
+- CEO movement uses time-based target velocity at 8.5 world units/second, eased acceleration/deceleration, smooth facing and camera follow, plus an articulated low-poly walk cycle.
 - The CEO procedural model now has a more coherent executive silhouette: jacket/shirt/tie layers, lapels, pocket accent, styled hair, facial details, trouser legs and shoes.
 - Cached deterministic canvas textures add restrained grain to wood, fabric and plaster surfaces without downloading external assets.
 - Unit tests cover pointer projection. Playwright captures runtime screenshots at desktop (1440×900) and mobile (390×844); CI uploads the PNGs as an artifact.
@@ -31,3 +31,4 @@
 - First CI run exposed a strict unit-test mismatch: stationary pointer deltas produced JavaScript negative zero (`-0`). Normalized zero values in `WorldPan.ts`.
 - The production build also exposed that this repository's current Three.js declarations do not export the type names used by the new annotations. Replaced those annotations with compatible structural/loose types while preserving runtime constructors.
 - That CI run therefore **failed** and produced no screenshot artifacts; do not treat it as accepted evidence. The fixes are now committed on the same branch. A fresh CI run for the latest head must pass before review continues.
+- The first fresh run passed CodeQL, recovery, infrastructure and DAST, but the frontend Playwright job failed two room-interaction tests because the `Locked room nearby` control did not appear after a 900 ms forward-movement window. Increased CEO target movement speed from 6.2 to 8.5 world units/second to better meet the user's responsiveness request and reach the proximity trigger more reliably. This is a targeted hypothesis, not yet verified; the next exact-head Playwright run must confirm it.
