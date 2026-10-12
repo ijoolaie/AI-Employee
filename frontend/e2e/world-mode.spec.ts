@@ -203,11 +203,15 @@ test("World room offer loads server prices and creates an order without charging
 
   // Walk toward the locked-room entrance; avoid relying on a 3D pixel coordinate.
   await canvas.focus();
-  await page.keyboard.down("s");
-  await page.waitForTimeout(900);
-  await page.keyboard.up("s");
   const inspectRoom = page.getByRole("button", { name: /Locked room nearby/ });
-  await expect(inspectRoom).toBeVisible({ timeout: 5000 });
+  await page.keyboard.down("s");
+  try {
+    // Keep walking until the actual proximity affordance appears; fixed-duration
+    // movement is flaky when CI frame pacing differs from a local browser.
+    await expect(inspectRoom).toBeVisible({ timeout: 10000 });
+  } finally {
+    await page.keyboard.up("s");
+  }
   await canvas.press("e");
 
   const offer = page.getByRole("dialog", { name: "اجاره یا تمدید اتاق شرکت" });
@@ -290,10 +294,14 @@ test("expired room access offers a renewal order without opening the 3D scene", 
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toHaveAttribute("data-room-access-state", "denied");
   await canvas.focus();
+  const inspectRoom = page.getByRole("button", { name: /Locked room nearby/ });
   await page.keyboard.down("s");
-  await page.waitForTimeout(900);
-  await page.keyboard.up("s");
-  await expect(page.getByRole("button", { name: /Locked room nearby/ })).toBeVisible({ timeout: 5000 });
+  try {
+    // Wait on the rendered proximity state rather than an assumed travel duration.
+    await expect(inspectRoom).toBeVisible({ timeout: 10000 });
+  } finally {
+    await page.keyboard.up("s");
+  }
   await canvas.press("e");
   const access = page.getByRole("dialog", { name: "دسترسی اتاق شرکت" });
   await expect(access.getByRole("alert")).toContainText("اجاره اتاق منقضی شده است");
