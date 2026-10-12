@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
 
 const authState = JSON.stringify({
   state: {
@@ -88,6 +89,19 @@ test("World Mode renders authoritative employee projection and management bridge
 
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
+
+  // Capture real-browser visual evidence from the same deterministic fixture at both target sizes.
+  // These artifacts support human review; they do not constitute visual acceptance by themselves.
+  await mkdir("artifacts/world-visual-review", { recursive: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: true });
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: true });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
 
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
@@ -190,10 +204,10 @@ test("World room offer loads server prices and creates an order without charging
   // Walk toward the locked-room entrance; avoid relying on a 3D pixel coordinate.
   await canvas.focus();
   await page.keyboard.down("s");
-  await page.waitForTimeout(900);
-  await page.keyboard.up("s");
   const inspectRoom = page.getByRole("button", { name: /Locked room nearby/ });
-  await expect(inspectRoom).toBeVisible({ timeout: 5000 });
+  // Keep moving until the proximity affordance appears; eased movement makes fixed holds brittle.
+  await expect(inspectRoom).toBeVisible({ timeout: 7000 });
+  await page.keyboard.up("s");
   await canvas.press("e");
 
   const offer = page.getByRole("dialog", { name: "اجاره یا تمدید اتاق شرکت" });
@@ -277,9 +291,10 @@ test("expired room access offers a renewal order without opening the 3D scene", 
   await expect(canvas).toHaveAttribute("data-room-access-state", "denied");
   await canvas.focus();
   await page.keyboard.down("s");
-  await page.waitForTimeout(900);
+  const inspectRoom = page.getByRole("button", { name: /Locked room nearby/ });
+  // Use the real proximity affordance rather than a timing assumption.
+  await expect(inspectRoom).toBeVisible({ timeout: 7000 });
   await page.keyboard.up("s");
-  await expect(page.getByRole("button", { name: /Locked room nearby/ })).toBeVisible({ timeout: 5000 });
   await canvas.press("e");
   const access = page.getByRole("dialog", { name: "دسترسی اتاق شرکت" });
   await expect(access.getByRole("alert")).toContainText("اجاره اتاق منقضی شده است");
