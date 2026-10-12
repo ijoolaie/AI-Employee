@@ -18,7 +18,7 @@
 ## What changed
 - Fixed Tailwind scanning to include `frontend/features/**`, which had omitted responsive utility styles from feature components.
 - Consolidated the procedural executive avatar, procedural surface materials, camera pan helper and tests, consistent reset/default camera distance, continuous side-wall backing and floor palette correction.
-- Desktop and portrait camera framing were adjusted, but the latest reviewed artifact still showed the front floor edge clipped on desktop and the far-right department tight on portrait. PR #1071's 1.55 desktop / 1.85 portrait artifact still clipped the front floor edge. Follow-up commit `191ead242c20a7d5681ca4729427a4653cdb889c` now tests 1.85 desktop / 1.85 portrait; fresh exact-head artifacts and visual acceptance remain pending.
+- Reviewed PR #1071 artifact for merge ref `270c27e93f9a94aaef6e89db539b8945ab04c372` (head `191ead242c20a7d5681ca4729427a4653cdb889c`): desktop floor is fully inside the frame, but portrait still clips the left floor boundary. All five workflows for `191ead2` passed. New candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` changes portrait multiplier to 2.05 while keeping desktop at 1.85; exact-head workflows/screenshots and visual acceptance remain pending.
 - Mobile camera controls use compact Reset/Full labels in the upper-right; the HUD stays upper-left and joystick stays bottom-left. Pointer cancellation resets movement.
 - Extracted ground collision footprints into `frontend/features/world/WorldNavigation.ts`.
 
@@ -37,7 +37,7 @@
 
 ## Next actions
 1. PR #1069 is merged; PR #1068 was closed as superseded. The pan smoke now checks pointer-event wiring rather than relying on WebGL canvas screenshots; unit tests cover pan projection math.
-2. Validate PR #1071 camera margins at 1.85 desktop / 1.85 portrait with fresh exact-head screenshots and all five workflows.
+2. Validate PR #1071 camera margins at 1.85 desktop / 2.05 portrait with fresh exact-head screenshots and all five workflows.
 3. Reconcile this handoff with final code/test results before merging documentation PR #1067.
 4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
