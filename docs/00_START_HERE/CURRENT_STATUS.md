@@ -1,3 +1,13 @@
+## User-approved World visual direction — 2026-10-12
+
+- The user supplied a current desktop AI Company HQ screenshot and a target mobile office-tycoon screenshot. The target direction is now documented in the canonical [AI Company World & Gameplay Specification, §30](../blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md#30-approved-visual-reference--office-management-tycoon-presentation-2026-10-12).
+- Visual target: polished 3/4 isometric office; warm cream walls and coral/terracotta floors; teal/blue partitions; windows/blinds, doors, wall decor, detailed workstations; varied original/licensed stylized employees; soft shadows; compact, readable responsive HUD.
+- This is a visual direction, not permission to copy proprietary art, exact UI, maps, characters or source. Preserve AI-Employee's department model and enterprise semantics.
+- Priority order: scene composition/legibility → authored/licensed employee and workstation art → obstacle-aware navigation → mobile HUD/accessibility → actual desktop/mobile screenshot review.
+- No fictional coins/gems/energy/income, fabricated activity or ungrounded employee placement. Backend state, tenant isolation, room access and approval semantics remain authoritative.
+- PR #1050 remains Draft/unmerged until the user-approved art direction is implemented and visually accepted. Existing green workflows do not constitute visual acceptance or release certification.
+
+---
 ## Current engineering status — 2026-10-12, World V2 visual-review checkpoint
 
 - PR [#1050](https://github.com/ijoolaie/AI-Employee/pull/1050) is open, Draft and unmerged on current `main`, exact head `8a7de75a8d49b4e1489b00353615f7a1f3808f87`. All five exact-head workflows passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177840), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177820), [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177945), [HA Failure Recovery Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177822), and [Ephemeral DAST Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177856).
