@@ -815,9 +815,22 @@ export function WorldViewport({
 
     const onPan = (event: Event) => {
       const { dx, dy } = (event as CustomEvent<{ dx: number; dy: number }>).detail;
-      const scale = distance * 0.00135;
-      target.x -= dx * scale;
-      target.z -= dy * scale;
+      // Convert screen-space dragging into the camera's ground-plane basis.
+      // Mapping screen X directly to world X and screen Y to world Z made the
+      // office slide diagonally relative to the pointer at this camera angle.
+      const rect = renderer.domElement.getBoundingClientRect();
+      const cameraDistance = camera.position.distanceTo(new THREE.Vector3(target.x, 0.8, target.z));
+      const worldPerPixel =
+        (2 * cameraDistance * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) /
+        Math.max(1, rect.height);
+      const cameraRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      cameraRight.y = 0;
+      cameraRight.normalize();
+      const cameraUp = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion);
+      cameraUp.y = 0;
+      cameraUp.normalize();
+      target.x += -dx * worldPerPixel * cameraRight.x + dy * worldPerPixel * cameraUp.x;
+      target.z += -dx * worldPerPixel * cameraRight.z + dy * worldPerPixel * cameraUp.z;
       updateCamera();
     };
     const onReset = () => {
@@ -875,10 +888,10 @@ export function WorldViewport({
       const moveY = keyboard.moveY || mobileMove.y;
       const seconds = delta / 1000;
       const inputLength = Math.hypot(moveX, moveY);
-      const desiredX = inputLength > 0 ? (moveX / inputLength) * 3.8 : 0;
-      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 3.8 : 0;
+      const desiredX = inputLength > 0 ? (moveX / inputLength) * 6.2 : 0;
+      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 6.2 : 0;
       const velocity = ceoAvatar.userData.velocity ?? (ceoAvatar.userData.velocity = new THREE.Vector2());
-      const responsiveness = inputLength > 0 ? 8 : 11;
+      const responsiveness = inputLength > 0 ? 12 : 14;
       velocity.lerp(new THREE.Vector2(desiredX, desiredZ), Math.min(1, seconds * responsiveness));
       const speed = velocity.length();
       if (speed > 0.025) {
@@ -891,14 +904,14 @@ export function WorldViewport({
         const rotationDelta = Math.atan2(Math.sin(desiredRotation - ceoAvatar.rotation.y), Math.cos(desiredRotation - ceoAvatar.rotation.y));
         ceoAvatar.rotation.y += rotationDelta * Math.min(1, seconds * 10);
       }
-      target.x += (ceoAvatar.position.x - target.x) * Math.min(1, seconds * 5);
-      target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 5);
+      target.x += (ceoAvatar.position.x - target.x) * Math.min(1, seconds * 8);
+      target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 8);
       updateCamera();
 
       const walkRig = ceoAvatar.userData.walkRig;
       if (walkRig) {
         const walking = speed > 0.22 && !reducedMotion.matches;
-        ceoAvatar.userData.walkPhase += speed * seconds * 2.7;
+        ceoAvatar.userData.walkPhase += speed * seconds * 3.1;
         const phase = ceoAvatar.userData.walkPhase;
         const swing = walking ? Math.sin(phase) * 0.48 : 0;
         walkRig.leftLeg.rotation.x += (swing - walkRig.leftLeg.rotation.x) * Math.min(1, seconds * 12);
