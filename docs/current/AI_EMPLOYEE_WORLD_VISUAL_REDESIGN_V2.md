@@ -99,3 +99,14 @@ Do not merge or certify this work without explicit user approval after the visua
 - PR #1046 now compares 18 commits against `main` and includes four changed files: `docs/00_START_HERE/CURRENT_PRIORITIES.md`, this contract, `frontend/e2e/world-mode.spec.ts`, and `frontend/features/world/WorldViewport.tsx`. This is a combined successor diff; inspect it as a whole.
 - The exact head `6185fcdb8c62f223f3391fb52474a90fb1929145` subsequently completed all five reported PR workflows successfully: CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation, and Ephemeral DAST Validation. This certifies those automated checks for that exact source head only; it does not establish visual quality or manual-browser correctness. Any subsequent code change requires fresh checks.
 - This session has no access to the user's local Windows browser/runtime, so it has not captured or verified actual desktop/mobile screenshots. Keep the PR Draft until exact-head checks and real visual evidence are available.
+
+
+## 2026-10-12 — User feedback: pointer mapping, movement speed, and art fidelity
+
+The user reports that pointer movement still feels disconnected from the scene, the CEO moves too slowly, and character/material quality has not changed enough. Source inspection confirms three distinct causes/gaps:
+
+- **Pointer pan:** the previous implementation mapped horizontal drag directly to world X and vertical drag directly to world Z. Because the camera is angled, those axes do not match the screen plane. The follow-up converts pointer deltas through the camera's projected ground-plane right/up basis and scales pan by camera distance and viewport height. Unit coverage lives in `frontend/__tests__/world-pan.test.ts`.
+- **CEO movement:** target speed was 3.8 world units/second, with conservative acceleration and camera follow easing. The follow-up raises the target to 6.2 units/second and tightens acceleration/follow response. This is a code-level adjustment; the user's runtime must still be checked to confirm the speed feels right.
+- **Character/material fidelity:** the current cast, CEO and most furniture are still constructed from Three.js primitive geometry and basic standard materials. The code contains no authored character GLTF rig or real texture/asset pipeline. More procedural details or color changes cannot deliver the agreed reference-level result. Properly licensed authored assets and material textures remain required; do not mark the art redesign complete on the basis of this movement fix.
+
+**Validation status:** automated source changes and unit tests have been added, but tests have not been executed in the user's local runtime by this session. No actual browser screenshots were available for this review. Keep the visual redesign PR Draft and unmerged until exact-head CI, runtime screenshots, and user visual acceptance are complete.
