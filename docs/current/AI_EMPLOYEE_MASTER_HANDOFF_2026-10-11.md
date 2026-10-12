@@ -1,3 +1,14 @@
+## Latest verified checkpoint — 2026-10-12, World V2 visual review
+
+- PR [#1046](https://github.com/ijoolaie/AI-Employee/pull/1046) remains Draft and unmerged at exact code head `8f5be2a45200d75b5a2f09fe71d6c69b54de319b`.
+- All five workflows passed on that exact head: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38211542565), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38211542533), [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38211542617), [HA Failure Recovery Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38211542538), and [Ephemeral DAST Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38211542592).
+- CI captured desktop (1440×900) and mobile (390×844) screenshots in artifact `world-visual-review-6b9d9afd2b567487f624e3e7e258e2ab08991e4a`. These screenshots use deterministic mocked tenant/employee data and must be reviewed by a human; passing E2E does not certify visual quality.
+- Iteration improved explicit camera-control positioning, portrait camera framing/fog, mobile viewport height, and added a first-pass fixed-furniture collision guard for CEO movement. The guard is not pathfinding or full dynamic obstacle avoidance.
+- Remaining acceptance blockers: authored/stylized character and furniture assets are not yet integrated; some room signage remains clipped at the current angle; movement and collision behavior still need manual runtime review. Do not mark the redesign complete or merge #1046 until the user reviews the actual screenshots.
+- Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Latest verified checkpoint — 2026-10-11 after PR #1040/#1041/#1042 merges
 
 - PR #1040 documentation reconciliation merged at `467e6266540cd429b6e4156ac1a3f9ca00d96759`; CodeQL passed on its final PR head `6a5126d6aad9f88ccd29b91b2e66070272108c7a`.
