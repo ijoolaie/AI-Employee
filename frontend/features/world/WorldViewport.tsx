@@ -782,8 +782,8 @@ export function WorldViewport({
       const moveY = keyboard.moveY || mobileMove.y;
       const seconds = delta / 1000;
       const inputLength = Math.hypot(moveX, moveY);
-      const desiredX = inputLength > 0 ? (moveX / inputLength) * 6.2 : 0;
-      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 6.2 : 0;
+      const desiredX = inputLength > 0 ? (moveX / inputLength) * 8.5 : 0;
+      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 8.5 : 0;
       const velocity = ceoAvatar.userData.velocity ?? (ceoAvatar.userData.velocity = new THREE.Vector2());
       velocity.lerp(new THREE.Vector2(desiredX, desiredZ), Math.min(1, seconds * (inputLength > 0 ? 12 : 14)));
       const speed = velocity.length();
