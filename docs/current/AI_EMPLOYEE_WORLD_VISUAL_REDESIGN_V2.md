@@ -1,3 +1,5 @@
+Latest code head after the movement-test diagnosis: `c943f86b2f831dfcd47fda9ada6b4a8f88093a85`. The two prior room-proximity E2E failures were traced to the imported executive avatar spawning at z=3.5 inside the lobby coffee-table collision footprint; the original safe spawn at z=4.4 has been restored. Exact-head CI, CodeQL, DAST, HA recovery and infrastructure workflows are rerunning; do not mark the regression resolved until Playwright passes.
+
 # AI Employee World — Visual Redesign V2
 
 **Status:** Design/implementation contract; not evidence of completed visual work.  
