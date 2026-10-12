@@ -1,3 +1,13 @@
+## Current priority checkpoint — 2026-10-12, World V2 visual review
+
+- PR #1046 remains Draft/unmerged at exact head `8f5be2a45200d75b5a2f09fe71d6c69b54de319b`; all five exact-head workflows passed (CI 38211542565, CodeQL 38211542533, Production Infrastructure 38211542617, HA Recovery 38211542538, DAST 38211542592).
+- A real-browser desktop (1440×900) and mobile (390×844) screenshot pair was captured by Playwright and uploaded as artifact `world-visual-review-6b9d9afd2b567487f624e3e7e258e2ab08991e4a` on [CI run 38211542565](https://github.com/ijoolaie/AI-Employee/actions/runs/38211542565). The screenshot artifact uses deterministic mocked data and is not an automated visual-quality verdict.
+- Camera controls and mobile framing have been corrected; first-pass fixed-furniture collision checks are present. Remaining visual gaps are significant: authored/stylized character and furniture assets are not yet integrated, static collision checks are not full pathfinding, and some room signage remains clipped from the current camera angle.
+- Next: collect explicit user visual review against the screenshots; then replace key primitive assets, improve movement/navigation, fix signage and recapture screenshots. Keep #1046 Draft until user acceptance. Do not claim a finished redesign.
+- Latest certified release remains `v1.4.17`; engineering CI success is not release certification.
+
+---
+
 ## Current priority checkpoint — 2026-10-11 after PR #1041/#1042 merge and visual PR disposition
 
 - PR #1041 is merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; its exact-head CI, CodeQL, infrastructure, HA recovery and DAST checks passed. Server-side room authorization remains fail-closed; a renewal order does not grant access.
