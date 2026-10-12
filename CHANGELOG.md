@@ -1,9 +1,9 @@
-## 2026-10-12 — World V2 review candidate rebased on current main
+## 2026-10-12 — World V2 screenshot review and responsive corrections
 
-- PR #1050 is the current Draft visual-review candidate at exact head `c03dc95db96fade9cd30ce36d57b5c74bba8e928`; all five exact-head workflows passed (CI 38212233176, CodeQL 38212233247, infrastructure 38212233168, HA recovery 38212233268, DAST 38212233184).
-- Playwright captured desktop and mobile screenshots in artifact `world-visual-review-c3883a003fbd606d6f45b95411929a911a67183e` on [CI run 38212233176](https://github.com/ijoolaie/AI-Employee/actions/runs/38212233176).
-- PR #1046 was closed unmerged as superseded by the conflict-free #1050 branch. The visual acceptance gate remains open: procedural characters/furniture, clipped signage and incomplete pathfinding remain.
-- Latest certified release remains `v1.4.17`.
+- PR #1050 is the current Draft visual-review candidate at exact head `8a7de75a8d49b4e1489b00353615f7a1f3808f87`; all five exact-head workflows passed (CI 38213177840, CodeQL 38213177820, infrastructure 38213177945, HA recovery 38213177822, DAST 38213177856).
+- CI uploaded artifact `world-visual-review-1e43f2d0cd75d04671bf8b71d9e7f54f848f15ef` with actual desktop (1440×900) and mobile (390×844) viewport screenshots.
+- Screenshot inspection exposed and fixed mobile camera scaling that made the office either too small or too tightly cropped, corrected screenshot capture from full-page to exact viewport, shortened desktop viewport height to keep controls visible, and removed the mobile status overlay collision.
+- Visual acceptance remains open: characters/furniture remain mostly procedural and static collision guards are not full pathfinding. Keep #1050 Draft until authored asset/style/navigation work and visual review are complete.
 
 ## 2026-10-12 — World V2 visual review preparation
 
