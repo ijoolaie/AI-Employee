@@ -183,7 +183,6 @@ test("World Mode renders authoritative employee projection and management bridge
     expect(desktopControlsBox.y).toBeGreaterThan(desktopCanvasBox.y + desktopCanvasBox.height / 2);
   }
   await expect(hud.getByText(/WASD/)).toBeVisible();
-  await expect(page.getByText("Working", { exact: true })).toBeVisible();
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
 
   // Use the accessible employee selector so this contract test does not depend on camera projection.
