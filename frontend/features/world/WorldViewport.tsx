@@ -1146,7 +1146,7 @@ export function WorldViewport({
         ))}
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/60 to-transparent" />
-      <div className="absolute right-3 top-16 z-10 flex max-w-[calc(100%-24px)] gap-1 rounded-xl border border-white/10 bg-slate-950/95 p-1 shadow-xl backdrop-blur sm:bottom-4 sm:left-4 sm:right-auto sm:top-auto sm:max-w-[calc(100%-32px)]" aria-label="World camera controls">
+      <div className="absolute right-3 top-24 z-10 flex max-w-[calc(100%-24px)] gap-1 rounded-xl border border-white/10 bg-slate-950/95 p-1 shadow-xl backdrop-blur sm:bottom-4 sm:left-4 sm:right-auto sm:top-auto sm:max-w-[calc(100%-32px)]" aria-label="World camera controls">
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }))} aria-label="Zoom in">+</button>
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: -0.12 } }))} aria-label="Zoom out">−</button>
         <button type="button" className="rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:reset"))}>Reset view</button>
