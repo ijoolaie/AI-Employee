@@ -821,7 +821,7 @@ export function WorldViewport({
       // Portrait uses a more top-down composition rather than merely zooming the
       // desktop camera out; this reduces diagonal skew and keeps the office center readable.
       const responsiveScale = portrait ? 1.65 : 1;
-      const effectiveDistance = distance * responsiveScale;
+      const effectiveDistance = distance * (portrait ? responsiveScale : 1.06);
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
         // Keep fog bounds proportional to the responsive camera distance.
@@ -1150,7 +1150,7 @@ export function WorldViewport({
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }))} aria-label="Zoom in">+</button>
         <button type="button" className="h-8 w-8 rounded-lg text-sm text-slate-200 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: -0.12 } }))} aria-label="Zoom out">−</button>
         <button type="button" className="rounded-lg px-2 text-xs text-slate-300 hover:bg-white/10" onClick={() => mountRef.current?.querySelector("canvas")?.dispatchEvent(new CustomEvent("world:reset"))}><span className="hidden sm:inline">Reset view</span><span className="sm:hidden">Reset</span></button>
-        <button type="button" className="rounded-lg px-2 text-xs text-slate-100 hover:bg-white/10" onClick={() => { if (document.fullscreenElement === viewportRef.current) { void document.exitFullscreen(); } else { void viewportRef.current?.requestFullscreen(); } }} aria-label={isFullscreen ? "Exit fullscreen world view" : "Show world in fullscreen"} aria-pressed={isFullscreen}>{isFullscreen ? <><span className="hidden sm:inline">⤢ Exit full screen</span><span className="sm:hidden">⤢</span></> : <><span className="hidden sm:inline">⛶ Full screen</span><span className="sm:hidden">⛶</span></>}</button>
+        <button type="button" className="rounded-lg px-2 text-xs text-slate-100 hover:bg-white/10" onClick={() => { if (document.fullscreenElement === viewportRef.current) { void document.exitFullscreen(); } else { void viewportRef.current?.requestFullscreen(); } }} aria-label={isFullscreen ? "Exit fullscreen world view" : "Show world in fullscreen"} aria-pressed={isFullscreen}>{isFullscreen ? <><span className="hidden sm:inline">⤢ Exit full screen</span><span className="sm:hidden">Full</span></> : <><span className="hidden sm:inline">⛶ Full screen</span><span className="sm:hidden">Full</span></>}</button>
       </div>
       <div data-testid="world-viewport-hud" className="pointer-events-none rounded-xl border border-white/10 bg-slate-950/85 px-3 py-2 text-xs text-slate-200 backdrop-blur" style={{ position: "absolute", left: 16, top: 16, maxWidth: "calc(100% - 32px)" }}>
         <div className="font-semibold tracking-wide text-amber-100">AI COMPANY HQ</div>
