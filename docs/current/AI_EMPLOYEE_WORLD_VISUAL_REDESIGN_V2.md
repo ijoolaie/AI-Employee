@@ -99,3 +99,14 @@ Do not merge or certify this work without explicit user approval after the visua
 - PR #1046 now compares 18 commits against `main` and includes four changed files: `docs/00_START_HERE/CURRENT_PRIORITIES.md`, this contract, `frontend/e2e/world-mode.spec.ts`, and `frontend/features/world/WorldViewport.tsx`. This is a combined successor diff; inspect it as a whole.
 - The exact head `6185fcdb8c62f223f3391fb52474a90fb1929145` subsequently completed all five reported PR workflows successfully: CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery Validation, and Ephemeral DAST Validation. This certifies those automated checks for that exact source head only; it does not establish visual quality or manual-browser correctness. Any subsequent code change requires fresh checks.
 - This session has no access to the user's local Windows browser/runtime, so it has not captured or verified actual desktop/mobile screenshots. Keep the PR Draft until exact-head checks and real visual evidence are available.
+
+
+## 2026-10-12 reconciliation after PR #1057 merged
+
+- Current `main` is at merge commit `de053b24d045d17d0e447e29140cfd4728ade4c8` for PR #1057. The warmer palette, window blinds, responsive viewport changes, and an employee GLB asset plus attribution/license information are present in that merged history.
+- PR #1055 is the remaining open follow-up found by repository search. Its head `004530abe6628d477a925cc1026f3b043f4c4280` is diverged from current main (14 commits ahead, 2 behind) and screenshots described by the PR show top-left overlay overlap and clipped room labels. Do not merge it without reconciling its unique changes and refreshing evidence.
+- Runtime asset caveat: current `frontend/features/world/WorldViewport.tsx` still creates ordinary employees in `addWorker` from primitive meshes and has no GLTF/GLB loader reference. Verify if another route/component uses the GLB; if not, asset presence alone does not meet the authored-character acceptance gate.
+- Revised work order: (1) port the unique pan projection utility/tests and executive avatar/movement changes onto current main; (2) fix label/HUD clipping; (3) verify or wire GLB runtime loading with loading/error fallback and resource disposal; (4) implement obstacle-aware navigation and validated workstation/overflow placement; (5) exact-head CI plus actual desktop/mobile screenshots and human review.
+- Keep visual acceptance open until the acceptance gates above are met. Green CI and the presence of an asset file are not visual approval.
+
+---
