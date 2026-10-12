@@ -98,7 +98,8 @@ test("World Mode renders authoritative employee projection and management bridge
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-desktop.png", fullPage: false });
-  // Add a focused view so reviewers can inspect the loaded player model rather than judging only map scale.
+  // Pan the camera target to the player, then zoom so reviewers can inspect the loaded model itself.
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:pan", { detail: { dx: 0, dy: -93 } })));
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.48 } })));
   await page.waitForTimeout(700);
   await page.screenshot({ path: "artifacts/world-visual-review/world-avatar-closeup.png", fullPage: false });
