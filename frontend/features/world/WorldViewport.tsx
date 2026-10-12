@@ -464,12 +464,12 @@ function buildOffice(scene: any) {
   // Batch the checkerboard planks into two instanced meshes to reduce hundreds of draw calls.
   const lightTiles = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1.96, 0.025, 1.96),
-    new THREE.MeshStandardMaterial({ color: 0xc99b6d, roughness: 0.78 }),
+    new THREE.MeshStandardMaterial({ color: 0xd7b1a2, roughness: 0.82 }),
     150,
   );
   const darkTiles = new THREE.InstancedMesh(
     new THREE.BoxGeometry(1.96, 0.025, 1.96),
-    new THREE.MeshStandardMaterial({ color: 0xb9895c, roughness: 0.78 }),
+    new THREE.MeshStandardMaterial({ color: 0xc88f80, roughness: 0.84 }),
     150,
   );
   const tileTransform = new THREE.Object3D();
@@ -509,6 +509,17 @@ function buildOffice(scene: any) {
     box(scene, [3.9, 0.11, 0.28], [x, 1.12, -14.57], 0xd5c8b4, { castShadow: false });
   }
   box(scene, [40, 0.18, 0.5], [0, 0.12, -14.72], 0xd1cfc6);
+
+
+  // Warm timber blinds echo the mobile reference while leaving enough glazing visible to read as windows.
+  for (let x = -17.5; x <= 17.5; x += 5) {
+    for (let slat = 0; slat < 6; slat += 1) {
+      const y = 2.82 + slat * 0.17;
+      box(scene, [3.55, 0.055, 0.13], [x, y, -14.53], slat % 2 === 0 ? 0xe5c39a : 0xd7ad7e, { castShadow: false, receiveShadow: false });
+    }
+    // A short pull cord gives the blind assembly a crafted, office-interior detail.
+    box(scene, [0.035, 0.62, 0.035], [x + 1.52, 2.48, -14.48], 0xb58b62, { castShadow: false, receiveShadow: false });
+  }
 
   // Low pastel department platforms make the floor plan readable without hiding the characters.
   for (const dept of DEPARTMENTS) {
