@@ -7,6 +7,8 @@
 - Current-main `WorldViewport.tsx` still has no GLTF/GLB loader reference for regular employee characters. Confirm actual runtime usage of the GLB asset before calling employee asset integration complete.
 - Remaining gates: fix and review actual desktop/mobile overlay and label clipping; verify employee asset runtime loading/fallback/disposal; implement obstacle-aware navigation and intentional overflow handling; review walk quality/reduced motion; pass exact-head checks and inspect the screenshot artifact.
 
+
+Latest code head after the movement-test diagnosis: `c943f86b2f831dfcd47fda9ada6b4a8f88093a85`. The two prior room-proximity E2E failures were traced to the imported executive avatar spawning at z=3.5 inside the lobby coffee-table collision footprint; the original safe spawn at z=4.4 has been restored. Exact-head CI, CodeQL, DAST, HA recovery and infrastructure workflows are rerunning; do not mark the regression resolved until Playwright passes.
 ---
 ## 2026-10-12 — Reconcile World follow-up after #1057 merge
 
