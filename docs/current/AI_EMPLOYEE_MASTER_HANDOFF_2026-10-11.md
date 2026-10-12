@@ -1,3 +1,13 @@
+## Latest user direction — 2026-10-12: World visual reference locked
+
+- User supplied two screenshots: current desktop AI Company HQ (before-state) and a portrait mobile office-management tycoon game (target art-direction reference).
+- The canonical gameplay specification §30 now records the approved direction and acceptance gates. Use it as the source of truth: warm/cream architecture, coral/terracotta floor accents, teal/blue partitions, windows/blinds, doors/wall decor, coherent detailed workstations, varied stylized employees, soft shadows, readable compact HUD and stable 3/4 isometric composition.
+- Treat the target screenshot as inspiration for visual language/readability only. Do not copy proprietary sprites, characters, maps, exact HUD, branding or source. Use original/properly licensed assets and record provenance.
+- Implementation order: scene composition and responsive framing; authored/licensed employee and workstation art; obstacle-aware navigation; mobile HUD/accessibility; actual-route desktop/mobile screenshots and regression testing.
+- Keep backend employee/run/approval state, tenant isolation, room entitlements, approvals and business metrics authoritative. No fake arcade currency/economy/activity.
+- PR #1050 remains Draft/unmerged until the approved visual direction is actually implemented and reviewed in browser screenshots. Documentation update does not mean the redesign is implemented; no release certification is implied.
+
+---
 ## Latest verified checkpoint — 2026-10-12, World V2 visual review candidate
 
 - PR [#1050](https://github.com/ijoolaie/AI-Employee/pull/1050) is open, Draft and unmerged on current `main`, exact head `8a7de75a8d49b4e1489b00353615f7a1f3808f87`. All five exact-head workflows passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177840), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177820), [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177945), [HA Failure Recovery Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177822), and [Ephemeral DAST Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38213177856).
