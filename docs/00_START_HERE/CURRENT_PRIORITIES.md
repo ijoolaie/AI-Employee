@@ -2,7 +2,7 @@
 
 - PR #1062 is merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; its validated source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2` passed all five required workflow groups and the exact-head screenshots were reviewed.
 - The 1440×900 desktop frame includes the front floor edge; the 390×844 mobile frame shows all five department platforms with the HUD, camera controls and joystick separated.
-- Next priorities: (1) create/merge fresh docs based on current main; (2) design original/licensed employee assets and verify runtime loading before claiming GLB integration; (3) implement obstacle-aware navigation beyond static collision footprints; (4) add broader collision/movement and reduced-motion acceptance.
+- Next priorities: (1) keep the current handoff/status aligned with future World code changes; (2) design original/licensed employee assets and verify runtime loading before claiming GLB integration; (3) implement obstacle-aware navigation beyond static collision footprints; (4) add broader collision/movement and reduced-motion acceptance.
 - PR #1058 is a stale Draft documentation branch and must not be merged as-is. Its status is superseded by the new master handoff.
 - Do not claim full game/pathfinding completion or production release certification. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
