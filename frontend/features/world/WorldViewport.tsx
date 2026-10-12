@@ -939,10 +939,10 @@ export function WorldViewport({
       const moveY = keyboard.moveY || mobileMove.y;
       const seconds = delta / 1000;
       const inputLength = Math.hypot(moveX, moveY);
-      const desiredX = inputLength > 0 ? (moveX / inputLength) * 8.5 : 0;
-      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 8.5 : 0;
+      const desiredX = inputLength > 0 ? (moveX / inputLength) * 3.8 : 0;
+      const desiredZ = inputLength > 0 ? (moveY / inputLength) * 3.8 : 0;
       const velocity = ceoAvatar.userData.velocity ?? (ceoAvatar.userData.velocity = new THREE.Vector2());
-      const responsiveness = inputLength > 0 ? 12 : 14;
+      const responsiveness = inputLength > 0 ? 8 : 11;
       velocity.lerp(new THREE.Vector2(desiredX, desiredZ), Math.min(1, seconds * responsiveness));
       const speed = velocity.length();
       if (speed > 0.025) {
@@ -955,14 +955,14 @@ export function WorldViewport({
         const rotationDelta = Math.atan2(Math.sin(desiredRotation - ceoAvatar.rotation.y), Math.cos(desiredRotation - ceoAvatar.rotation.y));
         ceoAvatar.rotation.y += rotationDelta * Math.min(1, seconds * 10);
       }
-      target.x += (ceoAvatar.position.x - target.x) * Math.min(1, seconds * 8);
-      target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 8);
+      target.x += (ceoAvatar.position.x - target.x) * Math.min(1, seconds * 5);
+      target.z += (ceoAvatar.position.z - 2.5 - target.z) * Math.min(1, seconds * 5);
       updateCamera();
 
       const walkRig = ceoAvatar.userData.walkRig;
       if (walkRig) {
         const walking = speed > 0.22 && !reducedMotion.matches;
-        ceoAvatar.userData.walkPhase += speed * seconds * 3.1;
+        ceoAvatar.userData.walkPhase += speed * seconds * 2.7;
         const phase = ceoAvatar.userData.walkPhase;
         const swing = walking ? Math.sin(phase) * 0.48 : 0;
         walkRig.leftLeg.rotation.x += (swing - walkRig.leftLeg.rotation.x) * Math.min(1, seconds * 12);
