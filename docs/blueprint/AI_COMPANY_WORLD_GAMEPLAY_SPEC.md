@@ -344,3 +344,11 @@ The currently available office read model may not expose authoritative employee 
 - Role-specific authored employee assets, a validated scene-layout model, skeletal animation/foot planting, full obstacle-aware pathfinding and overall visual acceptance remain incomplete.
 
 The redesign is **not considered complete** until the acceptance gates above are met. CI success and screenshots from a candidate are evidence only for that exact source head; neither certifies a production release.
+
+### PR #1082 follow-up — 2026-10-13
+
+PR #1082 is merged as `f1b4f782d8753da6c5f960b50942e9a5a6f16b06`. It adds deterministic, low-amplitude upper-body sway only for employees whose authoritative state is `WORKING`, and returns no sway when reduced motion is requested. Four unit tests cover non-working states, reduced motion, amplitude/determinism and per-employee phase variation.
+
+Post-merge CI, Production Compose Validation, Production Infrastructure Validation, CodeQL, and Ephemeral DAST all passed on the merge SHA; SLO Contract Manual v2 and Delivery Manifest Bundle also passed. These checks validate the bounded change, not production deployment or release certification.
+
+Acceptance boundary: this is not skeletal animation, a walk cycle, foot planting, role-specific character art, or full obstacle-aware pathfinding. Issue #1044 remains open pending actual desktop/mobile visual review and regression evidence for input, employee selection, room lock/expiry, tenant-scoped scene access, performance and reduced motion.
