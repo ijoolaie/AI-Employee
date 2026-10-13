@@ -21,7 +21,7 @@
 - This is a release certification fact, **not** proof of current `main` being certified.
 - External production deployment: **not verified / not claimed**.
 - External customer acceptance and realized revenue: **not verified**.
-- World viewport framing has bounded desktop/mobile screenshot acceptance recorded for PR #1071; that does not mean the broader World visual redesign, authored 3D assets, obstacle-aware pathfinding, or commercial workflows are complete.
+- PR #1071's bounded viewport criterion was initially accepted, but later portrait review found residual right-edge cropping. PR #1075 added a portrait fit/label-scale adjustment and its fresh screenshot showed the full floor within the 390×844 canvas. This does not mean the broader World visual redesign, authored 3D assets, full obstacle-aware pathfinding, or commercial workflows are complete.
 - PR #1072 merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6` from exact head `98e740fbc95d6597440fee2216977762e008fa0a` after all five workflow groups passed and its fresh desktop/portrait screenshots were manually reviewed. Acceptance is limited to the procedural glass-partition material pass; employee models remain procedural and obstacle-aware pathfinding is not implemented.
 - Current source-of-truth files had drifted: the manifest still described a September release-candidate checkpoint, the gap register described v1.4.11, the evidence index described v1.4.11, and status/priority documents carried stale PR-review language. The immutable v1.4.17 release facts themselves remain distinct from these stale current-state summaries.
 
@@ -63,7 +63,7 @@ Each row must also record: owner/role; user-visible promise; entry point; implem
 - [x] Removed or labeled stale current-state statements in status and priorities; retained dated history as history (PR #1073, with PR #1074 keeping World status current).
 - [x] Added this audit plan to the documentation index / start-here path (PR #1073).
 - [x] Inspected the relevant PR state and CI path filters; confirmed the missing docs paths and absent required-check enforcement (details in section 9).
-- [x] Added a repeatable release-identity consistency validator and workflow in PR #1074; merge and repository required-check enforcement remain pending.
+- [x] Added a repeatable release-identity consistency validator and workflow in PR #1074; the PR is merged and its post-merge check passed. Repository required-check enforcement remains open.
 
 ### A1 — Map every employee role to real execution
 
@@ -110,7 +110,7 @@ Fix stale truth surfaces and blockers first; then select the shortest end-to-end
 
 | Date | Area | Finding / action | Evidence | Status |
 |---|---|---|---|---|
-| 2026-10-13 | Documentation truth | Reconciled stale manifest, gap register, evidence index and status/priority snapshots in merged PR #1073; PR #1074 adds a consistency gate | README, manifest, release ledger, gap register, evidence index, current status/priority; PR #1073 and #1074 | RECONCILED; PREVENTION CHECK PENDING MERGE |
+| 2026-10-13 | Documentation truth | Reconciled stale manifest/gap/evidence/status surfaces in PR #1073; PR #1074 added the consistency gate and its post-merge run passed | README, manifest, release ledger, gap register, evidence index, current status/priority; PR #1073/#1074 | RECONCILED; PREVENTION CHECK PASSING; REQUIRED-CHECK ENFORCEMENT OPEN |
 | 2026-10-13 | Commercial readiness | External deployment, customer acceptance, and realized revenue are not verified in repository evidence | README; Versioning Truth; Release Truth Ledger | OPEN |
 | 2026-10-13 | World | PR #1071 viewport framing and PR #1072 glass-partition pass are each accepted only for their bounded criteria; broader World redesign remains open | PR #1071 exact-head artifact; PR #1072 CI run `38356980574`, artifact `11793500701`, merge `c097eedbc5674d788d72b5b3a2d334adba1737e6` | PARTIAL ACCEPTANCE |
 
@@ -169,3 +169,20 @@ This is a first-pass **static code map**, not an end-to-end execution certificat
 ### World visual follow-up — 2026-10-13
 
 PR #1072's initial exact-head CI failed because the full World E2E exceeded the default 30-second test budget at the final viewport reset/check; 8 of 9 browser tests passed, and the screenshot artifact was still uploaded. The World smoke now has a 60-second per-test timeout to account for its WebGL interaction and two viewport captures on software-rendered CI. On exact head `98e740fbc95d6597440fee2216977762e008fa0a`, CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST all passed. Desktop and portrait screenshots were manually reviewed; this is bounded visual acceptance only.
+
+
+### Additional confirmed World documentation drift — 2026-10-13
+
+The World gameplay spec still described PR #1050 as an active Draft candidate even though GitHub reports it closed/unmerged; the redesign contract likewise described #1045/#1046 as current candidates. These were historical snapshots not reconciled after later PRs. PR #1050 comments discussed a possible `employee-base.glb` asset, but the merged #1057 tree and current `main` tree contain no `employee-base.glb`, `GLTFLoader`, or World asset-credit/license files. The current player/CEO avatar and employee cast are procedural. The World spec, redesign contract and master handoff were corrected in PR #1075; asset integration remains NOT-IMPLEMENTED until the actual files, loader, provenance and runtime evidence exist.
+
+| 2026-10-13 | World documentation | Corrected stale #1050/#1045/#1046 active-state language and rejected unsupported GLB asset claims; #1075's bounded room/floor/portrait-fit change passed visual review | GitHub state for #1050/#1057; recursive tree and `WorldViewport.tsx` at current `main`; World spec and handoff | DOCS UPDATED; VISUAL REVIEW PASSED ON EXACT HEAD |
+
+
+A further visual-evidence correction: the #1071/#1072 portrait screenshots do not establish full-office mobile framing; the outer right room edge sits at or beyond the canvas boundary. The glass-partition pass remains accepted as a material-only change, but responsive camera framing stays OPEN until a fresh exact-head screenshot proves the room is composed as intended.
+
+
+### PR #1075 exact-head acceptance — 2026-10-13
+
+On `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf`, CI, Documentation Truth Consistency, CodeQL, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST all passed. The fresh desktop/portrait screenshot artifact `11793314632` from run `38358857827` was manually reviewed. The department-tinted floor tiles, framed room entrances, matching room-wall blockers and portrait fit/label scale are accepted for this bounded slice on the exact code head; PR lifecycle is tracked in GitHub. The full floor fits the 390×844 portrait canvas. This does not complete authored employee assets or full obstacle-aware pathfinding.
+
+| 2026-10-13 | World | Added room entrances and floor tiles; moved desk anchors to preserve a central aisle; aligned collision blockers with visible walls; corrected portrait camera fit; manually reviewed exact-head screenshots | PR #1075 head `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf`, CI run `38358857827`, artifact `11793314632` | BOUNDED ACCEPTANCE |

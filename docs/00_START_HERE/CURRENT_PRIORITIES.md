@@ -2,16 +2,17 @@
 
 - PR #1073 is merged at `6b5963f4c8409eb75d0be50c2ebdb3b4908a48d5`; release/current-state summaries now distinguish the immutable published release from current engineering `main` and external production.
 - PR #1072 is merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6`. Its exact head passed CI/Playwright, CodeQL, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST; desktop and portrait screenshots were reviewed. This accepts only the bounded glass-partition pass.
-- PR #1074 adds a release-truth consistency workflow and the initial static audit of all 12 canonical workforce roles. Review its exact-head checks before merge; branch protection still has no required checks, so a workflow pass is currently advisory.
-- Next: (1) complete/merge #1074 after checks and diff review; (2) close the Customer Success and QA/DevOps tool-reachability gaps and test configured provider paths; (3) prove one human-supervised lead-to-paid-delivery workflow with actual receipts, costs and customer acceptance; (4) continue World Issue #1044 with authored/licensed employee assets and obstacle-aware navigation.
+- PR #1075 exact head `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf` passed CI, Documentation Truth Consistency, CodeQL, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST. Artifact `11793314632` was reviewed; the bounded room/floor/portrait-fit slice is visually accepted. Employee assets and full pathfinding remain open.
+- PR #1074 is merged and its post-merge Release identity consistency check passed. It adds the release-truth workflow and static audit of all 12 canonical workforce roles. Branch protection still has no required checks, so workflow outcomes remain advisory.
+- Next: (1) continue World Issue #1044 beyond the accepted room/floor/portrait-fit slice with authored/licensed employee assets and full obstacle-aware pathfinding; (2) close the Customer Success and QA/DevOps tool-reachability gaps and test configured provider paths; (3) prove one human-supervised lead-to-paid-delivery workflow with actual receipts, costs and customer acceptance.
 - Canonical plan: [Capability Reality Audit & Commercial Readiness Plan](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
 - Do not claim complete World redesign, autonomous sales, external production, or realized revenue until the relevant acceptance evidence exists.
 ---
 
-## Current priority checkpoint — 2026-10-12, after World viewport merge
+## Historical priority checkpoint — 2026-10-12, superseded by the 2026-10-13 checkpoint above
 
 - PR #1062 is merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; its validated source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2` passed all five required workflow groups and the exact-head screenshots were reviewed.
-- Viewport-framing acceptance is met for the bounded criterion: PR #1071's exact-head artifact was reviewed at 1440×900 and 390×844, with the full floor visible in both. This does not mean the full visual redesign or gameplay is complete.
+- PR #1071 was accepted for its then-bounded viewport criterion. Later review of the #1071/#1072 portrait artifacts found the outer right room edge at or beyond the canvas boundary; that historical acceptance did not establish full mobile framing. The current fit evidence is the #1075 exact-head artifact linked above.
 - Next priorities: (1) keep the current handoff/status aligned with future World code changes; (2) design original/licensed employee assets and verify runtime loading before claiming GLB integration; (3) implement obstacle-aware navigation beyond static collision footprints; (4) add broader collision/movement and reduced-motion acceptance.
 - PR #1058 was closed as a stale documentation branch. PR #1069 was merged (#1068 closed as superseded); PR #1071 is merged after all five exact-head workflow groups passed and the viewport screenshots were reviewed. PR #1067 was the documentation reconciliation PR; its CodeQL result is historical evidence for that exact head only.
 - Do not claim full game/pathfinding completion or production release certification. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
@@ -20,7 +21,7 @@
 
 ---
 
-## World visual direction checkpoint — 2026-10-12 (user reference accepted)
+## Historical World visual direction checkpoint — 2026-10-12 (superseded by 2026-10-13 evidence)
 
 - Canonical spec updated: [AI_COMPANY_WORLD_GAMEPLAY_SPEC.md §30](../blueprint/AI_COMPANY_WORLD_GAMEPLAY_SPEC.md#30-approved-visual-reference--office-management-tycoon-presentation-2026-10-12). The target reference is a colorful, polished isometric office-management scene with room detail, warm/cool material contrast, varied stylized employees, detailed workstations, soft shadows and a compact readable mobile HUD.
 - The existing wide HQ screenshot is the before-state; the portrait game screenshot is a direction reference only. Do not copy its proprietary assets, exact HUD, characters, branding or map.
@@ -29,7 +30,7 @@
 - PR #1050 remains Draft/unmerged until visual acceptance, navigation and regression gates are satisfied. Automated CI success alone is not sufficient.
 
 ---
-## Current priority checkpoint — 2026-10-12, World V2 visual-review candidate
+## Historical priority checkpoint — 2026-10-12, World V2 visual-review candidate (superseded)
 
 - PR #1050 remains Draft/unmerged at exact head `8a7de75a8d49b4e1489b00353615f7a1f3808f87`; all five exact-head workflows passed (CI 38213177840, CodeQL 38213177820, infrastructure 38213177945, HA recovery 38213177822, DAST 38213177856).
 - Review artifact `world-visual-review-1e43f2d0cd75d04671bf8b71d9e7f54f848f15ef` contains viewport-sized desktop/mobile captures. Mobile framing and overlay overlap have been corrected.
@@ -43,7 +44,7 @@
 
 ---
 
-## Current priority checkpoint — 2026-10-11 after PR #1041/#1042 merge and visual PR disposition
+## Historical priority checkpoint — 2026-10-11 after PR #1041/#1042 merge and visual PR disposition (superseded)
 
 - PR #1041 is merged at `e1633e9bf000af045e2571d930b4eeefec30883f`; its exact-head CI, CodeQL, infrastructure, HA recovery and DAST checks passed. Server-side room authorization remains fail-closed; a renewal order does not grant access.
 - PR #1042 is merged at `cd1f218469d913e4e586e8a0c29b00dbb9d246ad`; all 11 exact-head workflows passed, plus backend (1452 passed, 1 deselected), local Docker build, 13 support-message tests, and a real PostgreSQL + HTTP API concurrency regression. Still required: manual support workflow and attachment-policy QA.
@@ -63,7 +64,7 @@
 - Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) tracks the visual upgrade, with before/after desktop/mobile screenshots and preservation of room authorization/input behavior as acceptance gates.
 - Manual customer support workflow acceptance and manual World visual QA remain open. Do not claim either is complete until validated in the actual local stack.
 
-## Current priority checkpoint — 2026-10-11 after PR #1039 and PR #1041 validation
+## Historical priority checkpoint — 2026-10-11 after PR #1039 and PR #1041 validation (superseded)
 
 - PR #1039 merged at `27c44ac33a92c636e552950cdfa2f983255e40a8`; exact PR head `9febc1124b28f53b8b8b4ba5c09a8f26bb978dfa` passed CI, including isolated PostgreSQL persistence/isolation regression, frontend lint/build and Playwright.
 - Support chain merged: #1031 threads, #1033 tenant-safe attachments, #1035 reseller conversation UI, #1036 sent-ticket persistence, #1039 regression coverage. PR #1042 adds safe conflict handling for concurrent attachment reuse; exact head `4bebbdcdce78dc5e43276cbaa7aac9136c5fdf4e` passed all 11 workflows, 13 support-message unit tests, and the real PostgreSQL + HTTP API concurrency regression locally (1 passed in 2.63s). Remaining support work: manual create → reload → reply/thread → authorized attachment QA; test both participants, deleted/missing files and policy limits.

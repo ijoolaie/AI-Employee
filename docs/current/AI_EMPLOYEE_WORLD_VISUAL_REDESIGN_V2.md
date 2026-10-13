@@ -1,8 +1,11 @@
-## Latest implementation checkpoint — 2026-10-12
+## Latest implementation checkpoint — 2026-10-13
 
-The viewport-framing criterion is accepted for candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0`: all five exact-head workflows passed and artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` was reviewed at 1440×900 and 390×844; the full floor is visible on both. This is limited to viewport framing and responsive controls, not overall redesign or gameplay completion. Evidence is recorded in [World Master Handoff](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md).
+- PR #1071 accepted viewport framing only.
+- PR #1072 merged as `c097eedbc5674d788d72b5b3a2d334adba1737e6`; its exact-head CI/security/recovery workflows passed and desktop/portrait screenshots were reviewed. The accepted scope is low glass department partitions, colored cap rails and mullions.
+- PR #1075 exact head `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf` passed CI, Documentation Truth Consistency, CodeQL, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST. Fresh desktop/portrait screenshots from [run 38358857827 / artifact 11793314632](https://github.com/ijoolaie/AI-Employee/actions/runs/38358857827/artifacts/11793314632) were reviewed. The office floor now fits within the 390×844 portrait canvas, room entrances and tiled zones are visible, and the central aisle/doorway blockers are covered by unit tests. The bounded room/floor/portrait-fit slice is visually accepted on this exact code head; consult the GitHub PR page for current lifecycle. Full pathfinding and authored employee assets remain open.
+- Current `main` contains no `employee-base.glb`, `GLTFLoader` integration, or asset-credit/license files under the World asset path. The player/CEO avatar and employee cast are therefore still procedural in the current tree; do not count the asset-pipeline step as implemented based on stale PR comments.
 
-This acceptance is limited to viewport framing/responsive controls and the implemented tests. Employees remain procedural; GLB/GLTF runtime integration, obstacle-aware pathfinding, richer authored workstations and foot-planting animation remain unimplemented. Do not interpret this checkpoint as full visual/gameplay completion or release certification.
+The World remains a partial implementation. Authored employee GLB/GLTF assets, full obstacle-aware pathfinding, validated workstation placement, richer animation/foot planting and full visual acceptance remain open. Automated checks and screenshots are evidence for their exact code head, not proof of the full redesign or production release.
 
 ---
 
@@ -65,7 +68,7 @@ The current `frontend/features/world/WorldViewport.tsx` builds most objects from
 - Use layered materials, restrained bevels, contact shadows, ambient occlusion only if affordable, and intentional warm key/cool fill lighting. Avoid relying on emissive rectangles and extra trim as a substitute for asset quality.
 - Test the scene at the actual intended camera distance and at mobile scale; faces, labels, and interaction targets must remain legible without clutter.
 
-## Acceptance gates (all required before #1045 or successor can be marked ready)
+## Acceptance gates (all required before Issue #1044 or a successor PR can be marked ready)
 
 1. **Visual evidence:** before/after screenshots from the actual running browser build at desktop (1440×900) and mobile (390×844), same camera and fixture data; no concept renders presented as runtime screenshots.
 2. **Character quality:** at least 4 visibly distinct, coherent character appearances; recognizable facial features at normal game zoom; no floating facial features, intersecting hair, or disconnected accessories.
@@ -87,13 +90,13 @@ The current `frontend/features/world/WorldViewport.tsx` builds most objects from
 
 Do not merge or certify this work without explicit user approval after the visual evidence is reviewed.
 
-## 2026-10-11 implementation follow-up
+## Historical implementation follow-up — 2026-10-11 (superseded by later PRs)
 
 - Corrected two visible layout collisions in the current procedural scene: department planters were placed beside the second desk/chair approach, and the left lobby planter nearly touched the sofa. Planters now use the rear-right corner of each department and the lobby planters sit outside the reception/sofa footprint.
 - Made the locked-room Playwright regression wait for the actual proximity affordance while movement is held, rather than stopping after a fixed 900 ms. The movement change uses acceleration/easing, so a fixed short hold was brittle.
 - Historical note: earlier source-only camera changes were not visually accepted until exact-head artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` was reviewed. Employees and furniture still use procedural primitives rather than authored GLTF assets; acceptance here does not imply full redesign completion.
 
-## 2026-10-11 additional source corrections
+## Historical additional source corrections — 2026-10-11
 
 - Reworked the department workstations into a compact 2×2 grid (four actual desk/chair assemblies per department, 20 authored stations total). Each seated worker anchor now corresponds to a station coordinate instead of the previous arrangement where the second desk could sit in front of the first desk's chair.
 - Employees beyond the 20 authored stations are placed in a separate staging row rather than being silently stacked into the desk grid. This fallback is not visually designed or labelled yet and still needs a capacity indicator.
@@ -101,7 +104,7 @@ Do not merge or certify this work without explicit user approval after the visua
 - Workflow lookup did not return runs for the latest branch head after these follow-up commits. The exact latest head remains unverified by CI, and no real-browser screenshot/video is available in this session. Keep the PR Draft and do not merge.
 
 
-## 2026-10-11 PR validation routing correction
+## Historical PR validation routing correction — 2026-10-11
 
 - PR #1046 was retargeted from `feat/world-visual-polish-1044` to `main` because `.github/workflows/ci.yml` and `.github/workflows/codeql.yml` restrict pull-request base branches. The prior base was excluded, so no workflow run for the latest head was not a passing result.
 - PR #1046 now compares 18 commits against `main` and includes four changed files: `docs/00_START_HERE/CURRENT_PRIORITIES.md`, this contract, `frontend/e2e/world-mode.spec.ts`, and `frontend/features/world/WorldViewport.tsx`. This is a combined successor diff; inspect it as a whole.
