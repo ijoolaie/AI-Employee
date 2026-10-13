@@ -1,3 +1,14 @@
+## Engineering handoff update — PR #1092 (2026-10-13)
+
+- **Merged:** [PR #1092](https://github.com/ijoolaie/AI-Employee/pull/1092), squash commit [`69c1ad187f8c50ae0ef79808a12d826d0e043bd2`](https://github.com/ijoolaie/AI-Employee/commit/69c1ad187f8c50ae0ef79808a12d826d0e043bd2), exact tested head `89fb498a5af02e2fadab9b41af38dbc1519d7e0f`.
+- **Evidence:** all eight exact-head workflow groups passed (CI, CodeQL, Architecture Guard, W21 AI Business Network E2E, Workforce Semantic Real-Stack E2E, Ephemeral DAST, HA Failure Recovery, Production Infrastructure Validation). See canonical run links in `docs/00_START_HERE/CURRENT_STATUS.md`.
+- **Change:** regression tests establish that Marketing `analyze_campaign_performance` and Trader `stage_order_for_review` remain explicitly unbound and reject guessed/unauthorized tool binding.
+- **Important limitation:** these tests do not implement either capability. Campaign-specific attribution requires its own data/domain/service; order staging requires a dedicated reviewed workflow. Do not use growth reporting as attribution or market research as staging.
+- **Next:** resume the 12-role registry-derived audit; trace each operation through handler, permissions/tenant scoping, persisted output/evidence, and failure/recovery. Add locally testable negative cases for tenant isolation, denied permissions, stale approval, replay and provider failure.
+- **Progress:** A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; agent-actionable A0–A2 = 48%, full-scope A0–A4 = 29%. Test-only coverage does not change stage completion.
+
+---
+
 ## PR #1083 merged — responsive World camera-control anchors (2026-10-13)
 
 - PR [#1083](https://github.com/ijoolaie/AI-Employee/pull/1083) merged by squash as `7ffd7720cbd7c931724a281c875152170d188afe`, from exact PR head `19bc76052955f2b22ceafe43aab2f2983f77fe65`.
