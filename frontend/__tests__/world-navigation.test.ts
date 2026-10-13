@@ -10,7 +10,9 @@ describe("World ground navigation", () => {
   });
 
   it("blocks workstation footprints but leaves the circulation aisle clear", () => {
-    expect(canOccupyGround(-1.8, -8.9, upperRoomBlockers)).toBe(false);
+    expect(canOccupyGround(-2.3, -8.9, upperRoomBlockers)).toBe(false);
+    expect(canOccupyGround(-2.3, -5.75, upperRoomBlockers)).toBe(false);
+    expect(canOccupyGround(0, -5.75, upperRoomBlockers)).toBe(true);
     expect(canOccupyGround(0, -2, upperRoomBlockers)).toBe(true);
   });
 
