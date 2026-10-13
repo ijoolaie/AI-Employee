@@ -4,6 +4,8 @@ This directory contains maintained documentation for the current `main` implemen
 
 ## Source of truth
 
+0. `CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md` — documentation-drift root cause, role-by-role capability audit, commercial gates and acceptance sequence.
+
 1. `../00_START_HERE/VERSIONING_TRUTH.md` — release/architecture/phase truth.
 2. `../00_START_HERE/CURRENT_STATUS.md` — executive current state.
 3. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
@@ -16,10 +18,10 @@ This directory contains maintained documentation for the current `main` implemen
 ## Current release position
 
 - Latest published/certified release: **`v1.4.17`**.
-- Exact certified SHA: **`90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`**.
-- Production Certification run: **`35848311037`**; job **`107139710452`**.
-- External production deployment: **PENDING**.
-- Live provider validation, deployed-target security evidence and customer acceptance: **PENDING EXTERNAL EXECUTION**.
+- Exact certified SHA: **`b403c0dcdea579e017738a6fdea138c2b1a2999c`**.
+- Production Certification run: **`37625345534`**; job **`112805570856`**.
+- External production deployment: **NOT VERIFIED / NOT CLAIMED**.
+- Live provider validation, deployed-target security evidence, customer acceptance and realized external revenue: **NOT VERIFIED / PENDING EXTERNAL EXECUTION**.
 - Current `main` is post-certification engineering/documentation work and is not represented as an exact-SHA certified release.
 
 ## Current engineering position
