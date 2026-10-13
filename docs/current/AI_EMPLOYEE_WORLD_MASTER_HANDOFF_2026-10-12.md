@@ -1,6 +1,6 @@
 # AI Employee World — Master Handoff
 **Updated:** 2026-10-12  
-**Status:** Viewport changes are merged, but visual acceptance remains pending; follow-up CI uncovered a flaky WebGL screenshot assertion and the desktop framing still needs human confirmation.
+**Status:** PR #1071 candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` passed all five required workflows and its exact-head 1440×900 desktop / 390×844 portrait screenshots were visually reviewed. The full floor is visible in both; viewport framing is accepted for this bounded criterion. Broader redesign and gameplay work remain incomplete.
 
 ## Current source of truth
 - `main` contains PR [#1062](https://github.com/ijoolaie/AI-Employee/pull/1062), merged as `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`.
@@ -18,7 +18,7 @@
 ## What changed
 - Fixed Tailwind scanning to include `frontend/features/**`, which had omitted responsive utility styles from feature components.
 - Consolidated the procedural executive avatar, procedural surface materials, camera pan helper and tests, consistent reset/default camera distance, continuous side-wall backing and floor palette correction.
-- Reviewed PR #1071 artifact for merge ref `270c27e93f9a94aaef6e89db539b8945ab04c372` (head `191ead242c20a7d5681ca4729427a4653cdb889c`): desktop floor is fully inside the frame, but portrait still clips the left floor boundary. All five workflows for `191ead2` passed. New candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` changes portrait multiplier to 2.05 while keeping desktop at 1.85; exact-head workflows/screenshots and visual acceptance remain pending.
+- Reviewed exact-head artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` from CI run [38298932308](https://github.com/ijoolaie/AI-Employee/actions/runs/38298932308), head `712a687a119aca0f82d3cce9df5aab5d0d53f2e0`: desktop and portrait both show the full office floor inside the viewport. All five required workflows passed for this exact head. Desktop multiplier is 1.85; portrait multiplier is 2.05.
 - Mobile camera controls use compact Reset/Full labels in the upper-right; the HUD stays upper-left and joystick stays bottom-left. Pointer cancellation resets movement.
 - Extracted ground collision footprints into `frontend/features/world/WorldNavigation.ts`.
 
@@ -37,7 +37,7 @@
 
 ## Next actions
 1. PR #1069 is merged; PR #1068 was closed as superseded. The pan smoke now checks pointer-event wiring rather than relying on WebGL canvas screenshots; unit tests cover pan projection math.
-2. Validate PR #1071 camera margins at 1.85 desktop / 2.05 portrait with fresh exact-head screenshots and all five workflows.
+2. Review PR #1071 diff, then merge only after its latest exact-head checks and screenshot evidence remain green; continue remaining World redesign tasks separately.
 3. Reconcile this handoff with final code/test results before merging documentation PR #1067.
 4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
