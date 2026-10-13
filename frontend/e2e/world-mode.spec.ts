@@ -170,8 +170,8 @@ test("World Mode renders authoritative employee projection and management bridge
     const overlaps = (a: NonNullable<typeof hudBox>, b: NonNullable<typeof controlsBox>) =>
       a.x < b.x + b.width && a.x + a.width > b.x &&
       a.y < b.y + b.height && a.y + a.height > b.y;
-    // HUD and camera controls share the top band on mobile but must occupy separate horizontal areas.
-    expect(overlaps(hudBox, controlsBox), "mobile HUD and camera controls overlap").toBe(false);
+    // Mobile HUD stays in the viewport's top-left; camera controls stay bottom-right.
+    expect(overlaps(hudBox, controlsBox), `mobile HUD and camera controls overlap: hud=${JSON.stringify(hudBox)} controls=${JSON.stringify(controlsBox)}`).toBe(false);
     expect(controlsBox.x).toBeGreaterThanOrEqual(0);
     expect(controlsBox.x + controlsBox.width).toBeLessThanOrEqual(390);
     expect(joystickBox.x).toBeGreaterThanOrEqual(0);
