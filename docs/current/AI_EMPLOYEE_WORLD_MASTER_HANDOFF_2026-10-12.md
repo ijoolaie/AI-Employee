@@ -114,3 +114,15 @@ Percentages below are coarse stage-completion estimates based on the exit criter
 
 **Current next stage:** continue A1/A2 with the smallest reproducible real-stack acceptance test, beginning by verifying the current-main W8/W23 Customer Success and W9 QA/DevOps workflow results. Do not claim configured provider execution where the test fixtures explicitly say `provider_execution=not_configured`. Commercial readiness and production certification remain separate gates.
 
+
+
+## PR #1085 merged — workforce E2E trigger coverage (2026-10-13)
+
+- PR [#1085](https://github.com/ijoolaie/AI-Employee/pull/1085) was squash-merged as `0a6025e6dae1ed473fafdee8f3ca1833f2c27068` from exact PR head `e262faa29fe2a4b05f5109652781c7939434ed4f`.
+- Exact-head W9 QA & DevOps real-stack E2E [run 38382195260](https://github.com/ijoolaie/AI-Employee/actions/runs/38382195260) passed, including stack build/start, DB preparation, health check, source compilation and certification step.
+- Exact-head W23 Customer Success real-stack E2E [run 38382195369](https://github.com/ijoolaie/AI-Employee/actions/runs/38382195369) passed, including stack build/start, DB preparation, health check, source compilation and verification step.
+- Exact-head CodeQL [run 38382195585](https://github.com/ijoolaie/AI-Employee/actions/runs/38382195585) passed.
+- Change aligns `pull_request` and `push` path filters for both workforce E2E workflows and includes relevant governance/freshness/license/storage/edition services, models, DB core, dependency lock, backend Dockerfile and Compose dependencies. Manual dispatch remains supported.
+- The workflow-run connector returned no post-merge runs for merge SHA at this checkpoint; do not infer post-merge workflow success from exact-head pre-merge checks.
+- Important boundary: these are real-stack certification-fixture tests, not proof of live third-party provider execution, customer delivery, revenue, production deployment or release certification. Unconfigured providers must continue to be reported as not configured.
+- Execution tracker unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%, overall 29%. This PR improves test-trigger reliability but does not yet add missing per-role runtime traces or end-to-end business acceptance evidence.
