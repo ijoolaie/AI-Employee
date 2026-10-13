@@ -578,3 +578,10 @@ Immediate repo/CI-actionable sequence: (1) inspect exact current-main SHA and la
 ## Trigger-parity batch complete — 2026-10-13
 
 Merged trigger fixes: [#1086](https://github.com/ijoolaie/AI-Employee/pull/1086) W8; [#1087](https://github.com/ijoolaie/AI-Employee/pull/1087) W10 dogfood; [#1088](https://github.com/ijoolaie/AI-Employee/pull/1088) W2/W7/W18; [#1089](https://github.com/ijoolaie/AI-Employee/pull/1089) W20/W22/W10 customer outcome. All exact-head E2E and CodeQL checks listed in CURRENT_STATUS passed. Post-merge runs were not returned for the merge SHAs, so do not infer post-merge success. A static audit found W21 has no `push` trigger; inspect its intent before changing it. Next repo-actionable step: verify remaining workflow event intent and add negative governance tests for denied permission/stale approval/replay where not already covered. Progress stays 48% actionable / 29% full-scope; trigger fixes alone do not increase role acceptance.
+
+
+## Workforce E2E trigger audit — checkpoint complete (2026-10-13)
+
+[PR #1090](https://github.com/ijoolaie/AI-Employee/pull/1090) merged as `880d46cff762e57cdbda97f95c3347e6f0c071b9`; W21 real-stack [38385311942](https://github.com/ijoolaie/AI-Employee/actions/runs/38385311942) and CodeQL [38385312104](https://github.com/ijoolaie/AI-Employee/actions/runs/38385312104) passed on the exact PR head. W21 now has a `push` trigger as well as manual and PR triggers. The workflow-run connector did not return post-merge runs, so post-merge success is not asserted.
+
+Trigger gaps fixed in this audit batch: W2, W7, W8, W10 dogfood, W10 Customer Outcome, W18, W20, W21, W22, plus the prior W9/W23 alignment. Next actionable stage is the role-level runtime/negative-test audit (permission denial, stale/mismatched approval, duplicate/replay, tenant isolation, failure/recovery). External live provider, customer pilot, actual receipt/cost, and customer-operated production checks remain excluded from actionable progress and open. Progress remains 48% actionable / 29% full-scope.
