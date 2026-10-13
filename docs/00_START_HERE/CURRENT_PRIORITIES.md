@@ -626,3 +626,12 @@ Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-
 5. PR [#1094](https://github.com/ijoolaie/AI-Employee/pull/1094) merged as `d2fbd94de07ba49aaff1b44bedac2a99abe8325b`; all eight exact-head workflow groups passed. This is a scoped unit test, not full tenant-isolation proof.
 
 Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-scope 29%.
+
+
+## PR #1095 merged — Outbox exception crosses nested savepoint (2026-10-13)
+
+- PR [#1095](https://github.com/ijoolaie/AI-Employee/pull/1095) squash-merged as `343aeb2a963768da1d70b02c0c854d7105dc7920` from exact tested head `fd558bf9a8d5db64e9d85db8a944eee40494e416`.
+- All eight exact-head workflow groups passed: [CI 38403175273](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175273), [Architecture Guard 38403175276](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175276), [W21 E2E 38403175220](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175220), [Workforce Semantic Real-Stack E2E 38403175456](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175456), [CodeQL 38403175244](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175244), [Ephemeral DAST 38403175405](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175405), [HA Failure Recovery 38403175395](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175395), and [Production Infrastructure Validation 38403175356](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175356).
+- The unit test now asserts that the outbox enqueue `RuntimeError` exits the nested savepoint context exceptionally. This checks exception propagation at the context-manager boundary only; it is not database-backed proof that a persisted Run is rolled back.
+- Next: inspect transaction/session semantics and add the smallest database-backed regression test proving Run persistence is rolled back when outbox enqueue fails, or explicitly document why the current architecture guarantees that behavior. Keep separate from broader provider/replay/persisted-output audits.
+- Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; 48% actionable (A0–A2), 29% full-scope (A0–A4).
