@@ -561,3 +561,10 @@ Immediate repo/CI-actionable sequence: (1) inspect exact current-main SHA and la
 ## W10 trigger parity — 2026-10-13
 
 [PR #1087](https://github.com/ijoolaie/AI-Employee/pull/1087) makes the W10 dogfood workflow's `pull_request` paths exactly match its 28 `push` paths (static comparison PASS). Exact head: `3aea69f297fdd3c215f6d592ebac38ace6c7156d`; W10 real-stack [38384295412](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295412) and CodeQL [38384295452](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295452) are in progress. The test stack uses synthetic payment fixtures and an SMTP sink, so this does not prove real receipts or external customer delivery. Hold merge until exact-head checks finish.
+
+
+## Latest W8/W10 trigger checkpoint — 2026-10-13
+
+- W8 dependency trigger PR [#1086](https://github.com/ijoolaie/AI-Employee/pull/1086) merged as `65bf5e6ba5faa376526f168b8a66670c1050ff6a`. Exact-head W8 real-stack run [38384054138](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054138) and CodeQL [38384054092](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054092) passed. No post-merge run was returned for the merge SHA; do not infer post-merge success.
+- W10 path-parity PR [#1087](https://github.com/ijoolaie/AI-Employee/pull/1087), head `3aea69f297fdd3c215f6d592ebac38ace6c7156d`: static path-list parity and CodeQL [38384295452](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295452) passed; W10 real-stack [38384295412](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295412) remains in progress. Hold merge until it completes and mergeability is confirmed.
+- Neither change advances role capability acceptance by itself. Actionable progress remains 48%; full-scope progress remains 29%.
