@@ -585,3 +585,12 @@ Merged trigger fixes: [#1086](https://github.com/ijoolaie/AI-Employee/pull/1086)
 [PR #1090](https://github.com/ijoolaie/AI-Employee/pull/1090) merged as `880d46cff762e57cdbda97f95c3347e6f0c071b9`; W21 real-stack [38385311942](https://github.com/ijoolaie/AI-Employee/actions/runs/38385311942) and CodeQL [38385312104](https://github.com/ijoolaie/AI-Employee/actions/runs/38385312104) passed on the exact PR head. W21 now has a `push` trigger as well as manual and PR triggers. The workflow-run connector did not return post-merge runs, so post-merge success is not asserted.
 
 Trigger gaps fixed in this audit batch: W2, W7, W8, W10 dogfood, W10 Customer Outcome, W18, W20, W21, W22, plus the prior W9/W23 alignment. Next actionable stage is the role-level runtime/negative-test audit (permission denial, stale/mismatched approval, duplicate/replay, tenant isolation, failure/recovery). External live provider, customer pilot, actual receipt/cost, and customer-operated production checks remain excluded from actionable progress and open. Progress remains 48% actionable / 29% full-scope.
+
+
+## Role-audit continuation — 2026-10-13
+
+1. [PR #1091](https://github.com/ijoolaie/AI-Employee/pull/1091) merged as `651116bb1a19a93fd4008e93d7e437e42884c443` after exact-head CI, semantic E2E, W21, CodeQL, Architecture Guard, infrastructure, HA recovery and DAST passed. It covers exact approval arguments, changed-argument rejection and ambiguous duplicate matches. Post-merge workflow runs were not returned; do not claim post-merge validation.
+2. Role audit identified intentionally unbound operations: Marketing `analyze_campaign_performance` and Trader `stage_order_for_review`. They remain blocked rather than being mapped to approximate tools. [PR #1092](https://github.com/ijoolaie/AI-Employee/pull/1092) adds explicit fail-closed regression tests; exact-head checks are pending.
+3. Next after #1092: continue registry-derived audit of all 12 catalog roles and check tenant isolation, denied permissions, stale approvals, replay, provider failure and persisted outputs per role.
+
+Progress: 48% agent-actionable A0–A2; 29% full-scope A0–A4. No increase until a defined role/workflow acceptance criterion is newly satisfied.
