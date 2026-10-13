@@ -1,3 +1,35 @@
+# Current workforce progress update — PR #1108 (2026-10-13)
+
+## Newly verified role lifecycle
+
+- PR [#1108](https://github.com/ijoolaie/AI-Employee/pull/1108) squash-merged as [`be013724b5ac598a4e97dabf6bcbdb395b38d203`](https://github.com/ijoolaie/AI-Employee/commit/be013724b5ac598a4e97dabf6bcbdb395b38d203) from exact tested head `de90ecbace8c2634873a58a4c1ba330ba5b7c9b9`.
+- Added AI Customer Success `workforce_customer_context` to the deterministic Workforce Semantic Real-Stack E2E through WorkItem assignment → dispatch → worker → successful Run.
+- Exact-head evidence verifies tool-call audit identity, active runtime binding, one tenant-scoped `customer_success_artifact`, `analysis` status, tenant provenance, no external side effect, and `provider_execution=not_configured`.
+- All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487899), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487894), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38428488006), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487871), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487709), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487756), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487896), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487919), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487972), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487722), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487881).
+- The E2E job log explicitly reports Customer Success full WorkItem lifecycle PASS, persistence/provenance PASS, provider-boundary PASS, and the complete semantic matrix PASS. Existing W8 certification was direct registry execution with manually created pending Runs; this new check specifically covers the canonical WorkItem lifecycle.
+
+## Progress calculation — clarified and updated
+
+For consistent role-breadth accounting, A2 is measured as the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. This matches the prior A2 value of 25% when three roles were evidenced. Operation count within an already represented role does not increase A2.
+
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle coverage: **4 of 12 roles = 33.3%** (Trader, Content Producer, Graphic Designer, Customer Success)
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcomes: **0%** (external/operational gate; excluded from actionable denominator)
+
+**Actionable progress (A0–A2):** `(100 + 30 + 33.3) / 3 = 54.4%` → **54%**.
+
+**Full-scope progress (A0–A4):** `(100 + 30 + 33.3 + 0 + 0) / 5 = 32.7%` → **33%**.
+
+Evidence boundary: these are deterministic engineering fixtures. They do not prove live CRM access, production provider execution, customer data correctness, deployment, customer acceptance, or revenue. The workflow query did not return post-merge runs for the merge SHA, so the evidence above is exact-head pre-merge validation only.
+
+## Next action
+
+Continue the canonical lifecycle audit with an unrepresented role (Internal Manager, Marketing, Software Developer, Social Media, Sales, SEO, QA/DevOps, or Website), and pair each positive path with the highest-value denial/failure checks. Keep external provider, production and commercial blockers visible; do not count them as locally completed.
+
+---
+
 ## PR #1102 merged — secondary content/creative lifecycle proof (2026-10-13)
 
 - PR [#1102](https://github.com/ijoolaie/AI-Employee/pull/1102) squash-merged as [`170a9179450435d44086b8776d43de3e456e6a42`](https://github.com/ijoolaie/AI-Employee/commit/170a9179450435d44086b8776d43de3e456e6a42), from exact tested head `02874df0cd55014f777c2e5d01d8a4e73a3a8340`.
