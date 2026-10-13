@@ -2,6 +2,15 @@
 **Updated:** 2026-10-13  
 **Status:** PR #1076 is merged to `main` as `fc669d9aa6ee32c099a605873cc8ffca8b95b988` from exact PR head `46a7f13ce9c4b8e9f94352f3862539efa14c404e`; all seven workflow groups passed on that exact head, and desktop/portrait visual artifacts were reviewed. The accepted change adds a project-original static employee GLB with deterministic material variation and procedural fallback. It does not complete rigging/animation, role-specific art or full pathfinding. PR #1071 viewport framing is accepted for its bounded criterion. PR #1072 is merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6` from exact head `98e740fbc95d6597440fee2216977762e008fa0a`; all five workflow groups passed, and the fresh 1440×900 desktop / 390×844 portrait screenshots were manually reviewed. The glass-partition pass is accepted; broader redesign and gameplay work remain incomplete.
 
+## Latest exact-main CI checkpoint — 2026-10-13
+
+The manual-dispatch trigger fix is merged and both workflows have now been run on `main` at exact SHA `8cd10f175df4a4f532f3e2d1ea0ac2b6486f2c3d`:
+
+- [CI run 38371564101](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101) — PASS. Frontend: 143 contract checks, 76 Vitest tests, 10 Playwright tests passed; production build completed. Backend: 1,452 passed, 1 deselected, 22 warnings. [World visual-review artifact 11800165354](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101/artifacts/11800165354) is available but is not marked visually accepted in this handoff.
+- [Architecture Guard run 38371581649](https://github.com/ijoolaie/AI-Employee/actions/runs/38371581649) — PASS. 20 architecture tests passed; final architecture audit and production-completeness baseline PASS.
+- Follow-up: triage React hook and Next.js navigation lint warnings; confirm duplicate-key database log entries are expected test output; plan the Node.js 24-compatible action runtime update; investigate the transient first localhost refusal if it recurs.
+- These runs validate the exact SHA and tested scope only. They do not certify a new release, prove external deployment or live provider execution, or establish customer acceptance/revenue.
+
 ## Current source of truth
 - `main` contains PR [#1062](https://github.com/ijoolaie/AI-Employee/pull/1062), merged as `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`.
 - Code head validated before merge: `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2`.
