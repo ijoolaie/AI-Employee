@@ -12,13 +12,13 @@ The repository uses three independent version axes. They must not be treated as 
 
 | Axis | Meaning | Current truth |
 |---|---|---|
-| Release | Immutable product snapshot tied to an exact Git tag/SHA | `v1.3.8` / `fd1e74b6...` certified |
+| Release | Immutable product snapshot tied to an exact Git tag/SHA | `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c` published and exact-SHA certified; external deployment/customer acceptance/revenue not verified |
 | Architecture | Platform architecture and operating-model generation | V1.5 Agentic Operating Model |
-| Engineering phase | Delivery workstream / acceptance gate | Phase 14.1–14.9 complete; 14.10 external-pending |
+| Engineering phase | Delivery workstream / acceptance gate | Phase 14.1–14.16 engineering tracked as complete/reconciled; external production execution and customer acceptance remain pending |
 
 V1.5 is an **architecture/documentation baseline**, not a separately certified product release. Phase completion is engineering evidence, not release certification.
 
-Canonical rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`.
+Canonical rules: `docs/00_START_HERE/VERSIONING_TRUTH.md`. For evidence-based role readiness and the root-cause assessment for documentation drift, see `docs/current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md`.
 
 ## Operating workspaces
 

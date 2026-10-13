@@ -1,11 +1,14 @@
 # Versioning Truth
 
 **Status:** CANONICAL
-**Reconciled:** 2026-10-07
+**Reconciled:** 2026-10-13
 
 This document defines the independent version axes used by the AI Employee Platform.
 
 ## 1. Release version
+
+**Reconciliation note (2026-10-13):** latest published/certified release remains `v1.4.17` at its immutable exact SHA. The current engineering `main` head is a separate moving target; release certification does not imply external deployment, customer acceptance, or realized revenue. The capability audit and documentation-drift root-cause assessment are tracked in [Capability Reality Audit & Commercial Readiness Plan](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
+
 
 A **Release** is an immutable product snapshot identified by a Git tag and exact commit SHA. Certification, deployment evidence, customer acceptance and rollback evidence attach to that exact SHA.
 

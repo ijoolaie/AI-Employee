@@ -1,25 +1,27 @@
 # Current Documentation
 
-This directory contains maintained documentation for the current `main` implementation line.
+This directory contains maintained documentation for the current `main` implementation line. Release certification is separate from current-main validation and external production/customer acceptance.
 
 ## Source of truth
 
-1. `../00_START_HERE/VERSIONING_TRUTH.md` — release/architecture/phase truth.
-2. `../00_START_HERE/CURRENT_STATUS.md` — executive current state.
-3. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
-4. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap and current Agent capability phases.
-5. `PRODUCTION_SERVER_BASELINE.md` — recommended external production infrastructure baseline.
-6. `PRODUCTION_EVIDENCE_INDEX.md` — external evidence boundary.
-7. `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` — exact-SHA certification procedure.
-8. `EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` — operator-facing execution sequence for remaining external production gates.
+1. `CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md` — documentation-drift root cause, role-by-role capability audit, commercial gates and acceptance sequence.
+
+2. `../00_START_HERE/VERSIONING_TRUTH.md` — release/architecture/phase truth.
+3. `../00_START_HERE/CURRENT_STATUS.md` — executive current state.
+4. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
+5. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap and current Agent capability phases.
+6. `PRODUCTION_SERVER_BASELINE.md` — recommended external production infrastructure baseline.
+7. `PRODUCTION_EVIDENCE_INDEX.md` — external evidence boundary.
+8. `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` — exact-SHA certification procedure.
+9. `EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` — operator-facing execution sequence for remaining external production gates.
 
 ## Current release position
 
-- Latest published/certified release: **`v1.4.11`**.
-- Exact certified SHA: **`90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`**.
-- Production Certification run: **`35848311037`**; job **`107139710452`**.
-- External production deployment: **PENDING**.
-- Live provider validation, deployed-target security evidence and customer acceptance: **PENDING EXTERNAL EXECUTION**.
+- Latest published/certified release: **`v1.4.17`**.
+- Exact certified SHA: **`b403c0dcdea579e017738a6fdea138c2b1a2999c`**.
+- Production Certification run: **`37625345534`**; job **`112805570856`**.
+- External production deployment: **NOT VERIFIED / NOT CLAIMED**.
+- Live provider validation, deployed-target security evidence, customer acceptance and realized external revenue: **NOT VERIFIED / PENDING EXTERNAL EXECUTION**.
 - Current `main` is post-certification engineering/documentation work and is not represented as an exact-SHA certified release.
 
 ## Current engineering position

@@ -1,6 +1,8 @@
 # AI Employee Platform — Productization & Delivery Roadmap
 
-## Roadmap truth — 2026-10-09
+## Roadmap truth — 2026-10-13
+
+**Documentation reconciliation:** Current-state summaries must follow the release ledger and exact GitHub evidence. The manifest, gap register and evidence index were found to contain stale release/current-state summaries; root-cause assessment and preventive actions are tracked in [Capability Reality Audit & Commercial Readiness Plan](CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md). The latest release certification is not proof of external deployment or revenue.
 
 Three axes remain independent:
 
