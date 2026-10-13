@@ -300,7 +300,7 @@ def test_every_explicit_workforce_binding_resolves_to_registered_tool() -> None:
             for tool_name in contract.tool_names:
                 try:
                     registry.get(tool_name)
-                except KeyError:
+                except ValidationAppError:
                     missing.append((role.code, contract.operation, tool_name))
 
     assert not missing, f"Workforce capability contracts reference unregistered tools: {missing}"
