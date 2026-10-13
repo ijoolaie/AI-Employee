@@ -5,13 +5,20 @@
 **Latest certified release:** `v1.4.17` — exact-SHA certification PASS  
 **Certified release commit:** `b403c0dcdea579e017738a6fdea138c2b1a2999c`  
 **Mainline engineering head:** resolve directly from the repository; this document intentionally does not embed the mutable current `main` SHA  
-**Status date:** 2026-10-07  
+**Status date:** 2026-10-13  
 **Latest published release:** `v1.4.17`  
 **Latest certified release:** `v1.4.17`  
 **Certification run:** `37625345534` — PASS (exact `v1.4.17` SHA)  
 **Production deployment:** OPEN — PENDING EXTERNAL EXECUTION
 
 The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.17` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification documentation changes and is not itself certified.
+
+## Exact-main CI and Architecture Guard — 2026-10-13
+
+- CI [run 38371564101](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101) passed on exact `main` SHA `8cd10f175df4a4f532f3e2d1ea0ac2b6486f2c3d`: frontend contract 143 passed, Vitest 76 passed, Playwright 10 passed; backend 1,452 passed, 1 deselected, 22 warnings.
+- Architecture Guard [run 38371581649](https://github.com/ijoolaie/AI-Employee/actions/runs/38371581649) passed on the same SHA: 20 architecture tests passed; final architecture audit and production-completeness baseline PASS.
+- Non-blocking follow-ups: React hook dependency and Next.js navigation lint warnings; duplicate-key constraint log lines to confirm as expected test output; Node.js 20 deprecation warning for `actions/upload-artifact@v4`; transient initial localhost refusal before browser tests eventually passed.
+- These are exact-SHA engineering checks, not certification of `main` as a release and not proof of external production deployment, live provider operation, customer acceptance, or revenue. Latest certified release remains `v1.4.17`.
 
 ## Executive status
 
