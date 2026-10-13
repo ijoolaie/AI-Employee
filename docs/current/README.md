@@ -14,6 +14,7 @@ This directory contains maintained documentation for the current `main` implemen
 7. `PRODUCTION_EVIDENCE_INDEX.md` — external evidence boundary.
 8. `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` — exact-SHA certification procedure.
 9. `EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` — operator-facing execution sequence for remaining external production gates.
+10. `WORLD_ASSET_PROVENANCE.md` — original World employee GLB provenance, regeneration command, runtime loader/fallback contract and acceptance evidence.
 
 ## Current release position
 

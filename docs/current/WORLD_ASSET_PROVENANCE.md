@@ -24,4 +24,4 @@ The generator uses only Python's standard library. The generated file is a glTF 
 
 ## Acceptance evidence
 
-The asset is not considered runtime-implemented solely because the file exists. Acceptance requires the Playwright success-path test to observe `glb-loaded`, the failure-path test to observe `procedural-fallback`, and exact-head desktop/portrait screenshots to be reviewed. These checks validate loading and resilience, not animation quality or final art direction.
+The asset is accepted for runtime loading and fallback on exact head `5ed83ed782e7c004f252e0bf3b89b97306f7278c`. CI/Playwright run `38361744527` passed both the `glb-loaded` success-path test and `procedural-fallback` failure-path test. The exact-head desktop/portrait screenshots in [artifact 11795276739](https://github.com/ijoolaie/AI-Employee/actions/runs/38361744527/artifacts/11795276739) were reviewed. This validates asset loading and resilience, not animation quality or final art direction.
