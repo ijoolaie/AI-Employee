@@ -26,45 +26,61 @@ class DeterministicProvider:
         # exercised without an external model service. Production providers
         # are unchanged.
         if request.tools and not any(message.role == "tool" for message in request.messages):
-            tool = next(
-                (item for item in request.tools if item.name == "workforce_market_research"),
-                None,
+            supported_tools = (
+                "workforce_market_research",
+                "workforce_produce_article",
+                "workforce_produce_social_caption",
+                "workforce_create_visual_asset",
+                "workforce_revise_visual_asset",
             )
-            if tool is None:
-                tool = next(
-                    (item for item in request.tools if item.name == "workforce_produce_article"),
-                    None,
-                )
-            if tool is None:
-                tool = next(
-                    (item for item in request.tools if item.name == "workforce_create_visual_asset"),
-                    None,
-                )
+            tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
-                is_market_research = tool.name == "workforce_market_research"
-                is_content_producer = tool.name == "workforce_produce_article"
-                is_graphic_designer = tool.name == "workforce_create_visual_asset"
+                fixtures = {
+                    "workforce_market_research": (
+                        "e2e-workforce-market-research-1",
+                        {"symbols": ["AAPL"], "horizon_days": 30},
+                    ),
+                    "workforce_produce_article": (
+                        "e2e-workforce-produce-article-1",
+                        {
+                            "title": "Semantic E2E governed article",
+                            "body": "Deterministic article created by the governed Content Producer WorkItem lifecycle.",
+                            "metadata": {"source": "workforce-semantic-real-stack-e2e"},
+                        },
+                    ),
+                    "workforce_produce_social_caption": (
+                        "e2e-workforce-produce-social-caption-1",
+                        {
+                            "title": "Semantic E2E governed social caption",
+                            "body": "A concise, deterministic launch caption for the product dashboard.",
+                            "metadata": {"source": "workforce-semantic-real-stack-e2e"},
+                        },
+                    ),
+                    "workforce_create_visual_asset": (
+                        "e2e-workforce-create-visual-asset-1",
+                        {
+                            "prompt": "Create a clean abstract SaaS launch visual for the product dashboard",
+                            "brand_context": "Workforce semantic E2E fixture",
+                            "provider": "image-provider",
+                        },
+                    ),
+                    "workforce_revise_visual_asset": (
+                        "e2e-workforce-revise-visual-asset-1",
+                        {
+                            "prompt": "Revise the existing SaaS dashboard launch visual to use a calmer palette",
+                            "brand_context": "Workforce semantic E2E fixture",
+                            "provider": "image-provider",
+                        },
+                    ),
+                }
+                call_id, arguments = fixtures[tool.name]
                 return ChatResult(
                     content="",
                     prompt_tokens=max(1, len(prompt.split())),
                     completion_tokens=5,
                     stop_reason="tool_calls",
                     raw={"provider": self.name, "certification": True, "e2e_tool_call": True},
-                    tool_calls=[
-                        ToolCall(
-                            id=("e2e-workforce-market-research-1" if is_market_research else ("e2e-workforce-produce-article-1" if is_content_producer else "e2e-workforce-create-visual-asset-1")),
-                            name=tool.name,
-                            arguments=({"symbols": ["AAPL"], "horizon_days": 30} if is_market_research else ({
-                                "title": "Semantic E2E governed article",
-                                "body": "Deterministic article created by the governed Content Producer WorkItem lifecycle.",
-                                "metadata": {"source": "workforce-semantic-real-stack-e2e"},
-                            } if is_content_producer else {
-                                "prompt": "Create a clean abstract SaaS launch visual for the product dashboard",
-                                "brand_context": "Workforce semantic E2E fixture",
-                                "provider": "image-provider",
-                            })),
-                        )
-                    ],
+                    tool_calls=[ToolCall(id=call_id, name=tool.name, arguments=arguments)],
                 )
 
         tool_messages = [message for message in request.messages if message.role == "tool"]
