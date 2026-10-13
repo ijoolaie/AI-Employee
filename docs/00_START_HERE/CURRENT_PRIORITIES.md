@@ -606,3 +606,13 @@ Trigger gaps fixed in this audit batch: W2, W7, W8, W10 dogfood, W10 Customer Ou
 3. Next after #1092: continue registry-derived audit of all 12 catalog roles and check tenant isolation, denied permissions, stale approvals, replay, provider failure and persisted outputs per role.
 
 Progress: 48% agent-actionable A0–A2; 29% full-scope A0–A4. No increase until a defined role/workflow acceptance criterion is newly satisfied.
+
+## Next priority after PR #1093 (2026-10-13)
+
+1. Continue A1 with negative-path runtime tests: tenant isolation, permission-denied cases, stale/mismatched approval, replay/idempotency, provider timeout/failure and persisted audit/output inspection.
+2. Continue A2 by choosing the smallest reproducible end-to-end workflow with explicit evidence of persisted output and independently verified target outcome.
+3. Keep known unbound Marketing `analyze_campaign_performance` and Trader `stage_order_for_review` non-executable until their real domain/service and explicit reviewed Tool Registry binding exist.
+4. Treat PR [#1093](https://github.com/ijoolaie/AI-Employee/pull/1093), merge `50fc153492a1b5fbe810eb7f25ebd7e1c042dce3`, as a catalog-to-registry consistency guard only. Its eight exact-head workflow groups passed; do not describe this as proof of all role executions or live provider behavior.
+5. Keep A3/A4 external acceptance gates visible but outside the agent-actionable progress denominator.
+
+Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-scope 29%.
