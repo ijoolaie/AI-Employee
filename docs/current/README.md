@@ -1,6 +1,6 @@
 # Current Documentation
 
-This directory contains maintained documentation for the current `main` implementation line.
+This directory contains maintained documentation for the current `main` implementation line. Release certification is separate from current-main validation and external production/customer acceptance.
 
 ## Source of truth
 
@@ -15,7 +15,7 @@ This directory contains maintained documentation for the current `main` implemen
 
 ## Current release position
 
-- Latest published/certified release: **`v1.4.11`**.
+- Latest published/certified release: **`v1.4.17`**.
 - Exact certified SHA: **`90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`**.
 - Production Certification run: **`35848311037`**; job **`107139710452`**.
 - External production deployment: **PENDING**.
