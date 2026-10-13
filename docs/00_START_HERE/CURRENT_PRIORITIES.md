@@ -717,3 +717,10 @@ Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-
 4. Keep real provider credentials, external rendering/publication, production deployment, customer acceptance and commercial outcomes visible as external blockers. They are not silently treated as locally completed.
 5. Keep progress at A0 100%, A1 30%, A2 25%, A3 0%, A4 0% (52% actionable / 31% full scope) until a phase-level acceptance criterion is demonstrably met.
 
+## Next execution priority after PR #1106 (2026-10-13)
+
+1. Continue the all-role capability reality audit. Prioritize roles/operations without full WorkItem → dispatch → worker → Run evidence, rather than adding another operation to an already represented role by default.
+2. For each selected operation, verify positive execution and meaningful denial/failure paths: wrong role, cross-tenant access, permission denial, stale/mismatched approval, replay/idempotency, provider failure, durable output and audit/provenance.
+3. Keep external-provider execution, rendering/publication, production deployment, customer acceptance and commercial outcomes as explicit unresolved gates.
+4. Maintain A0 100%, A1 30%, A2 25%, A3 0%, A4 0% (52% actionable / 31% full scope) until a documented phase-level acceptance threshold is actually met.
+
