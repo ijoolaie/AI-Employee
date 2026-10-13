@@ -1,12 +1,11 @@
-## Current priority checkpoint — 2026-10-13, documentation truth + capability audit
+## Current priority checkpoint — 2026-10-13, prevention + World follow-up
 
-- First priority is reconciling current-state documentation before further capability claims: manifest, production gap register, evidence index, release ledger, current status, and versioning truth must agree on the latest published release and clearly distinguish it from current `main`.
-- Latest published/exact-SHA certified release: `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`, certification run `37625345534`, job `112805570856`. This is not evidence of external deployment, customer acceptance, or realized revenue.
-- PR #1071's viewport-framing criterion is bounded acceptance only. PR #1072 is a separate visual candidate and its PR description still requires manual desktop/mobile review.
-- Next: (1) merge documentation reconciliation only after review/checks; (2) investigate why duplicated status documents drifted and add a prevention check; (3) audit every canonical employee role from role definition to real execution/evidence; (4) test one end-to-end commercial workflow before broadening autonomy.
-- Canonical audit plan: [Capability Reality Audit & Commercial Readiness Plan](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
-- Do not claim complete World redesign, autonomous sales, external production, or revenue until the relevant acceptance evidence exists.
-
+- PR #1073 is merged at `6b5963f4c8409eb75d0be50c2ebdb3b4908a48d5`; release/current-state summaries now distinguish the immutable published release from current engineering `main` and external production.
+- PR #1072 is merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6`. Its exact head passed CI/Playwright, CodeQL, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST; desktop and portrait screenshots were reviewed. This accepts only the bounded glass-partition pass.
+- PR #1074 adds a release-truth consistency workflow and the initial static audit of all 12 canonical workforce roles. Review its exact-head checks before merge; branch protection still has no required checks, so a workflow pass is currently advisory.
+- Next: (1) complete/merge #1074 after checks and diff review; (2) close the Customer Success and QA/DevOps tool-reachability gaps and test configured provider paths; (3) prove one human-supervised lead-to-paid-delivery workflow with actual receipts, costs and customer acceptance; (4) continue World Issue #1044 with authored/licensed employee assets and obstacle-aware navigation.
+- Canonical plan: [Capability Reality Audit & Commercial Readiness Plan](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
+- Do not claim complete World redesign, autonomous sales, external production, or realized revenue until the relevant acceptance evidence exists.
 ---
 
 ## Current priority checkpoint — 2026-10-12, after World viewport merge
