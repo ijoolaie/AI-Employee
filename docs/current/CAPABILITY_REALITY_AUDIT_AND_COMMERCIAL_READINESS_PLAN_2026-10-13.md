@@ -194,3 +194,22 @@ On `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf`, CI, Documentation Truth Consisten
 PR [#1076](https://github.com/ijoolaie/AI-Employee/pull/1076) was squash-merged to `main` as `fc669d9aa6ee32c099a605873cc8ffca8b95b988` from exact PR head `46a7f13ce9c4b8e9f94352f3862539efa14c404e`. On that exact head, CI/Playwright (`38366530490`), Documentation Truth Consistency (`38366530396`), CodeQL (`38366530599`), Architecture Guard (`38366530542`), HA Failure Recovery (`38366530330`), Production Infrastructure Validation (`38366530557`) and Ephemeral DAST (`38366530362`) all passed. The exact-head visual artifact `11796728540` was manually reviewed in desktop and portrait layouts. The local original `employee-base.glb` loads through `GLTFLoader`; the failure-path test confirms the procedural fallback. This accepts the static base-model loader and fallback only. The asset is not rigged and does not close role-specific art, skeletal animation, foot planting or full obstacle-aware pathfinding. Post-merge checks for the merge commit remain a separate verification step.
 
 | 2026-10-13 | World employee asset | Added project-original static employee GLB, deterministic material variation, loader success/fallback tests and provenance documentation | PR #1076 exact head `46a7f13ce9c4b8e9f94352f3862539efa14c404e`, CI `38366530490`, screenshot artifact `11796728540`, merge SHA `fc669d9aa6ee32c099a605873cc8ffca8b95b988` | MERGED; STATIC ASSET + FALLBACK ACCEPTED; ANIMATION/PATHFINDING OPEN |
+
+
+## Execution-phase progress tracker — 2026-10-13
+
+Percentages below are coarse stage-completion estimates based on the exit criteria in sections A0–A4 and section 8—not code-volume estimates. Overall progress is the unweighted mean of the five stage percentages, rounded to the nearest whole percent. Update these values only when new repository/runtime evidence changes the corresponding acceptance checklist.
+
+| Stage | Progress | Evidence and remaining exit criteria |
+|---|---:|---|
+| A0 — Reconcile source-of-truth documents and add consistency validation | 100% | PRs #1073/#1074 and the documentation consistency check are recorded as complete. Required-check enforcement on `main` remains a governance follow-up, not a hidden completion claim. |
+| A1 — Map every canonical employee role to real execution | 30% | Static source map covers the 12-role workforce catalog. Per-role runtime traces, configured-provider evidence, negative/failure tests, persisted audit review, and acceptance evidence remain incomplete. |
+| A2 — Execute priority end-to-end workflows | 15% | Existing local/component E2E evidence covers parts of the product. The defined content, design, marketing, sales, customer-delivery, finance, and developer/operations workflows are not yet all verified end-to-end against their intended real targets. |
+| A3 — Satisfy commercial launch gates | 0% | No verified live-provider customer pilot, independent delivery acceptance, and reconciled actual receipts/costs have been evidenced here. |
+| A4 — Establish autonomy/reliability acceptance baselines | 0% | Representative supervised-pilot metrics and agreed targets are not established. |
+| **Overall execution phase** | **29%** | Equal-weight average: (100 + 30 + 15 + 0 + 0) / 5 = 29%. This is not a claim that 29% of code or product features exist. |
+
+**Current next stage:** continue A1/A2 with the smallest reproducible real-stack acceptance test, beginning by verifying the current-main W8/W23 Customer Success and W9 QA/DevOps workflow results. Do not claim configured provider execution where the test fixtures explicitly say `provider_execution=not_configured`. Commercial readiness and production certification remain separate gates.
+
+
+| 2026-10-13 | World UI | Merged PR #1083 responsive camera-control anchor fix after all five exact-head workflow groups passed and desktop/mobile screenshots were inspected | PR #1083; head `19bc76052955f2b22ceafe43aab2f2983f77fe65`; merge `7ffd7720cbd7c931724a281c875152170d188afe`; artifact `11803596084` | BOUNDED UI FIX MERGED; POST-MERGE RUNS NOT VERIFIED |
