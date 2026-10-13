@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { WorldInput } from "./WorldInput";
 import { MobileInputAdapter } from "./MobileInputAdapter";
 import { screenPanToWorldDelta } from "./WorldPan";
@@ -13,6 +14,7 @@ import type { RoomFurniturePlacement, WorldRoomSceneConfig } from "./WorldRoomSc
 type WorkerVisual = {
   id: string;
   group: any;
+  body: any;
   hit: any;
   ring: any;
   status: any;
@@ -278,6 +280,9 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
   const group = new THREE.Group();
   group.userData.employeeId = employee.id;
   parent.add(group);
+  const body = new THREE.Group();
+  body.name = "employee-body";
+  group.add(body);
 
   const outfitPalette = [0x557ca5, 0x6b9b82, 0xc78360, 0x8b78b6, 0x4e9aab, 0xc28b4c];
   const skinPalette = [0xf0c8a5, 0xdca47e, 0xb97855, 0xf3d8bd, 0x8f5d45, 0xe8b594];
@@ -287,52 +292,53 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
   const skin = skinPalette[Math.floor(seed / 7) % skinPalette.length];
   const hair = hairPalette[Math.floor(seed / 13) % hairPalette.length];
   const hairstyle = Math.floor(seed / 19) % 4;
+  group.userData.style = { color, skin, hair, hairstyle, seed };
 
   // Rounded torso, shoulders and a contrasting collar make the silhouette read as a character, not a token.
-  cylinder(group, 0.34, 0.42, 0.78, [0, 1.0, 0.02], color, 18);
-  sphere(group, 0.22, [-0.27, 1.25, 0.02], color, [1.1, 0.82, 1]);
-  sphere(group, 0.22, [0.27, 1.25, 0.02], color, [1.1, 0.82, 1]);
-  cylinder(group, 0.13, 0.15, 0.2, [0, 1.39, -0.01], skin, 12);
+  cylinder(body, 0.34, 0.42, 0.78, [0, 1.0, 0.02], color, 18);
+  sphere(body, 0.22, [-0.27, 1.25, 0.02], color, [1.1, 0.82, 1]);
+  sphere(body, 0.22, [0.27, 1.25, 0.02], color, [1.1, 0.82, 1]);
+  cylinder(body, 0.13, 0.15, 0.2, [0, 1.39, -0.01], skin, 12);
   // Shirt collar, tie/scarf and a small employee badge add readable workwear detail.
-  box(group, [0.16, 0.12, 0.09], [-0.095, 1.34, 0.31], 0xf5eee2);
-  box(group, [0.16, 0.12, 0.09], [0.095, 1.34, 0.31], 0xf5eee2);
-  box(group, [0.075, 0.24, 0.045], [0, 1.22, 0.365], seed % 2 ? 0xe9c46a : 0xd7e7f0);
-  box(group, [0.12, 0.14, 0.035], [0.23, 1.08, 0.345], 0xf4eee1);
-  box(group, [0.055, 0.055, 0.025], [0.23, 1.08, 0.368], 0x4f9b87);
+  box(body, [0.16, 0.12, 0.09], [-0.095, 1.34, 0.31], 0xf5eee2);
+  box(body, [0.16, 0.12, 0.09], [0.095, 1.34, 0.31], 0xf5eee2);
+  box(body, [0.075, 0.24, 0.045], [0, 1.22, 0.365], seed % 2 ? 0xe9c46a : 0xd7e7f0);
+  box(body, [0.12, 0.14, 0.035], [0.23, 1.08, 0.345], 0xf4eee1);
+  box(body, [0.055, 0.055, 0.025], [0.23, 1.08, 0.368], 0x4f9b87);
 
   // Head and ears use a wider, softly rounded silhouette.
-  sphere(group, 0.35, [0, 1.68, -0.02], skin, [1.02, 1.04, 0.98]);
-  sphere(group, 0.075, [-0.335, 1.65, -0.015], skin, [0.78, 1, 0.82]);
-  sphere(group, 0.075, [0.335, 1.65, -0.015], skin, [0.78, 1, 0.82]);
+  sphere(body, 0.35, [0, 1.68, -0.02], skin, [1.02, 1.04, 0.98]);
+  sphere(body, 0.075, [-0.335, 1.65, -0.015], skin, [0.78, 1, 0.82]);
+  sphere(body, 0.075, [0.335, 1.65, -0.015], skin, [0.78, 1, 0.82]);
 
   // Four deterministic hairstyles vary the cast while remaining inexpensive procedural geometry.
-  sphere(group, 0.37, [0, 1.86, -0.085], hair, [1.02, 0.52, 0.98]);
+  sphere(body, 0.37, [0, 1.86, -0.085], hair, [1.02, 0.52, 0.98]);
   if (hairstyle === 0) {
-    sphere(group, 0.19, [0, 1.79, 0.235], hair, [1.25, 0.48, 0.45]);
-    sphere(group, 0.12, [-0.25, 1.78, 0.12], hair, [0.85, 0.95, 0.72]);
+    sphere(body, 0.19, [0, 1.79, 0.235], hair, [1.25, 0.48, 0.45]);
+    sphere(body, 0.12, [-0.25, 1.78, 0.12], hair, [0.85, 0.95, 0.72]);
   } else if (hairstyle === 1) {
-    sphere(group, 0.2, [-0.12, 1.91, 0.15], hair, [1.05, 0.68, 0.62]);
-    sphere(group, 0.17, [0.18, 1.91, 0.13], hair, [1.0, 0.6, 0.6]);
+    sphere(body, 0.2, [-0.12, 1.91, 0.15], hair, [1.05, 0.68, 0.62]);
+    sphere(body, 0.17, [0.18, 1.91, 0.13], hair, [1.0, 0.6, 0.6]);
   } else if (hairstyle === 2) {
-    sphere(group, 0.12, [-0.29, 1.7, 0.04], hair, [0.75, 1.15, 0.7]);
-    sphere(group, 0.12, [0.29, 1.7, 0.04], hair, [0.75, 1.15, 0.7]);
-    sphere(group, 0.16, [0.02, 1.96, -0.02], hair, [1.0, 0.52, 0.9]);
+    sphere(body, 0.12, [-0.29, 1.7, 0.04], hair, [0.75, 1.15, 0.7]);
+    sphere(body, 0.12, [0.29, 1.7, 0.04], hair, [0.75, 1.15, 0.7]);
+    sphere(body, 0.16, [0.02, 1.96, -0.02], hair, [1.0, 0.52, 0.9]);
   } else {
-    sphere(group, 0.16, [0.12, 1.96, 0.12], hair, [1.05, 0.55, 0.8]);
-    sphere(group, 0.12, [-0.22, 1.86, 0.16], hair, [0.8, 0.75, 0.6]);
+    sphere(body, 0.16, [0.12, 1.96, 0.12], hair, [1.05, 0.55, 0.8]);
+    sphere(body, 0.12, [-0.22, 1.86, 0.16], hair, [0.8, 0.75, 0.6]);
   }
 
   // Layered eyes with tiny catchlights read more clearly at an isometric camera distance.
   const irisPalette = [0x4d786e, 0x4a617f, 0x765342, 0x596b87];
   const iris = irisPalette[Math.floor(seed / 23) % irisPalette.length];
   for (const side of [-1, 1]) {
-    sphere(group, 0.073, [side * 0.12, 1.69, 0.292], 0xfffbf3, [1, 1.05, 0.5]);
-    sphere(group, 0.041, [side * 0.115, 1.685, 0.326], iris, [0.95, 1.1, 0.5]);
-    sphere(group, 0.022, [side * 0.115, 1.686, 0.345], 0x202a32, [0.9, 1.05, 0.5]);
-    sphere(group, 0.012, [side * 0.128, 1.704, 0.354], 0xffffff, [1, 1, 0.5]);
-    box(group, [0.14, 0.028, 0.035], [side * 0.12, 1.79, 0.285], hair);
+    sphere(body, 0.073, [side * 0.12, 1.69, 0.292], 0xfffbf3, [1, 1.05, 0.5]);
+    sphere(body, 0.041, [side * 0.115, 1.685, 0.326], iris, [0.95, 1.1, 0.5]);
+    sphere(body, 0.022, [side * 0.115, 1.686, 0.345], 0x202a32, [0.9, 1.05, 0.5]);
+    sphere(body, 0.012, [side * 0.128, 1.704, 0.354], 0xffffff, [1, 1, 0.5]);
+    box(body, [0.14, 0.028, 0.035], [side * 0.12, 1.79, 0.285], hair);
   }
-  sphere(group, 0.048, [0, 1.61, 0.325], skin, [0.78, 0.82, 1.1]);
+  sphere(body, 0.048, [0, 1.61, 0.325], skin, [0.78, 0.82, 1.1]);
   const smile = new THREE.Mesh(
     new THREE.TorusGeometry(0.073, 0.012, 6, 18, Math.PI),
     new THREE.MeshStandardMaterial({ color: 0x9a5c51, roughness: 0.9 }),
@@ -341,32 +347,32 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
   smile.rotation.z = Math.PI;
   smile.scale.set(1.2, 0.72, 1);
   smile.position.set(0, 1.56, 0.326);
-  group.add(smile);
+  body.add(smile);
   // Subtle cheeks make the style friendly without turning the employees into oversized mascots.
-  sphere(group, 0.045, [-0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
-  sphere(group, 0.045, [0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
+  sphere(body, 0.045, [-0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
+  sphere(body, 0.045, [0.22, 1.61, 0.275], 0xe99b8b, [1, 0.65, 0.4]);
 
   // Bent legs and shoes create a compact seated silhouette beneath the desk.
-  cylinder(group, 0.14, 0.15, 0.42, [-0.2, 0.48, 0.05], 0x33445b, 12).rotation.x = Math.PI / 2;
-  cylinder(group, 0.14, 0.15, 0.42, [0.2, 0.48, 0.05], 0x33445b, 12).rotation.x = Math.PI / 2;
-  box(group, [0.25, 0.13, 0.34], [-0.2, 0.2, 0.3], 0x293545);
-  box(group, [0.25, 0.13, 0.34], [0.2, 0.2, 0.3], 0x293545);
+  cylinder(body, 0.14, 0.15, 0.42, [-0.2, 0.48, 0.05], 0x33445b, 12).rotation.x = Math.PI / 2;
+  cylinder(body, 0.14, 0.15, 0.42, [0.2, 0.48, 0.05], 0x33445b, 12).rotation.x = Math.PI / 2;
+  box(body, [0.25, 0.13, 0.34], [-0.2, 0.2, 0.3], 0x293545);
+  box(body, [0.25, 0.13, 0.34], [0.2, 0.2, 0.3], 0x293545);
 
   // Sleeves and skin-toned forearms angle toward the keyboard.
-  const leftSleeve = cylinder(group, 0.12, 0.15, 0.34, [-0.29, 1.29, 0.15], color, 12);
+  const leftSleeve = cylinder(body, 0.12, 0.15, 0.34, [-0.29, 1.29, 0.15], color, 12);
   leftSleeve.rotation.x = 0.72;
   leftSleeve.rotation.z = -0.24;
-  const rightSleeve = cylinder(group, 0.12, 0.15, 0.34, [0.29, 1.29, 0.15], color, 12);
+  const rightSleeve = cylinder(body, 0.12, 0.15, 0.34, [0.29, 1.29, 0.15], color, 12);
   rightSleeve.rotation.x = 0.72;
   rightSleeve.rotation.z = 0.24;
-  const leftArm = cylinder(group, 0.075, 0.09, 0.3, [-0.31, 1.4, 0.48], skin, 12);
+  const leftArm = cylinder(body, 0.075, 0.09, 0.3, [-0.31, 1.4, 0.48], skin, 12);
   leftArm.rotation.x = 0.72;
   leftArm.rotation.z = -0.18;
-  const rightArm = cylinder(group, 0.075, 0.09, 0.3, [0.31, 1.4, 0.48], skin, 12);
+  const rightArm = cylinder(body, 0.075, 0.09, 0.3, [0.31, 1.4, 0.48], skin, 12);
   rightArm.rotation.x = 0.72;
   rightArm.rotation.z = 0.18;
-  sphere(group, 0.09, [-0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
-  sphere(group, 0.09, [0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
+  sphere(body, 0.09, [-0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
+  sphere(body, 0.09, [0.31, 1.46, 0.77], skin, [1, 0.7, 1.1]);
 
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.82, 0.05, 8, 32),
@@ -399,7 +405,64 @@ function addWorker(parent: any, employee: WorldEmployee): WorkerVisual {
     group.add(label);
   }
   group.userData.state = employee.state;
-  return { id: employee.id, group, hit, ring, status, state: employee.state };
+  group.userData.body = body;
+  return { id: employee.id, group, body, hit, ring, status, state: employee.state };
+}
+
+function disposeObjectTree(root: any) {
+  root.traverse((object: any) => {
+    object.geometry?.dispose?.();
+    if (object.material) {
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      for (const material of materials) {
+        material.map?.dispose?.();
+        material.dispose?.();
+      }
+    }
+  });
+}
+
+function applyWorkerAsset(worker: WorkerVisual, template: any) {
+  const body = worker.body;
+  for (const child of [...body.children]) {
+    body.remove(child);
+    disposeObjectTree(child);
+  }
+
+  const model = template.clone(true);
+  const geometryClones = new Map<string, any>();
+  const materialClones = new Map<string, any>();
+  const style = worker.group.userData.style;
+  model.traverse((object: any) => {
+    if (!object.isMesh) return;
+    if (object.geometry) {
+      const key = object.geometry.uuid;
+      if (!geometryClones.has(key)) geometryClones.set(key, object.geometry.clone());
+      object.geometry = geometryClones.get(key);
+    }
+    const recolor = (source: any) => {
+      if (!source) return source;
+      const key = source.uuid;
+      if (!materialClones.has(key)) {
+        const material = source.clone();
+        const name = String(source.name || "").toLowerCase();
+        if (name === "uniform") material.color.setHex(style.color);
+        else if (name === "skin") material.color.setHex(style.skin);
+        else if (name === "hair") material.color.setHex(style.hair);
+        else if (name === "tie") material.color.setHex(style.seed % 2 ? 0xe9c46a : 0xd7e7f0);
+        materialClones.set(key, material);
+      }
+      return materialClones.get(key);
+    };
+    object.material = Array.isArray(object.material) ? object.material.map(recolor) : recolor(object.material);
+    object.castShadow = true;
+    object.receiveShadow = true;
+  });
+  model.traverse((object: any) => {
+    if (object.name === "Hair fringe") object.visible = style.hairstyle === 0 || style.hairstyle === 3;
+    if (object.name === "Left sideburn" || object.name === "Right sideburn") object.visible = style.hairstyle === 0 || style.hairstyle === 2;
+  });
+  body.add(model);
 }
 
 function addCEOAvatar(scene: any) {
@@ -860,6 +923,7 @@ export function WorldViewport({
     const host = mountRef.current;
     if (!host) return;
 
+    let active = true;
     let renderer: any;
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
@@ -876,6 +940,7 @@ export function WorldViewport({
     renderer.toneMappingExposure = 1.12;
     renderer.domElement.setAttribute("aria-label", "AI Company World viewport");
     renderer.domElement.dataset.roomAccessState = "denied";
+    renderer.domElement.dataset.workerAssetState = "procedural-fallback";
     renderer.domElement.removeAttribute("data-room-instance-id");
     renderer.domElement.setAttribute("role", "img");
     renderer.domElement.tabIndex = 0;
@@ -946,6 +1011,7 @@ export function WorldViewport({
     let renderedSceneConfigKey = "";
     let wasNearRoom = false;
     const workers: WorkerVisual[] = [];
+    let workerTemplate: any = null;
     let signature = "";
     const syncWorkers = () => {
       const next = employeesRef.current;
@@ -973,6 +1039,7 @@ export function WorldViewport({
       );
       next.forEach((employee, index) => {
         const worker = addWorker(scene, employee);
+        if (workerTemplate) applyWorkerAsset(worker, workerTemplate);
         if (index < desks.length) {
           const place = desks[index];
           worker.group.position.set(place[0], 0, place[1]);
@@ -992,6 +1059,18 @@ export function WorldViewport({
       signature = nextSignature;
     };
     syncWorkers();
+    const workerAssetLoader = new GLTFLoader();
+    workerAssetLoader.loadAsync("/assets/world/employee-base.glb").then((gltf: any) => {
+      if (!active) {
+        disposeObjectTree(gltf.scene);
+        return;
+      }
+      workerTemplate = gltf.scene;
+      for (const worker of workers) applyWorkerAsset(worker, workerTemplate);
+      renderer.domElement.dataset.workerAssetState = "glb-loaded";
+    }).catch(() => {
+      if (active) renderer.domElement.dataset.workerAssetState = "procedural-fallback";
+    });
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -1185,6 +1264,7 @@ export function WorldViewport({
     if (isRendering) frame = requestAnimationFrame(tick);
 
     return () => {
+      active = false;
       cancelAnimationFrame(frame);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       observer.disconnect();
@@ -1207,6 +1287,7 @@ export function WorldViewport({
           }
         }
       });
+      if (workerTemplate) disposeObjectTree(workerTemplate);
       renderer.dispose();
       renderer.domElement.remove();
     };
