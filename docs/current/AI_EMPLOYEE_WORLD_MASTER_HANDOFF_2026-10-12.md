@@ -14,6 +14,8 @@
   - [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198497)
 - PRs #1059 and #1060 were closed as superseded by #1062. Dependency PRs #1063, #1066, #1065 and #1064 were also merged after their exact-head checks passed.
 - PR #1072 adds low translucent department glass panels, colored cap rails and repeated mullions; the exact-head screenshot artifact is [CI run 38356980574 / artifact 11793500701](https://github.com/ijoolaie/AI-Employee/actions/runs/38356980574/artifacts/11793500701). The full floor remains visible and workstations/employee silhouettes are not obscured by the low partitions.
+- PR #1075 is the current Draft candidate: department-tinted floor tiles, framed room entrances and collision blockers for room walls. Its exact-head CI and visual review are still pending; do not count these changes as accepted yet.
+- Asset reality check: current `main` contains no `employee-base.glb`, `GLTFLoader` integration or World asset-credit/license files. The player/CEO avatar and employee cast are procedural; authored/licensed GLB/GLTF integration remains open. Earlier comments on closed PR #1050 are not proof that an asset landed.
 - Release certification is unchanged: latest certified tag remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. The World merge is not a new production release.
 
 ## What changed
@@ -39,7 +41,7 @@
 ## Next actions
 1. PR #1069 is merged; PR #1068 was closed as superseded. The pan smoke now checks pointer-event wiring rather than relying on WebGL canvas screenshots; unit tests cover pan projection math.
 2. PR #1071 is merged at `ff3a138a4164c793c06678f9ca9d790ab2c14cd8`; its five exact-head workflow groups passed and viewport screenshots were reviewed. Continue remaining World redesign tasks separately.
-3. PR #1073 reconciled release/current-state docs and is merged; PR #1074 adds an automated consistency gate and role audit. Keep the handoff aligned with exact merged PR state.
+3. PR #1073 reconciled release/current-state docs and PR #1074 added the consistency gate and static role audit; both are merged. PR #1075 is the current Draft World slice. Keep the handoff aligned with exact merged PR state.
 4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
 6. Keep release certification separate from World code merges.
