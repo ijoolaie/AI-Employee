@@ -340,7 +340,7 @@ The currently available office read model may not expose authoritative employee 
 - PR #1050 is closed unmerged; its historical comments must not be treated as current implementation evidence. PR #1057 merged as `de053b24d045d17d0e447e29140cfd4728ade4c8` for the warm floor/window polish, but the current `main` tree has no `employee-base.glb`, `GLTFLoader`, or World asset-credit/license files. Player/CEO and employee models remain procedural.
 - PR #1071 accepted viewport framing for its bounded criterion.
 - PR #1072 merged as `c097eedbc5674d788d72b5b3a2d334adba1737e6`; exact-head workflows passed and desktop/portrait screenshots were manually reviewed. Acceptance is limited to glass partitions, colored rails and mullions.
-- PR #1075 is a Draft candidate for department-tinted floor tiles, centered room entrances and collision blockers matching the new partitions. Exact-head checks and visual review remain pending.
+- PR #1075 is a Draft candidate for department-tinted floor tiles, centered room entrances, collision blockers matching the new partitions, and a small portrait camera-fit/label-scale adjustment. Exact-head checks and visual review remain pending. Earlier #1071/#1072 portrait artifacts still show the outer right room edge at or beyond the canvas boundary, so the mobile framing gate is not accepted yet.
 - Authored employee assets, a validated scene-layout model, full obstacle-aware pathfinding, character animation quality and overall visual acceptance remain incomplete.
 
 The redesign is **not considered complete** until the acceptance gates above are met. CI success and screenshots from a candidate are evidence only for that exact source head; neither certifies a production release.
