@@ -126,3 +126,20 @@ Percentages below are coarse stage-completion estimates based on the exit criter
 - The workflow-run connector returned no post-merge runs for merge SHA at this checkpoint; do not infer post-merge workflow success from exact-head pre-merge checks.
 - Important boundary: these are real-stack certification-fixture tests, not proof of live third-party provider execution, customer delivery, revenue, production deployment or release certification. Unconfigured providers must continue to be reported as not configured.
 - Execution tracker unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%, overall 29%. This PR improves test-trigger reliability but does not yet add missing per-role runtime traces or end-to-end business acceptance evidence.
+
+
+## Progress denominator correction — agent-actionable scope (2026-10-13)
+
+The persistent agent rules in [`AGENTS.md`](../../AGENTS.md) now require separate actionable and full-scope progress figures. A3 (real commercial pilot, actual receipts/costs, independent customer acceptance) and A4 (operational autonomy/reliability baselines dependent on real supervised-pilot data) are excluded from the current actionable denominator only; they remain open and are not treated as complete.
+
+| Stage | Progress | Counting treatment |
+|---|---:|---|
+| A0 — source-of-truth reconciliation | 100% | Included in actionable denominator |
+| A1 — role-to-execution audit | 30% | Included in actionable denominator |
+| A2 — end-to-end workflow proof | 15% | Included only for repository/local/available-CI-verifiable criteria; split out any unavailable external-only criterion |
+| A3 — commercial pilot | 0% | Excluded from actionable denominator; externally dependent and still open |
+| A4 — autonomy/reliability baseline | 0% | Excluded from actionable denominator where it requires real operational/pilot data; still open |
+| **Agent-actionable progress** | **48%** | (100 + 30 + 15) / 3 = 48.3%, rounded |
+| **Full-scope context** | **29%** | (100 + 30 + 15 + 0 + 0) / 5 = 29% |
+
+Next repo-actionable work: inspect W8/W9/W23 certification scripts and their current-main evidence; distinguish fixture/real-stack verification from live-provider execution; add the smallest missing positive/negative role acceptance tests; record exact SHA/run evidence. External-only queue remains live provider credentials, production deployment, actual customer pilot/acceptance, receipts and costs. GitHub-hosted CI is a server-run engineering check but does not substitute for a customer-controlled server or live third-party integration.
