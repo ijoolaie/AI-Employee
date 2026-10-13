@@ -2,7 +2,16 @@
   "schema_version": 3,
   "status": "current_release_index",
   "generated_at": "2026-10-13T06:20:32Z",
-  "latest_certified_release_candidate": null,
+  "latest_certified_release_candidate": {
+    "version": "v1.4.0-rc.4",
+    "certified_sha": "4cadd2df003d72de43546466a47e2c66062002c6",
+    "certification_run": "34693535048",
+    "certification_status": "success",
+    "product_gate_failures": 0,
+    "certification_scope": "exact_sha_engineering_release_evidence",
+    "external_deployment": "not_verified",
+    "status": "historical_latest_certified_rc; no active candidate is asserted"
+  },
   "historical_certified_vendor_release": {
     "version": "v1.3.8",
     "release_truth": "docs/current/39_RELEASE_TRUTH_V1.3.8.md",
@@ -64,16 +73,6 @@
   "documentation_reconciliation": {
     "date": "2026-10-13",
     "plan": "docs/current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md",
-    "note": "latest_published_release is distinct from latest_certified_release_candidate and from current main engineering HEAD"
-  },
-  "historical_certified_release_candidate": {
-    "version": "v1.4.0-rc.4",
-    "certified_sha": "4cadd2df003d72de43546466a47e2c66062002c6",
-    "certification_run": "34693535048",
-    "certification_status": "success",
-    "product_gate_failures": 0,
-    "certification_scope": "exact_sha_engineering_release_evidence",
-    "external_deployment": "not_verified",
-    "status": "historical_not_current"
+    "note": "The latest certified RC record is historical; the latest published release is separately recorded under latest_published_release. Current main HEAD must be resolved from Git metadata."
   }
 }
