@@ -1,6 +1,11 @@
 name: W21 AI Business Network E2E
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/workforce-w21-e2e.yml"
   pull_request:
     branches: [main]
     paths:
