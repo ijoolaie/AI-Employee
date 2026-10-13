@@ -33,6 +33,7 @@ class DeterministicProvider:
                 "workforce_create_visual_asset",
                 "workforce_revise_visual_asset",
                 "workforce_content_qa",
+                "workforce_customer_context",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -79,6 +80,15 @@ class DeterministicProvider:
                             "title": "Semantic E2E QA article",
                             "body": "A complete deterministic article body with no placeholder markers.",
                             "metadata": {"source": "workforce-semantic-real-stack-e2e"},
+                        },
+                    ),
+                    "workforce_customer_context": (
+                        "e2e-workforce-customer-context-1",
+                        {
+                            "customer_reference": "customer-e2e-001",
+                            "query": "support history and account health",
+                            "evidence": ["deterministic certification fixture"],
+                            "recommendation": "Review the account health evidence before any customer-facing action.",
                         },
                     ),
                 }
