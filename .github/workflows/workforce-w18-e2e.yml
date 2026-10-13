@@ -27,6 +27,8 @@ on:
       - "backend/alembic/versions/w18_virtual_meeting_rooms.py"
       - "backend/scripts/e2e_workforce_w18_meeting_rooms_verify.py"
       - "backend/tests/api/test_customer_dashboard_meeting.py"
+      - "docker-compose.yml"
+      - "backend/requirements.lock"
       - ".github/workflows/workforce-w18-e2e.yml"
 
 concurrency:
