@@ -1,7 +1,11 @@
 # Release Truth Ledger
 
-**Last reconciled:** 2026-10-07
+**Last reconciled:** 2026-10-13
 **Authority:** Git metadata + GitHub release records + explicit certification and deployment evidence
+
+## Reconciliation note — 2026-10-13
+
+The current published release remains `v1.4.17` at its immutable certified SHA. Some operational documents had not advanced from older snapshots; those snapshots are historical evidence, not competing current release identities. External deployment, customer acceptance and realized external revenue remain **NOT VERIFIED / NOT CLAIMED**. See [Capability Reality Audit & Commercial Readiness Plan](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md) for the corrective process and role-by-role audit.
 
 ## Semantics
 
