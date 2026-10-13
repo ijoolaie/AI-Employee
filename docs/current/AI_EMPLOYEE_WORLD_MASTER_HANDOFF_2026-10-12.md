@@ -27,7 +27,7 @@
 - The original canvas-screenshot comparison for pointer drag timed out on software-rendered CI. Follow-up PR #1069 replaces that brittle screenshot comparison with a real pointer-gesture event assertion; `WorldPan` unit tests cover the projection math. This does not by itself certify visual camera movement.
 - Existing World E2E coverage checks keyboard movement to locked-room proximity, room offer/renewal flows and server-authorized room access.
 - Unit tests cover coffee-table/workstation footprints, walkable aisle space and office bounds.
-- The five workflows passed on the historical code head listed above, but a subsequent CI run on current `main` failed in the World Playwright test (run [38292598819](https://github.com/ijoolaie/AI-Employee/actions/runs/38292598819)). PR #1069 (merged; #1068 closed as superseded) and #1071 are follow-ups; revalidate all required checks on the final exact head before calling this stable.
+- Historical note: CI run [38292598819](https://github.com/ijoolaie/AI-Employee/actions/runs/38292598819) failed on an earlier post-merge head. PR #1069 and PR #1071 followed; the final #1071 head `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` subsequently passed all five required workflow groups and its screenshot artifact was reviewed. That validation applies to the merged viewport change, not every future `main` commit.
 
 ## Explicit limitations — do not overstate completion
 - Employee models remain procedural. A GLB/GLTF employee runtime loader is not implemented or claimed.
@@ -37,8 +37,8 @@
 
 ## Next actions
 1. PR #1069 is merged; PR #1068 was closed as superseded. The pan smoke now checks pointer-event wiring rather than relying on WebGL canvas screenshots; unit tests cover pan projection math.
-2. Review PR #1071 diff, then merge only after its latest exact-head checks and screenshot evidence remain green; continue remaining World redesign tasks separately.
-3. Reconcile this handoff with final code/test results before merging documentation PR #1067.
+2. PR #1071 is merged at `ff3a138a4164c793c06678f9ca9d790ab2c14cd8`; its five exact-head workflow groups passed and viewport screenshots were reviewed. Continue remaining World redesign tasks separately.
+3. Keep documentation PR #1067 aligned with the merged viewport result and merge only after its checks pass and the diff is reconciled.
 4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
 6. Keep release certification separate from World code merges.
