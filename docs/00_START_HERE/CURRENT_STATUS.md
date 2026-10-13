@@ -62,7 +62,7 @@ Both manually dispatched workflows passed on the same exact `main` head, `8cd10f
 - Collision footprints are extracted into `frontend/features/world/WorldNavigation.ts` and covered by unit tests.
 
 ## Remaining engineering gaps
-- Employee models remain procedural; authored/licensed GLB/GLTF runtime integration is not implemented.
+- The World viewport contains a GLTFLoader-based employee asset path with a procedural fallback; verify the asset file, provenance/license record, and runtime loading on the current main before claiming authored-asset acceptance. Loaded employee meshes remain static/unrigged; skeletal animation and role-specific authored variants are not complete.
 - Current collision footprints are conservative static blockers, not obstacle-aware pathfinding or arbitrary-route navigation.
 - Richer animation/foot planting and comprehensive collision/navigation behavior remain follow-up work.
 - Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; no new production release is certified by this merge.
