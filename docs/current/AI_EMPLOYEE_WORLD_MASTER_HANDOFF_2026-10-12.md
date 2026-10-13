@@ -158,3 +158,8 @@ W8, W9 and W23 scripts were inspected. Their passing real-stack fixture paths es
 ## W8 merge reconciliation — 2026-10-13
 
 [PR #1086](https://github.com/ijoolaie/AI-Employee/pull/1086) merged as `65bf5e6ba5faa376526f168b8a66670c1050ff6a` from exact head `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`. Exact-head [W8 real-stack run 38384054138](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054138) passed all steps (build/start, DB migration/check, health, compile, certification) and [CodeQL 38384054092](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054092) passed. The available workflow-run query returned no post-merge runs for the merge SHA; post-merge status remains unverified. This trigger fix adds test coverage only; W8 provider execution remains `not_configured`.
+
+
+## W10 trigger parity merged (2026-10-13)
+
+PR [#1087](https://github.com/ijoolaie/AI-Employee/pull/1087) merged as `2599944c515f464747f8cd00cdbd2e865d9bce09` from exact head `3aea69f297fdd3c215f6d592ebac38ace6c7156d`. The 28 push/PR paths matched. Exact-head W10 real-stack [38384295412](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295412) and CodeQL [38384295452](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295452) passed. Post-merge runs were not returned; post-merge status remains unverified. Synthetic providers and SMTP sink do not prove real customer delivery or revenue.
