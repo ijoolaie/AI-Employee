@@ -14,8 +14,8 @@
   - [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198497)
 - PRs #1059 and #1060 were closed as superseded by #1062. Dependency PRs #1063, #1066, #1065 and #1064 were also merged after their exact-head checks passed.
 - PR #1072 adds low translucent department glass panels, colored cap rails and repeated mullions; the exact-head screenshot artifact is [CI run 38356980574 / artifact 11793500701](https://github.com/ijoolaie/AI-Employee/actions/runs/38356980574/artifacts/11793500701). The glass partitions do not obscure workstations/employee silhouettes, but the portrait artifact crops the outer right room edge; full mobile framing is not accepted.
-- PR #1075 exact head `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf` passed CI, Documentation Truth Consistency, CodeQL, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST. The fresh [desktop/portrait artifact](https://github.com/ijoolaie/AI-Employee/actions/runs/38358857827/artifacts/11793314632) was reviewed; the floor now fits in portrait view, and room entrances/tiled zones are visible. The bounded room/floor/portrait-fit slice is visually accepted on the exact code head; the GitHub PR page is authoritative for lifecycle. Authored employee assets and full pathfinding remain open.
-- Asset reality check: current `main` contains no `employee-base.glb`, `GLTFLoader` integration or World asset-credit/license files. The player/CEO avatar and employee cast are procedural; authored/licensed GLB/GLTF integration remains open. Earlier comments on closed PR #1050 are not proof that an asset landed.
+- PR #1075 exact head `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf` passed CI, Documentation Truth Consistency, CodeQL, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST. The fresh [desktop/portrait artifact](https://github.com/ijoolaie/AI-Employee/actions/runs/38358857827/artifacts/11793314632) was reviewed; the floor now fits in portrait view, and room entrances/tiled zones are visible. The bounded room/floor/portrait-fit slice is visually accepted on the exact code head; the GitHub PR page is authoritative for lifecycle. Role-specific employee art, rigging/animation and full pathfinding remain open.
+- Asset reality check: at pre-PR #1076 baseline commit `4805a2eb8358fd64e6784fe07b1337c9553c0059`, the World asset path had no `employee-base.glb` or `GLTFLoader`. PR #1076 adds an original project-authored GLB, deterministic uniform/skin/hair variation and a procedural fallback. Exact-head checks and screenshots passed/reviewed on `81978a2a59f476176d4e795e38b0561bba1ff4b6` (artifact `11795088571`). The model is static/unrigged; rigging, animation and full pathfinding remain open.
 - Release certification is unchanged: latest certified tag remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. The World merge is not a new production release.
 
 ## What changed
@@ -33,7 +33,7 @@
 - Historical note: CI run [38292598819](https://github.com/ijoolaie/AI-Employee/actions/runs/38292598819) failed on an earlier post-merge head. PR #1069 and PR #1071 followed; the final #1071 head `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` subsequently passed all five required workflow groups and its screenshot artifact was reviewed. That validation applies to the merged viewport change, not every future `main` commit.
 
 ## Explicit limitations — do not overstate completion
-- Employee models remain procedural. A GLB/GLTF employee runtime loader is not implemented or claimed.
+- The base employee body now loads from the local GLB with procedural fallback. The player/CEO avatar remains procedural; the base employee mesh is static and does not provide skeletal animation or role-specific art.
 - Collision geometry is a conservative footprint guard with axis-separated sliding; it is not full obstacle-aware pathfinding or arbitrary-route navigation.
 - Walk-cycle foot planting and richer authored employee/workstation assets remain follow-up work.
 - World remains a read-only projection of authorized business data. Do not invent employees, revenue, orders, approvals, entitlements or room access client-side.
@@ -41,7 +41,7 @@
 ## Next actions
 1. PR #1069 is merged; PR #1068 was closed as superseded. The pan smoke now checks pointer-event wiring rather than relying on WebGL canvas screenshots; unit tests cover pan projection math.
 2. PR #1071 is merged at `ff3a138a4164c793c06678f9ca9d790ab2c14cd8`; its five exact-head workflow groups passed and viewport screenshots were reviewed. Continue remaining World redesign tasks separately.
-3. PR #1073 reconciled release/current-state docs and PR #1074 added the consistency gate and static role audit; both are merged. PR #1075's bounded room/floor/portrait-fit implementation passed exact-head checks and visual review. The GitHub PR page is authoritative for lifecycle; continue with authored employee assets and full pathfinding.
+3. PR #1073 reconciled release/current-state docs and PR #1074 added the consistency gate and static role audit; both are merged. PR #1075's bounded room/floor/portrait-fit implementation passed exact-head checks and visual review. The GitHub PR page is authoritative for lifecycle; continue with rigging/animation, role-specific art and full obstacle-aware pathfinding.
 4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
 6. Keep release certification separate from World code merges.

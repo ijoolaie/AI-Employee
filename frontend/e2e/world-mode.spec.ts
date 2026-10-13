@@ -124,6 +124,7 @@ test("World Mode renders authoritative employee projection and management bridge
 
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
+  await expect.poll(() => canvas.getAttribute("data-worker-asset-state"), { timeout: 10_000 }).toBe("glb-loaded");
 
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
@@ -487,4 +488,17 @@ test("World room editor surfaces a server-side stale-layout conflict", async ({ 
   const editor = page.getByRole("dialog", { name: "Customize your room" });
   await editor.getByRole("button", { name: "Save layout" }).click();
   await expect(editor.getByRole("alert")).toContainText("Room layout changed since it was loaded");
+});
+
+
+test("World Mode keeps procedural employees when the local GLB asset cannot load", async ({ page }) => {
+  await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), authState);
+  await page.route("**/customer-dashboard/office", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(office) });
+  });
+  await page.route("**/assets/world/employee-base.glb", async (route) => route.abort());
+  await page.goto("/world");
+  const canvas = page.getByLabel("AI Company World viewport");
+  await expect(canvas).toBeVisible();
+  await expect.poll(() => canvas.getAttribute("data-worker-asset-state"), { timeout: 10_000 }).toBe("procedural-fallback");
 });
