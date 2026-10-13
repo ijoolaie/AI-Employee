@@ -2,16 +2,6 @@ name: Workforce W9 QA & DevOps E2E
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "backend/scripts/e2e_workforce_w9_qa_devops_verify.py"
-      - "backend/app/services/workforce_semantic_domains.py"
-      - "backend/app/services/ai_workforce_roles.py"
-      - "backend/app/ai/tool_registry.py"
-      - "docker-compose.yml"
-      - "backend/requirements.lock"
-      - ".github/workflows/workforce-w9-e2e.yml"
   pull_request:
     branches: [main]
     paths:
@@ -19,6 +9,34 @@ on:
       - "backend/app/services/workforce_semantic_domains.py"
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/ai/tool_registry.py"
+      - "backend/app/services/agent_tool_governance.py"
+      - "backend/app/services/agent_governance_freshness.py"
+      - "backend/app/services/license_service.py"
+      - "backend/app/services/storage.py"
+      - "backend/app/services/edition_service.py"
+      - "backend/app/models/**"
+      - "backend/app/core/database.py"
+      - "backend/requirements.lock"
+      - "backend/Dockerfile"
+      - "docker-compose.yml"
+      - ".github/workflows/workforce-w9-e2e.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backend/scripts/e2e_workforce_w9_qa_devops_verify.py"
+      - "backend/app/services/workforce_semantic_domains.py"
+      - "backend/app/services/ai_workforce_roles.py"
+      - "backend/app/ai/tool_registry.py"
+      - "backend/app/services/agent_tool_governance.py"
+      - "backend/app/services/agent_governance_freshness.py"
+      - "backend/app/services/license_service.py"
+      - "backend/app/services/storage.py"
+      - "backend/app/services/edition_service.py"
+      - "backend/app/models/**"
+      - "backend/app/core/database.py"
+      - "backend/requirements.lock"
+      - "backend/Dockerfile"
+      - "docker-compose.yml"
       - ".github/workflows/workforce-w9-e2e.yml"
 
 concurrency:
