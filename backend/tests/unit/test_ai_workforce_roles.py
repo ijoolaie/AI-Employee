@@ -286,5 +286,5 @@ def test_known_unbound_workforce_operations_are_explicitly_non_executable(role: 
 
     contract = get_workforce_capability_contract(role, operation)
     assert contract.tool_names == ()
-    with pytest.raises(ValidationAppError, match="Tool is not bound to the requested workforce capability"):
+    with pytest.raises(ValidationAppError, match="Workforce operation has no approved Tool Registry binding"):
         assert_workforce_tool_binding(role, operation, "calculator")
