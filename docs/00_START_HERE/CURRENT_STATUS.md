@@ -1,11 +1,11 @@
 # Current Status — 2026-10-12
 
 ## Latest verified state
-- Current `main` contains World viewport PR [#1062](https://github.com/ijoolaie/AI-Employee/pull/1062), merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`.
+- Current `main` contains viewport consolidation PR [#1062](https://github.com/ijoolaie/AI-Employee/pull/1062), merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`, and viewport-framing follow-up PR [#1071](https://github.com/ijoolaie/AI-Employee/pull/1071), merged at `ff3a138a4164c793c06678f9ca9d790ab2c14cd8`.
 - The exact source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2` passed CI/Playwright, CodeQL, Ephemeral DAST, HA Failure Recovery and Production Infrastructure Validation. Links and detailed evidence are in [World Master Handoff](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md).
-- PR #1071 exact-head candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` passed all five required workflows. Reviewed CI artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` at 1440×900 and 390×844: full office floor is visible in both desktop and portrait frames. Viewport-framing acceptance is met; review the PR diff before merge.
+- PR #1071 exact head `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` passed all five required workflows. Reviewed CI artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` at 1440×900 and 390×844: full office floor is visible in both desktop and portrait frames. Viewport-framing acceptance is met for this bounded criterion.
 - Dependency PRs #1063 (Playwright), #1066 (lucide-react), #1065 (eslint-config-next) and #1064 (Next.js) were merged after their exact-head checks passed.
-- The stale documentation PR #1058 was closed; PR #1067 is the fresh documentation reconciliation and remains Draft while its status is corrected and checks run. PR #1069 (merged; #1068 closed as superseded) and #1071 address post-merge World Playwright instability.
+- The stale documentation PR #1058 was closed. Documentation PR #1067 has reconciled the status/handoff and its CodeQL check passed on head `559c55c9789419553b68f7fb01831cc5e8add3be`; final review and merge remain pending. PR #1069 is merged (#1068 closed as superseded); PR #1071 is merged after exact-head validation.
 
 ## Implemented in the World viewport
 - Responsive Tailwind scanning includes `frontend/features/**`.
