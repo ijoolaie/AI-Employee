@@ -221,3 +221,8 @@ Percentages below are coarse stage-completion estimates based on the exit criter
 - W10 trigger PR [#1087](https://github.com/ijoolaie/AI-Employee/pull/1087) merged as `2599944c515f464747f8cd00cdbd2e865d9bce09`; exact-head W10 real-stack run `38384295412` and CodeQL `38384295452` passed. Its 28 push/PR paths were statically verified equal. Post-merge runs were not returned.
 - Evidence boundary: W8/W9/W23 assert provider execution is `not_configured`; regular W10 uses synthetic payment reconciliation and an SMTP sink. These runs prove fixture-backed real-stack governance and test-trigger coverage, not live provider/customer delivery or actual revenue. Continue A1/A2 with negative governance tests and configured-provider evidence; A3/A4 remain externally dependent.
 - Progress: 48% agent-actionable A0–A2; 29% full-scope A0–A4. A3/A4 remain open and excluded only from the actionable denominator.
+
+
+## E2E trigger audit checkpoint — 2026-10-13
+
+Merged trigger fixes: W8 PR #1086; W10 dogfood #1087; W2/W7/W18 #1088; W20/W22/W10 Customer Outcome #1089; W21 push trigger #1090. Exact-head workflow and CodeQL checks passed for each PR. Post-merge runs were not returned by the available query, so no post-merge pass is claimed. The trigger audit improves CI coverage only; live providers/customer acceptance/actual revenue remain unverified. Next: continue role-level runtime and negative-path tests. Progress remains 48% actionable and 29% full-scope.
