@@ -11,7 +11,7 @@ This acceptance is limited to viewport framing/responsive controls and the imple
 **Status:** Design/implementation contract; not evidence of completed visual work.  
 **Date:** 2026-10-11  
 **Tracking:** Issue #1044; corrective PR #1046 is now based on `main` and contains the combined diff from the earlier #1045 branch plus V2 corrections, so repository pull-request workflows can validate it.  
-**Current decision:** PR #1045 remains Draft and must not be merged as visual approval. The user ran the earlier build locally and rejected the result: the office still looks primitive, employee faces do not match the approved reference direction, movement looks unnatural, and props are placed incoherently. PR #1046 also remains Draft and unmerged.
+**Historical decision (2026-10-11):** PR #1045 was not merged after the user rejected its earlier local visual result; PR #1046 was a subsequent Draft candidate. These references record the prior review, not the current PR state. The viewport-framing follow-up is now merged in #1071; the broader visual redesign still requires authored assets, improved movement and coherent prop placement.
 
 ## Outcome we are building toward
 
