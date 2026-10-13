@@ -26,7 +26,7 @@ The engineering/release certification boundary is evidenced; unrestricted commer
 
 | ID | Area | Classification | Current finding | What is required | Code change? |
 |---|---|---|---|---|---|
-| CR-01 | Release identity | 🟢 | `v1.4.11` exact SHA certified and published | Preserve SHA/tag/checksums as launch identity | No |
+| CR-01 | Release identity | 🟢 | `v1.4.17` exact SHA certified and published (see current release truth above) | Preserve SHA/tag/checksums as launch identity | No |
 | CR-02 | Backend | 🟢 | Certified by release certification | No additional launch code indicated | No |
 | CR-03 | Frontend | 🟢 | Certified by release certification | No additional launch code indicated | No |
 | CR-04 | DB/migrations | 🟢 | Migration and single-head checks passed | Validate again on target deployment | No |
@@ -64,7 +64,7 @@ These issues should be updated/reconciled as evidence is produced. Do not close 
 
 Engineering/release evidence includes:
 
-- exact-SHA Production Certification for `v1.4.11`;
+- exact-SHA Production Certification for the current published release `v1.4.17` (`b403c0dcdea579e017738a6fdea138c2b1a2999c`);
 - backend/frontend/DB validation;
 - Auth/RBAC/tenant isolation product gates;
 - workflow, billing, WorkItem and core business flows;
@@ -88,7 +88,7 @@ Provision the approved target, DNS/TLS, ingress, PostgreSQL, Redis, object stora
 
 ### 2. Exact release deployment
 
-Deploy exactly `v1.4.11` / `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f`, record deployment timestamp, image digests, migration revision and health checks.
+Deploy the selected immutable release only after target approval; current published candidate is `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Record deployment timestamp, image digests, migration revision and health checks. Do not deploy automatically as part of this documentation audit.
 
 ### 3. Backup/DR
 
