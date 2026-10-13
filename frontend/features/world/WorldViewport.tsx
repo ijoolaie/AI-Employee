@@ -6,6 +6,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { WorldInput } from "./WorldInput";
 import { MobileInputAdapter } from "./MobileInputAdapter";
 import { screenPanToWorldDelta } from "./WorldPan";
+import { getWorkerBodySway } from "./WorldAnimation";
 import { canOccupyGround, getWalkBlockers } from "./WorldNavigation";
 import type { WorldEmployee } from "./WorldState";
 import { isRoomSceneAccessUsable } from "./WorldRoomSceneAccess";
@@ -1239,6 +1240,12 @@ export function WorldViewport({
         worker.status.material.color.setHex(STATE_COLOR[worker.state as WorldEmployee["state"]] ?? 0x9aa8bb);
         worker.status.material.emissive.setHex(STATE_COLOR[worker.state as WorldEmployee["state"]] ?? 0x9aa8bb);
         worker.group.position.y = 0;
+        worker.body.rotation.z = getWorkerBodySway(
+          worker.state as WorldEmployee["state"],
+          now,
+          Math.abs(hash(worker.id)) % 20,
+          reducedMotion.matches,
+        );
         const activityPulse = worker.state === "WORKING" && !reducedMotion.matches
           ? 1 + (Math.sin(now * 0.003 + (Math.abs(hash(worker.id)) % 20)) + 1) * 0.06
           : 1;
