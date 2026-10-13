@@ -288,3 +288,19 @@ def test_known_unbound_workforce_operations_are_explicitly_non_executable(role: 
     assert contract.tool_names == ()
     with pytest.raises(ValidationAppError, match="Workforce operation has no approved Tool Registry binding"):
         assert_workforce_tool_binding(role, operation, "calculator")
+
+
+def test_every_explicit_workforce_binding_resolves_to_registered_tool() -> None:
+    from app.ai.tool_registry import registry
+    from app.services.ai_workforce_roles import WORKFORCE_ROLES
+
+    missing: list[tuple[str, str, str]] = []
+    for role in WORKFORCE_ROLES:
+        for contract in role.capability_contract:
+            for tool_name in contract.tool_names:
+                try:
+                    registry.get(tool_name)
+                except KeyError:
+                    missing.append((role.code, contract.operation, tool_name))
+
+    assert not missing, f"Workforce capability contracts reference unregistered tools: {missing}"
