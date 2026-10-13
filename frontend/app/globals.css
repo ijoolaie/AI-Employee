@@ -44,13 +44,13 @@ body {
 }
 
 
-/* World mobile controls use explicit safe-area positions so HUD and controls stay distinct. */
+/* Keep mobile World controls in separate corners from the HUD and movement joystick. */
 @media (max-width: 639px) {
   .world-viewport .world-camera-controls {
-    top: 12px !important;
+    top: auto !important;
     right: 12px !important;
+    bottom: 16px !important;
     left: auto !important;
-    bottom: auto !important;
     max-width: calc(100% - 24px);
   }
 
