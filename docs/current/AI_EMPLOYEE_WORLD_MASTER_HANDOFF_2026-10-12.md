@@ -195,3 +195,9 @@ Trigger-audit batch is merged for W2/W7/W8/W9/W10/W18/W20/W21/W22/W23. This impr
 [PR #1091](https://github.com/ijoolaie/AI-Employee/pull/1091) merged as `651116bb1a19a93fd4008e93d7e437e42884c443` from exact head `aaf8cd21ed46ebe8e9ad756e47f38d07283b5c76`. Exact-head CI, Workforce Semantic E2E, W21 E2E, CodeQL, Architecture Guard, Production Infrastructure, HA Recovery and DAST passed. It adds approval resolver coverage for exact arguments, changed arguments and ambiguous duplicate matches. The workflow connector did not return post-merge runs, so no post-merge pass is claimed.
 
 Role audit identified two intentionally unbound catalog operations: Marketing `analyze_campaign_performance` and Trader `stage_order_for_review`. They remain fail-closed until a real domain/service and explicit binding are reviewed. PR #1092 adds regression coverage; checks are pending. Progress remains 48% agent-actionable / 29% full-scope.
+
+## Workforce audit continuation — PR #1093 (2026-10-13)
+
+PR [#1093](https://github.com/ijoolaie/AI-Employee/pull/1093) is merged to main as `50fc153492a1b5fbe810eb7f25ebd7e1c042dce3`, from exact tested head `49cebd69c4dc8c63b1c9e1757349f77e7664e1a6`. The added test enumerates every non-empty workforce contract tool binding and asserts that `app.ai.tool_registry.registry.get(tool_name)` resolves it. All eight exact-head groups passed (CI, CodeQL, Architecture Guard, W21 E2E, Workforce Semantic Real-Stack E2E, Ephemeral DAST, HA Failure Recovery and Production Infrastructure Validation). This is a registry consistency invariant, not an end-to-end role execution proof; no post-merge pass is implied.
+
+Next: extend runtime governance tests across tenant isolation, permission denial, stale/mismatched approvals, replay/idempotency, provider failure and persisted output/audit evidence. Keep the two known unbound Marketing/Trader operations fail-closed. Progress remains 48% actionable A0–A2 and 29% full-scope A0–A4.
