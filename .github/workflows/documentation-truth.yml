@@ -1,0 +1,45 @@
+name: Documentation Truth Consistency
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'PROJECT_MANIFEST_CURRENT.json'
+      - 'README.md'
+      - 'docs/00_START_HERE/**'
+      - 'docs/current/**'
+      - 'docs/releases/**'
+      - 'docs/DOCUMENTATION_INDEX.md'
+      - 'scripts/validate_documentation_truth.py'
+      - '.github/workflows/documentation-truth.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'PROJECT_MANIFEST_CURRENT.json'
+      - 'README.md'
+      - 'docs/00_START_HERE/**'
+      - 'docs/current/**'
+      - 'docs/releases/**'
+      - 'docs/DOCUMENTATION_INDEX.md'
+      - 'scripts/validate_documentation_truth.py'
+      - '.github/workflows/documentation-truth.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: documentation-truth-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-truth-consistency:
+    name: Release identity consistency
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Validate current release identity across canonical documents
+        run: python scripts/validate_documentation_truth.py

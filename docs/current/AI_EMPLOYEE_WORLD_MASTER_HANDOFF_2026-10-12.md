@@ -1,6 +1,6 @@
 # AI Employee World — Master Handoff
-**Updated:** 2026-10-12  
-**Status:** PR #1071 candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` passed all five required workflows and its exact-head 1440×900 desktop / 390×844 portrait screenshots were visually reviewed. The full floor is visible in both; viewport framing is accepted for this bounded criterion. Broader redesign and gameplay work remain incomplete.
+**Updated:** 2026-10-13  
+**Status:** PR #1071 viewport framing is accepted for its bounded criterion. PR #1072 is merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6` from exact head `98e740fbc95d6597440fee2216977762e008fa0a`; all five workflow groups passed, and the fresh 1440×900 desktop / 390×844 portrait screenshots were manually reviewed. The glass-partition pass is accepted; broader redesign and gameplay work remain incomplete.
 
 ## Current source of truth
 - `main` contains PR [#1062](https://github.com/ijoolaie/AI-Employee/pull/1062), merged as `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`.
@@ -13,6 +13,7 @@
   - [HA Failure Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198352)
   - [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198497)
 - PRs #1059 and #1060 were closed as superseded by #1062. Dependency PRs #1063, #1066, #1065 and #1064 were also merged after their exact-head checks passed.
+- PR #1072 adds low translucent department glass panels, colored cap rails and repeated mullions; the exact-head screenshot artifact is [CI run 38356980574 / artifact 11793500701](https://github.com/ijoolaie/AI-Employee/actions/runs/38356980574/artifacts/11793500701). The full floor remains visible and workstations/employee silhouettes are not obscured by the low partitions.
 - Release certification is unchanged: latest certified tag remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. The World merge is not a new production release.
 
 ## What changed
@@ -38,7 +39,7 @@
 ## Next actions
 1. PR #1069 is merged; PR #1068 was closed as superseded. The pan smoke now checks pointer-event wiring rather than relying on WebGL canvas screenshots; unit tests cover pan projection math.
 2. PR #1071 is merged at `ff3a138a4164c793c06678f9ca9d790ab2c14cd8`; its five exact-head workflow groups passed and viewport screenshots were reviewed. Continue remaining World redesign tasks separately.
-3. Keep documentation PR #1067 aligned with the merged viewport result and merge only after its checks pass and the diff is reconciled.
+3. PR #1073 reconciled release/current-state docs and is merged; PR #1074 adds an automated consistency gate and role audit. Keep the handoff aligned with exact merged PR state.
 4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
 6. Keep release certification separate from World code merges.

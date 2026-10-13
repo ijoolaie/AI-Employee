@@ -22,7 +22,7 @@
 - External production deployment: **not verified / not claimed**.
 - External customer acceptance and realized revenue: **not verified**.
 - World viewport framing has bounded desktop/mobile screenshot acceptance recorded for PR #1071; that does not mean the broader World visual redesign, authored 3D assets, obstacle-aware pathfinding, or commercial workflows are complete.
-- PR #1072 adds a bounded procedural glass-partition visual change. Its PR description says manual desktop/mobile visual acceptance is pending; do not infer acceptance from build or automated checks.
+- PR #1072 merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6` from exact head `98e740fbc95d6597440fee2216977762e008fa0a` after all five workflow groups passed and its fresh desktop/portrait screenshots were manually reviewed. Acceptance is limited to the procedural glass-partition material pass; employee models remain procedural and obstacle-aware pathfinding is not implemented.
 - Current source-of-truth files had drifted: the manifest still described a September release-candidate checkpoint, the gap register described v1.4.11, the evidence index described v1.4.11, and status/priority documents carried stale PR-review language. The immutable v1.4.17 release facts themselves remain distinct from these stale current-state summaries.
 
 ## 3. Why documentation drifted — working root-cause assessment
@@ -58,12 +58,12 @@ Each row must also record: owner/role; user-visible promise; entry point; implem
 
 ### A0 — Reconcile truth surfaces (first)
 
-- [ ] Update the current manifest and make its release-vs-engineering-vs-production distinctions explicit.
-- [ ] Reconcile the gap register and evidence index to v1.4.17 while preserving v1.4.11 data only as historical evidence.
-- [ ] Remove or label stale current-state statements in status and priorities; retain dated history as history.
-- [ ] Add this audit plan to the documentation index / start-here path.
-- [ ] Inspect PR #1067/#1071/#1072 exact state and the PR/CI workflow that produced stale statements.
-- [ ] Add a repeatable consistency check or checklist so this drift is caught before merge.
+- [x] Updated the current manifest and made release-vs-engineering-vs-production distinctions explicit (merged via PR #1073).
+- [x] Reconciled the gap register and evidence index to v1.4.17 while preserving v1.4.11 data only as historical evidence (PR #1073).
+- [x] Removed or labeled stale current-state statements in status and priorities; retained dated history as history (PR #1073, with PR #1074 keeping World status current).
+- [x] Added this audit plan to the documentation index / start-here path (PR #1073).
+- [x] Inspected the relevant PR state and CI path filters; confirmed the missing docs paths and absent required-check enforcement (details in section 9).
+- [x] Added a repeatable release-identity consistency validator and workflow in PR #1074; merge and repository required-check enforcement remain pending.
 
 ### A1 — Map every employee role to real execution
 
@@ -110,10 +110,62 @@ Fix stale truth surfaces and blockers first; then select the shortest end-to-end
 
 | Date | Area | Finding / action | Evidence | Status |
 |---|---|---|---|---|
-| 2026-10-13 | Documentation truth | Identified stale manifest, gap register, evidence index, and status/priority snapshots; reconciliation proposed in this PR | README, manifest, release ledger, gap register, evidence index, current status/priority | IN PROGRESS |
+| 2026-10-13 | Documentation truth | Reconciled stale manifest, gap register, evidence index and status/priority snapshots in merged PR #1073; PR #1074 adds a consistency gate | README, manifest, release ledger, gap register, evidence index, current status/priority; PR #1073 and #1074 | RECONCILED; PREVENTION CHECK PENDING MERGE |
 | 2026-10-13 | Commercial readiness | External deployment, customer acceptance, and realized revenue are not verified in repository evidence | README; Versioning Truth; Release Truth Ledger | OPEN |
-| 2026-10-13 | World | PR #1071's viewport criterion is bounded acceptance only; PR #1072 remains a separate visual candidate pending manual review per PR description | Current Status; PR #1071; PR #1072 | OPEN |
+| 2026-10-13 | World | PR #1071 viewport framing and PR #1072 glass-partition pass are each accepted only for their bounded criteria; broader World redesign remains open | PR #1071 exact-head artifact; PR #1072 CI run `38356980574`, artifact `11793500701`, merge `c097eedbc5674d788d72b5b3a2d334adba1737e6` | PARTIAL ACCEPTANCE |
 
 ## 8. Exit criteria
 
 The audit is not complete until every canonical role has a status row, every priority workflow has exact reproducible evidence or an explicit gap, stale current-state statements are reconciled, and a narrow commercial pilot has independently verifiable customer/delivery/financial evidence. A green CI run alone cannot satisfy these exit criteria.
+
+
+## 9. Confirmed documentation-drift mechanisms and prevention — 2026-10-13
+
+The following mechanisms were confirmed by inspecting the repository workflow and GitHub branch metadata; these are stronger than the earlier working hypotheses:
+
+1. **The main CI path filter omitted several current-truth documents.** The CI workflow included `docs/releases/**` and one specific incident-response document, but did not include `PROJECT_MANIFEST_CURRENT.json`, `README.md`, `docs/00_START_HERE/**`, `docs/current/**` generally, or `docs/DOCUMENTATION_INDEX.md`. A docs-only change to several drifted surfaces could therefore bypass that CI workflow entirely.
+2. **No required-check enforcement was configured on `main` at inspection time.** GitHub branch metadata reported `protected=false`, required-check enforcement `off`, and an empty required-check list. Green checks and the PR checklist were therefore not enforced as merge prerequisites by branch protection.
+3. **The PR template was a process checklist, not an executable consistency gate.** It improves contributor prompts but cannot by itself compare the manifest, release ledger, and current summaries.
+
+Corrective action in this follow-up: add a dedicated `Documentation Truth Consistency` workflow that triggers when any canonical current-truth surface changes and runs `scripts/validate_documentation_truth.py`. The check compares the manifest's `latest_published_release` with the first/current release-identity row in the release ledger, then checks the version and full SHA in the current summary documents. It validates consistency only; it does not validate deployment, customer acceptance, or revenue.
+
+**Remaining governance limitation:** a failing workflow is visible but is not a hard merge block while `main` has no required status checks. Enabling required checks is a repository-settings decision and remains an explicit governance follow-up.
+
+## 10. Initial static role audit — source inspection only, 2026-10-13
+
+This is a first-pass **static code map**, not an end-to-end execution certification. Role catalog entries, registered tools, service functions, and automated tests prove different things. No row below should be read as proof that a real provider is configured or that a customer workflow has completed.
+
+| Canonical role | Source-level implementation found | Confirmed boundary / gap | Initial status | Next acceptance test |
+|---|---|---|---|---|
+| AI Internal Manager | Eight routine coordination/report/budget/cost operations have explicit tool bindings; high-impact staffing, financial, legal, security and production actions are approval-gated in the role contract. | A complete manager-originated proposal → CEO approval → provision/access review/activation trace has not been demonstrated in this audit. | PARTIAL — binding exists; end-to-end not verified | Exercise one routine task handoff and one denied high-impact staffing action; inspect persisted audit and approval records. |
+| AI Marketing & Advertising Manager | Campaign-plan, content-coordination and growth-report tool bindings/services exist. | The catalog's `analyze_campaign_performance` operation has no matching registered tool in the current registry scan; paid campaign launch/spend remains approval-gated and no live ad-provider execution is evidenced. | PARTIAL | Test campaign brief → saved plan → approved spend gate; verify the missing performance operation is either implemented or explicitly non-executable. |
+| AI Graphic Designer | Create/revise/brand-variant/campaign-creative tools are registered. | The creative handler persists a versioned draft request and explicitly returns `provider_execution=not_configured`; no actual image/video generation, provenance/licensing validation, or export delivery was verified. | PARTIAL — request scaffold only | Invoke with a test tenant; verify persisted prompt/provenance, then prove real provider output, licensing metadata, preview and export or keep generation marked blocked. |
+| AI Software Developer | Workspace read/list/create/edit/delete, change-set, test/lint/build, Git/CI and deployment/rollback proposal bindings exist; an explicit engineering-provider boundary is present. | Unconfigured-provider responses are fail-closed. Persisting a workspace artifact or proposing a change is not proof of running tests against a real repository, creating a PR, deployment or rollback. | PARTIAL — local artifact path exists; provider execution not verified | Test tenant isolation and change-set persistence, then exercise configured provider success, timeout, denied access and safe failure without implicit merge/deploy. |
+| AI Trader | Market research, risk-analysis and trading-plan tool bindings/services exist. | Market adapters fail closed if not configured; their scope is read-only research/planning. Actual order execution, capital allocation, leverage changes and withdrawals remain approval-required and are not exposed as verified execution. | PARTIAL — analysis boundary only | Verify configured read-only provider results and stale/error handling; prove order-related operations are denied without explicit human approval. |
+| AI Content Producer | Article, caption, short-form, CTA, calendar, brief, repurposing and QA tools are registered; content artifacts are tenant-scoped and versioned. | The current handler persists draft artifacts with `provider_execution=not_required`; authorized external publication and publication verification are not part of this handler. | PARTIAL — durable draft artifact | Test brief → versioned draft → review/approval → asset link → authorized publication through a real channel adapter and independent publication check. |
+| AI Social Media Employee | Comment triage/analytics/status and connect/publish/schedule/DM tool names are registered. | The social handler records requests/proposals and returns `provider_execution=not_configured`; it does not publish to Instagram or execute DMs in the inspected path. | PARTIAL — proposal records only | Verify tenant-owned channel credentials, approval, idempotent publication, status reconciliation and denied/unconfigured-provider behavior. |
+| AI Sales & Lead Generation Employee | Lead research/qualification, CRM enrichment, outreach draft/follow-up, proposal, meeting, pipeline and conversion operations are registered; outreach and checkout provider boundaries exist. | Outbound provider configuration is required and fail-closed; payment-provider presence/configuration and successful live payment, delivery, refund and realized revenue were not verified. | PARTIAL — workflow components exist; paid loop unverified | Run one human-supervised lead-to-proposal-to-checkout pilot with idempotency, actual receipt, delivery acceptance, refund path and cost reconciliation. |
+| AI SEO & Growth Employee | Keyword/research/recommendation/report operation names are registered and a tenant-scoped artifact handler exists. | The handler writes research/proposal records with `provider_execution=not_configured`; no live Search Console/analytics ingestion or verified SEO experiment execution was established. | PARTIAL — artifacts only | Verify actual read-only analytics provider, source timestamps, recommendation evidence and a human-approved experiment with attribution. |
+| AI Customer Success & Support Employee | The role contract and a customer-success artifact handler exist. | The registry scan did not find matching `workforce_customer_context`, `workforce_support_triage`, `workforce_response_draft` and related role tool registrations. Thus a handler's existence is not evidence that the role is reachable through the governed tool path. | BLOCKED/PARTIAL — tool reachability gap | Reconcile every operation to an exact registered tool and permission/approval contract; then test support triage, escalation and message-denial paths. |
+| AI QA & DevOps Employee | The role contract and a QA/DevOps artifact handler exist; a rollback-proposal tool is registered. | The registry scan did not find corresponding tools for the catalog's other QA/DevOps operations (test plan, regression analysis, CI health, release readiness, incident diagnostics, deployment/production-change proposals). The handler itself persists analysis/proposals and says provider execution is not configured. | BLOCKED/PARTIAL — most operations not tool-reachable | Add explicit safe bindings or mark them non-executable; prove exact-commit CI/diagnostics and approval-gated deployment/rollback proposal flow. |
+| AI Website Employee | Requirements/UX/content, implementation/assets, tests/accessibility/build/preview/health and deploy/rollback tool names are registered. | The website handler persists tenant-scoped staged changes/proposals with `provider_execution=not_configured`; live website build, preview on target, deployment and rollback were not verified. | PARTIAL — staged change artifacts | Exercise requirements → change set → tests/accessibility → preview artifact; verify deployment remains blocked until a configured provider and explicit approval exist. |
+
+### Static-audit interpretation
+
+- **Registered tool ≠ successful tool execution.** Each role still needs exact-head runtime tests, negative permission/approval tests, provider failure tests, and persisted-output inspection.
+- **Service handler ≠ reachable capability.** Customer Success and QA/DevOps show concrete examples where catalog/handler presence must be reconciled with registered tool bindings.
+- **Draft/proposal ≠ external side effect.** Creative, social, SEO, content, QA/DevOps and website paths explicitly persist records while reporting a provider as unconfigured or not required.
+- **No HR/recruiting role is present in the 12-role workforce catalog inspected here.** Do not count it as implemented. The separate built-in business employee modules (document, invoice, order, report and sales) need their own trace if they are included in the claimed employee roster.
+
+### Audit log additions
+
+| Date | Area | Finding / action | Evidence | Status |
+|---|---|---|---|---|
+| 2026-10-13 | Documentation CI | Confirmed CI path filters omitted multiple canonical current-truth documents; added dedicated validator/workflow in follow-up branch | `.github/workflows/ci.yml`; `.github/workflows/documentation-truth.yml`; `scripts/validate_documentation_truth.py` | IMPLEMENTED IN FOLLOW-UP PR; check result pending |
+| 2026-10-13 | Merge governance | GitHub reported `main` protection disabled and no required status checks | GitHub branch metadata for `main` | OPEN — settings decision |
+| 2026-10-13 | Workforce audit | Completed first static source map for all 12 roles in the canonical workforce catalog | `backend/app/services/ai_workforce_roles.py`; `backend/app/ai/tool_registry.py`; `backend/app/services/workforce_semantic_domains.py` | STATIC PASS ONLY; runtime audit open |
+
+
+### World visual follow-up — 2026-10-13
+
+PR #1072's initial exact-head CI failed because the full World E2E exceeded the default 30-second test budget at the final viewport reset/check; 8 of 9 browser tests passed, and the screenshot artifact was still uploaded. The World smoke now has a 60-second per-test timeout to account for its WebGL interaction and two viewport captures on software-rendered CI. On exact head `98e740fbc95d6597440fee2216977762e008fa0a`, CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST all passed. Desktop and portrait screenshots were manually reviewed; this is bounded visual acceptance only.
