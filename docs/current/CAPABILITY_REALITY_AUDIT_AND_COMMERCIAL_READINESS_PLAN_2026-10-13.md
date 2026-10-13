@@ -22,7 +22,7 @@
 - External production deployment: **not verified / not claimed**.
 - External customer acceptance and realized revenue: **not verified**.
 - World viewport framing has bounded desktop/mobile screenshot acceptance recorded for PR #1071; that does not mean the broader World visual redesign, authored 3D assets, obstacle-aware pathfinding, or commercial workflows are complete.
-- PR #1072 adds a bounded procedural glass-partition visual change. Its PR description says manual desktop/mobile visual acceptance is pending; do not infer acceptance from build or automated checks.
+- PR #1072 merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6` from exact head `98e740fbc95d6597440fee2216977762e008fa0a` after all five workflow groups passed and its fresh desktop/portrait screenshots were manually reviewed. Acceptance is limited to the procedural glass-partition material pass; employee models remain procedural and obstacle-aware pathfinding is not implemented.
 - Current source-of-truth files had drifted: the manifest still described a September release-candidate checkpoint, the gap register described v1.4.11, the evidence index described v1.4.11, and status/priority documents carried stale PR-review language. The immutable v1.4.17 release facts themselves remain distinct from these stale current-state summaries.
 
 ## 3. Why documentation drifted — working root-cause assessment
@@ -112,7 +112,7 @@ Fix stale truth surfaces and blockers first; then select the shortest end-to-end
 |---|---|---|---|---|
 | 2026-10-13 | Documentation truth | Identified stale manifest, gap register, evidence index, and status/priority snapshots; reconciliation proposed in this PR | README, manifest, release ledger, gap register, evidence index, current status/priority | IN PROGRESS |
 | 2026-10-13 | Commercial readiness | External deployment, customer acceptance, and realized revenue are not verified in repository evidence | README; Versioning Truth; Release Truth Ledger | OPEN |
-| 2026-10-13 | World | PR #1071's viewport criterion is bounded acceptance only; PR #1072 remains a separate visual candidate pending manual review per PR description | Current Status; PR #1071; PR #1072 | OPEN |
+| 2026-10-13 | World | PR #1071 viewport framing and PR #1072 glass-partition pass are each accepted only for their bounded criteria; broader World redesign remains open | PR #1071 exact-head artifact; PR #1072 CI run `38356980574`, artifact `11793500701`, merge `c097eedbc5674d788d72b5b3a2d334adba1737e6` | PARTIAL ACCEPTANCE |
 
 ## 8. Exit criteria
 
@@ -164,3 +164,8 @@ This is a first-pass **static code map**, not an end-to-end execution certificat
 | 2026-10-13 | Documentation CI | Confirmed CI path filters omitted multiple canonical current-truth documents; added dedicated validator/workflow in follow-up branch | `.github/workflows/ci.yml`; `.github/workflows/documentation-truth.yml`; `scripts/validate_documentation_truth.py` | IMPLEMENTED IN FOLLOW-UP PR; check result pending |
 | 2026-10-13 | Merge governance | GitHub reported `main` protection disabled and no required status checks | GitHub branch metadata for `main` | OPEN — settings decision |
 | 2026-10-13 | Workforce audit | Completed first static source map for all 12 roles in the canonical workforce catalog | `backend/app/services/ai_workforce_roles.py`; `backend/app/ai/tool_registry.py`; `backend/app/services/workforce_semantic_domains.py` | STATIC PASS ONLY; runtime audit open |
+
+
+### World visual follow-up — 2026-10-13
+
+PR #1072's initial exact-head CI failed because the full World E2E exceeded the default 30-second test budget at the final viewport reset/check; 8 of 9 browser tests passed, and the screenshot artifact was still uploaded. The World smoke now has a 60-second per-test timeout to account for its WebGL interaction and two viewport captures on software-rendered CI. On exact head `98e740fbc95d6597440fee2216977762e008fa0a`, CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST all passed. Desktop and portrait screenshots were manually reviewed; this is bounded visual acceptance only.
