@@ -156,3 +156,28 @@ async def test_workforce_tool_execution_rejects_wrong_role():
             agent_instance_id=agent_id,
             tool_name="workforce_market_research",
         )
+
+@pytest.mark.asyncio
+async def test_workforce_tool_execution_scopes_agent_lookup_to_requested_tenant():
+    tenant_id = uuid4()
+    agent_id = uuid4()
+
+    class Result:
+        def scalar_one_or_none(self):
+            return None
+
+    class DB:
+        async def execute(self, statement):
+            # Guard the SQL predicate itself, not only the error returned by a mock.
+            bound_values = statement.compile().params.values()
+            assert tenant_id in bound_values
+            assert agent_id in bound_values
+            return Result()
+
+    with pytest.raises(ValidationAppError, match="tenant-scoped AgentInstance"):
+        await runtime.assert_workforce_tool_execution(
+            DB(),
+            tenant_id=tenant_id,
+            agent_instance_id=agent_id,
+            tool_name="workforce_market_research",
+        )
