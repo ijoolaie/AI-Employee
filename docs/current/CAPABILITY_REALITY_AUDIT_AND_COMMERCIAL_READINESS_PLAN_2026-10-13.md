@@ -175,7 +175,14 @@ PR #1072's initial exact-head CI failed because the full World E2E exceeded the 
 
 The World gameplay spec still described PR #1050 as an active Draft candidate even though GitHub reports it closed/unmerged; the redesign contract likewise described #1045/#1046 as current candidates. These were historical snapshots not reconciled after later PRs. PR #1050 comments discussed a possible `employee-base.glb` asset, but the merged #1057 tree and current `main` tree contain no `employee-base.glb`, `GLTFLoader`, or World asset-credit/license files. The current player/CEO avatar and employee cast are procedural. The World spec, redesign contract and master handoff are being corrected in PR #1075; asset integration remains NOT-IMPLEMENTED until the actual files, loader, provenance and runtime evidence exist.
 
-| 2026-10-13 | World documentation | Corrected stale #1050/#1045/#1046 active-state language and rejected unsupported GLB asset claims; #1075 remains a Draft room/floor/navigation candidate | GitHub state for #1050/#1057; recursive tree and `WorldViewport.tsx` at current `main`; World spec and handoff | DOCS UPDATED IN PR #1075; VISUAL CHECK PENDING |
+| 2026-10-13 | World documentation | Corrected stale #1050/#1045/#1046 active-state language and rejected unsupported GLB asset claims; #1075 remains a Draft room/floor/navigation candidate | GitHub state for #1050/#1057; recursive tree and `WorldViewport.tsx` at current `main`; World spec and handoff | DOCS UPDATED IN PR #1075; VISUAL REVIEW PASSED ON EXACT HEAD; MERGE PENDING |
 
 
 A further visual-evidence correction: the #1071/#1072 portrait screenshots do not establish full-office mobile framing; the outer right room edge sits at or beyond the canvas boundary. The glass-partition pass remains accepted as a material-only change, but responsive camera framing stays OPEN until a fresh exact-head screenshot proves the room is composed as intended.
+
+
+### PR #1075 exact-head acceptance — 2026-10-13
+
+On `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf`, CI, Documentation Truth Consistency, CodeQL, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST all passed. The fresh desktop/portrait screenshot artifact `11793314632` from run `38358857827` was manually reviewed. The department-tinted floor tiles, framed room entrances, matching room-wall blockers and portrait fit/label scale are accepted for this bounded slice pending merge. The full floor fits the 390×844 portrait canvas. This does not complete authored employee assets or full obstacle-aware pathfinding.
+
+| 2026-10-13 | World | Added room entrances and floor tiles; moved desk anchors to preserve a central aisle; aligned collision blockers with visible walls; corrected portrait camera fit; manually reviewed exact-head screenshots | PR #1075 head `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf`, CI run `38358857827`, artifact `11793314632` | BOUNDED ACCEPTANCE; MERGE PENDING |
