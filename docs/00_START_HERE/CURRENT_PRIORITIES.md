@@ -1,3 +1,21 @@
+## PR #1082 merged — reduced-motion-aware working employee sway (2026-10-13)
+
+- PR: [#1082](https://github.com/ijoolaie/AI-Employee/pull/1082), squash-merged after exact-head CI/security/infra checks and fresh desktop/mobile screenshot review passed.
+- Exact PR head: `9a8cb2179cb7675a773b7dd51e99251a9e2838fb`; merge commit: `f1b4f782d8753da6c5f960b50942e9a5a6f16b06`.
+- Implementation: `getWorkerBodySway` adds a small deterministic body rotation only for `WORKING` employees; it returns zero for other states and when `prefers-reduced-motion: reduce` is active. Four Vitest cases cover state gating, reduced motion, amplitude/determinism and phase variation.
+- Exact-head workflows passed: [CI 38378436816](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436816) (backend and frontend; lint, contracts, unit tests, production build and Playwright), [CodeQL 38378436770](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436770), [Ephemeral DAST 38378436804](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436804), [Production Infrastructure Validation 38378436717](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436717), and [HA Failure Recovery Validation 38378436814](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436814).
+- Desktop/mobile artifact [11802346424](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436816/artifacts/11802346424) was inspected. Desktop layout is intact; on the 390×844 mobile screenshot the joystick stays bottom-left and camera controls bottom-right with no visible overlap. Static screenshots confirm layout only, not the animation over time.
+- Post-merge workflows on the merge SHA: [SLO Contract Manual v2 38378936646](https://github.com/ijoolaie/AI-Employee/actions/runs/38378936646) and [Delivery Manifest Bundle 38378937055](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937055) passed. At this documentation checkpoint, post-merge [CI 38378936957](https://github.com/ijoolaie/AI-Employee/actions/runs/38378936957), [Production Compose Validation 38378937006](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937006), [Production Infrastructure Validation 38378937068](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937068), [CodeQL 38378937201](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937201), and [Ephemeral DAST 38378937394](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937394) were still running; update this status after their final results.
+- Scope boundary: this is an ambient presentation cue, not skeletal rigging or a walk cycle. Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) remains open for the broader World redesign. No release certification, deployment, or customer-acceptance claim is implied; certified release remains `v1.4.17`.
+
+## Next steps after PR #1082
+
+1. Recheck the five post-merge workflows listed above and update their final outcomes; do not infer release certification from green engineering checks.
+2. Continue World issue #1044 with a separate bounded slice only after inspecting the remaining acceptance criteria; prioritize role-specific employee appearance/rigging and movement/pathfinding as distinct work, with visual artifacts and reduced-motion/accessibility coverage.
+3. Revalidate W8/W23 Customer Success and W9 QA/DevOps workflows on the current `main` SHA; prior successful runs on older SHAs are not current-main evidence.
+4. Continue the configured provider-path run and one human-supervised lead-to-paid-delivery flow with receipts, costs and customer acceptance evidence.
+5. Triage existing frontend lint warnings and plan `actions/upload-artifact@v4` Node.js 24 migration.
+
 ## PR #1081 merged — mobile World camera controls (2026-10-13)
 
 - PR: [#1081](https://github.com/ijoolaie/AI-Employee/pull/1081), merged by squash after the exact PR-head checks and visual review passed.
