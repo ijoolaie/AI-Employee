@@ -168,7 +168,7 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     keys=get_storage_backend().list_prefix(f"{tenant_id}/")
     article_payloads=[]
     for key in keys:
-        if "/content-" in key and key.endswith(".json"):
+        if "content-" in key and key.endswith(".json"):
             payload=workforce_semantic_domains._read_json(str(tenant_id),key)
             if payload.get("title")==content_title:
                 article_payloads.append((key,payload))
