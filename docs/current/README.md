@@ -4,16 +4,16 @@ This directory contains maintained documentation for the current `main` implemen
 
 ## Source of truth
 
-0. `CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md` — documentation-drift root cause, role-by-role capability audit, commercial gates and acceptance sequence.
+1. `CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md` — documentation-drift root cause, role-by-role capability audit, commercial gates and acceptance sequence.
 
-1. `../00_START_HERE/VERSIONING_TRUTH.md` — release/architecture/phase truth.
-2. `../00_START_HERE/CURRENT_STATUS.md` — executive current state.
-3. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
-4. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap and current Agent capability phases.
-5. `PRODUCTION_SERVER_BASELINE.md` — recommended external production infrastructure baseline.
-6. `PRODUCTION_EVIDENCE_INDEX.md` — external evidence boundary.
-7. `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` — exact-SHA certification procedure.
-8. `EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` — operator-facing execution sequence for remaining external production gates.
+2. `../00_START_HERE/VERSIONING_TRUTH.md` — release/architecture/phase truth.
+3. `../00_START_HERE/CURRENT_STATUS.md` — executive current state.
+4. `../00_START_HERE/CURRENT_PRIORITIES.md` — immediate execution order.
+5. `PRODUCTIZATION_ROADMAP.md` — delivery roadmap and current Agent capability phases.
+6. `PRODUCTION_SERVER_BASELINE.md` — recommended external production infrastructure baseline.
+7. `PRODUCTION_EVIDENCE_INDEX.md` — external evidence boundary.
+8. `PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` — exact-SHA certification procedure.
+9. `EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` — operator-facing execution sequence for remaining external production gates.
 
 ## Current release position
 
