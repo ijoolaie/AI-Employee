@@ -54,7 +54,7 @@ async def license_fixture(tenant_id,suffix):
         db.add(vendor); await db.flush()
         reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
         db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
 async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader",tool_name="workforce_market_research"):
@@ -66,7 +66,7 @@ async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader"
         employee=Employee(tenant_id=tenant_id,slug=f"e2e-workforce-{suffix}-{variant}",name=f"E2E Workforce {variant}",kind="custom",is_active=True)
         db.add(employee); await db.flush()
         output={"type":"object","properties":{"content":{"type":"string"}},"required":["content"]}
-        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=("Produce a draft article." if tool_name=="workforce_produce_article" else ("Prepare a social caption." if tool_name=="workforce_produce_social_caption" else ("Prepare a visual asset request." if tool_name=="workforce_create_visual_asset" else ("Revise a visual asset request." if tool_name=="workforce_revise_visual_asset" else ("Prepare governed customer context analysis." if tool_name=="workforce_customer_context" else ("Run deterministic content QA on the supplied title and body." if tool_name=="workforce_content_qa" else "Perform deterministic market research.")))))),allowed_tools=[tool_name],rules={})
+        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=("Produce a draft article." if tool_name=="workforce_produce_article" else ("Prepare a social caption." if tool_name=="workforce_produce_social_caption" else ("Prepare a visual asset request." if tool_name=="workforce_create_visual_asset" else ("Revise a visual asset request." if tool_name=="workforce_revise_visual_asset" else ("Create a deterministic workspace file." if tool_name=="workforce_workspace_create_file" else ("Prepare governed customer context analysis." if tool_name=="workforce_customer_context" else ("Run deterministic content QA on the supplied title and body." if tool_name=="workforce_content_qa" else "Perform deterministic market research."))))))),allowed_tools=[tool_name],rules={})
         definition=AgentDefinition(tenant_id=tenant_id,slug=f"e2e-workforce-def-{suffix}-{variant}",name=f"E2E Workforce {variant}",capabilities=["execution"],allowed_tools=[tool_name],model_policy={},input_schema={},output_schema=output,policy_requirements={},enabled=True)
         db.add_all([version,definition]); await db.flush()
         template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-workforce-template-{suffix}-{variant}",name=f"E2E Workforce Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract(role_code),permission_policy={"permissions":["run.execute"],"allowed_tools":[tool_name]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
@@ -376,6 +376,41 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     print("WORKFORCE CUSTOMER SUCCESS CUSTOMER_CONTEXT FULL WORKITEM LIFECYCLE PASS")
     print(f"WORKFORCE CUSTOMER CONTEXT PERSISTENCE + PROVENANCE PASS key={cs_key}")
     print("WORKFORCE CUSTOMER CONTEXT PROVIDER BOUNDARY PASS provider_execution=not_configured")
+
+    # Add a full lifecycle proof for the Software Developer's local workspace artifact path.
+    # This does not claim provider-backed tests/builds, Git operations, or deployment.
+    eng_agent,eng_version,eng_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"engineering-workspace",role_code="ai_software_developer",tool_name="workforce_workspace_create_file")
+    eng_path="src/semantic-e2e.txt"
+    eng_content="Deterministic engineering workspace fixture."
+    eng_item=await work_item(tenant_id,eng_agent,suffix,"engineering-workspace",request_text=f"Create workspace file {eng_path} with deterministic fixture content")
+    assert req("POST",f"/work-items/{eng_item}/assign/agent",{"agent_instance_id":str(eng_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{eng_item}/dispatch",token=token)[0]==200
+    eng_work,eng_run=await wait_result(eng_item)
+    assert eng_work.status is WorkItemStatus.SUCCEEDED and eng_run and eng_run.status=="success", (eng_work.status,eng_run.error_message if eng_run else None)
+    assert eng_run.agent_instance_id==eng_agent and eng_run.employee_version_id==eng_version
+    await verify_audit(tenant_id,eng_run.id,tool_name="workforce_workspace_create_file",tool_call_id="e2e-workforce-workspace-create-file-1")
+    eng_payloads=[]
+    for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
+        if key.endswith("workspace-src_semantic-e2e.txt.json"):
+            payload=workforce_semantic_domains._read_json(str(tenant_id),key)
+            if payload.get("path")==eng_path and payload.get("content")==eng_content:
+                eng_payloads.append((key,payload))
+    assert len(eng_payloads)==1, f"expected one persisted engineering workspace file, got {len(eng_payloads)}"
+    eng_key,eng_artifact=eng_payloads[0]
+    assert eng_artifact["kind"]=="workspace_file"
+    assert eng_artifact["path"]==eng_path and eng_artifact["content"]==eng_content
+    assert eng_key.startswith(f"{tenant_id}/")
+    async with AsyncSessionLocal() as db:
+        eng_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==eng_definition_id,
+            AgentRuntimeBinding.employee_version_id==eng_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert eng_binding is not None
+    print("WORKFORCE SOFTWARE DEVELOPER WORKSPACE_CREATE_FILE FULL WORKITEM LIFECYCLE PASS")
+    print(f"WORKFORCE ENGINEERING WORKSPACE FILE PERSISTENCE + TENANT SCOPE PASS key={eng_key}")
 
     wrong,_,_=await governed_agent(
         tenant_id,
