@@ -18,9 +18,9 @@ For consistent role-breadth accounting, A2 is measured as the share of the 12 ca
 - A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
 - A4 — independence/reliability and outcomes: **0%** (external/operational gate; excluded from actionable denominator)
 
-**Actionable progress (A0–A2):** ((100 + 30 + 33.3) / 3 = 54.4\%\), reported as **54%**.
+**Actionable progress (A0–A2):** `(100 + 30 + 33.3) / 3 = 54.4%` → **54%**.
 
-**Full-scope progress (A0–A4):** ((100 + 30 + 33.3 + 0 + 0) / 5 = 32.7\%\), reported as **33%**.
+**Full-scope progress (A0–A4):** `(100 + 30 + 33.3 + 0 + 0) / 5 = 32.7%` → **33%**.
 
 Evidence boundary: these are deterministic engineering fixtures. They do not prove live CRM access, production provider execution, customer data correctness, deployment, customer acceptance, or revenue. The workflow query did not return post-merge runs for the merge SHA, so the evidence above is exact-head pre-merge validation only.
 
