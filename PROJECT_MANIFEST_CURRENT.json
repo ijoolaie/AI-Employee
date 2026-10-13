@@ -29,7 +29,11 @@
   },
   "external_production": {
     "stage": "Stage 7 / Phase 14.10",
-    "issues": [269, 210, 19],
+    "issues": [
+      269,
+      210,
+      19
+    ],
     "status": "external_pending",
     "note": "Repository certification and production-like CI do not establish external production deployment, live provider validation, measured production SLO/RPO/RTO, independent security review or customer acceptance."
   },
@@ -50,5 +54,23 @@
     "docs/current/PRODUCTION_GAP_REGISTER_2026-09-04.md",
     "docs/00_START_HERE/CURRENT_STATUS.md",
     "docs/00_START_HERE/CURRENT_PRIORITIES.md"
-  ]
+  ],
+  "reconciled_on": "2026-10-13",
+  "latest_published_release": {
+    "version": "v1.4.17",
+    "certified_sha": "b403c0dcdea579e017738a6fdea138c2b1a2999c",
+    "certification_run": "37625345534",
+    "certification_job": "112805570856",
+    "certification_status": "success",
+    "github_release": "published",
+    "external_deployment": "not_verified",
+    "customer_acceptance": "not_verified",
+    "realized_external_revenue": "not_verified",
+    "source": "docs/releases/RELEASE_TRUTH_LEDGER.md"
+  },
+  "documentation_reconciliation": {
+    "date": "2026-10-13",
+    "plan": "docs/current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md",
+    "note": "latest_published_release is distinct from latest_certified_release_candidate and from current main engineering HEAD"
+  }
 }
