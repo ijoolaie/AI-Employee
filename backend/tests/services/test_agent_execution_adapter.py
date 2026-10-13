@@ -7,10 +7,14 @@ from app.services import agent_execution_adapter
 
 
 class _Savepoint:
+    def __init__(self):
+        self.exit_exception = None
+
     async def __aenter__(self):
         return self
 
     async def __aexit__(self, exc_type, exc, tb):
+        self.exit_exception = exc
         return False
 
 
@@ -19,7 +23,8 @@ class _DB:
         return None
 
     def begin_nested(self):
-        return _Savepoint()
+        self.savepoint = _Savepoint()
+        return self.savepoint
 
 
 @pytest.mark.asyncio
@@ -129,11 +134,16 @@ async def test_agent_adapter_rolls_back_run_when_outbox_enqueue_fails(monkeypatc
 
     work_item = SimpleNamespace(tenant_id=tenant_id, input_data={}, requester_id=None, id=uuid4())
     agent = SimpleNamespace(id=agent_id)
+    db = _DB()
 
     with pytest.raises(RuntimeError, match="outbox unavailable"):
-        await agent_execution_adapter.AgentExecutionAdapter(_DB()).dispatch(work_item, agent)
+        await agent_execution_adapter.AgentExecutionAdapter(db).dispatch(work_item, agent)
 
     assert calls == ["create", "enqueue"]
+    # The enqueue error must leave the nested transaction scope exceptionally,
+    # so SQLAlchemy's savepoint context manager rolls back the uncommitted Run.
+    assert isinstance(db.savepoint.exit_exception, RuntimeError)
+    assert str(db.savepoint.exit_exception) == "outbox unavailable"
 
 
 @pytest.mark.asyncio
