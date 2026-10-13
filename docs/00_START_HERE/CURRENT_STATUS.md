@@ -113,3 +113,12 @@ Agent-actionable progress is 48% across A0–A2; full-scope context remains 29% 
 [PR #1090](https://github.com/ijoolaie/AI-Employee/pull/1090) merged as `880d46cff762e57cdbda97f95c3347e6f0c071b9` from exact head `22c5b8e6f471057cebd84ab9670068442f693da2`. Exact-head W21 real-stack [38385311942](https://github.com/ijoolaie/AI-Employee/actions/runs/38385311942) and CodeQL [38385312104](https://github.com/ijoolaie/AI-Employee/actions/runs/38385312104) passed. The workflow-run query returned no post-merge runs (its wrapper only exposes PR-triggered runs), so post-merge execution is not verified here.
 
 The static trigger audit found and fixed gaps in W2, W7, W8, W10 dogfood, W10 Customer Outcome, W18, W20, W21, W22 and W23/W9 dependency filters. These changes improve test coverage triggers, not role capability acceptance. Progress remains 48% actionable A0–A2 and 29% full-scope A0–A4; A3/A4 remain open.
+
+
+## Approval-binding negative-path tests merged — 2026-10-13
+
+[PR #1091](https://github.com/ijoolaie/AI-Employee/pull/1091) merged as `651116bb1a19a93fd4008e93d7e437e42884c443`. It adds tests for exact approval-argument matching, changed-argument rejection, and ambiguous duplicate approvals. Exact-head CI, Workforce Semantic Real-Stack E2E, W21 E2E, CodeQL, Architecture Guard, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST all passed on head `aaf8cd21ed46ebe8e9ad756e47f38d07283b5c76`. The available post-merge workflow query returned no runs for the merge SHA; post-merge execution is therefore not asserted.
+
+The next role-audit finding is that Marketing `analyze_campaign_performance` and Trader `stage_order_for_review` have intentionally empty tool bindings. They must remain non-executable until a dedicated domain/service and reviewed binding exist; generic growth reporting is not campaign attribution, and market research/planning is not order staging. Regression tests for this fail-closed boundary are proposed in [PR #1092](https://github.com/ijoolaie/AI-Employee/pull/1092), pending exact-head CI.
+
+Progress remains 48% agent-actionable (A0–A2) and 29% full-scope (A0–A4).
