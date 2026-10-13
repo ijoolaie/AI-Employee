@@ -103,3 +103,15 @@ At final delivery, state the final acceptance criteria and their evidence, list 
 ## 9. Final definition of done
 
 A task is complete only when its stated acceptance criteria have been met and verified, required checks have run, evidence is recorded, relevant canonical documentation is reconciled, and the user is told what is still outside scope. A project or release is complete only against its separately documented end-to-end acceptance/release criteria—not because a single task or CI workflow passed.
+
+
+## 10. Progress accounting: agent-actionable vs external-only work
+
+Report two distinct progress figures whenever a project tracker contains work that may require live infrastructure or third parties:
+
+1. **Agent-actionable progress (primary working-progress figure):** average only the explicitly defined stages/criteria that can be advanced and verified through repository inspection, code changes, static analysis, unit/contract tests, local fixtures, and available repository CI. Exclude criteria that inherently require access not available in this session, such as a customer-operated server, private production environment, live third-party provider credentials, a real customer, payment/receipt confirmation, or external sign-off.
+2. **Full-scope progress (context only):** keep all stages, including excluded external-only stages, visible and calculate the original full-scope percentage separately when a defined denominator exists. Excluded work is **not complete**; label it “excluded from actionable denominator / externally blocked,” not PASS or done.
+
+For the current A0–A4 tracker, A3 (real commercial pilot, customer acceptance, receipts/cost reconciliation) and A4 (supervised-pilot autonomy/reliability baselines that depend on real operational data) are outside the current agent-actionable denominator. Current actionable calculation is A0–A2: (100% + 30% + 15%) / 3 = 48.3%, rounded to **48%**. Full-scope context remains (100% + 30% + 15% + 0% + 0%) / 5 = **29%**. Do not inflate stage-level percentages just because a stage is excluded from the denominator. If A2 later contains a specific test requiring unavailable external infrastructure, split that criterion out explicitly rather than excluding all locally/CI-testable A2 work.
+
+A green GitHub-hosted CI run is available engineering evidence, not proof of external production, provider, customer, revenue, or deployment outcomes. State the exact SHA and workflow scope. Recompute both figures whenever accepted criteria change and update this file plus the canonical status/handoff documents in the same work checkpoint.
