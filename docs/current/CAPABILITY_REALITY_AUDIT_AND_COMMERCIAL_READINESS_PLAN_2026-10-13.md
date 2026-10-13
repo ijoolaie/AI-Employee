@@ -169,3 +169,10 @@ This is a first-pass **static code map**, not an end-to-end execution certificat
 ### World visual follow-up — 2026-10-13
 
 PR #1072's initial exact-head CI failed because the full World E2E exceeded the default 30-second test budget at the final viewport reset/check; 8 of 9 browser tests passed, and the screenshot artifact was still uploaded. The World smoke now has a 60-second per-test timeout to account for its WebGL interaction and two viewport captures on software-rendered CI. On exact head `98e740fbc95d6597440fee2216977762e008fa0a`, CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST all passed. Desktop and portrait screenshots were manually reviewed; this is bounded visual acceptance only.
+
+
+### Additional confirmed World documentation drift — 2026-10-13
+
+The World gameplay spec still described PR #1050 as an active Draft candidate even though GitHub reports it closed/unmerged; the redesign contract likewise described #1045/#1046 as current candidates. These were historical snapshots not reconciled after later PRs. PR #1050 comments discussed a possible `employee-base.glb` asset, but the merged #1057 tree and current `main` tree contain no `employee-base.glb`, `GLTFLoader`, or World asset-credit/license files. The current player/CEO avatar and employee cast are procedural. The World spec, redesign contract and master handoff are being corrected in PR #1075; asset integration remains NOT-IMPLEMENTED until the actual files, loader, provenance and runtime evidence exist.
+
+| 2026-10-13 | World documentation | Corrected stale #1050/#1045/#1046 active-state language and rejected unsupported GLB asset claims; #1075 remains a Draft room/floor/navigation candidate | GitHub state for #1050/#1057; recursive tree and `WorldViewport.tsx` at current `main`; World spec and handoff | DOCS UPDATED IN PR #1075; VISUAL CHECK PENDING |
