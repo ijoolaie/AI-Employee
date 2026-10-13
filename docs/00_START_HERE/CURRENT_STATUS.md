@@ -87,3 +87,8 @@ World remains a read-only projection of authorized business state. Do not fabric
 - Post-merge runs for the merge SHA were not returned by the workflow-run query at this checkpoint. Do not treat pre-merge success as post-merge evidence.
 - These E2E tests use certification fixtures; they do not prove live external-provider execution or commercial readiness.
 - Execution phase tracker remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%, overall 29%. This CI-trigger fix improves verification reliability but does not independently satisfy role-runtime or commercial acceptance criteria.
+
+
+## Agent-actionable progress and W8 trigger audit — 2026-10-13
+
+Agent-actionable progress is 48% across A0–A2; full-scope context remains 29% across A0–A4. A3/A4 remain open and are excluded only from the actionable denominator. W8/W9/W23 scripts are real-stack certification fixtures and explicitly keep provider execution `not_configured`; no live customer/provider action is established. PR [#1086](https://github.com/ijoolaie/AI-Employee/pull/1086) aligns W8 `push` and `pull_request` dependency filters. Exact head `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`; exact-head workflow results are not yet available, so merge is deferred pending evidence.
