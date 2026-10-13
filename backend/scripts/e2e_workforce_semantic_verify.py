@@ -23,6 +23,8 @@ from app.services.agent_template_service import create_template, publish_templat
 from app.services.agent_workforce_proposal_service import create_proposal, board_decide, ceo_decide, provision_approved_proposal, activate_provisioned_proposal
 from app.services.ai_workforce_roles import workforce_capability_contract_snapshot, workforce_template_capability_contract
 from app.services.workforce_runtime_governance import assert_workforce_operation
+from app.services import workforce_semantic_domains
+from app.services.storage import get_storage_backend
 
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 
@@ -52,26 +54,26 @@ async def license_fixture(tenant_id,suffix):
         db.add(vendor); await db.flush()
         reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
         db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
-async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader"):
+async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader",tool_name="workforce_market_research"):
     async with AsyncSessionLocal() as db:
         sponsor=await new_user(db,tenant_id,suffix,f"sponsor-{variant}")
         board=await new_user(db,tenant_id,suffix,f"board-{variant}")
         ceo=await new_user(db,tenant_id,suffix,f"ceo-{variant}")
         activator=await new_user(db,tenant_id,suffix,f"activator-{variant}")
-        employee=Employee(tenant_id=tenant_id,slug=f"e2e-trader-{suffix}-{variant}",name=f"E2E Trader {variant}",kind="custom",is_active=True)
+        employee=Employee(tenant_id=tenant_id,slug=f"e2e-workforce-{suffix}-{variant}",name=f"E2E Workforce {variant}",kind="custom",is_active=True)
         db.add(employee); await db.flush()
         output={"type":"object","properties":{"content":{"type":"string"}},"required":["content"]}
-        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template="Perform deterministic market research.",allowed_tools=["workforce_market_research"],rules={})
-        definition=AgentDefinition(tenant_id=tenant_id,slug=f"e2e-trader-def-{suffix}-{variant}",name=f"E2E Trader {variant}",capabilities=["execution"],allowed_tools=["workforce_market_research"],model_policy={},input_schema={},output_schema=output,policy_requirements={},enabled=True)
+        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=("Produce a draft article." if tool_name=="workforce_produce_article" else "Perform deterministic market research."),allowed_tools=[tool_name],rules={})
+        definition=AgentDefinition(tenant_id=tenant_id,slug=f"e2e-workforce-def-{suffix}-{variant}",name=f"E2E Workforce {variant}",capabilities=["execution"],allowed_tools=[tool_name],model_policy={},input_schema={},output_schema=output,policy_requirements={},enabled=True)
         db.add_all([version,definition]); await db.flush()
-        template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-trader-template-{suffix}-{variant}",name=f"E2E Trader Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract(role_code),permission_policy={"permissions":["run.execute"],"allowed_tools":["workforce_market_research"]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
+        template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-workforce-template-{suffix}-{variant}",name=f"E2E Workforce Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract(role_code),permission_policy={"permissions":["run.execute"],"allowed_tools":[tool_name]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
         await record_evaluation(db,tenant_id=tenant_id,template_id=template.id,suite_id="workforce-semantic-e2e-v1",status=AgentEvaluationStatus.PASSED,evidence={"contract_version":"v1","fixture":True},score=100,evaluator_user_id=board.id,notes="E2E fixture")
         await publish_template(db,tenant_id=tenant_id,template_id=template.id,approved_by_user_id=ceo.id)
         config={"workforce_role_code":role_code,"workforce_capability_contract":workforce_capability_contract_snapshot(role_code),"max_concurrency":1,"budget_policy":{},"e2e_variant":variant}
-        proposal=await create_proposal(db,tenant_id=tenant_id,requester_user_id=owner_id,title=f"E2E Trader {variant}",rationale="Semantic runtime certification",requested_name=f"E2E Trader {variant}",sponsor_user_id=sponsor.id,agent_template_id=template.id,risk_tier=0,configuration=config)
+        proposal=await create_proposal(db,tenant_id=tenant_id,requester_user_id=owner_id,title=f"E2E Workforce {variant}",rationale="Semantic runtime certification",requested_name=f"E2E Workforce {variant}",sponsor_user_id=sponsor.id,agent_template_id=template.id,risk_tier=0,configuration=config)
         await board_decide(db,tenant_id=tenant_id,proposal_id=proposal.id,reviewer_user_id=board.id,approve=True,reason="E2E")
         await ceo_decide(db,tenant_id=tenant_id,proposal_id=proposal.id,approver_user_id=ceo.id,approve=True,reason="E2E")
         await provision_approved_proposal(db,tenant_id=tenant_id,proposal_id=proposal.id)
@@ -83,9 +85,9 @@ async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader"
         await db.commit()
         return instance_id,version.id,definition.id
 
-async def work_item(tenant_id,agent_id,suffix,variant):
+async def work_item(tenant_id,agent_id,suffix,variant,request_text="market research"):
     async with AsyncSessionLocal() as db:
-        w=WorkItem(tenant_id=tenant_id,title=f"Semantic Workforce {variant}",status=WorkItemStatus.READY,executor_type=ExecutorType.AGENT,executor_id=agent_id,input_data={"request":"market research"},policy_context={},idempotency_key=f"semantic-{suffix}-{variant}")
+        w=WorkItem(tenant_id=tenant_id,title=f"Semantic Workforce {variant}",status=WorkItemStatus.READY,executor_type=ExecutorType.AGENT,executor_id=agent_id,input_data={"request":request_text},policy_context={},idempotency_key=f"semantic-{suffix}-{variant}")
         db.add(w); await db.commit(); return w.id
 
 async def wait_result(wid):
@@ -99,13 +101,13 @@ async def wait_result(wid):
         await asyncio.sleep(.25)
     raise AssertionError("WorkItem execution timed out")
 
-async def verify_audit(tenant_id,run_id):
+async def verify_audit(tenant_id,run_id,tool_name="workforce_market_research",tool_call_id="e2e-workforce-market-research-1"):
     async with AsyncSessionLocal() as db:
         rows=(await db.execute(select(AuditLog).where(AuditLog.tenant_id==tenant_id,AuditLog.resource_type=="run",AuditLog.resource_id==str(run_id),AuditLog.action=="tool.call"))).scalars().all()
         assert rows
         meta=rows[-1].metadata_ or {}
-        assert rows[-1].status=="success" and meta.get("tool")=="workforce_market_research"
-        assert meta.get("tool_call_id")=="e2e-workforce-market-research-1"
+        assert rows[-1].status=="success" and meta.get("tool")==tool_name
+        assert meta.get("tool_call_id")==tool_call_id
 
 async def verify_cross_tenant_assignment(token, tenant_id, source_agent_id, suffix):
     other_suffix=f"{suffix}-cross"
@@ -150,6 +152,43 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
         assert binding is not None
     print("WORKFORCE SEMANTIC RUNTIME-BINDING CORRELATION REAL-STACK PASS")
     print("WORKFORCE SEMANTIC ALLOWED TOOL REAL-STACK PASS")
+
+    # Exercise the Content Producer through the same public WorkItem lifecycle:
+    # assign -> dispatch -> Celery worker -> canonical Run -> governed tool call.
+    content_agent,content_version,content_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"content-producer",role_code="ai_content_producer",tool_name="workforce_produce_article")
+    content_title="Semantic E2E governed article"
+    content_item=await work_item(tenant_id,content_agent,suffix,"content-producer",request_text=f"Produce an article titled {content_title}")
+    assert req("POST",f"/work-items/{content_item}/assign/agent",{"agent_instance_id":str(content_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{content_item}/dispatch",token=token)[0]==200
+    content_work,content_run=await wait_result(content_item)
+    assert content_work.status is WorkItemStatus.SUCCEEDED and content_run and content_run.status=="success", (content_work.status,content_run.error_message if content_run else None)
+    assert content_run.agent_instance_id==content_agent and content_run.employee_version_id==content_version
+    await verify_audit(tenant_id,content_run.id,tool_name="workforce_produce_article",tool_call_id="e2e-workforce-produce-article-1")
+    keys=get_storage_backend().list_prefix(f"{tenant_id}/")
+    article_payloads=[]
+    for key in keys:
+        if "/content-" in key and key.endswith(".json"):
+            payload=workforce_semantic_domains._read_json(str(tenant_id),key)
+            if payload.get("title")==content_title:
+                article_payloads.append((key,payload))
+    assert len(article_payloads)==1, f"expected one persisted content artifact for {content_title}, got {len(article_payloads)}"
+    artifact_key,artifact=article_payloads[0]
+    assert artifact["kind"]=="content_artifact" and artifact["status"]=="draft"
+    assert artifact["provenance"]["tenant_id"]==str(tenant_id)
+    assert artifact["provenance"]["provider_execution"]=="not_required"
+    assert artifact["approval_status"]=="not_required"
+    async with AsyncSessionLocal() as db:
+        content_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==content_definition_id,
+            AgentRuntimeBinding.employee_version_id==content_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert content_binding is not None
+    print("WORKFORCE CONTENT PRODUCER WORKITEM -> DISPATCH -> WORKER -> RUN PASS")
+    print(f"WORKFORCE CONTENT ARTIFACT PERSISTENCE + PROVENANCE PASS key={artifact_key}")
+    print("WORKFORCE CONTENT PRODUCER AUDIT + RUNTIME BINDING PASS")
 
     wrong,_,_=await governed_agent(
         tenant_id,
