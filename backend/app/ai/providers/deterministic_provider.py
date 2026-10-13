@@ -34,6 +34,7 @@ class DeterministicProvider:
                 "workforce_revise_visual_asset",
                 "workforce_content_qa",
                 "workforce_customer_context",
+                "workforce_workspace_create_file",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -89,6 +90,13 @@ class DeterministicProvider:
                             "query": "support history and account health",
                             "evidence": ["deterministic certification fixture"],
                             "recommendation": "Review the account health evidence before any customer-facing action.",
+                        },
+                    ),
+                    "workforce_workspace_create_file": (
+                        "e2e-workforce-workspace-create-file-1",
+                        {
+                            "path": "src/semantic-e2e.txt",
+                            "content": "Deterministic engineering workspace fixture.",
                         },
                     ),
                 }
