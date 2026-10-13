@@ -22,11 +22,11 @@ describe("World ground navigation", () => {
     expect(canOccupyGround(2.2, -3, upperRoomBlockers)).toBe(false);
   });
 
-  it("leaves the lower-room doorway open and blocks its outer wall", () => {
+  it("leaves the lower-room doorway open and blocks its side wall", () => {
     const lowerRoomBlockers = getWalkBlockers([{ x: 6, z: 6 }]);
     expect(canOccupyGround(6, 2, lowerRoomBlockers)).toBe(true);
     expect(canOccupyGround(9, 2, lowerRoomBlockers)).toBe(false);
-    expect(canOccupyGround(6, 10, lowerRoomBlockers)).toBe(false);
+    expect(canOccupyGround(10.5, 6, lowerRoomBlockers)).toBe(false);
   });
 
   it("keeps movement inside the office walkable bounds", () => {
