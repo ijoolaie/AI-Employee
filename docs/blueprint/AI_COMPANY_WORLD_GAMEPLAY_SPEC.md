@@ -335,6 +335,12 @@ The currently available office read model may not expose authoritative employee 
 - Frontend lint, unit/contracts, build and relevant Playwright tests pass; relevant real-stack smoke checks are recorded.
 - Keep the redesign PR Draft/unmerged until visual acceptance is explicit. Green CI is necessary but not sufficient and does not certify a production release.
 
-### Current evidence boundary — 2026-10-12
+### Current evidence boundary — 2026-10-13
 
-PR #1050 is the active World V2 visual-review candidate and remains Draft/unmerged. Its recorded automated checks and viewport screenshots are engineering evidence only. The approved target direction has now been clarified by the user's reference screenshots; the remaining implementation must be measured against this section. The redesign is **not considered complete** until the acceptance gates above are met.
+- PR #1050 is closed unmerged; its historical comments must not be treated as current implementation evidence. PR #1057 merged as `de053b24d045d17d0e447e29140cfd4728ade4c8` for the warm floor/window polish, but the current `main` tree has no `employee-base.glb`, `GLTFLoader`, or World asset-credit/license files. Player/CEO and employee models remain procedural.
+- PR #1071 accepted viewport framing for its bounded criterion.
+- PR #1072 merged as `c097eedbc5674d788d72b5b3a2d334adba1737e6`; exact-head workflows passed and desktop/portrait screenshots were manually reviewed. Acceptance is limited to glass partitions, colored rails and mullions.
+- PR #1075 is a Draft candidate for department-tinted floor tiles, centered room entrances and collision blockers matching the new partitions. Exact-head checks and visual review remain pending.
+- Authored employee assets, a validated scene-layout model, full obstacle-aware pathfinding, character animation quality and overall visual acceptance remain incomplete.
+
+The redesign is **not considered complete** until the acceptance gates above are met. CI success and screenshots from a candidate are evidence only for that exact source head; neither certifies a production release.
