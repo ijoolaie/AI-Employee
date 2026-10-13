@@ -13,6 +13,15 @@
 
 The architecture baseline, release identity and engineering phase are independent axes. V1.5 is not a release number. The certified `v1.4.17` release is immutable and points to the exact SHA certified by the Production Certification workflow. Historical releases remain immutable and are not rewritten. Mainline contains post-certification documentation changes and is not itself certified.
 
+## PR #1081 merged — mobile World camera controls (2026-10-13)
+
+- PR: [#1081](https://github.com/ijoolaie/AI-Employee/pull/1081), merged by squash after the exact PR-head checks and visual review passed.
+- Validated PR head: `7a6b410c5bbf1b27b72a024a2b823bf19711de82`; merge commit on `main`: `71755e07660f380116f3c157f3e78e9e1c7f79d6`.
+- Change: mobile camera controls are anchored to the bottom-right (`right: 12px; bottom: 16px; top: auto`) to keep them apart from the top-left HUD and bottom-left joystick. Reset/fullscreen controls have accessible labels/titles and 40px mobile targets; the Playwright overlap assertion now includes measured HUD/control boxes in failure diagnostics.
+- Pre-merge exact-head evidence: CI run [38376582057](https://github.com/ijoolaie/AI-Employee/actions/runs/38376582057) passed frontend and backend jobs; CodeQL [38376581915](https://github.com/ijoolaie/AI-Employee/actions/runs/38376581915), Ephemeral DAST [38376581913](https://github.com/ijoolaie/AI-Employee/actions/runs/38376581913), Production Infrastructure Validation [38376581909](https://github.com/ijoolaie/AI-Employee/actions/runs/38376581909), and HA Failure Recovery [38376581932](https://github.com/ijoolaie/AI-Employee/actions/runs/38376581932) passed. Desktop/mobile visual-review artifact [11801004004](https://github.com/ijoolaie/AI-Employee/actions/runs/38376582057/artifacts/11801004004) was reviewed; the HUD, joystick, and camera controls do not overlap.
+- Post-merge validation on `71755e07660f380116f3c157f3e78e9e1c7f79d6` was started automatically. At the time this checkpoint was written, CI [38377667568](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667568), CodeQL [38377667634](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667634), Ephemeral DAST [38377667574](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667574), Production Infrastructure Validation [38377667722](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667722), and Production Compose Validation [38377667804](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667804) were still running; do not infer their final outcome from the pre-merge checks.
+- Release boundary: this is an engineering UI fix, not a new release certification, production deployment, or customer-acceptance claim. Latest certified release remains `v1.4.17` unless the release ledger is updated by a separate certification.
+
 ## Exact-main CI and Architecture Guard — 2026-10-13
 
 - CI [run 38371564101](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101) passed on exact `main` SHA `8cd10f175df4a4f532f3e2d1ea0ac2b6486f2c3d`: frontend contract 143 passed, Vitest 76 passed, Playwright 10 passed; backend 1,452 passed, 1 deselected, 22 warnings.
