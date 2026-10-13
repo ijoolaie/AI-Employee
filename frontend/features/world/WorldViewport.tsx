@@ -699,13 +699,13 @@ function buildOffice(scene: any) {
     }
     // Keep decor in the back-right corner, away from the desk's chair and keyboard approach.
     const plantX = dept.x - 3.45;
-    const plantZ = dept.z + 2.95;
+    const plantZ = dept.z + 3.3;
     cylinder(scene, 0.38, 0.42, 0.52, [plantX, 0.32, plantZ], 0xc17f55, 12);
     cylinder(scene, 0.11, 0.05, 1.2, [plantX, 1.05, plantZ], 0x4f8b65, 8);
     sphere(scene, 0.5, [plantX - 0.3, 1.7, plantZ - 0.05], 0x68a77a, [1.1, 1.2, 0.85]);
     sphere(scene, 0.42, [plantX + 0.25, 1.55, plantZ + 0.2], 0x76b184, [1, 1.1, 0.9]);
     // A compact 2x2 workstation grid gives up to four employees a real desk/chair pair.
-    for (const xOffset of [-1.8, 1.8]) {
+    for (const xOffset of [-2.3, 2.3]) {
       for (const zOffset of [-2.15, 1.0]) {
         addDesk(scene, dept.x + xOffset, dept.z + zOffset, dept.accent);
       }
