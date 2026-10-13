@@ -153,3 +153,8 @@ W8, W9 and W23 scripts were inspected. Their passing real-stack fixture paths es
 ## W10 dogfood trigger parity — 2026-10-13
 
 [PR #1087](https://github.com/ijoolaie/AI-Employee/pull/1087) aligns the W10 dogfood workflow's `pull_request` paths with its `push` paths. Exact head `3aea69f297fdd3c215f6d592ebac38ace6c7156d`; static validation confirms 28 identical path entries on each event. Exact-head [W10 run 38384295412](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295412) and [CodeQL 38384295452](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295452) were in progress at last inspection. The normal dogfood workflow uses `smtp-test`, an `example.invalid` recipient and synthetic payment reconciliation; it is not evidence of live customer outreach or actual receipts. Do not merge until exact-head checks finish. Current actionable progress remains 48%, full-scope 29%.
+
+
+## W8 merge reconciliation — 2026-10-13
+
+[PR #1086](https://github.com/ijoolaie/AI-Employee/pull/1086) merged as `65bf5e6ba5faa376526f168b8a66670c1050ff6a` from exact head `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`. Exact-head [W8 real-stack run 38384054138](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054138) passed all steps (build/start, DB migration/check, health, compile, certification) and [CodeQL 38384054092](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054092) passed. The available workflow-run query returned no post-merge runs for the merge SHA; post-merge status remains unverified. This trigger fix adds test coverage only; W8 provider execution remains `not_configured`.
