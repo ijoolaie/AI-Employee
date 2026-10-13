@@ -652,3 +652,13 @@ Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-
 - Production Infrastructure Validation: 38406236606.
 - Evidence boundary: this validates rollback for this Run/outbox savepoint path only. It does not prove all 12 organizational roles end-to-end, external provider integration, complete tenant isolation, production deployment, or customer delivery.
 - Progress remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48% (A0–A2), full-scope progress 29% (A0–A4).
+
+
+## PR #1097 — Internal Manager runtime identity guards (2026-10-13)
+
+- PR: https://github.com/ijoolaie/AI-Employee/pull/1097 — squash merged as `c96863ed78256976fb3527863bdd6bcb9607a04c`.
+- Exact tested head: `19389b1e3e6112a14b80446a2b8bd673f00f6dea`.
+- Added two negative-path tests in `backend/tests/unit/test_workforce_runtime_governance.py`: a runtime tenant identity mismatch must fail before delegation is consulted, and a missing durable Run identity must fail before delegation is consulted.
+- All eight exact-head workflow runs succeeded: CI [38411249309](https://github.com/ijoolaie/AI-Employee/actions/runs/38411249309), Workforce Semantic Real-Stack E2E [38411249282](https://github.com/ijoolaie/AI-Employee/actions/runs/38411249282), W21 AI Business Network E2E [38411250480](https://github.com/ijoolaie/AI-Employee/actions/runs/38411250480), Architecture Guard [38411250745](https://github.com/ijoolaie/AI-Employee/actions/runs/38411250745), CodeQL [38411249211](https://github.com/ijoolaie/AI-Employee/actions/runs/38411249211), Ephemeral DAST [38411248787](https://github.com/ijoolaie/AI-Employee/actions/runs/38411248787), HA Failure Recovery [38411249276](https://github.com/ijoolaie/AI-Employee/actions/runs/38411249276), Production Infrastructure Validation [38411250483](https://github.com/ijoolaie/AI-Employee/actions/runs/38411250483).
+- Evidence boundary: these tests validate two Internal Manager rejection paths only. They do not establish complete workforce end-to-end execution, provider integration, comprehensive tenant isolation, or production/customer delivery.
+- Progress remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48% (A0–A2), full-scope progress 29% (A0–A4).
