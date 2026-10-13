@@ -19,6 +19,12 @@ on:
     paths:
       - "backend/scripts/e2e_workforce_w10_customer_outcome_verify.py"
       - "backend/app/services/stripe_service.py"
+      - "backend/app/services/workforce_sales_payment_provider.py"
+      - "backend/app/modules/employees/sales/service.py"
+      - "backend/app/models/workforce_revenue_event.py"
+      - "backend/app/models/business_deal.py"
+      - "backend/app/models/business_order.py"
+      - "docker-compose.yml"
       - ".github/workflows/workforce-w10-customer-outcome-e2e.yml"
 permissions: {contents: read}
 jobs:

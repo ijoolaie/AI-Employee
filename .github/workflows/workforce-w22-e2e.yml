@@ -23,6 +23,12 @@ on:
       - "backend/app/services/workforce_semantic_domains.py"
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/ai/tool_registry.py"
+      - "backend/app/services/agent_tool_governance.py"
+      - "backend/app/services/license_service.py"
+      - "backend/app/services/storage.py"
+      - "backend/app/models/**"
+      - "backend/requirements.lock"
+      - "docker-compose.yml"
       - ".github/workflows/workforce-w22-e2e.yml"
 
 concurrency:
