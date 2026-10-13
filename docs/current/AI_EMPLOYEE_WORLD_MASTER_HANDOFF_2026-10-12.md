@@ -214,5 +214,22 @@ Next: cover mismatched tenant/agent and permission denial, stale/mismatched appr
 - PR [#1095](https://github.com/ijoolaie/AI-Employee/pull/1095) squash-merged as `343aeb2a963768da1d70b02c0c854d7105dc7920` from exact tested head `fd558bf9a8d5db64e9d85db8a944eee40494e416`.
 - All eight exact-head workflow groups passed: [CI 38403175273](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175273), [Architecture Guard 38403175276](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175276), [W21 E2E 38403175220](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175220), [Workforce Semantic Real-Stack E2E 38403175456](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175456), [CodeQL 38403175244](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175244), [Ephemeral DAST 38403175405](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175405), [HA Failure Recovery 38403175395](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175395), and [Production Infrastructure Validation 38403175356](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175356).
 - The unit test now asserts that the outbox enqueue `RuntimeError` exits the nested savepoint context exceptionally. This checks exception propagation at the context-manager boundary only; it is not database-backed proof that a persisted Run is rolled back.
-- Next: inspect transaction/session semantics and add the smallest database-backed regression test proving Run persistence is rolled back when outbox enqueue fails, or explicitly document why the current architecture guarantees that behavior. Keep separate from broader provider/replay/persisted-output audits.
+- Completed by PR #1096: added a PostgreSQL-backed regression test proving the Run row is absent after outbox enqueue failure both in the active session after savepoint exit and in a fresh session after the outer transaction commits. This closes the narrow persisted-Run rollback evidence gap only; it does not prove provider behavior, the full workflow, or production/customer delivery.
 - Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; 48% actionable (A0–A2), 29% full-scope (A0–A4).
+
+
+## PR #1096 — PostgreSQL Run rollback evidence (2026-10-13)
+
+- PR: https://github.com/ijoolaie/AI-Employee/pull/1096 — merged by squash as `94cf861d0efc637cdb75b3fb2924bb782aed2852`.
+- Exact tested head: `7afb3f84855432c27aeb3970f4fa164526e5b30e`.
+- PostgreSQL regression test: `backend/tests/test_agent_execution_adapter_postgres.py`; inserts and flushes a real Run, forces `outbox_service.enqueue` to raise, then checks the Run is absent in the current session and a fresh session after commit.
+- All eight exact-head workflow runs succeeded: - CI: 38406235810
+- Architecture Guard: 38406236293
+- W21 AI Business Network E2E: 38406235908
+- Workforce Semantic Real-Stack E2E: 38406236565
+- CodeQL: 38406235816
+- Ephemeral DAST: 38406235714
+- HA Failure Recovery: 38406235452
+- Production Infrastructure Validation: 38406236606.
+- Evidence boundary: this validates rollback for this Run/outbox savepoint path only. It does not prove all 12 organizational roles end-to-end, external provider integration, complete tenant isolation, production deployment, or customer delivery.
+- Progress remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48% (A0–A2), full-scope progress 29% (A0–A4).
