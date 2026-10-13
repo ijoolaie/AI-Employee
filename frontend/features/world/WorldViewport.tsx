@@ -35,6 +35,7 @@ const DEPARTMENTS = [
   { name: "OPERATIONS", x: -7, z: 6, color: 0xe1e8ee, accent: 0x6197c5 },
   { name: "ENGINEERING", x: 6, z: 6, color: 0xe9e2f0, accent: 0x9c78c7 },
 ];
+type Department = (typeof DEPARTMENTS)[number];
 
 type SurfaceTexture = "wood" | "fabric" | "plaster" | "stone";
 const surfaceTextureCache = new Map<SurfaceTexture, any>();
@@ -145,6 +146,71 @@ function glassPanel(parent: any, size: [number, number, number], position: [numb
   panel.receiveShadow = true;
   parent.add(panel);
   return panel;
+}
+
+function addDepartmentFloorTiles(scene: any, dept: Department) {
+  const geometry = new THREE.BoxGeometry(1.48, 0.012, 1.48);
+  const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.88 });
+  const tiles = new THREE.InstancedMesh(geometry, material, 20);
+  const transform = new THREE.Object3D();
+  const baseColor = new THREE.Color(dept.color);
+  const accentColor = new THREE.Color(dept.accent);
+  let index = 0;
+
+  for (let row = 0; row < 4; row += 1) {
+    for (let column = 0; column < 5; column += 1) {
+      transform.position.set(dept.x + (column - 2) * 1.6, 0.099, dept.z + (row - 1.5) * 1.6);
+      transform.updateMatrix();
+      tiles.setMatrixAt(index, transform.matrix);
+      const tint = baseColor.clone().lerp(accentColor, (row + column) % 2 === 0 ? 0.045 : 0.11);
+      tiles.setColorAt(index, tint);
+      index += 1;
+    }
+  }
+
+  tiles.instanceMatrix.needsUpdate = true;
+  if (tiles.instanceColor) tiles.instanceColor.needsUpdate = true;
+  tiles.castShadow = false;
+  tiles.receiveShadow = false;
+  scene.add(tiles);
+}
+
+function addHorizontalPartitionSegment(scene: any, x: number, z: number, width: number, accent: number) {
+  box(scene, [width, 0.8, 0.16], [x, 0.45, z], 0xb8b6ab, { castShadow: false });
+  glassPanel(scene, [width - 0.18, 0.68, 0.095], [x, 1.18, z], accent);
+  box(scene, [width, 0.075, 0.2], [x, 1.57, z], accent, {
+    roughness: 0.42, metalness: 0.08, emissive: accent, emissiveIntensity: 0.06, castShadow: false,
+  });
+
+  for (const offset of [-3.2, -1.6, 0, 1.6, 3.2]) {
+    if (Math.abs(offset) < width / 2 - 0.25) {
+      box(scene, [0.055, 0.66, 0.12], [x + offset, 1.18, z], 0xf0eee5, { castShadow: false, receiveShadow: false });
+    }
+  }
+}
+
+function addVerticalPartitionWall(scene: any, x: number, z: number, length: number, accent: number) {
+  box(scene, [0.16, 0.8, length], [x, 0.45, z], 0xb8b6ab, { castShadow: false });
+  glassPanel(scene, [0.095, 0.68, length - 0.28], [x, 1.18, z], accent);
+  box(scene, [0.2, 0.075, length], [x, 1.57, z], accent, {
+    roughness: 0.42, metalness: 0.08, emissive: accent, emissiveIntensity: 0.06, castShadow: false,
+  });
+
+  for (const offset of [-2.8, -1.4, 0, 1.4, 2.8]) {
+    if (Math.abs(offset) < length / 2 - 0.25) {
+      box(scene, [0.12, 0.66, 0.055], [x, 1.18, z + offset], 0xf0eee5, { castShadow: false, receiveShadow: false });
+    }
+  }
+}
+
+function addDoorwayFrame(scene: any, dept: Department, z: number) {
+  const halfWidth = 1.25;
+  box(scene, [0.12, 1.86, 0.18], [dept.x - halfWidth, 0.93, z], 0xf7f3e9, { castShadow: false });
+  box(scene, [0.12, 1.86, 0.18], [dept.x + halfWidth, 0.93, z], 0xf7f3e9, { castShadow: false });
+  box(scene, [2.62, 0.12, 0.18], [dept.x, 1.82, z], 0xf7f3e9, { castShadow: false });
+  box(scene, [2.5, 0.035, 0.26], [dept.x, 0.115, z], dept.accent, {
+    emissive: dept.accent, emissiveIntensity: 0.08, castShadow: false, receiveShadow: false,
+  });
 }
 
 function makeLabel(text: string, color: string) {
@@ -602,27 +668,34 @@ function buildOffice(scene: any) {
   // Low pastel department platforms make the floor plan readable without hiding the characters.
   for (const dept of DEPARTMENTS) {
     box(scene, [9.2, 0.12, 8.1], [dept.x, 0.03, dept.z], dept.color);
+    addDepartmentFloorTiles(scene, dept);
     const label = makeLabel(dept.name, "#ffffff");
     if (label) {
       label.position.set(dept.x, 3.9, dept.z - 3.35);
       label.scale.set(4.2, 1.05, 1);
       scene.add(label);
     }
-    // Rounded-looking partitions and plant pots around each team area.
-    box(scene, [8.8, 0.8, 0.16], [dept.x, 0.45, dept.z + 4], 0xb8b6ab);
-    box(scene, [0.16, 0.8, 7.9], [dept.x - 4.5, 0.45, dept.z], 0xb8b6ab);
-    // Low translucent glass partitions and colored cap rails replace the plain solid dividers.
-    // Their height preserves sightlines to employee silhouettes and desk activity.
-    glassPanel(scene, [8.55, 0.68, 0.095], [dept.x, 1.18, dept.z + 4], dept.accent);
-    glassPanel(scene, [0.095, 0.68, 7.62], [dept.x - 4.5, 1.18, dept.z], dept.accent);
-    box(scene, [8.8, 0.075, 0.2], [dept.x, 1.57, dept.z + 4], dept.accent, { roughness: 0.42, metalness: 0.08, emissive: dept.accent, emissiveIntensity: 0.06, castShadow: false });
-    box(scene, [0.2, 0.075, 7.9], [dept.x - 4.5, 1.57, dept.z], dept.accent, { roughness: 0.42, metalness: 0.08, emissive: dept.accent, emissiveIntensity: 0.06, castShadow: false });
-    // Repeated narrow mullions make the glass read as designed office architecture, not a flat tint.
-    for (const mullionX of [-3.2, -1.6, 0, 1.6, 3.2]) {
-      box(scene, [0.055, 0.66, 0.12], [dept.x + mullionX, 1.18, dept.z + 4], 0xf0eee5, { castShadow: false, receiveShadow: false });
-    }
-    for (const mullionZ of [-2.8, -1.4, 0, 1.4, 2.8]) {
-      box(scene, [0.12, 0.66, 0.055], [dept.x - 4.5, 1.18, dept.z + mullionZ], 0xf0eee5, { castShadow: false, receiveShadow: false });
+    // Glass room partitions create deliberate department boundaries with a centered entrance.
+    addVerticalPartitionWall(scene, dept.x - 4.5, dept.z, 7.9, dept.accent);
+    addVerticalPartitionWall(scene, dept.x + 4.5, dept.z, 7.9, dept.accent);
+
+    if (dept.z < 0) {
+      // Upper rooms open toward the central circulation spine through the z+4 wall.
+      const entranceZ = dept.z + 4;
+      const segmentWidth = 3.15;
+      const segmentCenterOffset = 2.825;
+      addHorizontalPartitionSegment(scene, dept.x - segmentCenterOffset, entranceZ, segmentWidth, dept.accent);
+      addHorizontalPartitionSegment(scene, dept.x + segmentCenterOffset, entranceZ, segmentWidth, dept.accent);
+      addDoorwayFrame(scene, dept, entranceZ);
+    } else {
+      // Lower rooms keep a closed outer edge and face the circulation spine at z-4.
+      addHorizontalPartitionSegment(scene, dept.x, dept.z + 4, 8.8, dept.accent);
+      const entranceZ = dept.z - 4;
+      const segmentWidth = 3.15;
+      const segmentCenterOffset = 2.825;
+      addHorizontalPartitionSegment(scene, dept.x - segmentCenterOffset, entranceZ, segmentWidth, dept.accent);
+      addHorizontalPartitionSegment(scene, dept.x + segmentCenterOffset, entranceZ, segmentWidth, dept.accent);
+      addDoorwayFrame(scene, dept, entranceZ);
     }
     // Keep decor in the back-right corner, away from the desk's chair and keyboard approach.
     const plantX = dept.x - 3.45;
