@@ -126,6 +126,27 @@ function sphere(parent: any, radius: number, position: [number, number, number],
   return mesh;
 }
 
+
+function glassPanel(parent: any, size: [number, number, number], position: [number, number, number], tint: number) {
+  const panel = new THREE.Mesh(
+    new THREE.BoxGeometry(...size),
+    new THREE.MeshPhysicalMaterial({
+      color: tint,
+      roughness: 0.28,
+      metalness: 0.04,
+      transmission: 0.08,
+      transparent: true,
+      opacity: 0.42,
+      depthWrite: false,
+    }),
+  );
+  panel.position.set(...position);
+  panel.castShadow = false;
+  panel.receiveShadow = true;
+  parent.add(panel);
+  return panel;
+}
+
 function makeLabel(text: string, color: string) {
   const canvas = document.createElement("canvas");
   canvas.width = 512;
@@ -590,6 +611,19 @@ function buildOffice(scene: any) {
     // Rounded-looking partitions and plant pots around each team area.
     box(scene, [8.8, 0.8, 0.16], [dept.x, 0.45, dept.z + 4], 0xb8b6ab);
     box(scene, [0.16, 0.8, 7.9], [dept.x - 4.5, 0.45, dept.z], 0xb8b6ab);
+    // Low translucent glass partitions and colored cap rails replace the plain solid dividers.
+    // Their height preserves sightlines to employee silhouettes and desk activity.
+    glassPanel(scene, [8.55, 0.68, 0.095], [dept.x, 1.18, dept.z + 4], dept.accent);
+    glassPanel(scene, [0.095, 0.68, 7.62], [dept.x - 4.5, 1.18, dept.z], dept.accent);
+    box(scene, [8.8, 0.075, 0.2], [dept.x, 1.57, dept.z + 4], dept.accent, { roughness: 0.42, metalness: 0.08, emissive: dept.accent, emissiveIntensity: 0.06, castShadow: false });
+    box(scene, [0.2, 0.075, 7.9], [dept.x - 4.5, 1.57, dept.z], dept.accent, { roughness: 0.42, metalness: 0.08, emissive: dept.accent, emissiveIntensity: 0.06, castShadow: false });
+    // Repeated narrow mullions make the glass read as designed office architecture, not a flat tint.
+    for (const mullionX of [-3.2, -1.6, 0, 1.6, 3.2]) {
+      box(scene, [0.055, 0.66, 0.12], [dept.x + mullionX, 1.18, dept.z + 4], 0xf0eee5, { castShadow: false, receiveShadow: false });
+    }
+    for (const mullionZ of [-2.8, -1.4, 0, 1.4, 2.8]) {
+      box(scene, [0.12, 0.66, 0.055], [dept.x - 4.5, 1.18, dept.z + mullionZ], 0xf0eee5, { castShadow: false, receiveShadow: false });
+    }
     // Keep decor in the back-right corner, away from the desk's chair and keyboard approach.
     const plantX = dept.x - 3.45;
     const plantZ = dept.z + 2.95;
