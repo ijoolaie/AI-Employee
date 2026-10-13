@@ -236,3 +236,31 @@ async def test_internal_manager_requires_durable_run_before_delegation(monkeypat
             agent=agent,
             operation="assign_task",
         )
+
+
+@pytest.mark.asyncio
+async def test_internal_manager_rejects_runtime_agent_identity_mismatch(monkeypatch):
+    tenant_id = uuid4()
+    manager_id = uuid4()
+    agent = SimpleNamespace(
+        id=manager_id,
+        tenant_id=tenant_id,
+        configuration={"workforce_role_code": "ai_internal_manager"},
+    )
+    # The tenant matches, but the active runtime is bound to a different Agent.
+    monkeypatch.setattr(
+        runtime,
+        "current_agent_execution_context",
+        lambda: (tenant_id, uuid4(), uuid4(), None, None),
+    )
+
+    async def fail_if_delegation_checked(*_args, **_kwargs):
+        raise AssertionError("delegation must not be checked for mismatched runtime Agent identity")
+
+    monkeypatch.setattr(runtime, "assert_operation_delegated", fail_if_delegation_checked)
+    with pytest.raises(ValidationAppError, match="runtime identity mismatch"):
+        await runtime.assert_workforce_operation(
+            SimpleNamespace(),
+            agent=agent,
+            operation="assign_task",
+        )
