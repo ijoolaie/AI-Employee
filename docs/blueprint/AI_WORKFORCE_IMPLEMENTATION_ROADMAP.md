@@ -12,7 +12,7 @@ A role listed in a blueprint is not considered implemented until the role has a 
 
 ## Current code-reconciled baseline
 
-The repository now contains nine governed first-party workforce roles in the role catalog:
+The repository now contains twelve governed first-party workforce roles in the role catalog:
 1. ai_internal_manager
 2. ai_marketing_advertising_manager
 3. ai_graphic_designer
@@ -21,7 +21,10 @@ The repository now contains nine governed first-party workforce roles in the rol
 6. ai_content_producer
 7. ai_social_media
 8. ai_sales_lead_generation
-9. ai_website_employee
+9. ai_seo_growth_employee
+10. ai_customer_success
+11. ai_qa_devops
+12. ai_website_employee
 
 The role catalog defines explicit capability contracts and fail-closed binding rules.
 
@@ -35,7 +38,7 @@ The current code audit found:
 - Social/Instagram now has governed channel/publication/comment/DM/analytics operation contracts; live Instagram provider credentials/API execution remain unconfigured.
 - Dedicated image/video generation providers remain unconfigured; the creative domain records governed asset requests rather than faking provider execution.
 - Sales/CRM now has a governed Sales & Lead Generation role with research/qualification/proposal/reporting operations; autonomous external outreach remains approval-gated and provider-dependent.
-- Customer Success, SEO, QA and DevOps remain future dedicated workforce roles outside W0–W6.
+- Customer Success, SEO & Growth, and QA & DevOps now exist in the 12-role catalog with explicit operation/tool contracts. Catalog and registry presence do not prove end-to-end execution; their handler, persistence, provider, failure/recovery, and real-stack evidence remain part of the role-by-role audit.
 - Website Employee now has governed requirements/implementation/test/build/preview/health/deploy/rollback operations; actual deployment remains dependent on the W2 repository/deployment provider chain.
 
 ### Evidence rule
