@@ -22,6 +22,8 @@ on:
     branches: [main]
     paths:
       - "backend/app/models/employee_marketplace.py"
+      - "backend/app/models/agent_definition.py"
+      - "backend/app/models/agent_template.py"
       - "backend/app/services/employee_marketplace_service.py"
       - "backend/app/api/v1/employee_marketplace.py"
       - "backend/app/api/v1/router.py"
@@ -29,6 +31,8 @@ on:
       - "backend/app/models/__init__.py"
       - "backend/alembic/versions/w20_employee_marketplace.py"
       - "backend/scripts/e2e_workforce_w20_employee_marketplace_verify.py"
+      - "docker-compose.yml"
+      - "backend/requirements.lock"
       - ".github/workflows/workforce-w20-e2e.yml"
 
 concurrency:
