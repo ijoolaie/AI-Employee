@@ -77,3 +77,13 @@ Both manually dispatched workflows passed on the same exact `main` head, `8cd10f
 
 ## Guardrails
 World remains a read-only projection of authorized business state. Do not fabricate employees, revenue, orders, approvals, entitlements, room access or game-only economy.
+
+
+## PR #1085 merged — workforce E2E trigger coverage (2026-10-13)
+
+- PR [#1085](https://github.com/ijoolaie/AI-Employee/pull/1085) merged as `0a6025e6dae1ed473fafdee8f3ca1833f2c27068` from exact PR head `e262faa29fe2a4b05f5109652781c7939434ed4f`.
+- W9 QA & DevOps real-stack E2E [run 38382195260](https://github.com/ijoolaie/AI-Employee/actions/runs/38382195260), W23 Customer Success real-stack E2E [run 38382195369](https://github.com/ijoolaie/AI-Employee/actions/runs/38382195369), and CodeQL [run 38382195585](https://github.com/ijoolaie/AI-Employee/actions/runs/38382195585) passed on the exact PR head.
+- Trigger filters now cover relevant runtime dependency paths for `pull_request` and `push`; `workflow_dispatch` remains available.
+- Post-merge runs for the merge SHA were not returned by the workflow-run query at this checkpoint. Do not treat pre-merge success as post-merge evidence.
+- These E2E tests use certification fixtures; they do not prove live external-provider execution or commercial readiness.
+- Execution phase tracker remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%, overall 29%. This CI-trigger fix improves verification reliability but does not independently satisfy role-runtime or commercial acceptance criteria.
