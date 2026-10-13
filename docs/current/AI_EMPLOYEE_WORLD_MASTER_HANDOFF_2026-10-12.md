@@ -73,3 +73,20 @@ The manual-dispatch trigger fix is merged and both workflows have now been run o
 4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
 6. Keep release certification separate from World code merges.
+
+
+## Post-merge verification follow-up — PR #1082 (2026-10-13)
+
+The five post-merge workflows previously listed as running have now completed successfully on merge commit `f1b4f782d8753da6c5f960b50942e9a5a6f16b06`:
+
+- [CI / frontend + backend](https://github.com/ijoolaie/AI-Employee/actions/runs/38378936957) — both jobs passed.
+- [Production Compose Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937006) — passed.
+- [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937068) — passed.
+- [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937201) — Python and JavaScript/TypeScript analysis passed.
+- [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937394) — passed.
+
+Together with the already-recorded passing post-merge SLO Contract Manual v2 and Delivery Manifest Bundle workflows, these close the post-merge verification checkpoint for #1082. This is workflow evidence for the merge commit only; it does not establish production deployment or a new release certification.
+
+## Next World work — acceptance remains open
+
+Continue Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) as a separate, reviewable slice. Do not close the issue based on #1082. Next priority is to verify the current employee GLB loader/fallback and animation boundary against the live World route, then address authored asset provenance and obstacle-aware navigation with exact-head desktop/mobile screenshots, console/performance review, and regression checks for selection, touch/keyboard controls, room lock/expiry, tenant-scoped scene access, and reduced motion. Visual acceptance requires review of the actual rendered result; static screenshots alone cannot prove motion behavior.
