@@ -163,3 +163,10 @@ W8, W9 and W23 scripts were inspected. Their passing real-stack fixture paths es
 ## W10 trigger parity merged (2026-10-13)
 
 PR [#1087](https://github.com/ijoolaie/AI-Employee/pull/1087) merged as `2599944c515f464747f8cd00cdbd2e865d9bce09` from exact head `3aea69f297fdd3c215f6d592ebac38ace6c7156d`. The 28 push/PR paths matched. Exact-head W10 real-stack [38384295412](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295412) and CodeQL [38384295452](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295452) passed. Post-merge runs were not returned; post-merge status remains unverified. Synthetic providers and SMTP sink do not prove real customer delivery or revenue.
+
+
+## Workforce trigger-parity batch — 2026-10-13
+
+- [PR #1088](https://github.com/ijoolaie/AI-Employee/pull/1088) merged as `092e54364c5fd40a7a1c32b27e94a92b97272db1`: W2/W7/W18 push and PR filters aligned; exact-head W2 `38384891430`, W7 `38384891449`, W18 `38384891497`, and CodeQL `38384891426` passed.
+- [PR #1089](https://github.com/ijoolaie/AI-Employee/pull/1089) merged as `e23bae8777e05698175160749df4ad09281df98a`: W20/W22/W10 customer-outcome filters aligned; exact-head W20 `38384977674`, W22 `38384977736`, W10 customer outcome `38384977722`, and CodeQL `38384977580` passed.
+- No post-merge runs were returned for these SHAs. This batch improves CI trigger coverage only; live provider/customer/payment/revenue acceptance is not established. Current progress: 48% agent-actionable A0–A2, 29% full-scope A0–A4.
