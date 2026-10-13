@@ -1,3 +1,15 @@
+## Current priorities — reconciled after PR #1092 (2026-10-13)
+
+1. **Continue role-by-role Tool Registry audit for all 12 catalog roles.** For each operation, trace declared contract → exact tool binding → handler/service → permission and tenant scope → persisted evidence/output → failure/recovery path. Do not equate catalog presence or CI green with complete role execution.
+2. **Add focused negative tests** for tenant isolation, denied permissions, stale/mismatched approvals, replay/idempotency, and provider failures wherever the existing code paths support local/CI verification.
+3. **Keep Marketing `analyze_campaign_performance` and Trader `stage_order_for_review` blocked.** PR [#1092](https://github.com/ijoolaie/AI-Employee/pull/1092) merged as [`69c1ad1`](https://github.com/ijoolaie/AI-Employee/commit/69c1ad187f8c50ae0ef79808a12d826d0e043bd2); regression coverage verifies they remain unbound and fail closed. Do not map them to approximate tools.
+4. **Reconcile docs in the same checkpoint as each meaningful merge** and check whether workflow evidence is exact-head or post-merge. Do not infer post-merge success when no run exists.
+5. **External blockers remain visible but excluded from agent-actionable denominator:** live provider credentials, external production/server access, customer acceptance, and realized revenue.
+
+Progress remains 48% agent-actionable A0–A2; 29% full-scope A0–A4. No percentage increase is justified by this test-only PR.
+
+---
+
 ## PR #1082 merged — reduced-motion-aware working employee sway (2026-10-13)
 
 - PR: [#1082](https://github.com/ijoolaie/AI-Employee/pull/1082), squash-merged after exact-head CI/security/infra checks and fresh desktop/mobile screenshot review passed.
