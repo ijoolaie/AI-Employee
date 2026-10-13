@@ -1,9 +1,9 @@
 ## Current priority checkpoint — 2026-10-12, after World viewport merge
 
 - PR #1062 is merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; its validated source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2` passed all five required workflow groups and the exact-head screenshots were reviewed.
-- Visual acceptance remains pending: historical screenshots showed tight/cropped scene boundaries. Fresh screenshots must confirm desktop floor bounds and portrait right edge after the latest camera-margin adjustment.
+- Viewport-framing acceptance is met for the bounded criterion: PR #1071's exact-head artifact was reviewed at 1440×900 and 390×844, with the full floor visible in both. This does not mean the full visual redesign or gameplay is complete.
 - Next priorities: (1) keep the current handoff/status aligned with future World code changes; (2) design original/licensed employee assets and verify runtime loading before claiming GLB integration; (3) implement obstacle-aware navigation beyond static collision footprints; (4) add broader collision/movement and reduced-motion acceptance.
-- PR #1058 was closed as a stale documentation branch. PR #1067 is being corrected to keep visual acceptance pending; PR #1069 (merged; #1068 closed as superseded) and #1071 address post-merge E2E timeouts and must pass exact-head checks.
+- PR #1058 was closed as a stale documentation branch. PR #1069 was merged (#1068 closed as superseded); PR #1071 is merged after all five exact-head workflow groups passed and the viewport screenshots were reviewed. PR #1067 is the documentation reconciliation PR; CodeQL passed on its current head.
 - Do not claim full game/pathfinding completion or production release certification. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 **Historical note:** Dated checkpoints below this entry preserve earlier decisions and test evidence. Their references to PR #1050/#1058/#1059/#1060 as currently open are historical snapshots; use this latest checkpoint and the current GitHub PR state for present decisions.
