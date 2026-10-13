@@ -30,7 +30,13 @@ class DeterministicProvider:
                 (item for item in request.tools if item.name == "workforce_market_research"),
                 None,
             )
+            if tool is None:
+                tool = next(
+                    (item for item in request.tools if item.name == "workforce_produce_article"),
+                    None,
+                )
             if tool is not None:
+                is_market_research = tool.name == "workforce_market_research"
                 return ChatResult(
                     content="",
                     prompt_tokens=max(1, len(prompt.split())),
@@ -39,9 +45,13 @@ class DeterministicProvider:
                     raw={"provider": self.name, "certification": True, "e2e_tool_call": True},
                     tool_calls=[
                         ToolCall(
-                            id="e2e-workforce-market-research-1",
+                            id=("e2e-workforce-market-research-1" if is_market_research else "e2e-workforce-produce-article-1"),
                             name=tool.name,
-                            arguments={"symbols": ["AAPL"], "horizon_days": 30},
+                            arguments=({"symbols": ["AAPL"], "horizon_days": 30} if is_market_research else {
+                                "title": "Semantic E2E governed article",
+                                "body": "Deterministic article created by the governed Content Producer WorkItem lifecycle.",
+                                "metadata": {"source": "workforce-semantic-real-stack-e2e"},
+                            }),
                         )
                     ],
                 )
