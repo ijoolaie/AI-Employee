@@ -2,7 +2,7 @@
 
 - PR #1071 accepted viewport framing only.
 - PR #1072 merged as `c097eedbc5674d788d72b5b3a2d334adba1737e6`; its exact-head CI/security/recovery workflows passed and desktop/portrait screenshots were reviewed. The accepted scope is low glass department partitions, colored cap rails and mullions.
-- PR #1075 is the current Draft candidate for department-tinted floor tiles, centered room entrances and matching room-wall collision blockers. Its exact-head checks and fresh screenshot review are pending.
+- PR #1075 is the current Draft candidate for department-tinted floor tiles, centered room entrances, matching room-wall collision blockers and a small portrait camera-fit/label-scale adjustment. Its exact-head checks and fresh screenshot review are pending. Earlier #1071/#1072 portrait artifacts show the outer right room edge at or beyond the canvas boundary, so mobile framing is still open.
 - Current `main` contains no `employee-base.glb`, `GLTFLoader` integration, or asset-credit/license files under the World asset path. The player/CEO avatar and employee cast are therefore still procedural in the current tree; do not count the asset-pipeline step as implemented based on stale PR comments.
 
 The World remains a partial implementation. Authored employee GLB/GLTF assets, full obstacle-aware pathfinding, validated workstation placement, richer animation/foot planting and full visual acceptance remain open. Automated checks and screenshots are evidence for their exact code head, not proof of the full redesign or production release.
