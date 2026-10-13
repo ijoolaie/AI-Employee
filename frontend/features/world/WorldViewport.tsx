@@ -789,8 +789,8 @@ export function WorldViewport({
       const portrait = aspect < 1;
       // Portrait uses a more top-down composition rather than merely zooming the
       // desktop camera out; this reduces diagonal skew and keeps the office center readable.
-      const responsiveScale = portrait ? 1.65 : 1;
-      const effectiveDistance = distance * (portrait ? responsiveScale : 1.12);
+      const responsiveScale = portrait ? 2.05 : 1;
+      const effectiveDistance = distance * (portrait ? responsiveScale : 1.85);
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
         // Keep fog bounds proportional to the responsive camera distance.
