@@ -2,13 +2,14 @@
 
 - PR #1073 is merged at `6b5963f4c8409eb75d0be50c2ebdb3b4908a48d5`; release/current-state summaries now distinguish the immutable published release from current engineering `main` and external production.
 - PR #1072 is merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6`. Its exact head passed CI/Playwright, CodeQL, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST; desktop and portrait screenshots were reviewed. This accepts only the bounded glass-partition pass.
-- PR #1074 adds a release-truth consistency workflow and the initial static audit of all 12 canonical workforce roles. Review its exact-head checks before merge; branch protection still has no required checks, so a workflow pass is currently advisory.
+- PR #1075 exact head `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf` passed CI, Documentation Truth Consistency, CodeQL, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST. Artifact `11793314632` was reviewed; the bounded room/floor/portrait-fit slice is visually accepted. Employee assets and full pathfinding remain open.
+- PR #1074 is merged and its post-merge Release identity consistency check passed. It adds the release-truth workflow and static audit of all 12 canonical workforce roles. Branch protection still has no required checks, so workflow outcomes remain advisory.
 - Next: (1) continue World Issue #1044 beyond the accepted room/floor/portrait-fit slice with authored/licensed employee assets and full obstacle-aware pathfinding; (2) close the Customer Success and QA/DevOps tool-reachability gaps and test configured provider paths; (3) prove one human-supervised lead-to-paid-delivery workflow with actual receipts, costs and customer acceptance.
 - Canonical plan: [Capability Reality Audit & Commercial Readiness Plan](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
 - Do not claim complete World redesign, autonomous sales, external production, or realized revenue until the relevant acceptance evidence exists.
 ---
 
-## Current priority checkpoint — 2026-10-12, after World viewport merge
+## Historical priority checkpoint — 2026-10-12, superseded by the 2026-10-13 checkpoint above
 
 - PR #1062 is merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; its validated source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2` passed all five required workflow groups and the exact-head screenshots were reviewed.
 - Viewport-framing acceptance is met for the bounded criterion: PR #1071's exact-head artifact was reviewed at 1440×900 and 390×844, with the full floor visible in both. This does not mean the full visual redesign or gameplay is complete.
