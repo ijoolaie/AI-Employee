@@ -19,6 +19,8 @@ on:
       - "backend/app/services/workforce_semantic_domains.py"
       - "backend/app/services/ai_workforce_roles.py"
       - "backend/app/ai/tool_registry.py"
+      - "docker-compose.yml"
+      - "backend/requirements.lock"
       - ".github/workflows/workforce-w7-e2e.yml"
 
 concurrency:
