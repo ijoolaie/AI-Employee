@@ -4,6 +4,16 @@
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
+## Latest exact-main engineering evidence — 2026-10-13
+
+| Gate | Exact SHA | Result | Evidence |
+|---|---|---|---|
+| CI / frontend + backend | `8cd10f175df4a4f532f3e2d1ea0ac2b6486f2c3d` | PASS | [Run 38371564101](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101); 143 frontend contract checks, 76 Vitest tests, 10 Playwright tests; backend 1,452 passed / 1 deselected / 22 warnings |
+| Architecture Guard | `8cd10f175df4a4f532f3e2d1ea0ac2b6486f2c3d` | PASS | [Run 38371581649](https://github.com/ijoolaie/AI-Employee/actions/runs/38371581649); 20 tests passed; final audit and completeness baseline PASS |
+| World visual-review artifact | Same SHA | AVAILABLE — not yet recorded as visually accepted | [Artifact 11800165354](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101/artifacts/11800165354) |
+
+Follow-up warnings: frontend React-hook/Next.js navigation lint warnings; duplicate-key errors in backend test logs should be confirmed as expected negative/concurrency-test output; `actions/upload-artifact@v4` emits a Node.js 20 deprecation warning. These do not change the successful workflow conclusions but remain maintenance/diagnostic items. All evidence above is ENGINEERING, not external-production certification.
+
 ## Evidence classification
 
 - **ENGINEERING** — repository, CI, local Docker, synthetic-load, simulated-provider, or test evidence.
