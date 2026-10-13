@@ -1,3 +1,11 @@
+## PR #1083 merged — responsive World camera-control anchors (2026-10-13)
+
+- PR [#1083](https://github.com/ijoolaie/AI-Employee/pull/1083) merged by squash as `7ffd7720cbd7c931724a281c875152170d188afe`, from exact PR head `19bc76052955f2b22ceafe43aab2f2983f77fe65`.
+- Change: removed the inline `right: 12px` positioning that overrode responsive classes; controls now use `right-3 bottom-4` by default and `sm:left-4 sm:right-auto` on desktop.
+- All five observed exact-head workflow groups passed: [CI / frontend+backend+Playwright 38381090279](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090279), [CodeQL 38381090284](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090284), [Production Infrastructure 38381090299](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090299), [HA Failure Recovery 38381090566](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090566), and [Ephemeral DAST 38381090384](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090384).
+- Fresh [desktop/mobile artifact 11803596084](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090279/artifacts/11803596084) was manually inspected at 1440×900 and 390×844. Desktop controls are bottom-left; mobile controls are bottom-right and visibly separate from the bottom-left joystick.
+- This is a bounded layout fix. It does not complete Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044), skeletal animation, role-specific character art, obstacle-aware pathfinding, release certification, or production deployment. The available workflow wrapper did not return post-merge runs for the merge SHA; post-merge state must not be inferred from pre-merge checks.
+
 ## PR #1082 merged — reduced-motion-aware working employee sway (2026-10-13)
 
 - PR: [#1082](https://github.com/ijoolaie/AI-Employee/pull/1082), squash-merged after exact-head CI/security/infra checks and fresh desktop/mobile screenshot review passed.
