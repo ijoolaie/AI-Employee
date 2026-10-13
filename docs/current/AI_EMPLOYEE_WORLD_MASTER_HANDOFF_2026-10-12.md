@@ -41,7 +41,7 @@
 ## Next actions
 1. PR #1069 is merged; PR #1068 was closed as superseded. The pan smoke now checks pointer-event wiring rather than relying on WebGL canvas screenshots; unit tests cover pan projection math.
 2. PR #1071 is merged at `ff3a138a4164c793c06678f9ca9d790ab2c14cd8`; its five exact-head workflow groups passed and viewport screenshots were reviewed. Continue remaining World redesign tasks separately.
-3. PR #1073 reconciled release/current-state docs and PR #1074 added the consistency gate and static role audit; both are merged. PR #1075 is the current Draft World slice. Keep the handoff aligned with exact merged PR state.
+3. PR #1073 reconciled release/current-state docs and PR #1074 added the consistency gate and static role audit; both are merged. PR #1075's bounded room/floor/portrait-fit implementation passed exact-head checks and visual review. The GitHub PR page is authoritative for lifecycle; continue with authored employee assets and full pathfinding.
 4. Prioritize authored/licensed character assets with provenance and verified runtime loading, if approved.
 5. Design and test obstacle-aware navigation and more comprehensive collision integration tests.
 6. Keep release certification separate from World code merges.
