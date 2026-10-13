@@ -1,3 +1,14 @@
+## Current priority checkpoint — 2026-10-13, documentation truth + capability audit
+
+- First priority is reconciling current-state documentation before further capability claims: manifest, production gap register, evidence index, release ledger, current status, and versioning truth must agree on the latest published release and clearly distinguish it from current `main`.
+- Latest published/exact-SHA certified release: `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`, certification run `37625345534`, job `112805570856`. This is not evidence of external deployment, customer acceptance, or realized revenue.
+- PR #1071's viewport-framing criterion is bounded acceptance only. PR #1072 is a separate visual candidate and its PR description still requires manual desktop/mobile review.
+- Next: (1) merge documentation reconciliation only after review/checks; (2) investigate why duplicated status documents drifted and add a prevention check; (3) audit every canonical employee role from role definition to real execution/evidence; (4) test one end-to-end commercial workflow before broadening autonomy.
+- Canonical audit plan: [Capability Reality Audit & Commercial Readiness Plan](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
+- Do not claim complete World redesign, autonomous sales, external production, or revenue until the relevant acceptance evidence exists.
+
+---
+
 ## Current priority checkpoint — 2026-10-12, after World viewport merge
 
 - PR #1062 is merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; its validated source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2` passed all five required workflow groups and the exact-head screenshots were reviewed.
