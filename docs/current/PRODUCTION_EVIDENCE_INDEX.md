@@ -1,6 +1,6 @@
 # Production Evidence Index
 
-**Reconciled:** 2026-09-29  
+**Reconciled:** 2026-10-13  
 **Repository:** `ijoolaie/AI-Employee`  
 **Purpose:** keep engineering evidence and external-production certification evidence traceable to an immutable release identity.
 
@@ -13,22 +13,41 @@
 
 No P0 external gate may be marked complete from ENGINEERING evidence alone. `OPEN-EXTERNAL` is not a failure; it records work intentionally deferred until an external target exists.
 
-## Current release baseline
+## Current release baseline — reconciled 2026-10-13
 
-Current `main` is post-certification engineering/documentation work and is not certified as a release. The exact current Git HEAD is the authoritative engineering head and must be resolved directly from the repository rather than copied into this document.
+Current `main` is post-release engineering/documentation work and is not certified as a release. Resolve the exact current Git HEAD directly from Git metadata rather than copying it into this document.
 
 | Field | Value |
 |---|---|
-| Latest published release | `v1.4.11` |
-| Exact certified release SHA | `90dd5cbcfb0a372ee5d53b34f65868cd0acb181f` |
-| Stable Git tag | **VERIFIED** |
-| GitHub Release | **PUBLISHED** |
-| Production Certification | Run `35848311037` / Job `107139710452` — PASS |
-| Product Gate Failures | `0` |
-| Frontend Playwright | **PASS** |
-| External production deployment | **OPEN — PENDING EXTERNAL EXECUTION** |
-| External image registry/deployed digest evidence | **PENDING** |
-| External signed provenance/attestation | **PENDING** |
+| Latest published release | `v1.4.17` |
+| Exact certified release SHA | `b403c0dcdea579e017738a6fdea138c2b1a2999c` |
+| Production Certification | Run `37625345534` / Job `112805570856` — PASS |
+| Git tag / GitHub Release | VERIFIED / PUBLISHED |
+| Product Gate failures | `0` on the certified release run |
+| External production deployment | **NOT VERIFIED / NOT CLAIMED** |
+| Live provider validation | **NOT VERIFIED** |
+| External customer acceptance | **NOT VERIFIED** |
+| Realized external revenue | **NOT VERIFIED** |
+
+The detailed v1.4.11 certification and semantic-workforce records below are historical engineering/release evidence. They must not be read as the latest release identity or as evidence of external production. See the [Release Truth Ledger](../releases/RELEASE_TRUTH_LEDGER.md) for the current release authority.
+
+## Current external gate matrix
+
+| Gate | Class | Status |
+|---|---|---|
+| Exact-SHA certification for v1.4.17 | ENGINEERING | PASS |
+| Real production deployment and deployed digest | OPEN-EXTERNAL | NOT VERIFIED |
+| Live providers and payment/commercial paths | OPEN-EXTERNAL | NOT VERIFIED |
+| Real backup/restore and measured RPO/RTO | OPEN-EXTERNAL | NOT VERIFIED |
+| Production SLO/SLI and live alert routing | OPEN-EXTERNAL | NOT VERIFIED |
+| Deployed tenant isolation/RBAC matrix | OPEN-EXTERNAL | NOT VERIFIED |
+| Authenticated DAST on accepted target | OPEN-EXTERNAL | NOT VERIFIED |
+| Independent penetration/security review | OPEN-EXTERNAL | NOT VERIFIED |
+| HA/failure recovery and incident drill on target | OPEN-EXTERNAL | NOT VERIFIED |
+| Vendor/reseller/customer acceptance | OPEN-EXTERNAL | NOT VERIFIED |
+| Realized revenue and unit economics | OPEN-EXTERNAL | NOT VERIFIED |
+
+**Capability audit plan:** [Capability Reality Audit & Commercial Readiness Plan](CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
 
 ## v1.4.11 certification identity
 
