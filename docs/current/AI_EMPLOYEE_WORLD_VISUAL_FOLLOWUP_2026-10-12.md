@@ -1,16 +1,16 @@
 # AI Employee World — Visual Follow-up
 **Date:** 2026-10-12  
-**Code status:** PR #1062 merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; post-merge test stabilization is ongoing in PR #1069 (merged) and #1071.  
-**Validated source head:** `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2`
+**Code status:** PR #1062 merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`; PR #1069 and PR #1071 are both merged. PR #1071 merge commit: `ff3a138a4164c793c06678f9ca9d790ab2c14cd8`.  
+**Viewport-fix source head:** `712a687a119aca0f82d3cce9df5aab5d0d53f2e0`
 
 ## Outcome
 The earlier screenshots showed cropped boundaries. The latest exact-head CI artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` for `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` was reviewed at 1440×900 and 390×844: the full floor is visible in both. All five required workflows passed. Viewport framing is accepted for this criterion; this does not certify the remaining visual redesign or gameplay scope.
 
-Reviewed artifact: [`world-visual-review-10d00b30be9cfc784398ed8a3c4380328684ee3f`](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198575).
+Reviewed artifact: [`world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71`](https://github.com/ijoolaie/AI-Employee/actions/runs/38298932308).
 
 ## Exact-head validation
 - [Historical CI, including Playwright and screenshot upload](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198575) — passed on prior head only
-- [Post-merge CI with timeout](https://github.com/ijoolaie/AI-Employee/actions/runs/38292598819) — failed; responsive test timed out after the mobile interaction. Follow-up fixes must pass on the exact final head.
+- [Post-merge CI with timeout](https://github.com/ijoolaie/AI-Employee/actions/runs/38292598819) — failed on an earlier head; follow-up PR #1069 and #1071 were merged, and all five required workflow groups passed on #1071's exact final source head.
 - [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198505) — passed
 - [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198517) — passed
 - [HA Failure Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198352) — passed
