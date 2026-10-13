@@ -118,3 +118,86 @@ async def test_side_effect_requires_agent_run_context_even_with_db_and_tenant(mo
             tenant_id=uuid4(),
         )
     assert calls == []
+
+
+@pytest.mark.asyncio
+async def test_resolve_approval_accepts_only_one_exact_argument_match() -> None:
+    from types import SimpleNamespace
+
+    tenant_id, run_id = uuid4(), uuid4()
+    arguments = {"to": ["allowed@example.com"], "subject": "approved", "body": "approved body"}
+    approved = SimpleNamespace(arguments=arguments, id=uuid4(), status="approved")
+
+    class Result:
+        def scalars(self):
+            return self
+
+        def all(self):
+            return [approved]
+
+    class Db:
+        async def execute(self, _statement):
+            return Result()
+
+    resolved = await agent_tool_governance._resolve_approval(
+        Db(), tenant_id=tenant_id, run_id=run_id, tool_name="send_email",
+        tool_call_id="exact-call", arguments=arguments,
+    )
+    assert resolved is approved
+
+
+@pytest.mark.asyncio
+async def test_resolve_approval_rejects_changed_arguments() -> None:
+    from types import SimpleNamespace
+
+    approved = SimpleNamespace(
+        arguments={"to": ["allowed@example.com"], "subject": "approved", "body": "approved body"},
+        id=uuid4(), status="approved",
+    )
+
+    class Result:
+        def scalars(self):
+            return self
+
+        def all(self):
+            return [approved]
+
+    class Db:
+        async def execute(self, _statement):
+            return Result()
+
+    resolved = await agent_tool_governance._resolve_approval(
+        Db(), tenant_id=uuid4(), run_id=uuid4(), tool_name="send_email",
+        tool_call_id="exact-call",
+        arguments={"to": ["attacker@example.com"], "subject": "approved", "body": "approved body"},
+    )
+    assert resolved is None
+
+
+@pytest.mark.asyncio
+async def test_resolve_approval_rejects_ambiguous_duplicate_matches() -> None:
+    from types import SimpleNamespace
+
+    tenant_id, run_id = uuid4(), uuid4()
+    arguments = {"to": ["allowed@example.com"], "subject": "approved", "body": "approved body"}
+    matches = [
+        SimpleNamespace(arguments=arguments, id=uuid4(), status="approved"),
+        SimpleNamespace(arguments=arguments, id=uuid4(), status="approved"),
+    ]
+
+    class Result:
+        def scalars(self):
+            return self
+
+        def all(self):
+            return matches
+
+    class Db:
+        async def execute(self, _statement):
+            return Result()
+
+    resolved = await agent_tool_governance._resolve_approval(
+        Db(), tenant_id=tenant_id, run_id=run_id, tool_name="send_email",
+        tool_call_id="duplicate-call", arguments=arguments,
+    )
+    assert resolved is None
