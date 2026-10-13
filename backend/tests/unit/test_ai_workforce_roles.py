@@ -269,3 +269,22 @@ def test_internal_manager_capacity_request_has_exact_semantic_tool_binding():
     assert contract.tool_names == ("workforce_request_capacity",)
     assert contract.required_permissions == ("run.execute",)
     assert contract.approval_required is False
+
+
+@pytest.mark.parametrize(
+    ("role", "operation"),
+    [
+        # No campaign-attribution domain exists yet; a growth report is not
+        # a substitute for campaign-specific measured performance.
+        ("ai_marketing_advertising_manager", "analyze_campaign_performance"),
+        # Staging an order is intentionally not mapped to a research/planning tool.
+        ("ai_trader", "stage_order_for_review"),
+    ],
+)
+def test_known_unbound_workforce_operations_are_explicitly_non_executable(role: str, operation: str) -> None:
+    from app.services.ai_workforce_roles import assert_workforce_tool_binding, get_workforce_capability_contract
+
+    contract = get_workforce_capability_contract(role, operation)
+    assert contract.tool_names == ()
+    with pytest.raises(ValidationAppError, match="Workforce operation has no approved Tool Registry binding"):
+        assert_workforce_tool_binding(role, operation, "calculator")
