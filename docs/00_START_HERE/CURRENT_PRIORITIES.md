@@ -708,3 +708,12 @@ Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-
 - Scope boundary: this proves a governed creative request is persisted by the local deterministic stack; it explicitly does not claim that an image was rendered or that an external image provider ran. Other Graphic Designer operations and all-role execution coverage remain open.
 - Next runtime target: audit and certify the remaining Content Producer/Graphic Designer operations, then move to the next role with the largest business-value gap. Avoid treating tool catalog presence as execution proof.
 - Progress: A0 100%, A1 30%, A2 25%, A3 0%, A4 0%; actionable progress `(100+30+25)/3 = 51.67%` (report as 52%); full-scope progress `(100+30+25+0+0)/5 = 31%`. A2 increased because Graphic Designer now has a second role-specific operation proved through the complete WorkItem-to-worker path; A1 remains 30% because broad all-role runtime audit is incomplete. A3/A4 remain outside the actionable denominator and open.
+
+## Next execution priority after PR #1104 (2026-10-13)
+
+1. Continue the role-by-role capability reality audit from actual operation contracts, Tool Registry bindings, dispatch/worker paths, durable artifacts, audit/provenance, approval and failure behavior.
+2. Prefer the next uncovered high-value operation that can be exercised through WorkItem assignment → dispatch → worker → successful/failed Run; add explicit positive and negative-path assertions rather than catalog-only coverage.
+3. Extend Content QA only where acceptance is materially improved (e.g. policy/configurable checks with explicit limits); do not label structural placeholder checks as factual or brand/legal review.
+4. Keep real provider credentials, external rendering/publication, production deployment, customer acceptance and commercial outcomes visible as external blockers. They are not silently treated as locally completed.
+5. Keep progress at A0 100%, A1 30%, A2 25%, A3 0%, A4 0% (52% actionable / 31% full scope) until a phase-level acceptance criterion is demonstrably met.
+
