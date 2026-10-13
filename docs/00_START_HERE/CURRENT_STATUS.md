@@ -1,5 +1,23 @@
 # Current Status — 2026-10-13
 
+## Exact-main CI and Architecture Guard checkpoint — 2026-10-13
+
+Both manually dispatched workflows passed on the same exact `main` head, `8cd10f175df4a4f532f3e2d1ea0ac2b6486f2c3d`:
+
+- [CI run #3654](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101) — **PASS**; frontend and backend jobs succeeded.
+  - Frontend: 143 contract checks passed; Vitest 14 files / 76 tests passed; Playwright 10 tests passed; production build completed.
+  - Backend: 1,452 passed, 1 deselected, 22 warnings.
+  - CI uploaded the World visual-review artifact [11800165354](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101/artifacts/11800165354). Artifact availability is recorded; visual acceptance is not claimed here.
+- [Architecture Guard run #3008](https://github.com/ijoolaie/AI-Employee/actions/runs/38371581649) — **PASS**; 20 architecture tests passed; `M15 FINAL ARCHITECTURE AUDIT: PASS`; `PRODUCTION COMPLETENESS BASELINE: PASS`.
+
+### Follow-up / interpretation
+
+- Frontend lint emitted non-blocking warnings for missing `useEffect` dependencies and internal navigation via `window.location.href`. Track these as cleanup; do not treat a green run as proof they are fixed.
+- Backend test logs contain duplicate-key constraint errors during tests that still passed. These appear in the test run; confirm they are expected negative/concurrency-test output if the associated tests are modified, and investigate if they appear outside test execution.
+- GitHub Actions emitted a Node.js 20 deprecation warning for `actions/upload-artifact@v4`; schedule action-runtime maintenance.
+- The CI run included a transient initial localhost connection refusal before the browser suite later passed. No final workflow failure resulted; investigate only if it recurs.
+- These are **engineering checks on the exact SHA above**, not release certification, live provider validation, production deployment, customer acceptance, or realized revenue. The published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
 ## Documentation-truth reconciliation checkpoint — 2026-10-13
 
 - The latest published and exact-SHA certified release documented by the release ledger remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`, certification run `37625345534`, job `112805570856`.

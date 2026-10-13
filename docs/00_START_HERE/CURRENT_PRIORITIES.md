@@ -1,4 +1,7 @@
-## Current priority checkpoint — 2026-10-13, prevention + World follow-up
+## Current priority checkpoint — 2026-10-13, CI evidence reconciled
+
+- CI run [38371564101](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101) and Architecture Guard run [38371581649](https://github.com/ijoolaie/AI-Employee/actions/runs/38371581649) both passed on exact `main` SHA `8cd10f175df4a4f532f3e2d1ea0ac2b6486f2c3d`. CI: frontend contract 143 passed, Vitest 76 passed, Playwright 10 passed; backend 1452 passed / 1 deselected / 22 warnings. Architecture: 20 passed and final audit/baseline PASS.
+- Follow-up maintenance: triage frontend hook/navigation lint warnings; verify duplicate-key log lines are expected test assertions; plan `actions/upload-artifact@v4` Node.js 24 migration. No production or release-certification claim follows from these engineering runs.
 
 - PR #1073 is merged at `6b5963f4c8409eb75d0be50c2ebdb3b4908a48d5`; release/current-state summaries now distinguish the immutable published release from current engineering `main` and external production.
 - PR #1072 is merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6`. Its exact head passed CI/Playwright, CodeQL, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST; desktop and portrait screenshots were reviewed. This accepts only the bounded glass-partition pass.
