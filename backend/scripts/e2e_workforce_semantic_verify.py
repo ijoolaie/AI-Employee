@@ -54,7 +54,7 @@ async def license_fixture(tenant_id,suffix):
         db.add(vendor); await db.flush()
         reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
         db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
 async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader",tool_name="workforce_market_research"):
@@ -66,7 +66,7 @@ async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader"
         employee=Employee(tenant_id=tenant_id,slug=f"e2e-workforce-{suffix}-{variant}",name=f"E2E Workforce {variant}",kind="custom",is_active=True)
         db.add(employee); await db.flush()
         output={"type":"object","properties":{"content":{"type":"string"}},"required":["content"]}
-        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=("Produce a draft article." if tool_name=="workforce_produce_article" else ("Prepare a social caption." if tool_name=="workforce_produce_social_caption" else ("Prepare a visual asset request." if tool_name=="workforce_create_visual_asset" else ("Revise a visual asset request." if tool_name=="workforce_revise_visual_asset" else "Perform deterministic market research.")))),allowed_tools=[tool_name],rules={})
+        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=("Produce a draft article." if tool_name=="workforce_produce_article" else ("Prepare a social caption." if tool_name=="workforce_produce_social_caption" else ("Prepare a visual asset request." if tool_name=="workforce_create_visual_asset" else ("Revise a visual asset request." if tool_name=="workforce_revise_visual_asset" else ("Run deterministic content QA on the supplied title and body." if tool_name=="workforce_content_qa" else "Perform deterministic market research."))))),allowed_tools=[tool_name],rules={})
         definition=AgentDefinition(tenant_id=tenant_id,slug=f"e2e-workforce-def-{suffix}-{variant}",name=f"E2E Workforce {variant}",capabilities=["execution"],allowed_tools=[tool_name],model_policy={},input_schema={},output_schema=output,policy_requirements={},enabled=True)
         db.add_all([version,definition]); await db.flush()
         template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-workforce-template-{suffix}-{variant}",name=f"E2E Workforce Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract(role_code),permission_policy={"permissions":["run.execute"],"allowed_tools":[tool_name]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
@@ -300,6 +300,44 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
         assert revise_binding is not None
     print("WORKFORCE GRAPHIC DESIGNER REVISE_VISUAL_ASSET FULL WORKITEM LIFECYCLE PASS")
     print(f"WORKFORCE GRAPHIC REVISION PERSISTENCE + PROVIDER BOUNDARY PASS key={revise_key}")
+
+    # Certify deterministic content QA through the canonical WorkItem lifecycle.
+    # This proves report persistence/audit/runtime binding, not factual or brand review.
+    qa_agent,qa_version,qa_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"content-qa",role_code="ai_content_producer",tool_name="workforce_content_qa")
+    qa_title="Semantic E2E QA article"
+    qa_item=await work_item(tenant_id,qa_agent,suffix,"content-qa",request_text=f"Run content QA on the article titled {qa_title}")
+    assert req("POST",f"/work-items/{qa_item}/assign/agent",{"agent_instance_id":str(qa_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{qa_item}/dispatch",token=token)[0]==200
+    qa_work,qa_run=await wait_result(qa_item)
+    assert qa_work.status is WorkItemStatus.SUCCEEDED and qa_run and qa_run.status=="success", (qa_work.status,qa_run.error_message if qa_run else None)
+    assert qa_run.agent_instance_id==qa_agent and qa_run.employee_version_id==qa_version
+    await verify_audit(tenant_id,qa_run.id,tool_name="workforce_content_qa",tool_call_id="e2e-workforce-content-qa-1")
+    qa_payloads=[]
+    for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
+        if "content-qa-" in key and key.endswith(".json"):
+            payload=workforce_semantic_domains._read_json(str(tenant_id),key)
+            if payload.get("title")==qa_title:
+                qa_payloads.append((key,payload))
+    assert len(qa_payloads)==1, f"expected one persisted content QA report for {qa_title}, got {len(qa_payloads)}"
+    qa_key,qa_report=qa_payloads[0]
+    assert qa_report["kind"]=="content_qa_report" and qa_report["status"]=="passed"
+    assert qa_report["operation"]=="content_qa"
+    assert qa_report["provenance"]["tenant_id"]==str(tenant_id)
+    assert qa_report["provenance"]["provider_execution"]=="not_required"
+    assert {item["id"] for item in qa_report["checks"]}=={"title_present","body_present","placeholder_text_absent"}
+    assert qa_report["findings"]==[]
+    async with AsyncSessionLocal() as db:
+        qa_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==qa_definition_id,
+            AgentRuntimeBinding.employee_version_id==qa_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert qa_binding is not None
+    print("WORKFORCE CONTENT QA FULL WORKITEM LIFECYCLE PASS")
+    print(f"WORKFORCE CONTENT QA REPORT PERSISTENCE + PROVENANCE PASS key={qa_key}")
+    print("WORKFORCE CONTENT QA STRUCTURAL LIMITATIONS + PROVIDER BOUNDARY PASS")
 
     wrong,_,_=await governed_agent(
         tenant_id,

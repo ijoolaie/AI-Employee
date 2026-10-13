@@ -32,6 +32,7 @@ class DeterministicProvider:
                 "workforce_produce_social_caption",
                 "workforce_create_visual_asset",
                 "workforce_revise_visual_asset",
+                "workforce_content_qa",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -70,6 +71,14 @@ class DeterministicProvider:
                             "prompt": "Revise the existing SaaS dashboard launch visual to use a calmer palette",
                             "brand_context": "Workforce semantic E2E fixture",
                             "provider": "image-provider",
+                        },
+                    ),
+                    "workforce_content_qa": (
+                        "e2e-workforce-content-qa-1",
+                        {
+                            "title": "Semantic E2E QA article",
+                            "body": "A complete deterministic article body with no placeholder markers.",
+                            "metadata": {"source": "workforce-semantic-real-stack-e2e"},
                         },
                     ),
                 }
