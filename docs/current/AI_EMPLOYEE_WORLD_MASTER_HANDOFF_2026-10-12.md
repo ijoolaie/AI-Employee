@@ -177,3 +177,10 @@ PR [#1087](https://github.com/ijoolaie/AI-Employee/pull/1087) merged as `2599944
 [PR #1090](https://github.com/ijoolaie/AI-Employee/pull/1090) merged as `880d46cff762e57cdbda97f95c3347e6f0c071b9` from exact head `22c5b8e6f471057cebd84ab9670068442f693da2`. Exact-head W21 real-stack run [38385311942](https://github.com/ijoolaie/AI-Employee/actions/runs/38385311942) and CodeQL [38385312104](https://github.com/ijoolaie/AI-Employee/actions/runs/38385312104) passed. The available workflow-run query did not return post-merge runs, so post-merge execution remains unverified. W21 now runs on main pushes to backend/W21 paths.
 
 Trigger-audit batch is merged for W2/W7/W8/W9/W10/W18/W20/W21/W22/W23. This improves when engineering checks run; it does not prove configured provider execution, external delivery, production deployment or revenue. Progress remains 48% actionable A0–A2 and 29% full-scope A0–A4.
+
+
+## Approval-binding tests merged — 2026-10-13
+
+[PR #1091](https://github.com/ijoolaie/AI-Employee/pull/1091) merged as `651116bb1a19a93fd4008e93d7e437e42884c443` from exact head `aaf8cd21ed46ebe8e9ad756e47f38d07283b5c76`. Exact-head CI, Workforce Semantic E2E, W21 E2E, CodeQL, Architecture Guard, Production Infrastructure, HA Recovery and DAST passed. It adds approval resolver coverage for exact arguments, changed arguments and ambiguous duplicate matches. The workflow connector did not return post-merge runs, so no post-merge pass is claimed.
+
+Role audit identified two intentionally unbound catalog operations: Marketing `analyze_campaign_performance` and Trader `stage_order_for_review`. They remain fail-closed until a real domain/service and explicit binding are reviewed. PR #1092 adds regression coverage; checks are pending. Progress remains 48% agent-actionable / 29% full-scope.
