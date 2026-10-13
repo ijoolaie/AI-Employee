@@ -288,3 +288,43 @@ async def test_w6_website_changes_are_unique_and_provider_bound():
     assert payload["provenance"]["tenant_id"] == "tenant-a"
     with pytest.raises(Exception):
         _read_json("tenant-b", deploy["storage_key"])
+
+
+
+@pytest.mark.asyncio
+async def test_w3_content_qa_runs_deterministic_checks_and_persists_tenant_scoped_report():
+    from app.services.workforce_semantic_domains import _read_json, execute_content
+
+    passed = await execute_content(
+        {
+            "_operation": "content_qa",
+            "title": "Launch announcement",
+            "body": "We are launching the new dashboard today. Explore the updated workflow and share feedback.",
+            "metadata": {"stage": "qa"},
+        },
+        tenant_id="tenant-qa",
+    )
+    assert passed["status"] == "passed"
+    assert all(check["passed"] for check in passed["checks"])
+    assert passed["findings"] == []
+    assert passed["provider_execution"] == "not_required"
+    assert passed["storage_key"].startswith("tenant-qa/")
+    persisted = _read_json("tenant-qa", passed["storage_key"])
+    assert persisted["kind"] == "content_qa_report"
+    assert persisted["provenance"]["tenant_id"] == "tenant-qa"
+    assert "Does not assess factual accuracy, tone, brand compliance, or legal compliance." in persisted["limitations"]
+
+    needs_revision = await execute_content(
+        {
+            "_operation": "content_qa",
+            "title": "",
+            "body": "Draft placeholder: TODO replace this text with final copy.",
+        },
+        tenant_id="tenant-qa",
+    )
+    assert needs_revision["status"] == "needs_revision"
+    assert {finding["check_id"] for finding in needs_revision["findings"]} == {
+        "title_present", "placeholder_text_absent"
+    }
+    with pytest.raises(Exception):
+        _read_json("another-tenant", passed["storage_key"])

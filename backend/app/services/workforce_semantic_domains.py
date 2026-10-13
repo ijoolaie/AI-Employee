@@ -130,11 +130,80 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
 
 
 async def execute_content(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
-    """Create a durable, versioned content artifact without overwriting prior work."""
+    """Create durable content drafts or a deterministic, explicitly limited QA report."""
     tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
     content_id = str(uuid.uuid4())
     approval_required = _approval_required("ai_content_producer", operation)
+    title = str(arguments.get("title") or "")
+    body = str(arguments.get("body") or "")
+
+    if operation == "content_qa":
+        lowered_body = body.lower()
+        placeholder_markers = ("lorem ipsum", "[insert", "todo", "tbd")
+        placeholder_hits = [marker for marker in placeholder_markers if marker in lowered_body]
+        checks = [
+            {
+                "id": "title_present",
+                "passed": bool(title.strip()),
+                "severity": "error",
+                "message": "A non-empty title is present." if title.strip() else "Add a title before review.",
+            },
+            {
+                "id": "body_present",
+                "passed": bool(body.strip()),
+                "severity": "error",
+                "message": "The content body is non-empty." if body.strip() else "Add content before review.",
+            },
+            {
+                "id": "placeholder_text_absent",
+                "passed": not placeholder_hits,
+                "severity": "warning",
+                "message": "No common placeholder markers were found." if not placeholder_hits else (
+                    "Replace placeholder markers: " + ", ".join(placeholder_hits)
+                ),
+            },
+        ]
+        findings = [
+            {"check_id": item["id"], "severity": item["severity"], "message": item["message"]}
+            for item in checks if not item["passed"]
+        ]
+        qa_status = "passed" if not findings else "needs_revision"
+        payload = {
+            "kind": "content_qa_report",
+            "operation": operation,
+            "content_id": content_id,
+            "version": 1,
+            "status": qa_status,
+            "approval_required": approval_required,
+            "approval_status": "pending" if approval_required else "not_required",
+            "title": title,
+            "checks": checks,
+            "findings": findings,
+            "metadata": arguments.get("metadata", {}),
+            "limitations": [
+                "Deterministic structural checks only.",
+                "Does not assess factual accuracy, tone, brand compliance, or legal compliance.",
+            ],
+            "provenance": {
+                "tenant_id": tenant_id,
+                "created_at": _now(),
+                "provider_execution": "not_required",
+            },
+        }
+        artifact = _save_json(tenant_id, f"content-qa-{content_id}.json", payload)
+        return {
+            **artifact,
+            "content_id": content_id,
+            "version": 1,
+            "status": qa_status,
+            "checks": checks,
+            "findings": findings,
+            "approval_required": approval_required,
+            "approval_status": "pending" if approval_required else "not_required",
+            "provider_execution": "not_required",
+        }
+
     payload = {
         "kind": "content_artifact",
         "operation": operation,
@@ -162,7 +231,6 @@ async def execute_content(arguments: dict[str, Any], **context: Any) -> dict[str
         "approval_status": "pending" if approval_required else "not_required",
         "provider_execution": "not_required",
     }
-
 
 async def execute_creative(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     """Record a governed creative request; never fake image/video provider execution."""
