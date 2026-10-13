@@ -305,3 +305,18 @@ Next: cover mismatched tenant/agent and permission denial, stale/mismatched appr
 
 The next engineer/agent should inspect the current workforce operation matrix and choose the next role-operation gap by business value and testability. The content QA report operation is merged and green; it should not be mistaken for a full editorial intelligence system or a production provider integration.
 
+## PR #1106 merged — Content QA full WorkItem lifecycle evidence (2026-10-13)
+
+- PR [#1106](https://github.com/ijoolaie/AI-Employee/pull/1106) squash-merged as [`9e979d10f74cc1f4cb194f7f14e864db728a750b`](https://github.com/ijoolaie/AI-Employee/commit/9e979d10f74cc1f4cb194f7f14e864db728a750b) from exact tested head `413bb22f7d35895e75571a7fe0aa3744d213a0be`.
+- The deterministic Workforce Semantic Real-Stack E2E now provisions a governed Content Producer with `workforce_content_qa`, licenses the tool in the isolated test tenant, and exercises WorkItem assignment → dispatch → worker → successful Run.
+- The test verifies tool-call audit identity, active AgentRuntimeBinding, exactly one tenant-scoped persisted `content_qa_report`, `passed` status, the three expected structural checks, no findings for the clean fixture, tenant provenance, and `provider_execution=not_required`.
+- Exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491568), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491685), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491628), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491491), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491567), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491865), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491574), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491616), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491416), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491734), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38427492157). All 11 exact-head workflow groups completed successfully.
+- The E2E job log explicitly reports `WORKFORCE CONTENT QA FULL WORKITEM LIFECYCLE PASS`, report persistence/provenance PASS, provider-boundary PASS, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
+- Evidence boundary: deterministic structural QA only. This does not prove factual accuracy, brand/tone/legal review, configured external provider execution, publication, customer acceptance, or revenue. Post-merge workflow runs on the merge SHA were not returned by the available workflow query; do not claim a post-merge CI pass.
+- Progress remains A0 100%, A1 30%, A2 25%, A3 0%, A4 0%; actionable progress 52%, full-scope progress 31%. This adds one more operation-level lifecycle proof inside an already represented role; the phase-level rubric has not changed, so no percentage increase is claimed.
+
+
+### Handoff next step
+
+The Content Producer now has full WorkItem lifecycle evidence for article creation, social caption creation, and deterministic structural content QA. The Graphic Designer has full lifecycle evidence for creating and revising a creative request; neither path proves real image rendering. Shift the next slice toward an uncovered role and negative-path coverage instead of continuing to deepen these same role families.
+
