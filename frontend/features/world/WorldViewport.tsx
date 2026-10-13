@@ -666,6 +666,7 @@ function buildOffice(scene: any) {
   }
 
   // Low pastel department platforms make the floor plan readable without hiding the characters.
+  const departmentLabels: any[] = [];
   for (const dept of DEPARTMENTS) {
     box(scene, [9.2, 0.12, 8.1], [dept.x, 0.03, dept.z], dept.color);
     addDepartmentFloorTiles(scene, dept);
@@ -674,6 +675,7 @@ function buildOffice(scene: any) {
       label.position.set(dept.x, 3.9, dept.z - 3.35);
       label.scale.set(4.2, 1.05, 1);
       scene.add(label);
+      departmentLabels.push(label);
     }
     // Glass room partitions create deliberate department boundaries with a centered entrance.
     addVerticalPartitionWall(scene, dept.x - 4.5, dept.z, 7.9, dept.accent);
@@ -711,6 +713,8 @@ function buildOffice(scene: any) {
       }
     }
   }
+
+  scene.userData.departmentLabels = departmentLabels;
 
   // A clear central circulation spine and inset team borders give the HQ a designed, game-like floor plan.
   box(scene, [30, 0.045, 2.8], [0, 0.11, -0.5], 0xd7d4c9, { castShadow: false, receiveShadow: false });
@@ -890,13 +894,13 @@ export function WorldViewport({
     const target = new THREE.Vector3(0, 0, 1.5);
     let distance = 31;
     const updateCamera = () => {
-      // Desktop keeps the full HQ overview. Portrait screens use a closer, pannable crop
-      // so department labels and employees remain legible instead of shrinking to fit the full office.
+      // Desktop keeps the HQ overview. Portrait uses a slightly wider fit to reduce edge clipping
+      // while preserving a useful, pannable playable area.
       const aspect = Math.max(0.35, camera.aspect || 1);
       const portrait = aspect < 1;
       // Portrait uses a more top-down composition rather than merely zooming the
       // desktop camera out; this reduces diagonal skew and keeps the office center readable.
-      const responsiveScale = portrait ? 2.05 : 1;
+      const responsiveScale = portrait ? 2.2 : 1;
       const effectiveDistance = distance * (portrait ? responsiveScale : 1.85);
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
@@ -909,6 +913,10 @@ export function WorldViewport({
         effectiveDistance * (portrait ? 1.55 : 1.08),
         target.z + effectiveDistance * (portrait ? 0.42 : 0.68),
       );
+      const labelScale = portrait ? 1.12 : 1;
+      for (const label of scene.userData.departmentLabels ?? []) {
+        label.scale.set(4.2 * labelScale, 1.05 * labelScale, 1);
+      }
       camera.lookAt(target.x, 0.8, target.z);
       camera.updateProjectionMatrix();
     };
