@@ -616,3 +616,13 @@ Progress: 48% agent-actionable A0–A2; 29% full-scope A0–A4. No increase unti
 5. Keep A3/A4 external acceptance gates visible but outside the agent-actionable progress denominator.
 
 Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-scope 29%.
+
+## Next priority after PR #1094 (2026-10-13)
+
+1. Add runtime governance negative-path tests for tenant/agent mismatch and permission denial; the current #1094 test only asserts tenant and agent predicates are present and that a missing tenant-scoped result is denied.
+2. Cover stale/mismatched approval and replay/idempotency paths; inspect persisted audit/output evidence and provider failure behavior.
+3. Build a minimal reproducible end-to-end workflow with a persisted output and an independently checked target result.
+4. Keep the known unbound Marketing campaign-attribution and Trader order-staging operations non-executable.
+5. PR [#1094](https://github.com/ijoolaie/AI-Employee/pull/1094) merged as `d2fbd94de07ba49aaff1b44bedac2a99abe8325b`; all eight exact-head workflow groups passed. This is a scoped unit test, not full tenant-isolation proof.
+
+Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-scope 29%.
