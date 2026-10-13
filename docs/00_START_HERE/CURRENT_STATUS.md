@@ -1,3 +1,12 @@
+## PR #1092 merged — fail-closed workforce operation contracts (2026-10-13)
+
+- PR [#1092](https://github.com/ijoolaie/AI-Employee/pull/1092) squash-merged as `69c1ad187f8c50ae0ef79808a12d826d0e043bd2` from exact head `89fb498a5af02e2fadab9b41af38dbc1519d7e0f`.
+- Adds parameterized regression coverage for Marketing `analyze_campaign_performance` and Trader `stage_order_for_review`: both must have no Tool Registry binding and attempts to bind them to an arbitrary tool fail closed with the approved-binding validation error.
+- All eight exact-head workflow groups passed on the merged head: CI [38399841561](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841561), CodeQL [38399841477](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841477), Architecture Guard [38399841379](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841379), W21 E2E [38399841400](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841400), Workforce Semantic Real-Stack E2E [38399841437](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841437), Ephemeral DAST [38399841440](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841440), HA Failure Recovery [38399841413](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841413), and Production Infrastructure Validation [38399841486](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841486).
+- The CI failure on the earlier head was an assertion-message mismatch; the regression now expects `Workforce operation has no approved Tool Registry binding`. The existing assertion for the separate wrong-tool-binding case remains unchanged.
+- Scope boundary: no campaign-attribution domain or order-staging capability was implemented. These operations intentionally remain non-executable pending real domain/service implementations and reviewed explicit bindings. CI evidence is engineering evidence, not production/customer validation.
+- Progress remains 48% agent-actionable (A0–A2) and 29% full-scope (A0–A4); no stage acceptance criterion changed.
+
 ## PR #1083 merged — responsive World camera-control anchors (2026-10-13)
 
 - PR [#1083](https://github.com/ijoolaie/AI-Employee/pull/1083) merged by squash as `7ffd7720cbd7c931724a281c875152170d188afe`, from exact PR head `19bc76052955f2b22ceafe43aab2f2983f77fe65`.
