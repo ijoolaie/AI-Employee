@@ -10,6 +10,7 @@ This is the top-level map for current project documentation.
 | Project overview | `00_START_HERE/PROJECT_OVERVIEW.md` |
 | Current state | `00_START_HERE/CURRENT_STATUS.md` |
 | What to do next | `00_START_HERE/CURRENT_PRIORITIES.md` |
+| Capability truth / role-by-role execution audit and commercial readiness | `current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md` |
 | Navigation rules | `00_START_HERE/HOW_TO_NAVIGATE.md` |
 
 ## 2. Current implementation and delivery truth
@@ -24,6 +25,7 @@ This is the top-level map for current project documentation.
 | Current documentation set | `current/README.md` |
 | Production server sizing/baseline | `current/PRODUCTION_SERVER_BASELINE.md` |
 | Production evidence | `current/PRODUCTION_EVIDENCE_INDEX.md` |
+| Production gaps / launch blockers | `current/PRODUCTION_GAP_REGISTER_2026-09-04.md` |
 | Production certification execution | `current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md` |
 | External production execution | `current/EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md` |
 | Code ↔ documentation traceability | `current/CODE_DOCUMENTATION_TRACEABILITY.md` |
