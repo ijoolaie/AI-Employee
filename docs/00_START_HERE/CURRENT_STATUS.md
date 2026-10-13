@@ -1,4 +1,13 @@
-# Current Status — 2026-10-12
+# Current Status — 2026-10-13
+
+## Documentation-truth reconciliation checkpoint — 2026-10-13
+
+- The latest published and exact-SHA certified release documented by the release ledger remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`, certification run `37625345534`, job `112805570856`.
+- This release certification does not certify the mutable current `main` head and does not prove external production deployment, live customer acceptance, or realized revenue.
+- The manifest, production gap register, and production evidence index had older current-state summaries (September / v1.4.11 / v1.4.0-rc.4) even though the README and release ledger recorded v1.4.17. This is documentation drift, not proof that the certified release is invalid.
+- Root-cause assessment and the role-by-role capability audit sequence are recorded in [Capability Reality Audit & Commercial Readiness Plan](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
+- PR #1072 is still a bounded World visual candidate; its own description says manual desktop/mobile visual acceptance is pending. Do not treat it as accepted based only on automated checks.
+- Next work: finish this documentation reconciliation PR; inspect the workflow/process gap that allowed drift; then audit every canonical employee role and execute the highest-value end-to-end workflows with exact, reproducible evidence.
 
 ## Latest verified state
 - Current `main` contains viewport consolidation PR [#1062](https://github.com/ijoolaie/AI-Employee/pull/1062), merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`, and viewport-framing follow-up PR [#1071](https://github.com/ijoolaie/AI-Employee/pull/1071), merged at `ff3a138a4164c793c06678f9ca9d790ab2c14cd8`.
