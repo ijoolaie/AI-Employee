@@ -143,3 +143,8 @@ The persistent agent rules in [`AGENTS.md`](../../AGENTS.md) now require separat
 | **Full-scope context** | **29%** | (100 + 30 + 15 + 0 + 0) / 5 = 29% |
 
 Next repo-actionable work: inspect W8/W9/W23 certification scripts and their current-main evidence; distinguish fixture/real-stack verification from live-provider execution; add the smallest missing positive/negative role acceptance tests; record exact SHA/run evidence. External-only queue remains live provider credentials, production deployment, actual customer pilot/acceptance, receipts and costs. GitHub-hosted CI is a server-run engineering check but does not substitute for a customer-controlled server or live third-party integration.
+
+
+## W8 dependency-trigger audit — 2026-10-13
+
+W8, W9 and W23 scripts were inspected. Their passing real-stack fixture paths establish tenant-scoped governance/artifact behavior and fail-closed provider status, not live provider/customer execution. The scripts explicitly assert `provider_execution=not_configured` for their outward-facing paths. The W8 workflow was missing runtime dependencies in both path filters; [PR #1086](https://github.com/ijoolaie/AI-Employee/pull/1086) adds governance/freshness, license, storage, edition, models, DB core, lockfile, Dockerfile and Compose triggers. Current PR head is `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`; the available run query returned no exact-head workflow runs, so checks remain pending and the PR must not be merged yet. Next: obtain exact-head W8/CI evidence, then prioritize reproducible negative governance tests and continue role-by-role audit.
