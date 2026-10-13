@@ -940,7 +940,7 @@ export function WorldViewport({
     renderer.toneMappingExposure = 1.12;
     renderer.domElement.setAttribute("aria-label", "AI Company World viewport");
     renderer.domElement.dataset.roomAccessState = "denied";
-    renderer.domElement.dataset.workerAssetState = "procedural-fallback";
+    renderer.domElement.dataset.workerAssetState = "loading";
     renderer.domElement.removeAttribute("data-room-instance-id");
     renderer.domElement.setAttribute("role", "img");
     renderer.domElement.tabIndex = 0;
