@@ -556,3 +556,8 @@ Immediate repo/CI-actionable sequence: (1) inspect exact current-main SHA and la
 ## W8 trigger coverage follow-up — 2026-10-13
 
 [PR #1086](https://github.com/ijoolaie/AI-Employee/pull/1086) aligns W8 Customer Success `push` and `pull_request` path filters with its actual runtime dependencies. Current exact head: `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`. GitHub currently reports W8 run [38384054138](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054138) as pending with no jobs returned yet; CodeQL [38384054092](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054092) is in progress. This is **not yet a pass**; do not merge until exact-head results finish and the branch is confirmed mergeable. W8/W9/W23 are fixture-backed real-stack checks and deliberately assert `provider_execution=not_configured`; external provider execution remains outside proven scope.
+
+
+## W10 trigger parity — 2026-10-13
+
+[PR #1087](https://github.com/ijoolaie/AI-Employee/pull/1087) makes the W10 dogfood workflow's `pull_request` paths exactly match its 28 `push` paths (static comparison PASS). Exact head: `3aea69f297fdd3c215f6d592ebac38ace6c7156d`; W10 real-stack [38384295412](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295412) and CodeQL [38384295452](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295452) are in progress. The test stack uses synthetic payment fixtures and an SMTP sink, so this does not prove real receipts or external customer delivery. Hold merge until exact-head checks finish.
