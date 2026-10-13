@@ -54,7 +54,7 @@ async def license_fixture(tenant_id,suffix):
         db.add(vendor); await db.flush()
         reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
         db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_create_visual_asset"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
 async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader",tool_name="workforce_market_research"):
@@ -66,7 +66,7 @@ async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader"
         employee=Employee(tenant_id=tenant_id,slug=f"e2e-workforce-{suffix}-{variant}",name=f"E2E Workforce {variant}",kind="custom",is_active=True)
         db.add(employee); await db.flush()
         output={"type":"object","properties":{"content":{"type":"string"}},"required":["content"]}
-        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=("Produce a draft article." if tool_name=="workforce_produce_article" else "Perform deterministic market research."),allowed_tools=[tool_name],rules={})
+        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=("Produce a draft article." if tool_name=="workforce_produce_article" else ("Prepare a visual asset request." if tool_name=="workforce_create_visual_asset" else "Perform deterministic market research.")),allowed_tools=[tool_name],rules={})
         definition=AgentDefinition(tenant_id=tenant_id,slug=f"e2e-workforce-def-{suffix}-{variant}",name=f"E2E Workforce {variant}",capabilities=["execution"],allowed_tools=[tool_name],model_policy={},input_schema={},output_schema=output,policy_requirements={},enabled=True)
         db.add_all([version,definition]); await db.flush()
         template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-workforce-template-{suffix}-{variant}",name=f"E2E Workforce Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract(role_code),permission_policy={"permissions":["run.execute"],"allowed_tools":[tool_name]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
@@ -189,6 +189,45 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     print("WORKFORCE CONTENT PRODUCER WORKITEM -> DISPATCH -> WORKER -> RUN PASS")
     print(f"WORKFORCE CONTENT ARTIFACT PERSISTENCE + PROVENANCE PASS key={artifact_key}")
     print("WORKFORCE CONTENT PRODUCER AUDIT + RUNTIME BINDING PASS")
+
+    # Exercise Graphic Designer through the same end-to-end worker lifecycle.
+    # The provider is deliberately absent; only a tenant-scoped creative request
+    # may be persisted and provider_execution must remain not_configured.
+    graphic_agent,graphic_version,graphic_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"graphic-designer",role_code="ai_graphic_designer",tool_name="workforce_create_visual_asset")
+    graphic_prompt="Create a clean abstract SaaS launch visual for the product dashboard"
+    graphic_item=await work_item(tenant_id,graphic_agent,suffix,"graphic-designer",request_text=graphic_prompt)
+    assert req("POST",f"/work-items/{graphic_item}/assign/agent",{"agent_instance_id":str(graphic_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{graphic_item}/dispatch",token=token)[0]==200
+    graphic_work,graphic_run=await wait_result(graphic_item)
+    assert graphic_work.status is WorkItemStatus.SUCCEEDED and graphic_run and graphic_run.status=="success", (graphic_work.status,graphic_run.error_message if graphic_run else None)
+    assert graphic_run.agent_instance_id==graphic_agent and graphic_run.employee_version_id==graphic_version
+    await verify_audit(tenant_id,graphic_run.id,tool_name="workforce_create_visual_asset",tool_call_id="e2e-workforce-create-visual-asset-1")
+    creative_keys=get_storage_backend().list_prefix(f"{tenant_id}/")
+    creative_payloads=[]
+    for key in creative_keys:
+        if "creative-" in key and key.endswith(".json"):
+            payload=workforce_semantic_domains._read_json(str(tenant_id),key)
+            if payload.get("prompt")==graphic_prompt:
+                creative_payloads.append((key,payload))
+    assert len(creative_payloads)==1, f"expected one persisted creative request for prompt, got {len(creative_payloads)}"
+    creative_key,creative=creative_payloads[0]
+    assert creative["kind"]=="creative_asset_request" and creative["status"]=="draft"
+    assert creative["provenance"]["tenant_id"]==str(tenant_id)
+    assert creative["provider_execution"]=="not_configured"
+    assert creative["approval_status"]=="not_required"
+    async with AsyncSessionLocal() as db:
+        graphic_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==graphic_definition_id,
+            AgentRuntimeBinding.employee_version_id==graphic_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert graphic_binding is not None
+    print("WORKFORCE GRAPHIC DESIGNER WORKITEM -> DISPATCH -> WORKER -> RUN PASS")
+    print(f"WORKFORCE GRAPHIC REQUEST PERSISTENCE + PROVENANCE PASS key={creative_key}")
+    print("WORKFORCE GRAPHIC PROVIDER BOUNDARY PASS provider_execution=not_configured")
+    print("WORKFORCE GRAPHIC DESIGNER AUDIT + RUNTIME BINDING PASS")
 
     wrong,_,_=await governed_agent(
         tenant_id,
