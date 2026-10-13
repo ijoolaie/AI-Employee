@@ -7,10 +7,10 @@ export type WalkZone = { x: number; z: number };
 export function getWalkBlockers(zones: readonly WalkZone[]): WalkBlocker[] {
   const desks: WalkBlocker[] = zones.flatMap((zone) =>
     [-2.15, 1.0].flatMap((zOffset) =>
-      [-1.8, 1.8].map((xOffset) => ({
+      [-2.3, 2.3].map((xOffset) => ({
         x: zone.x + xOffset,
         z: zone.z + zOffset + 0.25,
-        halfWidth: 1.68,
+        halfWidth: 1.575,
         halfDepth: 1.45,
       })),
     ),
