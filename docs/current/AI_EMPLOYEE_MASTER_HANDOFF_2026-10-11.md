@@ -1,3 +1,11 @@
+## Latest verified handoff — 2026-10-12 after PR #1062 merge
+
+The current source of truth is [AI Employee World Master Handoff 2026-10-12](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md). PR #1062 merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038` after all five exact-head workflow groups passed for source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2`. The earlier artifact had framing issues, corrected by PR #1071. Its exact-head desktop/mobile artifact was reviewed at 1440×900 and 390×844; the full floor is visible in both. Viewport-framing acceptance is met for this bounded criterion; broader visual redesign remains incomplete. See the current World Master Handoff and Visual Follow-up for exact-head evidence.
+
+Do not infer that authored GLB employee models, full pathfinding, foot planting or a production release are complete. Characters remain procedural; collision checks cover static footprints only; latest certified release remains `v1.4.17`.
+
+---
+
 ## Latest user direction — 2026-10-12: World visual reference locked
 
 - User supplied two screenshots: current desktop AI Company HQ (before-state) and a portrait mobile office-management tycoon game (target art-direction reference).
