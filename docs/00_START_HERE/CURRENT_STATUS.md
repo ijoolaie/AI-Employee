@@ -92,3 +92,10 @@ World remains a read-only projection of authorized business state. Do not fabric
 ## Agent-actionable progress and W8 trigger audit — 2026-10-13
 
 Agent-actionable progress is 48% across A0–A2; full-scope context remains 29% across A0–A4. A3/A4 remain open and are excluded only from the actionable denominator. W8/W9/W23 scripts are real-stack certification fixtures and explicitly keep provider execution `not_configured`; no live customer/provider action is established. PR [#1086](https://github.com/ijoolaie/AI-Employee/pull/1086) aligns W8 `push` and `pull_request` dependency filters. Exact head `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`; exact-head workflow results are not yet available, so merge is deferred pending evidence.
+
+
+## Workforce E2E trigger coverage — follow-up (2026-10-13)
+
+- [PR #1086](https://github.com/ijoolaie/AI-Employee/pull/1086), W8 dependency filters, head `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`: CodeQL [38384054092](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054092) passed; W8 real-stack [38384054138](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054138) is still running at build/start, so not yet accepted or merged.
+- [PR #1087](https://github.com/ijoolaie/AI-Employee/pull/1087), W10 push/PR path-filter parity, head `3aea69f297fdd3c215f6d592ebac38ace6c7156d`: static comparison confirms both path lists contain the same 28 entries. W10 real-stack [38384295412](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295412) and CodeQL [38384295452](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295452) are in progress.
+- These are test-trigger coverage fixes, not capability-completion changes. W8/W9/W23 provider execution remains `not_configured`; W10 normal dogfood uses synthetic payment reconciliation and an SMTP test sink. Live provider/customer/real-revenue evidence is still absent. Progress remains 48% agent-actionable and 29% full-scope.
