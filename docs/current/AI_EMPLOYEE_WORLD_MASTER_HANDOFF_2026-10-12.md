@@ -1,3 +1,11 @@
+## PR #1083 merged — responsive World camera-control anchors (2026-10-13)
+
+- PR [#1083](https://github.com/ijoolaie/AI-Employee/pull/1083) merged by squash as `7ffd7720cbd7c931724a281c875152170d188afe`, from exact PR head `19bc76052955f2b22ceafe43aab2f2983f77fe65`.
+- Change: removed the inline `right: 12px` positioning that overrode responsive classes; controls now use `right-3 bottom-4` by default and `sm:left-4 sm:right-auto` on desktop.
+- All five observed exact-head workflow groups passed: [CI / frontend+backend+Playwright 38381090279](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090279), [CodeQL 38381090284](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090284), [Production Infrastructure 38381090299](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090299), [HA Failure Recovery 38381090566](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090566), and [Ephemeral DAST 38381090384](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090384).
+- Fresh [desktop/mobile artifact 11803596084](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090279/artifacts/11803596084) was manually inspected at 1440×900 and 390×844. Desktop controls are bottom-left; mobile controls are bottom-right and visibly separate from the bottom-left joystick.
+- This is a bounded layout fix. It does not complete Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044), skeletal animation, role-specific character art, obstacle-aware pathfinding, release certification, or production deployment. The available workflow wrapper did not return post-merge runs for the merge SHA; post-merge state must not be inferred from pre-merge checks.
+
 ## PR #1082 merged — reduced-motion-aware working employee sway (2026-10-13)
 
 - PR: [#1082](https://github.com/ijoolaie/AI-Employee/pull/1082), squash-merged after exact-head CI/security/infra checks and fresh desktop/mobile screenshot review passed.
@@ -90,3 +98,19 @@ Together with the already-recorded passing post-merge SLO Contract Manual v2 and
 ## Next World work — acceptance remains open
 
 Continue Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) as a separate, reviewable slice. Do not close the issue based on #1082. Next priority is to verify the current employee GLB loader/fallback and animation boundary against the live World route, then address authored asset provenance and obstacle-aware navigation with exact-head desktop/mobile screenshots, console/performance review, and regression checks for selection, touch/keyboard controls, room lock/expiry, tenant-scoped scene access, and reduced motion. Visual acceptance requires review of the actual rendered result; static screenshots alone cannot prove motion behavior.
+
+## Execution-phase progress tracker — 2026-10-13
+
+Percentages below are coarse stage-completion estimates based on the exit criteria in sections A0–A4 and section 8—not code-volume estimates. Overall progress is the unweighted mean of the five stage percentages, rounded to the nearest whole percent. Update these values only when new repository/runtime evidence changes the corresponding acceptance checklist.
+
+| Stage | Progress | Evidence and remaining exit criteria |
+|---|---:|---|
+| A0 — Reconcile source-of-truth documents and add consistency validation | 100% | PRs #1073/#1074 and the documentation consistency check are recorded as complete. Required-check enforcement on `main` remains a governance follow-up, not a hidden completion claim. |
+| A1 — Map every canonical employee role to real execution | 30% | Static source map covers the 12-role workforce catalog. Per-role runtime traces, configured-provider evidence, negative/failure tests, persisted audit review, and acceptance evidence remain incomplete. |
+| A2 — Execute priority end-to-end workflows | 15% | Existing local/component E2E evidence covers parts of the product. The defined content, design, marketing, sales, customer-delivery, finance, and developer/operations workflows are not yet all verified end-to-end against their intended real targets. |
+| A3 — Satisfy commercial launch gates | 0% | No verified live-provider customer pilot, independent delivery acceptance, and reconciled actual receipts/costs have been evidenced here. |
+| A4 — Establish autonomy/reliability acceptance baselines | 0% | Representative supervised-pilot metrics and agreed targets are not established. |
+| **Overall execution phase** | **29%** | Equal-weight average: (100 + 30 + 15 + 0 + 0) / 5 = 29%. This is not a claim that 29% of code or product features exist. |
+
+**Current next stage:** continue A1/A2 with the smallest reproducible real-stack acceptance test, beginning by verifying the current-main W8/W23 Customer Success and W9 QA/DevOps workflow results. Do not claim configured provider execution where the test fixtures explicitly say `provider_execution=not_configured`. Commercial readiness and production certification remain separate gates.
+
