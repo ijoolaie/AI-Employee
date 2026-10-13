@@ -49,7 +49,11 @@ async def test_agent_adapter_outbox_failure_does_not_persist_run_postgres(monkey
             allowed_tools=[],
             rules={},
         )
-        db.add_all([tenant, employee, version])
+        db.add(tenant)
+        await db.flush()
+        db.add(employee)
+        await db.flush()
+        db.add(version)
         await db.commit()
 
         async def authorize(*_args, **_kwargs):
