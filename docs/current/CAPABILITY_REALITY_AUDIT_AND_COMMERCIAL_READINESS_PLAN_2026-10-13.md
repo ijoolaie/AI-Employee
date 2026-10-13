@@ -1,3 +1,35 @@
+# Current workforce progress update — PR #1110 (2026-10-13)
+
+## Newly verified role lifecycle
+
+- PR [#1110](https://github.com/ijoolaie/AI-Employee/pull/1110) squash-merged as [`4e89b5a6ffe7e9b561b404ec6789d2580b492bd0`](https://github.com/ijoolaie/AI-Employee/commit/4e89b5a6ffe7e9b561b404ec6789d2580b492bd0) from exact tested head `2ff32caf5d031aea66577339814b3fdd74cca2b9`.
+- Added AI Software Developer `workforce_workspace_create_file` to the deterministic Workforce Semantic Real-Stack E2E through WorkItem assignment → dispatch → worker → successful Run.
+- Exact-head evidence verifies tool-call audit identity, active runtime binding, one tenant-scoped workspace file, and exact persisted path/content (`src/semantic-e2e.txt`).
+- All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558694), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558732), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558646), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558743), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558786), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558824), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38429559290), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558547), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558760), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558818), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558517).
+- The E2E job log explicitly reports Software Developer workspace-create-file full lifecycle PASS, persisted workspace file and tenant-scope PASS, and the complete semantic matrix PASS.
+
+## Progress calculation
+
+A2 is role-breadth coverage: canonical roles with at least one successful WorkItem assignment → dispatch → worker → Run path divided by the 12-role catalog. Operation count within a role already represented does not increase A2.
+
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle coverage: **5 of 12 roles = 41.7%** (Trader, Content Producer, Graphic Designer, Customer Success, Software Developer)
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcomes: **0%** (external/operational gate; excluded from actionable denominator)
+
+**Actionable progress (A0–A2):** `(100 + 30 + 41.7) / 3 = 57.2%` → **57%**.
+
+**Full-scope progress (A0–A4):** `(100 + 30 + 41.7 + 0 + 0) / 5 = 34.3%` → **34%**.
+
+Evidence boundary: this is a local tenant-scoped workspace file operation. It does not prove provider-backed tests, lint/build, Git operations, code review, deployment, production execution, customer acceptance, or revenue. Post-merge workflow runs for the merge SHA were not returned; validation cited above is exact-head pre-merge evidence.
+
+## Next action
+
+Continue with an unrepresented role (Internal Manager, Marketing, Social Media, Sales, SEO, QA/DevOps, or Website) and add negative/failure-path evidence. Do not count the workspace file path as proof of a full software delivery lifecycle.
+
+---
+
 # Current workforce progress update — PR #1108 (2026-10-13)
 
 ## Newly verified role lifecycle
