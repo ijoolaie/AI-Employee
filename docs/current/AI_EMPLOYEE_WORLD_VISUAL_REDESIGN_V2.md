@@ -1,6 +1,6 @@
 ## Latest implementation checkpoint — 2026-10-12
 
-The viewport-framing portion of this V2 visual contract is **not yet accepted**. Although PR #1062 was merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`, subsequent exact-head CI artifacts showed clipping. The reviewed PR #1071 artifact for head `191ead242c20a7d5681ca4729427a4653cdb889c` now shows the desktop floor fully inside the frame, while the portrait image still clips the left floor boundary; all five workflows passed for that head. The current follow-up candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` tests 1.85 desktop / 2.05 portrait. Keep visual acceptance pending until fresh exact-head workflows and screenshots are reviewed. Exact-head workflow evidence is recorded in [World Master Handoff](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md).
+The viewport-framing criterion is accepted for candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0`: all five exact-head workflows passed and artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` was reviewed at 1440×900 and 390×844; the full floor is visible on both. This is limited to viewport framing and responsive controls, not overall redesign or gameplay completion. Evidence is recorded in [World Master Handoff](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md).
 
 This acceptance is limited to viewport framing/responsive controls and the implemented tests. Employees remain procedural; GLB/GLTF runtime integration, obstacle-aware pathfinding, richer authored workstations and foot-planting animation remain unimplemented. Do not interpret this checkpoint as full visual/gameplay completion or release certification.
 
@@ -91,7 +91,7 @@ Do not merge or certify this work without explicit user approval after the visua
 
 - Corrected two visible layout collisions in the current procedural scene: department planters were placed beside the second desk/chair approach, and the left lobby planter nearly touched the sofa. Planters now use the rear-right corner of each department and the lobby planters sit outside the reception/sofa footprint.
 - Made the locked-room Playwright regression wait for the actual proximity affordance while movement is held, rather than stopping after a fixed 900 ms. The movement change uses acceleration/easing, so a fixed short hold was brittle.
-- Exact-head CI is running for the follow-up commit. These changes are source-level corrections only; they do **not** establish that the scene has been visually approved. No real-browser screenshot/video has been captured from this session, and the cast/furniture still uses procedural primitives rather than authored GLTF assets. Keep both visual PRs Draft pending visual evidence and the remaining redesign work.
+- Historical note: earlier source-only camera changes were not visually accepted until exact-head artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` was reviewed. Employees and furniture still use procedural primitives rather than authored GLTF assets; acceptance here does not imply full redesign completion.
 
 ## 2026-10-11 additional source corrections
 
