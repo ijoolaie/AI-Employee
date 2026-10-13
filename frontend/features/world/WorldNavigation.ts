@@ -1,8 +1,9 @@
 export type WalkBlocker = { x: number; z: number; halfWidth: number; halfDepth: number };
 export type WalkZone = { x: number; z: number };
 
-// Conservative ground-plane footprints for fixed office furniture. The player resolves
-// X and Z independently so movement slides along furniture edges instead of tunnelling.
+// Conservative ground-plane footprints for fixed office furniture and room partitions.
+// The center of each room's inner wall contains a doorway; the remaining wall segments
+// block movement. X/Z resolution lets the player slide along blockers rather than tunnel.
 export function getWalkBlockers(zones: readonly WalkZone[]): WalkBlocker[] {
   const desks: WalkBlocker[] = zones.flatMap((zone) =>
     [-2.15, 1.0].flatMap((zOffset) =>
@@ -14,8 +15,29 @@ export function getWalkBlockers(zones: readonly WalkZone[]): WalkBlocker[] {
       })),
     ),
   );
+
+  const roomWalls: WalkBlocker[] = zones.flatMap((zone) => {
+    const verticalWalls: WalkBlocker[] = [
+      { x: zone.x - 4.5, z: zone.z, halfWidth: 0.08, halfDepth: 3.95 },
+      { x: zone.x + 4.5, z: zone.z, halfWidth: 0.08, halfDepth: 3.95 },
+    ];
+    const innerWallZ = zone.z < 0 ? zone.z + 4 : zone.z - 4;
+    const doorwayHalfWidth = 1.25;
+    const segmentHalfWidth = 1.575;
+    const segmentCenterOffset = doorwayHalfWidth + segmentHalfWidth;
+    const innerWallSegments: WalkBlocker[] = [
+      { x: zone.x - segmentCenterOffset, z: innerWallZ, halfWidth: segmentHalfWidth, halfDepth: 0.08 },
+      { x: zone.x + segmentCenterOffset, z: innerWallZ, halfWidth: segmentHalfWidth, halfDepth: 0.08 },
+    ];
+    const outerWall: WalkBlocker[] = zone.z > 0
+      ? [{ x: zone.x, z: zone.z + 4, halfWidth: 4.4, halfDepth: 0.08 }]
+      : [];
+    return [...verticalWalls, ...innerWallSegments, ...outerWall];
+  });
+
   return [
     ...desks,
+    ...roomWalls,
     { x: 0, z: 0.1, halfWidth: 2.35, halfDepth: 0.95 }, // reception island
     { x: -8, z: 1.6, halfWidth: 2.25, halfDepth: 1.55 }, // sofa and arms
     { x: 0, z: 2.75, halfWidth: 0.95, halfDepth: 0.95 }, // coffee table
