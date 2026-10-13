@@ -4,7 +4,7 @@
 **Validated source head:** `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2`
 
 ## Outcome
-Visual acceptance is **not yet complete**. The historical 1440×900 and 390×844 screenshots are useful evidence, but they showed the desktop front edge and portrait right boundary still tight. Fresh exact-head screenshots are required after the latest camera and test changes. Manual visual approval remains a separate final gate.
+The earlier screenshots showed cropped boundaries. The latest exact-head CI artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` for `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` was reviewed at 1440×900 and 390×844: the full floor is visible in both. All five required workflows passed. Viewport framing is accepted for this criterion; this does not certify the remaining visual redesign or gameplay scope.
 
 Reviewed artifact: [`world-visual-review-10d00b30be9cfc784398ed8a3c4380328684ee3f`](https://github.com/ijoolaie/AI-Employee/actions/runs/38292198575).
 
@@ -19,7 +19,7 @@ Reviewed artifact: [`world-visual-review-10d00b30be9cfc784398ed8a3c4380328684ee3
 ## Implemented
 - Tailwind content scanning now includes feature components, restoring responsive utility classes that were not previously generated.
 - Mobile controls are placed in distinct safe areas: HUD upper-left, compact camera controls upper-right and joystick bottom-left.
-- Desktop camera framing has been iterated through 1.22, 1.35, 1.55 and 1.85. The reviewed `191ead2` artifact shows desktop floor fully visible but portrait left boundary clipped; all five workflows passed for that commit. Current PR #1071 candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` uses 1.85 desktop / 2.05 portrait, pending fresh exact-head workflows and screenshot review.
+- Final reviewed candidate `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` uses 1.85 desktop / 2.05 portrait. Exact-head artifact review confirms the floor fits both viewports, and CI, CodeQL, DAST, HA recovery, and infrastructure validation all passed.
 - The original real-drag assertion depended on taking WebGL canvas screenshots and timed out on CI. PR #1069 now checks that pointer dragging emits `world:pan`; `WorldPan` unit tests validate the projection math. This is input-path coverage, not visual acceptance of the camera result.
 - The browser smoke checks page/console errors and unexpected 5xx responses using deterministic commerce read fixtures.
 
