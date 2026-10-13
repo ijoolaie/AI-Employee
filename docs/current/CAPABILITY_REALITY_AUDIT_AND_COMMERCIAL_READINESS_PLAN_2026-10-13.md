@@ -58,12 +58,12 @@ Each row must also record: owner/role; user-visible promise; entry point; implem
 
 ### A0 — Reconcile truth surfaces (first)
 
-- [ ] Update the current manifest and make its release-vs-engineering-vs-production distinctions explicit.
-- [ ] Reconcile the gap register and evidence index to v1.4.17 while preserving v1.4.11 data only as historical evidence.
-- [ ] Remove or label stale current-state statements in status and priorities; retain dated history as history.
-- [ ] Add this audit plan to the documentation index / start-here path.
-- [ ] Inspect PR #1067/#1071/#1072 exact state and the PR/CI workflow that produced stale statements.
-- [ ] Add a repeatable consistency check or checklist so this drift is caught before merge.
+- [x] Updated the current manifest and made release-vs-engineering-vs-production distinctions explicit (merged via PR #1073).
+- [x] Reconciled the gap register and evidence index to v1.4.17 while preserving v1.4.11 data only as historical evidence (PR #1073).
+- [x] Removed or labeled stale current-state statements in status and priorities; retained dated history as history (PR #1073, with PR #1074 keeping World status current).
+- [x] Added this audit plan to the documentation index / start-here path (PR #1073).
+- [x] Inspected the relevant PR state and CI path filters; confirmed the missing docs paths and absent required-check enforcement (details in section 9).
+- [x] Added a repeatable release-identity consistency validator and workflow in PR #1074; merge and repository required-check enforcement remain pending.
 
 ### A1 — Map every employee role to real execution
 
@@ -110,7 +110,7 @@ Fix stale truth surfaces and blockers first; then select the shortest end-to-end
 
 | Date | Area | Finding / action | Evidence | Status |
 |---|---|---|---|---|
-| 2026-10-13 | Documentation truth | Identified stale manifest, gap register, evidence index, and status/priority snapshots; reconciliation proposed in this PR | README, manifest, release ledger, gap register, evidence index, current status/priority | IN PROGRESS |
+| 2026-10-13 | Documentation truth | Reconciled stale manifest, gap register, evidence index and status/priority snapshots in merged PR #1073; PR #1074 adds a consistency gate | README, manifest, release ledger, gap register, evidence index, current status/priority; PR #1073 and #1074 | RECONCILED; PREVENTION CHECK PENDING MERGE |
 | 2026-10-13 | Commercial readiness | External deployment, customer acceptance, and realized revenue are not verified in repository evidence | README; Versioning Truth; Release Truth Ledger | OPEN |
 | 2026-10-13 | World | PR #1071 viewport framing and PR #1072 glass-partition pass are each accepted only for their bounded criteria; broader World redesign remains open | PR #1071 exact-head artifact; PR #1072 CI run `38356980574`, artifact `11793500701`, merge `c097eedbc5674d788d72b5b3a2d334adba1737e6` | PARTIAL ACCEPTANCE |
 
