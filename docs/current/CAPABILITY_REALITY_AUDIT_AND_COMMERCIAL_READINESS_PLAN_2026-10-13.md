@@ -1,3 +1,11 @@
+## Latest change — rule-based Sales lead qualification (2026-10-14)
+
+PR [#1128](https://github.com/ijoolaie/AI-Employee/pull/1128), merged as [b88f7e663eeef564253aab9f268946b956cb7746](https://github.com/ijoolaie/AI-Employee/commit/b88f7e663eeef564253aab9f268946b956cb7746), adds a deterministic qualification report from five explicit Boolean signals: industry_match, need_confirmed, budget_confirmed, decision_maker_identified and timeline_confirmed. Each confirmed signal contributes 20 points; 80+ is qualified, 40–60 is needs_review, and lower scores are insufficient_evidence. Missing/false signals are reported as unconfirmed. This is local scoring over caller-supplied criteria, not a lead-data source or CRM integration. The artifact states provider_execution=not_configured and external_side_effect=false.
+
+Validation note: W10 real-stack, backend, frontend, contracts and semantic E2E passed on the PR head. One W16 skill-provider real-stack check failed because its fixture omitted active Agent Run context before expecting the human-approval error. This outstanding test-fixture issue must be resolved separately; do not mark the entire CI suite green. A1 remains 30% because this bounded operation does not complete the cross-role capability audit.
+
+---
+
 ## A1 capability trace — Sales & Lead Generation (2026-10-14)
 
 Static source inspection after PR #1125 traced the Sales role contract through the Tool Registry into `workforce_semantic_domains.execute_sales`. Sources inspected: [role contracts](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/ai_workforce_roles.py) at `fda32e5ad6d1e856b91b2559e7c2d323218bb649`, [Tool Registry](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/ai/tool_registry.py) at `b34be46d50f8ebd4b5d68241342bccd7e76d2e5c`, [semantic domains](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/workforce_semantic_domains.py) at `07c1030fc7a8918a6ba083490c8bdb6d91eed7e3`, [outreach provider](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/workforce_sales_outreach_provider.py) at `2c904179b94996842ca7172190f1fda5a2eb22e7`, and [payment provider](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/workforce_sales_payment_provider.py) at `49af313c3762d6dba21dd16809895cd1c121cf4f`.
