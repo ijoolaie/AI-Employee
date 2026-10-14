@@ -1,3 +1,18 @@
+# Audit update — 2026-10-14 — Sales lifecycle completed (PR #1125)
+
+## New role evidence
+
+- PR [#1125](https://github.com/ijoolaie/AI-Employee/pull/1125) merged as `8c9f79904241b9a5899ee38f0067719496fb4913`, exact tested head `92d2654ca3098a9e0f5865a3502fa0f5756c01ba`.
+- All 11 required workflow groups passed on the exact tested head, including Workforce Semantic Real-Stack E2E and W21 E2E.
+- `ai_sales_lead_generation:workforce_lead_research` now has canonical WorkItem → assignment → dispatch → worker → successful Run evidence; audit identity and active runtime binding verified.
+- Boundary: deterministic fixture only; provider `not_configured`. No live lead sourcing, CRM enrichment, external outreach, production result, customer acceptance or revenue is evidenced.
+
+## Revised phase indicators
+
+Role breadth is now **12/12 = 100%**. A0/A1/A2/A3/A4 = **100/30/100/0/0**; actionable progress = **77%**; full-scope context = **46%**. A3/A4 remain unresolved external/operational gates. Next audit step: review each role's real implemented tools, persistence, permissions, provider readiness and failure behavior; prioritize highest-value missing operations and integration gaps.
+
+---
+
 # Workforce progress update — PR #1119 (2026-10-14)
 
 ## Social Media read-only analytics lifecycle proof
