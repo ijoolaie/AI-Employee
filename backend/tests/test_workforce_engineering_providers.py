@@ -679,3 +679,51 @@ def test_github_readonly_provider_fails_closed_for_timeout_http_error_and_invali
     assert result.status == "provider_error"
     assert result.executed is False
     assert expected_type in result.reason
+
+
+@pytest.mark.parametrize("failure_phase", ["lookup", "create"])
+def test_github_branch_provider_handles_response_stream_oserror(monkeypatch, failure_phase):
+    """A failed response read must not escape as an uncaught transport error."""
+    from urllib.error import HTTPError
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class BrokenResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            raise ConnectionResetError("connection reset while reading response")
+
+    calls = []
+
+    def fake_urlopen(request, timeout):
+        calls.append(request.method)
+        if request.method == "GET" and failure_phase == "create":
+            raise HTTPError(request.full_url, 404, "not found", {}, None)
+        return BrokenResponse()
+
+    monkeypatch.setattr("app.services.workforce_engineering_providers.get_settings", lambda: FakeSettings())
+    monkeypatch.setattr("app.services.workforce_engineering_providers.urlopen", fake_urlopen)
+
+    result = GitHubEngineeringProvider().execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={
+            "branch_name": "ai/stream-error",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        },
+    )
+
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert "ConnectionResetError" in result.reason
+    assert calls == (["GET"] if failure_phase == "lookup" else ["GET", "POST"])
+    # For the create phase, the remote write may have reached GitHub even
+    # though reading its response failed; the external outcome is unverified.
