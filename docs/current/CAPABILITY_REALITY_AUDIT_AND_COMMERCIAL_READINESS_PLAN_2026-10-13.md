@@ -1,10 +1,12 @@
-## Latest change — rule-based Sales lead qualification (2026-10-14)
+## Latest change — W16 governed skill-provider fixture repaired (2026-10-14)
 
-PR [#1128](https://github.com/ijoolaie/AI-Employee/pull/1128), merged as [b88f7e663eeef564253aab9f268946b956cb7746](https://github.com/ijoolaie/AI-Employee/commit/b88f7e663eeef564253aab9f268946b956cb7746), adds a deterministic qualification report from five explicit Boolean signals: industry_match, need_confirmed, budget_confirmed, decision_maker_identified and timeline_confirmed. Each confirmed signal contributes 20 points; 80+ is qualified, 40–60 is needs_review, and lower scores are insufficient_evidence. Missing/false signals are reported as unconfirmed. This is local scoring over caller-supplied criteria, not a lead-data source or CRM integration. The artifact states provider_execution=not_configured and external_side_effect=false.
+PR [#1129](https://github.com/ijoolaie/AI-Employee/pull/1129) merged as [ece6b805f02a28b27cb30da34e31dcf2efb132f7](https://github.com/ijoolaie/AI-Employee/commit/ece6b805f02a28b27cb30da34e31dcf2efb132f7), from exact tested head [d593b5650673174ce9579df166f9a72b76904f9e](https://github.com/ijoolaie/AI-Employee/commit/d593b5650673174ce9579df166f9a72b76904f9e). The W16 real-stack fixture now establishes a tenant-scoped Agent Run and approval records before exercising approval denial, deterministic test-provider success, cross-tenant rejection and commercial entitlement denial. W16, backend/frontend CI, W21, Architecture Guard, CodeQL, Ephemeral DAST, HA recovery and Production Infrastructure Validation all passed on the exact PR head.
 
-Validation note: W10 real-stack, backend, frontend, contracts and semantic E2E passed on the PR head. One W16 skill-provider real-stack check failed because its fixture omitted active Agent Run context before expecting the human-approval error. This outstanding test-fixture issue must be resolved separately; do not mark the entire CI suite green. A1 remains 30% because this bounded operation does not complete the cross-role capability audit.
+This resolves the W16 fixture defect; it does not alter production authorization behavior and does not prove live external skill-provider execution. The provider is deterministic and isolated for CI. Production deployment, customer acceptance, commercial readiness and revenue remain unproven. A1 remains 30%; continue the cross-role audit.
 
 ---
+
+
 
 ## A1 capability trace — Sales & Lead Generation (2026-10-14)
 
