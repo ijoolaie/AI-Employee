@@ -100,13 +100,27 @@ class GitHubReadOnlyEngineeringProvider:
                 payload = json.loads(response.read().decode("utf-8"))
         except (HTTPError, URLError, TimeoutError, ValueError) as exc:
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub status read failed: {type(exc).__name__}")
+        # Treat syntactically valid JSON with the wrong shape as a provider
+        # contract failure too; never turn malformed upstream data into a
+        # successful read or leak an AttributeError to the caller.
+        if (
+            not isinstance(payload, dict)
+            or payload.get("state") not in {"pending", "success", "failure", "error"}
+            or not isinstance(payload.get("total_count"), int)
+            or isinstance(payload.get("total_count"), bool)
+            or payload.get("total_count") < 0
+        ):
+            return ProviderResult(
+                self.name, operation, False, "provider_error",
+                "GitHub status read failed: invalid response contract",
+            )
         # Read-only provider never reports external execution.
         return ProviderResult(
             self.name,
             operation,
             False,
             "read_verified",
-            json.dumps({"state": payload.get("state"), "total_count": payload.get("total_count")}, sort_keys=True),
+            json.dumps({"state": payload["state"], "total_count": payload["total_count"]}, sort_keys=True),
         )
 
 
