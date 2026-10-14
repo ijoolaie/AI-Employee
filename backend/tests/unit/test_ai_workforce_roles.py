@@ -304,3 +304,18 @@ def test_every_explicit_workforce_binding_resolves_to_registered_tool() -> None:
                     missing.append((role.code, contract.operation, tool_name))
 
     assert not missing, f"Workforce capability contracts reference unregistered tools: {missing}"
+
+
+
+def test_software_developer_commit_proposal_has_exact_approval_gated_tool_binding() -> None:
+    from app.ai.tool_registry import registry
+    from app.services.ai_workforce_roles import get_workforce_capability_contract
+
+    contract = get_workforce_capability_contract("ai_software_developer", "git_commit_proposal")
+    tool = registry.get("workforce_git_commit_proposal")
+
+    assert contract.tool_names == ("workforce_git_commit_proposal",)
+    assert contract.required_permissions == ("run.execute",)
+    assert contract.approval_required is True
+    assert tool.requires_approval is True
+    assert tool.external_side_effects is True
