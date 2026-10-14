@@ -218,6 +218,42 @@ class GitHubEngineeringProvider:
         except (URLError, OSError, ValueError, HTTPException) as exc:
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch lookup failed: {type(exc).__name__}")
 
+        def reconcile_unknown_create(original_reason: str) -> ProviderResult:
+            """Read once after an ambiguous POST; never repeat the mutation."""
+            try:
+                lookup = Request(base_url, headers=headers, method="GET")
+                with urlopen(lookup, timeout=settings.engineering_github_timeout_seconds) as response:
+                    current = json.loads(response.read().decode("utf-8"))
+                current_ref = current.get("ref") if isinstance(current, dict) else None
+                current_object = current.get("object") if isinstance(current, dict) else None
+                current_sha = current_object.get("sha") if isinstance(current_object, dict) else None
+                expected_ref = f"refs/heads/{branch_name}"
+                if (
+                    current_ref != expected_ref
+                    or not isinstance(current_sha, str)
+                    or not _GITHUB_SHA_RE.fullmatch(current_sha)
+                ):
+                    return ProviderResult(
+                        self.name, operation, False, "outcome_unknown",
+                        f"{original_reason}; reconciliation read was invalid or did not identify the requested ref",
+                    )
+                if current_sha == source_sha:
+                    return ProviderResult(
+                        self.name, operation, False, "reconciled",
+                        json.dumps({"branch": branch_name, "sha": source_sha, "prior_outcome": "unknown"}, sort_keys=True),
+                    )
+                return ProviderResult(
+                    self.name, operation, False, "conflict",
+                    "GitHub branch exists after ambiguous creation but points to a different commit",
+                )
+            except (HTTPError, URLError, OSError, ValueError, HTTPException) as exc:
+                # A 404 or failed read does not prove that the POST was rejected;
+                # GitHub state may be temporarily unavailable or not yet visible.
+                return ProviderResult(
+                    self.name, operation, False, "outcome_unknown",
+                    f"{original_reason}; reconciliation unavailable: {type(exc).__name__}",
+                )
+
         payload = json.dumps({"ref": f"refs/heads/{branch_name}", "sha": source_sha}).encode("utf-8")
         request = Request(
             f"https://api.github.com/repos/{repository}/git/refs",
@@ -231,26 +267,19 @@ class GitHubEngineeringProvider:
             created_object = created.get("object") if isinstance(created, dict) else None
             created_sha = created_object.get("sha") if isinstance(created_object, dict) else None
             if not isinstance(created_sha, str) or not _GITHUB_SHA_RE.fullmatch(created_sha):
-                return ProviderResult(
-                    self.name, operation, False, "outcome_unknown",
-                    "GitHub branch creation outcome unknown: invalid response contract",
-                )
+                return reconcile_unknown_create("GitHub branch creation outcome unknown: invalid response contract")
             if created_sha != source_sha:
-                return ProviderResult(
-                    self.name, operation, False, "outcome_unknown",
-                    "GitHub branch creation outcome unknown: returned SHA does not match requested source SHA",
-                )
+                return reconcile_unknown_create("GitHub branch creation outcome unknown: returned SHA does not match requested source SHA")
         except HTTPError as exc:
             if exc.code == 422:
                 return ProviderResult(self.name, operation, False, "conflict", "GitHub rejected branch creation; the branch may have been created concurrently")
             if exc.code >= 500:
-                return ProviderResult(self.name, operation, False, "outcome_unknown", f"GitHub branch creation outcome unknown: HTTP {exc.code}")
+                return reconcile_unknown_create(f"GitHub branch creation outcome unknown: HTTP {exc.code}")
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch creation failed: HTTP {exc.code}")
         except (URLError, OSError, ValueError, HTTPException) as exc:
-            # A write may have reached GitHub even when its response cannot be
-            # read or decoded. Do not report a definitive failure: callers must
-            # reconcile the branch before attempting another create.
-            return ProviderResult(self.name, operation, False, "outcome_unknown", f"GitHub branch creation outcome unknown: {type(exc).__name__}")
+            # The POST may have succeeded despite an unreadable response. Make
+            # one read-only reconciliation attempt; never retry the write here.
+            return reconcile_unknown_create(f"GitHub branch creation outcome unknown: {type(exc).__name__}")
 
         return ProviderResult(
             self.name, operation, True, "executed",
