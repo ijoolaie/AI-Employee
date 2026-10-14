@@ -37,6 +37,7 @@ class DeterministicProvider:
                 "workforce_workspace_create_file",
                 "workforce_keyword_research",
                 "workforce_qa_test_plan",
+                "workforce_read_analytics",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -112,6 +113,10 @@ class DeterministicProvider:
                             "commit_sha": "0000000000000000000000000000000000000000",
                             "test_scope": "full-regression",
                         },
+                    ),
+                    "workforce_read_analytics": (
+                        "e2e-workforce-read-analytics-1",
+                        {"provider": "instagram", "query": "campaign performance", "channel": "instagram"},
                     ),
                 }
                 call_id, arguments = fixtures[tool.name]
