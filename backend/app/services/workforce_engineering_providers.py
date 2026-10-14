@@ -177,7 +177,7 @@ class GitHubEngineeringProvider:
         if not _GITHUB_SHA_RE.fullmatch(source_sha):
             return ProviderResult(self.name, operation, False, "not_configured", "git_branch requires a 40-character hexadecimal source_sha")
 
-        base_url = f"https://api.github.com/repos/{repository}/git/refs/heads/{branch_name}"
+        base_url = f"https://api.github.com/repos/{repository}/git/ref/heads/{branch_name}"
         headers = {
             "Accept": "application/vnd.github+json",
             "Authorization": f"Bearer {token}",
