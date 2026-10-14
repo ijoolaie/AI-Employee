@@ -280,7 +280,7 @@ def test_github_branch_provider_is_operator_bound_and_idempotent(monkeypatch):
     assert result.executed is False
     assert provider.operations == frozenset({"ci_status", "git_branch"})
     assert provider.external_execution is True
-    assert calls[0][1] == "https://api.github.com/repos/ijoolaie/AI-Employee/git/refs/heads/ai/test-branch"
+    assert calls[0][1] == "https://api.github.com/repos/ijoolaie/AI-Employee/git/ref/heads/ai/test-branch"
     assert calls[0][3] == "Bearer secret-token"
     assert calls[0][4] == 2.5
 
