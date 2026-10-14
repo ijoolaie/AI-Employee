@@ -40,6 +40,7 @@ class DeterministicProvider:
                 "workforce_read_analytics",
                 "workforce_website_requirements",
                 "workforce_prepare_ceo_report",
+                "workforce_prepare_growth_report",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -126,6 +127,10 @@ class DeterministicProvider:
                     ),
                     "workforce_prepare_ceo_report": (
                         "e2e-workforce-prepare-ceo-report-1",
+                        {"window_days": 30},
+                    ),
+                    "workforce_prepare_growth_report": (
+                        "e2e-workforce-prepare-growth-report-1",
                         {"window_days": 30},
                     ),
                 }
