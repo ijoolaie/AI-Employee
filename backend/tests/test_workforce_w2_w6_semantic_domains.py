@@ -328,3 +328,48 @@ async def test_w3_content_qa_runs_deterministic_checks_and_persists_tenant_scope
     }
     with pytest.raises(Exception):
         _read_json("another-tenant", passed["storage_key"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "operation",
+    [
+        "lead_research",
+        "lead_qualification",
+        "crm_enrichment",
+        "prepare_outreach_draft",
+        "prepare_follow_up_queue",
+        "prepare_proposal",
+        "prepare_meeting_request",
+        "pipeline_reporting",
+        "conversion_attribution",
+    ],
+)
+async def test_w5_sales_routine_operations_are_artifacts_not_provider_execution(operation):
+    """Prevent routine sales artifacts from being mistaken for live source-backed work."""
+    from app.services.workforce_semantic_domains import _read_json
+
+    result = await execute_sales(
+        {
+            "_operation": operation,
+            "query": "B2B SaaS",
+            "criteria": {"industry": "software"},
+        },
+        tenant_id="tenant-sales-a",
+    )
+
+    assert result["operation"] == operation
+    assert result["status"] == "draft_or_report"
+    assert result["provider_execution"] == "not_configured"
+    assert result["external_side_effect"] is False
+    assert result["storage_key"].startswith("tenant-sales-a/")
+
+    payload = _read_json("tenant-sales-a", result["storage_key"])
+    assert payload["kind"] == "sales_operation"
+    assert payload["operation"] == operation
+    assert payload["provider_execution"] == "not_configured"
+    assert payload["external_side_effect"] is False
+    assert payload["provenance"]["tenant_id"] == "tenant-sales-a"
+
+    with pytest.raises(Exception):
+        _read_json("tenant-sales-b", result["storage_key"])
