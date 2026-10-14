@@ -778,7 +778,7 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     await verify_cross_tenant_assignment(token,tenant_id,good,suffix)
 
 def main():
-    suffix=str(time.time_ns())[-10:]
+    suffix=uuid.uuid4().hex[:10]
     status,data=req("POST","/auth/register",{"tenant_name":f"Workforce Semantic E2E {suffix}","tenant_slug":f"workforce-semantic-{suffix}","email":f"workforce-semantic-{suffix}@example.com","password":"WorkforceSemanticE2E-2026!","full_name":"Workforce Semantic E2E Owner"})
     assert status==201,data
     token=data["data"]["access_token"]
