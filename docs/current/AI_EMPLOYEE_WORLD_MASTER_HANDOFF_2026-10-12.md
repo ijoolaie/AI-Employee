@@ -1,3 +1,15 @@
+## Progress checkpoint — incomplete HTTP response stream handling merged (2026-10-14)
+
+PR [#1142](https://github.com/ijoolaie/AI-Employee/pull/1142) was squash-merged as [`b3da7b6273e6967d6f34797fb24a5c10a2f92783`](https://github.com/ijoolaie/AI-Employee/commit/b3da7b6273e6967d6f34797fb24a5c10a2f92783), from exact tested head [`605d482d063615a7befa057e2d2916f5e4865679`](https://github.com/ijoolaie/AI-Employee/commit/605d482d063615a7befa057e2d2916f5e4865679). All 17 check runs passed on that exact head.
+
+The GitHub engineering provider now catches `http.client.HTTPException` response-stream failures in addition to transport resets and OS-level read errors. Regression tests cover `ConnectionResetError` and truncated-body `IncompleteRead` for both branch lookup and branch creation; covered failures fail closed as `provider_error` with `executed=False`.
+
+**Evidence boundary:** if the branch-create response body cannot be read, GitHub may already have accepted the write; its external outcome remains unverified. These mocked regression tests and passing CI do not prove live GitHub provider configuration or production execution.
+
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%. Next: continue the source/test-backed Software Developer role audit across role contract → registry → semantic handler → provider → persisted result and failure tests. Do not claim deployment or broad external engineering execution without separate evidence. A3/A4 remain externally gated.
+
+---
+
 # Master handoff checkpoint — 2026-10-14 — PR #1129 merged; W16 fixture repaired
 
 ## Latest verified checkpoint
