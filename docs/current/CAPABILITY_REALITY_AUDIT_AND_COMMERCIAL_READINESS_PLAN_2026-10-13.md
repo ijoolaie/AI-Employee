@@ -8,6 +8,18 @@ This resolves the W16 fixture defect; it does not alter production authorization
 
 
 
+## A1 capability trace — QA/DevOps and Website Employee (2026-10-14)
+
+### AI QA/DevOps
+The W9 semantic E2E registers nine QA/DevOps tools and proves governed WorkItem → assignment → dispatch → worker → successful Run for `workforce_qa_test_plan`. It asserts audit identity, active runtime binding, tenant-scoped `qa_devops_artifact`, repository/commit/test-scope persistence, tenant provenance, `external_side_effect=false` and `provider_execution=not_configured`. The artifact is a test plan; the test log explicitly says `tests_not_executed`. Thus the lifecycle is proven, but test execution, regression execution, CI health retrieval, release readiness checks and incident diagnostics are not proven by this artifact alone. The W2 engineering provider boundary separately supports operator-configured GitHub `ci_status` reads and a narrowly scoped `git_branch` operation; those require tenant-mapped repository/token configuration and must not be generalized to build/test/deploy or PR/commit automation. The default provider fails closed.
+
+### AI Website Employee
+The W6 real-stack E2E proves governed tenant-scoped website requirement artifacts, approval-gated deploy proposals, persisted provenance and fail-closed provider behavior. In `execute_website`, website operations persist a `website_change` artifact; `website_deploy` and `website_rollback` are marked as external-side-effect-capable proposals but still return `provider_execution=not_configured`, `status=proposal` and pending approval. The marker describes the action's risk class, not a completed deployment. No actual site build, preview, accessibility scan, health check, deployment or rollback is proven by this semantic handler or W6 fixture.
+
+**A1 disposition:** these are valid governance/lifecycle foundations, not end-to-end execution proof. Next implementation target should be a read-only, operator-configured website health/preview check with bounded URL/repository configuration, timeout and response validation, tenant mapping, audit provenance and tests for missing config, malformed responses and cross-tenant denial. Do not implement deployment/rollback until a separately reviewed provider and approval flow are verified.
+
+---
+
 ## A1 capability trace — AI Internal Manager and Marketing Manager (2026-10-14)
 
 ### AI Internal Manager
