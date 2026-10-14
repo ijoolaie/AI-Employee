@@ -1,23 +1,19 @@
-## Handoff checkpoint — 2026-10-14: SEO lifecycle merged; website health PR open
+## Handoff checkpoint — 2026-10-14: website health provider merged; A1 audit continues
 
 ### Verified completion
-- PR [#1132](https://github.com/ijoolaie/AI-Employee/pull/1132) merged as [`5c62de7a399250332716dc714bd9f53d09bfce38`](https://github.com/ijoolaie/AI-Employee/commit/5c62de7a399250332716dc714bd9f53d09bfce38), from exact tested head `5e0d34df85021be1ddfc24aa551e12a6aa25911d`.
-- All 11 required workflow groups passed on that exact head. Semantic E2E logs explicitly report SEO keyword-research full WorkItem lifecycle PASS, artifact + tenant provenance PASS, provider boundary PASS, and matrix PASS.
-- Evidence boundary: the SEO path persists caller-supplied research context; it does not query a search engine, ingest Search Console data, or prove ranking/traffic outcomes.
+- PR [#1132](https://github.com/ijoolaie/AI-Employee/pull/1132) merged as [`5c62de7a399250332716dc714bd9f53d09bfce38`](https://github.com/ijoolaie/AI-Employee/commit/5c62de7a399250332716dc714bd9f53d09bfce38), from exact tested head `5e0d34df85021be1ddfc24aa551e12a6aa25911d`. It proves persisted caller-supplied SEO research context, not external search-engine execution or SEO outcomes.
+- PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) squash-merged as [`dce5371656fba372b0df06f3c25a010fdbb7e747`](https://github.com/ijoolaie/AI-Employee/commit/dce5371656fba372b0df06f3c25a010fdbb7e747) from exact tested head [`cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54`](https://github.com/ijoolaie/AI-Employee/commit/cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54). All 32 check runs passed on that exact head.
+- The merged website health path is read-only and tenant-scoped. It uses operator-configured HTTPS targets, bounded timeouts, disabled redirects, URL safety validation and persisted health evidence.
 
-### Current work
-- PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) introduces an operator-configured, tenant/site-mapped, read-only website health provider.
-- Current PR acceptance is pending exact-head CI. Do not merge before all required checks pass.
-- No live website target, external provider result, website preview/build, deployment, rollback, production deployment, customer acceptance or revenue is proven by this implementation.
+### Evidence boundary
+- No live website target is configured or verified by this code change; production website health remains unproven.
+- Website preview/build/deploy/rollback is not implemented by this increment. A passing CI suite does not establish production deployment, customer acceptance or revenue.
+- A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable 77%; full-scope 46%.
 
 ### Ordered next actions
-1. Check all PR #1135 workflows and inspect logs for failures.
-2. Fix only evidence-backed issues; rerun checks on the new exact head.
-3. Merge only after all required checks pass; record the tested head and merge SHA.
-4. Continue the A1 role-by-role capability audit without increasing A1 based only on lifecycle evidence.
-5. Keep A3/A4 externally gated until real pilot/operational/customer evidence exists.
-
-A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%; full-scope context 46%. These are rubric indicators, not commercial readiness.
+1. Continue the source/test-backed A1 role-by-role capability audit, tracing operations through provider selection, tenant-scoped persistence, authorization/approval and negative paths.
+2. Select the next bounded implementation only after source review identifies a concrete gap and its tests/acceptance criteria.
+3. Validate real provider configuration and operational/release gates separately; keep A3/A4 externally gated until real pilot/operational/customer evidence exists.
 
 ---
 
