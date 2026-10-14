@@ -849,3 +849,9 @@ last Phase 1 baseline; historical As-Built snapshots remain preserved.
 - PR #983 was merged into main with squash merge commit f3f7ad6c169a5e31b1773b4a280af43b49c020c7.
 - All 17 workflows on the documentation-updated PR head a0952cc44444e5c04c4c245653e59227b3a88a82 completed successfully before merge, including CI, CodeQL, HA recovery, DAST and production infrastructure validation.
 - Manual desktop/mobile visual QA and production release certification remain outstanding. Live payment verification, wallet/ledger, lease/fulfillment automation, persistent 3D customization, support replies/attachments and impersonation remain unimplemented.
+
+## 2026-10-14 — PR #1162 merged
+
+- Merged PR #1162 as `ed3d27bc22cc3b89752e3f237aac9d68cba15f48`; all 16 check runs passed on exact tested head `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`.
+- Durable provider audit status now distinguishes `reconciled` from ordinary `success` and preserves `outcome_unknown`. `reconciled` means a read-only GET confirmed the expected ref/SHA after an ambiguous branch-create response; it does not establish that the current invocation created the branch.
+- This is automated test/CI evidence, not proof of live GitHub mutation, production configuration, deployment, or production readiness.
