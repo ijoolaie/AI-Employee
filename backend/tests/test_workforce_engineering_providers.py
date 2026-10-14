@@ -838,3 +838,41 @@ def test_github_branch_provider_reports_server_error_after_create_as_unknown(mon
     assert result.status == "outcome_unknown"
     assert result.executed is False
     assert result.reason == "GitHub branch creation outcome unknown: HTTP 503"
+
+
+@pytest.mark.asyncio
+async def test_engineering_domain_preserves_unknown_branch_write_outcome(monkeypatch):
+    """The semantic handler must not collapse an uncertain remote write into failure."""
+    from app.services import workforce_semantic_domains as domains
+    from app.services import workforce_engineering_providers as providers
+
+    class FakeProvider:
+        name = "github"
+        operations = frozenset({"ci_status", "git_branch"})
+        external_execution = True
+
+        def execute(self, operation, *, tenant_id, arguments):
+            return providers.ProviderResult(
+                provider=self.name,
+                operation=operation,
+                executed=False,
+                status="outcome_unknown",
+                reason="GitHub branch creation outcome unknown: HTTP 503",
+            )
+
+    monkeypatch.setattr(domains, "get_configured_engineering_provider", lambda: FakeProvider())
+
+    result = await execute_engineering(
+        {
+            "_operation": "git_branch",
+            "branch_name": "ai/ambiguous-create",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        },
+        tenant_id="tenant-a",
+    )
+
+    assert result["status"] == "outcome_unknown"
+    assert result["provider_execution"] == "outcome_unknown"
+    assert result["executed"] is False
+    assert result["external_side_effect"] is True
+    assert result["provider_reason"] == "GitHub branch creation outcome unknown: HTTP 503"
