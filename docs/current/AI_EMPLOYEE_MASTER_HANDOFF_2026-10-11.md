@@ -1,3 +1,15 @@
+## Handoff update — PR #1160 merged (2026-10-14)
+
+### Verified completion
+- PR [#1160](https://github.com/ijoolaie/AI-Employee/pull/1160) squash-merged as [`5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd`](https://github.com/ijoolaie/AI-Employee/commit/5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd) from exact tested head [`0ee845eb4499234db653e96e51264e07cca254fe`](https://github.com/ijoolaie/AI-Employee/commit/0ee845eb4499234db653e96e51264e07cca254fe); all 17 check-runs passed.
+- Ambiguous branch-create outcomes trigger one read-only GET of the exact ref. If the ref points to the requested source SHA, return `reconciled`; if it points elsewhere, return `conflict`; if it is missing, malformed, or unavailable, preserve `outcome_unknown`. The POST is never blindly retried.
+- Regression tests cover exact-SHA reconciliation, 404 preserving unknown outcome, mismatched-SHA conflict, malformed create responses, stream failures, and server errors.
+
+### Evidence boundary and next work
+This is mocked-test and CI evidence only. It does not prove live GitHub mutation, configured production credentials, or production readiness. The provider still supports CI-status reads and branch creation only; Git commit, PR creation, deploy, and rollback are unsupported. Next: continue the existing role-operation trace only to a concrete, reproducible gap, then separately arrange supervised verification of operator configuration before any live write. Keep rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full scope 46%.
+
+---
+
 ## Handoff addendum — PR #1157/#1158 provider outcome audit (2026-10-14)
 
 

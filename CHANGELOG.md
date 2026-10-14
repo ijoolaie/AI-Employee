@@ -1,3 +1,11 @@
+## 2026-10-14 — Reconcile ambiguous GitHub branch-create writes (#1160)
+
+- PR #1160 squash-merged as `5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd` from exact tested head `0ee845eb4499234db653e96e51264e07cca254fe`; all 17/17 check-runs succeeded.
+- An ambiguous branch-create POST is followed by exactly one read-only GET for the requested ref; the POST is never retried. Exact ref + requested SHA reports `reconciled`; a different SHA reports `conflict`; missing, malformed, or unavailable reconciliation retains `outcome_unknown`.
+- Regression tests are mocked and do not establish live GitHub mutation or production readiness. Provider support remains CI-status reads and branch creation only; commit/PR/deploy/rollback are not implemented.
+
+---
+
 ## 2026-10-14 — Durable audit of unknown provider outcomes (#1157/#1158)
 
 
