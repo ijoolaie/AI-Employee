@@ -1,3 +1,14 @@
+## Current priority update — 2026-10-14 (after PR #1153)
+
+1. Continue the Software Developer provider audit with exact source/tests and close only a demonstrated correctness or safety gap.
+2. Keep the real-operation boundary explicit: provider support currently covers GitHub CI-status reads and branch creation only; commit/PR/deploy/rollback execution is not implemented by this adapter.
+3. Verify operator configuration and supervised live behavior separately before claiming an external GitHub write path is operational. Do not substitute mocked tests or CI for this evidence.
+4. Preserve progress scores until the broader A1 role/operation evidence threshold is met; A3/A4 remain externally gated.
+
+Completed immediately before this checkpoint: PR #1152 corrected the Git reference lookup route; PR #1153 added per-component branch-ref validation. PR #1153 passed all 17 checks on its exact head before squash merge.
+
+---
+
 ## Progress checkpoint — PR #1150 workspace-key collision fix merged (2026-10-14)
 
 - PR [#1150](https://github.com/ijoolaie/AI-Employee/pull/1150) was squash-merged into `main` as [`5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7`](https://github.com/ijoolaie/AI-Employee/commit/5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7) from exact tested head [`7335e2d90bfd0057560343794c168a59b6fd2e81`](https://github.com/ijoolaie/AI-Employee/commit/7335e2d90bfd0057560343794c168a59b6fd2e81).
