@@ -1,9 +1,9 @@
-## Current priorities — SEO lifecycle merged; website health slice under validation (2026-10-14)
+## Current priorities — website health merged; continue A1 capability audit (2026-10-14)
 
-1. **Finish PR #1135 safely.** Inspect exact-head CI, provider boundary tests and semantic artifact tests; fix any grounded failure and merge only when every required workflow passes. PR: https://github.com/ijoolaie/AI-Employee/pull/1135.
-2. **Preserve the evidence boundary.** SEO PR #1132 merged with 11/11 workflow groups green on exact head. It proves a persisted caller-supplied keyword-research artifact, not external search-engine execution or SEO outcomes.
-3. **Continue A1 capability reality audit.** Role lifecycle breadth A2 remains 12/12 = 100%; do not inflate A1 from lifecycle-only proof. Keep operation classifications tied to source, tests, permission/approval boundaries and provider state.
-4. **Keep external gates separate.** Production deployment, live provider configuration, measured operational SLO/DR, customer acceptance and revenue remain unverified.
+1. **Continue A1 capability reality audit.** Trace remaining role operations from contract → registry/handler → provider → persistence → tests, including failure paths, tenant isolation, authorization and approval boundaries. Keep A1 at 30% until the defined broader audit threshold is met.
+2. **Use PR #1135 as bounded engineering evidence.** [PR #1135](https://github.com/ijoolaie/AI-Employee/pull/1135) merged as [`dce5371656fba372b0df06f3c25a010fdbb7e747`](https://github.com/ijoolaie/AI-Employee/commit/dce5371656fba372b0df06f3c25a010fdbb7e747) from exact tested head [`cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54`](https://github.com/ijoolaie/AI-Employee/commit/cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54); all 32 exact-head check runs passed. It adds a read-only configured website health check, not live production verification or website deployment.
+3. **Preserve SEO evidence boundaries.** PR #1132 proves persistence of caller-supplied keyword-research context, not external search-engine execution or SEO outcomes.
+4. **Keep external gates separate.** Live provider configuration, production deployment, measured operational SLO/DR, customer acceptance and revenue remain unverified.
 
 Progress indicators unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%. These are engineering rubric indicators, not commercial readiness.
 
