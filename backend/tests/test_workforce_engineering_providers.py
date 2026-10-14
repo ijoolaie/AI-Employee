@@ -580,9 +580,9 @@ def test_github_branch_provider_rejects_malformed_creation_response(monkeypatch)
             "source_sha": "0123456789abcdef0123456789abcdef01234567",
         },
     )
-    assert result.status == "provider_error"
+    assert result.status == "outcome_unknown"
     assert result.executed is False
-    assert result.reason == "GitHub branch creation failed: invalid response contract"
+    assert result.reason == "GitHub branch creation outcome unknown: invalid response contract"
 
 
 def test_github_branch_provider_rejects_created_sha_mismatch(monkeypatch):
@@ -630,8 +630,9 @@ def test_github_branch_provider_rejects_created_sha_mismatch(monkeypatch):
             "source_sha": "0123456789abcdef0123456789abcdef01234567",
         },
     )
-    assert result.status == "provider_error"
+    assert result.status == "outcome_unknown"
     assert result.executed is False
+    assert "outcome unknown" in result.reason
     assert "does not match requested source SHA" in result.reason
 
 
@@ -740,12 +741,14 @@ def test_github_branch_provider_handles_response_stream_errors(
         },
     )
 
-    assert result.status == "provider_error"
+    assert result.status == ("provider_error" if failure_phase == "lookup" else "outcome_unknown")
     assert result.executed is False
     assert expected_type in result.reason
+    if failure_phase == "create":
+        assert "outcome unknown" in result.reason
     assert calls == (["GET"] if failure_phase == "lookup" else ["GET", "POST"])
     # For the create phase, the remote write may have reached GitHub even
-    # though reading its response failed; the external outcome is unverified.
+    # though reading its response failed; the explicit status preserves that uncertainty.
 
 
 def test_github_readonly_provider_handles_truncated_response_body(monkeypatch):
@@ -804,3 +807,34 @@ def test_github_provider_fails_closed_for_unimplemented_commit_proposal() -> Non
     assert result.executed is False
     assert result.status == "not_configured"
     assert "does not execute this operation" in result.reason
+
+
+def test_github_branch_provider_reports_server_error_after_create_as_unknown(monkeypatch):
+    """A 5xx after POST cannot prove whether GitHub applied the branch write."""
+    from urllib.error import HTTPError
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    def fake_urlopen(request, timeout):
+        if request.method == "GET":
+            raise HTTPError(request.full_url, 404, "not found", {}, None)
+        raise HTTPError(request.full_url, 503, "service unavailable", {}, None)
+
+    monkeypatch.setattr("app.services.workforce_engineering_providers.get_settings", lambda: FakeSettings())
+    monkeypatch.setattr("app.services.workforce_engineering_providers.urlopen", fake_urlopen)
+
+    result = GitHubEngineeringProvider().execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={
+            "branch_name": "ai/ambiguous-create",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        },
+    )
+
+    assert result.status == "outcome_unknown"
+    assert result.executed is False
+    assert result.reason == "GitHub branch creation outcome unknown: HTTP 503"
