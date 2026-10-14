@@ -1,8 +1,8 @@
-## Current priorities — PR #1128 merged (2026-10-14)
+## Current priorities — PR #1129 merged; W16 fixture checks green (2026-10-14)
 
-1. **Resolve W16 real-stack fixture failure.** The fixture invokes workforce_execute_installed_skill without agent_tool_context while supplying DB/tenant arguments; the governance wrapper correctly fails closed before the expected approval assertion. Build a valid tenant-scoped Agent Run/approval fixture rather than weakening the guard or merely changing the assertion.
-2. **Continue A1 capability reality audit** across remaining canonical workforce operations. Keep A1 at 30% until materially more operations have source/test-backed classifications.
-3. **Preserve the qualification evidence boundary.** PR #1128 adds a transparent score over supplied Boolean signals only; provider_execution=not_configured remains true and no live sourcing or CRM enrichment is proven.
+1. **Continue A1 capability reality audit** across remaining canonical workforce operations. Keep A1 at 30% until materially more operations have source/test-backed classifications.
+2. **Use the repaired W16 test as bounded governance evidence.** PR [#1129](https://github.com/ijoolaie/AI-Employee/pull/1129) merged as [ece6b805f02a28b27cb30da34e31dcf2efb132f7](https://github.com/ijoolaie/AI-Employee/commit/ece6b805f02a28b27cb30da34e31dcf2efb132f7); the exact tested head passed W16, backend/frontend CI, W21, Architecture Guard, CodeQL, DAST, HA recovery and infrastructure validation. This is test-provider evidence, not proof of a live external provider.
+3. **Preserve the qualification evidence boundary.** PR #1128 scores five supplied Boolean signals only; provider_execution=not_configured remains true and no live sourcing or CRM enrichment is proven.
 4. **Progress indicators unchanged:** A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%. These are engineering rubric indicators, not commercial readiness.
 
 ---
