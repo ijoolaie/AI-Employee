@@ -77,9 +77,11 @@ def _provider_audit_metadata(tool_result: Any) -> dict[str, Any]:
 
 
 def _tool_audit_status(tool_result: Any, default_status: str) -> str:
-    """Do not audit an ambiguous provider write as a successful tool call."""
-    if isinstance(tool_result, dict) and tool_result.get("provider_execution") == "outcome_unknown":
-        return "outcome_unknown"
+    """Preserve provider outcome semantics in durable tool-call audit status."""
+    if isinstance(tool_result, dict):
+        provider_execution = tool_result.get("provider_execution")
+        if provider_execution in {"outcome_unknown", "reconciled"}:
+            return provider_execution
     return default_status
 
 
