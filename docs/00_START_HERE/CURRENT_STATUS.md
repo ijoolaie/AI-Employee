@@ -16,6 +16,8 @@ A1 audit increment: AI Internal Manager's assignment/report paths and AI Marketi
 
 A1 audit increment: QA/DevOps W9 proves governed test-plan artifact lifecycle only; the artifact explicitly says tests were not executed. Website W6 proves tenant-scoped change artifacts and approval-gated deploy proposals, not live build/deploy/rollback. The engineering provider has a bounded operator-configured GitHub CI-status read and branch operation, while the default provider fails closed. See the capability reality audit for exact boundaries.
 
+A1 audit increment: Content Producer drafts and its QA are tenant-scoped; QA checks only title/body presence and common placeholders. Graphic Designer records requests without generating media. Social Media records requests/proposals but does not publish, schedule, connect channels or respond to DMs. Provider execution remains not configured for creative/social. Exact limits are in the capability reality audit.
+
 ---
 
 # Workforce progress update — PR #1125 (2026-10-14)
