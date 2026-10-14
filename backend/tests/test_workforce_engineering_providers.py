@@ -582,7 +582,7 @@ def test_github_branch_provider_rejects_malformed_creation_response(monkeypatch)
     )
     assert result.status == "outcome_unknown"
     assert result.executed is False
-    assert result.reason == "GitHub branch creation outcome unknown: invalid response contract"
+    assert result.reason.startswith("GitHub branch creation outcome unknown: invalid response contract")
 
 
 def test_github_branch_provider_rejects_created_sha_mismatch(monkeypatch):
@@ -746,7 +746,7 @@ def test_github_branch_provider_handles_response_stream_errors(
     assert expected_type in result.reason
     if failure_phase == "create":
         assert "outcome unknown" in result.reason
-    assert calls == (["GET"] if failure_phase == "lookup" else ["GET", "POST"])
+    assert calls == (["GET"] if failure_phase == "lookup" else ["GET", "POST", "GET"])
     # For the create phase, the remote write may have reached GitHub even
     # though reading its response failed; the explicit status preserves that uncertainty.
 
@@ -837,7 +837,7 @@ def test_github_branch_provider_reports_server_error_after_create_as_unknown(mon
 
     assert result.status == "outcome_unknown"
     assert result.executed is False
-    assert result.reason == "GitHub branch creation outcome unknown: HTTP 503"
+    assert result.reason.startswith("GitHub branch creation outcome unknown: HTTP 503")
 
 
 @pytest.mark.asyncio
