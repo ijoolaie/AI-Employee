@@ -16,6 +16,10 @@ Evidence boundary: the successful provider is a deterministic isolated test fixt
 4. Complete deployment-specific operations and release gates: monitoring/SLOs, backup/restore, recovery, security configuration and rollback evidence.
 5. Run a supervised pilot and gather operator/customer acceptance, reliability, cost and outcome evidence before claiming commercial readiness or revenue.
 
+## A1 audit increment — Content Producer, Graphic Designer and Social Media
+
+Content Producer persists drafts; `content_qa` checks title/body presence and common placeholders only, not factual accuracy, tone, brand or legal compliance. Graphic Designer persists creative requests but reports `provider_execution=not_configured` and generates no actual media. Social Media persists requests/proposals and does not publish, schedule, connect channels or respond to DMs. Next safe improvement should be a bounded deterministic content preflight or read-only website health check, with tests and no inflated capability claims.
+
 ## A1 audit increment — QA/DevOps and Website Employee
 
 W9 proves the QA test-plan artifact's governed lifecycle but explicitly records that tests were not executed. W6 proves website change artifacts and approval-gated deploy proposals with provider fail-closed behavior; no live website build, health check, deployment or rollback is proven. The engineering provider has bounded operator-configured GitHub CI-status read and branch operations; the default remains fail-closed. Recommended next technical slice: a read-only, tenant-mapped website health/preview check with timeout, response validation, audit provenance and negative-path tests, not deployment.
