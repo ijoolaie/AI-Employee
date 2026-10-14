@@ -937,3 +937,12 @@ Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-
 3. Semantic matrix also confirms wrong-role, stale-capability, approval-required, and cross-tenant denial checks. Evidence is limited to a read-only tenant-scoped report; it does not prove autonomous workforce decisions, hiring, budget commitments, or production outcomes.
 4. Role coverage: 10/12 = 83.3%. Progress: A0 100%, A1 30%, A2 83.3%, A3 0%, A4 0%; actionable 71%, full-scope 43%.
 5. Next: continue the role-by-role capability audit with priority on the two roles lacking canonical lifecycle coverage, then test remaining high-value operation gaps and failure/negative paths. Keep real-provider execution, deployment, customer acceptance, revenue, and production reliability as unverified external gates.
+
+
+## Execution update — 2026-10-14 (PR #1124)
+
+1. PR #1124 merged as `42cb0024a79ddeff79d5a5ad029dc0c98baf1967`, tested on exact head `db7ad80181c56dc000aa8662dd467544c8192b31`; all 11 required workflow groups passed on that exact head.
+2. `ai_marketing_advertising_manager:workforce_prepare_growth_report` passes the deterministic real-stack WorkItem → assignment → dispatch → worker → successful Run lifecycle, audit/runtime correlation, and tenant-scoped read-only report boundary. Run: https://github.com/ijoolaie/AI-Employee/actions/runs/38529979935
+3. Coverage is 11/12 roles (91.7%). Remaining canonical lifecycle target: `ai_sales_lead_generation`.
+4. Next priority: certify a safe, non-external sales operation through the full lifecycle, with explicit tenant isolation and negative-path tests. Do not execute external outreach, payment/checkout, or material commercial actions as part of the fixture.
+5. Progress: A0 100%, A1 30%, A2 91.7%, A3 0%, A4 0%; actionable 74%, full-scope 44%. Live provider execution, production outcomes, customer acceptance, and revenue remain unproven.
