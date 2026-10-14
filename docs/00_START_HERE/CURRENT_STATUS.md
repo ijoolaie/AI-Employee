@@ -10,6 +10,8 @@ PR [#1129](https://github.com/ijoolaie/AI-Employee/pull/1129) was squash-merged 
 
 Next: continue the cross-role A1 capability reality audit with source/test-backed evidence, then validate configured provider integrations and operational/release gates, and finally collect supervised pilot/customer outcome evidence. Keep production and commercial claims bounded by evidence.
 
+A1 audit increment: the AI Trader contract, registry wrappers, three provider adapters and their unit tests have now been traced. The three wired operations are read-only market research, risk analysis and non-executing trading-plan preparation; they fail closed without configured provider/tenant context. No live market-data integration, broker connection or order execution is proven. See the AI Trader section in the capability reality audit.
+
 ---
 
 # Workforce progress update — PR #1125 (2026-10-14)
