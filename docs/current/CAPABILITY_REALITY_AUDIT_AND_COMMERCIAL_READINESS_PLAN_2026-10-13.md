@@ -1,3 +1,13 @@
+## Progress checkpoint — provider response stream errors fixed and merged (2026-10-14)
+
+PR [#1141](https://github.com/ijoolaie/AI-Employee/pull/1141) was squash-merged as [`d1751bea33b6fd0c0eb024cc11984dba754dab78`](https://github.com/ijoolaie/AI-Employee/commit/d1751bea33b6fd0c0eb024cc11984dba754dab78), from exact tested head [`c142997b06a19446015f57b04e31cbf3e9b7c4b2`](https://github.com/ijoolaie/AI-Employee/commit/c142997b06a19446015f57b04e31cbf3e9b7c4b2). All 17 check runs passed on that exact head. The change handles generic `OSError` response-body read failures and adds regression tests for connection reset during branch lookup and branch-create response reads.
+
+**Evidence boundary:** on a branch-create response stream failure, GitHub may already have accepted the write; external outcome remains unverified. The tests do not prove live GitHub connectivity or production provider configuration.
+
+A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%; full-scope context 46%. Next audit slice: trace the Software Developer role contract through registry, semantic handler, provider boundary and tests, while preserving approval and tenant-isolation constraints. No score increase until the broader A1 rubric is met.
+
+---
+
 ## Progress checkpoint — GitHub CI-status provider failure-path tests merged (2026-10-14)
 
 PR [#1139](https://github.com/ijoolaie/AI-Employee/pull/1139) was squash-merged as [`bdf6efbc777af41d2fb8081ff93708bc0aed8c33`](https://github.com/ijoolaie/AI-Employee/commit/bdf6efbc777af41d2fb8081ff93708bc0aed8c33) from exact tested head [`e7c3f31842f0449451633b337ce60e0623c62080`](https://github.com/ijoolaie/AI-Employee/commit/e7c3f31842f0449451633b337ce60e0623c62080). All 13 check runs passed on that exact head, including frontend, backend, provider-contract, semantic E2E, security, infrastructure, architecture, and recovery checks.
