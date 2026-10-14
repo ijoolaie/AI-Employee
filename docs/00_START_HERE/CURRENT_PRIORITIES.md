@@ -1,3 +1,11 @@
+## A1 audit checkpoint — Sales capability reality (2026-10-14)
+
+A focused source trace of Sales & Lead Generation is complete, but the broader A1 audit remains in progress. Nine routine Sales operations currently route through a shared handler that persists generic tenant-scoped `sales_operation` artifacts; static inspection did not establish live lead sourcing, CRM enrichment, pipeline analytics or conversion attribution. External outreach and payment checkout have separate provider boundaries and approval controls, but their real execution is not proven by the Sales lifecycle E2E. See the latest [capability audit](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
+
+Next: build the cross-role evidence matrix (contract → registered tool → handler → persistence/data source → approval/permission → test → provider state), then select the highest-value gap for a bounded implementation/test. Keep A1 at 30% until the audit covers materially more roles and operations.
+
+---
+
 # Current priorities — checkpoint after PR #1125 (2026-10-14)
 
 ## Latest verified state
