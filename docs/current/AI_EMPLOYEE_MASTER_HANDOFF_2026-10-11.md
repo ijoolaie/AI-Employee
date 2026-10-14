@@ -1,3 +1,17 @@
+## Handoff addendum — PR #1152 and #1153 (2026-10-14)
+
+### Completed
+- PR #1152 merged: corrected GitHub branch-reference lookup route; merge commit `398cddef834c1d845cce0352ea5aeccb7f4d3dc4`.
+- PR #1153 merged: strengthened Git branch ref validation for hidden/trailing-dot and `.lock` components and `@`; exact head `21723a046957b3c0ee56579e901ec768390ea605`, 17/17 successful check-runs, merge commit `a3746d8f18271549c979f0fa0c104bc34dd51e67`.
+
+### What this does not prove
+Automated CI/test evidence is not proof of live GitHub writes, operator configuration, production deployment, or release readiness. The configured provider implements CI-status reads and branch creation only. Commit/PR/deploy/rollback execution remains unsupported by this adapter.
+
+### Next bounded task
+Continue the Software Developer role-operation audit. Trace approval identity and denial, registry binding/permissions, provider capability, error handling, and persisted results. File a fix only when the source and tests establish a concrete defect. Keep progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%.
+
+---
+
 ## Progress checkpoint — PR #1150 workspace-key collision fix merged (2026-10-14)
 
 - PR [#1150](https://github.com/ijoolaie/AI-Employee/pull/1150) was squash-merged into `main` as [`5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7`](https://github.com/ijoolaie/AI-Employee/commit/5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7) from exact tested head [`7335e2d90bfd0057560343794c168a59b6fd2e81`](https://github.com/ijoolaie/AI-Employee/commit/7335e2d90bfd0057560343794c168a59b6fd2e81).
