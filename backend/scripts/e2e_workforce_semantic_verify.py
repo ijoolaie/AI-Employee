@@ -436,7 +436,10 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
         # Workspace storage filenames are implementation details: identify the
         # artifact by its logical kind/path/content, not a legacy path-derived key.
-        if key.rsplit("/",1)[-1].startswith("workspace-") and key.endswith(".json"):
+        basename=key.rsplit("/",1)[-1]
+        # build_key adds a random prefix before the logical filename
+        # (for example, <uuid>_workspace-<digest>.json).
+        if (basename.startswith("workspace-") or "_workspace-" in basename) and basename.endswith(".json"):
             payload=workforce_semantic_domains._read_json(str(tenant_id),key)
             workspace_diagnostics.append({
                 "key": key,
