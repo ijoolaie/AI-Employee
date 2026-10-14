@@ -1,10 +1,8 @@
-## Current progress accounting — 2026-10-14 after PR #1128
+## Current progress accounting — 2026-10-14 after PR #1129
 
-PR #1128 merged as b88f7e663eeef564253aab9f268946b956cb7746 from tested head 9602bb75522a33f3d36c51f579e093f2db6d2e1c. The Sales lead-qualification operation scores five explicit Boolean signals and persists a tenant-scoped explanation; provider execution remains not_configured and no external sourcing, CRM enrichment, customer acceptance, production outcome or revenue is proven.
+PR #1129 merged as ece6b805f02a28b27cb30da34e31dcf2efb132f7 from tested head d593b5650673174ce9579df166f9a72b76904f9e. It repairs the W16 skill-provider real-stack test fixture by setting up valid tenant-scoped Agent Run and approval context. W16, backend/frontend CI, W21, Architecture Guard, CodeQL, Ephemeral DAST, HA recovery and Production Infrastructure Validation passed on that exact head. This is deterministic test-provider evidence only; it does not establish live external provider execution or production readiness.
 
-CI on the final PR head reported 29 successes and one failure among 31 check-runs; the failing W16 skill-provider real-stack fixture invokes a side-effecting tool without active Agent Run context, so governance rejects it before its expected approval assertion. This remains a follow-up; never describe the full suite as green until repaired and rerun.
-
-A2 remains 12/12 = 100%. A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress = (100 + 30 + 100) / 3 = 76.7% (77%); full-scope context = (100 + 30 + 100 + 0 + 0) / 5 = 46%. These are rubric indicators, not commercial readiness. Next priority: repair the W16 fixture using valid tenant-scoped Agent Run and approval setup without weakening fail-closed governance; continue A1 audit with source-backed evidence.
+A2 remains 12/12 = 100%. A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress = (100 + 30 + 100) / 3 = 76.7% (77%); full-scope context = (100 + 30 + 100 + 0 + 0) / 5 = 46%. These are rubric indicators, not commercial readiness. Next priority: continue A1 capability reality audit with source-backed evidence, then validate configured providers and operational/release gates before supervised pilot acceptance.
 
 ---
 
