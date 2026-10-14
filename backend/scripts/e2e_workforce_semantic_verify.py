@@ -1,6 +1,7 @@
 """Real-stack semantic Workforce E2E certification."""
 from __future__ import annotations
 import asyncio, json, os, sys, time, uuid
+from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from sqlalchemy import select
@@ -23,6 +24,7 @@ from app.services.agent_template_service import create_template, publish_templat
 from app.services.agent_workforce_proposal_service import create_proposal, board_decide, ceo_decide, provision_approved_proposal, activate_provisioned_proposal
 from app.services.ai_workforce_roles import workforce_capability_contract_snapshot, workforce_template_capability_contract
 from app.services.workforce_runtime_governance import assert_workforce_operation
+from app.services.workforce_delegation_service import create_delegation
 from app.services import workforce_semantic_domains
 from app.services.storage import get_storage_backend
 
@@ -568,6 +570,22 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     # Certify Internal Manager's read-only CEO report through canonical lifecycle.
     manager_agent,manager_version,manager_definition_id=await governed_agent(
         tenant_id,suffix,owner_id,"internal-manager-report",role_code="ai_internal_manager",tool_name="workforce_prepare_ceo_report")
+    # Internal Manager operations fail closed without explicit, active CEO delegation.
+    # The fixture grants only the read-only CEO report operation for this tenant.
+    async with AsyncSessionLocal() as db:
+        manager_delegation = await create_delegation(
+            db,
+            tenant_id=tenant_id,
+            manager_agent_instance_id=manager_agent,
+            delegated_by_user_id=owner_id,
+            starts_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            allowed_operations=["prepare_ceo_report"],
+            scope={"purpose": "semantic E2E read-only CEO report"},
+            resource_limits={},
+            risk_tier=0,
+        )
+        await db.commit()
     manager_item=await work_item(
         tenant_id,manager_agent,suffix,"internal-manager-report",
         request_text="Prepare the tenant-scoped workforce dashboard for a 30-day CEO report")
