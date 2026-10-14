@@ -98,7 +98,7 @@ class GitHubReadOnlyEngineeringProvider:
         try:
             with urlopen(request, timeout=settings.engineering_github_timeout_seconds) as response:
                 payload = json.loads(response.read().decode("utf-8"))
-        except (HTTPError, URLError, TimeoutError, ValueError) as exc:
+        except (HTTPError, URLError, OSError, ValueError) as exc:
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub status read failed: {type(exc).__name__}")
         # Treat syntactically valid JSON with the wrong shape as a provider
         # contract failure too; never turn malformed upstream data into a
@@ -206,7 +206,7 @@ class GitHubEngineeringProvider:
         except HTTPError as exc:
             if exc.code != 404:
                 return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch lookup failed: HTTP {exc.code}")
-        except (URLError, TimeoutError, ValueError) as exc:
+        except (URLError, OSError, ValueError) as exc:
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch lookup failed: {type(exc).__name__}")
 
         payload = json.dumps({"ref": f"refs/heads/{branch_name}", "sha": source_sha}).encode("utf-8")
