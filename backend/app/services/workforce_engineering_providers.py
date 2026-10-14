@@ -105,6 +105,7 @@ class GitHubReadOnlyEngineeringProvider:
         # successful read or leak an AttributeError to the caller.
         if (
             not isinstance(payload, dict)
+            or not isinstance(payload.get("state"), str)
             or payload.get("state") not in {"pending", "success", "failure", "error"}
             or not isinstance(payload.get("total_count"), int)
             or isinstance(payload.get("total_count"), bool)
