@@ -72,6 +72,8 @@ class Settings(BaseSettings):
             raise ValueError("MARKET_DATA_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
         if self.engineering_github_timeout_seconds <= 0 or self.engineering_github_timeout_seconds > 60:
             raise ValueError("ENGINEERING_GITHUB_TIMEOUT_SECONDS must be between 0 and 60")
+        if self.website_health_timeout_seconds <= 0 or self.website_health_timeout_seconds > 15:
+            raise ValueError("WEBSITE_HEALTH_TIMEOUT_SECONDS must be between 0 and 15")
         if self.skill_provider_timeout_seconds <= 0 or self.skill_provider_timeout_seconds > 60:
             raise ValueError("SKILL_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
         if self.skill_provider_name.lower() not in {"none", "http"}:
@@ -125,6 +127,10 @@ class Settings(BaseSettings):
                 raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
             if self.market_data_provider_base_url and urlparse(self.market_data_provider_base_url).scheme != "https":
                 raise ValueError("MARKET_DATA_PROVIDER_BASE_URL must use HTTPS in production")
+            for tenant_sites in self.website_health_targets.values():
+                for target_url in tenant_sites.values():
+                    if urlparse(target_url).scheme != "https":
+                        raise ValueError("WEBSITE_HEALTH_TARGETS URLs must use HTTPS in production")
             if self.skill_provider_name.lower() == "http":
                 if not self.skill_provider_base_url or not self.skill_provider_api_key:
                     raise ValueError("SKILL_PROVIDER_BASE_URL and SKILL_PROVIDER_API_KEY are required when http skill provider is enabled")
@@ -230,6 +236,9 @@ class Settings(BaseSettings):
     engineering_github_repositories: dict[str, str] = {}
     engineering_github_token: str | None = None
     engineering_github_timeout_seconds: float = 10.0
+    # Tenant -> site alias -> operator-controlled HTTPS target; callers never supply URLs.
+    website_health_targets: dict[str, dict[str, str]] = {}
+    website_health_timeout_seconds: float = 5.0
     skill_provider_name: str = "none"
     skill_provider_base_url: str | None = None
     skill_provider_api_key: str | None = None

@@ -1,3 +1,13 @@
+## Latest change — read-only website health provider proposed (PR #1135, 2026-10-14)
+
+PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) adds a first bounded implementation for the existing `ai_website_employee:website_health_check` operation. The provider resolves a site alias only from operator configuration keyed by tenant; tool callers cannot supply a URL. Configure `WEBSITE_HEALTH_TARGETS` as a JSON object mapping tenant IDs to site aliases and HTTPS URLs, for example `{"tenant-uuid":{"primary":"https://example.com/health"}}`; `WEBSITE_HEALTH_TIMEOUT_SECONDS` defaults to 5 seconds and must be greater than 0 and no more than 15. It disables redirects, rejects credentials/fragments/non-default ports, local hostnames and non-global IP literals, and persists HTTP health evidence with tenant provenance. Automated checks are pending on the current PR head, so this is not yet accepted implementation evidence.
+
+The operation is read-only. A successful mocked response can prove adapter behavior and artifact persistence, but not that any real tenant target is configured, that a production site was checked, or that website preview/build/deploy/rollback is implemented. Missing/invalid target configuration remains fail-closed. Keep A1 at 30% until the broader audit rubric is satisfied.
+
+PR [#1132](https://github.com/ijoolaie/AI-Employee/pull/1132) merged from exact tested head `5e0d34df85021be1ddfc24aa551e12a6aa25911d`; all 11 workflow groups passed. Its SEO evidence is a caller-supplied research artifact only, with `provider_execution=not_configured`; no external search-engine data or SEO outcome is claimed.
+
+---
+
 ## Latest change — W16 governed skill-provider fixture repaired (2026-10-14)
 
 PR [#1129](https://github.com/ijoolaie/AI-Employee/pull/1129) merged as [ece6b805f02a28b27cb30da34e31dcf2efb132f7](https://github.com/ijoolaie/AI-Employee/commit/ece6b805f02a28b27cb30da34e31dcf2efb132f7), from exact tested head [d593b5650673174ce9579df166f9a72b76904f9e](https://github.com/ijoolaie/AI-Employee/commit/d593b5650673174ce9579df166f9a72b76904f9e). The W16 real-stack fixture now establishes a tenant-scoped Agent Run and approval records before exercising approval denial, deterministic test-provider success, cross-tenant rejection and commercial entitlement denial. W16, backend/frontend CI, W21, Architecture Guard, CodeQL, Ephemeral DAST, HA recovery and Production Infrastructure Validation all passed on the exact PR head.

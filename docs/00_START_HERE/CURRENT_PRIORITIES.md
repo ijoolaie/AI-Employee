@@ -1,3 +1,14 @@
+## Current priorities — SEO lifecycle merged; website health slice under validation (2026-10-14)
+
+1. **Finish PR #1135 safely.** Inspect exact-head CI, provider boundary tests and semantic artifact tests; fix any grounded failure and merge only when every required workflow passes. PR: https://github.com/ijoolaie/AI-Employee/pull/1135.
+2. **Preserve the evidence boundary.** SEO PR #1132 merged with 11/11 workflow groups green on exact head. It proves a persisted caller-supplied keyword-research artifact, not external search-engine execution or SEO outcomes.
+3. **Continue A1 capability reality audit.** Role lifecycle breadth A2 remains 12/12 = 100%; do not inflate A1 from lifecycle-only proof. Keep operation classifications tied to source, tests, permission/approval boundaries and provider state.
+4. **Keep external gates separate.** Production deployment, live provider configuration, measured operational SLO/DR, customer acceptance and revenue remain unverified.
+
+Progress indicators unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%. These are engineering rubric indicators, not commercial readiness.
+
+---
+
 ## Current priorities — PR #1129 merged; W16 fixture checks green (2026-10-14)
 
 1. **Continue A1 capability reality audit** across remaining canonical workforce operations. Keep A1 at 30% until materially more operations have source/test-backed classifications.

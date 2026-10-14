@@ -554,14 +554,26 @@ async def execute_qa_devops(arguments: dict[str, Any], **context: Any) -> dict[s
 
 
 async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
-    """Persist tenant-scoped website work; deployment never executes without a provider."""
+    """Persist tenant-scoped website work; only health checks may perform a bounded read."""
     tenant_id = _tenant(arguments, context)
     operation = arguments["_operation"]
     change_id = str(uuid.uuid4())
     approval_required = _approval_required("ai_website_employee", operation)
     provider_execution = "not_configured"
-    status = "proposal" if approval_required else "staged"
+    health_check = None
+    if operation == "website_health_check":
+        from app.services.workforce_website_health_provider import check_website_health
+
+        health_check = check_website_health(tenant_id=tenant_id, site=arguments.get("site"))
+        provider_execution = health_check["provider_execution"]
+        if provider_execution == "read_verified":
+            status = "healthy" if health_check["healthy"] is True else "unhealthy"
+        else:
+            status = "staged"
+    else:
+        status = "proposal" if approval_required else "staged"
     approval_status = "pending" if approval_required else "not_required"
+    external_side_effect = operation in {"website_deploy", "website_rollback"}
     payload = {
         "kind": "website_change",
         "change_id": change_id,
@@ -570,14 +582,16 @@ async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str
         "status": status,
         "approval_required": approval_required,
         "approval_status": approval_status,
-        "site": arguments["site"],
+        "site": arguments.get("site"),
         "spec": arguments.get("spec", {}),
         "provider_execution": provider_execution,
-        "external_side_effect": operation in {"website_deploy", "website_rollback"},
+        "external_side_effect": external_side_effect,
         "provenance": {"tenant_id": tenant_id, "created_at": _now(), "provider_execution": provider_execution},
     }
+    if health_check is not None:
+        payload["health_check"] = health_check
     artifact = _save_json(tenant_id, f"website-{change_id}.json", payload)
-    return {
+    result = {
         **artifact,
         "change_id": change_id,
         "operation": operation,
@@ -586,5 +600,8 @@ async def execute_website(arguments: dict[str, Any], **context: Any) -> dict[str
         "approval_required": approval_required,
         "approval_status": approval_status,
         "provider_execution": provider_execution,
-        "external_side_effect": operation in {"website_deploy", "website_rollback"},
+        "external_side_effect": external_side_effect,
     }
+    if health_check is not None:
+        result["health_check"] = health_check
+    return result
