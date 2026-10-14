@@ -965,10 +965,12 @@ def test_github_branch_provider_conflicts_when_reconciliation_finds_different_sh
         def read(self):
             return b'{"ref":"refs/heads/ai/reconcile","object":{"sha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}'
 
+    calls = []
     def fake_urlopen(request, timeout):
+        calls.append(request.method)
+        if request.method == "GET" and len(calls) == 1:
+            raise HTTPError(request.full_url, 404, "not found", {}, None)
         if request.method == "GET":
-            if "git/ref/heads/" in request.full_url:
-                raise HTTPError(request.full_url, 404, "not found", {}, None)
             return FakeResponse()
         raise HTTPError(request.full_url, 503, "service unavailable", {}, None)
 
@@ -978,6 +980,7 @@ def test_github_branch_provider_conflicts_when_reconciliation_finds_different_sh
         "git_branch", tenant_id="tenant-a",
         arguments={"branch_name": "ai/reconcile", "source_sha": "0123456789abcdef0123456789abcdef01234567"},
     )
+    assert calls == ["GET", "POST", "GET"]
     assert result.status == "conflict"
     assert result.executed is False
     assert "different commit" in result.reason
