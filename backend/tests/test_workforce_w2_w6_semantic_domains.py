@@ -373,3 +373,46 @@ async def test_w5_sales_routine_operations_are_artifacts_not_provider_execution(
 
     with pytest.raises(Exception):
         _read_json("tenant-sales-b", result["storage_key"])
+
+
+@pytest.mark.asyncio
+async def test_w5_lead_qualification_scores_only_explicit_signals_and_persists_explanation():
+    from app.services.workforce_semantic_domains import _read_json
+
+    qualified = await execute_sales(
+        {
+            "_operation": "lead_qualification",
+            "query": "Example B2B lead",
+            "criteria": {
+                "industry_match": True,
+                "need_confirmed": True,
+                "budget_confirmed": True,
+                "decision_maker_identified": True,
+                "timeline_confirmed": False,
+            },
+        },
+        tenant_id="tenant-sales-qualification",
+    )
+    report = qualified["qualification"]
+    assert report["method"] == "explicit_boolean_signals_v1"
+    assert report["score"] == 80
+    assert report["status"] == "qualified"
+    assert report["passed_signals"] == [
+        "industry_match", "need_confirmed", "budget_confirmed", "decision_maker_identified"
+    ]
+    assert report["missing_or_unconfirmed_signals"] == ["timeline_confirmed"]
+    persisted = _read_json("tenant-sales-qualification", qualified["storage_key"])
+    assert persisted["qualification"] == report
+    assert persisted["provider_execution"] == "not_configured"
+    assert persisted["external_side_effect"] is False
+
+    insufficient = await execute_sales(
+        {"_operation": "lead_qualification", "criteria": {}},
+        tenant_id="tenant-sales-qualification",
+    )
+    assert insufficient["qualification"]["score"] == 0
+    assert insufficient["qualification"]["status"] == "insufficient_evidence"
+    assert len(insufficient["qualification"]["missing_or_unconfirmed_signals"]) == 5
+
+    with pytest.raises(Exception):
+        _read_json("other-tenant", qualified["storage_key"])
