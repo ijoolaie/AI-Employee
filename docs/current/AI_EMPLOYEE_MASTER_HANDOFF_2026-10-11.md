@@ -248,3 +248,10 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - Added response-shape and SHA validation for GitHub branch lookup/creation, with regression coverage for malformed lookup payload, malformed create payload, and returned SHA mismatch. A malformed/mismatched response after an HTTP write does not prove absence of an external side effect; the outcome remains unverified.
 - No live GitHub provider call, production configuration, deployment, or rollback has been verified. Phase indicators remain A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%.
 - Next: audit the read-only GitHub CI-status adapter's transport failure, malformed response and missing tenant-to-repository mapping paths; preserve fail-closed behavior and avoid new external writes.
+
+## 2026-10-14 continuation — PR #1162
+
+- **Merged:** PR #1162, merge commit `ed3d27bc22cc3b89752e3f237aac9d68cba15f48`.
+- **Exact tested head:** `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`; all 16 check runs concluded success.
+- `_tool_audit_status` now preserves `outcome_unknown` and `reconciled` instead of recording a reconciled result as ordinary `success`. A `reconciled` outcome means one read-only GET confirmed the requested branch ref and SHA after an ambiguous POST response. It does not claim the current invocation created the branch and does not retry the POST.
+- **Evidence boundary:** automated tests and CI only. No live GitHub mutation, production credentials/configuration, deployment, rollback, or production readiness has been verified. Keep progress at actionable 77%, full-scope 46%, A0/A1/A2/A3/A4 = 100/30/100/0/0 until broader evidence supports a change.

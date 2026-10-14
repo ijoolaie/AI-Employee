@@ -764,3 +764,7 @@ The immutable `v1.4.16` production certification remains unchanged. Mainline SHA
 ## 2026-10-06 status reconciliation
 
 W9 is already closed at its documented evidence boundary: final real-stack Run `36891616509` / Job `110468909696`, verification commit `5887c26c727fd2681cc1dd71fc17f0a475c9e80a`. The original W9→W10 roadmap ordering therefore remains valid historically, but W9 is not the next implementation task. Current main is PR #927 merge `600367bc20c3d9392e51d0af861d26cb326f8a4c`; PR #927 passed its exact-head validation before merge, while no post-merge workflow run is currently registered for the merge SHA. Therefore that main SHA is not yet post-merge verified. W17–W23 and W10 technical mechanics remain post-v1.4.16 engineering evidence, not release certification. External customer/payment/provider validation remains deferred.
+
+## 2026-10-14 — PR #1162 provider audit reconciliation
+
+PR #1162 merged as `ed3d27bc22cc3b89752e3f237aac9d68cba15f48`; all 16 check runs passed on exact tested head `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`. `_tool_audit_status` now preserves `outcome_unknown` and `reconciled` in durable tool-call audit records. `reconciled` indicates a read-only GET confirmed the requested ref/SHA after an ambiguous branch-create response, not that this invocation performed the creation. This is automated test/CI evidence only; live GitHub mutation, production credentials/configuration, deployment, and production readiness remain unverified.
