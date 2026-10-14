@@ -736,3 +736,43 @@ def test_github_branch_provider_handles_response_stream_errors(
     assert calls == (["GET"] if failure_phase == "lookup" else ["GET", "POST"])
     # For the create phase, the remote write may have reached GitHub even
     # though reading its response failed; the external outcome is unverified.
+
+
+def test_github_readonly_provider_handles_truncated_response_body(monkeypatch):
+    """A truncated CI-status body is a provider error, not an uncaught exception."""
+    from http.client import IncompleteRead
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 1.0
+
+    class BrokenResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            raise IncompleteRead(b'{"state":', 20)
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        lambda request, timeout: BrokenResponse(),
+    )
+
+    result = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert "IncompleteRead" in result.reason
