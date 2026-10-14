@@ -1,8 +1,9 @@
-# Current status — SEO lifecycle verified; website health provider under review (2026-10-14)
+# Current status — website health provider merged; A1 audit continues (2026-10-14)
 
-- PR [#1132](https://github.com/ijoolaie/AI-Employee/pull/1132) merged as [`5c62de7a399250332716dc714bd9f53d09bfce38`](https://github.com/ijoolaie/AI-Employee/commit/5c62de7a399250332716dc714bd9f53d09bfce38), from exact tested head `5e0d34df85021be1ddfc24aa551e12a6aa25911d`. All 11 workflow groups passed on that exact head.
-- The SEO keyword-research test proves WorkItem assignment → dispatch → worker → successful Run, persisted tenant-scoped research context, audit identity and active runtime binding. It does not query search engines or establish rankings, search volume, traffic impact or live SEO provider execution.
-- PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) adds a tenant-mapped read-only website health check using operator-configured HTTPS targets, bounded timeout and disabled redirects. The PR is open and its exact-head checks must pass before merge; no live target or production website health has been verified.
+- PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) squash-merged as [`dce5371656fba372b0df06f3c25a010fdbb7e747`](https://github.com/ijoolaie/AI-Employee/commit/dce5371656fba372b0df06f3c25a010fdbb7e747) from exact tested head [`cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54`](https://github.com/ijoolaie/AI-Employee/commit/cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54). All 32 check runs passed on that exact head.
+- Implemented `website_health_check` as a bounded, read-only provider: tenant/site-alias mapping to operator-configured HTTPS URLs, bounded timeout, disabled redirects, URL safety checks, persisted HTTP/health evidence and tenant provenance.
+- Evidence boundary: no live target is configured or verified by this merge. It does not establish production website health or implement preview/build/deploy/rollback. Automated tests establish provider and semantic-path behavior only.
+- PR [#1132](https://github.com/ijoolaie/AI-Employee/pull/1132) remains evidence for a persisted caller-supplied SEO research artifact only; no external search-engine execution, rankings, search volume or traffic outcome is proven.
 - A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%; full-scope context 46%. These are rubric indicators, not commercial readiness. Live providers, external deployment, customer acceptance and revenue remain unproven.
 
 ---
