@@ -1,3 +1,17 @@
+## A1 capability trace — Sales & Lead Generation (2026-10-14)
+
+Static source inspection after PR #1125 traced the Sales role contract through the Tool Registry into `workforce_semantic_domains.execute_sales`. Sources inspected: [role contracts](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/ai_workforce_roles.py) at `fda32e5ad6d1e856b91b2559e7c2d323218bb649`, [Tool Registry](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/ai/tool_registry.py) at `b34be46d50f8ebd4b5d68241342bccd7e76d2e5c`, [semantic domains](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/workforce_semantic_domains.py) at `07c1030fc7a8918a6ba083490c8bdb6d91eed7e3`, [outreach provider](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/workforce_sales_outreach_provider.py) at `2c904179b94996842ca7172190f1fda5a2eb22e7`, and [payment provider](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/workforce_sales_payment_provider.py) at `49af313c3762d6dba21dd16809895cd1c121cf4f`.
+
+- **Routine contract operations (9):** `lead_research`, `lead_qualification`, `crm_enrichment`, `prepare_outreach_draft`, `prepare_follow_up_queue`, `prepare_proposal`, `prepare_meeting_request`, `pipeline_reporting`, and `conversion_attribution`. The registry binds these to the shared sales handler, which currently persists a tenant-scoped generic `sales_operation` JSON artifact. Static inspection did not find dedicated live CRM enrichment, lead-source querying, pipeline analytics, or conversion-attribution data-source execution in this handler. Treat these as artifact/proposal scaffolding unless operation-specific evidence proves more.
+- **External outreach:** the provider adapter can enqueue SMTP mail only when the operator selects the SMTP provider, SMTP settings and recipient-domain allowlist are present, the tenant Run context exists, and the approval-gated tool is authorized. The no-provider path returns `not_configured` without external side effects. Actual delivery is not proven by the lifecycle test.
+- **Contractual commitment:** currently represented as an approval-gated proposal artifact; the shared sales handler has no separate external contract-signing execution branch.
+- **Material commercial action:** approval-gated payment checkout path exists behind the operator-configured payment provider (Stripe/ZarinPal or contract-test). The contract-test path is deliberately non-external. The Sales lifecycle PR did not exercise payment checkout, and no claim is made that a live payment provider is configured or that payment was collected.
+- **Binding sanity check:** a static scan of the registered workforce tool names and their operation arguments found no name-to-operation mismatch in the inspected registry. This is source inspection, not a runtime test of all nine routine operations.
+
+**Next A1 action:** turn this classification into a role-by-role evidence matrix: contract → registry binding → handler branch → persistence/data source → approval/permission → tests → provider state. Prioritize tests that distinguish real source-backed functionality from generic artifact persistence; keep A1 at 30% until the cross-role audit has materially broader coverage.
+
+---
+
 # Audit update — 2026-10-14 — Sales lifecycle completed (PR #1125)
 
 ## New role evidence
