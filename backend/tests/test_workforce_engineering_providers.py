@@ -876,3 +876,108 @@ async def test_engineering_domain_preserves_unknown_branch_write_outcome(monkeyp
     assert result["executed"] is False
     assert result["external_side_effect"] is True
     assert result["provider_reason"] == "GitHub branch creation outcome unknown: HTTP 503"
+
+
+def test_github_branch_provider_reconciles_ambiguous_create_when_exact_ref_and_sha_exist(monkeypatch):
+    """An ambiguous POST is reconciled by one read, without repeating the write."""
+    from urllib.error import HTTPError
+
+    source_sha = "0123456789abcdef0123456789abcdef01234567"
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self.payload = payload
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc, tb):
+            return False
+        def read(self):
+            return self.payload
+
+    calls = []
+    def fake_urlopen(request, timeout):
+        calls.append(request.method)
+        if request.method == "GET" and len(calls) == 1:
+            raise HTTPError(request.full_url, 404, "not found", {}, None)
+        if request.method == "POST":
+            raise HTTPError(request.full_url, 503, "service unavailable", {}, None)
+        return FakeResponse(
+            b'{"ref":"refs/heads/ai/reconcile","object":{"sha":"0123456789abcdef0123456789abcdef01234567"}}'
+        )
+
+    monkeypatch.setattr("app.services.workforce_engineering_providers.get_settings", lambda: FakeSettings())
+    monkeypatch.setattr("app.services.workforce_engineering_providers.urlopen", fake_urlopen)
+    result = GitHubEngineeringProvider().execute(
+        "git_branch", tenant_id="tenant-a",
+        arguments={"branch_name": "ai/reconcile", "source_sha": source_sha},
+    )
+    assert result.status == "reconciled"
+    assert result.executed is False
+    assert calls == ["GET", "POST", "GET"]
+
+
+def test_github_branch_provider_keeps_ambiguous_create_unknown_when_reconciliation_404(monkeypatch):
+    """A post-write 404 does not prove the original write failed."""
+    from urllib.error import HTTPError
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    calls = []
+    def fake_urlopen(request, timeout):
+        calls.append(request.method)
+        if request.method == "GET":
+            raise HTTPError(request.full_url, 404, "not found", {}, None)
+        raise HTTPError(request.full_url, 503, "service unavailable", {}, None)
+
+    monkeypatch.setattr("app.services.workforce_engineering_providers.get_settings", lambda: FakeSettings())
+    monkeypatch.setattr("app.services.workforce_engineering_providers.urlopen", fake_urlopen)
+    result = GitHubEngineeringProvider().execute(
+        "git_branch", tenant_id="tenant-a",
+        arguments={"branch_name": "ai/reconcile", "source_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+    assert result.status == "outcome_unknown"
+    assert result.executed is False
+    assert "reconciliation unavailable" in result.reason
+    assert calls == ["GET", "POST", "GET"]
+
+
+def test_github_branch_provider_conflicts_when_reconciliation_finds_different_sha(monkeypatch):
+    from urllib.error import HTTPError
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc, tb):
+            return False
+        def read(self):
+            return b'{"ref":"refs/heads/ai/reconcile","object":{"sha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}'
+
+    def fake_urlopen(request, timeout):
+        if request.method == "GET":
+            if "git/ref/heads/" in request.full_url:
+                raise HTTPError(request.full_url, 404, "not found", {}, None)
+            return FakeResponse()
+        raise HTTPError(request.full_url, 503, "service unavailable", {}, None)
+
+    monkeypatch.setattr("app.services.workforce_engineering_providers.get_settings", lambda: FakeSettings())
+    monkeypatch.setattr("app.services.workforce_engineering_providers.urlopen", fake_urlopen)
+    result = GitHubEngineeringProvider().execute(
+        "git_branch", tenant_id="tenant-a",
+        arguments={"branch_name": "ai/reconcile", "source_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+    assert result.status == "conflict"
+    assert result.executed is False
+    assert "different commit" in result.reason
