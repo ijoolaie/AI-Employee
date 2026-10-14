@@ -862,3 +862,10 @@ last Phase 1 baseline; historical As-Built snapshots remain preserved.
 - Merged PR #1164 as `245beb6b335a794bb0220d2d17a87f61f205e6ab`; all 17 check runs passed on exact tested head `229a57a67ce7022403d64a980c8e06e13d18c6b9`.
 - Hardened the GitHub branch provider's initial lookup: returned ref identity must exactly match the requested `refs/heads/{branch}` and include a valid SHA. Wrong-ref payloads fail closed without issuing a POST.
 - Automated test/CI evidence only; live GitHub mutation and production readiness remain unverified.
+
+
+## 2026-10-14 — PR #1166 merged
+
+- Merged PR #1166 as `4de70b6389e012d9416818c837287cc900a3ed6c`; all 13 check runs passed on exact tested head `61d46b1fdfee2792db694da5fed4549b64404f6e` after the frontend job was rerun successfully.
+- Added tests for malformed GitHub CI-status payloads, transport failure, and missing tenant-to-repository mapping. Test-only change; provider implementation behavior is unchanged.
+- The initial frontend attempt had five World-mode Playwright failures, but the rerun passed. CI/test evidence only; live GitHub mutation and production readiness remain unverified.
