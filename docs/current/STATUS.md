@@ -6,7 +6,7 @@
 - Evidence boundary: this establishes the merged source fix and automated CI/real-stack test evidence only. It does not establish live GitHub write execution, external provider execution, deployment, production readiness, customer acceptance, or a new release certification.
 - Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable progress 77%; full-scope context 46%. One additional correctness defect is fixed, but the broad A1 role/operation evidence threshold is not met, so do not raise the rubric scores.
 - Follow-up: continue the source/test-backed role-operation audit through role contract → Tool Registry/permission → semantic handler → approval/governance → provider → persisted result/audit and positive/negative tests. In particular, do not equate `git_commit_proposal` role binding with actual Git commit execution: provider support remains `not_configured`.
-- Documentation note: the original PR #1150 description still says “CI is pending”; that wording became stale after the successful exact-head checks and merge and should be corrected in the PR metadata.
+- PR metadata reconciliation: the stale “CI is pending” wording in PR #1150 was corrected after exact-head checks passed.
 
 ---
 
