@@ -1,8 +1,10 @@
-## Current progress accounting — 2026-10-14 after PR #1125
+## Current progress accounting — 2026-10-14 after PR #1128
 
-The latest verified checkpoint is PR #1125: exact tested head `92d2654ca3098a9e0f5865a3502fa0f5756c01ba`, squash merge `8c9f79904241b9a5899ee38f0067719496fb4913`. All 11 required workflow groups passed on the exact tested head. The Sales & Lead Generation deterministic lifecycle is evidenced; provider execution remains `not_configured`, and external sourcing/outreach, production outcomes, customer acceptance and revenue are not proven.
+PR #1128 merged as b88f7e663eeef564253aab9f268946b956cb7746 from tested head 9602bb75522a33f3d36c51f579e093f2db6d2e1c. The Sales lead-qualification operation scores five explicit Boolean signals and persists a tenant-scoped explanation; provider execution remains not_configured and no external sourcing, CRM enrichment, customer acceptance, production outcome or revenue is proven.
 
-A2 is now 12/12 = 100%. A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress = (100 + 30 + 100) / 3 = 76.7% (77%); full-scope context = (100 + 30 + 100 + 0 + 0) / 5 = 46%. These remain rubric-based indicators, not commercial readiness. Continue with the capability reality audit and evidence-based provider/operation gap prioritization; keep A3/A4 unresolved until external evidence exists.
+CI on the final PR head reported 29 successes and one failure among 31 check-runs; the failing W16 skill-provider real-stack fixture invokes a side-effecting tool without active Agent Run context, so governance rejects it before its expected approval assertion. This remains a follow-up; never describe the full suite as green until repaired and rerun.
+
+A2 remains 12/12 = 100%. A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress = (100 + 30 + 100) / 3 = 76.7% (77%); full-scope context = (100 + 30 + 100 + 0 + 0) / 5 = 46%. These are rubric indicators, not commercial readiness. Next priority: repair the W16 fixture using valid tenant-scoped Agent Run and approval setup without weakening fail-closed governance; continue A1 audit with source-backed evidence.
 
 ---
 
