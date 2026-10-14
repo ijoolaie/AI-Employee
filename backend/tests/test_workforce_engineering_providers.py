@@ -807,3 +807,34 @@ def test_github_provider_fails_closed_for_unimplemented_commit_proposal() -> Non
     assert result.executed is False
     assert result.status == "not_configured"
     assert "does not execute this operation" in result.reason
+
+
+def test_github_branch_provider_reports_server_error_after_create_as_unknown(monkeypatch):
+    """A 5xx after POST cannot prove whether GitHub applied the branch write."""
+    from urllib.error import HTTPError
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    def fake_urlopen(request, timeout):
+        if request.method == "GET":
+            raise HTTPError(request.full_url, 404, "not found", {}, None)
+        raise HTTPError(request.full_url, 503, "service unavailable", {}, None)
+
+    monkeypatch.setattr("app.services.workforce_engineering_providers.get_settings", lambda: FakeSettings())
+    monkeypatch.setattr("app.services.workforce_engineering_providers.urlopen", fake_urlopen)
+
+    result = GitHubEngineeringProvider().execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={
+            "branch_name": "ai/ambiguous-create",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        },
+    )
+
+    assert result.status == "outcome_unknown"
+    assert result.executed is False
+    assert result.reason == "GitHub branch creation outcome unknown: HTTP 503"
