@@ -416,3 +416,51 @@ async def test_w5_lead_qualification_scores_only_explicit_signals_and_persists_e
 
     with pytest.raises(Exception):
         _read_json("other-tenant", qualified["storage_key"])
+
+
+@pytest.mark.asyncio
+async def test_w6_website_health_check_persists_read_only_tenant_scoped_evidence(monkeypatch):
+    from app.services import workforce_website_health_provider
+    from app.services.workforce_semantic_domains import _read_json
+
+    monkeypatch.setattr(
+        workforce_website_health_provider,
+        "check_website_health",
+        lambda *, tenant_id, site: {
+            "site": site,
+            "provider_execution": "read_verified",
+            "healthy": True,
+            "status_code": 200,
+            "content_type": "text/html",
+            "checked_at": "2026-10-14T00:00:00+00:00",
+            "reason": "HTTP health check completed",
+        },
+    )
+    result = await execute_website(
+        {"_operation": "website_health_check", "site": "primary"},
+        tenant_id="tenant-a",
+    )
+    assert result["status"] == "healthy"
+    assert result["provider_execution"] == "read_verified"
+    assert result["external_side_effect"] is False
+    assert result["approval_required"] is False
+    assert result["health_check"]["status_code"] == 200
+
+    payload = _read_json("tenant-a", result["storage_key"])
+    assert payload["provenance"]["tenant_id"] == "tenant-a"
+    assert payload["health_check"]["healthy"] is True
+    assert payload["external_side_effect"] is False
+    with pytest.raises(Exception, match="Cross-tenant"):
+        _read_json("tenant-b", result["storage_key"])
+
+
+@pytest.mark.asyncio
+async def test_w6_website_health_check_stays_fail_closed_without_provider_configuration():
+    result = await execute_website(
+        {"_operation": "website_health_check", "site": "primary"},
+        tenant_id="tenant-no-config",
+    )
+    assert result["status"] == "staged"
+    assert result["provider_execution"] == "not_configured"
+    assert result["external_side_effect"] is False
+    assert result["health_check"]["healthy"] is None
