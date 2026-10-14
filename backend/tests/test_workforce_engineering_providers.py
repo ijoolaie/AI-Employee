@@ -372,11 +372,21 @@ def test_github_branch_provider_rejects_unsafe_inputs_without_network(monkeypatc
     )
 
     provider = GitHubEngineeringProvider()
-    invalid_branch = provider.execute(
-        "git_branch",
-        tenant_id="tenant-a",
-        arguments={"branch_name": "../main", "source_sha": "0123456789abcdef0123456789abcdef01234567"},
+    invalid_branch_names = (
+        "../main",
+        "feature/.hidden",
+        "feature/trailing.",
+        "feature/branch.lock",
+        "feature/@",
     )
+    for branch_name in invalid_branch_names:
+        invalid_branch = provider.execute(
+            "git_branch",
+            tenant_id="tenant-a",
+            arguments={"branch_name": branch_name, "source_sha": "0123456789abcdef0123456789abcdef01234567"},
+        )
+        assert invalid_branch.status == "not_configured"
+
     invalid_sha = provider.execute(
         "git_branch",
         tenant_id="tenant-a",

@@ -132,6 +132,7 @@ _GITHUB_BRANCH_RE = re.compile(r"[A-Za-z0-9._/-]{1,255}")
 
 def _validate_github_branch_name(branch_name: str) -> str | None:
     name = branch_name.strip()
+    components = name.split("/")
     if (
         not name
         or not _GITHUB_BRANCH_RE.fullmatch(name)
@@ -145,6 +146,13 @@ def _validate_github_branch_name(branch_name: str) -> str | None:
         or "//" in name
         or "@{" in name
         or name.startswith("refs/")
+        or any(
+            component.startswith(".")
+            or component.endswith(".")
+            or component.lower().endswith(".lock")
+            or component == "@"
+            for component in components
+        )
     ):
         return None
     return name
