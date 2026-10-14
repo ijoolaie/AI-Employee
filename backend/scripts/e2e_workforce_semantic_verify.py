@@ -54,7 +54,7 @@ async def license_fixture(tenant_id,suffix):
         db.add(vendor); await db.flush()
         reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
         db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan","tool:workforce_read_analytics"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan","tool:workforce_read_analytics","tool:workforce_website_requirements"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
 async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader",tool_name="workforce_market_research"):
@@ -524,6 +524,44 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     print("WORKFORCE SOCIAL_MEDIA READ_ANALYTICS FULL WORKITEM LIFECYCLE PASS")
     print(f"WORKFORCE SOCIAL ARTIFACT + TENANT PROVENANCE PASS key={social_key}")
     print("WORKFORCE SOCIAL PROVIDER BOUNDARY PASS provider_execution=not_configured; no live analytics fetched")
+
+    # Certify Website Employee requirements planning through the canonical WorkItem lifecycle.
+    web_agent,web_version,web_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"website-requirements",role_code="ai_website_employee",tool_name="workforce_website_requirements")
+    web_item=await work_item(
+        tenant_id,web_agent,suffix,"website-requirements",
+        request_text="Prepare requirements for a responsive, accessible product landing page")
+    assert req("POST",f"/work-items/{web_item}/assign/agent",{"agent_instance_id":str(web_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{web_item}/dispatch",token=token)[0]==200
+    web_work,web_run=await wait_result(web_item)
+    assert web_work.status is WorkItemStatus.SUCCEEDED and web_run and web_run.status=="success", (
+        web_work.status,web_run.error_message if web_run else None)
+    assert web_run.agent_instance_id==web_agent and web_run.employee_version_id==web_version
+    await verify_audit(tenant_id,web_run.id,tool_name="workforce_website_requirements",tool_call_id="e2e-workforce-website-requirements-1")
+    web_payloads=[]
+    for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
+        if key.endswith(".json") and "website-" in key:
+            payload=workforce_semantic_domains._read_json(str(tenant_id),key)
+            if payload.get("operation")=="website_requirements" and payload.get("site")=="certification-fixture.example":
+                web_payloads.append((key,payload))
+    assert len(web_payloads)==1, f"expected one persisted website requirements artifact, got {len(web_payloads)}"
+    web_key,web_artifact=web_payloads[0]
+    assert web_artifact["kind"]=="website_change" and web_artifact["status"]=="staged"
+    assert web_artifact["approval_required"] is False
+    assert web_artifact["external_side_effect"] is False
+    assert web_artifact["provider_execution"]=="not_configured"
+    assert web_artifact["provenance"]["tenant_id"]==str(tenant_id)
+    async with AsyncSessionLocal() as db:
+        web_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==web_definition_id,
+            AgentRuntimeBinding.employee_version_id==web_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert web_binding is not None
+    print("WORKFORCE WEBSITE REQUIREMENTS FULL WORKITEM LIFECYCLE PASS")
+    print(f"WORKFORCE WEBSITE ARTIFACT + TENANT PROVENANCE PASS key={web_key}")
+    print("WORKFORCE WEBSITE PROVIDER BOUNDARY PASS provider_execution=not_configured; no site deployed")
 
     wrong,_,_=await governed_agent(
         tenant_id,
