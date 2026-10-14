@@ -1,3 +1,36 @@
+# Workforce progress update — PR #1119 (2026-10-14)
+
+## Social Media read-only analytics lifecycle proof
+
+- PR [#1119](https://github.com/ijoolaie/AI-Employee/pull/1119) was squash-merged as [`14e401324507243a903e8655267ea26d261860c0`](https://github.com/ijoolaie/AI-Employee/commit/14e401324507243a903e8655267ea26d261860c0), from exact tested head `1208fae5ae8132baae34772d9dbea2e198b74dcd`.
+- Added an E2E-only deterministic `workforce_read_analytics` fixture for `ai_social_media`, exercising WorkItem assignment → dispatch → worker → successful Run.
+- The real-stack E2E verifies tool-call audit identity, active runtime binding, exactly one tenant-scoped social artifact, tenant provenance, read-only/no-external-side-effect semantics, and `provider_execution=not_configured`.
+- All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38525207752), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38525207887), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208102), [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38525207942), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208012), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208038), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208013), [W21 AI Business Network E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208046), [HA Failure Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208024), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38525207946), and [Production Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208049).
+- The E2E job log reports `WORKFORCE SOCIAL_MEDIA READ_ANALYTICS FULL WORKITEM LIFECYCLE PASS`, artifact + tenant provenance PASS, `provider_execution=not_configured; no live analytics fetched`, all denial-path checks PASS, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
+- Evidence boundary: this proves a durable read-only analytics request artifact, not live Instagram data access, account connection, content publication, external provider execution, production deployment, or commercial readiness.
+
+## Progress calculation
+
+A2 measures the share of 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. Evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, and Social Media: **8/12 = 66.7%**.
+
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle role coverage: **66.7%**
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
+
+**Actionable progress (A0–A2):** `(100 + 30 + 66.7) / 3 = 65.6%` → **66%**.
+
+**Full-scope progress (A0–A4):** `(100 + 30 + 66.7 + 0 + 0) / 5 = 39.3%` → **39%**.
+
+These rubric-based phase indicators are not a claim of commercial readiness. Real provider execution, production deployment, customer acceptance, production reliability and revenue remain unproven.
+
+## Next execution priority
+
+Continue with one of the four unrepresented canonical roles. Select a distinct bounded workflow with a durable local artifact and explicit permission/approval boundary, then add positive lifecycle and denial-path evidence. Keep live provider and production/commercial gates explicitly unresolved.
+
+---
+
 # Workforce progress update — PR #1117 (2026-10-14)
 
 ## QA & DevOps lifecycle proof
