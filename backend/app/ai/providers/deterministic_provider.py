@@ -36,6 +36,7 @@ class DeterministicProvider:
                 "workforce_customer_context",
                 "workforce_workspace_create_file",
                 "workforce_keyword_research",
+                "workforce_qa_test_plan",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -103,6 +104,14 @@ class DeterministicProvider:
                     "workforce_keyword_research": (
                         "e2e-workforce-keyword-research-1",
                         {"topic": "SaaS customer acquisition"},
+                    ),
+                    "workforce_qa_test_plan": (
+                        "e2e-workforce-qa-test-plan-1",
+                        {
+                            "repository": "certification-fixture",
+                            "commit_sha": "0000000000000000000000000000000000000000",
+                            "test_scope": "full-regression",
+                        },
                     ),
                 }
                 call_id, arguments = fixtures[tool.name]
