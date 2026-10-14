@@ -1,3 +1,11 @@
+## A1 audit finding — GitHub engineering branch response contract (2026-10-14)
+
+PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) addresses a concrete failure-path gap in `GitHubEngineeringProvider`: transport and JSON decode errors were caught, but valid JSON with a non-object shape could cause an uncaught attribute error; branch creation also trusted a missing/defaulted object SHA and could report `executed=True` without verifying the returned SHA. The patch validates lookup/create response shape and requires the created object SHA to be a valid 40-character hex value equal to the requested source SHA before reporting execution success. Regression tests cover malformed lookup JSON, malformed create JSON, and SHA mismatch.
+
+Status: open PR, exact head `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`, CI pending. This is static/test hardening evidence only; no live GitHub operation is claimed. Branch creation remains approval-gated. A1 stays 30%.
+
+---
+
 ## Latest change — read-only website health provider merged (PR #1135, 2026-10-14)
 
 PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) was squash-merged as [`dce5371656fba372b0df06f3c25a010fdbb7e747`](https://github.com/ijoolaie/AI-Employee/commit/dce5371656fba372b0df06f3c25a010fdbb7e747) from exact tested head [`cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54`](https://github.com/ijoolaie/AI-Employee/commit/cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54); all 32 check runs completed successfully on that exact head. The existing `ai_website_employee:website_health_check` operation now uses an operator-configured provider that resolves a site alias only from configuration keyed by tenant; callers cannot supply a URL. Configure `WEBSITE_HEALTH_TARGETS` as a JSON object mapping tenant IDs to site aliases and HTTPS URLs, for example `{"tenant-uuid":{"primary":"https://example.com/health"}}`; `WEBSITE_HEALTH_TIMEOUT_SECONDS` defaults to 5 seconds and must be greater than 0 and no more than 15. It disables redirects, rejects credentials/fragments/non-default ports, local hostnames and non-global IP literals, and persists HTTP health evidence with tenant provenance.
