@@ -1,3 +1,36 @@
+# Workforce progress update — PR #1115 (2026-10-14)
+
+## SEO & Growth lifecycle proof
+
+- PR [#1115](https://github.com/ijoolaie/AI-Employee/pull/1115) squash-merged as [`afbb80357f6e946340798a2d07153227f7863ed8`](https://github.com/ijoolaie/AI-Employee/commit/afbb80357f6e946340798a2d07153227f7863ed8), from exact tested head `895fa3382b8329bfc21aa8ba021522db594c2608`.
+- Added `workforce_keyword_research` under `ai_seo_growth_employee` to the deterministic Workforce Semantic Real-Stack E2E, covering WorkItem assignment → dispatch → worker → successful Run.
+- The E2E confirms tool-call audit identity, active runtime binding, one tenant-scoped `seo_growth_artifact`, `research` status, tenant provenance, `approval_required=false`, `external_side_effect=false`, and `provider_execution=not_configured`.
+- All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671832), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671733), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671718), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671664), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671802), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671796), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671607), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671676), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671900), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671861), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671777).
+- The E2E log explicitly reports `WORKFORCE SEO GROWTH KEYWORD_RESEARCH FULL WORKITEM LIFECYCLE PASS`, SEO artifact/provenance PASS, wrong-role denial PASS, stale-capability denial PASS, approval-required denial PASS, cross-tenant denial PASS, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
+- Evidence boundary: deterministic local research artifact only. This does not prove actual keyword/search-provider execution, Search Console access, ranking changes, an external experiment, production operation, or commercial outcomes. The workflow results above are exact-head pre-merge results; no separate post-merge run was returned by the workflow query.
+
+## Progress calculation
+
+A2 measures the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. The evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, and SEO & Growth: **6/12 = 50%**.
+
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle role coverage: **50%**
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
+
+**Actionable progress (A0–A2):** `(100 + 30 + 50) / 3 = 60%` → **60%**.
+
+**Full-scope progress (A0–A4):** `(100 + 30 + 50 + 0 + 0) / 5 = 36%` → **36%**.
+
+These are rubric-based phase indicators, not a claim that 60% of the product is commercially ready. Real provider execution, deployment, customer acceptance, reliability under production workloads, and revenue remain unproven.
+
+## Next execution priority
+
+Continue with an unrepresented role and add denial/failure-path coverage alongside the positive lifecycle. Prioritize an operation with durable local output and a clear authorization boundary. Do not count provider-backed execution or commercial gates as completed without direct evidence.
+
+---
+
 # Workforce progress update — PR #1110 (2026-10-14)
 
 ## New verified role lifecycle
