@@ -39,6 +39,7 @@ class DeterministicProvider:
                 "workforce_qa_test_plan",
                 "workforce_read_analytics",
                 "workforce_website_requirements",
+                "workforce_prepare_ceo_report",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -122,6 +123,10 @@ class DeterministicProvider:
                     "workforce_website_requirements": (
                         "e2e-workforce-website-requirements-1",
                         {"site": "certification-fixture.example", "spec": {"purpose": "product landing page", "acceptance_criteria": ["responsive layout", "accessible navigation"]}},
+                    ),
+                    "workforce_prepare_ceo_report": (
+                        "e2e-workforce-prepare-ceo-report-1",
+                        {"window_days": 30},
                     ),
                 }
                 call_id, arguments = fixtures[tool.name]
