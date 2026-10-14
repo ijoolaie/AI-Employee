@@ -1,3 +1,13 @@
+## Progress checkpoint — ambiguous GitHub branch-write outcome made explicit (2026-10-14)
+
+PR [#1155](https://github.com/ijoolaie/AI-Employee/pull/1155) was squash-merged as [`6947679d0fe89e8c81584f19ba2560480eb336b0`](https://github.com/ijoolaie/AI-Employee/commit/6947679d0fe89e8c81584f19ba2560480eb336b0) from exact tested head [`eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf`](https://github.com/ijoolaie/AI-Employee/commit/eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf). All 17/17 check-runs and 14/14 workflow runs succeeded on that exact head.
+
+Branch creation now returns `outcome_unknown` for ambiguous post-write cases (including lost/truncated/invalid response, returned-SHA mismatch, and HTTP 5xx), rather than asserting a definitive provider failure. Lookup failures remain `provider_error`; the concurrent-create HTTP 422 path remains `conflict`. Regression tests use mocked HTTP and do not establish live GitHub mutation or automatic reconciliation. Callers still need a safe read-after-write reconciliation path before retrying an ambiguous operation.
+
+Provider capability remains limited to CI-status reads and branch creation; commit, PR creation, deploy, and rollback execution are unsupported by this adapter. Live operator configuration and production execution remain unverified. Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%.
+
+---
+
 ## Progress checkpoint — GitHub branch lookup and ref validation fixes merged (2026-10-14)
 
 PR [#1152](https://github.com/ijoolaie/AI-Employee/pull/1152) corrected the GitHub Get-a-reference endpoint from `/git/refs/heads/...` to `/git/ref/heads/...`; squash merge: `398cddef834c1d845cce0352ea5aeccb7f4d3dc4`. PR [#1153](https://github.com/ijoolaie/AI-Employee/pull/1153) hardened branch-name validation for invalid ref components; exact tested head `21723a046957b3c0ee56579e901ec768390ea605`, all 17/17 check-runs succeeded, squash merge: `a3746d8f18271549c979f0fa0c104bc34dd51e67`.

@@ -1,3 +1,19 @@
+## Handoff addendum — PR #1155 merged (2026-10-14)
+
+### Completed
+- PR [#1155](https://github.com/ijoolaie/AI-Employee/pull/1155) squash-merged as [`6947679d0fe89e8c81584f19ba2560480eb336b0`](https://github.com/ijoolaie/AI-Employee/commit/6947679d0fe89e8c81584f19ba2560480eb336b0), from exact head `eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf`.
+- Exact-head evidence: 17/17 check-runs and 14/14 workflow runs passed.
+- Branch-create ambiguous outcomes are now represented as `outcome_unknown` for response-stream/transport failures, invalid create responses, SHA mismatch, and HTTP 5xx. The concurrent-create 422 case remains a conflict; preflight lookup failures remain provider errors.
+
+### Evidence boundary and follow-up
+This change prevents a false claim of definitive failure; it does not automatically reconcile the remote branch. Before retrying an `outcome_unknown` result, callers should perform a read-after-write lookup and verify the branch ref and target SHA, while treating mismatches as a reconciliation issue rather than blindly repeating POST. Current tests use mocked HTTP; they do not prove live GitHub writes or production configuration.
+
+The provider supports CI-status reads and branch creation only. Commit, PR creation, deploy, and rollback execution remain unsupported. Keep progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%.
+
+Next bounded task: inspect caller/runtime handling for `outcome_unknown` and implement/test reconciliation only if the public execution path currently permits unsafe retry or loses the uncertain state.
+
+---
+
 ## Handoff addendum — PR #1152 and #1153 (2026-10-14)
 
 ### Completed

@@ -1,3 +1,11 @@
+## 2026-10-14 — GitHub branch-write outcome semantics (#1155)
+
+- PR #1155 merged as `6947679d0fe89e8c81584f19ba2560480eb336b0`, from exact tested head `eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf`; 17/17 check-runs and 14/14 workflow runs passed.
+- Ambiguous branch-create outcomes (response transport/stream failure, invalid create response, returned SHA mismatch, and HTTP 5xx) now report `outcome_unknown`; lookup failures remain `provider_error` and HTTP 422 remains a possible concurrent-create conflict.
+- Mocked tests do not prove live GitHub mutation. Caller-side read-after-write reconciliation before retry remains follow-up; no commit/PR/deploy/rollback support is implied.
+
+---
+
 ## 2026-10-14 — GitHub engineering branch provider hardening
 
 - PR #1152: corrected GitHub branch reference lookup to the documented `git/ref/heads/{branch}` endpoint.
