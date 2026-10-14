@@ -446,6 +446,7 @@ def test_github_readonly_provider_returns_provider_error_on_transport_failure(mo
     "response_body",
     [
         b"[]",
+        b'{"state":[],"total_count":1}',
         b'{"state":"unknown","total_count":1}',
         b'{"state":"success","total_count":-1}',
         b'{"state":"success","total_count":"1"}',
