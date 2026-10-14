@@ -45,6 +45,8 @@ def _validate_target(value: object) -> str | None:
         return "Configured target URL is malformed"
     if parsed.scheme != "https" or not hostname:
         return "Configured target URL must use HTTPS"
+    if any(character.isspace() for character in hostname):
+        return "Configured target URL hostname is malformed"
     if parsed.username or parsed.password or parsed.fragment:
         return "Configured target URL must not contain credentials or a fragment"
     if port not in (None, 443):
