@@ -8,6 +8,7 @@ until a provider adapter is configured.
 """
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import uuid
@@ -68,7 +69,8 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         if not path or path.startswith("/") or ".." in path.split("/"):
             raise ValidationAppError("Workspace path is invalid")
         payload = {"kind": "workspace_file", "path": path, "content": arguments.get("content", ""), "created_at": _now()}
-        return {**_save_json(tenant_id, f"workspace-{path.replace('/', '_')}.json", payload), "path": path}
+        path_digest = hashlib.sha256(path.encode("utf-8")).hexdigest()
+        return {**_save_json(tenant_id, f"workspace-{path_digest}.json", payload), "path": path}
     if operation == "workspace_edit_file":
         payload = _read_json(tenant_id, arguments["storage_key"])
         payload["content"] = arguments["content"]

@@ -16,6 +16,24 @@ async def test_w2_engineering_workspace_is_tenant_scoped():
 
 
 @pytest.mark.asyncio
+async def test_w2_engineering_workspace_paths_cannot_collide_after_key_normalization():
+    from app.services.workforce_semantic_domains import _read_json
+
+    first = await execute_engineering(
+        {"_operation": "workspace_create_file", "path": "src/app.py", "content": "first"},
+        tenant_id="tenant-collision",
+    )
+    second = await execute_engineering(
+        {"_operation": "workspace_create_file", "path": "src_app.py", "content": "second"},
+        tenant_id="tenant-collision",
+    )
+
+    assert first["storage_key"] != second["storage_key"]
+    assert _read_json("tenant-collision", first["storage_key"])["content"] == "first"
+    assert _read_json("tenant-collision", second["storage_key"])["content"] == "second"
+
+
+@pytest.mark.asyncio
 async def test_w2_engineering_external_delivery_is_proposal_only():
     result = await execute_engineering({"_operation": "deploy_proposal"}, tenant_id="tenant-a")
     assert result["status"] == "proposal"
