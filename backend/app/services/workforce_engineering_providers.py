@@ -235,7 +235,7 @@ class GitHubEngineeringProvider:
             if exc.code == 422:
                 return ProviderResult(self.name, operation, False, "conflict", "GitHub rejected branch creation; the branch may have been created concurrently")
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch creation failed: HTTP {exc.code}")
-        except (URLError, TimeoutError, ValueError) as exc:
+        except (URLError, OSError, ValueError) as exc:
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch creation failed: {type(exc).__name__}")
 
         return ProviderResult(
