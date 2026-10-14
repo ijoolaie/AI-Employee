@@ -35,6 +35,7 @@ class DeterministicProvider:
                 "workforce_content_qa",
                 "workforce_customer_context",
                 "workforce_workspace_create_file",
+                "workforce_qa_test_plan",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -97,6 +98,17 @@ class DeterministicProvider:
                         {
                             "path": "src/semantic-e2e.txt",
                             "content": "Deterministic engineering workspace fixture.",
+                        },
+                    ),
+                    "workforce_qa_test_plan": (
+                        "e2e-workforce-qa-test-plan-1",
+                        {
+                            "repository": "fixture/example-service",
+                            "commit_sha": "0123456789abcdef0123456789abcdef01234567",
+                            "test_scope": "unit and API contract checks",
+                            "evidence": ["deterministic certification fixture"],
+                            "recommendation": "Run unit and API contract checks before merge.",
+                            "provider": "qa-devops",
                         },
                     ),
                 }
