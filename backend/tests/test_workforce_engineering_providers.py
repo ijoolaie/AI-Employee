@@ -1021,3 +1021,113 @@ def test_github_branch_provider_conflicts_when_reconciliation_finds_different_sh
     assert result.status == "conflict"
     assert result.executed is False
     assert "different commit" in result.reason
+
+
+@pytest.mark.parametrize(
+    ("payload", "expected_reason"),
+    [
+        (b"not-json", "GitHub status read failed: JSONDecodeError"),
+        (b'{"state":"queued","total_count":1}', "GitHub status read failed: invalid response contract"),
+        (b'{"state":"success","total_count":true}', "GitHub status read failed: invalid response contract"),
+    ],
+)
+def test_github_readonly_provider_rejects_malformed_status_payloads(
+    monkeypatch, payload, expected_reason
+):
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 1.0
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return payload
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        lambda request, timeout: FakeResponse(),
+    )
+
+    result = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert result.reason == expected_reason
+
+
+def test_github_readonly_provider_transport_failure_is_fail_closed(monkeypatch):
+    from urllib.error import URLError
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 1.0
+
+    def fail_request(request, timeout):
+        raise URLError("simulated network failure")
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        fail_request,
+    )
+
+    result = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert result.reason == "GitHub status read failed: URLError"
+
+
+def test_github_readonly_provider_missing_tenant_mapping_fails_before_request(monkeypatch):
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-other": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 1.0
+
+    calls = []
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        lambda request, timeout: calls.append(request),
+    )
+
+    result = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+
+    assert result.status == "not_configured"
+    assert result.executed is False
+    assert "not configured for this tenant" in result.reason
+    assert calls == []
