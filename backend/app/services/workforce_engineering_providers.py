@@ -196,9 +196,15 @@ class GitHubEngineeringProvider:
             request = Request(base_url, headers=headers, method="GET")
             with urlopen(request, timeout=settings.engineering_github_timeout_seconds) as response:
                 existing = json.loads(response.read().decode("utf-8"))
+            existing_ref = existing.get("ref") if isinstance(existing, dict) else None
             existing_object = existing.get("object") if isinstance(existing, dict) else None
             existing_sha = existing_object.get("sha") if isinstance(existing_object, dict) else None
-            if not isinstance(existing_sha, str) or not _GITHUB_SHA_RE.fullmatch(existing_sha):
+            expected_ref = f"refs/heads/{branch_name}"
+            if (
+                existing_ref != expected_ref
+                or not isinstance(existing_sha, str)
+                or not _GITHUB_SHA_RE.fullmatch(existing_sha)
+            ):
                 return ProviderResult(
                     self.name, operation, False, "provider_error",
                     "GitHub branch lookup failed: invalid response contract",
