@@ -56,7 +56,7 @@ async def license_fixture(tenant_id,suffix):
         db.add(vendor); await db.flush()
         reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
         db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan","tool:workforce_read_analytics","tool:workforce_website_requirements","tool:workforce_prepare_ceo_report","tool:workforce_prepare_growth_report","tool:workforce_lead_research"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_support_triage","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan","tool:workforce_read_analytics","tool:workforce_website_requirements","tool:workforce_prepare_ceo_report","tool:workforce_prepare_growth_report","tool:workforce_lead_research"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
 async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader",tool_name="workforce_market_research"):
@@ -68,7 +68,7 @@ async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader"
         employee=Employee(tenant_id=tenant_id,slug=f"e2e-workforce-{suffix}-{variant}",name=f"E2E Workforce {variant}",kind="custom",is_active=True)
         db.add(employee); await db.flush()
         output={"type":"object","properties":{"content":{"type":"string"}},"required":["content"]}
-        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=({"workforce_produce_article":"Produce a draft article.","workforce_produce_social_caption":"Prepare a social caption.","workforce_create_visual_asset":"Prepare a visual asset request.","workforce_revise_visual_asset":"Revise a visual asset request.","workforce_content_qa":"Run deterministic content QA on the supplied title and body.","workforce_customer_context":"Prepare governed customer context analysis.","workforce_workspace_create_file":"Create a deterministic workspace file.","workforce_keyword_research":"Conduct governed keyword research.","workforce_qa_test_plan":"Create a governed QA test plan.","workforce_read_analytics":"Prepare read-only social analytics.","workforce_prepare_growth_report":"Prepare a read-only tenant-scoped commercial growth report for the last 30 days.","workforce_lead_research":"Prepare a tenant-scoped lead research artifact from the supplied deterministic query and qualification criteria; do not contact anyone."}.get(tool_name,"Perform deterministic market research.")),allowed_tools=[tool_name],rules={})
+        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=({"workforce_produce_article":"Produce a draft article.","workforce_produce_social_caption":"Prepare a social caption.","workforce_create_visual_asset":"Prepare a visual asset request.","workforce_revise_visual_asset":"Revise a visual asset request.","workforce_content_qa":"Run deterministic content QA on the supplied title and body.","workforce_customer_context":"Prepare governed customer context analysis.","workforce_support_triage":"Triage the supplied customer support issue and preserve the supplied evidence.","workforce_workspace_create_file":"Create a deterministic workspace file.","workforce_keyword_research":"Conduct governed keyword research.","workforce_qa_test_plan":"Create a governed QA test plan.","workforce_read_analytics":"Prepare read-only social analytics.","workforce_prepare_growth_report":"Prepare a read-only tenant-scoped commercial growth report for the last 30 days.","workforce_lead_research":"Prepare a tenant-scoped lead research artifact from the supplied deterministic query and qualification criteria; do not contact anyone."}.get(tool_name,"Perform deterministic market research.")),allowed_tools=[tool_name],rules={})
         definition=AgentDefinition(tenant_id=tenant_id,slug=f"e2e-workforce-def-{suffix}-{variant}",name=f"E2E Workforce {variant}",capabilities=["execution"],allowed_tools=[tool_name],model_policy={},input_schema={},output_schema=output,policy_requirements={},enabled=True)
         db.add_all([version,definition]); await db.flush()
         template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-workforce-template-{suffix}-{variant}",name=f"E2E Workforce Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract(role_code),permission_policy={"permissions":["run.execute"],"allowed_tools":[tool_name]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
@@ -379,6 +379,44 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     print("WORKFORCE CUSTOMER SUCCESS CUSTOMER_CONTEXT FULL WORKITEM LIFECYCLE PASS")
     print(f"WORKFORCE CUSTOMER CONTEXT PERSISTENCE + PROVENANCE PASS key={cs_key}")
     print("WORKFORCE CUSTOMER CONTEXT PROVIDER BOUNDARY PASS provider_execution=not_configured")
+
+    # Certify a second routine Customer Success operation through the full queue/worker lifecycle.
+    # Inputs are a deterministic fixture; no live support system or customer history is queried.
+    triage_agent,triage_version,triage_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"customer-support-triage",role_code="ai_customer_success",tool_name="workforce_support_triage")
+    triage_reference="customer-e2e-support-triage-001"
+    triage_query="Customer reports repeated login failures and cannot access the paid workspace."
+    triage_item=await work_item(tenant_id,triage_agent,suffix,"customer-support-triage",request_text=f"Triage support issue for {triage_reference}: {triage_query}")
+    assert req("POST",f"/work-items/{triage_item}/assign/agent",{"agent_instance_id":str(triage_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{triage_item}/dispatch",token=token)[0]==200
+    triage_work,triage_run=await wait_result(triage_item)
+    assert triage_work.status is WorkItemStatus.SUCCEEDED and triage_run and triage_run.status=="success", (triage_work.status,triage_run.error_message if triage_run else None)
+    assert triage_run.agent_instance_id==triage_agent and triage_run.employee_version_id==triage_version
+    await verify_audit(tenant_id,triage_run.id,tool_name="workforce_support_triage",tool_call_id="e2e-workforce-support-triage-1")
+    triage_payloads=[]
+    for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
+        if "customer-success-" in key and key.endswith(".json"):
+            payload=workforce_semantic_domains._read_json(str(tenant_id),key)
+            if payload.get("customer_reference")==triage_reference and payload.get("query")==triage_query:
+                triage_payloads.append((key,payload))
+    assert len(triage_payloads)==1, f"expected one persisted support triage artifact, got {len(triage_payloads)}"
+    triage_key,triage_artifact=triage_payloads[0]
+    assert triage_artifact["kind"]=="customer_success_artifact" and triage_artifact["status"]=="analysis"
+    assert triage_artifact["operation"]=="support_triage"
+    assert triage_artifact["provenance"]["tenant_id"]==str(tenant_id)
+    assert triage_artifact["provider_execution"]=="not_configured"
+    assert triage_artifact["approval_required"] is False and triage_artifact["external_side_effect"] is False
+    async with AsyncSessionLocal() as db:
+        triage_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==triage_definition_id,
+            AgentRuntimeBinding.employee_version_id==triage_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert triage_binding is not None
+    print("WORKFORCE CUSTOMER SUCCESS SUPPORT_TRIAGE FULL WORKITEM LIFECYCLE PASS")
+    print(f"WORKFORCE SUPPORT TRIAGE PERSISTENCE + PROVENANCE PASS key={triage_key}")
+    print("WORKFORCE SUPPORT TRIAGE PROVIDER BOUNDARY PASS provider_execution=not_configured")
 
     # Add a full lifecycle proof for the Software Developer's local workspace artifact path.
     # This does not claim provider-backed tests/builds, Git operations, or deployment.

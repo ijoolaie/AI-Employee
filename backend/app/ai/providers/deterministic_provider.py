@@ -34,6 +34,7 @@ class DeterministicProvider:
                 "workforce_revise_visual_asset",
                 "workforce_content_qa",
                 "workforce_customer_context",
+                "workforce_support_triage",
                 "workforce_workspace_create_file",
                 "workforce_keyword_research",
                 "workforce_qa_test_plan",
@@ -97,6 +98,15 @@ class DeterministicProvider:
                             "query": "support history and account health",
                             "evidence": ["deterministic certification fixture"],
                             "recommendation": "Review the account health evidence before any customer-facing action.",
+                        },
+                    ),
+                    "workforce_support_triage": (
+                        "e2e-workforce-support-triage-1",
+                        {
+                            "customer_reference": "customer-e2e-support-triage-001",
+                            "query": "Customer reports repeated login failures and cannot access the paid workspace.",
+                            "evidence": ["deterministic support triage fixture"],
+                            "recommendation": "Review access logs and verify account status before responding.",
                         },
                     ),
                     "workforce_workspace_create_file": (
