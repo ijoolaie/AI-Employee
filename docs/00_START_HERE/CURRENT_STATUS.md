@@ -1,3 +1,34 @@
+# Workforce progress update — PR #1125 (2026-10-14)
+
+## Sales & Lead Generation lifecycle proof
+
+- PR [#1125](https://github.com/ijoolaie/AI-Employee/pull/1125) squash-merged as [`8c9f79904241b9a5899ee38f0067719496fb4913`](https://github.com/ijoolaie/AI-Employee/commit/8c9f79904241b9a5899ee38f0067719496fb4913), from exact tested head [`92d2654ca3098a9e0f5865a3502fa0f5756c01ba`](https://github.com/ijoolaie/AI-Employee/commit/92d2654ca3098a9e0f5865a3502fa0f5756c01ba).
+- Added `workforce_lead_research` to the deterministic E2E provider and tenant-license fixture; tested `ai_sales_lead_generation` through WorkItem assignment → dispatch → worker → successful Run, including Run/version identity, tool-call audit identity, and active runtime binding.
+- All 11 workflow groups passed on the exact tested head: [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241883), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241894), [Production Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241886), [W21 AI Business Network E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241942), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241938), [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241951), [HA Failure Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241911), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241968), [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38531242020), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241978), and [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38531243313).
+- The W21 workflow's API startup was hardened with `nohup` and a bounded health-check retry; W21 passed on the tested head after this change.
+- Evidence boundary: deterministic tenant-scoped lead-research artifact only. Provider remains `not_configured`; this does not prove live lead sourcing, external CRM enrichment, outreach delivery, production deployment/outcomes, customer acceptance, or revenue.
+
+## Progress calculation
+
+All 12 canonical workforce roles now have at least one successful canonical WorkItem → assignment → dispatch → worker → successful Run path: **12/12 = 100%**.
+
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle role coverage: **100%**
+- A3 — commercial/pilot readiness: **0%** (external gate)
+- A4 — independence/reliability and outcome evidence: **0%** (external/operational gate)
+
+**Actionable progress (A0–A2):** (100 + 30 + 100) / 3 = **76.7% → 77%**.
+**Full-scope progress (A0–A4):** (100 + 30 + 100 + 0 + 0) / 5 = **46%**.
+
+These rubric indicators are not commercial or release readiness. Real provider execution, external production operation, customer acceptance, and revenue remain unproven.
+
+## Next execution priority
+
+The canonical role-breadth lifecycle matrix is complete. Next prioritize the role-by-role capability reality audit (A1), identify the highest-value missing operations and provider-backed integration gaps, then close those with bounded tests and explicit evidence. Keep A3/A4 externally gated until real pilot and operational evidence exists.
+
+---
+
 # Workforce progress update — PR #1119 (2026-10-14)
 
 ## Social Media read-only analytics lifecycle proof
