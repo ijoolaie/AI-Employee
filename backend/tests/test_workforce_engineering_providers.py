@@ -623,3 +623,59 @@ def test_github_branch_provider_rejects_created_sha_mismatch(monkeypatch):
     assert result.status == "provider_error"
     assert result.executed is False
     assert "does not match requested source SHA" in result.reason
+
+
+@pytest.mark.parametrize(
+    "failure, expected_type",
+    [
+        ("timeout", "TimeoutError"),
+        ("http_error", "HTTPError"),
+        ("invalid_json", "JSONDecodeError"),
+    ],
+)
+def test_github_readonly_provider_fails_closed_for_timeout_http_error_and_invalid_json(
+    monkeypatch, failure, expected_type
+):
+    from urllib.error import HTTPError
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 1.0
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b"not-json"
+
+    def fake_urlopen(request, timeout):
+        if failure == "timeout":
+            raise TimeoutError("upstream timed out")
+        if failure == "http_error":
+            raise HTTPError(request.full_url, 503, "service unavailable", {}, None)
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        fake_urlopen,
+    )
+
+    result = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert expected_type in result.reason
