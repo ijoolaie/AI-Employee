@@ -376,6 +376,35 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
             "provider_payment_id": result.provider_payment_id,
         }
 
+    qualification: dict[str, Any] | None = None
+    if operation == "lead_qualification":
+        # Score only explicit, operator/model-supplied signals. This is a
+        # transparent local heuristic, not CRM enrichment or external research.
+        signals = (
+            "industry_match",
+            "need_confirmed",
+            "budget_confirmed",
+            "decision_maker_identified",
+            "timeline_confirmed",
+        )
+        supplied_criteria = arguments.get("criteria", {})
+        passed_signals = [name for name in signals if supplied_criteria.get(name) is True]
+        missing_signals = [name for name in signals if supplied_criteria.get(name) is not True]
+        score = len(passed_signals) * 20
+        qualification = {
+            "method": "explicit_boolean_signals_v1",
+            "score": score,
+            "max_score": 100,
+            "status": "qualified" if score >= 80 else "needs_review" if score >= 40 else "insufficient_evidence",
+            "passed_signals": passed_signals,
+            "missing_or_unconfirmed_signals": missing_signals,
+            "limitations": [
+                "Uses only criteria explicitly supplied with this request.",
+                "Does not fetch or enrich lead data from a CRM or external provider.",
+                "A missing signal is treated as unconfirmed, not as a negative fact.",
+            ],
+        }
+
     status = "proposal" if external else "draft_or_report"
     approval_status = "approved" if approval_required else "not_required"
     payload = {
@@ -393,6 +422,7 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "provider_execution": provider_execution,
         "external_side_effect": external,
         **({"execution": execution_result} if execution_result is not None else {}),
+        **({"qualification": qualification} if qualification is not None else {}),
         "provenance": {
             "tenant_id": tenant_id,
             "created_at": _now(),
@@ -412,6 +442,7 @@ async def execute_sales(arguments: dict[str, Any], **context: Any) -> dict[str, 
         "external_side_effect": external,
         "deal_id": arguments.get("deal_id"),
         **({"execution": execution_result} if execution_result is not None else {}),
+        **({"qualification": qualification} if qualification is not None else {}),
     }
 
 async def execute_seo_growth(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
