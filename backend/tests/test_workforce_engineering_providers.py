@@ -776,3 +776,21 @@ def test_github_readonly_provider_handles_truncated_response_body(monkeypatch):
     assert result.status == "provider_error"
     assert result.executed is False
     assert "IncompleteRead" in result.reason
+
+
+
+def test_github_provider_fails_closed_for_unimplemented_commit_proposal() -> None:
+    """A registered proposal tool must not imply GitHub commit execution exists."""
+    provider = GitHubEngineeringProvider()
+
+    result = provider.execute(
+        "git_commit_proposal",
+        tenant_id="tenant-a",
+        arguments={"title": "test change", "message": "propose only"},
+    )
+
+    assert result.provider == "github"
+    assert result.operation == "git_commit_proposal"
+    assert result.executed is False
+    assert result.status == "not_configured"
+    assert "does not execute this operation" in result.reason
