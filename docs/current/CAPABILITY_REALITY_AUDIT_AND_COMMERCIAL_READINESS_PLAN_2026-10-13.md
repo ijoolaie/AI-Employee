@@ -861,3 +861,14 @@ This is a coarse phase-level metric, not a PR-count or engineering-velocity metr
 3. Define explicit A1 exit criteria and a stable operation-level denominator before revising any score. Fix only confirmed mismatches; preserve fail-closed controls.
 
 Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope context 46%. No live provider write, production readiness, or commercial readiness is implied.
+
+
+## 2026-10-14 checkpoint — PR #1148 approval-gated workforce resume
+
+- PR #1148: https://github.com/ijoolaie/AI-Employee/pull/1148; merged as `0a38c57cb80f80ae6a522eac8933d0f7b4fc8ddd` from exact tested head `e7f308e2bea13dee5ad3e22da8e7b2a7210feb8b`.
+- Verified 13 GitHub Actions workflow runs on that exact head; all 13 completed successfully. This includes CI, CodeQL, architecture, security/privacy, semantic real-stack E2E, W1 control-plane E2E, infrastructure, observability, rollback/alerting, and failure recovery.
+- Runtime governance now permits an approval-required workforce operation only when the canonical Run resume path supplies a persisted approval matching tenant, Run, registered tool, tool-call ID, approved status, and exact arguments. Calls without approval context remain fail-closed; argument mismatch is rejected. Central Tool Registry approval enforcement remains in place as a separate boundary.
+- Scope/evidence boundary: automated tests and CI only. The provider still returns `not_configured` for `git_commit_proposal`; no actual GitHub write, live provider operation, deployment, or production readiness is established. If a remote write is accepted but its response cannot be read, the external outcome may remain unverified.
+- Why progress scores did not move: this fix closes one evidenced approval-resume mismatch, but does not complete provider support or the role-by-role evidence matrix. Do not infer broad A1 readiness from PR count.
+- Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%.
+- Next: build and maintain an operation-level evidence matrix across roles (role contract, Tool Registry/permissions, semantic handler, persisted approval/governance, provider support, persisted result/audit, positive/negative tests, exact-head CI, and external validation). Fix only confirmed gaps; keep A1 at 30% until its documented evidence threshold is met.
