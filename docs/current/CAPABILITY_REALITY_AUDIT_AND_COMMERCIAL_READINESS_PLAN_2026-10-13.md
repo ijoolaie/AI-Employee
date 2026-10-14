@@ -8,6 +8,21 @@ This resolves the W16 fixture defect; it does not alter production authorization
 
 
 
+## A1 capability trace — Content Producer, Graphic Designer and Social Media (2026-10-14)
+
+### AI Content Producer
+`execute_content` persists tenant-scoped draft artifacts with version and provenance. Its `content_qa` operation performs three deterministic checks only: title present, body non-empty and common placeholder markers absent. It persists findings and reports `provider_execution=not_required`. The code explicitly disclaims factual accuracy, tone, brand and legal-compliance review. This is a useful structural preflight, not semantic editorial QA or automated fact-checking.
+
+### AI Graphic Designer
+`execute_creative` records a versioned creative-asset request with prompt, optional brand context and requested provider metadata. It returns `provider_execution=not_configured`; it does not generate or store an actual image/video asset through an external provider. The unit tests verify unique IDs, tenant-scoped storage and that a caller-supplied provider name does not falsely claim execution.
+
+### AI Social Media Manager
+`execute_social` writes a tenant-scoped `social_operation` artifact. Read/analysis operations are recorded as requests; channel connection, publish, schedule and DM-response operations are proposals with approval required. The current handler hardcodes `provider_execution=not_configured`; no provider-side publishing, scheduling, channel connection or DM response is executed. Its `external_side_effect` field denotes the action class/risk boundary for these proposals, not a claim that the effect occurred.
+
+**A1 disposition:** content draft persistence and deterministic structural QA are implemented; image generation and social execution are not. A safe next slice is to strengthen content QA with deterministic policy/metadata checks and explicit test coverage, without presenting those checks as factual or legal verification. Real image generation or social publishing should remain a separate provider-integration project with tenant-owned credentials, scoped permissions, approval enforcement and auditable external outcomes.
+
+---
+
 ## A1 capability trace — QA/DevOps and Website Employee (2026-10-14)
 
 ### AI QA/DevOps
