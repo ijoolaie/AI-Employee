@@ -1,13 +1,14 @@
-# Current status — PR #1128 merged (2026-10-14)
+# Current status — PR #1129 merged; W16 fixture repaired (2026-10-14)
 
-PR [#1128](https://github.com/ijoolaie/AI-Employee/pull/1128) was squash-merged as [b88f7e663eeef564253aab9f268946b956cb7746](https://github.com/ijoolaie/AI-Employee/commit/b88f7e663eeef564253aab9f268946b956cb7746), from tested head [9602bb75522a33f3d36c51f579e093f2db6d2e1c](https://github.com/ijoolaie/AI-Employee/commit/9602bb75522a33f3d36c51f579e093f2db6d2e1c).
+PR [#1129](https://github.com/ijoolaie/AI-Employee/pull/1129) was squash-merged as [ece6b805f02a28b27cb30da34e31dcf2efb132f7](https://github.com/ijoolaie/AI-Employee/commit/ece6b805f02a28b27cb30da34e31dcf2efb132f7), from exact tested head [d593b5650673174ce9579df166f9a72b76904f9e](https://github.com/ijoolaie/AI-Employee/commit/d593b5650673174ce9579df166f9a72b76904f9e).
 
-- Added deterministic lead qualification based only on five explicit Boolean signals, with an explainable score, outcome, passed/unconfirmed signals and tenant-scoped persistence.
-- W10 real-stack, backend, frontend, contract and semantic E2E checks passed on the final PR head. Of 31 reported check-runs, 29 succeeded and one failed: **W16 skill provider execution real-stack**; one additional check completed without a success/failure conclusion. The W16 fixture calls a side-effecting tool with database/tenant arguments but no active Agent Run context, so centralized governance rejects the call before the fixture's expected human-approval assertion. This failure is not evidence that lead qualification failed, but remains a real CI follow-up; do not represent the full suite as green.
-- Qualification is local rule-based analysis over supplied criteria only. Provider execution remains not_configured; no live lead sourcing, CRM enrichment, outreach, production outcome, customer acceptance or revenue is proven.
-- Progress rubric unchanged: A0 100%, A1 30%, A2 100%, A3 0%, A4 0%; actionable 77%, full-scope 46%. One narrow implementation does not complete the broader capability audit or establish commercial readiness.
+- Repaired the W16 skill-provider real-stack test fixture to create a tenant-scoped Agent/Run/approval context and exercise approval denial, deterministic provider success, cross-tenant rejection and commercial-entitlement denial without weakening production governance.
+- All seven workflow runs checked on the exact PR head completed successfully, including [W16 Skill Provider Execution Real-Stack](https://github.com/ijoolaie/AI-Employee/actions/runs/38536389499), [CI backend/frontend](https://github.com/ijoolaie/AI-Employee/actions/runs/38536389446), [W21](https://github.com/ijoolaie/AI-Employee/actions/runs/38536389611), Architecture Guard, CodeQL, Ephemeral DAST, HA Failure Recovery and Production Infrastructure Validation.
+- This resolves the specific W16 fixture failure reported on PR #1128. The W16 evidence is an isolated deterministic test-provider path; it does not prove a live external skill provider, production deployment, customer acceptance or revenue.
+- PR #1128's deterministic Sales lead qualification remains a score over caller-supplied Boolean evidence only. Live lead sourcing, CRM enrichment and external outreach remain unproven.
+- Progress rubric remains A0 100%, A1 30%, A2 100%, A3 0%, A4 0%; actionable 77%, full-scope 46%. These are engineering rubric indicators, not commercial readiness.
 
-Next: repair W16's real-stack fixture so its approval-gate and provider-execution paths run inside a valid tenant-scoped Agent Run context, then rerun and verify relevant checks. Keep this follow-up separate from the already-merged lead-qualification change.
+Next: continue the cross-role A1 capability reality audit with source/test-backed evidence, then validate configured provider integrations and operational/release gates, and finally collect supervised pilot/customer outcome evidence. Keep production and commercial claims bounded by evidence.
 
 ---
 
