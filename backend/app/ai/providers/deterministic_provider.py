@@ -35,6 +35,7 @@ class DeterministicProvider:
                 "workforce_content_qa",
                 "workforce_customer_context",
                 "workforce_workspace_create_file",
+                "workforce_keyword_research",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -98,6 +99,10 @@ class DeterministicProvider:
                             "path": "src/semantic-e2e.txt",
                             "content": "Deterministic engineering workspace fixture.",
                         },
+                    ),
+                    "workforce_keyword_research": (
+                        "e2e-workforce-keyword-research-1",
+                        {"topic": "SaaS customer acquisition"},
                     ),
                 }
                 call_id, arguments = fixtures[tool.name]
