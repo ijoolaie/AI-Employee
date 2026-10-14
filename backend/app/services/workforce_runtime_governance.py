@@ -89,6 +89,11 @@ async def assert_workforce_operation(
     agent: AgentInstance,
     operation: str,
     affected_employee_id: UUID | None = None,
+    approval_request_id: UUID | None = None,
+    run_id: UUID | None = None,
+    tool_name: str | None = None,
+    tool_call_id: str | None = None,
+    arguments: dict | None = None,
 ) -> None:
     """Fail closed unless the Agent's catalog role permits the requested operation."""
     role_code = (agent.configuration or {}).get("workforce_role_code")
