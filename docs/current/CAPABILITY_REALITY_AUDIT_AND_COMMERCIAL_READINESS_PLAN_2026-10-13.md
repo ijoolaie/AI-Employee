@@ -2,7 +2,7 @@
 
 PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) addresses a concrete failure-path gap in `GitHubEngineeringProvider`: transport and JSON decode errors were caught, but valid JSON with a non-object shape could cause an uncaught attribute error; branch creation also trusted a missing/defaulted object SHA and could report `executed=True` without verifying the returned SHA. The patch validates lookup/create response shape and requires the created object SHA to be a valid 40-character hex value equal to the requested source SHA before reporting execution success. Regression tests cover malformed lookup JSON, malformed create JSON, and SHA mismatch.
 
-Status: open PR, exact head `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`, CI pending. This is static/test hardening evidence only; no live GitHub operation is claimed. Branch creation remains approval-gated. A1 stays 30%.
+Status: open PR, exact head `implementation commit `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`; subsequent documentation-only commits are included in PR #1137, whose page shows the current head`, CI pending. This is static/test hardening evidence only; no live GitHub operation is claimed. Branch creation remains approval-gated. A1 stays 30%.
 
 ---
 
