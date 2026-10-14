@@ -1035,3 +1035,12 @@ Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-
 Operation-specific tests have been inspected: SEO & Growth has W7/W22 real-stack governance/artifact coverage; Customer Success has W23 routine/proposal coverage plus PR #1131's full support-triage lifecycle; Software Developer has provider unit tests and W2 real-stack workspace/CI-status/deploy-proposal coverage. All of these use deterministic fixtures or mocked provider responses where stated; none should be described as live customer or production evidence.
 
 **Next action:** strengthen `backend/tests/test_workforce_engineering_providers.py` around the read-only GitHub CI-status adapter's transport failure, malformed response and missing tenant-to-repository mapping paths. Preserve the provider's read-only contract and fail-closed behavior. Do not implement new external write operations. Require focused tests plus the existing required CI checks before merge. Progress remains A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope context 46%.
+
+
+## Latest checkpoint — PR #1137 merged; next provider boundary (2026-10-14)
+
+- PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) merged at `6ae34445f7eabef8dc8cf8a5926b21d7cdc3dfac` after all 18 checks passed on exact tested head `27b176b3e0020388d45ab04e13ef7f5c138bdd09`.
+- GitHub branch lookup/create now validates response object SHA format and enforces returned-created-SHA == requested source SHA before reporting success. Three regression cases cover malformed lookup, malformed creation and SHA mismatch.
+- No live provider operation is claimed. For malformed/mismatched responses following an HTTP write, external side-effect status is unverified rather than proven absent.
+- Next: inspect and strengthen read-only GitHub CI-status provider tests for transport failure, malformed response and missing tenant-to-repository mapping. Preserve no-write behavior and fail-closed semantics; require focused and exact-head CI evidence before merge.
+- Progress unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%.
