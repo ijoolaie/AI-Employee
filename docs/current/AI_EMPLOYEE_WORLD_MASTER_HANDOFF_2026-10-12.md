@@ -1,5 +1,37 @@
 # Workforce progress update — PR #1110 (2026-10-14)
 
+## Software Developer lifecycle proof
+
+- PR [#1110](https://github.com/ijoolaie/AI-Employee/pull/1110) squash-merged as [`4e89b5a6ffe7e9b561b404ec6789d2580b492bd0`](https://github.com/ijoolaie/AI-Employee/commit/4e89b5a6ffe7e9b561b404ec6789d2580b492bd0), from exact tested head `2ff32caf5d031aea66577339814b3fdd74cca2b9`.
+- The deterministic semantic E2E now exercises `workforce_workspace_create_file` as `ai_software_developer` through WorkItem assignment → dispatch → worker → successful Run.
+- Assertions cover tool-call audit identity, active AgentRuntimeBinding, exactly one tenant-scoped workspace file, and exact persisted path/content.
+- All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558694), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558732), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558646), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558743), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558786), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558824), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38429559290), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558547), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558760), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558818), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558517).
+- Evidence boundary: this proves a deterministic tenant-scoped local file artifact only. It does not prove provider-backed tests/lint/build, Git operations, code review, deployment, or production execution. These are exact-head pre-merge workflow results; do not imply a separate post-merge run was verified.
+
+## Explicit progress calculation
+
+The A2 metric is the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run proof. It counts roles, not the number of operations in the same role.
+
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle role coverage: **5 of 12 roles = 41.7%** (Trader, Content Producer, Graphic Designer, Customer Success, Software Developer)
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
+
+**Actionable progress (A0–A2):** `(100 + 30 + 41.7) / 3 = 57.2%` → **57%**.
+
+**Full-scope progress (A0–A4):** `(100 + 30 + 41.7 + 0 + 0) / 5 = 34.3%` → **34%**.
+
+These are phase/coverage indicators, not a claim that 57% of a commercial product is ready. Provider execution, deployment, customer acceptance, reliability under real workloads, and revenue remain unproven.
+
+## Next execution priority
+
+Move to a currently unrepresented role rather than adding more operations to an already represented role. Prefer a role with a durable local artifact and clear authorization boundary; require positive lifecycle proof plus at least one meaningful denial/failure case. Keep external-provider and production gates explicit.
+
+---
+
+# Workforce progress update — PR #1110 (2026-10-14)
+
 ## New verified role lifecycle
 
 - PR [#1110](https://github.com/ijoolaie/AI-Employee/pull/1110) merged as [`4e89b5a6ffe7e9b561b404ec6789d2580b492bd0`](https://github.com/ijoolaie/AI-Employee/commit/4e89b5a6ffe7e9b561b404ec6789d2580b492bd0), with exact-head validation at `2ff32caf5d031aea66577339814b3fdd74cca2b9`.
