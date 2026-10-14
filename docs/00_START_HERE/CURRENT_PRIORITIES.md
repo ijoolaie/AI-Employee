@@ -1,3 +1,12 @@
+## Current priorities — PR #1128 merged (2026-10-14)
+
+1. **Resolve W16 real-stack fixture failure.** The fixture invokes workforce_execute_installed_skill without agent_tool_context while supplying DB/tenant arguments; the governance wrapper correctly fails closed before the expected approval assertion. Build a valid tenant-scoped Agent Run/approval fixture rather than weakening the guard or merely changing the assertion.
+2. **Continue A1 capability reality audit** across remaining canonical workforce operations. Keep A1 at 30% until materially more operations have source/test-backed classifications.
+3. **Preserve the qualification evidence boundary.** PR #1128 adds a transparent score over supplied Boolean signals only; provider_execution=not_configured remains true and no live sourcing or CRM enrichment is proven.
+4. **Progress indicators unchanged:** A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%. These are engineering rubric indicators, not commercial readiness.
+
+---
+
 ## A1 audit checkpoint — Sales capability reality (2026-10-14)
 
 A focused source trace of Sales & Lead Generation is complete, but the broader A1 audit remains in progress. Nine routine Sales operations currently route through a shared handler that persists generic tenant-scoped `sales_operation` artifacts; static inspection did not establish live lead sourcing, CRM enrichment, pipeline analytics or conversion attribution. External outreach and payment checkout have separate provider boundaries and approval controls, but their real execution is not proven by the Sales lifecycle E2E. See the latest [capability audit](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
