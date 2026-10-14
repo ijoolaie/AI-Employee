@@ -626,3 +626,43 @@ Count `content_qa` as an additional operation with lifecycle evidence under `ai_
 - Boundary: this is a deterministic report based on tenant-owned orders and sales pipeline data. It does not demonstrate ad attribution, live marketing provider execution, paid spend, campaign launch, external outreach, production outcomes, customer acceptance, or revenue.
 - Canonical role coverage is 11/12 = 91.7%; only `ai_sales_lead_generation` remains uncovered. A0/A1/A2/A3/A4 = 100/30/91.7/0/0; actionable progress 74%; full-scope context 44%.
 - Next audit target: Sales & Lead Generation, selecting a non-external routine operation and validating the canonical lifecycle and negative paths without sending messages or creating commercial commitments.
+
+
+## Cross-role capability evidence matrix — source trace checkpoint (2026-10-14)
+
+This is a **static source trace**, not a provider execution test. Sources inspected on `main`:
+- `backend/app/services/ai_workforce_roles.py` at `fda32e5ad6d1e856b91b2559e7c2d323218bb649` (role contracts and operation/tool bindings).
+- `backend/app/ai/tool_registry.py` at `b34be46d50f8ebd4b5d68241342bccd7e76d2e5c` (tool registration, permission, approval, tenant Run and entitlement gates).
+- `backend/app/services/workforce_semantic_domains.py` at `07c1030fc7a8918a6ba083490c8bdb6d91eed7e3` (nine semantic handlers and tenant-scoped JSON persistence).
+
+### Role-level matrix
+
+| Canonical role | Handler/source path observed | Persistence or data-source boundary | Approval / permission boundary | Current evidence classification |
+|---|---|---|---|---|
+| AI Internal Manager | Not covered by the nine semantic-domain handlers listed below; dedicated handler path still to be traced | Not established in this pass | Contract declares `run.execute`; operation-level review pending | **Audit pending** — do not infer full execution from the role contract |
+| Marketing & Advertising Manager | Canonical `workforce_prepare_growth_report` lifecycle evidence exists; exact full operation family not source-traced in this checkpoint | PR #1124 evidence describes a tenant-owned orders/deals read-only report; ad attribution and campaign-provider data are not proven | PR #1124 includes wrong-role, stale-capability, approval-required and cross-tenant denials | **Bounded report proven; broader marketing capability pending** |
+| Graphic Designer | `execute_creative` | Saves `creative_asset_request` JSON under tenant-scoped storage; status `draft`; provider execution explicitly `not_configured` | Reads approval requirement from canonical role contract; tool registry applies permission/approval gates | **Request/artifact scaffolding proven; image/video generation not proven by this handler** |
+| Software Developer | `execute_engineering` | Tenant-scoped workspace JSON and local storage operations; handler includes workspace CRUD and proposal operations. Provider-specific engineering operations require branch-by-branch verification | Tool registry permission, allowed-tool, approval, tenant Run and entitlement gates; workspace path and tenant-key checks visible | **Mixed local functionality and proposal scaffolding; tests/build/CI/deploy execution must be operation-specific** |
+| AI Trader | Dedicated provider/handler path not traced in this pass | Market-data source, order staging, broker connection and execution status not established here | Role contract identifies order execution, leverage, withdrawals and material financial commitments as approval-required | **Audit pending; no claim of live market or broker execution** |
+| Content Producer | `execute_content` | Persists tenant-scoped content artifacts; `content_qa` contains deterministic checks for title/body/placeholders | Approval requirement derived from role contract; registry gate applies to tool execution | **Draft and deterministic QA paths exist; editorial quality or publication is not externally certified** |
+| Social Media | `execute_social` | Persists `social_operation` records; provider state is `not_configured`; publish/connect/schedule/DM actions are proposals, not Instagram execution | External actions are marked approval-required by the role contract and guarded at registry execution | **Read/request lifecycle proven; live channel reads, publication and messaging unproven** |
+| Sales & Lead Generation | `execute_sales` | Nine routine operations share generic `sales_operation` artifact persistence; external outreach has a separate adapter; material commercial action checks deal state and delegates to checkout path | Registry and role contract gates; external outreach requires its own configured/authorized provider path; commercial action is approval-gated | **Generic research/qualification/CRM/reporting artifacts only unless a dedicated source-backed branch is evidenced; real outreach/payment unproven** |
+| SEO & Growth | `execute_seo_growth` | Persists `seo_growth_artifact`; status `research` or `proposal`; provider execution `not_configured` | Approval from role contract; external experiment is a proposal | **Research/proposal artifact proven; search-engine data and experiments not executed** |
+| Customer Success | `execute_customer_success` | Persists `customer_success_artifact`; provider execution `not_configured`; analysis/proposal status only | Approval from role contract; send/proposal operations marked external/proposal | **Analysis and communication proposals; live support/CRM actions unproven** |
+| QA & DevOps | `execute_qa_devops` | Persists `qa_devops_artifact`; provider execution `not_configured`; proposal operations do not deploy | Approval from role contract; registry gates apply | **Test-plan/evidence artifacts proven; tests are not thereby run, and deploy/rollback is not executed** |
+| Website Employee | `execute_website` | Persists `website_change`; staged/proposal status; provider execution `not_configured` | Approval from role contract; deploy/rollback represented as external side effects and proposals | **Requirements/change artifacts proven; live build, preview, health check, deploy and rollback not proven by this handler** |
+
+### Cross-cutting execution boundary
+
+The tool registry checks, in order, declared allowed-tool membership when supplied, the required permission (default `run.execute`), human approval where required, and commercial entitlement for non-utility tools; entitlement-gated business tools require an active tenant Run context. This is an authorization boundary, **not proof that the underlying business operation is implemented against a real provider**.
+
+The nine inspected semantic handlers are `execute_engineering`, `execute_content`, `execute_creative`, `execute_social`, `execute_sales`, `execute_seo_growth`, `execute_customer_success`, `execute_qa_devops`, and `execute_website`. Most persist tenant-scoped JSON artifacts. This persistence is valuable as governed request/proposal state, but must not be described as completion of the operation named in the artifact.
+
+### Audit gaps ranked for the next implementation cycle
+
+1. **Close evidence gaps for the three roles outside the nine-handler set**: trace AI Internal Manager, Marketing & Advertising Manager and AI Trader from contract → registered tool → handler → data source/provider → approval/permission → tests. Marketing has bounded lifecycle evidence, but its wider capability surface still needs tracing.
+2. **Operation-level source-backed tests**: prioritize claims with highest user value and highest risk of misleading labels: CRM enrichment, lead research/qualification, pipeline reporting/conversion attribution; live SEO analytics; social analytics/publication; and engineering/QA test execution. Tests must assert actual source/provider calls or explicitly assert `not_configured`.
+3. **Provider and side-effect state consistency**: ensure artifacts cannot be mistaken for executed actions; assert `provider_execution`, `external_side_effect`, approval state and provenance on success and denial paths.
+4. **Commercial action boundary**: separately test checkout adapter configured/unconfigured paths, approval denial, invalid deal stage and provider result; do not infer payment collection from proposal persistence.
+5. **Update this matrix with exact test/CI references** after each operation-specific test is merged. Keep A1 at 30% until materially more roles and operations have evidence-backed classifications; no progress percentage is raised merely because this matrix was written.
+
