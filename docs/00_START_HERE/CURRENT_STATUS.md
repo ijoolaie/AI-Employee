@@ -1,3 +1,16 @@
+## Progress checkpoint — provider outcome audit persistence fixed (#1157/#1158, 2026-10-14)
+
+
+PR [#1157](https://github.com/ijoolaie/AI-Employee/pull/1157) added semantic-handler regression coverage for `outcome_unknown` pass-through. PR [#1158](https://github.com/ijoolaie/AI-Employee/pull/1158) was squash-merged as [`e77ff28441266b8b2acf2489f9d9ddbbf0bd11fe`](https://github.com/ijoolaie/AI-Employee/commit/e77ff28441266b8b2acf2489f9d9ddbbf0bd11fe) from exact tested head `05349f23eb02c5d96e141439c836e2050d4de1d3`; all 16/16 check-runs succeeded on that head.
+
+The Run service now preserves a bounded allowlist of provider outcome metadata in `tool.call` audit records and records the audit status as `outcome_unknown` rather than `success` when that is the provider result. This is applied to normal tool execution and approved-tool resumption. Regression tests cover the status, allowlisting, and bounded reason length. Audit metadata continues through the existing sensitive-data redaction layer; raw arguments and arbitrary provider payloads are not copied.
+
+Evidence boundary: CI and tests do not prove live GitHub writes or reconcile whether an ambiguous branch-create POST took effect. The next priority is safe read-after-write reconciliation before any retry. Provider capability remains CI-status reads and branch creation only; commit/PR creation, deploy, and rollback are unsupported by this adapter. Live operator configuration and production execution remain unverified.
+
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable 77%; full-scope 46%. Do not raise scores for this bounded audit fix.
+
+---
+
 ## Progress checkpoint — ambiguous GitHub branch-write outcome made explicit (2026-10-14)
 
 PR [#1155](https://github.com/ijoolaie/AI-Employee/pull/1155) was squash-merged as [`6947679d0fe89e8c81584f19ba2560480eb336b0`](https://github.com/ijoolaie/AI-Employee/commit/6947679d0fe89e8c81584f19ba2560480eb336b0) from exact tested head [`eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf`](https://github.com/ijoolaie/AI-Employee/commit/eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf). All 17/17 check-runs and 14/14 workflow runs succeeded on that exact head.
