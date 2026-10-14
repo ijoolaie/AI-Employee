@@ -1,3 +1,13 @@
+## 2026-10-14 — Durable audit of unknown provider outcomes (#1157/#1158)
+
+
+- PR #1157 added semantic-handler regression coverage for preserving `outcome_unknown` provider results.
+- PR #1158 merged as `e77ff28441266b8b2acf2489f9d9ddbbf0bd11fe`, from exact tested head `05349f23eb02c5d96e141439c836e2050d4de1d3`; all 16 check-runs passed.
+- `tool.call` audit records now retain a bounded allowlist of provider outcome fields and use `outcome_unknown` as the event status when the provider reports an ambiguous result. Applies to regular execution and approved-tool resumption; provider reason is capped at 500 characters and existing audit redaction remains active.
+- Follow-up: add safe read-after-write reconciliation before retrying ambiguous GitHub branch-create writes. CI does not prove live external mutation or production readiness.
+
+---
+
 ## 2026-10-14 — GitHub branch-write outcome semantics (#1155)
 
 - PR #1155 merged as `6947679d0fe89e8c81584f19ba2560480eb336b0`, from exact tested head `eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf`; 17/17 check-runs and 14/14 workflow runs passed.

@@ -1,3 +1,14 @@
+## Current priority update — after PR #1158 (2026-10-14)
+
+
+1. Implement and test safe read-after-write reconciliation for GitHub branch creation returning `outcome_unknown`; never retry blindly when a write may already have succeeded.
+2. Verify that reconciliation is tenant/repository/branch scoped and that it distinguishes the requested branch/SHA from an unrelated pre-existing branch before deciding whether a retry is safe.
+3. Continue the Software Developer path audit through approval, Tool Registry, semantic handler, provider, persisted Run result, and audit evidence.
+4. Preserve capability boundaries: current engineering provider supports CI-status reads and branch creation only; Git commit, PR creation, deploy, and rollback remain unsupported. Live operator configuration and production execution are not verified.
+5. Keep progress rubric unchanged until broader role-operation evidence meets the existing threshold: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full scope 46%.
+
+---
+
 ## Current priority update — 2026-10-14 (after PR #1155)
 
 1. After the merged #1155 change, audit whether callers treat `outcome_unknown` as a stop-and-reconcile state rather than retrying a branch-create write blindly.
