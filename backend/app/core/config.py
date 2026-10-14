@@ -72,6 +72,8 @@ class Settings(BaseSettings):
             raise ValueError("MARKET_DATA_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
         if self.engineering_github_timeout_seconds <= 0 or self.engineering_github_timeout_seconds > 60:
             raise ValueError("ENGINEERING_GITHUB_TIMEOUT_SECONDS must be between 0 and 60")
+        if self.website_health_timeout_seconds <= 0 or self.website_health_timeout_seconds > 15:
+            raise ValueError("WEBSITE_HEALTH_TIMEOUT_SECONDS must be between 0 and 15")
         if self.skill_provider_timeout_seconds <= 0 or self.skill_provider_timeout_seconds > 60:
             raise ValueError("SKILL_PROVIDER_TIMEOUT_SECONDS must be between 0 and 60")
         if self.skill_provider_name.lower() not in {"none", "http"}:
