@@ -842,3 +842,22 @@ This checkpoint inspected the existing real-stack scripts and provider unit test
 PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) merged as `6ae34445f7eabef8dc8cf8a5926b21d7cdc3dfac`, after all 18 checks passed on exact head `27b176b3e0020388d45ab04e13ef7f5c138bdd09`. The engineering GitHub branch provider rejects malformed lookup/create JSON shapes, invalid object SHAs, and a create response whose SHA does not equal the requested source SHA. Automated regression cases cover each failure shape.
 
 This closes a provider response-contract gap only. It does not establish live GitHub connectivity, configured credentials, live branch creation, deployment, rollback, or production readiness. A successful HTTP write with an invalid response has an unverified external outcome. Metrics remain A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%. Next audit increment: read-only CI-status adapter error/malformed/missing-tenant-mapping paths, with no new write operations.
+
+
+## Progress-accounting checkpoint — PR #1146 — 2026-10-14
+
+PR [#1146](https://github.com/ijoolaie/AI-Employee/pull/1146) squash-merged as 088fefd65832020476638ffef45b8bde04717410 from exact tested head 7064dbb340a10e550268ac6421f1582432251940; all 13 check runs passed on that exact head. The regression test asserts that the GitHub engineering provider does not execute git_commit_proposal: it returns not_configured and executed=False. This protects the fail-closed boundary; it does not implement Git commits or prove live GitHub integration.
+
+### Why the headline percentage appears stuck
+
+The current actionable score is (A0 + A1 + A2) / 3. With A0/A1/A2 = 100/30/100, the result is 76.67%, rounded to 77%. A2 is already saturated at 100%, so additional tests inside already-counted role/lifecycle scope do not raise the phase score. A1 remains 30% until the broad, source-and-test-backed all-role capability audit meets its evidence threshold. A3/A4 remain 0%; they are excluded from the actionable denominator but included in full-scope context, currently 46%.
+
+This is a coarse phase-level metric, not a PR-count or engineering-velocity metric. The work is real but mostly hardens contracts and negative paths inside phases already counted. Do not inflate the score merely because PRs merge. Keep the headline score unchanged until exit criteria are met, while reporting each bounded increment separately.
+
+### Next measurable work
+
+1. Trace Software Developer approval end-to-end: role contract → Tool Registry and permissions → persisted approval request/decision → runtime governance → adapter dispatch → provider result and audit. A requires_approval flag or proposal artifact alone is not proof of approval.
+2. Build an evidence matrix for every workforce role and operation, recording contract, registry/license, semantic handler, governance/approval, provider support, persisted result/audit, positive and negative tests, exact-head CI, and external validation separately.
+3. Define explicit A1 exit criteria and a stable operation-level denominator before revising any score. Fix only confirmed mismatches; preserve fail-closed controls.
+
+Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope context 46%. No live provider write, production readiness, or commercial readiness is implied.
