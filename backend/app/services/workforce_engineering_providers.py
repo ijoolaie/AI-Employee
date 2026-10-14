@@ -7,6 +7,7 @@ provider until an operator configures a real adapter.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from http.client import HTTPException
 import json
 import re
 from typing import Any, Protocol
@@ -98,7 +99,7 @@ class GitHubReadOnlyEngineeringProvider:
         try:
             with urlopen(request, timeout=settings.engineering_github_timeout_seconds) as response:
                 payload = json.loads(response.read().decode("utf-8"))
-        except (HTTPError, URLError, OSError, ValueError) as exc:
+        except (HTTPError, URLError, OSError, ValueError, HTTPException) as exc:
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub status read failed: {type(exc).__name__}")
         # Treat syntactically valid JSON with the wrong shape as a provider
         # contract failure too; never turn malformed upstream data into a
@@ -206,7 +207,7 @@ class GitHubEngineeringProvider:
         except HTTPError as exc:
             if exc.code != 404:
                 return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch lookup failed: HTTP {exc.code}")
-        except (URLError, OSError, ValueError) as exc:
+        except (URLError, OSError, ValueError, HTTPException) as exc:
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch lookup failed: {type(exc).__name__}")
 
         payload = json.dumps({"ref": f"refs/heads/{branch_name}", "sha": source_sha}).encode("utf-8")
@@ -235,7 +236,7 @@ class GitHubEngineeringProvider:
             if exc.code == 422:
                 return ProviderResult(self.name, operation, False, "conflict", "GitHub rejected branch creation; the branch may have been created concurrently")
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch creation failed: HTTP {exc.code}")
-        except (URLError, OSError, ValueError) as exc:
+        except (URLError, OSError, ValueError, HTTPException) as exc:
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch creation failed: {type(exc).__name__}")
 
         return ProviderResult(
