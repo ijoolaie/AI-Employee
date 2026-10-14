@@ -1,3 +1,13 @@
+## Progress checkpoint — ambiguous GitHub branch-write reconciliation merged (#1160, 2026-10-14)
+
+PR [#1160](https://github.com/ijoolaie/AI-Employee/pull/1160) was squash-merged as [`5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd`](https://github.com/ijoolaie/AI-Employee/commit/5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd), from exact tested head [`0ee845eb4499234db653e96e51264e07cca254fe`](https://github.com/ijoolaie/AI-Employee/commit/0ee845eb4499234db653e96e51264e07cca254fe). All 17/17 check-runs succeeded on that exact head.
+
+After an ambiguous GitHub branch-create POST, the provider performs exactly one read-only GET to reconcile the requested branch ref. It reports `reconciled` only if the exact ref exists at the requested source SHA; a different SHA is `conflict`; missing, malformed, or unavailable reconciliation remains `outcome_unknown`. The POST is never retried. Tests are deterministic/mocked; no live GitHub mutation, operator configuration, or production execution is established. Provider support remains CI-status reads and branch creation only; Git commit, PR creation, deploy, and rollback remain unsupported.
+
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable 77%; full-scope 46%. This bounded safety fix does not justify a score increase.
+
+---
+
 ## Progress checkpoint — provider outcome audit persistence fixed (#1157/#1158, 2026-10-14)
 
 
