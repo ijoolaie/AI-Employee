@@ -1,6 +1,7 @@
 """Real-stack semantic Workforce E2E certification."""
 from __future__ import annotations
 import asyncio, json, os, sys, time, uuid
+from datetime import datetime, timedelta, timezone
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from sqlalchemy import select
@@ -23,6 +24,7 @@ from app.services.agent_template_service import create_template, publish_templat
 from app.services.agent_workforce_proposal_service import create_proposal, board_decide, ceo_decide, provision_approved_proposal, activate_provisioned_proposal
 from app.services.ai_workforce_roles import workforce_capability_contract_snapshot, workforce_template_capability_contract
 from app.services.workforce_runtime_governance import assert_workforce_operation
+from app.services.workforce_delegation_service import create_delegation
 from app.services import workforce_semantic_domains
 from app.services.storage import get_storage_backend
 
@@ -54,7 +56,7 @@ async def license_fixture(tenant_id,suffix):
         db.add(vendor); await db.flush()
         reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
         db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan","tool:workforce_read_analytics","tool:workforce_website_requirements"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan","tool:workforce_read_analytics","tool:workforce_website_requirements","tool:workforce_prepare_ceo_report"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
 async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader",tool_name="workforce_market_research"):
@@ -562,6 +564,48 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     print("WORKFORCE WEBSITE REQUIREMENTS FULL WORKITEM LIFECYCLE PASS")
     print(f"WORKFORCE WEBSITE ARTIFACT + TENANT PROVENANCE PASS key={web_key}")
     print("WORKFORCE WEBSITE PROVIDER BOUNDARY PASS provider_execution=not_configured; no site deployed")
+
+    print("WORKFORCE WEBSITE PROVIDER BOUNDARY PASS provider_execution=not_configured; no site deployed")
+
+    # Certify Internal Manager's read-only CEO report through canonical lifecycle.
+    manager_agent,manager_version,manager_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"internal-manager-report",role_code="ai_internal_manager",tool_name="workforce_prepare_ceo_report")
+    # Internal Manager operations fail closed without explicit, active CEO delegation.
+    # The fixture grants only the read-only CEO report operation for this tenant.
+    async with AsyncSessionLocal() as db:
+        manager_delegation = await create_delegation(
+            db,
+            tenant_id=tenant_id,
+            manager_agent_instance_id=manager_agent,
+            delegated_by_user_id=owner_id,
+            starts_at=datetime.now(timezone.utc) - timedelta(minutes=1),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+            allowed_operations=["prepare_ceo_report"],
+            scope={"purpose": "semantic E2E read-only CEO report"},
+            resource_limits={},
+            risk_tier=0,
+        )
+        await db.commit()
+    manager_item=await work_item(
+        tenant_id,manager_agent,suffix,"internal-manager-report",
+        request_text="Prepare the tenant-scoped workforce dashboard for a 30-day CEO report")
+    assert req("POST",f"/work-items/{manager_item}/assign/agent",{"agent_instance_id":str(manager_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{manager_item}/dispatch",token=token)[0]==200
+    manager_work,manager_run=await wait_result(manager_item)
+    assert manager_work.status is WorkItemStatus.SUCCEEDED and manager_run and manager_run.status=="success", (
+        manager_work.status,manager_run.error_message if manager_run else None)
+    assert manager_run.agent_instance_id==manager_agent and manager_run.employee_version_id==manager_version
+    await verify_audit(tenant_id,manager_run.id,tool_name="workforce_prepare_ceo_report",tool_call_id="e2e-workforce-prepare-ceo-report-1")
+    async with AsyncSessionLocal() as db:
+        manager_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==manager_definition_id,
+            AgentRuntimeBinding.employee_version_id==manager_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert manager_binding is not None
+    print("WORKFORCE INTERNAL MANAGER PREPARE_CEO_REPORT FULL WORKITEM LIFECYCLE PASS")
+    print("WORKFORCE INTERNAL MANAGER CEO REPORT PROVIDER BOUNDARY PASS read_only_tenant_scoped_dashboard")
 
     wrong,_,_=await governed_agent(
         tenant_id,
