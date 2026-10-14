@@ -127,6 +127,10 @@ class Settings(BaseSettings):
                 raise ValueError("LM_STUDIO_BASE_URL must use HTTPS in production")
             if self.market_data_provider_base_url and urlparse(self.market_data_provider_base_url).scheme != "https":
                 raise ValueError("MARKET_DATA_PROVIDER_BASE_URL must use HTTPS in production")
+            for tenant_sites in self.website_health_targets.values():
+                for target_url in tenant_sites.values():
+                    if urlparse(target_url).scheme != "https":
+                        raise ValueError("WEBSITE_HEALTH_TARGETS URLs must use HTTPS in production")
             if self.skill_provider_name.lower() == "http":
                 if not self.skill_provider_base_url or not self.skill_provider_api_key:
                     raise ValueError("SKILL_PROVIDER_BASE_URL and SKILL_PROVIDER_API_KEY are required when http skill provider is enabled")
