@@ -682,8 +682,15 @@ def test_github_readonly_provider_fails_closed_for_timeout_http_error_and_invali
 
 
 @pytest.mark.parametrize("failure_phase", ["lookup", "create"])
-def test_github_branch_provider_handles_response_stream_oserror(monkeypatch, failure_phase):
-    """A failed response read must not escape as an uncaught transport error."""
+@pytest.mark.parametrize(
+    "failure_kind, expected_type",
+    [("connection_reset", "ConnectionResetError"), ("incomplete_read", "IncompleteRead")],
+)
+def test_github_branch_provider_handles_response_stream_errors(
+    monkeypatch, failure_phase, failure_kind, expected_type
+):
+    """Transport resets and truncated HTTP bodies fail closed instead of escaping."""
+    from http.client import IncompleteRead
     from urllib.error import HTTPError
 
     class FakeSettings:
@@ -699,6 +706,8 @@ def test_github_branch_provider_handles_response_stream_oserror(monkeypatch, fai
             return False
 
         def read(self):
+            if failure_kind == "incomplete_read":
+                raise IncompleteRead(b'{"object":', 20)
             raise ConnectionResetError("connection reset while reading response")
 
     calls = []
@@ -723,7 +732,7 @@ def test_github_branch_provider_handles_response_stream_oserror(monkeypatch, fai
 
     assert result.status == "provider_error"
     assert result.executed is False
-    assert "ConnectionResetError" in result.reason
+    assert expected_type in result.reason
     assert calls == (["GET"] if failure_phase == "lookup" else ["GET", "POST"])
     # For the create phase, the remote write may have reached GitHub even
     # though reading its response failed; the external outcome is unverified.
