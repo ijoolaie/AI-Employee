@@ -700,12 +700,12 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     # Certify SEO & Growth keyword research through the canonical WorkItem lifecycle.
     # This records caller-supplied research context; it does not query a search engine.
     seo_agent,seo_version,seo_definition_id=await governed_agent(
-        tenant_id,suffix,owner_id,"seo-keyword-research",
+        tenant_id,suffix,owner_id,"seo-keyword-research-context",
         role_code="ai_seo_growth_employee",tool_name="workforce_keyword_research")
     seo_topic="AI employee workflow automation"
     seo_query="workflow automation software for small teams"
     seo_item=await work_item(
-        tenant_id,seo_agent,suffix,"seo-keyword-research",
+        tenant_id,seo_agent,suffix,"seo-keyword-research-context",
         request_text=f"Prepare a keyword research artifact for topic {seo_topic}; query seed {seo_query}; do not call external search providers")
     assert req("POST",f"/work-items/{seo_item}/assign/agent",{"agent_instance_id":str(seo_agent)},token)[0]==200
     assert req("POST",f"/work-items/{seo_item}/dispatch",token=token)[0]==200
