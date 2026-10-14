@@ -1,3 +1,9 @@
+## Progress checkpoint — GitHub engineering response hardening under review (2026-10-14)
+
+PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) is open; current implementation head is `implementation commit `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`; subsequent documentation-only commits are included in PR #1137, whose page shows the current head`. It hardens the operator-configured GitHub branch adapter against valid JSON with an unexpected shape and rejects branch-create responses whose object SHA is malformed or differs from the requested source SHA. Three regression tests cover malformed lookup JSON, malformed creation JSON, and returned-SHA mismatch. CI is pending on this exact head; do not merge until all required checks pass.
+
+Audit evidence boundary: this closes a response-contract/error-handling gap in code. It does not configure a live GitHub provider or prove a real branch was created. Git branch creation remains approval-gated. Keep A1 at 30% and continue the source/test-backed role audit.
+
 ## Progress checkpoint — website health provider merged (2026-10-14)
 
 PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) was squash-merged as [dce5371656fba372b0df06f3c25a010fdbb7e747](https://github.com/ijoolaie/AI-Employee/commit/dce5371656fba372b0df06f3c25a010fdbb7e747) from exact tested head [cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54](https://github.com/ijoolaie/AI-Employee/commit/cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54). All 32 check runs on that exact head completed successfully, including CI, CodeQL, provider contract, semantic real-stack E2E, W0–W6 contract gate, W2/W3/W4/W5/W6/W7/W8/W9/W10/W21/W22/W23, DAST, HA recovery, infrastructure, architecture, observability, release identity, secret management, rollback/alerting, and documentation consistency.

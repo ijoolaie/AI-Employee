@@ -187,7 +187,13 @@ class GitHubEngineeringProvider:
             request = Request(base_url, headers=headers, method="GET")
             with urlopen(request, timeout=settings.engineering_github_timeout_seconds) as response:
                 existing = json.loads(response.read().decode("utf-8"))
-            existing_sha = str(existing.get("object", {}).get("sha", ""))
+            existing_object = existing.get("object") if isinstance(existing, dict) else None
+            existing_sha = existing_object.get("sha") if isinstance(existing_object, dict) else None
+            if not isinstance(existing_sha, str) or not _GITHUB_SHA_RE.fullmatch(existing_sha):
+                return ProviderResult(
+                    self.name, operation, False, "provider_error",
+                    "GitHub branch lookup failed: invalid response contract",
+                )
             if existing_sha == source_sha:
                 return ProviderResult(
                     self.name, operation, False, "already_exists",
@@ -213,6 +219,18 @@ class GitHubEngineeringProvider:
         try:
             with urlopen(request, timeout=settings.engineering_github_timeout_seconds) as response:
                 created = json.loads(response.read().decode("utf-8"))
+            created_object = created.get("object") if isinstance(created, dict) else None
+            created_sha = created_object.get("sha") if isinstance(created_object, dict) else None
+            if not isinstance(created_sha, str) or not _GITHUB_SHA_RE.fullmatch(created_sha):
+                return ProviderResult(
+                    self.name, operation, False, "provider_error",
+                    "GitHub branch creation failed: invalid response contract",
+                )
+            if created_sha != source_sha:
+                return ProviderResult(
+                    self.name, operation, False, "provider_error",
+                    "GitHub branch creation failed: returned SHA does not match requested source SHA",
+                )
         except HTTPError as exc:
             if exc.code == 422:
                 return ProviderResult(self.name, operation, False, "conflict", "GitHub rejected branch creation; the branch may have been created concurrently")
@@ -222,10 +240,7 @@ class GitHubEngineeringProvider:
 
         return ProviderResult(
             self.name, operation, True, "executed",
-            json.dumps(
-                {"branch": branch_name, "sha": str(created.get("object", {}).get("sha", source_sha))},
-                sort_keys=True,
-            ),
+            json.dumps({"branch": branch_name, "sha": created_sha}, sort_keys=True),
         )
 
 def get_engineering_provider(*, provider_name: str | None = None) -> EngineeringProvider:

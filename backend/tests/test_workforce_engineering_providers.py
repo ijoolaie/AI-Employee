@@ -489,3 +489,137 @@ def test_github_readonly_provider_rejects_invalid_status_payload(monkeypatch, re
     assert result.executed is False
     assert "invalid response contract" in result.reason
 
+
+
+def test_github_branch_provider_rejects_malformed_lookup_response(monkeypatch):
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b'[]'
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        lambda request, timeout: FakeResponse(),
+    )
+
+    result = GitHubEngineeringProvider().execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={
+            "branch_name": "ai/test-branch",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        },
+    )
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert result.reason == "GitHub branch lookup failed: invalid response contract"
+
+
+def test_github_branch_provider_rejects_malformed_creation_response(monkeypatch):
+    from urllib.error import HTTPError
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b'[]'
+
+    def fake_urlopen(request, timeout):
+        if request.method == "GET":
+            raise HTTPError(request.full_url, 404, "not found", {}, None)
+        assert request.method == "POST"
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        fake_urlopen,
+    )
+
+    result = GitHubEngineeringProvider().execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={
+            "branch_name": "ai/test-branch",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        },
+    )
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert result.reason == "GitHub branch creation failed: invalid response contract"
+
+
+def test_github_branch_provider_rejects_created_sha_mismatch(monkeypatch):
+    from urllib.error import HTTPError
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 2.5
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self.payload = payload
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return self.payload
+
+    def fake_urlopen(request, timeout):
+        if request.method == "GET":
+            raise HTTPError(request.full_url, 404, "not found", {}, None)
+        return FakeResponse(
+            b'{"ref":"refs/heads/ai/test-branch","object":{"sha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}'
+        )
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        fake_urlopen,
+    )
+
+    result = GitHubEngineeringProvider().execute(
+        "git_branch",
+        tenant_id="tenant-a",
+        arguments={
+            "branch_name": "ai/test-branch",
+            "source_sha": "0123456789abcdef0123456789abcdef01234567",
+        },
+    )
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert "does not match requested source SHA" in result.reason

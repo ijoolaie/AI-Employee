@@ -1,3 +1,13 @@
+# Current status — engineering GitHub response hardening under review (2026-10-14)
+
+- PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) adds fail-closed response validation for the GitHub engineering provider's branch lookup and branch creation paths.
+- Regression coverage: malformed JSON shapes from lookup/create and a returned SHA that differs from the requested source SHA must yield `provider_error`, never uncaught exceptions or false success.
+- Exact current PR head: `implementation commit `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`; subsequent documentation-only commits are included in PR #1137, whose page shows the current head`. Required CI checks are pending; this is not merged.
+- Evidence boundary: no live GitHub provider operation was performed or proven by these deterministic tests; branch creation remains approval-gated.
+- Progress remains A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%. Do not infer production or commercial readiness.
+
+---
+
 # Current status — website health provider merged; A1 audit continues (2026-10-14)
 
 - PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) squash-merged as [`dce5371656fba372b0df06f3c25a010fdbb7e747`](https://github.com/ijoolaie/AI-Employee/commit/dce5371656fba372b0df06f3c25a010fdbb7e747) from exact tested head [`cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54`](https://github.com/ijoolaie/AI-Employee/commit/cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54). All 32 check runs passed on that exact head.
