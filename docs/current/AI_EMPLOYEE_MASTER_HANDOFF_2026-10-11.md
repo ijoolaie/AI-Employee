@@ -1,3 +1,19 @@
+## Handoff addendum — PR #1157/#1158 provider outcome audit (2026-10-14)
+
+
+### Completed
+- PR #1157 adds regression coverage that the semantic handler preserves `outcome_unknown`, `provider_execution`, `executed=False`, `external_side_effect=True`, and the provider reason.
+- PR [#1158](https://github.com/ijoolaie/AI-Employee/pull/1158) squash-merged as [`e77ff28441266b8b2acf2489f9d9ddbbf0bd11fe`](https://github.com/ijoolaie/AI-Employee/commit/e77ff28441266b8b2acf2489f9d9ddbbf0bd11fe), from exact tested head `05349f23eb02c5d96e141439c836e2050d4de1d3`. All 16/16 check-runs succeeded.
+- Run-service audit records preserve allowlisted provider outcome fields, and the audit event status reflects `outcome_unknown` rather than `success`. Normal execution and approved-tool resumption are both covered. Provider reason is capped at 500 characters; arbitrary payloads/raw arguments are not copied.
+
+### Remaining / evidence boundary
+- Implement safe read-after-write reconciliation for an ambiguous GitHub branch-create POST before permitting retries. Verify repository, branch, and expected SHA rather than treating any branch lookup as proof.
+- Automated checks do not prove a live GitHub mutation or production configuration.
+- Provider remains limited to CI-status reads and branch creation. Git commit, PR creation, deploy, and rollback are unsupported.
+- Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%.
+
+---
+
 ## Handoff addendum — PR #1155 merged (2026-10-14)
 
 ### Completed
