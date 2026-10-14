@@ -454,3 +454,13 @@ Progress remains 48% agent-actionable (A0–A2) and 29% full-scope (A0–A4).
 - Website Employee is role 9/12 with canonical WorkItem → assignment → dispatch → worker → successful Run evidence (75%). Evidenced roles: Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, Social Media, Website.
 - This is requirements planning only; no real site build, live provider execution, deployment, rollback, production availability, customer acceptance, or revenue is demonstrated.
 - Progress rubric: A0 100%; A1 30%; A2 9/12 = 75%; A3 0%; A4 0%. Actionable A0–A2 = (100 + 30 + 75) / 3 = 68.3% (68%). Full scope A0–A4 = (100 + 30 + 75 + 0 + 0) / 5 = 41%. These are phase indicators, not readiness certification.
+
+
+## Verified update — 2026-10-14 (PR #1123)
+
+- PR [#1123](https://github.com/ijoolaie/AI-Employee/pull/1123) merged as `7a7aed9d3b7ab5c998f7b7b64b698a86e3151820`; tested exact head `a43dd63673e9db61fe9a6f77c14bd5204543669e`.
+- All 11 exact-head workflow groups passed: CI, CodeQL, Architecture Guard, Workforce Semantic Real-Stack E2E, Runtime Isolation/RBAC, Ephemeral DAST, W21 AI Business Network E2E, HA Failure Recovery, Production Infrastructure, Production Observability, and Production Rollback & Alerting.
+- Semantic E2E log confirms `WORKFORCE INTERNAL MANAGER PREPARE_CEO_REPORT FULL WORKITEM LIFECYCLE PASS`, read-only tenant-scoped report boundary, wrong-role/stale-capability/approval-required/cross-tenant denial checks, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`. Run: https://github.com/ijoolaie/AI-Employee/actions/runs/38527603953
+- The test fixture grants only a time-bounded `prepare_ceo_report` CEO delegation. This proves a read-only report lifecycle in the deterministic real-stack CI fixture, not autonomous staffing, hiring, budget commitments, live external integrations, or production outcomes.
+- Canonical lifecycle role coverage is now 10/12 = 83.3%: Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, Social Media, Website, and Internal Manager.
+- Progress rubric: A0 100%; A1 30%; A2 10/12 = 83.3%; A3 0%; A4 0%. Actionable A0–A2 = (100 + 30 + 83.3) / 3 = 71.1% (71%). Full scope A0–A4 = (100 + 30 + 83.3 + 0 + 0) / 5 = 42.7% (43%). These phase indicators do not imply commercial or production readiness.
