@@ -697,3 +697,9 @@ Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope c
 - Why progress scores did not move: this fix closes one evidenced approval-resume mismatch, but does not complete provider support or the role-by-role evidence matrix. Do not infer broad A1 readiness from PR count.
 - Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%.
 - Next: build and maintain an operation-level evidence matrix across roles (role contract, Tool Registry/permissions, semantic handler, persisted approval/governance, provider support, persisted result/audit, positive/negative tests, exact-head CI, and external validation). Fix only confirmed gaps; keep A1 at 30% until its documented evidence threshold is met.
+
+## 2026-10-14 — PR #1162: reconciled provider audit semantics
+
+- Merged PR #1162 at `ed3d27bc22cc3b89752e3f237aac9d68cba15f48`; tested head was `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`, with all 16 check runs successful on that exact SHA.
+- Durable `tool.call` audit status now preserves both `outcome_unknown` and `reconciled`. `reconciled` means a read-only GET confirmed the expected ref/SHA after an ambiguous create response; it does **not** mean this invocation created the branch.
+- Evidence remains CI/test-based. No live GitHub mutation, production credentials/configuration, deployment, or production readiness is established. Metrics unchanged: actionable progress 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
