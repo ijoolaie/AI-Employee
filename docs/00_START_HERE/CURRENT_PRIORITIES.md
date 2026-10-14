@@ -1,3 +1,24 @@
+# Current priorities — checkpoint after PR #1125 (2026-10-14)
+
+## Latest verified state
+
+- PR [#1125](https://github.com/ijoolaie/AI-Employee/pull/1125) merged as `8c9f79904241b9a5899ee38f0067719496fb4913` from tested head `92d2654ca3098a9e0f5865a3502fa0f5756c01ba`.
+- All 11 required workflow groups passed on that exact tested head; W21 API startup hardening was included in the tested change.
+- Canonical workforce role lifecycle coverage is now **12/12 (100%)**, including `ai_sales_lead_generation`.
+- A0/A1/A2/A3/A4 = **100/30/100/0/0**; actionable progress **77%**, full-scope context **46%**. These are rubric indicators only, not commercial readiness.
+
+## Ordered next work
+
+1. **A1 capability reality audit:** inspect each role's declared tools against implementation, persistence, authorization, provider status, failure behavior, and evidence. Distinguish implemented, deterministic-only, provider-not-configured, and externally verified.
+2. **Highest-value operation gaps:** choose the next bounded operation from the audit; add positive lifecycle evidence plus role/tenant/capability/approval denial cases where appropriate.
+3. **Provider-backed integration validation:** start with the project's prescribed local model/provider path; keep paid APIs and real secrets out of CI unless policy explicitly allows them.
+4. **Release and operations gates:** verify deployment-specific configuration, backups/restore with measured RPO/RTO, SLO/SLI, secrets/networking, incident response, HA/recovery, and production rollback evidence.
+5. **Supervised pilot acceptance:** collect real customer/operator acceptance, usage, costs/receipts, reliability and outcome evidence before claiming commercial readiness or revenue.
+
+Do not count a deterministic E2E fixture as live provider execution or a successful engineering CI run as production deployment.
+
+---
+
 # Workforce progress update — PR #1119 (2026-10-14)
 
 ## Social Media read-only analytics lifecycle proof
