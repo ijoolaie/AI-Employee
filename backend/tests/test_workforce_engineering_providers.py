@@ -580,9 +580,9 @@ def test_github_branch_provider_rejects_malformed_creation_response(monkeypatch)
             "source_sha": "0123456789abcdef0123456789abcdef01234567",
         },
     )
-    assert result.status == "provider_error"
+    assert result.status == "outcome_unknown"
     assert result.executed is False
-    assert result.reason == "GitHub branch creation failed: invalid response contract"
+    assert result.reason == "GitHub branch creation outcome unknown: invalid response contract"
 
 
 def test_github_branch_provider_rejects_created_sha_mismatch(monkeypatch):
@@ -630,8 +630,9 @@ def test_github_branch_provider_rejects_created_sha_mismatch(monkeypatch):
             "source_sha": "0123456789abcdef0123456789abcdef01234567",
         },
     )
-    assert result.status == "provider_error"
+    assert result.status == "outcome_unknown"
     assert result.executed is False
+    assert "outcome unknown" in result.reason
     assert "does not match requested source SHA" in result.reason
 
 
@@ -740,12 +741,14 @@ def test_github_branch_provider_handles_response_stream_errors(
         },
     )
 
-    assert result.status == "provider_error"
+    assert result.status == ("provider_error" if failure_phase == "lookup" else "outcome_unknown")
     assert result.executed is False
     assert expected_type in result.reason
+    if failure_phase == "create":
+        assert "outcome unknown" in result.reason
     assert calls == (["GET"] if failure_phase == "lookup" else ["GET", "POST"])
     # For the create phase, the remote write may have reached GitHub even
-    # though reading its response failed; the external outcome is unverified.
+    # though reading its response failed; the explicit status preserves that uncertainty.
 
 
 def test_github_readonly_provider_handles_truncated_response_body(monkeypatch):
