@@ -610,3 +610,10 @@ The Content Producer now has full WorkItem lifecycle evidence for article creati
 - Canonical role coverage is 11/12 = 91.7%; only `ai_sales_lead_generation` remains without canonical lifecycle evidence.
 - A0/A1/A2/A3/A4 = 100/30/91.7/0/0; actionable progress 74%; full-scope context 44%. These figures are rubric-based and do not imply production/commercial readiness.
 - Next action: inspect the Sales & Lead Generation tool contracts and certify one read-only/draft-only routine operation end-to-end with tenant and approval-denial checks; never trigger external outreach or commercial commitments in the deterministic fixture.
+## A1 audit increment — SEO & Growth and Customer Success (2026-10-14)
+
+Source trace completed for both role contracts and semantic handlers. SEO & Growth declares keyword research, content opportunity, on-page/technical SEO, internal-link recommendations, content briefs, search-performance ingestion, growth reports and approval-gated experiment proposals. The handler currently persists caller-supplied inputs as tenant-scoped artifacts and reports `provider_execution=not_configured`; it does not establish live SEO or search-performance integration.
+
+Customer Success declares customer context, triage, summaries, churn evidence, escalation recommendations, response drafts and customer-health reports, plus approval-gated send/account/refund/cancellation proposals. Its handler likewise persists tenant-scoped artifacts, with provider execution unconfigured; no live helpdesk/customer-history integration or external customer action is proven. No new tests were run during this source-only audit, so do not raise A1.
+
+Next: complete the Software Developer contract-to-handler trace, inspect the exact role-specific test coverage for SEO and Customer Success, and then choose one bounded implementation with positive, tenant-isolation and denial-path tests. A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%, full-scope context 46%.
