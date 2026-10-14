@@ -45,6 +45,7 @@ def test_health_check_fails_closed_without_tenant_site_mapping(monkeypatch):
     "target",
     [
         "http://example.com",
+        "https://bad host/health",
         "https://user:password@example.com",
         "https://localhost/health",
         "https://service.local/health",
