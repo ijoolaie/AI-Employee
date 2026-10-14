@@ -1186,3 +1186,10 @@ Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope c
 - PR #1164 merged as `245beb6b335a794bb0220d2d17a87f61f205e6ab`; all 17 checks passed on exact head `229a57a67ce7022403d64a980c8e06e13d18c6b9`.
 - Branch lookup now validates both exact ref identity and SHA before treating the target as existing/conflicting; wrong-ref responses fail closed and do not trigger POST.
 - Priority remains supervised external validation of the GitHub provider with operator-configured credentials and an explicitly safe test repository/branch. Do not infer live-write readiness from CI. Progress metrics unchanged: actionable 77%, full-scope 46%, A0/A1/A2/A3/A4 = 100/30/100/0/0.
+
+
+## 2026-10-14 — PR #1166 merged: read-only provider regression coverage
+
+- PR #1166 merged as `4de70b6389e012d9416818c837287cc900a3ed6c`; all 13 check runs passed on exact tested head `61d46b1fdfee2792db694da5fed4549b64404f6e` after rerunning the frontend job. The first frontend attempt failed in five World-mode Playwright tests; the rerun succeeded.
+- Test-only coverage now explicitly exercises malformed CI-status payloads, URL transport failure, and missing tenant-to-repository mapping; no production implementation behavior changed.
+- Next priority remains supervised external validation of `git_branch` with operator-configured credentials, an explicitly authorized disposable test repository/branch, and cleanup plan. Do not treat CI as live-write or production-readiness evidence. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
