@@ -1,3 +1,14 @@
+## Current priority update — after PR #1160 (2026-10-14)
+
+1. Continue the Software Developer path audit only where source/tests show a concrete gap across approval → Tool Registry → semantic handler → provider → persisted result/audit; avoid repeating completed audits.
+2. Before any supervised live trial, verify tenant/repository/token configuration and confirm operational safeguards. Mocked tests and CI do not prove live GitHub writes.
+3. Keep provider boundaries explicit: CI-status reads and branch creation only; Git commit, PR creation, deploy, and rollback remain unsupported by this adapter.
+4. Keep progress scores unchanged until broader A1 role/operation evidence meets its threshold; A3/A4 remain externally gated.
+
+PR #1160 squash-merged as `5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd` from exact head `0ee845eb4499234db653e96e51264e07cca254fe`; all 17/17 check-runs passed. Ambiguous create outcomes now receive one read-only ref lookup, never a blind POST retry. Exact requested ref + requested SHA => `reconciled`; different SHA => `conflict`; otherwise remains `outcome_unknown`. Tests are mocked and do not prove production execution.
+
+---
+
 ## Current priority update — after PR #1158 (2026-10-14)
 
 
