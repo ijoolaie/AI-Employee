@@ -16,6 +16,10 @@ Evidence boundary: the successful provider is a deterministic isolated test fixt
 4. Complete deployment-specific operations and release gates: monitoring/SLOs, backup/restore, recovery, security configuration and rollback evidence.
 5. Run a supervised pilot and gather operator/customer acceptance, reliability, cost and outcome evidence before claiming commercial readiness or revenue.
 
+## A1 audit increment — QA/DevOps and Website Employee
+
+W9 proves the QA test-plan artifact's governed lifecycle but explicitly records that tests were not executed. W6 proves website change artifacts and approval-gated deploy proposals with provider fail-closed behavior; no live website build, health check, deployment or rollback is proven. The engineering provider has bounded operator-configured GitHub CI-status read and branch operations; the default remains fail-closed. Recommended next technical slice: a read-only, tenant-mapped website health/preview check with timeout, response validation, audit provenance and negative-path tests, not deployment.
+
 ## A1 audit increment — AI Internal Manager and Marketing Manager
 
 Source trace confirms Internal Manager's tenant-scoped WorkItem assignment and executive dashboard; dashboard SLA remains explicitly unavailable without an active tenant SLA contract. Marketing Manager's campaign-plan/content-coordination paths are deterministic planning only, while its growth report reads tenant-owned order/deal data and explicitly does not establish campaign attribution. PRs #1123 and #1124 provide bounded lifecycle evidence. Next audit targets: AI QA/DevOps and Website operations.
