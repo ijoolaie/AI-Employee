@@ -14,6 +14,8 @@ A1 audit increment: the AI Trader contract, registry wrappers, three provider ad
 
 A1 audit increment: AI Internal Manager's assignment/report paths and AI Marketing Manager's planning/report paths were traced. The dashboard is tenant-scoped and reports SLA as unavailable when no active target exists; marketing growth metrics aggregate tenant-owned orders/deals and do not imply campaign attribution. PR #1123/#1124 provide deterministic lifecycle evidence, not autonomous staffing, live campaign execution or ad-platform analytics. Details are in the capability reality audit.
 
+A1 audit increment: QA/DevOps W9 proves governed test-plan artifact lifecycle only; the artifact explicitly says tests were not executed. Website W6 proves tenant-scoped change artifacts and approval-gated deploy proposals, not live build/deploy/rollback. The engineering provider has a bounded operator-configured GitHub CI-status read and branch operation, while the default provider fails closed. See the capability reality audit for exact boundaries.
+
 ---
 
 # Workforce progress update — PR #1125 (2026-10-14)
