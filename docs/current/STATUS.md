@@ -1,3 +1,14 @@
+## Engineering audit checkpoint — PR #1158 merged (2026-10-14)
+
+
+PR [#1158](https://github.com/ijoolaie/AI-Employee/pull/1158) squash-merged as [`e77ff28441266b8b2acf2489f9d9ddbbf0bd11fe`](https://github.com/ijoolaie/AI-Employee/commit/e77ff28441266b8b2acf2489f9d9ddbbf0bd11fe) from exact tested head `05349f23eb02c5d96e141439c836e2050d4de1d3`; 16/16 check-runs passed. PR #1157 adds semantic-handler pass-through regression coverage for `outcome_unknown`.
+
+Run-service audit records now use the provider's `outcome_unknown` status instead of reporting success, and persist only an allowlist of provider, operation, provider status, execution/side-effect booleans, and a reason capped at 500 characters. Both normal execution and approved-tool resume paths are covered. Raw arguments and arbitrary tool results are not copied; audit redaction remains in place.
+
+Next: safe read-after-write reconciliation before any retry of an ambiguous branch-create request. The current adapter still supports only CI-status reads and branch creation; no live write, commit/PR creation, deployment, or rollback capability is established by this change.
+
+---
+
 ## Engineering provider checkpoint — 2026-10-14 (PR #1155)
 
 PR [#1155](https://github.com/ijoolaie/AI-Employee/pull/1155) merged as [`6947679d0fe89e8c81584f19ba2560480eb336b0`](https://github.com/ijoolaie/AI-Employee/commit/6947679d0fe89e8c81584f19ba2560480eb336b0), exact tested head `eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf`; all 17 check-runs and 14 workflow runs succeeded.
