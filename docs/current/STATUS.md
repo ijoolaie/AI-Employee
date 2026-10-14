@@ -1,3 +1,11 @@
+## Engineering provider checkpoint — 2026-10-14
+
+PR #1152 and PR #1153 are merged. The GitHub reference preflight now uses `/git/ref/heads/{branch}` and rejects invalid ref components before network access. PR #1153 exact head `21723a046957b3c0ee56579e901ec768390ea605` passed 17/17 checks; merge commit `a3746d8f18271549c979f0fa0c104bc34dd51e67`.
+
+Capability boundary remains narrow: the provider supports CI status reads and branch creation; it does not implement Git commit, PR creation, deploy, or rollback writes. Live operator configuration and actual external write evidence remain unverified. Progress remains A0/A1/A2/A3/A4 = 100/30/100/0/0, actionable 77%, full-scope 46%.
+
+---
+
 ## Progress checkpoint — PR #1150 workspace-key collision fix merged (2026-10-14)
 
 - PR [#1150](https://github.com/ijoolaie/AI-Employee/pull/1150) was squash-merged into `main` as [`5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7`](https://github.com/ijoolaie/AI-Employee/commit/5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7) from exact tested head [`7335e2d90bfd0057560343794c168a59b6fd2e81`](https://github.com/ijoolaie/AI-Employee/commit/7335e2d90bfd0057560343794c168a59b6fd2e81).
