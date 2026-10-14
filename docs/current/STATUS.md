@@ -1,3 +1,13 @@
+## Status checkpoint — PR #1160 merged: ambiguous branch writes reconciled (2026-10-14)
+
+- Merge commit: `5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd`; tested head: `0ee845eb4499234db653e96e51264e07cca254fe`.
+- Exact-head CI: 17/17 check-runs succeeded.
+- Provider behavior: after an ambiguous branch-create POST, issue one read-only GET for the exact branch ref. Exact requested SHA is `reconciled`; another SHA is `conflict`; absent/invalid/unavailable lookup preserves `outcome_unknown`. No POST retry is performed.
+- Evidence boundary: deterministic mocked tests and CI only; no live GitHub write, production credentials/configuration, or external execution is proven.
+- Supported operations remain CI-status reads and branch creation. Commit creation, PR creation, deploy, and rollback remain unsupported. Progress rubric remains A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full scope 46%.
+
+---
+
 ## Engineering audit checkpoint — PR #1158 merged (2026-10-14)
 
 
