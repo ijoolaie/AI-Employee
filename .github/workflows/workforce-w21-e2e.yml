@@ -36,9 +36,30 @@ jobs:
         working-directory: backend
       - run: python -m py_compile app/models/business_network_request.py app/services/business_network_service.py app/api/v1/business_network.py app/schemas/business_network.py scripts/e2e_workforce_w21_business_network_verify.py
         working-directory: backend
-      - run: uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/w21-api.log 2>&1 &
+      - run: nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 </dev/null > /tmp/w21-api.log 2>&1 & echo $! > /tmp/w21-api.pid
         working-directory: backend
-      - run: python -c "import urllib.request,time; time.sleep(5); urllib.request.urlopen('http://127.0.0.1:8000/health')"
+      - name: Wait for API health
+        run: |
+          python - <<'PY'
+          import time
+          import urllib.error
+          import urllib.request
+
+          url = "http://127.0.0.1:8000/health"
+          last_error = None
+          for _ in range(30):
+              try:
+                  with urllib.request.urlopen(url, timeout=2) as response:
+                      if response.status == 200:
+                          print("W21 API health check passed")
+                          break
+              except (urllib.error.URLError, TimeoutError) as exc:
+                  last_error = exc
+              time.sleep(1)
+          else:
+              print(f"W21 API did not become healthy: {last_error}")
+              raise SystemExit(1)
+          PY
       - run: python scripts/e2e_workforce_w21_business_network_verify.py
         working-directory: backend
       - if: failure()

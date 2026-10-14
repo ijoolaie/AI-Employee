@@ -41,6 +41,7 @@ class DeterministicProvider:
                 "workforce_website_requirements",
                 "workforce_prepare_ceo_report",
                 "workforce_prepare_growth_report",
+                "workforce_lead_research",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -132,6 +133,14 @@ class DeterministicProvider:
                     "workforce_prepare_growth_report": (
                         "e2e-workforce-prepare-growth-report-1",
                         {"window_days": 30},
+                    ),
+                    "workforce_lead_research": (
+                        "e2e-workforce-lead-research-1",
+                        {
+                            "query": "deterministic certification lead research",
+                            "criteria": {"segment": "test-fixture", "limit": 5},
+                            "provider": "not_configured",
+                        },
                     ),
                 }
                 call_id, arguments = fixtures[tool.name]
