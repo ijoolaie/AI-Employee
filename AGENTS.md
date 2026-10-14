@@ -4,7 +4,9 @@ PR [#1132](https://github.com/ijoolaie/AI-Employee/pull/1132) was squash-merged 
 
 PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) adds a bounded read-only website health provider behind the existing `website_health_check` operation. The branch maps tenant/site aliases to operator-configured HTTPS URLs, bounds timeouts, disables redirects, and persists tenant-scoped health evidence. Its checks are pending; do not merge until exact-head required checks pass. A live target is not configured or verified by this code change.
 
-A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%, full-scope context 46%. These rubric indicators do not mean commercial or production readiness. Next: validate PR #1135 on its exact head, fix any grounded failures, reconcile canonical docs, then continue the role-by-role A1 capability audit.## Current progress accounting — 2026-10-14 after PR #1129
+A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%, full-scope context 46%. These rubric indicators do not mean commercial or production readiness. Next: validate PR #1135 on its exact head, fix any grounded failures, reconcile canonical docs, then continue the role-by-role A1 capability audit.
+
+## Current progress accounting — 2026-10-14 after PR #1129
 
 PR #1129 merged as ece6b805f02a28b27cb30da34e31dcf2efb132f7 from tested head d593b5650673174ce9579df166f9a72b76904f9e. It repairs the W16 skill-provider real-stack test fixture by setting up valid tenant-scoped Agent Run and approval context. W16, backend/frontend CI, W21, Architecture Guard, CodeQL, Ephemeral DAST, HA recovery and Production Infrastructure Validation passed on that exact head. This is deterministic test-provider evidence only; it does not establish live external provider execution or production readiness.
 
