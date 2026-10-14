@@ -433,9 +433,13 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     await verify_audit(tenant_id,eng_run.id,tool_name="workforce_workspace_create_file",tool_call_id="e2e-workforce-workspace-create-file-1")
     eng_payloads=[]
     for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
-        if key.endswith("workspace-src_semantic-e2e.txt.json"):
+        # Workspace storage filenames are implementation details: identify the
+        # artifact by its logical kind/path/content, not a legacy path-derived key.
+        if key.rsplit("/",1)[-1].startswith("workspace-") and key.endswith(".json"):
             payload=workforce_semantic_domains._read_json(str(tenant_id),key)
-            if payload.get("path")==eng_path and payload.get("content")==eng_content:
+            if (payload.get("kind")=="workspace_file"
+                    and payload.get("path")==eng_path
+                    and payload.get("content")==eng_content):
                 eng_payloads.append((key,payload))
     assert len(eng_payloads)==1, f"expected one persisted engineering workspace file, got {len(eng_payloads)}"
     eng_key,eng_artifact=eng_payloads[0]
