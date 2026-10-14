@@ -384,3 +384,107 @@ def test_github_branch_provider_rejects_unsafe_inputs_without_network(monkeypatc
     )
     assert invalid_branch.status == "not_configured"
     assert invalid_sha.status == "not_configured"
+
+def test_github_readonly_provider_fails_closed_without_tenant_repository_mapping(monkeypatch):
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-b": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 1.0
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("network must not be called without a tenant repository mapping")
+        ),
+    )
+
+    result = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+    assert result.status == "not_configured"
+    assert result.executed is False
+    assert "not configured for this tenant" in result.reason
+
+
+def test_github_readonly_provider_returns_provider_error_on_transport_failure(monkeypatch):
+    from urllib.error import URLError
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 1.0
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        lambda *args, **kwargs: (_ for _ in ()).throw(URLError("offline")),
+    )
+
+    result = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert "URLError" in result.reason
+
+
+@pytest.mark.parametrize(
+    "response_body",
+    [
+        b"[]",
+        b'{"state":"unknown","total_count":1}',
+        b'{"state":"success","total_count":-1}',
+        b'{"state":"success","total_count":"1"}',
+        b'{"state":"success","total_count":true}',
+    ],
+)
+def test_github_readonly_provider_rejects_invalid_status_payload(monkeypatch, response_body):
+    from app.services.workforce_engineering_providers import GitHubReadOnlyEngineeringProvider
+
+    class FakeSettings:
+        engineering_github_repositories = {"tenant-a": "ijoolaie/AI-Employee"}
+        engineering_github_token = "secret-token"
+        engineering_github_timeout_seconds = 1.0
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return response_body
+
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.get_settings",
+        lambda: FakeSettings(),
+    )
+    monkeypatch.setattr(
+        "app.services.workforce_engineering_providers.urlopen",
+        lambda request, timeout: FakeResponse(),
+    )
+
+    result = GitHubReadOnlyEngineeringProvider().execute(
+        "ci_status",
+        tenant_id="tenant-a",
+        arguments={"commit_sha": "0123456789abcdef0123456789abcdef01234567"},
+    )
+    assert result.status == "provider_error"
+    assert result.executed is False
+    assert "invalid response contract" in result.reason
+
