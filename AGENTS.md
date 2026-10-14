@@ -1,6 +1,6 @@
 ## Progress checkpoint — GitHub engineering response hardening under review (2026-10-14)
 
-PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) is open; current implementation head is `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`. It hardens the operator-configured GitHub branch adapter against valid JSON with an unexpected shape and rejects branch-create responses whose object SHA is malformed or differs from the requested source SHA. Three regression tests cover malformed lookup JSON, malformed creation JSON, and returned-SHA mismatch. CI is pending on this exact head; do not merge until all required checks pass.
+PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) is open; current implementation head is `implementation commit `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`; subsequent documentation-only commits are included in PR #1137, whose page shows the current head`. It hardens the operator-configured GitHub branch adapter against valid JSON with an unexpected shape and rejects branch-create responses whose object SHA is malformed or differs from the requested source SHA. Three regression tests cover malformed lookup JSON, malformed creation JSON, and returned-SHA mismatch. CI is pending on this exact head; do not merge until all required checks pass.
 
 Audit evidence boundary: this closes a response-contract/error-handling gap in code. It does not configure a live GitHub provider or prove a real branch was created. Git branch creation remains approval-gated. Keep A1 at 30% and continue the source/test-backed role audit.
 
