@@ -1,3 +1,24 @@
+# Master handoff checkpoint — 2026-10-14 — PR #1125 merged
+
+## Verified checkpoint
+
+PR [#1125](https://github.com/ijoolaie/AI-Employee/pull/1125) (`test(workforce): certify Sales & Lead Generation lifecycle`) was squash-merged. Merge SHA: `8c9f79904241b9a5899ee38f0067719496fb4913`; exact pre-merge tested head: `92d2654ca3098a9e0f5865a3502fa0f5756c01ba`.
+
+All 11 exact-head workflow groups passed: CI, Workforce Semantic Real-Stack E2E, CodeQL, Architecture Guard, Runtime Isolation/RBAC, Ephemeral DAST, W21 AI Business Network E2E, HA Failure Recovery, Production Infrastructure Validation, Production Observability, and Production Rollback & Alerting. W21 API launch now uses `nohup` plus a retrying health check; the rerun passed.
+
+Sales & Lead Generation has a deterministic tenant-scoped lead-research artifact lifecycle through WorkItem assignment, dispatch, worker and successful Run, with audit identity and active runtime binding verified. The provider is still `not_configured`; no live sourcing, external CRM enrichment, outreach, customer acceptance, revenue or production outcome is evidenced.
+
+## Progress and remaining path
+
+- Canonical workforce lifecycle coverage: **12/12 roles (100%)**.
+- A0/A1/A2/A3/A4: **100/30/100/0/0**.
+- Agent-actionable progress: **77%**; full-scope context: **46%**.
+- Next: continue A1 capability reality audit and prioritize operation/provider gaps with direct evidence; then complete real deployment/operations gates and supervised pilot acceptance. Do not treat role lifecycle coverage as whole-project completion.
+
+The release-certified version remains separate from current main engineering work; this merge does not certify a new production release.
+
+---
+
 # Workforce progress update — PR #1119 (2026-10-14)
 
 ## Social Media read-only analytics lifecycle proof
