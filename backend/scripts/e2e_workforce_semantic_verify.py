@@ -441,7 +441,11 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
                     and payload.get("path")==eng_path
                     and payload.get("content")==eng_content):
                 eng_payloads.append((key,payload))
-    assert len(eng_payloads)==1, f"expected one persisted engineering workspace file, got {len(eng_payloads)}"
+    assert len(eng_payloads)==1, (
+        "expected one persisted engineering workspace file, "
+        f"got {len(eng_payloads)}; tenant_keys={get_storage_backend().list_prefix(f'{tenant_id}/')!r}; "
+        f"run_output_data={(eng_run.output_data or {})!r}"
+    )
     eng_key,eng_artifact=eng_payloads[0]
     assert eng_artifact["kind"]=="workspace_file"
     assert eng_artifact["path"]==eng_path and eng_artifact["content"]==eng_content
