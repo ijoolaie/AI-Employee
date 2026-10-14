@@ -1,3 +1,15 @@
+## Progress checkpoint — truncated CI-status response regression merged (2026-10-14)
+
+PR [#1143](https://github.com/ijoolaie/AI-Employee/pull/1143) was squash-merged as [`6d17a52ea4c607e371f5acc197c7f82e9ef4bba9`](https://github.com/ijoolaie/AI-Employee/commit/6d17a52ea4c607e371f5acc197c7f82e9ef4bba9), from exact tested head [`045a37c6cfb8b36f8e6d09e8d81698bd20dd48a6`](https://github.com/ijoolaie/AI-Employee/commit/045a37c6cfb8b36f8e6d09e8d81698bd20dd48a6). All 13 check runs passed on that exact head.
+
+Added a regression test proving the read-only GitHub CI-status provider handles a truncated response body (`http.client.IncompleteRead`) as `provider_error` with `executed=False`, rather than allowing an uncaught exception. This complements the prior provider stream-error hardening.
+
+**Evidence boundary:** the test uses a mocked response; it does not prove live GitHub connectivity, production provider configuration, or external CI execution. For branch-creation writes, an unreadable response still leaves the external outcome unverified.
+
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%. Next: continue the source/test-backed Software Developer role audit across role contract → Tool Registry → semantic handler → provider → persisted result and failure tests. Do not claim deployment or broad external engineering execution without separate evidence.
+
+---
+
 ## Progress checkpoint — incomplete HTTP response stream handling merged (2026-10-14)
 
 PR [#1142](https://github.com/ijoolaie/AI-Employee/pull/1142) was squash-merged as [`b3da7b6273e6967d6f34797fb24a5c10a2f92783`](https://github.com/ijoolaie/AI-Employee/commit/b3da7b6273e6967d6f34797fb24a5c10a2f92783), from exact tested head [`605d482d063615a7befa057e2d2916f5e4865679`](https://github.com/ijoolaie/AI-Employee/commit/605d482d063615a7befa057e2d2916f5e4865679). All 17 check runs passed on that exact head.
