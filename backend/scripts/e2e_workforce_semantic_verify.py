@@ -697,6 +697,48 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     print("WORKFORCE SALES LEAD RESEARCH FULL WORKITEM LIFECYCLE PASS")
     print("WORKFORCE SALES LEAD RESEARCH BOUNDARY PASS tenant_scoped_artifact; no external outreach")
 
+    # Certify SEO & Growth keyword research through the canonical WorkItem lifecycle.
+    # This records caller-supplied research context; it does not query a search engine.
+    seo_agent,seo_version,seo_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"seo-keyword-research",
+        role_code="ai_seo_growth_employee",tool_name="workforce_keyword_research")
+    seo_topic="AI employee workflow automation"
+    seo_query="workflow automation software for small teams"
+    seo_item=await work_item(
+        tenant_id,seo_agent,suffix,"seo-keyword-research",
+        request_text=f"Prepare a keyword research artifact for topic {seo_topic}; query seed {seo_query}; do not call external search providers")
+    assert req("POST",f"/work-items/{seo_item}/assign/agent",{"agent_instance_id":str(seo_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{seo_item}/dispatch",token=token)[0]==200
+    seo_work,seo_run=await wait_result(seo_item)
+    assert seo_work.status is WorkItemStatus.SUCCEEDED and seo_run and seo_run.status=="success", (
+        seo_work.status,seo_run.error_message if seo_run else None)
+    assert seo_run.agent_instance_id==seo_agent and seo_run.employee_version_id==seo_version
+    await verify_audit(tenant_id,seo_run.id,tool_name="workforce_keyword_research",tool_call_id=None)
+    seo_payloads=[]
+    for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
+        if key.endswith(".json") and "seo-growth-" in key:
+            payload=workforce_semantic_domains._read_json(str(tenant_id),key)
+            if payload.get("operation")=="keyword_research" and payload.get("topic")==seo_topic and payload.get("query")==seo_query:
+                seo_payloads.append((key,payload))
+    assert len(seo_payloads)==1, f"expected one persisted SEO keyword artifact, got {len(seo_payloads)}"
+    seo_key,seo_artifact=seo_payloads[0]
+    assert seo_artifact["kind"]=="seo_growth_artifact" and seo_artifact["status"]=="research"
+    assert seo_artifact["approval_required"] is False
+    assert seo_artifact["external_side_effect"] is False
+    assert seo_artifact["provider_execution"]=="not_configured"
+    assert seo_artifact["provenance"]["tenant_id"]==str(tenant_id)
+    async with AsyncSessionLocal() as db:
+        seo_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==seo_definition_id,
+            AgentRuntimeBinding.employee_version_id==seo_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert seo_binding is not None
+    print("WORKFORCE SEO KEYWORD_RESEARCH FULL WORKITEM LIFECYCLE PASS")
+    print(f"WORKFORCE SEO ARTIFACT + TENANT PROVENANCE PASS key={seo_key}")
+    print("WORKFORCE SEO PROVIDER BOUNDARY PASS provider_execution=not_configured; no live search executed")
+
     wrong,_,_=await governed_agent(
         tenant_id,
         suffix,
