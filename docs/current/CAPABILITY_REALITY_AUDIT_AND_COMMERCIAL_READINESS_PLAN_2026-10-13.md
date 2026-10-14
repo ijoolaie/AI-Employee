@@ -588,3 +588,12 @@ Count `content_qa` as an additional operation with lifecycle evidence under `ai_
 - Evidence includes successful WorkItem lifecycle, tool-call audit identity, active runtime binding, read-only tenant-scoped CEO report, and explicit bounded CEO delegation. Wrong-role, stale-capability, approval-required, and cross-tenant denial paths passed.
 - This does not prove autonomous staffing, hiring/provisioning, financial commitments, live external providers, production outcomes, customer acceptance, or revenue.
 - Role coverage is now 10/12 = 83.3%; A0/A1/A2/A3/A4 = 100/30/83.3/0/0; actionable progress 71%, full-scope 43%. The two roles without canonical lifecycle proof remain open. Continue prioritizing role breadth, high-value operation gaps, and denial/failure-path tests.
+
+
+## Audit update — 2026-10-14 (PR #1124)
+
+- Canonical lifecycle evidence added for `ai_marketing_advertising_manager:workforce_prepare_growth_report`; PR #1124 merged as `42cb0024a79ddeff79d5a5ad029dc0c98baf1967` after all 11 workflow groups passed on exact tested head `db7ad80181c56dc000aa8662dd467544c8192b31`.
+- Workforce Semantic Real-Stack E2E: https://github.com/ijoolaie/AI-Employee/actions/runs/38529979935 . Confirms successful WorkItem lifecycle, tool-call audit identity, active runtime binding, read-only tenant-owned orders/deals boundary, and wrong-role, stale-capability, approval-required, and cross-tenant denial checks.
+- Boundary: this is a deterministic report based on tenant-owned orders and sales pipeline data. It does not demonstrate ad attribution, live marketing provider execution, paid spend, campaign launch, external outreach, production outcomes, customer acceptance, or revenue.
+- Canonical role coverage is 11/12 = 91.7%; only `ai_sales_lead_generation` remains uncovered. A0/A1/A2/A3/A4 = 100/30/91.7/0/0; actionable progress 74%; full-scope context 44%.
+- Next audit target: Sales & Lead Generation, selecting a non-external routine operation and validating the canonical lifecycle and negative paths without sending messages or creating commercial commitments.
