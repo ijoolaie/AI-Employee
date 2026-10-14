@@ -1,3 +1,36 @@
+# Workforce progress update — PR #1117 (2026-10-14)
+
+## QA & DevOps lifecycle proof
+
+- PR [#1117](https://github.com/ijoolaie/AI-Employee/pull/1117) squash-merged as [`44ab9ca323b378f712898a3ebd07c63a65e8acfd`](https://github.com/ijoolaie/AI-Employee/commit/44ab9ca323b378f712898a3ebd07c63a65e8acfd), from exact tested head `1721a6857f0185ac375583a0b75acc6a16b90907`.
+- Added `workforce_qa_test_plan` under `ai_qa_devops` to the deterministic semantic E2E, covering WorkItem assignment → dispatch → worker → successful Run.
+- The E2E verifies tool-call audit identity, active runtime binding, one tenant-scoped `qa_devops_artifact`, repository/commit/test-scope persistence, tenant provenance, `approval_required=false`, `external_side_effect=false`, and `provider_execution=not_configured`.
+- All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332325), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332305), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332431), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332301), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332311), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332381), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332316), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332281), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332285), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332338), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332344).
+- The E2E job log explicitly reports `WORKFORCE QA DEVOPS TEST_PLAN FULL WORKITEM LIFECYCLE PASS`, artifact/provenance PASS, `provider_execution=not_configured; tests_not_executed`, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
+- Evidence boundary: this proves a durable test-plan artifact, not test execution, a live CI health check, repository inspection, deployment, rollback, or production readiness. Workflow results above are exact-head pre-merge validation; no separate post-merge run was returned by the workflow query.
+
+## Progress calculation
+
+A2 measures the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. The evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, and QA & DevOps: **7/12 = 58.3%**.
+
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle role coverage: **58.3%**
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
+
+**Actionable progress (A0–A2):** `(100 + 30 + 58.3) / 3 = 62.8%` → **63%**.
+
+**Full-scope progress (A0–A4):** `(100 + 30 + 58.3 + 0 + 0) / 5 = 37.7%` → **38%**.
+
+These are rubric-based phase indicators, not a claim that 63% of the product is commercially ready. Real provider execution, production deployment, customer acceptance, reliability under production workloads, and revenue remain unproven.
+
+## Next execution priority
+
+Continue with one of the five unrepresented canonical roles, prioritizing a distinct workflow with durable local output and clear authorization boundaries. Add meaningful denial/failure-path coverage as well as positive lifecycle proof. Keep provider-backed execution and commercial/production gates explicitly unresolved.
+
+---
+
 # Workforce progress update — PR #1115 (2026-10-14)
 
 ## SEO & Growth lifecycle proof
