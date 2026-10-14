@@ -1,3 +1,14 @@
+## Current priority update — 2026-10-14 (after PR #1155)
+
+1. After the merged #1155 change, audit whether callers treat `outcome_unknown` as a stop-and-reconcile state rather than retrying a branch-create write blindly.
+2. Continue tracing the Software Developer role-operation path across approval, Tool Registry, semantic handler, provider, persisted result and audit evidence.
+3. Keep the provider boundary explicit: CI-status reads and branch creation only; Git commit, PR creation, deploy and rollback are not implemented by this adapter.
+4. Keep progress scores unchanged until the broader A1 role/operation evidence threshold is met; A3/A4 remain externally gated.
+
+PR #1155 exact head `eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf` passed 17/17 check-runs and 14/14 workflow runs before squash merge `6947679d0fe89e8c81584f19ba2560480eb336b0`. The tests are mocked; no live GitHub write or production configuration is proven.
+
+---
+
 ## Current priority update — 2026-10-14 (after PR #1153)
 
 1. Continue the Software Developer provider audit with exact source/tests and close only a demonstrated correctness or safety gap.
