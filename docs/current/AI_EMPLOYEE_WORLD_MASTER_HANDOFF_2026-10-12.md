@@ -516,3 +516,14 @@ The next engineer/agent should inspect the current workforce operation matrix an
 
 The Content Producer now has full WorkItem lifecycle evidence for article creation, social caption creation, and deterministic structural content QA. The Graphic Designer has full lifecycle evidence for creating and revising a creative request; neither path proves real image rendering. Shift the next slice toward an uncovered role and negative-path coverage instead of continuing to deepen these same role families.
 
+
+
+## Master hand-off checkpoint — 2026-10-14 (PR #1121)
+
+- Merged PR #1121: https://github.com/ijoolaie/AI-Employee/pull/1121
+- Merge SHA: d4101848d53d93ee20b350546cc23509cac33a8e; tested head: 5d77d33b0e226b6d124731aea0989ae4a0bf8655.
+- All 11 exact-head workflow groups passed, including CI, CodeQL, Runtime Isolation/RBAC, Workforce Semantic Real-Stack E2E, DAST, architecture, HA recovery, observability, rollback/alerting, infrastructure validation and W21 business network E2E.
+- Website Employee workforce_website_requirements now has WorkItem assignment → dispatch → worker → successful Run evidence, audit identity, active runtime binding, and one tenant-scoped artifact with tenant provenance.
+- Provider remains not_configured; this is staged requirements planning only. No live site build/deploy, external provider or customer outcome was validated.
+- Role coverage: 9/12 (75%): Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, Social Media, Website. Next target: Internal Manager.
+- A0/A1/A2/A3/A4 = 100/30/75/0/0; actionable 68%; full scope 41%. These rubric-based values do not imply commercial readiness.

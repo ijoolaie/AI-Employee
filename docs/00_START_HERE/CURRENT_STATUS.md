@@ -445,3 +445,12 @@ Progress remains 48% agent-actionable (A0–A2) and 29% full-scope (A0–A4).
 - Evidence boundary: deterministic structural QA only. This does not prove factual accuracy, brand/tone/legal review, configured external provider execution, publication, customer acceptance, or revenue. Post-merge workflow runs on the merge SHA were not returned by the available workflow query; do not claim a post-merge CI pass.
 - Progress remains A0 100%, A1 30%, A2 25%, A3 0%, A4 0%; actionable progress 52%, full-scope progress 31%. This adds one more operation-level lifecycle proof inside an already represented role; the phase-level rubric has not changed, so no percentage increase is claimed.
 
+
+
+## Verified update — 2026-10-14 (PR #1121)
+
+- PR #1121 merged as d4101848d53d93ee20b350546cc23509cac33a8e after all 11 workflow groups passed on exact tested head 5d77d33b0e226b6d124731aea0989ae4a0bf8655. PR: https://github.com/ijoolaie/AI-Employee/pull/1121
+- Workforce Semantic Real-Stack E2E confirms WEBSITE REQUIREMENTS FULL WORKITEM LIFECYCLE PASS, tenant-scoped artifact/provenance PASS, provider_execution=not_configured; no site deployed, and overall semantic matrix PASS. Run: https://github.com/ijoolaie/AI-Employee/actions/runs/38526169492
+- Website Employee is role 9/12 with canonical WorkItem → assignment → dispatch → worker → successful Run evidence (75%). Evidenced roles: Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, Social Media, Website.
+- This is requirements planning only; no real site build, live provider execution, deployment, rollback, production availability, customer acceptance, or revenue is demonstrated.
+- Progress rubric: A0 100%; A1 30%; A2 9/12 = 75%; A3 0%; A4 0%. Actionable A0–A2 = (100 + 30 + 75) / 3 = 68.3% (68%). Full scope A0–A4 = (100 + 30 + 75 + 0 + 0) / 5 = 41%. These are phase indicators, not readiness certification.

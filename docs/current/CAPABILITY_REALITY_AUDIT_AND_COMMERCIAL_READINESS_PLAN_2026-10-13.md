@@ -570,3 +570,12 @@ Record `workforce_content_qa` as implemented with deterministic structural check
 
 Count `content_qa` as an additional operation with lifecycle evidence under `ai_content_producer`, not as a new role completed. Preserve the limitations: structural checks only; no external provider, factual review, brand/legal review, publication, or customer outcome demonstrated. The next audit slice should maximize role breadth and governance/failure-path coverage.
 
+
+
+## Audit update — 2026-10-14 (PR #1121)
+
+- Added canonical lifecycle evidence for ai_website_employee:workforce_website_requirements on tested head 5d77d33b0e226b6d124731aea0989ae4a0bf8655; all 11 workflow groups passed before merge. Merge SHA: d4101848d53d93ee20b350546cc23509cac33a8e.
+- Evidence: successful WorkItem lifecycle, tool-call audit identity, active runtime binding, tenant-scoped artifact/provenance, and no external side effect for requirements planning.
+- Limitation: provider not configured; no real site build, live website integration, deployment, rollback, customer acceptance, or revenue evidence.
+- Role coverage 9/12 = 75%; phase indicators A0 100%, A1 30%, A2 75%, A3 0%, A4 0%; actionable progress 68%, full-scope 41%.
+- Next audit target: Internal Manager role, then remaining capability gaps and negative-path coverage.
