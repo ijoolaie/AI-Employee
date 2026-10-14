@@ -8,6 +8,22 @@ This resolves the W16 fixture defect; it does not alter production authorization
 
 
 
+## A1 capability trace — AI Internal Manager and Marketing Manager (2026-10-14)
+
+### AI Internal Manager
+The role contract binds `assign_task`, `reprioritize_task`, `coordinate_handoff`, `balance_workload`, `request_workforce_capacity`, `prepare_ceo_report`, `prepare_budget_estimate` and `prepare_cost_optimization` to dedicated registry tools. The inspected `workforce_assign_task` wrapper requires DB and tenant Run context and delegates to `assign_work_item`; the dashboard wrapper delegates to `get_workforce_dashboard` in `agent_workforce_manager.py`.
+
+The dashboard reads only tenant-scoped AgentInstance, WorkItem and WorkforceSLAContract records. It computes status counts, terminal success rate, active queue age and agent capacity. SLA is explicitly reported as `not_configured`/disabled with no invented target when no active tenant SLA contract exists; when enabled, the reported compliance is a point-in-time active-queue measure, not a historical completion-time SLA. PR #1123 provides deterministic real-stack WorkItem → assignment → dispatch → worker → successful Run evidence for `prepare_ceo_report`, plus audit identity, active runtime binding, time-bounded CEO delegation and denial cases. This supports the report and assignment lifecycle only; it does not prove autonomous hiring, staffing changes, budget commitment or executive decision authority.
+
+### AI Marketing & Advertising Manager
+The inspected dedicated bindings are `draft_campaign_plan`, `coordinate_content` and `prepare_growth_report`. The first two are deterministic, tenant-context-gated planning functions that return draft work packages; they do not launch campaigns, publish content, spend money or query ad platforms. The growth report is a read-only SQL aggregation over tenant-owned BusinessOrder and BusinessDeal records, calculating order revenue/status totals and sales pipeline measures. Its explicit scope note disclaims campaign attribution and ad-performance analysis.
+
+PR #1124 supplies deterministic real-stack lifecycle evidence for `prepare_growth_report`, including negative-path denials. Campaign plan and content coordination remain planning artifacts, not live campaign execution. The role contract's `analyze_campaign_performance` operation has no dedicated binding in the inspected contract mapping, and paid launch, ad spend and external purchase remain approval-required boundaries rather than proven capabilities.
+
+**A1 disposition:** these roles have dedicated, tenant-scoped, read-only/plan-only functionality with bounded test evidence. The remaining gap is not lifecycle scaffolding; it is broader operation-by-operation classification and, where commercially required, real data/provider validation. A1 remains at 30% until the audit rubric's broader coverage threshold is met.
+
+---
+
 ## A1 capability trace — AI Trader (2026-10-14)
 
 The AI Trader contract binds only three read-only tools in the inspected executable registry: `market_research → workforce_market_research`, `risk_analysis → workforce_market_risk_analysis`, and `prepare_trading_plan → workforce_market_trading_plan`. The catalog separately classifies `stage_order_for_review` and the capital allocation, order execution, leverage, withdrawal and material-financial-commitment operations as human-approval-required; no inspected binding here executes a broker order.
