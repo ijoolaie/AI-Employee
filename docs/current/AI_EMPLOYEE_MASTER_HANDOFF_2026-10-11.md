@@ -255,3 +255,12 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - **Exact tested head:** `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`; all 16 check runs concluded success.
 - `_tool_audit_status` now preserves `outcome_unknown` and `reconciled` instead of recording a reconciled result as ordinary `success`. A `reconciled` outcome means one read-only GET confirmed the requested branch ref and SHA after an ambiguous POST response. It does not claim the current invocation created the branch and does not retry the POST.
 - **Evidence boundary:** automated tests and CI only. No live GitHub mutation, production credentials/configuration, deployment, rollback, or production readiness has been verified. Keep progress at actionable 77%, full-scope 46%, A0/A1/A2/A3/A4 = 100/30/100/0/0 until broader evidence supports a change.
+
+
+## 2026-10-14 continuation — PR #1164
+
+- **Merged:** PR #1164; merge commit `245beb6b335a794bb0220d2d17a87f61f205e6ab`.
+- **Exact tested head:** `229a57a67ce7022403d64a980c8e06e13d18c6b9`; all 17 check runs succeeded on that exact SHA.
+- The initial GitHub branch lookup now requires exact `refs/heads/{branch_name}` identity and a valid SHA. A response for a different ref returns `provider_error` and does not proceed to POST; regression test covers this no-write behavior.
+- **Evidence boundary:** automated tests/CI only. No live GitHub mutation, production credentials/configuration, deployment, rollback, or production readiness has been verified. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+- **Next:** plan a supervised, explicitly authorized external validation of the supported `git_branch` operation in a disposable test repository/branch, with configured credentials and a cleanup plan. Until then, keep live-write status unverified.

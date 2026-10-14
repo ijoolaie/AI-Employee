@@ -703,3 +703,10 @@ Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope c
 - Merged PR #1162 at `ed3d27bc22cc3b89752e3f237aac9d68cba15f48`; tested head was `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`, with all 16 check runs successful on that exact SHA.
 - Durable `tool.call` audit status now preserves both `outcome_unknown` and `reconciled`. `reconciled` means a read-only GET confirmed the expected ref/SHA after an ambiguous create response; it does **not** mean this invocation created the branch.
 - Evidence remains CI/test-based. No live GitHub mutation, production credentials/configuration, deployment, or production readiness is established. Metrics unchanged: actionable progress 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+
+
+## 2026-10-14 — PR #1164: exact branch-ref lookup contract
+
+- PR #1164 merged as `245beb6b335a794bb0220d2d17a87f61f205e6ab`; all 17 check runs passed on exact tested head `229a57a67ce7022403d64a980c8e06e13d18c6b9`.
+- The initial GitHub branch lookup now requires the returned `ref` to equal `refs/heads/{requested branch}` as well as a valid SHA. A mismatched ref fails closed as `provider_error`; regression coverage asserts no POST/write is attempted.
+- Evidence is automated tests/CI only. No live GitHub mutation, production credentials/configuration, deployment, or production readiness is established. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.

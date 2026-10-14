@@ -1179,3 +1179,10 @@ Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope c
 - PR #1162 merged as `ed3d27bc22cc3b89752e3f237aac9d68cba15f48` after all 16 checks passed on exact head `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`.
 - Durable tool-call audit now records `reconciled` distinctly from `success` and `outcome_unknown`. Reconciliation is based on a read-only GET matching the requested ref/SHA; it does not attribute branch creation to the current invocation.
 - Next operational boundary is still supervised external validation of the GitHub provider with explicitly configured credentials and safe test scope. Do not treat CI as proof of live writes or production readiness. Progress metrics unchanged: actionable 77%, full-scope 46%, A0/A1/A2/A3/A4 = 100/30/100/0/0.
+
+
+## 2026-10-14 — next boundary after PR #1164
+
+- PR #1164 merged as `245beb6b335a794bb0220d2d17a87f61f205e6ab`; all 17 checks passed on exact head `229a57a67ce7022403d64a980c8e06e13d18c6b9`.
+- Branch lookup now validates both exact ref identity and SHA before treating the target as existing/conflicting; wrong-ref responses fail closed and do not trigger POST.
+- Priority remains supervised external validation of the GitHub provider with operator-configured credentials and an explicitly safe test repository/branch. Do not infer live-write readiness from CI. Progress metrics unchanged: actionable 77%, full-scope 46%, A0/A1/A2/A3/A4 = 100/30/100/0/0.

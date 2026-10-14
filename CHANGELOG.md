@@ -855,3 +855,10 @@ last Phase 1 baseline; historical As-Built snapshots remain preserved.
 - Merged PR #1162 as `ed3d27bc22cc3b89752e3f237aac9d68cba15f48`; all 16 check runs passed on exact tested head `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`.
 - Durable provider audit status now distinguishes `reconciled` from ordinary `success` and preserves `outcome_unknown`. `reconciled` means a read-only GET confirmed the expected ref/SHA after an ambiguous branch-create response; it does not establish that the current invocation created the branch.
 - This is automated test/CI evidence, not proof of live GitHub mutation, production configuration, deployment, or production readiness.
+
+
+## 2026-10-14 — PR #1164 merged
+
+- Merged PR #1164 as `245beb6b335a794bb0220d2d17a87f61f205e6ab`; all 17 check runs passed on exact tested head `229a57a67ce7022403d64a980c8e06e13d18c6b9`.
+- Hardened the GitHub branch provider's initial lookup: returned ref identity must exactly match the requested `refs/heads/{branch}` and include a valid SHA. Wrong-ref payloads fail closed without issuing a POST.
+- Automated test/CI evidence only; live GitHub mutation and production readiness remain unverified.
