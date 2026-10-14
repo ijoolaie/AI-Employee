@@ -38,6 +38,7 @@ class DeterministicProvider:
                 "workforce_keyword_research",
                 "workforce_qa_test_plan",
                 "workforce_read_analytics",
+                "workforce_website_requirements",
             )
             tool = next((item for name in supported_tools for item in request.tools if item.name == name), None)
             if tool is not None:
@@ -117,6 +118,10 @@ class DeterministicProvider:
                     "workforce_read_analytics": (
                         "e2e-workforce-read-analytics-1",
                         {"provider": "instagram", "query": "campaign performance", "channel": "instagram"},
+                    ),
+                    "workforce_website_requirements": (
+                        "e2e-workforce-website-requirements-1",
+                        {"site": "certification-fixture.example", "spec": {"purpose": "product landing page", "acceptance_criteria": ["responsive layout", "accessible navigation"]}},
                     ),
                 }
                 call_id, arguments = fixtures[tool.name]
