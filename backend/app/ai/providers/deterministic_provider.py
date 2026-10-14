@@ -118,7 +118,14 @@ class DeterministicProvider:
                     ),
                     "workforce_keyword_research": (
                         "e2e-workforce-keyword-research-1",
-                        {"topic": "SaaS customer acquisition"},
+                        (
+                            {
+                                "topic": "AI employee workflow automation",
+                                "query": "workflow automation software for small teams",
+                            }
+                            if "AI employee workflow automation" in str(request.messages)
+                            else {"topic": "SaaS customer acquisition"}
+                        ),
                     ),
                     "workforce_qa_test_plan": (
                         "e2e-workforce-qa-test-plan-1",
