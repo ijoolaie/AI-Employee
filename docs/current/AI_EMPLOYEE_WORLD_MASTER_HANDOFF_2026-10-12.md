@@ -16,6 +16,10 @@ Evidence boundary: the successful provider is a deterministic isolated test fixt
 4. Complete deployment-specific operations and release gates: monitoring/SLOs, backup/restore, recovery, security configuration and rollback evidence.
 5. Run a supervised pilot and gather operator/customer acceptance, reliability, cost and outcome evidence before claiming commercial readiness or revenue.
 
+## A1 audit increment — AI Trader
+
+The AI Trader contract and three wired provider adapters were traced after the W16 fixture repair. Market research, risk analysis and trading-plan preparation are read-only and require active tenant Run context plus an operator-configured provider. Unit tests cover fail-closed and mocked provider paths. Live market-data operation, broker connection and order execution remain unproven. Next audit targets: AI Internal Manager and Marketing & Advertising Manager.
+
 The release-certified version remains separate from current main engineering work; this merge does not certify a production release.
 
 ---
