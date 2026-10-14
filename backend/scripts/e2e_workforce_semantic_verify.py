@@ -54,7 +54,7 @@ async def license_fixture(tenant_id,suffix):
         db.add(vendor); await db.flush()
         reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
         db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan","tool:workforce_read_analytics"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
 async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader",tool_name="workforce_market_research"):
@@ -66,7 +66,7 @@ async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader"
         employee=Employee(tenant_id=tenant_id,slug=f"e2e-workforce-{suffix}-{variant}",name=f"E2E Workforce {variant}",kind="custom",is_active=True)
         db.add(employee); await db.flush()
         output={"type":"object","properties":{"content":{"type":"string"}},"required":["content"]}
-        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=({"workforce_produce_article":"Produce a draft article.","workforce_produce_social_caption":"Prepare a social caption.","workforce_create_visual_asset":"Prepare a visual asset request.","workforce_revise_visual_asset":"Revise a visual asset request.","workforce_content_qa":"Run deterministic content QA on the supplied title and body.","workforce_customer_context":"Prepare governed customer context analysis.","workforce_workspace_create_file":"Create a deterministic workspace file.","workforce_keyword_research":"Conduct governed keyword research.","workforce_qa_test_plan":"Create a governed QA test plan."}.get(tool_name,"Perform deterministic market research.")),allowed_tools=[tool_name],rules={})
+        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=({"workforce_produce_article":"Produce a draft article.","workforce_produce_social_caption":"Prepare a social caption.","workforce_create_visual_asset":"Prepare a visual asset request.","workforce_revise_visual_asset":"Revise a visual asset request.","workforce_content_qa":"Run deterministic content QA on the supplied title and body.","workforce_customer_context":"Prepare governed customer context analysis.","workforce_workspace_create_file":"Create a deterministic workspace file.","workforce_keyword_research":"Conduct governed keyword research.","workforce_qa_test_plan":"Create a governed QA test plan.","workforce_read_analytics":"Prepare read-only social analytics."}.get(tool_name,"Perform deterministic market research.")),allowed_tools=[tool_name],rules={})
         definition=AgentDefinition(tenant_id=tenant_id,slug=f"e2e-workforce-def-{suffix}-{variant}",name=f"E2E Workforce {variant}",capabilities=["execution"],allowed_tools=[tool_name],model_policy={},input_schema={},output_schema=output,policy_requirements={},enabled=True)
         db.add_all([version,definition]); await db.flush()
         template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-workforce-template-{suffix}-{variant}",name=f"E2E Workforce Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract(role_code),permission_policy={"permissions":["run.execute"],"allowed_tools":[tool_name]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
@@ -486,6 +486,44 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     print("WORKFORCE QA DEVOPS TEST_PLAN FULL WORKITEM LIFECYCLE PASS")
     print(f"WORKFORCE QA TEST PLAN ARTIFACT + TENANT PROVENANCE PASS key={qa_key}")
     print("WORKFORCE QA PROVIDER BOUNDARY PASS provider_execution=not_configured; tests_not_executed")
+
+    # Certify Social Media read-only analytics through the canonical WorkItem lifecycle.
+    social_agent,social_version,social_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"social-read-analytics",role_code="ai_social_media",tool_name="workforce_read_analytics")
+    social_item=await work_item(
+        tenant_id,social_agent,suffix,"social-read-analytics",
+        request_text="Prepare a read-only Instagram analytics snapshot")
+    assert req("POST",f"/work-items/{social_item}/assign/agent",{"agent_instance_id":str(social_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{social_item}/dispatch",token=token)[0]==200
+    social_work,social_run=await wait_result(social_item)
+    assert social_work.status is WorkItemStatus.SUCCEEDED and social_run and social_run.status=="success", (
+        social_work.status,social_run.error_message if social_run else None)
+    assert social_run.agent_instance_id==social_agent and social_run.employee_version_id==social_version
+    await verify_audit(tenant_id,social_run.id,tool_name="workforce_read_analytics",tool_call_id="e2e-workforce-read-analytics-1")
+    social_payloads=[]
+    for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
+        if key.endswith(".json") and "social-" in key:
+            payload=workforce_semantic_domains._read_json(str(tenant_id),key)
+            if payload.get("operation")=="read_analytics" and payload.get("provider_requested")=="instagram":
+                social_payloads.append((key,payload))
+    assert len(social_payloads)==1, f"expected one persisted social analytics artifact, got {len(social_payloads)}"
+    social_key,social_artifact=social_payloads[0]
+    assert social_artifact["kind"]=="social_operation" and social_artifact["status"]=="request"
+    assert social_artifact["approval_required"] is False
+    assert social_artifact["external_side_effect"] is False
+    assert social_artifact["provider_execution"]=="not_configured"
+    assert social_artifact["provenance"]["tenant_id"]==str(tenant_id)
+    async with AsyncSessionLocal() as db:
+        social_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==social_definition_id,
+            AgentRuntimeBinding.employee_version_id==social_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert social_binding is not None
+    print("WORKFORCE SOCIAL_MEDIA READ_ANALYTICS FULL WORKITEM LIFECYCLE PASS")
+    print(f"WORKFORCE SOCIAL ARTIFACT + TENANT PROVENANCE PASS key={social_key}")
+    print("WORKFORCE SOCIAL PROVIDER BOUNDARY PASS provider_execution=not_configured; no live analytics fetched")
 
     wrong,_,_=await governed_agent(
         tenant_id,
