@@ -504,7 +504,7 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
     for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
         if key.endswith(".json") and "social-" in key:
             payload=workforce_semantic_domains._read_json(str(tenant_id),key)
-            if payload.get("operation")=="read_analytics" and payload.get("provider")=="instagram":
+            if payload.get("operation")=="read_analytics" and payload.get("provider_requested")=="instagram":
                 social_payloads.append((key,payload))
     assert len(social_payloads)==1, f"expected one persisted social analytics artifact, got {len(social_payloads)}"
     social_key,social_artifact=social_payloads[0]
