@@ -8,6 +8,18 @@ This resolves the W16 fixture defect; it does not alter production authorization
 
 
 
+## A1 capability trace — AI Trader (2026-10-14)
+
+The AI Trader contract binds only three read-only tools in the inspected executable registry: `market_research → workforce_market_research`, `risk_analysis → workforce_market_risk_analysis`, and `prepare_trading_plan → workforce_market_trading_plan`. The catalog separately classifies `stage_order_for_review` and the capital allocation, order execution, leverage, withdrawal and material-financial-commitment operations as human-approval-required; no inspected binding here executes a broker order.
+
+- **Handler and tenant boundary:** each tool wrapper requires DB and tenant context from the active Run. Each provider service independently rejects missing tenant context.
+- **Provider boundary:** services use the operator-configured `MARKET_DATA_PROVIDER_BASE_URL`, fixed endpoint paths, bounded symbol/horizon/objective inputs, timeout configuration, no redirects, optional bearer credential, and fail closed on missing configuration, transport/HTTP failure, invalid JSON or an invalid response contract. The configured endpoint is not caller-supplied. Production settings validation requires HTTPS when the endpoint is configured.
+- **Evidence:** unit tests exist for each of the three services, including missing-provider fail-closed behavior, input normalization/validation, valid mocked provider responses, invalid payload rejection and the explicit trading-plan contract binding. These are mocked-provider tests, not a live market-data integration certification.
+- **Current classification:** the three read-only paths have implemented provider adapters and bounded contract tests; live provider configuration, freshness/quality of real market data and any production outcome remain unverified. Trading execution, broker connection, capital movement and live orders are not established by these read-only handlers. Do not infer autonomous trading capability from the role catalog.
+- **Next evidence needed:** run a supervised integration test against an approved non-production market-data provider, record freshness/contract behavior and failure telemetry, and separately audit the approval/denial boundary for order-staging versus any future broker execution. Do not enable live orders as part of this read-only audit.
+
+---
+
 ## A1 capability trace — Sales & Lead Generation (2026-10-14)
 
 Static source inspection after PR #1125 traced the Sales role contract through the Tool Registry into `workforce_semantic_domains.execute_sales`. Sources inspected: [role contracts](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/ai_workforce_roles.py) at `fda32e5ad6d1e856b91b2559e7c2d323218bb649`, [Tool Registry](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/ai/tool_registry.py) at `b34be46d50f8ebd4b5d68241342bccd7e76d2e5c`, [semantic domains](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/workforce_semantic_domains.py) at `07c1030fc7a8918a6ba083490c8bdb6d91eed7e3`, [outreach provider](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/workforce_sales_outreach_provider.py) at `2c904179b94996842ca7172190f1fda5a2eb22e7`, and [payment provider](https://github.com/ijoolaie/AI-Employee/blob/main/backend/app/services/workforce_sales_payment_provider.py) at `49af313c3762d6dba21dd16809895cd1c121cf4f`.
