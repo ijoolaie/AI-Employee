@@ -843,10 +843,8 @@ def test_github_branch_provider_reports_server_error_after_create_as_unknown(mon
 @pytest.mark.asyncio
 async def test_engineering_domain_preserves_unknown_branch_write_outcome(monkeypatch):
     """The semantic handler must not collapse an uncertain remote write into failure."""
+    from app.services import workforce_semantic_domains as domains
     from app.services import workforce_engineering_providers as providers
-
-    class FakeSettings:
-        engineering_provider_name = "github"
 
     class FakeProvider:
         name = "github"
@@ -862,8 +860,7 @@ async def test_engineering_domain_preserves_unknown_branch_write_outcome(monkeyp
                 reason="GitHub branch creation outcome unknown: HTTP 503",
             )
 
-    monkeypatch.setattr(providers, "get_settings", lambda: FakeSettings())
-    monkeypatch.setattr(providers, "get_configured_engineering_provider", lambda: FakeProvider())
+    monkeypatch.setattr(domains, "get_configured_engineering_provider", lambda: FakeProvider())
 
     result = await execute_engineering(
         {
