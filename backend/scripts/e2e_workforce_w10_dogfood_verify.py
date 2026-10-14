@@ -302,7 +302,15 @@ async def main():
     tenant_id, instance_id, runs, owner_id, reviewer_id, deal_approval_tool_call_id = await prepare()
 
     lead_query = "B2B SaaS founders with manual customer operations"
-    criteria = {"company_size": "10-200", "pain": "manual customer operations"}
+    # Qualification now accepts only explicit Boolean evidence signals; descriptive
+    # lead research criteria remain separate and are not silently coerced.
+    criteria = {
+        "industry_match": True,
+        "need_confirmed": True,
+        "budget_confirmed": False,
+        "decision_maker_identified": True,
+        "timeline_confirmed": False,
+    }
 
     research = await execute(
         tenant_id, instance_id, runs["lead_research"],
