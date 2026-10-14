@@ -1,3 +1,11 @@
+## Current progress accounting — 2026-10-14 after PR #1125
+
+The latest verified checkpoint is PR #1125: exact tested head `92d2654ca3098a9e0f5865a3502fa0f5756c01ba`, squash merge `8c9f79904241b9a5899ee38f0067719496fb4913`. All 11 required workflow groups passed on the exact tested head. The Sales & Lead Generation deterministic lifecycle is evidenced; provider execution remains `not_configured`, and external sourcing/outreach, production outcomes, customer acceptance and revenue are not proven.
+
+A2 is now 12/12 = 100%. A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress = (100 + 30 + 100) / 3 = 76.7% (77%); full-scope context = (100 + 30 + 100 + 0 + 0) / 5 = 46%. These remain rubric-based indicators, not commercial readiness. Continue with the capability reality audit and evidence-based provider/operation gap prioritization; keep A3/A4 unresolved until external evidence exists.
+
+---
+
 # AI Employee — Mandatory Working Rules for AI Agents
 
 **Status:** Active repository-wide instructions  
