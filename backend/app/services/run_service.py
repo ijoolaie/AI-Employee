@@ -60,6 +60,29 @@ logger = logging.getLogger("app.services.run")
 settings = get_settings()
 
 
+def _provider_audit_metadata(tool_result: Any) -> dict[str, Any]:
+    """Return a small allowlist of provider outcome fields for durable audit records."""
+    if not isinstance(tool_result, dict) or "provider_execution" not in tool_result:
+        return {}
+    fields = ("provider", "operation", "provider_execution", "executed", "external_side_effect", "provider_reason")
+    metadata: dict[str, Any] = {}
+    for key in fields:
+        value = tool_result.get(key)
+        if value is None:
+            continue
+        if key == "provider_reason" and isinstance(value, str):
+            value = value[:500]
+        metadata[key] = value
+    return metadata
+
+
+def _tool_audit_status(tool_result: Any, default_status: str) -> str:
+    """Do not audit an ambiguous provider write as a successful tool call."""
+    if isinstance(tool_result, dict) and tool_result.get("provider_execution") == "outcome_unknown":
+        return "outcome_unknown"
+    return default_status
+
+
 async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, error: str | None = None) -> None:
     """Project a bound Run lifecycle onto its WorkItem and team parent.
 
@@ -500,10 +523,11 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         tenant_id=run.tenant_id,
                         resource_type="run",
                         resource_id=run.id,
-                        status=tool_status,
+                        status=_tool_audit_status(tool_result, tool_status),
                         request_id=run.request_id,
                         metadata={
                             "tool": tool_call_name,
+                            **_provider_audit_metadata(tool_result),
                             "tool_call_id": tool_call_id,
                             "latency_ms": elapsed_ms,
                             "approval_id": str(resume_approval.id),
@@ -633,10 +657,11 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         tenant_id=run.tenant_id,
                         resource_type="run",
                         resource_id=run.id,
-                        status=tool_status,
+                        status=_tool_audit_status(tool_result, tool_status),
                         request_id=run.request_id,
                         metadata={
                             "tool": tool_call.name,
+                            **_provider_audit_metadata(tool_result),
                             "tool_call_id": tool_call.id,
                             "latency_ms": elapsed_ms,
                             "approval_required": approval_required if 'approval_required' in locals() else None,
