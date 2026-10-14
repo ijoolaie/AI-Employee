@@ -992,3 +992,9 @@ Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-
 - This checkpoint was source inspection only. Test-file coverage and provider-backed paths still need direct verification; do not raise A1 from this increment alone.
 - Next ordered step: finish the Software Developer contract-to-handler trace, then locate and inspect the relevant SEO/Customer Success tests. After that, select a bounded implementation with positive, tenant-isolation and denial-path evidence.
 - Progress remains A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%, full-scope context 46%. These are rubric indicators, not production/commercial readiness.
+## A1 audit checkpoint — Software Developer (2026-10-14)
+
+- Default engineering provider is `none` and fails closed. `contract-test` is deterministic/no-side-effect; `github-readonly` supports CI-status reads; `github` supports CI-status and potentially real branch creation under tenant-mapped repository/token configuration.
+- GitHub provider support does not extend to executing tests/lint/build, PR/commit, health check, deploy or rollback. Those operations remain unconfigured; branch creation is an external side effect requiring the existing governance/approval path.
+- Source inspection only: no new tests run, live provider call proven, or provider integration certified.
+- Next: inspect exact test coverage for SEO & Growth, Customer Success and Software Developer; then implement one bounded improvement with positive, failure, tenant-isolation and approval/permission-denial evidence. Keep A1 at 30%.
