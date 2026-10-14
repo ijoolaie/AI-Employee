@@ -1,3 +1,13 @@
+## Engineering provider checkpoint — 2026-10-14 (PR #1155)
+
+PR [#1155](https://github.com/ijoolaie/AI-Employee/pull/1155) merged as [`6947679d0fe89e8c81584f19ba2560480eb336b0`](https://github.com/ijoolaie/AI-Employee/commit/6947679d0fe89e8c81584f19ba2560480eb336b0), exact tested head `eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf`; all 17 check-runs and 14 workflow runs succeeded.
+
+The GitHub branch-create provider now preserves uncertainty as `outcome_unknown` when a POST may have reached GitHub but its response is lost, malformed, truncated, returns a mismatched SHA, or yields HTTP 5xx. Lookup errors remain `provider_error`; HTTP 422 remains a possible concurrent-create `conflict`. Regression tests are mocked and do not prove live external writes. A caller-side read-after-write reconciliation path remains a follow-up before any safe retry can be claimed.
+
+Provider capability still covers CI-status reads and branch creation only. Git commit/PR creation/deploy/rollback are unsupported; live operator configuration and production execution remain unverified. Progress remains A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%.
+
+---
+
 ## Engineering provider checkpoint — 2026-10-14
 
 PR #1152 and PR #1153 are merged. The GitHub reference preflight now uses `/git/ref/heads/{branch}` and rejects invalid ref components before network access. PR #1153 exact head `21723a046957b3c0ee56579e901ec768390ea605` passed 17/17 checks; merge commit `a3746d8f18271549c979f0fa0c104bc34dd51e67`.
