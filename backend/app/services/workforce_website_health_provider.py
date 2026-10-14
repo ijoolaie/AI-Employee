@@ -99,14 +99,14 @@ def check_website_health(*, tenant_id: str, site: str | None) -> dict:
             reason=invalid_reason,
         ).as_dict()
 
-    request = Request(
-        target,
-        headers={"Accept": "text/html,application/json,*/*", "User-Agent": "AI-Employee-WebsiteHealth/1.0"},
-        method="GET",
-    )
-    opener = build_opener(_NoRedirectHandler())
     timeout = float(settings.website_health_timeout_seconds)
     try:
+        request = Request(
+            target,
+            headers={"Accept": "text/html,application/json,*/*", "User-Agent": "AI-Employee-WebsiteHealth/1.0"},
+            method="GET",
+        )
+        opener = build_opener(_NoRedirectHandler())
         with opener.open(request, timeout=timeout) as response:
             status_code = response.getcode()
             if not isinstance(status_code, int) or isinstance(status_code, bool) or not 100 <= status_code <= 599:
