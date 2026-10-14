@@ -1,17 +1,19 @@
 """Runtime enforcement for governed AI workforce role operations.
 
 This layer binds the declarative workforce-role catalog to the existing Agent
-execution adapter. It never provisions roles and never grants approval-gated
-operations.
+execution adapter. Approval-gated operations require a persisted approval bound
+to the exact tenant, Run, tool, tool-call ID, and arguments.
 """
 from __future__ import annotations
 
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ValidationAppError
 from app.models.agent_instance import AgentInstance
+from app.models.tool_approval import ToolApprovalRequest
 from app.services.ai_workforce_roles import (
     assert_workforce_capability_contract_snapshot,
     assert_workforce_tool_binding,
@@ -38,6 +40,10 @@ async def assert_workforce_tool_execution(
     tenant_id: UUID,
     agent_instance_id: UUID,
     tool_name: str,
+    approval_request_id: UUID | None = None,
+    run_id: UUID | None = None,
+    tool_call_id: str | None = None,
+    arguments: dict | None = None,
 ) -> None:
     """Enforce role/capability/tool binding at the canonical Run tool boundary."""
     binding = workforce_operation_for_tool(tool_name)
@@ -64,8 +70,17 @@ async def assert_workforce_tool_execution(
             details={"role": actual_role or None, "required_role": role_code, "operation": operation, "tool": tool_name},
         )
 
-    await assert_workforce_operation(db, agent=agent, operation=operation)
     assert_workforce_tool_binding(role_code, operation, tool_name)
+    await assert_workforce_operation(
+        db,
+        agent=agent,
+        operation=operation,
+        approval_request_id=approval_request_id,
+        run_id=run_id,
+        tool_name=tool_name,
+        tool_call_id=tool_call_id,
+        arguments=arguments,
+    )
 
 
 async def assert_workforce_operation(
@@ -74,6 +89,11 @@ async def assert_workforce_operation(
     agent: AgentInstance,
     operation: str,
     affected_employee_id: UUID | None = None,
+    approval_request_id: UUID | None = None,
+    run_id: UUID | None = None,
+    tool_name: str | None = None,
+    tool_call_id: str | None = None,
+    arguments: dict | None = None,
 ) -> None:
     """Fail closed unless the Agent's catalog role permits the requested operation."""
     role_code = (agent.configuration or {}).get("workforce_role_code")
@@ -92,19 +112,39 @@ async def assert_workforce_operation(
         (agent.configuration or {}).get("workforce_capability_contract"),
     )
 
+    approved_gated_operation = False
     if operation in role.approval_required_operations:
-        raise ValidationAppError(
-            "Human approval is required for this workforce operation",
-            details={"role": role.code, "operation": operation},
+        if not all((approval_request_id, run_id, tool_name, tool_call_id)) or arguments is None:
+            raise ValidationAppError(
+                "Human approval is required for this workforce operation",
+                details={"role": role.code, "operation": operation},
+            )
+        assert_workforce_tool_binding(role.code, operation, tool_name)
+        approval_result = await db.execute(
+            select(ToolApprovalRequest).where(
+                ToolApprovalRequest.id == approval_request_id,
+                ToolApprovalRequest.tenant_id == agent.tenant_id,
+                ToolApprovalRequest.run_id == run_id,
+                ToolApprovalRequest.tool_name == tool_name,
+                ToolApprovalRequest.tool_call_id == tool_call_id,
+                ToolApprovalRequest.status == "approved",
+            )
         )
-    if operation not in role.allowed_routine_operations:
+        approval = approval_result.scalar_one_or_none()
+        if approval is None or approval.arguments != arguments:
+            raise ValidationAppError(
+                "Human approval is missing or does not match this workforce tool call",
+                details={"role": role.code, "operation": operation},
+            )
+        approved_gated_operation = True
+    if operation not in role.allowed_routine_operations and operation not in role.approval_required_operations:
         raise ValidationAppError(
             "Workforce role is not authorized for this operation",
             details={"role": role.code, "operation": operation},
         )
 
     if role.code != "ai_internal_manager":
-        if not is_operation_allowed(role.code, operation):
+        if not approved_gated_operation and not is_operation_allowed(role.code, operation):
             raise ValidationAppError("Workforce operation denied by role policy")
         return
 

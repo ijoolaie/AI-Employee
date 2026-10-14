@@ -264,3 +264,126 @@ async def test_internal_manager_rejects_runtime_agent_identity_mismatch(monkeypa
             agent=agent,
             operation="assign_task",
         )
+
+@pytest.mark.asyncio
+async def test_approved_gated_workforce_tool_requires_exact_persisted_approval():
+    from app.services.ai_workforce_roles import workforce_capability_contract_snapshot
+
+    tenant_id = uuid4()
+    agent_id = uuid4()
+    run_id = uuid4()
+    approval_id = uuid4()
+    tool_call_id = "call_git_branch_1"
+    arguments = {"branch_name": "agent/fix", "source_sha": "a" * 40}
+    approval = SimpleNamespace(
+        id=approval_id,
+        tenant_id=tenant_id,
+        run_id=run_id,
+        tool_name="workforce_git_branch",
+        tool_call_id=tool_call_id,
+        status="approved",
+        arguments=arguments,
+    )
+    agent = SimpleNamespace(
+        id=agent_id,
+        tenant_id=tenant_id,
+        configuration={
+            "workforce_role_code": "ai_software_developer",
+            "workforce_capability_contract": workforce_capability_contract_snapshot("ai_software_developer"),
+        },
+    )
+
+    class Result:
+        def __init__(self, value):
+            self.value = value
+
+        def scalar_one_or_none(self):
+            return self.value
+
+    class DB:
+        def __init__(self):
+            self.calls = 0
+
+        async def execute(self, statement):
+            self.calls += 1
+            params = statement.compile().params
+            assert tenant_id in params.values()
+            if self.calls == 1:
+                assert agent_id in params.values()
+                return Result(agent)
+            assert approval_id in params.values()
+            assert run_id in params.values()
+            assert tool_call_id in params.values()
+            assert "workforce_git_branch" in params.values()
+            assert "approved" in params.values()
+            return Result(approval)
+
+    await runtime.assert_workforce_tool_execution(
+        DB(),
+        tenant_id=tenant_id,
+        agent_instance_id=agent_id,
+        tool_name="workforce_git_branch",
+        approval_request_id=approval_id,
+        run_id=run_id,
+        tool_call_id=tool_call_id,
+        arguments=arguments,
+    )
+
+
+@pytest.mark.asyncio
+async def test_approved_gated_workforce_tool_rejects_argument_mismatch():
+    from app.services.ai_workforce_roles import workforce_capability_contract_snapshot
+
+    tenant_id = uuid4()
+    agent_id = uuid4()
+    run_id = uuid4()
+    approval_id = uuid4()
+    tool_call_id = "call_git_branch_2"
+    approved_arguments = {"branch_name": "agent/approved", "source_sha": "b" * 40}
+    changed_arguments = {"branch_name": "agent/changed", "source_sha": "b" * 40}
+    approval = SimpleNamespace(
+        id=approval_id,
+        tenant_id=tenant_id,
+        run_id=run_id,
+        tool_name="workforce_git_branch",
+        tool_call_id=tool_call_id,
+        status="approved",
+        arguments=approved_arguments,
+    )
+    agent = SimpleNamespace(
+        id=agent_id,
+        tenant_id=tenant_id,
+        configuration={
+            "workforce_role_code": "ai_software_developer",
+            "workforce_capability_contract": workforce_capability_contract_snapshot("ai_software_developer"),
+        },
+    )
+
+    class Result:
+        def __init__(self, value):
+            self.value = value
+
+        def scalar_one_or_none(self):
+            return self.value
+
+    class DB:
+        def __init__(self):
+            self.calls = 0
+
+        async def execute(self, statement):
+            self.calls += 1
+            if self.calls == 1:
+                return Result(agent)
+            return Result(approval)
+
+    with pytest.raises(ValidationAppError, match="does not match"):
+        await runtime.assert_workforce_tool_execution(
+            DB(),
+            tenant_id=tenant_id,
+            agent_instance_id=agent_id,
+            tool_name="workforce_git_branch",
+            approval_request_id=approval_id,
+            run_id=run_id,
+            tool_call_id=tool_call_id,
+            arguments=changed_arguments,
+        )
