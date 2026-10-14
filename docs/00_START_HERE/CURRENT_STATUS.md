@@ -12,6 +12,8 @@ Next: continue the cross-role A1 capability reality audit with source/test-backe
 
 A1 audit increment: the AI Trader contract, registry wrappers, three provider adapters and their unit tests have now been traced. The three wired operations are read-only market research, risk analysis and non-executing trading-plan preparation; they fail closed without configured provider/tenant context. No live market-data integration, broker connection or order execution is proven. See the AI Trader section in the capability reality audit.
 
+A1 audit increment: AI Internal Manager's assignment/report paths and AI Marketing Manager's planning/report paths were traced. The dashboard is tenant-scoped and reports SLA as unavailable when no active target exists; marketing growth metrics aggregate tenant-owned orders/deals and do not imply campaign attribution. PR #1123/#1124 provide deterministic lifecycle evidence, not autonomous staffing, live campaign execution or ad-platform analytics. Details are in the capability reality audit.
+
 ---
 
 # Workforce progress update — PR #1125 (2026-10-14)
