@@ -985,3 +985,10 @@ Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-
 3. Coverage is 11/12 roles (91.7%). Remaining canonical lifecycle target: `ai_sales_lead_generation`.
 4. Next priority: certify a safe, non-external sales operation through the full lifecycle, with explicit tenant isolation and negative-path tests. Do not execute external outreach, payment/checkout, or material commercial actions as part of the fixture.
 5. Progress: A0 100%, A1 30%, A2 91.7%, A3 0%, A4 0%; actionable 74%, full-scope 44%. Live provider execution, production outcomes, customer acceptance, and revenue remain unproven.
+## A1 audit checkpoint — SEO & Growth and Customer Success (2026-10-14)
+
+- Traced both role contracts and their semantic handlers. Named operations currently converge on generic tenant-scoped artifact persistence; provider execution remains `not_configured`.
+- No evidence from these handlers of live SEO/Search Console execution, customer-history/helpdesk integration, churn prediction, or customer-facing external action completion.
+- This checkpoint was source inspection only. Test-file coverage and provider-backed paths still need direct verification; do not raise A1 from this increment alone.
+- Next ordered step: finish the Software Developer contract-to-handler trace, then locate and inspect the relevant SEO/Customer Success tests. After that, select a bounded implementation with positive, tenant-isolation and denial-path evidence.
+- Progress remains A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%, full-scope context 46%. These are rubric indicators, not production/commercial readiness.
