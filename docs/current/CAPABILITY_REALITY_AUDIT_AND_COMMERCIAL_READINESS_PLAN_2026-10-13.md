@@ -1,3 +1,36 @@
+# Workforce progress update — PR #1110 (2026-10-14)
+
+## New verified role lifecycle
+
+- PR [#1110](https://github.com/ijoolaie/AI-Employee/pull/1110) merged as [`4e89b5a6ffe7e9b561b404ec6789d2580b492bd0`](https://github.com/ijoolaie/AI-Employee/commit/4e89b5a6ffe7e9b561b404ec6789d2580b492bd0), with exact-head validation at `2ff32caf5d031aea66577339814b3fdd74cca2b9`.
+- Added Software Developer `workforce_workspace_create_file` to the deterministic Workforce Semantic Real-Stack E2E: WorkItem assignment → dispatch → worker → successful Run.
+- Exact-head E2E confirms tool-call audit identity, active runtime binding, one tenant-scoped workspace file, and exact path/content persistence.
+- All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558694), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558732), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558646), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558743), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558786), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558824), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38429559290), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558547), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558760), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558818), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558517).
+- E2E logs report `WORKFORCE SOFTWARE DEVELOPER WORKSPACE_CREATE_FILE FULL WORKITEM LIFECYCLE PASS`, tenant-scoped file persistence PASS, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
+- Evidence boundary: local workspace artifact only; no provider-backed tests/lint/build, Git operations, code review, deployment, or production execution is proven.
+
+## Progress calculation
+
+A2 remains defined as the share of 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. The currently evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, and Software Developer: **5/12 = 41.7%**.
+
+- A0 — source-of-truth documentation: **100%**
+- A1 — audit of actual role capabilities: **30%**
+- A2 — canonical lifecycle coverage: **41.7%**
+- A3 — commercial/pilot readiness: **0%** (external gate, excluded from actionable denominator)
+- A4 — independence/reliability and outcomes: **0%** (external/operational gate, excluded from actionable denominator)
+
+**Actionable progress (A0–A2):** `(100 + 30 + 41.7) / 3 = 57.2%` → **57%**.
+
+**Full-scope progress (A0–A4):** `(100 + 30 + 41.7 + 0 + 0) / 5 = 34.3%` → **34%**.
+
+These percentages are phase-level indicators, not a claim that 57% of the product is production-ready. Deterministic fixtures do not prove live provider integrations, production deployment, customer acceptance, or revenue.
+
+## Next priority
+
+Broaden lifecycle proof to a role not yet represented, then test meaningful denial and failure paths (authorization mismatch, tenant isolation, provider failure, durable audit and idempotency). Avoid inflating A2 by adding multiple operations to a role already counted.
+
+---
+
 # Current workforce progress update — PR #1110 (2026-10-13)
 
 ## Newly verified role lifecycle
