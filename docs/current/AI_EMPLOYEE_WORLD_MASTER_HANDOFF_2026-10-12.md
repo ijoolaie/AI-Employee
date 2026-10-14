@@ -632,3 +632,11 @@ Next: inspect exact role-specific test coverage for Software Developer, SEO & Gr
 - Evidence limit: caller-supplied deterministic fixture only; no live helpdesk/customer history, real-world triage accuracy, message delivery, production deployment, customer acceptance or revenue.
 - Progress unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%. Role breadth remains 12/12; this adds operation-level depth, not new role coverage.
 - Next: inspect operation-specific tests for SEO & Growth, Customer Success and Software Developer, then choose a bounded business-value gap with positive, failure, tenant-isolation and permission/approval-denial tests.
+
+## Operation-level test audit and next handoff — 2026-10-14
+
+- SEO & Growth test scripts: `backend/scripts/e2e_workforce_w7_seo_growth_verify.py` and `backend/scripts/e2e_workforce_w22_seo_growth_verify.py`. They verify tenant-scoped artifacts, provenance, routine-operation coverage, cross-tenant denial and approval-gated experiment proposals; they do not prove live SEO/Search Console execution or measured growth.
+- Customer Success: `backend/scripts/e2e_workforce_w23_customer_success_verify.py` covers routine artifacts and the customer-message proposal. PR #1131 adds the support-triage canonical WorkItem lifecycle; exact tested head `4bd18db4922b0ce00f15dad9aa6a97a0a0eb73b3`, 14/14 check runs passed, merge SHA `3764e7502cb0837a74645a1fcdb88d4bf29d4289`. Provider remains `not_configured`.
+- Software Developer: `backend/tests/test_workforce_engineering_providers.py` and `backend/scripts/e2e_workforce_w2_engineering_verify.py` cover provider selection/fail-closed semantics, mocked read-only CI status, tenant-scoped workspace behavior, and approval-gated deploy proposal. No live GitHub provider mutation or external deploy is certified.
+- **Next implementation slice:** add explicit negative tests for GitHub CI-status transport errors, invalid response payloads, and missing tenant-to-repository mapping. Keep the provider read-only and fail closed. Do not claim new capability until focused tests and required CI pass.
+- Progress unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope context 46%. These remain rubric indicators, not commercial/production readiness.

@@ -1007,3 +1007,9 @@ Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable 48%, full-
 - This does not establish live helpdesk integration, accurate triage on real cases, external messaging, customer outcomes or commercial readiness.
 - Progress remains A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%, full-scope 46%. No score increase: canonical role coverage was already 12/12.
 - Next ordered action: inspect operation-specific tests for SEO & Growth, Customer Success and Software Developer; select one highest-value bounded gap and add positive, failure, tenant-isolation and permission/approval-denial coverage before adding any live provider integration.
+
+## Next bounded engineering increment — provider failure-path coverage (2026-10-14)
+
+Operation-specific tests have been inspected: SEO & Growth has W7/W22 real-stack governance/artifact coverage; Customer Success has W23 routine/proposal coverage plus PR #1131's full support-triage lifecycle; Software Developer has provider unit tests and W2 real-stack workspace/CI-status/deploy-proposal coverage. All of these use deterministic fixtures or mocked provider responses where stated; none should be described as live customer or production evidence.
+
+**Next action:** strengthen `backend/tests/test_workforce_engineering_providers.py` around the read-only GitHub CI-status adapter's transport failure, malformed response and missing tenant-to-repository mapping paths. Preserve the provider's read-only contract and fail-closed behavior. Do not implement new external write operations. Require focused tests plus the existing required CI checks before merge. Progress remains A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope context 46%.
