@@ -1,3 +1,13 @@
+## Progress checkpoint — GitHub branch lookup and ref validation fixes merged (2026-10-14)
+
+PR [#1152](https://github.com/ijoolaie/AI-Employee/pull/1152) corrected the GitHub Get-a-reference endpoint from `/git/refs/heads/...` to `/git/ref/heads/...`; squash merge: `398cddef834c1d845cce0352ea5aeccb7f4d3dc4`. PR [#1153](https://github.com/ijoolaie/AI-Employee/pull/1153) hardened branch-name validation for invalid ref components; exact tested head `21723a046957b3c0ee56579e901ec768390ea605`, all 17/17 check-runs succeeded, squash merge: `a3746d8f18271549c979f0fa0c104bc34dd51e67`.
+
+The merged provider can perform a narrowly scoped GitHub branch operation when an operator has configured tenant repository/token settings; tests and CI do not prove that those settings exist or that a live branch write was performed. Commit creation, PR creation, deploy and rollback remain unsupported by this provider. Do not infer production readiness from successful CI.
+
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable 77%; full-scope 46%. Next: continue source/test-backed Software Developer audit through approval → registry → provider → persisted result, prioritizing only reproducible gaps. No score increase is justified by these two bounded fixes alone.
+
+---
+
 ## Progress checkpoint — PR #1150 workspace-key collision fix merged (2026-10-14)
 
 - PR [#1150](https://github.com/ijoolaie/AI-Employee/pull/1150) was squash-merged into `main` as [`5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7`](https://github.com/ijoolaie/AI-Employee/commit/5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7) from exact tested head [`7335e2d90bfd0057560343794c168a59b6fd2e81`](https://github.com/ijoolaie/AI-Employee/commit/7335e2d90bfd0057560343794c168a59b6fd2e81).

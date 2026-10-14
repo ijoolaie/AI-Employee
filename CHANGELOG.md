@@ -1,3 +1,11 @@
+## 2026-10-14 — GitHub engineering branch provider hardening
+
+- PR #1152: corrected GitHub branch reference lookup to the documented `git/ref/heads/{branch}` endpoint.
+- PR #1153: reject invalid Git branch ref components before any network request; exact PR head passed 17/17 check-runs before merge.
+- Evidence boundary: no live external branch write, commit/PR creation, deployment, or release certification is claimed.
+
+---
+
 ## Progress checkpoint — PR #1150 workspace-key collision fix merged (2026-10-14)
 
 - PR [#1150](https://github.com/ijoolaie/AI-Employee/pull/1150) was squash-merged into `main` as [`5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7`](https://github.com/ijoolaie/AI-Employee/commit/5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7) from exact tested head [`7335e2d90bfd0057560343794c168a59b6fd2e81`](https://github.com/ijoolaie/AI-Employee/commit/7335e2d90bfd0057560343794c168a59b6fd2e81).
