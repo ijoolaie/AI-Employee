@@ -232,20 +232,25 @@ class GitHubEngineeringProvider:
             created_sha = created_object.get("sha") if isinstance(created_object, dict) else None
             if not isinstance(created_sha, str) or not _GITHUB_SHA_RE.fullmatch(created_sha):
                 return ProviderResult(
-                    self.name, operation, False, "provider_error",
-                    "GitHub branch creation failed: invalid response contract",
+                    self.name, operation, False, "outcome_unknown",
+                    "GitHub branch creation outcome unknown: invalid response contract",
                 )
             if created_sha != source_sha:
                 return ProviderResult(
-                    self.name, operation, False, "provider_error",
-                    "GitHub branch creation failed: returned SHA does not match requested source SHA",
+                    self.name, operation, False, "outcome_unknown",
+                    "GitHub branch creation outcome unknown: returned SHA does not match requested source SHA",
                 )
         except HTTPError as exc:
             if exc.code == 422:
                 return ProviderResult(self.name, operation, False, "conflict", "GitHub rejected branch creation; the branch may have been created concurrently")
+            if exc.code >= 500:
+                return ProviderResult(self.name, operation, False, "outcome_unknown", f"GitHub branch creation outcome unknown: HTTP {exc.code}")
             return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch creation failed: HTTP {exc.code}")
         except (URLError, OSError, ValueError, HTTPException) as exc:
-            return ProviderResult(self.name, operation, False, "provider_error", f"GitHub branch creation failed: {type(exc).__name__}")
+            # A write may have reached GitHub even when its response cannot be
+            # read or decoded. Do not report a definitive failure: callers must
+            # reconcile the branch before attempting another create.
+            return ProviderResult(self.name, operation, False, "outcome_unknown", f"GitHub branch creation outcome unknown: {type(exc).__name__}")
 
         return ProviderResult(
             self.name, operation, True, "executed",
