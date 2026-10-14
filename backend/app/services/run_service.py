@@ -464,6 +464,10 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                             tenant_id=run.tenant_id,
                             agent_instance_id=run.agent_instance_id,
                             tool_name=tool_call_name,
+                            approval_request_id=resume_approval.id,
+                            run_id=run.id,
+                            tool_call_id=tool_call_id,
+                            arguments=resume_approval.arguments,
                         )
                     tool_result = await registry.execute(
                         tool_call_name,
