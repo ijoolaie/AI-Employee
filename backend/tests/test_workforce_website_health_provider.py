@@ -148,3 +148,21 @@ def test_health_check_reports_transport_failure_without_claiming_health(monkeypa
     assert result["provider_execution"] == "provider_error"
     assert result["healthy"] is None
     assert result["status_code"] is None
+
+
+def test_health_check_rejects_malformed_http_status(monkeypatch):
+    monkeypatch.setattr(
+        provider,
+        "get_settings",
+        lambda: _settings({"tenant-a": {"primary": "https://example.com/health"}}),
+    )
+
+    class FakeOpener:
+        def open(self, request, timeout):
+            return FakeResponse(status="200")
+
+    monkeypatch.setattr(provider, "build_opener", lambda *args, **kwargs: FakeOpener())
+    result = provider.check_website_health(tenant_id="tenant-a", site="primary")
+    assert result["provider_execution"] == "provider_error"
+    assert result["healthy"] is None
+    assert result["status_code"] is None
