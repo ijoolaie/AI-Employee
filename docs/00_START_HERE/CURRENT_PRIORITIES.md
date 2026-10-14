@@ -1,6 +1,6 @@
 ## Current priorities — engineering provider failure-path gap under review (2026-10-14)
 
-1. **Validate PR #1137** ([link](https://github.com/ijoolaie/AI-Employee/pull/1137)): wait for all required checks on exact head `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`; merge only if they pass.
+1. **Validate PR #1137** ([link](https://github.com/ijoolaie/AI-Employee/pull/1137)): wait for all required checks on exact head `implementation commit `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`; subsequent documentation-only commits are included in PR #1137, whose page shows the current head`; merge only if they pass.
 2. **Continue the A1 capability audit** by tracing role contract → registered tool → handler → provider → persisted result → failure tests, including tenant and approval boundaries.
 3. **Preserve provider evidence boundaries:** this patch hardens malformed GitHub API response handling only. It does not establish live provider configuration or successful real-world GitHub execution.
 4. Keep A1 at 30%; A3/A4 remain externally gated.
