@@ -1,10 +1,10 @@
-# Current status — engineering GitHub response hardening under review (2026-10-14)
+## Progress checkpoint — GitHub CI-status provider failure-path tests merged (2026-10-14)
 
-- PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) adds fail-closed response validation for the GitHub engineering provider's branch lookup and branch creation paths.
-- Regression coverage: malformed JSON shapes from lookup/create and a returned SHA that differs from the requested source SHA must yield `provider_error`, never uncaught exceptions or false success.
-- Exact current PR head: `implementation commit `e1e1ec13e793a51bc9f41a7dbc3123bfd6452a0d`; subsequent documentation-only commits are included in PR #1137, whose page shows the current head`. Required CI checks are pending; this is not merged.
-- Evidence boundary: no live GitHub provider operation was performed or proven by these deterministic tests; branch creation remains approval-gated.
-- Progress remains A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%. Do not infer production or commercial readiness.
+PR [#1139](https://github.com/ijoolaie/AI-Employee/pull/1139) was squash-merged as [`bdf6efbc777af41d2fb8081ff93708bc0aed8c33`](https://github.com/ijoolaie/AI-Employee/commit/bdf6efbc777af41d2fb8081ff93708bc0aed8c33) from exact tested head [`e7c3f31842f0449451633b337ce60e0623c62080`](https://github.com/ijoolaie/AI-Employee/commit/e7c3f31842f0449451633b337ce60e0623c62080). All 13 check runs passed on that exact head, including frontend, backend, provider-contract, semantic E2E, security, infrastructure, architecture, and recovery checks.
+
+Regression tests cover read-only GitHub CI-status provider timeout, HTTP 503, and syntactically invalid JSON; each must return `provider_error` and `executed=False`. Existing coverage includes missing tenant-to-repository mapping, transport errors, and malformed response shapes/fields. This is deterministic failure-path test evidence, not proof of live GitHub connectivity, production provider configuration, or external execution.
+
+A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress remains 77%, full-scope context 46%. These rubric indicators are not production or commercial readiness. Next: continue the source/test-backed A1 role/provider audit and choose the next bounded gap from inspected code and tests. A3/A4 remain externally gated.
 
 ---
 
