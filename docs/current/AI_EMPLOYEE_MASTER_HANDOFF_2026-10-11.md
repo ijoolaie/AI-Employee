@@ -1,3 +1,15 @@
+## Progress checkpoint — PR #1150 workspace-key collision fix merged (2026-10-14)
+
+- PR [#1150](https://github.com/ijoolaie/AI-Employee/pull/1150) was squash-merged into `main` as [`5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7`](https://github.com/ijoolaie/AI-Employee/commit/5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7) from exact tested head [`7335e2d90bfd0057560343794c168a59b6fd2e81`](https://github.com/ijoolaie/AI-Employee/commit/7335e2d90bfd0057560343794c168a59b6fd2e81).
+- Exact-head evidence: 27/27 commit check-runs concluded success. [Workforce Semantic Real-Stack E2E run 38583617654](https://github.com/ijoolaie/AI-Employee/actions/runs/38583617654) passed, including deterministic real-stack startup, migration graph verification, deterministic market provider, the semantic workforce matrix, diagnostics collection and shutdown.
+- The fix replaces lossy slash-to-underscore workspace key mapping with a SHA-256-derived key based on the normalized logical path. Regression coverage asserts distinct keys and independent readback for paths such as `src/app.py` and `src_app.py`; the E2E lookup was corrected to validate persisted workspace payloads by logical path and content rather than assuming the old key format.
+- Evidence boundary: this establishes the merged source fix and automated CI/real-stack test evidence only. It does not establish live GitHub write execution, external provider execution, deployment, production readiness, customer acceptance, or a new release certification.
+- Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable progress 77%; full-scope context 46%. One additional correctness defect is fixed, but the broad A1 role/operation evidence threshold is not met, so do not raise the rubric scores.
+- Follow-up: continue the source/test-backed role-operation audit through role contract → Tool Registry/permission → semantic handler → approval/governance → provider → persisted result/audit and positive/negative tests. In particular, do not equate `git_commit_proposal` role binding with actual Git commit execution: provider support remains `not_configured`.
+- PR metadata reconciliation: the stale “CI is pending” wording in PR #1150 was corrected after exact-head checks passed.
+
+---
+
 ## Progress checkpoint — provider response stream errors fixed and merged (2026-10-14)
 
 PR [#1141](https://github.com/ijoolaie/AI-Employee/pull/1141) was squash-merged as [`d1751bea33b6fd0c0eb024cc11984dba754dab78`](https://github.com/ijoolaie/AI-Employee/commit/d1751bea33b6fd0c0eb024cc11984dba754dab78), from exact tested head [`c142997b06a19446015f57b04e31cbf3e9b7c4b2`](https://github.com/ijoolaie/AI-Employee/commit/c142997b06a19446015f57b04e31cbf3e9b7c4b2). All 17 check runs passed on that exact head, including backend, provider-contract, frontend, semantic E2E, security/privacy, CodeQL, DAST, infrastructure, architecture, observability, recovery, rollback, tenant isolation/RBAC, and real-stack checks.
