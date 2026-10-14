@@ -768,3 +768,8 @@ W9 is already closed at its documented evidence boundary: final real-stack Run `
 ## 2026-10-14 — PR #1162 provider audit reconciliation
 
 PR #1162 merged as `ed3d27bc22cc3b89752e3f237aac9d68cba15f48`; all 16 check runs passed on exact tested head `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`. `_tool_audit_status` now preserves `outcome_unknown` and `reconciled` in durable tool-call audit records. `reconciled` indicates a read-only GET confirmed the requested ref/SHA after an ambiguous branch-create response, not that this invocation performed the creation. This is automated test/CI evidence only; live GitHub mutation, production credentials/configuration, deployment, and production readiness remain unverified.
+
+
+## 2026-10-14 — PR #1164 GitHub branch lookup contract
+
+PR #1164 merged as `245beb6b335a794bb0220d2d17a87f61f205e6ab`. All 17 check runs succeeded on exact tested head `229a57a67ce7022403d64a980c8e06e13d18c6b9`. The initial branch lookup now verifies exact `refs/heads/{branch}` identity and SHA; wrong-ref responses fail closed as `provider_error` before any POST. This is CI/test evidence only; live GitHub mutation, production configuration, deployment, and production readiness remain unverified.
