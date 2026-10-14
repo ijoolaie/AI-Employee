@@ -1,3 +1,13 @@
+## Progress checkpoint — Software Developer capability binding merged (2026-10-14)
+
+PR [#1144](https://github.com/ijoolaie/AI-Employee/pull/1144) was squash-merged as [`3a95c0649c0f884f43d694c0a9dd76c060c3d70c`](https://github.com/ijoolaie/AI-Employee/commit/3a95c0649c0f884f43d694c0a9dd76c060c3d70c), from exact tested head [`f47b25a764c7b39696ae78b55e5991d630999894`](https://github.com/ijoolaie/AI-Employee/commit/f47b25a764c7b39696ae78b55e5991d630999894). All 28 check runs passed on that exact head.
+
+The `ai_software_developer` role now explicitly binds its approval-gated `git_commit_proposal` capability to `workforce_git_commit_proposal`. A regression test checks the exact binding, `run.execute` permission, and human-approval gate. This closes a role-contract/Tool Registry binding gap; it does **not** implement Git commit execution. The provider does not yet execute this operation, so no actual Git write or live GitHub integration is claimed.
+
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%. Next: continue the bounded Software Developer path audit from registry dispatch through semantic handler, provider support, and persisted execution/result evidence; identify and test the next evidenced mismatch. No deployment or broad external engineering execution is claimed.
+
+---
+
 ## Progress checkpoint — truncated CI-status response regression merged (2026-10-14)
 
 PR [#1143](https://github.com/ijoolaie/AI-Employee/pull/1143) was squash-merged as [`6d17a52ea4c607e371f5acc197c7f82e9ef4bba9`](https://github.com/ijoolaie/AI-Employee/commit/6d17a52ea4c607e371f5acc197c7f82e9ef4bba9), from exact tested head [`045a37c6cfb8b36f8e6d09e8d81698bd20dd48a6`](https://github.com/ijoolaie/AI-Employee/commit/045a37c6cfb8b36f8e6d09e8d81698bd20dd48a6). All 13 check runs passed on that exact head.
