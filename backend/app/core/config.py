@@ -230,6 +230,9 @@ class Settings(BaseSettings):
     engineering_github_repositories: dict[str, str] = {}
     engineering_github_token: str | None = None
     engineering_github_timeout_seconds: float = 10.0
+    # Tenant -> site alias -> operator-controlled HTTPS target; callers never supply URLs.
+    website_health_targets: dict[str, dict[str, str]] = {}
+    website_health_timeout_seconds: float = 5.0
     skill_provider_name: str = "none"
     skill_provider_base_url: str | None = None
     skill_provider_api_key: str | None = None
