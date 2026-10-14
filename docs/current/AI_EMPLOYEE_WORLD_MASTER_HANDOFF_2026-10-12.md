@@ -1,12 +1,22 @@
-# Master handoff checkpoint — 2026-10-14 — PR #1128 merged
+# Master handoff checkpoint — 2026-10-14 — PR #1129 merged; W16 fixture repaired
 
 ## Latest verified checkpoint
 
-PR [#1128](https://github.com/ijoolaie/AI-Employee/pull/1128) was squash-merged as [b88f7e663eeef564253aab9f268946b956cb7746](https://github.com/ijoolaie/AI-Employee/commit/b88f7e663eeef564253aab9f268946b956cb7746), tested head [9602bb75522a33f3d36c51f579e093f2db6d2e1c](https://github.com/ijoolaie/AI-Employee/commit/9602bb75522a33f3d36c51f579e093f2db6d2e1c).
+PR [#1129](https://github.com/ijoolaie/AI-Employee/pull/1129) was squash-merged as [ece6b805f02a28b27cb30da34e31dcf2efb132f7](https://github.com/ijoolaie/AI-Employee/commit/ece6b805f02a28b27cb30da34e31dcf2efb132f7), from exact tested head [d593b5650673174ce9579df166f9a72b76904f9e](https://github.com/ijoolaie/AI-Employee/commit/d593b5650673174ce9579df166f9a72b76904f9e).
 
-The lead qualification operation now computes a deterministic score from five explicit Boolean signals and persists its explanation in a tenant-scoped artifact. W10 real-stack, backend, frontend, contracts and semantic E2E checks passed on that head. CI also reported one W16 skill-provider real-stack failure (29 successes among 31 check-runs); that fixture lacks an active Agent Run context while expecting the human-approval gate to be reached. Treat it as an open CI follow-up, not as a green full suite.
+The W16 skill-provider real-stack fixture now creates valid tenant-scoped Agent Run and approval context. Approval denial, deterministic test-provider success, cross-tenant rejection and commercial-entitlement denial execute within governed context. All seven checked workflow runs on the exact PR head completed successfully, including [W16](https://github.com/ijoolaie/AI-Employee/actions/runs/38536389499) and [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38536389446). This closes the specific W16 fixture failure from PR #1128 without changing production authorization behavior.
 
-The qualification provider remains not_configured; no live lead sourcing, CRM enrichment, outreach delivery, customer acceptance, production outcome or revenue is established. A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%; full-scope context 46%. Next action: repair W16 fixture with valid tenant/Agent/Run and approval setup without weakening centralized governance.
+Evidence boundary: the successful provider is a deterministic isolated test fixture, not a live external provider or production execution. No customer acceptance, commercial readiness, production outcome or revenue is established. A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%; full-scope context 46%.
+
+## Next path to intended outcome
+
+1. Continue the A1 cross-role capability reality audit, tracing role contract → registered tool → handler → persistence/data source → authorization/approval → tests → provider status.
+2. Implement and verify the highest-value bounded gaps with positive and denial-path tests.
+3. Validate configured provider integrations using safe, approved test environments and keep live secrets/external side effects out of CI unless explicitly authorized.
+4. Complete deployment-specific operations and release gates: monitoring/SLOs, backup/restore, recovery, security configuration and rollback evidence.
+5. Run a supervised pilot and gather operator/customer acceptance, reliability, cost and outcome evidence before claiming commercial readiness or revenue.
+
+The release-certified version remains separate from current main engineering work; this merge does not certify a production release.
 
 ---
 
