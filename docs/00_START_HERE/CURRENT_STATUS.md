@@ -559,3 +559,12 @@ The Software Developer handler and provider selector were traced. Default provid
 PR [#1131](https://github.com/ijoolaie/AI-Employee/pull/1131) merged as [`3764e7502cb0837a74645a1fcdb88d4bf29d4289`](https://github.com/ijoolaie/AI-Employee/commit/3764e7502cb0837a74645a1fcdb88d4bf29d4289), from tested head `4bd18db4922b0ce00f15dad9aa6a97a0a0eb73b3`. All 14 exact-head check runs passed, including semantic E2E, backend/frontend, tenant isolation/RBAC, W21, infrastructure, DAST, recovery, observability, rollback and both language CodeQL checks.
 
 The deterministic Customer Success support-triage workflow now has full WorkItem → assignment → dispatch → worker → successful Run evidence with runtime binding, audit identity, tenant-scoped artifact and provenance assertions. Provider execution remains `not_configured`; no live helpdesk lookup, triage accuracy on real cases, message delivery, customer acceptance or production outcome is proven. Phase indicators remain A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%, full-scope 46%.
+
+
+## Latest verified change — GitHub engineering response contract (2026-10-14)
+
+PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) merged at [`6ae34445f7eabef8dc8cf8a5926b21d7cdc3dfac`](https://github.com/ijoolaie/AI-Employee/commit/6ae34445f7eabef8dc8cf8a5926b21d7cdc3dfac). Exact tested head: `27b176b3e0020388d45ab04e13ef7f5c138bdd09`; all 18 check runs succeeded on that exact head, including backend/frontend, semantic E2E, tenant isolation/RBAC, W2/W21, provider contract, infrastructure, DAST, observability, recovery, rollback and CodeQL checks. The provider now validates GitHub branch lookup/create response shapes and SHA values, including a mismatch guard against the requested source SHA. Regression tests cover malformed lookup/create payloads and SHA mismatch.
+
+Evidence boundary: this is automated contract hardening only. No live GitHub branch operation, live provider configuration, production integration, or successful external outcome is claimed. A malformed or mismatched response after a successful HTTP write leaves the external outcome unverified; it does not prove that no side effect occurred. Phase indicators remain A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%.
+
+Next bounded increment: inspect and strengthen the read-only GitHub CI-status adapter's transport failure, malformed-response and missing tenant-to-repository mapping tests. Keep provider writes out of scope and retain the fail-closed contract.

@@ -159,3 +159,12 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 3. Manually validate World Mode expiry/renewal and desktop/mobile behavior; CI is not a substitute for local visual QA.
 4. Complete manual support acceptance: create → reload → reply/thread → authorized attachment download, including both participants, foreign-tenant denial, missing/deleted files and policy limits. Concurrency is covered by automated/local PostgreSQL regression.
 5. Update this hand-off with observed manual QA results rather than inferred status.
+
+
+## Current engineering checkpoint — PR #1137 merged (2026-10-14)
+
+- PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) — GitHub branch-provider response-contract hardening — merged at `6ae34445f7eabef8dc8cf8a5926b21d7cdc3dfac`.
+- Exact tested PR head: `27b176b3e0020388d45ab04e13ef7f5c138bdd09`; all 18 check runs passed on that exact head.
+- Added response-shape and SHA validation for GitHub branch lookup/creation, with regression coverage for malformed lookup payload, malformed create payload, and returned SHA mismatch. A malformed/mismatched response after an HTTP write does not prove absence of an external side effect; the outcome remains unverified.
+- No live GitHub provider call, production configuration, deployment, or rollback has been verified. Phase indicators remain A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope 46%.
+- Next: audit the read-only GitHub CI-status adapter's transport failure, malformed response and missing tenant-to-repository mapping paths; preserve fail-closed behavior and avoid new external writes.
