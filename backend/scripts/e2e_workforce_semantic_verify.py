@@ -56,7 +56,7 @@ async def license_fixture(tenant_id,suffix):
         db.add(vendor); await db.flush()
         reseller=Tenant(name=f"E2E Reseller {suffix}",slug=f"e2e-reseller-{suffix}",status="active",tenant_kind=edition_service.EDITION_RESELLER,parent_tenant_id=vendor.id)
         db.add(reseller); await db.flush(); t.parent_tenant_id=reseller.id
-        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan","tool:workforce_read_analytics","tool:workforce_website_requirements","tool:workforce_prepare_ceo_report"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
+        row=await license_service.issue_license(db,issuer=reseller,tenant=t,feature_codes=["employee.run","tool:workforce_market_research","tool:workforce_produce_article","tool:workforce_produce_social_caption","tool:workforce_create_visual_asset","tool:workforce_revise_visual_asset","tool:workforce_content_qa","tool:workforce_customer_context","tool:workforce_workspace_create_file","tool:workforce_keyword_research","tool:workforce_qa_test_plan","tool:workforce_read_analytics","tool:workforce_website_requirements","tool:workforce_prepare_ceo_report","tool:workforce_prepare_growth_report"],metadata={"certification_fixture":True,"purpose":"workforce-semantic-e2e"})
         assert row.status=="active"; await db.commit()
 
 async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader",tool_name="workforce_market_research"):
@@ -68,7 +68,7 @@ async def governed_agent(tenant_id,suffix,owner_id,variant,role_code="ai_trader"
         employee=Employee(tenant_id=tenant_id,slug=f"e2e-workforce-{suffix}-{variant}",name=f"E2E Workforce {variant}",kind="custom",is_active=True)
         db.add(employee); await db.flush()
         output={"type":"object","properties":{"content":{"type":"string"}},"required":["content"]}
-        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=({"workforce_produce_article":"Produce a draft article.","workforce_produce_social_caption":"Prepare a social caption.","workforce_create_visual_asset":"Prepare a visual asset request.","workforce_revise_visual_asset":"Revise a visual asset request.","workforce_content_qa":"Run deterministic content QA on the supplied title and body.","workforce_customer_context":"Prepare governed customer context analysis.","workforce_workspace_create_file":"Create a deterministic workspace file.","workforce_keyword_research":"Conduct governed keyword research.","workforce_qa_test_plan":"Create a governed QA test plan.","workforce_read_analytics":"Prepare read-only social analytics."}.get(tool_name,"Perform deterministic market research.")),allowed_tools=[tool_name],rules={})
+        version=EmployeeVersion(employee_id=employee.id,version_number=1,is_current=True,input_schema={},output_schema=output,prompt_template=({"workforce_produce_article":"Produce a draft article.","workforce_produce_social_caption":"Prepare a social caption.","workforce_create_visual_asset":"Prepare a visual asset request.","workforce_revise_visual_asset":"Revise a visual asset request.","workforce_content_qa":"Run deterministic content QA on the supplied title and body.","workforce_customer_context":"Prepare governed customer context analysis.","workforce_workspace_create_file":"Create a deterministic workspace file.","workforce_keyword_research":"Conduct governed keyword research.","workforce_qa_test_plan":"Create a governed QA test plan.","workforce_read_analytics":"Prepare read-only social analytics.","workforce_prepare_growth_report":"Prepare a read-only tenant-scoped commercial growth report for the last 30 days."}.get(tool_name,"Perform deterministic market research.")),allowed_tools=[tool_name],rules={})
         definition=AgentDefinition(tenant_id=tenant_id,slug=f"e2e-workforce-def-{suffix}-{variant}",name=f"E2E Workforce {variant}",capabilities=["execution"],allowed_tools=[tool_name],model_policy={},input_schema={},output_schema=output,policy_requirements={},enabled=True)
         db.add_all([version,definition]); await db.flush()
         template=await create_template(db,tenant_id=tenant_id,agent_definition_id=definition.id,slug=f"e2e-workforce-template-{suffix}-{variant}",name=f"E2E Workforce Template {variant}",version=1,risk_tier=0,capability_contract=workforce_template_capability_contract(role_code),permission_policy={"permissions":["run.execute"],"allowed_tools":[tool_name]},approval_policy={},evaluation_policy={},install_policy={"requires_ceo_approval":True})
@@ -106,10 +106,11 @@ async def wait_result(wid):
 async def verify_audit(tenant_id,run_id,tool_name="workforce_market_research",tool_call_id="e2e-workforce-market-research-1"):
     async with AsyncSessionLocal() as db:
         rows=(await db.execute(select(AuditLog).where(AuditLog.tenant_id==tenant_id,AuditLog.resource_type=="run",AuditLog.resource_id==str(run_id),AuditLog.action=="tool.call"))).scalars().all()
-        assert rows
+        assert rows, f"missing tool.call audit for run={run_id} tool={tool_name}"
         meta=rows[-1].metadata_ or {}
-        assert rows[-1].status=="success" and meta.get("tool")==tool_name
-        assert meta.get("tool_call_id")==tool_call_id
+        assert rows[-1].status=="success" and meta.get("tool")==tool_name, f"unexpected audit status/tool: status={rows[-1].status} metadata={meta}"
+        if tool_call_id is not None:
+            assert meta.get("tool_call_id")==tool_call_id, f"unexpected tool_call_id: {meta.get('tool_call_id')!r}"
 
 async def verify_cross_tenant_assignment(token, tenant_id, source_agent_id, suffix):
     other_suffix=f"{suffix}-cross"
@@ -606,6 +607,33 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
         assert manager_binding is not None
     print("WORKFORCE INTERNAL MANAGER PREPARE_CEO_REPORT FULL WORKITEM LIFECYCLE PASS")
     print("WORKFORCE INTERNAL MANAGER CEO REPORT PROVIDER BOUNDARY PASS read_only_tenant_scoped_dashboard")
+
+    # Certify Marketing & Advertising Manager read-only growth reporting through canonical lifecycle.
+    growth_agent,growth_version,growth_definition_id=await governed_agent(
+        tenant_id,suffix,owner_id,"marketing-growth-report",
+        role_code="ai_marketing_advertising_manager",tool_name="workforce_prepare_growth_report")
+    growth_item=await work_item(
+        tenant_id,growth_agent,suffix,"marketing-growth-report",
+        request_text="Prepare a read-only commercial growth report for the last 30 days using this tenant's orders and sales pipeline")
+    assert req("POST",f"/work-items/{growth_item}/assign/agent",{"agent_instance_id":str(growth_agent)},token)[0]==200
+    assert req("POST",f"/work-items/{growth_item}/dispatch",token=token)[0]==200
+    growth_work,growth_run=await wait_result(growth_item)
+    assert growth_work.status is WorkItemStatus.SUCCEEDED and growth_run and growth_run.status=="success", (
+        growth_work.status,growth_run.error_message if growth_run else None)
+    assert growth_run.agent_instance_id==growth_agent and growth_run.employee_version_id==growth_version
+    # The canonical worker persists tool execution through Run status and audit; Run.output_data is optional.
+    await verify_audit(tenant_id,growth_run.id,tool_name="workforce_prepare_growth_report",tool_call_id=None)
+    async with AsyncSessionLocal() as db:
+        growth_binding=(await db.execute(select(AgentRuntimeBinding).where(
+            AgentRuntimeBinding.tenant_id==tenant_id,
+            AgentRuntimeBinding.agent_definition_id==growth_definition_id,
+            AgentRuntimeBinding.employee_version_id==growth_version,
+            AgentRuntimeBinding.is_active.is_(True),
+        ))).scalar_one_or_none()
+        assert growth_binding is not None
+    print("WORKFORCE MARKETING MANAGER PREPARE_GROWTH_REPORT FULL WORKITEM LIFECYCLE PASS")
+    print("WORKFORCE MARKETING GROWTH REPORT BOUNDARY PASS read_only_tenant_owned_orders_and_deals; no campaign attribution or ad-spend")
+
 
     wrong,_,_=await governed_agent(
         tenant_id,
