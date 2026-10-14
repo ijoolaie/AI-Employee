@@ -186,6 +186,12 @@ async def cleanup(slugs: list[str]) -> None:
                 )
             ).scalars().all()
         )
+        # Deprovision customer/child tenants before their reseller/vendor parents.
+        tenants.sort(key=lambda tenant: {
+            edition_service.EDITION_CUSTOMER: 0,
+            edition_service.EDITION_RESELLER: 1,
+            edition_service.EDITION_VENDOR: 2,
+        }.get(tenant.tenant_kind, 0))
         for tenant in tenants:
             if tenant.status != edition_lifecycle_service.STATUS_DEPROVISIONED:
                 await edition_lifecycle_service.transition_tenant_status(
