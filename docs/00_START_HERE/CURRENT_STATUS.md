@@ -1,3 +1,11 @@
+# Current status — SEO lifecycle verified; website health provider under review (2026-10-14)
+
+- PR [#1132](https://github.com/ijoolaie/AI-Employee/pull/1132) merged as [`5c62de7a399250332716dc714bd9f53d09bfce38`](https://github.com/ijoolaie/AI-Employee/commit/5c62de7a399250332716dc714bd9f53d09bfce38), from exact tested head `5e0d34df85021be1ddfc24aa551e12a6aa25911d`. All 11 workflow groups passed on that exact head.
+- The SEO keyword-research test proves WorkItem assignment → dispatch → worker → successful Run, persisted tenant-scoped research context, audit identity and active runtime binding. It does not query search engines or establish rankings, search volume, traffic impact or live SEO provider execution.
+- PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) adds a tenant-mapped read-only website health check using operator-configured HTTPS targets, bounded timeout and disabled redirects. The PR is open and its exact-head checks must pass before merge; no live target or production website health has been verified.
+- A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%; full-scope context 46%. These are rubric indicators, not commercial readiness. Live providers, external deployment, customer acceptance and revenue remain unproven.
+
+---
 # Current status — PR #1129 merged; W16 fixture repaired (2026-10-14)
 
 PR [#1129](https://github.com/ijoolaie/AI-Employee/pull/1129) was squash-merged as [ece6b805f02a28b27cb30da34e31dcf2efb132f7](https://github.com/ijoolaie/AI-Employee/commit/ece6b805f02a28b27cb30da34e31dcf2efb132f7), from exact tested head [d593b5650673174ce9579df166f9a72b76904f9e](https://github.com/ijoolaie/AI-Employee/commit/d593b5650673174ce9579df166f9a72b76904f9e).
