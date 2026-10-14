@@ -1,3 +1,13 @@
+## Progress checkpoint — provider response stream errors fixed and merged (2026-10-14)
+
+PR [#1141](https://github.com/ijoolaie/AI-Employee/pull/1141) was squash-merged as [`d1751bea33b6fd0c0eb024cc11984dba754dab78`](https://github.com/ijoolaie/AI-Employee/commit/d1751bea33b6fd0c0eb024cc11984dba754dab78), from exact tested head [`c142997b06a19446015f57b04e31cbf3e9b7c4b2`](https://github.com/ijoolaie/AI-Employee/commit/c142997b06a19446015f57b04e31cbf3e9b7c4b2). All 17 check runs passed on that exact head, including backend, provider-contract, frontend, semantic E2E, security/privacy, CodeQL, DAST, infrastructure, architecture, observability, recovery, rollback, tenant isolation/RBAC, and real-stack checks.
+
+The change catches generic `OSError` failures while reading GitHub provider response bodies and adds regression tests for a connection reset during branch lookup and branch-create response reads. Failures return `provider_error` with `executed=False` in the covered code path. Important evidence boundary: if the create response stream fails, GitHub may already have accepted the write; external outcome remains unverified. This does not prove live GitHub connectivity or production provider configuration.
+
+A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress remains 77%, full-scope context 46%. These are rubric indicators, not production or commercial readiness. Next: continue the source/test-backed A1 role/provider audit and select the next bounded gap from inspected code and tests. A3/A4 remain externally gated.
+
+---
+
 ## Progress checkpoint — GitHub CI-status provider failure-path tests merged (2026-10-14)
 
 PR [#1139](https://github.com/ijoolaie/AI-Employee/pull/1139) was squash-merged as [`bdf6efbc777af41d2fb8081ff93708bc0aed8c33`](https://github.com/ijoolaie/AI-Employee/commit/bdf6efbc777af41d2fb8081ff93708bc0aed8c33) from exact tested head [`e7c3f31842f0449451633b337ce60e0623c62080`](https://github.com/ijoolaie/AI-Employee/commit/e7c3f31842f0449451633b337ce60e0623c62080). All 13 check runs passed on that exact head, including frontend, backend, provider-contract, semantic E2E, security, infrastructure, architecture, and recovery checks.
