@@ -121,7 +121,7 @@ def check_website_health(*, tenant_id: str, site: str | None) -> dict:
             return WebsiteHealthResult(
                 site=site.strip(),
                 provider_execution="read_verified",
-                healthy=200 <= status_code < 400,
+                healthy=200 <= status_code < 300,
                 status_code=status_code,
                 content_type=content_type,
                 checked_at=now,
