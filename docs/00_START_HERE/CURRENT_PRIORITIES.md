@@ -1,3 +1,15 @@
+## Priority update — 2026-10-15
+
+1. **P0 — Load the merged lock fix into the local runtime.** The host checkout is on merge commit `8c1067a0`, but the Docker containers were created before the pull. Rebuild/recreate API and Worker with the same three Compose files; avoid touching unrelated services unless dependency/Compose behavior requires it.
+2. **P0 — Validate one real CSV analysis.** Use the existing `report-analyst-test.csv` and `analyze_dataset` tool. Expected totals: 23 units, revenue 2800; per product revenue 1200 / 1000 / 600. Inspect terminal Run state, output/artifact, Worker logs and PostgreSQL locks. Do not count deterministic placeholder output.
+3. **P1 — If the run still stalls, collect one correlated evidence bundle**: Run ID, Worker task logs across the failure window, PostgreSQL `pg_stat_activity` and `pg_blocking_pids(pid)` while the wait is active, and the exact API/Worker image/source SHA. Avoid speculative fixes or repeated five-minute runs.
+4. **P2 — Resume the separate software-developer provider audit** only after the local runtime issue is closed; keep capability boundaries explicit (the GitHub adapter supports CI-status reads and branch creation, not commit creation, PR creation, deployment, or rollback).
+5. Keep external-server/production tests out of the progress denominator. Do not increase progress based only on a merged PR or CI.
+
+Current progress checkpoint: operational 78%; full product-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Current priority update — after PR #1168 (2026-10-15)
 
 1. Next validate the supported `git_branch` operation only in a disposable test repository/branch, with explicit authorization, verified tenant-to-repository/token configuration, and a cleanup plan.
