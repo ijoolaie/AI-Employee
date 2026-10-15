@@ -23,7 +23,7 @@ def test_report_analysis_serializes_same_source_and_checks_existing_artifacts():
 def test_report_generation_persists_chart_ids_for_future_idempotent_reuse():
     from pathlib import Path
 
-    source = Path("backend/app/modules/employees/report/service.py").read_text(encoding="utf-8")
+    source = (Path(__file__).parents[1] / "app/modules/employees/report/service.py").read_text(encoding="utf-8")
 
     assert '"chart_file_ids": chart_file_ids' in source
     assert '"pdf_file_id": str(pdf_file.id)' in source
