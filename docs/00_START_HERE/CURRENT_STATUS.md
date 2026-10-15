@@ -710,3 +710,10 @@ Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope c
 - PR #1164 merged as `245beb6b335a794bb0220d2d17a87f61f205e6ab`; all 17 check runs passed on exact tested head `229a57a67ce7022403d64a980c8e06e13d18c6b9`.
 - The initial GitHub branch lookup now requires the returned `ref` to equal `refs/heads/{requested branch}` as well as a valid SHA. A mismatched ref fails closed as `provider_error`; regression coverage asserts no POST/write is attempted.
 - Evidence is automated tests/CI only. No live GitHub mutation, production credentials/configuration, deployment, or production readiness is established. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+
+
+## 2026-10-14 — PR #1166: GitHub read-only provider fail-closed regression tests
+
+- PR #1166 merged as `4de70b6389e012d9416818c837287cc900a3ed6c`; exact tested head `61d46b1fdfee2792db694da5fed4549b64404f6e` has all 13 check runs successful after rerunning the frontend job. The rerun passed; the earlier frontend attempt had unrelated World-mode Playwright failures.
+- Added regression tests for malformed CI-status JSON/contracts, transport failure, and missing tenant repository mapping. This PR changed tests only; it did not add provider behavior or prove live GitHub writes.
+- Evidence remains CI/test-only. Live mutation, production credentials/configuration, deployment, and production readiness remain unverified. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.

@@ -773,3 +773,8 @@ PR #1162 merged as `ed3d27bc22cc3b89752e3f237aac9d68cba15f48`; all 16 check runs
 ## 2026-10-14 — PR #1164 GitHub branch lookup contract
 
 PR #1164 merged as `245beb6b335a794bb0220d2d17a87f61f205e6ab`. All 17 check runs succeeded on exact tested head `229a57a67ce7022403d64a980c8e06e13d18c6b9`. The initial branch lookup now verifies exact `refs/heads/{branch}` identity and SHA; wrong-ref responses fail closed as `provider_error` before any POST. This is CI/test evidence only; live GitHub mutation, production configuration, deployment, and production readiness remain unverified.
+
+
+## 2026-10-14 — PR #1166 read-only provider fail-closed tests
+
+PR #1166 merged as `4de70b6389e012d9416818c837287cc900a3ed6c`; all 13 check runs succeeded on exact tested head `61d46b1fdfee2792db694da5fed4549b64404f6e` after a successful rerun of the frontend job. The first frontend attempt had five World-mode Playwright failures, while the rerun passed. The PR added tests only for malformed CI-status responses, transport failures, and missing tenant repository mapping; provider implementation behavior did not change. This remains CI/test evidence only, not proof of live GitHub writes or production readiness.

@@ -264,3 +264,12 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - The initial GitHub branch lookup now requires exact `refs/heads/{branch_name}` identity and a valid SHA. A response for a different ref returns `provider_error` and does not proceed to POST; regression test covers this no-write behavior.
 - **Evidence boundary:** automated tests/CI only. No live GitHub mutation, production credentials/configuration, deployment, rollback, or production readiness has been verified. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
 - **Next:** plan a supervised, explicitly authorized external validation of the supported `git_branch` operation in a disposable test repository/branch, with configured credentials and a cleanup plan. Until then, keep live-write status unverified.
+
+
+## 2026-10-14 continuation — PR #1166
+
+- **Merged:** PR #1166; merge commit `4de70b6389e012d9416818c837287cc900a3ed6c`.
+- **Exact tested head:** `61d46b1fdfee2792db694da5fed4549b64404f6e`; all 13 check runs passed after rerunning the frontend job. The initial frontend attempt failed five World-mode Playwright tests; the rerun succeeded.
+- Added regression tests only for malformed CI-status JSON/contracts, transport failure, and missing tenant-to-repository mapping. No production provider behavior changed.
+- **Evidence boundary:** CI/test evidence only. Live GitHub mutation, production credentials/configuration, deployment, rollback, and production readiness remain unverified. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+- **Next:** supervised, explicitly authorized external validation of the supported `git_branch` operation in a disposable test repository/branch, with configured credentials and a cleanup plan.
