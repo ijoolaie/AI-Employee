@@ -1,3 +1,14 @@
+## Current priority update — after PR #1168 (2026-10-15)
+
+1. Next validate the supported `git_branch` operation only in a disposable test repository/branch, with explicit authorization, verified tenant-to-repository/token configuration, and a cleanup plan.
+2. Preserve the provider boundary: CI-status reads and branch creation only; Git commit, PR creation, deploy, and rollback remain unsupported by this adapter.
+3. Treat CI and mocked regression tests as source/test evidence, not proof of live external writes or production readiness. Never blindly retry an ambiguous POST.
+4. Keep progress scores unchanged until broader A1 role/operation evidence meets its threshold; A3/A4 remain externally gated.
+
+PR #1168 merged as `9f64f8f78b9e828911629bce4ea2230c7015042f` from exact tested head `79c28b1e5926ea2379846ddc6d3a413cd898cf4f`; all 17/17 check-runs passed. The provider now validates exact response ref identity as well as SHA; regression coverage proves a mismatched ref is not accepted as success. No live GitHub write or production configuration is established.
+
+---
+
 ## Current priority update — after PR #1160 (2026-10-14)
 
 1. Continue the Software Developer path audit only where source/tests show a concrete gap across approval → Tool Registry → semantic handler → provider → persisted result/audit; avoid repeating completed audits.
