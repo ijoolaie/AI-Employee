@@ -2,7 +2,6 @@
 execution through the transactional outbox, so the Run and its execution signal
 are committed atomically and can be dispatched once the transaction is visible."""
 
-import logging
 from uuid import UUID
 
 from fastapi import APIRouter, status
@@ -17,7 +16,6 @@ from app.schemas.run import RunCreate, RunResponse
 from app.schemas.trace import RunTraceResponse
 from app.services import outbox_service, run_read_service, run_service, trace_service
 
-logger = logging.getLogger("app.api.runs")
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 
