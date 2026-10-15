@@ -45,6 +45,7 @@ from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_a
 from app.ai.tool_registry import registry
 from app.services import workforce_sales_engagement
 from app.services.workforce_sales_mailbox_provider import poll_sales_replies
+from app.services.workforce_semantic_domains import _read_json
 
 TOOLS = [
     "workforce_lead_research",
@@ -325,6 +326,28 @@ async def main():
     )
     assert qualification["provider_execution"] == "not_configured"
     assert qualification["external_side_effect"] is False
+    # Three of five explicitly confirmed signals must yield 60 / needs_review.
+    # Persisted output must preserve confirmed vs. unconfirmed evidence without enrichment.
+    qualification_report = qualification["qualification"]
+    assert qualification_report["method"] == "explicit_boolean_signals_v1"
+    assert qualification_report["score"] == 60
+    assert qualification_report["max_score"] == 100
+    assert qualification_report["status"] == "needs_review"
+    assert qualification_report["passed_signals"] == [
+        "industry_match", "need_confirmed", "decision_maker_identified"
+    ]
+    assert qualification_report["missing_or_unconfirmed_signals"] == [
+        "budget_confirmed", "timeline_confirmed"
+    ]
+    qualification_payload = _read_json(str(tenant_id), qualification["storage_key"])
+    assert qualification_payload["qualification"] == qualification_report
+    assert qualification_payload["provenance"]["tenant_id"] == str(tenant_id)
+    try:
+        _read_json(str(uuid.uuid4()), qualification["storage_key"])
+    except Exception:
+        pass
+    else:
+        raise AssertionError("W10 cross-tenant qualification artifact read unexpectedly succeeded")
 
     brief = await execute(
         tenant_id, instance_id, runs["content_brief"],
