@@ -25,12 +25,39 @@ from app.services import agent_tool_governance, edition_service, license_service
 from app.services.agent_governance_freshness import FINGERPRINT_KEY, execution_authority_fingerprint
 from app.ai.tool_registry import registry
 
-REPO = "ijoolaie/AI-Employee"
+REPO = os.environ.get("W2_LIVE_REPO", "ijoolaie/AI-Employee-Provider-Test")
+if REPO != "ijoolaie/AI-Employee-Provider-Test":
+    raise RuntimeError(f"Refusing live certification against non-isolated repository: {REPO}")
 TOKEN = os.environ["ENGINEERING_GITHUB_TOKEN"]
-SOURCE_SHA = os.environ["GITHUB_SHA"]
+SOURCE_SHA = os.environ.get("W2_LIVE_SOURCE_SHA", "b67f1a8696c9d4a9d2ac479680bac31ab43f071e")
+if len(SOURCE_SHA) != 40 or any(c not in "0123456789abcdefABCDEF" for c in SOURCE_SHA):
+    raise RuntimeError("W2_LIVE_SOURCE_SHA must be a full 40-character hexadecimal commit SHA")
 BRANCH = os.environ.get("W2_LIVE_BRANCH", f"ai-cert/w2-git-branch-{os.environ.get('GITHUB_RUN_ID', uuid.uuid4().hex[:8])}")
 
 
+
+
+def assert_source_commit_exists() -> None:
+    req = Request(
+        f"https://api.github.com/repos/{REPO}/commits/{SOURCE_SHA}",
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {TOKEN}",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "AI-Employee-W2-Live-Certification",
+        },
+        method="GET",
+    )
+    try:
+        with urlopen(req, timeout=10) as response:
+            import json
+            payload = json.loads(response.read().decode("utf-8"))
+            if payload.get("sha", "").lower() != SOURCE_SHA.lower():
+                raise RuntimeError("Refusing certification: source SHA response did not match requested SHA")
+    except HTTPError as exc:
+        raise RuntimeError(
+            f"Refusing certification: source SHA is not accessible in isolated repository (HTTP {exc.code})"
+        ) from exc
 
 def assert_branch_absent() -> None:
     req = Request(
@@ -143,6 +170,7 @@ def cleanup_if_present() -> None:
         raise RuntimeError(f"Unable to verify certification branch cleanup target: HTTP {exc.code}") from exc
 
 async def main() -> None:
+    assert_source_commit_exists()
     assert_branch_absent()
     tenant_id, instance_id, run_id, approval_id, tool_call_id = await prepare()
     result = None
