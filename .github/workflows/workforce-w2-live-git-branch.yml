@@ -9,7 +9,7 @@ on:
         default: ""
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: workforce-w2-live-git-branch
@@ -44,12 +44,18 @@ jobs:
           DATABASE_URL_SYNC: postgresql+psycopg2://aiep:aiep@localhost:5432/aiep
           STORAGE_DIR: ./var/storage
           ENGINEERING_PROVIDER_NAME: github
-          ENGINEERING_GITHUB_REPOSITORIES: '{"live-cert":"ijoolaie/AI-Employee"}'
-          ENGINEERING_GITHUB_TOKEN: ${{ github.token }}
+          ENGINEERING_GITHUB_REPOSITORIES: '{"live-cert":"ijoolaie/AI-Employee-Provider-Test"}'
+          ENGINEERING_GITHUB_TOKEN: ${{ secrets.W2_LIVE_GITHUB_TOKEN }}
+          W2_LIVE_REPO: ijoolaie/AI-Employee-Provider-Test
+          W2_LIVE_SOURCE_SHA: b67f1a8696c9d4a9d2ac479680bac31ab43f071e
           ENGINEERING_GITHUB_TIMEOUT_SECONDS: "10"
           W2_LIVE_BRANCH: ${{ inputs.branch_name }}
         run: |
           set -euo pipefail
+          if [ -z "${ENGINEERING_GITHUB_TOKEN:-}" ]; then
+            echo "Required secret W2_LIVE_GITHUB_TOKEN is not configured." >&2
+            exit 1
+          fi
           branch="${W2_LIVE_BRANCH:-ai-cert/w2-git-branch-${GITHUB_RUN_ID}}"
           case "$branch" in
             ai-cert/*) ;;
