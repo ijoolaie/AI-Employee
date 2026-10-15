@@ -342,6 +342,22 @@ async def main():
     qualification_payload = _read_json(str(tenant_id), qualification["storage_key"])
     assert qualification_payload["qualification"] == qualification_report
     assert qualification_payload["provenance"]["tenant_id"] == str(tenant_id)
+
+    # Invalid non-Boolean evidence must be rejected by the tool schema before
+    # the sales handler can persist a qualification artifact.
+    try:
+        await execute(
+            tenant_id, instance_id, runs["lead_qualification"],
+            "workforce_lead_qualification",
+            {"query": lead_query, "criteria": {"budget_confirmed": "yes"}},
+        )
+    except Exception as exc:
+        assert "Invalid arguments" in str(exc), (
+            f"unexpected validation failure for non-Boolean qualification signal: {exc}"
+        )
+    else:
+        raise AssertionError("non-Boolean qualification signal was accepted")
+
     try:
         _read_json(str(uuid.uuid4()), qualification["storage_key"])
     except Exception:
