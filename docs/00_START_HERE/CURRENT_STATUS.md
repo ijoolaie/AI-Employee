@@ -1,3 +1,15 @@
+## Progress checkpoint — GitHub branch-create response ref identity hardened (#1168, 2026-10-15)
+
+PR [#1168](https://github.com/ijoolaie/AI-Employee/pull/1168) was squash-merged as [`9f64f8f78b9e828911629bce4ea2230c7015042f`](https://github.com/ijoolaie/AI-Employee/commit/9f64f8f78b9e828911629bce4ea2230c7015042f) from exact tested head [`79c28b1e5926ea2379846ddc6d3a413cd898cf4f`](https://github.com/ijoolaie/AI-Employee/commit/79c28b1e5926ea2379846ddc6d3a413cd898cf4f). All 17/17 check runs succeeded on that exact head.
+
+The GitHub branch-create provider now validates that the create response's `ref` exactly equals `refs/heads/{branch_name}`, as well as validating the returned SHA. A missing or mismatched ref is not reported as success; it follows the existing single read-only reconciliation path, without repeating the POST. A regression test covers a response with the requested SHA but a different ref.
+
+Evidence boundary: CI and mocked tests only. No live GitHub mutation, operator credentials/configuration, deployment, rollback, or production readiness has been verified. Provider support remains CI-status reads and branch creation only; commit, PR creation, deploy, and rollback remain unsupported.
+
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable 77%; full-scope 46%. Next: supervised, explicitly authorized validation of `git_branch` in a disposable test repository/branch, with verified tenant/repository/token configuration and a cleanup plan. Do not claim live-write readiness until that separate validation is performed.
+
+---
+
 ## Progress checkpoint — ambiguous GitHub branch-write reconciliation merged (#1160, 2026-10-14)
 
 PR [#1160](https://github.com/ijoolaie/AI-Employee/pull/1160) was squash-merged as [`5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd`](https://github.com/ijoolaie/AI-Employee/commit/5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd), from exact tested head [`0ee845eb4499234db653e96e51264e07cca254fe`](https://github.com/ijoolaie/AI-Employee/commit/0ee845eb4499234db653e96e51264e07cca254fe). All 17/17 check-runs succeeded on that exact head.
