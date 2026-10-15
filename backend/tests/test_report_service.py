@@ -83,3 +83,43 @@ def test_render_pdf_produces_pdf_bytes():
         source_filename="sample.csv", kpis=kpis, forecast=forecast, charts=charts
     )
     assert pdf_bytes[:5] == b"%PDF-"
+
+
+
+def test_compute_kpis_calculates_product_revenue_deterministically():
+    df = pd.DataFrame(
+        {
+            "product": ["Book A", "Book B", "Book C"],
+            "units_sold": [10, 5, 8],
+            "unit_price": [120, 200, 75],
+        }
+    )
+
+    result = report_service._compute_kpis(df)["product_revenue"]
+
+    assert result == {
+        "products": [
+            {"product": "Book A", "units_sold": 10, "revenue": 1200},
+            {"product": "Book B", "units_sold": 5, "revenue": 1000},
+            {"product": "Book C", "units_sold": 8, "revenue": 600},
+        ],
+        "total_units_sold": 23,
+        "total_revenue": 2800,
+    }
+
+
+def test_compute_kpis_omits_product_revenue_when_sales_columns_are_missing():
+    result = report_service._compute_kpis(_sample_df())
+    assert "product_revenue" not in result
+
+
+def test_compute_kpis_does_not_guess_sales_totals_with_invalid_values():
+    df = pd.DataFrame(
+        {
+            "product": ["Book A", "Book B"],
+            "units_sold": [10, "not-a-number"],
+            "unit_price": [120, 200],
+        }
+    )
+    result = report_service._compute_kpis(df)
+    assert "product_revenue" not in result
