@@ -705,6 +705,22 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
         sales_work.status,sales_run.error_message if sales_run else None)
     assert sales_run.agent_instance_id==sales_agent and sales_run.employee_version_id==sales_version
     await verify_audit(tenant_id,sales_run.id,tool_name="workforce_lead_research",tool_call_id=None)
+    # Verify the successful Run produced exactly one durable, tenant-scoped artifact.
+    # This is deterministic supplied-context research, not external lead sourcing.
+    sales_payloads=[]
+    for key in get_storage_backend().list_prefix(f"{tenant_id}/"):
+        if key.endswith(".json") and "sales-" in key:
+            payload=workforce_semantic_domains._read_json(str(tenant_id),key)
+            if payload.get("kind")=="sales_operation" and payload.get("operation")=="lead_research":
+                sales_payloads.append((key,payload))
+    assert len(sales_payloads)==1, f"expected one persisted lead-research artifact, got {len(sales_payloads)}"
+    sales_key,sales_payload=sales_payloads[0]
+    assert sales_key.startswith(f"{tenant_id}/")
+    assert sales_payload["provenance"]["tenant_id"]==str(tenant_id)
+    assert sales_payload["provider_execution"]=="not_configured"
+    assert sales_payload["external_side_effect"] is False
+    assert sales_payload["status"]=="draft_or_report"
+    print("WORKFORCE SALES LEAD RESEARCH PERSISTENCE BOUNDARY PASS tenant_scoped; provider_not_configured; no external sourcing")
     async with AsyncSessionLocal() as db:
         sales_binding=(await db.execute(select(AgentRuntimeBinding).where(
             AgentRuntimeBinding.tenant_id==tenant_id,
