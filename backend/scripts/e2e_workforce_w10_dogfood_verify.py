@@ -46,6 +46,7 @@ from app.ai.tool_registry import registry
 from app.services import workforce_sales_engagement
 from app.services.workforce_sales_mailbox_provider import poll_sales_replies
 from app.services.workforce_semantic_domains import _read_json
+from app.services.storage import get_storage_backend
 
 TOOLS = [
     "workforce_lead_research",
@@ -345,6 +346,9 @@ async def main():
 
     # Invalid non-Boolean evidence must be rejected by the tool schema before
     # the sales handler can persist a qualification artifact.
+    storage_keys_before_invalid = set(
+        get_storage_backend().list_prefix(f"{tenant_id}/")
+    )
     try:
         await execute(
             tenant_id, instance_id, runs["lead_qualification"],
@@ -357,6 +361,14 @@ async def main():
         )
     else:
         raise AssertionError("non-Boolean qualification signal was accepted")
+    storage_keys_after_invalid = set(
+        get_storage_backend().list_prefix(f"{tenant_id}/")
+    )
+    assert storage_keys_after_invalid == storage_keys_before_invalid, (
+        "invalid qualification input unexpectedly changed tenant storage: "
+        f"before={sorted(storage_keys_before_invalid)!r}; "
+        f"after={sorted(storage_keys_after_invalid)!r}"
+    )
 
     try:
         _read_json(str(uuid.uuid4()), qualification["storage_key"])
