@@ -1,3 +1,12 @@
+## 2026-10-15 — Fix tenant quota lock blocking durable AI provider calls (#1175)
+
+- PR #1175 squash-merged as `8c1067a030f3aff7d54d3fdee64a664ea0bc3bae` from exact tested head `9a05e5ad2a232aebfaf3fdcca04a9ddce8194d88`; all 15/15 reported check-runs passed.
+- Tenant quota serialization in `backend/app/services/file_service.py` now uses SQLAlchemy `with_for_update(key_share=True)`, compiling on PostgreSQL to `FOR NO KEY UPDATE`. This serializes quota writers while remaining compatible with foreign-key `KEY SHARE` checks on `tenants.id`.
+- Added `backend/tests/test_file_service_locking.py` to assert the expected PostgreSQL lock SQL.
+- Evidence boundary: local checkout updated; Docker API/Worker were still running containers created before the pull at the latest inspection. Real local `analyze_dataset` CSV execution is pending until those images are refreshed and a Run's result/artifact is verified. No new release certification or production readiness is implied.
+
+---
+
 ## 2026-10-15 — Validate exact ref in GitHub branch-create response (#1168)
 
 - PR #1168 squash-merged as `9f64f8f78b9e828911629bce4ea2230c7015042f` from exact tested head `79c28b1e5926ea2379846ddc6d3a413cd898cf4f`; all 17/17 check-runs succeeded.
