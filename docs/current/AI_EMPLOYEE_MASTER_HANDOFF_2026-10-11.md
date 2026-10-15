@@ -273,3 +273,12 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - Added regression tests only for malformed CI-status JSON/contracts, transport failure, and missing tenant-to-repository mapping. No production provider behavior changed.
 - **Evidence boundary:** CI/test evidence only. Live GitHub mutation, production credentials/configuration, deployment, rollback, and production readiness remain unverified. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
 - **Next:** supervised, explicitly authorized external validation of the supported `git_branch` operation in a disposable test repository/branch, with configured credentials and a cleanup plan.
+
+
+## 2026-10-15 continuation — PR #1168
+
+- **Merged:** PR #1168; merge commit `9f64f8f78b9e828911629bce4ea2230c7015042f`.
+- **Exact tested head:** `79c28b1e5926ea2379846ddc6d3a413cd898cf4f`; all 17 check runs succeeded.
+- The branch-create provider now requires exact `refs/heads/{branch_name}` response identity as well as a valid matching source SHA. A regression test covers a wrong ref with a matching SHA; the response is not treated as success and goes through the existing single read-only reconciliation, with no POST retry.
+- **Evidence boundary:** CI and mocked tests only. Live GitHub mutation, operator credentials/configuration, deployment, rollback, and production readiness remain unverified. Progress metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+- **Next:** supervised, explicitly authorized external validation of `git_branch` in a disposable test repository/branch, with verified tenant/repository/token configuration and a cleanup plan.
