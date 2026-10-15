@@ -80,6 +80,58 @@ def _read_dataframe(raw: bytes, filename: str, content_type: str | None) -> pd.D
     return df
 
 
+def _compute_product_revenue(df: pd.DataFrame) -> dict[str, Any] | None:
+    """Compute deterministic product revenue when the CSV has a known sales schema.
+
+    This deliberately requires recognizable product, units-sold, and unit-price
+    columns. It returns no sales metric rather than guessing column meanings.
+    """
+    normalized = {
+        str(column).strip().lower().replace(" ", "_").replace("-", "_"): column
+        for column in df.columns
+    }
+    product_col = next(
+        (normalized[name] for name in ("product", "product_name", "item", "item_name") if name in normalized),
+        None,
+    )
+    units_col = next(
+        (normalized[name] for name in ("units_sold", "quantity", "qty") if name in normalized),
+        None,
+    )
+    price_col = next(
+        (normalized[name] for name in ("unit_price", "price_per_unit") if name in normalized),
+        None,
+    )
+    if product_col is None or units_col is None or price_col is None:
+        return None
+
+    work = df[[product_col, units_col, price_col]].copy()
+    work["_units"] = pd.to_numeric(work[units_col], errors="coerce")
+    work["_unit_price"] = pd.to_numeric(work[price_col], errors="coerce")
+    if work[[product_col, "_units", "_unit_price"]].isna().any().any():
+        return None
+
+    work["_revenue"] = work["_units"] * work["_unit_price"]
+
+    def number(value: Any) -> int | float:
+        numeric = float(value)
+        return int(numeric) if numeric.is_integer() else numeric
+
+    products = []
+    for product, group in work.groupby(product_col, sort=False, dropna=False):
+        products.append({
+            "product": str(product),
+            "units_sold": number(group["_units"].sum()),
+            "revenue": number(group["_revenue"].sum()),
+        })
+
+    return {
+        "products": products,
+        "total_units_sold": number(work["_units"].sum()),
+        "total_revenue": number(work["_revenue"].sum()),
+    }
+
+
 def _compute_kpis(df: pd.DataFrame) -> dict[str, Any]:
     numeric_cols = df.select_dtypes(include="number").columns.tolist()
     categorical_cols = [c for c in df.columns if c not in numeric_cols]
@@ -102,13 +154,17 @@ def _compute_kpis(df: pd.DataFrame) -> dict[str, Any]:
         counts = df[col].astype(str).value_counts().head(5)
         category_summary[str(col)] = {str(k): int(v) for k, v in counts.items()}
 
-    return {
+    result = {
         "row_count": int(len(df)),
         "column_count": int(len(df.columns)),
         "columns": [str(c) for c in df.columns],
         "numeric_summary": numeric_summary,
         "category_summary": category_summary,
     }
+    product_revenue = _compute_product_revenue(df)
+    if product_revenue is not None:
+        result["product_revenue"] = product_revenue
+    return result
 
 
 def _simple_forecast(df: pd.DataFrame) -> dict[str, Any] | None:
@@ -371,7 +427,7 @@ async def analyze_dataset(
         },
     )
 
-    return {
+    result = {
         "row_count": kpis["row_count"],
         "column_count": kpis["column_count"],
         "columns": kpis["columns"],
@@ -384,3 +440,6 @@ async def analyze_dataset(
             "chart_file_ids": chart_file_ids,
         },
     }
+    if "product_revenue" in kpis:
+        result["product_revenue"] = kpis["product_revenue"]
+    return result
