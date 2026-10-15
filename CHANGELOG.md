@@ -1,3 +1,11 @@
+## 2026-10-15 — Validate exact ref in GitHub branch-create response (#1168)
+
+- PR #1168 squash-merged as `9f64f8f78b9e828911629bce4ea2230c7015042f` from exact tested head `79c28b1e5926ea2379846ddc6d3a413cd898cf4f`; all 17/17 check-runs succeeded.
+- Branch-create success now requires the returned `ref` to exactly match `refs/heads/{branch_name}` and the returned SHA to match the requested source SHA. Invalid/mismatched response contracts enter the existing single read-only reconciliation path; the POST is not retried.
+- Added a regression test for a matching SHA paired with a different branch ref. CI and mocked tests do not prove live GitHub writes, production configuration, or production readiness.
+
+---
+
 ## 2026-10-14 — Reconcile ambiguous GitHub branch-create writes (#1160)
 
 - PR #1160 squash-merged as `5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd` from exact tested head `0ee845eb4499234db653e96e51264e07cca254fe`; all 17/17 check-runs succeeded.
