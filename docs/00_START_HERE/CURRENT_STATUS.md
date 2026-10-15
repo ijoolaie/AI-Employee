@@ -1,3 +1,17 @@
+## Current status update — 2026-10-15 (PR #1175)
+
+- Main source fix merged: PR [#1175](https://github.com/ijoolaie/AI-Employee/pull/1175), merge commit [`8c1067a030f3aff7d54d3fdee64a664ea0bc3bae`](https://github.com/ijoolaie/AI-Employee/commit/8c1067a030f3aff7d54d3fdee64a664ea0bc3bae).
+- All 15/15 exact-head check-runs passed on `9a05e5ad2a232aebfaf3fdcca04a9ddce8194d88`.
+- Fix: tenant quota lock uses PostgreSQL `FOR NO KEY UPDATE` via SQLAlchemy `with_for_update(key_share=True)`, preventing the suspected conflict with FK key-share checks for independent durable provider-call inserts. Added a lock-SQL regression test.
+- User pulled the merge into `C:\Users\Ali\AI-Employee`; local `main` is at `8c1067a0` and `git status --short` is empty.
+- Docker Compose inspection shows API, frontend, PostgreSQL, Redis, Worker and Worker-control running; API/frontend/PostgreSQL/Redis are healthy. Containers were created about four hours earlier, so API/Worker may still run pre-fix images.
+- Current blocker: rebuild/recreate API and Worker from the updated source, then run the existing CSV test once and verify actual `analyze_dataset` output. Previous attempts stalled around the 300-second timeout after LM Studio returned HTTP 200; earlier placeholder results are not valid evidence.
+- CSV expected result: Book A 1200, Book B 1000, Book C 600; 23 units and 2800 total revenue.
+- Progress: operational 78%; product-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0. No progress increase until the local real-tool Run passes.
+- Release boundary unchanged: certified release `v1.4.17`, commit `b403c0dcdea579e017738a6fdea138c2b1a2999c`; PR #1175 does not certify a new release.
+
+---
+
 ## Progress checkpoint — GitHub branch-create response ref identity hardened (#1168, 2026-10-15)
 
 PR [#1168](https://github.com/ijoolaie/AI-Employee/pull/1168) was squash-merged as [`9f64f8f78b9e828911629bce4ea2230c7015042f`](https://github.com/ijoolaie/AI-Employee/commit/9f64f8f78b9e828911629bce4ea2230c7015042f) from exact tested head [`79c28b1e5926ea2379846ddc6d3a413cd898cf4f`](https://github.com/ijoolaie/AI-Employee/commit/79c28b1e5926ea2379846ddc6d3a413cd898cf4f). All 17/17 check runs succeeded on that exact head.
