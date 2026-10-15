@@ -16,6 +16,20 @@ from app.services import audit_service, storage
 from app.services.file_policy import max_file_size, max_files_per_tenant, tenant_storage_quota, validate_content_type
 
 
+def _tenant_quota_lock_statement(tenant_id: uuid.UUID):
+    """Serialize tenant quota checks without blocking FK key-share checks.
+
+    PostgreSQL's FOR NO KEY UPDATE still serializes concurrent quota writers,
+    but unlike FOR UPDATE it is compatible with the KEY SHARE lock required
+    when an independent transaction inserts a row referencing tenants.id.
+    """
+    return (
+        select(Tenant.id)
+        .where(Tenant.id == tenant_id)
+        .with_for_update(key_share=True)
+    )
+
+
 class _LimitedReader:
     """Bound a file-like object so storage never receives more than a quota window."""
 
@@ -54,9 +68,7 @@ async def upload_file(
 
     # Serialize quota accounting per tenant so concurrent uploads cannot both
     # observe the same remaining quota/count and over-commit it.
-    tenant_row = await db.execute(
-        select(Tenant.id).where(Tenant.id == tenant_id).with_for_update()
-    )
+    tenant_row = await db.execute(_tenant_quota_lock_statement(tenant_id))
     if tenant_row.scalar_one_or_none() is None:
         raise ValidationAppError("Tenant not found")
 
