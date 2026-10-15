@@ -1,3 +1,44 @@
+## AI-Employee handoff update — PR #1175 merged; local stack ready for image refresh (2026-10-15)
+
+### Verified repository and fix state
+- PR [#1175](https://github.com/ijoolaie/AI-Employee/pull/1175) was squash-merged on 2026-10-15 as [`8c1067a030f3aff7d54d3fdee64a664ea0bc3bae`](https://github.com/ijoolaie/AI-Employee/commit/8c1067a030f3aff7d54d3fdee64a664ea0bc3bae).
+- Exact PR head: `9a05e5ad2a232aebfaf3fdcca04a9ddce8194d88`; all 15/15 reported check-runs succeeded, including backend, frontend, semantic E2E, infrastructure, security/privacy, DAST, recovery, architecture, observability, tenant isolation/RBAC, CodeQL and `w21-real-stack`.
+- Changed `backend/app/services/file_service.py`: tenant quota serialization now uses SQLAlchemy `with_for_update(key_share=True)`, which on PostgreSQL emits `FOR NO KEY UPDATE`. This still serializes competing quota writers while allowing the foreign-key `KEY SHARE` check used by independent `ai_provider_calls` inserts.
+- Added `backend/tests/test_file_service_locking.py` to assert the PostgreSQL lock SQL contract.
+- Root cause is strongly indicated by the earlier captured PostgreSQL wait: an `ai_provider_calls` insert waited on a tenant-row key-share check while the Run transaction held the tenant row lock during tool/file work. The fix has CI evidence; the local CSV end-to-end behavior is NOT yet verified.
+
+### Local machine and Docker evidence (user-provided, 2026-10-15)
+- Working copy: `C:\Users\Ali\AI-Employee`; branch `main`; `git pull --ff-only origin main` advanced from `72aa2093` to `8c1067a0`; `git status --short` was empty.
+- Compose stack from `docker-compose.yml`, `docker-compose.local-production.yml`, and `%TEMP%\ai-employee-local-ports.override.yml` is running:
+  - API: `127.0.0.1:18000->8000`, healthy.
+  - Frontend: `127.0.0.1:13000->3000`, healthy.
+  - PostgreSQL 16: `127.0.0.1:15432->5432`, healthy.
+  - Redis 7: `127.0.0.1:16379->6379`, healthy.
+  - Worker: running (Docker reports Up; no health status shown).
+  - Worker-control: running (created 7 days ago; Up 4 hours at inspection).
+- All six containers showed they had been created about four hours before the inspection, while the Git pull just brought the fix into the host checkout. Therefore the running API/Worker images may still contain pre-fix code. Do not create another Run until API and Worker are rebuilt/recreated from current `main`.
+
+### Blocker reproduction and test target
+- Earlier Run attempts reached LM Studio successfully (`google/gemma-4-e4b`, base URL `http://host.docker.internal:1234/v1`, chat-completions HTTP 200), but failed after waiting about 300 seconds during durable provider-call insertion/commit. Worker retry then skipped the idempotent Run. Do not count placeholder/deterministic certification output as real dataset analysis.
+- CSV test file: `report-analyst-test.csv`, file ID `0a74b684-7841-4079-96e6-e08af4003286`, 73 bytes.
+- Expected real results:
+  - Book A: 10 × 120 = 1200
+  - Book B: 5 × 200 = 1000
+  - Book C: 8 × 75 = 600
+  - Total units = 23; total revenue = 2800.
+- Existing local test tenant: `raya-test-org`, UUID `f2ed7c1d-002f-443a-8657-0d1ca4f70132`. Local test license included `employee.run` and `tool:analyze_dataset`, active through 2026-11-14 at the last recorded inspection; re-check only if the API rejects the Run.
+- Next bounded procedure: (1) rebuild/recreate only API and Worker using the exact same Compose file list; (2) verify they are running from current source/image and check health/logs; (3) execute one `analyze_dataset` Run against the existing CSV; (4) verify terminal Run status, absence of tenant/FK lock wait, and the actual result/artifact. If it fails, capture Run ID plus Worker/Postgres logs before changing anything else. Keep external server/production tests excluded from progress calculations.
+
+### Progress and evidence boundary
+- Current operational progress tracker: 78% (unchanged until the local real-tool Run succeeds).
+- Full product-scope coverage: 46%.
+- Rubric coverage A0/A1/A2/A3/A4: 100% / 30% / 100% / 0% / 0%.
+- Historical agent-actionable rubric in prior handoffs is 77%; do not conflate that separate rubric with the current operational tracker at 78%.
+- PR merge and 15/15 CI checks are confirmed; local container refresh, real CSV execution, artifact verification, production deployment, release certification, and customer acceptance are NOT confirmed.
+- Certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c` unless a separate release certification proves otherwise. PR #1175 is an engineering fix, not a new certified release.
+
+---
+
 ## Handoff update — PR #1160 merged (2026-10-14)
 
 ### Verified completion
