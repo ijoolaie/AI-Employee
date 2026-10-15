@@ -690,7 +690,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
             return run
 
         output_data = {"content": result.content}
-        if last_tool_result and isinstance(last_tool_result.get("report_artifacts"), list):
+        if last_tool_result and isinstance(last_tool_result.get("report_artifacts"), (dict, list)):
             output_data["report_artifacts"] = last_tool_result["report_artifacts"]
         if last_tool_result and isinstance(last_tool_result.get("report_artifact"), dict):
             output_data["report_artifact"] = last_tool_result["report_artifact"]
