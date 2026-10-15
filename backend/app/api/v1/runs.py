@@ -1,7 +1,6 @@
 """Run endpoints (11_Employee_Framework §5). Creating a Run enqueues async
-execution on Celery; if the broker is unreachable (e.g. local dev without
-`docker compose up`), the Run is still created as 'pending' so nothing is
-lost — it can be retried via the worker once the queue is back."""
+execution through the transactional outbox, so the Run and its execution signal
+are committed atomically and can be dispatched once the transaction is visible."""
 
 import logging
 from uuid import UUID
@@ -16,7 +15,7 @@ from app.models.run import Run
 from app.schemas.common import APIResponse
 from app.schemas.run import RunCreate, RunResponse
 from app.schemas.trace import RunTraceResponse
-from app.services import run_read_service, run_service, trace_service
+from app.services import outbox_service, run_read_service, run_service, trace_service
 
 logger = logging.getLogger("app.api.runs")
 router = APIRouter(prefix="/runs", tags=["runs"])
@@ -69,12 +68,19 @@ async def create_run(payload: RunCreate, ctx: RunExecuteContext, db: DbSession):
         created_by=ctx.user_id,
     )
 
-    try:
-        from app.workers.run_worker import execute_run_task
-
-        execute_run_task.delay(str(run.id), str(ctx.tenant_id))
-    except Exception:  # noqa: BLE001
-        logger.warning("run_enqueue_failed", extra={"run_id": str(run.id)}, exc_info=True)
+    # Keep the execution signal in the same transaction as the Run. The
+    # dispatcher cannot publish it until this transaction commits, avoiding
+    # a worker racing the uncommitted Run row.
+    await outbox_service.enqueue(
+        db,
+        kind="agent.run.execute",
+        tenant_id=ctx.tenant_id,
+        payload={
+            "run_id": str(run.id),
+            "tenant_id": str(ctx.tenant_id),
+        },
+        dedupe_key=f"agent.run.execute:run:{run.id}",
+    )
 
     labels = await _employee_labels(db, [run.employee_id])
     return APIResponse(success=True, data=_to_response(run, labels))
