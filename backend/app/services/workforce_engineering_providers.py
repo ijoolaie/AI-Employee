@@ -270,9 +270,15 @@ class GitHubEngineeringProvider:
         try:
             with urlopen(request, timeout=settings.engineering_github_timeout_seconds) as response:
                 created = json.loads(response.read().decode("utf-8"))
+            created_ref = created.get("ref") if isinstance(created, dict) else None
             created_object = created.get("object") if isinstance(created, dict) else None
             created_sha = created_object.get("sha") if isinstance(created_object, dict) else None
-            if not isinstance(created_sha, str) or not _GITHUB_SHA_RE.fullmatch(created_sha):
+            expected_ref = f"refs/heads/{branch_name}"
+            if (
+                created_ref != expected_ref
+                or not isinstance(created_sha, str)
+                or not _GITHUB_SHA_RE.fullmatch(created_sha)
+            ):
                 return reconcile_unknown_create("GitHub branch creation outcome unknown: invalid response contract")
             if created_sha != source_sha:
                 return reconcile_unknown_create("GitHub branch creation outcome unknown: returned SHA does not match requested source SHA")
