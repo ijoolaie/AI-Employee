@@ -9,7 +9,7 @@ requiring a live database.
 def test_report_analysis_serializes_same_source_and_checks_existing_artifacts():
     from pathlib import Path
 
-    source = Path("backend/app/modules/employees/report/service.py").read_text(encoding="utf-8")
+    source = (Path(__file__).parents[1] / "app/modules/employees/report/service.py").read_text(encoding="utf-8")
 
     assert "pg_advisory_xact_lock(lock_key)" in source
     assert "async def _existing_report_artifacts(" in source
