@@ -1,3 +1,14 @@
+## Workspace artifact lifecycle checkpoint — PR #1185 merged (2026-10-16)
+
+- PR [#1185](https://github.com/ijoolaie/AI-Employee/pull/1185) was squash-merged as `e78e885fd542f9af6fed108e0312fa80d67e0cd0` from exact tested head `87111c4944ee8a74b8f9ca6264ba666f195e3aaa`.
+- The W2 real-stack semantic verifier now asserts cross-tenant deletion denial, owner deletion success, absence from the owner's listing after deletion, read-after-delete failure, and cleanup of generated change-set fixtures.
+- Exact-head automated workflows reported success for CI, CodeQL, Architecture Guard, Workforce W2 Engineering E2E, and W21 AI Business Network E2E. Production infrastructure, ephemeral DAST and HA recovery workflows also reported success, but they remain excluded from the user-requested progress denominator.
+- Evidence boundary: this is automated real-stack test evidence from CI; it is not a claim that the user's local checkout was rerun after merge, nor does it establish live provider writes or production readiness.
+- Next bounded local-first step: inspect the Software Developer workspace lifecycle and provider-dependent operation tests for any remaining unconfigured-provider path that does not fail closed. Add tests only for a demonstrated gap; do not repeat the deletion assertions or make live external writes.
+- Progress unchanged: operational readiness 78%; full product-scope coverage 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Source/test audit checkpoint — Software Developer governance path (2026-10-16)
 
 - Reviewed the current source path across `backend/app/services/ai_workforce_roles.py`, `backend/app/ai/tool_registry.py`, `backend/app/services/workforce_runtime_governance.py`, `backend/app/services/workforce_semantic_domains.py`, `backend/app/services/workforce_engineering_providers.py`, `backend/app/services/run_service.py`, and the related provider/governance tests.
