@@ -25,6 +25,7 @@ hallucination.
 
 from __future__ import annotations
 
+import hashlib
 import io
 import uuid
 from datetime import datetime, timezone
@@ -32,9 +33,11 @@ from typing import Any
 
 import pandas as pd
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ValidationAppError
+from app.models.audit_log import AuditLog
 from app.models.file import FileObject
 from app.services import audit_service, file_service, storage
 
@@ -349,6 +352,57 @@ async def _save_generated_file(
     )
 
 
+async def _existing_report_artifacts(
+    db: AsyncSession, *, tenant_id: uuid.UUID, source_file_id: uuid.UUID
+) -> dict[str, Any] | None:
+    """Return the latest complete artifact set already generated for this source.
+
+    The source FileObject is immutable after upload, so its tenant-scoped ID is
+    a stable cache key. Older audit rows without chart IDs are intentionally
+    ignored; the next generation records a complete reusable artifact manifest.
+    """
+    result = await db.execute(
+        select(AuditLog)
+        .where(
+            AuditLog.tenant_id == tenant_id,
+            AuditLog.action == "report.generated",
+            AuditLog.resource_type == "file",
+            AuditLog.resource_id == str(source_file_id),
+        )
+        .order_by(AuditLog.created_at.desc())
+        .limit(20)
+    )
+    for entry in result.scalars().all():
+        metadata = entry.metadata_ or {}
+        pdf_id = metadata.get("pdf_file_id")
+        excel_id = metadata.get("excel_file_id")
+        chart_ids = metadata.get("chart_file_ids")
+        if not pdf_id or not excel_id or not isinstance(chart_ids, list):
+            continue
+        raw_ids = [pdf_id, excel_id, *chart_ids]
+        try:
+            artifact_ids = [uuid.UUID(str(value)) for value in raw_ids]
+        except (TypeError, ValueError):
+            continue
+        if len(set(artifact_ids)) != len(artifact_ids):
+            continue
+        active_result = await db.execute(
+            select(FileObject.id).where(
+                FileObject.tenant_id == tenant_id,
+                FileObject.status == "active",
+                FileObject.id.in_(artifact_ids),
+            )
+        )
+        if set(active_result.scalars().all()) != set(artifact_ids):
+            continue
+        return {
+            "pdf_file_id": str(pdf_id),
+            "excel_file_id": str(excel_id),
+            "chart_file_ids": [str(value) for value in chart_ids],
+        }
+    return None
+
+
 async def analyze_dataset(
     db: AsyncSession,
     *,
@@ -368,6 +422,17 @@ async def analyze_dataset(
         raise ValidationAppError("file_id must be a valid UUID") from exc
 
     source_file = await file_service.get_file(db, tenant_id=tenant_id, file_id=source_uuid)
+
+    # Serialize analyses for the same immutable source file. This transaction-
+    # scoped lock prevents concurrent Runs from both missing the cache and
+    # generating duplicate artifact sets.
+    lock_key = int.from_bytes(
+        hashlib.sha256(f"report:{tenant_id}:{source_uuid}".encode("utf-8")).digest()[:8],
+        "big",
+        signed=True,
+    )
+    await db.execute(select(func.pg_advisory_xact_lock(lock_key)))
+
     backend = storage.get_storage_backend()
     with backend.open(source_file.storage_key) as fh:
         raw = fh.read()
@@ -375,6 +440,33 @@ async def analyze_dataset(
     df = _read_dataframe(raw, source_file.filename, source_file.content_type)
     kpis = _compute_kpis(df)
     forecast = _simple_forecast(df)
+    existing_artifacts = await _existing_report_artifacts(
+        db, tenant_id=tenant_id, source_file_id=source_uuid
+    )
+    if existing_artifacts is not None:
+        await audit_service.record(
+            db,
+            action="report.reused",
+            actor_type="system",
+            actor_id=actor_id,
+            tenant_id=tenant_id,
+            resource_type="file",
+            resource_id=str(source_file.id),
+            metadata={"artifact_count": 2 + len(existing_artifacts["chart_file_ids"])},
+        )
+        result = {
+            "row_count": kpis["row_count"],
+            "column_count": kpis["column_count"],
+            "columns": kpis["columns"],
+            "numeric_summary": kpis["numeric_summary"],
+            "category_summary": kpis["category_summary"],
+            "forecast": forecast,
+            "report_artifacts": existing_artifacts,
+        }
+        if "product_revenue" in kpis:
+            result["product_revenue"] = kpis["product_revenue"]
+        return result
+
     charts = _render_charts(df)
 
     pdf_bytes = _render_pdf(
@@ -423,6 +515,7 @@ async def analyze_dataset(
             "pdf_file_id": str(pdf_file.id),
             "excel_file_id": str(excel_file.id),
             "chart_count": len(chart_file_ids),
+            "chart_file_ids": chart_file_ids,
             "row_count": kpis["row_count"],
         },
     )
