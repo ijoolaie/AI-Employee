@@ -100,6 +100,33 @@ export default function TracesPage() {
                             {event.provider && <p className="mt-1 text-xs text-gray-500">{event.provider}{event.model ? ` · ${event.model}` : ""}</p>}
                             {(event.prompt_tokens !== undefined || event.completion_tokens !== undefined) && <p className="mt-1 text-xs text-gray-500">{event.prompt_tokens ?? 0} + {event.completion_tokens ?? 0} {m.traces.tokens}{event.latency_ms !== undefined ? ` · ${event.latency_ms} ms` : ""}{event.cost_usd !== undefined ? ` · ${formatCurrency(event.cost_usd)}` : ""}</p>}
                             {event.error_message && <p className="mt-2 text-xs text-red-700">{event.error_message}</p>}
+                            {(event.metadata || event.request_id) && (
+                              <details className="mt-3 rounded-md border border-gray-200 bg-gray-50 p-3">
+                                <summary className="cursor-pointer text-xs font-semibold text-gray-700">
+                                  Event details
+                                </summary>
+                                <div className="mt-3 space-y-2">
+                                  {event.request_id && (
+                                    <p className="break-all text-xs text-gray-600">
+                                      <span className="font-medium">Request ID:</span> {event.request_id}
+                                    </p>
+                                  )}
+                                  {event.metadata && (
+                                    <div>
+                                      <p className="mb-1 text-xs font-medium text-gray-600">Metadata</p>
+                                      <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded bg-white p-3 text-xs text-gray-800">
+                                        {JSON.stringify(event.metadata, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
+                                  {event.type === "audit" && event.action === "tool.call" && (
+                                    <p className="text-xs text-gray-500">
+                                      Raw tool arguments and results are intentionally not stored in audit metadata.
+                                    </p>
+                                  )}
+                                </div>
+                              </details>
+                            )}
                           </div>
                         </div>
                       ))}
