@@ -1,3 +1,14 @@
+## Local validation checkpoint — Report Employee real-tool run (2026-10-16)
+
+- The user completed one real local Report Employee Run after setting both API and Worker to `AI_DEFAULT_PROVIDER=lm_studio`, with model `google/gemma-4-e4b` and LM Studio endpoint `http://host.docker.internal:1234/v1`.
+- Run: `30979101-70fb-4944-b978-55ee03dc550b`; status `success`; Trace contains 7 events and a successful `tool.call` for `analyze_dataset` with `error=null`, latency 675 ms, 3 rows, 3 columns, 3 products, total revenue 2800, total units sold 23, `forecast_available=false`, and `artifact_count=5`.
+- Model provider evidence: `lm_studio` / `google/gemma-4-e4b`; two provider calls and a completed Run were recorded.
+- Report totals matched the test fixture: Book A $1200, Book B $1000, Book C $600; 23 units and $2800 total revenue. User confirmed all generated files downloaded and opened successfully: PDF, Excel and three charts.
+- Trace stores only allowlisted result metrics; raw tool arguments/results remain intentionally absent from audit metadata.
+- This closes the local acceptance criteria for the Report Employee → CSV analysis → report artifact path. It does not prove every employee role, customer acceptance, external provider operations, production deployment, or a new certified release.
+- Progress rubric remains unchanged: operational readiness 78%; product-scope coverage 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%. The successful local path is evidence for one bounded capability, not a basis for inflating coarse phase scores.
+- Next: resume the bounded Software Developer source/test audit through role contract → Tool Registry/permissions → semantic handler/approval → provider → persisted result/audit. Keep the GitHub adapter boundary explicit (CI-status reads and branch creation only); any live branch-write trial requires verified tenant/repository/token configuration, a disposable branch, an explicit authorization and cleanup plan. Do not execute a live external write as part of this documentation checkpoint.
+
 ## Current status update — 2026-10-15 (PR #1175)
 
 - Main source fix merged: PR [#1175](https://github.com/ijoolaie/AI-Employee/pull/1175), merge commit [`8c1067a030f3aff7d54d3fdee64a664ea0bc3bae`](https://github.com/ijoolaie/AI-Employee/commit/8c1067a030f3aff7d54d3fdee64a664ea0bc3bae).
