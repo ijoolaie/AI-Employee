@@ -37,6 +37,26 @@ async def run() -> None:
         tenant_id="w2-tenant-a",
     )
     assert updated["updated"] is True
+    read_back = await execute_engineering(
+        {"_operation": "workspace_read", "storage_key": created["storage_key"]},
+        tenant_id="w2-tenant-a",
+    )
+    assert read_back["content"] == "print('w2-updated')"
+    assert "updated_at" in read_back
+
+    try:
+        await execute_engineering(
+            {
+                "_operation": "workspace_edit_file",
+                "storage_key": created["storage_key"],
+                "content": "print('cross-tenant-tamper')",
+            },
+            tenant_id="w2-tenant-b",
+        )
+    except Exception as exc:
+        assert "Cross-tenant" in str(exc)
+    else:
+        raise AssertionError("Cross-tenant workspace edit was not rejected")
 
     try:
         await execute_engineering(
