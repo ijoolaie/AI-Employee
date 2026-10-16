@@ -1,8 +1,8 @@
 """PostgreSQL integration coverage for report artifact advisory-lock serialization.
 
-CI supplies a migrated PostgreSQL database through DATABASE_URL. The test uses
-independent sessions and the same lock-key derivation as report.service, so it
-checks the database behavior rather than mocking AsyncSession.execute.
+CI supplies PostgreSQL through DATABASE_URL. Independent sessions exercise the
+same transaction-scoped advisory lock used by report.service, without mocking
+AsyncSession.execute or depending on pg_stat_activity polling.
 """
 
 import asyncio
@@ -11,7 +11,7 @@ import os
 import uuid
 
 import pytest
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
@@ -33,12 +33,21 @@ async def test_report_advisory_lock_serializes_concurrent_sessions():
     engine = create_async_engine(database_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, expire_on_commit=False)
     second_started = asyncio.Event()
+    second_probe_completed = asyncio.Event()
     second_acquired = asyncio.Event()
+    second_probe_result = None
 
     async def acquire_lock_in_second_transaction():
+        nonlocal second_probe_result
         async with sessions() as second:
             async with second.begin():
                 second_started.set()
+                # This non-blocking PostgreSQL primitive proves the first
+                # transaction owns the lock when it returns False.
+                second_probe_result = bool(
+                    await second.scalar(select(func.pg_try_advisory_xact_lock(lock_key)))
+                )
+                second_probe_completed.set()
                 await second.execute(select(func.pg_advisory_xact_lock(lock_key)))
                 second_acquired.set()
 
@@ -50,29 +59,12 @@ async def test_report_advisory_lock_serializes_concurrent_sessions():
 
             second_task = asyncio.create_task(acquire_lock_in_second_transaction())
             await asyncio.wait_for(second_started.wait(), timeout=5)
+            await asyncio.wait_for(second_probe_completed.wait(), timeout=5)
 
-            # Wait until PostgreSQL confirms that the second backend is blocked
-            # on an advisory lock; this avoids relying on arbitrary sleep timing.
-            deadline = asyncio.get_running_loop().time() + 5
-            waiting = False
-            while asyncio.get_running_loop().time() < deadline:
-                waiting = bool(
-                    await first.scalar(
-                        text(
-                            "SELECT EXISTS ("
-                            " SELECT 1 FROM pg_stat_activity"
-                            " WHERE wait_event_type = 'Lock'"
-                            " AND wait_event = 'advisory'"
-                            " AND query ILIKE '%pg_advisory_xact_lock%'"
-                            ")"
-                        )
-                    )
-                )
-                if waiting:
-                    break
-                await asyncio.sleep(0.05)
-
-            assert waiting, "second PostgreSQL session never waited on the report advisory lock"
+            assert second_probe_result is False, (
+                "second PostgreSQL session unexpectedly acquired the lock "
+                "while the first transaction still held it"
+            )
             assert not second_acquired.is_set()
 
             await transaction.commit()
