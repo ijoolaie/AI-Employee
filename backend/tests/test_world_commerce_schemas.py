@@ -2,7 +2,7 @@
 from datetime import datetime, timezone
 from decimal import Decimal
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from uuid import uuid4
@@ -347,6 +347,7 @@ async def test_create_order_uses_server_catalogue_price(monkeypatch):
         },
     )
     db = AsyncMock()
+    db.add = Mock()
     db.scalar.side_effect = [None, item]
     event = AsyncMock()
     monkeypatch.setattr(commerce, "_event", event)
@@ -689,6 +690,7 @@ async def test_room_fulfillment_persists_expiry_from_server_catalogue_duration(m
         id=order.catalogue_item_id, item_type="room", is_free=False, lease_duration_days=30,
     )
     db = AsyncMock()
+    db.add = Mock()
     db.scalar.side_effect = [order, item, None, None]
     event = AsyncMock()
     monkeypatch.setattr(commerce, "_event", event)
