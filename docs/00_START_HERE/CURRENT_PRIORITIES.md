@@ -1,3 +1,14 @@
+## Workspace edit/readback and provider fail-closed checkpoint — PR #1187 merged (2026-10-16)
+
+- PR [#1187](https://github.com/ijoolaie/AI-Employee/pull/1187) was squash-merged as `fd3da218b161426afcd775c89cd9831fce3b5aec` from exact tested head `d0876a31f3465fb50df804813698f1720622c36d`.
+- The W2 real-stack verifier now confirms that edits persist on readback, the updated timestamp is present, and a different tenant cannot edit the artifact. Exact-head CI, backend/frontend checks, CodeQL, Architecture Guard, W2 and W21 real-stack jobs reported success.
+- Provider-boundary audit found existing fail-closed coverage for the default unconfigured provider, unknown provider names, runtime context attempting to select a provider, and unconfigured `workspace_test`, `workspace_lint`, `workspace_build`, `git_branch`, `git_pr_proposal`, `ci_status`, and `health_check`. The GitHub provider tests also cover missing tenant mapping, unsafe inputs, transport/payload errors, unsupported operations, and ambiguous branch-create outcomes.
+- No additional reproducible provider-boundary defect was established by this source/test inspection. This is not a fresh local pytest run and does not establish live provider writes.
+- Next bounded step: inspect role-level routing and tool/semantic-operation mapping for a demonstrated mismatch between advertised capability and executable behavior. Only add a focused test/fix if a concrete gap is found; keep external GitHub writes, production deployment and local-machine-only test claims out of scope.
+- Progress unchanged: operational readiness 78%; full product-scope coverage 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Workspace artifact lifecycle checkpoint — PR #1185 merged (2026-10-16)
 
 - PR [#1185](https://github.com/ijoolaie/AI-Employee/pull/1185) was squash-merged as `e78e885fd542f9af6fed108e0312fa80d67e0cd0` from exact tested head `87111c4944ee8a74b8f9ca6264ba666f195e3aaa`.
