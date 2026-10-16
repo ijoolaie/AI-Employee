@@ -1,3 +1,13 @@
+## Workforce approval boundary trace — PR #1189 merged (2026-10-16)
+
+- PR [#1189](https://github.com/ijoolaie/AI-Employee/pull/1189) was squash-merged as `33bb42dbdeae7f4481b33302e9400f319b1735e5` after all 11 reported check runs completed successfully on exact head `5a8b7286f1695b8689ba3ef35441413629ec0789`. The new parameterized regression test keeps seven unimplemented Software Developer privileged operations approval-required but unbound; no runtime capability was added.
+- Source trace checked the role contract, Tool Registry, RunService approval pause/resume, persisted approval decision/outbox, runtime workforce governance and generic tool governance. On the resume path, RunService validates the persisted approval against tenant, Run, tool, tool-call ID, approved status and exact arguments before registry execution; generic tool governance then consumes the approval as part of the gated execution path. The approval decision is persisted with a transactional outbox resume signal.
+- Existing focused tests cover a correctly bound persisted approval, argument mismatch denial, approval replay prevention in generic tool governance, and tenant/Run/tool/tool-call/status query constraints. This was source/test inspection plus CI evidence, not a fresh local pytest run or live provider execution.
+- No reproducible approval-flow mismatch was established in this bounded trace. Next measurable step: build the operation-level evidence matrix for role → registry/permission → semantic handler → governance/approval → provider support → persisted result/audit → positive/negative tests → exact-head CI, distinguishing local/CI evidence from external validation.
+- Progress unchanged: operational readiness 78%; full product-scope coverage 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Workspace edit/readback and provider fail-closed checkpoint — PR #1187 merged (2026-10-16)
 
 - PR [#1187](https://github.com/ijoolaie/AI-Employee/pull/1187) was squash-merged as `fd3da218b161426afcd775c89cd9831fce3b5aec` from exact tested head `d0876a31f3465fb50df804813698f1720622c36d`.
