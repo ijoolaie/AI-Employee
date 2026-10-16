@@ -319,3 +319,25 @@ def test_software_developer_commit_proposal_has_exact_approval_gated_tool_bindin
     assert contract.approval_required is True
     assert tool.requires_approval is True
     assert tool.external_side_effects is True
+
+@pytest.mark.parametrize(
+    "operation",
+    [
+        "deploy_proposal",
+        "rollback_proposal",
+        "production_critical_change",
+        "security_sensitive_change",
+        "privileged_access_change",
+        "material_resource_consumption",
+        "irreversible_data_change",
+    ],
+)
+def test_software_developer_unimplemented_privileged_operations_remain_unbound(operation: str) -> None:
+    from app.services.ai_workforce_roles import assert_workforce_tool_binding, get_workforce_capability_contract
+
+    contract = get_workforce_capability_contract("ai_software_developer", operation)
+    assert contract.approval_required is True
+    assert contract.tool_names == ()
+    with pytest.raises(ValidationAppError, match="Workforce operation has no approved Tool Registry binding"):
+        assert_workforce_tool_binding("ai_software_developer", operation, "workforce_" + operation)
+
