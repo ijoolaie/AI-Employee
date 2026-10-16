@@ -48,6 +48,34 @@ async def run() -> None:
     else:
         raise AssertionError("Cross-tenant workspace read was not rejected")
 
+    try:
+        await execute_engineering(
+            {"_operation": "workspace_delete_file", "storage_key": created["storage_key"]},
+            tenant_id="w2-tenant-b",
+        )
+    except Exception as exc:
+        assert "Cross-tenant" in str(exc)
+    else:
+        raise AssertionError("Cross-tenant workspace deletion was not rejected")
+
+    deleted = await execute_engineering(
+        {"_operation": "workspace_delete_file", "storage_key": created["storage_key"]},
+        tenant_id="w2-tenant-a",
+    )
+    assert deleted["deleted"] is True
+    after_delete = await execute_engineering({"_operation": "workspace_list"}, tenant_id="w2-tenant-a")
+    assert created["storage_key"] not in after_delete["storage_keys"]
+
+    try:
+        await execute_engineering(
+            {"_operation": "workspace_read", "storage_key": created["storage_key"]},
+            tenant_id="w2-tenant-a",
+        )
+    except Exception as exc:
+        assert "not found" in str(exc).lower()
+    else:
+        raise AssertionError("Deleted workspace artifact remained readable")
+
     first = await execute_engineering(
         {"_operation": "workspace_change_set", "title": "W2 first", "changes": [{"path": "src/w2.py"}]},
         tenant_id="w2-tenant-a",
@@ -86,7 +114,16 @@ async def run() -> None:
     assert deploy["approval_required"] is True
     assert deploy["external_side_effect"] is True
 
+    # Remove generated change-set fixtures so repeated runs do not accumulate artifacts.
+    for artifact in (first, second):
+        await execute_engineering(
+            {"_operation": "workspace_delete_file", "storage_key": artifact["storage_key"]},
+            tenant_id="w2-tenant-a",
+        )
+
     print("W2 TENANT WORKSPACE PASS")
+    print("W2 WORKSPACE DELETE LIFECYCLE PASS")
+    print("W2 CROSS-TENANT DELETE DENIAL PASS")
     print("W2 CROSS-TENANT ISOLATION PASS")
     print("W2 DURABLE CHANGE-SET PASS")
     print("W2 PROVIDER FAIL-CLOSED PASS")
