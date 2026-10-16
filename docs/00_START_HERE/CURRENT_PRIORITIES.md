@@ -1,3 +1,15 @@
+## Source/test audit checkpoint — Software Developer governance path (2026-10-16)
+
+- Reviewed the current source path across `backend/app/services/ai_workforce_roles.py`, `backend/app/ai/tool_registry.py`, `backend/app/services/workforce_runtime_governance.py`, `backend/app/services/workforce_semantic_domains.py`, `backend/app/services/workforce_engineering_providers.py`, `backend/app/services/run_service.py`, and the related provider/governance tests.
+- Existing guardrails observed: role/capability-contract snapshot validation; tenant-scoped AgentInstance lookup; exact approval identity scoped by tenant + Run + tool + tool-call ID + approved status; approved arguments must exactly match; gated operation binding is rechecked during resume; GitHub branch provider validates exact returned ref and SHA and reconciles ambiguous writes with a single read-only lookup rather than blind retry.
+- Existing test coverage includes wrong/missing role, stale contract, tenant-scoped Agent lookup, exact persisted approval, argument mismatch, approval-required metadata, malformed/unsafe GitHub inputs, transport errors, response identity mismatch, ambiguous-write reconciliation and fail-closed behavior.
+- No new reproducible source defect was established by this bounded read-only audit, so no speculative code change was made. This was source/test inspection, not a fresh local pytest execution or a live GitHub operation.
+- Hard capability boundary remains: configured CI-status read and branch creation only. Git commit, PR creation, deployment and rollback are not implemented by this adapter. External/live GitHub write validation remains out of local-first scope unless separately authorized.
+- Next local-first step: exercise the non-external Software Developer workspace artifact lifecycle (create → list/read → edit → delete) and verify tenant isolation, then test provider-dependent operations fail closed when unconfigured. Use the existing local stack; no production or external provider tests.
+- Progress unchanged: operational readiness 78%; full product-scope coverage 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Local validation checkpoint — Report Employee real-tool run (2026-10-16)
 
 - The user completed one real local Report Employee Run after setting both API and Worker to `AI_DEFAULT_PROVIDER=lm_studio`, with model `google/gemma-4-e4b` and LM Studio endpoint `http://host.docker.internal:1234/v1`.
