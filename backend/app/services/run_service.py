@@ -48,6 +48,7 @@ from app.services import approval_service
 from app.models.user import User
 from app.models.role import Role
 from app.services import audit_service, employee_service, billing_service
+from app.services.tool_audit_metadata import tool_result_audit_summary
 from app.services.schema_validation import validate_json_data
 from app.services.workforce_runtime_governance import assert_workforce_tool_execution
 from app.rag import service as rag_service
@@ -530,6 +531,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         metadata={
                             "tool": tool_call_name,
                             **_provider_audit_metadata(tool_result),
+                            **tool_result_audit_summary(tool_call_name, tool_result),
                             "tool_call_id": tool_call_id,
                             "latency_ms": elapsed_ms,
                             "approval_id": str(resume_approval.id),
@@ -664,6 +666,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         metadata={
                             "tool": tool_call.name,
                             **_provider_audit_metadata(tool_result),
+                            **tool_result_audit_summary(tool_call.name, tool_result),
                             "tool_call_id": tool_call.id,
                             "latency_ms": elapsed_ms,
                             "approval_required": approval_required if 'approval_required' in locals() else None,
