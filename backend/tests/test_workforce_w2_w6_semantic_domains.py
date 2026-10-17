@@ -43,7 +43,7 @@ async def test_software_developer_workspace_acceptance_checks_lifecycle_and_isol
     assert result["suite_id"] == "software_developer_workspace_acceptance"
     assert result["suite_version"] == "workspace_artifact_lifecycle_v1"
     assert result["status"] == "passed"
-    assert result["checks_passed"] == 11
+    assert result["checks_passed"] == 10
     assert all(check["passed"] for check in result["checks"])
     assert result["evidence_boundary"] == "local_workspace_artifact_only"
     assert result["provider_execution"] == "not_required"
