@@ -217,8 +217,6 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
             )
             source_user.roles.append(source_role)
             unrelated_user.roles.append(unrelated_role)
-            customer_user.roles.append(customer_role)
-            unrelated_customer_user.roles.append(unrelated_customer_role)
             customer_user = User(
                 id=customer_user_id,
                 tenant_id=customer_tenant_id,
@@ -241,6 +239,8 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                 is_platform_admin=False,
                 auth_token_version=0,
             )
+            customer_user.roles.append(customer_role)
+            unrelated_customer_user.roles.append(unrelated_customer_role)
             race_file_id = uuid.uuid4()
             race_file = FileObject(
                 id=race_file_id,
