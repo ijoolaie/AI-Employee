@@ -54,7 +54,8 @@ async def test_materialize_rejects_conflicting_tenant_agent_definition():
         policy_requirements={"workforce_role_code": "some_other_role"},
     )
     db = SimpleNamespace(
-        execute=AsyncMock(side_effect=[_result(None), _result(conflicting_definition)])
+        execute=AsyncMock(side_effect=[_result(None), _result(conflicting_definition)]),
+        rollback=AsyncMock(),
     )
     ctx = SimpleNamespace(tenant_id="tenant-a", user_id="user-a")
 
@@ -66,6 +67,7 @@ async def test_materialize_rejects_conflicting_tenant_agent_definition():
     assert exc.value.status_code == 409
     assert "conflicts with the first-party role" in exc.value.detail
     assert db.execute.await_count == 2
+    db.rollback.assert_awaited_once()
 
 
 @pytest.mark.asyncio
