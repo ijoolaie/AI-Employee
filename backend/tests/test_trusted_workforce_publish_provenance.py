@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-import json
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -47,30 +45,6 @@ def _valid_evidence(tenant_id, template_id, version):
         "template_version": version,
     }
 
-
-def _fixtures(evidence):
-    tenant_id = uuid4()
-    template_id = uuid4()
-    template = SimpleNamespace(
-        id=template_id,
-        tenant_id=tenant_id,
-        is_system_template=True,
-        capability_contract={"workforce_role_code": "ai_software_developer"},
-        evaluation_policy={},
-    )
-    evidence["tenant_id"] = str(tenant_id)
-    evidence["template_id"] = str(template_id)
-    evidence["template_version"] = template.version = 3
-    evaluation = SimpleNamespace(
-        tenant_id=tenant_id,
-        agent_template_id=template_id,
-        suite_id="software_developer_workspace_acceptance",
-        status=AgentEvaluationStatus.PASSED,
-        score=100,
-        evidence=evidence,
-        evidence_hash=_hash_evidence(evidence),
-    )
-    return tenant_id, template_id, template, evaluation
 
 
 @pytest.mark.asyncio
