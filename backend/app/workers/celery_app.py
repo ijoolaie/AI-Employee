@@ -33,6 +33,7 @@ celery_app = Celery(
         "app.workers.outbox_worker",
         "app.workers.email_worker",
         "app.workers.test_center_worker",
+        "app.workers.workforce_evaluation_worker",
     ],
 )
 
@@ -58,6 +59,7 @@ TASK_ROUTES = {
     "workflow.execute": {"queue": EXECUTION_QUEUE},
     "workflow.parallel_branch": {"queue": EXECUTION_QUEUE},
     "test_center.execute_run": {"queue": TEST_CENTER_QUEUE},
+    "workforce.evaluate_software_developer_workspace": {"queue": EXECUTION_QUEUE},
     "workflow.schedule_tick": {"queue": CONTROL_QUEUE},
     "workflow.approval_expiry": {"queue": CONTROL_QUEUE},
     "workflow.timeout_sweep": {"queue": CONTROL_QUEUE},
