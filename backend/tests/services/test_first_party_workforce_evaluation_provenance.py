@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -20,7 +20,7 @@ async def test_first_party_workforce_template_rejects_caller_asserted_pass_evide
         capability_contract={"workforce_role_code": "ai_software_developer"},
         evaluation_policy={"requires_evidence": True},
     )
-    db = SimpleNamespace(execute=AsyncMock())
+    db = SimpleNamespace(execute=AsyncMock(), add=Mock())
     db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: template)
 
     with pytest.raises(ValidationAppError, match="trusted Test Center evaluation provenance"):
