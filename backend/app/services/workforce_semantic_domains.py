@@ -83,6 +83,8 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         if not arguments["storage_key"].startswith(f"{tenant_id}/"):
             raise ValidationAppError("Cross-tenant workspace artifact deletion is forbidden")
         backend = get_storage_backend()
+        if not backend.exists(arguments["storage_key"]):
+            raise ValidationAppError("Workspace artifact not found")
         backend.delete(arguments["storage_key"])
         return {"storage_key": arguments["storage_key"], "deleted": True}
     if operation == "workspace_change_set":
