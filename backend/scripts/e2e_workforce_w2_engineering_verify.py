@@ -14,7 +14,8 @@ if PROJECT_ROOT not in sys.path:
 
 import asyncio
 
-from app.services.workforce_semantic_domains import execute_engineering
+from app.services.storage import get_storage_backend
+from app.services.workforce_semantic_domains import _read_json, execute_engineering
 
 
 async def run() -> None:
@@ -134,12 +135,18 @@ async def run() -> None:
     assert deploy["approval_required"] is True
     assert deploy["external_side_effect"] is True
 
-    # Remove generated change-set fixtures so repeated runs do not accumulate artifacts.
+    # Change sets are durable proposal artifacts, not workspace files. Clean up
+    # only these known tenant-owned fixtures directly through storage; the public
+    # workspace deletion operation must reject non-workspace artifact kinds.
+    backend = get_storage_backend()
     for artifact in (first, second):
-        await execute_engineering(
-            {"_operation": "workspace_delete_file", "storage_key": artifact["storage_key"]},
-            tenant_id="w2-tenant-a",
-        )
+        key = artifact["storage_key"]
+        if not key.startswith("w2-tenant-a/"):
+            raise AssertionError("Refusing to clean up a cross-tenant change-set fixture")
+        payload = _read_json("w2-tenant-a", key)
+        if payload.get("kind") != "change_set":
+            raise AssertionError("Refusing to clean up a non-change-set fixture")
+        backend.delete(key)
 
     print("W2 TENANT WORKSPACE PASS")
     print("W2 WORKSPACE DELETE LIFECYCLE PASS")
