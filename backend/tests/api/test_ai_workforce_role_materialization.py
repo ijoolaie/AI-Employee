@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import HTTPException
@@ -66,3 +66,26 @@ async def test_materialize_rejects_conflicting_tenant_agent_definition():
     assert exc.value.status_code == 409
     assert "conflicts with the first-party role" in exc.value.detail
     assert db.execute.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_materialize_rolls_back_when_definition_flush_fails():
+    db = SimpleNamespace(
+        execute=AsyncMock(side_effect=[_result(None), _result(None)]),
+        add=Mock(),
+        flush=AsyncMock(side_effect=RuntimeError("simulated flush failure")),
+        rollback=AsyncMock(),
+        commit=AsyncMock(),
+        refresh=AsyncMock(),
+    )
+    ctx = SimpleNamespace(tenant_id="tenant-a", user_id="user-a")
+
+    with pytest.raises(HTTPException) as exc:
+        await materialize_first_party_workforce_template(
+            "ai_software_developer", ctx=ctx, db=db
+        )
+
+    assert exc.value.status_code == 409
+    assert exc.value.detail == "Could not materialize the first-party workforce template"
+    db.rollback.assert_awaited_once()
+    db.commit.assert_not_awaited()
