@@ -20,8 +20,8 @@ async def test_first_party_workforce_template_rejects_caller_asserted_pass_evide
         capability_contract={"workforce_role_code": "ai_software_developer"},
         evaluation_policy={"requires_evidence": True},
     )
-    db = AsyncMock()
-    db.execute.return_value.scalar_one_or_none.return_value = template
+    db = SimpleNamespace(execute=AsyncMock())
+    db.execute.return_value = SimpleNamespace(scalar_one_or_none=lambda: template)
 
     with pytest.raises(ValidationAppError, match="trusted Test Center evaluation provenance"):
         await record_evaluation(
