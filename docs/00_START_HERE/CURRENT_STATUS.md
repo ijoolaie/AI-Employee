@@ -1,3 +1,12 @@
+## Support acceptance checkpoint — 2026-10-17 (PR #1209)
+
+- PR [#1209](https://github.com/ijoolaie/AI-Employee/pull/1209) merged at `acaf451141505856fc92fae3cee664e1664d29f5` after its required GitHub checks passed. Added Playwright route-guard tests for customer/reseller support route separation.
+- Issue [#1043](https://github.com/ijoolaie/AI-Employee/issues/1043) remains open. The existing `backend/tests/test_support_escalation_postgres_api.py` covers customer ticket/reply persistence across HTTP reloads, independent-session database verification, tenant isolation, reseller support, and concurrent attachment-link conflicts. This checkpoint does not claim that test ran locally.
+- Next gate: run the PostgreSQL integration test against the dedicated local `support_test` DB (the test fails closed unless both explicit DB URLs target that DB), then manually verify customer ticket creation, reload, reply/thread persistence, and authorized attachment upload/download in the local app.
+- Progress remains unchanged: operational 78%; product-scope 46%; actionable 77%; A0/A1/A2/A3/A4 = 100/30/100/0/0. No production certification claim.
+
+---
+
 ## Local validation checkpoint — Report Employee real-tool run (2026-10-16)
 
 - The user completed one real local Report Employee Run after setting both API and Worker to `AI_DEFAULT_PROVIDER=lm_studio`, with model `google/gemma-4-e4b` and LM Studio endpoint `http://host.docker.internal:1234/v1`.
