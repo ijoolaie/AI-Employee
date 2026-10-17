@@ -170,7 +170,7 @@ export default function CustomerSupportPage() {
                 <label htmlFor="customer-support-description" className="mb-1 block text-sm font-medium">{m.descriptionLabel}</label>
                 <textarea id="customer-support-description" value={description} onChange={(event) => setDescription(event.target.value)} maxLength={10000} placeholder={m.descriptionPlaceholder} className="min-h-28 w-full rounded-md border px-3 py-2 text-sm" />
               </div>
-              <Button disabled={createMutation.isPending || subject.trim().length < 3 || description.trim().length < 5} onClick={() => createMutation.mutate()}>
+              <Button disabled={createMutation.isPending || uploadingAttachments || subject.trim().length < 3 || description.trim().length < 5} onClick={() => createMutation.mutate()}>
                 {createMutation.isPending ? m.submitting : m.submit}
               </Button>
             </CardContent>
@@ -182,7 +182,7 @@ export default function CustomerSupportPage() {
               {ticketsQuery.isError && <p role="alert" className="text-sm text-red-600">{m.error}</p>}
               {!ticketsQuery.isLoading && !ticketsQuery.isError && tickets.length === 0 && <p className="text-sm text-muted-foreground">{m.empty}</p>}
               {tickets.map((ticket) => (
-                <button key={ticket.id} type="button" onClick={() => { if (selectedTicket?.id !== ticket.id) clearStagedAttachments(); setSelectedId(ticket.id); setFeedback(null); }} className={`w-full rounded-lg border p-3 text-start transition hover:bg-muted/50 ${selectedTicket?.id === ticket.id ? "border-primary bg-muted/40" : "border-border"}`}>
+                <button key={ticket.id} type="button" disabled={uploadingAttachments} onClick={() => { if (selectedTicket?.id !== ticket.id) clearStagedAttachments(); setSelectedId(ticket.id); setFeedback(null); }} className={`w-full rounded-lg border p-3 text-start transition hover:bg-muted/50 ${selectedTicket?.id === ticket.id ? "border-primary bg-muted/40" : "border-border"}`}>
                   <span className="block font-medium">{ticket.subject}</span>
                   <span className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground"><span>{ticket.id.slice(0, 8)}</span><Badge status={ticket.status} /></span>
                 </button>
