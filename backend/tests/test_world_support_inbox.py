@@ -166,12 +166,6 @@ async def test_support_edition_dependencies_reject_wrong_tenant_kind(dependency,
     """A valid admin identity from another edition must not cross support boundaries."""
     from types import SimpleNamespace
 
-    from app.core.edition_deps import (
-        require_customer_admin,
-        require_reseller_admin,
-        require_vendor_admin,
-    )
-
     roles = [SimpleNamespace(tenant_id=uuid4(), name="admin")]
     tenant_id = roles[0].tenant_id
     ctx = SimpleNamespace(
@@ -188,8 +182,6 @@ async def test_support_edition_dependencies_reject_wrong_tenant_kind(dependency,
 
 @pytest.mark.asyncio
 async def test_vendor_edition_dependency_requires_platform_admin():
-    from app.core.edition_deps import require_vendor_admin
-
     tenant_id = uuid4()
     ctx = SimpleNamespace(
         tenant_id=tenant_id,
