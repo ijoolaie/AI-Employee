@@ -1283,7 +1283,7 @@ const testCenterFa = { title:"مرکز تست", description:"اجرای تست�
 const nav = {
   business: "Business", office: "AI Company HQ", overview: "Overview", customers: "Customers", orders: "Orders", products: "Products", sales: "Sales", analytics: "Analytics", reports: "Reports",
   peopleAi: "People & AI", team: "Human Employees", employees: "AI Employees", templates: "Employee Templates", workspace: "AI Workspace", chat: "AI Chat", governance: "Workforce Governance", knowledge: "Knowledge Base", memory: "Memory",
-  customerOperations: "Customer Operations", inbox: "Unified Inbox", conversations: "Conversations", channels: "Customer Channels", workflows: "Workflows", tasks: "Tasks", approvals: "Approvals", schedules: "Schedules",
+  customerOperations: "Customer Operations", inbox: "Unified Inbox", conversations: "Conversations", support: "Support", channels: "Customer Channels", workflows: "Workflows", tasks: "Tasks", approvals: "Approvals", schedules: "Schedules",
   financePlatform: "Finance & Platform", billing: "Billing", invoices: "Invoices", usage: "Usage & Cost", integrations: "Integrations", files: "Files", runs: "Runs", traces: "Trace Explorer",
   developer: "Developer", developerConsole: "Developer Console", testCenter: "Test Center", marketplace: "Marketplace", apiKeys: "API Keys", webhooks: "Webhooks",
   settings: "Settings", security: "Security / Password", signOut: "Sign out", workspaceFallback: "Business Workspace",
@@ -1292,7 +1292,7 @@ const nav = {
 const navFa = {
   business: "کسب‌وکار", office: "دفتر مرکزی هوش مصنوعی", overview: "نمای کلی", customers: "مشتریان", orders: "سفارش‌ها", products: "محصولات", sales: "فروش", analytics: "تحلیل‌ها", reports: "گزارش‌ها",
   peopleAi: "افراد و هوش مصنوعی", team: "کارمندان انسانی", employees: "کارمندان هوش مصنوعی", templates: "قالب‌های کارمند", workspace: "فضای کاری هوش مصنوعی", chat: "گفتگوی هوش مصنوعی", governance: "حاکمیت نیروی کار", knowledge: "پایگاه دانش", memory: "حافظه",
-  customerOperations: "عملیات مشتری", inbox: "صندوق ورودی یکپارچه", conversations: "گفتگوها", channels: "کانال‌های مشتری", workflows: "گردش‌کارها", tasks: "وظایف", approvals: "تأییدها", schedules: "زمان‌بندی‌ها",
+  customerOperations: "عملیات مشتری", inbox: "صندوق ورودی یکپارچه", conversations: "گفتگوها", support: "پشتیبانی", channels: "کانال‌های مشتری", workflows: "گردش‌کارها", tasks: "وظایف", approvals: "تأییدها", schedules: "زمان‌بندی‌ها",
   financePlatform: "مالی و پلتفرم", billing: "صورتحساب", invoices: "فاکتورها", usage: "مصرف و هزینه", integrations: "یکپارچه‌سازی‌ها", files: "فایل‌ها", runs: "اجراها", traces: "رهگیری اجرا",
   developer: "توسعه‌دهنده", developerConsole: "کنسول توسعه‌دهنده", testCenter: "مرکز آزمون", marketplace: "بازار", apiKeys: "کلیدهای API", webhooks: "وب‌هوک‌ها",
   settings: "تنظیمات", security: "امنیت / گذرواژه", signOut: "خروج", workspaceFallback: "فضای کاری کسب‌وکار",

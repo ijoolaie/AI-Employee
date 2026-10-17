@@ -273,6 +273,12 @@ async def update_reseller_support_escalation_status(
     return await _update_incoming_support_escalation(escalation_id, payload, ctx, db)
 
 
+@router.get("/support/escalations", response_model=APIResponse[list[SupportEscalationResponse]])
+async def list_customer_support_escalations(ctx: CustomerAdminContext, db: DbSession):
+    """List support escalations opened by the authenticated customer tenant."""
+    return await _list_outgoing_support_escalations(db, ctx.tenant_id)
+
+
 @router.post("/support/escalations", response_model=APIResponse[SupportEscalationResponse], status_code=201)
 async def create_escalation(payload: SupportEscalationRequest, ctx: CustomerAdminContext, db: DbSession):
     row = await edition_service.create_support_escalation(
