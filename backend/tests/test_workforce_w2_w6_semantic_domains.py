@@ -49,12 +49,16 @@ async def test_software_developer_workspace_acceptance_checks_lifecycle_and_isol
     assert result["provider_execution"] == "not_required"
     assert result["external_side_effects"] is False
 
+    import json
     from app.services.storage import get_storage_backend
     backend = get_storage_backend()
-    assert not any(
-        "workspace-lifecycle-" in key
-        for key in backend.list_prefix(f"{tenant_id}/")
-    )
+    for key in backend.list_prefix(f"{tenant_id}/"):
+        with backend.open(key) as stream:
+            payload = json.loads(stream.read().decode("utf-8"))
+        assert not (
+            payload.get("kind") == "workspace_file"
+            and payload.get("path", "").startswith(".acceptance/workspace-lifecycle-")
+        )
 
 
 @pytest.mark.asyncio
