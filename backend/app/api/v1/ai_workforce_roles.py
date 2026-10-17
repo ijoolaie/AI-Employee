@@ -102,7 +102,13 @@ async def materialize_first_party_workforce_template(
         # Never silently rebind an existing tenant definition with a mismatched
         # slug/name/role contract to a first-party workforce template.
         expected_capabilities = list(role.allowed_routine_operations) + list(role.approval_required_operations)
-        if definition.name != role_template.name or definition.capabilities != expected_capabilities:
+        expected_tools = sorted({tool for contract in role.capability_contract for tool in contract.tool_names})
+        if (
+            definition.name != role_template.name
+            or definition.capabilities != expected_capabilities
+            or sorted(definition.allowed_tools or []) != expected_tools
+            or (definition.policy_requirements or {}).get("workforce_role_code") != role.code
+        ):
             raise HTTPException(status_code=409, detail="Existing tenant AgentDefinition conflicts with the first-party role")
 
     try:
@@ -136,7 +142,7 @@ async def materialize_first_party_workforce_template(
         raise
     except Exception as exc:
         await db.rollback()
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
+        raise HTTPException(status_code=409, detail="Could not materialize the first-party workforce template") from exc
 
     return {
         "id": str(item.id),
