@@ -100,3 +100,14 @@ async def test_workspace_acceptance_rejects_non_draft_template(monkeypatch):
 
     assert exc.value.status_code == 409
     dispatch.delay.assert_not_called()
+
+
+def test_workspace_acceptance_worker_is_registered_and_routed():
+    from app.workers.celery_app import EXECUTION_QUEUE, celery_app
+
+    assert "app.workers.workforce_evaluation_worker" in celery_app.conf.include
+    assert any(
+        route.get("workforce.evaluate_software_developer_workspace", {}).get("queue") == EXECUTION_QUEUE
+        for route in celery_app.conf.task_routes
+        if isinstance(route, dict)
+    )
