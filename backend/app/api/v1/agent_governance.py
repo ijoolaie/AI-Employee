@@ -13,12 +13,14 @@ from app.core.database import get_db
 from app.core.deps import TenantContext, require_permission
 from app.models.agent_access_review import AgentAccessReviewDecision
 from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
+from app.models.agent_template import AgentTemplate
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_kill_switch import AgentKillScope, AgentKillSwitch
 from app.services.agent_governance import record_evaluation, review_access
 from app.services.agent_kill_switch_service import assert_kill, revoke_kill
 from app.services.agent_workforce_registry import list_workforce
 from app.services.audit_service import record
+from app.workers.workforce_evaluation_worker import evaluate_software_developer_workspace_task
 
 router = APIRouter(prefix="/agent-governance", tags=["agent-governance"])
 
@@ -127,6 +129,68 @@ async def evaluate_template(
         await db.rollback()
         raise _http(exc) from exc
     return AgentEvaluationRead.model_validate(item, from_attributes=True)
+
+
+class WorkspaceEvaluationDispatch(BaseModel):
+    task_id: str
+    template_id: UUID
+    status: str
+    suite_id: str
+
+
+@router.post(
+    "/templates/{template_id}/evaluate-workspace",
+    response_model=WorkspaceEvaluationDispatch,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def evaluate_software_developer_workspace(
+    template_id: UUID,
+    ctx: TenantContext = Depends(require_permission("agent_template.evaluate")),
+    db: AsyncSession = Depends(get_db, scope="function"),
+):
+    """Dispatch a fixed server-owned workspace acceptance suite; caller cannot submit PASS evidence."""
+    template = (
+        await db.execute(
+            select(AgentTemplate).where(
+                AgentTemplate.id == template_id,
+                AgentTemplate.tenant_id == ctx.tenant_id,
+            )
+        )
+    ).scalar_one_or_none()
+    if template is None:
+        raise HTTPException(status_code=404, detail="Agent template not found")
+    role_code = (template.capability_contract or {}).get("workforce_role_code")
+    if not template.is_system_template or role_code != "ai_software_developer":
+        raise HTTPException(status_code=422, detail="Workspace acceptance is only available for the first-party Software Developer template")
+    if getattr(template.status, "value", template.status) != "draft":
+        raise HTTPException(status_code=409, detail="Workspace acceptance requires a draft template")
+
+    try:
+        task = evaluate_software_developer_workspace_task.delay(
+            str(ctx.tenant_id),
+            str(template.id),
+            str(ctx.user_id) if ctx.user_id else None,
+        )
+        await record(
+            db,
+            action="agent_template.workspace_acceptance_dispatched",
+            actor_id=ctx.user_id,
+            tenant_id=ctx.tenant_id,
+            resource_type="agent_template",
+            resource_id=template.id,
+            metadata={"task_id": task.id, "suite_id": "software_developer_workspace_acceptance"},
+        )
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        raise HTTPException(status_code=503, detail="Workspace acceptance worker dispatch failed") from exc
+
+    return WorkspaceEvaluationDispatch(
+        task_id=task.id,
+        template_id=template.id,
+        status="dispatched",
+        suite_id="software_developer_workspace_acceptance",
+    )
 
 
 @router.get("/templates/{template_id}/evaluations", response_model=list[AgentEvaluationRead])
