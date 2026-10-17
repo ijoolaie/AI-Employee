@@ -61,57 +61,57 @@ async def materialize_first_party_workforce_template(
     if existing is not None:
         raise HTTPException(status_code=409, detail="First-party workforce template version already exists")
 
-    definition = (await db.execute(
-        select(AgentDefinition).where(
-            AgentDefinition.tenant_id == ctx.tenant_id,
-            AgentDefinition.slug == role_template.slug,
-        )
-    )).scalar_one_or_none()
-    if definition is None:
-        all_contracts = list(role.capability_contract)
-        allowed_tools = sorted({tool for contract in all_contracts for tool in contract.tool_names})
-        definition = AgentDefinition(
-            tenant_id=ctx.tenant_id,
-            slug=role_template.slug,
-            name=role_template.name,
-            description=role_template.description,
-            version=1,
-            capabilities=list(role.allowed_routine_operations) + list(role.approval_required_operations),
-            allowed_tools=allowed_tools,
-            model_policy={},
-            input_schema={},
-            output_schema={},
-            policy_requirements={
-                "workforce_role_code": role.code,
-                "workforce_capability_contract": [
-                    {
-                        "operation": contract.operation,
-                        "capability_code": contract.capability_code,
-                        "tool_names": list(contract.tool_names),
-                        "required_permissions": list(contract.required_permissions),
-                        "approval_required": contract.approval_required,
-                    }
-                    for contract in all_contracts
-                ],
-            },
-            enabled=True,
-        )
-        db.add(definition)
-        await db.flush()
-    else:
-        # Never silently rebind an existing tenant definition with a mismatched
-        # slug/name/role contract to a first-party workforce template.
-        expected_capabilities = list(role.allowed_routine_operations) + list(role.approval_required_operations)
-        expected_tools = sorted({tool for contract in role.capability_contract for tool in contract.tool_names})
-        if (
-            definition.name != role_template.name
-            or definition.capabilities != expected_capabilities
-            or sorted(definition.allowed_tools or []) != expected_tools
-            or (definition.policy_requirements or {}).get("workforce_role_code") != role.code
-        ):
-            raise HTTPException(status_code=409, detail="Existing tenant AgentDefinition conflicts with the first-party role")
-
     try:
+        definition = (await db.execute(
+            select(AgentDefinition).where(
+                AgentDefinition.tenant_id == ctx.tenant_id,
+                AgentDefinition.slug == role_template.slug,
+            )
+        )).scalar_one_or_none()
+        if definition is None:
+            all_contracts = list(role.capability_contract)
+            allowed_tools = sorted({tool for contract in all_contracts for tool in contract.tool_names})
+            definition = AgentDefinition(
+                tenant_id=ctx.tenant_id,
+                slug=role_template.slug,
+                name=role_template.name,
+                description=role_template.description,
+                version=1,
+                capabilities=list(role.allowed_routine_operations) + list(role.approval_required_operations),
+                allowed_tools=allowed_tools,
+                model_policy={},
+                input_schema={},
+                output_schema={},
+                policy_requirements={
+                    "workforce_role_code": role.code,
+                    "workforce_capability_contract": [
+                        {
+                            "operation": contract.operation,
+                            "capability_code": contract.capability_code,
+                            "tool_names": list(contract.tool_names),
+                            "required_permissions": list(contract.required_permissions),
+                            "approval_required": contract.approval_required,
+                        }
+                        for contract in all_contracts
+                    ],
+                },
+                enabled=True,
+            )
+            db.add(definition)
+            await db.flush()
+        else:
+            # Never silently rebind an existing tenant definition with a mismatched
+            # slug/name/role contract to a first-party workforce template.
+            expected_capabilities = list(role.allowed_routine_operations) + list(role.approval_required_operations)
+            expected_tools = sorted({tool for contract in role.capability_contract for tool in contract.tool_names})
+            if (
+                definition.name != role_template.name
+                or definition.capabilities != expected_capabilities
+                or sorted(definition.allowed_tools or []) != expected_tools
+                or (definition.policy_requirements or {}).get("workforce_role_code") != role.code
+            ):
+                raise HTTPException(status_code=409, detail="Existing tenant AgentDefinition conflicts with the first-party role")
+
         item = await create_first_party_workforce_template(
             db,
             tenant_id=ctx.tenant_id,
