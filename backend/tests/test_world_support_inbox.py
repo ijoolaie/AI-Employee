@@ -5,6 +5,8 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
+from app.core.edition_deps import require_customer_admin, require_reseller_admin, require_vendor_admin
+
 from app.api.v1.edition_control import (
     list_reseller_support_escalations,
     list_customer_support_escalations,
@@ -149,3 +151,57 @@ async def test_customer_support_list_is_scoped_to_opening_tenant():
     statement = str(db.execute.await_args.args[0])
     assert "support_escalations.from_tenant_id" in statement
     assert "support_escalations.created_at" in statement
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "dependency,tenant_kind",
+    [
+        (require_vendor_admin, "customer"),
+        (require_reseller_admin, "customer"),
+        (require_customer_admin, "reseller"),
+    ],
+)
+async def test_support_edition_dependencies_reject_wrong_tenant_kind(dependency, tenant_kind):
+    """A valid admin identity from another edition must not cross support boundaries."""
+    from types import SimpleNamespace
+
+    from app.core.edition_deps import (
+        require_customer_admin,
+        require_reseller_admin,
+        require_vendor_admin,
+    )
+
+    roles = [SimpleNamespace(tenant_id=uuid4(), name="admin")]
+    tenant_id = roles[0].tenant_id
+    ctx = SimpleNamespace(
+        tenant_id=tenant_id,
+        tenant=SimpleNamespace(tenant_kind=tenant_kind),
+        user=SimpleNamespace(is_platform_admin=True, is_superuser=False, roles=roles),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await dependency(ctx)
+
+    assert exc.value.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_vendor_edition_dependency_requires_platform_admin():
+    from app.core.edition_deps import require_vendor_admin
+
+    tenant_id = uuid4()
+    ctx = SimpleNamespace(
+        tenant_id=tenant_id,
+        tenant=SimpleNamespace(tenant_kind="vendor"),
+        user=SimpleNamespace(
+            is_platform_admin=False,
+            is_superuser=False,
+            roles=[SimpleNamespace(tenant_id=tenant_id, name="admin")],
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await require_vendor_admin(ctx)
+
+    assert exc.value.status_code == 403
