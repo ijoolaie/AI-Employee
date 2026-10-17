@@ -214,6 +214,60 @@ test.describe("critical platform flows", () => {
   });
 
 
+  test("customer tenant cannot enter reseller-only support workspace", async ({ page }) => {
+    const customerState = JSON.stringify({
+      state: {
+        accessToken: "e2e-access-token",
+        refreshToken: "e2e-refresh-token",
+        user: { id: "customer-user-e2e", email: "customer@example.test", full_name: "E2E Customer" },
+        tenant: { id: "customer-tenant-e2e", name: "E2E Customer", tenant_kind: "customer" },
+      },
+      version: 0,
+    });
+    await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), customerState);
+    await page.route("**/api/proxy/auth/refresh", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { access_token: "e2e-access-token", refresh_token: "e2e-refresh-token" },
+        }),
+      });
+    });
+
+    await page.goto("/reseller/support", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\\/dashboard$/);
+    await expect(page.getByRole("heading", { name: "Support" })).toBeVisible();
+  });
+
+  test("reseller tenant cannot enter customer support ticket workspace", async ({ page }) => {
+    const resellerState = JSON.stringify({
+      state: {
+        accessToken: "e2e-access-token",
+        refreshToken: "e2e-refresh-token",
+        user: { id: "reseller-user-e2e", email: "reseller@example.test", full_name: "E2E Reseller" },
+        tenant: { id: "reseller-tenant-e2e", name: "E2E Reseller", tenant_kind: "reseller" },
+      },
+      version: 0,
+    });
+    await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), resellerState);
+    await page.route("**/api/proxy/auth/refresh", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { access_token: "e2e-access-token", refresh_token: "e2e-refresh-token" },
+        }),
+      });
+    });
+
+    await page.goto("/support", { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\\/reseller\\/dashboard$/);
+    await expect(page.getByRole("heading", { name: /Overview|Dashboard/i })).toBeVisible();
+  });
+
   test("customer support ticket survives reload and supports a persisted reply", async ({ page }) => {
     await page.addInitScript((state) => {
       localStorage.setItem("aiep-auth", state);
