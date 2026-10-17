@@ -73,6 +73,8 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         return {**_save_json(tenant_id, f"workspace-{path_digest}.json", payload), "path": path}
     if operation == "workspace_edit_file":
         payload = _read_json(tenant_id, arguments["storage_key"])
+        if payload.get("kind") != "workspace_file":
+            raise ValidationAppError("Artifact is not a workspace file")
         payload["content"] = arguments["content"]
         payload["updated_at"] = _now()
         backend = get_storage_backend()
