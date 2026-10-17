@@ -499,3 +499,30 @@ async def test_w2_engineering_delete_missing_workspace_artifact_is_not_reported_
             },
             tenant_id="tenant-a",
         )
+
+@pytest.mark.asyncio
+async def test_w2_engineering_edit_rejects_non_workspace_artifacts_without_mutating_them():
+    from app.core.exceptions import ValidationAppError
+    from app.services.workforce_semantic_domains import _read_json
+
+    change_set = await execute_engineering(
+        {
+            "_operation": "workspace_change_set",
+            "title": "Protected change set",
+            "changes": [{"path": "src/app.py", "content": "safe"}],
+        },
+        tenant_id="tenant-edit-guard",
+    )
+    original = _read_json("tenant-edit-guard", change_set["storage_key"])
+
+    with pytest.raises(ValidationAppError, match="Artifact is not a workspace file"):
+        await execute_engineering(
+            {
+                "_operation": "workspace_edit_file",
+                "storage_key": change_set["storage_key"],
+                "content": "tampered",
+            },
+            tenant_id="tenant-edit-guard",
+        )
+
+    assert _read_json("tenant-edit-guard", change_set["storage_key"]) == original
