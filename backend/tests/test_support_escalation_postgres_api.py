@@ -105,10 +105,16 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
     vendor_id = uuid.uuid4()
     source_tenant_id = uuid.uuid4()
     unrelated_tenant_id = uuid.uuid4()
+    customer_tenant_id = uuid.uuid4()
+    unrelated_customer_tenant_id = uuid.uuid4()
     source_user_id = uuid.uuid4()
     unrelated_user_id = uuid.uuid4()
+    customer_user_id = uuid.uuid4()
+    unrelated_customer_user_id = uuid.uuid4()
     source_role_id = uuid.uuid4()
     unrelated_role_id = uuid.uuid4()
+    customer_role_id = uuid.uuid4()
+    unrelated_customer_role_id = uuid.uuid4()
 
     async def override_get_db() -> AsyncIterator:
         async with sessions() as session:
@@ -151,6 +157,22 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                 parent_tenant_id=vendor_id,
                 status="active",
             )
+            customer_tenant = Tenant(
+                id=customer_tenant_id,
+                name=f"Test customer {run_id}",
+                slug=f"pgtest-customer-{run_id}",
+                tenant_kind="customer",
+                parent_tenant_id=source_tenant_id,
+                status="active",
+            )
+            unrelated_customer_tenant = Tenant(
+                id=unrelated_customer_tenant_id,
+                name=f"Test unrelated customer {run_id}",
+                slug=f"pgtest-unrelated-customer-{run_id}",
+                tenant_kind="customer",
+                parent_tenant_id=unrelated_tenant_id,
+                status="active",
+            )
             source_role = Role(
                 id=source_role_id,
                 tenant_id=source_tenant_id,
@@ -159,6 +181,16 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
             unrelated_role = Role(
                 id=unrelated_role_id,
                 tenant_id=unrelated_tenant_id,
+                name="admin",
+            )
+            customer_role = Role(
+                id=customer_role_id,
+                tenant_id=customer_tenant_id,
+                name="admin",
+            )
+            unrelated_customer_role = Role(
+                id=unrelated_customer_role_id,
+                tenant_id=unrelated_customer_tenant_id,
                 name="admin",
             )
             source_user = User(
@@ -185,6 +217,30 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
             )
             source_user.roles.append(source_role)
             unrelated_user.roles.append(unrelated_role)
+            customer_user = User(
+                id=customer_user_id,
+                tenant_id=customer_tenant_id,
+                email=f"customer-{run_id}@example.test",
+                password_hash="not-used-by-this-test",
+                full_name="Postgres Test Customer Admin",
+                is_active=True,
+                is_superuser=False,
+                is_platform_admin=False,
+                auth_token_version=0,
+            )
+            unrelated_customer_user = User(
+                id=unrelated_customer_user_id,
+                tenant_id=unrelated_customer_tenant_id,
+                email=f"unrelated-customer-{run_id}@example.test",
+                password_hash="not-used-by-this-test",
+                full_name="Postgres Test Unrelated Customer Admin",
+                is_active=True,
+                is_superuser=False,
+                is_platform_admin=False,
+                auth_token_version=0,
+            )
+            customer_user.roles.append(customer_role)
+            unrelated_customer_user.roles.append(unrelated_customer_role)
             race_file_id = uuid.uuid4()
             race_file = FileObject(
                 id=race_file_id,
@@ -202,10 +258,16 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
                     vendor,
                     source_tenant,
                     unrelated_tenant,
+                    customer_tenant,
+                    unrelated_customer_tenant,
                     source_role,
                     unrelated_role,
+                    customer_role,
+                    unrelated_customer_role,
                     source_user,
                     unrelated_user,
+                    customer_user,
+                    unrelated_customer_user,
                 ]
             )
             # Commit FK parents first: FileObject has FK columns but no ORM
@@ -224,6 +286,16 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
             tenant_id=unrelated_tenant_id,
             extra_claims={"auth_token_version": 0},
         )
+        customer_token = create_access_token(
+            subject=customer_user_id,
+            tenant_id=customer_tenant_id,
+            extra_claims={"auth_token_version": 0},
+        )
+        unrelated_customer_token = create_access_token(
+            subject=unrelated_customer_user_id,
+            tenant_id=unrelated_customer_tenant_id,
+            extra_claims={"auth_token_version": 0},
+        )
 
         transport = ASGITransport(app=app)
         async with AsyncClient(
@@ -232,9 +304,82 @@ async def test_reseller_escalation_and_messages_persist_and_are_tenant_isolated(
         ) as client:
             source_headers = {"Authorization": f"Bearer {source_token}"}
             unrelated_headers = {"Authorization": f"Bearer {unrelated_token}"}
+            customer_headers = {"Authorization": f"Bearer {customer_token}"}
+            unrelated_customer_headers = {"Authorization": f"Bearer {unrelated_customer_token}"}
             base = "/api/v1/edition/reseller/support/escalations"
 
-            # 1. Create an escalation through the actual HTTP API.
+            # Customer UI path: create, reply, reload, and verify persisted data
+            # through the real HTTP API and an independent PostgreSQL session.
+            customer_base = "/api/v1/edition/support/escalations"
+            customer_subject = f"Customer PostgreSQL persistence {run_id}"
+            customer_create = await client.post(
+                customer_base,
+                headers=customer_headers,
+                json={
+                    "subject": customer_subject,
+                    "description": "Verify customer support ticket persistence.",
+                },
+            )
+            assert customer_create.status_code == 201, customer_create.text
+            customer_escalation = customer_create.json()["data"]
+            customer_escalation_id = uuid.UUID(customer_escalation["id"])
+            assert customer_escalation["from_tenant_id"] == str(customer_tenant_id)
+            assert customer_escalation["to_tenant_id"] == str(source_tenant_id)
+
+            customer_messages_url = f"{customer_base}/{customer_escalation_id}/messages"
+            customer_message_body = f"Persist customer reply {run_id}"
+            customer_reply = await client.post(
+                customer_messages_url,
+                headers=customer_headers,
+                json={"body": customer_message_body},
+            )
+            assert customer_reply.status_code == 201, customer_reply.text
+            customer_message_id = uuid.UUID(customer_reply.json()["data"]["id"])
+
+            customer_reload = await client.get(customer_base, headers=customer_headers)
+            assert customer_reload.status_code == 200, customer_reload.text
+            assert any(
+                item["id"] == str(customer_escalation_id)
+                for item in customer_reload.json()["data"]
+            )
+            customer_thread_reload = await client.get(
+                customer_messages_url, headers=customer_headers
+            )
+            assert customer_thread_reload.status_code == 200, customer_thread_reload.text
+            assert any(
+                item["id"] == str(customer_message_id)
+                and item["body"] == customer_message_body
+                for item in customer_thread_reload.json()["data"]
+            )
+
+            async with sessions() as verification_session:
+                customer_row = await verification_session.get(
+                    SupportEscalation, customer_escalation_id
+                )
+                customer_message_row = await verification_session.get(
+                    SupportEscalationMessage, customer_message_id
+                )
+                assert customer_row is not None
+                assert customer_row.from_tenant_id == customer_tenant_id
+                assert customer_row.to_tenant_id == source_tenant_id
+                assert customer_message_row is not None
+                assert customer_message_row.escalation_id == customer_escalation_id
+                assert customer_message_row.body == customer_message_body
+
+            unrelated_customer_list = await client.get(
+                customer_base, headers=unrelated_customer_headers
+            )
+            assert unrelated_customer_list.status_code == 200, unrelated_customer_list.text
+            assert all(
+                item["id"] != str(customer_escalation_id)
+                for item in unrelated_customer_list.json()["data"]
+            )
+            unrelated_customer_thread = await client.get(
+                customer_messages_url, headers=unrelated_customer_headers
+            )
+            assert unrelated_customer_thread.status_code == 404, unrelated_customer_thread.text
+
+            # 1. Create a reseller escalation through the actual HTTP API.
             create_response = await client.post(
                 base,
                 headers=source_headers,
