@@ -1,3 +1,14 @@
+## Current priority — trusted Software Developer publish gate (2026-10-17)
+
+1. Exact-head GitHub Actions for [PR #1216](https://github.com/ijoolaie/AI-Employee/pull/1216) passed on `c462d95ccb46233132649f03bb88d24e236cbc1d` (five workflows). Because this documentation update will create a new commit, recheck Actions against the new head before considering merge.
+2. Verify the implementation against the evidence chain: DRAFT materialization (#1213) → permission-checked Celery dispatch (#1215) → worker-created evaluation plus transactional immutable audit completion event → publish guard requiring the matching trusted audit row.
+3. If CI exposes failures, fix only the failing focused code/tests; do not relax the missing-audit rejection or substitute a caller-provided PASS payload.
+4. Keep #1213, #1215 and #1216 open and Draft. Do not merge/close them until exact-head CI passes, the provenance regression is confirmed, and the user completes the local workspace acceptance in their own checkout.
+5. Local acceptance scope: create/read/list/edit/delete, exact content/read-after-delete, cross-tenant read/delete denial, and cleanup. It does not establish provider-backed tests/lint/build, Git writes, deployment, or production readiness.
+6. Progress rubric unchanged: operational 78%; product-scope 46%; actionable 77%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+
+---
+
 ## Workforce approval boundary trace — PR #1189 merged (2026-10-16)
 
 - PR [#1189](https://github.com/ijoolaie/AI-Employee/pull/1189) was squash-merged as `33bb42dbdeae7f4481b33302e9400f319b1735e5` after all 11 reported check runs completed successfully on exact head `5a8b7286f1695b8689ba3ef35441413629ec0789`. The new parameterized regression test keeps seven unimplemented Software Developer privileged operations approval-required but unbound; no runtime capability was added.
