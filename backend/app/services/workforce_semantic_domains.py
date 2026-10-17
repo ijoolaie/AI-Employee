@@ -82,11 +82,10 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         backend.save(arguments["storage_key"], io.BytesIO(raw))
         return {"storage_key": arguments["storage_key"], "updated": True}
     if operation == "workspace_delete_file":
-        if not arguments["storage_key"].startswith(f"{tenant_id}/"):
-            raise ValidationAppError("Cross-tenant workspace artifact deletion is forbidden")
+        payload = _read_json(tenant_id, arguments["storage_key"])
+        if payload.get("kind") != "workspace_file":
+            raise ValidationAppError("Artifact is not a workspace file")
         backend = get_storage_backend()
-        if not backend.exists(arguments["storage_key"]):
-            raise ValidationAppError("Workspace artifact not found")
         backend.delete(arguments["storage_key"])
         return {"storage_key": arguments["storage_key"], "deleted": True}
     if operation == "workspace_change_set":
