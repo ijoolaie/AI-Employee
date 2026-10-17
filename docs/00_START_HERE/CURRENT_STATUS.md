@@ -1,8 +1,9 @@
-## Support acceptance checkpoint — 2026-10-17 (PR #1209)
+## Support acceptance checkpoint — 2026-10-17 (PR #1209 + local PostgreSQL test)
 
 - PR [#1209](https://github.com/ijoolaie/AI-Employee/pull/1209) merged at `acaf451141505856fc92fae3cee664e1664d29f5` after its required GitHub checks passed. Added Playwright route-guard tests for customer/reseller support route separation.
-- Issue [#1043](https://github.com/ijoolaie/AI-Employee/issues/1043) remains open. The existing `backend/tests/test_support_escalation_postgres_api.py` covers customer ticket/reply persistence across HTTP reloads, independent-session database verification, tenant isolation, reseller support, and concurrent attachment-link conflicts. This checkpoint does not claim that test ran locally.
-- Next gate: run the PostgreSQL integration test against the dedicated local `support_test` DB (the test fails closed unless both explicit DB URLs target that DB), then manually verify customer ticket creation, reload, reply/thread persistence, and authorized attachment upload/download in the local app.
+- Local test passed: dedicated `support_test` DB created and migrated to Alembic head `w23_support_message_attachments`; user-run `python -m pytest -p no:cacheprovider tests/test_support_escalation_postgres_api.py -q` from `backend/` returned `1 passed in 5.81s`. Covered API create/reply/reload, independent-session PostgreSQL persistence, customer/reseller tenant isolation, reseller persistence, and concurrent attachment-link conflict.
+- Temporary `SUPPORT_TEST_DATABASE_URL` and `SUPPORT_TEST_DATABASE_URL_SYNC` environment variables were removed after the run.
+- Issue [#1043](https://github.com/ijoolaie/AI-Employee/issues/1043) remains open pending manual local UI acceptance: create ticket, reload, reply/thread persistence, and authorized attachment upload/download. The API test does not prove the full UI journey.
 - Progress remains unchanged: operational 78%; product-scope 46%; actionable 77%; A0/A1/A2/A3/A4 = 100/30/100/0/0. No production certification claim.
 
 ---
