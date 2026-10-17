@@ -52,9 +52,17 @@ api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError<APIResponse<unknown>>) => {
     const original = error.config;
+    const requestUrl = original?.url ?? "";
+    // Authentication failures (especially invalid tenant slugs) must be
+    // returned to the login form immediately. Refreshing a previous session
+    // for a failed login can delay or obscure the actual credential error.
+    const isAuthRequest =
+      /\/auth\/(login|register|forgot-password|reset-password)$/.test(requestUrl);
+
     if (
       error.response?.status === 401 &&
       original &&
+      !isAuthRequest &&
       !(original as InternalAxiosRequestConfig & { _retry?: boolean })._retry
     ) {
       (original as InternalAxiosRequestConfig & { _retry?: boolean })._retry =
