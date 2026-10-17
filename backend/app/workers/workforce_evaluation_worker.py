@@ -110,14 +110,15 @@ async def _evaluate_workspace_async(tenant_id: UUID, template_id: UUID, evaluato
         return str(evaluation.id)
 
 
-@celery_app.task(name="workforce.evaluate_software_developer_workspace")
+@celery_app.task(bind=True, name="workforce.evaluate_software_developer_workspace")
 def evaluate_software_developer_workspace_task(
+    self,
     tenant_id: str,
     template_id: str,
     evaluator_user_id: str | None = None,
 ) -> str:
     """Run the fixed acceptance suite; no caller-provided test code or evidence is accepted."""
-    task_id = getattr(getattr(evaluate_software_developer_workspace_task, "request", None), "id", None)
+    task_id = getattr(self.request, "id", None)
     return asyncio.run(
         _evaluate_workspace_async(
             UUID(tenant_id),
