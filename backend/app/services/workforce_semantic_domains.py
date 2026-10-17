@@ -87,6 +87,9 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         backend = get_storage_backend()
         if not backend.exists(arguments["storage_key"]):
             raise ValidationAppError("Workspace artifact not found")
+        payload = _read_json(tenant_id, arguments["storage_key"])
+        if payload.get("kind") != "workspace_file":
+            raise ValidationAppError("Artifact is not a workspace file")
         backend.delete(arguments["storage_key"])
         return {"storage_key": arguments["storage_key"], "deleted": True}
     if operation == "workspace_change_set":
