@@ -237,7 +237,7 @@ test.describe("critical platform flows", () => {
     });
 
     await page.goto("/reseller/support", { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveURL(new RegExp("/dashboard$"));
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/dashboard");
   });
 
   test("reseller tenant cannot enter customer support ticket workspace", async ({ page }) => {
@@ -263,7 +263,7 @@ test.describe("critical platform flows", () => {
     });
 
     await page.goto("/support", { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveURL(new RegExp("/reseller/dashboard$"));
+    await expect.poll(() => new URL(page.url()).pathname).toBe("/reseller/dashboard");
   });
 
   test("customer support ticket survives reload and supports a persisted reply", async ({ page }) => {
