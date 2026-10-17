@@ -1,3 +1,15 @@
+# Support acceptance checkpoint — 2026-10-17 — PR #1209 merged
+
+PR [#1209](https://github.com/ijoolaie/AI-Employee/pull/1209) was merged at [acaf451141505856fc92fae3cee664e1664d29f5](https://github.com/ijoolaie/AI-Employee/commit/acaf451141505856fc92fae3cee664e1664d29f5). The added Playwright regressions assert exact redirect destinations for customer tenants entering `/reseller/support` and reseller tenants entering `/support`. The PR's required GitHub checks completed successfully before merge.
+
+**Evidence boundary:** these browser route-guard tests do not replace API/database authorization tests or local manual acceptance. Issue [#1043](https://github.com/ijoolaie/AI-Employee/issues/1043) remains open. The existing dedicated PostgreSQL + HTTP API test `backend/tests/test_support_escalation_postgres_api.py` includes customer create/reply/reload verification, independent-session persistence checks, unrelated-customer isolation, reseller support persistence/isolation, and concurrent attachment-link conflict coverage. It has **not** been run as part of this GitHub-side checkpoint.
+
+**Next required local gate:** run that test only against the explicitly validated local `support_test` database using `SUPPORT_TEST_DATABASE_URL` and `SUPPORT_TEST_DATABASE_URL_SYNC`; then manually verify the local customer UI flow (create → reload → reply/thread → authorized attachment upload/download). Do not mark Issue #1043 accepted, increase coarse progress percentages, or claim production certification until these checks are evidenced. The update is recorded in [Issue #1043](https://github.com/ijoolaie/AI-Employee/issues/1043).
+
+Progress rubric unchanged: operational readiness 78%; full product-scope coverage 46%; actionable execution progress 77%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+
+---
+
 ## Progress checkpoint — Software Developer capability binding merged (2026-10-14)
 
 PR [#1144](https://github.com/ijoolaie/AI-Employee/pull/1144) was squash-merged as [`3a95c0649c0f884f43d694c0a9dd76c060c3d70c`](https://github.com/ijoolaie/AI-Employee/commit/3a95c0649c0f884f43d694c0a9dd76c060c3d70c), from exact tested head [`f47b25a764c7b39696ae78b55e5991d630999894`](https://github.com/ijoolaie/AI-Employee/commit/f47b25a764c7b39696ae78b55e5991d630999894). All 28 check runs passed on that exact head.
