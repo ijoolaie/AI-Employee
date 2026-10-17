@@ -129,8 +129,8 @@ export default function CustomerSupportPage() {
     if (selected.length === 0) return;
     setUploadingAttachments(true);
     setFeedback(null);
+    const uploaded: FileItem[] = [];
     try {
-      const uploaded: FileItem[] = [];
       for (const file of selected) uploaded.push(await uploadFile(file));
       setAttachments((current) => [...current, ...uploaded]);
       setFeedbackError(false);
