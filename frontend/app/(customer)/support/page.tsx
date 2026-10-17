@@ -2,18 +2,21 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LifeBuoy, MessageSquareText, Send } from "lucide-react";
+import { Download, LifeBuoy, MessageSquareText, Paperclip, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   createCustomerSupportEscalation,
   createCustomerSupportEscalationMessage,
+  downloadCustomerSupportAttachment,
   getErrorMessage,
   listCustomerSupportEscalations,
   listCustomerSupportEscalationMessages,
+  uploadFile,
 } from "@/lib/api";
-import type { SupportEscalation } from "@/lib/api";
+import type { SupportEscalation, SupportEscalationMessage } from "@/lib/api";
+import type { FileItem } from "@/types";
 import { useI18n } from "@/lib/i18n/provider";
 
 export default function CustomerSupportPage() {
@@ -32,7 +35,9 @@ export default function CustomerSupportPage() {
     loading: "در حال بارگذاری…", noMessages: "هنوز پاسخی ثبت نشده است.",
     error: "بارگذاری یا انجام عملیات ناموفق بود.", created: "تیکت ثبت شد.",
     sent: "پاسخ ارسال شد.", resolved: "این تیکت بسته شده است و فعلاً امکان پاسخ وجود ندارد.",
-    status: "وضعیت",
+    status: "وضعیت", attachment: "پیوست فایل", uploading: "در حال بارگذاری فایل…",
+    attachments: "پیوست‌ها", remove: "حذف", download: "دریافت فایل",
+    attachmentLimit: "حداکثر ۵ فایل برای هر پاسخ مجاز است.",
   } : {
     title: "Support",
     description: "Create a ticket for your service provider's support team and follow replies here.",
@@ -45,13 +50,17 @@ export default function CustomerSupportPage() {
     loading: "Loading…", noMessages: "No replies yet.",
     error: "Could not load or complete the operation.", created: "Support ticket created.",
     sent: "Reply sent.", resolved: "This ticket is resolved and cannot currently receive replies.",
-    status: "Status",
+    status: "Status", attachment: "Attach files", uploading: "Uploading files…",
+    attachments: "Attachments", remove: "Remove", download: "Download",
+    attachmentLimit: "Up to 5 files can be attached to each reply.",
   };
 
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reply, setReply] = useState("");
+  const [attachments, setAttachments] = useState<FileItem[]>([]);
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [feedbackError, setFeedbackError] = useState(false);
 
@@ -84,16 +93,47 @@ export default function CustomerSupportPage() {
   const replyMutation = useMutation({
     mutationFn: () => createCustomerSupportEscalationMessage(selectedTicket!.id, {
       body: reply.trim(),
-      attachment_file_ids: [],
+      attachment_file_ids: attachments.map((file) => file.id),
     }),
     onSuccess: async () => {
       setReply("");
+      setAttachments([]);
       setFeedback(m.sent);
       setFeedbackError(false);
       await qc.invalidateQueries({ queryKey: ["customer-support-messages", selectedTicket?.id] });
     },
     onError: (error) => { setFeedback(getErrorMessage(error) || m.error); setFeedbackError(true); },
   });
+
+  const handleAttachmentSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (attachments.length + selected.length > 5) {
+      setFeedback(m.attachmentLimit);
+      setFeedbackError(true);
+      return;
+    }
+    if (selected.length === 0) return;
+    setUploadingAttachments(true);
+    setFeedback(null);
+    try {
+      const uploaded: FileItem[] = [];
+      for (const file of selected) uploaded.push(await uploadFile(file));
+      setAttachments((current) => [...current, ...uploaded]);
+      setFeedbackError(false);
+    } catch (error) {
+      setFeedback(getErrorMessage(error) || m.error);
+      setFeedbackError(true);
+    } finally {
+      setUploadingAttachments(false);
+    }
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -147,12 +187,19 @@ export default function CustomerSupportPage() {
               {messagesQuery.isError && <p role="alert" className="text-sm text-red-600">{m.error}</p>}
               {!messagesQuery.isLoading && !messagesQuery.isError && (messagesQuery.data ?? []).length === 0 && <p className="text-sm text-muted-foreground">{m.noMessages}</p>}
               <div className="max-h-[420px] space-y-3 overflow-y-auto">
-                {(messagesQuery.data ?? []).map((message) => <article key={message.id} className="rounded-lg border p-3"><p className="whitespace-pre-wrap text-sm">{message.body}</p><p className="mt-2 text-xs text-muted-foreground">{new Intl.DateTimeFormat(fa ? "fa-IR" : undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(message.created_at))}</p></article>)}
+                {(messagesQuery.data ?? []).map((message: SupportEscalationMessage) => <article key={message.id} className="rounded-lg border p-3"><p className="whitespace-pre-wrap text-sm">{message.body}</p>
+                  {message.attachments.length > 0 && <div className="mt-3 space-y-2"><p className="text-xs font-medium text-muted-foreground">{m.attachments}</p>{message.attachments.map((attachment) => <div key={attachment.id} className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2 text-sm"><span className="min-w-0 truncate">{attachment.filename} <span className="text-xs text-muted-foreground">({formatBytes(attachment.size_bytes)})</span></span><Button type="button" variant="outline" size="sm" onClick={() => downloadCustomerSupportAttachment(selectedTicket.id, message.id, attachment.id, attachment.filename)}><Download className="h-4 w-4" />{m.download}</Button></div>)}</div>}
+                  <p className="mt-2 text-xs text-muted-foreground">{new Intl.DateTimeFormat(fa ? "fa-IR" : undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(message.created_at))}</p></article>)}
               </div>
               {selectedTicket.status === "resolved" ? <p className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">{m.resolved}</p> : <div className="space-y-3 border-t pt-4">
                 <label htmlFor="customer-support-reply" className="block text-sm font-medium">{m.reply}</label>
                 <textarea id="customer-support-reply" value={reply} onChange={(event) => setReply(event.target.value)} maxLength={10000} placeholder={m.replyPlaceholder} className="min-h-24 w-full rounded-md border px-3 py-2 text-sm" />
-                <Button disabled={replyMutation.isPending || reply.trim().length === 0} onClick={() => replyMutation.mutate()}><Send className="h-4 w-4" />{replyMutation.isPending ? m.submitting : m.send}</Button>
+                <div className="space-y-2">
+                  <label htmlFor="customer-support-attachments" className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/50"><Paperclip className="h-4 w-4" />{uploadingAttachments ? m.uploading : m.attachment}</label>
+                  <input id="customer-support-attachments" type="file" multiple disabled={uploadingAttachments || replyMutation.isPending || attachments.length >= 5} onChange={handleAttachmentSelection} className="sr-only" />
+                  {attachments.map((file) => <div key={file.id} className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2 text-sm"><span className="min-w-0 truncate">{file.filename} <span className="text-xs text-muted-foreground">({formatBytes(file.size_bytes)})</span></span><Button type="button" variant="ghost" size="sm" onClick={() => setAttachments((current) => current.filter((item) => item.id !== file.id))}>{m.remove}</Button></div>)}
+                </div>
+                <Button disabled={replyMutation.isPending || uploadingAttachments || (reply.trim().length === 0 && attachments.length === 0)} onClick={() => replyMutation.mutate()}><Send className="h-4 w-4" />{replyMutation.isPending ? m.submitting : m.send}</Button>
               </div>}
             </>}
           </CardContent>
