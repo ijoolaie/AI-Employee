@@ -7,6 +7,7 @@ from fastapi import HTTPException
 
 from app.api.v1.edition_control import (
     list_reseller_support_escalations,
+    list_customer_support_escalations,
     list_vendor_support_escalations,
     update_reseller_support_escalation_status,
     update_vendor_support_escalation_status,
@@ -122,3 +123,29 @@ async def test_support_inbox_rejects_invalid_status_transition(monkeypatch):
         )
     assert exc.value.status_code == 409
     audit.assert_not_awaited()
+
+
+
+@pytest.mark.asyncio
+async def test_customer_support_list_is_scoped_to_opening_tenant():
+    tenant_id = uuid4()
+    ticket = SimpleNamespace(
+        id=uuid4(),
+        from_tenant_id=tenant_id,
+        to_tenant_id=uuid4(),
+        status="open",
+        subject="Need help",
+        description="A detailed support request.",
+    )
+    result = SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [ticket]))
+    db = AsyncMock()
+    db.execute.return_value = result
+    ctx = SimpleNamespace(tenant_id=tenant_id, tenant=SimpleNamespace(tenant_kind="customer"))
+
+    response = await list_customer_support_escalations(ctx, db)
+
+    assert response.data[0].id == ticket.id
+    assert response.data[0].from_tenant_id == tenant_id
+    statement = str(db.execute.await_args.args[0])
+    assert "support_escalations.from_tenant_id" in statement
+    assert "support_escalations.created_at" in statement
