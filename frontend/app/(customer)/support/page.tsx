@@ -78,9 +78,21 @@ export default function CustomerSupportPage() {
     enabled: Boolean(selectedTicket?.id),
   });
 
+  const clearStagedAttachments = () => {
+    const staged = attachments;
+    setAttachments([]);
+    setReply("");
+    for (const file of staged) {
+      void deleteFile(file.id).catch(() => {
+        // Best-effort cleanup; the next upload/reply remains available.
+      });
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: () => createCustomerSupportEscalation({ subject: subject.trim(), description: description.trim() }),
     onSuccess: async (ticket) => {
+      clearStagedAttachments();
       setSelectedId(ticket.id);
       setSubject("");
       setDescription("");
@@ -123,6 +135,7 @@ export default function CustomerSupportPage() {
       setAttachments((current) => [...current, ...uploaded]);
       setFeedbackError(false);
     } catch (error) {
+      await Promise.allSettled(uploaded.map((file) => deleteFile(file.id)));
       setFeedback(getErrorMessage(error) || m.error);
       setFeedbackError(true);
     } finally {
@@ -169,7 +182,7 @@ export default function CustomerSupportPage() {
               {ticketsQuery.isError && <p role="alert" className="text-sm text-red-600">{m.error}</p>}
               {!ticketsQuery.isLoading && !ticketsQuery.isError && tickets.length === 0 && <p className="text-sm text-muted-foreground">{m.empty}</p>}
               {tickets.map((ticket) => (
-                <button key={ticket.id} type="button" onClick={() => { setSelectedId(ticket.id); setFeedback(null); }} className={`w-full rounded-lg border p-3 text-start transition hover:bg-muted/50 ${selectedTicket?.id === ticket.id ? "border-primary bg-muted/40" : "border-border"}`}>
+                <button key={ticket.id} type="button" onClick={() => { if (selectedTicket?.id !== ticket.id) clearStagedAttachments(); setSelectedId(ticket.id); setFeedback(null); }} className={`w-full rounded-lg border p-3 text-start transition hover:bg-muted/50 ${selectedTicket?.id === ticket.id ? "border-primary bg-muted/40" : "border-border"}`}>
                   <span className="block font-medium">{ticket.subject}</span>
                   <span className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground"><span>{ticket.id.slice(0, 8)}</span><Badge status={ticket.status} /></span>
                 </button>
