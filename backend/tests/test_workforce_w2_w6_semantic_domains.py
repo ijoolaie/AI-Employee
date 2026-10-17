@@ -482,3 +482,20 @@ async def test_w6_website_health_check_stays_fail_closed_without_provider_config
     assert result["provider_execution"] == "not_configured"
     assert result["external_side_effect"] is False
     assert result["health_check"]["healthy"] is None
+
+@pytest.mark.asyncio
+async def test_w2_engineering_delete_missing_workspace_artifact_is_not_reported_as_success():
+    import uuid
+
+    from app.core.exceptions import ValidationAppError
+
+    missing_key = f"tenant-a/missing-workspace-{uuid.uuid4().hex}.json"
+
+    with pytest.raises(ValidationAppError, match="Workspace artifact not found"):
+        await execute_engineering(
+            {
+                "_operation": "workspace_delete_file",
+                "storage_key": missing_key,
+            },
+            tenant_id="tenant-a",
+        )
