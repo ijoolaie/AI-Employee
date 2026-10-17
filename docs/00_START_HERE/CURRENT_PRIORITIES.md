@@ -1,6 +1,6 @@
 ## Current priority — trusted Software Developer publish gate (2026-10-17)
 
-1. Confirm exact-head GitHub Actions for [PR #1216](https://github.com/ijoolaie/AI-Employee/pull/1216) after the audit-ledger binding and no-audit forged-payload regression were committed. CI status is not yet certified by this documentation update.
+1. Exact-head GitHub Actions for [PR #1216](https://github.com/ijoolaie/AI-Employee/pull/1216) passed on `c462d95ccb46233132649f03bb88d24e236cbc1d` (five workflows). Because this documentation update will create a new commit, recheck Actions against the new head before considering merge.
 2. Verify the implementation against the evidence chain: DRAFT materialization (#1213) → permission-checked Celery dispatch (#1215) → worker-created evaluation plus transactional immutable audit completion event → publish guard requiring the matching trusted audit row.
 3. If CI exposes failures, fix only the failing focused code/tests; do not relax the missing-audit rejection or substitute a caller-provided PASS payload.
 4. Keep #1213, #1215 and #1216 open and Draft. Do not merge/close them until exact-head CI passes, the provenance regression is confirmed, and the user completes the local workspace acceptance in their own checkout.
