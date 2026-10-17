@@ -722,6 +722,49 @@ export async function updateInvoice(id: string, payload: Partial<import("@/types
 export async function updateInvoiceStatus(id: string, status: string) { return unwrap(await api.post<APIResponse<import("@/types").BusinessInvoice>>(`/invoices/${id}/status`, { status })); }
 export async function exportInvoicePdf(id: string) { return unwrap(await api.post<APIResponse<Record<string, unknown>>>(`/invoices/${id}/export-pdf`)); }
 
+// ── Customer support escalation ────────────────────────
+export async function createCustomerSupportEscalation(payload: { subject: string; description: string }) {
+  return unwrap(await api.post<APIResponse<SupportEscalation>>("/edition/support/escalations", payload));
+}
+
+export async function listCustomerSupportEscalations() {
+  return unwrap(await api.get<APIResponse<SupportEscalation[]>>("/edition/support/escalations"));
+}
+
+export async function listCustomerSupportEscalationMessages(escalationId: string) {
+  return unwrap(await api.get<APIResponse<SupportEscalationMessage[]>>(`/edition/support/escalations/${escalationId}/messages`));
+}
+
+export async function createCustomerSupportEscalationMessage(
+  escalationId: string,
+  payload: { body: string; attachment_file_ids: string[] },
+) {
+  return unwrap(await api.post<APIResponse<SupportEscalationMessage>>(
+    `/edition/support/escalations/${escalationId}/messages`,
+    payload,
+  ));
+}
+
+export async function downloadCustomerSupportAttachment(
+  escalationId: string,
+  messageId: string,
+  attachmentId: string,
+  filename: string,
+) {
+  const res = await api.get(
+    `/edition/support/escalations/${escalationId}/messages/${messageId}/attachments/${attachmentId}/download`,
+    { responseType: "blob" },
+  );
+  const url = window.URL.createObjectURL(res.data as Blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 // ── Tenant administration ─────────────────────────────
 export async function createResellerSupportEscalation(payload: { subject: string; description: string }) {
   return unwrap(await api.post<APIResponse<{ id: string; from_tenant_id: string; to_tenant_id: string; status: string; subject: string; description: string }>>("/edition/reseller/support/escalations", payload));
