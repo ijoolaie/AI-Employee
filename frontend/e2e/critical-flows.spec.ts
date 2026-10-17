@@ -213,4 +213,113 @@ test.describe("critical platform flows", () => {
     }
   });
 
+
+  test("customer support ticket survives reload and supports a persisted reply", async ({ page }) => {
+    await page.addInitScript((state) => {
+      localStorage.setItem("aiep-auth", state);
+      localStorage.setItem("aiep.locale", "en");
+    }, JSON.stringify({
+      state: {
+        accessToken: "e2e-access-token",
+        refreshToken: "e2e-refresh-token",
+        user: { id: "user-e2e", email: "e2e@example.test", full_name: "E2E Customer" },
+        tenant: { id: "tenant-customer-e2e", name: "E2E Customer", tenant_kind: "customer" },
+      },
+      version: 0,
+    }));
+
+    await page.route("**/api/proxy/auth/refresh", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: { access_token: "e2e-access-token", refresh_token: "e2e-refresh-token" },
+        }),
+      });
+    });
+
+    const ticketId = "support-ticket-e2e";
+    const tickets: Array<Record<string, unknown>> = [];
+    const messages: Array<Record<string, unknown>> = [];
+
+    await page.route("**/edition/support/escalations**", async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (url.pathname.endsWith("/messages") && request.method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true, data: messages }),
+        });
+        return;
+      }
+      if (url.pathname.endsWith("/messages") && request.method() === "POST") {
+        const payload = request.postDataJSON() as { body: string };
+        const message = {
+          id: `support-message-${messages.length + 1}`,
+          escalation_id: ticketId,
+          author_tenant_id: "tenant-customer-e2e",
+          author_user_id: "user-e2e",
+          body: payload.body,
+          created_at: "2026-10-17T12:00:00Z",
+          attachments: [],
+        };
+        messages.push(message);
+        await route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true, data: message }),
+        });
+        return;
+      }
+      if (!url.pathname.endsWith("/messages") && request.method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true, data: tickets }),
+        });
+        return;
+      }
+      if (!url.pathname.endsWith("/messages") && request.method() === "POST") {
+        const payload = request.postDataJSON() as { subject: string; description: string };
+        const ticket = {
+          id: ticketId,
+          from_tenant_id: "tenant-customer-e2e",
+          to_tenant_id: "provider-tenant-e2e",
+          status: "open",
+          subject: payload.subject,
+          description: payload.description,
+        };
+        tickets.push(ticket);
+        await route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({ success: true, data: ticket }),
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto("/support");
+    await expect(page.getByRole("heading", { name: "Support" })).toBeVisible();
+    await page.getByLabel("Subject").fill("Order status question");
+    await page.getByLabel("Description").fill("Please help me check my order status.");
+    await page.getByRole("button", { name: "Create ticket" }).click();
+    await expect(page.getByText("Support ticket created.")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Order status question/ })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole("button", { name: /Order status question/ })).toBeVisible();
+    await page.getByLabel("Reply").fill("Could you please provide an update?");
+    await page.getByRole("button", { name: "Send reply" }).click();
+    await expect(page.getByText("Reply sent.")).toBeVisible();
+    await expect(page.getByText("Could you please provide an update?")).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole("button", { name: /Order status question/ })).toBeVisible();
+    await expect(page.getByText("Could you please provide an update?")).toBeVisible();
+  });
+
 });
