@@ -138,6 +138,115 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
     raise ValidationAppError("Unsupported engineering operation")
 
 
+async def run_software_developer_workspace_acceptance(
+    *, tenant_id: str, suite_version: str = "workspace_artifact_lifecycle_v1"
+) -> dict[str, Any]:
+    """Run deterministic, provider-independent checks against the real workspace storage path.
+
+    This suite proves local artifact lifecycle and tenant isolation only. It does not
+    execute source code, invoke engineering providers, or certify Git/CI/deployment.
+    Callers must persist this result only from a server-controlled execution path.
+    """
+    if not tenant_id or not suite_version:
+        raise ValidationAppError("Workspace acceptance requires tenant and suite identity")
+
+    backend = get_storage_backend()
+    path = f".acceptance/workspace-lifecycle-{uuid.uuid4().hex}.txt"
+    original_content = f"workspace-acceptance:{uuid.uuid4().hex}"
+    edited_content = f"{original_content}:edited"
+    storage_key: str | None = None
+    checks: list[dict[str, Any]] = []
+
+    def record_check(check_id: str, passed: bool) -> None:
+        checks.append({"id": check_id, "passed": bool(passed)})
+        if not passed:
+            raise ValidationAppError(f"Software Developer workspace acceptance failed: {check_id}")
+
+    try:
+        created = await execute_engineering(
+            {"_operation": "workspace_create_file", "path": path, "content": original_content},
+            tenant_id=tenant_id,
+        )
+        storage_key = created.get("storage_key")
+        record_check("create_persisted_tenant_scoped_artifact", bool(
+            storage_key and storage_key.startswith(f"{tenant_id}/") and backend.exists(storage_key)
+        ))
+
+        readback = await execute_engineering(
+            {"_operation": "workspace_read", "storage_key": storage_key},
+            tenant_id=tenant_id,
+        )
+        record_check("read_exact_created_content", readback.get("content") == original_content)
+        listing = await execute_engineering({"_operation": "workspace_list"}, tenant_id=tenant_id)
+        record_check("list_contains_created_artifact", storage_key in listing.get("storage_keys", []))
+
+        await execute_engineering(
+            {"_operation": "workspace_edit_file", "storage_key": storage_key, "content": edited_content},
+            tenant_id=tenant_id,
+        )
+        edited = await execute_engineering(
+            {"_operation": "workspace_read", "storage_key": storage_key},
+            tenant_id=tenant_id,
+        )
+        record_check("edit_persists_exact_content", edited.get("content") == edited_content)
+
+        other_tenant = f"acceptance-isolation-{uuid.uuid4().hex}"
+        other_listing = await execute_engineering({"_operation": "workspace_list"}, tenant_id=other_tenant)
+        record_check("other_tenant_listing_is_isolated", storage_key not in other_listing.get("storage_keys", []))
+        try:
+            await execute_engineering(
+                {"_operation": "workspace_read", "storage_key": storage_key},
+                tenant_id=other_tenant,
+            )
+        except ValidationAppError:
+            record_check("cross_tenant_read_denied", True)
+        else:
+            record_check("cross_tenant_read_denied", False)
+
+        try:
+            await execute_engineering(
+                {"_operation": "workspace_delete_file", "storage_key": storage_key},
+                tenant_id=other_tenant,
+            )
+        except ValidationAppError:
+            record_check("cross_tenant_delete_denied", True)
+        else:
+            record_check("cross_tenant_delete_denied", False)
+
+        await execute_engineering(
+            {"_operation": "workspace_delete_file", "storage_key": storage_key},
+            tenant_id=tenant_id,
+        )
+        record_check("owner_delete_succeeds", not backend.exists(storage_key))
+        after_delete = await execute_engineering({"_operation": "workspace_list"}, tenant_id=tenant_id)
+        record_check("deleted_artifact_absent_from_listing", storage_key not in after_delete.get("storage_keys", []))
+        try:
+            await execute_engineering(
+                {"_operation": "workspace_read", "storage_key": storage_key},
+                tenant_id=tenant_id,
+            )
+        except ValidationAppError:
+            record_check("read_after_delete_denied", True)
+        else:
+            record_check("read_after_delete_denied", False)
+
+        return {
+            "suite_id": "software_developer_workspace_acceptance",
+            "suite_version": suite_version,
+            "tenant_id": tenant_id,
+            "status": "passed",
+            "checks": checks,
+            "checks_passed": len(checks),
+            "evidence_boundary": "local_workspace_artifact_only",
+            "provider_execution": "not_required",
+            "external_side_effects": False,
+        }
+    finally:
+        # Cleanup is best-effort and always tenant-scoped. Preserve the original failure.
+        if storage_key and storage_key.startswith(f"{tenant_id}/") and backend.exists(storage_key):
+            backend.delete(storage_key)
+
+
 async def execute_content(arguments: dict[str, Any], **context: Any) -> dict[str, Any]:
     """Create durable content drafts or a deterministic, explicitly limited QA report."""
     tenant_id = _tenant(arguments, context)
