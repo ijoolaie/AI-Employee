@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   createCustomerSupportEscalation,
   createCustomerSupportEscalationMessage,
+  deleteFile,
   downloadCustomerSupportAttachment,
   getErrorMessage,
   listCustomerSupportEscalations,
@@ -197,9 +198,9 @@ export default function CustomerSupportPage() {
                 <div className="space-y-2">
                   <label htmlFor="customer-support-attachments" className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/50"><Paperclip className="h-4 w-4" />{uploadingAttachments ? m.uploading : m.attachment}</label>
                   <input id="customer-support-attachments" type="file" multiple disabled={uploadingAttachments || replyMutation.isPending || attachments.length >= 5} onChange={handleAttachmentSelection} className="sr-only" />
-                  {attachments.map((file) => <div key={file.id} className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2 text-sm"><span className="min-w-0 truncate">{file.filename} <span className="text-xs text-muted-foreground">({formatBytes(file.size_bytes)})</span></span><Button type="button" variant="ghost" size="sm" onClick={() => setAttachments((current) => current.filter((item) => item.id !== file.id))}>{m.remove}</Button></div>)}
+                  {attachments.map((file) => <div key={file.id} className="flex items-center justify-between gap-3 rounded-md bg-muted/40 px-3 py-2 text-sm"><span className="min-w-0 truncate">{file.filename} <span className="text-xs text-muted-foreground">({formatBytes(file.size_bytes)})</span></span><Button type="button" variant="ghost" size="sm" onClick={() => { setAttachments((current) => current.filter((item) => item.id !== file.id)); void deleteFile(file.id).catch((error) => { setFeedback(getErrorMessage(error) || m.error); setFeedbackError(true); }); }}>{m.remove}</Button></div>)}
                 </div>
-                <Button disabled={replyMutation.isPending || uploadingAttachments || (reply.trim().length === 0 && attachments.length === 0)} onClick={() => replyMutation.mutate()}><Send className="h-4 w-4" />{replyMutation.isPending ? m.submitting : m.send}</Button>
+                <Button disabled={replyMutation.isPending || uploadingAttachments || reply.trim().length === 0} onClick={() => replyMutation.mutate()}><Send className="h-4 w-4" />{replyMutation.isPending ? m.submitting : m.send}</Button>
               </div>}
             </>}
           </CardContent>
