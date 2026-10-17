@@ -169,6 +169,43 @@ async def assert_publishable_with_evidence(db: AsyncSession, *, tenant_id: uuid.
     if evidence is None or evidence.status != AgentEvaluationStatus.PASSED:
         raise ValidationAppError("Agent template requires its latest evaluation evidence to be passed before publication")
 
+    # A PASSED database row is not itself proof that a trusted evaluator ran.
+    # First-party workforce templates require a server-owned worker evaluation
+    # bound to this tenant, template, version and supported suite. Keep unknown
+    # roles fail-closed until each has its own trusted evaluator.
+    role_code = (template.capability_contract or {}).get("workforce_role_code")
+    if template.is_system_template and role_code:
+        expected_suite = {
+            "ai_software_developer": "software_developer_workspace_acceptance",
+        }.get(role_code)
+        evaluation_evidence = evidence.evidence if isinstance(evidence.evidence, dict) else {}
+        checks = evaluation_evidence.get("checks")
+        provenance_valid = (
+            expected_suite is not None
+            and evidence.suite_id == expected_suite
+            and evaluation_evidence.get("suite_id") == expected_suite
+            and evaluation_evidence.get("suite_version") == "workspace_artifact_lifecycle_v1"
+            and evaluation_evidence.get("worker_execution") is True
+            and evaluation_evidence.get("source") == "celery_worker"
+            and bool(evaluation_evidence.get("worker_task_id"))
+            and evaluation_evidence.get("tenant_id") == str(tenant_id)
+            and evaluation_evidence.get("template_id") == str(template.id)
+            and evaluation_evidence.get("template_version") == template.version
+            and evaluation_evidence.get("status") == "passed"
+            and evaluation_evidence.get("evidence_boundary") == "local_workspace_artifact_only"
+            and evaluation_evidence.get("provider_execution") == "not_required"
+            and evaluation_evidence.get("external_side_effects") is False
+            and isinstance(checks, list)
+            and len(checks) == 10
+            and all(isinstance(check, dict) and check.get("passed") is True for check in checks)
+            and evaluation_evidence.get("checks_passed") == len(checks)
+            and evidence.evidence_hash == _hash_evidence(evaluation_evidence)
+        )
+        if not provenance_valid:
+            raise ValidationAppError(
+                "First-party workforce template requires verified worker-generated evaluation provenance before publication"
+            )
+
     policy = template.evaluation_policy or {}
     required_suite_id = policy.get("required_suite_id") or policy.get("suite_id")
     if required_suite_id and evidence.suite_id != required_suite_id:
