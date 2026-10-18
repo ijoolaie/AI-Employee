@@ -1,3 +1,12 @@
+## Local acceptance and repeatable test-user runbook — 2026-10-18
+
+- The isolated secondary checkout `C:\Users\Ali\AI-Employee-main-sync` passed the bounded local Employee → Run → tool → result acceptance: auth, Employee creation/version/list/get, successful Run, tool-call audit and tenant-scoped artifact, then API reread with identical persisted output. Checklist: 6/6 for this scenario only.
+- Tool: `workforce_keyword_research`; provider execution: `not_configured`. This proves deterministic local tool execution and persistence, not live search/provider behavior, production readiness, or customer acceptance. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; no release claim changed.
+- Canonical test-account and license runbook: `docs/local/LOCAL_TEST_TENANT_ACCOUNTS.md`. It records stable Vendor/Reseller/Customer slugs, the supported UI/API provisioning path, login verification, how to issue a fresh time-limited license when a test license expires, feature-scoped entitlement examples, and safety rules. Passwords and tokens are not stored.
+- Next local product step: expose the persisted tool artifact in the product UI and link it to the corresponding Run; avoid repeating already-passed infrastructure checks unless a specific regression appears.
+
+---
+
 ## Workforce publication provenance checkpoint — 2026-10-17 (PR #1213–#1216)
 
 - Reviewed the stacked path: [#1213](https://github.com/ijoolaie/AI-Employee/pull/1213) materializes a first-party Software Developer template as DRAFT; [#1215](https://github.com/ijoolaie/AI-Employee/pull/1215) dispatches a fixed server-owned workspace acceptance suite to Celery and persists an `AgentEvaluation`; [#1216](https://github.com/ijoolaie/AI-Employee/pull/1216) gates publication on trusted provenance. All three remain open Draft PRs; none was merged or closed.
