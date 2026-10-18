@@ -90,6 +90,20 @@ async def record_evaluation(
         )
     if template.status in {AgentTemplateStatus.PUBLISHED, AgentTemplateStatus.RETIRED}:
         raise ConflictError("Published or retired templates cannot receive new evaluation evidence")
+
+    # First-party workforce roles must not be marked PASSED using caller-authored
+    # JSON alone. The evidence hash below proves integrity of submitted bytes, not
+    # that a trusted evaluation actually ran. Keep this path fail-closed until a
+    # persisted, trusted Test Center execution can be linked and verified here.
+    role_code = (template.capability_contract or {}).get("workforce_role_code")
+    if (
+        status == AgentEvaluationStatus.PASSED
+        and template.is_system_template
+        and role_code
+    ):
+        raise ValidationAppError(
+            "First-party workforce templates require trusted Test Center evaluation provenance; manually submitted PASS evidence is not accepted"
+        )
     if score is not None and not 0 <= score <= 100:
         raise ValidationAppError("Evaluation score must be between 0 and 100")
 

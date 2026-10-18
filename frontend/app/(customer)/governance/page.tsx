@@ -18,6 +18,7 @@ interface RegistryItem {
   identity_id: string | null; identity_active: boolean; identity_expires_at: string | null; identity_revoked_at: string | null;
   tools: string[]; capabilities: string[]; max_concurrency: number; budget_policy: Record<string, unknown>; total_cost_usd: number; last_run_at: string | null;
 }
+interface WorkforceTemplate { id: string; agent_definition_id: string; slug: string; name: string; version: number; status: string; description: string | null; }
 interface Proposal {
   id: string; title: string; rationale: string; requested_name: string; requester_user_id: string; sponsor_user_id: string;
   risk_tier: number; status: string; provisioned_agent_instance_id: string | null; created_at: string; updated_at: string;
@@ -35,6 +36,7 @@ const PERMISSIONS = {
 async function loadRegistry() { return (await api.get<RegistryItem[]>("/agent-governance/workforce-registry")).data; }
 async function loadProposals() { return (await api.get<Proposal[]>("/agent-workforce/proposals")).data; }
 async function loadEvaluations(id: string) { return (await api.get<AgentEvaluation[]>(`/agent-governance/templates/${id}/evaluations`)).data; }
+async function loadTemplates() { return (await api.get<WorkforceTemplate[]>("/agent-templates")).data; }
 
 // Contract markers intentionally remain in source for governance integration tests: Workforce Registry, Proposal Queue, Submit workforce proposal, Approve access, Evaluation evidence, Record evaluation, agent_workforce.board_review, agent_workforce.ceo_approve, agent_workforce.provision, agent_workforce.activate.
 export default function GovernancePage() {
@@ -44,39 +46,40 @@ export default function GovernancePage() {
   const permissions = new Set((user as (typeof user & { permissions?: string[] }) | null)?.permissions ?? []);
   const can = (permission: string) => Boolean(user?.is_platform_admin || permissions.has("*") || permissions.has(permission));
   const [registry, setRegistry] = useState<RegistryItem[]>([]);
+  const [templates, setTemplates] = useState<WorkforceTemplate[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [evaluations, setEvaluations] = useState<Record<string, AgentEvaluation[]>>({});
   const [loading, setLoading] = useState(true); const [busy, setBusy] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false); const [showEvaluate, setShowEvaluate] = useState<string | null>(null);
   const [form, setForm] = useState({ title: "", rationale: "", requested_name: "", sponsor_user_id: "", risk_tier: "0" });
-  const [evaluationForm, setEvaluationForm] = useState({ suite_id: "", status: "passed", score: "", evidence: "{}", notes: "" });
+  const [evaluationForm, setEvaluationForm] = useState({ suite_id: "", status: "blocked", score: "", evidence: "{}", notes: "" });
 
   async function loadAllData() {
-    const [workforce, proposalItems] = await Promise.all([loadRegistry(), loadProposals()]);
+    const [workforce, proposalItems, templateItems] = await Promise.all([loadRegistry(), loadProposals(), can(PERMISSIONS.read) ? loadTemplates() : Promise.resolve([] as WorkforceTemplate[])]);
     if (can(PERMISSIONS.read)) {
-      const entries = await Promise.all(workforce.filter((item) => item.agent_template_id).map(async (item) => {
-        const id = item.agent_template_id as string;
+      const templateIds = new Set([...workforce.map((item) => item.agent_template_id).filter((id): id is string => Boolean(id)), ...templateItems.map((item) => item.id)]);
+      const entries = await Promise.all([...templateIds].map(async (id) => {
         try { return [id, await loadEvaluations(id)] as const; } catch { return [id, []] as const; }
       }));
-      return { workforce, proposalItems, evaluations: Object.fromEntries(entries) };
+      return { workforce, proposalItems, templateItems, evaluations: Object.fromEntries(entries) };
     }
-    return { workforce, proposalItems, evaluations: {} as Record<string, AgentEvaluation[]> };
+    return { workforce, proposalItems, templateItems, evaluations: {} as Record<string, AgentEvaluation[]> };
   }
 
   async function refresh() {
     setError(null);
     try {
-      const { workforce, proposalItems, evaluations: evaluationItems } = await loadAllData();
-      setRegistry(workforce); setProposals(proposalItems); setEvaluations(evaluationItems);
+      const { workforce, proposalItems, templateItems, evaluations: evaluationItems } = await loadAllData();
+      setRegistry(workforce); setProposals(proposalItems); setTemplates(templateItems); setEvaluations(evaluationItems);
     } catch (err) { setError(getErrorMessage(err)); } finally { setLoading(false); }
   }
   useEffect(() => {
     let cancelled = false;
     async function loadInitialData() {
       try {
-        const { workforce, proposalItems, evaluations: evaluationItems } = await loadAllData();
+        const { workforce, proposalItems, templateItems, evaluations: evaluationItems } = await loadAllData();
         if (cancelled) return;
-        setRegistry(workforce); setProposals(proposalItems); setEvaluations(evaluationItems); setLoading(false);
+        setRegistry(workforce); setProposals(proposalItems); setTemplates(templateItems); setEvaluations(evaluationItems); setLoading(false);
       } catch (err) {
         if (cancelled) return;
         setError(getErrorMessage(err)); setLoading(false);
@@ -92,6 +95,9 @@ export default function GovernancePage() {
     catch (err) { setError(getErrorMessage(err)); setLoading(false); return false; }
     finally { setBusy(null); }
   }
+  async function materializeDeveloperTemplate() {
+    await action("/ai-workforce-roles/templates/ai_software_developer/materialize", "materialize-developer");
+  }
   async function createProposal(event: FormEvent) {
     event.preventDefault();
     const ok = await action("/agent-workforce/proposals", "create", { ...form, risk_tier: Number(form.risk_tier), sponsor_user_id: form.sponsor_user_id.trim() });
@@ -103,7 +109,7 @@ export default function GovernancePage() {
     const ok = await action(`/agent-governance/templates/${templateId}/evaluate`, `evaluate-${templateId}`, {
       suite_id: evaluationForm.suite_id.trim(), status: evaluationForm.status, score: evaluationForm.score === "" ? null : Number(evaluationForm.score), evidence, notes: evaluationForm.notes.trim() || null,
     });
-    if (ok) { setShowEvaluate(null); setEvaluationForm({ suite_id: "", status: "passed", score: "", evidence: "{}", notes: "" }); }
+    if (ok) { setShowEvaluate(null); setEvaluationForm({ suite_id: "", status: "blocked", score: "", evidence: "{}", notes: "" }); }
   }
   const status = (value: string) => <Badge status={value.toLowerCase().includes("approved") || value === "ENABLED" || value === "approved" || value === "passed" ? "active" : value.toLowerCase().includes("rejected") || value === "REVOKED" || value === "failed" ? "inactive" : "pending"}>{value.replaceAll("_", " ")}</Badge>;
 
@@ -112,6 +118,12 @@ export default function GovernancePage() {
     <div className="space-y-6 p-6" dir="auto">
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
       {showCreate && can(PERMISSIONS.propose) && <form onSubmit={createProposal} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"><div className="mb-4 flex items-center gap-2"><ShieldCheck className="h-5 w-5" /><h2 className="font-semibold">{m.submitProposal}</h2></div><div className="grid gap-4 md:grid-cols-2"><input required placeholder={m.proposalTitle} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" /><input required placeholder={m.agentName} value={form.requested_name} onChange={(e) => setForm({ ...form, requested_name: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" /><input required placeholder={m.sponsor} value={form.sponsor_user_id} onChange={(e) => setForm({ ...form, sponsor_user_id: e.target.value })} className="rounded-lg border px-3 py-2 text-sm" /><select value={form.risk_tier} onChange={(e) => setForm({ ...form, risk_tier: e.target.value })} className="rounded-lg border px-3 py-2 text-sm"><option value="0">{m.riskTier} 0</option><option value="1">{m.riskTier} 1</option><option value="2">{m.riskTier} 2</option><option value="3">{m.riskTier} 3</option><option value="4">{m.riskTier} 4</option></select><textarea required placeholder={m.rationale} value={form.rationale} onChange={(e) => setForm({ ...form, rationale: e.target.value })} className="min-h-24 rounded-lg border px-3 py-2 text-sm md:col-span-2" /></div><div className="mt-4 flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setShowCreate(false)}>{m.cancel}</Button><Button type="submit" disabled={busy === "create"}>{busy === "create" ? m.submitting : m.submit}</Button></div></form>}
+
+
+      <section>
+        <div className="mb-3 flex items-center justify-between gap-3"><div><h2 className="text-lg font-semibold text-gray-900">First-party workforce templates</h2><p className="text-sm text-gray-500">Draft templates are evaluated separately; creating one does not activate an employee. First-party workforce templates cannot be marked PASS with manually entered JSON; trusted Test Center provenance is required.</p></div>{can("agent_template.create") && !templates.some((item) => item.slug === "ai-software-developer") && <Button size="sm" onClick={() => void materializeDeveloperTemplate()} disabled={busy === "materialize-developer"}><Plus className="h-4 w-4" />Create Software Developer draft</Button>}</div>
+        {templates.length === 0 ? <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500">No tenant-owned templates yet.</div> : <div className="grid gap-4 lg:grid-cols-2">{templates.map((template) => { const latest = evaluations[template.id]?.[0]; return <article key={template.id} className="rounded-xl border border-gray-200 bg-white p-5"><div className="flex items-start justify-between"><div><h3 className="font-semibold">{template.name}</h3><p className="text-xs text-gray-500">{template.slug} · v{template.version}</p><p className="mt-2 text-sm text-gray-600">{template.description}</p></div>{status(template.status)}</div><p className="mt-3 text-xs text-gray-500">Evaluation: {latest ? latest.status : "No evaluation evidence"}</p>{can(PERMISSIONS.evaluate) && <Button size="sm" variant="outline" className="mt-3" onClick={() => setShowEvaluate(showEvaluate === template.id ? null : template.id)}><ClipboardCheck className="h-4 w-4" />Record evaluation</Button>}{showEvaluate === template.id && <form onSubmit={(e) => void createEvaluation(e, template.id)} className="mt-3 space-y-2 border-t pt-3"><input required placeholder={m.suite} value={evaluationForm.suite_id} onChange={(e) => setEvaluationForm({ ...evaluationForm, suite_id: e.target.value })} className="w-full rounded border px-2 py-1.5 text-xs" /><div className="grid grid-cols-2 gap-2"><select value={evaluationForm.status} onChange={(e) => setEvaluationForm({ ...evaluationForm, status: e.target.value })} className="rounded border px-2 py-1.5 text-xs"><option value="passed">{m.passed}</option><option value="failed">{m.failed}</option><option value="blocked">{m.blocked}</option></select><input type="number" min="0" max="100" placeholder={m.score} value={evaluationForm.score} onChange={(e) => setEvaluationForm({ ...evaluationForm, score: e.target.value })} className="rounded border px-2 py-1.5 text-xs" /></div><textarea required value={evaluationForm.evidence} onChange={(e) => setEvaluationForm({ ...evaluationForm, evidence: e.target.value })} className="min-h-20 w-full rounded border px-2 py-1.5 font-mono text-xs" aria-label={m.evidence} /><textarea placeholder={m.notes} value={evaluationForm.notes} onChange={(e) => setEvaluationForm({ ...evaluationForm, notes: e.target.value })} className="min-h-16 w-full rounded border px-2 py-1.5 text-xs" /><div className="flex justify-end gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setShowEvaluate(null)}>{m.cancel}</Button><Button type="submit" size="sm" disabled={busy === "evaluate-" + template.id}>{busy === "evaluate-" + template.id ? m.saving : m.saveEvidence}</Button></div></form>}</article>; })}</div>}
+      </section>
 
       <section><div className="mb-3 flex items-center justify-between"><div><h2 className="text-lg font-semibold text-gray-900">{m.registry}</h2><p className="text-sm text-gray-500">{m.registryDescription}</p></div><span className="text-sm text-gray-500">{registry.length} {m.agents}</span></div>{loading ? <Spinner /> : registry.length === 0 ? <div className="rounded-xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">{m.noAgents}</div> : <div className="grid gap-4 lg:grid-cols-2">{registry.map((item) => { const latest = item.agent_template_id ? evaluations[item.agent_template_id]?.[0] : undefined; return <article key={item.agent_instance_id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold text-gray-900">{item.name}</h3><p className="mt-1 text-xs text-gray-500">{item.definition.name} · v{item.definition.version}</p></div>{status(item.status)}</div><div className="mt-4 grid grid-cols-2 gap-3 text-sm"><div><p className="text-xs text-gray-400">{m.risk}</p><p>{m.tierLabel} {item.risk_tier}</p></div><div><p className="text-xs text-gray-400">{m.identity}</p><p>{item.identity_active ? m.active : m.notActive}</p></div><div><p className="text-xs text-gray-400">{m.cost}</p><p>${item.total_cost_usd.toFixed(4)}</p></div><div><p className="text-xs text-gray-400">{m.concurrency}</p><p>{item.max_concurrency}</p></div></div><div className="mt-4"><p className="mb-1 text-xs text-gray-400">{m.tools}</p><div className="flex flex-wrap gap-1">{item.tools.length ? item.tools.map((tool) => <span key={tool} className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">{tool}</span>) : <span className="text-xs text-gray-400">{m.none}</span>}</div></div><div className="mt-4 rounded-lg border bg-gray-50 p-3"><div className="flex items-center justify-between"><div className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /><span className="text-sm font-medium">{m.evaluation}</span></div>{latest ? status(latest.status) : <span className="text-xs text-gray-400">{m.noEvidence}</span>}</div>{latest && <><div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-600"><span>{m.suiteLabel}: {latest.suite_id}</span><span>{m.scoreLabel}: {latest.score ?? "—"}</span><span>{m.hashLabel}: {latest.evidence_hash ? `${latest.evidence_hash.slice(0, 16)}…` : "—"}</span><span>{new Date(latest.created_at).toLocaleString()}</span></div>{latest.notes && <p className="mt-2 text-xs text-gray-500">{latest.notes}</p>}<details className="mt-2"><summary className="cursor-pointer text-xs text-gray-500">{m.viewEvidence}</summary><pre className="mt-2 max-h-48 overflow-auto rounded bg-white p-2 text-[11px]">{JSON.stringify(latest.evidence, null, 2)}</pre></details></>}{can(PERMISSIONS.evaluate) && item.agent_template_id && <Button size="sm" variant="outline" className="mt-3" onClick={() => setShowEvaluate(showEvaluate === item.agent_template_id ? null : item.agent_template_id)}><ClipboardCheck className="h-4 w-4" />{m.recordEvaluation}</Button>}{showEvaluate === item.agent_template_id && item.agent_template_id && <form onSubmit={(e) => void createEvaluation(e, item.agent_template_id as string)} className="mt-3 space-y-2 border-t pt-3"><input required placeholder={m.suite} value={evaluationForm.suite_id} onChange={(e) => setEvaluationForm({ ...evaluationForm, suite_id: e.target.value })} className="w-full rounded border px-2 py-1.5 text-xs" /><div className="grid grid-cols-2 gap-2"><select value={evaluationForm.status} onChange={(e) => setEvaluationForm({ ...evaluationForm, status: e.target.value })} className="rounded border px-2 py-1.5 text-xs"><option value="passed">{m.passed}</option><option value="failed">{m.failed}</option><option value="blocked">{m.blocked}</option></select><input type="number" min="0" max="100" placeholder={m.score} value={evaluationForm.score} onChange={(e) => setEvaluationForm({ ...evaluationForm, score: e.target.value })} className="rounded border px-2 py-1.5 text-xs" /></div><textarea required value={evaluationForm.evidence} onChange={(e) => setEvaluationForm({ ...evaluationForm, evidence: e.target.value })} className="min-h-20 w-full rounded border px-2 py-1.5 font-mono text-xs" aria-label={m.evidence} /><textarea placeholder={m.notes} value={evaluationForm.notes} onChange={(e) => setEvaluationForm({ ...evaluationForm, notes: e.target.value })} className="min-h-16 w-full rounded border px-2 py-1.5 text-xs" /><div className="flex justify-end gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setShowEvaluate(null)}>{m.cancel}</Button><Button type="submit" size="sm" disabled={busy === `evaluate-${item.agent_template_id}`}>{busy === `evaluate-${item.agent_template_id}` ? m.saving : m.saveEvidence}</Button></div></form>}</div>{item.identity_id && can(PERMISSIONS.lifecycle) && <Button size="sm" variant="outline" className="mt-4" onClick={() => void action(`/agent-governance/identities/${item.identity_id}/access-review`, `review-${item.identity_id}`, { decision: "approved" })} disabled={busy === `review-${item.identity_id}`}><UserCheck className="h-4 w-4" />{busy === `review-${item.identity_id}` ? m.reviewing : m.approveAccess}</Button>}</article>; })}</div>}</section>
 
