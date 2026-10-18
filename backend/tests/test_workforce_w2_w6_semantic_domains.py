@@ -34,6 +34,61 @@ async def test_w2_engineering_workspace_paths_cannot_collide_after_key_normaliza
 
 
 @pytest.mark.asyncio
+async def test_software_developer_workspace_acceptance_checks_lifecycle_and_isolation():
+    from app.services.workforce_semantic_domains import run_software_developer_workspace_acceptance
+
+    tenant_id = "tenant-workspace-acceptance"
+    result = await run_software_developer_workspace_acceptance(tenant_id=tenant_id)
+
+    assert result["suite_id"] == "software_developer_workspace_acceptance"
+    assert result["suite_version"] == "workspace_artifact_lifecycle_v1"
+    assert result["status"] == "passed"
+    assert result["checks_passed"] == 10
+    assert all(check["passed"] for check in result["checks"])
+    assert result["evidence_boundary"] == "local_workspace_artifact_only"
+    assert result["provider_execution"] == "not_required"
+    assert result["external_side_effects"] is False
+
+    import json
+    from app.services.storage import get_storage_backend
+    backend = get_storage_backend()
+    for key in backend.list_prefix(f"{tenant_id}/"):
+        with backend.open(key) as stream:
+            payload = json.loads(stream.read().decode("utf-8"))
+        assert not (
+            payload.get("kind") == "workspace_file"
+            and payload.get("path", "").startswith(".acceptance/workspace-lifecycle-")
+        )
+
+
+@pytest.mark.asyncio
+async def test_software_developer_workspace_acceptance_cleans_up_after_failure(monkeypatch):
+    from app.services import workforce_semantic_domains as domains
+    from app.services.storage import get_storage_backend
+    from app.core.exceptions import ValidationAppError
+
+    original = domains.execute_engineering
+    created_keys = []
+
+    async def fail_after_create(arguments, **context):
+        if arguments.get("_operation") == "workspace_create_file":
+            result = await original(arguments, **context)
+            created_keys.append(result["storage_key"])
+            return result
+        if arguments.get("_operation") == "workspace_read":
+            raise ValidationAppError("injected acceptance failure")
+        return await original(arguments, **context)
+
+    monkeypatch.setattr(domains, "execute_engineering", fail_after_create)
+    tenant_id = "tenant-workspace-acceptance-failure"
+    with pytest.raises(ValidationAppError, match="injected acceptance failure"):
+        await domains.run_software_developer_workspace_acceptance(tenant_id=tenant_id)
+
+    assert len(created_keys) == 1
+    assert not get_storage_backend().exists(created_keys[0])
+
+
+@pytest.mark.asyncio
 async def test_w2_engineering_external_delivery_is_proposal_only():
     result = await execute_engineering({"_operation": "deploy_proposal"}, tenant_id="tenant-a")
     assert result["status"] == "proposal"
