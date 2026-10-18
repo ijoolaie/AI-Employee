@@ -46,3 +46,6 @@ dist/
 
 # Local/generated certification and operational evidence
 artifacts/
+
+# Local runtime storage
+/var/storage/
