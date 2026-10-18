@@ -93,11 +93,12 @@ CI, production-like infrastructure and simulated providers are engineering/relea
 4. `docs/00_START_HERE/CURRENT_PRIORITIES.md`
 5. `docs/current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md`
 6. `docs/DOCUMENTATION_INDEX.md`
-7. `docs/current/PRODUCTIZATION_ROADMAP.md`
-8. `docs/current/PRODUCTION_SERVER_BASELINE.md`
-9. `docs/current/PRODUCTION_EVIDENCE_INDEX.md`
-10. `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
-11. `docs/current/EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md`
+7. `docs/local/LOCAL_TEST_TENANT_ACCOUNTS.md` — repeatable local Vendor → Reseller → Customer provisioning, login, license issuance/renewal, and test checklist.
+8. `docs/current/PRODUCTIZATION_ROADMAP.md`
+9. `docs/current/PRODUCTION_SERVER_BASELINE.md`
+10. `docs/current/PRODUCTION_EVIDENCE_INDEX.md`
+11. `docs/current/PRODUCTION_CERTIFICATION_EXECUTION_PACK.md`
+12. `docs/current/EXTERNAL_PRODUCTION_EXECUTION_PACK_2026-09-26.md`
 
 ## Release rules
 
