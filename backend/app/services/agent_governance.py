@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.models.agent_access_review import AgentAccessReview, AgentAccessReviewDecision
 from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
+from app.models.audit_log import AuditLog
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_template import AgentTemplate, AgentTemplateStatus
@@ -168,6 +169,94 @@ async def assert_publishable_with_evidence(db: AsyncSession, *, tenant_id: uuid.
     evidence = await latest_evaluation(db, tenant_id=tenant_id, template_id=template_id)
     if evidence is None or evidence.status != AgentEvaluationStatus.PASSED:
         raise ValidationAppError("Agent template requires its latest evaluation evidence to be passed before publication")
+
+    # A PASSED database row is not itself proof that a trusted evaluator ran.
+    # First-party workforce templates require a server-owned worker evaluation
+    # bound to this tenant, template, version and supported suite. Keep unknown
+    # roles fail-closed until each has its own trusted evaluator.
+    role_code = (template.capability_contract or {}).get("workforce_role_code")
+    if template.is_system_template and role_code:
+        expected_suite = {
+            "ai_software_developer": "software_developer_workspace_acceptance",
+        }.get(role_code)
+        evaluation_evidence = evidence.evidence if isinstance(evidence.evidence, dict) else {}
+        checks = evaluation_evidence.get("checks")
+        worker_task_id = evaluation_evidence.get("worker_task_id")
+
+        # Evidence JSON and its SHA-256 are caller-reproducible. Require the
+        # immutable, server-written completion event committed by the worker in
+        # the same transaction as this evaluation. The event is tenant-, template-,
+        # evaluation-, task-, suite-, outcome-, and evidence-hash-bound.
+        trusted_audit = None
+        if expected_suite is not None and isinstance(worker_task_id, str) and worker_task_id:
+            audit_result = await db.execute(
+                select(AuditLog)
+                .where(
+                    AuditLog.tenant_id == tenant_id,
+                    AuditLog.actor_type == "system",
+                    AuditLog.action == "agent_template.workspace_acceptance_completed",
+                    AuditLog.resource_type == "agent_template",
+                    AuditLog.resource_id == str(template.id),
+                    AuditLog.status == "success",
+                    AuditLog.metadata_["evaluation_id"].as_string() == str(evidence.id),
+                    AuditLog.metadata_["worker_task_id"].as_string() == worker_task_id,
+                    AuditLog.metadata_["suite_id"].as_string() == expected_suite,
+                    AuditLog.metadata_["suite_version"].as_string() == "workspace_artifact_lifecycle_v1",
+                    AuditLog.metadata_["evaluation_status"].as_string() == "passed",
+                    AuditLog.metadata_["evidence_hash"].as_string() == str(evidence.evidence_hash),
+                    AuditLog.metadata_["evidence_boundary"].as_string() == "local_workspace_artifact_only",
+                    AuditLog.ledger_sequence.is_not(None),
+                    AuditLog.entry_hash.is_not(None),
+                )
+                .limit(1)
+            )
+            trusted_audit = audit_result.scalar_one_or_none()
+
+        audit_metadata = (getattr(trusted_audit, "metadata_", None) or {}) if trusted_audit is not None else {}
+        trusted_record_valid = (
+            trusted_audit is not None
+            and trusted_audit.tenant_id == tenant_id
+            and trusted_audit.actor_type == "system"
+            and trusted_audit.action == "agent_template.workspace_acceptance_completed"
+            and trusted_audit.resource_type == "agent_template"
+            and trusted_audit.resource_id == str(template.id)
+            and trusted_audit.status == "success"
+            and trusted_audit.ledger_sequence is not None
+            and bool(trusted_audit.entry_hash)
+            and audit_metadata.get("evaluation_id") == str(evidence.id)
+            and audit_metadata.get("worker_task_id") == worker_task_id
+            and audit_metadata.get("suite_id") == expected_suite
+            and audit_metadata.get("suite_version") == "workspace_artifact_lifecycle_v1"
+            and audit_metadata.get("evaluation_status") == "passed"
+            and audit_metadata.get("evidence_hash") == evidence.evidence_hash
+            and audit_metadata.get("evidence_boundary") == "local_workspace_artifact_only"
+        )
+        provenance_valid = (
+            trusted_record_valid
+            and expected_suite is not None
+            and evidence.suite_id == expected_suite
+            and evaluation_evidence.get("suite_id") == expected_suite
+            and evaluation_evidence.get("suite_version") == "workspace_artifact_lifecycle_v1"
+            and evaluation_evidence.get("worker_execution") is True
+            and evaluation_evidence.get("source") == "celery_worker"
+            and bool(evaluation_evidence.get("worker_task_id"))
+            and evaluation_evidence.get("tenant_id") == str(tenant_id)
+            and evaluation_evidence.get("template_id") == str(template.id)
+            and evaluation_evidence.get("template_version") == template.version
+            and evaluation_evidence.get("status") == "passed"
+            and evaluation_evidence.get("evidence_boundary") == "local_workspace_artifact_only"
+            and evaluation_evidence.get("provider_execution") == "not_required"
+            and evaluation_evidence.get("external_side_effects") is False
+            and isinstance(checks, list)
+            and len(checks) == 10
+            and all(isinstance(check, dict) and check.get("passed") is True for check in checks)
+            and evaluation_evidence.get("checks_passed") == len(checks)
+            and evidence.evidence_hash == _hash_evidence(evaluation_evidence)
+        )
+        if not provenance_valid:
+            raise ValidationAppError(
+                "First-party workforce template requires verified worker-generated evaluation provenance before publication"
+            )
 
     policy = template.evaluation_policy or {}
     required_suite_id = policy.get("required_suite_id") or policy.get("suite_id")

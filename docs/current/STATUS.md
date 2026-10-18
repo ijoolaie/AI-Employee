@@ -1,3 +1,15 @@
+## Workforce provenance gate — 2026-10-17
+
+PR stack: [#1213](https://github.com/ijoolaie/AI-Employee/pull/1213) → [#1215](https://github.com/ijoolaie/AI-Employee/pull/1215) → [#1216](https://github.com/ijoolaie/AI-Employee/pull/1216). All remain open Draft PRs.
+
+The source-to-action trace is: tenant/permission-checked draft materialization; tenant/template/DRAFT-checked dispatch of a fixed Celery suite; worker persistence of evaluation evidence and a same-transaction audit completion event; publication gate lookup of that server-owned event and comparison of tenant, template, evaluation, task ID, suite/version, passed outcome, evidence hash and local-only boundary. This corrects the prior weakness where caller-authored JSON could claim `source=celery_worker` and recompute its own hash without proof of execution.
+
+A new regression now covers the fully matching/rehashed evidence case when no trusted worker audit row exists. Source commit: `841891498c5eb877e62939f2d08a23ecb26a026a`; regression-test commit: `8f3a007507cffdd4ad8c217b99e4c7f98033bf67`. All five GitHub Actions workflows completed successfully on exact PR head `c462d95ccb46233132649f03bb88d24e236cbc1d`: Production Observability, Production Rollback & Alerting, Architecture Guard, Runtime Isolation and RBAC Contract, and Workforce Semantic Real-Stack E2E. This is CI evidence only; local tests and user-side acceptance remain unverified. Recheck Actions after subsequent commits.
+
+Do not merge or close the stacked PRs yet. After CI is green, perform the bounded local acceptance in the user's checkout; only then reassess merge readiness in dependency order. Passing CI is not evidence of local UI acceptance, arbitrary code execution, GitHub write capability, deployment, or production readiness. No release or progress-score increase is claimed.
+
+---
+
 ## Current status update — 2026-10-15 (PR #1175)
 
 - Main source fix merged: PR [#1175](https://github.com/ijoolaie/AI-Employee/pull/1175), merge commit [`8c1067a030f3aff7d54d3fdee64a664ea0bc3bae`](https://github.com/ijoolaie/AI-Employee/commit/8c1067a030f3aff7d54d3fdee64a664ea0bc3bae).
