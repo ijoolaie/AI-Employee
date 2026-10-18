@@ -20,6 +20,7 @@ def test_all_registered_tasks_have_explicit_isolation_routes():
         "workflow.execute": EXECUTION_QUEUE,
         "workflow.parallel_branch": EXECUTION_QUEUE,
         "test_center.execute_run": TEST_CENTER_QUEUE,
+        "workforce.evaluate_software_developer_workspace": EXECUTION_QUEUE,
         "workflow.schedule_tick": CONTROL_QUEUE,
         "workflow.approval_expiry": CONTROL_QUEUE,
         "workflow.timeout_sweep": CONTROL_QUEUE,
