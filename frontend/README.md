@@ -1,12 +1,12 @@
 # AI Employee Platform — Frontend
 
-**v0.1.0** — Customer Panel MVP aligned with backend `v0.2.0` and docs package `v1.2` / `08_Frontend_v1.1`.
+**Current frontend package:** `1.1.1` (source: `package.json`). This README began as an MVP guide; the historical MVP inventory below is incomplete and must not be treated as the current feature list. The current `main` dependency is Next.js `16.4.2`. Frontend changes remain post-release engineering unless separately certified.
 
 ## Stack
 
 | Technology | Role |
 |---|---|
-| Next.js 15 (App Router) | Framework, routing, layouts |
+| Next.js 16.4.2 (App Router) | Framework, routing, layouts |
 | React 19 + TypeScript | UI |
 | Tailwind CSS | Styling |
 | Zustand | Auth / session state (persisted) |
@@ -30,7 +30,7 @@
 - **Files** — upload, list, soft-delete
 - **Settings** — profile & tenant info
 
-### Not yet (per roadmap)
+### Original MVP scope (historical; not a current feature inventory)
 - Admin Panel
 - Developer Console (Trace / Logs)
 - Knowledge, Billing, Usage charts
