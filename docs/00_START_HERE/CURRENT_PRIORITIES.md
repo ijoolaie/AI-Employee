@@ -1,14 +1,12 @@
-## Current priority — trusted Software Developer publish gate (2026-10-17)
+## Current priority — documentation truth and dependency PR disposition (2026-10-19)
 
-1. Exact-head GitHub Actions for [PR #1216](https://github.com/ijoolaie/AI-Employee/pull/1216) passed on `c462d95ccb46233132649f03bb88d24e236cbc1d` (five workflows). Because this documentation update will create a new commit, recheck Actions against the new head before considering merge.
-2. Verify the implementation against the evidence chain: DRAFT materialization (#1213) → permission-checked Celery dispatch (#1215) → worker-created evaluation plus transactional immutable audit completion event → publish guard requiring the matching trusted audit row.
-3. If CI exposes failures, fix only the failing focused code/tests; do not relax the missing-audit rejection or substitute a caller-provided PASS payload.
-4. Keep #1213, #1215 and #1216 open and Draft. Do not merge/close them until exact-head CI passes, the provenance regression is confirmed, and the user completes the local workspace acceptance in their own checkout.
-5. Local acceptance scope: create/read/list/edit/delete, exact content/read-after-delete, cross-tenant read/delete denial, and cleanup. It does not establish provider-backed tests/lint/build, Git writes, deployment, or production readiness.
-6. Progress rubric unchanged: operational 78%; product-scope 46%; actionable 77%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+1. PR #1223 was squash-merged to update Next.js to 16.4.2. Its upstream release notes include critical and high-severity security fixes; this is an engineering dependency update, not a production certification.
+2. Dependabot PRs #1222 and #1224–#1231 were asked to rebase after #1223 advanced main. Recheck current mergeability and exact-head CI after each rebase; do not merge a stale/conflicting head or infer current CI from an older SHA.
+3. PR #1221 (local test tenant/license runbook) remains Draft until the stale workforce PR statements are corrected, the frontend README matches the current package, and documentation consistency checks pass on its final head.
+4. The most recent merged application/test work is PR #1220 (tenant-scoped persisted Run reads). The next product-facing step is to expose the persisted tool artifact in the UI and link it to its Run, with focused regression coverage.
+5. Keep the release boundary explicit: certified release remains v1.4.17 at b403c0dcdea579e017738a6fdea138c2b1a2999c. Current main and CI/local acceptance do not establish production deployment, live-provider behavior, or customer acceptance.
 
 ---
-
 ## Workforce approval boundary trace — PR #1189 merged (2026-10-16)
 
 - PR [#1189](https://github.com/ijoolaie/AI-Employee/pull/1189) was squash-merged as `33bb42dbdeae7f4481b33302e9400f319b1735e5` after all 11 reported check runs completed successfully on exact head `5a8b7286f1695b8689ba3ef35441413629ec0789`. The new parameterized regression test keeps seven unimplemented Software Developer privileged operations approval-required but unbound; no runtime capability was added.
