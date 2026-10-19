@@ -9,7 +9,7 @@
 
 ## Workforce provenance gate — 2026-10-17
 
-PR stack: [#1213](https://github.com/ijoolaie/AI-Employee/pull/1213) → [#1215](https://github.com/ijoolaie/AI-Employee/pull/1215) → [#1216](https://github.com/ijoolaie/AI-Employee/pull/1216). All remain open Draft PRs.
+PR stack: [#1213](https://github.com/ijoolaie/AI-Employee/pull/1213) → [#1215](https://github.com/ijoolaie/AI-Employee/pull/1215) → [#1216](https://github.com/ijoolaie/AI-Employee/pull/1216). All three PRs were subsequently merged: #1213, #1215 and #1216. Their merge status supersedes this dated checkpoint; the security/provenance conclusions below remain historical evidence.
 
 The source-to-action trace is: tenant/permission-checked draft materialization; tenant/template/DRAFT-checked dispatch of a fixed Celery suite; worker persistence of evaluation evidence and a same-transaction audit completion event; publication gate lookup of that server-owned event and comparison of tenant, template, evaluation, task ID, suite/version, passed outcome, evidence hash and local-only boundary. This corrects the prior weakness where caller-authored JSON could claim `source=celery_worker` and recompute its own hash without proof of execution.
 
