@@ -106,7 +106,8 @@ def _workforce_artifact_audit_metadata(tool_name: str, tool_result: Any, tenant_
         import hashlib
         artifact_id = hashlib.sha256(storage_key.encode("utf-8")).hexdigest()[:32]
         payload_artifact_id = None
-    return {"persisted_workforce_artifact": {"artifact_id": artifact_id, "payload_artifact_id": payload_artifact_id, "storage_key": storage_key, "tool": tool_name}}
+    import hashlib
+    return {"persisted_workforce_artifact": {"artifact_id": artifact_id, "payload_artifact_id": payload_artifact_id, "storage_key_sha256": hashlib.sha256(storage_key.encode("utf-8")).hexdigest(), "tool": tool_name}}
 
 
 async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, error: str | None = None) -> None:
