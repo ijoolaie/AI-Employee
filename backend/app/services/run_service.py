@@ -95,7 +95,10 @@ def _workforce_artifact_audit_metadata(tool_name: str, tool_result: Any, tenant_
         return {}
     from app.services.storage import get_storage_backend
     backend = get_storage_backend()
-    if not backend.exists(storage_key):
+    try:
+        if not backend.exists(storage_key):
+            return {}
+    except (OSError, ValueError):
         return {}
     payload_artifact_id = tool_result.get("artifact_id")
     artifact_id = payload_artifact_id
