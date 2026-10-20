@@ -1,9 +1,20 @@
+## Run artifact UI delivery checkpoint — 2026-10-20 (PR #1236)
+
+- PR [#1236](https://github.com/ijoolaie/AI-Employee/pull/1236) merged as `4956dafc50febd380ee3bcbf70e474aa7dcd5c00` from exact tested head `96981a3fd2138310faed2b89fff369bb3ed123fd`.
+- The Run detail API now lists and downloads persisted workforce JSON artifacts using the authenticated tenant's Run ownership and trusted tool-call audit references. Audit metadata stores a storage-key digest rather than the raw storage path; the browser never submits a storage key.
+- The Run detail UI includes artifact kind/operation/status/time, provider evidence metadata, a Run-scoped JSON download, and loading/empty/error states. It refreshes the list while a Run is active. Report Employee and Document Employee download flows are unchanged.
+- Backend regression tests and frontend contract/unit/build checks passed in CI. All 12 reported workflow groups passed on the exact PR head: CI, CodeQL, Architecture Guard, Workforce Semantic Real-Stack E2E, W21 AI Business Network E2E, Runtime Isolation/RBAC, Phase 14.14 Security Privacy Compliance Gate, Production Infrastructure, Production Observability, Rollback & Alerting, HA Failure Recovery, and Ephemeral DAST.
+- Evidence boundary: artifacts are persisted tool evidence, not proof of live-provider execution, external side effects, production deployment, customer acceptance, or release certification. Existing artifacts whose historical tool-call audit rows lack a trusted storage reference are not surfaced; new tool calls establish the reference.
+- Remaining acceptance: run a fresh local workforce Run after updating the local checkout, confirm the artifact appears in Run detail and download opens correctly. This connector session did not run local-machine acceptance. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Local acceptance and repeatable test-user runbook — 2026-10-18
 
 - The isolated secondary checkout `C:\Users\Ali\AI-Employee-main-sync` passed the bounded local Employee → Run → tool → result acceptance: auth, Employee creation/version/list/get, successful Run, tool-call audit and tenant-scoped artifact, then API reread with identical persisted output. Checklist: 6/6 for this scenario only.
 - Tool: `workforce_keyword_research`; provider execution: `not_configured`. This proves deterministic local tool execution and persistence, not live search/provider behavior, production readiness, or customer acceptance. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; no release claim changed.
 - Canonical test-account and license runbook: `docs/local/LOCAL_TEST_TENANT_ACCOUNTS.md`. It records stable Vendor/Reseller/Customer slugs, the supported UI/API provisioning path, login verification, how to issue a fresh time-limited license when a test license expires, feature-scoped entitlement examples, and safety rules. Passwords and tokens are not stored.
-- Next local product step: expose the persisted tool artifact in the product UI and link it to the corresponding Run; avoid repeating already-passed infrastructure checks unless a specific regression appears.
+- Historical next-step note (superseded by PR #1236): expose the persisted tool artifact in the product UI and link it to the corresponding Run. The remaining action is a fresh local UI acceptance run; avoid repeating already-passed infrastructure checks unless a specific regression appears.
 
 ---
 
