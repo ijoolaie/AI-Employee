@@ -1,6 +1,15 @@
+## Local product acceptance — isolated test stack (2026-10-18)
+
+- In the user's secondary checkout `C:\Users\Ali\AI-Employee-main-sync`, the isolated local acceptance flow passed: authenticated test tenant; employee create; version create; list/get; Run create and worker execution; governed tool invocation with audit/artifact; terminal result reread through the API with persisted output equality.
+- Checklist result: 6/6 local acceptance gates passed for this bounded scenario. The tool used was `workforce_keyword_research`; its execution produced a tenant-scoped artifact and audit record. The provider was `not_configured`, so this verifies deterministic local tool execution—not live internet search or a real external provider.
+- This does not change the certified release (`v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`), does not certify current `main`, and does not prove production deployment or customer acceptance.
+- Added the canonical repeatable account/license procedure: `docs/local/LOCAL_TEST_TENANT_ACCOUNTS.md`. It documents reuse of the stable vendor tenant, supported Vendor → Reseller → Customer provisioning, login checks, license issuance as renewal, exact endpoint boundaries, and required feature codes. Passwords are intentionally excluded.
+
+---
+
 ## Workforce provenance gate — 2026-10-17
 
-PR stack: [#1213](https://github.com/ijoolaie/AI-Employee/pull/1213) → [#1215](https://github.com/ijoolaie/AI-Employee/pull/1215) → [#1216](https://github.com/ijoolaie/AI-Employee/pull/1216). All remain open Draft PRs.
+PR stack: [#1213](https://github.com/ijoolaie/AI-Employee/pull/1213) → [#1215](https://github.com/ijoolaie/AI-Employee/pull/1215) → [#1216](https://github.com/ijoolaie/AI-Employee/pull/1216). All three PRs were subsequently merged: #1213, #1215 and #1216. Their merge status supersedes this dated checkpoint; the security/provenance conclusions below remain historical evidence.
 
 The source-to-action trace is: tenant/permission-checked draft materialization; tenant/template/DRAFT-checked dispatch of a fixed Celery suite; worker persistence of evaluation evidence and a same-transaction audit completion event; publication gate lookup of that server-owned event and comparison of tenant, template, evaluation, task ID, suite/version, passed outcome, evidence hash and local-only boundary. This corrects the prior weakness where caller-authored JSON could claim `source=celery_worker` and recompute its own hash without proof of execution.
 

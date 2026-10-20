@@ -12,6 +12,7 @@ This is the top-level map for current project documentation.
 | What to do next | `00_START_HERE/CURRENT_PRIORITIES.md` |
 | Capability truth / role-by-role execution audit and commercial readiness | `current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md` |
 | Navigation rules | `00_START_HERE/HOW_TO_NAVIGATE.md` |
+| Repeatable local Vendor/Reseller/Customer test accounts and license renewal | `local/LOCAL_TEST_TENANT_ACCOUNTS.md` |
 
 ## 2. Current implementation and delivery truth
 
