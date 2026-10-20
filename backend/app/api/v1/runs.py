@@ -2,8 +2,10 @@
 execution through the transactional outbox, so the Run and its execution signal
 are committed atomically and can be dispatched once the transaction is visible."""
 
+import hashlib
 import io
 import json
+import re
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
@@ -62,19 +64,29 @@ async def _run_artifacts(db, *, run_id: UUID, tenant_id: UUID) -> list[dict[str,
         if not isinstance(ref, dict):
             continue
         artifact_id = ref.get("artifact_id")
-        key = ref.get("storage_key")
+        key_hash = ref.get("storage_key_sha256")
         tool = ref.get("tool")
         if (
             not isinstance(artifact_id, str)
             or not artifact_id
-            or not isinstance(key, str)
-            or not key.startswith(f"{tenant_id}/")
+            or not isinstance(key_hash, str)
+            or re.fullmatch(r"[0-9a-f]{64}", key_hash) is None
             or not isinstance(tool, str)
             or not tool.startswith("workforce_")
         ):
             continue
+        # The audit ledger stores only a digest, not the raw storage path. Resolve
+        # the digest against keys under the authenticated tenant prefix.
         try:
-            if not backend.exists(key):
+            key = next(
+                (
+                    candidate for candidate in backend.list_prefix(f"{tenant_id}/")
+                    if hashlib.sha256(candidate.encode("utf-8")).hexdigest() == key_hash
+                    and candidate.startswith(f"{tenant_id}/")
+                ),
+                None,
+            )
+            if key is None or not backend.exists(key):
                 continue
             with backend.open(key) as stream:
                 raw = stream.read()
