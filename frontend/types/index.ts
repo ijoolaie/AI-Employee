@@ -149,6 +149,19 @@ export interface TraceEvent {
   error_message?: string | null;
 }
 
+export interface RunArtifactSummary {
+  artifact_id: string;
+  kind: string;
+  operation: string | null;
+  status: string | null;
+  created_at: string;
+  tool: string;
+  content_type: string;
+  size_bytes: number;
+  download_url: string;
+  provenance: Record<string, string | number | boolean | null>;
+}
+
 export interface RunTrace {
   run_id: string;
   status: string;
