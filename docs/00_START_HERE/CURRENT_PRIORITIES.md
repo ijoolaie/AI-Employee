@@ -6,7 +6,8 @@
 4. The most recent merged application/test work remains PR #1220 (tenant-scoped persisted Run reads). The next product-facing step is to expose persisted tool artifacts in the UI and link them to their Run, with focused regression coverage.
 5. Keep the release boundary explicit: certified release remains v1.4.17 at b403c0dcdea579e017738a6fdea138c2b1a2999c. Current main and CI/local acceptance do not establish production deployment, live-provider behavior, or customer acceptance.
 
----## Workforce approval boundary trace — PR #1189 merged (2026-10-16)
+---
+## Workforce approval boundary trace — PR #1189 merged (2026-10-16)
 
 - PR [#1189](https://github.com/ijoolaie/AI-Employee/pull/1189) was squash-merged as `33bb42dbdeae7f4481b33302e9400f319b1735e5` after all 11 reported check runs completed successfully on exact head `5a8b7286f1695b8689ba3ef35441413629ec0789`. The new parameterized regression test keeps seven unimplemented Software Developer privileged operations approval-required but unbound; no runtime capability was added.
 - Source trace checked the role contract, Tool Registry, RunService approval pause/resume, persisted approval decision/outbox, runtime workforce governance and generic tool governance. On the resume path, RunService validates the persisted approval against tenant, Run, tool, tool-call ID, approved status and exact arguments before registry execution; generic tool governance then consumes the approval as part of the gated execution path. The approval decision is persisted with a transactional outbox resume signal.
