@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 from datetime import datetime, timezone
@@ -27,6 +28,9 @@ class MemoryStorage:
 
     def open(self, key):
         return io.BytesIO(self.objects[key])
+
+    def list_prefix(self, prefix):
+        return [key for key in self.objects if key.startswith(prefix)]
 
 
 class FakeRows:
@@ -70,7 +74,7 @@ def audit_row(*, tenant_id, run_id, artifact_id, storage_key, tool="workforce_ke
         metadata_={
             "persisted_workforce_artifact": {
                 "artifact_id": artifact_id,
-                "storage_key": storage_key,
+                "storage_key_sha256": hashlib.sha256(storage_key.encode("utf-8")).hexdigest(),
                 "tool": tool,
             }
         },
