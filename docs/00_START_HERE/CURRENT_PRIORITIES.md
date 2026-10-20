@@ -1,13 +1,12 @@
-## Current priority — documentation truth and dependency PR disposition (2026-10-19)
+## Current priority — post-merge synchronization and remaining dependency conflicts (2026-10-20)
 
-1. PR #1223 was squash-merged to update Next.js to 16.4.2. Its upstream release notes include critical and high-severity security fixes; this is an engineering dependency update, not a production certification.
-2. Dependabot PRs #1222 and #1224–#1231 were asked to rebase after #1223 advanced main. Recheck current mergeability and exact-head CI after each rebase; do not merge a stale/conflicting head or infer current CI from an older SHA.
-3. PR #1221 (local test tenant/license runbook) remains Draft until the stale workforce PR statements are corrected, the frontend README matches the current package, and documentation consistency checks pass on its final head.
-4. The most recent merged application/test work is PR #1220 (tenant-scoped persisted Run reads). The next product-facing step is to expose the persisted tool artifact in the UI and link it to its Run, with focused regression coverage.
+1. PR #1223 (Next.js 16.4.2) and documentation PR #1221 (local test tenant/license runbook plus status/README corrections) are merged.
+2. Dependency PRs #1222, #1224, #1225, #1226, #1227, #1229 and #1230 are merged after all reported workflow runs on their exact reviewed heads completed successfully.
+3. PR #1228 (react-dom 19.3.1) and #1231 (eslint-config-next 16.4.2) currently conflict with main after the preceding merges. Rebase them onto current main, preserve React/React DOM version alignment, and rerun required CI on each new exact head before merging.
+4. The most recent merged application/test work remains PR #1220 (tenant-scoped persisted Run reads). The next product-facing step is to expose persisted tool artifacts in the UI and link them to their Run, with focused regression coverage.
 5. Keep the release boundary explicit: certified release remains v1.4.17 at b403c0dcdea579e017738a6fdea138c2b1a2999c. Current main and CI/local acceptance do not establish production deployment, live-provider behavior, or customer acceptance.
 
----
-## Workforce approval boundary trace — PR #1189 merged (2026-10-16)
+---## Workforce approval boundary trace — PR #1189 merged (2026-10-16)
 
 - PR [#1189](https://github.com/ijoolaie/AI-Employee/pull/1189) was squash-merged as `33bb42dbdeae7f4481b33302e9400f319b1735e5` after all 11 reported check runs completed successfully on exact head `5a8b7286f1695b8689ba3ef35441413629ec0789`. The new parameterized regression test keeps seven unimplemented Software Developer privileged operations approval-required but unbound; no runtime capability was added.
 - Source trace checked the role contract, Tool Registry, RunService approval pause/resume, persisted approval decision/outbox, runtime workforce governance and generic tool governance. On the resume path, RunService validates the persisted approval against tenant, Run, tool, tool-call ID, approved status and exact arguments before registry execution; generic tool governance then consumes the approval as part of the gated execution path. The approval decision is persisted with a transactional outbox resume signal.
