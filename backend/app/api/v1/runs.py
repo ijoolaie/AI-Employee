@@ -71,10 +71,11 @@ async def _run_artifacts(db, *, run_id: UUID, tenant_id: UUID) -> list[dict[str,
             or not key.startswith(f"{tenant_id}/")
             or not isinstance(tool, str)
             or not tool.startswith("workforce_")
-            or not backend.exists(key)
         ):
             continue
         try:
+            if not backend.exists(key):
+                continue
             with backend.open(key) as stream:
                 raw = stream.read()
             payload = json.loads(raw.decode("utf-8"))
