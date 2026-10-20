@@ -68,7 +68,7 @@ async def _run_artifacts(db, *, run_id: UUID, tenant_id: UUID) -> list[dict[str,
         tool = ref.get("tool")
         if (
             not isinstance(artifact_id, str)
-            or not artifact_id
+            or re.fullmatch(r"[A-Za-z0-9_-]{1,128}", artifact_id) is None
             or not isinstance(key_hash, str)
             or re.fullmatch(r"[0-9a-f]{64}", key_hash) is None
             or not isinstance(tool, str)
@@ -89,7 +89,9 @@ async def _run_artifacts(db, *, run_id: UUID, tenant_id: UUID) -> list[dict[str,
             if key is None or not backend.exists(key):
                 continue
             with backend.open(key) as stream:
-                raw = stream.read()
+                raw = stream.read(5_000_001)
+            if len(raw) > 5_000_000:
+                continue
             payload = json.loads(raw.decode("utf-8"))
         except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError):
             continue
@@ -145,7 +147,9 @@ async def download_run_artifact(run_id: UUID, artifact_id: str, ctx: RunReadCont
     if not key.startswith(f"{ctx.tenant_id}/") or not backend.exists(key):
         raise HTTPException(status_code=404, detail="Run artifact not found")
     with backend.open(key) as stream:
-        content = stream.read()
+        content = stream.read(5_000_001)
+    if len(content) > 5_000_000:
+        raise HTTPException(status_code=413, detail="Run artifact exceeds the download size limit")
     return StreamingResponse(
         io.BytesIO(content),
         media_type="application/json",
