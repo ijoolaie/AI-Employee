@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { downloadFile, getErrorMessage, getRun, getRunTrace, submitFeedback } from "@/lib/api";
+import { downloadFile, downloadRunArtifact, getErrorMessage, getRun, getRunArtifacts, getRunTrace, submitFeedback } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Download, FileSpreadsheet, FileText, Star } from "lucide-react";
@@ -31,6 +31,11 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
     queryKey: ["runs", id, "trace"],
     queryFn: () => getRunTrace(id),
     refetchInterval: run && ["pending", "queued", "running"].includes(run.status) ? 2000 : false,
+  });
+
+  const artifactsQ = useQuery({
+    queryKey: ["runs", id, "artifacts"],
+    queryFn: () => getRunArtifacts(id),
   });
 
   useEffect(() => {}, [run?.status]);
@@ -139,6 +144,39 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
             </CardContent>
           </Card>
         )}
+
+        <Card>
+          <CardHeader><CardTitle>Workforce artifacts</CardTitle></CardHeader>
+          <CardContent>
+            {artifactsQ.isLoading ? <Spinner /> : artifactsQ.error ? (
+              <p className="text-sm text-red-600">{getErrorMessage(artifactsQ.error)}</p>
+            ) : artifactsQ.data?.length ? (
+              <div className="space-y-3">
+                {artifactsQ.data.map((artifact) => (
+                  <div key={artifact.artifact_id} className="flex flex-col gap-3 rounded-lg border border-gray-100 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900">{artifact.kind.replaceAll("_", " ")}</p>
+                      <p className="text-xs text-gray-500">
+                        {artifact.operation ? `${artifact.operation} · ` : ""}{artifact.status || "persisted"} · {formatDate(artifact.created_at)}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {artifact.tool} · {artifact.size_bytes.toLocaleString()} bytes
+                        {artifact.provenance.provider_execution ? ` · provider: ${artifact.provenance.provider_execution}` : ""}
+                      </p>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => downloadRunArtifact(id, artifact.artifact_id)}>
+                      <Download className="h-4 w-4" />
+                      Download JSON
+                    </Button>
+                  </div>
+                ))}
+                <p className="text-xs text-gray-500">Persisted tool evidence only. This list does not indicate that an external provider or side effect executed.</p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No persisted workforce artifacts are linked to this Run.</p>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader><CardTitle>{tx.executionTrace}</CardTitle></CardHeader>
