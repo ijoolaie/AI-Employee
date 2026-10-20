@@ -74,6 +74,7 @@ def audit_row(*, tenant_id, run_id, artifact_id, storage_key, tool="workforce_ke
         metadata_={
             "persisted_workforce_artifact": {
                 "artifact_id": artifact_id,
+                "payload_artifact_id": artifact_id,
                 "storage_key_sha256": hashlib.sha256(storage_key.encode("utf-8")).hexdigest(),
                 "tool": tool,
             }
