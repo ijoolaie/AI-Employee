@@ -9,6 +9,7 @@ from uuid import UUID
 import pytest
 
 from app.api.v1 import runs as runs_api
+from app.core.exceptions import NotFoundError
 
 
 TENANT_A = UUID("11111111-1111-4111-8111-111111111111")
@@ -166,3 +167,16 @@ async def test_cross_tenant_audit_pointer_and_storage_key_fail_closed(monkeypatc
     ])
     response = await runs_api.list_run_artifacts(RUN_A, SimpleNamespace(tenant_id=TENANT_A), db)
     assert response.data == []
+
+
+@pytest.mark.asyncio
+async def test_cross_tenant_run_ownership_is_denied_before_artifact_lookup(monkeypatch):
+    async def tenant_scoped_run(db, *, run_id, tenant_id):
+        if run_id == RUN_A and tenant_id == TENANT_B:
+            raise NotFoundError("Run not found")
+        return SimpleNamespace(id=run_id, tenant_id=tenant_id)
+
+    monkeypatch.setattr(runs_api.run_read_service, "get_run", tenant_scoped_run)
+    db = FakeDB([])
+    with pytest.raises(NotFoundError):
+        await runs_api.list_run_artifacts(RUN_A, SimpleNamespace(tenant_id=TENANT_B), db)
