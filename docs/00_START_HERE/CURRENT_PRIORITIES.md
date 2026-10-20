@@ -1,8 +1,8 @@
-## Current priority — post-merge synchronization and remaining dependency conflicts (2026-10-20)
+## Current priority — post-merge synchronization and remaining dependency update (2026-10-20)
 
 1. PR #1223 (Next.js 16.4.2) and documentation PR #1221 (local test tenant/license runbook plus status/README corrections) are merged.
-2. Dependency PRs #1222, #1224, #1225, #1226, #1227, #1229 and #1230 are merged after all reported workflow runs on their exact reviewed heads completed successfully.
-3. PR #1228 (react-dom 19.3.1) and #1231 (eslint-config-next 16.4.2) currently conflict with main after the preceding merges. Rebase them onto current main, preserve React/React DOM version alignment, and rerun required CI on each new exact head before merging.
+2. Dependency PRs #1222, #1224, #1225, #1226, #1227, #1229 and #1230 are merged after their reported workflows completed successfully on the exact reviewed heads. PR #1228 (react-dom 19.3.1) has now also merged after all five reported workflows passed on exact head `45f128d559f97b681479b4f760f2afbdf221b7e8`.
+3. PR #1231 (eslint-config-next 16.4.2) remains open. Its checks passed on head `09adcc5bfcf01b3c50c6d00230e6445be0e5355b`, but it became non-mergeable after #1228 merged. Rebase onto current main and rerun required CI on the new exact head before merging.
 4. The most recent merged application/test work remains PR #1220 (tenant-scoped persisted Run reads). The next product-facing step is to expose persisted tool artifacts in the UI and link them to their Run, with focused regression coverage.
 5. Keep the release boundary explicit: certified release remains v1.4.17 at b403c0dcdea579e017738a6fdea138c2b1a2999c. Current main and CI/local acceptance do not establish production deployment, live-provider behavior, or customer acceptance.
 
