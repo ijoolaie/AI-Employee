@@ -36,6 +36,7 @@ export default function RunDetailPage({ params }: { params: Promise<{ id: string
   const artifactsQ = useQuery({
     queryKey: ["runs", id, "artifacts"],
     queryFn: () => getRunArtifacts(id),
+    refetchInterval: run && ["pending", "queued", "running", "waiting"].includes(run.status) ? 2000 : false,
   });
 
   useEffect(() => {}, [run?.status]);
