@@ -97,11 +97,13 @@ def _workforce_artifact_audit_metadata(tool_name: str, tool_result: Any, tenant_
     backend = get_storage_backend()
     if not backend.exists(storage_key):
         return {}
-    artifact_id = tool_result.get("artifact_id")
+    payload_artifact_id = tool_result.get("artifact_id")
+    artifact_id = payload_artifact_id
     if not isinstance(artifact_id, str) or not artifact_id.strip():
         import hashlib
         artifact_id = hashlib.sha256(storage_key.encode("utf-8")).hexdigest()[:32]
-    return {"persisted_workforce_artifact": {"artifact_id": artifact_id, "storage_key": storage_key, "tool": tool_name}}
+        payload_artifact_id = None
+    return {"persisted_workforce_artifact": {"artifact_id": artifact_id, "payload_artifact_id": payload_artifact_id, "storage_key": storage_key, "tool": tool_name}}
 
 
 async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, error: str | None = None) -> None:
