@@ -4,14 +4,13 @@ are committed atomically and can be dispatched once the transaction is visible."
 
 import io
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from sqlalchemy import select
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy import select
 
@@ -84,9 +83,9 @@ async def _run_artifacts(db, *, run_id: UUID, tenant_id: UUID) -> list[dict[str,
         if not isinstance(payload, dict):
             continue
         payload_id = payload.get("artifact_id")
-        # For artifacts that carry their own ID, require the audit pointer to
-        # agree. Workspace files without an embedded ID use a server-derived ID.
-        if isinstance(payload_id, str) and len(artifact_id) != 32 and payload_id != artifact_id:
+        # If the tool returned an embedded artifact ID, bind it to the audit pointer.
+        expected_payload_id = ref.get("payload_artifact_id")
+        if isinstance(expected_payload_id, str) and payload_id != expected_payload_id:
             continue
         provenance = {
             key_name: payload[key_name]
@@ -95,7 +94,7 @@ async def _run_artifacts(db, *, run_id: UUID, tenant_id: UUID) -> list[dict[str,
         }
         created_at = payload.get("created_at")
         if not isinstance(created_at, str):
-            created_at = audit.created_at.isoformat() if audit.created_at else datetime.now().astimezone().isoformat()
+            created_at = audit.created_at.isoformat() if audit.created_at else datetime.now(timezone.utc).isoformat()
         item = {
             "artifact_id": artifact_id,
             "kind": str(payload.get("kind") or "workforce_artifact"),
