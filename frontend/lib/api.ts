@@ -12,6 +12,7 @@ import type {
   Run,
   RunCreate,
   RunTrace,
+  RunArtifactSummary,
   TokenResponse,
   UsageSummary,
   ToolDefinition,
@@ -239,6 +240,22 @@ export async function createRun(payload: RunCreate) {
 
 export async function getRunTrace(id: string) {
   return unwrap(await api.get<APIResponse<RunTrace>>(`/runs/${id}/trace`));
+}
+
+export async function getRunArtifacts(id: string) {
+  return unwrap(await api.get<APIResponse<RunArtifactSummary[]>>(`/runs/${id}/artifacts`));
+}
+
+export async function downloadRunArtifact(runId: string, artifactId: string) {
+  const res = await api.get(`/runs/${runId}/artifacts/${encodeURIComponent(artifactId)}/download`, { responseType: "blob" });
+  const url = window.URL.createObjectURL(res.data as Blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `workforce-artifact-${artifactId}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
 }
 
 export async function getCustomerDashboard() {

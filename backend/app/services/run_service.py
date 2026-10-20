@@ -86,6 +86,30 @@ def _tool_audit_status(tool_result: Any, default_status: str) -> str:
     return default_status
 
 
+def _workforce_artifact_audit_metadata(tool_name: str, tool_result: Any, tenant_id: Any) -> dict[str, Any]:
+    """Persist a private, server-created pointer to a workforce artifact on its Run audit event."""
+    if not tool_name.startswith("workforce_") or not isinstance(tool_result, dict):
+        return {}
+    storage_key = tool_result.get("storage_key")
+    if not isinstance(storage_key, str) or not storage_key.startswith(f"{tenant_id}/"):
+        return {}
+    from app.services.storage import get_storage_backend
+    backend = get_storage_backend()
+    try:
+        if not backend.exists(storage_key):
+            return {}
+    except (OSError, ValueError):
+        return {}
+    payload_artifact_id = tool_result.get("artifact_id")
+    artifact_id = payload_artifact_id
+    if not isinstance(artifact_id, str) or not artifact_id.strip():
+        import hashlib
+        artifact_id = hashlib.sha256(storage_key.encode("utf-8")).hexdigest()[:32]
+        payload_artifact_id = None
+    import hashlib
+    return {"persisted_workforce_artifact": {"artifact_id": artifact_id, "payload_artifact_id": payload_artifact_id, "storage_key_sha256": hashlib.sha256(storage_key.encode("utf-8")).hexdigest(), "tool": tool_name}}
+
+
 async def _sync_work_item_lifecycle(db: AsyncSession, *, run: Run, status: str, error: str | None = None) -> None:
     """Project a bound Run lifecycle onto its WorkItem and team parent.
 
@@ -529,6 +553,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         status=_tool_audit_status(tool_result, tool_status),
                         request_id=run.request_id,
                         metadata={
+                            **_workforce_artifact_audit_metadata(tool_call_name, tool_result, run.tenant_id),
                             "tool": tool_call_name,
                             **_provider_audit_metadata(tool_result),
                             **tool_result_audit_summary(tool_call_name, tool_result),
@@ -664,6 +689,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         status=_tool_audit_status(tool_result, tool_status),
                         request_id=run.request_id,
                         metadata={
+                            **_workforce_artifact_audit_metadata(tool_call.name, tool_result, run.tenant_id),
                             "tool": tool_call.name,
                             **_provider_audit_metadata(tool_result),
                             **tool_result_audit_summary(tool_call.name, tool_result),

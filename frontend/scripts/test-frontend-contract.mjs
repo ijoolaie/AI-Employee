@@ -117,6 +117,24 @@ test("api reexports errors", () => {
   if (!api.includes('from "./errors"')) throw new Error("no reexport");
 });
 
+test("Run artifact API contract", () => {
+  if (!api.includes("function getRunArtifacts")) throw new Error("missing Run artifact list API");
+  if (!api.includes("/runs/${id}/artifacts")) throw new Error("missing Run artifact endpoint");
+  if (!api.includes("function downloadRunArtifact")) throw new Error("missing Run artifact download API");
+  if (!api.includes("/artifacts/${encodeURIComponent(artifactId)}/download")) throw new Error("download must use the Run-scoped artifact endpoint");
+  if (!types.includes("interface RunArtifactSummary")) throw new Error("missing typed artifact response");
+});
+
+test("Run detail artifact loading, empty, error and download states", () => {
+  const src = read("app/(customer)/runs/[id]/page.tsx");
+  if (!src.includes("getRunArtifacts(id)")) throw new Error("Run detail does not load artifacts");
+  if (!src.includes("artifactsQ.isLoading")) throw new Error("missing loading state");
+  if (!src.includes("artifactsQ.error")) throw new Error("missing error state");
+  if (!src.includes("No persisted workforce artifacts are linked to this Run.")) throw new Error("missing empty state");
+  if (!src.includes("downloadRunArtifact(id, artifact.artifact_id)")) throw new Error("missing Run-scoped download action");
+  if (!src.includes("does not indicate that an external provider or side effect executed")) throw new Error("missing evidence boundary");
+});
+
 for (const rel of [
   "app/(customer)/orders/page.tsx",
   "app/(customer)/sales/page.tsx",
