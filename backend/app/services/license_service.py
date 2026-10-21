@@ -31,24 +31,40 @@ async def issue_license(
     if issuer.tenant_kind == edition_service.EDITION_VENDOR:
         # Vendor admins may manually license any reseller/customer in their own
         # hierarchy, not tenants owned by another vendor.
+        if tenant.tenant_kind not in {edition_service.EDITION_RESELLER, edition_service.EDITION_CUSTOMER}:
+            raise ConflictError("Vendor licenses may only be issued to reseller or customer tenants")
+
+        # Enforce the actual Vendor -> Reseller -> Customer hierarchy, not just
+        # ancestry. This fails closed for malformed or manually edited tenant rows.
         current = tenant
-        visited: set[uuid.UUID] = set()
+        visited: set[uuid.UUID] = {tenant.id}
         while current.parent_tenant_id is not None:
-            if current.parent_tenant_id == issuer.id:
-                break
             if current.parent_tenant_id in visited:
                 raise ConflictError("Invalid tenant hierarchy for commercial license")
             visited.add(current.parent_tenant_id)
             parent_result = await db.execute(
                 select(Tenant).where(Tenant.id == current.parent_tenant_id)
             )
-            current = parent_result.scalar_one_or_none()
-            if current is None:
+            parent = parent_result.scalar_one_or_none()
+            if parent is None:
                 raise ConflictError("License target is outside the vendor tenant hierarchy")
+
+            expected_parent_kind = (
+                edition_service.EDITION_RESELLER
+                if current.tenant_kind == edition_service.EDITION_CUSTOMER
+                else edition_service.EDITION_VENDOR
+                if current.tenant_kind == edition_service.EDITION_RESELLER
+                else None
+            )
+            if parent.tenant_kind != expected_parent_kind:
+                raise ConflictError("Invalid tenant hierarchy for commercial license")
+            if parent.id == issuer.id:
+                if parent.tenant_kind != edition_service.EDITION_VENDOR:
+                    raise ConflictError("License target is outside the vendor tenant hierarchy")
+                break
+            current = parent
         else:
             raise ConflictError("License target is outside the vendor tenant hierarchy")
-        if tenant.tenant_kind not in {edition_service.EDITION_RESELLER, edition_service.EDITION_CUSTOMER}:
-            raise ConflictError("Vendor licenses may only be issued to reseller or customer tenants")
     elif issuer.tenant_kind == edition_service.EDITION_RESELLER:
         edition_service.assert_direct_child(issuer, tenant, edition_service.EDITION_CUSTOMER)
     else:
