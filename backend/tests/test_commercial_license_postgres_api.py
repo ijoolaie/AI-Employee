@@ -28,14 +28,17 @@ def _validated_database_url() -> str:
     if (
         parsed.drivername != "postgresql+asyncpg"
         or parsed.database != "aiep_license_test"
-        or parsed.host != "postgres"
+        or not (
+            parsed.host == "postgres"
+            or (os.getenv("CI", "").lower() == "true" and parsed.host == "localhost")
+        )
         or parsed.port != 5432
         or parsed.username != "aiep"
         or not parsed.password
     ):
         raise RuntimeError(
             "Refusing to run: URL must target aiep_license_test on "
-            "the isolated Compose PostgreSQL service."
+            "the isolated Compose PostgreSQL service (or localhost in CI)."
         )
     return raw
 
