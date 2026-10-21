@@ -1,11 +1,12 @@
-## Commercial edition API-key scope enforcement — 2026-10-21
+## Post-merge reconciliation — 2026-10-21 (PR #1241)
 
-- PR [#1238](https://github.com/ijoolaie/AI-Employee/pull/1238) is open and unmerged. Exact head `9c123e03652952cad01eb89b0cec605198c3dd1c` passed all 27 reported GitHub Actions workflows.
-- CI backend suite: 1,607 passed, 1 deselected; frontend contracts: 145 passed; Vitest: 80 passed across 15 files; TypeScript `--noEmit` passed; ESLint reported 0 errors and 5 warnings.
-- The isolated PostgreSQL-backed commercial-license HTTP integration test passed. Coverage includes invalid/cross-edition scope creation, scoped Vendor/Reseller/Customer API-key requests, legacy NULL-scope and superuser-key enforcement, license hierarchy/issuer/audit boundaries, and support-message/attachment participant isolation.
-- Security verification: `pip-audit -r requirements.lock` reported no known vulnerabilities after pinning Pillow 13.0.0. Security/Privacy, Runtime Isolation/RBAC, CodeQL, DAST, Architecture Guard, Documentation Truth Consistency, and Workforce E2E workflows passed.
-- Static route-map audit: 35/35 route templates mapped; unmapped control-plane routes fail closed for API keys. No PR reviews or inline review threads were present at the latest check.
-- Evidence boundary: automated CI and isolated integration evidence only. PR has not been merged; no production migration or deployment has been performed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- Current `main` SHA: [`c7d6bdc64fb5d2e1bb0cf5b37155798f105faaaf`](https://github.com/ijoolaie/AI-Employee/commit/c7d6bdc64fb5d2e1bb0cf5b37155798f105faaaf), confirmed from the GitHub `main` ref after PR #1241 merged.
+- PR [#1241](https://github.com/ijoolaie/AI-Employee/pull/1241) replaces the problematic Dependabot PR #1239: only `frontend/package-lock.json` changed, locked `follow-redirects` is 1.16.1, and Tailwind remains on v3. Pre-merge CI workflows passed on the exact PR head; the user additionally confirmed all relevant post-merge GitHub Actions are green.
+- PR [#1238](https://github.com/ijoolaie/AI-Employee/pull/1238) and follow-up [#1240](https://github.com/ijoolaie/AI-Employee/pull/1240) are merged. This supersedes the stale entry below that described #1238 as open/unmerged.
+- The repository rulesets API returned an empty list during this reconciliation. This does not by itself establish the full branch-protection state; issue [#975](https://github.com/ijoolaie/AI-Employee/issues/975) remains the tracked owner/admin follow-up for required PR checks.
+- Remaining acceptance: a fresh local Run/artifact UI download check after syncing `main`, plus the customer support UI acceptance recorded in [issue #1043](https://github.com/ijoolaie/AI-Employee/issues/1043). No local desktop UI acceptance was performed by this connector session.
+- **Release boundary:** the latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. This engineering merge and green Actions do not establish a new certified release, production deployment, live-provider behavior, or customer acceptance.
+
 
 ---
 
