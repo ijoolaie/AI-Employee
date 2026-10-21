@@ -68,8 +68,8 @@ async def test_license_http_hierarchy_revocation_and_audit():
     )
 
     run_id = uuid.uuid4().hex
-    vendor_a_id, vendor_b_id, reseller_a_id, customer_a_id, customer_b_id = (
-        uuid.uuid4() for _ in range(5)
+    vendor_a_id, vendor_b_id, reseller_a_id, reseller_b_id, customer_a_id, customer_b_id = (
+        uuid.uuid4() for _ in range(6)
     )
     user_a_id, user_b_id, user_reseller_id, user_customer_id, user_vendor_superuser_id = (
         uuid.uuid4() for _ in range(5)
@@ -107,6 +107,11 @@ async def test_license_http_hierarchy_revocation_and_audit():
                 slug=f"lic-reseller-a-{run_id}", tenant_kind="reseller",
                 parent_tenant_id=vendor_a_id, status="active",
             )
+            reseller_b = Tenant(
+                id=reseller_b_id, name=f"Reseller B {run_id}",
+                slug=f"lic-reseller-b-{run_id}", tenant_kind="reseller",
+                parent_tenant_id=vendor_b_id, status="active",
+            )
             customer_a = Tenant(
                 id=customer_a_id, name=f"Customer A {run_id}",
                 slug=f"lic-customer-a-{run_id}", tenant_kind="customer",
@@ -115,7 +120,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
             customer_b = Tenant(
                 id=customer_b_id, name=f"Customer B {run_id}",
                 slug=f"lic-customer-b-{run_id}", tenant_kind="customer",
-                parent_tenant_id=vendor_b_id, status="active",
+                parent_tenant_id=reseller_b_id, status="active",
             )
             role_a = Role(id=role_a_id, tenant_id=vendor_a_id, name="admin")
             role_b = Role(id=role_b_id, tenant_id=vendor_b_id, name="admin")
@@ -124,7 +129,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
             session.add_all([vendor_a, vendor_b])
             await session.commit()
 
-            session.add(reseller_a)
+            session.add_all([reseller_a, reseller_b])
             await session.commit()
 
             session.add_all([customer_a, customer_b])
