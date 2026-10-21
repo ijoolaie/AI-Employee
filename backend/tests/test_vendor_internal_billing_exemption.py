@@ -99,3 +99,27 @@ async def test_vendor_workflow_quota_does_not_require_subscription_or_plan_quota
     subscription_check.assert_not_awaited()
     usage_check.assert_not_awaited()
 
+@pytest.mark.parametrize("tenant_kind", ["reseller", "customer"])
+async def test_reseller_and_customer_employee_and_workflow_quotas_still_use_subscription(
+    tenant_kind, monkeypatch
+):
+    subscription = SimpleNamespace(
+        status="active",
+        plan=SimpleNamespace(max_employees=3, max_workflows=3),
+    )
+    subscription_check = AsyncMock(return_value=subscription)
+    usage_check = AsyncMock(return_value={"employees": 0, "workflows": 0})
+    monkeypatch.setattr(billing_service, "get_subscription", subscription_check)
+    monkeypatch.setattr(billing_service, "monthly_usage", usage_check)
+    monkeypatch.setattr(
+        billing_service,
+        "_lock_tenant_for_quota",
+        AsyncMock(return_value=SimpleNamespace(tenant_kind=tenant_kind)),
+    )
+
+    await billing_service.enforce_employee_quota(object(), tenant_id=f"{tenant_kind}-tenant")
+    await billing_service.enforce_workflow_quota(object(), tenant_id=f"{tenant_kind}-tenant")
+
+    assert subscription_check.await_count == 2
+    assert usage_check.await_count == 2
+
