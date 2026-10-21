@@ -63,3 +63,39 @@ async def test_vendor_tool_feature_entitlement_does_not_require_commercial_licen
 
     assert result is None
     license_check.assert_not_awaited()
+
+@pytest.mark.asyncio
+async def test_vendor_employee_quota_does_not_require_subscription_or_plan_quota(monkeypatch):
+    subscription_check = AsyncMock()
+    usage_check = AsyncMock()
+    monkeypatch.setattr(billing_service, "get_subscription", subscription_check)
+    monkeypatch.setattr(billing_service, "monthly_usage", usage_check)
+    monkeypatch.setattr(
+        billing_service,
+        "_lock_tenant_for_quota",
+        AsyncMock(return_value=SimpleNamespace(tenant_kind="vendor")),
+    )
+
+    await billing_service.enforce_employee_quota(object(), tenant_id="vendor-tenant")
+
+    subscription_check.assert_not_awaited()
+    usage_check.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_vendor_workflow_quota_does_not_require_subscription_or_plan_quota(monkeypatch):
+    subscription_check = AsyncMock()
+    usage_check = AsyncMock()
+    monkeypatch.setattr(billing_service, "get_subscription", subscription_check)
+    monkeypatch.setattr(billing_service, "monthly_usage", usage_check)
+    monkeypatch.setattr(
+        billing_service,
+        "_lock_tenant_for_quota",
+        AsyncMock(return_value=SimpleNamespace(tenant_kind="vendor")),
+    )
+
+    await billing_service.enforce_workflow_quota(object(), tenant_id="vendor-tenant")
+
+    subscription_check.assert_not_awaited()
+    usage_check.assert_not_awaited()
+
