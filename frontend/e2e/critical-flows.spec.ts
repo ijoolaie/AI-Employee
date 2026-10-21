@@ -355,7 +355,7 @@ test.describe("critical platform flows", () => {
     });
 
     await page.goto("/support");
-    await expect(page.getByRole("heading", { name: "Support" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Support", exact: true })).toBeVisible();
     await page.getByLabel("Subject").fill("Order status question");
     await page.getByLabel("Description").fill("Please help me check my order status.");
     await page.getByRole("button", { name: "Create ticket" }).click();
