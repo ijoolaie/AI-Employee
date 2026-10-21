@@ -100,6 +100,7 @@ async def test_vendor_workflow_quota_does_not_require_subscription_or_plan_quota
     usage_check.assert_not_awaited()
 
 @pytest.mark.parametrize("tenant_kind", ["reseller", "customer"])
+@pytest.mark.asyncio
 async def test_reseller_and_customer_employee_and_workflow_quotas_still_use_subscription(
     tenant_kind, monkeypatch
 ):
