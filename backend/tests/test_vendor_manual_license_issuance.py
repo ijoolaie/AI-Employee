@@ -83,7 +83,7 @@ async def test_vendor_cannot_issue_license_outside_its_hierarchy():
             feature_codes=["run.execute"],
         )
 
-@pytest.mark.parametrize("feature_codes", [[""], ["   "], ["run.execute", " \\t "]])
+@pytest.mark.parametrize("feature_codes", [[""], ["   "], ["run.execute", " \t "]])
 def test_license_issue_request_rejects_blank_feature_codes(feature_codes):
     from pydantic import ValidationError
 
