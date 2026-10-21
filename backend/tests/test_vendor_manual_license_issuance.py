@@ -67,10 +67,15 @@ async def test_vendor_can_issue_license_to_customer_under_its_reseller(monkeypat
 @pytest.mark.asyncio
 async def test_vendor_cannot_issue_license_outside_its_hierarchy():
     vendor = SimpleNamespace(id="vendor-id", tenant_kind=edition_service.EDITION_VENDOR)
-    other_vendor = SimpleNamespace(id="other-vendor", parent_tenant_id=None)
+    other_vendor = SimpleNamespace(
+        id="other-vendor",
+        parent_tenant_id=None,
+        tenant_kind=edition_service.EDITION_VENDOR,
+    )
     other_reseller = SimpleNamespace(
         id="other-reseller",
         parent_tenant_id=other_vendor.id,
+        tenant_kind=edition_service.EDITION_RESELLER,
     )
     customer = SimpleNamespace(
         id="foreign-customer",
