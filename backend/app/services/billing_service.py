@@ -258,14 +258,20 @@ def _assert_subscription_active(sub: Subscription) -> None:
 
     
 async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
-    """Fail closed at the worker execution boundary without re-counting quota."""
+    """Enforce customer billing while allowing the root vendor to run its own platform."""
+    tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = tenant_result.scalar_one_or_none()
+    if tenant is not None and tenant.tenant_kind == "vendor":
+        return
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
     _assert_subscription_active(sub)
 
 
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
-    await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    if tenant.tenant_kind == "vendor":
+        return
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
     _assert_subscription_active(sub)
@@ -277,7 +283,9 @@ async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
 
 
 async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
-    await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    if tenant.tenant_kind == "vendor":
+        return
     sub = await get_subscription(db, tenant_id=tenant_id)
     _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
@@ -286,7 +294,9 @@ async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
 
 
 async def enforce_workflow_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
-    await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    if tenant.tenant_kind == "vendor":
+        return
     sub = await get_subscription(db, tenant_id=tenant_id)
     _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)

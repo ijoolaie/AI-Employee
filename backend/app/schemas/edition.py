@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ChildTenantProvisionRequest(BaseModel):
@@ -50,6 +50,14 @@ class LicenseIssueRequest(BaseModel):
     expires_in_days: int | None = Field(default=None, ge=1, le=3650)
     feature_codes: list[str] = Field(default_factory=list, max_length=100)
     metadata: dict = Field(default_factory=dict)
+
+    @field_validator("feature_codes")
+    @classmethod
+    def validate_feature_codes(cls, values: list[str]) -> list[str]:
+        normalized = [value.strip() for value in values]
+        if any(not value for value in normalized):
+            raise ValueError("feature codes must not be blank")
+        return normalized
 
 
 class LicenseRevokeRequest(BaseModel):

@@ -1,3 +1,14 @@
+## Current priority — commercial API-key scope verification (2026-10-21)
+
+1. **Implementation and docs:** granular API-key scopes cover all 35 Vendor/Reseller/Customer commercial control-plane route templates; unmapped routes and legacy NULL-scope keys fail closed; API-key creation rejects unknown and cross-edition scopes.
+2. **Backend verification passed:** CI backend suite reported 1,607 passed and 1 deselected; the dedicated PostgreSQL-backed commercial-license HTTP integration test passed against isolated `aiep_license_test`.
+3. **Frontend verification passed:** ESLint 0 errors / 5 warnings; 145 contract checks passed; 80 Vitest tests across 15 files passed; TypeScript `--noEmit` passed.
+4. **Exact-head CI passed:** all 27 reported workflows passed for head `9c123e03652952cad01eb89b0cec605198c3dd1c`, including Security/Privacy, Runtime Isolation/RBAC, CodeQL, DAST, Architecture Guard, Documentation Truth Consistency and Workforce E2E. `pip-audit -r requirements.lock` found no known vulnerabilities.
+5. **Next:** human review of PR [#1238](https://github.com/ijoolaie/AI-Employee/pull/1238), then reassess merge readiness after review. Do not merge, migrate production, or deploy without explicit authorization. Fix only reproducible defects and preserve hierarchy, issuer and support-participant checks and unrelated local changes.
+6. **Release boundary:** PR #1238 remains open/unmerged; certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. CI evidence is not production or customer-acceptance evidence.
+
+---
+
 ## Current priority — post-merge synchronization (2026-10-20)
 
 1. PR #1223 (Next.js 16.4.2) and documentation PR #1221 (local test tenant/license runbook plus status/README corrections) are merged.

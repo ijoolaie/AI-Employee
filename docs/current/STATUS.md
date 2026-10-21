@@ -1,3 +1,25 @@
+## PR #1238 follow-up validation — 2026-10-21
+
+- PR [#1238](https://github.com/ijoolaie/AI-Employee/pull/1238) is open on `fix/vendor-license-control-plane`, unmerged and undeployed. Exact head `9c123e03652952cad01eb89b0cec605198c3dd1c` completed all 27 reported GitHub Actions workflows successfully, including CI, Security/Privacy, Runtime Isolation/RBAC, CodeQL, DAST, Architecture Guard, Documentation Truth Consistency, and Workforce E2E.
+- CI backend suite: 1,607 passed, 1 deselected. Frontend Vitest: 80 passed across 15 files; frontend contract checks: 145 passed; TypeScript `--noEmit` passed; lint reported 0 errors and 5 warnings. Focused PostgreSQL-backed commercial-license HTTP integration test passed against the dedicated isolated `aiep_license_test` database.
+- `pip-audit -r requirements.lock` reported “No known vulnerabilities found” after updating the lockfile pin to Pillow 13.0.0. Static route-map audit covered 35/35 route templates; `git diff --check` passed.
+- Review status at latest check: no submitted PR reviews or inline review threads. The PR description has been reconciled with the exact-head evidence. CI success is not a substitute for human review/approval.
+- No merge, production migration, or deployment has been performed. Local-only `docker-compose.local-isolated.yml` remains excluded and must be preserved.
+---
+
+## Commercial edition API-key scope enforcement — 2026-10-21
+
+- Implemented granular scope enforcement for all 35 route templates in `backend/app/api/v1/edition_control.py` and `backend/app/api/v1/license_control.py`; unmapped routes fail closed for API-key authentication.
+- API-key creation validates edition-specific control-plane scope allowlists and rejects unknown or cross-edition scopes. Superuser API keys remain constrained by their explicit scopes. Legacy API keys with `scopes = NULL` are denied on commercial control-plane routes; ordinary Bearer-token behavior is preserved.
+- Retained service-level tenant hierarchy, license issuer ownership, support participant and entitlement checks; scopes do not grant cross-tenant authority.
+- Verification passed: 17 focused unit/regression tests; an expanded related backend suite (46 tests); 1 isolated PostgreSQL-backed HTTP integration test; Python compile check; static route-map audit (35/35); and `git diff --check`.
+- Frontend validation passed after dependency installation: ESLint 0 errors / 5 warnings, frontend contract checks 145 passed plus governance contract PASS, Vitest 80 tests across 15 files, and TypeScript `--noEmit` with 0 errors. The Vite config-loader warning is non-blocking.
+- Integration coverage includes invalid scope creation, wrong/legacy/superuser key denial, allowed Vendor/Reseller/Customer requests, license hierarchy/audit, and support message/attachment participant isolation.
+- Evidence boundary: local checkout only. The entire backend suite and browser/Playwright E2E were not run. No commit, push, migration, or deployment was performed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+- Next: inspect the full working-tree diff and run the broader relevant backend regression suite, then frontend typecheck/lint/tests where applicable. Fix only reproducible defects and preserve unrelated local changes.
+
+---
+
 ## Local product acceptance — isolated test stack (2026-10-18)
 
 - In the user's secondary checkout `C:\Users\Ali\AI-Employee-main-sync`, the isolated local acceptance flow passed: authenticated test tenant; employee create; version create; list/get; Run create and worker execution; governed tool invocation with audit/artifact; terminal result reread through the API with persisted output equality.

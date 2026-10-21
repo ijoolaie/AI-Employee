@@ -27,6 +27,8 @@ This directory contains maintained documentation for the current `main` implemen
 
 ## Current engineering position
 
+- Commercial Vendor/Reseller/Customer API-key scope enforcement: locally implemented and focused-tested on 2026-10-21; see `11_EDITION_API_KEY_SCOPE_CONTRACT.md`. Broader backend/frontend regression review remains pending. This does not change release certification.
+
 - Phase 11: complete.
 - Phase 12: operationally hardened.
 - Phase 13: engineering complete.

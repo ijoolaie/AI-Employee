@@ -1,3 +1,14 @@
+## Commercial edition API-key scope enforcement — 2026-10-21
+
+- PR [#1238](https://github.com/ijoolaie/AI-Employee/pull/1238) is open and unmerged. Exact head `9c123e03652952cad01eb89b0cec605198c3dd1c` passed all 27 reported GitHub Actions workflows.
+- CI backend suite: 1,607 passed, 1 deselected; frontend contracts: 145 passed; Vitest: 80 passed across 15 files; TypeScript `--noEmit` passed; ESLint reported 0 errors and 5 warnings.
+- The isolated PostgreSQL-backed commercial-license HTTP integration test passed. Coverage includes invalid/cross-edition scope creation, scoped Vendor/Reseller/Customer API-key requests, legacy NULL-scope and superuser-key enforcement, license hierarchy/issuer/audit boundaries, and support-message/attachment participant isolation.
+- Security verification: `pip-audit -r requirements.lock` reported no known vulnerabilities after pinning Pillow 13.0.0. Security/Privacy, Runtime Isolation/RBAC, CodeQL, DAST, Architecture Guard, Documentation Truth Consistency, and Workforce E2E workflows passed.
+- Static route-map audit: 35/35 route templates mapped; unmapped control-plane routes fail closed for API keys. No PR reviews or inline review threads were present at the latest check.
+- Evidence boundary: automated CI and isolated integration evidence only. PR has not been merged; no production migration or deployment has been performed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Run artifact UI delivery checkpoint — 2026-10-20 (PR #1236)
 
 - PR [#1236](https://github.com/ijoolaie/AI-Employee/pull/1236) merged as `4956dafc50febd380ee3bcbf70e474aa7dcd5c00` from exact tested head `96981a3fd2138310faed2b89fff369bb3ed123fd`.
