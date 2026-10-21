@@ -48,7 +48,7 @@ async def test_vendor_can_issue_license_to_customer_under_its_reseller(monkeypat
         tenant_kind=edition_service.EDITION_CUSTOMER,
     )
     issuer = SimpleNamespace(id=vendor_id, tenant_kind=edition_service.EDITION_VENDOR)
-    db = _IssueDB([_Result(reseller), _Result(), _Result(None)])
+    db = _IssueDB([_Result(reseller), _Result(issuer), _Result(), _Result(None)])
     monkeypatch.setattr(edition_service, "record_audit", AsyncMock())
 
     license_row = await license_service.issue_license(
