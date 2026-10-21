@@ -1,12 +1,13 @@
-## Post-merge reconciliation — 2026-10-21 (PR #1241)
+## Post-merge reconciliation — 2026-10-21 (PR #1243)
 
-- Current `main` SHA: [`c7d6bdc64fb5d2e1bb0cf5b37155798f105faaaf`](https://github.com/ijoolaie/AI-Employee/commit/c7d6bdc64fb5d2e1bb0cf5b37155798f105faaaf), confirmed from the GitHub `main` ref after PR #1241 merged.
-- PR [#1241](https://github.com/ijoolaie/AI-Employee/pull/1241) replaces the problematic Dependabot PR #1239: only `frontend/package-lock.json` changed, locked `follow-redirects` is 1.16.1, and Tailwind remains on v3. Pre-merge CI workflows passed on the exact PR head; the user additionally confirmed all relevant post-merge GitHub Actions are green.
-- PR [#1238](https://github.com/ijoolaie/AI-Employee/pull/1238) and follow-up [#1240](https://github.com/ijoolaie/AI-Employee/pull/1240) are merged. This supersedes the stale entry below that described #1238 as open/unmerged.
-- The repository rulesets API returned an empty list during this reconciliation. This does not by itself establish the full branch-protection state; issue [#975](https://github.com/ijoolaie/AI-Employee/issues/975) remains the tracked owner/admin follow-up for required PR checks.
-- Remaining acceptance: a fresh local Run/artifact UI download check after syncing `main`, plus the customer support UI acceptance recorded in [issue #1043](https://github.com/ijoolaie/AI-Employee/issues/1043). No local desktop UI acceptance was performed by this connector session.
-- **Release boundary:** the latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. This engineering merge and green Actions do not establish a new certified release, production deployment, live-provider behavior, or customer acceptance.
-
+- Current `main` SHA: [`b7b6bb3856f291d6110578e9e7b666e883caf7bc`](https://github.com/ijoolaie/AI-Employee/commit/b7b6bb3856f291d6110578e9e7b666e883caf7bc).
+- PR [#1243](https://github.com/ijoolaie/AI-Employee/pull/1243) was squash-merged from exact head `d5d17b80f29749a0034084292d006b82dcb91026`. It fixes a strict-mode Playwright locator by matching the exact `Support` heading; no application or production code changed.
+- All seven post-merge workflows passed on the exact merge SHA: CI, CodeQL, Ephemeral DAST Validation, Production Infrastructure Validation, Production Compose Validation, SLO Contract Manual v2, and Delivery Manifest Bundle.
+- Support test evidence: three support-focused Playwright tests passed using the current-main test source against the already-running local UI at `http://127.0.0.1:13010`. That UI is served by the older `fix/vendor-license-control-plane` worktree (`9c123e03`), not a fresh current-main build; these browser tests mock the API. Treat this as focused regression evidence, not current-main visual/UI acceptance.
+- The CI backend job provisions and migrates an isolated `support_test` PostgreSQL database, then runs the backend test suite successfully, including `test_support_escalation_postgres_api.py` for real HTTP API/PostgreSQL persistence, tenant isolation, and concurrent attachment-link conflict. This is separate backend evidence, not a full browser-to-real-API journey.
+- Issue [#1043](https://github.com/ijoolaie/AI-Employee/issues/1043) remains open for fresh current-main UI acceptance, browser-to-real-API verification, and authorized attachment upload/download. The latest evidence and remaining boundary were recorded in an issue comment.
+- Issue [#975](https://github.com/ijoolaie/AI-Employee/issues/975) remains the owner/admin follow-up for required PR checks; branch protection is not claimed as configured.
+- **Release boundary:** the latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Green engineering workflows do not establish production deployment, customer acceptance, or a new release certification.
 
 ---
 
