@@ -283,7 +283,9 @@ async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
 
 
 async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
-    await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    if tenant.tenant_kind == "vendor":
+        return
     sub = await get_subscription(db, tenant_id=tenant_id)
     _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
@@ -292,7 +294,9 @@ async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
 
 
 async def enforce_workflow_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
-    await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
+    if tenant.tenant_kind == "vendor":
+        return
     sub = await get_subscription(db, tenant_id=tenant_id)
     _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
