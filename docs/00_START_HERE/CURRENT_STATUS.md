@@ -1,3 +1,14 @@
+## Commercial edition API-key scope enforcement — 2026-10-21
+
+- Local implementation maps 35 Vendor/Reseller/Customer commercial control-plane routes to required API-key scopes; missing route mappings deny API-key access by default.
+- API-key creation rejects unknown and cross-edition control-plane scopes. Superuser keys are not exempt from endpoint scopes, and legacy keys with `scopes = NULL` fail closed on these endpoints. Bearer-token behavior is intended to remain unchanged.
+- Verification: 17 focused and 46 expanded related backend regression tests passed; 1 PostgreSQL-backed HTTP integration test passed on the isolated `aiep_license_test` database; Python compile and 35/35 route-map audit passed.
+- Frontend checks passed: lint (0 errors, 5 warnings), 145 contract checks plus governance contract, 80 Vitest tests, and TypeScript `--noEmit` (0 errors). The full backend suite and browser/Playwright E2E remain unrun.
+- The integration test checks invalid scope creation, Vendor/Reseller/Customer scope behavior, legacy and superuser keys, license hierarchy/issuer/audit boundaries, and support-message/attachment participant isolation.
+- This is local engineering evidence only. No commit/push, migration, deployment or production acceptance was performed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Run artifact UI delivery checkpoint — 2026-10-20 (PR #1236)
 
 - PR [#1236](https://github.com/ijoolaie/AI-Employee/pull/1236) merged as `4956dafc50febd380ee3bcbf70e474aa7dcd5c00` from exact tested head `96981a3fd2138310faed2b89fff369bb3ed123fd`.

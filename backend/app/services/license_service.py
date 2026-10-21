@@ -28,12 +28,31 @@ async def issue_license(
     feature_codes: list[str] | None = None,
     metadata: dict | None = None,
 ) -> CommercialLicense:
-    expected_kind = (
-        edition_service.EDITION_RESELLER
-        if issuer.tenant_kind == edition_service.EDITION_VENDOR
-        else edition_service.EDITION_CUSTOMER
-    )
-    edition_service.assert_direct_child(issuer, tenant, expected_kind)
+    if issuer.tenant_kind == edition_service.EDITION_VENDOR:
+        # Vendor admins may manually license any reseller/customer in their own
+        # hierarchy, not tenants owned by another vendor.
+        current = tenant
+        visited: set[uuid.UUID] = set()
+        while current.parent_tenant_id is not None:
+            if current.parent_tenant_id == issuer.id:
+                break
+            if current.parent_tenant_id in visited:
+                raise ConflictError("Invalid tenant hierarchy for commercial license")
+            visited.add(current.parent_tenant_id)
+            parent_result = await db.execute(
+                select(Tenant).where(Tenant.id == current.parent_tenant_id)
+            )
+            current = parent_result.scalar_one_or_none()
+            if current is None:
+                raise ConflictError("License target is outside the vendor tenant hierarchy")
+        else:
+            raise ConflictError("License target is outside the vendor tenant hierarchy")
+        if tenant.tenant_kind not in {edition_service.EDITION_RESELLER, edition_service.EDITION_CUSTOMER}:
+            raise ConflictError("Vendor licenses may only be issued to reseller or customer tenants")
+    elif issuer.tenant_kind == edition_service.EDITION_RESELLER:
+        edition_service.assert_direct_child(issuer, tenant, edition_service.EDITION_CUSTOMER)
+    else:
+        raise ConflictError("Tenant is not authorized to issue commercial licenses")
     await db.execute(select(Tenant).where(Tenant.id == tenant.id).with_for_update())
     existing = (
         await db.execute(
@@ -43,6 +62,10 @@ async def issue_license(
             )
         )
     ).scalar_one_or_none()
+    if existing and existing.expires_at is not None and existing.expires_at <= datetime.now(timezone.utc):
+        existing.status = "expired"
+        await db.flush()
+        existing = None
     if existing:
         raise ConflictError("An active commercial license already exists")
 
@@ -141,14 +164,19 @@ async def assert_feature_entitlement(
     *,
     tenant_id: uuid.UUID,
     feature_code: str,
-) -> CommercialLicense:
-    """Authorize one commercial feature at execution time.
+) -> CommercialLicense | None:
+    """Authorize one commercial feature, exempting the platform's root vendor.
 
     Explicit feature codes are mandatory for newly issued licenses. Only the
     migration-created ``grandfathered`` legacy licenses may use an empty list,
     preserving existing tenants without making an accidentally empty new
     license equivalent to unlimited access.
     """
+    tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
+    tenant = tenant_result.scalar_one_or_none()
+    if tenant is not None and getattr(tenant, "tenant_kind", None) == edition_service.EDITION_VENDOR:
+        return None
+
     license_row = await assert_execution_license(db, tenant_id=tenant_id)
     licensed_features = set(license_row.feature_codes or [])
     grandfathered = bool((license_row.license_metadata or {}).get("grandfathered"))

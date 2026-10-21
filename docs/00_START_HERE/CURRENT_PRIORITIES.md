@@ -1,3 +1,13 @@
+## Current priority — commercial API-key scope verification (2026-10-21)
+
+1. **Implementation and docs updated locally:** granular scopes cover all 35 Vendor/Reseller/Customer commercial control-plane routes; unmapped routes and legacy NULL-scope keys fail closed; API-key creation validates edition-specific scopes.
+2. **Backend verification passed:** 17 focused tests, 46 expanded related regression tests, 1 isolated PostgreSQL-backed HTTP integration test, Python compile check, and 35/35 route-map audit.
+3. **Frontend verification passed:** ESLint 0 errors / 5 warnings; 145 contract checks and governance contract PASS; 80 Vitest tests across 15 files; TypeScript `--noEmit` passed. Browser/Playwright E2E and the entire backend suite remain pending.
+4. **Next:** run the entire backend suite only after confirming that all database-bound tests target isolated test databases; otherwise keep the passed 46-test related suite as the current boundary. Browser/Playwright E2E remains pending. Fix only reproducible defects; preserve hierarchy, issuer and support-participant checks and all unrelated local changes.
+5. **Release boundary:** no commit, push, migration or deployment. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; local checks are not production or customer-acceptance evidence.
+
+---
+
 ## Current priority — post-merge synchronization (2026-10-20)
 
 1. PR #1223 (Next.js 16.4.2) and documentation PR #1221 (local test tenant/license runbook plus status/README corrections) are merged.

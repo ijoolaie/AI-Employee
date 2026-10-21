@@ -14,6 +14,23 @@ from app.services import edition_service, license_service
 router = APIRouter(prefix="/edition/licenses", tags=["commercial-license"])
 
 
+@router.post("/vendor/tenants/{tenant_id}", response_model=APIResponse[LicenseResponse], status_code=201)
+async def issue_vendor_tenant_license(tenant_id: UUID, payload: LicenseIssueRequest, ctx: VendorAdminContext, db: DbSession):
+    """Manually issue a commercial license to any tenant in this vendor's hierarchy."""
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    row = await license_service.issue_license(
+        db,
+        issuer=ctx.tenant,
+        tenant=tenant,
+        expires_in_days=payload.expires_in_days,
+        feature_codes=payload.feature_codes,
+        metadata=payload.metadata,
+    )
+    return APIResponse(success=True, data=row)
+
+
 @router.post("/vendor/resellers/{reseller_id}", response_model=APIResponse[LicenseResponse], status_code=201)
 async def issue_reseller_license(reseller_id: UUID, payload: LicenseIssueRequest, ctx: VendorAdminContext, db: DbSession):
     tenant = (await db.execute(select(Tenant).where(Tenant.id == reseller_id))).scalar_one_or_none()

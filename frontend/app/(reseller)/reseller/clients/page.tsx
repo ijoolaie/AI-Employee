@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2 } from "lucide-react";
-import { api } from "@/lib/api";
+import { api, getErrorMessage } from "@/lib/api";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n/provider";
@@ -22,7 +22,16 @@ export default function ResellerClientsPage() {
   const m = resellerMessages[locale];
   const qc = useQueryClient();
   const [form, setForm] = useState({ name: "", slug: "", admin_email: "", admin_password: "", full_name: "" });
+  const [licenseForm, setLicenseForm] = useState({ customer_id: "", feature_codes: "", expires_in_days: "365" });
   const clients = useQuery({ queryKey: ["reseller-clients"], queryFn: getClients });
+  const issueLicense = useMutation({
+    mutationFn: () => api.post("/edition/licenses/reseller/customers/" + licenseForm.customer_id, {
+      feature_codes: licenseForm.feature_codes.split(",").map(code => code.trim()).filter(Boolean),
+      expires_in_days: licenseForm.expires_in_days.trim() ? Number(licenseForm.expires_in_days) : undefined,
+      metadata: { source: "reseller_admin_ui" },
+    }),
+    onSuccess: () => setLicenseForm({ ...licenseForm, feature_codes: "" }),
+  });
   const action = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
       api.post("/edition/reseller/customers/" + id + "/" + (status === "active" ? "suspend" : "resume")),
@@ -43,10 +52,41 @@ export default function ResellerClientsPage() {
     },
   });
   const canCreate = form.name.trim().length >= 2 && form.slug.trim().length >= 2 && form.admin_email.trim().length >= 3 && form.admin_password.length >= 12;
+  const featureCodes = licenseForm.feature_codes.split(",").map(code => code.trim()).filter(Boolean);
+  const canIssueLicense = Boolean(licenseForm.customer_id) && featureCodes.length > 0 &&
+    (!licenseForm.expires_in_days.trim() || (Number(licenseForm.expires_in_days) >= 1 && Number(licenseForm.expires_in_days) <= 3650));
+  const fa = locale === "fa";
 
   return <>
     <Header title={m.clientsTitle} description={m.clientsDescription} />
     <div className="space-y-6 p-6">
+      <Card>
+        <CardHeader><CardTitle>{fa ? "\u0635\u062f\u0648\u0631 \u062f\u0633\u062a\u06cc \u0645\u062c\u0648\u0632 \u062a\u062c\u0627\u0631\u06cc" : "Manually issue a commercial license"}</CardTitle></CardHeader>
+        <CardContent>
+          <p className="mb-4 text-sm text-gray-500">{fa ? "\u0645\u062c\u0648\u0632 \u0631\u0627 \u0641\u0642\u0637 \u0628\u0631\u0627\u06cc \u0645\u0634\u062a\u0631\u06cc\u0627\u0646 \u0632\u06cc\u0631\u0645\u062c\u0645\u0648\u0639\u0647\u0654 \u062e\u0648\u062f\u062a\u0627\u0646 \u0635\u0627\u062f\u0631 \u06a9\u0646\u06cc\u062f. \u06a9\u062f\u0647\u0627\u06cc \u0642\u0627\u0628\u0644\u06cc\u062a \u0627\u062c\u0628\u0627\u0631\u06cc \u0647\u0633\u062a\u0646\u062f." : "Issue licenses only to customers under your reseller account. Authorized feature codes are required."}</p>
+          {clients.isError ? <p role="alert" className="mb-3 text-sm text-red-600">{m.clientsError}</p> : null}
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="grid gap-1 text-sm">
+              <span>{fa ? "\u0645\u0634\u062a\u0631\u06cc" : "Customer"}</span>
+              <select aria-label={fa ? "\u0645\u0634\u062a\u0631\u06cc" : "Customer"} value={licenseForm.customer_id} onChange={e => setLicenseForm({ ...licenseForm, customer_id: e.target.value })} className="rounded-lg border px-3 py-2" disabled={clients.isLoading}>
+                <option value="">{fa ? "\u0627\u0646\u062a\u062e\u0627\u0628 \u0645\u0634\u062a\u0631\u06cc" : "Select customer"}</option>
+                {clients.data?.map(client => <option key={client.id} value={client.id}>{client.name} ({client.slug})</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1 text-sm md:col-span-2">
+              <span>{fa ? "\u06a9\u062f\u0647\u0627\u06cc \u0642\u0627\u0628\u0644\u06cc\u062a (\u062c\u062f\u0627\u0634\u062f\u0647 \u0628\u0627 \u06a9\u0627\u0645\u0627)" : "Feature codes (comma-separated)"}</span>
+              <input aria-label="Feature codes" value={licenseForm.feature_codes} onChange={e => setLicenseForm({ ...licenseForm, feature_codes: e.target.value })} placeholder="tool:send_email, tool:sales_forecast" className="rounded-lg border px-3 py-2" />
+            </label>
+            <label className="grid gap-1 text-sm">
+              <span>{fa ? "\u0645\u062f\u062a \u0627\u0639\u062a\u0628\u0627\u0631 \u0628\u0647 \u0631\u0648\u0632 (\u062e\u0627\u0644\u06cc = \u0628\u062f\u0648\u0646 \u0627\u0646\u0642\u0636\u0627)" : "Validity in days (blank = no expiry)"}</span>
+              <input aria-label="Validity in days" type="number" min="1" max="3650" value={licenseForm.expires_in_days} onChange={e => setLicenseForm({ ...licenseForm, expires_in_days: e.target.value })} className="rounded-lg border px-3 py-2" />
+            </label>
+          </div>
+          {issueLicense.isError && <p role="alert" className="mt-3 text-sm text-red-600">{getErrorMessage(issueLicense.error)}</p>}
+          {issueLicense.isSuccess && <p role="status" className="mt-3 text-sm text-emerald-600">{fa ? "\u0645\u062c\u0648\u0632 \u0628\u0627 \u0645\u0648\u0641\u0642\u06cc\u062a \u0635\u0627\u062f\u0631 \u0634\u062f." : "License issued successfully."}</p>}
+          <button disabled={!canIssueLicense || issueLicense.isPending || clients.isLoading} onClick={() => issueLicense.mutate()} className="mt-4 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{issueLicense.isPending ? (fa ? "\u062f\u0631 \u062d\u0627\u0644 \u0635\u062f\u0648\u0631..." : "Issuing...") : (fa ? "\u0635\u062f\u0648\u0631 \u0645\u062c\u0648\u0632" : "Issue license")}</button>
+        </CardContent>
+      </Card>
       <Card><CardHeader><CardTitle>{m.createClient}</CardTitle></CardHeader><CardContent>
         <div className="grid gap-4 md:grid-cols-2">
           <input aria-label={m.clientName} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={m.clientName} className="rounded-lg border px-3 py-2 text-sm" />

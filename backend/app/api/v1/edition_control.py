@@ -34,6 +34,27 @@ from app.services import edition_lifecycle_service, edition_service, storage
 router = APIRouter(prefix="/edition", tags=["edition-control"])
 
 
+@router.get("/vendor/tenants", response_model=APIResponse[list[TenantSummary]])
+async def list_vendor_license_targets(ctx: VendorAdminContext, db: DbSession):
+    """List tenants within this vendor's hierarchy for manual license management."""
+    resellers = (await db.execute(
+        select(Tenant).where(
+            Tenant.parent_tenant_id == ctx.tenant_id,
+            Tenant.tenant_kind == edition_service.EDITION_RESELLER,
+        )
+    )).scalars().all()
+    reseller_ids = [row.id for row in resellers]
+    customers = []
+    if reseller_ids:
+        customers = (await db.execute(
+            select(Tenant).where(
+                Tenant.parent_tenant_id.in_(reseller_ids),
+                Tenant.tenant_kind == edition_service.EDITION_CUSTOMER,
+            )
+        )).scalars().all()
+    return APIResponse(success=True, data=[*resellers, *customers])
+
+
 @router.get("/vendor/resellers", response_model=APIResponse[list[TenantSummary]])
 async def list_resellers(ctx: VendorAdminContext, db: DbSession):
     rows = (await db.execute(select(Tenant).where(Tenant.parent_tenant_id == ctx.tenant_id, Tenant.tenant_kind == edition_service.EDITION_RESELLER).order_by(Tenant.created_at))).scalars().all()
