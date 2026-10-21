@@ -174,14 +174,18 @@ async def test_support_edition_dependencies_reject_wrong_tenant_kind(dependency,
         user=SimpleNamespace(is_platform_admin=True, is_superuser=False, roles=roles),
     )
 
+    request = SimpleNamespace(
+        scope={"route": SimpleNamespace(path="/edition/test")},
+        method="GET",
+    )
     with pytest.raises(HTTPException) as exc:
-        await dependency(ctx)
+        await dependency(ctx, request)
 
     assert exc.value.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_vendor_edition_dependency_requires_platform_admin():
+async def test_vendor_edition_dependency_requires_edition_admin_role():
     tenant_id = uuid4()
     ctx = SimpleNamespace(
         tenant_id=tenant_id,
@@ -189,11 +193,15 @@ async def test_vendor_edition_dependency_requires_platform_admin():
         user=SimpleNamespace(
             is_platform_admin=False,
             is_superuser=False,
-            roles=[SimpleNamespace(tenant_id=tenant_id, name="admin")],
+            roles=[],
         ),
+    )
+    request = SimpleNamespace(
+        scope={"route": SimpleNamespace(path="/edition/vendor/tenants")},
+        method="GET",
     )
 
     with pytest.raises(HTTPException) as exc:
-        await require_vendor_admin(ctx)
+        await require_vendor_admin(ctx, request)
 
     assert exc.value.status_code == 403

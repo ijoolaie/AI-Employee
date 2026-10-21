@@ -1,3 +1,12 @@
+## PR #1238 follow-up validation ? 2026-10-21
+
+- PR [#1238](https://github.com/ijoolaie/AI-Employee/pull/1238) is open on `fix/vendor-license-control-plane`; it has not been merged or deployed. GitHub currently reports no commit statuses or submitted reviews, so CI is not yet verified.
+- Full-suite execution was attempted from the backend-only bind mount. It produced 1,567 passes, 6 skips, 4 failures and 30 errors, but this run is not a valid full-suite verdict: the container lacked the repository-root Compose file and required isolated PostgreSQL environment variables/database connectivity. The dedicated `support_test` and `aiep_license_test` integrations must be run with their guarded database configuration.
+- The current checkout exposed outdated direct-call tests for the edition dependencies after the new `Request` parameter was added. Updated those tests to pass a request stub and assert the existing edition-admin-role contract. The focused `test_world_support_inbox.py` + `test_vendor_edition_deps.py` run passed (20 tests); `git diff --check` passed.
+- Next: run the backend suite using the complete repository/isolated test stack and required dedicated DB variables, then recheck exact-head GitHub Actions. No merge, migration, or deployment is authorized by this checkpoint.
+
+---
+
 ## Commercial edition API-key scope enforcement — 2026-10-21
 
 - Implemented granular scope enforcement for all 35 route templates in `backend/app/api/v1/edition_control.py` and `backend/app/api/v1/license_control.py`; unmapped routes fail closed for API-key authentication.
