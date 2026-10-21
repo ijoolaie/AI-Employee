@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from app.core.exceptions import ConflictError
+from app.schemas.edition import LicenseIssueRequest
 from app.services import edition_service, license_service
 
 
@@ -81,3 +82,17 @@ async def test_vendor_cannot_issue_license_outside_its_hierarchy():
             tenant=customer,
             feature_codes=["run.execute"],
         )
+
+@pytest.mark.parametrize("feature_codes", [[""], ["   "], ["run.execute", " \\t "]])
+def test_license_issue_request_rejects_blank_feature_codes(feature_codes):
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="feature codes must not be blank"):
+        LicenseIssueRequest(feature_codes=feature_codes)
+
+
+def test_license_issue_request_strips_feature_code_whitespace():
+    request = LicenseIssueRequest(feature_codes=["  run.execute  "])
+
+    assert request.feature_codes == ["run.execute"]
+
