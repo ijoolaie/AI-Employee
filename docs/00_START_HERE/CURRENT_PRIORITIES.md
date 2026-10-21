@@ -1,10 +1,11 @@
 ## Current priority — commercial API-key scope verification (2026-10-21)
 
-1. **Implementation and docs updated locally:** granular scopes cover all 35 Vendor/Reseller/Customer commercial control-plane routes; unmapped routes and legacy NULL-scope keys fail closed; API-key creation validates edition-specific scopes.
-2. **Backend verification passed:** 17 focused tests, 46 expanded related regression tests, 1 isolated PostgreSQL-backed HTTP integration test, Python compile check, and 35/35 route-map audit.
-3. **Frontend verification passed:** ESLint 0 errors / 5 warnings; 145 contract checks and governance contract PASS; 80 Vitest tests across 15 files; TypeScript `--noEmit` passed. Browser/Playwright E2E and the entire backend suite remain pending.
-4. **Next:** run the entire backend suite only after confirming that all database-bound tests target isolated test databases; otherwise keep the passed 46-test related suite as the current boundary. Browser/Playwright E2E remains pending. Fix only reproducible defects; preserve hierarchy, issuer and support-participant checks and all unrelated local changes.
-5. **Release boundary:** no commit, push, migration or deployment. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; local checks are not production or customer-acceptance evidence.
+1. **Implementation and docs:** granular API-key scopes cover all 35 Vendor/Reseller/Customer commercial control-plane route templates; unmapped routes and legacy NULL-scope keys fail closed; API-key creation rejects unknown and cross-edition scopes.
+2. **Backend verification passed:** CI backend suite reported 1,607 passed and 1 deselected; the dedicated PostgreSQL-backed commercial-license HTTP integration test passed against isolated `aiep_license_test`.
+3. **Frontend verification passed:** ESLint 0 errors / 5 warnings; 145 contract checks passed; 80 Vitest tests across 15 files passed; TypeScript `--noEmit` passed.
+4. **Exact-head CI passed:** all 27 reported workflows passed for head `9c123e03652952cad01eb89b0cec605198c3dd1c`, including Security/Privacy, Runtime Isolation/RBAC, CodeQL, DAST, Architecture Guard, Documentation Truth Consistency and Workforce E2E. `pip-audit -r requirements.lock` found no known vulnerabilities.
+5. **Next:** human review of PR [#1238](https://github.com/ijoolaie/AI-Employee/pull/1238), then reassess merge readiness after review. Do not merge, migrate production, or deploy without explicit authorization. Fix only reproducible defects and preserve hierarchy, issuer and support-participant checks and unrelated local changes.
+6. **Release boundary:** PR #1238 remains open/unmerged; certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. CI evidence is not production or customer-acceptance evidence.
 
 ---
 
