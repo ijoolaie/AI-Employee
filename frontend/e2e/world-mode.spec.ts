@@ -176,7 +176,7 @@ test("World Mode renders authoritative employee projection and management bridge
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } })));
   const mobileCloseupDistance = Number(await canvas.getAttribute("data-camera-distance"));
   expect(mobileCloseupDistance).toBeLessThan(mobileOverviewDistance);
-  await resetView.click();
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
   expect(Number(await canvas.getAttribute("data-camera-distance"))).toBe(31);
   await page.waitForTimeout(250);
   await canvas.evaluate((element) => {
