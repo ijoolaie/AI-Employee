@@ -111,8 +111,14 @@ test("World Mode renders authoritative employee projection and management bridge
 
   const browserErrors: string[] = [];
   const serverErrors: string[] = [];
+  const materialWarnings: string[] = [];
   page.on("pageerror", (error) => browserErrors.push(error.message));
-  page.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
+  page.on("console", (message) => {
+    if (message.type() === "error") browserErrors.push(message.text());
+    if (message.type() === "warning" && message.text().includes("THREE.Material: parameter 'map' has value of undefined")) {
+      materialWarnings.push(message.text());
+    }
+  });
   page.on("response", (response) => {
     if (response.status() >= 500) serverErrors.push(`${response.status()} ${response.url()}`);
   });
@@ -125,6 +131,7 @@ test("World Mode renders authoritative employee projection and management bridge
   const canvas = page.getByLabel("AI Company World viewport");
   await expect(canvas).toBeVisible();
   await expect.poll(() => canvas.getAttribute("data-worker-asset-state"), { timeout: 10_000 }).toBe("glb-loaded");
+  expect(materialWarnings, "World scene should not pass an undefined map option to Three.js materials").toEqual([]);
 
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
