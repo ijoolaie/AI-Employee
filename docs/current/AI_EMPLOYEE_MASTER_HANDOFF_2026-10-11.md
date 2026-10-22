@@ -323,3 +323,30 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - The branch-create provider now requires exact `refs/heads/{branch_name}` response identity as well as a valid matching source SHA. A regression test covers a wrong ref with a matching SHA; the response is not treated as success and goes through the existing single read-only reconciliation, with no POST retry.
 - **Evidence boundary:** CI and mocked tests only. Live GitHub mutation, operator credentials/configuration, deployment, rollback, and production readiness remain unverified. Progress metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
 - **Next:** supervised, explicitly authorized external validation of `git_branch` in a disposable test repository/branch, with verified tenant/repository/token configuration and a cleanup plan.
+
+
+---
+
+## Acceptance update ? 2026-10-22 (local evidence; no release certification)
+
+### Customer support / Issue #1043
+
+- Verified from detached `main` source SHA `19ddcc072dc386ccce17baa858c0c2fb94db5171` using an isolated verification API container and dedicated `support_test` PostgreSQL database. Existing local application stacks and production were not targeted.
+- Browser-to-real-API customer workflow passed: create ticket, submit reply, reload page, and confirm ticket/reply persistence.
+- Attachment acceptance passed through the browser UI: upload a synthetic 61-byte text file with a reply, reload and confirm attachment metadata persisted, download through the application's authorized endpoint, and compare downloaded bytes exactly against the original (61/61 bytes matched).
+- Customer access to the reseller-only API returned HTTP 403 in the real-API authorization check. This is separate from mocked Playwright route-guard tests.
+- `backend/tests/test_support_escalation_postgres_api.py`: 1 passed against isolated `support_test`; `tests/test_world_support_inbox.py` and `tests/test_world_support_messages.py`: 24 passed; `git diff --check`: passed.
+- The first attachment attempt was denied because the synthetic test account lacked `file.write`; assigning its role through the application's role-assignment service corrected the test fixture, after which the browser upload/reload/download flow passed. No support product code was changed for this acceptance run.
+- The evidence was posted to [Issue #1043](https://github.com/ijoolaie/AI-Employee/issues/1043) in comment [#6332798320](https://github.com/ijoolaie/AI-Employee/issues/1043#issuecomment-6332798320). Keep the issue open for review and hand-off reconciliation; do not claim production certification.
+
+### OpenTelemetry / SQLAlchemy dependency compatibility
+
+- In the isolated verification worktree only, `backend/requirements.txt` and `backend/pyproject.toml` now constrain `sqlalchemy[asyncio]` to `>=2.0.36,<2.1.0`, aligning declared dependencies with the installed OpenTelemetry SQLAlchemy instrumentation's upper bound. The existing lockfile pin at SQLAlchemy 2.0.36 remains in range.
+- Rebuilt isolated API reported SQLAlchemy 2.0.55; `pip check` passed; the SQLAlchemy instrumentation listener was present; and an actual application-engine query against PostgreSQL returned `SELECT 1` successfully. Dependency/test validation passed; frontend unit tests reported 145 passed, and lint reported 0 errors with 5 pre-existing warnings.
+- These dependency edits are submitted for code review separately from the support-acceptance evidence; no deployment or release is implied. Latest certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+### Workspace / cleanup boundary
+
+- Browser auth files and the temporary API container/port `18022` and frontend dev server/port `13021` were removed/stopped. The dedicated isolated Compose verification stack remains on its own ports (`18021`, `13020`, `15433`, `16390`); pre-existing application stacks were not stopped.
+- Synthetic acceptance records remain in the dedicated `support_test` database; no broad database cleanup was performed.
+- No deployment, release, or production-certification action was performed.
