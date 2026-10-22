@@ -98,7 +98,7 @@ function box(
 ) {
   const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(...size),
-    new THREE.MeshStandardMaterial({ color, map: options.texture ? getSurfaceTexture(options.texture) : undefined, roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
+    new THREE.MeshStandardMaterial({ color, ...(options.texture ? { map: getSurfaceTexture(options.texture) } : {}), roughness: options.roughness ?? 0.78, metalness: options.metalness ?? 0, emissive: options.emissive ?? 0, emissiveIntensity: options.emissiveIntensity ?? 0 }),
   );
   mesh.position.set(...position);
   mesh.castShadow = options.castShadow ?? true;
