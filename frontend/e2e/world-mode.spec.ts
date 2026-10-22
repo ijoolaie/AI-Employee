@@ -133,6 +133,21 @@ test("World Mode renders authoritative employee projection and management bridge
   await expect.poll(() => canvas.getAttribute("data-worker-asset-state"), { timeout: 10_000 }).toBe("glb-loaded");
   expect(materialWarnings, "World scene should not pass an undefined map option to Three.js materials").toEqual([]);
 
+  // Verify that camera controls change the actual scene distance, not just the control UI.
+  const zoomIn = page.getByRole("button", { name: "Zoom in" });
+  const zoomOut = page.getByRole("button", { name: "Zoom out" });
+  const resetView = page.getByRole("button", { name: "Reset world view" });
+  const overviewDistance = Number(await canvas.getAttribute("data-camera-distance"));
+  for (let step = 0; step < 5; step += 1) await zoomIn.click();
+  const closeupDistance = Number(await canvas.getAttribute("data-camera-distance"));
+  expect(closeupDistance).toBeLessThan(overviewDistance);
+  await mkdir("artifacts/world-visual-review", { recursive: true });
+  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop-closeup.png", fullPage: false });
+  await zoomOut.click();
+  expect(Number(await canvas.getAttribute("data-camera-distance"))).toBeGreaterThan(closeupDistance);
+  await resetView.click();
+  expect(Number(await canvas.getAttribute("data-camera-distance"))).toBe(31);
+
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
   await employeeSelector.evaluate((element) => (element as HTMLButtonElement).focus());
@@ -156,6 +171,13 @@ test("World Mode renders authoritative employee projection and management bridge
   // can stall pointer dispatch after repeated full-page WebGL screenshots/resizes.
   await page.setViewportSize({ width: 390, height: 844 });
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  const mobileOverviewDistance = Number(await canvas.getAttribute("data-camera-distance"));
+  for (let step = 0; step < 5; step += 1) await zoomIn.click();
+  const mobileCloseupDistance = Number(await canvas.getAttribute("data-camera-distance"));
+  expect(mobileCloseupDistance).toBeLessThan(mobileOverviewDistance);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile-closeup.png", fullPage: false });
+  await resetView.click();
+  expect(Number(await canvas.getAttribute("data-camera-distance"))).toBe(31);
   await page.waitForTimeout(250);
   await canvas.evaluate((element) => {
     (window as Window & { __worldPanEvents?: number }).__worldPanEvents = 0;
