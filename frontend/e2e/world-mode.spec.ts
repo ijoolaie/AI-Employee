@@ -168,10 +168,12 @@ test("World Mode renders authoritative employee projection and management bridge
   // Exercise mobile pointer panning before expensive visual captures; software-rendered CI
   // can stall pointer dispatch after repeated full-page WebGL screenshots/resizes.
   await page.setViewportSize({ width: 390, height: 844 });
+  // Let the WebGL renderer finish its responsive resize before sending mobile camera input.
+  await page.waitForTimeout(300);
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
   const mobileOverviewDistance = Number(await canvas.getAttribute("data-camera-distance"));
   // One equivalent zoom event avoids repeated browser evaluations on software-rendered CI.
-  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.48 } })));
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } })));
   const mobileCloseupDistance = Number(await canvas.getAttribute("data-camera-distance"));
   expect(mobileCloseupDistance).toBeLessThan(mobileOverviewDistance);
   await resetView.click();
