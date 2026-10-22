@@ -141,6 +141,8 @@ test("World Mode renders authoritative employee projection and management bridge
   for (let step = 0; step < 5; step += 1) await zoomIn.click();
   const closeupDistance = Number(await canvas.getAttribute("data-camera-distance"));
   expect(closeupDistance).toBeLessThan(overviewDistance);
+  await mkdir("artifacts/world-visual-review", { recursive: true });
+  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop-closeup.png", fullPage: false });
   await zoomOut.click();
   expect(Number(await canvas.getAttribute("data-camera-distance"))).toBeGreaterThan(closeupDistance);
   await resetView.click();
@@ -176,6 +178,7 @@ test("World Mode renders authoritative employee projection and management bridge
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } })));
   const mobileCloseupDistance = Number(await canvas.getAttribute("data-camera-distance"));
   expect(mobileCloseupDistance).toBeLessThan(mobileOverviewDistance);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile-closeup.png", fullPage: false });
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
   expect(Number(await canvas.getAttribute("data-camera-distance"))).toBe(31);
   await page.waitForTimeout(250);
