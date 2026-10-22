@@ -1,5 +1,5 @@
 import pytest
-from app.services.support_slot_filling import plan_support_turn
+from app.services.support_slot_filling import find_trusted_shipping_city, plan_support_turn
 
 def test_shipping_fee_asks_city_before_answering():
     d = plan_support_turn(intent="shipping_fee")
@@ -60,3 +60,29 @@ def test_unknown_intent_requires_review():
     d = plan_support_turn(intent="refund_everything")
     assert not d.can_answer_from_policy
     assert d.reason == "unknown_intent_requires_review"
+
+
+@pytest.mark.parametrize(("message", "policy", "expected"), [
+    ("هزینه ارسال به تهران چقدر است؟", {"rates_by_city": {"تهران": 65000}}, "تهران"),
+    ("هزینه ارسال به شیراز", {"cities": ["تهران", "شیراز"]}, "شیراز"),
+    ("هزینه ارسال به تبریز", {"known_cities": ["تهران"]}, None),
+    ("هزینه ارسال به تهران", {"cities": "تهران"}, None),
+    ("هزینه ارسال به تهران", None, None),
+])
+def test_find_trusted_shipping_city_uses_only_configured_city_names(message, policy, expected):
+    assert find_trusted_shipping_city(message, policy) == expected
+
+
+def test_find_trusted_shipping_city_prefers_longest_matching_name():
+    assert find_trusted_shipping_city(
+        "هزینه ارسال به شهرکرد",
+        {"known_cities": ["شهر", "شهرکرد"]},
+    ) == "شهرکرد"
+
+
+def test_known_city_does_not_imply_shipping_rate():
+    city = find_trusted_shipping_city("هزینه ارسال به تهران", {"cities": ["تهران"]})
+    decision = plan_support_turn(intent="shipping_fee", known_slots={"city": city}, policy={})
+    assert city == "تهران"
+    assert not decision.can_answer_from_policy
+    assert decision.reason == "shipping_policy_unavailable"
