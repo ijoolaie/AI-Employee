@@ -145,6 +145,29 @@ test("World Mode renders authoritative employee projection and management bridge
   await expect(employeeSelector).toHaveAttribute("aria-pressed", "false");
 
 
+  // Exercise mobile pointer panning before expensive visual captures; software-rendered CI
+  // can stall pointer dispatch after repeated full-page WebGL screenshots/resizes.
+  await page.setViewportSize({ width: 390, height: 844 });
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  await page.waitForTimeout(250);
+  await canvas.evaluate((element) => {
+    (window as Window & { __worldPanEvents?: number }).__worldPanEvents = 0;
+    element.addEventListener("world:pan", () => {
+      const state = window as Window & { __worldPanEvents?: number };
+      state.__worldPanEvents = (state.__worldPanEvents ?? 0) + 1;
+    });
+  });
+  const mobileCanvasBox = await canvas.boundingBox();
+  expect(mobileCanvasBox).toBeTruthy();
+  if (mobileCanvasBox) {
+    await page.mouse.move(mobileCanvasBox.x + mobileCanvasBox.width * 0.55, mobileCanvasBox.y + mobileCanvasBox.height * 0.55);
+    await page.mouse.down();
+    await page.mouse.move(mobileCanvasBox.x + mobileCanvasBox.width * 0.68, mobileCanvasBox.y + mobileCanvasBox.height * 0.61, { steps: 5 });
+    await page.mouse.up();
+    await expect.poll(() => page.evaluate(() => (window as Window & { __worldPanEvents?: number }).__worldPanEvents ?? 0))
+      .toBeGreaterThan(0);
+  }
+
   // Capture real-browser visual evidence from the same deterministic fixture at both target sizes.
   // These artifacts support human review; they do not constitute visual acceptance by themselves.
   await mkdir("artifacts/world-visual-review", { recursive: true });
@@ -200,27 +223,6 @@ test("World Mode renders authoritative employee projection and management bridge
     expect(joystickBox.x + joystickBox.width).toBeLessThanOrEqual(390);
     expect(overlaps(joystickBox, controlsBox), "mobile joystick and camera controls overlap").toBe(false);
     expect(overlaps(joystickBox, hudBox), "mobile joystick and HUD overlap").toBe(false);
-  }
-
-  // Exercise the real pointer gesture without screenshotting the WebGL canvas.
-  // WebGL canvas screenshots can stall on software-rendered CI runners; verify
-  // the gesture emits the camera-pan event, while WorldPan unit tests cover math.
-  await canvas.evaluate((element) => {
-    (window as Window & { __worldPanEvents?: number }).__worldPanEvents = 0;
-    element.addEventListener("world:pan", () => {
-      const state = window as Window & { __worldPanEvents?: number };
-      state.__worldPanEvents = (state.__worldPanEvents ?? 0) + 1;
-    });
-  });
-  const mobileCanvasBox = await canvas.boundingBox();
-  expect(mobileCanvasBox).toBeTruthy();
-  if (mobileCanvasBox) {
-    await page.mouse.move(mobileCanvasBox.x + mobileCanvasBox.width * 0.55, mobileCanvasBox.y + mobileCanvasBox.height * 0.55);
-    await page.mouse.down();
-    await page.mouse.move(mobileCanvasBox.x + mobileCanvasBox.width * 0.68, mobileCanvasBox.y + mobileCanvasBox.height * 0.61, { steps: 5 });
-    await page.mouse.up();
-    await expect.poll(() => page.evaluate(() => (window as Window & { __worldPanEvents?: number }).__worldPanEvents ?? 0))
-      .toBeGreaterThan(0);
   }
 
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
