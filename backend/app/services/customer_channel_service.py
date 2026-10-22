@@ -12,6 +12,14 @@ from app.models.run import Run
 from app.services import audit_service, employee_service, run_service, customer_service
 
 
+def _format_conversation_transcript(messages: list[CustomerMessage]) -> str:
+    """Format authorized messages in chronological order for model context."""
+    return "\\n".join(
+        ("Customer: " if item.role == "user" else "Assistant: ") + item.content
+        for item in messages
+    )
+
+
 def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
@@ -76,10 +84,7 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
         .limit(30)
     )).scalars().all())
     history.reverse()  # Keep the most recent 30 turns in chronological order.
-    transcript = "\n".join(
-        ("Customer: " if item.role == "user" else "Assistant: ") + item.content
-        for item in history
-    )
+    transcript = _format_conversation_transcript(history)
     run_message = content
     if transcript:
         run_message = (
