@@ -50,6 +50,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.services import audit_service, employee_service, billing_service
 from app.services.tool_audit_metadata import tool_result_audit_summary
+from app.services.support_slot_filling import plan_support_turn
 from app.services.schema_validation import validate_json_data
 from app.services.workforce_runtime_governance import assert_workforce_tool_execution
 from app.rag import service as rag_service
@@ -371,6 +372,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
 
     gateway = AIGateway()
     paused_for_approval = False
+    support_preflight_question: str | None = None
     # Keep the Run admission transaction (and therefore the FOR UPDATE lock
     # acquired by the governance wrapper) alive while provider/tool execution
     # can fail. The previous full rollback released that lock before the
@@ -397,6 +399,30 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 channel = conversation_channel[1]
                 channel_config = channel.config if isinstance(channel.config, dict) else {}
                 support_policy = channel_config.get("support_policy", {})
+                # Deterministic preflight for the highest-risk common support
+                # ambiguity: destination-dependent shipping fees. This runs
+                # before any provider call and only uses channel policy as
+                # trusted data. It deliberately does not guess a city.
+                message_text = str(run.input_data.get("message", ""))
+                normalized_message = message_text.casefold()
+                shipping_fee_terms = (
+                    "هزینه ارسال", "هزینه‌ی ارسال", "هزینه پست", "کرایه ارسال",
+                    "قیمت ارسال", "ارسال چقدر", "ارسال چند", "هزینه حمل",
+                )
+                policy_dict = support_policy if isinstance(support_policy, dict) else {}
+                shipping_policy = policy_dict.get("shipping", {})
+                shipping_policy = shipping_policy if isinstance(shipping_policy, dict) else {}
+                flat_rate = shipping_policy.get("flat_rate_all_destinations") is True
+                rates_by_city = shipping_policy.get("rates_by_city", {})
+                rates_by_city = rates_by_city if isinstance(rates_by_city, dict) else {}
+                known_city = next(
+                    (city for city in rates_by_city if isinstance(city, str) and city and city.casefold() in normalized_message),
+                    None,
+                )
+                if any(term in normalized_message for term in shipping_fee_terms) and not flat_rate and known_city is None:
+                    decision = plan_support_turn(intent="shipping_fee", policy=policy_dict)
+                    support_preflight_question = decision.next_question
+
                 rules["customer_support_contract"] = {
                     "enabled": True,
                     "policy": support_policy if isinstance(support_policy, dict) else {},
@@ -518,7 +544,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
         # below) — this never widens what an arbitrary Tool can inject.
         last_tool_result: dict[str, Any] | None = None
 
-        while True:
+        while support_preflight_question is None:
             # Resume an approved gated tool call before asking the model for another turn.
             if resume_approval is not None:
                 tool_call_name = resume_approval.tool_name
@@ -746,6 +772,9 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
 
             if paused_for_approval:
                 break
+
+        if support_preflight_question is not None:
+            result = ChatMessage(role="assistant", content=support_preflight_question)
 
         if paused_for_approval:
             await _sync_work_item_lifecycle(db, run=run, status="waiting")
