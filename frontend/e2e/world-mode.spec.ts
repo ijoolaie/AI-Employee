@@ -207,11 +207,11 @@ test("World Mode renders authoritative employee projection and management bridge
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: false });
-  // Verify mobile HUD/controls at a narrow, target, and wider-narrow viewport, and retain full-page review artifacts.
+  // Verify mobile HUD/controls at narrow, target, and wider-narrow widths without extra full-page WebGL captures.
+  // The dedicated 390px viewport screenshot above is the review artifact; repeated full-page captures can stall CI.
   for (const width of [360, 390, 430]) {
     await page.setViewportSize({ width, height: 844 });
     await page.waitForTimeout(250);
-    await page.screenshot({ path: "artifacts/world-visual-review/world-mobile-" + width + ".png", fullPage: true });
     const probeHud = await page.getByTestId("world-viewport-hud").boundingBox();
     const probeControls = await page.getByRole("group", { name: "World camera controls" }).boundingBox();
     const probeJoystick = await page.getByLabel("World movement joystick").boundingBox();
