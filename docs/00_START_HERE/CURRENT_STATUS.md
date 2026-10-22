@@ -1,6 +1,6 @@
 ## Post-merge reconciliation — 2026-10-22 (PR #1252)
 
-- Current `main` SHA: [`8a03df9d7dcb46e465b5ea0c5ee355226730c642`](https://github.com/ijoolaie/AI-Employee/commit/8a03df9d7dcb46e465b5ea0c5ee355226730c642). PR [#1252](https://github.com/ijoolaie/AI-Employee/pull/1252) merged from exact head `0427938a0f1179ef08569d27135ef576574bedac`.
+- World mobile implementation merge SHA: [`8a03df9d7dcb46e465b5ea0c5ee355226730c642`](https://github.com/ijoolaie/AI-Employee/commit/8a03df9d7dcb46e465b5ea0c5ee355226730c642). PR [#1252](https://github.com/ijoolaie/AI-Employee/pull/1252) merged from exact head `0427938a0f1179ef08569d27135ef576574bedac`. Documentation-only PR [#1253](https://github.com/ijoolaie/AI-Employee/pull/1253) subsequently merged as `cdd5577bec6ebe0ddab2a28c228f4365d03690a0`; it changed no application code.
 - All reported checks passed on that exact PR head: frontend, backend, CodeQL (Python and JavaScript/TypeScript), Ephemeral DAST, Production Infrastructure and HA Failure Recovery.
 - The World mobile camera-framing correction and reordered Playwright pan interaction are merged. Issue [#1053](https://github.com/ijoolaie/AI-Employee/issues/1053) is closed.
 - Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) remains open for the broader World visual acceptance: authored/licensed asset provenance, character/furniture detail, obstacle-aware navigation, fresh desktop/mobile runtime inspection, and explicit user approval. CI does not satisfy this gate.

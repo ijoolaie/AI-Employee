@@ -3,7 +3,7 @@
 1. **World visual acceptance:** [Issue #1044](https://github.com/ijoolaie/AI-Employee/issues/1044) remains the next World-specific gate after PR #1252. Inspect asset provenance and obstacle-aware navigation; capture fresh desktop 1440×900 and mobile 390×844 runtime evidence, check console/performance/accessibility/authorization, then request explicit user visual approval. Do not open another PR without a confirmed defect.
 2. **MVP/customer evidence:** continue [Issue #1061](https://github.com/ijoolaie/AI-Employee/issues/1061). Local synthetic Report Employee and support journeys are engineering evidence only; the next unblocker is access to real prospective customers, five decision-maker conversations, and at least two concrete sample/trial commitments. Do not add broad integrations before this.
 3. **Open issue dispositions:** #1250 is upstream/advisory-watch only (no guessed dependency override); #269, #259, #210 and #19 are intentional operator-controlled external validation/release/RBAC gates. Keep open until their stated evidence exists.
-4. **Repository status:** current `main` is `8a03df9d7dcb46e465b5ea0c5ee355226730c642`; live inventory returned zero open PRs and seven open issues at this checkpoint.
+4. **Repository status:** latest application change is PR #1252 at `8a03df9d7dcb46e465b5ea0c5ee355226730c642`; docs-only reconciliation PR #1253 is merged at `cdd5577bec6ebe0ddab2a28c228f4365d03690a0`. Live inventory after #1253 returned zero open PRs and seven open issues.
 5. **Release boundary:** the latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Engineering `main` and green CI do not certify production, customer acceptance, live-provider behavior or revenue.
 
 ---
