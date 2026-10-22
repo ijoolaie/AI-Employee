@@ -57,3 +57,26 @@ def test_prompt_assembly_renders_reserved_input_json_field():
     assert '"file_id": "abc"' in assembly.messages[0].content
     assert '"message": "hello"' in assembly.messages[0].content
     assert assembly.messages[0].content.count('"file_id"') == 1
+
+
+def test_prompt_assembly_includes_customer_support_contract_as_execution_rules():
+    assembly = assemble_employee_prompt(
+        prompt_template="Answer the customer.",
+        prompt_version="1",
+        context=ExecutionContext(
+            input_data={"message": "هزینه ارسال چقدره؟"},
+            rules={
+                "customer_support_contract": {
+                    "enabled": True,
+                    "requirements": [
+                        "Ask for the destination city before a destination-dependent shipping quote.",
+                        "Do not claim a handoff succeeded unless a durable action succeeded.",
+                    ],
+                }
+            },
+        ),
+    )
+    system_content = assembly.messages[0].content
+    assert "customer_support_contract" in system_content
+    assert "destination city" in system_content
+    assert "durable action succeeded" in system_content
