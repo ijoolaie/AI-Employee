@@ -14,7 +14,7 @@ from app.services import audit_service, employee_service, run_service, customer_
 
 def _format_conversation_transcript(messages: list[CustomerMessage]) -> str:
     """Format authorized messages in chronological order for model context."""
-    return "\\n".join(
+    return "\n".join(
         ("Customer: " if item.role == "user" else "Assistant: ") + item.content
         for item in messages
     )
