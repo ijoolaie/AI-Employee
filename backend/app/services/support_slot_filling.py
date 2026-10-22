@@ -70,3 +70,24 @@ def plan_support_turn(*, intent: str, known_slots: dict[str, Any] | None = None,
     available = policy_key in trusted_policy and trusted_policy[policy_key] is not None
     return SlotDecision(intent, (), None, bool(available),
                         "trusted_policy_available" if available else "policy_or_authorized_review_required")
+
+
+def find_trusted_shipping_city(message: str, shipping_policy: dict[str, Any] | None = None) -> str | None:
+    """Return a configured city explicitly mentioned by the customer, if any.
+
+    Only trusted policy keys/lists are considered. This helper identifies context;
+    it does not imply that a shipping rate exists for the matched city.
+    """
+    policy = shipping_policy if isinstance(shipping_policy, dict) else {}
+    rates_by_city = policy.get("rates_by_city", {})
+    rates_by_city = rates_by_city if isinstance(rates_by_city, dict) else {}
+    known_cities = policy.get("cities", policy.get("known_cities", []))
+    known_cities = known_cities if isinstance(known_cities, list) else []
+    message_folded = message.casefold()
+    candidates = [city for city in [*rates_by_city.keys(), *known_cities]
+                  if isinstance(city, str) and city.strip()]
+    # Prefer the longest match so a short city name cannot shadow a longer one.
+    for city in sorted(set(candidates), key=len, reverse=True):
+        if city.casefold() in message_folded:
+            return city
+    return None
