@@ -233,3 +233,31 @@ Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope c
 - Why progress scores did not move: this fix closes one evidenced approval-resume mismatch, but does not complete provider support or the role-by-role evidence matrix. Do not infer broad A1 readiness from PR count.
 - Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%.
 - Next: build and maintain an operation-level evidence matrix across roles (role contract, Tool Registry/permissions, semantic handler, persisted approval/governance, provider support, persisted result/audit, positive/negative tests, exact-head CI, and external validation). Fix only confirmed gaps; keep A1 at 30% until its documented evidence threshold is met.
+
+## 11. Mandatory open GitHub PR and issue triage on every agent run
+
+**Scope:** this repository, `ijoolaie/AI-Employee`. This is a recurring per-run requirement, not an optional cleanup task. Perform it at the beginning of every new task and every continuation/resume (including “continue” / «ادامه بده»), before selecting unrelated implementation work.
+
+### Inventory and evidence
+
+1. Query GitHub's live state for **all open pull requests and all open issues** in this repository. Do not rely on an old handoff, memory, a recent-items list, or the local clone as a complete inventory. Follow pagination/limits until the inventory is complete; if the tools cannot return the full set, report the exact coverage limitation and do not call it a full review.
+2. For each open PR, inspect its current base/head and exact head SHA, changed files/diff, linked issues/dependencies, requested reviews/review threads, and required workflow/check results on that exact head. Re-check live state before any mutation.
+3. For each open issue, read its title/body, labels, comments and linked PRs where available. Identify the acceptance criteria, latest verified evidence, owner/dependency, and whether it is an engineering task, intentional external gate, upstream-watch item, duplicate, or already resolved.
+4. Avoid duplicate work: map issues to their PRs/branches and group related blockers. Prioritize security/correctness, broken required checks, stale/unblocked work, and canonical project priorities.
+
+### Required disposition for every item
+
+Every reviewed open item must receive an explicit, evidence-based disposition recorded in the appropriate GitHub thread or canonical tracker when the review changes or clarifies status:
+
+- **PR:** merge only when policy-required reviews/checks and acceptance criteria pass on the exact current head; otherwise revise, request changes, close with a reason, or hold/defer with a named blocker and next action.
+- **Issue:** act now (with a bounded change/PR), keep open and track a concrete next action, defer/hold with a specific dependency and recheck trigger, or close only when verified complete, duplicate, invalid, or superseded. Preserve intentionally open external/customer/production certification gates; never close them merely to reduce the open count.
+- For every held/deferred item, record why it cannot progress now, what evidence or event unblocks it, and the next action/recheck condition. For completed work, link the exact commit/PR/test evidence. Update existing canonical status/handoff documents when project status or priorities change; do not create redundant status files.
+
+### Safety and truthful completion
+
+- Never merge a PR solely because its title/body says ready, CI is green without required acceptance, or the queue is old. Never bypass branch protection, reviews, or required checks.
+- Do not automatically close issues or merge PRs just to make the list empty. Preserve scope, user data, uncommitted changes, production/release gates, and the repository's security/tenant-isolation constraints.
+- Re-check current state and exact SHA immediately before merge/close/update actions; stop if the head moved or evidence is stale.
+- Do not claim “all PRs/issues reviewed” unless every currently open item was inspected. Report counts inventoried/reviewed, explicit dispositions, changed items, blockers, and any unreviewed remainder.
+- The review is not complete until every open PR and issue has a recorded disposition (including “hold with reason and next action”), and the next highest-priority actionable item is selected. Continue with that item after triage when safe and within the user's task; do not stop after producing an inventory alone.
+
