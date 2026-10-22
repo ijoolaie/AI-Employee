@@ -174,8 +174,12 @@ test("World Mode renders authoritative employee projection and management bridge
   await page.waitForTimeout(300);
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
   const mobileOverviewDistance = Number(await canvas.getAttribute("data-camera-distance"));
-  // One equivalent zoom event avoids repeated browser evaluations on software-rendered CI.
-  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } })));
+  // Batch five equivalent zoom events in one browser evaluation to avoid repeated cross-process dispatches.
+  await canvas.evaluate((element) => {
+    for (let step = 0; step < 5; step += 1) {
+      element.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }));
+    }
+  });
   const mobileCloseupDistance = Number(await canvas.getAttribute("data-camera-distance"));
   expect(mobileCloseupDistance).toBeLessThan(mobileOverviewDistance);
   await page.screenshot({ path: "artifacts/world-visual-review/world-mobile-closeup.png", fullPage: false });
