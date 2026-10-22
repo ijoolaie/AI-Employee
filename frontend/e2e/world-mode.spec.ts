@@ -155,6 +155,28 @@ test("World Mode renders authoritative employee projection and management bridge
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: false });
+  // Verify mobile HUD/controls at a narrow, target, and wider-narrow viewport, and retain full-page review artifacts.
+  for (const width of [360, 390, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.waitForTimeout(250);
+    await page.screenshot({ path: "artifacts/world-visual-review/world-mobile-" + width + ".png", fullPage: true });
+    const probeHud = await page.getByTestId("world-viewport-hud").boundingBox();
+    const probeControls = await page.getByRole("group", { name: "World camera controls" }).boundingBox();
+    const probeJoystick = await page.getByLabel("World movement joystick").boundingBox();
+    expect(probeHud && probeControls && probeJoystick).toBeTruthy();
+    if (probeHud && probeControls && probeJoystick) {
+      const overlapsProbe = (a: NonNullable<typeof probeHud>, b: NonNullable<typeof probeControls>) =>
+        a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+      expect(probeControls.x).toBeGreaterThanOrEqual(0);
+      expect(probeControls.x + probeControls.width).toBeLessThanOrEqual(width);
+      expect(probeJoystick.x).toBeGreaterThanOrEqual(0);
+      expect(probeJoystick.x + probeJoystick.width).toBeLessThanOrEqual(width);
+      expect(overlapsProbe(probeHud, probeControls)).toBe(false);
+      expect(overlapsProbe(probeJoystick, probeControls)).toBe(false);
+      expect(overlapsProbe(probeJoystick, probeHud)).toBe(false);
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
 
   const hud = page.getByTestId("world-viewport-hud");
   const cameraControls = page.getByRole("group", { name: "World camera controls" });
