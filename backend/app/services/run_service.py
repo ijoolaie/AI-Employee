@@ -415,8 +415,15 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 flat_rate = shipping_policy.get("flat_rate_all_destinations") is True
                 rates_by_city = shipping_policy.get("rates_by_city", {})
                 rates_by_city = rates_by_city if isinstance(rates_by_city, dict) else {}
+                known_cities = shipping_policy.get("cities", shipping_policy.get("known_cities", []))
+                if not isinstance(known_cities, list):
+                    known_cities = []
+                trusted_city_names = [
+                    city for city in [*rates_by_city.keys(), *known_cities]
+                    if isinstance(city, str) and city.strip()
+                ]
                 known_city = next(
-                    (city for city in rates_by_city if isinstance(city, str) and city and city.casefold() in normalized_message),
+                    (city for city in trusted_city_names if city.casefold() in normalized_message),
                     None,
                 )
                 if any(term in normalized_message for term in shipping_fee_terms) and not flat_rate and known_city is None:
