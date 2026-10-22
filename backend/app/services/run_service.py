@@ -50,7 +50,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.services import audit_service, employee_service, billing_service
 from app.services.tool_audit_metadata import tool_result_audit_summary
-from app.services.support_slot_filling import plan_support_turn
+from app.services.support_slot_filling import find_trusted_shipping_city, plan_support_turn
 from app.services.schema_validation import validate_json_data
 from app.services.workforce_runtime_governance import assert_workforce_tool_execution
 from app.rag import service as rag_service
@@ -413,19 +413,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 shipping_policy = policy_dict.get("shipping", {})
                 shipping_policy = shipping_policy if isinstance(shipping_policy, dict) else {}
                 flat_rate = shipping_policy.get("flat_rate_all_destinations") is True
-                rates_by_city = shipping_policy.get("rates_by_city", {})
-                rates_by_city = rates_by_city if isinstance(rates_by_city, dict) else {}
-                known_cities = shipping_policy.get("cities", shipping_policy.get("known_cities", []))
-                if not isinstance(known_cities, list):
-                    known_cities = []
-                trusted_city_names = [
-                    city for city in [*rates_by_city.keys(), *known_cities]
-                    if isinstance(city, str) and city.strip()
-                ]
-                known_city = next(
-                    (city for city in trusted_city_names if city.casefold() in normalized_message),
-                    None,
-                )
+                known_city = find_trusted_shipping_city(message_text, shipping_policy)
                 if any(term in normalized_message for term in shipping_fee_terms) and not flat_rate and known_city is None:
                     decision = plan_support_turn(intent="shipping_fee", policy=policy_dict)
                     support_preflight_question = decision.next_question
