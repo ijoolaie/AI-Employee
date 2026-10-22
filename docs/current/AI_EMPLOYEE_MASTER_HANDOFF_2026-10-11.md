@@ -350,3 +350,28 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - Browser auth files and the temporary API container/port `18022` and frontend dev server/port `13021` were removed/stopped. The dedicated isolated Compose verification stack remains on its own ports (`18021`, `13020`, `15433`, `16390`); pre-existing application stacks were not stopped.
 - Synthetic acceptance records remain in the dedicated `support_test` database; no broad database cleanup was performed.
 - No deployment, release, or production-certification action was performed.
+
+---
+
+## MVP Phase 1 checkpoint — 2026-10-22 (isolated local acceptance; no release certification)
+
+### Repository and runtime audit
+
+- Exact source checkout used for this verification: `471d6457d6cf5f996f0059b2083387b2682db64e` (`main` at the time of the audit). The checkout used for the documentation change was created from this exact SHA.
+- The current open-PR search returned no open PRs. Dependabot PR #1239 is closed unmerged; its focused replacement #1241 merged, followed by PR #1245. The 2026-10-21 handoff note that #1239 was still open is historical.
+- Verification used only the isolated local stack: frontend `127.0.0.1:13020`, API `127.0.0.1:18021`, PostgreSQL `127.0.0.1:15433`, and Redis `127.0.0.1:16390`. The primary local worktrees and their pre-existing untracked files were left untouched.
+- The first Run stayed `pending` because the isolated stack had no execution worker, outbox worker, Beat scheduler, or control worker running. Starting the required services enabled the outbox dispatch and execution tasks. This was a local runtime activation/configuration gap; no application source fix was made for it.
+- The isolated API and execution worker were temporarily configured through an untracked `%TEMP%` Compose override to use the actual local LM Studio provider. The same temporary override set `GIT_COMMIT_SHA` to the verified source SHA; `/health` then returned the matching SHA. This was local test configuration only, not a tracked Compose or production change.
+
+### Acceptance evidence
+
+- Real-stack auth API passed: register, login, current-user read, refresh, and current-user read after refresh, using synthetic test identities.
+- Employee/Run acceptance passed with the deterministic certification provider: tenant/license fixture, Employee creation and version publication, list/detail reads, Run creation, terminal success, and result validation.
+- Actual local-model acceptance passed with LM Studio `google/gemma-4-e4b`. The worker logged HTTP 200 for `/v1/chat/completions`; the Run completed successfully in about 19.8 seconds and returned `LIVE_MODEL_EXECUTION_OK.`. A separate authenticated read returned the same persisted output.
+- Browser acceptance passed on the isolated frontend: login, Run detail rendering, and full browser reload with the model output still visible. The one generic console 404 was traced to `http://127.0.0.1:13020/favicon.ico`; it was not an API or Run-result failure and remains a small UI polish item.
+
+### Evidence boundary and next step
+
+- This is synthetic, local engineering evidence. It is not a real-customer pilot, willingness-to-pay evidence, production deployment, or release certification.
+- The certified production release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No release or deployment occurred as part of this checkpoint.
+- The next product decision remains evidence-based: compare the store customer-support journey with the Employee Run workflow against a specific customer segment and measurable pain, then seek genuine trial/payment intent. Do not expand employee roles or broad integrations before that decision.
