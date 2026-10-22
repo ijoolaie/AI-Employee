@@ -72,9 +72,10 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
         select(CustomerMessage)
         .where(CustomerMessage.conversation_id == conversation.id,
                CustomerMessage.tenant_id == conversation.tenant_id)
-        .order_by(CustomerMessage.created_at.asc())
+        .order_by(CustomerMessage.created_at.desc())
         .limit(30)
     )).scalars().all())
+    history.reverse()  # Keep the most recent 30 turns in chronological order.
     transcript = "\n".join(
         ("Customer: " if item.role == "user" else "Assistant: ") + item.content
         for item in history
