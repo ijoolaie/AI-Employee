@@ -375,3 +375,23 @@ Coverage boundary: the Playwright reload regression mocks the API; the backend A
 - This is synthetic, local engineering evidence. It is not a real-customer pilot, willingness-to-pay evidence, production deployment, or release certification.
 - The certified production release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No release or deployment occurred as part of this checkpoint.
 - The next product decision remains evidence-based: compare the store customer-support journey with the Employee Run workflow against a specific customer segment and measurable pain, then seek genuine trial/payment intent. Do not expand employee roles or broad integrations before that decision.
+
+---
+
+## Report Employee real-model acceptance — 2026-10-22
+
+This run validates the narrow report-analysis workflow against current `main` source SHA `ccf3a253d817b4be37e0f51fea89cd5524ce7aa9` in the isolated local verification stack. API `/health` reported the same SHA. The API and execution worker used a temporary, untracked Compose override for local LM Studio `google/gemma-4-e4b`; no production or primary local stack configuration was changed.
+
+### Test fixture and result
+
+- Seeded the system `report-employee`, registered a synthetic tenant, and issued a synthetic test license with `employee.run` and `tool:analyze_dataset`.
+- Uploaded synthetic `report-analyst-test.csv` (source file ID `e6bd4310-1fb6-4c79-a742-d8a6037bfc9a`) containing three rows: Book A / A- / 10 units / 120 unit price; Book B / A- / 5 / 200; Book C / A- / 8 / 75.
+- Run ID: `ec3c500f-4f18-4dfd-bc2f-2d082db5bc42`. Final status `success`; 2,536 tokens; execution task completed in about 99.7 seconds. Both LM Studio chat-completion requests returned HTTP 200.
+- The generated analysis returned the correct calculations: 23 units; total revenue $2,800; Book A $1,200, Book B $1,000, Book C $600; average unit price about $131.67. A separate authenticated Run read returned the same persisted output.
+- Generated report artifacts were present in the Run output: PDF ID `e82678a2-cf18-4e94-9fb2-ff1efb4e479c`, Excel ID `efd5662a-a8ca-4e45-a41b-0da325702ec1`, and three chart IDs. Authenticated downloads passed: PDF 65,658 bytes with `%PDF` signature, Excel 5,576 bytes with ZIP/OOXML signature, and Chart 1 PNG 24,448 bytes with PNG signature.
+- Browser login, Run detail rendering, and full browser reload passed. The report KPI text remained visible after reload; the PDF, Excel, and Chart 1 buttons each completed a browser download.
+- Worker logs show the Run task succeeded. The PostgreSQL active lock-wait count was zero after completion, with no deadlock or lock-timeout markers for this execution.
+
+### Interpretation
+
+This is meaningful local engineering evidence that the Report Employee can use a real local model, analyze uploaded data, persist its result, and produce downloadable artifacts. The CSV, account, tenant, and license were synthetic. It is not evidence of real-customer demand or willingness to pay, and it does not certify production or a new release. Production certification remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
