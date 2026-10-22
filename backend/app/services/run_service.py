@@ -465,7 +465,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 metadata={"top_k": memory_config["top_k"], "result_count": len(memory_context), "query_fields": memory_config["query_fields"], "min_score": memory_config["min_score"]},
             )
 
-        autonomy_config = autonomy_settings(rules)
+        autonomy_config = ({"enabled": False, "require_plan": False} if support_preflight_question else autonomy_settings(rules))
         autonomous_plan = None
         if autonomy_config["enabled"]:
             try:
