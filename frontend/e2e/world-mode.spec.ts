@@ -175,7 +175,6 @@ test("World Mode renders authoritative employee projection and management bridge
   for (let step = 0; step < 5; step += 1) await zoomIn.click();
   const mobileCloseupDistance = Number(await canvas.getAttribute("data-camera-distance"));
   expect(mobileCloseupDistance).toBeLessThan(mobileOverviewDistance);
-  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile-closeup.png", fullPage: false });
   await resetView.click();
   expect(Number(await canvas.getAttribute("data-camera-distance"))).toBe(31);
   await page.waitForTimeout(250);
