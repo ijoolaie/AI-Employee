@@ -725,6 +725,25 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
             output_data["report_artifact"] = last_tool_result["report_artifact"]
         validate_json_data(output_data, version.output_schema, field_name="output_data")
         run.output_data = output_data
+        # Public customer-chat Runs persist the assistant turn in the same
+        # tenant-scoped conversation so the next turn can reuse the transcript.
+        if run.conversation_id is not None:
+            existing_assistant_turn = await db.execute(
+                select(CustomerMessage.id).where(
+                    CustomerMessage.tenant_id == run.tenant_id,
+                    CustomerMessage.conversation_id == run.conversation_id,
+                    CustomerMessage.run_id == run.id,
+                    CustomerMessage.role == "assistant",
+                ).limit(1)
+            )
+            if existing_assistant_turn.scalar_one_or_none() is None:
+                db.add(CustomerMessage(
+                    tenant_id=run.tenant_id,
+                    conversation_id=run.conversation_id,
+                    run_id=run.id,
+                    role="assistant",
+                    content=result.content,
+                ))
         run.status = "success"
         run.completed_at = datetime.now(timezone.utc)
         run.prompt_tokens = total_prompt_tokens
