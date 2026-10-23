@@ -1,8 +1,8 @@
 """PostgreSQL-backed tenant-isolation regression for customer handoff.
 
-This test only runs against the dedicated local support_test database. It skips
-when that explicit test database URL is not configured and fails closed if the
-URL points anywhere else.
+This test only runs against the dedicated support_test database. It skips when
+that explicit test database URL is not configured and fails closed if the URL
+points anywhere else.
 """
 
 import os
@@ -51,9 +51,9 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
     suffix = uuid.uuid4().hex
 
     try:
-        # A transaction is deliberately rolled back at the end; the test leaves
-        # no fixture records in the shared, isolated CI regression database.
         async with sessions() as session:
+            # Keep the fixture creation ordered explicitly: some model mappings
+            # do not declare ORM relationships, so flush each FK dependency.
             async with session.begin():
                 tenant_a = Tenant(
                     id=uuid.uuid4(), name=f"Handoff tenant A {suffix}",
@@ -63,6 +63,9 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
                     id=uuid.uuid4(), name=f"Handoff tenant B {suffix}",
                     slug=f"handoff-b-{suffix}", tenant_kind="customer", status="active",
                 )
+                session.add_all([tenant_a, tenant_b])
+                await session.flush()
+
                 employee = Employee(
                     id=uuid.uuid4(), tenant_id=tenant_a.id,
                     slug=f"handoff-agent-{suffix}", name="Handoff test agent",
@@ -82,21 +85,24 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
                     is_active=True, is_superuser=False, is_platform_admin=False,
                     auth_token_version=0,
                 )
+                session.add_all([employee, same_tenant_user, foreign_tenant_user])
+                await session.flush()
+
                 channel = CustomerChannel(
                     id=uuid.uuid4(), tenant_id=tenant_a.id, employee_id=employee.id,
                     name="PostgreSQL handoff test", channel_type="web_widget",
                     public_key=f"pk_handoff_{suffix}", config={}, is_active=True,
                 )
+                session.add(channel)
+                await session.flush()
+
                 conversation = CustomerConversation(
                     id=uuid.uuid4(), tenant_id=tenant_a.id,
                     employee_id=employee.id, channel_id=channel.id,
                     customer_token_hash=("0" * 64), customer_name="Synthetic customer",
                     status="open", handoff_requested=False,
                 )
-                session.add_all([
-                    tenant_a, tenant_b, employee, same_tenant_user,
-                    foreign_tenant_user, channel, conversation,
-                ])
+                session.add(conversation)
                 await session.flush()
 
                 with pytest.raises(NotFoundError, match="Assigned user not found"):
@@ -119,7 +125,6 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
                 assert updated.assigned_user_id == same_tenant_user.id
                 assert updated.status == "human"
 
-                # Confirm the flushed row can be queried back from PostgreSQL.
                 persisted = (
                     await session.execute(
                         select(CustomerConversation).where(
