@@ -89,10 +89,11 @@ async def test_send_message_includes_prior_turns_in_run_input(monkeypatch):
         customer_email=None,
         customer_phone=None,
     )
+    # The service query orders newest-first, then reverses the result.
     history = [
         SimpleNamespace(
             tenant_id=tenant_id, conversation_id=conversation_id,
-            role="user", content="هزینه ارسال چقدره؟",
+            role="user", content="تهران",
         ),
         SimpleNamespace(
             tenant_id=tenant_id, conversation_id=conversation_id,
@@ -100,7 +101,7 @@ async def test_send_message_includes_prior_turns_in_run_input(monkeypatch):
         ),
         SimpleNamespace(
             tenant_id=tenant_id, conversation_id=conversation_id,
-            role="user", content="تهران",
+            role="user", content="هزینه ارسال چقدره؟",
         ),
     ]
     db = _SendMessageDB(history=history)
@@ -142,7 +143,7 @@ async def test_send_message_includes_prior_turns_in_run_input(monkeypatch):
     assert result_conversation is conversation
     assert result_run is run
     message_input = captured["input_data"]["message"]
-    assert "Current customer message:\\nو هزینه برای تهران؟" in message_input
+    assert "Current customer message:\nو هزینه برای تهران؟" in message_input
     assert "Customer: هزینه ارسال چقدره؟" in message_input
     assert "Assistant: ارسال برای کدوم شهره؟" in message_input
     assert "Customer: تهران" in message_input
