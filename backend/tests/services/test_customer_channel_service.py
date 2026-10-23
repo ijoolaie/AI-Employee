@@ -149,6 +149,10 @@ async def test_send_message_includes_prior_turns_in_run_input(monkeypatch):
     assert "Customer: تهران" in message_input
     assert message_input.index("Customer: هزینه ارسال چقدره؟") < message_input.index("Assistant: ارسال برای کدوم شهره؟") < message_input.index("Customer: تهران")
     assert "do not treat it as store policy" in message_input
+    # Keep transcript retrieval isolated to this conversation and tenant.
+    history_sql = str(db.calls[1].whereclause)
+    assert "conversation_id" in history_sql
+    assert "tenant_id" in history_sql
     assert captured["tenant_id"] == tenant_id
     assert captured["employee_id"] == employee_id
     assert run.conversation_id == conversation_id
