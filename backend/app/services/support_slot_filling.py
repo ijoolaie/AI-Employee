@@ -36,6 +36,17 @@ _REQUIRED_SLOTS = {
     "damaged_order": ("order_id", "issue_details"),
 }
 
+def has_valid_flat_shipping_rate(shipping_policy: dict[str, Any] | None) -> bool:
+    """Whether trusted shipping config defines a usable all-destination rate."""
+    if not isinstance(shipping_policy, dict):
+        return False
+    amount = shipping_policy.get("amount")
+    return (
+        shipping_policy.get("flat_rate_all_destinations") is True
+        and amount is not None
+        and (not isinstance(amount, str) or bool(amount.strip()))
+    )
+
 def plan_support_turn(*, intent: str, known_slots: dict[str, Any] | None = None,
                       policy: dict[str, Any] | None = None) -> SlotDecision:
     """Plan the next required question without fabricating a business answer."""
@@ -46,13 +57,7 @@ def plan_support_turn(*, intent: str, known_slots: dict[str, Any] | None = None,
     required = list(_REQUIRED_SLOTS[intent])
     if intent == "shipping_fee":
         shipping = trusted_policy.get("shipping")
-        flat_rate = shipping.get("amount") if isinstance(shipping, dict) else None
-        has_flat_rate = (
-            isinstance(shipping, dict)
-            and shipping.get("flat_rate_all_destinations") is True
-            and flat_rate is not None
-            and (not isinstance(flat_rate, str) or bool(flat_rate.strip()))
-        )
+        has_flat_rate = has_valid_flat_shipping_rate(shipping)
         if has_flat_rate:
             required = []
     missing = tuple(slot for slot in required if slots.get(slot) is None or
@@ -64,12 +69,7 @@ def plan_support_turn(*, intent: str, known_slots: dict[str, Any] | None = None,
         shipping = trusted_policy.get("shipping")
         has_rate = False
         if isinstance(shipping, dict):
-            amount = shipping.get("amount")
-            has_flat_rate = (
-                shipping.get("flat_rate_all_destinations") is True
-                and amount is not None
-                and (not isinstance(amount, str) or bool(amount.strip()))
-            )
+            has_flat_rate = has_valid_flat_shipping_rate(shipping)
             rates_by_city = shipping.get("rates_by_city")
             city = slots.get("city")
             city_rate = rates_by_city.get(city) if isinstance(rates_by_city, dict) else None
