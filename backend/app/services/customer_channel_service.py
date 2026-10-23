@@ -69,6 +69,20 @@ async def _get_conversation(db: AsyncSession, *, conversation_id: uuid.UUID, tok
 
 async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: str, content: str):
     conversation = await _get_conversation(db, conversation_id=conversation_id, token=token)
+
+    # A human handoff is a persistent routing boundary: accept and store the
+    # customer's message, but never start another AI Run until staff resumes it.
+    if conversation.handoff_requested or conversation.status == "human":
+        message = CustomerMessage(
+            tenant_id=conversation.tenant_id,
+            conversation_id=conversation.id,
+            role="user",
+            content=content,
+        )
+        db.add(message)
+        await db.flush()
+        return conversation, None
+
     active = (await db.execute(select(func.count()).select_from(Run).where(Run.conversation_id == conversation.id, Run.tenant_id == conversation.tenant_id, Run.status.in_(["pending", "running"])))).scalar_one()
     if active:
         raise ConflictError("Please wait for the current assistant response before sending another message")
