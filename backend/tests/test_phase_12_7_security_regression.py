@@ -22,13 +22,10 @@ def _request(authorization: str | None = None) -> Request:
 def test_security_regression_side_effects_require_approval():
     registered = {tool.name for tool in registry.list()}
     assert MANDATORY_APPROVAL_TOOLS
-    # A reserved policy name may intentionally precede the corresponding
-    # integration. Every mandatory tool that is exposed must be registered
-    # with side effects and approval enabled; no other policy-only entry is
-    # allowed without updating this explicit exception.
-    policy_only = MANDATORY_APPROVAL_TOOLS - registered
-    assert policy_only == {"whatsapp.send_text"}
-    for name in MANDATORY_APPROVAL_TOOLS & registered:
+    # Every mandatory approval policy name must correspond to a real
+    # registered side-effecting tool; policy-only reservations are not enough.
+    assert MANDATORY_APPROVAL_TOOLS <= registered
+    for name in MANDATORY_APPROVAL_TOOLS:
         tool = registry.get(name)
         assert tool.side_effects is True
         assert tool.requires_approval is True
