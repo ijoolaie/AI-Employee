@@ -23,7 +23,13 @@ A model ToolCall never grants itself permission. A gated Tool must still be regi
 
 ## Current production tools
 
-The registry now also ships `send_email`, the first side-effecting external Tool. It requires `run.execute` and `requires_approval=True`; SMTP execution occurs only after explicit approval and resumes through Celery.
+The registry ships `send_email`, a side-effecting external Tool. It requires `run.execute` and `requires_approval=True`; SMTP execution occurs only after explicit approval and resumes through Celery.
+
+## WhatsApp outbound status (2026-10-23)
+
+- The provider adapter and provider-neutral `deliver_text` boundary exist.
+- The central mandatory approval policy now reserves `whatsapp.send_text` as approval-required, even if a future registration omits its local flag.
+- **Not yet implemented:** a registry-backed `whatsapp.send_text` Tool wired to durable approval context. The adapter must not be treated as an approved production sending path until that integration and its end-to-end tests are delivered. This policy entry alone does not gate direct calls to `deliver_text`.
 
 ## Database
 
@@ -34,11 +40,11 @@ Apply with Alembic before using the approval endpoints.
 
 ## v0.2.21 extension
 
-The first real external side-effect is implemented as `send_email`. The approval infrastructure is now exercised by a production-shaped external integration.
+The first real external side-effect is implemented as `send_email`. The approval infrastructure is exercised by a production-shaped external integration.
 
 ## Deferred
 
-- Real external side-effecting tools.
+- Registry-backed WhatsApp outbound delivery with durable approval and exact-call binding.
 - Approval policies by tenant/plan/tool risk class.
 - Multi-approver quorum.
 - Approval expiration/timeout escalation.
