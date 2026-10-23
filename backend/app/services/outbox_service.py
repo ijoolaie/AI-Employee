@@ -88,7 +88,7 @@ async def claim(db: AsyncSession, *, limit: int = 50) -> list[OutboxMessage]:
     ) | (
         (OutboxMessage.status == "processing")
         & (OutboxMessage.available_at <= now - timedelta(minutes=5))
-        & (OutboxMessage.kind != "email.send")
+        & (OutboxMessage.kind.notin_({"email.send", "whatsapp.send_text"}))
     )
     result = await db.execute(
         select(OutboxMessage).where(claimable).with_for_update(skip_locked=True).limit(limit)
