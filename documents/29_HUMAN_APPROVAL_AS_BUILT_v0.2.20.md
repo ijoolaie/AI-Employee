@@ -27,9 +27,12 @@ The registry ships `send_email`, a side-effecting external Tool. It requires `ru
 
 ## WhatsApp outbound status (2026-10-23)
 
-- The provider adapter and provider-neutral `deliver_text` boundary exist.
-- The central mandatory approval policy now reserves `whatsapp.send_text` as approval-required, even if a future registration omits its local flag.
-- **Not yet implemented:** a registry-backed `whatsapp.send_text` Tool wired to durable approval context. The adapter must not be treated as an approved production sending path until that integration and its end-to-end tests are delivered. This policy entry alone does not gate direct calls to `deliver_text`.
+- `whatsapp.send_text` is registered as an external side-effecting Tool with `run.execute`, a strict input schema, and mandatory approval.
+- The governed registry path requires the active Agent Run context, a consumed `ToolApprovalRequest` matching the exact tenant, Run, tool name, tool-call ID, and full arguments, plus an active WhatsApp channel owned by that tenant before creating a transactional `whatsapp.send_text` outbox row.
+- The outbox dispatcher routes the row to `whatsapp_worker`. The worker rechecks the consumed approval, exact arguments, tenant/channel ownership, channel activity/type, and current Agent policy before invoking the provider-neutral `deliver_text` boundary.
+- Before the provider request, the worker commits the row as `uncertain`. A crash or exception after this boundary is not automatically retried; manual reconciliation is required to avoid duplicate customer messages. The dispatcher also excludes WhatsApp rows from stale-processing redispatch.
+- Direct calls to `deliver_text` remain a lower-level adapter API, not an approval gate. Production use must go through the governed Tool Registry and outbox path.
+- **Validation status:** implementation and focused regression coverage are present in this PR; CI and runtime/provider acceptance on the resulting exact commit are still required. No live WhatsApp provider request has been made, so live delivery is not certified.
 
 ## Database
 
@@ -44,7 +47,7 @@ The first real external side-effect is implemented as `send_email`. The approval
 
 ## Deferred
 
-- Registry-backed WhatsApp outbound delivery with durable approval and exact-call binding.
+- Live WhatsApp provider acceptance, provider-outcome reconciliation, and end-to-end tenant/approval/runtime certification.
 - Approval policies by tenant/plan/tool risk class.
 - Multi-approver quorum.
 - Approval expiration/timeout escalation.
