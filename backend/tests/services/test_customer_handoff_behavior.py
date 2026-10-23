@@ -70,3 +70,34 @@ async def test_customer_message_during_handoff_is_saved_without_starting_ai_run(
     assert saved_message.conversation_id == conversation_id
     assert saved_message.role == "user"
     assert saved_message.content == "پیام پیگیری مشتری"
+
+
+@pytest.mark.asyncio
+async def test_public_chat_endpoint_handles_missing_run_during_handoff(monkeypatch):
+    from app.api.v1 import public_chat
+    from app.schemas.customer_channel import PublicMessageCreate
+
+    conversation_id = uuid4()
+    conversation = SimpleNamespace(id=conversation_id, status="human")
+
+    async def fake_send_message(db, *, conversation_id, token, content):
+        assert token == "customer-token"
+        assert content == "please help"
+        return conversation, None
+
+    monkeypatch.setattr(
+        public_chat.customer_channel_service, "send_message", fake_send_message
+    )
+
+    response = await public_chat.send_message(
+        conversation_id=conversation_id,
+        payload=PublicMessageCreate(content=" please help "),
+        db=object(),
+        x_customer_token="customer-token",
+    )
+
+    assert response.success is True
+    assert response.data["conversation_id"] == conversation_id
+    assert response.data["run_id"] is None
+    assert response.data["status"] == "human"
+
