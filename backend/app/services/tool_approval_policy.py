@@ -1,4 +1,4 @@
-""""Central, fail-closed approval policy for AI tool side effects.
+"""Central, fail-closed approval policy for AI tool side effects.
 
 The Tool Registry remains the execution boundary. This module defines the
 business-risk classification once so high-risk mutations cannot accidentally
