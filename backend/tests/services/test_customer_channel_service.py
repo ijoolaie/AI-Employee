@@ -203,7 +203,7 @@ class _HandoffDB:
 async def test_update_handoff_rejects_assignee_from_another_tenant():
     from app.core.exceptions import NotFoundError
 
-    tenant_id, other_tenant_id = uuid4(), uuid4()
+    tenant_id = uuid4()
     assigned_user_id = uuid4()
     conversation = SimpleNamespace(
         id=uuid4(), tenant_id=tenant_id, handoff_requested=False,
