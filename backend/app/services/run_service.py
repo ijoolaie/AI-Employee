@@ -50,7 +50,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.services import audit_service, employee_service, billing_service
 from app.services.tool_audit_metadata import tool_result_audit_summary
-from app.services.support_slot_filling import find_trusted_shipping_city, plan_support_turn
+from app.services.support_slot_filling import current_customer_message_for_preflight, shipping_fee_preflight_response
 from app.services.schema_validation import validate_json_data
 from app.services.workforce_runtime_governance import assert_workforce_tool_execution
 from app.rag import service as rag_service
@@ -403,20 +403,12 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 # ambiguity: destination-dependent shipping fees. This runs
                 # before any provider call and only uses channel policy as
                 # trusted data. It deliberately does not guess a city.
-                message_text = str(run.input_data.get("message", ""))
-                normalized_message = message_text.casefold()
-                shipping_fee_terms = (
-                    "هزینه ارسال", "هزینه‌ی ارسال", "هزینه پست", "کرایه ارسال",
-                    "قیمت ارسال", "ارسال چقدر", "ارسال چند", "هزینه حمل",
-                )
+                message_text = current_customer_message_for_preflight(run.input_data)
                 policy_dict = support_policy if isinstance(support_policy, dict) else {}
-                shipping_policy = policy_dict.get("shipping", {})
-                shipping_policy = shipping_policy if isinstance(shipping_policy, dict) else {}
-                flat_rate = shipping_policy.get("flat_rate_all_destinations") is True
-                known_city = find_trusted_shipping_city(message_text, shipping_policy)
-                if any(term in normalized_message for term in shipping_fee_terms) and not flat_rate and known_city is None:
-                    decision = plan_support_turn(intent="shipping_fee", policy=policy_dict)
-                    support_preflight_question = decision.next_question
+                support_preflight_question = shipping_fee_preflight_response(
+                    message_text,
+                    policy_dict,
+                )
 
                 rules["customer_support_contract"] = {
                     "enabled": True,

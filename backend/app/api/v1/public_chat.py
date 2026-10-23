@@ -25,4 +25,4 @@ async def get_conversation(conversation_id: UUID, db: DbSession, x_customer_toke
 @router.post("/conversations/{conversation_id}/messages", response_model=APIResponse[dict])
 async def send_message(conversation_id: UUID, payload: PublicMessageCreate, db: DbSession, x_customer_token: str = Header(...)):
     conversation, run = await customer_channel_service.send_message(db, conversation_id=conversation_id, token=x_customer_token, content=payload.content.strip())
-    return APIResponse(success=True, data={"conversation_id": conversation.id, "run_id": run.id, "status": run.status})
+    return APIResponse(success=True, data={"conversation_id": conversation.id, "run_id": run.id if run is not None else None, "status": run.status if run is not None else conversation.status})

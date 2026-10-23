@@ -37,3 +37,225 @@ async def test_get_conversation_locks_row_for_serialized_public_chat_sends():
 
     assert result is conversation
     assert db.statement._for_update_arg is not None
+
+
+class _ScalarResult:
+    def __init__(self, value):
+        self.value = value
+
+    def scalar_one(self):
+        return self.value
+
+    def scalars(self):
+        return self
+
+    def all(self):
+        return self.value
+
+
+class _SendMessageDB:
+    def __init__(self, *, active_runs=0, history=None):
+        self.active_runs = active_runs
+        self.history = history or []
+        self.calls = []
+        self.added = []
+        self.flushed = False
+        self.rolled_back = False
+
+    async def execute(self, statement):
+        self.calls.append(statement)
+        if len(self.calls) == 1:
+            return _ScalarResult(self.active_runs)
+        return _ScalarResult(self.history)
+
+    def add(self, item):
+        self.added.append(item)
+
+    async def flush(self):
+        self.flushed = True
+
+    async def rollback(self):
+        self.rolled_back = True
+
+
+@pytest.mark.asyncio
+async def test_send_message_includes_prior_turns_in_run_input(monkeypatch):
+    tenant_id, employee_id, conversation_id = uuid4(), uuid4(), uuid4()
+    conversation = SimpleNamespace(
+        id=conversation_id,
+        tenant_id=tenant_id,
+        employee_id=employee_id,
+        customer_name="Test Customer",
+        customer_email=None,
+        customer_phone=None,
+    )
+    # The service query orders newest-first, then reverses the result.
+    history = [
+        SimpleNamespace(
+            tenant_id=tenant_id, conversation_id=conversation_id,
+            role="user", content="تهران",
+        ),
+        SimpleNamespace(
+            tenant_id=tenant_id, conversation_id=conversation_id,
+            role="assistant", content="ارسال برای کدوم شهره؟",
+        ),
+        SimpleNamespace(
+            tenant_id=tenant_id, conversation_id=conversation_id,
+            role="user", content="هزینه ارسال چقدره؟",
+        ),
+    ]
+    db = _SendMessageDB(history=history)
+    run = SimpleNamespace(id=uuid4())
+    captured = {}
+
+    async def fake_get_conversation(*args, **kwargs):
+        assert kwargs["conversation_id"] == conversation_id
+        assert kwargs["token"] == "valid-token"
+        return conversation
+
+    async def fake_create_run(db_arg, **kwargs):
+        captured.update(kwargs)
+        return run
+
+    class _Task:
+        @staticmethod
+        def delay(*args):
+            captured["dispatched"] = args
+
+    monkeypatch.setattr(customer_channel_service, "_get_conversation", fake_get_conversation)
+    monkeypatch.setattr(customer_channel_service.run_service, "create_run", fake_create_run)
+    monkeypatch.setattr(
+        "app.workers.run_worker.execute_run_task",
+        _Task(),
+        raising=False,
+    )
+
+    # Importing the worker task may be eager in this codebase; replace its delay
+    # method directly to keep this unit test independent of a running queue.
+    from app.workers import run_worker
+    monkeypatch.setattr(run_worker.execute_run_task, "delay", _Task.delay)
+
+    result_conversation, result_run = await customer_channel_service.send_message(
+        db, conversation_id=conversation_id, token="valid-token",
+        content="و هزینه برای تهران؟",
+    )
+
+    assert result_conversation is conversation
+    assert result_run is run
+    message_input = captured["input_data"]["message"]
+    assert captured["input_data"]["current_customer_message"] == next(item.content for item in db.added if getattr(item, "role", None) == "user")
+    assert "Current customer message:\nو هزینه برای تهران؟" in message_input
+    assert "Customer: هزینه ارسال چقدره؟" in message_input
+    assert "Assistant: ارسال برای کدوم شهره؟" in message_input
+    assert "Customer: تهران" in message_input
+    assert message_input.index("Customer: هزینه ارسال چقدره؟") < message_input.index("Assistant: ارسال برای کدوم شهره؟") < message_input.index("Customer: تهران")
+    assert "do not treat it as store policy" in message_input
+    # Keep transcript retrieval isolated to this conversation and tenant.
+    history_sql = str(db.calls[1].whereclause)
+    assert "conversation_id" in history_sql
+    assert "tenant_id" in history_sql
+    assert captured["tenant_id"] == tenant_id
+    assert captured["employee_id"] == employee_id
+    assert run.conversation_id == conversation_id
+    assert any(getattr(item, "content", None) == "و هزینه برای تهران؟" for item in db.added)
+    assert db.flushed
+
+
+@pytest.mark.asyncio
+async def test_send_message_blocks_new_turn_while_run_is_active(monkeypatch):
+    conversation = SimpleNamespace(
+        id=uuid4(), tenant_id=uuid4(), employee_id=uuid4(),
+        customer_name=None, customer_email=None, customer_phone=None,
+    )
+    db = _SendMessageDB(active_runs=1)
+
+    async def fake_get_conversation(*args, **kwargs):
+        return conversation
+
+    monkeypatch.setattr(customer_channel_service, "_get_conversation", fake_get_conversation)
+
+    from app.core.exceptions import ConflictError
+    with pytest.raises(ConflictError, match="wait for the current assistant response"):
+        await customer_channel_service.send_message(
+            db, conversation_id=conversation.id, token="valid-token",
+            content="پیام دوم",
+        )
+
+    assert len(db.calls) == 1
+    active_run_params = db.calls[0].whereclause.compile().params
+    status_values = next(
+        value for value in active_run_params.values()
+        if isinstance(value, (list, tuple, set))
+    )
+    assert set(status_values) == {"pending", "running", "waiting"}
+    assert db.added == []
+
+
+class _HandoffDB:
+    def __init__(self, conversation, assigned_user=None):
+        self.conversation = conversation
+        self.assigned_user = assigned_user
+        self.calls = []
+        self.flushed = False
+        self.refreshed = False
+
+    async def execute(self, statement):
+        self.calls.append(statement)
+        return _Result(self.conversation if len(self.calls) == 1 else self.assigned_user)
+
+    async def flush(self):
+        self.flushed = True
+
+    async def refresh(self, instance):
+        self.refreshed = True
+
+
+@pytest.mark.asyncio
+async def test_update_handoff_rejects_assignee_from_another_tenant():
+    from app.core.exceptions import NotFoundError
+
+    tenant_id = uuid4()
+    assigned_user_id = uuid4()
+    conversation = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, handoff_requested=False,
+        assigned_user_id=None, status="open",
+    )
+    db = _HandoffDB(conversation, assigned_user=None)
+
+    with pytest.raises(NotFoundError, match="Assigned user not found"):
+        await customer_channel_service.update_handoff(
+            db, tenant_id=tenant_id, conversation_id=conversation.id,
+            requested=True, assigned_user_id=assigned_user_id,
+        )
+
+    assert len(db.calls) == 2
+    assert conversation.handoff_requested is False
+    assert conversation.assigned_user_id is None
+    assert conversation.status == "open"
+    # Both queries must be scoped: conversation by tenant and assignee by tenant.
+    assert str(db.calls[0].whereclause).find("tenant_id") >= 0
+    assert str(db.calls[1].whereclause).find("tenant_id") >= 0
+    assert not db.flushed
+
+
+@pytest.mark.asyncio
+async def test_update_handoff_persists_requested_state_for_valid_assignee():
+    tenant_id, conversation_id, user_id = uuid4(), uuid4(), uuid4()
+    conversation = SimpleNamespace(
+        id=conversation_id, tenant_id=tenant_id, handoff_requested=False,
+        assigned_user_id=None, status="open",
+    )
+    assigned_user = SimpleNamespace(id=user_id, tenant_id=tenant_id, is_active=True)
+    db = _HandoffDB(conversation, assigned_user=assigned_user)
+
+    result = await customer_channel_service.update_handoff(
+        db, tenant_id=tenant_id, conversation_id=conversation_id,
+        requested=True, assigned_user_id=user_id,
+    )
+
+    assert result is conversation
+    assert conversation.handoff_requested is True
+    assert conversation.assigned_user_id == user_id
+    assert conversation.status == "human"
+    assert db.flushed
+    assert db.refreshed

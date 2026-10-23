@@ -69,7 +69,21 @@ async def _get_conversation(db: AsyncSession, *, conversation_id: uuid.UUID, tok
 
 async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: str, content: str):
     conversation = await _get_conversation(db, conversation_id=conversation_id, token=token)
-    active = (await db.execute(select(func.count()).select_from(Run).where(Run.conversation_id == conversation.id, Run.tenant_id == conversation.tenant_id, Run.status.in_(["pending", "running"])))).scalar_one()
+
+    # A human handoff is a persistent routing boundary: accept and store the
+    # customer's message, but never start another AI Run until staff resumes it.
+    if getattr(conversation, "handoff_requested", False) or getattr(conversation, "status", None) == "human":
+        message = CustomerMessage(
+            tenant_id=conversation.tenant_id,
+            conversation_id=conversation.id,
+            role="user",
+            content=content,
+        )
+        db.add(message)
+        await db.flush()
+        return conversation, None
+
+    active = (await db.execute(select(func.count()).select_from(Run).where(Run.conversation_id == conversation.id, Run.tenant_id == conversation.tenant_id, Run.status.in_(["pending", "running", "waiting"])))).scalar_one()
     if active:
         raise ConflictError("Please wait for the current assistant response before sending another message")
 
@@ -96,7 +110,7 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
     message = CustomerMessage(tenant_id=conversation.tenant_id, conversation_id=conversation.id, role="user", content=content)
     db.add(message)
     await db.flush()
-    run = await run_service.create_run(db, tenant_id=conversation.tenant_id, employee_id=conversation.employee_id, input_data={"message": run_message, "customer": {"name": conversation.customer_name, "email": conversation.customer_email, "phone": conversation.customer_phone}, "channel": "web_widget"}, created_by=None, employee_version_id=None)
+    run = await run_service.create_run(db, tenant_id=conversation.tenant_id, employee_id=conversation.employee_id, input_data={"message": run_message, "current_customer_message": content, "customer": {"name": conversation.customer_name, "email": conversation.customer_email, "phone": conversation.customer_phone}, "channel": "web_widget"}, created_by=None, employee_version_id=None)
     run.conversation_id = conversation.id
     message.run_id = run.id
     try:
