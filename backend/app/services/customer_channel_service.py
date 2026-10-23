@@ -83,7 +83,7 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
         await db.flush()
         return conversation, None
 
-    active = (await db.execute(select(func.count()).select_from(Run).where(Run.conversation_id == conversation.id, Run.tenant_id == conversation.tenant_id, Run.status.in_(["pending", "running"])))).scalar_one()
+    active = (await db.execute(select(func.count()).select_from(Run).where(Run.conversation_id == conversation.id, Run.tenant_id == conversation.tenant_id, Run.status.in_(["pending", "running", "waiting"])))).scalar_one()
     if active:
         raise ConflictError("Please wait for the current assistant response before sending another message")
 
