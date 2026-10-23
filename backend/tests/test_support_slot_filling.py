@@ -1,5 +1,5 @@
 import pytest
-from app.services.support_slot_filling import find_trusted_shipping_city, plan_support_turn
+from app.services.support_slot_filling import find_trusted_shipping_city, has_valid_flat_shipping_rate, plan_support_turn
 
 def test_shipping_fee_asks_city_before_answering():
     d = plan_support_turn(intent="shipping_fee")
@@ -160,3 +160,20 @@ def test_flat_rate_with_amount_applies_without_city():
     assert decision.missing_slots == ()
     assert decision.can_answer_from_policy
 
+
+
+@pytest.mark.parametrize(
+    ("policy", "expected"),
+    [
+        ({"flat_rate_all_destinations": True, "amount": 50000}, True),
+        ({"flat_rate_all_destinations": True, "amount": 0}, True),
+        ({"flat_rate_all_destinations": True, "amount": None}, False),
+        ({"flat_rate_all_destinations": True, "amount": ""}, False),
+        ({"flat_rate_all_destinations": True, "amount": "   "}, False),
+        ({"flat_rate_all_destinations": False, "amount": 50000}, False),
+        ({"amount": 50000}, False),
+        (None, False),
+    ],
+)
+def test_flat_shipping_rate_requires_explicit_flag_and_nonblank_amount(policy, expected):
+    assert has_valid_flat_shipping_rate(policy) is expected
