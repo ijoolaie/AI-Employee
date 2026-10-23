@@ -50,7 +50,7 @@ async def test_whatsapp_worker_rejects_missing_governance_proof_before_provider(
     )
     db = _DB(row)
     provider = AsyncMock()
-    retries = AsyncMock()
+    retries = AsyncMock(side_effect=lambda _db, message, *_args, **_kwargs: setattr(message, "status", "pending"))
 
     monkeypatch.setattr(whatsapp_worker, "worker_db_session", lambda: _session(db))
     monkeypatch.setattr(whatsapp_worker, "deliver_text", provider)
