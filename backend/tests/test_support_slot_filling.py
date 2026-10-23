@@ -1,5 +1,5 @@
 import pytest
-from app.services.support_slot_filling import find_trusted_shipping_city, has_valid_flat_shipping_rate, plan_support_turn
+from app.services.support_slot_filling import find_trusted_shipping_city, has_valid_flat_shipping_rate, plan_support_turn, shipping_fee_preflight_response
 
 def test_shipping_fee_asks_city_before_answering():
     d = plan_support_turn(intent="shipping_fee")
@@ -177,3 +177,34 @@ def test_flat_rate_with_amount_applies_without_city():
 )
 def test_flat_shipping_rate_requires_explicit_flag_and_nonblank_amount(policy, expected):
     assert has_valid_flat_shipping_rate(policy) is expected
+
+
+def test_shipping_preflight_asks_city_when_destination_is_unknown():
+    assert shipping_fee_preflight_response(
+        "هزینه ارسال چقدر است؟",
+        {"shipping": {"rates_by_city": {"تهران": 50000}}},
+    ) == "ارسال برای کدوم شهره؟ 😊"
+
+
+def test_shipping_preflight_does_not_let_model_guess_missing_city_rate():
+    response = shipping_fee_preflight_response(
+        "هزینه ارسال به شیراز چقدر است؟",
+        {"shipping": {"cities": ["شیراز"], "rates_by_city": {"تهران": 50000}}},
+    )
+    assert response is not None
+    assert "نرخ ارسالِ تأییدشده‌ای" in response
+
+
+def test_shipping_preflight_allows_configured_city_rate():
+    assert shipping_fee_preflight_response(
+        "هزینه ارسال به تهران چقدر است؟",
+        {"shipping": {"rates_by_city": {"تهران": 50000}, "cities": ["تهران"]}},
+    ) is None
+
+
+def test_shipping_preflight_does_not_accept_flat_rate_flag_without_amount():
+    response = shipping_fee_preflight_response(
+        "هزینه ارسال چقدر است؟",
+        {"shipping": {"flat_rate_all_destinations": True}},
+    )
+    assert response == "ارسال برای کدوم شهره؟ 😊"
