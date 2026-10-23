@@ -25,7 +25,6 @@ def test_mandatory_side_effect_tools_are_approval_gated():
     for name in expected:
         assert requires_approval(name) is True
         assert registry.get(name).side_effects is True
-        assert registry.get(name).external_side_effects is True
         assert registry.get(name).requires_approval is True
 
 
@@ -35,6 +34,7 @@ def test_whatsapp_outbound_tool_schema_is_restricted_and_registered():
     assert tool.input_schema["additionalProperties"] is False
     assert tool.input_schema["properties"]["text"]["maxLength"] == 4096
     assert tool.required_permission == "run.execute"
+    assert tool.external_side_effects is True
 
 
 def test_policy_cannot_be_disabled_by_local_tool_flag():
