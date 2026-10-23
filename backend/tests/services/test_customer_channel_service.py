@@ -181,6 +181,10 @@ async def test_send_message_blocks_new_turn_while_run_is_active(monkeypatch):
         )
 
     assert len(db.calls) == 1
+    active_run_sql = str(db.calls[0].whereclause)
+    assert "pending" in active_run_sql
+    assert "running" in active_run_sql
+    assert "waiting" in active_run_sql
     assert db.added == []
 
 
