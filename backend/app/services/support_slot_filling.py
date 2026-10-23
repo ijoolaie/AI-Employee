@@ -46,7 +46,14 @@ def plan_support_turn(*, intent: str, known_slots: dict[str, Any] | None = None,
     required = list(_REQUIRED_SLOTS[intent])
     if intent == "shipping_fee":
         shipping = trusted_policy.get("shipping")
-        if isinstance(shipping, dict) and shipping.get("flat_rate_all_destinations") is True:
+        flat_rate = shipping.get("amount") if isinstance(shipping, dict) else None
+        has_flat_rate = (
+            isinstance(shipping, dict)
+            and shipping.get("flat_rate_all_destinations") is True
+            and flat_rate is not None
+            and (not isinstance(flat_rate, str) or bool(flat_rate.strip()))
+        )
+        if has_flat_rate:
             required = []
     missing = tuple(slot for slot in required if slots.get(slot) is None or
                     (isinstance(slots.get(slot), str) and not slots[slot].strip()))
@@ -55,9 +62,23 @@ def plan_support_turn(*, intent: str, known_slots: dict[str, Any] | None = None,
                             "required_context_missing")
     if intent == "shipping_fee":
         shipping = trusted_policy.get("shipping")
-        has_rate = isinstance(shipping, dict) and (
-            shipping.get("flat_rate_all_destinations") is True or shipping.get("rates_by_city"))
-        return SlotDecision(intent, (), None, bool(has_rate),
+        has_rate = False
+        if isinstance(shipping, dict):
+            amount = shipping.get("amount")
+            has_flat_rate = (
+                shipping.get("flat_rate_all_destinations") is True
+                and amount is not None
+                and (not isinstance(amount, str) or bool(amount.strip()))
+            )
+            rates_by_city = shipping.get("rates_by_city")
+            city = slots.get("city")
+            city_rate = rates_by_city.get(city) if isinstance(rates_by_city, dict) else None
+            has_city_rate = (
+                city_rate is not None
+                and (not isinstance(city_rate, str) or bool(city_rate.strip()))
+            )
+            has_rate = has_flat_rate or has_city_rate
+        return SlotDecision(intent, (), None, has_rate,
                             "trusted_shipping_policy_available" if has_rate else "shipping_policy_unavailable")
     if intent == "delivery_eta":
         sla = trusted_policy.get("delivery_sla_by_city")
