@@ -19,16 +19,25 @@ def test_mandatory_side_effect_tools_are_approval_gated():
         "update_deal_stage",
         "link_order_invoice",
         "send_email",
+        "whatsapp.send_text",
     }
     assert MANDATORY_APPROVAL_TOOLS == expected
-    for name in expected:
+    for name in expected - {"whatsapp.send_text"}:
         assert requires_approval(name) is True
         assert registry.get(name).side_effects is True
         assert registry.get(name).requires_approval is True
 
 
+def test_whatsapp_outbound_policy_is_fail_closed_before_registry_exposure():
+    # The provider adapter exists, but a registry-backed WhatsApp send Tool is
+    # not shipped yet. Keep the central risk classification explicit so a
+    # future registration cannot accidentally omit its approval requirement.
+    assert requires_approval("whatsapp.send_text", explicitly_required=False) is True
+
+
 def test_policy_cannot_be_disabled_by_local_tool_flag():
     assert requires_approval("create_order", explicitly_required=False) is True
+    assert requires_approval("whatsapp.send_text", explicitly_required=False) is True
     assert requires_approval("calculator", explicitly_required=False) is False
     assert requires_approval("calculator", explicitly_required=True) is True
 
