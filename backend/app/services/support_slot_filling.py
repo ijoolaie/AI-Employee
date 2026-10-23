@@ -114,6 +114,18 @@ def find_trusted_shipping_city(message: str, shipping_policy: dict[str, Any] | N
     return None
 
 
+def current_customer_message_for_preflight(input_data: dict[str, Any]) -> str:
+    """Select only the current customer turn for deterministic preflight checks.
+
+    Older and non-widget Runs may not have the dedicated field, so retain the
+    legacy message fallback for compatibility. New widget Runs always set it.
+    """
+    current_message = input_data.get("current_customer_message")
+    if isinstance(current_message, str):
+        return current_message
+    return str(input_data.get("message", ""))
+
+
 def shipping_fee_preflight_response(message: str, policy: dict[str, Any] | None = None) -> str | None:
     """Return a safe deterministic reply when a shipping-fee question lacks a usable rate."""
     normalized_message = message.casefold()

@@ -1,5 +1,5 @@
 import pytest
-from app.services.support_slot_filling import find_trusted_shipping_city, has_valid_flat_shipping_rate, plan_support_turn, shipping_fee_preflight_response
+from app.services.support_slot_filling import current_customer_message_for_preflight, find_trusted_shipping_city, has_valid_flat_shipping_rate, plan_support_turn, shipping_fee_preflight_response
 
 def test_shipping_fee_asks_city_before_answering():
     d = plan_support_turn(intent="shipping_fee")
@@ -208,3 +208,31 @@ def test_shipping_preflight_does_not_accept_flat_rate_flag_without_amount():
         {"shipping": {"flat_rate_all_destinations": True}},
     )
     assert response == "ارسال برای کدوم شهره؟ 😊"
+
+
+
+
+def test_preflight_uses_current_turn_not_shipping_terms_in_prior_transcript():
+    current_message = "\u0645\u06cc\u200c\u062e\u0648\u0627\u0647\u0645 \u06a9\u0627\u0644\u0627\u06cc \u0622\u0633\u06cc\u0628\u200c\u062f\u06cc\u062f\u0647 \u0631\u0627 \u0645\u0631\u062c\u0648\u0639 \u06a9\u0646\u0645"
+    input_data = {
+        "message": "Current customer message: " + current_message + "\n\nPrevious conversation transcript: \u0647\u0632\u06cc\u0646\u0647 \u0627\u0631\u0633\u0627\u0644 \u0686\u0642\u062f\u0631\u0647\u061f",
+        "current_customer_message": current_message,
+    }
+    current = current_customer_message_for_preflight(input_data)
+    assert current == current_message
+    assert shipping_fee_preflight_response(current, {"shipping": {"rates_by_city": {"\u062a\u0647\u0631\u0627\u0646": 50000}}}) is None
+
+
+def test_preflight_does_not_reuse_city_from_prior_transcript():
+    current_message = "\u0647\u0632\u06cc\u0646\u0647 \u0627\u0631\u0633\u0627\u0644 \u0686\u0642\u062f\u0631\u0647\u061f"
+    input_data = {
+        "message": "Current customer message: " + current_message + "\n\nPrevious conversation transcript: Customer: \u062a\u0647\u0631\u0627\u0646",
+        "current_customer_message": current_message,
+    }
+    current = current_customer_message_for_preflight(input_data)
+    assert current == current_message
+    assert shipping_fee_preflight_response(current, {"shipping": {"rates_by_city": {"\u062a\u0647\u0631\u0627\u0646": 50000}}}) == "\u0627\u0631\u0633\u0627\u0644 \u0628\u0631\u0627\u06cc \u06a9\u062f\u0648\u0645 \u0634\u0647\u0631\u0647\u061f \U0001f60a"
+
+
+def test_preflight_message_selector_falls_back_for_legacy_runs():
+    assert current_customer_message_for_preflight({"message": "legacy message"}) == "legacy message"

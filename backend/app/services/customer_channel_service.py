@@ -110,7 +110,7 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
     message = CustomerMessage(tenant_id=conversation.tenant_id, conversation_id=conversation.id, role="user", content=content)
     db.add(message)
     await db.flush()
-    run = await run_service.create_run(db, tenant_id=conversation.tenant_id, employee_id=conversation.employee_id, input_data={"message": run_message, "customer": {"name": conversation.customer_name, "email": conversation.customer_email, "phone": conversation.customer_phone}, "channel": "web_widget"}, created_by=None, employee_version_id=None)
+    run = await run_service.create_run(db, tenant_id=conversation.tenant_id, employee_id=conversation.employee_id, input_data={"message": run_message, "current_customer_message": content, "customer": {"name": conversation.customer_name, "email": conversation.customer_email, "phone": conversation.customer_phone}, "channel": "web_widget"}, created_by=None, employee_version_id=None)
     run.conversation_id = conversation.id
     message.run_id = run.id
     try:

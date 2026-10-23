@@ -143,6 +143,7 @@ async def test_send_message_includes_prior_turns_in_run_input(monkeypatch):
     assert result_conversation is conversation
     assert result_run is run
     message_input = captured["input_data"]["message"]
+    assert captured["input_data"]["current_customer_message"] == next(item.content for item in db.added if getattr(item, "role", None) == "user")
     assert "Current customer message:\nو هزینه برای تهران؟" in message_input
     assert "Customer: هزینه ارسال چقدره؟" in message_input
     assert "Assistant: ارسال برای کدوم شهره؟" in message_input

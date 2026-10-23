@@ -50,7 +50,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.services import audit_service, employee_service, billing_service
 from app.services.tool_audit_metadata import tool_result_audit_summary
-from app.services.support_slot_filling import shipping_fee_preflight_response
+from app.services.support_slot_filling import current_customer_message_for_preflight, shipping_fee_preflight_response
 from app.services.schema_validation import validate_json_data
 from app.services.workforce_runtime_governance import assert_workforce_tool_execution
 from app.rag import service as rag_service
@@ -403,7 +403,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 # ambiguity: destination-dependent shipping fees. This runs
                 # before any provider call and only uses channel policy as
                 # trusted data. It deliberately does not guess a city.
-                message_text = str(run.input_data.get("message", ""))
+                message_text = current_customer_message_for_preflight(run.input_data)
                 policy_dict = support_policy if isinstance(support_policy, dict) else {}
                 support_preflight_question = shipping_fee_preflight_response(
                     message_text,
