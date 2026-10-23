@@ -178,3 +178,73 @@ async def test_send_message_blocks_new_turn_while_run_is_active(monkeypatch):
 
     assert len(db.calls) == 1
     assert db.added == []
+
+
+class _HandoffDB:
+    def __init__(self, conversation, assigned_user=None):
+        self.conversation = conversation
+        self.assigned_user = assigned_user
+        self.calls = []
+        self.flushed = False
+        self.refreshed = False
+
+    async def execute(self, statement):
+        self.calls.append(statement)
+        return _Result(self.conversation if len(self.calls) == 1 else self.assigned_user)
+
+    async def flush(self):
+        self.flushed = True
+
+    async def refresh(self, instance):
+        self.refreshed = True
+
+
+@pytest.mark.asyncio
+async def test_update_handoff_rejects_assignee_from_another_tenant():
+    from app.core.exceptions import NotFoundError
+
+    tenant_id, other_tenant_id = uuid4(), uuid4()
+    assigned_user_id = uuid4()
+    conversation = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant_id, handoff_requested=False,
+        assigned_user_id=None, status="open",
+    )
+    db = _HandoffDB(conversation, assigned_user=None)
+
+    with pytest.raises(NotFoundError, match="Assigned user not found"):
+        await customer_channel_service.update_handoff(
+            db, tenant_id=tenant_id, conversation_id=conversation.id,
+            requested=True, assigned_user_id=assigned_user_id,
+        )
+
+    assert len(db.calls) == 2
+    assert conversation.handoff_requested is False
+    assert conversation.assigned_user_id is None
+    assert conversation.status == "open"
+    # Both queries must be scoped: conversation by tenant and assignee by tenant.
+    assert str(db.calls[0].whereclause).find("tenant_id") >= 0
+    assert str(db.calls[1].whereclause).find("tenant_id") >= 0
+    assert not db.flushed
+
+
+@pytest.mark.asyncio
+async def test_update_handoff_persists_requested_state_for_valid_assignee():
+    tenant_id, conversation_id, user_id = uuid4(), uuid4(), uuid4()
+    conversation = SimpleNamespace(
+        id=conversation_id, tenant_id=tenant_id, handoff_requested=False,
+        assigned_user_id=None, status="open",
+    )
+    assigned_user = SimpleNamespace(id=user_id, tenant_id=tenant_id, is_active=True)
+    db = _HandoffDB(conversation, assigned_user=assigned_user)
+
+    result = await customer_channel_service.update_handoff(
+        db, tenant_id=tenant_id, conversation_id=conversation_id,
+        requested=True, assigned_user_id=user_id,
+    )
+
+    assert result is conversation
+    assert conversation.handoff_requested is True
+    assert conversation.assigned_user_id == user_id
+    assert conversation.status == "human"
+    assert db.flushed
+    assert db.refreshed
