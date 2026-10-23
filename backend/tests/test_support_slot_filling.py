@@ -121,3 +121,42 @@ def test_empty_string_is_treated_as_missing_slot():
     assert decision.missing_slots == ("city",)
     assert decision.next_question == "ارسال برای کدوم شهره؟ 😊"
     assert decision.can_answer_from_policy is False
+
+def test_shipping_fee_does_not_use_another_citys_rate():
+    decision = plan_support_turn(
+        intent="shipping_fee",
+        known_slots={"city": "شیراز"},
+        policy={"shipping": {"rates_by_city": {"تهران": 65000}}},
+    )
+    assert not decision.can_answer_from_policy
+    assert decision.reason == "shipping_policy_unavailable"
+
+
+@pytest.mark.parametrize("rate", [None, "", "   "])
+def test_shipping_fee_rejects_missing_or_blank_city_rate(rate):
+    decision = plan_support_turn(
+        intent="shipping_fee",
+        known_slots={"city": "تهران"},
+        policy={"shipping": {"rates_by_city": {"تهران": rate}}},
+    )
+    assert not decision.can_answer_from_policy
+    assert decision.reason == "shipping_policy_unavailable"
+
+
+def test_flat_rate_flag_without_amount_does_not_authorize_answer():
+    decision = plan_support_turn(
+        intent="shipping_fee",
+        policy={"shipping": {"flat_rate_all_destinations": True}},
+    )
+    assert decision.missing_slots == ("city",)
+    assert not decision.can_answer_from_policy
+
+
+def test_flat_rate_with_amount_applies_without_city():
+    decision = plan_support_turn(
+        intent="shipping_fee",
+        policy={"shipping": {"flat_rate_all_destinations": True, "amount": 0}},
+    )
+    assert decision.missing_slots == ()
+    assert decision.can_answer_from_policy
+
