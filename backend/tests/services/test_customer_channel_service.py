@@ -181,10 +181,12 @@ async def test_send_message_blocks_new_turn_while_run_is_active(monkeypatch):
         )
 
     assert len(db.calls) == 1
-    active_run_sql = str(db.calls[0].whereclause)
-    assert "pending" in active_run_sql
-    assert "running" in active_run_sql
-    assert "waiting" in active_run_sql
+    active_run_params = db.calls[0].whereclause.compile().params
+    status_values = next(
+        value for value in active_run_params.values()
+        if isinstance(value, (list, tuple, set))
+    )
+    assert set(status_values) == {"pending", "running", "waiting"}
     assert db.added == []
 
 
