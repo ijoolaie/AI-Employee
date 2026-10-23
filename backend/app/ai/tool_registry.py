@@ -2,7 +2,7 @@
 
 Tools are registered by code, exposed to the model only when explicitly allowed
 by the immutable EmployeeVersion, and executed only through this registry.
-The registry now includes the first side-effecting external integration: `send_email`.
+The registry includes approval-gated external integrations such as `send_email` and `whatsapp.send_text`.
 It is fail-closed by configuration, requires `run.execute`, and always requires
 human approval before execution.
 """
