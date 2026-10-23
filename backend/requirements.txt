@@ -30,14 +30,14 @@ openpyxl>=3.1.0
 reportlab>=4.2.0
 
 prometheus-client>=0.21.0
-opentelemetry-api>=1.43.0
-opentelemetry-sdk>=1.43.0
+opentelemetry-api>=1.45.1
+opentelemetry-sdk>=1.45.1
 
 # FastAPI >=0.137 uses lazy _IncludedRouter nodes; older OTel FastAPI
 # instrumentation can raise AttributeError while resolving matched routes.
-opentelemetry-instrumentation-fastapi>=0.64b0
-opentelemetry-instrumentation-sqlalchemy>=0.64b0
-opentelemetry-exporter-otlp-proto-http>=1.43.0
+opentelemetry-instrumentation-fastapi>=0.66b1
+opentelemetry-instrumentation-sqlalchemy>=0.66b1
+opentelemetry-exporter-otlp-proto-http>=1.45.1
 
 # Phase 6 — real payment-provider adapter (Stripe), closing the Phase 4
 # commercial exit gate. See app/services/stripe_service.py.
