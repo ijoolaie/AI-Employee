@@ -56,7 +56,7 @@ const office = {
 
 test("World Mode renders authoritative employee projection and management bridge", async ({ page }) => {
   // This full World smoke includes WebGL interaction and two viewport captures; allow slower software-rendered CI runners to finish the complete acceptance path.
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), authState);
   await page.route("**/customer-dashboard/office", async (route) => {
