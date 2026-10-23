@@ -32,7 +32,7 @@ The registry ships `send_email`, a side-effecting external Tool. It requires `ru
 - The outbox dispatcher routes the row to `whatsapp_worker`. The worker rechecks the consumed approval, exact arguments, tenant/channel ownership, channel activity/type, and current Agent policy before invoking the provider-neutral `deliver_text` boundary.
 - Before the provider request, the worker commits the row as `uncertain`. A crash or exception after this boundary is not automatically retried; manual reconciliation is required to avoid duplicate customer messages. The dispatcher also excludes WhatsApp rows from stale-processing redispatch.
 - Direct calls to `deliver_text` remain a lower-level adapter API, not an approval gate. Production use must go through the governed Tool Registry and outbox path.
-- **Validation status:** implementation and focused regression coverage are present in this PR; CI and runtime/provider acceptance on the resulting exact commit are still required. No live WhatsApp provider request has been made, so live delivery is not certified.
+- **Validation status (2026-10-23):** the exact PR head `0d3ebdc4d5fbccb1a4f53bd2d0435cb0daf62640` passed the GitHub Actions CI backend/frontend jobs, including backend tests, Ruff and compile; the Runtime Isolation/RBAC and Security/Privacy workflows also completed successfully. This is CI evidence only; local Docker/DB acceptance and live provider delivery were not run, so live delivery is not certified.
 
 ## Database
 
