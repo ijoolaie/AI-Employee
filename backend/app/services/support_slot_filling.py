@@ -112,3 +112,33 @@ def find_trusted_shipping_city(message: str, shipping_policy: dict[str, Any] | N
         if city.casefold() in message_folded:
             return city
     return None
+
+
+def shipping_fee_preflight_response(message: str, policy: dict[str, Any] | None = None) -> str | None:
+    """Return a safe deterministic reply when a shipping-fee question lacks a usable rate."""
+    normalized_message = message.casefold()
+    shipping_fee_terms = (
+        "هزینه ارسال", "هزینه‌ی ارسال", "هزینه پست", "کرایه ارسال",
+        "قیمت ارسال", "ارسال چقدر", "ارسال چند", "هزینه حمل",
+    )
+    if not any(term in normalized_message for term in shipping_fee_terms):
+        return None
+
+    trusted_policy = policy if isinstance(policy, dict) else {}
+    shipping = trusted_policy.get("shipping")
+    shipping = shipping if isinstance(shipping, dict) else {}
+    if has_valid_flat_shipping_rate(shipping):
+        return None
+
+    city = find_trusted_shipping_city(message, shipping)
+    if city is None:
+        return plan_support_turn(intent="shipping_fee", policy=trusted_policy).next_question
+
+    decision = plan_support_turn(
+        intent="shipping_fee",
+        known_slots={"city": city},
+        policy=trusted_policy,
+    )
+    if decision.can_answer_from_policy:
+        return None
+    return "برای این شهر نرخ ارسالِ تأییدشده‌ای در اطلاعات فروشگاه ندارم؛ برای اعلام مبلغ دقیق، لازم است پشتیبانی بررسی کند."
