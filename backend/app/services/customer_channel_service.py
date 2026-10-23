@@ -72,7 +72,7 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
 
     # A human handoff is a persistent routing boundary: accept and store the
     # customer's message, but never start another AI Run until staff resumes it.
-    if getattr(conversation, "handoff_requested", False) or conversation.status == "human":
+    if getattr(conversation, "handoff_requested", False) or getattr(conversation, "status", None) == "human":
         message = CustomerMessage(
             tenant_id=conversation.tenant_id,
             conversation_id=conversation.id,
