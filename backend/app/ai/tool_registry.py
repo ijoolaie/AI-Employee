@@ -2,7 +2,7 @@
 
 Tools are registered by code, exposed to the model only when explicitly allowed
 by the immutable EmployeeVersion, and executed only through this registry.
-The registry now includes the first side-effecting external integration: `send_email`.
+The registry includes approval-gated external integrations such as `send_email` and `whatsapp.send_text`.
 It is fail-closed by configuration, requires `run.execute`, and always requires
 human approval before execution.
 """
@@ -219,6 +219,74 @@ class ToolRegistry:
                 raise ValidationAppError(
                     "send_email requires an active tenant Run context"
                 )
+        elif name == "whatsapp.send_text":
+            # WhatsApp is queued only from the canonical, approval-governed
+            # Agent Run path. A caller-controlled approval_granted flag alone
+            # is never sufficient to create an outbound message.
+            from uuid import UUID
+            from sqlalchemy import select
+            from app.models.customer_channel import CustomerChannel
+            from app.models.tool_approval import ToolApprovalRequest
+            from app.services.agent_tool_governance import current_agent_tool_context
+            from app.services.outbox_service import enqueue
+
+            active_context = current_agent_tool_context()
+            if db is None or tenant_id is None or active_context is None:
+                raise ValidationAppError("whatsapp.send_text requires an active governed tenant Run")
+            bound_tenant, _agent_id, run_id, _delegation_id = active_context
+            if tenant_id != bound_tenant or not approval_granted or not tool_call_id or not approval_request_id:
+                raise ValidationAppError("whatsapp.send_text requires an exact durable approval binding")
+            try:
+                channel_id = UUID(str(arguments["channel_id"]))
+                approval_id = UUID(str(approval_request_id))
+            except (TypeError, ValueError) as exc:
+                raise ValidationAppError("Invalid WhatsApp channel or approval identifier") from exc
+
+            approval = (await db.execute(
+                select(ToolApprovalRequest).where(
+                    ToolApprovalRequest.id == approval_id,
+                    ToolApprovalRequest.tenant_id == tenant_id,
+                    ToolApprovalRequest.run_id == run_id,
+                    ToolApprovalRequest.tool_name == name,
+                    ToolApprovalRequest.tool_call_id == str(tool_call_id),
+                    ToolApprovalRequest.status == "consumed",
+                ).with_for_update()
+            )).scalar_one_or_none()
+            if approval is None or approval.arguments != arguments:
+                raise ValidationAppError("WhatsApp approval does not match this exact tool call")
+
+            channel = (await db.execute(
+                select(CustomerChannel).where(
+                    CustomerChannel.id == channel_id,
+                    CustomerChannel.tenant_id == tenant_id,
+                    CustomerChannel.channel_type == "whatsapp",
+                    CustomerChannel.is_active.is_(True),
+                ).with_for_update()
+            )).scalar_one_or_none()
+            if channel is None:
+                raise ValidationAppError("Active WhatsApp channel not found for this tenant")
+
+            queued = await enqueue(
+                db,
+                kind="whatsapp.send_text",
+                tenant_id=tenant_id,
+                dedupe_key=f"whatsapp:{run_id}:{tool_call_id}",
+                payload={
+                    "channel_id": str(channel.id),
+                    "recipient": arguments["recipient"],
+                    "text": arguments["text"],
+                    "run_id": str(run_id),
+                    "tool_name": name,
+                    "tool_call_id": str(tool_call_id),
+                    "approval_request_id": str(approval.id),
+                },
+            )
+            result = {
+                "queued": True,
+                "outbox_id": str(queued.id),
+                "channel_id": str(channel.id),
+                "recipient": arguments["recipient"],
+            }
         elif name == "analyze_dataset":
             # Requires DB + tenant context, same as send_email above. This is
             # the Phase 2 "Report Employee" analysis path (report_service.py);
@@ -997,6 +1065,12 @@ async def _check_inventory(arguments: dict[str, Any], **context):
     product = await _get_product(arguments, **context)
     return {"product_id": product["id"], "name": product["name"], "inventory": product["inventory"], "available": product["inventory"] > 0}
 
+async def _whatsapp_send_text(arguments: dict[str, Any], **context):
+    # Execution is handled inside ToolRegistry.execute so the approval,
+    # channel ownership and outbox write share the governed DB transaction.
+    raise ValidationAppError("whatsapp.send_text must execute through the governed registry boundary")
+
+
 def build_default_registry() -> ToolRegistry:
     registry = ToolRegistry()
     registry.register(
@@ -1043,6 +1117,27 @@ def build_default_registry() -> ToolRegistry:
                 "additionalProperties": False,
             },
             handler=_send_email,
+            side_effects=True,
+            external_side_effects=True,
+            required_permission="run.execute",
+            requires_approval=True,
+        )
+    )
+    registry.register(
+        RegisteredTool(
+            name="whatsapp.send_text",
+            description="Queue an outbound WhatsApp text only after exact-call human approval. Delivery is performed by the durable outbox worker.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "channel_id": {"type": "string", "format": "uuid"},
+                    "recipient": {"type": "string", "minLength": 5, "maxLength": 32, "pattern": "^[+0-9][0-9]+$"},
+                    "text": {"type": "string", "minLength": 1, "maxLength": 4096},
+                },
+                "required": ["channel_id", "recipient", "text"],
+                "additionalProperties": False,
+            },
+            handler=_whatsapp_send_text,
             side_effects=True,
             external_side_effects=True,
             required_permission="run.execute",
