@@ -117,3 +117,42 @@ async def test_broker_publish_failure_retries_after_durable_claim(monkeypatch):
     assert await outbox_worker._dispatch_async(limit=1) == 0
     assert events.index("commit") < events.index("publish")
     assert events.index("rollback") < events.index("mark_retry")
+
+
+
+@pytest.mark.asyncio
+async def test_whatsapp_outbox_routes_to_dedicated_worker_without_generic_redispatch(monkeypatch):
+    events = []
+    db = _DB(events)
+    row = SimpleNamespace(
+        id=uuid4(),
+        kind="whatsapp.send_text",
+        tenant_id=uuid4(),
+        payload={"channel_id": str(uuid4()), "recipient": "+15551234567", "text": "approved"},
+        attempts=1,
+        status="processing",
+    )
+    db.row = row
+
+    async def fake_claim(_db, *, limit):
+        return [row]
+
+    class _Task:
+        @staticmethod
+        def delay(outbox_id):
+            events.append(("publish_whatsapp", outbox_id))
+
+    fake_whatsapp_module = SimpleNamespace(send_whatsapp_text_task=_Task)
+
+    monkeypatch.setattr(outbox_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(outbox_worker.outbox_service, "claim", fake_claim)
+    monkeypatch.setattr(outbox_worker, "span", lambda *args, **kwargs: _Span())
+    monkeypatch.setitem(sys.modules, "app.workers.whatsapp_worker", fake_whatsapp_module)
+
+    assert await outbox_worker._dispatch_async(limit=1) == 0
+    assert events.count("commit") == 1
+    assert ("publish_whatsapp", str(row.id)) in events
+    # The dedicated worker owns delivery/uncertain handling; dispatcher must
+    # not mark the provider send complete or generic-retry it.
+    assert "mark_dispatched" not in events
+    assert "mark_retry" not in events

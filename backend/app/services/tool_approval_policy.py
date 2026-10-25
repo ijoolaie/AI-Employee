@@ -22,6 +22,9 @@ MANDATORY_APPROVAL_TOOLS: Final[frozenset[str]] = frozenset(
         "update_deal_stage",
         "link_order_invoice",
         "send_email",
+        # Reserve the same fail-closed policy for the WhatsApp outbound action
+        # before it is exposed through the Tool Registry.
+        "whatsapp.send_text",
     }
 )
 

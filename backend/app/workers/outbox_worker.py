@@ -46,6 +46,13 @@ async def _dispatch_async(limit: int = 50) -> int:
                             row.payload["run_id"],
                             row.payload["tenant_id"],
                         )
+                    elif row.kind == "whatsapp.send_text":
+                        from app.workers.whatsapp_worker import send_whatsapp_text_task
+                        send_whatsapp_text_task.delay(str(row.id))
+                        OUTBOX_DISPATCH.labels("queued", row.kind).inc()
+                        if current_span is not None:
+                            current_span.set_attribute("outbox.status", "queued")
+                        continue
                     elif row.kind == "email.send":
                         from app.workers.email_worker import send_email_task
                         # Email has its own worker-side durable uncertain boundary.
