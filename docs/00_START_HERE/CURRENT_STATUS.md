@@ -1,8 +1,9 @@
-## Customer support explicit human handoff acceptance slice - 2026-10-25 (in progress)
+## Customer support explicit human handoff — merged and CI-verified (2026-10-25)
 
-- Following PR #1263 merge `fcaf23680ca7d4bd7ccd06a4e1b05b942def6948`, a bounded local-first support slice now persists explicit current-turn human handoff requests from the public customer-message path. It sets `handoff_requested=true` and `status=human`, stores the customer request plus an acknowledgement, and does not start a new AI Run. Prior transcript text cannot trigger the handoff.
-- Targeted local validation: 64 passed; Ruff, compileall, and `git diff --check` passed. The dedicated PostgreSQL handoff test is skipped locally because its explicit test DB URL is not configured; the test now covers the public message path when run against the isolated DB. Full backend suite and exact-head CI are not yet verified.
-- This establishes persisted routing state only; staff notification, assignment, response-time SLA, live channels, production behavior, and customer acceptance are not claimed. No deployment or release was performed. Detailed checkpoint: `documents/30_CUSTOMER_SUPPORT_HUMAN_HANDOFF_v0.1.md`.
+- PR [#1264](https://github.com/ijoolaie/AI-Employee/pull/1264) was squash-merged as [`ef30af24c47d3ddea20bf420be1ada044d2adaf8`](https://github.com/ijoolaie/AI-Employee/commit/ef30af24c47d3ddea20bf420be1ada044d2adaf8). The branch was safely synchronized with current `main` before final checks; no force-push was used.
+- All 16 exact-head checks completed successfully, including backend tests with the isolated PostgreSQL handoff test, frontend, security/privacy, tenant isolation/RBAC, architecture, infrastructure, recovery, DAST, semantic real-stack E2E, and both CodeQL analyses. This is CI evidence, not a fresh local full-suite run.
+- The bounded public customer-message path recognizes explicit current-turn requests for a human, persists the request and acknowledgement, sets `handoff_requested=true` / `status=human`, leaves the conversation unassigned, and returns without creating an AI Run. Prior transcript text cannot trigger the handoff.
+- This establishes persisted routing state only; staff notification, assignment, response-time SLA, live channel behavior, production behavior, and customer acceptance are not claimed. No deployment or release was performed. Detailed checkpoint: `documents/30_CUSTOMER_SUPPORT_HUMAN_HANDOFF_v0.1.md`.
 
 ---
 
