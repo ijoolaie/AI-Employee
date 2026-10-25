@@ -23,7 +23,16 @@ A model ToolCall never grants itself permission. A gated Tool must still be regi
 
 ## Current production tools
 
-The registry now also ships `send_email`, the first side-effecting external Tool. It requires `run.execute` and `requires_approval=True`; SMTP execution occurs only after explicit approval and resumes through Celery.
+The registry ships `send_email`, a side-effecting external Tool. It requires `run.execute` and `requires_approval=True`; SMTP execution occurs only after explicit approval and resumes through Celery.
+
+## WhatsApp outbound status (2026-10-23)
+
+- `whatsapp.send_text` is registered as an external side-effecting Tool with `run.execute`, a strict input schema, and mandatory approval.
+- The governed registry path requires the active Agent Run context, a consumed `ToolApprovalRequest` matching the exact tenant, Run, tool name, tool-call ID, and full arguments, plus an active WhatsApp channel owned by that tenant before creating a transactional `whatsapp.send_text` outbox row.
+- The outbox dispatcher routes the row to `whatsapp_worker`. The worker rechecks the consumed approval, exact arguments, tenant/channel ownership, channel activity/type, and current Agent policy before invoking the provider-neutral `deliver_text` boundary.
+- Before the provider request, the worker commits the row as `uncertain`. A crash or exception after this boundary is not automatically retried; manual reconciliation is required to avoid duplicate customer messages. The dispatcher also excludes WhatsApp rows from stale-processing redispatch.
+- Direct calls to `deliver_text` remain a lower-level adapter API, not an approval gate. Production use must go through the governed Tool Registry and outbox path.
+- **Validation status (2026-10-24):** the latest checked head `115f04c9f93e22153a77f61a751a037b6ea2cc02` passed all 31 GitHub Actions workflows, including CI, Security/Privacy dependency audit, Runtime Isolation/RBAC, and Workforce Semantic Real-Stack E2E. The dependency audit blocker was resolved by updating `backend/requirements.lock` from `pypdf==6.21.1` to `pypdf==6.21.2` after three CVEs were reported against the prior pin. Local focused regression tests passed (`17 passed`) for approval policy, security regression, outbox dispatch, and WhatsApp worker. The full backend suite was started but did not produce a final pytest summary, so it is **not counted as passed**; local Docker/database acceptance also remains unconfirmed. No live provider request was made; live delivery is not certified.
 
 ## Database
 
@@ -34,11 +43,11 @@ Apply with Alembic before using the approval endpoints.
 
 ## v0.2.21 extension
 
-The first real external side-effect is implemented as `send_email`. The approval infrastructure is now exercised by a production-shaped external integration.
+The first real external side-effect is implemented as `send_email`. The approval infrastructure is exercised by a production-shaped external integration.
 
 ## Deferred
 
-- Real external side-effecting tools.
+- Live WhatsApp provider acceptance, provider-outcome reconciliation, and end-to-end tenant/approval/runtime certification.
 - Approval policies by tenant/plan/tool risk class.
 - Multi-approver quorum.
 - Approval expiration/timeout escalation.

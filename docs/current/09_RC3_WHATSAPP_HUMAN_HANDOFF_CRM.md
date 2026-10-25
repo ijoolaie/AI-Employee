@@ -40,7 +40,9 @@ Payload:
 
 Optional `config.webhook_secret` enables HMAC-SHA256 verification through `X-Channel-Signature`.
 
-The endpoint maps the phone number to a persistent customer and conversation, creates a Run through the existing Run Service, and queues the AI Employee worker. The endpoint intentionally remains provider-neutral; a Meta/Twilio/360dialog adapter is still required for production outbound delivery and provider-specific verification.
+The endpoint maps the phone number to a persistent customer and conversation, creates a Run through the existing Run Service, and queues the AI Employee worker. Meta-specific verification and inbound parsing are implemented at `/api/v1/webhooks/channels/whatsapp/meta/{channel_id}`; the provider-neutral endpoint remains available for integrations that already verify their own requests.
+
+Outbound Meta Cloud API delivery is implemented by `WhatsAppCloudAdapter`, which resolves an opaque Credential Vault reference and returns the provider message ID when present. Outbound calls must enter through the governed `whatsapp.send_text` Tool Registry and approval-bound outbox worker. Direct calls to the lower-level delivery adapter do not themselves enforce human approval.
 
 ## Customer CRM
 
@@ -94,15 +96,18 @@ Human replies are stored as `role=human`. Public web chat reads the same convers
 
 ## Production gaps
 
-RC3 is a foundation release, not WhatsApp production certification. Before launch:
+RC3 remains a foundation release, not WhatsApp production certification. The Meta Cloud API adapter and approval-gated outbound path exist, but production readiness still requires:
 
-1. Add and verify a Meta WhatsApp Cloud API or approved BSP adapter.
-2. Implement provider verification handshake and signed webhook verification according to the selected provider.
-3. Implement outbound message delivery and retry/idempotency.
-4. Add provider message IDs and delivery/read states.
-5. Add agent assignment/presence and SLA controls.
-6. Add CRM profile detail, conversation timeline, notes and tags editing.
-7. Add E2E tests for customer → AI → human → customer.
+1. Configure and verify a real Meta Business/WhatsApp Cloud API account, phone-number ID, and tenant-scoped opaque Credential Vault reference.
+2. Validate the webhook verification token and app-secret configuration through the actual Meta console and a publicly reachable HTTPS endpoint.
+3. Add a provider-sandbox or explicitly authorized test-number acceptance run covering approved outbound send, provider message ID persistence, and provider status callbacks. Do not use a live customer recipient for acceptance.
+4. Persist and expose provider delivery/read/failure status callbacks; current outbound success records the provider's immediate acceptance, not final delivery.
+5. Define manual reconciliation for outbox rows marked `uncertain`; do not automatically retry after the provider request boundary because duplicate delivery is possible.
+6. Add agent assignment/presence and SLA controls.
+7. Add CRM profile detail, conversation timeline, notes and tags editing.
+8. Add E2E tests for customer → AI → human → customer.
+
+Contract tests for the Cloud API adapter mock the HTTP client and Credential Vault resolution. They validate request construction, credential isolation, response handling, and fail-closed behavior; they do not prove external connectivity or real Meta delivery.
 
 ## Release acceptance
 
