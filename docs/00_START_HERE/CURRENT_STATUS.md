@@ -1,3 +1,11 @@
+## Customer support explicit human handoff acceptance slice - 2026-10-25 (in progress)
+
+- Following PR #1263 merge `fcaf23680ca7d4bd7ccd06a4e1b05b942def6948`, a bounded local-first support slice now persists explicit current-turn human handoff requests from the public customer-message path. It sets `handoff_requested=true` and `status=human`, stores the customer request plus an acknowledgement, and does not start a new AI Run. Prior transcript text cannot trigger the handoff.
+- Targeted local validation: 64 passed; Ruff, compileall, and `git diff --check` passed. The dedicated PostgreSQL handoff test is skipped locally because its explicit test DB URL is not configured; the test now covers the public message path when run against the isolated DB. Full backend suite and exact-head CI are not yet verified.
+- This establishes persisted routing state only; staff notification, assignment, response-time SLA, live channels, production behavior, and customer acceptance are not claimed. No deployment or release was performed. Detailed checkpoint: `documents/30_CUSTOMER_SUPPORT_HUMAN_HANDOFF_v0.1.md`.
+
+---
+
 ## Post-merge reconciliation — 2026-10-22 (PR #1252)
 
 - World mobile framing implementation merge SHA: [`8a03df9d7dcb46e465b5ea0c5ee355226730c642`](https://github.com/ijoolaie/AI-Employee/commit/8a03df9d7dcb46e465b5ea0c5ee355226730c642), PR [#1252](https://github.com/ijoolaie/AI-Employee/pull/1252) from exact head `0427938a0f1179ef08569d27135ef576574bedac`. Latest application fix: PR [#1255](https://github.com/ijoolaie/AI-Employee/pull/1255), merge SHA `71dca017e078e0eaaf701e37e4da29d367dd1932`, removes the undefined Three.js material-map warning and adds a regression assertion. Documentation-only reconciliations #1253 (`cdd5577bec6ebe0ddab2a28c228f4365d03690a0`) and #1254 added no application changes.
