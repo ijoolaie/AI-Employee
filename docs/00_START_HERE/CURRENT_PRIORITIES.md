@@ -1,9 +1,10 @@
-## Current priority update - customer support handoff slice (2026-10-25)
+## Current priority update — human handoff merged; MVP evidence next (2026-10-25)
 
-1. Finish the bounded public-chat human-handoff acceptance slice on branch `feat/customer-support-human-handoff-20261025`; validate the PostgreSQL-backed test in its dedicated isolated DB and exact-head CI before merge.
-2. Keep the boundary explicit: persisted `status=human` is not evidence of staff notification, a response-time SLA, live provider execution, or production readiness.
-3. Preserve the separate MVP customer-evidence priority in issue #1061 and World visual-acceptance gate in issue #1044. Do not deploy or change the certified release as part of this slice.
-4. PR #1263 is merged as `fcaf23680ca7d4bd7ccd06a4e1b05b942def6948`; it does not certify live WhatsApp delivery.
+1. PR [#1264](https://github.com/ijoolaie/AI-Employee/pull/1264) is squash-merged as `ef30af24c47d3ddea20bf420be1ada044d2adaf8` after all 16 exact-head checks completed successfully, including backend PostgreSQL-backed handoff coverage, DAST, recovery, and semantic real-stack E2E.
+2. The bounded public-chat handoff recognizes explicit current-message requests, persists `status=human` / `handoff_requested=true`, acknowledges the customer, leaves the conversation unassigned, and returns without creating an AI Run. This does **not** establish staff notification, assignment, an SLA, live channel behavior, or production readiness.
+3. Next priority: continue [Issue #1061](https://github.com/ijoolaie/AI-Employee/issues/1061) and validate one narrow customer problem with real prospective customers. Engineering tests and synthetic journeys are not customer evidence; target five decision-maker conversations and at least two concrete sample/trial commitments before broadening integrations.
+4. Keep [World visual acceptance #1044](https://github.com/ijoolaie/AI-Employee/issues/1044) open and deferred to the final phase. PR #1257's synthetic screenshots were visually rejected; do not merge it or start another visual redesign PR until higher-priority reliability/core workflow/customer-evidence blockers are addressed.
+5. PR #1263 remains merged as `fcaf23680ca7d4bd7ccd06a4e1b05b942def6948`; it does not certify live WhatsApp delivery. Do not deploy or change the certified release as part of this checkpoint.
 
 ---
 
