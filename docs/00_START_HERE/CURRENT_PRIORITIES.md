@@ -1,3 +1,12 @@
+## Current priority update - customer support handoff slice (2026-10-25)
+
+1. Finish the bounded public-chat human-handoff acceptance slice on branch `feat/customer-support-human-handoff-20261025`; validate the PostgreSQL-backed test in its dedicated isolated DB and exact-head CI before merge.
+2. Keep the boundary explicit: persisted `status=human` is not evidence of staff notification, a response-time SLA, live provider execution, or production readiness.
+3. Preserve the separate MVP customer-evidence priority in issue #1061 and World visual-acceptance gate in issue #1044. Do not deploy or change the certified release as part of this slice.
+4. PR #1263 is merged as `fcaf23680ca7d4bd7ccd06a4e1b05b942def6948`; it does not certify live WhatsApp delivery.
+
+---
+
 ## Current priority — after World mobile merge (2026-10-22)
 
 1. **World visual acceptance:** [Issue #1044](https://github.com/ijoolaie/AI-Employee/issues/1044) remains the next World-specific gate after PRs #1252 and #1255. The GLB provenance record, fixed-footprint collision implementation/tests, and fresh desktop 1440×900/mobile 390×844 screenshots have been inspected; the undefined-map console warning is fixed in #1255. Remaining: close-up character review, obstacle-aware movement scope decision, accessibility/authorization review, and explicit user approval. Do not open another PR without a confirmed defect.

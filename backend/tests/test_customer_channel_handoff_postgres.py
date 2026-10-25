@@ -40,11 +40,11 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
 
     from app.core.exceptions import NotFoundError
     from app.models.customer_channel import CustomerChannel
-    from app.models.conversation import CustomerConversation
+    from app.models.conversation import CustomerConversation, CustomerMessage
     from app.models.employee import Employee
     from app.models.tenant import Tenant
     from app.models.user import User
-    from app.services.customer_channel_service import update_handoff
+    from app.services.customer_channel_service import _hash_token, send_message, update_handoff
 
     engine = create_async_engine(_support_test_database_url(), poolclass=NullPool)
     sessions = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
@@ -96,10 +96,11 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
                 session.add(channel)
                 await session.flush()
 
+                handoff_token = f"handoff-token-{suffix}"
                 conversation = CustomerConversation(
                     id=uuid.uuid4(), tenant_id=tenant_a.id,
                     employee_id=employee.id, channel_id=channel.id,
-                    customer_token_hash=("0" * 64), customer_name="Synthetic customer",
+                    customer_token_hash=_hash_token(handoff_token), customer_name="Synthetic customer",
                     status="open", handoff_requested=False,
                 )
                 session.add(conversation)
@@ -136,5 +137,33 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
                 assert persisted.handoff_requested is True
                 assert persisted.assigned_user_id == same_tenant_user.id
                 assert persisted.status == "human"
+
+                # Exercise the public customer-message path, not just the staff toggle.
+                conversation.handoff_requested = False
+                conversation.assigned_user_id = None
+                conversation.status = "open"
+                await session.flush()
+                request_text = "I want to talk to a human"
+                routed_conversation, run = await send_message(
+                    session,
+                    conversation_id=conversation.id,
+                    token=handoff_token,
+                    content=request_text,
+                )
+                assert run is None
+                assert routed_conversation.handoff_requested is True
+                assert routed_conversation.status == "human"
+                assert routed_conversation.assigned_user_id is None
+                saved_messages = list((await session.execute(
+                    select(CustomerMessage).where(
+                        CustomerMessage.conversation_id == conversation.id,
+                        CustomerMessage.tenant_id == tenant_a.id,
+                    )
+                )).scalars().all())
+                assert any(item.role == "user" and item.content == request_text for item in saved_messages)
+                assert any(
+                    item.role == "assistant" and "recorded" in item.content
+                    for item in saved_messages
+                )
     finally:
         await engine.dispose()

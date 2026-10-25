@@ -24,6 +24,48 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def _is_explicit_human_handoff_request(content: str) -> bool:
+    """Recognize explicit requests for a person without consulting prior turns."""
+    normalized = " ".join(content.casefold().split()).replace("\u064a", "\u06cc").replace("\u0643", "\u06a9")
+    phrases = (
+        "talk to a human", "speak to a human", "human agent", "real person",
+        "talk to someone", "speak to someone", "live agent", "human support",
+        "live person", "agent please", "i need a human", "i want a human",
+        "can i speak with a human", "connect me to a human", "transfer me to a human",
+        "connect me to support", "transfer me to support",
+        "\u0628\u0627 \u067e\u0634\u062a\u06cc\u0628\u0627\u0646 \u0635\u062d\u0628\u062a",
+        "\u0628\u0627 \u067e\u0634\u062a\u06cc\u0628\u0627\u0646\u06cc \u0635\u062d\u0628\u062a",
+        "\u0628\u0627 \u06a9\u0627\u0631\u0634\u0646\u0627\u0633 \u0635\u062d\u0628\u062a",
+        "\u0628\u0627 \u0627\u067e\u0631\u0627\u062a\u0648\u0631 \u0635\u062d\u0628\u062a",
+        "\u0628\u0627 \u0627\u0646\u0633\u0627\u0646 \u0635\u062d\u0628\u062a",
+        "\u0628\u0627 \u0622\u062f\u0645 \u0635\u062d\u0628\u062a",
+        "\u0628\u0627 \u06cc\u06a9 \u0646\u0641\u0631 \u0635\u062d\u0628\u062a",
+        "\u0628\u0647 \u06a9\u0627\u0631\u0634\u0646\u0627\u0633 \u0648\u0635\u0644",
+        "\u0628\u0647 \u067e\u0634\u062a\u06cc\u0628\u0627\u0646 \u0648\u0635\u0644",
+        "\u0648\u0635\u0644 \u06a9\u0646\u06cc\u062f \u0628\u0647 \u067e\u0634\u062a\u06cc\u0628\u0627\u0646",
+        "\u067e\u0634\u062a\u06cc\u0628\u0627\u0646 \u0627\u0646\u0633\u0627\u0646\u06cc",
+        "\u06a9\u0627\u0631\u0634\u0646\u0627\u0633 \u0627\u0646\u0633\u0627\u0646\u06cc",
+        "\u0627\u0646\u0633\u0627\u0646 \u0648\u0627\u0642\u0639\u06cc",
+        "\u0627\u0631\u062a\u0628\u0627\u0637 \u0628\u0627 \u06a9\u0627\u0631\u0634\u0646\u0627\u0633",
+    )
+    return any(phrase in normalized for phrase in phrases)
+
+
+def _human_handoff_acknowledgement(content: str) -> str:
+    """Acknowledge only after the conversation's human-routing state is persisted."""
+    if any("\u0600" <= char <= "\u06ff" for char in content):
+        return (
+            "\u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0634\u0645\u0627 \u062b\u0628\u062a \u0634\u062f \u0648 \u0627\u06cc\u0646 \u06af\u0641\u062a\u06af\u0648 \u0628\u0631\u0627\u06cc \u067e\u06cc\u06af\u06cc\u0631\u06cc \u0627\u0646\u0633\u0627\u0646\u06cc \u062f\u0631 \u0648\u0636\u0639\u06cc\u062a \u0627\u0646\u062a\u0638\u0627\u0631 \u0642\u0631\u0627\u0631 \u06af\u0631\u0641\u062a. "
+            "\u067e\u06cc\u0627\u0645\u200c\u0647\u0627\u06cc \u0628\u0639\u062f\u06cc \u0634\u0645\u0627 \u062f\u0631 \u0647\u0645\u06cc\u0646 \u06af\u0641\u062a\u06af\u0648 \u0630\u062e\u06cc\u0631\u0647 \u0645\u06cc\u200c\u0634\u0648\u0646\u062f \u0648 \u067e\u0627\u0633\u062e \u062e\u0648\u062f\u06a9\u0627\u0631 \u0647\u0648\u0634 \u0645\u0635\u0646\u0648\u0639\u06cc \u0627\u0631\u0633\u0627\u0644 \u0646\u0645\u06cc\u200c\u0634\u0648\u062f. "
+            "\u0632\u0645\u0627\u0646 \u067e\u0627\u0633\u062e\u200c\u06af\u0648\u06cc\u06cc \u0647\u0646\u0648\u0632 \u062a\u0623\u06cc\u06cc\u062f \u0646\u0634\u062f\u0647 \u0627\u0633\u062a."
+        )
+    return (
+        "Your request has been recorded and this conversation is now awaiting human follow-up. "
+        "Further messages here will be saved without automatic AI replies. "
+        "A response time has not been confirmed."
+    )
+
+
 async def create_channel(db: AsyncSession, *, tenant_id: uuid.UUID, employee_id: uuid.UUID, name: str, channel_type: str, config: dict, actor_id: uuid.UUID | None = None) -> CustomerChannel:
     employee = await employee_service.get_employee(db, employee_id=employee_id, tenant_id=tenant_id)
     channel = CustomerChannel(tenant_id=tenant_id, employee_id=employee.id, name=name, channel_type=channel_type, public_key="pk_" + secrets.token_urlsafe(24), config=config or {})
@@ -86,6 +128,27 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
     active = (await db.execute(select(func.count()).select_from(Run).where(Run.conversation_id == conversation.id, Run.tenant_id == conversation.tenant_id, Run.status.in_(["pending", "running", "waiting"])))).scalar_one()
     if active:
         raise ConflictError("Please wait for the current assistant response before sending another message")
+
+    # A handoff is a durable conversation-state transition, not a model claim.
+    # Only the current customer turn is inspected; transcript text cannot trigger it.
+    if _is_explicit_human_handoff_request(content):
+        conversation.handoff_requested = True
+        conversation.assigned_user_id = None
+        conversation.status = "human"
+        db.add(CustomerMessage(
+            tenant_id=conversation.tenant_id,
+            conversation_id=conversation.id,
+            role="user",
+            content=content,
+        ))
+        db.add(CustomerMessage(
+            tenant_id=conversation.tenant_id,
+            conversation_id=conversation.id,
+            role="assistant",
+            content=_human_handoff_acknowledgement(content),
+        ))
+        await db.flush()
+        return conversation, None
 
     # Preserve the authorized conversation transcript in the current Run input.
     # The database rows remain the source of truth; transcript text is context,
