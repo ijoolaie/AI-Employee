@@ -1,3 +1,12 @@
+## Customer support multi-turn acceptance — merged and CI-verified (2026-10-28)
+
+- PR [#1277](https://github.com/ijoolaie/AI-Employee/pull/1277) was squash-merged as [`174ea5805e558ad238ac4e96e080a3197e3de9d8`](https://github.com/ijoolaie/AI-Employee/commit/174ea5805e558ad238ac4e96e080a3197e3de9d8), after exact-head CI passed on `3dda64e4b256f4fddee7335b38748381a8774ecd` ([CI run](https://github.com/ijoolaie/AI-Employee/actions/runs/40656304476)). Backend and frontend jobs both passed.
+- Added deterministic planner acceptance coverage for delivery ETA, product variants, bulk discounts, returns/exchanges, payment issues, and damaged orders, plus a Run-path regression that blocks model invocation when the requested city's trusted shipping rate is absent. No application behavior changed.
+- Issue [#1258](https://github.com/ijoolaie/AI-Employee/issues/1258) remains open: this is partial engineering coverage, not proof of persisted cross-turn context, a complete browser-to-real-API journey, durable handoff/task completion, outbound approval, or full tenant/privacy acceptance.
+- No deployment or release was performed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Customer support explicit human handoff — merged and CI-verified (2026-10-25)
 
 - PR [#1264](https://github.com/ijoolaie/AI-Employee/pull/1264) was squash-merged as [`ef30af24c47d3ddea20bf420be1ada044d2adaf8`](https://github.com/ijoolaie/AI-Employee/commit/ef30af24c47d3ddea20bf420be1ada044d2adaf8). The branch was safely synchronized with current `main` before final checks; no force-push was used.
