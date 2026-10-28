@@ -195,6 +195,8 @@ class Settings(BaseSettings):
     smtp_username: str | None = None
     smtp_password: str | None = None
     smtp_from_email: str | None = None
+    # Explicit global destination; unset means no staff email is queued.
+    customer_handoff_notification_email: str | None = None
     smtp_use_starttls: bool = True
     frontend_base_url: str = "http://localhost:3000"
     password_reset_token_expire_minutes: int = 30

@@ -9,7 +9,8 @@ from app.models.conversation import CustomerConversation, CustomerMessage
 from app.models.user import User
 from app.models.employee import Employee
 from app.models.run import Run
-from app.services import audit_service, employee_service, run_service, customer_service
+from app.services import audit_service, employee_service, run_service, customer_service, outbox_service
+from app.core.config import get_settings
 
 
 def _format_conversation_transcript(messages: list[CustomerMessage]) -> str:
@@ -51,16 +52,20 @@ def _is_explicit_human_handoff_request(content: str) -> bool:
     return any(phrase in normalized for phrase in phrases)
 
 
-def _human_handoff_acknowledgement(content: str) -> str:
+def _human_handoff_acknowledgement(content: str, *, notification_configured: bool = False) -> str:
     """Acknowledge only after the conversation's human-routing state is persisted."""
     if any("\u0600" <= char <= "\u06ff" for char in content):
+        if not notification_configured:
+            return ("درخواست شما ثبت شد، اما مقصد اعلان به تیم پشتیبانی هنوز پیکربندی نشده است. پیام‌های بعدی ذخیره می‌شوند و پاسخ خودکار هوش مصنوعی ارسال نمی‌شود. زمان پاسخ‌گویی تأیید نشده است.")
         return (
             "\u062f\u0631\u062e\u0648\u0627\u0633\u062a \u0634\u0645\u0627 \u062b\u0628\u062a \u0634\u062f \u0648 \u0627\u06cc\u0646 \u06af\u0641\u062a\u06af\u0648 \u0628\u0631\u0627\u06cc \u067e\u06cc\u06af\u06cc\u0631\u06cc \u0627\u0646\u0633\u0627\u0646\u06cc \u062f\u0631 \u0648\u0636\u0639\u06cc\u062a \u0627\u0646\u062a\u0638\u0627\u0631 \u0642\u0631\u0627\u0631 \u06af\u0631\u0641\u062a. "
             "\u067e\u06cc\u0627\u0645\u200c\u0647\u0627\u06cc \u0628\u0639\u062f\u06cc \u0634\u0645\u0627 \u062f\u0631 \u0647\u0645\u06cc\u0646 \u06af\u0641\u062a\u06af\u0648 \u0630\u062e\u06cc\u0631\u0647 \u0645\u06cc\u200c\u0634\u0648\u0646\u062f \u0648 \u067e\u0627\u0633\u062e \u062e\u0648\u062f\u06a9\u0627\u0631 \u0647\u0648\u0634 \u0645\u0635\u0646\u0648\u0639\u06cc \u0627\u0631\u0633\u0627\u0644 \u0646\u0645\u06cc\u200c\u0634\u0648\u062f. "
             "\u0632\u0645\u0627\u0646 \u067e\u0627\u0633\u062e\u200c\u06af\u0648\u06cc\u06cc \u0647\u0646\u0648\u0632 \u062a\u0623\u06cc\u06cc\u062f \u0646\u0634\u062f\u0647 \u0627\u0633\u062a."
         )
+    if not notification_configured:
+        return ("Your request has been recorded, but staff notification is not configured yet. Further messages will be saved without automatic AI replies. A response time has not been confirmed.")
     return (
-        "Your request has been recorded and this conversation is now awaiting human follow-up. "
+        "Your request has been recorded and this conversation is awaiting human follow-up. "
         "Further messages here will be saved without automatic AI replies. "
         "A response time has not been confirmed."
     )
@@ -135,6 +140,29 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
         conversation.handoff_requested = True
         conversation.assigned_user_id = None
         conversation.status = "human"
+        settings = get_settings()
+        notification_email = (settings.customer_handoff_notification_email or "").strip()
+        notification_configured = bool(
+            notification_email and settings.smtp_host and settings.smtp_from_email
+        )
+        if notification_configured:
+            await outbox_service.enqueue(
+                db,
+                tenant_id=conversation.tenant_id,
+                kind="email.send",
+                dedupe_key=f"customer-handoff:{conversation.id}",
+                payload={
+                    "to": [notification_email],
+                    "subject": "Customer requested human support",
+                    "body": (
+                        "A customer requested human support.\n"
+                        f"Conversation ID: {conversation.id}\n"
+                        f"Channel ID: {conversation.channel_id}\n"
+                        f"Tenant ID: {conversation.tenant_id}\n"
+                        "Open the authenticated support workspace to review the conversation."
+                    ),
+                },
+            )
         db.add(CustomerMessage(
             tenant_id=conversation.tenant_id,
             conversation_id=conversation.id,
@@ -145,7 +173,7 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
             tenant_id=conversation.tenant_id,
             conversation_id=conversation.id,
             role="assistant",
-            content=_human_handoff_acknowledgement(content),
+            content=_human_handoff_acknowledgement(content, notification_configured=notification_configured),
         ))
         await db.flush()
         return conversation, None
