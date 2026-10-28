@@ -52,3 +52,52 @@ async def test_handoff_uses_configured_destination_and_tenant_dedupe(monkeypatch
     assert "\n" in calls[0]["payload"]["body"]
     assert "\\n" not in calls[0]["payload"]["body"]
     assert len(db.added) == 2
+
+
+@pytest.mark.asyncio
+async def test_handoff_does_not_claim_notification_configured_without_smtp(monkeypatch):
+    tenant_id, conversation_id = uuid4(), uuid4()
+    conversation = SimpleNamespace(
+        id=conversation_id, tenant_id=tenant_id, employee_id=uuid4(),
+        channel_id=uuid4(), customer_name=None, customer_email=None,
+        customer_phone=None, status="open", handoff_requested=False,
+        assigned_user_id=None,
+    )
+
+    class DB:
+        def __init__(self):
+            self.added = []
+        def add(self, row):
+            self.added.append(row)
+        async def flush(self):
+            pass
+        async def execute(self, statement):
+            return SimpleNamespace(scalar_one=lambda: 0)
+
+    db = DB()
+    calls = []
+
+    async def get_conversation(*args, **kwargs):
+        return conversation
+
+    async def enqueue(db_arg, **kwargs):
+        calls.append(kwargs)
+        return SimpleNamespace(id=uuid4())
+
+    monkeypatch.setattr(customer_channel_service, "_get_conversation", get_conversation)
+    monkeypatch.setattr(customer_channel_service, "get_settings", lambda: SimpleNamespace(
+        customer_handoff_notification_email="ops",
+        smtp_host=None,
+        smtp_from_email="support@example.test",
+    ))
+    monkeypatch.setattr(customer_channel_service.outbox_service, "enqueue", enqueue)
+
+    result, run = await customer_channel_service.send_message(
+        db, conversation_id=conversation_id, token="token",
+        content="Please connect me to a human"
+    )
+
+    assert result is conversation and run is None
+    assert calls == []
+    assert "not configured" in db.added[-1].content
+    assert conversation.status == "human"
