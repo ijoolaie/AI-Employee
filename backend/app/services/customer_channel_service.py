@@ -155,10 +155,10 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
                     "to": [notification_email],
                     "subject": "Customer requested human support",
                     "body": (
-                        "A customer requested human support.\\n"
-                        f"Conversation ID: {conversation.id}\\n"
-                        f"Channel ID: {conversation.channel_id}\\n"
-                        f"Tenant ID: {conversation.tenant_id}\\n"
+                        "A customer requested human support.\n"
+                        f"Conversation ID: {conversation.id}\n"
+                        f"Channel ID: {conversation.channel_id}\n"
+                        f"Tenant ID: {conversation.tenant_id}\n"
                         "Open the authenticated support workspace to review the conversation."
                     ),
                 },
