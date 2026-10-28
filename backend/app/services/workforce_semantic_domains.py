@@ -66,7 +66,13 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         return {"tenant_id": tenant_id, "storage_keys": get_storage_backend().list_prefix(prefix)}
     if operation == "workspace_create_file":
         path = arguments["path"].strip()
-        if not path or path.startswith("/") or ".." in path.split("/"):
+        if (
+            not path
+            or path.startswith(("/", "\\"))
+            or "\\" in path
+            or ".." in path.split("/")
+            or "\x00" in path
+        ):
             raise ValidationAppError("Workspace path is invalid")
         payload = {"kind": "workspace_file", "path": path, "content": arguments.get("content", ""), "created_at": _now()}
         path_digest = hashlib.sha256(path.encode("utf-8")).hexdigest()
