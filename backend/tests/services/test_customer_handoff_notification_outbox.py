@@ -33,7 +33,9 @@ async def test_handoff_uses_configured_destination_and_tenant_dedupe(monkeypatch
         return SimpleNamespace(id=uuid4())
     monkeypatch.setattr(customer_channel_service, "_get_conversation", get_conversation)
     monkeypatch.setattr(customer_channel_service, "get_settings", lambda: SimpleNamespace(
-        customer_handoff_notification_email="ops"
+        customer_handoff_notification_email="ops",
+        smtp_host="smtp.example.test",
+        smtp_from_email="support@example.test",
     ))
     monkeypatch.setattr(customer_channel_service.outbox_service, "enqueue", enqueue)
     result, run = await customer_channel_service.send_message(
@@ -47,4 +49,6 @@ async def test_handoff_uses_configured_destination_and_tenant_dedupe(monkeypatch
     assert calls[0]["dedupe_key"] == f"customer-handoff:{conversation_id}"
     assert calls[0]["payload"]["to"] == ["ops"]
     assert str(channel_id) in calls[0]["payload"]["body"]
+    assert "\n" in calls[0]["payload"]["body"]
+    assert "\\n" not in calls[0]["payload"]["body"]
     assert len(db.added) == 2
