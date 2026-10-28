@@ -233,3 +233,65 @@ async def test_email_side_effect_failure_remains_uncertain(monkeypatch):
     assert row.status == "uncertain"
     assert "provider acceptance" in row.last_error
     assert db.commits >= 2
+
+
+@pytest.mark.asyncio
+async def test_customer_handoff_email_worker_invokes_configured_destination(monkeypatch):
+    tenant_id = uuid4()
+    conversation_id = uuid4()
+    channel_id = uuid4()
+    recipient = "ops@example.test"
+    row = SimpleNamespace(
+        id=uuid4(),
+        status="processing",
+        attempts=1,
+        tenant_id=tenant_id,
+        last_error=None,
+        payload={
+            "to": [recipient],
+            "subject": "Customer requested human support",
+            "body": (
+                f"tenant_id={tenant_id}\\n"
+                f"conversation_id={conversation_id}\\n"
+                f"channel_id={channel_id}\\n"
+            ),
+        },
+    )
+    db = _DB([row])
+    delivered = []
+
+    async def authorize(*args, **kwargs):
+        return None
+
+    async def mark_dispatched(db_arg, row_arg):
+        row_arg.status = "dispatched"
+
+    class _CapturingSMTP:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def send_message(self, msg):
+            delivered.append(msg)
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorize)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _CapturingSMTP)
+    monkeypatch.setattr(outbox_service, "mark_dispatched", mark_dispatched)
+
+    await email_worker._send(str(row.id))
+
+    assert len(delivered) == 1
+    assert delivered[0]["To"] == recipient
+    assert delivered[0]["Subject"] == "Customer requested human support"
+    body = delivered[0].get_content()
+    assert str(tenant_id) in body
+    assert str(conversation_id) in body
+    assert str(channel_id) in body
+    assert row.status == "dispatched"
