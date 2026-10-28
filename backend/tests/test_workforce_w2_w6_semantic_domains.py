@@ -34,6 +34,25 @@ async def test_w2_engineering_workspace_paths_cannot_collide_after_key_normaliza
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "path",
+    [
+        "..\\\\secret.txt",
+        "src\\\\..\\\\secret.txt",
+        "\\\\absolute.txt",
+    ],
+)
+async def test_w2_engineering_workspace_rejects_windows_style_path_traversal(path):
+    from app.core.exceptions import ValidationAppError
+
+    with pytest.raises(ValidationAppError, match="Workspace path is invalid"):
+        await execute_engineering(
+            {"_operation": "workspace_create_file", "path": path, "content": "blocked"},
+            tenant_id="tenant-invalid-path",
+        )
+
+
+@pytest.mark.asyncio
 async def test_software_developer_workspace_acceptance_checks_lifecycle_and_isolation():
     from app.services.workforce_semantic_domains import run_software_developer_workspace_acceptance
 
