@@ -37,9 +37,9 @@ async def test_w2_engineering_workspace_paths_cannot_collide_after_key_normaliza
 @pytest.mark.parametrize(
     "path",
     [
-        "..\\\\secret.txt",
-        "src\\\\..\\\\secret.txt",
-        "\\\\absolute.txt",
+        "..\\secret.txt",
+        "src\\..\\secret.txt",
+        "\\absolute.txt",
     ],
 )
 async def test_w2_engineering_workspace_rejects_windows_style_path_traversal(path):
