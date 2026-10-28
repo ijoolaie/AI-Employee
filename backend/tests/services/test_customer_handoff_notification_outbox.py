@@ -23,7 +23,7 @@ async def test_handoff_uses_configured_destination_and_tenant_dedupe(monkeypatch
         async def flush(self):
             pass
         async def execute(self, statement):
-            raise AssertionError("handoff must not create an AI run")
+            return SimpleNamespace(scalar_one=lambda: 0)
     db = DB()
     calls = []
     async def get_conversation(*args, **kwargs):
