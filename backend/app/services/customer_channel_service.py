@@ -142,7 +142,10 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
         conversation.status = "human"
         settings = get_settings()
         notification_email = (settings.customer_handoff_notification_email or "").strip()
-        if notification_email:
+        notification_configured = bool(
+            notification_email and settings.smtp_host and settings.smtp_from_email
+        )
+        if notification_configured:
             await outbox_service.enqueue(
                 db,
                 tenant_id=conversation.tenant_id,
@@ -170,7 +173,7 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
             tenant_id=conversation.tenant_id,
             conversation_id=conversation.id,
             role="assistant",
-            content=_human_handoff_acknowledgement(content, notification_configured=bool(notification_email)),
+            content=_human_handoff_acknowledgement(content, notification_configured=notification_configured),
         ))
         await db.flush()
         return conversation, None
