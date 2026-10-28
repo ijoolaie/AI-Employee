@@ -64,6 +64,45 @@ async def test_w2_workspace_list_excludes_non_workspace_artifacts():
 
 
 @pytest.mark.asyncio
+async def test_w2_workspace_list_skips_json_values_that_are_not_objects(monkeypatch):
+    import app.services.workforce_semantic_domains as domains
+
+    tenant_id = "tenant-workspace-list-malformed-json"
+    created = await execute_engineering(
+        {"_operation": "workspace_create_file", "path": "src/main.py", "content": "print('ok')"},
+        tenant_id=tenant_id,
+    )
+    original_read = domains._read_json
+
+    def read_non_object_for_fixture(tenant, storage_key):
+        if storage_key == created["storage_key"]:
+            return []
+        return original_read(tenant, storage_key)
+
+    monkeypatch.setattr(domains, "_read_json", read_non_object_for_fixture)
+    listing = await execute_engineering({"_operation": "workspace_list"}, tenant_id=tenant_id)
+    assert created["storage_key"] not in listing["storage_keys"]
+
+
+@pytest.mark.asyncio
+async def test_w2_workspace_read_rejects_json_values_that_are_not_objects(monkeypatch):
+    import app.services.workforce_semantic_domains as domains
+    from app.core.exceptions import ValidationAppError
+
+    tenant_id = "tenant-workspace-read-malformed-json"
+    created = await execute_engineering(
+        {"_operation": "workspace_create_file", "path": "src/main.py", "content": "print('ok')"},
+        tenant_id=tenant_id,
+    )
+    monkeypatch.setattr(domains, "_read_json", lambda tenant, storage_key: [])
+    with pytest.raises(ValidationAppError, match="Artifact is not a workspace file"):
+        await execute_engineering(
+            {"_operation": "workspace_read", "storage_key": created["storage_key"]},
+            tenant_id=tenant_id,
+        )
+
+
+@pytest.mark.asyncio
 async def test_w2_engineering_workspace_paths_cannot_collide_after_key_normalization():
     from app.services.workforce_semantic_domains import _read_json
 
