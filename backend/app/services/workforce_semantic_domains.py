@@ -66,7 +66,16 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
         return payload
     if operation == "workspace_list":
         prefix = f"{tenant_id}/"
-        return {"tenant_id": tenant_id, "storage_keys": get_storage_backend().list_prefix(prefix)}
+        backend = get_storage_backend()
+        storage_keys = []
+        for storage_key in backend.list_prefix(prefix):
+            try:
+                payload = _read_json(tenant_id, storage_key)
+            except (ValidationAppError, json.JSONDecodeError, UnicodeDecodeError):
+                continue
+            if payload.get("kind") == "workspace_file":
+                storage_keys.append(storage_key)
+        return {"tenant_id": tenant_id, "storage_keys": storage_keys}
     if operation == "workspace_create_file":
         path = arguments["path"].strip()
         if (
