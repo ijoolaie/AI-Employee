@@ -69,7 +69,7 @@ async def test_send_message_passes_authorized_history_and_current_turn_separatel
     queued = []
     created_runs = []
 
-    async def get_conversation(*, db, conversation_id, token):
+    async def get_conversation(db, *, conversation_id, token):
         assert conversation_id == conversation.id
         assert token == "valid-test-token"
         return conversation
