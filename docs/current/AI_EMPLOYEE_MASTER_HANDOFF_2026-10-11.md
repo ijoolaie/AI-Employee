@@ -395,3 +395,41 @@ This run validates the narrow report-analysis workflow against current `main` so
 ### Interpretation
 
 This is meaningful local engineering evidence that the Report Employee can use a real local model, analyze uploaded data, persist its result, and produce downloadable artifacts. The CSV, account, tenant, and license were synthetic. It is not evidence of real-customer demand or willingness to pay, and it does not certify production or a new release. Production certification remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
+## Engineering handoff — Commercial portal access and tenant lifecycle (2026-10-28)
+
+### Current working state (local, not yet published as code)
+- Repository: `ijoolaie/AI-Employee`.
+- Local worktree: `C:\\Users\\Ali\\AI-Employee\\.worktrees\\portal-license-acceptance-20261027`.
+- Branch: `feat/portal-license-acceptance-20261027`; base/HEAD at start of this work: `9eef15db`.
+- **All implementation changes remain local and uncommitted.** This handoff note is the only change being written to GitHub in this action; no code branch push, PR, merge, deployment, or release was performed.
+- Do not infer that the vendor console is finished: `/vendor/dashboard` remains an entry shell. Vendor reseller/license and reseller license pages cover the current narrow operations, not a complete commercial operations console.
+
+### Implemented locally in the worktree
+- Portal-specific login/route/sidebar behavior for Vendor, Reseller, and Customer; Platform Admin remains separate.
+- Edition license APIs enforce issuer scoping and tenant hierarchy; list responses omit license keys; license revocation is restricted to the issuing tenant. Vendor and Reseller license pages expose revocation only for active licenses and require a reason.
+- Regression contract checks map every route declared in the commercial license router to an explicit edition-license API-key scope; Vendor/Reseller allowlists include the needed scopes while Customer does not.
+- Durable failed-tool audit handling was corrected so entitlement-denied `tool.call` evidence survives the execution savepoint rollback and accompanies `run.failed`.
+- The real PostgreSQL/API acceptance test now provisions a new Reseller through the Vendor endpoint, provisions a Customer through the Reseller endpoint, issues/revokes a license, and checks that the entitlement gate rejects use after revocation. It also covers lifecycle controls for that newly provisioned chain.
+
+### Tenant lifecycle acceptance
+- Real ASGI API + dedicated PostgreSQL test database: **`backend/tests/test_commercial_license_postgres_api.py` — 1 passed (11.10s)** on 2026-10-28.
+- Verified: a foreign Vendor cannot suspend another Vendor's Reseller (403); a Reseller with a non-deprovisioned Customer cannot be deprovisioned (409); valid suspend/resume transitions work; a suspended tenant's existing token is rejected (403) and login is rejected (401); resumed tenants regain access; deprovisioning disables the tenant admin account and blocks existing tokens/login (401); a deprovisioned Reseller cannot be resumed (409).
+- Lifecycle checks use the fail-closed `COMMERCIAL_LICENSE_TEST_DATABASE_URL` pointing to the dedicated `aiep_license_test` database, with uniquely named test tenants. They are not production or live-customer tests.
+- Existing auth dependencies already enforce active tenant status. This lifecycle follow-up adds regression evidence; no additional production authorization fix was needed for these tested paths.
+
+### Other latest verification evidence
+- Full backend suite before the latest lifecycle assertions: **1719 passed, 1 skipped** (56.69s). This full-suite result predates the most recent extension of the PostgreSQL lifecycle test; do not label it a fresh full-suite run.
+- Latest portal Playwright run: **2 passed**; API interactions are mocked, so it is browser-routing/UI regression evidence, not proof of a live end-to-end backend workflow.
+- Earlier frontend checks on this worktree: Vitest **145 passed**, portal-access unit tests **13 passed**, lint **0 errors / 5 existing warnings**, production build succeeded. Build-generated edits to `frontend/next-env.d.ts` and `frontend/tsconfig.json` were restored.
+- `python -m ruff check backend/tests/test_commercial_license_postgres_api.py`: passed; `git diff --check`: passed.
+- Current branch worktree contains multiple modified/new files across backend, frontend and `docs/roadmap/COMMERCIAL_PORTAL_ACCESS_BACKLOG.md`; inspect `git status --short` before staging. No commits or pushes have been made.
+
+### Next actions
+1. Run the full backend suite again after the latest lifecycle-test extension; record the exact result, and rerun targeted frontend tests only if related UI files change.
+2. Review lifecycle negative cases for foreign Reseller → Customer management and wrong-kind tenant IDs, plus license behavior for suspended/deprovisioned tenants if those semantics are part of the product contract.
+3. Inspect the full diff and ensure no generated/config files or test artifacts are included.
+4. When ready, create a focused PR from `feat/portal-license-acceptance-20261027`; do not push/merge/deploy without the user's explicit authorization.
+5. Treat all current results as local engineering/test evidence only. No production deployment, release certification, or customer acceptance is established by this work.
