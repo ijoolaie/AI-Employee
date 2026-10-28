@@ -61,7 +61,7 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
     operation = arguments["_operation"]
     if operation == "workspace_read":
         payload = _read_json(tenant_id, arguments["storage_key"])
-        if payload.get("kind") != "workspace_file":
+        if not isinstance(payload, dict) or payload.get("kind") != "workspace_file":
             raise ValidationAppError("Artifact is not a workspace file")
         return payload
     if operation == "workspace_list":
@@ -73,7 +73,7 @@ async def execute_engineering(arguments: dict[str, Any], **context: Any) -> dict
                 payload = _read_json(tenant_id, storage_key)
             except (ValidationAppError, json.JSONDecodeError, UnicodeDecodeError):
                 continue
-            if payload.get("kind") == "workspace_file":
+            if isinstance(payload, dict) and payload.get("kind") == "workspace_file":
                 storage_keys.append(storage_key)
         return {"tenant_id": tenant_id, "storage_keys": storage_keys}
     if operation == "workspace_create_file":
