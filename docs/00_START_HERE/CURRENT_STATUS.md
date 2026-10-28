@@ -1,3 +1,12 @@
+## Workspace listing artifact-kind guard — merged and CI-verified (2026-10-28)
+
+- PR [#1282](https://github.com/ijoolaie/AI-Employee/pull/1282) was squash-merged as [`e792c33155d16cba8a32f0e6b0ec85aafe6b221c`](https://github.com/ijoolaie/AI-Employee/commit/e792c33155d16cba8a32f0e6b0ec85aafe6b221c), from exact tested head `255ee2dc70c5591585ec528d91d44feb38dc1804`.
+- `workspace_list` now includes only persisted artifacts whose `kind` is `workspace_file`; non-workspace artifacts are excluded. A regression test verifies that a content artifact in the same tenant does not appear in the workspace file listing.
+- All 27 check runs on the exact PR head completed successfully before merge. No local test run was performed in this connector session.
+- No deployment or release was performed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Software Developer workspace path validation — merged and CI-verified (2026-10-28)
 
 - PR [#1279](https://github.com/ijoolaie/AI-Employee/pull/1279) was squash-merged as [`752c5dccec69779e4590a6a5ee63edb5b536f663`](https://github.com/ijoolaie/AI-Employee/commit/752c5dccec69779e4590a6a5ee63edb5b536f663), from exact head `c6ad1da000d676bc5101918426a62083e1e72ea0`.
