@@ -40,6 +40,30 @@ async def test_w2_workspace_read_rejects_non_workspace_artifacts():
 
 
 @pytest.mark.asyncio
+async def test_w2_workspace_list_excludes_non_workspace_artifacts():
+    from app.services.workforce_semantic_domains import execute_content
+
+    tenant_id = "tenant-workspace-list-boundary"
+    workspace_file = await execute_engineering(
+        {"_operation": "workspace_create_file", "path": "src/main.py", "content": "print('ok')"},
+        tenant_id=tenant_id,
+    )
+    content_artifact = await execute_content(
+        {
+            "_operation": "produce_article",
+            "title": "Workspace list boundary test",
+            "body": "This content artifact must not appear in the workspace file list.",
+        },
+        tenant_id=tenant_id,
+    )
+
+    listing = await execute_engineering({"_operation": "workspace_list"}, tenant_id=tenant_id)
+
+    assert workspace_file["storage_key"] in listing["storage_keys"]
+    assert content_artifact["storage_key"] not in listing["storage_keys"]
+
+
+@pytest.mark.asyncio
 async def test_w2_engineering_workspace_paths_cannot_collide_after_key_normalization():
     from app.services.workforce_semantic_domains import _read_json
 
