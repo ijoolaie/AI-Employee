@@ -7,6 +7,7 @@ points anywhere else.
 
 import os
 import uuid
+from types import SimpleNamespace
 
 import pytest
 from sqlalchemy.engine import make_url
@@ -35,7 +36,7 @@ def _support_test_database_url() -> str:
 
 
 @pytest.mark.asyncio
-async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
+async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(monkeypatch):
     from sqlalchemy import select
 
     from app.core.exceptions import NotFoundError
@@ -44,7 +45,20 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
     from app.models.employee import Employee
     from app.models.tenant import Tenant
     from app.models.user import User
+    from app.models.outbox import OutboxMessage
+    from app.services import customer_channel_service
     from app.services.customer_channel_service import _hash_token, send_message, update_handoff
+
+    # Exercise the configured notification path without sending real email.
+    monkeypatch.setattr(
+        customer_channel_service,
+        "get_settings",
+        lambda: SimpleNamespace(
+            customer_handoff_notification_email="ops@example.test",
+            smtp_host="smtp.example.test",
+            smtp_from_email="support@example.test",
+        ),
+    )
 
     engine = create_async_engine(_support_test_database_url(), poolclass=NullPool)
     sessions = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
@@ -165,5 +179,47 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres():
                     item.role == "assistant" and "recorded" in item.content
                     for item in saved_messages
                 )
+
+                # The notification is durable in the same transaction as the
+                # handoff state transition and remains tenant-scoped/deduplicated.
+                outbox_rows = list((await session.execute(
+                    select(OutboxMessage).where(
+                        OutboxMessage.tenant_id == tenant_a.id,
+                        OutboxMessage.dedupe_key == f"customer-handoff:{conversation.id}",
+                    )
+                )).scalars().all())
+                assert len(outbox_rows) == 1
+                outbox_row = outbox_rows[0]
+                assert outbox_row.kind == "email.send"
+                assert outbox_row.status == "pending"
+                assert outbox_row.payload["to"] == ["ops@example.test"]
+                assert str(tenant_a.id) in outbox_row.payload["body"]
+                assert str(conversation.id) in outbox_row.payload["body"]
+                assert str(channel.id) in outbox_row.payload["body"]
+
+                # Re-enqueuing the same logical handoff must return the existing
+                # row instead of creating a second notification.
+                from app.services import outbox_service
+                duplicate = await outbox_service.enqueue(
+                    session,
+                    tenant_id=tenant_a.id,
+                    kind="email.send",
+                    dedupe_key=f"customer-handoff:{conversation.id}",
+                    payload={
+                        "to": ["ops@example.test"],
+                        "subject": "Duplicate should be deduplicated",
+                        "body": "synthetic test",
+                    },
+                )
+                assert duplicate.id == outbox_row.id
+                duplicate_count = (
+                    await session.execute(
+                        select(OutboxMessage.id).where(
+                            OutboxMessage.tenant_id == tenant_a.id,
+                            OutboxMessage.dedupe_key == f"customer-handoff:{conversation.id}",
+                        )
+                    )
+                ).all()
+                assert len(duplicate_count) == 1
     finally:
         await engine.dispose()
