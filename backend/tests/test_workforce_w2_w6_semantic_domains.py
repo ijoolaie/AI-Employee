@@ -16,6 +16,30 @@ async def test_w2_engineering_workspace_is_tenant_scoped():
 
 
 @pytest.mark.asyncio
+async def test_w2_workspace_read_rejects_non_workspace_artifacts():
+    from app.core.exceptions import ValidationAppError
+    from app.services.workforce_semantic_domains import execute_content
+
+    content_artifact = await execute_content(
+        {
+            "_operation": "produce_article",
+            "title": "Workspace read boundary test",
+            "body": "This is a content artifact, not a workspace file.",
+        },
+        tenant_id="tenant-workspace-read-boundary",
+    )
+
+    with pytest.raises(ValidationAppError, match="Artifact is not a workspace file"):
+        await execute_engineering(
+            {
+                "_operation": "workspace_read",
+                "storage_key": content_artifact["storage_key"],
+            },
+            tenant_id="tenant-workspace-read-boundary",
+        )
+
+
+@pytest.mark.asyncio
 async def test_w2_engineering_workspace_paths_cannot_collide_after_key_normalization():
     from app.services.workforce_semantic_domains import _read_json
 
