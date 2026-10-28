@@ -236,3 +236,93 @@ def test_preflight_does_not_reuse_city_from_prior_transcript():
 
 def test_preflight_message_selector_falls_back_for_legacy_runs():
     assert current_customer_message_for_preflight({"message": "legacy message"}) == "legacy message"
+
+
+
+@pytest.mark.parametrize(
+    ("intent", "turns", "policy"),
+    [
+        (
+            "delivery_eta",
+            [
+                ({}, ("city", "order_id"), "ارسال برای کدوم شهره؟ 😊", False),
+                ({"city": "تهران"}, ("order_id",), "شماره سفارش‌تون رو می‌فرمایید؟", False),
+                (
+                    {"city": "تهران", "order_id": "ORD-ETA-1"},
+                    (),
+                    None,
+                    True,
+                ),
+            ],
+            {"delivery_sla_by_city": {"تهران": "۱ تا ۲ روز کاری"}},
+        ),
+        (
+            "variant_stock",
+            [
+                ({"product": "تی‌شرت"}, ("color", "size"), "چه رنگی مدنظرتونه؟", False),
+                ({"product": "تی‌شرت", "color": "آبی"}, ("size",), "چه سایزی می‌خواید؟", False),
+                (
+                    {"product": "تی‌شرت", "color": "آبی", "size": "M"},
+                    (),
+                    None,
+                    True,
+                ),
+            ],
+            {"stock": {"تی‌شرت": {"آبی": {"M": 3}}}},
+        ),
+        (
+            "bulk_discount",
+            [
+                ({"product": "تی‌شرت"}, ("quantity",), "چند عدد مدنظرتونه؟", False),
+                ({"product": "تی‌شرت", "quantity": 20}, (), None, True),
+            ],
+            {"discounts": {"bulk_minimum": 10}},
+        ),
+        (
+            "return_exchange",
+            [
+                ({"order_id": "ORD-RET-1"}, ("reason",), "دلیل درخواست تعویض یا مرجوعی رو می‌فرمایید؟", False),
+                ({"order_id": "ORD-RET-1", "reason": "کالای آسیب‌دیده"}, (), None, True),
+            ],
+            {"returns": {"review_required": True}},
+        ),
+        (
+            "payment_issue",
+            [
+                ({"order_id": "ORD-PAY-1"}, ("payment_reference",), "شماره پیگیری پرداخت یا سفارش رو می‌فرمایید؟", False),
+                (
+                    {"order_id": "ORD-PAY-1", "payment_reference": "PAY-REF-1"},
+                    (),
+                    None,
+                    True,
+                ),
+            ],
+            {"payment_status": {"lookup_required": True}},
+        ),
+        (
+            "damaged_order",
+            [
+                ({"order_id": "ORD-DMG-1"}, ("issue_details",), "ممکنه کمی بیشتر درباره مشکلی که پیش اومده توضیح بدید؟", False),
+                (
+                    {"order_id": "ORD-DMG-1", "issue_details": "بسته آسیب دیده"},
+                    (),
+                    None,
+                    True,
+                ),
+            ],
+            {"damage_resolution": {"review_required": True}},
+        ),
+    ],
+)
+def test_multiturn_slot_plan_asks_only_next_missing_slot_and_requires_trusted_policy(
+    intent, turns, policy
+):
+    for known_slots, missing_slots, next_question, can_answer in turns:
+        decision = plan_support_turn(
+            intent=intent,
+            known_slots=known_slots,
+            policy=policy if not missing_slots else {},
+        )
+        assert decision.missing_slots == missing_slots
+        assert decision.next_question == next_question
+        assert decision.can_answer_from_policy is can_answer

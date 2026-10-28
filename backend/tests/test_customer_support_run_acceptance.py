@@ -180,3 +180,29 @@ async def test_execute_run_passes_trusted_channel_policy_into_support_prompt(mon
     assert contract["policy"] == policy
     assert any("never invent a delivery SLA" in requirement for requirement in contract["requirements"])
     assert db.committed
+
+
+
+@pytest.mark.asyncio
+async def test_execute_run_does_not_guess_when_current_city_has_no_trusted_rate(monkeypatch):
+    current = "هزینه ارسال به شیراز چقدر است؟"
+    policy = {
+        "shipping": {
+            "cities": ["شیراز"],
+            "rates_by_city": {"تهران": 50000},
+        }
+    }
+    run, version, channel = _make_run(current, "Customer: previous city was تهران", policy)
+    db = _RunPathDB(run, version, channel)
+    gateway = _Gateway()
+    _patch_run_path(monkeypatch, gateway)
+
+    result = await run_service.execute_run(db, run_id=run.id)
+
+    assert result.status == "success"
+    assert result.output_data["content"] == (
+        "برای این شهر نرخ ارسالِ تأییدشده‌ای در اطلاعات فروشگاه ندارم؛ "
+        "برای اعلام مبلغ دقیق، لازم است پشتیبانی بررسی کند."
+    )
+    assert gateway.calls == [], "The model must not invent a rate for an unconfigured city"
+    assert db.committed
