@@ -1,3 +1,12 @@
+## Software Developer workspace path validation — merged and CI-verified (2026-10-28)
+
+- PR [#1279](https://github.com/ijoolaie/AI-Employee/pull/1279) was squash-merged as [`752c5dccec69779e4590a6a5ee63edb5b536f663`](https://github.com/ijoolaie/AI-Employee/commit/752c5dccec69779e4590a6a5ee63edb5b536f663), from exact head `c6ad1da000d676bc5101918426a62083e1e72ea0`.
+- The workspace logical-path validator now rejects backslashes and NUL bytes as well as empty paths, POSIX absolute paths, and `..` path segments. Three regression cases cover Windows-style traversal and absolute paths.
+- All 24 GitHub Actions workflow runs reported for the exact PR head completed successfully; no failed or pending runs remained at verification time. This is CI evidence, not a local full-suite run or production validation.
+- No deployment or release was performed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Customer support multi-turn acceptance — merged and CI-verified (2026-10-28)
 
 - PR [#1277](https://github.com/ijoolaie/AI-Employee/pull/1277) was squash-merged as [`174ea5805e558ad238ac4e96e080a3197e3de9d8`](https://github.com/ijoolaie/AI-Employee/commit/174ea5805e558ad238ac4e96e080a3197e3de9d8), after exact-head CI passed on `3dda64e4b256f4fddee7335b38748381a8774ecd` ([CI run](https://github.com/ijoolaie/AI-Employee/actions/runs/40656304476)). Backend and frontend jobs both passed.
