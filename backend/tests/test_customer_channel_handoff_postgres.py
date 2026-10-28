@@ -221,5 +221,29 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                     )
                 ).all()
                 assert len(duplicate_count) == 1
+
+                # The same dedupe key in another tenant must not resolve to
+                # tenant A's notification or suppress tenant B's own handoff.
+                other_tenant = await outbox_service.enqueue(
+                    session,
+                    tenant_id=tenant_b.id,
+                    kind="email.send",
+                    dedupe_key=f"customer-handoff:{conversation.id}",
+                    payload={
+                        "to": ["ops@example.test"],
+                        "subject": "Tenant B handoff",
+                        "body": f"tenant_id={tenant_b.id}",
+                    },
+                )
+                assert other_tenant.id != outbox_row.id
+                assert other_tenant.tenant_id == tenant_b.id
+                tenant_rows = (
+                    await session.execute(
+                        select(OutboxMessage.id).where(
+                            OutboxMessage.dedupe_key == f"customer-handoff:{conversation.id}",
+                        )
+                    )
+                ).all()
+                assert len(tenant_rows) == 2
     finally:
         await engine.dispose()
