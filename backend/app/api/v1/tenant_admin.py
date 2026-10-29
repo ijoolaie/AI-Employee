@@ -1,4 +1,5 @@
 """Tenant administration: users and roles, strictly tenant-scoped."""
+import re
 from uuid import UUID
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -7,6 +8,7 @@ from sqlalchemy.orm import selectinload
 from app.core.deps import CurrentContext, DbSession
 from app.models.user import User
 from app.models.role import Role
+from app.models.tenant import Tenant
 from app.schemas.common import APIResponse
 from app.services import audit_service
 
@@ -20,6 +22,27 @@ class UserStatusUpdate(BaseModel):
     is_active: bool
 class UserRolesUpdate(BaseModel):
     role_ids: list[UUID] = Field(default_factory=list)
+
+class HandoffNotificationSettingsUpdate(BaseModel):
+    email: str | None = Field(default=None, max_length=320)
+
+    @classmethod
+    def validate_email(cls, value: str | None) -> str | None:
+        if value is None or not value.strip():
+            return None
+        normalized = value.strip().lower()
+        if not re.fullmatch(r"[^@\\s]+@[^@\\s]+\\.[^@\\s]+", normalized):
+            raise ValueError("A valid notification email address is required")
+        return normalized
+
+    @classmethod
+    def model_validate(cls, obj, *args, **kwargs):
+        if isinstance(obj, dict) and "email" in obj:
+            obj = {**obj, "email": cls.validate_email(obj["email"])}
+        return super().model_validate(obj, *args, **kwargs)
+
+class HandoffNotificationSettings(BaseModel):
+    email: str | None = None
 
 async def require_tenant_admin(ctx: CurrentContext):
     if not ctx.user.is_superuser and not any(r.name.lower() in {"admin", "owner", "tenant_admin"} and r.tenant_id == ctx.tenant_id for r in ctx.user.roles):
@@ -60,6 +83,45 @@ async def _load_assignable_roles(payload: UserRolesUpdate, ctx: CurrentContext, 
         raise HTTPException(status_code=400, detail="One or more roles are invalid for this tenant")
     _assert_roles_within_authority(ctx, roles)
     return roles
+
+
+@router.get("/customer-handoff-notification", response_model=APIResponse[HandoffNotificationSettings])
+async def get_customer_handoff_notification(ctx: CurrentContext, db: DbSession):
+    """Read the authenticated tenant's private handoff notification destination."""
+    await require_tenant_admin(ctx)
+    result = await db.execute(select(Tenant.settings).where(Tenant.id == ctx.tenant_id))
+    settings = result.scalar_one_or_none() or {}
+    email = settings.get("customer_handoff_notification_email") if isinstance(settings, dict) else None
+    return APIResponse(success=True, data=HandoffNotificationSettings(email=email))
+
+
+@router.put("/customer-handoff-notification", response_model=APIResponse[HandoffNotificationSettings])
+async def update_customer_handoff_notification(payload: HandoffNotificationSettingsUpdate, ctx: CurrentContext, db: DbSession):
+    """Set or clear this tenant's staff notification email; never expose provider secrets."""
+    await require_tenant_admin(ctx)
+    result = await db.execute(select(Tenant).where(Tenant.id == ctx.tenant_id).with_for_update())
+    tenant = result.scalar_one_or_none()
+    if tenant is None:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    email = payload.validate_email(payload.email)
+    settings = dict(tenant.settings or {})
+    if email:
+        settings["customer_handoff_notification_email"] = email
+    else:
+        settings.pop("customer_handoff_notification_email", None)
+    tenant.settings = settings
+    await audit_service.record(
+        db,
+        action="tenant.customer_handoff_notification_updated",
+        actor_type="user",
+        actor_id=ctx.user_id,
+        tenant_id=ctx.tenant_id,
+        resource_type="tenant_settings",
+        resource_id=str(ctx.tenant_id),
+        metadata={"configured": bool(email)},
+    )
+    await db.commit()
+    return APIResponse(success=True, data=HandoffNotificationSettings(email=email))
 
 @router.get("/users", response_model=APIResponse[list[UserSummary]])
 async def list_users(ctx: CurrentContext, db: DbSession):
