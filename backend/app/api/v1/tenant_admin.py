@@ -98,7 +98,7 @@ async def update_customer_handoff_notification(payload: HandoffNotificationSetti
     tenant = result.scalar_one_or_none()
     if tenant is None:
         raise HTTPException(status_code=404, detail="Tenant not found")
-    email = payload.validate_email(payload.email)
+    email = payload.email
     settings = dict(tenant.settings or {})
     if email:
         settings["customer_handoff_notification_email"] = email
