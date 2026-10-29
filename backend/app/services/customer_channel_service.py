@@ -240,7 +240,7 @@ async def list_conversations(db: AsyncSession, *, tenant_id: uuid.UUID, employee
     for c in conversations:
         messages = list((await db.execute(select(CustomerMessage).where(CustomerMessage.conversation_id == c.id, CustomerMessage.tenant_id == c.tenant_id).order_by(CustomerMessage.created_at.desc()).limit(1))).scalars().all())
         count = (await db.execute(select(func.count(CustomerMessage.id)).where(CustomerMessage.conversation_id == c.id, CustomerMessage.tenant_id == c.tenant_id))).scalar_one()
-        out.append({"id": c.id, "employee_id": c.employee_id, "channel_id": c.channel_id, "status": c.status, "customer_name": c.customer_name, "customer_email": c.customer_email, "customer_phone": c.customer_phone, "message_count": count, "last_message": messages[0].content if messages else None, "updated_at": c.updated_at})
+        out.append({"id": c.id, "employee_id": c.employee_id, "channel_id": c.channel_id, "status": c.status, "customer_name": c.customer_name, "customer_email": c.customer_email, "customer_phone": c.customer_phone, "message_count": count, "last_message": messages[0].content if messages else None, "updated_at": c.updated_at, "acknowledged_at": c.acknowledged_at, "acknowledged_by_user_id": c.acknowledged_by_user_id})
     return out
 
 
@@ -252,9 +252,41 @@ async def update_handoff(db: AsyncSession, *, tenant_id: uuid.UUID, conversation
         assigned = (await db.execute(select(User).where(User.id == assigned_user_id, User.tenant_id == tenant_id, User.is_active.is_(True)))).scalar_one_or_none()
         if assigned is None:
             raise NotFoundError("Assigned user not found")
+    previous_assignee = conversation.assigned_user_id
     conversation.handoff_requested = requested
     conversation.assigned_user_id = assigned_user_id if requested else None
     conversation.status = "human" if requested else "open"
+    if not requested or previous_assignee != conversation.assigned_user_id:
+        conversation.acknowledged_at = None
+        conversation.acknowledged_by_user_id = None
+    await db.flush()
+    await db.refresh(conversation)
+    return conversation
+
+
+async def acknowledge_handoff(db: AsyncSession, *, tenant_id: uuid.UUID, conversation_id: uuid.UUID, user_id: uuid.UUID):
+    """Claim an unassigned handoff or acknowledge it as its existing assignee."""
+    from datetime import datetime, timezone
+
+    conversation = (await db.execute(
+        select(CustomerConversation)
+        .where(CustomerConversation.id == conversation_id, CustomerConversation.tenant_id == tenant_id)
+        .with_for_update()
+    )).scalar_one_or_none()
+    if not conversation:
+        raise NotFoundError("Conversation not found")
+    if not conversation.handoff_requested or conversation.status != "human":
+        raise ConflictError("Conversation is not awaiting human handoff")
+    user = (await db.execute(
+        select(User).where(User.id == user_id, User.tenant_id == tenant_id, User.is_active.is_(True))
+    )).scalar_one_or_none()
+    if user is None:
+        raise NotFoundError("Assigned user not found")
+    if conversation.assigned_user_id is not None and conversation.assigned_user_id != user_id:
+        raise ConflictError("Conversation is assigned to another user")
+    conversation.assigned_user_id = user_id
+    conversation.acknowledged_at = conversation.acknowledged_at or datetime.now(timezone.utc)
+    conversation.acknowledged_by_user_id = user_id
     await db.flush()
     await db.refresh(conversation)
     return conversation
