@@ -22,7 +22,7 @@ OUTBOX_RETRIES = Counter("aiep_outbox_retries_total", "Outbox retries", ["kind"]
 OUTBOX_DEAD = Counter("aiep_outbox_dead_total", "Outbox messages moved to DLQ", ["kind"])
 OUTBOX_EMAIL_DELIVERY = Counter(
     "aiep_outbox_email_delivery_total",
-    "Email outbox worker outcomes; success means SMTP accepted and DB completion committed",
+    "Email outbox worker outcomes recorded after SMTP handling and before the final session commit",
     ["outcome"],
 )
 OUTBOX_QUEUE = Gauge("aiep_outbox_messages", "Current durable outbox messages", ["status"])
