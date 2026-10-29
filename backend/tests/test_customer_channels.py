@@ -1,3 +1,8 @@
+from types import SimpleNamespace
+from uuid import uuid4
+
+import pytest
+
 from app.services.customer_channel_service import _hash_token
 
 
@@ -21,7 +26,6 @@ def test_handoff_service_contains_tenant_scoped_assignee_check():
 
 
 def test_support_transcript_format_preserves_role_and_chronological_order():
-    from types import SimpleNamespace
     from app.services.customer_channel_service import _format_conversation_transcript
 
     transcript = _format_conversation_transcript([
@@ -35,3 +39,35 @@ def test_support_transcript_format_preserves_role_and_chronological_order():
         "Assistant: ارسال برای کدوم شهره؟ 😊",
         "Customer: تهران",
     ]
+
+
+@pytest.mark.asyncio
+async def test_public_channel_endpoint_does_not_expose_private_channel_config(monkeypatch):
+    from app.api.v1 import public_chat
+
+    channel = SimpleNamespace(
+        public_key="pk_test",
+        name="Support",
+        channel_type="whatsapp",
+        config={"webhook_secret": "must-not-be-public"},
+    )
+    employee = SimpleNamespace(
+        id=uuid4(),
+        name="Support Employee",
+        slug="support-employee",
+    )
+
+    async def get_public_channel(db, *, public_key):
+        assert public_key == "pk_test"
+        return channel, employee
+
+    monkeypatch.setattr(
+        public_chat.customer_channel_service,
+        "get_public_channel",
+        get_public_channel,
+    )
+
+    response = await public_chat.get_channel("pk_test", object())
+
+    assert response.data.config == {}
+    assert "must-not-be-public" not in response.model_dump_json()
