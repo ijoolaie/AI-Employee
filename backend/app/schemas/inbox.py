@@ -18,6 +18,8 @@ class InboxConversationResponse(BaseModel):
     status: str
     handoff_requested: bool
     assigned_user_id: UUID | None
+    acknowledged_at: datetime | None = None
+    acknowledged_by_user_id: UUID | None = None
     customer_name: str | None
     customer_email: str | None
     customer_phone: str | None
