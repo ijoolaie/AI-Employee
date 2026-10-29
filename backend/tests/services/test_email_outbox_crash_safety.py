@@ -222,6 +222,13 @@ async def test_email_side_effect_failure_remains_uncertain(monkeypatch):
     async def fail_retry(*args, **kwargs):
         raise AssertionError("uncertain SMTP outcome must not be retried")
 
+    metric_events = []
+
+    class _Metric:
+        def labels(self, outcome):
+            return SimpleNamespace(inc=lambda: metric_events.append(outcome))
+
+    monkeypatch.setattr(email_worker, "OUTBOX_EMAIL_DELIVERY", _Metric())
     monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
     monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
     monkeypatch.setattr(email_worker, "assert_authorized", authorize)
@@ -232,6 +239,7 @@ async def test_email_side_effect_failure_remains_uncertain(monkeypatch):
 
     assert row.status == "uncertain"
     assert "provider acceptance" in row.last_error
+    assert metric_events == ["uncertain"]
     assert db.commits >= 2
 
 
@@ -259,6 +267,11 @@ async def test_customer_handoff_email_worker_invokes_configured_destination(monk
     )
     db = _DB([row])
     delivered = []
+    metric_events = []
+
+    class _Metric:
+        def labels(self, outcome):
+            return SimpleNamespace(inc=lambda: metric_events.append(outcome))
 
     async def authorize(*args, **kwargs):
         return None
@@ -279,6 +292,7 @@ async def test_customer_handoff_email_worker_invokes_configured_destination(monk
         def send_message(self, msg):
             delivered.append(msg)
 
+    monkeypatch.setattr(email_worker, "OUTBOX_EMAIL_DELIVERY", _Metric())
     monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
     monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
     monkeypatch.setattr(email_worker, "assert_authorized", authorize)
@@ -295,3 +309,4 @@ async def test_customer_handoff_email_worker_invokes_configured_destination(monk
     assert str(conversation_id) in body
     assert str(channel_id) in body
     assert row.status == "dispatched"
+    assert metric_events == ["success"]

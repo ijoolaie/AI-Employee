@@ -20,6 +20,11 @@ AI_COST = Counter("aiep_ai_cost_usd_total", "AI provider cost in USD", ["provide
 OUTBOX_DISPATCH = Counter("aiep_outbox_dispatch_total", "Outbox dispatch attempts", ["status", "kind"])
 OUTBOX_RETRIES = Counter("aiep_outbox_retries_total", "Outbox retries", ["kind"])
 OUTBOX_DEAD = Counter("aiep_outbox_dead_total", "Outbox messages moved to DLQ", ["kind"])
+OUTBOX_EMAIL_DELIVERY = Counter(
+    "aiep_outbox_email_delivery_total",
+    "Email outbox worker outcomes recorded after SMTP handling and before the final session commit",
+    ["outcome"],
+)
 OUTBOX_QUEUE = Gauge("aiep_outbox_messages", "Current durable outbox messages", ["status"])
 WORKFLOW_RUNS_DB = Gauge("aiep_workflow_runs_db", "Current workflow run rows")
 WORKFLOW_STEPS_DB = Gauge("aiep_workflow_steps_db", "Current workflow step rows")

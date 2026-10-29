@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import smtplib
 from email.message import EmailMessage
 from uuid import UUID
@@ -10,10 +11,13 @@ from sqlalchemy import select
 
 from app.core.config import get_settings
 from app.core.database import worker_db_session
+from app.core.metrics import OUTBOX_EMAIL_DELIVERY
 from app.core.exceptions import ValidationAppError
 from app.models.outbox import OutboxMessage
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 from app.workers.celery_app import celery_app
+
+logger = logging.getLogger("app.workers.email")
 
 
 async def _authorize_deferred_agent_side_effect(db, row: OutboxMessage) -> None:
@@ -119,6 +123,7 @@ async def _send(outbox_id: str) -> None:
                     subject=str(payload.get("subject") or ""),
                     deal_id=sales_binding.get("deal_id"),
                 )
+            OUTBOX_EMAIL_DELIVERY.labels("success").inc()
         except Exception as exc:
             if side_effect_started:
                 # The provider may have accepted the message even when the
@@ -126,19 +131,19 @@ async def _send(outbox_id: str) -> None:
                 # into an automatic retry.
                 row.status = "uncertain"
                 row.last_error = str(exc)[:4000]
-                print(
-                    f"EMAIL SEND UNCERTAIN outbox_id={row.id} "
-                    f"exception_type={type(exc).__name__} "
-                    f"stage=post_side_effect"
+                OUTBOX_EMAIL_DELIVERY.labels("uncertain").inc()
+                logger.error(
+                    "email_send_uncertain",
+                    extra={"outbox_id": str(row.id), "exception_type": type(exc).__name__, "stage": "post_side_effect"},
                 )
             else:
-                print(
-                    f"EMAIL SEND RETRYABLE outbox_id={row.id} "
-                    f"exception_type={type(exc).__name__} "
-                    f"stage=pre_side_effect"
+                logger.warning(
+                    "email_send_retryable",
+                    extra={"outbox_id": str(row.id), "exception_type": type(exc).__name__, "stage": "pre_side_effect"},
                 )
                 from app.services.outbox_service import mark_retry
                 await mark_retry(db, row, str(exc), delay_seconds=min(300, 10 * max(1, row.attempts)))
+                OUTBOX_EMAIL_DELIVERY.labels("dead" if row.status == "dead" else "retry").inc()
         await db.commit()
 
 
