@@ -54,7 +54,6 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
         customer_channel_service,
         "get_settings",
         lambda: SimpleNamespace(
-            customer_handoff_notification_email="ops@example.test",
             smtp_host="smtp.example.test",
             smtp_from_email="support@example.test",
         ),
@@ -72,6 +71,7 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                 tenant_a = Tenant(
                     id=uuid.uuid4(), name=f"Handoff tenant A {suffix}",
                     slug=f"handoff-a-{suffix}", tenant_kind="customer", status="active",
+                    settings={"customer_handoff_notification_email": "ops@example.test"},
                 )
                 tenant_b = Tenant(
                     id=uuid.uuid4(), name=f"Handoff tenant B {suffix}",
