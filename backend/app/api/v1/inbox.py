@@ -27,6 +27,20 @@ async def handoff(conversation_id: UUID, payload: HandoffUpdate, ctx: EmployeeWr
     row = await customer_channel_service.update_handoff(db, tenant_id=ctx.tenant_id, conversation_id=conversation_id, requested=payload.requested, assigned_user_id=payload.assigned_user_id)
     return APIResponse(success=True, data={"id": str(row.id), "status": row.status, "handoff_requested": row.handoff_requested, "assigned_user_id": str(row.assigned_user_id) if row.assigned_user_id else None})
 
+@router.post("/conversations/{conversation_id}/acknowledge", response_model=APIResponse[dict])
+async def acknowledge_handoff(conversation_id: UUID, ctx: EmployeeWriteContext, db: DbSession):
+    row = await customer_channel_service.acknowledge_handoff(
+        db, tenant_id=ctx.tenant_id, conversation_id=conversation_id, user_id=ctx.user_id
+    )
+    return APIResponse(success=True, data={
+        "id": str(row.id),
+        "status": row.status,
+        "handoff_requested": row.handoff_requested,
+        "assigned_user_id": str(row.assigned_user_id) if row.assigned_user_id else None,
+        "acknowledged_at": row.acknowledged_at,
+        "acknowledged_by_user_id": str(row.acknowledged_by_user_id) if row.acknowledged_by_user_id else None,
+    })
+
 @router.get("/conversations/{conversation_id}/messages", response_model=APIResponse[list[dict]])
 async def inbox_messages(conversation_id: UUID, ctx: EmployeeReadContext, db: DbSession):
     from sqlalchemy import select
