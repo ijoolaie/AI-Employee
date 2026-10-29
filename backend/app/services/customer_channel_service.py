@@ -9,8 +9,17 @@ from app.models.conversation import CustomerConversation, CustomerMessage
 from app.models.user import User
 from app.models.employee import Employee
 from app.models.run import Run
+from app.models.tenant import Tenant
 from app.services import audit_service, employee_service, run_service, customer_service, outbox_service
 from app.core.config import get_settings
+
+
+async def _tenant_handoff_notification_email(db: AsyncSession, tenant_id: uuid.UUID) -> str | None:
+    """Return only the destination configured by this tenant's administrator."""
+    result = await db.execute(select(Tenant.settings).where(Tenant.id == tenant_id))
+    settings = result.scalar_one_or_none() or {}
+    email = settings.get("customer_handoff_notification_email") if isinstance(settings, dict) else None
+    return email.strip() if isinstance(email, str) and email.strip() else None
 
 
 def _format_conversation_transcript(messages: list[CustomerMessage]) -> str:
@@ -141,7 +150,7 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
         conversation.assigned_user_id = None
         conversation.status = "human"
         settings = get_settings()
-        notification_email = (settings.customer_handoff_notification_email or "").strip()
+        notification_email = await _tenant_handoff_notification_email(db, conversation.tenant_id)
         notification_configured = bool(
             notification_email and settings.smtp_host and settings.smtp_from_email
         )
