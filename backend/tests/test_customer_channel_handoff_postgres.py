@@ -256,6 +256,7 @@ async def test_handoff_outbox_retry_and_dead_letter_states_persist_in_postgres(m
 
     from app.core import config
     from app.models.outbox import OutboxMessage
+    from app.models.tenant import Tenant
     from app.services.outbox_service import mark_retry
 
     def settings():
@@ -269,9 +270,19 @@ async def test_handoff_outbox_retry_and_dead_letter_states_persist_in_postgres(m
     try:
         async with sessions() as session:
             async with session.begin():
+                tenant = Tenant(
+                    id=uuid.uuid4(),
+                    name=f"Handoff retry tenant {suffix}",
+                    slug=f"handoff-retry-{suffix}",
+                    tenant_kind="customer",
+                    status="active",
+                )
+                session.add(tenant)
+                await session.flush()
+
                 row = OutboxMessage(
                     id=row_id,
-                    tenant_id=uuid.uuid4(),
+                    tenant_id=tenant.id,
                     kind="email.send",
                     dedupe_key=f"handoff-retry-test:{suffix}",
                     payload={"to": ["ops@example.test"], "subject": "synthetic", "body": "synthetic"},
