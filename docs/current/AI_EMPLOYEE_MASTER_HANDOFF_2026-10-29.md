@@ -17,19 +17,19 @@ Customer human-handoff is now being hardened into an operationally actionable fl
 - [PR #1286](https://github.com/ijoolaie/AI-Employee/pull/1286) and [PR #1287](https://github.com/ijoolaie/AI-Employee/pull/1287) are merged: PostgreSQL-backed transcript isolation and proof that customer follow-up messages after handoff do not create new AI Runs.
 - [Issue #1288](https://github.com/ijoolaie/AI-Employee/issues/1288) remains the acceptance tracker for durable staff notification and acknowledgement. Synthetic tests and queued outbox rows are not proof of real SMTP delivery, human assignment, an SLA, or customer acceptance.
 
-### Current open PR: #1298
+### PR #1298 — merged after exact-head validation
 
-[PR #1298 — test: cover handoff outbox retry and dead-letter persistence](https://github.com/ijoolaie/AI-Employee/pull/1298) is open, marked Draft, and targets `main`.
+[PR #1298 — test: cover handoff outbox retry and dead-letter persistence](https://github.com/ijoolaie/AI-Employee/pull/1298) was squash-merged after review of the final diff and successful exact-head GitHub Actions checks.
 
+- Merge commit: [`7ef52533e92c8af5cbc1bc4215587f2003ccda9e`](https://github.com/ijoolaie/AI-Employee/commit/7ef52533e92c8af5cbc1bc4215587f2003ccda9e).
 - Adds a PostgreSQL-backed test for retry persistence (`pending`, retry timestamp and error) and exhausted retry transition (`dead`, `dead_at`).
-- Review found the new test initially used a random `tenant_id` without creating a corresponding Tenant row. That could violate the Outbox foreign key in PostgreSQL.
 - Corrected the test in commit [`cd8f080f978bd91bdac33a79d4f17940663381af`](https://github.com/ijoolaie/AI-Employee/commit/cd8f080f978bd91bdac33a79d4f17940663381af) to create and flush a synthetic tenant before inserting the outbox row.
-- Exact-head GitHub Actions workflows were **in progress** at the time of this handoff update: CI, CodeQL, Architecture Guard, Workforce Semantic Real-Stack E2E, W21 AI Business Network E2E, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST. Do not merge until these finish and all required checks pass on the exact current head.
+- CI, CodeQL, Architecture Guard, Workforce Semantic Real-Stack E2E, W21 AI Business Network E2E, HA Failure Recovery, Production Infrastructure Validation and Ephemeral DAST all completed successfully on the tested head.
 - Test guard accepts only the dedicated local `support_test` PostgreSQL database and does not send real SMTP messages.
 
 ### Ordered next actions
 
-1. Re-check [PR #1298](https://github.com/ijoolaie/AI-Employee/pull/1298) current head and all exact-head checks. If green, review the final diff, mark ready for review, and merge using the repository's established PR workflow. If any check fails, inspect its logs and fix only the demonstrated cause.
+1. Reconcile [Issue #1288](https://github.com/ijoolaie/AI-Employee/issues/1288) against merged code and tests: configured recipient path, transactional outbox persistence, tenant isolation/deduplication, worker/adapter invocation, retry/dead-letter observability, acknowledgement/assignment semantics, and the no-new-AI-Run invariant. Keep live delivery and SLA claims explicitly unverified until separately demonstrated.
 2. Reconcile [Issue #1288](https://github.com/ijoolaie/AI-Employee/issues/1288) against merged code and tests: configured recipient path, transactional outbox persistence, tenant isolation/deduplication, worker/adapter invocation, retry/dead-letter observability, acknowledgement/assignment semantics, and the no-new-AI-Run invariant. Keep live delivery and SLA claims explicitly unverified until separately demonstrated.
 3. Continue [Issue #1061](https://github.com/ijoolaie/AI-Employee/issues/1061): validate one narrow customer problem with real prospective customers. Target five decision-maker conversations and at least two concrete sample/trial commitments before broadening integrations. Synthetic journeys and CI are not customer evidence.
 4. Keep World visual acceptance [Issue #1044](https://github.com/ijoolaie/AI-Employee/issues/1044) deferred. Do not merge draft PR #1257 or start a new visual redesign before higher-priority reliability and customer-evidence blockers are addressed.
