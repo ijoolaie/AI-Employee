@@ -10,7 +10,10 @@ router = APIRouter(prefix="/public/chat", tags=["public-chat"])
 @router.get("/channels/{public_key}", response_model=APIResponse[PublicChannelResponse])
 async def get_channel(public_key: str, db: DbSession):
     channel, employee = await customer_channel_service.get_public_channel(db, public_key=public_key)
-    return APIResponse(success=True, data=PublicChannelResponse(public_key=channel.public_key, employee_id=employee.id, employee_name=employee.name, employee_slug=employee.slug, channel_name=channel.name, channel_type=channel.channel_type, config=channel.config))
+    # Channel config is tenant-owned and may contain credentials (for example,
+    # WhatsApp webhook_secret). The public widget does not need it, so never
+    # serialize private channel configuration through this unauthenticated API.
+    return APIResponse(success=True, data=PublicChannelResponse(public_key=channel.public_key, employee_id=employee.id, employee_name=employee.name, employee_slug=employee.slug, channel_name=channel.name, channel_type=channel.channel_type, config={}))
 
 @router.post("/channels/{public_key}/conversations", response_model=APIResponse[PublicConversationResponse])
 async def create_conversation(public_key: str, payload: PublicConversationCreate, db: DbSession):
