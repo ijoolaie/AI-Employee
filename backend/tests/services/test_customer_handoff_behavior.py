@@ -167,6 +167,10 @@ async def test_explicit_human_request_persists_handoff_and_does_not_start_ai_run
 
     monkeypatch.setattr(customer_channel_service, "_get_conversation", fake_get_conversation)
     monkeypatch.setattr(customer_channel_service.run_service, "create_run", unexpected_create_run)
+    async def no_tenant_notification(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(customer_channel_service, "_tenant_handoff_notification_email", no_tenant_notification)
 
     result_conversation, run = await customer_channel_service.send_message(
         db,

@@ -32,8 +32,10 @@ async def test_handoff_uses_configured_destination_and_tenant_dedupe(monkeypatch
         calls.append(kwargs)
         return SimpleNamespace(id=uuid4())
     monkeypatch.setattr(customer_channel_service, "_get_conversation", get_conversation)
+    async def tenant_destination(*args, **kwargs):
+        return "ops@example.test"
+    monkeypatch.setattr(customer_channel_service, "_tenant_handoff_notification_email", tenant_destination)
     monkeypatch.setattr(customer_channel_service, "get_settings", lambda: SimpleNamespace(
-        customer_handoff_notification_email="ops",
         smtp_host="smtp.example.test",
         smtp_from_email="support@example.test",
     ))
@@ -47,7 +49,7 @@ async def test_handoff_uses_configured_destination_and_tenant_dedupe(monkeypatch
     assert calls[0]["tenant_id"] == tenant_id
     assert calls[0]["kind"] == "email.send"
     assert calls[0]["dedupe_key"] == f"customer-handoff:{conversation_id}"
-    assert calls[0]["payload"]["to"] == ["ops"]
+    assert calls[0]["payload"]["to"] == ["ops@example.test"]
     assert str(channel_id) in calls[0]["payload"]["body"]
     assert "\n" in calls[0]["payload"]["body"]
     assert "\\n" not in calls[0]["payload"]["body"]
@@ -85,8 +87,10 @@ async def test_handoff_does_not_claim_notification_configured_without_smtp(monke
         return SimpleNamespace(id=uuid4())
 
     monkeypatch.setattr(customer_channel_service, "_get_conversation", get_conversation)
+    async def tenant_destination(*args, **kwargs):
+        return "ops@example.test"
+    monkeypatch.setattr(customer_channel_service, "_tenant_handoff_notification_email", tenant_destination)
     monkeypatch.setattr(customer_channel_service, "get_settings", lambda: SimpleNamespace(
-        customer_handoff_notification_email="ops",
         smtp_host=None,
         smtp_from_email="support@example.test",
     ))
