@@ -79,6 +79,7 @@ async def _send(outbox_id: str) -> None:
         settings = get_settings()
         payload = row.payload
         side_effect_started = False
+        metric_outcome: str | None = None
         try:
             await _authorize_deferred_agent_side_effect(db, row)
 
@@ -123,7 +124,7 @@ async def _send(outbox_id: str) -> None:
                     subject=str(payload.get("subject") or ""),
                     deal_id=sales_binding.get("deal_id"),
                 )
-            OUTBOX_EMAIL_DELIVERY.labels("success").inc()
+            metric_outcome = "success"
         except Exception as exc:
             if side_effect_started:
                 # The provider may have accepted the message even when the
@@ -131,7 +132,7 @@ async def _send(outbox_id: str) -> None:
                 # into an automatic retry.
                 row.status = "uncertain"
                 row.last_error = str(exc)[:4000]
-                OUTBOX_EMAIL_DELIVERY.labels("uncertain").inc()
+                metric_outcome = "uncertain"
                 logger.error(
                     "email_send_uncertain",
                     extra={"outbox_id": str(row.id), "exception_type": type(exc).__name__, "stage": "post_side_effect"},
@@ -143,8 +144,12 @@ async def _send(outbox_id: str) -> None:
                 )
                 from app.services.outbox_service import mark_retry
                 await mark_retry(db, row, str(exc), delay_seconds=min(300, 10 * max(1, row.attempts)))
-                OUTBOX_EMAIL_DELIVERY.labels("dead" if row.status == "dead" else "retry").inc()
+                metric_outcome = "dead" if row.status == "dead" else "retry"
         await db.commit()
+        # Count only after the final DB state is committed. A failed commit
+        # must not be reported as a successful durable dispatch/retry.
+        if metric_outcome is not None:
+            OUTBOX_EMAIL_DELIVERY.labels(metric_outcome).inc()
 
 
 @celery_app.task(name="email.send")
