@@ -247,3 +247,75 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                 assert len(tenant_rows) == 2
     finally:
         await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_handoff_outbox_retry_and_dead_letter_states_persist_in_postgres(monkeypatch):
+    """Verify retry/dead-letter transitions survive PostgreSQL commits."""
+    from sqlalchemy import select
+
+    from app.core import config
+    from app.models.outbox import OutboxMessage
+    from app.models.tenant import Tenant
+    from app.services.outbox_service import mark_retry
+
+    def settings():
+        return SimpleNamespace(outbox_max_attempts=2)
+
+    monkeypatch.setattr(config, "get_settings", settings)
+    engine = create_async_engine(_support_test_database_url(), poolclass=NullPool)
+    sessions = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
+    suffix = uuid.uuid4().hex
+    row_id = uuid.uuid4()
+    try:
+        async with sessions() as session:
+            async with session.begin():
+                tenant = Tenant(
+                    id=uuid.uuid4(),
+                    name=f"Handoff retry tenant {suffix}",
+                    slug=f"handoff-retry-{suffix}",
+                    tenant_kind="customer",
+                    status="active",
+                )
+                session.add(tenant)
+                await session.flush()
+
+                row = OutboxMessage(
+                    id=row_id,
+                    tenant_id=tenant.id,
+                    kind="email.send",
+                    dedupe_key=f"handoff-retry-test:{suffix}",
+                    payload={"to": ["ops@example.test"], "subject": "synthetic", "body": "synthetic"},
+                    status="pending",
+                    attempts=1,
+                )
+                session.add(row)
+                await session.flush()
+                await mark_retry(session, row, "synthetic temporary SMTP failure", delay_seconds=1)
+                assert row.status == "pending"
+                assert row.dead_at is None
+                assert "synthetic temporary SMTP failure" in row.last_error
+
+        async with sessions() as session:
+            persisted = (await session.execute(
+                select(OutboxMessage).where(OutboxMessage.id == row_id)
+            )).scalar_one()
+            assert persisted.status == "pending"
+            assert persisted.attempts == 1
+            assert persisted.last_error == "synthetic temporary SMTP failure"
+            assert persisted.available_at is not None
+
+            persisted.attempts = 2
+            await mark_retry(session, persisted, "synthetic exhausted retries", delay_seconds=1)
+            await session.commit()
+
+        async with sessions() as session:
+            dead = (await session.execute(
+                select(OutboxMessage).where(OutboxMessage.id == row_id)
+            )).scalar_one()
+            assert dead.status == "dead"
+            assert dead.dead_at is not None
+            assert dead.last_error == "synthetic exhausted retries"
+    finally:
+        await engine.dispose()
+
