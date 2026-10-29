@@ -1,3 +1,16 @@
+## Current priority update — customer handoff/outbox reliability (2026-10-29)
+
+1. The customer handoff path has progressed beyond state persistence: PRs [#1293](https://github.com/ijoolaie/AI-Employee/pull/1293), [#1294](https://github.com/ijoolaie/AI-Employee/pull/1294), [#1295](https://github.com/ijoolaie/AI-Employee/pull/1295), [#1296](https://github.com/ijoolaie/AI-Employee/pull/1296), and [#1297](https://github.com/ijoolaie/AI-Employee/pull/1297) are merged. These cover public-config secrecy, tenant-configured handoff recipients, durable acknowledgement, outbox outcome metrics, and commit-aligned success metrics.
+2. [PR #1298](https://github.com/ijoolaie/AI-Employee/pull/1298) adds PostgreSQL retry/dead-letter persistence coverage. Its test was corrected in commit `cd8f080f978bd91bdac33a79d4f17940663381af` to create a persisted Tenant fixture instead of using an orphan UUID as `tenant_id`. Exact-head CI was in progress at handoff time. **Do not merge until every required workflow passes on the current head.**
+3. Continue [Issue #1288](https://github.com/ijoolaie/AI-Employee/issues/1288) as the acceptance tracker. Distinguish outbox queueing and worker/adapter tests from real SMTP delivery; do not claim assignment or an SLA without explicit operational policy and evidence. Preserve tenant isolation, deduplication, and no-new-AI-Run behavior during human handoff.
+4. MVP/customer evidence remains the higher-level product gate: continue [Issue #1061](https://github.com/ijoolaie/AI-Employee/issues/1061), target five decision-maker conversations and at least two concrete sample/trial commitments before broadening integrations.
+5. Keep [World visual acceptance #1044](https://github.com/ijoolaie/AI-Employee/issues/1044) deferred; do not merge draft PR #1257 or begin another redesign before reliability and customer-evidence blockers are addressed.
+6. Latest published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No deployment or release certification is implied by mainline merges or green CI.
+
+Detailed handoff: `docs/current/AI_EMPLOYEE_MASTER_HANDOFF_2026-10-29.md`.
+
+---
+
 ## Current priority update — human handoff merged; MVP evidence next (2026-10-25)
 
 1. PR [#1264](https://github.com/ijoolaie/AI-Employee/pull/1264) is squash-merged as `ef30af24c47d3ddea20bf420be1ada044d2adaf8` after all 16 exact-head checks completed successfully, including backend PostgreSQL-backed handoff coverage, DAST, recovery, and semantic real-stack E2E.
