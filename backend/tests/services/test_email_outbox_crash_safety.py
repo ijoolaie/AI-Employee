@@ -310,3 +310,60 @@ async def test_customer_handoff_email_worker_invokes_configured_destination(monk
     assert str(channel_id) in body
     assert row.status == "dispatched"
     assert metric_events == ["success"]
+
+
+@pytest.mark.asyncio
+async def test_email_success_metric_is_not_emitted_when_final_commit_fails(monkeypatch):
+    row = SimpleNamespace(
+        id=uuid4(),
+        status="processing",
+        attempts=1,
+        payload={"to": ["user@example.test"], "subject": "Hello", "body": "Body"},
+        tenant_id=None,
+        last_error=None,
+    )
+
+    class _FailFinalCommitDB(_DB):
+        async def commit(self):
+            self.commits += 1
+            if self.commits == 2:
+                raise RuntimeError("simulated final commit failure")
+
+    db = _FailFinalCommitDB([row])
+    metric_events = []
+
+    class _Metric:
+        def labels(self, outcome):
+            return SimpleNamespace(inc=lambda: metric_events.append(outcome))
+
+    async def authorize(*args, **kwargs):
+        return None
+
+    async def mark_dispatched(db_arg, row_arg):
+        row_arg.status = "dispatched"
+
+    class _AcceptedSMTP:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def send_message(self, msg):
+            return None
+
+    monkeypatch.setattr(email_worker, "OUTBOX_EMAIL_DELIVERY", _Metric())
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorize)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _AcceptedSMTP)
+    monkeypatch.setattr(outbox_service, "mark_dispatched", mark_dispatched)
+
+    with pytest.raises(RuntimeError, match="simulated final commit failure"):
+        await email_worker._send(str(row.id))
+
+    assert metric_events == []
+    assert db.commits == 2
