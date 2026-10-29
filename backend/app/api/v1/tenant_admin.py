@@ -2,7 +2,7 @@
 import re
 from uuid import UUID
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from app.core.deps import CurrentContext, DbSession
@@ -26,20 +26,15 @@ class UserRolesUpdate(BaseModel):
 class HandoffNotificationSettingsUpdate(BaseModel):
     email: str | None = Field(default=None, max_length=320)
 
+    @field_validator("email")
     @classmethod
     def validate_email(cls, value: str | None) -> str | None:
         if value is None or not value.strip():
             return None
         normalized = value.strip().lower()
-        if not re.fullmatch(r"[^@\\s]+@[^@\\s]+\\.[^@\\s]+", normalized):
+        if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", normalized):
             raise ValueError("A valid notification email address is required")
         return normalized
-
-    @classmethod
-    def model_validate(cls, obj, *args, **kwargs):
-        if isinstance(obj, dict) and "email" in obj:
-            obj = {**obj, "email": cls.validate_email(obj["email"])}
-        return super().model_validate(obj, *args, **kwargs)
 
 class HandoffNotificationSettings(BaseModel):
     email: str | None = None
