@@ -748,3 +748,18 @@ export interface BusinessInvoice { id: string; number: string; status: string; c
 export interface InvoiceFinancialSummary { currency_breakdown: Record<string, Record<string, number>>; counts_by_status: Record<string, number>; total_invoices: number; }
 export interface TenantUser { id: string; email: string; full_name: string | null; is_active: boolean; roles: string[]; }
 export interface TenantRole { id: string; name: string; description: string | null; permissions: string[]; }
+
+
+export interface PublicCustomerOrder {
+  number: string;
+  status: string;
+  order_date: string;
+  total: string | number;
+  currency: string;
+}
+export interface PublicCustomerOrders {
+  available: boolean;
+  message: string;
+  source_fresh_at: string | null;
+  orders: PublicCustomerOrder[];
+}
