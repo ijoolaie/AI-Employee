@@ -16,7 +16,7 @@ from app.models.user import User
 from app.models.employee import Employee
 from app.models.run import Run
 from app.models.tenant import Tenant
-from app.services import audit_service, employee_service, run_service, outbox_service
+from app.services import audit_service, employee_service, run_service, customer_service, outbox_service
 from app.core.config import get_settings
 from app.services.customer_support_slots import extract_explicit_customer_slots, upsert_customer_conversation_slots
 
