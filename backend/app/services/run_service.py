@@ -50,7 +50,7 @@ from app.models.user import User
 from app.models.role import Role
 from app.services import audit_service, employee_service, billing_service
 from app.services.tool_audit_metadata import tool_result_audit_summary
-from app.services.support_slot_filling import current_customer_message_for_preflight, shipping_fee_preflight_response
+from app.services.support_slot_filling import current_customer_message_for_preflight, support_slot_preflight_response
 from app.services.customer_support_slots import load_valid_customer_conversation_slots
 from app.services.schema_validation import validate_json_data
 from app.services.workforce_runtime_governance import assert_workforce_tool_execution
@@ -412,7 +412,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                     tenant_id=run.tenant_id,
                     conversation_id=run.conversation_id,
                 )
-                support_preflight_question = shipping_fee_preflight_response(
+                support_preflight_question = support_slot_preflight_response(
                     message_text,
                     policy_dict,
                     known_slots=validated_customer_slots,
