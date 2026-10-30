@@ -75,3 +75,40 @@ async def test_public_conversation_does_not_attach_unverified_crm_customer(monke
     assert conversation.verified_email is None
     assert conversation.email_verified_at is None
     assert db.added == [conversation]
+
+
+class _ScalarResult:
+    def __init__(self, value):
+        self.value = value
+
+    def scalar_one_or_none(self):
+        return self.value
+
+
+class _ConversationDB:
+    def __init__(self, conversation):
+        self.conversation = conversation
+        self.calls = 0
+
+    async def execute(self, statement):
+        self.calls += 1
+        return _ScalarResult(self.conversation)
+
+
+@pytest.mark.asyncio
+async def test_public_orders_fail_closed_before_verified_customer_identity():
+    conversation = SimpleNamespace(
+        id=uuid4(),
+        tenant_id=uuid4(),
+        customer_token_hash=customer_channel_service._hash_token("valid-token"),
+        email_verified_at=None,
+        verified_email=None,
+        customer_id=None,
+    )
+    db = _ConversationDB(conversation)
+    result = await customer_channel_service.get_public_customer_orders(
+        db, conversation_id=conversation.id, token="valid-token"
+    )
+    assert result["available"] is False
+    assert result["orders"] == []
+    assert db.calls == 1, "Unverified identity must stop before any commerce lookup"
