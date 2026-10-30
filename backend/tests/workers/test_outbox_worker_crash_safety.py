@@ -156,3 +156,52 @@ async def test_whatsapp_outbox_routes_to_dedicated_worker_without_generic_redisp
     # not mark the provider send complete or generic-retry it.
     assert "mark_dispatched" not in events
     assert "mark_retry" not in events
+
+
+
+@pytest.mark.asyncio
+async def test_customer_handoff_email_outbox_dispatches_dedicated_email_task(monkeypatch):
+    """Route a persisted handoff email to the SMTP worker without sending mail here."""
+    events = []
+    db = _DB(events)
+    outbox_id = uuid4()
+    tenant_id = uuid4()
+    row = SimpleNamespace(
+        id=outbox_id,
+        kind="email.send",
+        tenant_id=tenant_id,
+        payload={
+            "to": ["ops@example.test"],
+            "subject": "Customer requested human support",
+            "body": f"tenant_id={tenant_id}",
+        },
+        attempts=1,
+        status="processing",
+    )
+    db.row = row
+
+    async def fake_claim(_db, *, limit):
+        assert limit == 1
+        return [row]
+
+    published = []
+
+    class _EmailTask:
+        @staticmethod
+        def delay(received_outbox_id):
+            events.append("publish_email")
+            published.append(received_outbox_id)
+
+    fake_email_module = SimpleNamespace(send_email_task=_EmailTask)
+
+    monkeypatch.setattr(outbox_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(outbox_worker.outbox_service, "claim", fake_claim)
+    monkeypatch.setattr(outbox_worker, "span", lambda *args, **kwargs: _Span())
+    monkeypatch.setitem(sys.modules, "app.workers.email_worker", fake_email_module)
+
+    assert await outbox_worker._dispatch_async(limit=1) == 0
+    assert events == ["commit", "publish_email"]
+    assert published == [str(outbox_id)]
+    # Email delivery state belongs to email_worker, not the dispatcher.
+    assert "mark_dispatched" not in events
+    assert "mark_retry" not in events
