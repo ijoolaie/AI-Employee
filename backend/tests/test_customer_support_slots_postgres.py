@@ -156,7 +156,7 @@ async def test_slots_are_tenant_scoped_expiring_and_source_message_bound():
                 session, tenant_id=tenant_b_id, conversation_id=conversation_b_id, now=now,
             )
             assert slots_a == {"city": "تهران", "order_id": "ORD-NEW", "quantity": 5}
-            assert slots_b == {"city": "شیراز"}
+            assert slots_b == {}, "A slot whose value is absent from its source customer message must be rejected"
 
         # A slot cannot pair tenant A's conversation with tenant B's source row.
         async with sessions() as session:
