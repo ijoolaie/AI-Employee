@@ -2,7 +2,7 @@ from uuid import UUID
 from fastapi import APIRouter, Header
 from app.core.deps import DbSession
 from app.schemas.common import APIResponse
-from app.schemas.customer_channel import PublicChannelResponse, PublicConversationCreate, PublicConversationResponse, PublicMessageCreate, PublicMessageResponse, PublicEmailVerificationCode, PublicEmailVerificationResponse
+from app.schemas.customer_channel import PublicChannelResponse, PublicConversationCreate, PublicConversationResponse, PublicMessageCreate, PublicMessageResponse, PublicEmailVerificationCode, PublicEmailVerificationResponse, PublicCustomerOrdersResponse
 from app.services import customer_channel_service
 
 router = APIRouter(prefix="/public/chat", tags=["public-chat"])
@@ -52,3 +52,12 @@ async def confirm_email_verification(conversation_id: UUID, payload: PublicEmail
         verified=verified,
         message="Email verified." if verified else "The code is invalid or expired."
     ))
+
+
+
+@router.get("/conversations/{conversation_id}/orders", response_model=APIResponse[PublicCustomerOrdersResponse])
+async def get_customer_orders(conversation_id: UUID, db: DbSession, x_customer_token: str = Header(...)):
+    data = await customer_channel_service.get_public_customer_orders(
+        db, conversation_id=conversation_id, token=x_customer_token
+    )
+    return APIResponse(success=True, data=PublicCustomerOrdersResponse.model_validate(data))
