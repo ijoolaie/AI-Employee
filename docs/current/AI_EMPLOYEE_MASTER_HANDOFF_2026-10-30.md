@@ -1,3 +1,42 @@
+## Verified checkpoint — 2026-10-30 (after PR #1315)
+
+Repository: [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee), default branch `main`.
+Current main SHA: [`90da90d14c54bafd72983eed87b7f10d91bd042b`](https://github.com/ijoolaie/AI-Employee/commit/90da90d14c54bafd72983eed87b7f10d91bd042b).
+
+### Public customer identity and scoped order access — merged
+
+PR [#1315](https://github.com/ijoolaie/AI-Employee/pull/1315) is squash-merged at `90da90d14c54bafd72983eed87b7f10d91bd042b` after **25/25 exact-head CI checks passed**.
+
+Implementation:
+- Public widget contact fields are unverified. Public conversation creation no longer creates or links a CRM Customer from those fields.
+- Email ownership is verified through a six-digit, tenant/conversation-bound HMAC challenge delivered by the existing transactional email outbox. Challenge expiry is 10 minutes; there are five attempts, a 60-second resend cooldown, a three-send conversation/hour cap and a five-send tenant/email/hour cap.
+- A verified address links only to exactly one active Shopify-sourced Customer in the same tenant. Duplicate matches remain unlinked.
+- A minimal public order endpoint requires the conversation token, verified email, revalidated Customer UUID and Shopify-owned order metadata. The response contains only order number, status, order date, total and currency.
+- Public order reads fail closed unless the channel has a configured `support_policy.commerce.max_order_staleness_seconds` between 60 and 86400, the Shopify integration is active and synced, and the order-sync watermark is valid and fresh.
+- Shopify `last_order_sync_at` is advanced only after the order sync loop completes successfully.
+- No anonymous `run.execute` permission or general public tool execution was granted.
+
+Tests include HMAC binding, no CRM link before verification, PostgreSQL OTP/outbox round-trip, same-tenant other-customer order exclusion, stale-sync rejection, existing WhatsApp regression coverage, browser-to-real-API acceptance, frontend build/lint/unit/browser regressions and security/CodeQL checks.
+
+Post-merge checks on the merge SHA were still running at the time of this checkpoint. Exact-head PR CI is green; do not conflate it with post-merge validation.
+
+### Issue #1258 — remains OPEN
+
+The public widget browser/API admission gate and the initial customer identity/order ownership engineering increment are implemented. Remaining acceptance gates:
+- Real non-production SMTP delivery evidence for email verification and staff handoff.
+- Configure and validate a freshness policy per customer channel; without it public order reads intentionally remain unavailable.
+- Broader tenant/privacy acceptance, including negative cross-tenant/cross-customer cases beyond the current targeted regression.
+- Named human response owner, measurable SLA and escalation; live SMTP delivery is not yet proven.
+- Real customer validation and feedback.
+
+No model-quality, live customer acceptance, live SMTP delivery, production deployment or production release certification is claimed.
+
+### Release boundary
+
+Latest production-certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Mainline commits and green CI do not certify production deployment or live-provider behavior. No deployment or release promotion was performed.
+
+---
+
 ## Verified checkpoint — 2026-10-30 (after PR #1313)
 
 Repository: [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee), default branch `main`.
