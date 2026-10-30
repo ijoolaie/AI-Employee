@@ -365,3 +365,12 @@ def test_shipping_preflight_can_reuse_prior_city_for_explicit_same_city_referenc
         policy,
         known_slots={"city": "تهران"},
     ) is None
+
+
+def test_shipping_preflight_asks_for_city_when_customer_lists_alternatives():
+    policy = {"shipping": {"cities": ["تهران"], "rates_by_city": {"تهران": 50000}}}
+    assert shipping_fee_preflight_response(
+        "هزینه ارسال به تهران یا اصفهان چقدر است؟",
+        policy,
+        known_slots={"city": "تهران"},
+    ) == "ارسال برای کدوم شهره؟ 😊"
