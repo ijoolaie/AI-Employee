@@ -53,7 +53,7 @@ export default function PublicChatPage({ params }: { params: Promise<{ publicKey
 
   const requestVerification = useMutation({
     mutationFn: () => requestPublicEmailVerification(conversation!.id, token!),
-    onSuccess: () => setVerificationMessage(locale === "fa" ? "اگر امکان تأیید ایمیل فراهم باشد، کد برای شما ارسال می‌شود." : "If email verification is available, a code has been sent."),
+    onSuccess: () => setVerificationMessage(locale === "fa" ? "اگر امکان تأیید ایمیل فراهم باشد، کد برای شما ارسال می‌شود." : "If email verification is available, a code will be sent."),
     onError: (e) => setError(getErrorMessage(e)),
   });
 
