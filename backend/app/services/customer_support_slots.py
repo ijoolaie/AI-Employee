@@ -93,7 +93,6 @@ def extract_explicit_customer_slots(
     if ambiguous_destination:
         candidates["city"] = None
     elif city and known:
-        # If the message names multiple configured cities, it is ambiguous.
         matches = {
             item for item in known
             if re.search(rf"(?<![\w]){re.escape(item)}(?![\w])", message, re.UNICODE)
@@ -110,7 +109,6 @@ def extract_explicit_customer_slots(
             re.UNICODE,
         )
         if explicit_destination:
-            # A new but unconfigured destination invalidates an older city.
             candidates["city"] = None
 
     for slot_name, label in _LABELS.items():
@@ -212,7 +210,6 @@ async def upsert_customer_conversation_slots(
                 expires_at=expires_at,
             ))
         else:
-            # A later explicit customer turn supersedes the prior value.
             existing.source_message_id = source_message_id
             existing.value = value
             existing.captured_at = captured_at
@@ -230,10 +227,10 @@ async def load_valid_customer_conversation_slots(
     conversation_id: uuid.UUID,
     now: datetime | None = None,
 ) -> dict[str, Any]:
-    """Load unexpired slots only when their source is still a user message."""
+    """Load unexpired slots only when their exact value is present in its source turn."""
     current = now or datetime.now(timezone.utc)
     result = await db.execute(
-        select(CustomerConversationSlot)
+        select(CustomerConversationSlot, CustomerMessage.content)
         .join(
             CustomerMessage,
             (CustomerMessage.id == CustomerConversationSlot.source_message_id)
@@ -248,9 +245,18 @@ async def load_valid_customer_conversation_slots(
             CustomerConversationSlot.expires_at > current,
         )
     )
-    rows = result.scalars().all()
-    return {
-        row.slot_name: row.value
-        for row in rows
-        if row.slot_name in ALLOWED_SLOT_NAMES and row.value is not None
-    }
+    slots: dict[str, Any] = {}
+    for row, source_content in result.all():
+        if row.slot_name not in ALLOWED_SLOT_NAMES or row.value is None:
+            continue
+        source_text = source_content or ""
+        if isinstance(row.value, str):
+            if row.value.casefold() not in source_text.casefold():
+                continue
+        elif row.slot_name == "quantity" and isinstance(row.value, int) and not isinstance(row.value, bool):
+            if str(row.value) not in _normalize_digits(source_text):
+                continue
+        else:
+            continue
+        slots[row.slot_name] = row.value
+    return slots
