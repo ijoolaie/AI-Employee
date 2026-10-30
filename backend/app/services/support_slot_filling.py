@@ -221,3 +221,28 @@ def shipping_fee_preflight_response(message: str, policy: dict[str, Any] | None 
     if decision.can_answer_from_policy:
         return None
     return "برای این شهر نرخ ارسالِ تأییدشده‌ای در اطلاعات فروشگاه ندارم؛ برای اعلام مبلغ دقیق، لازم است پشتیبانی بررسی کند."
+
+
+
+def support_slot_preflight_response(
+    message: str,
+    policy: dict[str, Any] | None = None,
+    known_slots: dict[str, Any] | None = None,
+) -> str | None:
+    """Ask the first missing required slot before invoking the model.
+
+    This is intentionally limited to explicit, unambiguous intent phrases.
+    It never synthesizes a business answer; complete requests continue through
+    the normal policy-guarded model/tool path.
+    """
+    intent = detect_support_intent(message)
+    if intent is None:
+        return None
+    if intent == "shipping_fee":
+        return shipping_fee_preflight_response(message, policy, known_slots)
+    decision = plan_support_turn(
+        intent=intent,
+        known_slots=known_slots,
+        policy=policy,
+    )
+    return decision.next_question if decision.missing_slots else None
