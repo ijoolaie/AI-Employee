@@ -57,6 +57,10 @@ class _RunPathDB:
             return _Result((SimpleNamespace(id=self.run.conversation_id), self.channel))
         if index == 5:
             return _Result(self.slots)
+        if index == 6:
+            return _Result(None)
+        if index == 7:
+            return _Result(self.run)
         raise AssertionError(f"Unexpected execute_run DB query #{index}: {statement}")
 
     async def begin_nested(self):
