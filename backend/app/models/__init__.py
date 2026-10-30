@@ -23,6 +23,7 @@ from app.models.usage import UsageEvent
 from app.models.business_invoice import BusinessInvoice
 from app.models.customer_channel import CustomerChannel
 from app.models.conversation import CustomerConversation, CustomerMessage
+from app.models.customer_conversation_slot import CustomerConversationSlot
 from app.models.product import Product
 from app.models.commerce_integration import CommerceIntegration
 from app.models.credential import Credential
@@ -81,7 +82,7 @@ __all__ = [
     "WorkflowRun", "WorkflowStepRun", "WorkflowParallelBranchRun", "WorkflowEventTrigger",
     "WorkflowEventDelivery", "WorkflowSchedule", "WorkflowApproval", "OutboxMessage", "Feedback",
     "BillingPlan", "Subscription", "BillingEvent", "WorldCatalogueItem", "WorldOrder", "WorldCommerceEvent", "WorldFeatureEntitlement", "PaymentRefund", "UsageEvent", "BusinessInvoice", "CustomerChannel",
-    "CustomerConversation", "CustomerMessage", "Product", "CommerceIntegration", "Credential", "OnboardingProgress",
+    "CustomerConversation", "CustomerMessage", "CustomerConversationSlot", "Product", "CommerceIntegration", "Credential", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "ShopifyOAuthState", "PasswordResetToken",
     "TenantEntitlement", "SkillPurchaseEntitlement", "SkillPurchaseEntitlementStatus", "SupportEscalation", "SupportEscalationMessage", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
     "AgentDefinition", "AgentTemplate", "AgentTemplateStatus", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding",

@@ -326,3 +326,51 @@ def test_multiturn_slot_plan_asks_only_next_missing_slot_and_requires_trusted_po
         assert decision.missing_slots == missing_slots
         assert decision.next_question == next_question
         assert decision.can_answer_from_policy is can_answer
+
+
+def test_shipping_preflight_reuses_only_a_configured_persisted_city():
+    policy = {"shipping": {"rates_by_city": {"تهران": 50000}, "cities": ["تهران"]}}
+    assert shipping_fee_preflight_response(
+        "هزینه ارسال چقدر است؟", policy, known_slots={"city": "تهران"}
+    ) is None
+    assert shipping_fee_preflight_response(
+        "هزینه ارسال چقدر است؟", policy, known_slots={"city": "شیراز"}
+    ) == "ارسال برای کدوم شهره؟ 😊"
+
+
+def test_shipping_preflight_does_not_reuse_prior_city_when_current_turn_is_ambiguous():
+    policy = {"shipping": {"cities": ["تهران", "شیراز"], "rates_by_city": {"تهران": 50000, "شیراز": 60000}}}
+    assert shipping_fee_preflight_response(
+        "هزینه ارسال از تهران به شیراز چقدر است؟",
+        policy,
+        known_slots={"city": "تهران"},
+    ) == "ارسال برای کدوم شهره؟ 😊"
+
+
+def test_shipping_preflight_does_not_apply_prior_city_to_new_unconfigured_destination():
+    policy = {"shipping": {"cities": ["تهران"], "rates_by_city": {"تهران": 50000}}}
+    response = shipping_fee_preflight_response(
+        "هزینه ارسال برای اصفهان چقدر است؟",
+        policy,
+        known_slots={"city": "تهران"},
+    )
+    assert response is not None
+    assert "نرخ ارسالِ تأییدشده‌ای" in response
+
+
+def test_shipping_preflight_can_reuse_prior_city_for_explicit_same_city_reference():
+    policy = {"shipping": {"cities": ["تهران"], "rates_by_city": {"تهران": 50000}}}
+    assert shipping_fee_preflight_response(
+        "هزینه ارسال برای همون شهر چقدره؟",
+        policy,
+        known_slots={"city": "تهران"},
+    ) is None
+
+
+def test_shipping_preflight_asks_for_city_when_customer_lists_alternatives():
+    policy = {"shipping": {"cities": ["تهران"], "rates_by_city": {"تهران": 50000}}}
+    assert shipping_fee_preflight_response(
+        "هزینه ارسال به تهران یا اصفهان چقدر است؟",
+        policy,
+        known_slots={"city": "تهران"},
+    ) == "ارسال برای کدوم شهره؟ 😊"

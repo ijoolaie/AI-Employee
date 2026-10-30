@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, func, text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -18,6 +18,7 @@ class CustomerConversation(Base):
             unique=True,
             postgresql_where=text("external_conversation_key IS NOT NULL"),
         ),
+        UniqueConstraint("tenant_id", "id", name="uq_customer_conversations_tenant_id_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -57,6 +58,10 @@ class CustomerMessage(Base):
             "provider_message_id",
             unique=True,
             postgresql_where=text("provider_message_id IS NOT NULL"),
+        ),
+        UniqueConstraint(
+            "tenant_id", "conversation_id", "id",
+            name="uq_customer_messages_tenant_conversation_id",
         ),
     )
 

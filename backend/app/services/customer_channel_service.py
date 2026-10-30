@@ -12,6 +12,7 @@ from app.models.run import Run
 from app.models.tenant import Tenant
 from app.services import audit_service, employee_service, run_service, customer_service, outbox_service
 from app.core.config import get_settings
+from app.services.customer_support_slots import extract_explicit_customer_slots, upsert_customer_conversation_slots
 
 
 async def _tenant_handoff_notification_email(db: AsyncSession, tenant_id: uuid.UUID) -> str | None:
@@ -198,6 +199,18 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
         .limit(30)
     )).scalars().all())
     history.reverse()  # Keep the most recent 30 turns in chronological order.
+    channel = None
+    if getattr(conversation, "channel_id", None) is not None:
+        channel_result = await db.execute(
+            select(CustomerChannel).where(
+                CustomerChannel.id == conversation.channel_id,
+                CustomerChannel.tenant_id == conversation.tenant_id,
+            )
+        )
+        channel = channel_result.scalar_one_or_none()
+    channel_config = channel.config if channel and isinstance(channel.config, dict) else {}
+    support_policy = channel_config.get("support_policy", {})
+    support_policy = support_policy if isinstance(support_policy, dict) else {}
     transcript = _format_conversation_transcript(history)
     run_message = content
     if transcript:
@@ -210,6 +223,15 @@ async def send_message(db: AsyncSession, *, conversation_id: uuid.UUID, token: s
     message = CustomerMessage(tenant_id=conversation.tenant_id, conversation_id=conversation.id, role="user", content=content)
     db.add(message)
     await db.flush()
+    if channel is not None:
+        candidates = extract_explicit_customer_slots(content, support_policy=support_policy)
+        await upsert_customer_conversation_slots(
+            db,
+            tenant_id=conversation.tenant_id,
+            conversation_id=conversation.id,
+            source_message_id=message.id,
+            candidates=candidates,
+        )
     run = await run_service.create_run(db, tenant_id=conversation.tenant_id, employee_id=conversation.employee_id, input_data={"message": run_message, "current_customer_message": content, "customer": {"name": conversation.customer_name, "email": conversation.customer_email, "phone": conversation.customer_phone}, "channel": "web_widget"}, created_by=None, employee_version_id=None)
     run.conversation_id = conversation.id
     message.run_id = run.id

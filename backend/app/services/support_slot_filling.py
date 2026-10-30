@@ -4,6 +4,8 @@ This module is policy-only: it never invents prices, stock, delivery times,
 refunds, or escalation success. Callers must supply trusted slots and policy.
 """
 from __future__ import annotations
+
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -126,7 +128,8 @@ def current_customer_message_for_preflight(input_data: dict[str, Any]) -> str:
     return str(input_data.get("message", ""))
 
 
-def shipping_fee_preflight_response(message: str, policy: dict[str, Any] | None = None) -> str | None:
+def shipping_fee_preflight_response(message: str, policy: dict[str, Any] | None = None,
+                                   known_slots: dict[str, Any] | None = None) -> str | None:
     """Return a safe deterministic reply when a shipping-fee question lacks a usable rate."""
     normalized_message = message.casefold()
     shipping_fee_terms = (
@@ -142,7 +145,32 @@ def shipping_fee_preflight_response(message: str, policy: dict[str, Any] | None 
     if has_valid_flat_shipping_rate(shipping):
         return None
 
-    city = find_trusted_shipping_city(message, shipping)
+    rates_by_city = shipping.get("rates_by_city")
+    configured_cities = set(rates_by_city.keys()) if isinstance(rates_by_city, dict) else set()
+    configured_list = shipping.get("cities", shipping.get("known_cities", []))
+    if isinstance(configured_list, list):
+        configured_cities.update(item for item in configured_list if isinstance(item, str))
+    current_city_mentions = {
+        city_name for city_name in configured_cities
+        if isinstance(city_name, str)
+        and re.search(rf"(?<![\w]){re.escape(city_name)}(?![\w])", message, re.UNICODE)
+    }
+    alternative_destinations = re.search(
+        r"(?:به|برای)\s+[\w‌-]+\s+یا\s+[\w‌-]+",
+        message,
+        re.UNICODE,
+    )
+    if len(current_city_mentions) > 1 or alternative_destinations:
+        return plan_support_turn(intent="shipping_fee", policy=trusted_policy).next_question
+    explicit_destination = re.search(
+        r"(?:به|برای)\s+(?!کدوم\s+شهر|چه\s+شهری|همون\s+شهر|همان\s+شهر|همون\s+مقصد|همان\s+مقصد)([\w‌-]+)",
+        message,
+        re.UNICODE,
+    )
+    if explicit_destination and not current_city_mentions:
+        return "برای این مقصد نرخ ارسالِ تأییدشده‌ای در اطلاعات فروشگاه ندارم؛ برای اعلام مبلغ دقیق، لازم است پشتیبانی بررسی کند."
+    prior_city = (known_slots or {}).get("city") if isinstance(known_slots, dict) else None
+    city = prior_city if isinstance(prior_city, str) and prior_city in configured_cities else find_trusted_shipping_city(message, shipping)
     if city is None:
         return plan_support_turn(intent="shipping_fee", policy=trusted_policy).next_question
 
