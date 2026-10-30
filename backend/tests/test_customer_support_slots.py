@@ -85,9 +85,6 @@ class _Rows:
     def __init__(self, rows):
         self.rows = rows
 
-    def scalars(self):
-        return self
-
     def all(self):
         return self.rows
 
@@ -101,17 +98,33 @@ class _LoadSlotsDB:
 
 
 @pytest.mark.asyncio
-async def test_load_valid_slots_filters_unknown_names_and_null_values():
+async def test_load_valid_slots_filters_unknown_null_and_foreign_source_values():
+    valid_city = SimpleNamespace(slot_name="city", value="تهران")
+    invalid_foreign_reason = SimpleNamespace(slot_name="reason", value="FOREIGN-SOURCE")
+    unknown = SimpleNamespace(slot_name="invented", value="untrusted")
+    null_value = SimpleNamespace(slot_name="order_id", value=None)
     db = _LoadSlotsDB([
-        SimpleNamespace(slot_name="city", value="تهران"),
-        SimpleNamespace(slot_name="invented", value="untrusted"),
-        SimpleNamespace(slot_name="order_id", value=None),
+        (valid_city, "مقصد من تهران است"),
+        (invalid_foreign_reason, "شیراز"),
+        (unknown, "untrusted"),
+        (null_value, "ORD-123"),
     ])
     result = await load_valid_customer_conversation_slots(
         db, tenant_id=uuid4(), conversation_id=uuid4(),
         now=datetime(2026, 10, 30, tzinfo=timezone.utc),
     )
     assert result == {"city": "تهران"}
+
+
+@pytest.mark.asyncio
+async def test_load_valid_slots_matches_persian_quantity_digits():
+    quantity = SimpleNamespace(slot_name="quantity", value=12)
+    db = _LoadSlotsDB([(quantity, "تعداد: ۱۲")])
+    result = await load_valid_customer_conversation_slots(
+        db, tenant_id=uuid4(), conversation_id=uuid4(),
+        now=datetime(2026, 10, 30, tzinfo=timezone.utc),
+    )
+    assert result == {"quantity": 12}
 
 
 def test_conflicting_explicit_order_references_invalidate_instead_of_overwrite():
