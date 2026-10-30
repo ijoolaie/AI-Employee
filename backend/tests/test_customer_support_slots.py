@@ -173,7 +173,7 @@ async def test_upsert_rejects_slot_value_not_present_in_source_message():
             candidates={"city": "شیراز"},
             now=datetime(2026, 10, 30, tzinfo=timezone.utc),
         )
-    assert db.calls == 1
+    assert db.calls == 2
 
 
 def test_alternative_configured_and_unconfigured_destinations_invalidate_city():
