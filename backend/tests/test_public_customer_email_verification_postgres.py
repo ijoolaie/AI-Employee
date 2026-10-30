@@ -129,15 +129,7 @@ async def test_verified_email_links_only_unique_tenant_customer_and_scoped_order
                 await customer_channel_service.request_customer_email_verification(
                     session, conversation_id=conversation.id, token=token,
                 )
-                mail = (await session.execute(
-                    select(OutboxMessage).where(
-                        OutboxMessage.tenant_id == tenant.id,
-                        OutboxMessage.kind == "email.send",
-                        OutboxMessage.dedupe_key == f"customer-email-verification:{session.new.pop().id if False else ''}",
-                    )
-                )).scalar_one_or_none()
-                # Resolve the newest verification challenge and its durable email.
-                challenge = (await session.execute(
+                # Resolve the verification challenge and its durable email.\n                challenge = (await session.execute(
                     select(CustomerEmailVerification).where(
                         CustomerEmailVerification.tenant_id == tenant.id,
                         CustomerEmailVerification.conversation_id == conversation.id,
