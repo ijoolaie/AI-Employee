@@ -8,7 +8,7 @@ import pytest
 from app.ai.schemas import ChatResult
 from app.models.run import Run
 from app.services import run_service
-from app.memory import auto_extract_impl
+from app.memory import auto_extract, auto_extract_impl
 from app.services.support_slot_filling import shipping_fee_preflight_response
 
 
@@ -306,6 +306,7 @@ async def test_execute_run_skips_rag_and_memory_embedding_when_support_preflight
     db = _RunPathDB(run, version, channel)
     gateway = _Gateway()
     _patch_run_path(monkeypatch, gateway)
+    monkeypatch.setattr(run_service, "extract_and_consolidate_run_memory", auto_extract.extract_and_consolidate_run_memory)
 
     monkeypatch.setattr(
         run_service,
