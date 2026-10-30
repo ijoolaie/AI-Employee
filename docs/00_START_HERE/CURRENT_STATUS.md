@@ -1,8 +1,18 @@
+## Follow-up checkpoint — provider-boundary fix PR #1310 (2026-10-30)
+
+- Documentation reconciliation PR #1308 merged as `315e3ea71a136bca3ce64772bf28d8a03687f744`; its post-merge CodeQL runs were still running at last inspection.
+- PR #1309 was closed as superseded after backend CI showed its new test patched the memory-extraction facade wrapper, which correctly receives disabled settings during preflight. This was a test-design false positive, not proof of a provider call.
+- Replacement [PR #1310](https://github.com/ijoolaie/AI-Employee/pull/1310) is based on latest main and corrects the regression test to instrument the actual memory AI gateway and embedding function. It also retains assertions that RAG and memory retrieval do not run during preflight.
+- Exact-head `36e0f1abcc3dcac974b2648485a5148732598a09` CI was queued/running at this checkpoint; do not merge before all required checks pass.
+- Issue #1258 remains open for the broader trusted-evidence, handoff, real API, tenant/privacy and live-customer acceptance matrix.
+
+---
+
 ## Customer-support Run slot preflight — PR #1307 merged (2026-10-30)
 
 - PR [#1307](https://github.com/ijoolaie/AI-Employee/pull/1307) was squash-merged to `main` as [`31e869542d12aa141745667b8d44b9c1d9650c93`](https://github.com/ijoolaie/AI-Employee/commit/31e869542d12aa141745667b8d44b9c1d9650c93), from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`.
 - All **15/15 exact-head check-runs passed**, including backend, frontend, semantic E2E, tenant hierarchy/RBAC, DAST, infrastructure, recovery, security/privacy, observability, architecture, rollback contract, real-stack W21 and both CodeQL analyses.
-- The Run path now applies conservative explicit-phrase intent detection and deterministic missing-slot preflight for delivery ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders (plus the existing shipping-fee path). For a single unambiguous intent it asks only the first missing required slot before the primary response-generation gateway call; ambiguity/unknown intents remain on the guarded model path. A post-merge audit found optional RAG/memory retrieval and automatic memory extraction could still call providers; the follow-up guard is tracked in PR #1309 (open, CI pending).
+- The Run path now applies conservative explicit-phrase intent detection and deterministic missing-slot preflight for delivery ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders (plus the existing shipping-fee path). For a single unambiguous intent it asks only the first missing required slot before the primary response-generation gateway call; ambiguity/unknown intents remain on the guarded model path. A post-merge audit found optional RAG/memory retrieval and automatic memory extraction could still call providers; the follow-up guard is tracked in [PR #1310](https://github.com/ijoolaie/AI-Employee/pull/1310). PR #1309 was closed as superseded after its regression test patched the facade rather than the underlying provider boundary. PR #1310 CI is pending; do not claim the provider-boundary fix complete until exact-head checks pass.
 - Run-path tests assert that the model gateway is not called while required context is missing. Customer-provided order/payment references remain untrusted claims; this change does not synthesize stock, ETA, discount, refund or payment outcomes.
 - [Issue #1258](https://github.com/ijoolaie/AI-Employee/issues/1258) remains open for broader acceptance: complete trusted-evidence/policy scenarios, durable handoff/outbound approval, browser-to-real-API, full tenant/privacy matrix and real customer acceptance. CI is not live customer acceptance.
 - Post-merge validation on `31e869542d12aa141745667b8d44b9c1d9650c93`: **11/11 check-runs completed successfully**, with zero failures or pending checks. This is automated CI evidence, not production certification.
