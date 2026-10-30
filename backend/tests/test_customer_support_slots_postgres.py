@@ -115,7 +115,7 @@ async def test_slots_are_tenant_scoped_expiring_and_source_message_bound():
                 message_a_followup = CustomerMessage(
                     id=uuid.uuid4(), tenant_id=tenant_a_id,
                     conversation_id=conversation_a_id, channel_id=channel_a.id,
-                    role="user", content="شماره سفارش: ORD-NEW\\nتعداد: ۵",
+                    role="user", content="شماره سفارش: ORD-NEW\nتعداد: ۵",
                 )
                 session.add(message_a_followup)
                 await session.flush()
