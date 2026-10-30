@@ -10,6 +10,8 @@ from app.models.customer_channel import CustomerChannel
 from app.models.conversation import CustomerConversation, CustomerMessage
 from app.models.customer_email_verification import CustomerEmailVerification
 from app.models.customer import Customer
+from app.models.business_order import BusinessOrder
+from app.models.commerce_integration import CommerceIntegration
 from app.models.user import User
 from app.models.employee import Employee
 from app.models.run import Run
@@ -462,3 +464,85 @@ async def verify_customer_email(
     conversation.customer_id = matches[0].id if len(matches) == 1 else None
     await db.flush()
     return True
+
+
+
+async def get_public_customer_orders(
+    db: AsyncSession, *, conversation_id: uuid.UUID, token: str,
+) -> dict:
+    """Return a minimal order projection only for a verified, uniquely linked customer."""
+    conversation = await _get_conversation(db, conversation_id=conversation_id, token=token)
+    unavailable = {"available": False, "message": "Order information is not available until identity and data freshness are verified.", "source_fresh_at": None, "orders": []}
+    if conversation.email_verified_at is None or not conversation.verified_email or not conversation.customer_id:
+        return unavailable
+
+    customer = (await db.execute(
+        select(Customer).where(
+            Customer.id == conversation.customer_id,
+            Customer.tenant_id == conversation.tenant_id,
+            Customer.is_active.is_(True),
+            Customer.last_channel == "shopify",
+            func.lower(func.trim(Customer.email)) == conversation.verified_email,
+        )
+    )).scalar_one_or_none()
+    if customer is None:
+        return unavailable
+
+    channel = (await db.execute(
+        select(CustomerChannel).where(
+            CustomerChannel.id == conversation.channel_id,
+            CustomerChannel.tenant_id == conversation.tenant_id,
+            CustomerChannel.is_active.is_(True),
+        )
+    )).scalar_one_or_none()
+    channel_config = channel.config if channel and isinstance(channel.config, dict) else {}
+    support_policy = channel_config.get("support_policy", {})
+    commerce_policy = support_policy.get("commerce", {}) if isinstance(support_policy, dict) else {}
+    max_staleness = commerce_policy.get("max_order_staleness_seconds") if isinstance(commerce_policy, dict) else None
+    if not isinstance(max_staleness, int) or isinstance(max_staleness, bool) or not 60 <= max_staleness <= 86400:
+        return unavailable
+
+    integration = (await db.execute(
+        select(CommerceIntegration).where(
+            CommerceIntegration.tenant_id == conversation.tenant_id,
+            CommerceIntegration.provider == "shopify",
+            CommerceIntegration.is_active.is_(True),
+            CommerceIntegration.status == "synced",
+        )
+    )).scalar_one_or_none()
+    if integration is None:
+        return unavailable
+    raw_fresh_at = (integration.config or {}).get("last_order_sync_at")
+    if not isinstance(raw_fresh_at, str):
+        return unavailable
+    try:
+        source_fresh_at = datetime.fromisoformat(raw_fresh_at.replace("Z", "+00:00"))
+    except ValueError:
+        return unavailable
+    if source_fresh_at.tzinfo is None:
+        return unavailable
+    if datetime.now(timezone.utc) - source_fresh_at > timedelta(seconds=max_staleness):
+        return unavailable
+
+    rows = list((await db.execute(
+        select(BusinessOrder).where(
+            BusinessOrder.tenant_id == conversation.tenant_id,
+            BusinessOrder.metadata_["customer_id"].as_string() == str(customer.id),
+            BusinessOrder.metadata_["shopify"].as_boolean().is_(True),
+        ).order_by(BusinessOrder.order_date.desc(), BusinessOrder.created_at.desc()).limit(20)
+    )).scalars().all())
+    return {
+        "available": True,
+        "message": "Orders are shown from a recent Shopify synchronization.",
+        "source_fresh_at": source_fresh_at,
+        "orders": [
+            {
+                "number": row.number,
+                "status": row.status,
+                "order_date": row.order_date,
+                "total": row.total,
+                "currency": row.currency,
+            }
+            for row in rows
+        ],
+    }
