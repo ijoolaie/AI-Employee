@@ -29,6 +29,7 @@ import type {
   CustomerConversationSummary,
   PublicChannel,
   PublicConversation,
+  PublicCustomerOrders,
 } from "@/types";
 
 const API_BASE =
