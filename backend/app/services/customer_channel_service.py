@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.exceptions import NotFoundError, ConflictError
+from app.core.exceptions import NotFoundError, ConflictError, ValidationAppError
 from app.models.customer_channel import CustomerChannel
 from app.models.conversation import CustomerConversation, CustomerMessage
 from app.models.customer_email_verification import CustomerEmailVerification
