@@ -23,7 +23,7 @@ def main():
     suffix = uuid.uuid4().hex[:16]
     status, result = call("POST", "/auth/register", {
         "tenant_name": "Widget CI " + suffix, "tenant_slug": "widget-ci-" + suffix,
-        "email": "widget-ci-" + suffix + "@example.invalid",
+        "email": "widget-ci-" + suffix + "@example.com",
         "password": os.environ.get("CI_FIXTURE_PASSWORD", "ci-only-fixture-password-2026"),
         "full_name": "Widget CI Admin",
     })
