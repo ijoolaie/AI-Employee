@@ -1,3 +1,43 @@
+## Verified checkpoint — 2026-10-30 (after PR #1313)
+
+Repository: [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee), default branch `main`.
+Current main SHA: [`50cb540fd420e74e3c55dd76275527194c582017`](https://github.com/ijoolaie/AI-Employee/commit/50cb540fd420e74e3c55dd76275527194c582017).
+
+### Post-merge validation
+
+- PR [#1313](https://github.com/ijoolaie/AI-Employee/pull/1313) is squash-merged. The dedicated browser-to-real-API Playwright workflow passed on the exact PR head; the merged commit is `50cb540fd420e74e3c55dd76275527194c582017`.
+- All **11/11 post-merge check-runs** on that merge SHA completed successfully: DAST, validate-and-package, validate, W21 real stack, architecture, SLO contract, backend, frontend, infrastructure, and both CodeQL analyses.
+- The browser/API acceptance covers disposable tenant/channel provisioning through the real API, production Next.js + Chromium against the real API proxy without public-chat endpoint mocks, conversation/token creation, message submission, Run ID, transcript read-back and invalid-token rejection.
+- This is automated CI evidence for the browser/API admission and persistence boundary only. It does not prove model quality, customer-specific commerce access, live staff email delivery, full customer acceptance, production deployment or release certification.
+
+### Issue #1258 — remains OPEN
+
+The public-chat browser/API CI gap is closed. The remaining customer support gates are not.
+
+Source audit findings recorded in the issue:
+- Public conversation identity is currently derived from user-supplied email/phone or a generated token key; the supplied contact fields are not verified identity.
+- Shopify sync associates a tenant Customer UUID with imported orders in `BusinessOrder.metadata_.customer_id`, but BusinessOrder has no first-class customer FK and `find_order_for_customer` constrains lookup by tenant only, not verified customer.
+- Shopify fulfillment is mapped to coarse `cancelled` / `delivered` / `processing`; no trustworthy delivery ETA is populated.
+- Product `updated_at` is a local row timestamp, not provider-observed freshness. Integration sync records counts/status but no durable successful per-resource freshness watermark. Webhook registration is not proof of event application.
+- Anonymous public widget Runs have neither `created_by` nor `agent_instance_id`; `get_order` / `track_order` require `run.execute`, and ToolRegistry correctly denies them. Do not relax this gate or grant anonymous broad execution permission.
+
+Safe next implementation requires a verified customer identity contract, a customer-scoped read-only order capability, provider freshness/unknown-state semantics, and negative tests for same-tenant cross-customer access and stale/missing data. Do not claim order/ETA/stock answers are trusted until those contracts exist.
+
+### Other current gates
+
+- The only pre-existing application PR is [#1257](https://github.com/ijoolaie/AI-Employee/pull/1257), Draft/on hold for human visual approval based on actual desktop/mobile runtime evidence. Do not merge on CI or synthetic screenshots alone.
+- Issue [#1288](https://github.com/ijoolaie/AI-Employee/issues/1288) remains blocked on authorized non-production SMTP delivery evidence, a named human response owner and a measurable SLA/escalation.
+- Issue [#1305](https://github.com/ijoolaie/AI-Employee/issues/1305) remains blocked on explicit retention-duration, audit and purge-schedule approval. Logical expiry is not physical erasure.
+- Issue [#1061](https://github.com/ijoolaie/AI-Employee/issues/1061) remains blocked on five decision-maker conversations and two concrete sample/trial commitments. No demand or revenue is claimed.
+- Issue [#1250](https://github.com/ijoolaie/AI-Employee/issues/1250) was closed as not planned after the official GHSA-vfj7-8cjw-p6xm / CVE-2026-93687 advisory was withdrawn on 2026-10-23. No dependency override, suppression or framework migration was applied. Reassess if the advisory is reinstated or a new defect is demonstrated.
+- Issues #1044 and external gates #19, #210, #259 and #269 remain open for human visual approval, production RBAC, exact-SHA release promotion, production operations/security/DR and customer acceptance.
+
+### Release boundary
+
+Latest production-certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Mainline merges and green CI do not certify production deployment or live-provider behavior. No deployment or new release certification was performed.
+
+---
+
 ## Verified checkpoint — 2026-10-30 (PRs #1310 and #1311 merged)
 
 Application baseline: `main` at `3d3f7f72c4c5e56a4d7e3f1c73cd282c41aea10f` after the two merges below. This documentation checkpoint does not change application behavior.
