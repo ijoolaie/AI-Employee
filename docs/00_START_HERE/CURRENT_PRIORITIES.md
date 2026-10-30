@@ -1,3 +1,15 @@
+## Current priority update — structured customer slots merged (2026-10-30)
+
+1. **Finish Issue #1258 acceptance** after PR #1303: exercise the remaining Run-path scenarios (ETA, variants, bulk discount, returns/payment), durable handoff and outbound approval, browser-to-real-API, and privacy/tenant isolation. Do not equate the 23 passing exact-head checks with live customer acceptance.
+2. **Keep Issue #1305 gated** until the owner approves retention duration, audit requirements and purge schedule. Logical expiry is implemented; physical erasure is not. Do not deploy a purge job before approval and bounded PostgreSQL isolation/idempotency/cutoff tests.
+3. **Continue Issue #1288 operational acceptance** only with real non-production SMTP delivery evidence, a named human owner/acknowledgement process and measurable response SLA. Mocked SMTP tests do not establish delivery.
+4. **Continue Issue #1061 customer discovery** with five decision-maker conversations and at least two concrete sample/trial commitments before broadening integrations.
+5. **Keep World visual acceptance #1044 deferred**; PR #1257 remains Draft/on hold pending explicit human visual approval and higher-priority reliability/customer evidence.
+6. Main merge SHA is `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`. Its post-merge workflows were 4/17 successful and 13 pending at the latest check; no failures were observed. Reconcile the final result.
+7. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; no deployment or release was performed.
+
+---
+
 ## Current priority update — human handoff merged; MVP evidence next (2026-10-25)
 
 1. PR [#1264](https://github.com/ijoolaie/AI-Employee/pull/1264) is squash-merged as `ef30af24c47d3ddea20bf420be1ada044d2adaf8` after all 16 exact-head checks completed successfully, including backend PostgreSQL-backed handoff coverage, DAST, recovery, and semantic real-stack E2E.
