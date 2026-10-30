@@ -210,6 +210,13 @@ export async function confirmPublicEmailVerification(conversationId: string, tok
   ));
 }
 
+export async function getPublicCustomerOrders(conversationId: string, token: string) {
+  return unwrap(await api.get<APIResponse<PublicCustomerOrders>>(
+    `/public/chat/conversations/${conversationId}/orders`,
+    { headers: { "X-Customer-Token": token } }
+  ));
+}
+
 export async function getPublicConversation(conversationId: string, token: string) {
   return unwrap(await api.get<APIResponse<PublicConversation>>(`/public/chat/conversations/${conversationId}`, { headers: { "X-Customer-Token": token } }));
 }
