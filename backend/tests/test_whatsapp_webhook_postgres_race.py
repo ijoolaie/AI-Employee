@@ -322,7 +322,8 @@ async def test_public_chat_allows_multiple_conversations_for_same_customer(
                 await db.execute(
                     select(CustomerConversation).where(
                         CustomerConversation.tenant_id == data.tenant_id,
-                        CustomerConversation.customer_id == customers[0].id,
+                        CustomerConversation.customer_email == "same-customer@example.com",
+                        CustomerConversation.customer_id.is_(None),
                     )
                 )
             )
@@ -330,7 +331,7 @@ async def test_public_chat_allows_multiple_conversations_for_same_customer(
             .all()
         )
 
-    assert len(customers) == 1
+    assert customers == [], "Unverified public contact data must not create CRM customers"
     assert len(conversations) == 2
     assert first.id != second.id
     assert first_token != second_token
@@ -366,20 +367,25 @@ async def test_public_chat_concurrent_starts_create_independent_conversations(
     first, second = await asyncio.gather(create_one(), create_one())
 
     async with AsyncSessionLocal() as db:
-        customer = (
-            await db.execute(
-                select(Customer).where(
-                    Customer.tenant_id == data.tenant_id,
-                    Customer.external_key == "concurrent@example.com",
+        customers = list(
+            (
+                await db.execute(
+                    select(Customer).where(
+                        Customer.tenant_id == data.tenant_id,
+                        Customer.external_key == "concurrent@example.com",
+                    )
                 )
             )
-        ).scalar_one()
+            .scalars()
+            .all()
+        )
         conversations = list(
             (
                 await db.execute(
                     select(CustomerConversation).where(
                         CustomerConversation.tenant_id == data.tenant_id,
-                        CustomerConversation.customer_id == customer.id,
+                        CustomerConversation.customer_email == "concurrent@example.com",
+                        CustomerConversation.customer_id.is_(None),
                     )
                 )
             )
@@ -389,6 +395,7 @@ async def test_public_chat_concurrent_starts_create_independent_conversations(
 
     assert first[0] != second[0]
     assert first[1] != second[1]
+    assert customers == [], "Concurrent unverified starts must not create a CRM customer"
     assert len(conversations) == 2
 
 

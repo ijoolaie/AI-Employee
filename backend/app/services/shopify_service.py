@@ -1,7 +1,7 @@
 """Production-oriented Shopify GraphQL connector with governed credentials."""
 from __future__ import annotations
 import base64, hashlib, hmac, uuid
-from datetime import date
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any
 from urllib.parse import urlencode
@@ -113,7 +113,7 @@ async def sync_orders(db, tenant_id, integration_id):
             for k, v in data.items(): setattr(existing, k, v)
             updated += 1
         else: db.add(BusinessOrder(tenant_id=tenant_id, **data)); created += 1
-    integration.status = "synced"; integration.config = {**(integration.config or {}), "last_order_sync_count": len(orders)}; await db.flush()
+    integration.status = "synced"; integration.config = {**(integration.config or {}), "last_order_sync_count": len(orders), "last_order_sync_at": datetime.now(timezone.utc).isoformat()}; await db.flush()
     return {"provider": "shopify", "orders_seen": len(orders), "created": created, "updated": updated}
 
 async def reconcile(db, tenant_id, integration_id):

@@ -1,11 +1,17 @@
 import hashlib
+import hmac
 import secrets
 import uuid
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.exceptions import NotFoundError, ConflictError
+from app.core.exceptions import NotFoundError, ConflictError, ValidationAppError
 from app.models.customer_channel import CustomerChannel
 from app.models.conversation import CustomerConversation, CustomerMessage
+from app.models.customer_email_verification import CustomerEmailVerification
+from app.models.customer import Customer
+from app.models.business_order import BusinessOrder
+from app.models.commerce_integration import CommerceIntegration
 from app.models.user import User
 from app.models.employee import Employee
 from app.models.run import Run
@@ -109,8 +115,20 @@ async def get_public_channel(db: AsyncSession, *, public_key: str) -> tuple[Cust
 async def create_conversation(db: AsyncSession, *, public_key: str, customer_name: str | None, customer_email: str | None, customer_phone: str | None) -> tuple[CustomerConversation, str, Employee]:
     channel, employee = await get_public_channel(db, public_key=public_key)
     token = secrets.token_urlsafe(32)
-    customer = await customer_service.upsert_customer(db, tenant_id=channel.tenant_id, external_key=customer_phone or customer_email or token[:20], name=customer_name, email=customer_email, phone=customer_phone, channel=channel.channel_type)
-    conversation = CustomerConversation(tenant_id=channel.tenant_id, employee_id=employee.id, channel_id=channel.id, customer_token_hash=_hash_token(token), customer_name=customer_name, customer_email=customer_email, customer_phone=customer_phone, customer_id=customer.id)
+    # Publicly supplied contact details are unverified. Do not create or attach
+    # a CRM customer until the visitor proves control of the email address.
+    conversation = CustomerConversation(
+        tenant_id=channel.tenant_id,
+        employee_id=employee.id,
+        channel_id=channel.id,
+        customer_token_hash=_hash_token(token),
+        customer_name=customer_name,
+        customer_email=(customer_email.strip().lower() if customer_email else None),
+        customer_phone=customer_phone,
+        customer_id=None,
+        verified_email=None,
+        email_verified_at=None,
+    )
     db.add(conversation)
     await db.flush()
     return conversation, token, employee
@@ -312,3 +330,234 @@ async def acknowledge_handoff(db: AsyncSession, *, tenant_id: uuid.UUID, convers
     await db.flush()
     await db.refresh(conversation)
     return conversation
+
+
+
+def _normalize_customer_email(email: str) -> str:
+    return email.strip().casefold()
+
+
+def _verification_code_hash(*, challenge_id: uuid.UUID, tenant_id: uuid.UUID, conversation_id: uuid.UUID, code: str) -> str:
+    settings = get_settings()
+    material = f"customer-email-verification:{tenant_id}:{conversation_id}:{challenge_id}:{code}".encode("utf-8")
+    return hmac.new(settings.secret_key.encode("utf-8"), material, hashlib.sha256).hexdigest()
+
+
+async def request_customer_email_verification(
+    db: AsyncSession, *, conversation_id: uuid.UUID, token: str,
+) -> None:
+    conversation = await _get_conversation(db, conversation_id=conversation_id, token=token)
+    if conversation.email_verified_at is not None:
+        return
+    email = _normalize_customer_email(conversation.customer_email or "")
+    if not email:
+        raise ConflictError("An email address is required before verification")
+    settings = get_settings()
+    if not settings.smtp_host or not settings.smtp_from_email:
+        raise ValidationAppError("Email verification is temporarily unavailable")
+
+    now = datetime.now(timezone.utc)
+    # Serialize per-tenant email throttling so concurrent conversations cannot
+    # race past the address-level send limit.
+    await db.execute(select(Tenant.id).where(Tenant.id == conversation.tenant_id).with_for_update())
+    email_recent_count = (await db.execute(
+        select(func.count()).select_from(CustomerEmailVerification).where(
+            CustomerEmailVerification.tenant_id == conversation.tenant_id,
+            CustomerEmailVerification.email == email,
+            CustomerEmailVerification.created_at >= now - timedelta(hours=1),
+        )
+    )).scalar_one()
+    if email_recent_count >= 5:
+        raise ConflictError("Too many verification requests; try again later")
+
+    recent = list((await db.execute(
+        select(CustomerEmailVerification)
+        .where(
+            CustomerEmailVerification.tenant_id == conversation.tenant_id,
+            CustomerEmailVerification.conversation_id == conversation.id,
+            CustomerEmailVerification.created_at >= now - timedelta(hours=1),
+        )
+        .order_by(CustomerEmailVerification.created_at.desc())
+        .with_for_update()
+    )).scalars().all())
+    if len(recent) >= 3:
+        raise ConflictError("Too many verification requests; try again later")
+    if recent and recent[0].created_at and recent[0].created_at > now - timedelta(seconds=60):
+        raise ConflictError("Please wait before requesting another verification code")
+
+    for previous in recent:
+        if previous.consumed_at is None:
+            previous.consumed_at = now
+
+    challenge_id = uuid.uuid4()
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    challenge = CustomerEmailVerification(
+        id=challenge_id,
+        tenant_id=conversation.tenant_id,
+        conversation_id=conversation.id,
+        email=email,
+        code_hash=_verification_code_hash(
+            challenge_id=challenge_id,
+            tenant_id=conversation.tenant_id,
+            conversation_id=conversation.id,
+            code=code,
+        ),
+        attempts=0,
+        expires_at=now + timedelta(minutes=10),
+    )
+    db.add(challenge)
+    await db.flush()
+    await outbox_service.enqueue(
+        db,
+        tenant_id=conversation.tenant_id,
+        kind="email.send",
+        dedupe_key=f"customer-email-verification:{challenge.id}",
+        payload={
+            "to": [email],
+            "subject": "Verify your email address",
+            "body": (
+                f"Your AI Employee customer support verification code is: {code}\n\n"
+                "This code expires in 10 minutes. If you did not request it, you can ignore this email."
+            ),
+        },
+    )
+
+
+async def verify_customer_email(
+    db: AsyncSession, *, conversation_id: uuid.UUID, token: str, code: str,
+) -> bool:
+    conversation = await _get_conversation(db, conversation_id=conversation_id, token=token)
+    if conversation.email_verified_at is not None:
+        return True
+    now = datetime.now(timezone.utc)
+    challenge = (await db.execute(
+        select(CustomerEmailVerification)
+        .where(
+            CustomerEmailVerification.tenant_id == conversation.tenant_id,
+            CustomerEmailVerification.conversation_id == conversation.id,
+            CustomerEmailVerification.consumed_at.is_(None),
+        )
+        .order_by(CustomerEmailVerification.created_at.desc())
+        .limit(1)
+        .with_for_update()
+    )).scalar_one_or_none()
+    if (
+        challenge is None
+        or challenge.expires_at <= now
+        or challenge.attempts >= 5
+        or _normalize_customer_email(challenge.email) != _normalize_customer_email(conversation.customer_email or "")
+    ):
+        return False
+
+    challenge.attempts += 1
+    expected = _verification_code_hash(
+        challenge_id=challenge.id,
+        tenant_id=conversation.tenant_id,
+        conversation_id=conversation.id,
+        code=code,
+    )
+    if not hmac.compare_digest(challenge.code_hash, expected):
+        await db.flush()
+        return False
+
+    challenge.consumed_at = now
+    conversation.verified_email = challenge.email
+    conversation.email_verified_at = now
+
+    # Only link to a unique Shopify-sourced customer in this tenant. A verified
+    # mailbox alone is not enough to choose between duplicate CRM identities.
+    matches = list((await db.execute(
+        select(Customer).where(
+            Customer.tenant_id == conversation.tenant_id,
+            Customer.is_active.is_(True),
+            Customer.last_channel == "shopify",
+            func.lower(func.trim(Customer.email)) == challenge.email,
+        ).limit(2)
+    )).scalars().all())
+    conversation.customer_id = matches[0].id if len(matches) == 1 else None
+    await db.flush()
+    return True
+
+
+
+async def get_public_customer_orders(
+    db: AsyncSession, *, conversation_id: uuid.UUID, token: str,
+) -> dict:
+    """Return a minimal order projection only for a verified, uniquely linked customer."""
+    conversation = await _get_conversation(db, conversation_id=conversation_id, token=token)
+    unavailable = {"available": False, "message": "Order information is not available until identity and data freshness are verified.", "source_fresh_at": None, "orders": []}
+    if conversation.email_verified_at is None or not conversation.verified_email or not conversation.customer_id:
+        return unavailable
+
+    customer = (await db.execute(
+        select(Customer).where(
+            Customer.id == conversation.customer_id,
+            Customer.tenant_id == conversation.tenant_id,
+            Customer.is_active.is_(True),
+            Customer.last_channel == "shopify",
+            func.lower(func.trim(Customer.email)) == conversation.verified_email,
+        )
+    )).scalar_one_or_none()
+    if customer is None:
+        return unavailable
+
+    channel = (await db.execute(
+        select(CustomerChannel).where(
+            CustomerChannel.id == conversation.channel_id,
+            CustomerChannel.tenant_id == conversation.tenant_id,
+            CustomerChannel.is_active.is_(True),
+        )
+    )).scalar_one_or_none()
+    channel_config = channel.config if channel and isinstance(channel.config, dict) else {}
+    support_policy = channel_config.get("support_policy", {})
+    commerce_policy = support_policy.get("commerce", {}) if isinstance(support_policy, dict) else {}
+    max_staleness = commerce_policy.get("max_order_staleness_seconds") if isinstance(commerce_policy, dict) else None
+    if not isinstance(max_staleness, int) or isinstance(max_staleness, bool) or not 60 <= max_staleness <= 86400:
+        return unavailable
+
+    integration = (await db.execute(
+        select(CommerceIntegration).where(
+            CommerceIntegration.tenant_id == conversation.tenant_id,
+            CommerceIntegration.provider == "shopify",
+            CommerceIntegration.is_active.is_(True),
+            CommerceIntegration.status == "synced",
+        )
+    )).scalar_one_or_none()
+    if integration is None:
+        return unavailable
+    raw_fresh_at = (integration.config or {}).get("last_order_sync_at")
+    if not isinstance(raw_fresh_at, str):
+        return unavailable
+    try:
+        source_fresh_at = datetime.fromisoformat(raw_fresh_at.replace("Z", "+00:00"))
+    except ValueError:
+        return unavailable
+    if source_fresh_at.tzinfo is None:
+        return unavailable
+    if source_fresh_at > datetime.now(timezone.utc) + timedelta(seconds=60):
+        return unavailable
+    if datetime.now(timezone.utc) - source_fresh_at > timedelta(seconds=max_staleness):
+        return unavailable
+
+    rows = list((await db.execute(
+        select(BusinessOrder).where(
+            BusinessOrder.tenant_id == conversation.tenant_id,
+            BusinessOrder.metadata_["customer_id"].as_string() == str(customer.id),
+            BusinessOrder.metadata_["shopify"].as_boolean().is_(True),
+        ).order_by(BusinessOrder.order_date.desc(), BusinessOrder.created_at.desc()).limit(20)
+    )).scalars().all())
+    return {
+        "available": True,
+        "message": "Orders are shown from a recent Shopify synchronization.",
+        "source_fresh_at": source_fresh_at,
+        "orders": [
+            {
+                "number": row.number,
+                "status": row.status,
+                "order_date": row.order_date,
+                "total": row.total,
+                "currency": row.currency,
+            }
+            for row in rows
+        ],
+    }

@@ -32,6 +32,8 @@ class CustomerConversation(Base):
     customer_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    verified_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     external_conversation_key: Mapped[str | None] = mapped_column(String(160), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="open")
     handoff_requested: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

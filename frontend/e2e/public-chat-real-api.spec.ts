@@ -12,6 +12,7 @@ test("public widget uses the real API for conversation, message persistence, and
   expect((await channelLookup).status()).toBe(200);
   await expect(page.locator("section header h1")).toHaveText("CI Public Support Employee");
 
+  await page.locator('input[type="email"]').fill(`browser-acceptance-${Date.now()}@example.com`);
   await page.getByRole("button").first().click();
   const storageKey = `aiep-chat-${publicKey}`;
   await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), storageKey)).not.toBeNull();
@@ -28,7 +29,7 @@ test("public widget uses the real API for conversation, message persistence, and
     response.url().includes(`/api/proxy/public/chat/conversations/${stored!.id}/messages`) &&
     response.request().method() === "POST"
   );
-  await page.locator("form button").click();
+  await page.locator("form").filter({ has: page.locator("textarea") }).locator("button").click();
   const sendResponse = await sendRequest;
   const envelope = await sendResponse.json();
   expect(sendResponse.status(), JSON.stringify(envelope)).toBe(200);

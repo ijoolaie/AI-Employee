@@ -29,6 +29,7 @@ import type {
   CustomerConversationSummary,
   PublicChannel,
   PublicConversation,
+  PublicCustomerOrders,
 } from "@/types";
 
 const API_BASE =
@@ -191,6 +192,30 @@ export async function getPublicChannel(publicKey: string) {
 
 export async function createPublicConversation(publicKey: string, payload?: { customer_name?: string; customer_email?: string; customer_phone?: string }) {
   return unwrap(await api.post<APIResponse<PublicConversation>>(`/public/chat/channels/${publicKey}/conversations`, payload ?? {}));
+}
+
+
+export async function requestPublicEmailVerification(conversationId: string, token: string) {
+  return unwrap(await api.post<APIResponse<{ message: string }>>(
+    `/public/chat/conversations/${conversationId}/email-verification`,
+    {},
+    { headers: { "X-Customer-Token": token } }
+  ));
+}
+
+export async function confirmPublicEmailVerification(conversationId: string, token: string, code: string) {
+  return unwrap(await api.post<APIResponse<{ verified: boolean; message: string }>>(
+    `/public/chat/conversations/${conversationId}/email-verification/confirm`,
+    { code },
+    { headers: { "X-Customer-Token": token } }
+  ));
+}
+
+export async function getPublicCustomerOrders(conversationId: string, token: string) {
+  return unwrap(await api.get<APIResponse<PublicCustomerOrders>>(
+    `/public/chat/conversations/${conversationId}/orders`,
+    { headers: { "X-Customer-Token": token } }
+  ));
 }
 
 export async function getPublicConversation(conversationId: string, token: string) {
