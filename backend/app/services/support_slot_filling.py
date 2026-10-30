@@ -155,7 +155,12 @@ def shipping_fee_preflight_response(message: str, policy: dict[str, Any] | None 
         if isinstance(city_name, str)
         and re.search(rf"(?<![\w]){re.escape(city_name)}(?![\w])", message, re.UNICODE)
     }
-    if len(current_city_mentions) > 1:
+    alternative_destinations = re.search(
+        r"(?:به|برای)\\s+[\\w‌-]+\\s+یا\\s+[\\w‌-]+",
+        message,
+        re.UNICODE,
+    )
+    if len(current_city_mentions) > 1 or alternative_destinations:
         return plan_support_turn(intent="shipping_fee", policy=trusted_policy).next_question
     explicit_destination = re.search(
         r"(?:به|برای)\s+(?!کدوم\s+شهر|چه\s+شهری|همون\s+شهر|همان\s+شهر|همون\s+مقصد|همان\s+مقصد)([\w‌-]+)",
