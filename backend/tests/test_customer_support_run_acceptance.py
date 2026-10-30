@@ -327,6 +327,8 @@ async def test_execute_run_skips_rag_and_memory_embedding_when_support_preflight
 
     monkeypatch.setattr(run_service.rag_service, "search", unexpected_retrieval)
     monkeypatch.setattr(run_service.memory_service, "search_memory", unexpected_retrieval)
+    monkeypatch.setattr(run_service, "auto_memory_settings", lambda rules: {"enabled": True})
+    monkeypatch.setattr(run_service, "extract_and_consolidate_run_memory", unexpected_retrieval)
 
     result = await run_service.execute_run(db, run_id=run.id)
 
