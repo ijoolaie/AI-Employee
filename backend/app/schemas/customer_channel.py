@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal
 from uuid import UUID
 from typing import Any
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -76,7 +77,7 @@ class PublicCustomerOrder(BaseModel):
     number: str
     status: str
     order_date: datetime | date
-    total: str | float
+    total: Decimal
     currency: str
 
 class PublicCustomerOrdersResponse(BaseModel):
