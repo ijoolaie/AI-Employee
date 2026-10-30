@@ -1,3 +1,15 @@
+## Customer-support Run slot preflight — PR #1307 merged (2026-10-30)
+
+- PR [#1307](https://github.com/ijoolaie/AI-Employee/pull/1307) was squash-merged to `main` as [`31e869542d12aa141745667b8d44b9c1d9650c93`](https://github.com/ijoolaie/AI-Employee/commit/31e869542d12aa141745667b8d44b9c1d9650c93), from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`.
+- All **15/15 exact-head check-runs passed**, including backend, frontend, semantic E2E, tenant hierarchy/RBAC, DAST, infrastructure, recovery, security/privacy, observability, architecture, rollback contract, real-stack W21 and both CodeQL analyses.
+- The Run path now applies conservative explicit-phrase intent detection and deterministic missing-slot preflight for delivery ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders (plus the existing shipping-fee path). For a single unambiguous intent it asks only the first missing required slot before the primary response-generation gateway call; ambiguity/unknown intents remain on the guarded model path. A post-merge audit found optional RAG/memory retrieval and automatic memory extraction could still call providers; the follow-up guard is tracked in PR #1309 (open, CI pending).
+- Run-path tests assert that the model gateway is not called while required context is missing. Customer-provided order/payment references remain untrusted claims; this change does not synthesize stock, ETA, discount, refund or payment outcomes.
+- [Issue #1258](https://github.com/ijoolaie/AI-Employee/issues/1258) remains open for broader acceptance: complete trusted-evidence/policy scenarios, durable handoff/outbound approval, browser-to-real-API, full tenant/privacy matrix and real customer acceptance. CI is not live customer acceptance.
+- Post-merge validation on `31e869542d12aa141745667b8d44b9c1d9650c93`: **11/11 check-runs completed successfully**, with zero failures or pending checks. This is automated CI evidence, not production certification.
+- No local full-suite run, live customer acceptance, production deployment, or new release certification is claimed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Customer conversation slots — PR #1303 merged (2026-10-30)
 
 - PR [#1303](https://github.com/ijoolaie/AI-Employee/pull/1303) was squash-merged to `main` as [`1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`](https://github.com/ijoolaie/AI-Employee/commit/1cb51001d3a8922b1e48c9d87b376a1cb4aa7831), from exact tested head `c38c6dda9ab835995a5e457f9079cc49dabd9e7f`.

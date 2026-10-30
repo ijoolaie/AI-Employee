@@ -1,5 +1,40 @@
 # AI-Employee master handoff — 2026-10-30
 
+## Current checkpoint — 2026-10-30 (after PR #1307)
+
+Repository: [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee), default branch `main`.
+Current main SHA: [`31e869542d12aa141745667b8d44b9c1d9650c93`](https://github.com/ijoolaie/AI-Employee/commit/31e869542d12aa141745667b8d44b9c1d9650c93).
+
+### Customer-support Run-path preflight
+
+- PR [#1307](https://github.com/ijoolaie/AI-Employee/pull/1307) squash-merged from exact head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`; all 15/15 exact-head checks passed.
+- `execute_run` now calls deterministic preflight before primary response-generation gateway invocation for conservative explicit intents: delivery ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders, in addition to shipping fee. It asks only the first missing required slot for one unambiguous intent. Unknown or multiple intents remain on the normal guarded model path.
+- Tests cover intent detection, missing-slot selection, ambiguity and Run-path behavior asserting no gateway call while required context is missing.
+- Safety boundary: customer-provided order/payment references remain untrusted claims. Preflight does not synthesize order/payment state, stock, ETA, discounts, refunds or other commercial outcomes. Complete requests continue through existing policy/tool authorization.
+- Issue #1258 remains open for trusted-evidence and policy outcomes, durable handoff/outbound approval, browser-to-real-API and full tenant/privacy plus live customer acceptance. The merge closes one Run-path wiring increment, not the whole acceptance issue.
+
+### Post-merge validation
+
+- All **11/11 check-runs** on merge SHA `31e869542d12aa141745667b8d44b9c1d9650c93` completed successfully, with zero failures or pending checks. This is automated post-merge CI evidence, not production certification.
+- No local full-suite run, live customer acceptance, production deployment, or release certification is claimed.
+
+### Ordered next actions
+
+1. Reconcile all 11 post-merge checks on `31e869542d12aa141745667b8d44b9c1d9650c93`; investigate any failed job and record final results.
+2. Continue Issue #1258 acceptance for trusted evidence/policy outcomes, handoff/outbound approval, browser-to-real-API and tenant/privacy isolation.
+3. Keep Issue #1305 physical erasure gated on explicit retention duration, audit and schedule approval.
+4. Continue Issue #1288 only with authorized non-production SMTP proof, named staff ownership and measurable response SLA.
+5. Continue Issue #1061 customer discovery (five decision-maker conversations and two concrete sample/trial commitments).
+6. Keep World visual redesign PR #1257 Draft/on hold pending explicit visual acceptance.
+
+### Release boundary
+
+Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Mainline merges and green CI do not certify production deployment, live-provider behavior, customer acceptance or revenue. No deployment or release was performed.
+
+---
+
+# AI-Employee master handoff — 2026-10-30
+
 ## Current checkpoint — 2026-10-30 (after PR #1303)
 
 Repository: [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee), default branch `main`.
