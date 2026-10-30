@@ -5,7 +5,7 @@
 - The Run path now applies conservative explicit-phrase intent detection and deterministic missing-slot preflight for delivery ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders (plus the existing shipping-fee path). For a single unambiguous intent it asks only the first missing required slot before any model/provider call; ambiguity/unknown intents remain on the guarded model path.
 - Run-path tests assert that the model gateway is not called while required context is missing. Customer-provided order/payment references remain untrusted claims; this change does not synthesize stock, ETA, discount, refund or payment outcomes.
 - [Issue #1258](https://github.com/ijoolaie/AI-Employee/issues/1258) remains open for broader acceptance: complete trusted-evidence/policy scenarios, durable handoff/outbound approval, browser-to-real-API, full tenant/privacy matrix and real customer acceptance. CI is not live customer acceptance.
-- Post-merge validation on `31e869542d12aa141745667b8d44b9c1d9650c93` started with **11 check-runs in progress** at documentation time; final results must be reconciled before claiming post-merge CI completion.
+- Post-merge validation on `31e869542d12aa141745667b8d44b9c1d9650c93`: **11/11 check-runs completed successfully**, with zero failures or pending checks. This is automated CI evidence, not production certification.
 - No local full-suite run, live customer acceptance, production deployment, or new release certification is claimed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ---
