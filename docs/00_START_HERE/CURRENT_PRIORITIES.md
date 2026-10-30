@@ -1,3 +1,22 @@
+## Verified checkpoint — 2026-10-30 (PRs #1310 and #1311 merged)
+
+Application baseline: `main` at `3d3f7f72c4c5e56a4d7e3f1c73cd282c41aea10f` after the two merges below. This documentation checkpoint does not change application behavior.
+
+- PR [#1310](https://github.com/ijoolaie/AI-Employee/pull/1310) merged as `f262a1df58ba4d8c24fccc7e4573ee04c3efe4fb`. All 15/15 exact-head checks passed before merge; all 11/11 post-merge checks on the merge SHA have now completed successfully. Missing-slot preflight skips RAG retrieval, memory retrieval/embedding and automatic memory extraction; the regression test instruments the actual provider/embedding boundaries.
+- PR [#1311](https://github.com/ijoolaie/AI-Employee/pull/1311) merged as `3d3f7f72c4c5e56a4d7e3f1c73cd282c41aea10f`. It was synchronized with the #1310 merge, all 4/4 exact-head checks passed, and all 5/5 post-merge checks have now completed successfully.
+- Open PR inventory: only [#1257](https://github.com/ijoolaie/AI-Employee/pull/1257), intentionally Draft/on hold for human visual acceptance. Do not merge based on CI or synthetic screenshots.
+- [Issue #1258](https://github.com/ijoolaie/AI-Employee/issues/1258) remains the active engineering/product acceptance tracker. Implemented slot provenance and conservative preflight are partial increments, not proof of trusted order/payment/stock/policy outcomes, durable staff delivery, browser-to-real-API acceptance, complete tenant/privacy acceptance, or live customer acceptance.
+- [Issue #1288](https://github.com/ijoolaie/AI-Employee/issues/1288) remains blocked on authorized non-production SMTP delivery evidence, a named human owner and an agreed measurable SLA. Mocked SMTP/outbox tests do not prove delivery.
+- [Issue #1305](https://github.com/ijoolaie/AI-Employee/issues/1305) remains blocked on explicit owner approval of retention duration, audit requirements and purge schedule. Logical expiry is not physical erasure; do not enable purge before approval.
+- [Issue #1061](https://github.com/ijoolaie/AI-Employee/issues/1061) remains blocked on real prospective-customer discovery (target: five decision-maker conversations and two concrete sample/trial commitments). No customer demand or revenue is claimed.
+- [Issue #1044](https://github.com/ijoolaie/AI-Employee/issues/1044) and Draft PR #1257 remain deferred pending actual-runtime desktop/mobile evidence and explicit human visual approval. [Issue #1250](https://github.com/ijoolaie/AI-Employee/issues/1250) remains upstream advisory watch; no guessed dependency override or suppression.
+- External gates #19, #210, #259 and #269 remain open for target-production RBAC, exact-SHA release promotion, production operations/security/DR and customer acceptance evidence. No repository CI result closes these gates.
+- Latest production-certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. The newer mainline commits are not covered by that certification. No deployment or new release certification is claimed.
+
+The older dated checkpoints below are retained as historical records; this verified checkpoint supersedes their pending/running descriptions of PRs #1310 and #1311.
+
+---
+
 ## Provider-boundary follow-up — 2026-10-30
 
 - PR #1309 is closed as superseded; its backend failure exposed a test that patched the memory-extraction facade wrapper instead of the underlying provider boundary.
