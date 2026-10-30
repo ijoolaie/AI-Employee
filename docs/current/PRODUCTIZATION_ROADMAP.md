@@ -9,7 +9,7 @@ The project remains in **Post-release Reconciliation → External Production & C
 - **Operational handoff:** Issue #1288 still requires authorized non-production SMTP delivery, named human ownership and a measurable SLA.
 - **Customer evidence:** Issue #1061 remains a separate discovery gate (five decision-maker conversations and two concrete sample/trial commitments).
 - **World redesign:** #1044 / Draft PR #1257 remain deferred pending explicit human visual acceptance.
-- Post-merge checks on the merge SHA were 4/17 success, 13 pending, zero failed at latest observation. Reconcile before marking complete.
+- All **17/17 post-merge checks** on merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4` completed successfully; zero failed or pending.
 - Latest certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No deployment or new release certification.
 
 ---
