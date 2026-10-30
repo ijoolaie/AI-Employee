@@ -1,3 +1,15 @@
+## Current priority update — Run-path customer-support preflight merged (2026-10-30)
+
+1. **Continue Issue #1258 acceptance** after PRs #1303 and #1307: verify trusted policy/evidence outcomes for ETA, variants, bulk discount, returns/payment, damaged orders; durable handoff and outbound approval; browser-to-real-API; and complete tenant/privacy acceptance. Do not equate green CI with live customer acceptance.
+2. PR #1307 merged as `31e869542d12aa141745667b8d44b9c1d9650c93` from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`; all 15 exact-head checks passed. Eleven post-merge checks were still running when this note was prepared; reconcile them separately.
+3. **Keep Issue #1305 gated** until the owner approves retention duration, audit requirements and purge schedule. Logical expiry is not physical erasure.
+4. **Continue Issue #1288** only with real non-production SMTP delivery evidence, a named human owner and measurable response SLA.
+5. **Continue Issue #1061** customer discovery with five decision-maker conversations and at least two concrete sample/trial commitments before broadening integrations.
+6. Keep World visual acceptance #1044 deferred; PR #1257 remains Draft/on hold pending explicit human visual approval.
+7. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; no deployment or release was performed.
+
+---
+
 ## Current priority update — structured customer slots merged (2026-10-30)
 
 1. **Finish Issue #1258 acceptance** after PR #1303: exercise the remaining Run-path scenarios (ETA, variants, bulk discount, returns/payment), durable handoff and outbound approval, browser-to-real-API, and privacy/tenant isolation. Do not equate the 23 passing exact-head checks with live customer acceptance.
