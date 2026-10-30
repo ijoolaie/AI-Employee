@@ -3,7 +3,7 @@
 The project remains in **Post-release Reconciliation → External Production & Customer Acceptance**; this increment does not change release certification or authorize deployment.
 
 - PR #1307 merged to main as `31e869542d12aa141745667b8d44b9c1d9650c93` from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`; 15/15 exact-head checks passed.
-- The customer-support Run path now performs conservative intent-based missing-slot preflight for ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders, plus existing shipping-fee preflight. Missing context is requested before model/provider execution; ambiguity is not guessed.
+- The customer-support Run path now performs conservative intent-based missing-slot preflight for ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders, plus existing shipping-fee preflight. Missing context is requested before the primary response-generation gateway call; ambiguity is not guessed. Optional provider-backed retrieval and automatic memory extraction are tracked separately in PR #1309 (open, CI pending).
 - Next acceptance remains Issue #1258: trusted policy/evidence outcomes, durable handoff/outbound approval, browser-to-real-API and complete tenant/privacy plus live customer acceptance.
 - Issue #1305 remains gated on owner approval of retention duration, audit requirements and purge schedule; logical expiry is not physical erasure.
 - Issue #1288 still requires authorized non-production SMTP delivery, named human ownership and measurable SLA. Issue #1061 remains the customer-discovery gate. World redesign #1044 / Draft PR #1257 remains deferred.
