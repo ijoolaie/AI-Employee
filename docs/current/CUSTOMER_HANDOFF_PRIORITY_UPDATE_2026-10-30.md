@@ -3,7 +3,7 @@
 - PR [#1307](https://github.com/ijoolaie/AI-Employee/pull/1307) merged as `31e869542d12aa141745667b8d44b9c1d9650c93` from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`; all 15 exact-head checks passed.
 - Run execution now performs conservative missing-slot preflight for ETA, variants, bulk discounts, returns/exchanges, payment issues and damaged orders (plus shipping fee). Unknown/multi-intent requests are not guessed; missing context is requested before provider invocation.
 - Issue #1258 remains open for trusted evidence/policy completion, durable handoff/outbound approval, browser-to-real-API and full tenant/privacy/live-customer acceptance.
-- Eleven post-merge checks were still in progress at the time of this update; final merge-SHA results must be reconciled separately.
+- All **11/11 post-merge checks** on merge SHA `31e869542d12aa141745667b8d44b9c1d9650c93` completed successfully; zero failures or pending checks.
 - Issue #1305 physical erasure remains gated on owner-approved retention duration, audit requirements and schedule. Certified release remains v1.4.17; no production deployment or release was performed.
 
 ---
