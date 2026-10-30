@@ -1,0 +1,50 @@
+import { expect, test } from "@playwright/test";
+
+test("public widget uses the real API for conversation, message persistence, and token checks", async ({ page }) => {
+  const publicKey = process.env.PUBLIC_CHAT_KEY;
+  expect(publicKey, "the CI fixture must provision a public channel").toBeTruthy();
+
+  const channelLookup = page.waitForResponse((response) =>
+    response.url().includes(`/api/proxy/public/chat/channels/${publicKey}`) &&
+    response.request().method() === "GET"
+  );
+  await page.goto(`/chat/${publicKey}`);
+  expect((await channelLookup).status()).toBe(200);
+  await expect(page.locator("section header h1")).toHaveText("CI Public Support Employee");
+
+  await page.getByRole("button").first().click();
+  const storageKey = `aiep-chat-${publicKey}`;
+  await expect.poll(() => page.evaluate((key) => window.localStorage.getItem(key), storageKey)).not.toBeNull();
+  const stored = await page.evaluate((key) => {
+    const value = window.localStorage.getItem(key);
+    return value ? JSON.parse(value) as { id: string; token: string } : null;
+  }, storageKey);
+  expect(stored?.id).toBeTruthy();
+  expect(stored?.token).toBeTruthy();
+
+  const customerMessage = `browser-api-acceptance-${Date.now()}`;
+  await page.locator("form textarea").fill(customerMessage);
+  const sendRequest = page.waitForResponse((response) =>
+    response.url().includes(`/api/proxy/public/chat/conversations/${stored!.id}/messages`) &&
+    response.request().method() === "POST"
+  );
+  await page.locator("form button").click();
+  const sendResponse = await sendRequest;
+  expect(sendResponse.status()).toBe(200);
+  const envelope = await sendResponse.json();
+  expect(envelope.success).toBe(true);
+  expect(envelope.data.conversation_id).toBe(stored!.id);
+  expect(envelope.data.run_id).toMatch(/^[0-9a-f-]{36}$/i);
+  expect(envelope.data.status).toBeTruthy();
+
+  // The page polls the real customer-token-protected transcript endpoint.
+  await expect(page.getByText(customerMessage, { exact: true })).toBeVisible({ timeout: 15_000 });
+
+  const wrongTokenStatus = await page.evaluate(async (conversationId) => {
+    const response = await fetch(`/api/proxy/public/chat/conversations/${conversationId}`, {
+      headers: { "X-Customer-Token": "not-the-owner-token" },
+    });
+    return response.status;
+  }, stored.id);
+  expect(wrongTokenStatus).toBe(404);
+});
