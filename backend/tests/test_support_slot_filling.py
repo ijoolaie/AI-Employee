@@ -374,3 +374,47 @@ def test_shipping_preflight_asks_for_city_when_customer_lists_alternatives():
         policy,
         known_slots={"city": "تهران"},
     ) == "ارسال برای کدوم شهره؟ 😊"
+
+
+
+@pytest.mark.parametrize(
+    ("message", "expected_intent", "expected_question"),
+    [
+        ("زمان تحویل سفارش من چقدره؟", "delivery_eta", "ارسال برای کدوم شهره؟ 😊"),
+        ("موجودی تی‌شرت در چه رنگ و سایزی هست؟", "variant_stock", "کدوم محصول مدنظرتونه؟"),
+        ("برای خرید عمده تخفیف دارید؟", "bulk_discount", "کدوم محصول مدنظرتونه؟"),
+        ("می‌خوام کالا رو مرجوع کنم", "return_exchange", "شماره سفارش‌تون رو می‌فرمایید؟"),
+        ("پرداخت من ناموفق بوده", "payment_issue", "شماره سفارش‌تون رو می‌فرمایید؟"),
+        ("سفارشم آسیب دیده", "damaged_order", "شماره سفارش‌تون رو می‌فرمایید؟"),
+    ],
+)
+def test_explicit_support_intent_preflights_first_missing_slot(message, expected_intent, expected_question):
+    from app.services.support_slot_filling import detect_support_intent, support_slot_preflight_response
+
+    assert detect_support_intent(message) == expected_intent
+    assert support_slot_preflight_response(message, policy={}, known_slots={}) == expected_question
+
+
+def test_ambiguous_multi_intent_message_is_not_preflight_routed():
+    from app.services.support_slot_filling import detect_support_intent, support_slot_preflight_response
+
+    message = "پرداخت ناموفق بوده و می‌خواهم کالا را مرجوع کنم"
+    assert detect_support_intent(message) is None
+    assert support_slot_preflight_response(message, policy={}, known_slots={}) is None
+
+
+@pytest.mark.parametrize(
+    ("message", "known", "expected"),
+    [
+        ("زمان تحویل سفارش چقدره؟", {"city": "تهران"}, "شماره سفارش‌تون رو می‌فرمایید؟"),
+        ("موجودی تی‌شرت در چه رنگ و سایزی هست؟", {"product": "تی‌شرت"}, "چه رنگی مدنظرتونه؟"),
+        ("برای خرید عمده تخفیف دارید؟", {"product": "تی‌شرت"}, "چند عدد مدنظرتونه؟"),
+        ("می‌خوام کالا رو مرجوع کنم", {"order_id": "ORD-1"}, "دلیل درخواست تعویض یا مرجوعی رو می‌فرمایید؟"),
+        ("پرداخت من ناموفق بوده", {"order_id": "ORD-1"}, "شماره پیگیری پرداخت یا سفارش رو می‌فرمایید؟"),
+        ("سفارشم آسیب دیده", {"order_id": "ORD-1"}, "ممکنه کمی بیشتر درباره مشکلی که پیش اومده توضیح بدید؟"),
+    ],
+)
+def test_support_preflight_asks_only_the_first_missing_slot(message, known, expected):
+    from app.services.support_slot_filling import support_slot_preflight_response
+
+    assert support_slot_preflight_response(message, policy={}, known_slots=known) == expected
