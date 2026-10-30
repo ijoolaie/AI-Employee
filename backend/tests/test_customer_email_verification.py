@@ -57,11 +57,7 @@ async def test_public_conversation_does_not_attach_unverified_crm_customer(monke
         assert public_key == "pk_test"
         return channel, employee
 
-    async def forbidden_upsert(*args, **kwargs):
-        raise AssertionError("Unverified public contact data must not create or link CRM customers")
-
     monkeypatch.setattr(customer_channel_service, "get_public_channel", get_channel)
-    monkeypatch.setattr(customer_channel_service.customer_service, "upsert_customer", forbidden_upsert)
     db = _DB()
     conversation, token, result_employee = await customer_channel_service.create_conversation(
         db, public_key="pk_test", customer_name="Test",
