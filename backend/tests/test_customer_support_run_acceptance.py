@@ -254,7 +254,7 @@ async def test_execute_run_exposes_validated_customer_slots_as_context_not_busin
     assert result.status == "success"
     contract = captured["context"].rules["customer_support_contract"]
     assert "customer_provided_slots" not in contract
-    assert "not proof" in contract["slot_provenance"]
+    assert "never treat them as proof" in contract["slot_provenance"]
     request = gateway.calls[0][0][1]
     saved_context_message = request.messages[-1]
     assert saved_context_message.role == "user"
