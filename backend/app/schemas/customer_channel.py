@@ -76,7 +76,7 @@ class PublicEmailVerificationResponse(BaseModel):
 class PublicCustomerOrder(BaseModel):
     number: str
     status: str
-    order_date: datetime | date
+    order_date: date
     total: Decimal
     currency: str
 
