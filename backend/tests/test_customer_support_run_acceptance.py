@@ -8,6 +8,7 @@ import pytest
 from app.ai.schemas import ChatResult
 from app.models.run import Run
 from app.services import run_service
+from app.memory import auto_extract, auto_extract_impl
 from app.services.support_slot_filling import shipping_fee_preflight_response
 
 
@@ -295,4 +296,49 @@ async def test_execute_run_preflights_missing_support_slots_without_model_call(m
     assert result.status == "success"
     assert result.output_data["content"] == expected
     assert gateway.calls == [], "Missing required support context must be requested before any model call"
+    assert db.committed
+
+
+@pytest.mark.asyncio
+async def test_execute_run_skips_rag_and_memory_embedding_when_support_preflight_is_pending(monkeypatch):
+    current = "پرداخت من ناموفق بوده"
+    run, version, channel = _make_run(current, "Customer: no trusted payment reference", {})
+    db = _RunPathDB(run, version, channel)
+    gateway = _Gateway()
+    _patch_run_path(monkeypatch, gateway)
+    monkeypatch.setattr(run_service, "extract_and_consolidate_run_memory", auto_extract.extract_and_consolidate_run_memory)
+
+    monkeypatch.setattr(
+        run_service,
+        "rag_settings",
+        lambda rules: {"enabled": True, "query_fields": ["message"], "top_k": 1},
+    )
+    monkeypatch.setattr(
+        run_service,
+        "memory_settings",
+        lambda rules: {
+            "enabled": True,
+            "query_fields": ["message"],
+            "top_k": 1,
+            "min_score": 0.1,
+        },
+    )
+
+    async def unexpected_retrieval(*args, **kwargs):
+        raise AssertionError("Retrieval/embedding must not run during missing-slot preflight")
+
+    def unexpected_provider(*args, **kwargs):
+        raise AssertionError("Memory extraction provider must not run during missing-slot preflight")
+
+    monkeypatch.setattr(run_service.rag_service, "search", unexpected_retrieval)
+    monkeypatch.setattr(run_service.memory_service, "search_memory", unexpected_retrieval)
+    monkeypatch.setattr(run_service, "auto_memory_settings", lambda rules: {"enabled": True})
+    monkeypatch.setattr(auto_extract_impl, "AIGateway", unexpected_provider)
+    monkeypatch.setattr(auto_extract_impl, "embed_texts", unexpected_retrieval)
+
+    result = await run_service.execute_run(db, run_id=run.id)
+
+    assert result.status == "success"
+    assert result.output_data["content"] == "شماره سفارش‌تون رو می‌فرمایید؟"
+    assert gateway.calls == []
     assert db.committed
