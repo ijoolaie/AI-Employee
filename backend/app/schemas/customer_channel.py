@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class CustomerChannelCreate(BaseModel):
     employee_id: UUID
@@ -31,7 +31,7 @@ class PublicChannelResponse(BaseModel):
 
 class PublicConversationCreate(BaseModel):
     customer_name: str | None = Field(default=None, max_length=160)
-    customer_email: str | None = Field(default=None, max_length=320)
+    customer_email: EmailStr | None = None
     customer_phone: str | None = Field(default=None, max_length=40)
 
 class PublicMessageCreate(BaseModel):
@@ -48,6 +48,7 @@ class PublicConversationResponse(BaseModel):
     employee_name: str
     status: str
     customer_token: str | None = None
+    email_verified: bool = False
     messages: list[PublicMessageResponse]
 
 class CustomerConversationSummary(BaseModel):
@@ -64,7 +65,7 @@ class CustomerConversationSummary(BaseModel):
 
 
 class PublicEmailVerificationCode(BaseModel):
-    code: str = Field(min_length=6, max_length=6, pattern=r"^\\d{6}$")
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
 
 class PublicEmailVerificationResponse(BaseModel):
     verified: bool
