@@ -8,7 +8,7 @@ Current main SHA: [`31e869542d12aa141745667b8d44b9c1d9650c93`](https://github.co
 ### Customer-support Run-path preflight
 
 - PR [#1307](https://github.com/ijoolaie/AI-Employee/pull/1307) squash-merged from exact head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`; all 15/15 exact-head checks passed.
-- `execute_run` now calls deterministic preflight before model/provider invocation for conservative explicit intents: delivery ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders, in addition to shipping fee. It asks only the first missing required slot for one unambiguous intent. Unknown or multiple intents remain on the normal guarded model path.
+- `execute_run` now calls deterministic preflight before primary response-generation gateway invocation for conservative explicit intents: delivery ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders, in addition to shipping fee. It asks only the first missing required slot for one unambiguous intent. Unknown or multiple intents remain on the normal guarded model path.
 - Tests cover intent detection, missing-slot selection, ambiguity and Run-path behavior asserting no gateway call while required context is missing.
 - Safety boundary: customer-provided order/payment references remain untrusted claims. Preflight does not synthesize order/payment state, stock, ETA, discounts, refunds or other commercial outcomes. Complete requests continue through existing policy/tool authorization.
 - Issue #1258 remains open for trusted-evidence and policy outcomes, durable handoff/outbound approval, browser-to-real-API and full tenant/privacy plus live customer acceptance. The merge closes one Run-path wiring increment, not the whole acceptance issue.
