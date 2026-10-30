@@ -172,3 +172,10 @@ async def test_upsert_rejects_slot_value_not_present_in_source_message():
             now=datetime(2026, 10, 30, tzinfo=timezone.utc),
         )
     assert db.calls == 1
+
+
+def test_alternative_configured_and_unconfigured_destinations_invalidate_city():
+    policy = {"shipping": {"cities": ["تهران"], "rates_by_city": {"تهران": 50000}}}
+    assert extract_explicit_customer_slots(
+        "هزینه ارسال به تهران یا اصفهان؟", support_policy=policy
+    ) == {"city": None}
