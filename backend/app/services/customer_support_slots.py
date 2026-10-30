@@ -86,7 +86,7 @@ def extract_explicit_customer_slots(
 
     city = find_trusted_shipping_city(message, shipping)
     ambiguous_destination = re.search(
-        r"(?:به|برای)\\s+[\\w‌-]+\\s+یا\\s+[\\w‌-]+",
+        r"(?:به|برای)\s+[\w‌-]+\s+یا\s+[\w‌-]+",
         message,
         re.UNICODE,
     )
