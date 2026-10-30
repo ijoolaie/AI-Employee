@@ -1,3 +1,16 @@
+## Customer conversation slots — PR #1303 merged (2026-10-30)
+
+- PR [#1303](https://github.com/ijoolaie/AI-Employee/pull/1303) was squash-merged to `main` as [`1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`](https://github.com/ijoolaie/AI-Employee/commit/1cb51001d3a8922b1e48c9d87b376a1cb4aa7831), from exact tested head `c38c6dda9ab835995a5e457f9079cc49dabd9e7f`.
+- All 23/23 check-runs passed on that exact PR head, including backend, frontend, PostgreSQL-backed tests, tenant isolation/RBAC, security/privacy, DAST, infrastructure, recovery, semantic real-stack E2E, architecture and both CodeQL analyses.
+- The merged implementation adds tenant/conversation/source-message-bound structured customer slots, allowlisted slot/type validation, conservative extraction, per-slot logical expiry, conflict and unconfigured-value invalidation, exact customer-authored source-message verification on reads, and validated prior-city reuse in shipping preflight.
+- The source-message content check is fail-closed: a stored value absent from its exact customer-authored source message is rejected. Do not weaken this boundary to satisfy fixtures.
+- [Issue #1258](https://github.com/ijoolaie/AI-Employee/issues/1258) remains open for the broader acceptance matrix: ETA, variants, bulk discount, returns/payment, durable handoff/outbound approval, browser-to-real-API, and complete privacy/tenant acceptance. CI and synthetic fixtures are not live customer acceptance.
+- [Issue #1305](https://github.com/ijoolaie/AI-Employee/issues/1305) remains open. Expiry prevents reuse but does not physically erase rows. Do not enable a purge until retention duration, audit requirements and operational schedule are approved.
+- Post-merge checks on merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`: **17/17 completed successfully**, with zero failures or pending checks. This is automated post-merge CI evidence, not production certification.
+- No local full-suite run, live customer acceptance, production deployment, or new release certification is claimed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+---
+
 ## Workspace listing artifact-kind guard — merged and CI-verified (2026-10-28)
 
 - PR [#1282](https://github.com/ijoolaie/AI-Employee/pull/1282) was squash-merged as [`e792c33155d16cba8a32f0e6b0ec85aafe6b221c`](https://github.com/ijoolaie/AI-Employee/commit/e792c33155d16cba8a32f0e6b0ec85aafe6b221c), from exact tested head `255ee2dc70c5591585ec528d91d44feb38dc1804`.

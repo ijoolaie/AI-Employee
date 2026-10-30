@@ -1,3 +1,14 @@
+## Engineering hand-off update — customer slots merged (2026-10-30)
+
+- Current main checkpoint: `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`; PR #1303 is merged from exact tested head `c38c6dda9ab835995a5e457f9079cc49dabd9e7f`, with 23/23 exact-head checks successful.
+- Tenant-scoped customer conversation slots now carry exact customer-authored source-message provenance, conservative allowlisted values, logical expiry and fail-closed source-content validation. Prior validated city reuse is integrated in shipping preflight.
+- Next customer-support engineering gate is the remaining Issue #1258 acceptance matrix: ETA, variants, bulk discount, returns/payment, durable handoff/outbound approval, browser-to-real-API and full privacy/tenant acceptance.
+- Issue #1305 is the separate physical-erasure follow-up. No purge may be enabled until retention duration, audit requirements and schedule are owner-approved; logical expiry is not physical deletion.
+- All **17/17 post-merge workflows** on merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4` completed successfully; zero failed or pending. This remains automated CI evidence only.
+- Certified release remains v1.4.17 at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; no production deployment or release was performed.
+
+---
+
 # AI Employee Platform — Master Implementation & Delivery Hand-off
 
 **Hand-off updated:** 2026-10-10  

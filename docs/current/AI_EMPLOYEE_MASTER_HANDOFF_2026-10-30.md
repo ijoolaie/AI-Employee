@@ -1,5 +1,38 @@
 # AI-Employee master handoff — 2026-10-30
 
+## Current checkpoint — 2026-10-30 (after PR #1303)
+
+Repository: [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee), default branch `main`.
+Current main SHA: [`1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`](https://github.com/ijoolaie/AI-Employee/commit/1cb51001d3a8922b1e48c9d87b376a1cb4aa7831).
+
+### Customer conversation intelligence
+
+- PR [#1303](https://github.com/ijoolaie/AI-Employee/pull/1303) is squash-merged from exact head `c38c6dda9ab835995a5e457f9079cc49dabd9e7f`; all 23 exact-head checks passed.
+- Structured slots are tenant/conversation scoped and tied to an exact customer-authored source message. Values are allowlisted and conservatively extracted; expiry, conflict invalidation, configured-city constraints and fail-closed source-value verification apply. Validated prior city can be reused in shipping preflight.
+- This is an engineering implementation checkpoint, not a complete support acceptance. Issue #1258 remains open for remaining ETA/variant/bulk-discount/returns/payment Run-path journeys, durable human handoff/outbound approval, browser-to-real-API and full tenant/privacy acceptance.
+- Issue #1305 tracks physical erasure. Expired rows are not reused, but remain stored until source/conversation deletion. Do not implement or enable production purge before retention duration, audit requirements and operational schedule are approved.
+
+### Post-merge verification
+
+- Merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`: all **17/17 post-merge check-runs completed successfully**; zero failed or pending. No local full-suite run, live customer acceptance, production deployment or release certification is implied.
+- No local full-suite execution, live customer acceptance, real SMTP delivery, production deployment or release certification is claimed.
+
+### Ordered next actions
+
+1. Reconcile all post-merge checks on `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`; investigate any failed job and record final results.
+2. Continue Issue #1258 against the remaining Run-path and end-to-end acceptance matrix; preserve source-message provenance and tenant isolation.
+3. Obtain explicit owner approval for Issue #1305 retention duration, audit and schedule before designing/enabling bounded physical purge.
+4. Continue Issue #1288 only with authorized non-production SMTP proof, named staff ownership and measurable response SLA.
+5. Continue Issue #1061 customer discovery (five decision-maker conversations and two concrete sample/trial commitments).
+6. Keep World visual redesign PR #1257 Draft/on hold until explicit visual acceptance; do not prioritize it over reliability and customer evidence.
+
+### Release boundary
+
+Latest published certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Mainline merges and green CI do not certify production deployment, live-provider behavior, customer acceptance or revenue. No deployment or release was performed.
+
+---
+
+
 ## Current checkpoint
 
 Repository: [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee), default branch `main`.
