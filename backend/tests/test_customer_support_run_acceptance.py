@@ -326,10 +326,13 @@ async def test_execute_run_skips_rag_and_memory_embedding_when_support_preflight
     async def unexpected_retrieval(*args, **kwargs):
         raise AssertionError("Retrieval/embedding must not run during missing-slot preflight")
 
+    def unexpected_provider(*args, **kwargs):
+        raise AssertionError("Memory extraction provider must not run during missing-slot preflight")
+
     monkeypatch.setattr(run_service.rag_service, "search", unexpected_retrieval)
     monkeypatch.setattr(run_service.memory_service, "search_memory", unexpected_retrieval)
     monkeypatch.setattr(run_service, "auto_memory_settings", lambda rules: {"enabled": True})
-    monkeypatch.setattr(auto_extract_impl, "AIGateway", lambda: unexpected_retrieval())
+    monkeypatch.setattr(auto_extract_impl, "AIGateway", unexpected_provider)
     monkeypatch.setattr(auto_extract_impl, "embed_texts", unexpected_retrieval)
 
     result = await run_service.execute_run(db, run_id=run.id)
