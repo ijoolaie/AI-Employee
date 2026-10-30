@@ -1,3 +1,14 @@
+## Structured customer-slot implementation checkpoint — 2026-10-30
+
+- PR [#1303](https://github.com/ijoolaie/AI-Employee/pull/1303) merged as `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`; all 23 exact-head checks passed on `c38c6dda9ab835995a5e457f9079cc49dabd9e7f`.
+- Tenant-scoped slots now persist with exact customer-message provenance, allowlist/type validation, per-slot expiry and fail-closed source-content verification; validated prior city reuse is supported in shipping preflight.
+- Issue #1258 remains open for remaining Run-path scenarios, durable handoff/outbound approval, browser-to-real-API and full privacy/tenant acceptance. No live customer acceptance is claimed.
+- Issue #1305 remains open: logical expiry is not physical deletion. Retention duration, audit requirements and operational schedule require owner approval before purge implementation/activation.
+- Merge SHA post-merge checks were 4/17 successful and 13 pending at latest reconciliation; none failed. Recheck final outcomes.
+- Certified release remains `v1.4.17`; no production deployment or release was performed.
+
+---
+
 # Customer handoff/outbox priority update — 2026-10-30
 
 This dated priority record preserves the actionable guidance introduced by the superseded 2026-10-29 handoff PR #1299, reconciled against the newer master handoff and merged PR #1300.
