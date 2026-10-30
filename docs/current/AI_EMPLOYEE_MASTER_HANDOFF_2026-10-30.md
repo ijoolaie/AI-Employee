@@ -1,3 +1,12 @@
+## Provider-boundary follow-up — 2026-10-30
+
+- PR #1309 is closed as superseded; its backend failure exposed a test that patched the memory-extraction facade wrapper instead of the underlying provider boundary.
+- Replacement PR [#1310](https://github.com/ijoolaie/AI-Employee/pull/1310) is based on current main and instruments the real memory AI gateway and embedding function, while asserting RAG/memory retrieval is skipped during missing-slot preflight. Exact-head CI is running; do not merge until all required checks pass.
+- Documentation PR [#1311](https://github.com/ijoolaie/AI-Employee/pull/1311) records this correction across the current status, priorities, customer handoff and roadmap; this update also adds the master handoff checkpoint.
+- Issue #1258 remains open for trusted-evidence and policy outcomes, durable handoff/outbound approval, browser-to-real-API, full tenant/privacy acceptance and real customer validation. No production deployment or new release certification is claimed.
+
+---
+
 # AI-Employee master handoff — 2026-10-30
 
 ## Current checkpoint — 2026-10-30 (after PR #1307)
