@@ -156,7 +156,7 @@ def shipping_fee_preflight_response(message: str, policy: dict[str, Any] | None 
         and re.search(rf"(?<![\w]){re.escape(city_name)}(?![\w])", message, re.UNICODE)
     }
     alternative_destinations = re.search(
-        r"(?:به|برای)\\s+[\\w‌-]+\\s+یا\\s+[\\w‌-]+",
+        r"(?:به|برای)\s+[\w‌-]+\s+یا\s+[\w‌-]+",
         message,
         re.UNICODE,
     )
