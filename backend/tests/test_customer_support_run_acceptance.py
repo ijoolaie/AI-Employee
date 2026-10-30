@@ -8,6 +8,7 @@ import pytest
 from app.ai.schemas import ChatResult
 from app.models.run import Run
 from app.services import run_service
+from app.memory import auto_extract_impl
 from app.services.support_slot_filling import shipping_fee_preflight_response
 
 
@@ -328,7 +329,8 @@ async def test_execute_run_skips_rag_and_memory_embedding_when_support_preflight
     monkeypatch.setattr(run_service.rag_service, "search", unexpected_retrieval)
     monkeypatch.setattr(run_service.memory_service, "search_memory", unexpected_retrieval)
     monkeypatch.setattr(run_service, "auto_memory_settings", lambda rules: {"enabled": True})
-    monkeypatch.setattr(run_service, "extract_and_consolidate_run_memory", unexpected_retrieval)
+    monkeypatch.setattr(auto_extract_impl, "AIGateway", lambda: unexpected_retrieval())
+    monkeypatch.setattr(auto_extract_impl, "embed_texts", unexpected_retrieval)
 
     result = await run_service.execute_run(db, run_id=run.id)
 
