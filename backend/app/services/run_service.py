@@ -420,6 +420,12 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 rules["customer_support_contract"] = {
                     "enabled": True,
                     "policy": support_policy if isinstance(support_policy, dict) else {},
+                    "customer_provided_slots": trusted_slots,
+                    "slot_provenance": (
+                        "Values are explicit customer statements from tenant-scoped, unexpired "
+                        "source messages. They may prevent repeated questions, but are not proof "
+                        "of order/payment status, inventory, delivery, refund eligibility, or store policy."
+                    ),
                     "requirements": [
                         "Answer the customer's latest message in natural, respectful Persian when the customer writes Persian.",
                         "Before answering a question whose answer depends on missing information, ask one concise question for the first required missing detail; do not ask for details already present in the authorized conversation transcript.",
