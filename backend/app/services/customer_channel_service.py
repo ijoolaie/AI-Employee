@@ -357,6 +357,16 @@ async def request_customer_email_verification(
         raise ValidationAppError("Email verification is temporarily unavailable")
 
     now = datetime.now(timezone.utc)
+    email_recent_count = (await db.execute(
+        select(func.count()).select_from(CustomerEmailVerification).where(
+            CustomerEmailVerification.tenant_id == conversation.tenant_id,
+            CustomerEmailVerification.email == email,
+            CustomerEmailVerification.created_at >= now - timedelta(hours=1),
+        )
+    )).scalar_one()
+    if email_recent_count >= 5:
+        raise ConflictError("Too many verification requests; try again later")
+
     recent = list((await db.execute(
         select(CustomerEmailVerification)
         .where(
@@ -520,6 +530,8 @@ async def get_public_customer_orders(
     except ValueError:
         return unavailable
     if source_fresh_at.tzinfo is None:
+        return unavailable
+    if source_fresh_at > datetime.now(timezone.utc) + timedelta(seconds=60):
         return unavailable
     if datetime.now(timezone.utc) - source_fresh_at > timedelta(seconds=max_staleness):
         return unavailable
