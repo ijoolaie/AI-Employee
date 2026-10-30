@@ -61,3 +61,11 @@ class CustomerConversationSummary(BaseModel):
     message_count: int
     last_message: str | None
     updated_at: datetime
+
+
+class PublicEmailVerificationCode(BaseModel):
+    code: str = Field(min_length=6, max_length=6, pattern=r"^\\d{6}$")
+
+class PublicEmailVerificationResponse(BaseModel):
+    verified: bool
+    message: str
