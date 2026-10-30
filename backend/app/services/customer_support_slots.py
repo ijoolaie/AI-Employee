@@ -85,7 +85,14 @@ def extract_explicit_customer_slots(
         known.update(item for item in cities if isinstance(item, str))
 
     city = find_trusted_shipping_city(message, shipping)
-    if city and known:
+    ambiguous_destination = re.search(
+        r"(?:به|برای)\\s+[\\w‌-]+\\s+یا\\s+[\\w‌-]+",
+        message,
+        re.UNICODE,
+    )
+    if ambiguous_destination:
+        candidates["city"] = None
+    elif city and known:
         # If the message names multiple configured cities, it is ambiguous.
         matches = {
             item for item in known
