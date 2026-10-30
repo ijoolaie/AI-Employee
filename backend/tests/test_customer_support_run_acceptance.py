@@ -229,3 +229,30 @@ async def test_execute_run_reuses_unexpired_persisted_city_when_current_turn_omi
     assert len(gateway.calls) == 1, "A validated prior city should satisfy the destination slot"
     assert result.output_data["content"] == "grounded return-policy response"
     assert db.committed
+
+
+@pytest.mark.asyncio
+async def test_execute_run_exposes_validated_customer_slots_as_context_not_business_proof(monkeypatch):
+    current = "می‌خواهم درخواست مرجوعی را پیگیری کنم"
+    policy = {"returns": {"review_required": True}}
+    run, version, channel = _make_run(current, "Customer: شماره سفارش: ORD-RET-42", policy)
+    slots = [
+        SimpleNamespace(slot_name="order_id", value="ORD-RET-42"),
+        SimpleNamespace(slot_name="reason", value="کالای آسیب‌دیده"),
+    ]
+    db = _RunPathDB(run, version, channel, slots=slots)
+    gateway = _Gateway()
+    captured = {}
+    _patch_run_path(monkeypatch, gateway, captured)
+
+    result = await run_service.execute_run(db, run_id=run.id)
+
+    assert result.status == "success"
+    contract = captured["context"].rules["customer_support_contract"]
+    assert contract["customer_provided_slots"] == {
+        "order_id": "ORD-RET-42",
+        "reason": "کالای آسیب‌دیده",
+    }
+    assert "not proof" in contract["slot_provenance"]
+    assert len(gateway.calls) == 1
+    assert db.committed
