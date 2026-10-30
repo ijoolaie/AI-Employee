@@ -16,7 +16,7 @@ from app.models.user import User
 from app.models.employee import Employee
 from app.models.run import Run
 from app.models.tenant import Tenant
-from app.services import audit_service, employee_service, run_service, customer_service, outbox_service
+from app.services import audit_service, employee_service, run_service, outbox_service
 from app.core.config import get_settings
 from app.services.customer_support_slots import extract_explicit_customer_slots, upsert_customer_conversation_slots
 
@@ -357,6 +357,9 @@ async def request_customer_email_verification(
         raise ValidationAppError("Email verification is temporarily unavailable")
 
     now = datetime.now(timezone.utc)
+    # Serialize per-tenant email throttling so concurrent conversations cannot
+    # race past the address-level send limit.
+    await db.execute(select(Tenant.id).where(Tenant.id == conversation.tenant_id).with_for_update())
     email_recent_count = (await db.execute(
         select(func.count()).select_from(CustomerEmailVerification).where(
             CustomerEmailVerification.tenant_id == conversation.tenant_id,
