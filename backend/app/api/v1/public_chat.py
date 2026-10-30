@@ -18,8 +18,10 @@ async def get_channel(public_key: str, db: DbSession):
 @router.post("/channels/{public_key}/conversations", response_model=APIResponse[PublicConversationResponse])
 async def create_conversation(public_key: str, payload: PublicConversationCreate, db: DbSession):
     conversation, token, employee = await customer_channel_service.create_conversation(db, public_key=public_key, customer_name=payload.customer_name, customer_email=payload.customer_email, customer_phone=payload.customer_phone)
+    employee_name = employee.name
     await db.commit()
-    return APIResponse(success=True, data=PublicConversationResponse(id=conversation.id, employee_name=employee.name, status=conversation.status, customer_token=token, email_verified=False, messages=[]))
+    await db.refresh(conversation)
+    return APIResponse(success=True, data=PublicConversationResponse(id=conversation.id, employee_name=employee_name, status=conversation.status, customer_token=token, email_verified=False, messages=[]))
 
 @router.get("/conversations/{conversation_id}", response_model=APIResponse[PublicConversationResponse])
 async def get_conversation(conversation_id: UUID, db: DbSession, x_customer_token: str = Header(...)):
