@@ -374,6 +374,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
     gateway = AIGateway()
     paused_for_approval = False
     support_preflight_question: str | None = None
+    validated_customer_slots: dict[str, Any] = {}
     # Keep the Run admission transaction (and therefore the FOR UPDATE lock
     # acquired by the governance wrapper) alive while provider/tool execution
     # can fail. The previous full rollback released that lock before the
