@@ -441,7 +441,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 }
         rag_config = rag_settings(rules)
         retrieved_context: list[dict[str, Any]] = []
-        if rag_config["enabled"]:
+        if rag_config["enabled"] and not support_preflight_question:
             rag_query = build_rag_query(run.input_data, rag_config["query_fields"])
             retrieved_context = await rag_service.search(
                 db, tenant_id=run.tenant_id, query=rag_query, top_k=rag_config["top_k"]
@@ -454,7 +454,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
 
         memory_config = memory_settings(rules)
         memory_context: list[dict[str, Any]] = []
-        if memory_config["enabled"]:
+        if memory_config["enabled"] and not support_preflight_question:
             memory_query = build_memory_query(run.input_data, memory_config["query_fields"])
             memory_context = await memory_service.search_memory(
                 db, tenant_id=run.tenant_id, employee_id=run.employee_id, query=memory_query,
