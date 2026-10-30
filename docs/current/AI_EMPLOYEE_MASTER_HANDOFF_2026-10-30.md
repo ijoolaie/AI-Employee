@@ -14,7 +14,7 @@ Current main SHA: [`1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`](https://github.co
 
 ### Post-merge verification
 
-- Merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`: latest post-merge snapshot was 4/17 checks successful, 13 pending, zero failed. Recheck the exact merge SHA before treating post-merge validation as complete.
+- Merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`: all **17/17 post-merge check-runs completed successfully**; zero failed or pending. No local full-suite run, live customer acceptance, production deployment or release certification is implied.
 - No local full-suite execution, live customer acceptance, real SMTP delivery, production deployment or release certification is claimed.
 
 ### Ordered next actions
