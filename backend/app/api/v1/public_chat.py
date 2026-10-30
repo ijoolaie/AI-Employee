@@ -41,7 +41,7 @@ async def request_email_verification(conversation_id: UUID, db: DbSession, x_cus
         db, conversation_id=conversation_id, token=x_customer_token
     )
     await db.commit()
-    return APIResponse(success=True, data={"message": "If email verification is available, a code has been sent."})
+    return APIResponse(success=True, data={"message": "If email verification is available, a code will be sent."})
 
 
 @router.post("/conversations/{conversation_id}/email-verification/confirm", response_model=APIResponse[PublicEmailVerificationResponse])
