@@ -21,6 +21,7 @@ This is the top-level map for current project documentation.
 | Implementation / verification | `current/STATUS.md` |
 | Commercial edition API-key scope contract and verification limits | `current/11_EDITION_API_KEY_SCOPE_CONTRACT.md` |
 | AI Employee World — current implementation, CI evidence, PR disposition and next steps | `current/AI_EMPLOYEE_MASTER_HANDOFF_2026-10-11.md` |
+| AI-Employee master handoff — customer handoff/outbox and support-intelligence checkpoint (2026-10-30) | `current/AI_EMPLOYEE_MASTER_HANDOFF_2026-10-30.md` |
 | World V2 exact-head validation and visual acceptance blockers (2026-10-12) | `current/AI_EMPLOYEE_WORLD_V2_VALIDATION_2026-10-12.md` |
 | Historical AI Employee World handoff (2026-10-09 snapshot) | `current/AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-09.md` |
 | Delivery roadmap | `current/PRODUCTIZATION_ROADMAP.md` |
