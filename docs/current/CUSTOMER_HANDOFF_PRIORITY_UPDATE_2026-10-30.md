@@ -1,7 +1,17 @@
+## Follow-up checkpoint — provider-boundary fix PR #1310 (2026-10-30)
+
+- Documentation reconciliation PR #1308 merged as `315e3ea71a136bca3ce64772bf28d8a03687f744`; its post-merge CodeQL runs were still running at last inspection.
+- PR #1309 was closed as superseded after backend CI showed its new test patched the memory-extraction facade wrapper, which correctly receives disabled settings during preflight. This was a test-design false positive, not proof of a provider call.
+- Replacement [PR #1310](https://github.com/ijoolaie/AI-Employee/pull/1310) is based on latest main and corrects the regression test to instrument the actual memory AI gateway and embedding function. It also retains assertions that RAG and memory retrieval do not run during preflight.
+- Exact-head `36e0f1abcc3dcac974b2648485a5148732598a09` CI was queued/running at this checkpoint; do not merge before all required checks pass.
+- Issue #1258 remains open for the broader trusted-evidence, handoff, real API, tenant/privacy and live-customer acceptance matrix.
+
+---
+
 ## Customer-support Run-path preflight — PR #1307 merged (2026-10-30)
 
 - PR [#1307](https://github.com/ijoolaie/AI-Employee/pull/1307) merged as `31e869542d12aa141745667b8d44b9c1d9650c93` from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`; all 15 exact-head checks passed.
-- Run execution now performs conservative missing-slot preflight for ETA, variants, bulk discounts, returns/exchanges, payment issues and damaged orders (plus shipping fee). Unknown/multi-intent requests are not guessed; missing context is requested before the primary response-generation call. Optional provider-backed retrieval and automatic memory extraction are tracked separately in PR #1309 (open, CI pending).
+- Run execution now performs conservative missing-slot preflight for ETA, variants, bulk discounts, returns/exchanges, payment issues and damaged orders (plus shipping fee). Unknown/multi-intent requests are not guessed; missing context is requested before the primary response-generation call. Optional provider-backed retrieval and automatic memory extraction are tracked in [PR #1310](https://github.com/ijoolaie/AI-Employee/pull/1310). PR #1309 was closed as superseded after CI identified an over-broad facade-level test; PR #1310 instruments the actual provider and embedding boundaries and awaits exact-head CI.
 - Issue #1258 remains open for trusted evidence/policy completion, durable handoff/outbound approval, browser-to-real-API and full tenant/privacy/live-customer acceptance.
 - All **11/11 post-merge checks** on merge SHA `31e869542d12aa141745667b8d44b9c1d9650c93` completed successfully; zero failures or pending checks.
 - Issue #1305 physical erasure remains gated on owner-approved retention duration, audit requirements and schedule. Certified release remains v1.4.17; no production deployment or release was performed.

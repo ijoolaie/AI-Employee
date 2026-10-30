@@ -1,9 +1,19 @@
+## Follow-up checkpoint — provider-boundary fix PR #1310 (2026-10-30)
+
+- Documentation reconciliation PR #1308 merged as `315e3ea71a136bca3ce64772bf28d8a03687f744`; its post-merge CodeQL runs were still running at last inspection.
+- PR #1309 was closed as superseded after backend CI showed its new test patched the memory-extraction facade wrapper, which correctly receives disabled settings during preflight. This was a test-design false positive, not proof of a provider call.
+- Replacement [PR #1310](https://github.com/ijoolaie/AI-Employee/pull/1310) is based on latest main and corrects the regression test to instrument the actual memory AI gateway and embedding function. It also retains assertions that RAG and memory retrieval do not run during preflight.
+- Exact-head `36e0f1abcc3dcac974b2648485a5148732598a09` CI was queued/running at this checkpoint; do not merge before all required checks pass.
+- Issue #1258 remains open for the broader trusted-evidence, handoff, real API, tenant/privacy and live-customer acceptance matrix.
+
+---
+
 ## Roadmap checkpoint — customer-support Run-path preflight merged (2026-10-30)
 
 The project remains in **Post-release Reconciliation → External Production & Customer Acceptance**; this increment does not change release certification or authorize deployment.
 
 - PR #1307 merged to main as `31e869542d12aa141745667b8d44b9c1d9650c93` from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`; 15/15 exact-head checks passed.
-- The customer-support Run path now performs conservative intent-based missing-slot preflight for ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders, plus existing shipping-fee preflight. Missing context is requested before the primary response-generation gateway call; ambiguity is not guessed. Optional provider-backed retrieval and automatic memory extraction are tracked separately in PR #1309 (open, CI pending).
+- The customer-support Run path now performs conservative intent-based missing-slot preflight for ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders, plus existing shipping-fee preflight. Missing context is requested before the primary response-generation gateway call; ambiguity is not guessed. Optional provider-backed retrieval and automatic memory extraction are tracked in [PR #1310](https://github.com/ijoolaie/AI-Employee/pull/1310); PR #1309 is closed as superseded, and #1310 remains subject to exact-head CI.
 - Next acceptance remains Issue #1258: trusted policy/evidence outcomes, durable handoff/outbound approval, browser-to-real-API and complete tenant/privacy plus live customer acceptance.
 - Issue #1305 remains gated on owner approval of retention duration, audit requirements and purge schedule; logical expiry is not physical erasure.
 - Issue #1288 still requires authorized non-production SMTP delivery, named human ownership and measurable SLA. Issue #1061 remains the customer-discovery gate. World redesign #1044 / Draft PR #1257 remains deferred.
