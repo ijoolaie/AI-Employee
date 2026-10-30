@@ -15,7 +15,7 @@ Current main SHA: [`31e869542d12aa141745667b8d44b9c1d9650c93`](https://github.co
 
 ### Post-merge validation
 
-- Eleven check-runs on merge SHA `31e869542d12aa141745667b8d44b9c1d9650c93` were in progress at this checkpoint. Re-read exact merge-SHA check-runs and record final outcomes; do not infer post-merge success from pre-merge CI.
+- All **11/11 check-runs** on merge SHA `31e869542d12aa141745667b8d44b9c1d9650c93` completed successfully, with zero failures or pending checks. This is automated post-merge CI evidence, not production certification.
 - No local full-suite run, live customer acceptance, production deployment, or release certification is claimed.
 
 ### Ordered next actions
