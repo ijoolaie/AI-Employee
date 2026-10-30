@@ -4,7 +4,7 @@
 - Tenant-scoped customer conversation slots now carry exact customer-authored source-message provenance, conservative allowlisted values, logical expiry and fail-closed source-content validation. Prior validated city reuse is integrated in shipping preflight.
 - Next customer-support engineering gate is the remaining Issue #1258 acceptance matrix: ETA, variants, bulk discount, returns/payment, durable handoff/outbound approval, browser-to-real-API and full privacy/tenant acceptance.
 - Issue #1305 is the separate physical-erasure follow-up. No purge may be enabled until retention duration, audit requirements and schedule are owner-approved; logical expiry is not physical deletion.
-- Post-merge workflows on the merge SHA were 4/17 successful, 13 pending and zero failed at the latest reconciliation. Recheck before calling post-merge verification complete.
+- All **17/17 post-merge workflows** on merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4` completed successfully; zero failed or pending. This remains automated CI evidence only.
 - Certified release remains v1.4.17 at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; no production deployment or release was performed.
 
 ---
