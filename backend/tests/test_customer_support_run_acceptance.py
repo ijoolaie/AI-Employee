@@ -264,3 +264,35 @@ async def test_execute_run_exposes_validated_customer_slots_as_context_not_busin
     assert "کالای آسیب‌دیده" in saved_context_message.content
     assert len(gateway.calls) == 1
     assert db.committed
+
+
+
+@pytest.mark.parametrize(
+    ("current", "saved", "expected"),
+    [
+        ("زمان تحویل سفارش من چقدره؟", {"city": "تهران"}, "شماره سفارش‌تون رو می‌فرمایید؟"),
+        ("موجودی تی‌شرت در چه رنگ و سایزی هست؟", {"product": "تی‌شرت"}, "چه رنگی مدنظرتونه؟"),
+        ("برای خرید عمده تخفیف دارید؟", {"product": "تی‌شرت"}, "چند عدد مدنظرتونه؟"),
+        ("می‌خوام کالا رو مرجوع کنم", {"order_id": "ORD-1"}, "دلیل درخواست تعویض یا مرجوعی رو می‌فرمایید؟"),
+        ("پرداخت من ناموفق بوده", {"order_id": "ORD-1"}, "شماره پیگیری پرداخت یا سفارش رو می‌فرمایید؟"),
+        ("سفارشم آسیب دیده", {"order_id": "ORD-1"}, "ممکنه کمی بیشتر درباره مشکلی که پیش اومده توضیح بدید؟"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_execute_run_preflights_missing_support_slots_without_model_call(monkeypatch, current, saved, expected):
+    run, version, channel = _make_run(current, "Customer: previously supplied details", {})
+    source = "اطلاعات قبلی مشتری: " + "، ".join(str(value) for value in saved.values())
+    slots = [
+        (SimpleNamespace(slot_name=name, value=value), source)
+        for name, value in saved.items()
+    ]
+    db = _RunPathDB(run, version, channel, slots=slots)
+    gateway = _Gateway()
+    _patch_run_path(monkeypatch, gateway)
+
+    result = await run_service.execute_run(db, run_id=run.id)
+
+    assert result.status == "success"
+    assert result.output_data["content"] == expected
+    assert gateway.calls == [], "Missing required support context must be requested before any model call"
+    assert db.committed
