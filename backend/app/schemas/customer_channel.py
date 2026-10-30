@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 from typing import Any
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -70,3 +70,17 @@ class PublicEmailVerificationCode(BaseModel):
 class PublicEmailVerificationResponse(BaseModel):
     verified: bool
     message: str
+
+
+class PublicCustomerOrder(BaseModel):
+    number: str
+    status: str
+    order_date: datetime | date
+    total: str | float
+    currency: str
+
+class PublicCustomerOrdersResponse(BaseModel):
+    available: bool
+    message: str
+    source_fresh_at: datetime | None = None
+    orders: list[PublicCustomerOrder] = Field(default_factory=list)
