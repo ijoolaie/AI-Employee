@@ -968,7 +968,14 @@ export function WorldViewport({
       // desktop camera out; this reduces diagonal skew and keeps the office center readable.
       // Narrower portrait canvases need a little more distance to keep the entire HQ inside the frame.
       const responsiveScale = portrait ? 2.2 + Math.max(0, 0.8 - aspect) * 2 : 1;
-      const effectiveDistance = distance * (portrait ? responsiveScale : 1.85);
+      // Keep the wide HQ framing at overview distances, but remove most of the
+      // responsive camera offset as the user zooms in so employee/workstation
+      // details become visible instead of hitting an artificial zoom floor.
+      const overviewScale = portrait ? responsiveScale : 1.85;
+      const closeupScale = portrait ? 1.3 : 1.15;
+      const overviewBlend = THREE.MathUtils.smoothstep(distance, 5, 24);
+      const cameraScale = THREE.MathUtils.lerp(closeupScale, overviewScale, overviewBlend);
+      const effectiveDistance = distance * cameraScale;
       const fogScale = effectiveDistance / distance;
       if (scene.fog instanceof THREE.Fog) {
         // Keep fog bounds proportional to the responsive camera distance.
@@ -986,6 +993,8 @@ export function WorldViewport({
       }
       camera.lookAt(target.x, 0.8, target.z);
       camera.updateProjectionMatrix();
+      // Expose the logical zoom level for deterministic browser acceptance tests.
+      renderer.domElement.dataset.cameraDistance = distance.toFixed(2);
     };
     updateCamera();
 
@@ -1114,7 +1123,7 @@ export function WorldViewport({
     };
     const onZoom = (event: Event) => {
       const { delta } = (event as CustomEvent<{ delta: number }>).detail;
-      distance = Math.max(11, Math.min(92, distance * (1 - delta)));
+      distance = Math.max(3.5, Math.min(92, distance * (1 - delta)));
       updateCamera();
     };
     const onMapToggle = () => mapToggleRef.current();

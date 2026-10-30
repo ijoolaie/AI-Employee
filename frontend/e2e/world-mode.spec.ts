@@ -133,6 +133,21 @@ test("World Mode renders authoritative employee projection and management bridge
   await expect.poll(() => canvas.getAttribute("data-worker-asset-state"), { timeout: 10_000 }).toBe("glb-loaded");
   expect(materialWarnings, "World scene should not pass an undefined map option to Three.js materials").toEqual([]);
 
+  // Verify that camera controls change the actual scene distance, not just the control UI.
+  const zoomIn = page.getByRole("button", { name: "Zoom in" });
+  const zoomOut = page.getByRole("button", { name: "Zoom out" });
+  const resetView = page.getByRole("button", { name: "Reset world view" });
+  const overviewDistance = Number(await canvas.getAttribute("data-camera-distance"));
+  for (let step = 0; step < 5; step += 1) await zoomIn.click();
+  const closeupDistance = Number(await canvas.getAttribute("data-camera-distance"));
+  expect(closeupDistance).toBeLessThan(overviewDistance);
+  await mkdir("artifacts/world-visual-review", { recursive: true });
+  await page.screenshot({ path: "artifacts/world-visual-review/world-desktop-closeup.png", fullPage: false });
+  await zoomOut.click();
+  expect(Number(await canvas.getAttribute("data-camera-distance"))).toBeGreaterThan(closeupDistance);
+  await resetView.click();
+  expect(Number(await canvas.getAttribute("data-camera-distance"))).toBe(31);
+
   // Use the accessible employee selector so this contract test does not depend on camera projection.
   const employeeSelector = page.getByRole("button", { name: "Select Sales AI" });
   await employeeSelector.evaluate((element) => (element as HTMLButtonElement).focus());
@@ -155,7 +170,21 @@ test("World Mode renders authoritative employee projection and management bridge
   // Exercise mobile pointer panning before expensive visual captures; software-rendered CI
   // can stall pointer dispatch after repeated full-page WebGL screenshots/resizes.
   await page.setViewportSize({ width: 390, height: 844 });
+  // Let the WebGL renderer finish its responsive resize before sending mobile camera input.
+  await page.waitForTimeout(300);
   await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  const mobileOverviewDistance = Number(await canvas.getAttribute("data-camera-distance"));
+  // Batch five equivalent zoom events in one browser evaluation to avoid repeated cross-process dispatches.
+  await canvas.evaluate((element) => {
+    for (let step = 0; step < 5; step += 1) {
+      element.dispatchEvent(new CustomEvent("world:zoom", { detail: { delta: 0.12 } }));
+    }
+  });
+  const mobileCloseupDistance = Number(await canvas.getAttribute("data-camera-distance"));
+  expect(mobileCloseupDistance).toBeLessThan(mobileOverviewDistance);
+  await page.screenshot({ path: "artifacts/world-visual-review/world-mobile-closeup.png", fullPage: false });
+  await canvas.evaluate((element) => element.dispatchEvent(new CustomEvent("world:reset")));
+  expect(Number(await canvas.getAttribute("data-camera-distance"))).toBe(31);
   await page.waitForTimeout(250);
   await canvas.evaluate((element) => {
     (window as Window & { __worldPanEvents?: number }).__worldPanEvents = 0;
@@ -185,11 +214,11 @@ test("World Mode renders authoritative employee projection and management bridge
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForTimeout(1200);
   await page.screenshot({ path: "artifacts/world-visual-review/world-mobile.png", fullPage: false });
-  // Verify mobile HUD/controls at a narrow, target, and wider-narrow viewport, and retain full-page review artifacts.
+  // Verify mobile HUD/controls at narrow, target, and wider-narrow widths without extra full-page WebGL captures.
+  // The dedicated 390px viewport screenshot above is the review artifact; repeated full-page captures can stall CI.
   for (const width of [360, 390, 430]) {
     await page.setViewportSize({ width, height: 844 });
     await page.waitForTimeout(250);
-    await page.screenshot({ path: "artifacts/world-visual-review/world-mobile-" + width + ".png", fullPage: true });
     const probeHud = await page.getByTestId("world-viewport-hud").boundingBox();
     const probeControls = await page.getByRole("group", { name: "World camera controls" }).boundingBox();
     const probeJoystick = await page.getByLabel("World movement joystick").boundingBox();
