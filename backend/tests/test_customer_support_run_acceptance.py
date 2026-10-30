@@ -222,7 +222,7 @@ async def test_execute_run_reuses_unexpired_persisted_city_when_current_turn_omi
     policy = {"shipping": {"cities": ["تهران"], "rates_by_city": {"تهران": 50000}}}
     run, version, channel = _make_run(current, "Customer: مقصد من تهران است", policy)
     db = _RunPathDB(run, version, channel, slots=[
-        SimpleNamespace(slot_name="city", value="تهران"),
+        (SimpleNamespace(slot_name="city", value="تهران"), "مقصد من تهران است"),
     ])
     gateway = _Gateway()
     _patch_run_path(monkeypatch, gateway)
