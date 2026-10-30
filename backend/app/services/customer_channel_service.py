@@ -413,7 +413,7 @@ async def request_customer_email_verification(
             "to": [email],
             "subject": "Verify your email address",
             "body": (
-                f"Your AI Employee customer support verification code is: {code}\\n\\n"
+                f"Your AI Employee customer support verification code is: {code}\n\n"
                 "This code expires in 10 minutes. If you did not request it, you can ignore this email."
             ),
         },
