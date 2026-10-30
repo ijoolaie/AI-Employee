@@ -30,8 +30,8 @@ test("public widget uses the real API for conversation, message persistence, and
   );
   await page.locator("form button").click();
   const sendResponse = await sendRequest;
-  expect(sendResponse.status()).toBe(200);
   const envelope = await sendResponse.json();
+  expect(sendResponse.status(), JSON.stringify(envelope)).toBe(200);
   expect(envelope.success).toBe(true);
   expect(envelope.data.conversation_id).toBe(stored!.id);
   expect(envelope.data.run_id).toMatch(/^[0-9a-f-]{36}$/i);
