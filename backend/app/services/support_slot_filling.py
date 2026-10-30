@@ -95,6 +95,45 @@ def plan_support_turn(*, intent: str, known_slots: dict[str, Any] | None = None,
                         "trusted_policy_available" if available else "policy_or_authorized_review_required")
 
 
+
+# Conservative phrases only: ambiguous or unrecognized requests stay on the
+# normal guarded model path rather than being assigned a guessed intent.
+_INTENT_PHRASES = {
+    "shipping_fee": ("هزینه ارسال", "هزینه‌ی ارسال", "هزینه پست", "کرایه ارسال",
+                     "قیمت ارسال", "ارسال چقدر", "ارسال چند", "هزینه حمل"),
+    "delivery_eta": ("زمان تحویل", "کی میرسه", "کی میرسد", "چند روزه میرسه",
+                     "مدت زمان ارسال", "زمان رسیدن سفارش", "delivery eta", "when will it arrive"),
+    "variant_stock": ("موجودی", "موجوده", "موجود دارید", "چه رنگی", "چه سایزی",
+                      "رنگ و سایز", "stock availability", "available in"),
+    "bulk_discount": ("تخفیف عمده", "تخفیف تعداد", "خرید عمده", "تعداد بالا",
+                      "قیمت عمده", "bulk discount", "wholesale discount"),
+    "return_exchange": ("مرجوع", "تعویض کالا", "تعویضش کنم", "پس بدم", "پس بفرستم",
+                        "return this", "exchange this"),
+    "payment_issue": ("مشکل پرداخت", "پرداختم", "پرداخت ناموفق", "واریز کردم",
+                      "پول کم شده", "کسر شده", "تراکنش", "payment issue", "payment failed"),
+    "damaged_order": ("آسیب دیده", "آسیب‌دیده", "شکسته رسیده", "خراب رسیده",
+                      "کالای معیوب", "خرابی کالا", "damaged item", "arrived broken"),
+}
+
+
+def detect_support_intent(message: str) -> str | None:
+    """Recognize only explicit support-intent phrases; return None on ambiguity."""
+    if not isinstance(message, str) or not message.strip():
+        return None
+    normalized = " ".join(
+        message.casefold().replace("\u064a", "\u06cc").replace("\u0643", "\u06a9")
+        .replace("\u200c", " ").split()
+    )
+    matches = [
+        intent for intent, phrases in _INTENT_PHRASES.items()
+        if any(
+            " ".join(phrase.casefold().replace("\u200c", " ").split()) in normalized
+            for phrase in phrases
+        )
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 def find_trusted_shipping_city(message: str, shipping_policy: dict[str, Any] | None = None) -> str | None:
     """Return a configured city explicitly mentioned by the customer, if any.
 
