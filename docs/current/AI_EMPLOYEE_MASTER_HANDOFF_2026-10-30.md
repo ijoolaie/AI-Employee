@@ -25,7 +25,7 @@ Safe next implementation requires a verified customer identity contract, a custo
 
 ### Other current gates
 
-- Only open PR is [#1257](https://github.com/ijoolaie/AI-Employee/pull/1257), Draft/on hold for human visual approval based on actual desktop/mobile runtime evidence. Do not merge on CI or synthetic screenshots alone.
+- The only pre-existing application PR is [#1257](https://github.com/ijoolaie/AI-Employee/pull/1257), Draft/on hold for human visual approval based on actual desktop/mobile runtime evidence. Do not merge on CI or synthetic screenshots alone.
 - Issue [#1288](https://github.com/ijoolaie/AI-Employee/issues/1288) remains blocked on authorized non-production SMTP delivery evidence, a named human response owner and a measurable SLA/escalation.
 - Issue [#1305](https://github.com/ijoolaie/AI-Employee/issues/1305) remains blocked on explicit retention-duration, audit and purge-schedule approval. Logical expiry is not physical erasure.
 - Issue [#1061](https://github.com/ijoolaie/AI-Employee/issues/1061) remains blocked on five decision-maker conversations and two concrete sample/trial commitments. No demand or revenue is claimed.
