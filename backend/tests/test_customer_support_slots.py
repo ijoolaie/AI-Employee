@@ -60,7 +60,9 @@ class _SourceOnlyDB:
 
     async def execute(self, statement):
         self.calls += 1
-        return _Result(self.source)
+        if self.calls == 1:
+            return _Result(self.source if getattr(self.source, "role", None) == "user" else None)
+        return _Result(SimpleNamespace())
 
 
 @pytest.mark.asyncio
