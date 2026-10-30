@@ -1,3 +1,19 @@
+## Roadmap checkpoint — customer conversation slots merged (2026-10-30)
+
+The project remains in **Post-release Reconciliation → External Production & Customer Acceptance**; this engineering increment does not change release certification or authorize deployment.
+
+- PR #1303 merged to main as `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831` from exact tested head `c38c6dda9ab835995a5e457f9079cc49dabd9e7f`; 23/23 exact-head checks passed.
+- Structured tenant-scoped customer slots now have exact customer-source-message provenance, allowlisted conservative extraction, per-slot logical expiry, fail-closed source-content validation and validated prior-city reuse.
+- **Next engineering acceptance:** continue Issue #1258 for ETA, variants, bulk discount, returns/payment, durable handoff/outbound approval, browser-to-real-API and complete privacy/tenant scenarios.
+- **Retention follow-up:** Issue #1305 remains gated on owner approval of retention duration, audit requirements and schedule. No production purge is enabled; expiry is not physical erasure.
+- **Operational handoff:** Issue #1288 still requires authorized non-production SMTP delivery, named human ownership and a measurable SLA.
+- **Customer evidence:** Issue #1061 remains a separate discovery gate (five decision-maker conversations and two concrete sample/trial commitments).
+- **World redesign:** #1044 / Draft PR #1257 remain deferred pending explicit human visual acceptance.
+- Post-merge checks on the merge SHA were 4/17 success, 13 pending, zero failed at latest observation. Reconcile before marking complete.
+- Latest certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No deployment or new release certification.
+
+---
+
 # AI Employee Platform — Productization & Delivery Roadmap
 
 ## Roadmap truth — 2026-10-13
