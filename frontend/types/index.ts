@@ -697,6 +697,7 @@ export interface PublicConversation {
   employee_name: string;
   status: string;
   customer_token?: string | null;
+  email_verified: boolean;
   messages: PublicMessage[];
 }
 
