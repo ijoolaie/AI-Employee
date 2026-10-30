@@ -296,3 +296,41 @@ async def test_execute_run_preflights_missing_support_slots_without_model_call(m
     assert result.output_data["content"] == expected
     assert gateway.calls == [], "Missing required support context must be requested before any model call"
     assert db.committed
+
+
+@pytest.mark.asyncio
+async def test_execute_run_skips_rag_and_memory_embedding_when_support_preflight_is_pending(monkeypatch):
+    current = "پرداخت من ناموفق بوده"
+    run, version, channel = _make_run(current, "Customer: no trusted payment reference", {})
+    db = _RunPathDB(run, version, channel)
+    gateway = _Gateway()
+    _patch_run_path(monkeypatch, gateway)
+
+    monkeypatch.setattr(
+        run_service,
+        "rag_settings",
+        lambda rules: {"enabled": True, "query_fields": ["message"], "top_k": 1},
+    )
+    monkeypatch.setattr(
+        run_service,
+        "memory_settings",
+        lambda rules: {
+            "enabled": True,
+            "query_fields": ["message"],
+            "top_k": 1,
+            "min_score": 0.1,
+        },
+    )
+
+    async def unexpected_retrieval(*args, **kwargs):
+        raise AssertionError("Retrieval/embedding must not run during missing-slot preflight")
+
+    monkeypatch.setattr(run_service.rag_service, "search", unexpected_retrieval)
+    monkeypatch.setattr(run_service.memory_service, "search_memory", unexpected_retrieval)
+
+    result = await run_service.execute_run(db, run_id=run.id)
+
+    assert result.status == "success"
+    assert result.output_data["content"] == "شماره سفارش‌تون رو می‌فرمایید؟"
+    assert gateway.calls == []
+    assert db.committed
