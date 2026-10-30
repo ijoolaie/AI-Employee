@@ -6,7 +6,7 @@
 - The source-message content check is fail-closed: a stored value absent from its exact customer-authored source message is rejected. Do not weaken this boundary to satisfy fixtures.
 - [Issue #1258](https://github.com/ijoolaie/AI-Employee/issues/1258) remains open for the broader acceptance matrix: ETA, variants, bulk discount, returns/payment, durable handoff/outbound approval, browser-to-real-API, and complete privacy/tenant acceptance. CI and synthetic fixtures are not live customer acceptance.
 - [Issue #1305](https://github.com/ijoolaie/AI-Employee/issues/1305) remains open. Expiry prevents reuse but does not physically erase rows. Do not enable a purge until retention duration, audit requirements and operational schedule are approved.
-- Post-merge checks on merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`: 4/17 success, 13 pending at the latest reconciliation; none failed. Recheck before claiming post-merge validation complete.
+- Post-merge checks on merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`: **17/17 completed successfully**, with zero failures or pending checks. This is automated post-merge CI evidence, not production certification.
 - No local full-suite run, live customer acceptance, production deployment, or new release certification is claimed. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ---
