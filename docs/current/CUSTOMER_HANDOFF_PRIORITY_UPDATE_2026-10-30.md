@@ -1,3 +1,13 @@
+## Customer-support Run-path preflight — PR #1307 merged (2026-10-30)
+
+- PR [#1307](https://github.com/ijoolaie/AI-Employee/pull/1307) merged as `31e869542d12aa141745667b8d44b9c1d9650c93` from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`; all 15 exact-head checks passed.
+- Run execution now performs conservative missing-slot preflight for ETA, variants, bulk discounts, returns/exchanges, payment issues and damaged orders (plus shipping fee). Unknown/multi-intent requests are not guessed; missing context is requested before provider invocation.
+- Issue #1258 remains open for trusted evidence/policy completion, durable handoff/outbound approval, browser-to-real-API and full tenant/privacy/live-customer acceptance.
+- Eleven post-merge checks were still in progress at the time of this update; final merge-SHA results must be reconciled separately.
+- Issue #1305 physical erasure remains gated on owner-approved retention duration, audit requirements and schedule. Certified release remains v1.4.17; no production deployment or release was performed.
+
+---
+
 ## Structured customer-slot implementation checkpoint — 2026-10-30
 
 - PR [#1303](https://github.com/ijoolaie/AI-Employee/pull/1303) merged as `1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`; all 23 exact-head checks passed on `c38c6dda9ab835995a5e457f9079cc49dabd9e7f`.
