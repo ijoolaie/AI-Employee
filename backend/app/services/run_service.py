@@ -840,7 +840,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
             metadata={"prompt_tokens": total_prompt_tokens, "completion_tokens": total_completion_tokens, "cost_usd": total_cost_usd},
         )
         await _sync_work_item_lifecycle(db, run=run, status="success")
-        await extract_and_consolidate_run_memory(db, run=run, output_data=output_data, settings=auto_memory_settings(version.rules or {}))
+        memory_extraction_settings = (\n            {"enabled": False}\n            if support_preflight_question\n            else auto_memory_settings(version.rules or {})\n        )\n        await extract_and_consolidate_run_memory(\n            db, run=run, output_data=output_data, settings=memory_extraction_settings\n        )
         await db.commit()
         return run
     except Exception as exc:  # noqa: BLE001
