@@ -109,7 +109,7 @@ _INTENT_PHRASES = {
                       "قیمت عمده", "bulk discount", "wholesale discount"),
     "return_exchange": ("مرجوع", "تعویض کالا", "تعویضش کنم", "پس بدم", "پس بفرستم",
                         "return this", "exchange this"),
-    "payment_issue": ("مشکل پرداخت", "پرداختم", "پرداخت ناموفق", "واریز کردم",
+    "payment_issue": ("مشکل پرداخت", "پرداختم", "پرداخت ناموفق", "پرداخت من ناموفق", "واریز کردم",
                       "پول کم شده", "کسر شده", "تراکنش", "payment issue", "payment failed"),
     "damaged_order": ("آسیب دیده", "آسیب‌دیده", "شکسته رسیده", "خراب رسیده",
                       "کالای معیوب", "خرابی کالا", "damaged item", "arrived broken"),
