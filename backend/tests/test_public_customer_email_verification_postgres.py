@@ -129,7 +129,8 @@ async def test_verified_email_links_only_unique_tenant_customer_and_scoped_order
                 await customer_channel_service.request_customer_email_verification(
                     session, conversation_id=conversation.id, token=token,
                 )
-                # Resolve the verification challenge and its durable email.\n                challenge = (await session.execute(
+                # Resolve the verification challenge and its durable email.
+                challenge = (await session.execute(
                     select(CustomerEmailVerification).where(
                         CustomerEmailVerification.tenant_id == tenant.id,
                         CustomerEmailVerification.conversation_id == conversation.id,
