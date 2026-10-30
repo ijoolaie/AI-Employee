@@ -1,7 +1,7 @@
 ## Verified checkpoint — 2026-10-30 (after PR #1315)
 
 Repository: [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee), default branch `main`.
-Current main SHA: [`90da90d14c54bafd72983eed87b7f10d91bd042b`](https://github.com/ijoolaie/AI-Employee/commit/90da90d14c54bafd72983eed87b7f10d91bd042b).
+Application merge commit for PR #1315: [`90da90d14c54bafd72983eed87b7f10d91bd042b`](https://github.com/ijoolaie/AI-Employee/commit/90da90d14c54bafd72983eed87b7f10d91bd042b).
 
 ### Public customer identity and scoped order access — merged
 
