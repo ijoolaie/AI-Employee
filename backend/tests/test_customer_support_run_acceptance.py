@@ -239,10 +239,11 @@ async def test_execute_run_reuses_unexpired_persisted_city_when_current_turn_omi
 async def test_execute_run_exposes_validated_customer_slots_as_context_not_business_proof(monkeypatch):
     current = "می‌خواهم درخواست مرجوعی را پیگیری کنم"
     policy = {"returns": {"review_required": True}}
-    run, version, channel = _make_run(current, "Customer: شماره سفارش: ORD-RET-42", policy)
+    run, version, channel = _make_run(current, "Customer: شماره سفارش: ORD-RET-42، دلیل: کالای آسیب‌دیده", policy)
+    source_message = "شماره سفارش: ORD-RET-42، دلیل: کالای آسیب‌دیده"
     slots = [
-        SimpleNamespace(slot_name="order_id", value="ORD-RET-42"),
-        SimpleNamespace(slot_name="reason", value="کالای آسیب‌دیده"),
+        (SimpleNamespace(slot_name="order_id", value="ORD-RET-42"), source_message),
+        (SimpleNamespace(slot_name="reason", value="کالای آسیب‌دیده"), source_message),
     ]
     db = _RunPathDB(run, version, channel, slots=slots)
     gateway = _Gateway()
