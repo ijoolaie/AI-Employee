@@ -15,6 +15,9 @@ class _ScalarResult:
     def scalar_one(self):
         return self.value
 
+    def scalar_one_or_none(self):
+        return self.value
+
     def scalars(self):
         return self
 
@@ -23,8 +26,9 @@ class _ScalarResult:
 
 
 class _ConversationDB:
-    def __init__(self, history):
+    def __init__(self, history, channel_config=None):
         self.history = history
+        self.channel_config = channel_config or {}
         self.execute_calls = 0
         self.added = []
         self.flushed = False
@@ -36,6 +40,8 @@ class _ConversationDB:
             return _ScalarResult(0)
         if self.execute_calls == 2:
             return _ScalarResult(self.history)
+        if self.execute_calls == 3:
+            return _ScalarResult(SimpleNamespace(config=self.channel_config))
         raise AssertionError(f"Unexpected query #{self.execute_calls}: {statement}")
 
     def add(self, value):
@@ -113,3 +119,43 @@ async def test_send_message_passes_authorized_history_and_current_turn_separatel
         getattr(message, "role", None) == "user" and getattr(message, "content", None) == current_message
         for message in db.added
     )
+
+
+@pytest.mark.asyncio
+async def test_send_message_persists_only_explicit_current_turn_slots(monkeypatch):
+    tenant_id, conversation_id, employee_id, channel_id = uuid4(), uuid4(), uuid4(), uuid4()
+    conversation = SimpleNamespace(
+        id=conversation_id, tenant_id=tenant_id, employee_id=employee_id,
+        channel_id=channel_id, customer_name=None, customer_email=None,
+        customer_phone=None, handoff_requested=False, status="open",
+    )
+    policy = {"support_policy": {"shipping": {
+        "cities": ["تهران"], "rates_by_city": {"تهران": 50000},
+    }}}
+    db = _ConversationDB([], channel_config=policy)
+    captured = {}
+    run = SimpleNamespace(id=uuid4())
+
+    async def get_conversation(db_arg, *, conversation_id, token):
+        return conversation
+
+    async def create_run(db_arg, **kwargs):
+        return run
+
+    async def persist_slots(db_arg, **kwargs):
+        captured.update(kwargs)
+
+    from app.workers import run_worker
+    monkeypatch.setattr(customer_channel_service, "_get_conversation", get_conversation)
+    monkeypatch.setattr(customer_channel_service.run_service, "create_run", create_run)
+    monkeypatch.setattr(customer_channel_service, "upsert_customer_conversation_slots", persist_slots)
+    monkeypatch.setattr(run_worker.execute_run_task, "delay", lambda *args: None)
+
+    await customer_channel_service.send_message(
+        db, conversation_id=conversation_id, token="token",
+        content="هزینه ارسال برای تهران چقدره؟",
+    )
+
+    assert captured["tenant_id"] == tenant_id
+    assert captured["conversation_id"] == conversation_id
+    assert captured["candidates"] == {"city": "تهران"}

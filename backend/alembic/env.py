@@ -30,6 +30,7 @@ from app.models import (  # noqa: F401 — register models on Base.metadata
     BillingPlan, Subscription, BillingEvent,
     WorldCatalogueItem, WorldOrder, WorldCommerceEvent, WorldFeatureEntitlement, WorldRoomInventory,
     TeamInstallation,
+    CustomerConversationSlot,
 )
 
 config = context.config

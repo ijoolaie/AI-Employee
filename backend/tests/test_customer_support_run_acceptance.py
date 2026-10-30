@@ -21,6 +21,9 @@ class _Result:
     def scalars(self):
         return self
 
+    def all(self):
+        return self.value
+
     def first(self):
         return self.value
 
@@ -31,10 +34,11 @@ class _Savepoint:
 
 
 class _RunPathDB:
-    def __init__(self, run, version, channel):
+    def __init__(self, run, version, channel, slots=None):
         self.run = run
         self.version = version
         self.channel = channel
+        self.slots = slots or []
         self.calls = []
         self.added = []
         self.savepoint = _Savepoint()
@@ -52,7 +56,7 @@ class _RunPathDB:
         if index == 4:
             return _Result((SimpleNamespace(id=self.run.conversation_id), self.channel))
         if index == 5:
-            return _Result(None)
+            return _Result(self.slots)
         raise AssertionError(f"Unexpected execute_run DB query #{index}: {statement}")
 
     async def begin_nested(self):
@@ -205,4 +209,23 @@ async def test_execute_run_does_not_guess_when_current_city_has_no_trusted_rate(
         "برای اعلام مبلغ دقیق، لازم است پشتیبانی بررسی کند."
     )
     assert gateway.calls == [], "The model must not invent a rate for an unconfigured city"
+    assert db.committed
+
+
+@pytest.mark.asyncio
+async def test_execute_run_reuses_unexpired_persisted_city_when_current_turn_omits_it(monkeypatch):
+    current = "هزینه ارسال چقدر است؟"
+    policy = {"shipping": {"cities": ["تهران"], "rates_by_city": {"تهران": 50000}}}
+    run, version, channel = _make_run(current, "Customer: مقصد من تهران است", policy)
+    db = _RunPathDB(run, version, channel, slots=[
+        SimpleNamespace(slot_name="city", value="تهران"),
+    ])
+    gateway = _Gateway()
+    _patch_run_path(monkeypatch, gateway)
+
+    result = await run_service.execute_run(db, run_id=run.id)
+
+    assert result.status == "success"
+    assert len(gateway.calls) == 1, "A validated prior city should satisfy the destination slot"
+    assert result.output_data["content"] == "grounded return-policy response"
     assert db.committed
