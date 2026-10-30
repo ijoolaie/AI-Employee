@@ -4,7 +4,7 @@
 - Tenant-scoped slots now persist with exact customer-message provenance, allowlist/type validation, per-slot expiry and fail-closed source-content verification; validated prior city reuse is supported in shipping preflight.
 - Issue #1258 remains open for remaining Run-path scenarios, durable handoff/outbound approval, browser-to-real-API and full privacy/tenant acceptance. No live customer acceptance is claimed.
 - Issue #1305 remains open: logical expiry is not physical deletion. Retention duration, audit requirements and operational schedule require owner approval before purge implementation/activation.
-- Merge SHA post-merge checks were 4/17 successful and 13 pending at latest reconciliation; none failed. Recheck final outcomes.
+- All **17/17 post-merge checks** on merge SHA `1cb51001d3a8922b1e48c9d87b376a1cb4` completed successfully; zero failed or pending.
 - Certified release remains `v1.4.17`; no production deployment or release was performed.
 
 ---
