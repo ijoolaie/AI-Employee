@@ -1,3 +1,17 @@
+## Roadmap checkpoint — customer-support Run-path preflight merged (2026-10-30)
+
+The project remains in **Post-release Reconciliation → External Production & Customer Acceptance**; this increment does not change release certification or authorize deployment.
+
+- PR #1307 merged to main as `31e869542d12aa141745667b8d44b9c1d9650c93` from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`; 15/15 exact-head checks passed.
+- The customer-support Run path now performs conservative intent-based missing-slot preflight for ETA, variant stock, bulk discount, returns/exchanges, payment issues and damaged orders, plus existing shipping-fee preflight. Missing context is requested before model/provider execution; ambiguity is not guessed.
+- Next acceptance remains Issue #1258: trusted policy/evidence outcomes, durable handoff/outbound approval, browser-to-real-API and complete tenant/privacy plus live customer acceptance.
+- Issue #1305 remains gated on owner approval of retention duration, audit requirements and purge schedule; logical expiry is not physical erasure.
+- Issue #1288 still requires authorized non-production SMTP delivery, named human ownership and measurable SLA. Issue #1061 remains the customer-discovery gate. World redesign #1044 / Draft PR #1257 remains deferred.
+- Eleven post-merge checks on merge SHA were in progress at documentation time; reconcile before claiming post-merge success.
+- Latest certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No deployment or new release certification.
+
+---
+
 ## Roadmap checkpoint — customer conversation slots merged (2026-10-30)
 
 The project remains in **Post-release Reconciliation → External Production & Customer Acceptance**; this engineering increment does not change release certification or authorize deployment.
