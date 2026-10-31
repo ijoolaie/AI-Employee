@@ -1,10 +1,10 @@
 ## Latest validation update — 2026-10-31
 
-PR #1319's current validation state:
-- Passed: Phase 14.14 Security/Privacy (including `pip-audit` after the `pypdf==6.21.4` patch), Architecture Guard, CodeQL, backend compile, Ruff, release/runbook contracts, Alembic graph/upgrade/consistency, isolated database migrations, W16 database/runtime checks, and the targeted workflow recovery race test.
-- Still running: full backend pytest suite and frontend production build / browser regression pipeline.
-- PR #1318's Documentation Truth Consistency check passed; its CodeQL check is still running. A merge attempt was rejected by GitHub because required checks were still queued. Neither PR is merged.
-- Do not treat this partial green state as full CI acceptance. Merge only after all required checks complete successfully.
+PR #1319's validation state on HEAD `a8a0cfe519146cbcb6d8221d3f1f0442e64d62c8`:
+- All 27 pull-request workflow runs returned `completed/success`, including the main CI workflow, Architecture Guard, Phase 14.14 Security/Privacy (with `pip-audit` passing after the `pypdf==6.21.4` update), CodeQL, and the full backend/frontend CI pipeline.
+- The CI workflow completed successfully; this includes the backend test job and frontend browser-regression job.
+- PR #1318's Documentation Truth Consistency and CodeQL workflows both completed successfully on HEAD `2aa7401de48b85b23b76ba6baf564d63a793f852`.
+- Both PRs remain open and unmerged at this checkpoint. No review submissions or unresolved review threads were returned by GitHub. Recheck current base/head and required checks immediately before any merge.
 
 ## Follow-up implementation checkpoint — 2026-10-31
 
@@ -12,8 +12,8 @@ The pagination truncation issue now has a bounded implementation PR: [#1319](htt
 
 - `backend/app/services/shopify_service.py`: `_paginate()` now raises `ValidationAppError` if `hasNextPage` remains true on the configured final page; it also rejects missing or non-advancing cursors.
 - `backend/tests/services/test_shopify_pagination.py`: regression coverage added for completion exactly at the page limit, continuation beyond the limit, missing/repeated cursors, and preservation of existing product/order sync metadata when pagination fails.
-- PR #1319 remains open. At the latest check, GitHub exposed no PR workflow runs or status checks for its HEAD, and no review had been submitted. The repository `.github/workflows/ci.yml` includes `backend/**` in its pull-request path filter, but execution has not been evidenced here. Do not merge without actual CI/test evidence and required review.
-- No tests were executed in this environment. The product freshness watermark and explicit unknown-inventory representation remain unimplemented.
+- PR #1319's full pull-request workflow set has now completed successfully on HEAD `a8a0cfe519146cbcb6d8221d3f1f0442e64d62c8`; the pagination implementation has regression coverage for page-limit overflow, missing/repeated cursors, and preservation of sync metadata on failure.
+- No live Shopify API request or production sync was performed. The product freshness watermark and explicit unknown-inventory representation remain unimplemented and are the next scoped engineering increments.
 
 The current open PR inventory is **3**: #1257 (World visual hold), #1318 (this documentation update), and #1319 (pagination fix awaiting validation). The nine open issue dispositions recorded above remain unchanged.
 
