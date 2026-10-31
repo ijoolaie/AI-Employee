@@ -10,8 +10,10 @@
 - Reused the existing dedicated container `ai-employee-support-test-postgres` (PostgreSQL 16.15, bound to 127.0.0.1:15433; database `support_test`; user `support_test_user`). The named data volume was preserved.
 - Created a custom-format pg_dump backup before schema changes: `support_test_before_migrations.dump` (456,448 bytes).
 - Initial Alembic revision: `w23_support_message_attachments`. Applied w24, w25, w26 and w27 successfully. Current revision: `w27_product_inventory_nullable`.
-- Targeted test: `python -m pytest tests/test_public_customer_email_verification_postgres.py -q` → **1 passed in 1.95s**.
-- Combined focused support/email tests, including the PostgreSQL test: **92 passed in 1.89s**.
+- Targeted verified-email test: `python -m pytest tests/test_public_customer_email_verification_postgres.py -q` → **1 passed in 1.95s**.
+- PostgreSQL handoff suite: `python -m pytest tests/test_customer_channel_handoff_postgres.py -q` → **2 passed in 1.73s**.
+- Combined focused support/email tests, including the verified-email PostgreSQL test: **92 passed in 1.89s**.
+- Additional handoff/notification/dispatcher/email-worker regression group: **25 passed in 2.28s**.
 - Test exercises persisted verification outbox creation, invalid then valid challenge verification, unique same-tenant customer linking, customer-scoped order projection, and fail-closed behavior for stale order sync evidence.
 
 ## Non-production SMTP sink proof
