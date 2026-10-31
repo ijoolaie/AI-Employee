@@ -943,3 +943,13 @@ PR #1164 merged as `245beb6b335a794bb0220d2d17a87f61f205e6ab`. All 17 check runs
 ## 2026-10-14 — PR #1166 read-only provider fail-closed tests
 
 PR #1166 merged as `4de70b6389e012d9416818c837287cc900a3ed6c`; all 13 check runs succeeded on exact tested head `61d46b1fdfee2792db694da5fed4549b64404f6e` after a successful rerun of the frontend job. The first frontend attempt had five World-mode Playwright failures, while the rerun passed. The PR added tests only for malformed CI-status responses, transport failures, and missing tenant repository mapping; provider implementation behavior did not change. This remains CI/test evidence only, not proof of live GitHub writes or production readiness.
+
+
+## Follow-up checkpoint — 2026-10-31
+
+- PR #1320 was squash-merged to main as a4e1fb37de86e65f1106f179e246d12760ddf692 after all 17 checks succeeded. Product sync freshness is now recorded independently as last_product_sync_at after product writes flush.
+- The next change is being developed on fix/shopify-unknown-inventory: Shopify inventoryQuantity missing/null is represented as SQL/API NULL, while a provider-reported 0 remains a verified zero. Manual product creation retains its default of zero and manual inventory updates remain explicit integers.
+- The follow-up also updates the AI inventory tool to return available=null and inventory_status=unknown for unknown stock, and the product catalog UI labels null inventory as unknown.
+- Migration w27_product_inventory_nullable makes the column nullable. Its downgrade explicitly converts null to zero because the old schema cannot represent unknown.
+- Historical Shopify rows previously coerced from null to zero cannot be safely reclassified from stored data alone. They are deliberately not mass-converted; a successful future Shopify product sync will refresh them from provider values.
+- Focused backend validation currently passes (60 tests). Full frontend typecheck is not available in this local environment because npm is not installed. No live Shopify sync, deployment, or release is claimed.

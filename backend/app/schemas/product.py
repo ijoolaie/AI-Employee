@@ -28,6 +28,7 @@ class ProductUpdate(BaseModel):
 
 class ProductResponse(ProductCreate):
     model_config = ConfigDict(from_attributes=True)
+    inventory: int | None = Field(default=None, ge=0)
     id: UUID
     is_active: bool
     source: str

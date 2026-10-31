@@ -432,7 +432,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                         "Before answering a question whose answer depends on missing information, ask one concise question for the first required missing detail; do not ask for details already present in the authorized conversation transcript.",
                         "For shipping fees, ask for the destination city first unless the trusted configured shipping policy explicitly says one flat rate applies to all destinations.",
                         "For delivery estimates, use the order reference and destination when required by configured policy; never invent a delivery SLA.",
-                        "For variant stock, identify the product, color, and size; ask only for missing fields.",
+                        "For variant stock, identify the product, color, and size; ask only for missing fields. If inventory is null/unknown, state that stock status is unknown and never claim available or unavailable.",
                         "For multi-item discounts, identify product and quantity, then use configured discount policy or request a human review; never invent a discount.",
                         "For returns, payment issues, and damaged-order complaints, collect only the minimum required order/reference and issue details, then use trusted policy or request human review. Never promise a refund or claim a payment is successful without trusted evidence.",
                         "If the policy does not contain the answer, clearly say you will check or need a team member, but do not claim a handoff was registered unless a durable handoff action actually succeeded.",

@@ -1063,7 +1063,14 @@ async def _get_product(arguments: dict[str, Any], **context):
 
 async def _check_inventory(arguments: dict[str, Any], **context):
     product = await _get_product(arguments, **context)
-    return {"product_id": product["id"], "name": product["name"], "inventory": product["inventory"], "available": product["inventory"] > 0}
+    inventory = product["inventory"]
+    return {
+        "product_id": product["id"],
+        "name": product["name"],
+        "inventory": inventory,
+        "available": None if inventory is None else inventory > 0,
+        "inventory_status": "unknown" if inventory is None else ("in_stock" if inventory > 0 else "out_of_stock"),
+    }
 
 async def _whatsapp_send_text(arguments: dict[str, Any], **context):
     # Execution is handled inside ToolRegistry.execute so the approval,
