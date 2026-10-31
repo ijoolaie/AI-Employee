@@ -29,6 +29,9 @@
 - Mailpit API confirmed receipt of the `Customer requested human support` message at `ops@example.test`; PostgreSQL confirmed that exact outbox row reached `dispatched`, populated `dispatched_at`, and had no `last_error`.
 - This verifies configured handoff notification delivery to a local non-production sink. It does not prove a real provider, actual staff ownership/response, or an SLA. Issue #1288 remains open for those operational requirements.
 
+## Handoff notification semantics
+- Added `docs/architecture/CUSTOMER_HANDOFF_NOTIFICATION.md` to define the tenant-configured destination, transactional outbox behavior, meaning of `dispatched` versus human acknowledgement, retry/dead/uncertain states, and the explicit absence of an SLA until an owner and measurable policy are approved.
+
 ## Remaining acceptance gates — Issue #1258 / #1288
 1. Real-provider SMTP validation and a named staff owner plus measurable SLA (#1288).
 2. Broader tenant/privacy matrix and multi-turn order/ETA/handoff scenarios.
