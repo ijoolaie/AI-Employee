@@ -1,3 +1,34 @@
+## Reconciled priority checkpoint — 2026-10-31 (PRs #1330–#1332 merged)
+
+Application/documentation baseline inspected: `main` at `212128c772382821aab02672581eb1bfcd70cdb1`.
+
+### What changed since the previous priority snapshot
+
+- PRs #1330, #1331, and #1332 are merged. Together they add widget-to-worker response persistence, browser-to-real-API/worker acceptance using a deterministic provider, and a wider multi-turn customer-support scenario matrix.
+- Issue #1258 records 136 passing customer-support acceptance tests across 18 files, including PostgreSQL-backed handoff, acknowledgement/follow-up, tenant-isolated escalation, outbox/dispatcher/email-worker and multi-turn persistence.
+- Issue #1288 records a real application email worker dispatching a synthetic handoff notification to a localhost-only Mailpit sink, with the message received and the outbox row marked dispatched.
+- These are meaningful implementation and non-production acceptance advances. They do not prove live LLM quality, external SMTP/inbox delivery, real staff response, customer demand, or production readiness.
+
+### Ordered priorities
+
+1. **#1258 — finish bounded support acceptance.** Preserve verified customer identity, customer-scoped order access, provider freshness, conservative preflight, tenant boundaries and no anonymous `run.execute`. Keep the distinction between deterministic CI and live-model/customer evidence explicit. Do not broaden roles/integrations before the first workflow is validated.
+2. **#1061 — customer discovery is the commercial bottleneck.** Identify a specific segment and measurable pain; target five decision-maker conversations and at least two concrete sample/trial commitments. Choose the first paid workflow from evidence, not implementation novelty.
+3. **#1288 — operationalize human handoff.** Validate an authorized non-production external SMTP provider/inbox, name the human response owner, define assignment/coverage and agree a measurable response SLA/escalation. Local Mailpit is not external delivery.
+4. **#1305 — obtain data-policy approval before purge.** Decide retention duration, audit requirements and schedule with the product/data owner. Logical expiry is not physical erasure; do not activate purge before approval.
+5. **#1257 / #1044 — keep World visual work on hold.** Require authenticated real-runtime desktop/mobile screenshots and human visual/interaction acceptance. Green CI or generated screenshots alone are insufficient.
+6. **External gates #19, #210, #259 and #269** remain distinct production RBAC, release promotion, security/DR and customer-acceptance gates.
+
+### PR disposition
+
+- #1330, #1331, #1332, and #1319 are merged.
+- #1318 is closed without merge.
+- #1257 is the only open PR in the inspected inventory and remains Draft/on hold.
+- Do not merge or release based solely on CI.
+
+### Release boundary
+
+Latest production-certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No deployment, production certification, live Shopify sync, external SMTP delivery, customer trial, paid conversion, or revenue is claimed by this update.
+
 ## Verified checkpoint — 2026-10-30 (PRs #1310 and #1311 merged)
 
 Application baseline: `main` at `3d3f7f72c4c5e56a4d7e3f1c73cd282c41aea10f` after the two merges below. This documentation checkpoint does not change application behavior.
