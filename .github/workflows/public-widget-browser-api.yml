@@ -94,7 +94,7 @@ jobs:
       - name: Start the real Celery execution worker
         working-directory: backend
         run: |
-          nohup celery -A app.workers.celery_app.celery_app worker --loglevel=INFO --pool=solo --queues=execution --hostname=public-widget-worker@%h >/tmp/public-widget-worker.log 2>&1 &
+          nohup celery -A app.workers.celery_app worker --loglevel=INFO --pool=solo --queues=execution --hostname=public-widget-worker@%h >/tmp/public-widget-worker.log 2>&1 &
           for i in {1..30}; do
             if grep -q "ready." /tmp/public-widget-worker.log; then exit 0; fi
             sleep 2
