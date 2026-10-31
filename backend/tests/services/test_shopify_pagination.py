@@ -1,5 +1,7 @@
 """Regression tests for Shopify pagination completeness guarantees."""
 
+from types import SimpleNamespace
+
 import pytest
 
 from app.core.exceptions import ValidationAppError
@@ -80,8 +82,6 @@ async def test_paginate_rejects_missing_or_repeated_cursor(monkeypatch, end_curs
 
 @pytest.mark.asyncio
 async def test_failed_product_pagination_does_not_advance_sync_metadata(monkeypatch):
-    from types import SimpleNamespace
-
     integration = SimpleNamespace(
         config={"last_product_sync_count": 7, "last_product_sync_at": "previous"}
     )
