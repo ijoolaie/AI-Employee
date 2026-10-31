@@ -37,6 +37,10 @@ Inspected current-main source in `backend/app/services/shopify_service.py`, `bac
 3. Define and test an explicit unknown/unavailable inventory representation, distinct from a verified zero, before exposing customer-facing stock claims. Preserve manually maintained inventory semantics.
 4. Keep public stock/order answers fail-closed until per-resource freshness policy and verified customer-scoped read contracts are present.
 
+### CI-discovered security baseline blocker and remediation
+
+The first Phase 14.14 Security/Privacy run on PR #1319 passed its security/privacy regression suite and Ruff baseline but failed dependency auditing: `pip-audit` reported seven advisories for locked `pypdf==6.21.2`, with fixes in 6.21.3/6.21.4. PR #1319 now raises the `pyproject.toml` minimum and `requirements.lock` pin to **6.21.4**. A fresh CI/security run is in progress; the fix is not considered validated until the rerun's audit passes. This dependency issue was discovered by CI and is not caused by the pagination code.
+
 ### Evidence and boundaries
 
 This checkpoint is source inspection plus GitHub triage and an issue comment. **No tests were run, no application code was changed, and no Shopify live request, customer validation, SMTP delivery, deployment or release certification is claimed.** The existing identity verification, customer-scoped order endpoint and tenant boundaries from PR #1315 must remain intact.
