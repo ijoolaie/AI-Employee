@@ -1,3 +1,14 @@
+## Verified checkpoint — 2026-10-31 (PR #1324 merged)
+
+- Current `main`: `cacfd67c94bda7cf916ee7f3cac2a07c293a8074`. PR #1324 merged as this commit after all 12/12 check-runs on exact head `59ed39eb75dda49afc3a9c4231972b913d987ddb` completed successfully; no review threads remained.
+- PR #1324 adds regression tests for expired/exhausted email-verification challenges, invalid-code attempt accounting, challenge invalidation after email changes, and duplicate active Shopify customer emails. It is test-only; no application behavior changed. The focused local support/email suite reported 91 passed; Ruff, compileall and diff check passed.
+- Issue #1258 remains OPEN. Remaining acceptance work includes PostgreSQL-backed identity/order tests on isolated `support_test`, non-production SMTP delivery proof, broader tenant/privacy and multi-turn order/ETA/handoff coverage, and real customer validation. The PostgreSQL-backed test was skipped locally because `SUPPORT_TEST_DATABASE_URL` is unset and Docker Desktop is not running; no SMTP delivery or full support acceptance is claimed.
+- Only open PR: #1257, intentionally Draft/on hold after visual review rejected its synthetic close-up captures. Do not merge or resume World visual work until higher-priority gates are met and authenticated real-runtime desktop/mobile evidence receives explicit human approval.
+- Local Windows checkout currently has uncommitted changes and is 132 commits behind `origin/main`; preserve those changes and do not reset or fast-forward that worktree blindly.
+- Latest production-certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No live Shopify sync, production deployment, or release promotion is claimed.
+
+---
+
 ## Verified checkpoint — 2026-10-31 (PR #1322 merged)
 
 - Current main: 9afec9b16d4e932347ea3d018124ec902e449758. PR #1320 passed all 17 exact-head checks; PR #1322 passed all 35 exact-head checks before squash merge.
