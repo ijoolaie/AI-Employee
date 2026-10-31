@@ -1,3 +1,13 @@
+## Current verified checkpoint — 2026-10-31 (PR #1325 merged)
+
+- Current `main`: `b1c956ab4f7ee2500cd07b7acb7cc4a2bbddef3d`. PR #1325 merged after Documentation Truth Consistency and all CodeQL checks passed.
+- PR #1324 added test-only email-verification security regression coverage; all 12/12 exact-head checks passed and the focused local support/email suite reported 91 passed. No application behavior changed in that PR.
+- Issue #1258 remains OPEN. PostgreSQL-backed identity/order acceptance is blocked because Docker Engine is not running and `SUPPORT_TEST_DATABASE_URL` is unset. Non-production SMTP delivery proof, broader tenant/privacy and multi-turn acceptance, and real customer validation remain outstanding.
+- Local checkout has uncommitted changes; do not reset, clean, or fast-forward it blindly. The Docker CLI cannot connect to `dockerDesktopLinuxEngine`; the Windows service query reported `com.docker.service` is not installed.
+- PR #1257 remains Draft/on hold pending authenticated real-runtime desktop/mobile evidence and explicit human visual approval. Latest production-certified release remains `v1.4.17`; no production deployment or release promotion is claimed.
+
+---
+
 ## Verified checkpoint — 2026-10-31 (PR #1322 merged)
 
 - Current main: 9afec9b16d4e932347ea3d018124ec902e449758. PR #1320 passed all 17 exact-head checks; PR #1322 passed all 35 exact-head checks before squash merge.
