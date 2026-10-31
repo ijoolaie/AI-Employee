@@ -1,6 +1,7 @@
 """Regression tests for Shopify pagination completeness guarantees."""
 
-from datetime import datetime\nfrom types import SimpleNamespace
+from datetime import datetime
+from types import SimpleNamespace
 
 import pytest
 
