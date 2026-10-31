@@ -362,5 +362,5 @@ async def test_execute_run_includes_general_complaint_and_no_unauthorized_resolu
     assert any("For general complaints" in item for item in requirements)
     assert any("never promise compensation, refunds, or resolution" in item for item in requirements)
     assert any("durable human handoff" in item for item in requirements)
-    assert any("never promise a refund" in item for item in requirements)
+    assert any("Never promise a refund" in item for item in requirements)
     assert db.committed
