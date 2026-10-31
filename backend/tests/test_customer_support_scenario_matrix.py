@@ -72,7 +72,9 @@ from app.services.support_slot_filling import support_slot_preflight_response
         ),
     ],
 )
-def test_support_scenario_matrix_asks_only_the_next_missing_detail(message, policy, turns):
+def test_support_scenario_matrix_asks_only_the_next_missing_detail(
+    message, policy, turns
+):
     for known_slots, expected in turns:
         assert support_slot_preflight_response(
             message,
@@ -104,7 +106,9 @@ def test_support_scenario_matrix_asks_only_the_next_missing_detail(message, poli
         ),
     ],
 )
-def test_completed_slots_do_not_create_business_facts(message, policy, known_slots, expected_fragment):
+def test_completed_slots_continue_to_policy_guarded_model_path(
+    message, policy, known_slots, expected_fragment
+):
     response = support_slot_preflight_response(message, policy, known_slots=known_slots)
     if expected_fragment is None:
         assert response is None
