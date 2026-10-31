@@ -1,7 +1,7 @@
 # AI-Employee verified checkpoint — 2026-10-31
 
 ## Repository state
-- Default branch `main`: `cacfd67c94bda7cf916ee7f3cac2a07c293a8074`.
+- `main` at the PR #1324 merge checkpoint: `cacfd67c94bda7cf916ee7f3cac2a07c293a8074`. PR #1325 subsequently merged documentation updates; current `main` is `b1c956ab4f7ee2500cd07b7acb7cc4a2bbddef3d`.
 - PR #1324 merged at this SHA after all 12/12 check-runs passed on exact head `59ed39eb75dda49afc3a9c4231972b913d987ddb`.
 - PR #1324 is test-only. It adds regression coverage for expired/exhausted verification challenges, invalid-code attempt accounting, email-change invalidation, and duplicate active Shopify identities. No application behavior changed.
 - Focused local support/email tests: 91 passed. Ruff, compileall, and diff check passed.
