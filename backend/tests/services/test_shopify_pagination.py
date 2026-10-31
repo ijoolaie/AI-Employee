@@ -1,6 +1,6 @@
 """Regression tests for Shopify pagination completeness guarantees."""
 
-from types import SimpleNamespace
+from datetime import datetime\nfrom types import SimpleNamespace
 
 import pytest
 
@@ -128,3 +128,46 @@ async def test_failed_order_pagination_does_not_advance_sync_metadata(monkeypatc
         "last_order_sync_count": 9,
         "last_order_sync_at": "previous",
     }
+
+
+@pytest.mark.asyncio
+async def test_successful_product_sync_records_product_specific_freshness(monkeypatch):
+    integration = SimpleNamespace(
+        config={
+            "shop_domain": "example.myshopify.com",
+            "last_order_sync_at": "2026-10-30T12:00:00+00:00",
+        },
+        status="connected",
+    )
+
+    class FakeDB:
+        flush_calls = 0
+
+        async def flush(self):
+            self.flush_calls += 1
+
+    db = FakeDB()
+
+    async def lock_integration(*_args):
+        return integration
+
+    async def paginate(*_args, **_kwargs):
+        return []
+
+    monkeypatch.setattr(shopify_service, "_lock_integration", lock_integration)
+    monkeypatch.setattr(shopify_service, "_paginate", paginate)
+
+    result = await shopify_service.sync_products(db, "tenant", "integration")
+
+    assert result == {
+        "provider": "shopify",
+        "products_seen": 0,
+        "created": 0,
+        "updated": 0,
+    }
+    assert integration.status == "synced"
+    assert integration.config["last_product_sync_count"] == 0
+    assert integration.config["last_order_sync_at"] == "2026-10-30T12:00:00+00:00"
+    freshness = datetime.fromisoformat(integration.config["last_product_sync_at"])
+    assert freshness.tzinfo is not None
+    assert db.flush_calls == 2
