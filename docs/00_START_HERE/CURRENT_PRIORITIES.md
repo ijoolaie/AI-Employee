@@ -1,3 +1,37 @@
+## Verified source-audit checkpoint — 2026-10-31
+
+Repository: `ijoolaie/AI-Employee`; default branch `main`.
+Verified current main HEAD at inspection: [`8053dbabfe6a0b961336b37ec890c42b2472174f`](https://github.com/ijoolaie/AI-Employee/commit/8053dbabfe6a0b961336b37ec890c42b2472174f). This is the documentation-only merge for PR #1317; PR #1315's application merge remains `90da90d14c54bafd72983eed87b7f10d91bd042b`.
+
+### Live GitHub triage
+
+- Open PR inventory: **1** — #1257, intentionally Draft/on hold after explicit rejection of synthetic desktop/mobile visual evidence. Do not merge or resume World visual work until higher-priority gates are met and authenticated real-runtime evidence receives human approval.
+- Open issue inventory: **9** — #1258, #1044, #1061, #1288, #1305, #19, #210, #259 and #269. Each was reviewed against its current body and available comments. Existing dispositions remain: #1258 active engineering/customer-support acceptance; #1044 deferred; #1061 blocked on real customer discovery; #1288 blocked on configured non-production SMTP, named response owner and measurable SLA; #1305 blocked on approved retention/audit/schedule; #19/#210/#259/#269 are intentional external production/RBAC/release/customer-acceptance gates. None should be closed merely to reduce the open count.
+- PR #1317 is closed and its commit is present at current `main`; it corrected the master handoff to distinguish PR #1315's application merge SHA from the later documentation HEAD.
+
+### New source-backed Shopify correctness findings — Issue #1258
+
+Inspected current-main source in `backend/app/services/shopify_service.py`, `backend/app/models/product.py`, `backend/app/schemas/product.py`, `backend/app/services/customer_channel_service.py` and `backend/app/modules/employees/order/service.py`. Findings were recorded in [Issue #1258 comment](https://github.com/ijoolaie/AI-Employee/issues/1258#issuecomment-6539722784).
+
+1. **Pagination can silently truncate.** `_paginate(..., max_pages=50)` returns accumulated rows even when the final page still reports `hasNextPage=true`. A caller can then treat an incomplete dataset as a successful sync. In particular, `sync_orders()` may write `last_order_sync_at` after this partial result, weakening the freshness guarantee introduced by PR #1315.
+2. **Product freshness is not recorded.** `sync_products()` writes `last_product_sync_count` but no successful product-sync timestamp/watermark. Order freshness does not establish inventory freshness.
+3. **Unknown inventory is collapsed into zero.** Shopify mapping uses `int(variant.get("inventoryQuantity") or 0)`; missing/null quantity becomes indistinguishable from a real zero. The Product model and response schema currently require a non-null integer, so an explicit unknown state is not represented.
+
+### Ordered next engineering increment
+
+1. Harden `_paginate`: if the page limit is reached while `hasNextPage` remains true, raise a clear failure rather than return partial data. Add exact-limit and over-limit tests. Assert failed/partial pagination does not mark the integration freshly synced or advance any watermark.
+2. Add a product-sync freshness watermark only after complete pagination and successful persistence; do not use `Product.updated_at` as provider freshness.
+3. Define and test an explicit unknown/unavailable inventory representation, distinct from a verified zero, before exposing customer-facing stock claims. Preserve manually maintained inventory semantics.
+4. Keep public stock/order answers fail-closed until per-resource freshness policy and verified customer-scoped read contracts are present.
+
+### Evidence and boundaries
+
+This checkpoint is source inspection plus GitHub triage and an issue comment. **No tests were run, no application code was changed, and no Shopify live request, customer validation, SMTP delivery, deployment or release certification is claimed.** The existing identity verification, customer-scoped order endpoint and tenant boundaries from PR #1315 must remain intact.
+
+Latest production-certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`; current mainline is not covered by that certification.
+
+---
+
 ## Verified checkpoint — 2026-10-30 (PRs #1310 and #1311 merged)
 
 Application baseline: `main` at `3d3f7f72c4c5e56a4d7e3f1c73cd282c41aea10f` after the two merges below. This documentation checkpoint does not change application behavior.
