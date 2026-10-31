@@ -1,8 +1,21 @@
-## Verified checkpoint — 2026-10-31 (PR #1324 merged)
+## Current verified checkpoint — 2026-10-31 (PostgreSQL + SMTP sink acceptance)
+
+- Current `main`: `f90211484b0b64f042785cd7f69504ef0449ccd9` (PR #1326 merged after all CodeQL and Release identity checks passed).
+- Docker Desktop is running; Docker Engine 29.8.2. The dedicated PostgreSQL 16.15 container `ai-employee-support-test-postgres` is healthy on localhost:15433, using isolated database `support_test`. Its named volume was preserved.
+- Backed up `support_test` before migration (custom-format dump, 456,448 bytes). Applied Alembic migrations w24–w27; database is at `w27_product_inventory_nullable`.
+- PostgreSQL-backed verified-email/customer-scoped-order acceptance: 1 passed; PostgreSQL handoff persistence/tenant-isolation tests: 2 passed. Combined focused support/email suite including the DB test: 92 passed in 1.89s. A further handoff/notification/dispatcher/worker regression group passed 25 tests in 2.28s.
+- Actual application email worker delivered two synthetic messages to a local Mailpit SMTP sink (localhost:1025): a customer email-verification message and a configured staff handoff notification (`Customer requested human support` to `ops@example.test`). Mailpit confirmed both receipts; PostgreSQL confirmed both outbox rows reached `dispatched` with no error. This proves local non-production SMTP transport only—not real provider delivery, inbox placement, SPF/DKIM/DMARC, actual staff response, or an SLA.
+- Issue #1258 remains OPEN. Remaining gates: real-provider SMTP validation, actual staff owner/response and an approved measurable SLA (#1288), broader tenant/privacy + multi-turn order/ETA/handoff acceptance, and real customer validation. Notification/assignment/SLA semantics are documented in `docs/architecture/CUSTOMER_HANDOFF_NOTIFICATION.md`.
+- Original Windows checkout remains dirty and 132 commits behind; preserve it. All latest acceptance work ran in a separate clean worktree based on this `main`; no reset/clean/fast-forward was performed on the original checkout.
+- PR #1257 remains Draft/on hold pending authenticated real-runtime desktop/mobile evidence and explicit human visual approval. Latest production-certified release remains `v1.4.17`; no production deployment or release promotion is claimed.
+
+---
+
+## Historical checkpoint — 2026-10-31 (PR #1324 merged; superseded by the current checkpoint above)
 
 - At this checkpoint, `main` was `cacfd67c94bda7cf916ee7f3cac2a07c293a8074`; PR #1324 merged there after all 12/12 exact-head checks passed. PR #1325 subsequently merged the documentation checkpoint; current `main` is `b1c956ab4f7ee2500cd07b7acb7cc4a2bbddef3d`.
 - PR #1324 adds regression tests for expired/exhausted email-verification challenges, invalid-code attempt accounting, challenge invalidation after email changes, and duplicate active Shopify customer emails. It is test-only; no application behavior changed. The focused local support/email suite reported 91 passed; Ruff, compileall and diff check passed.
-- Issue #1258 remains OPEN. Remaining acceptance work includes PostgreSQL-backed identity/order tests on isolated `support_test`, non-production SMTP delivery proof, broader tenant/privacy and multi-turn order/ETA/handoff coverage, and real customer validation. The PostgreSQL-backed test was skipped locally because `SUPPORT_TEST_DATABASE_URL` is unset and Docker Desktop is not running; no SMTP delivery or full support acceptance is claimed.
+- Issue #1258 remains OPEN. PostgreSQL-backed identity/order acceptance and local Mailpit SMTP sink delivery have since passed; remaining work is real-provider SMTP validation, named staff owner/SLA, broader tenant/privacy and multi-turn order/ETA/handoff coverage, and real customer validation.
 - Only open PR: #1257, intentionally Draft/on hold after visual review rejected its synthetic close-up captures. Do not merge or resume World visual work until higher-priority gates are met and authenticated real-runtime desktop/mobile evidence receives explicit human approval.
 - Local Windows checkout currently has uncommitted changes and is 132 commits behind `origin/main`; preserve those changes and do not reset or fast-forward that worktree blindly.
 - Latest production-certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No live Shopify sync, production deployment, or release promotion is claimed.
