@@ -5,7 +5,7 @@ Verified current main HEAD at inspection: [`8053dbabfe6a0b961336b37ec890c42b2472
 
 ### Live GitHub triage
 
-- Open PR inventory: **1** — #1257, intentionally Draft/on hold after explicit rejection of synthetic desktop/mobile visual evidence. Do not merge or resume World visual work until higher-priority gates are met and authenticated real-runtime evidence receives human approval.
+- Pre-work open PR inventory: **1** — #1257, intentionally Draft/on hold after explicit rejection of synthetic desktop/mobile visual evidence. This checkpoint adds documentation PR #1318; the current open PR inventory is therefore **2** (#1257 on hold and #1318 awaiting required review/checks). Do not merge #1257 or resume World visual work until higher-priority gates are met and authenticated real-runtime evidence receives human approval. Do not merge #1318 until its required checks pass.
 - Open issue inventory: **9** — #1258, #1044, #1061, #1288, #1305, #19, #210, #259 and #269. Each was reviewed against its current body and available comments. Existing dispositions remain: #1258 active engineering/customer-support acceptance; #1044 deferred; #1061 blocked on real customer discovery; #1288 blocked on configured non-production SMTP, named response owner and measurable SLA; #1305 blocked on approved retention/audit/schedule; #19/#210/#259/#269 are intentional external production/RBAC/release/customer-acceptance gates. None should be closed merely to reduce the open count.
 - PR #1317 is closed and its commit is present at current `main`; it corrected the master handoff to distinguish PR #1315's application merge SHA from the later documentation HEAD.
 
