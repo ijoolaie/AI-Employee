@@ -342,3 +342,25 @@ async def test_execute_run_skips_rag_and_memory_embedding_when_support_preflight
     assert result.output_data["content"] == "شماره سفارش‌تون رو می‌فرمایید؟"
     assert gateway.calls == []
     assert db.committed
+
+
+@pytest.mark.asyncio
+async def test_execute_run_includes_general_complaint_and_no_unauthorized_resolution_guardrails(monkeypatch):
+    current = "از خدمات ناراضی هستم و می‌خواهم شکایت ثبت کنم"
+    run, version, channel = _make_run(current, "Customer: first contact", {})
+    db = _RunPathDB(run, version, channel)
+    gateway = _Gateway()
+    captured = {}
+    _patch_run_path(monkeypatch, gateway, captured)
+
+    result = await run_service.execute_run(db, run_id=run.id)
+
+    assert result.status == "success"
+    assert len(gateway.calls) == 1
+    contract = captured["context"].rules["customer_support_contract"]
+    requirements = contract["requirements"]
+    assert any("For general complaints" in item for item in requirements)
+    assert any("never promise compensation, refunds, or resolution" in item for item in requirements)
+    assert any("durable human handoff" in item for item in requirements)
+    assert any("Never promise a refund" in item for item in requirements)
+    assert db.committed
