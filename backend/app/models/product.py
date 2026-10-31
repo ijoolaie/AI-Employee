@@ -36,7 +36,7 @@ class Product(Base):
     category: Mapped[str | None] = mapped_column(String(120), nullable=True, index=True)
     price: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, default=Decimal("0"))
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="EUR")
-    inventory: Mapped[int] = mapped_column(default=0, nullable=False)
+    inventory: Mapped[int | None] = mapped_column(default=None, nullable=True)
     attributes: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
     images: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

@@ -703,7 +703,7 @@ export interface PublicConversation {
 
 export interface Product {
   id: string; sku: string | null; name: string; description: string | null; category: string | null;
-  price: string | number; currency: string; inventory: number; attributes: Record<string, unknown>;
+  price: string | number; currency: string; inventory: number | null; attributes: Record<string, unknown>;
   images: string[]; is_active: boolean; source: string; created_at: string; updated_at: string;
 }
 export interface CommerceIntegration { id: string; provider: string; name: string; status: string; config: Record<string, unknown>; is_active: boolean; created_at: string; updated_at: string; }

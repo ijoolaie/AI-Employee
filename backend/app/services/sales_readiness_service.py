@@ -35,7 +35,7 @@ TEMPLATES = [
         "min_platform_version": "1.4.9",
         "allowed_tools": ["search_products", "get_product", "check_inventory", "create_order"],
         "rules": {"max_discount_percent": 10, "require_approval_for": ["create_order"], "forbidden_actions": ["change_price", "delete_customer"]},
-        "prompt_template": "You are a helpful sales assistant. Recommend the best products based on customer needs and current inventory.",
+        "prompt_template": "You are a helpful sales assistant. Recommend products using verified catalog data. If inventory is null/unknown, say stock status is unknown; never infer in-stock or out-of-stock from missing inventory.",
     },
     {
         "code": "support_agent",

@@ -1,3 +1,15 @@
+## Verified checkpoint — 2026-10-31 (PR #1320 merged; PR #1322 under CI)
+
+- Current main: a4e1fb37de86e65f1106f179e246d12760ddf692. PR #1320 is merged; all 17 exact-head checks succeeded. Shopify product freshness is now independent via last_product_sync_at.
+- Open PR inventory: 2. PR #1322 is the unknown-inventory implementation, base main at a4e1fb37de86e65f1106f179e246d12760ddf692, head 336905ca7ea6a9bdfe6a2cb3e768059e253d0abe. Its 36 exact-head check-runs currently show 15 success, one neutral CodeQL wrapper, and 20 queued/in progress; no failures. Do not merge before every required check passes.
+- PR #1257 remains Draft/on hold. Its 8 reported checks passed, but prior human visual review explicitly rejected the synthetic desktop/mobile captures; mobile close-up framing still clips a label. Keep it unmerged until higher-priority gates are met and authenticated real-runtime screenshots receive explicit human visual approval.
+- Open issue inventory: 9. #1258 remains the active engineering/customer-support acceptance tracker; PR #1322 partially addresses only unknown-inventory semantics. #1288 remains open for configured non-production SMTP delivery, named staff owner and measurable SLA. #1305 remains blocked on owner-approved retention duration/audit requirements/purge schedule. #1061 remains blocked on real customer discovery. #1044 remains deferred. #19/#210/#259/#269 remain intentional external production/RBAC/release/customer-acceptance gates.
+- PR #1322 preserves Shopify null/missing inventory as NULL, retains provider-reported zero, keeps manual create default zero and manual updates explicit, makes the API/AI/UI represent unknown safely, and adds migration w27_product_inventory_nullable. Historical Shopify zeroes are not mass-converted because their origin cannot be inferred; a future successful sync refreshes them.
+- Local validation on the PR branch: 60 focused tests plus 6 additional sales-readiness/migration tests passed; Ruff, compileall, git diff --check and Alembic single-head inspection passed. Offline full migration SQL generation stops in pre-existing migration 9f3a1c7b2d10_tool_approval_requests.py because it requires a live bind, before reaching w27. Frontend typecheck was not run because npm is unavailable locally; CI frontend job is running.
+- Release boundary: latest production-certified release remains v1.4.17 at b403c0dcdea579e017738a6fdea138c2b1a2999c. Mainline changes do not inherit that certification. No live Shopify sync, deployment or release promotion is claimed.
+
+---
+
 ## Latest validation update — 2026-10-31
 
 PR #1319's validation state on HEAD `a8a0cfe519146cbcb6d8221d3f1f0442e64d62c8`:
@@ -1418,3 +1430,13 @@ Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope c
 - PR #1166 merged as `4de70b6389e012d9416818c837287cc900a3ed6c`; all 13 check runs passed on exact tested head `61d46b1fdfee2792db694da5fed4549b64404f6e` after rerunning the frontend job. The first frontend attempt failed in five World-mode Playwright tests; the rerun succeeded.
 - Test-only coverage now explicitly exercises malformed CI-status payloads, URL transport failure, and missing tenant-to-repository mapping; no production implementation behavior changed.
 - Next priority remains supervised external validation of `git_branch` with operator-configured credentials, an explicitly authorized disposable test repository/branch, and cleanup plan. Do not treat CI as live-write or production-readiness evidence. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+
+
+## Follow-up checkpoint — 2026-10-31
+
+- PR #1320 was squash-merged to main as a4e1fb37de86e65f1106f179e246d12760ddf692 after all 17 checks succeeded. Product sync freshness is now recorded independently as last_product_sync_at after product writes flush.
+- The next change is being developed on fix/shopify-unknown-inventory: Shopify inventoryQuantity missing/null is represented as SQL/API NULL, while a provider-reported 0 remains a verified zero. Manual product creation retains its default of zero and manual inventory updates remain explicit integers.
+- The follow-up also updates the AI inventory tool to return available=null and inventory_status=unknown for unknown stock, and the product catalog UI labels null inventory as unknown.
+- Migration w27_product_inventory_nullable makes the column nullable. Its downgrade explicitly converts null to zero because the old schema cannot represent unknown.
+- Historical Shopify rows previously coerced from null to zero cannot be safely reclassified from stored data alone. They are deliberately not mass-converted; a successful future Shopify product sync will refresh them from provider values.
+- Focused backend validation currently passes (60 tests). Full frontend typecheck is not available in this local environment because npm is not installed. No live Shopify sync, deployment, or release is claimed.

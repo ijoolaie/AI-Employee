@@ -271,7 +271,7 @@ export default function ProductsPage() {
                   </thead>
                   <tbody>
                     {(q.data ?? []).map((p) => {
-                      const draft = inventoryDrafts[p.id] ?? String(p.inventory);
+                      const draft = inventoryDrafts[p.id] ?? (p.inventory === null ? "" : String(p.inventory));
                       const parsedInventory = Number(draft);
                       const validInventory =
                         draft.trim() !== "" &&
@@ -295,6 +295,7 @@ export default function ProductsPage() {
                               min="0"
                               step="1"
                               value={draft}
+                              placeholder={p.inventory === null ? m.inventoryUnknown : ""}
                               disabled={inventoryMut.isPending}
                               onChange={(e) =>
                                 setInventoryDrafts((current) => ({
