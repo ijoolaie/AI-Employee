@@ -21,6 +21,12 @@
 - PostgreSQL confirmed that exact outbox row reached `dispatched`, had `dispatched_at`, and had no `last_error`.
 - This proves local non-production SMTP transport and worker state transition only. It does not prove a real SMTP provider, inbox placement, SPF/DKIM/DMARC, or real-customer delivery.
 
+## Customer handoff notification delivery
+- Ran `python -m pytest tests/test_customer_channel_handoff_postgres.py -q` → **2 passed** against the isolated PostgreSQL database. The tests cover tenant-scoped assignment, handoff persistence without creating a new AI Run, tenant-scoped/deduplicated staff notification outbox creation, and persisted retry/dead-letter transitions.
+- Selected one synthetic handoff outbox row addressed to `ops@example.test` and invoked the actual `send_email_task` worker with SMTP configured to the local Mailpit sink.
+- Mailpit API confirmed receipt of the `Customer requested human support` message at `ops@example.test`; PostgreSQL confirmed that exact outbox row reached `dispatched`, populated `dispatched_at`, and had no `last_error`.
+- This verifies configured handoff notification delivery to a local non-production sink. It does not prove a real provider, actual staff ownership/response, or an SLA. Issue #1288 remains open for those operational requirements.
+
 ## Remaining acceptance gates — Issue #1258 / #1288
 1. Real-provider SMTP validation and a named staff owner plus measurable SLA (#1288).
 2. Broader tenant/privacy matrix and multi-turn order/ETA/handoff scenarios.
