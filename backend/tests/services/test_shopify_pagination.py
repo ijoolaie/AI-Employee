@@ -1,0 +1,78 @@
+"""Regression tests for Shopify pagination completeness guarantees."""
+
+import pytest
+
+from app.core.exceptions import ValidationAppError
+from app.services import shopify_service
+
+
+@pytest.mark.asyncio
+async def test_paginate_accepts_completion_on_the_page_limit(monkeypatch):
+    calls = []
+
+    async def graphql(_db, _integration, _query, variables):
+        calls.append(dict(variables))
+        page = len(calls)
+        return {
+            "products": {
+                "nodes": [{"id": str(page)}],
+                "pageInfo": {
+                    "hasNextPage": page < 2,
+                    "endCursor": f"cursor-{page}" if page < 2 else None,
+                },
+            }
+        }
+
+    monkeypatch.setattr(shopify_service, "_graphql", graphql)
+
+    rows = await shopify_service._paginate(
+        None, None, "query", "products", page_size=1, max_pages=2
+    )
+
+    assert rows == [{"id": "1"}, {"id": "2"}]
+    assert [call["after"] for call in calls] == [None, "cursor-1"]
+
+
+@pytest.mark.asyncio
+async def test_paginate_rejects_continuation_after_page_limit(monkeypatch):
+    calls = []
+
+    async def graphql(_db, _integration, _query, variables):
+        calls.append(dict(variables))
+        page = len(calls)
+        return {
+            "products": {
+                "nodes": [{"id": str(page)}],
+                "pageInfo": {"hasNextPage": True, "endCursor": f"cursor-{page}"},
+            }
+        }
+
+    monkeypatch.setattr(shopify_service, "_graphql", graphql)
+
+    with pytest.raises(ValidationAppError, match="exceeded the maximum page limit"):
+        await shopify_service._paginate(
+            None, None, "query", "products", page_size=1, max_pages=2
+        )
+
+    # The incomplete second page must not be returned as a successful result.
+    assert len(calls) == 2
+    assert [call["after"] for call in calls] == [None, "cursor-1"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("end_cursor", [None, "cursor-1"])
+async def test_paginate_rejects_missing_or_repeated_cursor(monkeypatch, end_cursor):
+    async def graphql(_db, _integration, _query, variables):
+        return {
+            "products": {
+                "nodes": [{"id": "1"}],
+                "pageInfo": {"hasNextPage": True, "endCursor": end_cursor},
+            }
+        }
+
+    monkeypatch.setattr(shopify_service, "_graphql", graphql)
+
+    with pytest.raises(ValidationAppError, match="without a new endCursor"):
+        await shopify_service._paginate(
+            None, None, "query", "products", page_size=1, max_pages=2
+        )
