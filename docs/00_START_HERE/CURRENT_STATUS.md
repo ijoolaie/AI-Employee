@@ -1,9 +1,22 @@
-## Current verified checkpoint — 2026-10-31 (PR #1325 merged)
+## Current verified checkpoint — 2026-10-31 (PostgreSQL + SMTP sink acceptance)
+
+- Current `main`: `f90211484b0b64f042785cd7f69504ef0449ccd9` (PR #1326 merged after all CodeQL and Release identity checks passed).
+- Docker Desktop is running; Docker Engine 29.8.2. The dedicated PostgreSQL 16.15 container `ai-employee-support-test-postgres` is healthy on localhost:15433, using isolated database `support_test`. Its named volume was preserved.
+- Backed up `support_test` before migration (custom-format dump, 456,448 bytes). Applied Alembic migrations w24–w27; database is at `w27_product_inventory_nullable`.
+- PostgreSQL-backed verified-email/customer-scoped-order acceptance: 1 passed. Combined focused support/email suite including this DB test: 92 passed in 1.89s.
+- Actual application email worker delivered one synthetic verification email to a local Mailpit SMTP sink (localhost:1025); Mailpit API confirmed receipt and PostgreSQL confirmed the outbox row reached `dispatched` with no error. This proves local non-production SMTP transport only—not real provider delivery, inbox placement, SPF/DKIM/DMARC, or customer delivery.
+- Issue #1258 remains OPEN. Remaining gates: real-provider SMTP validation and named staff owner/SLA (#1288), broader tenant/privacy + multi-turn order/ETA/handoff acceptance, and real customer validation.
+- Original Windows checkout remains dirty and 132 commits behind; preserve it. All latest acceptance work ran in a separate clean worktree based on this `main`; no reset/clean/fast-forward was performed on the original checkout.
+- PR #1257 remains Draft/on hold pending authenticated real-runtime desktop/mobile evidence and explicit human visual approval. Latest production-certified release remains `v1.4.17`; no production deployment or release promotion is claimed.
+
+---
+
+## Historical checkpoint — 2026-10-31 (PR #1325 merged; superseded by the current checkpoint above)
 
 - Current `main`: `b1c956ab4f7ee2500cd07b7acb7cc4a2bbddef3d`. PR #1325 merged after Documentation Truth Consistency and all CodeQL checks passed.
 - PR #1324 added test-only email-verification security regression coverage; all 12/12 exact-head checks passed and the focused local support/email suite reported 91 passed. No application behavior changed in that PR.
-- Issue #1258 remains OPEN. PostgreSQL-backed identity/order acceptance is blocked because Docker Engine is not running and `SUPPORT_TEST_DATABASE_URL` is unset. Non-production SMTP delivery proof, broader tenant/privacy and multi-turn acceptance, and real customer validation remain outstanding.
-- Local checkout has uncommitted changes; do not reset, clean, or fast-forward it blindly. The Docker CLI cannot connect to `dockerDesktopLinuxEngine`; the Windows service query reported `com.docker.service` is not installed.
+- At this historical checkpoint PostgreSQL and SMTP validation were blocked. They were subsequently completed against the isolated support_test database and a local Mailpit sink; see the current checkpoint above.
+- Local checkout has uncommitted changes; do not reset, clean, or fast-forward it blindly. Docker was subsequently started successfully; see the current checkpoint above.
 - PR #1257 remains Draft/on hold pending authenticated real-runtime desktop/mobile evidence and explicit human visual approval. Latest production-certified release remains `v1.4.17`; no production deployment or release promotion is claimed.
 
 ---
