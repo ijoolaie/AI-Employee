@@ -68,10 +68,23 @@ async def test_connection(db, tenant_id, integration_id):
 
 async def _paginate(db, integration, query, root, variables=None, page_size=100, max_pages=50):
     variables = dict(variables or {}); variables["first"] = page_size; variables["after"] = None; items = []
-    for _ in range(max_pages):
+    for page_number in range(1, max_pages + 1):
         data = await _graphql(db, integration, query, variables); conn = data[root]; items.extend(conn.get("nodes") or [])
-        if not (conn.get("pageInfo") or {}).get("hasNextPage"): break
-        variables["after"] = (conn.get("pageInfo") or {}).get("endCursor")
+        page_info = conn.get("pageInfo") or {}
+        if not page_info.get("hasNextPage"):
+            return items
+        next_cursor = page_info.get("endCursor")
+        if not next_cursor or next_cursor == variables["after"]:
+            raise ValidationAppError(
+                "Shopify pagination returned hasNextPage without a new endCursor",
+                details={"connection": root, "page": page_number},
+            )
+        if page_number == max_pages:
+            raise ValidationAppError(
+                "Shopify pagination exceeded the maximum page limit",
+                details={"connection": root, "max_pages": max_pages},
+            )
+        variables["after"] = next_cursor
     return items
 
 PRODUCTS_Q='''query Products($first:Int!,$after:String){ products(first:$first,after:$after){ nodes { id title descriptionHtml productType status variants(first:100){ nodes { id sku price inventoryQuantity } } images(first:20){ nodes { url } } } pageInfo { hasNextPage endCursor } } }'''
