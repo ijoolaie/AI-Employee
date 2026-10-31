@@ -1,3 +1,11 @@
+## Latest validation update — 2026-10-31
+
+PR #1319's current validation state:
+- Passed: Phase 14.14 Security/Privacy (including `pip-audit` after the `pypdf==6.21.4` patch), Architecture Guard, CodeQL, backend compile, Ruff, release/runbook contracts, Alembic graph/upgrade/consistency, isolated database migrations, W16 database/runtime checks, and the targeted workflow recovery race test.
+- Still running: full backend pytest suite and frontend production build / browser regression pipeline.
+- PR #1318's Documentation Truth Consistency check passed; its CodeQL check is still running. A merge attempt was rejected by GitHub because required checks were still queued. Neither PR is merged.
+- Do not treat this partial green state as full CI acceptance. Merge only after all required checks complete successfully.
+
 ## Follow-up implementation checkpoint — 2026-10-31
 
 The pagination truncation issue now has a bounded implementation PR: [#1319](https://github.com/ijoolaie/AI-Employee/pull/1319).
