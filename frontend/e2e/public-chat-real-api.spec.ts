@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("public widget uses the real API for conversation, message persistence, and token checks", async ({ page }) => {
+test("public widget uses the real API, Celery worker, and persisted assistant transcript", async ({ page }) => {
   const publicKey = process.env.PUBLIC_CHAT_KEY;
   expect(publicKey, "the CI fixture must provision a public channel").toBeTruthy();
 
@@ -23,7 +23,7 @@ test("public widget uses the real API for conversation, message persistence, and
   expect(stored?.id).toBeTruthy();
   expect(stored?.token).toBeTruthy();
 
-  const customerMessage = `browser-api-acceptance-${Date.now()}`;
+  const customerMessage = `browser-worker-acceptance-${Date.now()}`;
   await page.locator("form textarea").fill(customerMessage);
   const sendRequest = page.waitForResponse((response) =>
     response.url().includes(`/api/proxy/public/chat/conversations/${stored!.id}/messages`) &&
@@ -38,8 +38,10 @@ test("public widget uses the real API for conversation, message persistence, and
   expect(envelope.data.run_id).toMatch(/^[0-9a-f-]{36}$/i);
   expect(envelope.data.status).toBeTruthy();
 
-  // The page polls the real customer-token-protected transcript endpoint.
+  // The browser must render both the customer turn and the assistant turn
+  // returned by the token-protected transcript after the real Celery worker runs.
   await expect(page.getByText(customerMessage, { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/^Deterministic certification result:/)).toBeVisible({ timeout: 30_000 });
 
   const wrongTokenStatus = await page.evaluate(async (conversationId) => {
     const response = await fetch(`/api/proxy/public/chat/conversations/${conversationId}`, {

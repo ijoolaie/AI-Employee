@@ -49,6 +49,7 @@ jobs:
       APP_ENV: test
       CI: true
       DEBUG: 'false'
+      AI_DEFAULT_PROVIDER: deterministic
       STRIPE_SECRET_KEY: ''
       STRIPE_PUBLISHABLE_KEY: ''
       STRIPE_WEBHOOK_SECRET: ''
@@ -90,6 +91,17 @@ jobs:
         working-directory: backend
         run: python scripts/e2e_public_widget_fixture.py
 
+      - name: Start the real Celery execution worker
+        working-directory: backend
+        run: |
+          nohup celery -A app.workers.celery_app.celery_app worker --loglevel=INFO --pool=solo --queues=execution --hostname=public-widget-worker@%h >/tmp/public-widget-worker.log 2>&1 &
+          for i in {1..30}; do
+            if grep -q "ready." /tmp/public-widget-worker.log; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/public-widget-worker.log
+          exit 1
+
       - uses: actions/setup-node@v7
         with:
           node-version: '22.13.0'
@@ -124,18 +136,19 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
-      - name: Verify browser-to-real-API public chat flow
+      - name: Verify browser-to-real-API-and-worker assistant response
         working-directory: frontend
         env:
           BASE_URL: http://127.0.0.1:3000
         run: npx playwright test e2e/public-chat-real-api.spec.ts
 
-      - name: Upload API and frontend logs when the job fails
+      - name: Upload API, worker, and frontend logs when the job fails
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: public-widget-browser-api-logs-${{ github.sha }}
           path: |
             /tmp/public-widget-api.log
+            /tmp/public-widget-worker.log
             /tmp/public-widget-frontend.log
           if-no-files-found: warn
