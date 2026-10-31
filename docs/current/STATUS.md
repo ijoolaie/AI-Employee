@@ -1,3 +1,15 @@
+## Verified checkpoint — 2026-10-31 (PR #1320 merged; PR #1322 under CI)
+
+- Current main: a4e1fb37de86e65f1106f179e246d12760ddf692. PR #1320 is merged; all 17 exact-head checks succeeded. Shopify product freshness is now independent via last_product_sync_at.
+- Open PR inventory: 2. PR #1322 is the unknown-inventory implementation, base main at a4e1fb37de86e65f1106f179e246d12760ddf692, head 336905ca7ea6a9bdfe6a2cb3e768059e253d0abe. Its 36 exact-head check-runs currently show 15 success, one neutral CodeQL wrapper, and 20 queued/in progress; no failures. Do not merge before every required check passes.
+- PR #1257 remains Draft/on hold. Its 8 reported checks passed, but prior human visual review explicitly rejected the synthetic desktop/mobile captures; mobile close-up framing still clips a label. Keep it unmerged until higher-priority gates are met and authenticated real-runtime screenshots receive explicit human visual approval.
+- Open issue inventory: 9. #1258 remains the active engineering/customer-support acceptance tracker; PR #1322 partially addresses only unknown-inventory semantics. #1288 remains open for configured non-production SMTP delivery, named staff owner and measurable SLA. #1305 remains blocked on owner-approved retention duration/audit requirements/purge schedule. #1061 remains blocked on real customer discovery. #1044 remains deferred. #19/#210/#259/#269 remain intentional external production/RBAC/release/customer-acceptance gates.
+- PR #1322 preserves Shopify null/missing inventory as NULL, retains provider-reported zero, keeps manual create default zero and manual updates explicit, makes the API/AI/UI represent unknown safely, and adds migration w27_product_inventory_nullable. Historical Shopify zeroes are not mass-converted because their origin cannot be inferred; a future successful sync refreshes them.
+- Local validation on the PR branch: 60 focused tests plus 6 additional sales-readiness/migration tests passed; Ruff, compileall, git diff --check and Alembic single-head inspection passed. Offline full migration SQL generation stops in pre-existing migration 9f3a1c7b2d10_tool_approval_requests.py because it requires a live bind, before reaching w27. Frontend typecheck was not run because npm is unavailable locally; CI frontend job is running.
+- Release boundary: latest production-certified release remains v1.4.17 at b403c0dcdea579e017738a6fdea138c2b1a2999c. Mainline changes do not inherit that certification. No live Shopify sync, deployment or release promotion is claimed.
+
+---
+
 ## Latest validation update — 2026-10-31
 
 PR #1319's validation state on HEAD `a8a0cfe519146cbcb6d8221d3f1f0442e64d62c8`:
