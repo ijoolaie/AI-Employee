@@ -101,7 +101,15 @@ async def sync_products(db, tenant_id, integration_id):
             for k, v in data.items(): setattr(existing, k, v)
             updated += 1
         else: db.add(Product(tenant_id=tenant_id, **data)); created += 1
-    integration.status = "synced"; integration.config = {**(integration.config or {}), "last_product_sync_count": len(products)}; await db.flush()
+    # Flush product writes before advancing the provider-specific freshness watermark.
+    await db.flush()
+    integration.status = "synced"
+    integration.config = {
+        **(integration.config or {}),
+        "last_product_sync_count": len(products),
+        "last_product_sync_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.flush()
     return {"provider": "shopify", "products_seen": len(products), "created": created, "updated": updated}
 
 async def sync_customers(db, tenant_id, integration_id):
