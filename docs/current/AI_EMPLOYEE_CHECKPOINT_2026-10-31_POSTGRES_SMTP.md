@@ -1,7 +1,7 @@
 # AI-Employee acceptance checkpoint — 2026-10-31
 
 ## Repository and worktree
-- Current `main` at checkpoint creation: `f90211484b0b64f042785cd7f69504ef0449ccd9`.
+- Evidence baseline `main` at acceptance execution: `f90211484b0b64f042785cd7f69504ef0449ccd9`; PR #1327 recorded the checkpoint and merged as `46d1407c8171de936556dd616bc68e50fdc023ae`.
 - PR #1326 reconciled the start-here docs with main and was merged after CodeQL (Python + JavaScript/TypeScript) and Release identity consistency all passed.
 - Original Windows checkout remains dirty and 132 commits behind; it was not reset, cleaned, or fast-forwarded. Acceptance work ran in a separate clean Git worktree from current main.
 
@@ -14,6 +14,7 @@
 - PostgreSQL handoff suite: `python -m pytest tests/test_customer_channel_handoff_postgres.py -q` → **2 passed in 1.73s**.
 - Combined focused support/email tests, including the verified-email PostgreSQL test: **92 passed in 1.89s**.
 - Additional handoff/notification/dispatcher/email-worker regression group: **25 passed in 2.28s**.
+- Expanded customer-support matrix across 18 files (customer channel, multi-turn context/PostgreSQL, email verification, slot filling/PostgreSQL, escalation API/PostgreSQL, handoff/ack/follow-up, outbox, dispatcher, worker): **136 passed in 69.24s**. The first attempt had one environment-only failure because `SUPPORT_TEST_DATABASE_URL_SYNC` was missing; rerunning with both validated async/sync URLs passed.
 - Test exercises persisted verification outbox creation, invalid then valid challenge verification, unique same-tenant customer linking, customer-scoped order projection, and fail-closed behavior for stale order sync evidence.
 
 ## Non-production SMTP sink proof
