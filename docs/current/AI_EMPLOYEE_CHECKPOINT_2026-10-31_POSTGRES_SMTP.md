@@ -40,3 +40,9 @@
 4. Keep customer-facing claims fail-closed when trusted provider data is stale or unavailable.
 
 PR #1257 remains Draft/on hold pending authenticated real-runtime desktop/mobile evidence and explicit human visual approval. Latest production-certified release remains `v1.4.17`; no production deployment, live Shopify sync, or release promotion is claimed.
+
+
+## Tenant-boundary and privacy regression pass — 2026-10-31
+- Ran 12 additional backend test files against the isolated `support_test` environment with both async and sync database URLs configured: `python -m pytest tests/test_outbox_tenant_dedupe.py tests/test_tenant_lifecycle_concurrency.py tests/test_workflow_approval_expiry_tenant_boundary.py tests/test_workflow_parallel_branch_tenant_boundary.py tests/test_workflow_worker_tenant_boundary.py tests/services/test_agent_governance_tenant_attribution.py tests/services/test_customer_upsert_race.py tests/unit/test_logging_privacy.py tests/unit/test_privacy.py tests/api/test_tenant_admin_role_boundary.py tests/test_world_support_inbox.py tests/test_world_support_messages.py -q` → **50 passed in 2.84s**.
+- Coverage adds tenant-scoped outbox deduplication, tenant lifecycle concurrency, workflow tenant boundaries, agent governance attribution, customer upsert races, privacy/logging protections, tenant-admin role boundary, and support inbox/message behavior.
+- Together with the 136-test customer-support matrix above, this increases synthetic engineering evidence. It is not live customer research, external SMTP provider validation, or production certification.
