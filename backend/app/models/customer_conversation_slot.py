@@ -45,8 +45,8 @@ class CustomerConversationSlot(Base):
             name="fk_customer_conversation_slots_source_message",
         ),
         Index(
-            "ix_customer_conversation_slots_expiry",
-            "tenant_id", "conversation_id", "expires_at",
+            "ix_customer_conversation_slots_tenant_expiry",
+            "tenant_id", "expires_at",
         ),
     )
 
