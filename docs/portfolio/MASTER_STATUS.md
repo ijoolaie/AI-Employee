@@ -9,13 +9,13 @@
 
 | Project | Repository / tracking | Main status | Open PRs | Open issues | Latest inspected main SHA |
 |---|---|---|---:|---:|---|
-| AI-Employee | [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee) | Active; commercial portal PR blocked by frontend Playwright regression | 2 | 9 | `a781c5941c8449483fa521149e792a84877efcb0` |
+| AI-Employee | [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee) | Active; commercial portal PR blocked by frontend Playwright regression | 3 | 9 | `a781c5941c8449483fa521149e792a84877efcb0` |
 | Nova-Audit | [ijoolaie/Nova-Audit](https://github.com/ijoolaie/Nova-Audit) | Build/integrity repaired; Cloudflare 1101 diagnosis awaits runtime evidence | 0 | 0 | `4d4c92f074924c027c0dc2345d20a104a9752e57` |
 | IranPriceScout | [ijoolaie/IranPriceScout](https://github.com/ijoolaie/IranPriceScout) | Worker deployed at PR #19; PR #20 merged but not deployed | 0 | 0 | `687edf82feca527ce12d91735373417419a72f04` |
 | imoxy-net | [ijoolaie/imoxy-net](https://github.com/ijoolaie/imoxy-net) | Implementation progressing; D1/data-plane and reference-parity gates remain | 0 | 1 | `abc38a1392cc57a2ad7b3ca388d4a42820a232bb` |
 | Raya MCP | Repository mapping pending | Separate MCP project; not found in accessible repositories under current GitHub installation | Unknown | Unknown | Unknown |
 
-**Totals for the four accessible repositories:** 2 open PRs and 10 open issues. Raya MCP is excluded until its canonical repository is identified.
+**Totals for the four accessible repositories at this snapshot:** 3 open PRs (including this portfolio-register PR) and 10 open issues. Raya MCP is excluded until its canonical repository is identified.
 
 ## 1. AI-Employee
 
@@ -29,6 +29,7 @@
 |---|---|---|
 | [#1334 — commercial portal license management and tenant access boundaries](https://github.com/ijoolaie/AI-Employee/pull/1334) | Open, not draft | Do not merge yet. Exact-head workflow inventory: 16 runs completed; 15 succeeded and the CI workflow failed in frontend Playwright browser regressions. Backend job passed. |
 | [#1257 — World close-up zoom](https://github.com/ijoolaie/AI-Employee/pull/1257) | Open, Draft | On hold pending authenticated real-runtime desktop/mobile evidence and human visual approval. |
+| [#1335 — portfolio master status register](https://github.com/ijoolaie/AI-Employee/pull/1335) | Open, documentation-only | This register. Created on a dedicated branch because main requires PR review and two status checks; exact-head workflow runs had not appeared at last inspection. Do not merge until required checks pass. |
 
 Failing CI: [run 41297949329](https://github.com/ijoolaie/AI-Employee/actions/runs/41297949329). Backend passed; frontend failed at **Playwright browser regressions**. The other 15 workflow runs in the inspected exact-head inventory succeeded. Local validation in the PR body does not override the failed GitHub browser regression.
 
