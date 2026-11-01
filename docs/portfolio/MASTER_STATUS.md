@@ -9,29 +9,29 @@
 
 | Project | Repository / tracking | Main status | Open PRs | Open issues | Latest inspected main SHA |
 |---|---|---|---:|---:|---|
-| AI-Employee | [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee) | Active; commercial portal PR blocked by frontend Playwright regression | 3 | 9 | `a781c5941c8449483fa521149e792a84877efcb0` |
+| AI-Employee | [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee) | Active; commercial portal license management merged; World close-up PR remains Draft pending visual acceptance | 2 | 9 | `b4fc2759f291b9a23b1a88ca764abe77afe03bf0` |
 | Nova-Audit | [ijoolaie/Nova-Audit](https://github.com/ijoolaie/Nova-Audit) | Build/integrity repaired; Cloudflare 1101 diagnosis awaits runtime evidence | 0 | 0 | `4d4c92f074924c027c0dc2345d20a104a9752e57` |
 | IranPriceScout | [ijoolaie/IranPriceScout](https://github.com/ijoolaie/IranPriceScout) | Worker deployed at PR #19; PR #20 merged but not deployed | 0 | 0 | `687edf82feca527ce12d91735373417419a72f04` |
 | imoxy-net | [ijoolaie/imoxy-net](https://github.com/ijoolaie/imoxy-net) | Implementation progressing; D1/data-plane and reference-parity gates remain | 0 | 1 | `abc38a1392cc57a2ad7b3ca388d4a42820a232bb` |
 | Raya MCP | [ijoolaie/Raya-MCP](https://github.com/ijoolaie/Raya-MCP) (Private) | Initial source pushed; one moderate Dependabot alert open; Phase 1 filesystem confinement remains not accepted as race-free | 0 | 0 | `16b018109fa66de0166f36af010b3e9cf187fd76` |
 
-**Totals for the five accessible repositories at this snapshot:** 3 open PRs (including this portfolio-register PR) and 10 open issues. Raya MCP has no open PRs or issues at initial repository creation.
+**Totals for the five accessible repositories at this snapshot:** 2 open PRs in AI-Employee (including this portfolio-register PR) and 10 open issues across the five repositories. Raya MCP has no open PRs or issues at initial repository creation.
 
 ## 1. AI-Employee
 
 - **Repository:** https://github.com/ijoolaie/AI-Employee
-- **Default branch / inspected HEAD:** `main` / `a781c5941c8449483fa521149e792a84877efcb0`
+- **Default branch / inspected HEAD:** `main` / `b4fc2759f291b9a23b1a88ca764abe77afe03bf0`
 - **Latest production-certified release recorded in handoff:** `v1.4.17`, SHA `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
 ### Open PRs
 
 | PR | Status | Disposition |
 |---|---|---|
-| [#1334 — commercial portal license management and tenant access boundaries](https://github.com/ijoolaie/AI-Employee/pull/1334) | Open, not draft | Do not merge yet. Exact-head workflow inventory: 16 runs completed; 15 succeeded and the CI workflow failed in frontend Playwright browser regressions. Backend job passed. |
+| [#1334 — commercial portal license management and tenant access boundaries](https://github.com/ijoolaie/AI-Employee/pull/1334) | **Merged 2026-11-01** | Merged at `b4fc2759f291b9a23b1a88ca764abe77afe03bf0`. Exact merged head: `07895983b512052fd5e8071a74f6db431b9091f6`. GitHub reports all 16 PR workflow runs completed successfully on that head. |
 | [#1257 — World close-up zoom](https://github.com/ijoolaie/AI-Employee/pull/1257) | Open, Draft | On hold pending authenticated real-runtime desktop/mobile evidence and human visual approval. |
-| [#1335 — portfolio master status register](https://github.com/ijoolaie/AI-Employee/pull/1335) | Open, documentation-only | This register. Created on a dedicated branch because main requires PR review and two status checks; exact-head workflow runs had not appeared at last inspection. Do not merge until required checks pass. |
+| [#1335 — portfolio master status register](https://github.com/ijoolaie/AI-Employee/pull/1335) | Open, documentation-only | This register. Dedicated branch; `main` ruleset requires the two named CodeQL checks and strict base freshness. Current head is being refreshed against `main`; merge only after the exact-head CodeQL checks pass and the branch is up to date. |
 
-Failing CI: [run 41297949329](https://github.com/ijoolaie/AI-Employee/actions/runs/41297949329). Backend passed; frontend failed at **Playwright browser regressions**. The other 15 workflow runs in the inspected exact-head inventory succeeded. Local validation in the PR body does not override the failed GitHub browser regression.
+PR #1334's final exact-head workflow inventory completed successfully (16/16); the earlier Playwright failure was resolved before merge. Local validation and GitHub CI remain distinct from production certification.
 
 ### Open issues
 
@@ -57,13 +57,11 @@ Failing CI: [run 41297949329](https://github.com/ijoolaie/AI-Employee/actions/ru
 
 ### Next actions
 
-1. Inspect PR #1334's failing Playwright output, reproduce the browser regressions and repair the underlying issue without weakening assertions.
-2. Re-run exact PR-head CI; require all mandatory checks to pass before merge.
-3. Keep #1257 on hold until real-runtime screenshots and human approval exist.
-4. Continue #1258/#1288 acceptance without treating deterministic tests or Mailpit as production evidence.
-5. Prioritize #1061 customer discovery before broadening integrations.
-6. Do not enable physical purge under #1305 before explicit policy-owner approval.
-7. Keep external production/release gates #19, #210, #259 and #269 separate from CI.
+1. Keep #1257 on hold until real-runtime screenshots and human approval exist.
+2. Continue #1258/#1288 acceptance without treating deterministic tests or Mailpit as production evidence.
+3. Prioritize #1061 customer discovery before broadening integrations.
+4. Do not enable physical purge under #1305 before explicit policy-owner approval.
+5. Keep external production/release gates #19, #210, #259 and #269 separate from CI.
 
 ## 2. Nova-Audit
 
@@ -208,7 +206,7 @@ Handoff records foundations including:
 ## Next portfolio maintenance cycle
 
 1. Audit the newly created Raya MCP repository's PRs/issues, roadmap, handoff and runtime/tool evidence; continue Phase 1 acceptance gates without overstating production security.
-2. Resolve AI-Employee PR #1334's Playwright failure; keep #1257 on hold.
+2. Keep AI-Employee PR #1257 on hold pending human visual acceptance; maintain this register's AI-Employee SHA and PR inventory from live GitHub.
 3. Decide and execute the safe isolated deployment path for IranPriceScout PR #20.
 4. Obtain the actual Nova-Audit Cloudflare Worker identity and runtime logs.
 5. Continue imoxy-net issue #78 and D1/reference-parity acceptance.
