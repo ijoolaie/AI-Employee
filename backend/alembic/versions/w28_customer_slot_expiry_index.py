@@ -9,10 +9,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.drop_index(
-        "ix_customer_conversation_slots_expiry",
-        table_name="customer_conversation_slots",
-    )
     op.create_index(
         "ix_customer_conversation_slots_tenant_expiry",
         "customer_conversation_slots",
@@ -24,9 +20,4 @@ def downgrade() -> None:
     op.drop_index(
         "ix_customer_conversation_slots_tenant_expiry",
         table_name="customer_conversation_slots",
-    )
-    op.create_index(
-        "ix_customer_conversation_slots_expiry",
-        "customer_conversation_slots",
-        ["tenant_id", "conversation_id", "expires_at"],
     )
