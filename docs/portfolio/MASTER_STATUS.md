@@ -13,7 +13,7 @@
 | Nova-Audit | [ijoolaie/Nova-Audit](https://github.com/ijoolaie/Nova-Audit) | Build/integrity repaired; Cloudflare 1101 diagnosis awaits runtime evidence | 0 | 0 | `4d4c92f074924c027c0dc2345d20a104a9752e57` |
 | IranPriceScout | [ijoolaie/IranPriceScout](https://github.com/ijoolaie/IranPriceScout) | Worker deployed at PR #19; PR #20 merged but not deployed | 0 | 0 | `687edf82feca527ce12d91735373417419a72f04` |
 | imoxy-net | [ijoolaie/imoxy-net](https://github.com/ijoolaie/imoxy-net) | Implementation progressing; D1/data-plane and reference-parity gates remain | 0 | 1 | `abc38a1392cc57a2ad7b3ca388d4a42820a232bb` |
-| Raya MCP | [ijoolaie/Raya-MCP](https://github.com/ijoolaie/Raya-MCP) (Private) | Initial source pushed; one moderate Dependabot alert open; Phase 1 filesystem confinement remains not accepted as race-free | 0 | 0 | `b2ca507d83f881851f97f5304a5c882de68f0e5d` |
+| Raya MCP | [ijoolaie/Raya-MCP](https://github.com/ijoolaie/Raya-MCP) (Private) | Initial source pushed; one moderate Dependabot alert open; Phase 1 filesystem confinement remains not accepted as race-free | 0 | 0 | `16b018109fa66de0166f36af010b3e9cf187fd76` |
 
 **Totals for the five accessible repositories at this snapshot:** 3 open PRs (including this portfolio-register PR) and 10 open issues. Raya MCP has no open PRs or issues at initial repository creation.
 
@@ -174,7 +174,7 @@ Handoff records foundations including:
 - **Local workspace:** `C:\Users\Ali\local-mcp-bridge`.
 - **GitHub repository:** [ijoolaie/Raya-MCP](https://github.com/ijoolaie/Raya-MCP), created as **Private** on 2026-11-01; default branch `main`.
 - **Initial commit:** `bf78a715ba16ed1d0e4a600af171f50aed628cbe` (`Initial import of Raya Local MCP Bridge`); 101 files and 20,668 insertions.
-- **Current remote HEAD:** `b2ca507d83f881851f97f5304a5c882de68f0e5d`; the remote `origin/main` SHA was independently checked and exactly matches the local HEAD after the security documentation update.
+- **Current remote HEAD:** `16b018109fa66de0166f36af010b3e9cf187fd76`; the remote `origin/main` SHA was independently checked and exactly matches the local HEAD after the security documentation update.
 - **Dependency alert:** GitHub Dependabot alert [#1](https://github.com/ijoolaie/Raya-MCP/security/dependabot/1) is open for the moderate minimatch globparts-amplification DoS advisory (GHSA-g3hv-75wg-m249 / CVE-2026-118764). Local `npm audit` reports 8 moderate transitive package records in the same ExcelJS/archiver dependency chain, with 0 high and 0 critical. No dependency fix was applied because npm's dry-run proposed a semver-major ExcelJS downgrade; reachability and a compatible remediation strategy remain to be assessed. Details: [docs/DEPENDENCY-SECURITY-20261101.md](https://github.com/ijoolaie/Raya-MCP/blob/main/docs/DEPENDENCY-SECURITY-20261101.md).
 - **Included:** MCP server source and tool modules, package manifests/lockfile, smoke/security tests, agent rules, README, roadmap/current-status/parity/design documents, handoff, and text/source files for isolated native security prototypes.
 - **Excluded from the first push:** `.env*`, `raya-config.json`, logs/traces, local backups, `node_modules`, downloads/tunnel-client binaries, build outputs, compiled native artifacts, duplicate `security-validation-*` copies, dated marketplace probe captures, and the separate local `to-iman-hand-off.md`. These remain local; no files were deleted.
