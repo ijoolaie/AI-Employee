@@ -6,7 +6,7 @@ const authState = JSON.stringify({
     accessToken: "e2e-access-token",
     refreshToken: "e2e-refresh-token",
     user: { id: "user-e2e", email: "e2e@example.test", full_name: "E2E Admin" },
-    tenant: { id: "tenant-e2e", name: "E2E Tenant" },
+    tenant: { id: "tenant-e2e", name: "E2E Tenant", tenant_kind: "customer" },
   },
   version: 0,
 });
