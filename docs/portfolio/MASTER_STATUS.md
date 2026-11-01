@@ -1,0 +1,213 @@
+# Portfolio Master Status
+
+> Canonical cross-project status register. Reconcile against live GitHub before acting; this file is a snapshot, not a substitute for current PR/Issue/CI checks.
+>
+> **Last reconciled:** 2026-11-01  
+> **Maintainer:** ijoolaie
+
+## Portfolio overview
+
+| Project | Repository / tracking | Main status | Open PRs | Open issues | Latest inspected main SHA |
+|---|---|---|---:|---:|---|
+| AI-Employee | [ijoolaie/AI-Employee](https://github.com/ijoolaie/AI-Employee) | Active; commercial portal license management merged; World close-up PR remains Draft pending visual acceptance | 2 | 9 | `b4fc2759f291b9a23b1a88ca764abe77afe03bf0` |
+| Nova-Audit | [ijoolaie/Nova-Audit](https://github.com/ijoolaie/Nova-Audit) | Build/integrity repaired; Cloudflare 1101 diagnosis awaits runtime evidence | 0 | 0 | `4d4c92f074924c027c0dc2345d20a104a9752e57` |
+| IranPriceScout | [ijoolaie/IranPriceScout](https://github.com/ijoolaie/IranPriceScout) | Worker deployed at PR #19; PR #20 merged but not deployed | 0 | 0 | `687edf82feca527ce12d91735373417419a72f04` |
+| imoxy-net | [ijoolaie/imoxy-net](https://github.com/ijoolaie/imoxy-net) | Implementation progressing; D1/data-plane and reference-parity gates remain | 0 | 1 | `abc38a1392cc57a2ad7b3ca388d4a42820a232bb` |
+| Raya MCP | [ijoolaie/Raya-MCP](https://github.com/ijoolaie/Raya-MCP) (Private) | Initial source pushed; one moderate Dependabot alert open; Phase 1 filesystem confinement remains not accepted as race-free | 0 | 0 | `16b018109fa66de0166f36af010b3e9cf187fd76` |
+
+**Totals for the five accessible repositories at this snapshot:** 2 open PRs in AI-Employee (including this portfolio-register PR) and 10 open issues across the five repositories. Raya MCP has no open PRs or issues at initial repository creation.
+
+## 1. AI-Employee
+
+- **Repository:** https://github.com/ijoolaie/AI-Employee
+- **Default branch / inspected HEAD:** `main` / `b4fc2759f291b9a23b1a88ca764abe77afe03bf0`
+- **Latest production-certified release recorded in handoff:** `v1.4.17`, SHA `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
+
+### Open PRs
+
+| PR | Status | Disposition |
+|---|---|---|
+| [#1334 — commercial portal license management and tenant access boundaries](https://github.com/ijoolaie/AI-Employee/pull/1334) | **Merged 2026-11-01** | Merged at `b4fc2759f291b9a23b1a88ca764abe77afe03bf0`. Exact merged head: `07895983b512052fd5e8071a74f6db431b9091f6`. GitHub reports all 16 PR workflow runs completed successfully on that head. |
+| [#1257 — World close-up zoom](https://github.com/ijoolaie/AI-Employee/pull/1257) | Open, Draft | On hold pending authenticated real-runtime desktop/mobile evidence and human visual approval. |
+| [#1335 — portfolio master status register](https://github.com/ijoolaie/AI-Employee/pull/1335) | Open, documentation-only | This register. Dedicated branch; `main` ruleset requires the two named CodeQL checks and strict base freshness. Current head is being refreshed against `main`; merge only after the exact-head CodeQL checks pass and the branch is up to date. |
+
+PR #1334's final exact-head workflow inventory completed successfully (16/16); the earlier Playwright failure was resolved before merge. Local validation and GitHub CI remain distinct from production certification.
+
+### Open issues
+
+- [#1258](https://github.com/ijoolaie/AI-Employee/issues/1258) — multi-turn customer-support acceptance; active engineering/customer acceptance tracker.
+- [#1288](https://github.com/ijoolaie/AI-Employee/issues/1288) — durable staff notification and acknowledgement; external SMTP/inbox delivery, named owner, assignment and measurable SLA remain unproven.
+- [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) — World visual/gameplay specification; deferred with PR #1257.
+- [#1061](https://github.com/ijoolaie/AI-Employee/issues/1061) — validate a revenue-generating workflow; commercial discovery gate. Handoff target: five decision-maker conversations and at least two concrete sample/trial commitments.
+- [#1305](https://github.com/ijoolaie/AI-Employee/issues/1305) — tenant-safe retention/purge; logical expiry exists, physical purge is gated on owner approval of retention duration, audit requirements and schedule.
+- [#19](https://github.com/ijoolaie/AI-Employee/issues/19) — production evidence for Vendor/Reseller/Customer isolation and RBAC.
+- [#210](https://github.com/ijoolaie/AI-Employee/issues/210) — immutable external-production release promotion.
+- [#259](https://github.com/ijoolaie/AI-Employee/issues/259) — scale, governance and production master plan.
+- [#269](https://github.com/ijoolaie/AI-Employee/issues/269) — external production certification and customer acceptance.
+
+### Verified progress
+
+- PRs #1330, #1331 and #1332 are merged; the handoff records exact-head CI results of 12/12, 9/9 and 16/16 respectively.
+- Customer-support acceptance records 136 passing tests across 18 files, including PostgreSQL-backed handoff, acknowledgement/follow-up, tenant-isolated escalation, outbox, dispatcher, email-worker and multi-turn persistence.
+- Browser acceptance covers widget/API/Run/worker response persistence with a deterministic test provider. It does **not** establish live LLM quality or customer satisfaction.
+- Handoff notification was exercised through the real application worker to a localhost-only Mailpit sink. This is not external SMTP delivery or proof of staff response.
+- Shopify pagination hardening is merged; incomplete pagination must fail rather than silently mark a partial sync complete.
+- Unknown Shopify inventory is represented separately from provider-confirmed zero; no live Shopify sync is claimed.
+- Mainline CI and merged work do not certify a production release or deployment.
+
+### Next actions
+
+1. Keep #1257 on hold until real-runtime screenshots and human approval exist.
+2. Continue #1258/#1288 acceptance without treating deterministic tests or Mailpit as production evidence.
+3. Prioritize #1061 customer discovery before broadening integrations.
+4. Do not enable physical purge under #1305 before explicit policy-owner approval.
+5. Keep external production/release gates #19, #210, #259 and #269 separate from CI.
+
+## 2. Nova-Audit
+
+- **Repository:** https://github.com/ijoolaie/Nova-Audit
+- **Inspected HEAD:** `4d4c92f074924c027c0dc2345d20a104a9752e57`
+- **Handoff:** [HANDOFF.md](https://github.com/ijoolaie/Nova-Audit/blob/main/HANDOFF.md), updated 2026-10-20.
+- **GitHub inventory:** no open PRs and no open issues. PR #2 build/lockfile verification fix is merged; PR #3 refreshed the handoff.
+
+### Verified progress recorded in handoff
+
+- Clean-clone `npm ci`, `npm run build`, `node --check worker.js`, `npm test` (4 tests), `npm run check`, and `npm audit --audit-level=high` passed.
+- Release Worker SHA-256 matched the checksum manifest.
+- Windows line-ending conversion was addressed with `.gitattributes`.
+- No deployment was performed as part of the build/integrity repair.
+
+### Blocker
+
+Cloudflare Error 1101 remains undiagnosed. The Worker name `web-app` in repository config was not found in the currently selected Cloudflare account (error 10007). This does not prove that no deployed Worker exists. Actual Worker name/URL/account and runtime exception remain unknown.
+
+### Next actions
+
+1. Identify the correct Cloudflare account, actual Worker name and URL from the dashboard.
+2. Capture read-only runtime logs/stack trace while reproducing 1101; redact secrets and customer data.
+3. Fix only a demonstrated cause, add a regression test and validate in an isolated Worker first.
+4. Require explicit approval before production deployment or changes to production bindings/secrets.
+
+**Status:** repository repair complete; original runtime-diagnosis objective blocked on external runtime identity/log evidence.
+
+## 3. IranPriceScout
+
+- **Repository:** https://github.com/ijoolaie/IranPriceScout
+- **Inspected HEAD:** `687edf82feca527ce12d91735373417419a72f04`
+- **Handoff:** [docs/HANDOFF.md](https://github.com/ijoolaie/IranPriceScout/blob/main/docs/HANDOFF.md), updated 2026-10-31.
+- **GitHub inventory:** no open PRs and no open issues.
+- PR #19 (Serper result-limit fix) is merged and was deployed.
+- PR #20 (explicit search redirect URL normalization) is merged but **not deployed** according to the latest handoff.
+
+### Production evidence and limitations
+
+- Handoff records a Cloudflare Worker deployment after PR #19 with 100% traffic on the deployed version.
+- GET-only health checks returned HTTP 200.
+- A user-initiated search after that deployment completed the Serper-backed web run without the previous HTTP 400; handoff records 39 raw results and 28 eligible results.
+- PR #20 unwraps only explicit absolute HTTP(S) destinations in known Google/Bing/Yahoo query parameters. It does not follow arbitrary redirects or decode opaque tokens.
+- Observed Google `/goto?url=CAES...` values remain opaque; investigation found binary/protobuf-like payload, not a directly extractable URL.
+- PR #20 was not deployed at the latest handoff checkpoint. Do not imply that the deployed Worker includes it.
+- Torob has previously returned an upstream blocked/challenged condition; Telegram is not configured; Instagram data is limited to publicly indexed results.
+- Parsed prices are heuristic and must not be described as seller-confirmed live prices.
+
+### Next actions
+
+1. Review PR #20 and decide whether the opaque Google URL limitation is accepted or needs a narrowly scoped resolver.
+2. Do not use arbitrary redirect following or unrestricted destination fetching; preserve SSRF/DNS/IP and retailer-host protections.
+3. Prepare a clean isolated release checkout, run the full test suite and Wrangler dry-run, and deploy only after exact merged code is verified.
+4. After deployment, ask the user to initiate the next real scan from the UI. Management tools must not call `/api/scan` or trigger ingestion.
+5. Validate price extraction and outliers using fixtures first; distinguish parsed offers from verified retail prices.
+
+**Status:** deployed MVP at the PR #19 baseline; PR #20 is merged but awaiting safe release/deployment and further validation.
+
+## 4. imoxy-net
+
+- **Repository:** https://github.com/ijoolaie/imoxy-net
+- **Inspected HEAD:** `abc38a1392cc57a2ad7b3ca388d4a42820a232bb`
+- **Handoff:** [HANDOFF.md](https://github.com/ijoolaie/imoxy-net/blob/main/HANDOFF.md)
+- **GitHub inventory:** no open PRs; one open issue: [#78 — prove bounded downstream WebSocket buffering in Cloudflare Workers](https://github.com/ijoolaie/imoxy-net/issues/78).
+- Latest inspected commit is a handoff update recording quota-recovery work in PR #150.
+
+### Product scope and implementation
+
+Target is behaviorally compatible implementation against pinned Nova Proxy 5.0.0, followed by separately approved improvements. Interfaces: web panel, Telegram bot and Android APK, sharing API/domain and authorization/quota logic.
+
+Handoff records foundations including:
+- Worker API authentication/session, account CRUD foundations, quota/usage foundations and subscription lifecycle.
+- Web login/session, account list/create, usage summary and read-only Cloudflare inventory/preview.
+- Telegram allowlisted private-chat read-only commands, update-ID deduplication, stale-claim recovery and cleanup.
+- Android HTTPS login/account list/refresh/logout with Android Keystore-backed session storage.
+- Quota overflow guard and recovery improvements.
+
+### Acceptance gaps
+
+- Cloudflare operations remain read-only inventory and dry-run planning; no apply/delete/write route is enabled.
+- SQLite tests are not a substitute for real Cloudflare D1 validation.
+- Real D1 migration, backup/restore, concurrency and failure-injection tests remain.
+- Full browser E2E/accessibility, Android device/emulator E2E, secure Telegram account linking and real webhook validation remain.
+- Nova reference runtime parity has not been proven. Handoff requires an authorized disposable Nova Proxy 5.0.0 instance and qualified license/distribution review.
+- Issue #78 remains the immediate WebSocket bounded-buffer acceptance gate.
+- No production deployment, real Cloudflare write, live Telegram API call or Nova runtime comparison is claimed.
+
+### Roadmap phases explicitly reported by handoff
+
+| Phase | Status | Evidence / exit gate |
+|---|---|---|
+| 0–10 | Needs reconciliation | Current handoff summary does not provide a complete per-phase 0–10 status table; do not infer completion. |
+| 11 | In progress | Initial API/Telegram account-list contract tests pass; full cross-interface E2E, failure injection, SLOs and mutation parity remain. |
+| 12 | Blocked | Legal/distribution approval, reference runtime evidence, real D1 backup/restore, staging deployment and production release artifact absent. |
+| 13 | Not started | Candidate improvements documented; gated on parity and legal review. |
+
+### Next actions
+
+1. Continue issue #78 with bounded-buffer proof and safe failure-injection tests.
+2. Obtain an authorized disposable reference instance and qualified license/distribution review before claiming parity.
+3. Add real D1 migration/backup/restore/concurrency validation.
+4. Add web/Android E2E and secure Telegram account linking in a safe test environment.
+5. Keep Cloudflare writes disabled until least privilege, preview approval, idempotency and rollback are demonstrated.
+6. Do not start Phase 13 before parity and legal gates pass.
+
+## 5. Raya MCP — private repository created and initial source pushed
+
+- **Local workspace:** `C:\Users\Ali\local-mcp-bridge`.
+- **GitHub repository:** [ijoolaie/Raya-MCP](https://github.com/ijoolaie/Raya-MCP), created as **Private** on 2026-11-01; default branch `main`.
+- **Initial commit:** `bf78a715ba16ed1d0e4a600af171f50aed628cbe` (`Initial import of Raya Local MCP Bridge`); 101 files and 20,668 insertions.
+- **Current remote HEAD:** `16b018109fa66de0166f36af010b3e9cf187fd76`; the remote `origin/main` SHA was independently checked and exactly matches the local HEAD after the security documentation update.
+- **Dependency alert:** GitHub Dependabot alert [#1](https://github.com/ijoolaie/Raya-MCP/security/dependabot/1) is open for the moderate minimatch globparts-amplification DoS advisory (GHSA-g3hv-75wg-m249 / CVE-2026-118764). Local `npm audit` reports 8 moderate transitive package records in the same ExcelJS/archiver dependency chain, with 0 high and 0 critical. No dependency fix was applied because npm's dry-run proposed a semver-major ExcelJS downgrade; reachability and a compatible remediation strategy remain to be assessed. Details: [docs/DEPENDENCY-SECURITY-20261101.md](https://github.com/ijoolaie/Raya-MCP/blob/main/docs/DEPENDENCY-SECURITY-20261101.md).
+- **Included:** MCP server source and tool modules, package manifests/lockfile, smoke/security tests, agent rules, README, roadmap/current-status/parity/design documents, handoff, and text/source files for isolated native security prototypes.
+- **Excluded from the first push:** `.env*`, `raya-config.json`, logs/traces, local backups, `node_modules`, downloads/tunnel-client binaries, build outputs, compiled native artifacts, duplicate `security-validation-*` copies, dated marketplace probe captures, and the separate local `to-iman-hand-off.md`. These remain local; no files were deleted.
+- **Secret screening:** a heuristic scan of 101 candidate text/source files found no recognized private-key, GitHub/OpenAI/AWS token, JWT, Cloudflare key, or high-entropy secret-assignment patterns. This is a screening result, not a guarantee that no secret exists.
+- **Validation on the local Windows/Node 22 host:** `npm run lint` passed; `npm test` passed with 42 core checks, 34 format/config checks, HTTP unauthorized/authenticated-initialize checks, and 36 URL-security checks. The test inventory reports 45 tools. Representative live connector calls succeeded, but not all 45 tools have been individually acceptance-tested.
+- **Important engineering status:** Phase 1 filesystem confinement remains **IN PROGRESS / NOT ACCEPTED**; production filesystem confinement is not established as race-free. Native HANDLE-relative prototypes are isolated test artifacts and are not integrated into production handlers. Production integration remains NO-GO pending the roadmap gates.
+- **Repository hygiene note:** the initial staged diff check identified pre-existing trailing whitespace and extra blank lines in a small set of source/test/docs files. Those were not mass-edited during onboarding. The separate local `to-iman-hand-off.md` remains ignored and unpushed. A later local status check also found a modification in `.native-probe/hardlink-sharing-experiment.c`; its diff was inspected and preserved as an uncommitted local change, not pushed.
+- **GitHub inventory at creation:** zero open PRs and zero open issues. No GitHub Actions workflow or CI result is claimed for this initial push.
+
+### Next actions
+
+1. Audit the 45 registered tools against source schemas and run representative positive, negative, boundary, permission, failure and lifecycle tests per tool family; do not claim full acceptance from the inventory count.
+2. Continue Phase 1 operation-family race/cleanup acceptance, including live ACL permission-denied evidence; keep native prototypes isolated until all gates pass.
+3. Keep production filesystem handlers unchanged until accepted native contracts exist for each operation family; no race-free claim or production integration before then.
+4. Add CI for supported Windows/Node versions and ensure the isolated native probes have reproducible build prerequisites before treating their results as portable.
+5. Review the untracked local handoff separately before deciding whether it belongs in the private repository.
+
+**Current status:** private GitHub repository created; initial source pushed and remote SHA verified. Local project remains in active development; production filesystem confinement is not accepted as race-free.
+## Portfolio operating rules
+
+1. Before every project action, refresh the default-branch SHA, open PRs, open issues and relevant workflow runs. This file can become stale.
+2. PR merge readiness requires exact-head required checks to pass, review threads to be resolved, and base/head freshness to be checked. Green CI alone is not production certification.
+3. Never count documentation-only progress as functional implementation progress.
+4. Never claim a feature works solely because it appears in README, roadmap or handoff. Require source inspection and relevant tests/runtime evidence.
+5. Keep GitHub evidence separate from local machine, Docker, Cloudflare, provider, customer and production evidence.
+6. Record blocked work with the missing evidence/external dependency and a concrete next action.
+7. Do not deploy, change production resources, trigger customer scans/ingestion, read secrets or perform destructive actions unless the user authorized that exact operation.
+8. Update this file only after reconciling the affected project against live GitHub and relevant handoff/roadmap.
+9. Percent-complete values are intentionally omitted until each project's roadmap phases and exit criteria are mapped to verifiable evidence. Do not invent progress percentages.
+
+## Next portfolio maintenance cycle
+
+1. Audit the newly created Raya MCP repository's PRs/issues, roadmap, handoff and runtime/tool evidence; continue Phase 1 acceptance gates without overstating production security.
+2. Keep AI-Employee PR #1257 on hold pending human visual acceptance; maintain this register's AI-Employee SHA and PR inventory from live GitHub.
+3. Decide and execute the safe isolated deployment path for IranPriceScout PR #20.
+4. Obtain the actual Nova-Audit Cloudflare Worker identity and runtime logs.
+5. Continue imoxy-net issue #78 and D1/reference-parity acceptance.
+6. Reconcile this file after each material merge, release, deployment or acceptance milestone.
