@@ -45,4 +45,5 @@ async def test_retention_is_tenant_scoped_and_idempotent_shape(monkeypatch):
     assert result["usage_events_deleted"] == 0
     assert result["memory_rows_deleted"] == 0
     assert result["files_soft_deleted"] == 0
-    assert len(db.calls) == 3
+    assert result["customer_slots_deleted"] == 0
+    assert len(db.calls) == 4
