@@ -13,9 +13,9 @@
 | Nova-Audit | [ijoolaie/Nova-Audit](https://github.com/ijoolaie/Nova-Audit) | Build/integrity repaired; Cloudflare 1101 diagnosis awaits runtime evidence | 0 | 0 | `4d4c92f074924c027c0dc2345d20a104a9752e57` |
 | IranPriceScout | [ijoolaie/IranPriceScout](https://github.com/ijoolaie/IranPriceScout) | Worker deployed at PR #19; PR #20 merged but not deployed | 0 | 0 | `687edf82feca527ce12d91735373417419a72f04` |
 | imoxy-net | [ijoolaie/imoxy-net](https://github.com/ijoolaie/imoxy-net) | Implementation progressing; D1/data-plane and reference-parity gates remain | 0 | 1 | `abc38a1392cc57a2ad7b3ca388d4a42820a232bb` |
-| Raya MCP | Local workspace identified: `C:\\Users\\Ali\\local-mcp-bridge`; GitHub repository not created | Local MCP project; repository creation/upload blocked because the local MCP server is currently not initialized, so files and Git state cannot yet be inspected | N/A | N/A | Local SHA not verified |
+| Raya MCP | [ijoolaie/Raya-MCP](https://github.com/ijoolaie/Raya-MCP) (Private) | Initial local source committed and pushed; Phase 1 filesystem confinement remains in progress and not accepted as race-free | 0 | 0 | `bf78a715ba16ed1d0e4a600af171f50aed628cbe` |
 
-**Totals for the four accessible repositories at this snapshot:** 3 open PRs (including this portfolio-register PR) and 10 open issues. Raya MCP is excluded until its canonical repository is identified.
+**Totals for the five accessible repositories at this snapshot:** 3 open PRs (including this portfolio-register PR) and 10 open issues. Raya MCP has no open PRs or issues at initial repository creation.
 
 ## 1. AI-Employee
 
@@ -169,27 +169,28 @@ Handoff records foundations including:
 5. Keep Cloudflare writes disabled until least privilege, preview approval, idempotency and rollback are demonstrated.
 6. Do not start Phase 13 before parity and legal gates pass.
 
-## 5. Raya MCP — local project, GitHub onboarding pending
+## 5. Raya MCP — private repository created and initial source pushed
 
-- **Known local workspace:** `C:\\Users\\Ali\\local-mcp-bridge` (listed among Raya MCP's configured workspace roots).
-- **GitHub repository:** not yet created; no canonical remote was found in the connected GitHub repository searches.
-- **Local audit status:** blocked. The first workspace-root listing succeeded, but subsequent local filesystem/Git requests returned `MCP server is not initialized`. Therefore the directory contents, current Git branch, uncommitted changes, existing remote, tests, secrets exposure and local commit history have not been verified.
-- **Planned GitHub visibility:** Private, as the project controls local filesystem and system capabilities. Do not publish it publicly by default.
-- **Important:** Do not upload the directory wholesale. First inspect and exclude `.env*`, credentials, tokens, certificates, private keys, local databases, logs, caches, build artifacts, user data, and any machine-specific configuration. Review the proposed file list before the first push.
-- **Known historical context only:** prior conversations described a 45-tool inventory, but that is not proof that all 45 tools currently exist in the local source or are operational. Re-audit source, tests and runtime independently.
+- **Local workspace:** `C:\Users\Ali\local-mcp-bridge`.
+- **GitHub repository:** [ijoolaie/Raya-MCP](https://github.com/ijoolaie/Raya-MCP), created as **Private** on 2026-11-01; default branch `main`.
+- **Initial commit:** `bf78a715ba16ed1d0e4a600af171f50aed628cbe` (`Initial import of Raya Local MCP Bridge`); 101 files and 20,668 insertions. The remote `origin/main` SHA was independently checked and exactly matches the local HEAD.
+- **Included:** MCP server source and tool modules, package manifests/lockfile, smoke/security tests, agent rules, README, roadmap/current-status/parity/design documents, handoff, and text/source files for isolated native security prototypes.
+- **Excluded from the first push:** `.env*`, `raya-config.json`, logs/traces, local backups, `node_modules`, downloads/tunnel-client binaries, build outputs, compiled native artifacts, duplicate `security-validation-*` copies, dated marketplace probe captures, and the separate local `to-iman-hand-off.md`. These remain local; no files were deleted.
+- **Secret screening:** a heuristic scan of 101 candidate text/source files found no recognized private-key, GitHub/OpenAI/AWS token, JWT, Cloudflare key, or high-entropy secret-assignment patterns. This is a screening result, not a guarantee that no secret exists.
+- **Validation on the local Windows/Node 22 host:** `npm run lint` passed; `npm test` passed with 42 core checks, 34 format/config checks, HTTP unauthorized/authenticated-initialize checks, and 36 URL-security checks. The test inventory reports 45 tools. Representative live connector calls succeeded, but not all 45 tools have been individually acceptance-tested.
+- **Important engineering status:** Phase 1 filesystem confinement remains **IN PROGRESS / NOT ACCEPTED**; production filesystem confinement is not established as race-free. Native HANDLE-relative prototypes are isolated test artifacts and are not integrated into production handlers. Production integration remains NO-GO pending the roadmap gates.
+- **Repository hygiene note:** the initial staged diff check identified pre-existing trailing whitespace and extra blank lines in a small set of source/test/docs files. Those were not mass-edited during onboarding. One local handoff file remains untracked and intentionally unpushed.
+- **GitHub inventory at creation:** zero open PRs and zero open issues. No GitHub Actions workflow or CI result is claimed for this initial push.
 
-### Onboarding sequence
+### Next actions
 
-1. Restore/initialize the local Raya MCP connection and inspect `C:\\Users\\Ali\\local-mcp-bridge` read-only.
-2. Determine whether it is already a Git repository; inspect remotes, branch, commit history, working-tree changes and ignored/untracked files. Preserve all user changes.
-3. Review project structure, README, package manifests, tests, roadmap, handoff, agent/rules files and tool registration.
-4. Prepare a reviewed `.gitignore` and secret-safe initial file manifest; do not delete or overwrite local files.
-5. Create a **private** GitHub repository under the user's account, then add the remote and push only the reviewed source/history. If the GitHub connector cannot create repositories, use the authenticated GitHub UI/CLI after local access is restored.
-6. Verify the remote SHA, default branch, pushed file list and CI; add the canonical repository URL to this portfolio register.
-7. Audit PRs, Issues, Roadmap, Handoff and the 45-tool inventory against the uploaded source and runtime evidence.
+1. Audit the 45 registered tools against source schemas and run representative positive, negative, boundary, permission, failure and lifecycle tests per tool family; do not claim full acceptance from the inventory count.
+2. Continue Phase 1 operation-family race/cleanup acceptance, including live ACL permission-denied evidence; keep native prototypes isolated until all gates pass.
+3. Keep production filesystem handlers unchanged until accepted native contracts exist for each operation family; no race-free claim or production integration before then.
+4. Add CI for supported Windows/Node versions and ensure the isolated native probes have reproducible build prerequisites before treating their results as portable.
+5. Review the untracked local handoff separately before deciding whether it belongs in the private repository.
 
-**Current status:** project identified locally; not yet inspected, not uploaded, and no GitHub repository has been created.
-
+**Current status:** private GitHub repository created; initial source pushed and remote SHA verified. Local project remains in active development; production filesystem confinement is not accepted as race-free.
 ## Portfolio operating rules
 
 1. Before every project action, refresh the default-branch SHA, open PRs, open issues and relevant workflow runs. This file can become stale.
@@ -204,7 +205,7 @@ Handoff records foundations including:
 
 ## Next portfolio maintenance cycle
 
-1. Add the canonical Raya MCP repository once identified, then audit its PRs, issues, roadmap, handoff and runtime/tool evidence.
+1. Audit the newly created Raya MCP repository's PRs/issues, roadmap, handoff and runtime/tool evidence; continue Phase 1 acceptance gates without overstating production security.
 2. Resolve AI-Employee PR #1334's Playwright failure; keep #1257 on hold.
 3. Decide and execute the safe isolated deployment path for IranPriceScout PR #20.
 4. Obtain the actual Nova-Audit Cloudflare Worker identity and runtime logs.
