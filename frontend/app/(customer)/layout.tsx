@@ -11,29 +11,29 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   const router = useRouter();
   const pathname = usePathname();
   const isWorld = pathname === "/world" || pathname.startsWith("/world/");
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const user = useAuthStore((s) => s.user);
-  const tenant = useAuthStore((s) => s.tenant);
-  const tenantKind = (tenant as (typeof tenant & { tenant_kind?: string }) | null)?.tenant_kind;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    let active = true;
     const check = () => {
-      if (!isAuthenticated()) { router.replace("/login/customer"); return; }
+      // Read the hydrated snapshot, not render-time selector values captured
+      // before persist.rehydrate() resolves.
+      const { accessToken, user, tenant } = useAuthStore.getState();
+      if (!accessToken) { router.replace("/login/customer"); return; }
       if (user?.is_platform_admin) { router.replace("/admin"); return; }
+      const tenantKind = (tenant as (typeof tenant & { tenant_kind?: string }) | null)?.tenant_kind;
       if (tenantKind !== "customer") {
         router.replace(tenantKind === "vendor" ? "/vendor/dashboard" : tenantKind === "reseller" ? "/reseller/dashboard" : "/login/customer");
         return;
       }
       setReady(true);
     };
-    let active = true;
     const runCheck = () => { if (active) check(); };
     const unsub = useAuthStore.persist.onFinishHydration(runCheck);
     if (useAuthStore.persist.hasHydrated()) runCheck();
     else void Promise.resolve(useAuthStore.persist.rehydrate()).then(runCheck);
     return () => { active = false; unsub(); };
-  }, [isAuthenticated, router, user, tenantKind]);
+  }, [router]);
 
   if (!ready) return <Spinner className="min-h-screen" />;
   if (isWorld) return <div className="min-h-screen">{children}</div>;
