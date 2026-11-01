@@ -107,7 +107,7 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     existing_user = await db.execute(select(User).where(User.email == normalized_email, User.tenant_id == tenant.id))
     if existing_user.scalar_one_or_none():
         raise ConflictError("Email already registered in this tenant")
-    user = User(tenant_id=tenant.id, email=normalized_email, password_hash=hash_password(payload.password), full_name=payload.full_name, is_active=True, is_superuser=True)
+    user = User(tenant_id=tenant.id, email=normalized_email, password_hash=hash_password(payload.password), full_name=payload.full_name, is_active=True, is_superuser=False)
     db.add(user)
     await db.flush()
     role = await _assign_tenant_admin_role(db, user, tenant.id)

@@ -14,44 +14,35 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
   const tenant = useAuthStore((s) => s.tenant);
+  const tenantKind = (tenant as (typeof tenant & { tenant_kind?: string }) | null)?.tenant_kind;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const check = () => {
-      if (!isAuthenticated()) {
-        router.replace("/login");
-        return;
-      }
-      if (user?.is_platform_admin) {
-        router.replace("/admin");
-        return;
-      }
-      const tenantKind = (tenant as (typeof tenant & { tenant_kind?: string }) | null)?.tenant_kind;
-      if (tenantKind === "reseller") {
-        router.replace("/reseller/dashboard");
+      if (!isAuthenticated()) { router.replace("/login/customer"); return; }
+      if (user?.is_platform_admin) { router.replace("/admin"); return; }
+      if (tenantKind !== "customer") {
+        router.replace(tenantKind === "vendor" ? "/vendor/dashboard" : tenantKind === "reseller" ? "/reseller/dashboard" : "/login/customer");
         return;
       }
       setReady(true);
     };
-
-    const unsub = useAuthStore.persist.onFinishHydration(check);
-    if (useAuthStore.persist.hasHydrated()) check();
-    return unsub;
-  }, [isAuthenticated, router, tenant, user]);
+    let active = true;
+    const runCheck = () => { if (active) check(); };
+    const unsub = useAuthStore.persist.onFinishHydration(runCheck);
+    if (useAuthStore.persist.hasHydrated()) runCheck();
+    else void Promise.resolve(useAuthStore.persist.rehydrate()).then(runCheck);
+    return () => { active = false; unsub(); };
+  }, [isAuthenticated, router, user, tenantKind]);
 
   if (!ready) return <Spinner className="min-h-screen" />;
-
-  if (isWorld) {
-    return <div className="min-h-screen">{children}</div>;
-  }
+  if (isWorld) return <div className="min-h-screen">{children}</div>;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar />
       <main className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-b border-gray-200 bg-white px-4 py-2 md:px-6">
-          <ModeSwitch />
-        </div>
+        <div className="border-b border-gray-200 bg-white px-4 py-2 md:px-6"><ModeSwitch /></div>
         <div className="flex-1 overflow-y-auto">{children}</div>
       </main>
     </div>
