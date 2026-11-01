@@ -13,7 +13,7 @@
 | Nova-Audit | [ijoolaie/Nova-Audit](https://github.com/ijoolaie/Nova-Audit) | Build/integrity repaired; Cloudflare 1101 diagnosis awaits runtime evidence | 0 | 0 | `4d4c92f074924c027c0dc2345d20a104a9752e57` |
 | IranPriceScout | [ijoolaie/IranPriceScout](https://github.com/ijoolaie/IranPriceScout) | Worker deployed at PR #19; PR #20 merged but not deployed | 0 | 0 | `687edf82feca527ce12d91735373417419a72f04` |
 | imoxy-net | [ijoolaie/imoxy-net](https://github.com/ijoolaie/imoxy-net) | Implementation progressing; D1/data-plane and reference-parity gates remain | 0 | 1 | `abc38a1392cc57a2ad7b3ca388d4a42820a232bb` |
-| Raya MCP | Repository mapping pending | Separate MCP project; not found in accessible repositories under current GitHub installation | Unknown | Unknown | Unknown |
+| Raya MCP | Local workspace identified: `C:\\Users\\Ali\\local-mcp-bridge`; GitHub repository not created | Local MCP project; repository creation/upload blocked because the local MCP server is currently not initialized, so files and Git state cannot yet be inspected | N/A | N/A | Local SHA not verified |
 
 **Totals for the four accessible repositories at this snapshot:** 3 open PRs (including this portfolio-register PR) and 10 open issues. Raya MCP is excluded until its canonical repository is identified.
 
@@ -169,18 +169,26 @@ Handoff records foundations including:
 5. Keep Cloudflare writes disabled until least privilege, preview approval, idempotency and rollback are demonstrated.
 6. Do not start Phase 13 before parity and legal gates pass.
 
-## 5. Raya MCP — repository mapping required
+## 5. Raya MCP — local project, GitHub onboarding pending
 
-Raya MCP is recognized as a separate project and must be included in the portfolio. However, on 2026-11-01:
+- **Known local workspace:** `C:\\Users\\Ali\\local-mcp-bridge` (listed among Raya MCP's configured workspace roots).
+- **GitHub repository:** not yet created; no canonical remote was found in the connected GitHub repository searches.
+- **Local audit status:** blocked. The first workspace-root listing succeeded, but subsequent local filesystem/Git requests returned `MCP server is not initialized`. Therefore the directory contents, current Git branch, uncommitted changes, existing remote, tests, secrets exposure and local commit history have not been verified.
+- **Planned GitHub visibility:** Private, as the project controls local filesystem and system capabilities. Do not publish it publicly by default.
+- **Important:** Do not upload the directory wholesale. First inspect and exclude `.env*`, credentials, tokens, certificates, private keys, local databases, logs, caches, build artifacts, user data, and any machine-specific configuration. Review the proposed file list before the first push.
+- **Known historical context only:** prior conversations described a 45-tool inventory, but that is not proof that all 45 tools currently exist in the local source or are operational. Re-audit source, tests and runtime independently.
 
-- Searches of connected/installed GitHub repositories returned only the four repositories listed above.
-- GitHub repository search scoped to `user:ijoolaie` also returned only those four repositories.
-- Searches for `Raya MCP`, `raya-mcp` and `raya-mcp-local` did not identify a repository owned by or accessible under the connected GitHub account.
-- Raya MCP may be maintained outside this GitHub installation, under another owner/name, or as a local/connected MCP service rather than a GitHub repository. This has not been established.
+### Onboarding sequence
 
-**Do not infer its PRs, issues, roadmap, handoff, runtime health or tool availability from historical conversation alone.**
+1. Restore/initialize the local Raya MCP connection and inspect `C:\\Users\\Ali\\local-mcp-bridge` read-only.
+2. Determine whether it is already a Git repository; inspect remotes, branch, commit history, working-tree changes and ignored/untracked files. Preserve all user changes.
+3. Review project structure, README, package manifests, tests, roadmap, handoff, agent/rules files and tool registration.
+4. Prepare a reviewed `.gitignore` and secret-safe initial file manifest; do not delete or overwrite local files.
+5. Create a **private** GitHub repository under the user's account, then add the remote and push only the reviewed source/history. If the GitHub connector cannot create repositories, use the authenticated GitHub UI/CLI after local access is restored.
+6. Verify the remote SHA, default branch, pushed file list and CI; add the canonical repository URL to this portfolio register.
+7. Audit PRs, Issues, Roadmap, Handoff and the 45-tool inventory against the uploaded source and runtime evidence.
 
-Required mapping input: canonical GitHub URL or exact `owner/repository` for Raya MCP. Until then, track it as **unmapped / not audited**, not completed or inactive.
+**Current status:** project identified locally; not yet inspected, not uploaded, and no GitHub repository has been created.
 
 ## Portfolio operating rules
 
