@@ -1,3 +1,51 @@
+## Reconciled checkpoint — 2026-10-31 (PRs #1330–#1332 merged)
+
+Repository: `ijoolaie/AI-Employee`; default branch `main`.
+Verified main HEAD at this checkpoint: `212128c772382821aab02672581eb1bfcd70cdb1` — merge of PR #1332, expanding the customer-support scenario acceptance matrix.
+
+### Current GitHub disposition
+
+- PRs [#1330](https://github.com/ijoolaie/AI-Employee/pull/1330), [#1331](https://github.com/ijoolaie/AI-Employee/pull/1331), and [#1332](https://github.com/ijoolaie/AI-Employee/pull/1332) are merged. Their recorded exact-head CI evidence is green: #1330 (12/12), #1331 (9/9), and #1332 (16/16).
+- PR #1319 (Shopify pagination hardening) is merged. PR #1318 was closed without merge. PR #1257 remains the only open PR in the inspected inventory: Draft/on hold for authenticated real-runtime desktop/mobile screenshots and human visual approval. Do not merge it based on CI or synthetic screenshots.
+- Open issues in the inspected inventory: #1258, #1288, #1305, #1061, #1044, #19, #210, #259, and #269. Keep their distinct engineering, customer, policy, and external acceptance gates; do not close them merely to reduce the count.
+
+### Customer-support acceptance — updated evidence
+
+- PR #1330 adds an acceptance path from the public widget through API and Run execution to a real Celery worker and persisted assistant response.
+- PR #1331 adds browser-level Playwright acceptance using the real browser/API/worker path and a deterministic test provider. This verifies execution and response display/persistence, not live-model answer quality.
+- PR #1332 expands the multi-turn scenario matrix for shipping price/ETA, variants, bulk discounts, returns, payment failures, damaged orders, and public complaints. Treat this as automated contract/acceptance coverage, not proof of production performance or real customer satisfaction.
+- Issue #1258 records a 136-test customer-support acceptance matrix passing on a clean current-main worktree (18 files; 69.24 seconds), including PostgreSQL-backed handoff/acknowledgement/follow-up, multi-turn persistence, tenant-isolated escalation, outbox, dispatcher, and email-worker coverage. The documented initial failure was environment setup: the escalation PostgreSQL test requires both `SUPPORT_TEST_DATABASE_URL` and `SUPPORT_TEST_DATABASE_URL_SYNC`; the configured rerun passed.
+- The acceptance evidence uses synthetic fixtures and a deterministic provider. It does not establish live LLM quality, actual customer validation, commercial demand, production readiness, or release certification.
+
+### Human handoff — stronger non-production transport evidence
+
+Issue [#1288](https://github.com/ijoolaie/AI-Employee/issues/1288) records that the PostgreSQL-backed handoff tests passed (2 tests), and the focused handoff/notification/dispatcher/email-worker regression group passed (25 tests). A real application `send_email_task` worker dispatched a synthetic tenant-scoped handoff message through SMTP to a localhost-only Mailpit sink; Mailpit confirmed receipt at `ops@example.test`, and PostgreSQL showed the outbox row as `dispatched` with no `last_error`.
+
+This is non-production local sink evidence, not delivery to an external SMTP provider or a real staff inbox. No actual staff response, named operational owner, assignment process, or measurable response SLA is established. Keep #1288 OPEN.
+
+### Shopify correctness and freshness
+
+- PR #1319 is merged and rejects incomplete pagination (including continuation beyond the configured page limit and missing/non-advancing cursors), preventing a partial sync from being treated as complete.
+- The merged inventory representation distinguishes unknown Shopify inventory (`NULL`) from provider-reported zero. Product freshness is tracked independently from order freshness. Migration w27 introduced nullable inventory; historical zeroes were not mass-converted because their original provider state cannot be inferred.
+- No live Shopify API sync or production provider validation is claimed.
+
+### Remaining blockers and product decisions
+
+- **#1061 — customer discovery:** identify a specific customer segment and measurable pain; target five decision-maker conversations and at least two concrete sample/trial commitments. No customer demand, paid pilot, or revenue is claimed.
+- **#1305 — retention/purge:** expiry is logical only; expired values are excluded from reuse but rows are not physically erased. Do not implement or enable production purge until the product/data owner approves retention duration, audit requirements, and an operational schedule. Any later purge must be bounded, tenant-scoped, idempotent, and must not delete customer messages/conversations.
+- **#1288 — human operations:** external SMTP/inbox delivery, named owner, assignment/response process, and measurable SLA remain open.
+- **#1258 — overall customer-support acceptance:** despite substantial implementation and CI evidence, real customer trials, live-model quality, provider-specific operational acceptance, and remaining product-policy decisions are not complete.
+- **#1257 / #1044 — World visual work:** remain deferred pending real-runtime evidence and explicit human visual acceptance.
+- External gates #19, #210, #259, and #269 remain separate production/RBAC/release/security/customer-acceptance gates.
+
+### Release and environment boundary
+
+Latest production-certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Mainline merges and green CI do not certify production deployment or a new release. No deployment, release promotion, live Shopify sync, external SMTP delivery, or production purge is claimed.
+
+This reconciliation is based on GitHub main/PR/Issue records and the acceptance evidence recorded there. The local Windows worktree, Docker runtime, current LM Studio process/model, and local uncommitted changes were not inspected in this documentation-only pass.
+
+---
+
 ## Verified checkpoint — 2026-10-31 (PR #1322 merged)
 
 - Current main: 9afec9b16d4e932347ea3d018124ec902e449758. PR #1320 passed all 17 exact-head checks; PR #1322 passed all 35 exact-head checks before squash merge.

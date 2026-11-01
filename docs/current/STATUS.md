@@ -1,3 +1,38 @@
+## Current verified status — 2026-10-31 (PRs #1330–#1332 merged)
+
+- Repository: `ijoolaie/AI-Employee`; inspected `main` HEAD: `212128c772382821aab02672581eb1bfcd70cdb1` (PR #1332).
+- Merged acceptance increments: #1330 (widget/API/Run/worker response persistence; 12/12 exact-head checks), #1331 (browser-to-real-API/worker Playwright path with deterministic provider; 9/9), #1332 (expanded multi-turn support matrix; 16/16). PR #1319 Shopify pagination hardening is also merged.
+- Open PR inventory inspected: #1257 only; Draft/on hold pending authenticated real-runtime desktop/mobile evidence and human visual approval. PR #1318 is closed without merge.
+- Open issue inventory inspected: #1258, #1288, #1305, #1061, #1044, #19, #210, #259, #269.
+
+### Customer-support evidence
+
+- Issue #1258 records 136 passing acceptance tests across 18 customer-support test files, including PostgreSQL handoff/acknowledgement/follow-up, multi-turn persistence, tenant-isolated escalation, outbox, dispatcher and email-worker coverage.
+- Browser acceptance uses a deterministic test provider. It proves a technical execution/display/persistence path, not live model quality or customer satisfaction.
+- Issue #1288 records PostgreSQL handoff tests (2 passed), focused handoff/notification/dispatcher/email-worker tests (25 passed), and one synthetic handoff notification sent by the actual application worker to a localhost-only Mailpit sink. Mailpit confirmed receipt and PostgreSQL recorded the outbox row as dispatched.
+- Mailpit evidence is not external SMTP/inbox delivery, a real staff response, an assigned operational owner, or an SLA.
+
+### Shopify
+
+- PR #1319 is merged; incomplete pagination now fails rather than silently returning partial results.
+- Product freshness is separate from order freshness. Unknown inventory is represented as NULL rather than conflated with a verified zero; migration w27 supports nullable inventory. Historical zeroes were not rewritten.
+- No live Shopify provider sync is claimed.
+
+### Outstanding gates
+
+- #1258: real customer validation, live-model quality and remaining operational acceptance.
+- #1288: authorized external SMTP/inbox delivery, named human owner, assignment/response process and measurable SLA.
+- #1305: owner-approved retention duration, audit requirements and purge schedule before any physical deletion job. Current expiry is logical only; no production purge is enabled.
+- #1061: customer discovery; target five decision-maker conversations and at least two concrete sample/trial commitments. No paid pilot or revenue is claimed.
+- #1257/#1044: visual acceptance remains on hold.
+- #19/#210/#259/#269: separate external production/RBAC/release/security/DR/customer acceptance gates.
+
+### Release and execution boundary
+
+Latest production-certified release remains `v1.4.17` at `b403c0dcdea579e017738a6fdea138c2b1a2999c`. Mainline CI is not production certification. No deployment, release promotion, live Shopify sync, external SMTP delivery, or purge activation is claimed. This checkpoint reflects GitHub evidence only; local worktree/runtime/LM Studio status has not been rechecked.
+
+---
+
 ## Verified checkpoint — 2026-10-31 (PR #1322 merged)
 
 - Current main: 9afec9b16d4e932347ea3d018124ec902e449758. PR #1320 passed all 17 exact-head checks; PR #1322 passed all 35 exact-head checks before squash merge.
