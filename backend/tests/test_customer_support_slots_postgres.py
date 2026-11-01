@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -35,6 +36,7 @@ async def test_slots_are_tenant_scoped_expiring_and_source_message_bound():
     from app.models.customer_conversation_slot import CustomerConversationSlot
     from app.models.employee import Employee
     from app.models.tenant import Tenant
+    from app.services.retention_service import enforce_retention
     from app.services.customer_support_slots import (
         extract_explicit_customer_slots,
         load_valid_customer_conversation_slots,
@@ -168,5 +170,28 @@ async def test_slots_are_tenant_scoped_expiring_and_source_message_bound():
             with pytest.raises(IntegrityError):
                 await session.flush()
             await session.rollback()
+
+        # Physical cleanup follows the slot's own TTL, not the 365-day policy.
+        # It is tenant-scoped and leaves live slots and other tenants untouched.
+        async with sessions() as session:
+            async with session.begin():
+                outcome = await enforce_retention(
+                    session, tenant_id=tenant_a_id, retention_days=365, now=now,
+                )
+                assert outcome["customer_slots_deleted"] == 1
+
+        async with sessions() as session:
+            tenant_a_slots = set((await session.execute(
+                select(CustomerConversationSlot.slot_name).where(
+                    CustomerConversationSlot.tenant_id == tenant_a_id,
+                )
+            )).scalars().all())
+            tenant_b_slots = set((await session.execute(
+                select(CustomerConversationSlot.slot_name).where(
+                    CustomerConversationSlot.tenant_id == tenant_b_id,
+                )
+            )).scalars().all())
+            assert tenant_a_slots == {"city", "order_id", "quantity"}
+            assert tenant_b_slots == {"reason"}
     finally:
         await engine.dispose()
