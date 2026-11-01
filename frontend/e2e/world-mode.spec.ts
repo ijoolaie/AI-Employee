@@ -6,7 +6,7 @@ const authState = JSON.stringify({
     accessToken: "e2e-access-token",
     refreshToken: "e2e-refresh-token",
     user: { id: "user-e2e", email: "e2e@example.test", full_name: "E2E Admin" },
-    tenant: { id: "tenant-e2e", name: "E2E Tenant" },
+    tenant: { id: "tenant-e2e", name: "E2E Tenant", tenant_kind: "customer" },
   },
   version: 0,
 });
@@ -526,6 +526,18 @@ test("World Mode keeps procedural employees when the local GLB asset cannot load
   await page.addInitScript((state) => localStorage.setItem("aiep-auth", state), authState);
   await page.route("**/customer-dashboard/office", async (route) => {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(office) });
+  });
+  await page.route("**/analytics/roi", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, data: { conversations: 0, ai_resolved: 0, human_handoffs: 0, runs: 0, successful_runs: 0, orders: 0, revenue: 0, influenced_orders: 0, influenced_revenue: 0, ai_resolution_rate: 0, handoff_rate: 0 } }) });
+  });
+  await page.route("**/world-commerce/catalogue", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, data: [{ code: "room-e2e", item_type: "room", is_free: false }] }) });
+  });
+  await page.route("**/world-commerce/room-inventory", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, data: [] }) });
+  });
+  await page.route("**/world-commerce/room-inventory/room-e2e/access", async (route) => {
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, data: { item_code: "room-e2e", granted: false, reason: "not_owned", room_instance_id: null, expires_at: null } }) });
   });
   await page.route("**/assets/world/employee-base.glb", async (route) => route.abort());
   await page.goto("/world");

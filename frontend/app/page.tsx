@@ -4,6 +4,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Spinner } from "@/components/ui/spinner";
+import { defaultPortalForAccount, portalPath } from "@/lib/portal-access";
 
 export default function HomePage() {
   const router = useRouter();
@@ -12,18 +13,10 @@ export default function HomePage() {
   const tenant = useAuthStore((s) => s.tenant);
 
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.replace("/login");
-      return;
-    }
-
-    if (user?.is_platform_admin) {
-      router.replace("/admin");
-      return;
-    }
-
+    if (!isAuthenticated()) { router.replace("/login"); return; }
     const tenantKind = (tenant as (typeof tenant & { tenant_kind?: string }) | null)?.tenant_kind;
-    router.replace(tenantKind === "reseller" ? "/reseller/dashboard" : "/dashboard");
+    const portal = defaultPortalForAccount(user?.is_platform_admin ? "platform-admin" : tenantKind ?? "customer");
+    router.replace(portal === "admin" ? "/admin" : portalPath(portal));
   }, [isAuthenticated, router, tenant, user]);
 
   return <Spinner className="min-h-screen" />;

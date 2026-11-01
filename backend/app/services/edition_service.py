@@ -108,7 +108,7 @@ async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str,
         if constraint_name != "tenants_slug_key":
             raise
         raise HTTPException(status_code=409, detail="Tenant slug already exists") from exc
-    user = User(tenant_id=tenant.id, email=admin_email.lower(), password_hash=hash_password(admin_password), full_name=full_name, is_active=True, is_superuser=True)
+    user = User(tenant_id=tenant.id, email=admin_email.lower(), password_hash=hash_password(admin_password), full_name=full_name, is_active=True, is_superuser=False)
     db.add(user)
     await db.flush()
     permissions = RESELLER_PERMISSIONS if kind == EDITION_RESELLER else CUSTOMER_PERMISSIONS

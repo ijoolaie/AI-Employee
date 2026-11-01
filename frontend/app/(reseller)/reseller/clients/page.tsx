@@ -10,6 +10,12 @@ import { useI18n } from "@/lib/i18n/provider";
 import { resellerMessages } from "@/lib/i18n/reseller";
 
 interface ClientSummary { id: string; name: string; slug: string; status: string; tenant_kind: string; created_at: string }
+interface CommercialLicense { id: string; tenant_id: string; status: string; issued_at: string; expires_at: string | null; revoked_at: string | null; revocation_reason: string | null; feature_codes: string[] }
+async function listResellerLicenses() {
+  const response = await api.get<{ success: boolean; data: CommercialLicense[] }>("/edition/licenses/reseller");
+  if (!response.data.success) throw new Error("Unable to load licenses");
+  return response.data.data;
+}
 
 async function getClients() {
   const response = await api.get<{ success: boolean; data: ClientSummary[] }>("/edition/reseller/customers");
@@ -21,6 +27,14 @@ export default function ResellerClientsPage() {
   const { locale } = useI18n();
   const m = resellerMessages[locale];
   const qc = useQueryClient();
+  const [entitlementForms, setEntitlementForms] = useState<Record<string, { feature: string; quota: string }>>({});
+  const resellerLicenses = useQuery({ queryKey: ["reseller-licenses"], queryFn: listResellerLicenses });
+  const [revokeReasons, setRevokeReasons] = useState<Record<string, string>>({});
+  const revokeLicense = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => api.post("/edition/licenses/reseller/" + id + "/revoke", { reason }),
+    onSuccess: () => { setRevokeReasons({}); qc.invalidateQueries({ queryKey: ["reseller-licenses"] }); },
+  });
+  const delegateEntitlement = useMutation({ mutationFn: ({ id, feature, quota }: { id: string; feature: string; quota: string }) => api.post("/edition/reseller/customers/" + id + "/entitlements", { feature_code: feature.trim(), quota_limit: quota === "" ? null : Number(quota) }) });
   const [form, setForm] = useState({ name: "", slug: "", admin_email: "", admin_password: "", full_name: "" });
   const [licenseForm, setLicenseForm] = useState({ customer_id: "", feature_codes: "", expires_in_days: "365" });
   const clients = useQuery({ queryKey: ["reseller-clients"], queryFn: getClients });
@@ -30,7 +44,7 @@ export default function ResellerClientsPage() {
       expires_in_days: licenseForm.expires_in_days.trim() ? Number(licenseForm.expires_in_days) : undefined,
       metadata: { source: "reseller_admin_ui" },
     }),
-    onSuccess: () => setLicenseForm({ ...licenseForm, feature_codes: "" }),
+    onSuccess: () => { setLicenseForm({ ...licenseForm, feature_codes: "" }); qc.invalidateQueries({ queryKey: ["reseller-licenses"] }); },
   });
   const action = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
@@ -99,9 +113,40 @@ export default function ResellerClientsPage() {
         {create.isSuccess && <p className="mt-3 text-sm text-emerald-600">{m.createClientSuccess}</p>}
         <button disabled={!canCreate || create.isPending} onClick={() => create.mutate()} className="mt-4 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{create.isPending ? m.creatingClient : m.createClient}</button>
       </CardContent></Card>
+      {(issueLicense.isError || delegateEntitlement.isError) && <p role="alert" className="text-sm text-red-600">License or entitlement update failed. Check parent license permissions and quota limits.</p>}
+      {issueLicense.isSuccess && <p role="status" className="text-sm text-emerald-600">License issued.</p>}
+      {delegateEntitlement.isSuccess && <p role="status" className="text-sm text-emerald-600">Entitlement updated.</p>}
       <Card><CardHeader><CardTitle>{m.clientPortfolio}</CardTitle></CardHeader><CardContent className="overflow-x-auto p-0">
-        {clients.isLoading ? <p className="p-6 text-sm text-gray-500">{m.clientsLoading}</p> : clients.isError ? <p className="p-6 text-sm text-red-600">{m.clientsError}</p> : clients.data?.length === 0 ? <div className="p-10 text-center"><Building2 className="mx-auto h-8 w-8 text-gray-300" /><p className="mt-3 font-medium">{m.noClientTenants}</p><p className="mt-1 text-sm text-gray-500">{m.noClientTenantsText}</p></div> : <table className="w-full text-start text-sm"><thead><tr className="border-b bg-gray-50 text-xs uppercase text-gray-500"><th className="px-5 py-3 text-start">{m.client}</th><th className="px-5 py-3 text-start">{m.status}</th><th className="px-5 py-3 text-start">{m.created}</th><th className="px-5 py-3 text-end">{m.action}</th></tr></thead><tbody>{clients.data?.map(client => <tr key={client.id} className="border-b border-gray-50"><td className="px-5 py-4"><p className="font-medium text-gray-900">{client.name}</p><p className="text-xs text-gray-500">{client.slug}</p></td><td className="px-5 py-4"><span className={client.status === "active" ? "rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700" : "rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600"}>{client.status === "active" ? m.active : m.disabled}</span></td><td className="px-5 py-4 text-gray-500">{new Date(client.created_at).toLocaleDateString(locale === "fa" ? "fa-IR" : "en-US")}</td><td className="px-5 py-4 text-end"><div className="flex justify-end gap-2"><button disabled={action.isPending || deprovision.isPending} onClick={() => action.mutate({ id: client.id, status: client.status })} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 disabled:opacity-50">{client.status === "active" ? m.suspend : m.activate}</button>{client.status !== "deprovisioned" && <button disabled={deprovision.isPending} onClick={() => deprovision.mutate(client.id)} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50">{m.deprovision}</button>}</div></td></tr>)}</tbody></table>}
+        {clients.isLoading ? <p className="p-6 text-sm text-gray-500">{m.clientsLoading}</p> : clients.isError ? <p className="p-6 text-sm text-red-600">{m.clientsError}</p> : clients.data?.length === 0 ? <div className="p-10 text-center"><Building2 className="mx-auto h-8 w-8 text-gray-300" /><p className="mt-3 font-medium">{m.noClientTenants}</p><p className="mt-1 text-sm text-gray-500">{m.noClientTenantsText}</p></div> : (
+          <table className="w-full text-start text-sm">
+            <thead><tr className="border-b bg-gray-50 text-xs uppercase text-gray-500"><th className="px-5 py-3 text-start">{m.client}</th><th className="px-5 py-3 text-start">{m.status}</th><th className="px-5 py-3 text-start">{m.created}</th><th className="px-5 py-3 text-end">{m.action}</th></tr></thead>
+            <tbody>{clients.data?.map(client => (
+              <tr key={client.id} className="border-b border-gray-50">
+                <td className="px-5 py-4"><p className="font-medium text-gray-900">{client.name}</p><p className="text-xs text-gray-500">{client.slug}</p></td>
+                <td className="px-5 py-4"><span className={client.status === "active" ? "rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700" : "rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600"}>{client.status === "active" ? m.active : m.disabled}</span></td>
+                <td className="px-5 py-4 text-gray-500">{new Date(client.created_at).toLocaleDateString(locale === "fa" ? "fa-IR" : "en-US")}</td>
+                <td className="px-5 py-4 text-end">
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <button disabled={action.isPending || deprovision.isPending} onClick={() => action.mutate({ id: client.id, status: client.status })} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 disabled:opacity-50">{client.status === "active" ? m.suspend : m.activate}</button>
+                    {client.status !== "deprovisioned" && <button disabled={deprovision.isPending} onClick={() => deprovision.mutate(client.id)} className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50">{m.deprovision}</button>}
+                  </div>
+                  {client.status === "active" && (
+                    <div className="mt-2 flex flex-wrap justify-end gap-2">
+                      <input aria-label="Entitlement feature code" placeholder="entitlement feature" value={entitlementForms[client.id]?.feature ?? ""} onChange={e => setEntitlementForms(v => ({ ...v, [client.id]: { feature: e.target.value, quota: v[client.id]?.quota ?? "" } }))} className="w-36 rounded border px-2 py-1 text-xs" />
+                      <input aria-label="Quota limit" type="number" min="0" placeholder="quota" value={entitlementForms[client.id]?.quota ?? ""} onChange={e => setEntitlementForms(v => ({ ...v, [client.id]: { feature: v[client.id]?.feature ?? "", quota: e.target.value } }))} className="w-20 rounded border px-2 py-1 text-xs" />
+                      <button disabled={delegateEntitlement.isPending || (entitlementForms[client.id]?.feature ?? "").trim().length < 2} onClick={() => delegateEntitlement.mutate({ id: client.id, feature: entitlementForms[client.id]?.feature ?? "", quota: entitlementForms[client.id]?.quota ?? "" })} className="rounded border px-2 py-1 text-xs">Set entitlement</button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}</tbody>
+          </table>
+        )}
       </CardContent></Card>
     </div>
+      <Card><CardHeader><CardTitle>Commercial licenses</CardTitle></CardHeader><CardContent className="space-y-3">
+        {resellerLicenses.isLoading ? <p className="text-sm text-gray-500">Loading licenses…</p> : resellerLicenses.isError ? <p role="alert" className="text-sm text-red-600">Unable to load licenses.</p> : resellerLicenses.data?.length === 0 ? <p className="text-sm text-gray-500">No licenses issued yet.</p> : resellerLicenses.data?.map(license => <div key={license.id} className="flex flex-wrap items-start justify-between gap-3 rounded-lg border p-3 text-sm"><div><p className="font-medium">Customer {license.tenant_id.slice(0, 8)}… · {license.status}</p><p className="text-xs text-gray-500">Features: {license.feature_codes.join(", ") || "—"}</p><p className="text-xs text-gray-500">Issued {new Date(license.issued_at).toLocaleString()} · Expires {license.expires_at ? new Date(license.expires_at).toLocaleDateString() : "Never"}</p>{license.revocation_reason && <p className="text-xs text-gray-500">Revocation reason: {license.revocation_reason}</p>}</div>{license.status === "active" && <div className="flex flex-wrap gap-2"><input aria-label={`Revocation reason for ${license.id}`} placeholder="Reason (min 3 chars)" value={revokeReasons[license.id] ?? ""} onChange={e => setRevokeReasons(v => ({ ...v, [license.id]: e.target.value }))} className="w-48 rounded border px-2 py-1 text-xs" /><button disabled={revokeLicense.isPending || (revokeReasons[license.id] ?? "").trim().length < 3} onClick={() => revokeLicense.mutate({ id: license.id, reason: (revokeReasons[license.id] ?? "").trim() })} className="rounded border border-red-200 px-3 py-1 text-xs text-red-700 disabled:opacity-50">Revoke</button></div>}</div>)}
+        {revokeLicense.isError && <p role="alert" className="text-sm text-red-600">Unable to revoke license. Check permissions and try again.</p>}{revokeLicense.isSuccess && <p role="status" className="text-sm text-emerald-600">License revoked.</p>}
+      </CardContent></Card>
   </>;
 }

@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.models.license import CommercialLicense
-from app.schemas.edition import LicenseIssueRequest, LicenseRevokeRequest
+from app.schemas.edition import LicenseIssueRequest, LicenseListResponse, LicenseRevokeRequest
 
 
 def test_license_issue_request_bounds():
@@ -34,6 +34,28 @@ def test_license_model_has_immutable_identity_fields():
     assert row.issuer_tenant_id == issuer_id
     assert row.tenant_id == tenant_id
     assert row.status == "active"
+
+
+def test_license_list_response_never_exposes_bearer_key():
+    fields = LicenseListResponse.model_fields
+    assert "license_key" not in fields
+    assert {"id", "issuer_tenant_id", "tenant_id", "status", "feature_codes"} <= set(fields)
+
+    payload = LicenseListResponse(
+        id=uuid4(),
+        issuer_tenant_id=uuid4(),
+        tenant_id=uuid4(),
+        edition="customer",
+        status="active",
+        issued_at=datetime.now(timezone.utc),
+        expires_at=None,
+        revoked_at=None,
+        revocation_reason=None,
+        feature_codes=["advanced_workflows"],
+    ).model_dump(mode="json")
+    assert "license_key" not in payload
+    assert payload["status"] == "active"
+    assert payload["feature_codes"] == ["advanced_workflows"]
 
 
 def test_license_revoke_requires_reason():

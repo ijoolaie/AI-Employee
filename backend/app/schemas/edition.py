@@ -64,6 +64,22 @@ class LicenseRevokeRequest(BaseModel):
     reason: str = Field(min_length=3, max_length=1000)
 
 
+class LicenseListResponse(BaseModel):
+    """Safe license summary for list views; never returns the bearer license key."""
+    id: UUID
+    issuer_tenant_id: UUID
+    tenant_id: UUID
+    edition: str
+    status: str
+    issued_at: datetime
+    expires_at: datetime | None
+    revoked_at: datetime | None
+    revocation_reason: str | None
+    feature_codes: list[str]
+
+    model_config = {"from_attributes": True}
+
+
 class LicenseResponse(BaseModel):
     id: UUID
     license_key: str

@@ -19,6 +19,23 @@ interface Reseller {
   delivery_revision: string | null;
 }
 
+interface CommercialLicense {
+  id: string;
+  tenant_id: string;
+  status: string;
+  issued_at: string;
+  expires_at: string | null;
+  revoked_at: string | null;
+  revocation_reason: string | null;
+  feature_codes: string[];
+}
+
+async function listVendorLicenses() {
+  const response = await api.get<{ success: boolean; data: CommercialLicense[] }>("/edition/licenses/vendor");
+  if (!response.data.success) throw new Error("Unable to load licenses");
+  return response.data.data;
+}
+
 async function listResellers() {
   const response = await api.get<{ success: boolean; data: Reseller[] }>("/edition/vendor/resellers");
   if (!response.data.success) throw new Error("Unable to load resellers");
@@ -40,6 +57,16 @@ export default function AdminResellersPage() {
   const [licenseForm, setLicenseForm] = useState({ tenant_id: "", feature_codes: "", expires_in_days: "365" });
   const resellers = useQuery({ queryKey: ["vendor-resellers"], queryFn: listResellers });
   const licenseTargets = useQuery({ queryKey: ["vendor-license-targets"], queryFn: listVendorLicenseTargets });
+  const vendorLicenses = useQuery({ queryKey: ["vendor-licenses"], queryFn: listVendorLicenses });
+  const [revokeReasons, setRevokeReasons] = useState<Record<string, string>>({});
+  const revokeLicense = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      api.post("/edition/licenses/vendor/" + id + "/revoke", { reason }),
+    onSuccess: () => {
+      setRevokeReasons({});
+      qc.invalidateQueries({ queryKey: ["vendor-licenses"] });
+    },
+  });
   const issueLicense = useMutation({
     mutationFn: () => api.post("/edition/licenses/vendor/tenants/" + licenseForm.tenant_id, {
       feature_codes: licenseForm.feature_codes.split(",").map(code => code.trim()).filter(Boolean),
@@ -49,6 +76,7 @@ export default function AdminResellersPage() {
     onSuccess: () => {
       setLicenseForm({ ...licenseForm, feature_codes: "" });
       qc.invalidateQueries({ queryKey: ["vendor-license-targets"] });
+      qc.invalidateQueries({ queryKey: ["vendor-licenses"] });
     },
   });
   const action = useMutation({
@@ -149,6 +177,28 @@ export default function AdminResellersPage() {
                 </div></td>
               </tr>)}</tbody>
             </table>}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>{fa ? "مجوزهای تجاری صادرشده" : "Commercial licenses issued"}</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {vendorLicenses.isLoading ? <p className="text-sm text-gray-500">{fa ? "در حال بارگذاری..." : "Loading licenses..."}</p> :
+            vendorLicenses.isError ? <p role="alert" className="text-sm text-red-600">{getErrorMessage(vendorLicenses.error)}</p> :
+            vendorLicenses.data?.length === 0 ? <p className="text-sm text-gray-500">{fa ? "هنوز مجوزی صادر نشده است." : "No licenses issued yet."}</p> :
+            vendorLicenses.data?.map(license => <div key={license.id} className="flex flex-wrap items-start justify-between gap-3 rounded-lg border p-3 text-sm">
+              <div className="min-w-0">
+                <p className="font-medium">{fa ? "مستأجر" : "Tenant"} {license.tenant_id.slice(0, 8)}… · {license.status}</p>
+                <p className="text-xs text-gray-500">{fa ? "قابلیت‌ها" : "Features"}: {license.feature_codes.join(", ") || "—"}</p>
+                <p className="text-xs text-gray-500">{fa ? "صدور" : "Issued"} {new Date(license.issued_at).toLocaleString()} · {fa ? "انقضا" : "Expires"} {license.expires_at ? new Date(license.expires_at).toLocaleDateString() : (fa ? "بدون انقضا" : "Never")}</p>
+                {license.revocation_reason && <p className="text-xs text-gray-500">{fa ? "علت لغو" : "Revocation reason"}: {license.revocation_reason}</p>}
+              </div>
+              {license.status === "active" && <div className="flex flex-wrap gap-2">
+                <input aria-label={"Revocation reason for " + license.id} placeholder={fa ? "علت لغو (حداقل ۳ حرف)" : "Reason (min 3 chars)"} value={revokeReasons[license.id] ?? ""} onChange={e => setRevokeReasons(v => ({ ...v, [license.id]: e.target.value }))} className="w-48 rounded border px-2 py-1 text-xs" />
+                <button disabled={revokeLicense.isPending || (revokeReasons[license.id] ?? "").trim().length < 3} onClick={() => revokeLicense.mutate({ id: license.id, reason: (revokeReasons[license.id] ?? "").trim() })} className="rounded border border-red-200 px-3 py-1 text-xs text-red-700 disabled:opacity-50">{fa ? "لغو مجوز" : "Revoke"}</button>
+              </div>}
+            </div>)}
+          {revokeLicense.isError && <p role="alert" className="text-sm text-red-600">{getErrorMessage(revokeLicense.error)}</p>}
+          {revokeLicense.isSuccess && <p role="status" className="text-sm text-emerald-600">{fa ? "مجوز لغو شد." : "License revoked."}</p>}
         </CardContent>
       </Card>
     </div>

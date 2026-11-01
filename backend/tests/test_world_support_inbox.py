@@ -205,3 +205,23 @@ async def test_vendor_edition_dependency_requires_edition_admin_role():
         await require_vendor_admin(ctx, request)
 
     assert exc.value.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_vendor_tenant_admin_does_not_need_platform_admin():
+    tenant_id = uuid4()
+    ctx = SimpleNamespace(
+        tenant_id=tenant_id,
+        tenant=SimpleNamespace(tenant_kind="vendor"),
+        user=SimpleNamespace(
+            is_platform_admin=False,
+            is_superuser=False,
+            roles=[SimpleNamespace(tenant_id=tenant_id, name="Admin")],
+        ),
+    )
+    request = SimpleNamespace(
+        scope={"route": SimpleNamespace(path="/edition/vendor/tenants")},
+        method="GET",
+    )
+
+    assert await require_vendor_admin(ctx, request) is ctx
