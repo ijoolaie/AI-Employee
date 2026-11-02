@@ -48,6 +48,10 @@ class CustomerConversationSlot(Base):
             "ix_customer_conversation_slots_expiry",
             "tenant_id", "conversation_id", "expires_at",
         ),
+        Index(
+            "ix_customer_conversation_slots_tenant_expiry",
+            "tenant_id", "expires_at",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

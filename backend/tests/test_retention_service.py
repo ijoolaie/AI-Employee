@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
+from sqlalchemy.dialects import postgresql
 
 from app.services.retention_service import enforce_retention
 
@@ -45,4 +46,10 @@ async def test_retention_is_tenant_scoped_and_idempotent_shape(monkeypatch):
     assert result["usage_events_deleted"] == 0
     assert result["memory_rows_deleted"] == 0
     assert result["files_soft_deleted"] == 0
-    assert len(db.calls) == 3
+    assert result["customer_slots_deleted"] == 0
+    assert len(db.calls) == 4
+    purge_sql = str(db.calls[3].compile(dialect=postgresql.dialect()))
+    assert "customer_conversation_slots.tenant_id" in purge_sql
+    assert "customer_conversation_slots.expires_at" in purge_sql
+    assert "FOR UPDATE SKIP LOCKED" in purge_sql
+    assert "LIMIT" in purge_sql

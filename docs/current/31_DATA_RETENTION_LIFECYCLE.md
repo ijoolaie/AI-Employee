@@ -12,6 +12,7 @@ Define a deterministic, tenant-scoped retention boundary for operational data wi
 - Allowed operational window: 1–3650 days when the caller explicitly supplies the value.
 - **Audit logs are immutable and are not hard-deleted by the retention service.**
 - Usage events: hard-delete records older than the retention cutoff for the selected tenant.
+- Customer support conversation slots: hard-delete immediately when their per-slot `expires_at` is reached; the general 365-day window does not apply. Cleanup is tenant-scoped, limited to 500 rows per tenant per retention pass, uses row locking with `SKIP LOCKED` for concurrent workers, and never deletes source messages or conversations.
 - Employee memory: hard-delete only lifecycle-terminal rows (`expired`, `deleted`, `superseded`) older than the cutoff. Active memory is never removed solely because it is old.
 - Files: mark stale active file metadata as `deleted` and record `deleted_at`; physical object deletion remains storage-provider lifecycle work and must be verified on the target storage backend.
 - File upload compensates for pre-commit metadata/audit failures by deleting the newly written object. A database commit failure can still occur after the service returns; provider-side orphan reconciliation/lifecycle controls therefore remain a production requirement.
@@ -38,9 +39,11 @@ In particular, physical deletion/version expiry for object storage and backup li
 - [x] Usage-ledger cleanup.
 - [x] Terminal-memory cleanup.
 - [x] File metadata soft deletion.
+- [x] Customer support slot physical purge at the slot-specific TTL (bounded tenant-scoped batches).
 - [x] Pre-commit file-upload compensation for DB/audit failures.
 - [x] Tenant-wide runner.
 - [x] Unit coverage for policy bounds and tenant-scoped execution shape.
+- [x] PostgreSQL integration coverage for expired-slot deletion and cross-tenant/live-slot preservation (requires `SUPPORT_TEST_DATABASE_URL`).
 - [ ] Target scheduler configured and observed.
 - [ ] Object-storage lifecycle/version expiration verified.
 - [ ] Storage orphan reconciliation after post-service DB commit failure verified.
