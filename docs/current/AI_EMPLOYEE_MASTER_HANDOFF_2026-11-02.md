@@ -106,7 +106,7 @@ Confirmed gaps:
 - Public registration creates a standalone root Customer tenant, activates the user immediately, assigns a broad tenant Admin role and starts a generic 14-day billing trial. It does not select Reseller/Customer or attach to a default Vendor.
 - No authoritative default-Vendor resolver/marker or Vendor provisioning endpoint was found in the inspected core path.
 - Direct Vendor → Customer provisioning is absent.
-- Child creation is guarded by edition Admin/Owner role, not per-user delegable action grants.
+- Generic tenant-admin role assignment exists and prevents assigning permissions beyond the actor's own set, but child creation is still guarded by edition Admin/Owner role rather than the specific per-user action grant; the inspected tenant-admin API has no user create/invite endpoint.
 - Portal routing is same-kind-only in `frontend/lib/portal-access.ts`; backend edition dependencies also deny cross-edition access. No server-validated portal context/grant flow was found.
 - Vendor dashboard is a placeholder; Reseller and Customer UI foundations are more developed.
 - Existing Phase 14 tests cover important isolation paths but do not establish every data surface or the new portal-context behavior.
