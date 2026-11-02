@@ -1032,3 +1032,11 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Exact-head CI for `48a4c46a` exposed two PostgreSQL API fixture failures: reseller list requests now correctly return 403 unless the fixture grants `reseller.customer.read`.
 - Updated both `test_edition_live_api_access.py` and `test_commercial_license_postgres_api.py` to seed an explicit tenant-local read permission and attach it to the Reseller role. Production authorization was not weakened.
 - Commit: `708d9300`. Offline focused suite remains 29 passed; Ruff passes on changed tests and implementation files. PostgreSQL tests are awaiting the new exact-head CI run; they were not run against shared Staging locally.
+
+## Vendor control-plane action permission slice — 2026-11-02
+
+- Added a tenant-local Vendor action permission dependency factory and applied it to Vendor edition control-plane operations: direct Customer list/create/manage, Reseller list/create/manage, and vendor tenant/license-target listing.
+- Permission codes: `vendor.tenant.read`, `vendor.reseller.read/create/manage`, `vendor.customer.read/create/manage`. Every check filters role grants to the active Vendor tenant. `is_superuser` and foreign-tenant role grants do not bypass the action permission. API-key route scopes remain independently enforced.
+- Validation: 38 focused tests passed; Ruff passed; `git diff --check` passed. Commit `8f93e098` pushed to the implementation branch.
+- Important rollout prerequisite: the repository does not yet expose a canonical Vendor-root provisioning/bootstrap path that grants these Vendor action permissions to the initial Vendor Admin role. Do not enable this slice for existing Vendor tenants in a deployment until that bootstrap/upgrade path is implemented and tested. The role-delegation ceiling and secure invitation flow remain outstanding.
+- Exact-head CI for `4272164e` had all 22 workflows green before this commit; new exact-head CI for `8f93e098` is pending.
