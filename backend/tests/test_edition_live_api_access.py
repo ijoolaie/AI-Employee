@@ -27,7 +27,7 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition():
     from app.main import app
     from app.models.tenant import Tenant
     from app.models.user import User
-    from app.models.role import Role
+    from app.models.role import Permission, Role
     engine = create_async_engine(db_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
     run_id = uuid.uuid4().hex
@@ -44,6 +44,8 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition():
             for tenant, kind in ((vendor, "vendor"), (reseller, "reseller"), (customer, "customer")):
                 user = User(tenant_id=tenant.id, email=f"{kind}-{run_id}@example.com", password_hash=hash_password("Local-Test-Password-2026!"), full_name=kind.title(), is_active=True, is_superuser=False, is_platform_admin=False)
                 role = Role(tenant_id=tenant.id, name="Admin", description="integration test tenant admin")
+                if kind == "reseller":
+                    role.permissions = [Permission(code="reseller.customer.read", description="Read own direct customers")]
                 user.roles = [role]
                 session.add_all([user, role])
                 users.append((tenant, user))
