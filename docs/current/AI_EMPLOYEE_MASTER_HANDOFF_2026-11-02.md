@@ -180,3 +180,10 @@ Validation: 36 focused offline tests passed; Ruff passed. Database-backed live A
 Not implemented by this slice: per-user action grants, child user invitation/creation, default Vendor provisioning, public signup/payment/Demo lifecycle, server-validated portal context or distinct portal UI. Existing Admin/Owner route gates remain temporarily.
 
 Local branch and GitHub PR head match. Local worktree clean after commit/push. Handoff and Current Status in the implementation branch record this checkpoint.
+
+## Delegated authorization contract — 2026-11-02
+
+- Added `docs/current/MULTI_VENDOR_DELEGATED_AUTHORIZATION_CONTRACT.md`: action-level permission catalogue, tenant-kind + permission checks, delegation ceilings, secure tenant-local invitation lifecycle, server-authorized portal access, negative test matrix and rollout guidance.
+- Contract is documentation only; no claim that action-level enforcement or user invitations are already implemented.
+- PR #1353 exact-head CI completed with all recorded workflows green; PR remains Draft pending dedicated PostgreSQL-backed API tests and review.
+- Next: implement permission dependency enforcement and role authoring, then tenant-local invitation lifecycle. Keep local implementation worktree fast-forwarded with the GitHub branch.
