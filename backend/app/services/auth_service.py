@@ -28,6 +28,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "workflow.approval.decide", "workflow.event.read", "workflow.event.write", "workflow.event.ingest",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read", "team.install",
     "team.execute", "team.evaluate", "marketplace.publish", "marketplace.read",
+    "skill_marketplace.publish", "skill_marketplace.read",
     "agent_template.create", "agent_template.read", "agent_template.evaluate", "agent_template.publish", "agent_template.install",
     "agent_instance.lifecycle", "agent.emergency_kill",
     "agent_delegation.create", "agent_delegation.revoke",
