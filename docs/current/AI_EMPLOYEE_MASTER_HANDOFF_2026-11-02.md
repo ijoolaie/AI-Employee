@@ -113,22 +113,53 @@ Confirmed gaps:
 
 **Current conclusion:** do not start broad UI changes. The first application slice must define default-Vendor provisioning/ownership and permission/portal authorization contracts, after a deeper data-surface and existing-user migration audit.
 
-## 9. Documentation PR status
+## 9. Documentation PR and merge status
 
-- PR #1351 now includes the architecture spec, source-backed gap analysis, documentation index and current status/handoff updates.
-- PR head is being advanced after the initial exact-head Documentation Truth Consistency and CodeQL workflows passed on `737956996bb855ba3ccfa2251a666ba40425f087`; the new gap-analysis commit requires its own exact-head checks.
-- Keep PR #1351 unmerged until the latest head checks pass and the diff is reviewed.
+- PR #1351 was merged after exact-head Documentation Truth Consistency and CodeQL workflows both completed successfully.
+- Merge commit on `main`: `2819cdc651c0a769b653bf3c92cd74e21a62925a`.
+- The merged change contains the approved architecture, source-backed gap analysis, documentation index and project handoff/status updates.
+- Implementation tracker: [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350).
 
-## 10. Local/GitHub parity
+## 10. Local worktrees and synchronization
 
-- The isolated Local Staging worktree was switched from detached `main` to `docs/multi-vendor-portal-architecture-20261102` after fetching the GitHub branch.
-- At the last verified parity check, local HEAD and GitHub branch HEAD both equaled `737956996bb855ba3ccfa2251a666ba40425f087`; the subsequent gap-analysis documentation commits must be fetched before claiming current parity.
-- Existing uncommitted staging/runtime files remain outside the documentation diff and must remain untouched.
+### Previous Local Staging worktree
 
-## 11. Latest synchronization checkpoint — 2026-11-02
+Path: `C:\Users\Ali\AI-Employee\.worktrees\Ai-employee Staging`
 
-- Local Staging worktree last successfully fast-forwarded from GitHub at `f38faafd99dddf3076c93c878c114d6bfb94bdb1`.
-- GitHub documentation branch has since advanced to `7226a525e4e1ec0a94c0dba17f5fedf9be1ce369` with the RBAC evidence refinement in the gap analysis, handoff and current status.
-- The Local MCP session terminated before the latest fetch/fast-forward could be completed. Therefore Local and GitHub are **not currently at the same SHA**; the local branch is known to be four documentation commits behind this GitHub head.
-- Do not claim current parity until the isolated worktree fetches and fast-forwards to the exact GitHub head and `git status` confirms no unexpected tracked changes. Preserve all pre-existing local staging artifacts.
-- GitHub PR #1351 exact-head Documentation Truth Consistency passed; CodeQL is still running on the latest observed head. Do not merge until the exact latest-head required checks finish successfully.
+- Branch: `docs/multi-vendor-portal-architecture-20261102`.
+- Successfully fetched and fast-forwarded to the documentation branch head `57b1505ab89700b2777c8fcefa358ff94965bd1e`; the post-fast-forward `git status` showed local HEAD tracking the matching origin branch.
+- `git diff --check` exit 0; only a line-ending warning was emitted for `frontend/tsconfig.json`.
+- Pre-existing local staging changes remain: modified `frontend/next-env.d.ts`, `frontend/tsconfig.json`, retention preview/acceptance scripts, compose/wrapper/readme and Celery Beat schedule artifacts. Preserve them; do not stage them in feature work.
+
+### New clean implementation worktree
+
+Path: `C:\Users\Ali\AI-Employee\.worktrees\Ai-employee MultiVendor`
+
+- Branch: `feature/multi-vendor-foundation-20261102`.
+- Created from merged `origin/main` at `2819cdc651c0a769b653bf3c92cd74e21a62925a`.
+- Verified `git status` clean, branch tracking `origin/main`, and `git diff --check` exit 0.
+- Focused backend baseline: `tests/test_edition_boundaries.py` plus `tests/api/test_tenant_admin_role_boundary.py` — 21 passed in 6.64s.
+- No application code or database records have been changed in this worktree yet.
+
+### Primary checkout
+
+- `C:\Users\Ali\AI-Employee` remains dirty and must remain untouched. No reset, clean, stash, switch, rebase, pull or fast-forward was performed there.
+
+## 11. Current implementation findings and next action
+
+- Existing `TenantContext` binds a User to its home Tenant and validates JWT `tenant_id` against `User.tenant_id`. It has no separate target portal/resource context. The implementation must retain actor identity/home tenant and separately resolve an authorized context tenant; it must never rewrite the primary identity.
+- `has_permission` already evaluates tenant-local role permissions; `require_edition` still relies on Admin/Owner role names. The edition API-key scope contract is separate from bearer-user RBAC.
+- `tenant_admin.py` supports tenant-scoped user listing, status updates and permission-subset-checked role assignment, but the inspected API has no user create/invite endpoint.
+- `provision_child_tenant` supports Vendor→Reseller and Reseller→Customer, creates an active child and fixed Admin user, and commits internally. It does not support direct Vendor→Customer or per-user operation grants.
+- `license_service.issue_license` has its own hierarchy traversal but currently assumes Customer→Reseller→Vendor; direct Vendor→Customer requires an explicit extension. Vendor hierarchy listing also omits direct Customer children.
+- Ordinary API services commonly scope by `ctx.tenant_id`; file and knowledge services receive explicit tenant IDs. Context-aware access must be opt-in and preserve default tenant-local behavior. Support escalation participant checks and resource-derived worker tenant scopes should be reused.
+- Existing focused tests are baseline regression evidence only; they do not prove the approved portal matrix or sibling-Reseller isolation.
+
+**Next:** finish route/service/repository and background-task scope audit; define a safe migration strategy for existing root Customer tenants without automatic re-parenting; then implement backend action permissions and scoped portal context with negative tests before any UI redesign.
+
+## 12. Safety and release boundaries
+
+- No production deployment, account mutation, payment activation or destructive retention operation is authorized by this work.
+- Do not alter the three local test users without an explicit request.
+- CI success is not production certification, external customer acceptance or visual QA.
+- Keep issue #19 as the external-production tenant isolation/RBAC evidence gate.
