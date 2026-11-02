@@ -1,3 +1,17 @@
+## Architecture and synchronization checkpoint — 2026-11-02
+
+- Approved account model and implementation plan are recorded in [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350), [architecture specification](../current/MULTI_VENDOR_PORTAL_ARCHITECTURE_2026-11-02.md) and [master handoff](../current/AI_EMPLOYEE_MASTER_HANDOFF_2026-11-02.md).
+- Decision: one default Vendor at launch with multi-Vendor support from the beginning; public Reseller/Customer signup attaches to the default Vendor; no public Vendor signup; explicit scoped grants govern child-account creation and portal access; Reseller-to-Reseller data access is forbidden.
+- Repository baseline inspected: `main` at `0c921d85fae806851fad1a58170d37bf8d46114d`. Documentation work is isolated on `docs/multi-vendor-portal-architecture-20261102`; this is not yet merged into main.
+- Existing [Phase 14 isolation/RBAC evidence](../current/PHASE_14_RUNTIME_ISOLATION_RBAC_ENGINEERING.md) documents the Vendor → Reseller → Customer tenant hierarchy and a real-stack CI verification harness. The new work must extend verified gaps rather than duplicate that foundation.
+- New implementation tracker: [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350). Existing issue #19 remains the external-production RBAC/isolation evidence gate.
+- Open retention drafts #1348 and #1349 remain unmerged. #1349 requires a dedicated staging DB secret and repository variable before activation. Issue #1305 remains open for observed operational acceptance; no production purge is claimed.
+- Local Staging worktree `C:\Users\Ali\AI-Employee\.worktrees\Ai-employee Staging` was observed at the same baseline SHA, detached, with pre-existing local runtime/staging modifications and untracked artifacts. Preserve them and do not include them in architecture commits.
+- Primary checkout `C:\Users\Ali\AI-Employee` is dirty and 153 commits behind `origin/main`; preserve it. No reset, clean, stash, switch, rebase, pull or fast-forward was performed.
+- Previously recorded local retention acceptance and local app/runtime state are not re-certified by this documentation checkpoint. Re-run checks before relying on current process/container status.
+- Next action: source-backed Gap Analysis of User/Tenant/Membership models, registration/login, RBAC delegation, portal authorization/context, commercial entitlements, data-access scoping and the three portal UIs. No application behavior or user accounts have been changed.
+
+---
 ## Current verified checkpoint — 2026-10-31 (PostgreSQL + SMTP sink acceptance)
 
 - Evidence baseline: `main` at `f90211484b0b64f042785cd7f69504ef0449ccd9`; PR #1327 merged the acceptance documentation as `46d1407c8171de936556dd616bc68e50fdc023ae` after all CodeQL and Release identity checks passed.
