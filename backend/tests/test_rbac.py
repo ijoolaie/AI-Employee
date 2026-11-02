@@ -66,3 +66,11 @@ async def test_foreign_tenant_role_cannot_grant_permission():
     ctx = TenantContext(user=user, tenant=SimpleNamespace(id=tenant_id))
 
     assert not await has_permission(ctx, "file.write")
+
+
+
+def test_default_tenant_admin_has_skill_marketplace_permissions():
+    from app.services.auth_service import DEFAULT_TENANT_ADMIN_PERMISSIONS
+
+    assert "skill_marketplace.publish" in DEFAULT_TENANT_ADMIN_PERMISSIONS
+    assert "skill_marketplace.read" in DEFAULT_TENANT_ADMIN_PERMISSIONS
