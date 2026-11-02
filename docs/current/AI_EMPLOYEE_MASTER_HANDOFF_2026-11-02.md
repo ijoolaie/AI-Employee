@@ -93,3 +93,34 @@ Local state is not re-certified by this documentation update. Re-run checks befo
 - Do not alter the user's three existing local accounts without an explicit request.
 - Do not treat CI as production certification, live customer acceptance or visual QA.
 - Keep the original dirty primary checkout untouched.
+## 8. Source-backed architecture gap analysis — 2026-11-02
+
+Source review was performed against `main` SHA `0c921d85fae806851fad1a58170d37bf8d46114d`. The detailed findings are in [MULTI_VENDOR_PORTAL_GAP_ANALYSIS_2026-11-02.md](MULTI_VENDOR_PORTAL_GAP_ANALYSIS_2026-11-02.md).
+
+Confirmed reusable foundation:
+- `Tenant.tenant_kind` / `parent_tenant_id` hierarchy, User-to-Tenant association, role/permission tables, edition-specific backend dependencies, direct-child provisioning, lifecycle and entitlement services.
+- Vendor → Reseller and Reseller → Customer provisioning endpoints.
+- Distinct frontend route groups; Reseller and Customer UI foundations; Phase 14 real-stack isolation/RBAC CI harness.
+
+Confirmed gaps:
+- Public registration creates a standalone root Customer tenant, activates the user immediately, assigns a broad tenant Admin role and starts a generic 14-day billing trial. It does not select Reseller/Customer or attach to a default Vendor.
+- No authoritative default-Vendor resolver/marker or Vendor provisioning endpoint was found in the inspected core path.
+- Direct Vendor → Customer provisioning is absent.
+- Child creation is guarded by edition Admin/Owner role, not per-user delegable action grants.
+- Portal routing is same-kind-only in `frontend/lib/portal-access.ts`; backend edition dependencies also deny cross-edition access. No server-validated portal context/grant flow was found.
+- Vendor dashboard is a placeholder; Reseller and Customer UI foundations are more developed.
+- Existing Phase 14 tests cover important isolation paths but do not establish every data surface or the new portal-context behavior.
+
+**Current conclusion:** do not start broad UI changes. The first application slice must define default-Vendor provisioning/ownership and permission/portal authorization contracts, after a deeper data-surface and existing-user migration audit.
+
+## 9. Documentation PR status
+
+- PR #1351 now includes the architecture spec, source-backed gap analysis, documentation index and current status/handoff updates.
+- PR head is being advanced after the initial exact-head Documentation Truth Consistency and CodeQL workflows passed on `737956996bb855ba3ccfa2251a666ba40425f087`; the new gap-analysis commit requires its own exact-head checks.
+- Keep PR #1351 unmerged until the latest head checks pass and the diff is reviewed.
+
+## 10. Local/GitHub parity
+
+- The isolated Local Staging worktree was switched from detached `main` to `docs/multi-vendor-portal-architecture-20261102` after fetching the GitHub branch.
+- At the last verified parity check, local HEAD and GitHub branch HEAD both equaled `737956996bb855ba3ccfa2251a666ba40425f087`; the subsequent gap-analysis documentation commits must be fetched before claiming current parity.
+- Existing uncommitted staging/runtime files remain outside the documentation diff and must remain untouched.
