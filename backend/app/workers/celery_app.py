@@ -34,6 +34,7 @@ celery_app = Celery(
         "app.workers.email_worker",
         "app.workers.test_center_worker",
         "app.workers.workforce_evaluation_worker",
+        "app.workers.retention_worker",
     ],
 )
 
@@ -45,6 +46,7 @@ SCHEDULE_INTERVALS = {
     "run_stale_sweep_seconds": 30.0,
     "test_center_expiration_sweep_seconds": 30.0,
     "outbox_dispatch_seconds": 5.0,
+    "retention_dry_run_interval_seconds": 86400.0,
 }
 
 EXECUTION_QUEUE = "execution"
@@ -65,6 +67,7 @@ TASK_ROUTES = {
     "workflow.timeout_sweep": {"queue": CONTROL_QUEUE},
     "workflow.event_dispatch": {"queue": CONTROL_QUEUE},
     "test_center.expiration_sweep": {"queue": CONTROL_QUEUE},
+    "retention.dry_run": {"queue": CONTROL_QUEUE},
     "outbox.dispatch": {"queue": OUTBOX_QUEUE},
     "email.send": {"queue": EMAIL_QUEUE},
 }
@@ -151,6 +154,10 @@ celery_app.conf.update(
         "outbox-dispatch": {
             "task": "outbox.dispatch",
             "schedule": SCHEDULE_INTERVALS["outbox_dispatch_seconds"],
+        },
+        "retention-dry-run-daily": {
+            "task": "retention.dry_run",
+            "schedule": SCHEDULE_INTERVALS["retention_dry_run_interval_seconds"],
         },
     },
 )
