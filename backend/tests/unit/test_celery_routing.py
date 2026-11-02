@@ -26,6 +26,7 @@ def test_all_registered_tasks_have_explicit_isolation_routes():
         "workflow.timeout_sweep": CONTROL_QUEUE,
         "workflow.event_dispatch": CONTROL_QUEUE,
         "test_center.expiration_sweep": CONTROL_QUEUE,
+        "retention.dry_run": CONTROL_QUEUE,
         "outbox.dispatch": OUTBOX_QUEUE,
         "email.send": EMAIL_QUEUE,
     }
@@ -57,6 +58,11 @@ def test_scheduling_intervals_are_explicit_positive_contracts():
     assert SCHEDULE_INTERVALS
     assert all(value > 0 for value in SCHEDULE_INTERVALS.values())
     assert SCHEDULE_INTERVALS["outbox_dispatch_seconds"] <= SCHEDULE_INTERVALS["workflow_schedule_tick_seconds"]
+    assert SCHEDULE_INTERVALS["retention_dry_run_interval_seconds"] == 86400.0
+    assert celery_app.conf.beat_schedule["retention-dry-run-daily"] == {
+        "task": "retention.dry_run",
+        "schedule": 86400.0,
+    }
 
 
 def test_fair_router_extracts_tenant_context_and_adds_bounded_priority(monkeypatch):
