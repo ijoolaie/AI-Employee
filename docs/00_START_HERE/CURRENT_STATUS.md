@@ -1020,3 +1020,9 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - API-key scope remains an additional independent requirement (`edition.reseller.customers.create`).
 - Focused tests: `26 passed` across action-permission, Vendor edition dependency and edition-boundary suites. Ruff passed on all changed Python files; `git diff --check` passed.
 - Commit: `c15e44d1`. This is a narrow first slice, not full Vendor/Reseller permission enforcement or secure user invitation. PR #1353 remains Draft pending PostgreSQL-backed API validation.
+
+## Reseller action coverage expansion — 2026-11-02
+
+- Generalized the action dependency factory and enforced tenant-local grants on all Reseller-owned Customer control-plane routes: list (`reseller.customer.read`), create (`reseller.customer.create`), suspend/resume/deprovision (`reseller.customer.manage`), and entitlement delegation (`reseller.entitlement.delegate`).
+- Existing API-key route scopes remain a second independent gate. Focused suite now: 29 passed; Ruff passed; `git diff --check` passed.
+- Commit: `65e4e2af`. Vendor operations and remaining edition/license/support action permissions are not yet migrated; user invitation, role delegation-ceiling and portal grants remain outstanding.
