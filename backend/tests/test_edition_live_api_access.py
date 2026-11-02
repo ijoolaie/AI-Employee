@@ -46,6 +46,8 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition():
                 role = Role(tenant_id=tenant.id, name="Admin", description="integration test tenant admin")
                 if kind == "vendor":
                     role.permissions = [Permission(code="vendor.reseller.read", description="Read own direct resellers")]
+                elif kind == "vendor":
+                    role.permissions = [Permission(code="vendor.reseller.read", description="Read own direct resellers")]
                 elif kind == "reseller":
                     role.permissions = [Permission(code="reseller.customer.read", description="Read own direct customers")]
                 user.roles = [role]
