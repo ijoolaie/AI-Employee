@@ -1040,3 +1040,11 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Validation: 38 focused tests passed; Ruff passed; `git diff --check` passed. Commit `8f93e098` pushed to the implementation branch.
 - Important rollout prerequisite: the repository does not yet expose a canonical Vendor-root provisioning/bootstrap path that grants these Vendor action permissions to the initial Vendor Admin role. Do not enable this slice for existing Vendor tenants in a deployment until that bootstrap/upgrade path is implemented and tested. The role-delegation ceiling and secure invitation flow remain outstanding.
 - Exact-head CI for `4272164e` had all 22 workflows green before this commit; new exact-head CI for `8f93e098` is pending.
+
+
+## Vendor permission PostgreSQL fixture correction — 2026-11-02
+
+- Exact-head CI for `90a7484e656fe41b55b43b06fe3833427e13f5e2` exposed two PostgreSQL API fixture failures: Vendor list-Reseller requests now correctly require the tenant-local `vendor.reseller.read` grant.
+- Updated `test_edition_live_api_access.py` and `test_commercial_license_postgres_api.py` to attach that permission to the appropriate Vendor test Admin roles (including the second Vendor fixture used for cross-Vendor isolation). Production authorization was not weakened.
+- The same exact-head run had frontend success and all non-CI workflows green; Backend CI failed only in those two PostgreSQL API assertions (1,842 passed, 2 failed). Re-run required after fixture correction.
+- Ruff passed for both changed fixtures; `git diff --check` passed. PR #1353 remains Draft; no merge or deployment.

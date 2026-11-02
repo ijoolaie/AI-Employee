@@ -44,7 +44,9 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition():
             for tenant, kind in ((vendor, "vendor"), (reseller, "reseller"), (customer, "customer")):
                 user = User(tenant_id=tenant.id, email=f"{kind}-{run_id}@example.com", password_hash=hash_password("Local-Test-Password-2026!"), full_name=kind.title(), is_active=True, is_superuser=False, is_platform_admin=False)
                 role = Role(tenant_id=tenant.id, name="Admin", description="integration test tenant admin")
-                if kind == "reseller":
+                if kind == "vendor":
+                    role.permissions = [Permission(code="vendor.reseller.read", description="Read own direct resellers")]
+                elif kind == "reseller":
                     role.permissions = [Permission(code="reseller.customer.read", description="Read own direct customers")]
                 user.roles = [role]
                 session.add_all([user, role])

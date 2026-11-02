@@ -123,9 +123,11 @@ async def test_license_http_hierarchy_revocation_and_audit():
                 parent_tenant_id=reseller_b_id, status="active",
             )
             role_a = Role(id=role_a_id, tenant_id=vendor_a_id, name="admin")
+            role_a.permissions = [Permission(code="vendor.reseller.read", description="Read own direct resellers")]
             role_reseller = Role(tenant_id=reseller_a_id, name="reseller-admin")
             role_reseller.permissions = [Permission(code="reseller.customer.read", description="Read own direct customers")]
             role_b = Role(id=role_b_id, tenant_id=vendor_b_id, name="admin")
+            role_b.permissions = [Permission(code="vendor.reseller.read", description="Read own direct resellers")]
 
             # Persist tenant parents before children to satisfy the self-referencing FK.
             session.add_all([vendor_a, vendor_b])
