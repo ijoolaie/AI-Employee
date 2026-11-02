@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.core.deps import DbSession
-from app.core.edition_deps import CustomerAdminContext, ResellerAdminContext, VendorAdminContext
+from app.core.edition_deps import CustomerAdminContext, ResellerAdminContext, ResellerCustomerCreateContext, VendorAdminContext
 from app.models.tenant import Tenant
 from app.models.support_escalation import SupportEscalation
 from app.models.support_escalation_message import SupportEscalationMessage
@@ -190,7 +190,7 @@ async def list_customers(ctx: ResellerAdminContext, db: DbSession):
 
 
 @router.post("/reseller/customers", response_model=APIResponse[TenantSummary], status_code=201)
-async def create_customer(payload: ChildTenantProvisionRequest, ctx: ResellerAdminContext, db: DbSession):
+async def create_customer(payload: ChildTenantProvisionRequest, ctx: ResellerCustomerCreateContext, db: DbSession):
     tenant, _ = await edition_service.provision_child_tenant(
         db,
         parent=ctx.tenant,

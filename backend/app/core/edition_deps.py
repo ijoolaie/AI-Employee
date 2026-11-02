@@ -142,6 +142,22 @@ async def require_customer_admin(ctx: CurrentContext, request: Request) -> Tenan
     return ctx
 
 
+async def require_reseller_customer_create(ctx: CurrentContext, request: Request) -> TenantContext:
+    """Require reseller edition access and the explicit customer-create grant."""
+    require_edition(ctx, EDITION_RESELLER)
+    _enforce_api_key_scope(ctx, request, EDITION_RESELLER)
+    granted = any(
+        permission.code == "reseller.customer.create"
+        for role in ctx.user.roles
+        if role.tenant_id == ctx.tenant_id
+        for permission in role.permissions
+    )
+    if not granted:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing permission: reseller.customer.create")
+    return ctx
+
+
 VendorAdminContext = Annotated[TenantContext, Depends(require_vendor_admin)]
 ResellerAdminContext = Annotated[TenantContext, Depends(require_reseller_admin)]
 CustomerAdminContext = Annotated[TenantContext, Depends(require_customer_admin)]
+ResellerCustomerCreateContext = Annotated[TenantContext, Depends(require_reseller_customer_create)]
