@@ -1,0 +1,68 @@
+name: Retention Preview (Read Only)
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: retention-preview-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    # Enable only after the dedicated read-only Staging DB secret is configured.
+    if: vars.RETENTION_PREVIEW_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: retention-preview
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: ${{ secrets.RETENTION_PREVIEW_DATABASE_URL }}
+      DATA_RETENTION_DAYS: ${{ vars.DATA_RETENTION_DAYS || '365' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.lock
+      - name: Install locked backend dependencies
+        run: |
+          pip install -r requirements.lock
+          pip install -e . --no-deps
+      - name: Verify dedicated database secret is configured
+        shell: bash
+        run: |
+          if [[ -z "${DATABASE_URL}" ]]; then
+            echo "::error::Set RETENTION_PREVIEW_DATABASE_URL in the retention-preview environment."
+            exit 1
+          fi
+      - name: Count retention candidates (PostgreSQL READ ONLY)
+        run: python scripts/retention_preview.py | tee retention-preview.json
+      - name: Publish summary
+        if: always()
+        run: |
+          if [[ -f retention-preview.json ]]; then
+            {
+              echo "## Retention preview"
+              echo '`Database transaction: READ ONLY` — no rows were modified.'
+              echo '```json'
+              cat retention-preview.json
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload preview report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retention-preview-${{ github.run_id }}
+          path: backend/retention-preview.json
+          retention-days: 14
