@@ -16,7 +16,7 @@
 
 - Initial source audit is recorded in [MULTI_VENDOR_PORTAL_GAP_ANALYSIS_2026-11-02.md](../current/MULTI_VENDOR_PORTAL_GAP_ANALYSIS_2026-11-02.md) under [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350).
 - Reusable foundation exists: tenant_kind/parent_tenant_id hierarchy, edition guards, direct-child provisioning, entitlements, distinct portal route groups and Phase 14 isolation CI.
-- Confirmed gaps: public signup creates a standalone root Customer tenant and active Admin; no default-Vendor resolver/provisioning path; no direct Vendor→Customer creation; no per-user delegated child-creation grants; portal access is same-kind-only in frontend and backend; Vendor dashboard is a placeholder; existing isolation evidence does not cover every newly required data surface.
+- Confirmed gaps: public signup creates a standalone root Customer tenant and active Admin; no default-Vendor resolver/provisioning path; no direct Vendor→Customer creation; child creation is edition-Admin-gated rather than tied to a per-user action grant (although generic role assignment has a permission-subset check); no tenant-admin user create/invite endpoint; portal access is same-kind-only in frontend and backend; Vendor dashboard is a placeholder; existing isolation evidence does not cover every newly required data surface.
 - Do not duplicate Phase 14. Next: deeper audit of permission management APIs, resource query scoping, background jobs and migration of existing tenants, then implement the ownership and authorization contract before broad UI changes.
 - This is source review only. No application code, database, production resource or local test account was changed. Local staging runtime state is not re-certified.
 
