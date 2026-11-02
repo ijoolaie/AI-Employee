@@ -1,3 +1,14 @@
+## Current project checkpoint — 2026-11-02
+
+- Approved multi-Vendor architecture, source-backed gap analysis and master handoff are merged to `main` at `2819cdc651c0a769b653bf3c92cd74e21a62925a` via PR #1351. Implementation tracker: [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350).
+- A clean local implementation worktree is based on the same main SHA at `C:\Users\Ali\AI-Employee\.worktrees\Ai-employee MultiVendor`, branch `feature/multi-vendor-foundation-20261102`; `git status` and `git diff --check` passed.
+- Baseline backend tests: `tests/test_edition_boundaries.py` and `tests/api/test_tenant_admin_role_boundary.py` — 21 passed.
+- The separate Local Staging worktree retains its pre-existing runtime/staging artifacts and was fast-forwarded to the documentation branch head. Do not mix those artifacts into feature changes.
+- The primary checkout remains dirty and is not to be modified.
+- Next: finish the resource/background-task scope audit, define existing-tenant migration compatibility, then implement backend action grants and a server-validated portal context before UI redesign.
+- No application code, user accounts, local staging DB records, production data or payment state were changed in this checkpoint.
+
+---
 ## Latest Local/GitHub sync boundary — 2026-11-02
 
 - Latest GitHub documentation branch head before this status update: `7226a525e4e1ec0a94c0dba17f5fedf9be1ce369`.
