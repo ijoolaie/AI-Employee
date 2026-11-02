@@ -163,3 +163,20 @@ Path: `C:\Users\Ali\AI-Employee\.worktrees\Ai-employee MultiVendor`
 - Do not alter the three local test users without an explicit request.
 - CI success is not production certification, external customer acceptance or visual QA.
 - Keep issue #19 as the external-production tenant isolation/RBAC evidence gate.
+
+## Implementation slice 1 — direct Vendor-owned Customers
+
+Draft PR [#1353](https://github.com/ijoolaie/AI-Employee/pull/1353) is open from `feature/multi-vendor-foundation-20261102` at `b73e03537801824be6ace88b483fae029aacfbb1`.
+
+Implemented in this slice:
+- Vendor direct Customer provision/list/suspend/resume/deprovision endpoints.
+- Vendor license target listing includes direct Customers.
+- Tenant provisioning, direct-child access and entitlement delegation support Vendor→Customer while preserving Vendor→Reseller→Customer and denying Vendor→grandchild access.
+- Commercial license hierarchy supports both direct Vendor Customer and Reseller-owned Customer, with malformed/foreign hierarchy rejection.
+- Explicit API-key route scopes and contract docs.
+
+Validation: 36 focused offline tests passed; Ruff passed. Database-backed live API/license tests could not run because dedicated test DB environment variables are absent; no staging DB was substituted. Exact-head CI is pending. PR is Draft and must not merge until PostgreSQL-backed API validation and CI pass.
+
+Not implemented by this slice: per-user action grants, child user invitation/creation, default Vendor provisioning, public signup/payment/Demo lifecycle, server-validated portal context or distinct portal UI. Existing Admin/Owner route gates remain temporarily.
+
+Local branch and GitHub PR head match. Local worktree clean after commit/push. Handoff and Current Status in the implementation branch record this checkpoint.
