@@ -56,11 +56,14 @@ No application code, database records, local user accounts or production resourc
 - `backend/app/services/edition_service.py` defines fixed `RESELLER_PERMISSIONS` including `reseller.customer.create`, `reseller.customer.read` and `reseller.customer.manage`.
 - `provision_child_tenant` creates a fixed Admin role for the child and attaches the fixed permission set.
 - `require_edition` checks the Tenant edition and whether the user is a superuser or has a role named Admin, Owner or tenant_admin. It does not evaluate a per-user grant for the requested child-creation operation.
-- `backend/app/core/edition_deps.py` maps API-key scopes for specific control-plane routes, but those API-key scopes do not implement user-specific role delegation for bearer-authenticated users.
+- `backend/app/core/edition_deps.py` maps API-key scopes for specific control-plane routes; these scopes narrow API-key access but are separate from bearer-user permission delegation.
+- `backend/app/api/v1/tenant_admin.py` does provide tenant-scoped user listing, activation/deactivation and role assignment. `_assert_roles_within_authority` prevents assigning roles whose permission set exceeds the actor's effective permission set.
+- The inspected `tenant_admin.py` has no endpoint to create/invite another tenant user; child provisioning creates only the initial Admin user for the new child tenant.
+- Edition-specific create/list routes use `VendorAdminContext` / `ResellerAdminContext`, whose `require_edition` check still requires an Admin/Owner/tenant_admin role rather than the specific `reseller.customer.create` action permission.
 
-**Impact:** the current edition admin gate cannot express the required case where one Reseller user may create Customers and another Reseller user may not. A fixed Admin role is not the requested configurable delegation model.
+**Impact:** a partial generic RBAC/role-delegation foundation exists, including a permission-subset check during role assignment. However, the required per-user child-creation authorization is not wired to edition operations, and general user creation/invitation is absent from the inspected tenant-admin API. A fixed edition Admin role cannot express the requested distinction between Reseller users who may create Customers and those who may not.
 
-**Required change:** explicit action permissions and scopes for user/role grants, with a delegation ceiling enforced on both the grant operation and the target operation. Preserve existing role/permission infrastructure where possible.
+**Required change:** reuse the existing role/permission and subset-delegation mechanism, add user creation/invitation, and enforce explicit action permissions and scopes on every child-management endpoint. Apply a delegation ceiling on both the grant operation and the target operation.
 
 ### G5 — Cross-portal access is explicitly denied today; there is no server-validated portal context
 
