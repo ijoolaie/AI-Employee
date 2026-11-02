@@ -67,7 +67,7 @@ def assert_can_access(actor: Tenant, target: Tenant) -> None:
         return
     if actor.tenant_kind == EDITION_RESELLER and target.parent_tenant_id == actor.id and target.tenant_kind == EDITION_CUSTOMER:
         return
-    if actor.tenant_kind == EDITION_VENDOR and target.parent_tenant_id == actor.id and target.tenant_kind == EDITION_RESELLER:
+    if actor.tenant_kind == EDITION_VENDOR and target.parent_tenant_id == actor.id and target.tenant_kind in {EDITION_RESELLER, EDITION_CUSTOMER}:
         return
     raise HTTPException(status_code=403, detail="Cross-edition tenant access denied")
 
@@ -89,8 +89,8 @@ async def _ensure_role(db: AsyncSession, tenant: Tenant, name: str, permissions:
 
 
 async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str, slug: str, admin_email: str, admin_password: str, full_name: str | None, kind: str, vendor_release_tag: str | None, delivery_revision: str | None) -> tuple[Tenant, User]:
-    expected_parent_kind = EDITION_VENDOR if kind == EDITION_RESELLER else EDITION_RESELLER
-    if parent.tenant_kind != expected_parent_kind:
+    allowed_parent_kinds = {EDITION_RESELLER: {EDITION_VENDOR}, EDITION_CUSTOMER: {EDITION_VENDOR, EDITION_RESELLER}}
+    if parent.tenant_kind not in allowed_parent_kinds.get(kind, set()):
         raise HTTPException(status_code=403, detail="Invalid parent edition")
     assert_release_identity(parent, vendor_release_tag)
     existing = (await db.execute(select(Tenant).where(Tenant.slug == slug))).scalar_one_or_none()
@@ -133,8 +133,9 @@ async def _authorized_parent_entitlement(db: AsyncSession, *, parent: Tenant, fe
 
 
 async def delegate_entitlement(db: AsyncSession, *, parent: Tenant, child: Tenant, feature_code: str, quota_limit: int | None) -> TenantEntitlement:
-    expected_kind = EDITION_RESELLER if parent.tenant_kind == EDITION_VENDOR else EDITION_CUSTOMER
-    assert_direct_child(parent, child, expected_kind)
+    allowed_child_kinds = {EDITION_RESELLER, EDITION_CUSTOMER} if parent.tenant_kind == EDITION_VENDOR else {EDITION_CUSTOMER} if parent.tenant_kind == EDITION_RESELLER else set()
+    if child.parent_tenant_id != parent.id or child.tenant_kind not in allowed_child_kinds:
+        raise HTTPException(status_code=403, detail="Tenant is outside the permitted edition boundary")
     effective_quota = await _authorized_parent_entitlement(db, parent=parent, feature_code=feature_code, requested_quota=quota_limit)
     row = (await db.execute(select(TenantEntitlement).where(TenantEntitlement.tenant_id == child.id, TenantEntitlement.feature_code == feature_code))).scalar_one_or_none()
     if row is None:

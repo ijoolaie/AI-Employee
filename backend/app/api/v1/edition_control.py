@@ -52,7 +52,73 @@ async def list_vendor_license_targets(ctx: VendorAdminContext, db: DbSession):
                 Tenant.tenant_kind == edition_service.EDITION_CUSTOMER,
             )
         )).scalars().all()
-    return APIResponse(success=True, data=[*resellers, *customers])
+    direct_customers = (await db.execute(
+        select(Tenant).where(
+            Tenant.parent_tenant_id == ctx.tenant_id,
+            Tenant.tenant_kind == edition_service.EDITION_CUSTOMER,
+        )
+    )).scalars().all()
+    return APIResponse(success=True, data=[*resellers, *direct_customers, *customers])
+
+
+@router.get("/vendor/customers", response_model=APIResponse[list[TenantSummary]])
+async def list_vendor_customers(ctx: VendorAdminContext, db: DbSession):
+    """List only Customer tenants directly owned by this Vendor."""
+    rows = (await db.execute(
+        select(Tenant).where(
+            Tenant.parent_tenant_id == ctx.tenant_id,
+            Tenant.tenant_kind == edition_service.EDITION_CUSTOMER,
+        ).order_by(Tenant.created_at)
+    )).scalars().all()
+    return APIResponse(success=True, data=rows)
+
+
+@router.post("/vendor/customers", response_model=APIResponse[TenantSummary], status_code=201)
+async def create_vendor_customer(payload: ChildTenantProvisionRequest, ctx: VendorAdminContext, db: DbSession):
+    """Provision a Customer directly under the authenticated Vendor."""
+    tenant, _ = await edition_service.provision_child_tenant(
+        db,
+        parent=ctx.tenant,
+        name=payload.name,
+        slug=payload.slug,
+        admin_email=payload.admin_email,
+        admin_password=payload.admin_password,
+        full_name=payload.full_name,
+        kind=edition_service.EDITION_CUSTOMER,
+        vendor_release_tag=payload.vendor_release_tag,
+        delivery_revision=payload.delivery_revision,
+    )
+    return APIResponse(success=True, data=tenant)
+
+
+@router.post("/vendor/customers/{customer_id}/suspend", response_model=APIResponse[TenantSummary])
+async def suspend_vendor_customer(customer_id: UUID, ctx: VendorAdminContext, db: DbSession):
+    tenant = await edition_lifecycle_service.set_child_tenant_status(
+        db, parent=ctx.tenant, child_id=customer_id,
+        expected_kind=edition_service.EDITION_CUSTOMER,
+        target_status=edition_lifecycle_service.STATUS_SUSPENDED, actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=tenant)
+
+
+@router.post("/vendor/customers/{customer_id}/resume", response_model=APIResponse[TenantSummary])
+async def resume_vendor_customer(customer_id: UUID, ctx: VendorAdminContext, db: DbSession):
+    tenant = await edition_lifecycle_service.set_child_tenant_status(
+        db, parent=ctx.tenant, child_id=customer_id,
+        expected_kind=edition_service.EDITION_CUSTOMER,
+        target_status=edition_lifecycle_service.STATUS_ACTIVE, actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=tenant)
+
+
+@router.post("/vendor/customers/{customer_id}/deprovision", response_model=APIResponse[TenantSummary])
+async def deprovision_vendor_customer(customer_id: UUID, ctx: VendorAdminContext, db: DbSession):
+    tenant = await edition_lifecycle_service.set_child_tenant_status(
+        db, parent=ctx.tenant, child_id=customer_id,
+        expected_kind=edition_service.EDITION_CUSTOMER,
+        target_status=edition_lifecycle_service.STATUS_DEPROVISIONED, actor_id=ctx.user_id,
+    )
+    return APIResponse(success=True, data=tenant)
 
 
 @router.get("/vendor/resellers", response_model=APIResponse[list[TenantSummary]])

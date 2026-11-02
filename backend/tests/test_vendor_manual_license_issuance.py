@@ -106,18 +106,23 @@ def test_license_issue_request_strips_feature_code_whitespace():
     assert request.feature_codes == ["run.execute"]
 
 @pytest.mark.asyncio
-async def test_vendor_rejects_malformed_direct_customer_child(monkeypatch):
+async def test_vendor_rejects_customer_with_invalid_parent_kind(monkeypatch):
+    invalid_parent = SimpleNamespace(
+        id="invalid-parent-id",
+        parent_tenant_id=None,
+        tenant_kind=edition_service.EDITION_CUSTOMER,
+    )
+    customer = SimpleNamespace(
+        id="customer-id",
+        parent_tenant_id=invalid_parent.id,
+        tenant_kind=edition_service.EDITION_CUSTOMER,
+    )
     vendor = SimpleNamespace(
         id="vendor-id",
         parent_tenant_id=None,
         tenant_kind=edition_service.EDITION_VENDOR,
     )
-    customer = SimpleNamespace(
-        id="customer-id",
-        parent_tenant_id=vendor.id,
-        tenant_kind=edition_service.EDITION_CUSTOMER,
-    )
-    db = _IssueDB([_Result(vendor)])
+    db = _IssueDB([_Result(invalid_parent)])
 
     with pytest.raises(ConflictError, match="Invalid tenant hierarchy"):
         await license_service.issue_license(

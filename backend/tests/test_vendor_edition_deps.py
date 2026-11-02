@@ -66,6 +66,9 @@ async def test_customer_tenant_cannot_use_vendor_control_plane():
 
 def test_edition_scope_allowlist_is_restricted_by_tenant_kind():
     assert "edition.vendor.resellers.create" in EDITION_SCOPE_ALLOWLIST_BY_KIND["vendor"]
+    assert "edition.vendor.customers.read" in EDITION_SCOPE_ALLOWLIST_BY_KIND["vendor"]
+    assert "edition.vendor.customers.create" in EDITION_SCOPE_ALLOWLIST_BY_KIND["vendor"]
+    assert "edition.vendor.customers.manage" in EDITION_SCOPE_ALLOWLIST_BY_KIND["vendor"]
     assert "edition.vendor.resellers.create" not in EDITION_SCOPE_ALLOWLIST_BY_KIND["customer"]
     assert "edition.licenses.revoke" not in EDITION_SCOPE_ALLOWLIST_BY_KIND["customer"]
 
@@ -141,3 +144,12 @@ def test_bearer_context_keeps_existing_edition_scope_behavior():
         method="GET",
     )
     _enforce_api_key_scope(ctx, request, "vendor")
+
+def test_vendor_direct_customer_api_key_routes_have_explicit_scopes():
+    from app.core.edition_deps import EDITION_ROUTE_SCOPES
+
+    assert EDITION_ROUTE_SCOPES[("GET", "/edition/vendor/customers")] == "edition.vendor.customers.read"
+    assert EDITION_ROUTE_SCOPES[("POST", "/edition/vendor/customers")] == "edition.vendor.customers.create"
+    assert EDITION_ROUTE_SCOPES[("POST", "/edition/vendor/customers/{customer_id}/suspend")] == "edition.vendor.customers.manage"
+    assert EDITION_ROUTE_SCOPES[("POST", "/edition/vendor/customers/{customer_id}/resume")] == "edition.vendor.customers.manage"
+    assert EDITION_ROUTE_SCOPES[("POST", "/edition/vendor/customers/{customer_id}/deprovision")] == "edition.vendor.customers.manage"
