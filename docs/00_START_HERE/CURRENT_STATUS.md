@@ -1012,3 +1012,11 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - This is a design/acceptance contract, not implementation completion. Existing edition Admin/Owner gates remain until the permission enforcement slice is implemented and tested.
 - PR #1353 exact-head CI has completed successfully (all recorded workflows green) and remains Draft pending PostgreSQL-backed API validation and review.
 - Next implementation slice: permission dependency enforcement + permission catalogue/role authoring, then secure tenant-local user invitation.
+
+## First delegated action-permission enforcement slice — 2026-11-02
+
+- Added `require_reseller_customer_create` in `backend/app/core/edition_deps.py` and wired it to `POST /edition/reseller/customers`.
+- The endpoint now requires both Reseller edition/admin boundary and explicit tenant-local `reseller.customer.create`; a superuser flag alone does not bypass the action grant. Foreign-tenant role permissions do not count.
+- API-key scope remains an additional independent requirement (`edition.reseller.customers.create`).
+- Focused tests: `26 passed` across action-permission, Vendor edition dependency and edition-boundary suites. Ruff passed on all changed Python files; `git diff --check` passed.
+- Commit: `c15e44d1`. This is a narrow first slice, not full Vendor/Reseller permission enforcement or secure user invitation. PR #1353 remains Draft pending PostgreSQL-backed API validation.
