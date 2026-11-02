@@ -9,7 +9,22 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.core.deps import DbSession
-from app.core.edition_deps import (CustomerAdminContext, ResellerAdminContext, ResellerCustomerCreateContext, ResellerCustomerReadContext, ResellerCustomerManageContext, ResellerEntitlementDelegateContext, VendorAdminContext)
+from app.core.edition_deps import (
+    CustomerAdminContext,
+    ResellerAdminContext,
+    ResellerCustomerCreateContext,
+    ResellerCustomerReadContext,
+    ResellerCustomerManageContext,
+    ResellerEntitlementDelegateContext,
+    VendorAdminContext,
+    VendorTenantReadContext,
+    VendorResellerReadContext,
+    VendorResellerCreateContext,
+    VendorResellerManageContext,
+    VendorCustomerReadContext,
+    VendorCustomerCreateContext,
+    VendorCustomerManageContext,
+)
 from app.models.tenant import Tenant
 from app.models.support_escalation import SupportEscalation
 from app.models.support_escalation_message import SupportEscalationMessage
@@ -35,7 +50,7 @@ router = APIRouter(prefix="/edition", tags=["edition-control"])
 
 
 @router.get("/vendor/tenants", response_model=APIResponse[list[TenantSummary]])
-async def list_vendor_license_targets(ctx: VendorAdminContext, db: DbSession):
+async def list_vendor_license_targets(ctx: VendorTenantReadContext, db: DbSession):
     """List tenants within this vendor's hierarchy for manual license management."""
     resellers = (await db.execute(
         select(Tenant).where(
@@ -62,7 +77,7 @@ async def list_vendor_license_targets(ctx: VendorAdminContext, db: DbSession):
 
 
 @router.get("/vendor/customers", response_model=APIResponse[list[TenantSummary]])
-async def list_vendor_customers(ctx: VendorAdminContext, db: DbSession):
+async def list_vendor_customers(ctx: VendorCustomerReadContext, db: DbSession):
     """List only Customer tenants directly owned by this Vendor."""
     rows = (await db.execute(
         select(Tenant).where(
@@ -74,7 +89,7 @@ async def list_vendor_customers(ctx: VendorAdminContext, db: DbSession):
 
 
 @router.post("/vendor/customers", response_model=APIResponse[TenantSummary], status_code=201)
-async def create_vendor_customer(payload: ChildTenantProvisionRequest, ctx: VendorAdminContext, db: DbSession):
+async def create_vendor_customer(payload: ChildTenantProvisionRequest, ctx: VendorCustomerCreateContext, db: DbSession):
     """Provision a Customer directly under the authenticated Vendor."""
     tenant, _ = await edition_service.provision_child_tenant(
         db,
@@ -92,7 +107,7 @@ async def create_vendor_customer(payload: ChildTenantProvisionRequest, ctx: Vend
 
 
 @router.post("/vendor/customers/{customer_id}/suspend", response_model=APIResponse[TenantSummary])
-async def suspend_vendor_customer(customer_id: UUID, ctx: VendorAdminContext, db: DbSession):
+async def suspend_vendor_customer(customer_id: UUID, ctx: VendorCustomerManageContext, db: DbSession):
     tenant = await edition_lifecycle_service.set_child_tenant_status(
         db, parent=ctx.tenant, child_id=customer_id,
         expected_kind=edition_service.EDITION_CUSTOMER,
@@ -102,7 +117,7 @@ async def suspend_vendor_customer(customer_id: UUID, ctx: VendorAdminContext, db
 
 
 @router.post("/vendor/customers/{customer_id}/resume", response_model=APIResponse[TenantSummary])
-async def resume_vendor_customer(customer_id: UUID, ctx: VendorAdminContext, db: DbSession):
+async def resume_vendor_customer(customer_id: UUID, ctx: VendorCustomerManageContext, db: DbSession):
     tenant = await edition_lifecycle_service.set_child_tenant_status(
         db, parent=ctx.tenant, child_id=customer_id,
         expected_kind=edition_service.EDITION_CUSTOMER,
@@ -112,7 +127,7 @@ async def resume_vendor_customer(customer_id: UUID, ctx: VendorAdminContext, db:
 
 
 @router.post("/vendor/customers/{customer_id}/deprovision", response_model=APIResponse[TenantSummary])
-async def deprovision_vendor_customer(customer_id: UUID, ctx: VendorAdminContext, db: DbSession):
+async def deprovision_vendor_customer(customer_id: UUID, ctx: VendorCustomerManageContext, db: DbSession):
     tenant = await edition_lifecycle_service.set_child_tenant_status(
         db, parent=ctx.tenant, child_id=customer_id,
         expected_kind=edition_service.EDITION_CUSTOMER,
@@ -122,13 +137,13 @@ async def deprovision_vendor_customer(customer_id: UUID, ctx: VendorAdminContext
 
 
 @router.get("/vendor/resellers", response_model=APIResponse[list[TenantSummary]])
-async def list_resellers(ctx: VendorAdminContext, db: DbSession):
+async def list_resellers(ctx: VendorResellerReadContext, db: DbSession):
     rows = (await db.execute(select(Tenant).where(Tenant.parent_tenant_id == ctx.tenant_id, Tenant.tenant_kind == edition_service.EDITION_RESELLER).order_by(Tenant.created_at))).scalars().all()
     return APIResponse(success=True, data=rows)
 
 
 @router.post("/vendor/resellers", response_model=APIResponse[TenantSummary], status_code=201)
-async def create_reseller(payload: ChildTenantProvisionRequest, ctx: VendorAdminContext, db: DbSession):
+async def create_reseller(payload: ChildTenantProvisionRequest, ctx: VendorResellerCreateContext, db: DbSession):
     tenant, _ = await edition_service.provision_child_tenant(
         db,
         parent=ctx.tenant,
@@ -145,7 +160,7 @@ async def create_reseller(payload: ChildTenantProvisionRequest, ctx: VendorAdmin
 
 
 @router.post("/vendor/resellers/{reseller_id}/suspend", response_model=APIResponse[TenantSummary])
-async def suspend_reseller(reseller_id: UUID, ctx: VendorAdminContext, db: DbSession):
+async def suspend_reseller(reseller_id: UUID, ctx: VendorResellerManageContext, db: DbSession):
     tenant = await edition_lifecycle_service.set_child_tenant_status(
         db,
         parent=ctx.tenant,
@@ -158,7 +173,7 @@ async def suspend_reseller(reseller_id: UUID, ctx: VendorAdminContext, db: DbSes
 
 
 @router.post("/vendor/resellers/{reseller_id}/resume", response_model=APIResponse[TenantSummary])
-async def resume_reseller(reseller_id: UUID, ctx: VendorAdminContext, db: DbSession):
+async def resume_reseller(reseller_id: UUID, ctx: VendorResellerManageContext, db: DbSession):
     tenant = await edition_lifecycle_service.set_child_tenant_status(
         db,
         parent=ctx.tenant,
@@ -171,7 +186,7 @@ async def resume_reseller(reseller_id: UUID, ctx: VendorAdminContext, db: DbSess
 
 
 @router.post("/vendor/resellers/{reseller_id}/deprovision", response_model=APIResponse[TenantSummary])
-async def deprovision_reseller(reseller_id: UUID, ctx: VendorAdminContext, db: DbSession):
+async def deprovision_reseller(reseller_id: UUID, ctx: VendorResellerManageContext, db: DbSession):
     tenant = await edition_lifecycle_service.set_child_tenant_status(
         db,
         parent=ctx.tenant,
