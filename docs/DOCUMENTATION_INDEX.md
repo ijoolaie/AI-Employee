@@ -22,6 +22,9 @@ This is the top-level map for current project documentation.
 | Commercial edition API-key scope contract and verification limits | `current/11_EDITION_API_KEY_SCOPE_CONTRACT.md` |
 | AI Employee World — current implementation, CI evidence, PR disposition and next steps | `current/AI_EMPLOYEE_MASTER_HANDOFF_2026-10-11.md` |
 | AI-Employee master handoff — customer handoff/outbox and support-intelligence checkpoint (2026-10-30) | `current/AI_EMPLOYEE_MASTER_HANDOFF_2026-10-30.md` |
+| Approved multi-Vendor account, scoped RBAC and portal architecture (2026-11-02) | `current/MULTI_VENDOR_PORTAL_ARCHITECTURE_2026-11-02.md` |
+| Source-backed multi-Vendor / portal implementation gap analysis (2026-11-02) | `current/MULTI_VENDOR_PORTAL_GAP_ANALYSIS_2026-11-02.md` |
+| AI-Employee master handoff and local/GitHub synchronization checkpoint (2026-11-02) | `current/AI_EMPLOYEE_MASTER_HANDOFF_2026-11-02.md` |
 | Customer handoff/outbox execution priorities and acceptance boundaries (2026-10-30) | `current/CUSTOMER_HANDOFF_PRIORITY_UPDATE_2026-10-30.md` |
 | World V2 exact-head validation and visual acceptance blockers (2026-10-12) | `current/AI_EMPLOYEE_WORLD_V2_VALIDATION_2026-10-12.md` |
 | Historical AI Employee World handoff (2026-10-09 snapshot) | `current/AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-09.md` |
