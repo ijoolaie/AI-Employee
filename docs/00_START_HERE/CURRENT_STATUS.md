@@ -1026,3 +1026,9 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Generalized the action dependency factory and enforced tenant-local grants on all Reseller-owned Customer control-plane routes: list (`reseller.customer.read`), create (`reseller.customer.create`), suspend/resume/deprovision (`reseller.customer.manage`), and entitlement delegation (`reseller.entitlement.delegate`).
 - Existing API-key route scopes remain a second independent gate. Focused suite now: 29 passed; Ruff passed; `git diff --check` passed.
 - Commit: `65e4e2af`. Vendor operations and remaining edition/license/support action permissions are not yet migrated; user invitation, role delegation-ceiling and portal grants remain outstanding.
+
+## PostgreSQL CI fixture correction — 2026-11-02
+
+- Exact-head CI for `48a4c46a` exposed two PostgreSQL API fixture failures: reseller list requests now correctly return 403 unless the fixture grants `reseller.customer.read`.
+- Updated both `test_edition_live_api_access.py` and `test_commercial_license_postgres_api.py` to seed an explicit tenant-local read permission and attach it to the Reseller role. Production authorization was not weakened.
+- Commit: `708d9300`. Offline focused suite remains 29 passed; Ruff passes on changed tests and implementation files. PostgreSQL tests are awaiting the new exact-head CI run; they were not run against shared Staging locally.
