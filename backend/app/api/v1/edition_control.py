@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from app.core.deps import DbSession
-from app.core.edition_deps import CustomerAdminContext, ResellerAdminContext, ResellerCustomerCreateContext, VendorAdminContext
+from app.core.edition_deps import (CustomerAdminContext, ResellerAdminContext, ResellerCustomerCreateContext, ResellerCustomerReadContext, ResellerCustomerManageContext, ResellerEntitlementDelegateContext, VendorAdminContext)
 from app.models.tenant import Tenant
 from app.models.support_escalation import SupportEscalation
 from app.models.support_escalation_message import SupportEscalationMessage
@@ -184,7 +184,7 @@ async def deprovision_reseller(reseller_id: UUID, ctx: VendorAdminContext, db: D
 
 
 @router.get("/reseller/customers", response_model=APIResponse[list[TenantSummary]])
-async def list_customers(ctx: ResellerAdminContext, db: DbSession):
+async def list_customers(ctx: ResellerCustomerReadContext, db: DbSession):
     rows = (await db.execute(select(Tenant).where(Tenant.parent_tenant_id == ctx.tenant_id, Tenant.tenant_kind == edition_service.EDITION_CUSTOMER).order_by(Tenant.created_at))).scalars().all()
     return APIResponse(success=True, data=rows)
 
@@ -207,7 +207,7 @@ async def create_customer(payload: ChildTenantProvisionRequest, ctx: ResellerCus
 
 
 @router.post("/reseller/customers/{customer_id}/suspend", response_model=APIResponse[TenantSummary])
-async def suspend_customer(customer_id: UUID, ctx: ResellerAdminContext, db: DbSession):
+async def suspend_customer(customer_id: UUID, ctx: ResellerCustomerManageContext, db: DbSession):
     tenant = await edition_lifecycle_service.set_child_tenant_status(
         db,
         parent=ctx.tenant,
@@ -220,7 +220,7 @@ async def suspend_customer(customer_id: UUID, ctx: ResellerAdminContext, db: DbS
 
 
 @router.post("/reseller/customers/{customer_id}/resume", response_model=APIResponse[TenantSummary])
-async def resume_customer(customer_id: UUID, ctx: ResellerAdminContext, db: DbSession):
+async def resume_customer(customer_id: UUID, ctx: ResellerCustomerManageContext, db: DbSession):
     tenant = await edition_lifecycle_service.set_child_tenant_status(
         db,
         parent=ctx.tenant,
@@ -233,7 +233,7 @@ async def resume_customer(customer_id: UUID, ctx: ResellerAdminContext, db: DbSe
 
 
 @router.post("/reseller/customers/{customer_id}/deprovision", response_model=APIResponse[TenantSummary])
-async def deprovision_customer(customer_id: UUID, ctx: ResellerAdminContext, db: DbSession):
+async def deprovision_customer(customer_id: UUID, ctx: ResellerCustomerManageContext, db: DbSession):
     tenant = await edition_lifecycle_service.set_child_tenant_status(
         db,
         parent=ctx.tenant,
@@ -246,7 +246,7 @@ async def deprovision_customer(customer_id: UUID, ctx: ResellerAdminContext, db:
 
 
 @router.post("/reseller/customers/{customer_id}/entitlements", response_model=APIResponse[EntitlementResponse])
-async def delegate_customer_entitlement(customer_id: UUID, payload: EntitlementDelegationRequest, ctx: ResellerAdminContext, db: DbSession):
+async def delegate_customer_entitlement(customer_id: UUID, payload: EntitlementDelegationRequest, ctx: ResellerEntitlementDelegateContext, db: DbSession):
     child = (await db.execute(select(Tenant).where(Tenant.id == customer_id))).scalar_one_or_none()
     if child is None:
         raise HTTPException(status_code=404, detail="Customer tenant not found")

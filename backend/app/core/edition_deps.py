@@ -142,22 +142,37 @@ async def require_customer_admin(ctx: CurrentContext, request: Request) -> Tenan
     return ctx
 
 
-async def require_reseller_customer_create(ctx: CurrentContext, request: Request) -> TenantContext:
-    """Require reseller edition access and the explicit customer-create grant."""
-    require_edition(ctx, EDITION_RESELLER)
-    _enforce_api_key_scope(ctx, request, EDITION_RESELLER)
-    granted = any(
-        permission.code == "reseller.customer.create"
-        for role in ctx.user.roles
-        if role.tenant_id == ctx.tenant_id
-        for permission in role.permissions
-    )
-    if not granted:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Missing permission: reseller.customer.create")
-    return ctx
+def require_reseller_permission(permission_code: str):
+    """Build a dependency requiring a tenant-local reseller action grant."""
+    async def checker(ctx: CurrentContext, request: Request) -> TenantContext:
+        require_edition(ctx, EDITION_RESELLER)
+        _enforce_api_key_scope(ctx, request, EDITION_RESELLER)
+        granted = any(
+            permission.code == permission_code
+            for role in ctx.user.roles
+            if role.tenant_id == ctx.tenant_id
+            for permission in role.permissions
+        )
+        if not granted:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Missing permission: {permission_code}",
+            )
+        return ctx
+
+    return checker
+
+
+require_reseller_customer_create = require_reseller_permission("reseller.customer.create")
+require_reseller_customer_read = require_reseller_permission("reseller.customer.read")
+require_reseller_customer_manage = require_reseller_permission("reseller.customer.manage")
+require_reseller_entitlement_delegate = require_reseller_permission("reseller.entitlement.delegate")
 
 
 VendorAdminContext = Annotated[TenantContext, Depends(require_vendor_admin)]
 ResellerAdminContext = Annotated[TenantContext, Depends(require_reseller_admin)]
 CustomerAdminContext = Annotated[TenantContext, Depends(require_customer_admin)]
 ResellerCustomerCreateContext = Annotated[TenantContext, Depends(require_reseller_customer_create)]
+ResellerCustomerReadContext = Annotated[TenantContext, Depends(require_reseller_customer_read)]
+ResellerCustomerManageContext = Annotated[TenantContext, Depends(require_reseller_customer_manage)]
+ResellerEntitlementDelegateContext = Annotated[TenantContext, Depends(require_reseller_entitlement_delegate)]

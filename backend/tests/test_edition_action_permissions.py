@@ -73,3 +73,25 @@ async def test_reseller_api_key_requires_both_route_scope_and_user_permission():
     with pytest.raises(HTTPException) as exc:
         await require_reseller_customer_create(ctx, _request())
     assert exc.value.status_code == 403
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "permission_code",
+    [
+        "reseller.customer.read",
+        "reseller.customer.manage",
+        "reseller.entitlement.delegate",
+    ],
+)
+async def test_reseller_customer_operations_require_their_own_action_grant(permission_code):
+    from app.core.edition_deps import require_reseller_permission
+
+    ctx = _context(permission_tenant_matches=True)
+    ctx.user.roles[0].permissions = [SimpleNamespace(code=permission_code)]
+    dependency = require_reseller_permission(permission_code)
+    assert await dependency(ctx, _request()) is ctx
+
+    ctx.user.roles[0].permissions = [SimpleNamespace(code="reseller.customer.create")]
+    with pytest.raises(HTTPException) as exc:
+        await dependency(ctx, _request())
+    assert exc.value.status_code == 403
