@@ -12,6 +12,15 @@
 - Next action: source-backed Gap Analysis of User/Tenant/Membership models, registration/login, RBAC delegation, portal authorization/context, commercial entitlements, data-access scoping and the three portal UIs. No application behavior or user accounts have been changed.
 
 ---
+## Source-backed multi-Vendor gap analysis — 2026-11-02
+
+- Initial source audit is recorded in [MULTI_VENDOR_PORTAL_GAP_ANALYSIS_2026-11-02.md](../current/MULTI_VENDOR_PORTAL_GAP_ANALYSIS_2026-11-02.md) under [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350).
+- Reusable foundation exists: tenant_kind/parent_tenant_id hierarchy, edition guards, direct-child provisioning, entitlements, distinct portal route groups and Phase 14 isolation CI.
+- Confirmed gaps: public signup creates a standalone root Customer tenant and active Admin; no default-Vendor resolver/provisioning path; no direct Vendor→Customer creation; no per-user delegated child-creation grants; portal access is same-kind-only in frontend and backend; Vendor dashboard is a placeholder; existing isolation evidence does not cover every newly required data surface.
+- Do not duplicate Phase 14. Next: deeper audit of permission management APIs, resource query scoping, background jobs and migration of existing tenants, then implement the ownership and authorization contract before broad UI changes.
+- This is source review only. No application code, database, production resource or local test account was changed. Local staging runtime state is not re-certified.
+
+---
 ## Current verified checkpoint — 2026-10-31 (PostgreSQL + SMTP sink acceptance)
 
 - Evidence baseline: `main` at `f90211484b0b64f042785cd7f69504ef0449ccd9`; PR #1327 merged the acceptance documentation as `46d1407c8171de936556dd616bc68e50fdc023ae` after all CodeQL and Release identity checks passed.
