@@ -205,3 +205,11 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 
 - CI at `48a4c46a` surfaced two expected fixture updates after enforcing `reseller.customer.read`. Updated both PostgreSQL API test fixtures to create and attach that explicit tenant-local permission to their Reseller test role; no production bypass was introduced.
 - Commit `708d9300`; 29 focused offline tests and Ruff pass. New exact-head PostgreSQL CI is pending. Shared Staging was not used.
+
+## Vendor control-plane action permission slice — 2026-11-02
+
+- Added tenant-local Vendor action dependencies and enforced them on Vendor direct Customer list/create/suspend/resume/deprovision, Reseller list/create/suspend/resume/deprovision, and Vendor license-target listing.
+- Codes: `vendor.tenant.read`, `vendor.reseller.read/create/manage`, `vendor.customer.read/create/manage`. Grants are resolved only from roles owned by the active Vendor tenant. Superuser and foreign-tenant permissions do not bypass. API-key scopes remain an independent gate.
+- Focused validation: 38 passed; Ruff and `git diff --check` passed. Commit `8f93e098`.
+- Rollout caveat: no canonical Vendor root provisioning/bootstrap path currently grants this permission set to the initial Vendor Admin role. Do not deploy/enforce for existing Vendor tenants until a tested bootstrap/upgrade mechanism is added. Next work: bootstrap and delegation ceiling, then tenant-local invitation.
+- Previous SHA `4272164e` had all 22 workflows green; exact-head CI after `8f93e098` is pending.
