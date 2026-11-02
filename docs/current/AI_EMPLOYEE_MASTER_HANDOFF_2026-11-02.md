@@ -187,3 +187,10 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Contract is documentation only; no claim that action-level enforcement or user invitations are already implemented.
 - PR #1353 exact-head CI completed with all recorded workflows green; PR remains Draft pending dedicated PostgreSQL-backed API tests and review.
 - Next: implement permission dependency enforcement and role authoring, then tenant-local invitation lifecycle. Keep local implementation worktree fast-forwarded with the GitHub branch.
+
+## First delegated action-permission enforcement slice — 2026-11-02
+
+- `POST /edition/reseller/customers` now uses a dedicated dependency requiring Reseller edition boundary plus the explicit tenant-local `reseller.customer.create` permission. Admin role membership or `is_superuser` alone cannot satisfy the action grant.
+- API-key scope remains independently enforced. Tests cover allow, missing grant, foreign-tenant permission isolation, superuser non-bypass and API-key scope denial.
+- Validation: 26 focused tests passed; Ruff and `git diff --check` passed. Commit `c15e44d1`.
+- Scope limitation: this is only the first action-permission endpoint. Vendor provisioning grants, remaining control-plane routes, role delegation ceiling, invitation lifecycle and portal grants remain outstanding. Keep PR #1353 Draft until dedicated PostgreSQL-backed API validation is complete.
