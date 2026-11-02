@@ -120,7 +120,7 @@ No application code, database records, local user accounts or production resourc
 
 - Tenant hierarchy: `Tenant.tenant_kind` and `Tenant.parent_tenant_id`.
 - User-to-tenant membership: `User.tenant_id` and role relationships.
-- Role/permission tables and role-permission/user-role joins.
+- Role/permission tables and role-permission/user-role joins; tenant-admin role assignment with a permission-subset delegation check.
 - Edition-specific backend dependencies and API-key route scopes.
 - Direct-child provisioning, lifecycle transitions and entitlement delegation.
 - Commercial subscriptions/plans and a provider-neutral billing service.
@@ -138,7 +138,7 @@ These components should be reused after their gaps are proven; do not introduce 
 | Public Customer signup | Creates standalone root Customer | Attach to default Vendor and gate activation |
 | Vendor-created Reseller | Existing endpoint | Add per-user delegated permission check |
 | Vendor-created direct Customer | No endpoint/path found | Add direct child Customer path |
-| Reseller-created Customer | Existing endpoint | Enforce per-user grant and ownership scope |
+| Reseller-created Customer | Existing endpoint; generic tenant role assignment exists | Add user creation/invitation and enforce the specific per-user child-create permission and ownership scope |
 | No cross-Reseller reads | Direct-parent scoping exists for edition list endpoints | Extend tests/audit to every data surface and indirect inference |
 | Vendor/Reseller/Customer portal access | Same-kind-only routing/guards | Add explicit grants and server-validated portal context with immutable ceilings |
 | Distinct portal UI | Reseller/Customer foundations; Vendor dashboard placeholder | Complete Vendor UI and align all portals to context |
