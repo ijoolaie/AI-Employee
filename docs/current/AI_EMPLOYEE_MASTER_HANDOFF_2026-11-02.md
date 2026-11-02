@@ -194,3 +194,9 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - API-key scope remains independently enforced. Tests cover allow, missing grant, foreign-tenant permission isolation, superuser non-bypass and API-key scope denial.
 - Validation: 26 focused tests passed; Ruff and `git diff --check` passed. Commit `c15e44d1`.
 - Scope limitation: this is only the first action-permission endpoint. Vendor provisioning grants, remaining control-plane routes, role delegation ceiling, invitation lifecycle and portal grants remain outstanding. Keep PR #1353 Draft until dedicated PostgreSQL-backed API validation is complete.
+
+## Reseller action coverage expansion — 2026-11-02
+
+- Action dependency factory now protects the Reseller Customer control-plane surface end-to-end: list, create, suspend, resume, deprovision and entitlement delegation each require their own tenant-local action permission.
+- API-key route scopes remain independently enforced. Focused tests: 29 passed; Ruff and `git diff --check` passed. Commit `65e4e2af`.
+- Remaining work is explicit: Vendor permission bootstrap/enforcement, other edition/license/support operations, tenant-local user invitation, role delegation ceilings, portal grants and dedicated PostgreSQL-backed API tests.
