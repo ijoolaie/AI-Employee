@@ -221,3 +221,11 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Updated `test_edition_live_api_access.py` and `test_commercial_license_postgres_api.py` to attach that permission to the appropriate Vendor test Admin roles (including the second Vendor fixture used for cross-Vendor isolation). Production authorization was not weakened.
 - The same exact-head run had frontend success and all non-CI workflows green; Backend CI failed only in those two PostgreSQL API assertions (1,842 passed, 2 failed). Re-run required after fixture correction.
 - Ruff passed for both changed fixtures; `git diff --check` passed. PR #1353 remains Draft; no merge or deployment.
+
+## Exact-head CI fixture follow-up — 2026-11-02
+
+- CI run #4284 on `c38f3adf` passed all workflows except Backend CI. Backend had `1 failed, 1843 passed, 1 deselected`; the single failure was `test_license_http_hierarchy_revocation_and_audit` inserting duplicate globally unique `Permission` rows for `vendor.reseller.read` across two Vendor roles (and a duplicate assignment in one role fixture).
+- Fixed the test fixture to query or create the `vendor.reseller.read` Permission row once and attach the same row to both Vendor Admin roles. Production authorization remains unchanged and strict.
+- Commit `550afd293ec61ab2e9c0dfa071848b21ab1f9b5f` is pushed to PR #1353. Ruff and `git diff --check` pass. The local PostgreSQL test was blocked because `COMMERCIAL_LICENSE_TEST_DATABASE_URL` is not configured; the test failed closed before connecting. No Staging database was used.
+- Exact-head CI run #4285 is running on `550afd29`; Documentation Truth Consistency passed, and other workflows were queued/in progress at last inspection. Keep PR #1353 Draft until Backend/PostgreSQL CI and all required checks pass.
+- The isolated MultiVendor worktree was fetched and fast-forwarded from `3375bde4` to `c38f3adf`, then the fixture correction was committed and pushed. The current status file records the same checkpoint. Reverify final HEAD/status after docs commit. The dirty primary checkout and Staging/Production environments were not modified.
