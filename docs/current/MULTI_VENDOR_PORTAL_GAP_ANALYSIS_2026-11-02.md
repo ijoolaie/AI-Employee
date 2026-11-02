@@ -166,3 +166,44 @@ These components should be reused after their gaps are proven; do not introduce 
 ## 7. Verification limits
 
 This audit is based on source files fetched from the inspected `main` SHA. It is not a live production test, does not inspect production databases, and does not certify every resource query or background job. The local staging runtime and user accounts were not modified. The deeper data-surface audit and local execution of relevant tests remain outstanding.
+## 8. Extended resource-boundary audit — 2026-11-02
+
+### Request context and permission resolution
+
+- `backend/app/core/deps.py` resolves one authenticated User and the User's home Tenant; JWT `tenant_id` must match `User.tenant_id`. The `TenantContext` currently has no distinct target portal/resource tenant.
+- `has_permission` evaluates permissions from roles whose `tenant_id` equals the current context tenant. `require_edition` separately requires an Admin/Owner/tenant_admin role name. Therefore the existing generic RBAC cannot yet authorize a non-Admin user for one specific child-management operation.
+- `backend/app/core/edition_deps.py` defines API-key operation scopes, but bearer-user permission grants and API-key scopes are separate contracts.
+- Design implication: preserve actor identity/home tenant for permission evaluation and audit, and add a separately validated effective resource/portal context. A context switch must not replace `User.tenant_id`, mutate JWT identity, or bypass the actor's delegation ceiling.
+
+### Tenant-scoped resource foundations
+
+- Ordinary API examples use `ctx.tenant_id` predicates for conversations/inbox, work items, workflow runs/events/schedules/approvals, workforce proposals/templates, files, knowledge search and run artifacts.
+- File service list/get/delete and quota accounting explicitly scope by tenant ID. Knowledge endpoints pass the authenticated tenant ID to the RAG service.
+- Support escalation inbox/status/message/attachment paths use sender/recipient tenant ownership and tenant-owned file checks. Preserve participant constraints rather than granting broad descendant access.
+- Test Center worker loads a run, then loads its definition using both definition ID and the run's tenant ID; audit records use the run tenant ID. Other Celery tasks still need a systematic review.
+- These are examples, not an exhaustive repository audit. Cross-portal context must be opt-in and must preserve current same-tenant behavior by default.
+
+### Direct Vendor → Customer compatibility gaps
+
+- `license_service.issue_license` currently validates a Vendor target by walking Customer→Reseller→Vendor; a direct Customer child of a Vendor is rejected because Customer's parent is expected to be a Reseller.
+- `GET /edition/vendor/tenants` returns direct Resellers and their Customer children, but omits direct Vendor Customer children.
+- When direct Vendor Customer provisioning is added, update hierarchy validation, Vendor target listing, license issuance/revocation, entitlement delegation, lifecycle operations and their tests as one coherent change.
+
+### Migration compatibility
+
+- Existing public registration created standalone root Customer tenants. Do not automatically re-parent these records to the default Vendor: the correct Vendor/Reseller ownership cannot be inferred safely from the current schema.
+- Add an explicit reviewed mapping/import operation for existing tenants. Unmapped legacy root Customers should retain their current ownership and behavior until a mapping is approved.
+- The three local test users must remain unchanged. Any migration rehearsal must use synthetic fixtures in an isolated database and verify before/after ownership, role grants, subscriptions and audit history.
+
+## 9. Refined portal-context contract
+
+- Actor identity: authenticated `user_id` and immutable `actor_tenant_id` from the current JWT/session.
+- Target context: server-resolved `context_tenant_id` and `context_portal_kind`, selected through an explicit context-switch endpoint and revalidated on every request.
+- Permission check: evaluate the requested action against the actor's home-tenant role permissions and explicit delegation ceiling; never use a generic `is_superuser` shortcut to grant cross-tenant portal access.
+- Ownership check: Vendor can target only itself, direct Resellers or their Customers; Reseller can target only itself or its direct Customers; Customer can target only itself. No sibling Reseller or cross-Vendor target is valid.
+- Audit: record actor user, actor tenant, target context tenant, portal kind, action, grant/role and request ID for context switches and sensitive operations.
+- Portal grant: primary identity determines the absolute ceiling; grants can only narrow within that ceiling. Vendor Owner is not Platform Admin.
+
+## 10. Updated verification limits
+
+The 21 focused unit tests passed in the clean local implementation worktree at merged main SHA `2819cdc651c0a769b653bf3c92cd74e21a62925a`. These are baseline tests only. No application code, database records, existing user accounts, production resources or payment state were changed. The full route/service/background-job audit remains open.
