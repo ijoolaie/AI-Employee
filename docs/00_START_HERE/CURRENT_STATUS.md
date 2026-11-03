@@ -1123,3 +1123,15 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - W16 Cross-Tenant Purchase API reached the actual purchase endpoint after successful Vendor bootstrap and public signup, then received HTTP 403 because the Customer edition Admin grant set did not include the explicit skill_marketplace.purchase permission. The endpoint's permission gate is correct; the Customer role's default grant set was incomplete for the documented purchase flow.
 - Added skill_marketplace.purchase only to CUSTOMER_PERMISSIONS and extended both the focused permission contract and PostgreSQL live-registration assertions. Vendor/Reseller grants and API-key scopes were not broadened.
 - Local validation: **28 focused tests passed**, Ruff passed, compileall passed. Dedicated PostgreSQL acceptance remains delegated to CI because SUPPORT_TEST_DATABASE_URL is not configured locally. New exact-head CI is pending after push.
+
+
+### Manual certification workflow parity
+
+- Added the same disposable Vendor bootstrap to the manually dispatched Production Certification and Release Certification workflows after their isolated application-stack migrations. Their product gates exercise multiple /auth/register consumers; these workflows now receive a test-only Vendor fixture and retain the fail-closed signup contract. These workflows are certification-only and were not run as part of the current PR matrix; no real production or staging environment was targeted.
+
+
+### Celery/Kombu/Redis worker compatibility correction — 2026-11-03
+
+- Public Widget E2E now completes migration, Vendor bootstrap and API fixture provisioning, then its Celery worker fails before consuming tasks. The exact runtime error is Kombu Redis transport requiring redis-py >=6.1.0 while the installed dependency set supplies redis-py 5.2.0. This is a dependency compatibility issue, not an API signup or authorization failure.
+- Aligned all backend dependency declarations: Celery is bounded below 5.6, Kombu is bounded below 5.6 and pinned to 5.5.4 in the direct lock, and redis-py remains on the compatible 5.x line. This avoids Kombu 5.6's newer Redis transport requirement without broadening or changing the application runtime contract.
+- The same direct lock is used by Docker-based workers, so this correction covers the other E2E worker stacks as well as the standalone Public Widget worker. The new CI matrix must confirm clean worker startup and task execution before this is considered resolved.
