@@ -1135,3 +1135,16 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Public Widget E2E now completes migration, Vendor bootstrap and API fixture provisioning, then its Celery worker fails before consuming tasks. The exact runtime error is Kombu Redis transport requiring redis-py >=6.1.0 while the installed dependency set supplies redis-py 5.2.0. This is a dependency compatibility issue, not an API signup or authorization failure.
 - Aligned all backend dependency declarations: Celery is bounded below 5.6, Kombu is bounded below 5.6 and pinned to 5.5.4 in the direct lock, and redis-py remains on the compatible 5.x line. This avoids Kombu 5.6's newer Redis transport requirement without broadening or changing the application runtime contract.
 - The same direct lock is used by Docker-based workers, so this correction covers the other E2E worker stacks as well as the standalone Public Widget worker. The new CI matrix must confirm clean worker startup and task execution before this is considered resolved.
+
+
+### Marketplace purchase permission parity across new Admin roles
+
+- The historical W16 migration grants skill_marketplace.purchase to existing Admin roles across editions. To keep newly provisioned roles consistent with that migration, the explicit permission is now included in the common tenant Admin permission tuple, Reseller and Customer edition permission sets, and the operator-created Vendor bootstrap Admin set. It remains a tenant-local role grant; no superuser or API-key-scope bypass was introduced.
+- Local validation after the parity change: **28 focused tests passed**, Ruff passed and compileall passed. The exact-head PostgreSQL API/bootstrap tests remain CI-gated because the local dedicated SUPPORT_TEST_DATABASE_URL is absent.
+
+
+### Employee Marketplace Admin permission parity — 2026-11-03
+
+- W20's 403 was at POST /employee-marketplace/packages and required employee_marketplace.publish. The corresponding W20 migration, like the W16 marketplace migrations, grants explicit marketplace actions to existing Admin roles. Newly provisioned edition Admin roles must receive the equivalent grants through their role permission sets.
+- Added marketplace.install and employee_marketplace.publish/install/revoke to the common Admin, Reseller and Customer permission sets. The operator-created Vendor bootstrap Admin also receives these specific marketplace actions alongside its Vendor control-plane grants. The grants remain tenant-local and are not superuser/API-key bypasses.
+- Extended the public-signup permission contract, live PostgreSQL registration assertions, and bootstrap least-privilege acceptance assertions. Local focused suite and exact-head CI must be rerun after this change; no pass is claimed yet.

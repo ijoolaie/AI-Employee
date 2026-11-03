@@ -139,6 +139,10 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition(monke
                     assert "employee.read" in registered_grants
                     assert "support.escalation.create" in registered_grants
                     assert "skill_marketplace.purchase" in registered_grants
+                    assert "marketplace.install" in registered_grants
+                    assert "employee_marketplace.publish" in registered_grants
+                    assert "employee_marketplace.install" in registered_grants
+                    assert "employee_marketplace.revoke" in registered_grants
         finally:
             if previous is missing:
                 app.dependency_overrides.pop(get_db, None)

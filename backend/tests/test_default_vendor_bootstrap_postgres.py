@@ -71,7 +71,8 @@ async def test_default_vendor_bootstrap_is_idempotent_and_least_privilege(monkey
             assert user.is_platform_admin is False
             assert user.id in assigned_user_ids
             assert set(bootstrap_default_vendor.VENDOR_ADMIN_PERMISSIONS) <= grants
-            assert len(grants) == len(bootstrap_default_vendor.VENDOR_ADMIN_PERMISSIONS)
+            assert "skill_marketplace.purchase" in grants
+            assert len(grants) == len(bootstrap_default_vendor.BOOTSTRAP_ADMIN_PERMISSIONS)
 
             audit_actions = list((await db.execute(
                 select(AuditLog.action).where(AuditLog.tenant_id == vendor.id)

@@ -108,7 +108,13 @@ async def test_operator_bootstrap_refuses_unconfigured_default_vendor(monkeypatc
     with pytest.raises(SystemExit, match="DEFAULT_VENDOR_TENANT_SLUG"):
         await bootstrap_default_vendor.bootstrap()
 
-def test_customer_signup_admin_has_explicit_marketplace_purchase_permission():
-    from app.services.edition_service import CUSTOMER_PERMISSIONS
+def test_new_edition_admin_roles_have_explicit_marketplace_purchase_permission():
+    from app.services.auth_service import DEFAULT_TENANT_ADMIN_PERMISSIONS
+    from app.services.edition_service import CUSTOMER_PERMISSIONS, RESELLER_PERMISSIONS
 
-    assert "skill_marketplace.purchase" in CUSTOMER_PERMISSIONS
+    for permissions in (DEFAULT_TENANT_ADMIN_PERMISSIONS, RESELLER_PERMISSIONS, CUSTOMER_PERMISSIONS):
+        assert "skill_marketplace.purchase" in permissions
+        assert "marketplace.install" in permissions
+        assert "employee_marketplace.publish" in permissions
+        assert "employee_marketplace.install" in permissions
+        assert "employee_marketplace.revoke" in permissions

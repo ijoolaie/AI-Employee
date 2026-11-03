@@ -41,6 +41,15 @@ VENDOR_ADMIN_PERMISSIONS = (
     "vendor.customer.manage",
 )
 
+BOOTSTRAP_ADMIN_PERMISSIONS = (
+    *VENDOR_ADMIN_PERMISSIONS,
+    "skill_marketplace.purchase",
+    "marketplace.install",
+    "employee_marketplace.publish",
+    "employee_marketplace.install",
+    "employee_marketplace.revoke",
+)
+
 
 async def bootstrap() -> None:
     settings = get_settings()
@@ -110,7 +119,7 @@ async def bootstrap() -> None:
             await db.flush()
 
         grants_added: list[str] = []
-        for code in VENDOR_ADMIN_PERMISSIONS:
+        for code in BOOTSTRAP_ADMIN_PERMISSIONS:
             permission = (await db.execute(
                 select(Permission).where(Permission.code == code)
             )).scalar_one_or_none()
