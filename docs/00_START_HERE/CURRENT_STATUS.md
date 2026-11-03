@@ -1177,3 +1177,10 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Extended the no-superuser-bypass correction to the shared `has_permission` dependency, API-key scope delegation, `/auth/me` permission projection, and worker-side Run tool authorization.
 - A superuser with no explicit tenant role now has no ordinary operational permissions. Worker tool permissions are resolved only from roles attached to the Run tenant. API keys cannot receive ordinary or edition scopes beyond the creator's explicit tenant-local authority; superusers must provide explicit scopes and do not receive an authority exemption.
 - Added regression coverage for superuser-without-grants, API-key over-delegation, and worker tool permissions. Combined focused suite: 65 passed; Ruff and `git diff --check` passed.
+
+## Repository-wide superuser bypass audit
+
+- A complete `backend/app` search found remaining authorization shortcuts outside the edition control plane: the shared `has_permission` dependency, API-key scope delegation, `/auth/me` wildcard permission projection, and worker-side Run tool permission resolution.
+- Removed those shortcuts. `is_superuser` no longer grants operational permissions, broad API-key delegation, wildcard permissions in `/auth/me`, or wildcard worker tool access. Explicit tenant-local role grants and API-key route scopes remain the authority sources.
+- The only remaining application use of `is_superuser` is requiring explicit scopes when a superuser creates an API key; it is not an authorization grant. Model field and user constructors remain for compatibility, but no longer elevate tenant operations.
+- Focused regression suite: 65 passed; Ruff and `git diff --check` passed. Documentation truth validator passed.
