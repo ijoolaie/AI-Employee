@@ -1110,3 +1110,9 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 
 - A repository-wide audit found additional real-stack scripts that call the public registration endpoint. Added the same isolated Vendor bootstrap setup to W1 Control Plane, W17 Career Reputation, W18 Meeting Rooms, W20 Employee Marketplace, and the W16 Cross-Tenant Skill Purchase API workflow. These are test-only bootstrap fixtures; the API's fail-closed behavior remains unchanged.
 - The next exact-head CI matrix must verify these additional workflows as well as the seven fixes above. No claim is made that the new workflow setup has passed until that matrix completes.
+
+
+### Bootstrap script import-path correction — 2026-11-03
+
+- Exact-head CI #4293 found W21's standalone bootstrap invocation could not import the backend app package because Python set sys.path to the script directory. Added an explicit backend-root path derived from the script's own file location before application imports; this is independent of the caller's working directory and also hardens compose-based E2E invocations.
+- Local direct invocation from repository root now imports successfully and stops at the intended fail-closed guard when DEFAULT_VENDOR_TENANT_SLUG is unset; it does not connect to or mutate a database. Ruff passed, compileall passed, and the 27 focused unit/contract tests passed again. Exact-head CI after this path correction is pending.
