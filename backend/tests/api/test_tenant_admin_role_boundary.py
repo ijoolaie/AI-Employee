@@ -43,11 +43,14 @@ def test_tenant_admin_can_assign_role_within_existing_authority():
     _assert_roles_within_authority(ctx, [peer_role])
 
 
-def test_superuser_can_assign_any_role():
+def test_superuser_without_explicit_permissions_cannot_assign_role():
     ctx = _ctx(superuser=True)
     higher_role = _role(ctx.tenant_id, "platform.admin")
 
-    _assert_roles_within_authority(ctx, [higher_role])
+    with pytest.raises(HTTPException) as exc:
+        _assert_roles_within_authority(ctx, [higher_role])
+
+    assert exc.value.status_code == 403
 
 
 def test_handoff_notification_email_is_normalized():
@@ -96,3 +99,26 @@ async def test_handoff_notification_settings_allow_tenant_admin_role():
     )
 
     assert await require_tenant_admin(ctx) is ctx
+
+
+@pytest.mark.asyncio
+async def test_superuser_without_tenant_admin_role_is_not_tenant_admin():
+    ctx = _ctx(superuser=True)
+    ctx.user.roles = []
+
+    with pytest.raises(HTTPException) as exc:
+        await require_tenant_admin(ctx)
+
+    assert exc.value.status_code == 403
+
+
+def test_superuser_delegation_is_limited_to_explicit_tenant_permissions():
+    ctx = _ctx("employee.read", superuser=True)
+    allowed_role = _role(ctx.tenant_id, "employee.read")
+    elevated_role = _role(ctx.tenant_id, "employee.read", "platform.admin")
+
+    _assert_roles_within_authority(ctx, [allowed_role])
+    with pytest.raises(HTTPException) as exc:
+        _assert_roles_within_authority(ctx, [elevated_role])
+
+    assert exc.value.status_code == 403

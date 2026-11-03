@@ -40,14 +40,12 @@ class HandoffNotificationSettings(BaseModel):
     email: str | None = None
 
 async def require_tenant_admin(ctx: CurrentContext):
-    if not ctx.user.is_superuser and not any(r.name.lower() in {"admin", "owner", "tenant_admin"} and r.tenant_id == ctx.tenant_id for r in ctx.user.roles):
+    if not any(r.name.lower() in {"admin", "owner", "tenant_admin"} and r.tenant_id == ctx.tenant_id for r in ctx.user.roles):
         raise HTTPException(status_code=403, detail="Tenant administrator access required")
     return ctx
 
 
 def _effective_permission_codes(ctx: CurrentContext) -> set[str]:
-    if ctx.user.is_superuser:
-        return set()
     return {
         permission.code
         for role in ctx.user.roles
@@ -58,8 +56,6 @@ def _effective_permission_codes(ctx: CurrentContext) -> set[str]:
 
 def _assert_roles_within_authority(ctx: CurrentContext, roles: list[Role]) -> None:
     """Reject any role set that would grant permissions the actor lacks."""
-    if ctx.user.is_superuser:
-        return
     actor_permissions = _effective_permission_codes(ctx)
     requested_permissions = {permission.code for role in roles for permission in role.permissions}
     if not requested_permissions.issubset(actor_permissions):
