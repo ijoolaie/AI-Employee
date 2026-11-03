@@ -103,6 +103,7 @@ async def bootstrap() -> None:
             db.add(role)
             await db.flush()
 
+        grants_added: list[str] = []
         for code in VENDOR_ADMIN_PERMISSIONS:
             permission = (await db.execute(
                 select(Permission).where(Permission.code == code)
@@ -116,17 +117,39 @@ async def bootstrap() -> None:
                 permission = (await db.execute(
                     select(Permission).where(Permission.code == code)
                 )).scalar_one()
-            await db.execute(
+            grant_result = await db.execute(
                 insert(role_permissions)
                 .values(role_id=role.id, permission_id=permission.id)
                 .on_conflict_do_nothing()
             )
+            if grant_result.rowcount:
+                grants_added.append(code)
 
-        await db.execute(
+        assignment_result = await db.execute(
             insert(user_roles)
             .values(user_id=user.id, role_id=role.id)
             .on_conflict_do_nothing()
         )
+        if assignment_result.rowcount:
+            await audit_service.record(
+                db,
+                action="vendor.bootstrap.admin_role_assigned",
+                actor_type="system",
+                tenant_id=vendor.id,
+                resource_type="role",
+                resource_id=role.id,
+                metadata={"admin_user_id": str(user.id), "role": role.name},
+            )
+        if grants_added:
+            await audit_service.record(
+                db,
+                action="vendor.bootstrap.permissions_granted",
+                actor_type="system",
+                tenant_id=vendor.id,
+                resource_type="role",
+                resource_id=role.id,
+                metadata={"permission_codes": sorted(grants_added)},
+            )
 
         if created_vendor:
             await audit_service.record(

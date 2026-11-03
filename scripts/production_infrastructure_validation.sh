@@ -60,7 +60,20 @@ done
 echo 'INFRA|redis|persistence-pass'
 
 # API dependency endpoint proves API can reach PostgreSQL and Redis after restarts.
-compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5)"
+# Allow bounded reconnection time after the deliberate database/Redis restarts above.
+api_ready=0
+for _ in $(seq 1 30); do
+  if compose exec -T api python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/dependencies', timeout=5)" >/dev/null 2>&1; then
+    api_ready=1
+    break
+  fi
+  sleep 2
+done
+if [[ "$api_ready" != 1 ]]; then
+  compose logs --no-color --tail=200 api postgres redis
+  echo 'INFRA|api|dependency-readiness-failed' >&2
+  exit 1
+fi
 echo 'INFRA|api|dependency-readiness-pass'
 
 # Frontend must remain reachable through the published local validation port.

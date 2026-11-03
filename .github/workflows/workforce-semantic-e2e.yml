@@ -20,6 +20,11 @@ jobs:
   semantic-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      DEFAULT_VENDOR_TENANT_SLUG: ci-default-vendor
+      DEFAULT_VENDOR_BOOTSTRAP_TENANT_NAME: CI Default Vendor
+      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL: ci-vendor-admin@example.test
+      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD: ci-only-bootstrap-password-2026
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -45,6 +50,9 @@ jobs:
         run: |
           docker compose exec -T api alembic upgrade head
           docker compose exec -T api alembic check
+
+      - name: Bootstrap isolated default Vendor for signup tests
+        run: docker compose exec -T api python scripts/bootstrap_default_vendor.py
 
       - name: Verify deterministic market provider
         run: |
