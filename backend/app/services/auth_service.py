@@ -4,12 +4,14 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 import jwt
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.exceptions import ConflictError, UnauthorizedError
 from app.core.logging import request_id_var
 from app.core.security import create_access_token, create_refresh_token, decode_token, hash_password, verify_password
@@ -17,7 +19,7 @@ from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.role import Permission, Role, role_permissions, user_roles
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse
-from app.services import audit_service, billing_service
+from app.services import audit_service, billing_service, edition_service
 
 
 DEFAULT_TENANT_ADMIN_PERMISSIONS = (
@@ -36,9 +38,18 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
 )
 
 
-async def _create_tenant(db: AsyncSession, payload: RegisterRequest) -> Tenant:
-    """Create a tenant while preserving the unique-slug conflict boundary."""
-    tenant = Tenant(name=payload.tenant_name, slug=payload.tenant_slug, status="active", settings={})
+async def _create_tenant(db: AsyncSession, payload: RegisterRequest, *, parent: Tenant) -> Tenant:
+    """Create a public-signup Customer under the configured Vendor."""
+    tenant = Tenant(
+        name=payload.tenant_name,
+        slug=payload.tenant_slug,
+        status="active",
+        tenant_kind=edition_service.EDITION_CUSTOMER,
+        parent_tenant_id=parent.id,
+        vendor_release_tag=parent.vendor_release_tag,
+        delivery_revision=parent.delivery_revision,
+        settings={"edition": edition_service.EDITION_CUSTOMER, "control_plane_parent": str(parent.id)},
+    )
     try:
         async with db.begin_nested():
             db.add(tenant)
@@ -47,13 +58,31 @@ async def _create_tenant(db: AsyncSession, payload: RegisterRequest) -> Tenant:
         constraint_name = getattr(getattr(exc.orig, "diag", None), "constraint_name", None)
         if constraint_name is None:
             constraint_name = getattr(exc.orig, "constraint_name", None)
-        # Test doubles used by dialect-neutral race tests do not expose PostgreSQL constraint metadata.
         if constraint_name is None and type(exc.orig).__module__ == "builtins" and "duplicate key" in str(exc.orig).lower():
             constraint_name = "tenants_slug_key"
         if constraint_name != "tenants_slug_key":
             raise
         raise ConflictError("Tenant slug already exists") from exc
     return tenant
+
+
+async def _resolve_default_vendor(db: AsyncSession) -> Tenant:
+    """Resolve exactly one active root Vendor; public signup never creates a Vendor."""
+    slug = (get_settings().default_vendor_tenant_slug or "").strip()
+    if not slug:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Public registration is not configured")
+    result = await db.execute(
+        select(Tenant).where(
+            Tenant.slug == slug,
+            Tenant.tenant_kind == edition_service.EDITION_VENDOR,
+            Tenant.parent_tenant_id.is_(None),
+            Tenant.status == "active",
+        )
+    )
+    vendors = result.scalars().all()
+    if len(vendors) != 1:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Public registration is temporarily unavailable")
+    return vendors[0]
 
 
 async def _get_or_create_permission(db: AsyncSession, code: str) -> Permission:
@@ -70,7 +99,7 @@ async def _get_or_create_permission(db: AsyncSession, code: str) -> Permission:
     return (await db.execute(select(Permission).where(Permission.code == code))).scalar_one()
 
 
-async def _assign_tenant_admin_role(db: AsyncSession, user: User, tenant_id: UUID) -> Role:
+async def _assign_tenant_admin_role(db: AsyncSession, user: User, tenant_id: UUID, *, extra_permissions: set[str] | None = None) -> Role:
     """Create/resolve the tenant Admin role and assign it to the first user."""
     result = await db.execute(select(Role).where(Role.tenant_id == tenant_id, Role.name == "Admin"))
     role = result.scalar_one_or_none()
@@ -87,9 +116,10 @@ async def _assign_tenant_admin_role(db: AsyncSession, user: User, tenant_id: UUI
             if constraint_name != "uq_role_tenant_name":
                 raise
             role = (await db.execute(select(Role).where(Role.tenant_id == tenant_id, Role.name == "Admin"))).scalar_one()
-    result = await db.execute(select(Permission).where(Permission.code.in_(DEFAULT_TENANT_ADMIN_PERMISSIONS)))
+    permission_codes = set(DEFAULT_TENANT_ADMIN_PERMISSIONS) | (extra_permissions or set())
+    result = await db.execute(select(Permission).where(Permission.code.in_(permission_codes)))
     permissions = {p.code: p for p in result.scalars().all()}
-    for code in DEFAULT_TENANT_ADMIN_PERMISSIONS:
+    for code in sorted(permission_codes):
         permission = permissions.get(code)
         if permission is None:
             permission = await _get_or_create_permission(db, code)
@@ -103,20 +133,22 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     existing_slug = await db.execute(select(Tenant).where(Tenant.slug == payload.tenant_slug))
     if existing_slug.scalar_one_or_none():
         raise ConflictError("Tenant slug already exists")
-    tenant = await _create_tenant(db, payload)
+    parent = await _resolve_default_vendor(db)
+    tenant = await _create_tenant(db, payload, parent=parent)
     normalized_email = payload.email.lower()
     existing_user = await db.execute(select(User).where(User.email == normalized_email, User.tenant_id == tenant.id))
     if existing_user.scalar_one_or_none():
         raise ConflictError("Email already registered in this tenant")
-    user = User(tenant_id=tenant.id, email=normalized_email, password_hash=hash_password(payload.password), full_name=payload.full_name, is_active=True, is_superuser=False)
+    user = User(tenant_id=tenant.id, email=normalized_email, password_hash=hash_password(payload.password), full_name=payload.full_name, is_active=True, is_superuser=False, is_platform_admin=False)
     db.add(user)
     await db.flush()
-    role = await _assign_tenant_admin_role(db, user, tenant.id)
+    role = await _assign_tenant_admin_role(db, user, tenant.id, extra_permissions=edition_service.CUSTOMER_PERMISSIONS)
     await db.refresh(tenant)
     await db.refresh(user)
     await billing_service.ensure_subscription(db, tenant_id=tenant.id)
     await audit_service.record(db, action="rbac.role_assigned", actor_type="user", actor_id=user.id, tenant_id=tenant.id, resource_type="role", resource_id=role.id, request_id=request_id_var.get(), metadata={"role": "Admin", "user_id": str(user.id)})
-    await audit_service.record(db, action="tenant.registered", actor_type="user", tenant_id=tenant.id, actor_id=user.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"tenant_slug": tenant.slug, "user_email": user.email})
+    await audit_service.record(db, action="tenant.registered", actor_type="user", tenant_id=tenant.id, actor_id=user.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"tenant_slug": tenant.slug, "user_email": user.email, "parent_vendor_id": str(parent.id)})
+    await audit_service.record(db, action="edition.customer.self_registered", actor_type="user", actor_id=user.id, tenant_id=parent.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"customer_tenant_id": str(tenant.id), "customer_slug": tenant.slug})
     return tenant, user
 
 

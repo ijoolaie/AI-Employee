@@ -68,9 +68,10 @@ async def test_create_tenant_maps_unique_slug_race_to_conflict():
         tenant_name="Acme",
         tenant_slug="acme",
     )
+    parent = SimpleNamespace(id=uuid4(), vendor_release_tag="release-1", delivery_revision="rev-1")
 
     with pytest.raises(ConflictError, match="Tenant slug already exists"):
-        await auth_service._create_tenant(db, payload)
+        await auth_service._create_tenant(db, payload, parent=parent)
 
     assert len(db.added) == 1
     assert db.flushes == 1

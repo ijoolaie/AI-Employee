@@ -21,18 +21,18 @@ def _test_database_url() -> str:
     return url
 
 @pytest.mark.asyncio
-async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition():
+async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition(monkeypatch):
     db_url = _test_database_url()
     from app.core.database import get_db
     from app.core.security import create_access_token, hash_password
     from app.main import app
     from app.models.tenant import Tenant
     from app.models.user import User
-    from app.models.role import Permission, Role
+    from app.models.role import Permission, Role, role_permissions, user_roles
     engine = create_async_engine(db_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
     run_id = uuid.uuid4().hex
-    vendor = Tenant(name=f"API test vendor {run_id}", slug=f"api-vendor-{run_id}", status="active", tenant_kind="vendor", settings={})
+    vendor = Tenant(name=f"API test vendor {run_id}", slug=f"api-vendor-{run_id}", status="active", tenant_kind="vendor", vendor_release_tag="vendor-release-test", delivery_revision="delivery-test", settings={})
     reseller = Tenant(name=f"API test reseller {run_id}", slug=f"api-reseller-{run_id}", status="active", tenant_kind="reseller", settings={})
     customer = Tenant(name=f"API test customer {run_id}", slug=f"api-customer-{run_id}", status="active", tenant_kind="customer", settings={})
     reseller.parent = vendor
@@ -78,6 +78,9 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition():
                 except Exception:
                     await session.rollback()
                     raise
+        from types import SimpleNamespace
+        from app.services import auth_service
+        monkeypatch.setattr(auth_service, "get_settings", lambda: SimpleNamespace(default_vendor_tenant_slug=vendor.slug))
         missing = object()
         previous = app.dependency_overrides.get(get_db, missing)
         app.dependency_overrides[get_db] = override_get_db
@@ -127,6 +130,14 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition():
                     registered_user = (await session.execute(select(User).where(User.email == registration["email"], User.tenant_id == registered_me.json()["data"]["tenant"]["id"]))).scalar_one()
                     assert registered_user.is_superuser is False
                     assert registered_user.is_platform_admin is False
+                    registered_tenant = (await session.execute(select(Tenant).where(Tenant.id == registered_user.tenant_id))).scalar_one()
+                    assert registered_tenant.parent_tenant_id == vendor.id
+                    assert registered_tenant.vendor_release_tag == vendor.vendor_release_tag
+                    assert registered_tenant.delivery_revision == vendor.delivery_revision
+                    registered_role_id = (await session.execute(select(user_roles.c.role_id).where(user_roles.c.user_id == registered_user.id))).scalar_one()
+                    registered_grants = set((await session.execute(select(Permission.code).join(role_permissions, role_permissions.c.permission_id == Permission.id).where(role_permissions.c.role_id == registered_role_id))).scalars())
+                    assert "employee.read" in registered_grants
+                    assert "support.escalation.create" in registered_grants
         finally:
             if previous is missing:
                 app.dependency_overrides.pop(get_db, None)
