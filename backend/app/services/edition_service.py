@@ -50,7 +50,7 @@ CUSTOMER_PERMISSIONS = {
 def require_edition(ctx, kind: str) -> None:
     if ctx.tenant.tenant_kind != kind:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"{kind.title()} edition access required")
-    if not ctx.user.is_superuser and not any(role.tenant_id == ctx.tenant_id and role.name.lower() in {"admin", "owner", "tenant_admin"} for role in ctx.user.roles):
+    if not any(role.tenant_id == ctx.tenant_id and role.name.lower() in {"admin", "owner", "tenant_admin"} for role in ctx.user.roles):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Edition administrator access required")
 
 
