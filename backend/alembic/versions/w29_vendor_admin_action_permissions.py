@@ -56,6 +56,17 @@ def upgrade() -> None:
               ON u.id = ur.user_id
              AND u.tenant_id = t.id
              AND u.is_platform_admin IS TRUE
+            -- A Role grant affects every member of that Role. Do not backfill
+            -- control-plane authority onto a shared role with ordinary users.
+            AND NOT EXISTS (
+                SELECT 1
+                FROM user_roles AS other_ur
+                JOIN users AS other_u
+                  ON other_u.id = other_ur.user_id
+                 AND other_u.tenant_id = t.id
+                WHERE other_ur.role_id = r.id
+                  AND other_u.is_platform_admin IS NOT TRUE
+            )
             CROSS JOIN permissions AS p
             WHERE lower(r.name) IN ('admin', 'owner', 'tenant_admin')
               AND p.code IN (

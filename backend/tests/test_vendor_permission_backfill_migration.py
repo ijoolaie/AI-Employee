@@ -48,6 +48,9 @@ def test_backfill_seeds_catalog_and_only_grants_existing_root_vendor_admin_roles
     assert "t.parent_tenant_id IS NULL" in grant_sql
     assert "u.is_platform_admin IS TRUE" in grant_sql
     assert "u.tenant_id = t.id" in grant_sql
+    assert "AND NOT EXISTS" in grant_sql
+    assert "other_ur.role_id = r.id" in grant_sql
+    assert "other_u.is_platform_admin IS NOT TRUE" in grant_sql
     assert "lower(r.name) IN ('admin', 'owner', 'tenant_admin')" in grant_sql
     assert "ON CONFLICT (role_id, permission_id) DO NOTHING" in grant_sql
     assert grant_parameters is None
