@@ -3,6 +3,7 @@ import os
 import uuid
 from collections.abc import AsyncIterator
 import pytest
+from sqlalchemy import select
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
@@ -41,15 +42,30 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition():
         async with sessions() as session:
             session.add_all([vendor, reseller, customer])
             await session.flush()
+            permission_codes = ("vendor.reseller.read", "reseller.customer.read")
+            permission_by_code = {
+                permission.code: permission
+                for permission in (
+                    await session.execute(
+                        select(Permission).where(Permission.code.in_(permission_codes))
+                    )
+                ).scalars()
+            }
+            for code, description in (
+                ("vendor.reseller.read", "Read own direct resellers"),
+                ("reseller.customer.read", "Read own direct customers"),
+            ):
+                if code not in permission_by_code:
+                    permission = Permission(code=code, description=description)
+                    session.add(permission)
+                    permission_by_code[code] = permission
             for tenant, kind in ((vendor, "vendor"), (reseller, "reseller"), (customer, "customer")):
                 user = User(tenant_id=tenant.id, email=f"{kind}-{run_id}@example.com", password_hash=hash_password("Local-Test-Password-2026!"), full_name=kind.title(), is_active=True, is_superuser=False, is_platform_admin=False)
                 role = Role(tenant_id=tenant.id, name="Admin", description="integration test tenant admin")
                 if kind == "vendor":
-                    role.permissions = [Permission(code="vendor.reseller.read", description="Read own direct resellers")]
-                elif kind == "vendor":
-                    role.permissions = [Permission(code="vendor.reseller.read", description="Read own direct resellers")]
+                    role.permissions = [permission_by_code["vendor.reseller.read"]]
                 elif kind == "reseller":
-                    role.permissions = [Permission(code="reseller.customer.read", description="Read own direct customers")]
+                    role.permissions = [permission_by_code["reseller.customer.read"]]
                 user.roles = [role]
                 session.add_all([user, role])
                 users.append((tenant, user))
@@ -107,7 +123,6 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition():
                 assert registered_me.status_code == 200, registered_me.text
                 assert registered_me.json()["data"]["tenant"]["tenant_kind"] == "customer"
                 assert registered_me.json()["data"]["user"]["is_platform_admin"] is False
-                from sqlalchemy import select
                 async with sessions() as session:
                     registered_user = (await session.execute(select(User).where(User.email == registration["email"], User.tenant_id == registered_me.json()["data"]["tenant"]["id"]))).scalar_one()
                     assert registered_user.is_superuser is False
