@@ -25,6 +25,24 @@ def _owner_permissions(ctx: TenantContext) -> set[str]:
         for permission in role.permissions
     }
 
+def _assert_api_key_scopes_within_authority(
+    ctx: TenantContext, scopes: set[str], edition_scopes: set[str]
+) -> None:
+    requested_edition_scopes = scopes & edition_scopes
+    is_tenant_admin = any(
+        role.tenant_id == ctx.tenant_id
+        and role.name.lower() in {"admin", "owner", "tenant_admin"}
+        for role in ctx.user.roles
+    )
+    if requested_edition_scopes and not is_tenant_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Edition control-plane scopes require a tenant administrator",
+        )
+    ordinary_scopes = scopes - edition_scopes
+    if not ordinary_scopes.issubset(_owner_permissions(ctx)):
+        raise HTTPException(status_code=403, detail="API key scope exceeds owner permissions")
+
 
 @router.get("", response_model=APIResponse[list[APIKeyResponse]])
 async def list_api_keys(ctx: APIKeysReadContext, db: DbSession):
@@ -56,18 +74,8 @@ async def create_api_key(payload: APIKeyCreate, ctx: APIKeysCreateContext, db: D
     requested_edition_names = {scope for scope in scopes if scope.startswith("edition.")}
     if not requested_edition_names.issubset(edition_scopes):
         raise HTTPException(status_code=400, detail="API key contains edition scopes incompatible with this tenant")
-    # Edition scopes are not ordinary role permissions. Only a tenant
-    # administrator may delegate them, and only for the tenant's own edition.
-    requested_edition_scopes = set(scopes) & edition_scopes
-    is_tenant_admin = ctx.user.is_superuser or any(
-        role.tenant_id == ctx.tenant_id and role.name.lower() in {"admin", "owner", "tenant_admin"}
-        for role in ctx.user.roles
-    )
-    if requested_edition_scopes and not is_tenant_admin:
-        raise HTTPException(status_code=403, detail="Edition control-plane scopes require a tenant administrator")
-    ordinary_scopes = set(scopes) - edition_scopes
-    if not ctx.user.is_superuser and not ordinary_scopes.issubset(owner_permissions):
-        raise HTTPException(status_code=403, detail="API key scope exceeds owner permissions")
+    # Explicit role grants, not the legacy superuser flag, define delegation authority.
+    _assert_api_key_scopes_within_authority(ctx, set(scopes), edition_scopes)
 
     row, secret = await api_key_service.create_key(
         db, tenant_id=ctx.tenant_id, user_id=ctx.user_id,

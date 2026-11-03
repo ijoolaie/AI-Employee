@@ -64,6 +64,15 @@ logger = logging.getLogger("app.services.run")
 settings = get_settings()
 
 
+def _effective_run_tool_permissions(user: User, tenant_id: uuid.UUID) -> set[str]:
+    """Resolve worker permissions from explicit roles in the Run's tenant."""
+    return {
+        permission.code
+        for role in user.roles
+        if role.tenant_id == tenant_id
+        for permission in role.permissions
+    }
+
 def _provider_audit_metadata(tool_result: Any) -> dict[str, Any]:
     """Return a small allowlist of provider outcome fields for durable audit records."""
     if not isinstance(tool_result, dict) or "provider_execution" not in tool_result:
@@ -361,15 +370,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
         )
         run_user = user_result.scalar_one_or_none()
         if run_user is not None:
-            if run_user.is_superuser:
-                tool_permissions = {"*"}
-            else:
-                tool_permissions = {
-                    permission.code
-                    for role in run_user.roles
-                    if role.tenant_id == run.tenant_id
-                    for permission in role.permissions
-                }
+            tool_permissions = _effective_run_tool_permissions(run_user, run.tenant_id)
 
     gateway = AIGateway()
     paused_for_approval = False

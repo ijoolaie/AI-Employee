@@ -98,8 +98,6 @@ async def has_permission(ctx: TenantContext, permission_code: str) -> bool:
     """Return whether the request has a tenant permission."""
     if ctx.api_key_scopes is not None and permission_code not in set(ctx.api_key_scopes):
         return False
-    if ctx.user.is_superuser:
-        return True
     return any(
         permission.code == permission_code
         for role in ctx.user.roles
