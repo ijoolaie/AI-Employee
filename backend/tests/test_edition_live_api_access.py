@@ -138,6 +138,7 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition(monke
                     registered_grants = set((await session.execute(select(Permission.code).join(role_permissions, role_permissions.c.permission_id == Permission.id).where(role_permissions.c.role_id == registered_role_id))).scalars())
                     assert "employee.read" in registered_grants
                     assert "support.escalation.create" in registered_grants
+                    assert "skill_marketplace.purchase" in registered_grants
         finally:
             if previous is missing:
                 app.dependency_overrides.pop(get_db, None)

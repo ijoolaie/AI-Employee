@@ -41,7 +41,7 @@ CUSTOMER_PERMISSIONS = {
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
     "support.escalation.create", "team.install", "team.execute", "team.evaluate",
-    "marketplace.publish", "marketplace.read",
+    "marketplace.publish", "marketplace.read", "skill_marketplace.purchase",
 }
 
 

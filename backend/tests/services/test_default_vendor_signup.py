@@ -107,3 +107,8 @@ async def test_operator_bootstrap_refuses_unconfigured_default_vendor(monkeypatc
     monkeypatch.setattr(bootstrap_default_vendor, "AsyncSessionLocal", unexpected_database_access)
     with pytest.raises(SystemExit, match="DEFAULT_VENDOR_TENANT_SLUG"):
         await bootstrap_default_vendor.bootstrap()
+
+def test_customer_signup_admin_has_explicit_marketplace_purchase_permission():
+    from app.services.edition_service import CUSTOMER_PERMISSIONS
+
+    assert "skill_marketplace.purchase" in CUSTOMER_PERMISSIONS

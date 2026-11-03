@@ -290,3 +290,10 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 
 - Exact-head CI #4293 found W21's standalone bootstrap invocation could not import the backend app package because Python set sys.path to the script directory. Added an explicit backend-root path derived from the script's own file location before application imports; this is independent of the caller's working directory and also hardens compose-based E2E invocations.
 - Local direct invocation from repository root now imports successfully and stops at the intended fail-closed guard when DEFAULT_VENDOR_TENANT_SLUG is unset; it does not connect to or mutate a database. Ruff passed, compileall passed, and the 27 focused unit/contract tests passed again. Exact-head CI after this path correction is pending.
+
+
+### Customer marketplace purchase grant correction — 2026-11-03
+
+- W16 Cross-Tenant Purchase API reached the actual purchase endpoint after successful Vendor bootstrap and public signup, then received HTTP 403 because the Customer edition Admin grant set did not include the explicit skill_marketplace.purchase permission. The endpoint's permission gate is correct; the Customer role's default grant set was incomplete for the documented purchase flow.
+- Added skill_marketplace.purchase only to CUSTOMER_PERMISSIONS and extended both the focused permission contract and PostgreSQL live-registration assertions. Vendor/Reseller grants and API-key scopes were not broadened.
+- Local validation: **28 focused tests passed**, Ruff passed, compileall passed. Dedicated PostgreSQL acceptance remains delegated to CI because SUPPORT_TEST_DATABASE_URL is not configured locally. New exact-head CI is pending after push.
