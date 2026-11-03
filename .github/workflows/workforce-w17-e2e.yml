@@ -41,6 +41,11 @@ jobs:
   w17-real-stack:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      DEFAULT_VENDOR_TENANT_SLUG: ci-default-vendor
+      DEFAULT_VENDOR_BOOTSTRAP_TENANT_NAME: CI Default Vendor
+      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL: ci-vendor-admin@example.test
+      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD: ci-only-bootstrap-password-2026
     steps:
       - uses: actions/checkout@v7
 
@@ -69,6 +74,9 @@ jobs:
           docker compose ps
           docker compose logs --tail=200 api worker
           exit 1
+
+      - name: Bootstrap isolated default Vendor for signup tests
+        run: docker compose exec -T api python scripts/bootstrap_default_vendor.py
 
       - name: Compile W17 sources
         timeout-minutes: 2
