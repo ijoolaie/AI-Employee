@@ -175,6 +175,8 @@ class Settings(BaseSettings):
         return v
 
     platform_admin_emails: List[str] = []
+    # Public signup is fail-closed unless this exact active root Vendor slug is configured.
+    default_vendor_tenant_slug: str | None = None
     storage_dir: str = "./var/storage"
     ai_default_provider: str = "lm_studio"
     ai_default_model: str = "google/gemma-4-e4b"

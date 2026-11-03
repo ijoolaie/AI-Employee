@@ -23,6 +23,9 @@ Bearer-token requests retain the existing edition/RBAC behavior. API-key request
 | `edition.vendor.resellers.read` | List direct resellers |
 | `edition.vendor.resellers.create` | Provision a reseller |
 | `edition.vendor.resellers.manage` | Suspend, resume, or deprovision a reseller |
+| `edition.vendor.customers.read` | List direct Customer tenants owned by a Vendor |
+| `edition.vendor.customers.create` | Provision a direct Vendor-owned Customer tenant |
+| `edition.vendor.customers.manage` | Suspend, resume, or deprovision a direct Vendor-owned Customer tenant |
 | `edition.reseller.customers.read` | List direct customers |
 | `edition.reseller.customers.create` | Provision a customer |
 | `edition.reseller.customers.manage` | Suspend, resume, or deprovision a customer |

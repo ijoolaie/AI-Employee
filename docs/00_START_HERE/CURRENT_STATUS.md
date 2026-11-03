@@ -988,3 +988,171 @@ Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope c
 - PR #1166 merged as `4de70b6389e012d9416818c837287cc900a3ed6c`; exact tested head `61d46b1fdfee2792db694da5fed4549b64404f6e` has all 13 check runs successful after rerunning the frontend job. The rerun passed; the earlier frontend attempt had unrelated World-mode Playwright failures.
 - Added regression tests for malformed CI-status JSON/contracts, transport failure, and missing tenant repository mapping. This PR changed tests only; it did not add provider behavior or prove live GitHub writes.
 - Evidence remains CI/test-only. Live mutation, production credentials/configuration, deployment, and production readiness remain unverified. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
+
+## Implementation slice 1 — direct Vendor-owned Customers
+
+Draft PR [#1353](https://github.com/ijoolaie/AI-Employee/pull/1353) is open from `feature/multi-vendor-foundation-20261102` at `b73e03537801824be6ace88b483fae029aacfbb1`.
+
+Implemented in this slice:
+- Vendor direct Customer provision/list/suspend/resume/deprovision endpoints.
+- Vendor license target listing includes direct Customers.
+- Tenant provisioning, direct-child access and entitlement delegation support Vendor→Customer while preserving Vendor→Reseller→Customer and denying Vendor→grandchild access.
+- Commercial license hierarchy supports both direct Vendor Customer and Reseller-owned Customer, with malformed/foreign hierarchy rejection.
+- Explicit API-key route scopes and contract docs.
+
+Validation: 36 focused offline tests passed; Ruff passed. Database-backed live API/license tests could not run because dedicated test DB environment variables are absent; no staging DB was substituted. Exact-head CI is pending. PR is Draft and must not merge until PostgreSQL-backed API validation and CI pass.
+
+Not implemented by this slice: per-user action grants, child user invitation/creation, default Vendor provisioning, public signup/payment/Demo lifecycle, server-validated portal context or distinct portal UI. Existing Admin/Owner route gates remain temporarily.
+
+Local branch and GitHub PR head match. Local worktree clean after commit/push. Handoff and Current Status in the implementation branch record this checkpoint.
+
+## Delegated authorization contract — 2026-11-02
+
+- Added [MULTI_VENDOR_DELEGATED_AUTHORIZATION_CONTRACT.md](../current/MULTI_VENDOR_DELEGATED_AUTHORIZATION_CONTRACT.md) as the source-backed implementation contract for action-level permissions, delegation ceilings, tenant-local user invitations, portal authorization, required tests and rollout.
+- This is a design/acceptance contract, not implementation completion. Existing edition Admin/Owner gates remain until the permission enforcement slice is implemented and tested.
+- PR #1353 exact-head CI has completed successfully (all recorded workflows green) and remains Draft pending PostgreSQL-backed API validation and review.
+- Next implementation slice: permission dependency enforcement + permission catalogue/role authoring, then secure tenant-local user invitation.
+
+## First delegated action-permission enforcement slice — 2026-11-02
+
+- Added `require_reseller_customer_create` in `backend/app/core/edition_deps.py` and wired it to `POST /edition/reseller/customers`.
+- The endpoint now requires both Reseller edition/admin boundary and explicit tenant-local `reseller.customer.create`; a superuser flag alone does not bypass the action grant. Foreign-tenant role permissions do not count.
+- API-key scope remains an additional independent requirement (`edition.reseller.customers.create`).
+- Focused tests: `26 passed` across action-permission, Vendor edition dependency and edition-boundary suites. Ruff passed on all changed Python files; `git diff --check` passed.
+- Commit: `c15e44d1`. This is a narrow first slice, not full Vendor/Reseller permission enforcement or secure user invitation. PR #1353 remains Draft pending PostgreSQL-backed API validation.
+
+## Reseller action coverage expansion — 2026-11-02
+
+- Generalized the action dependency factory and enforced tenant-local grants on all Reseller-owned Customer control-plane routes: list (`reseller.customer.read`), create (`reseller.customer.create`), suspend/resume/deprovision (`reseller.customer.manage`), and entitlement delegation (`reseller.entitlement.delegate`).
+- Existing API-key route scopes remain a second independent gate. Focused suite now: 29 passed; Ruff passed; `git diff --check` passed.
+- Commit: `65e4e2af`. Vendor operations and remaining edition/license/support action permissions are not yet migrated; user invitation, role delegation-ceiling and portal grants remain outstanding.
+
+## PostgreSQL CI fixture correction — 2026-11-02
+
+- Exact-head CI for `48a4c46a` exposed two PostgreSQL API fixture failures: reseller list requests now correctly return 403 unless the fixture grants `reseller.customer.read`.
+- Updated both `test_edition_live_api_access.py` and `test_commercial_license_postgres_api.py` to seed an explicit tenant-local read permission and attach it to the Reseller role. Production authorization was not weakened.
+- Commit: `708d9300`. Offline focused suite remains 29 passed; Ruff passes on changed tests and implementation files. PostgreSQL tests are awaiting the new exact-head CI run; they were not run against shared Staging locally.
+
+## Vendor control-plane action permission slice — 2026-11-02
+
+- Added a tenant-local Vendor action permission dependency factory and applied it to Vendor edition control-plane operations: direct Customer list/create/manage, Reseller list/create/manage, and vendor tenant/license-target listing.
+- Permission codes: `vendor.tenant.read`, `vendor.reseller.read/create/manage`, `vendor.customer.read/create/manage`. Every check filters role grants to the active Vendor tenant. `is_superuser` and foreign-tenant role grants do not bypass the action permission. API-key route scopes remain independently enforced.
+- Validation: 38 focused tests passed; Ruff passed; `git diff --check` passed. Commit `8f93e098` pushed to the implementation branch.
+- Important rollout prerequisite: the repository does not yet expose a canonical Vendor-root provisioning/bootstrap path that grants these Vendor action permissions to the initial Vendor Admin role. Do not enable this slice for existing Vendor tenants in a deployment until that bootstrap/upgrade path is implemented and tested. The role-delegation ceiling and secure invitation flow remain outstanding.
+- Exact-head CI for `4272164e` had all 22 workflows green before this commit; new exact-head CI for `8f93e098` is pending.
+
+
+## Vendor permission PostgreSQL fixture correction — 2026-11-02
+
+- Exact-head CI for `90a7484e656fe41b55b43b06fe3833427e13f5e2` exposed two PostgreSQL API fixture failures: Vendor list-Reseller requests now correctly require the tenant-local `vendor.reseller.read` grant.
+- Updated `test_edition_live_api_access.py` and `test_commercial_license_postgres_api.py` to attach that permission to the appropriate Vendor test Admin roles (including the second Vendor fixture used for cross-Vendor isolation). Production authorization was not weakened.
+- The same exact-head run had frontend success and all non-CI workflows green; Backend CI failed only in those two PostgreSQL API assertions (1,842 passed, 2 failed). Re-run required after fixture correction.
+- Ruff passed for both changed fixtures; `git diff --check` passed. PR #1353 remains Draft; no merge or deployment.
+
+## Exact-head CI fixture follow-up — 2026-11-02
+
+- CI run #4284 on `c38f3adf` passed all workflows except Backend CI. Backend had `1 failed, 1843 passed, 1 deselected`; the single failure was `test_license_http_hierarchy_revocation_and_audit` inserting multiple `Permission` rows with the same globally unique `vendor.reseller.read` code (two Vendor roles plus a duplicated assignment in the fixture).
+- Corrected the PostgreSQL fixture to look up or create the shared `vendor.reseller.read` Permission row once and attach the same row to both Vendor roles. No production authorization code was changed.
+- Commit `550afd293ec61ab2e9c0dfa071848b21ab1f9b5f` is pushed to PR #1353. Ruff and `git diff --check` pass. The local PostgreSQL API test could not be run because `COMMERCIAL_LICENSE_TEST_DATABASE_URL` is not configured; it refused to run, and no Staging database was substituted.
+- Exact-head CI run #4285 has started on `550afd29`; Documentation Truth Consistency is green, remaining workflows are queued/running at the latest check. PR remains Draft; do not merge until PostgreSQL CI and all required checks pass.
+- Local implementation worktree was fast-forwarded from `3375bde4` to `c38f3adf`, then the fixture correction was committed/pushed. Recheck local HEAD and clean status after documentation updates. The separate primary checkout remains dirty and untouched; Staging/Production were not changed.
+
+## Vendor permission bootstrap investigation + exact-head CI — 2026-11-03
+
+- Exact PR head `841ca8072cd04de45d2d80411c60ee9df5867c1b` was rechecked: all **22/22** associated GitHub Actions workflows completed successfully, with zero failures. This includes Backend CI run #4286, CodeQL, Runtime Isolation/RBAC, Ephemeral DAST, Security Privacy Compliance, Architecture Guard, Production Observability, recovery and infrastructure validation.
+- PR #1353 remains open and Draft. Green repository CI is not a substitute for dedicated local PostgreSQL API acceptance or review. `COMMERCIAL_LICENSE_TEST_DATABASE_URL` remains absent locally; no shared Staging or Production database was used.
+- Local isolated MultiVendor worktree is clean and matches GitHub at `841ca8072cd04de45d2d80411c60ee9df5867c1b`. The primary checkout remains dirty and untouched.
+- Source audit confirms `Tenant.tenant_kind` defaults to `customer`; public `register_tenant_and_user` creates a standalone root tenant and seeds only `DEFAULT_TENANT_ADMIN_PERMISSIONS`. There is no default-Vendor resolver/configuration or canonical Vendor-root bootstrap function. Migration `20260820_edition_runtime_boundaries.py` classified tenants containing `is_platform_admin=true` as Vendor roots; `p5_vendor_identity_backfill.py` only backfills release identity and does not grant the new Vendor action permissions.
+- Vendor control-plane dependencies require explicit tenant-local grants (`vendor.tenant.read`, `vendor.reseller.read/create/manage`, `vendor.customer.read/create/manage`) even for a superuser. Deploying current enforcement without tested root-Vendor bootstrap/backfill could lock out legitimate Vendor Admin operations. Do not restore broad Admin/superuser bypass.
+- No application code or migration was changed in this investigation. Next implementation is staged: (1) idempotent least-privilege permission catalogue/role bootstrap for the canonical Vendor root and explicitly identified existing Vendor Admin role; (2) safe backfill migration with deterministic eligibility and audit evidence; (3) public signup routing to the configured default Vendor as a child Customer, failing closed if the default Vendor is missing/ambiguous; (4) isolated PostgreSQL tests for fresh bootstrap, rerun/idempotency, existing role preservation, non-Vendor exclusion, missing/ambiguous default Vendor, and cross-Vendor isolation. Keep PR Draft until these gates pass.
+- No Staging/Production changes, no user provisioning, and no merge occurred.
+
+## Vendor Admin permission backfill migration — 2026-11-03 (local validation)
+
+- Added `backend/alembic/versions/w29_vendor_admin_action_permissions.py` (revision `w29_vendor_admin_perms`, based on `w28_customer_slot_expiry_index`). It seeds the seven Vendor action permission catalogue rows idempotently and attaches them only to tenant-local Admin/Owner/Tenant_Admin roles already assigned to an `is_platform_admin` user in a root Vendor tenant. Child tenants and arbitrary Vendor users/roles are excluded. Downgrade intentionally retains grants to avoid silently revoking access later curated or relied upon.
+- Added `backend/tests/test_vendor_permission_backfill_migration.py` to verify the migration's permission set, idempotent inserts, strict root-Vendor/platform-admin eligibility, role-name allowlist, and non-destructive downgrade contract. Focused test after final revision-ID shortening: **2 passed**. Ruff passed on the final migration and test.
+- `alembic heads` resolves to exactly one head: `w29_vendor_admin_perms`. The migration has not been applied to any database. PostgreSQL execution/upgrade-downgrade validation remains required on an isolated disposable database; no Staging/Production connection was used.
+- Remaining bootstrap gap: this migration handles legacy root Vendor admins identified by `is_platform_admin`; canonical fresh default-Vendor creation/bootstrap and public-signup-to-default-Vendor child-Customer routing are still not implemented. Keep the feature Draft and do not deploy action gates until those paths and dedicated PostgreSQL tests are complete.
+
+
+## Default Vendor bootstrap + public signup routing — 2026-11-03 (implementation in progress)
+
+- Exact-head CI for 12784da030af6c7dcf9ea3e9b8380958433b4785 completed **24/24 workflows successfully, zero failures** (CI #4290 plus all associated E2E/security workflows). This green result applies to that commit, not yet to the current uncommitted signup/bootstrap changes.
+- Public registration now resolves DEFAULT_VENDOR_TENANT_SLUG to exactly one active root Vendor. Missing configuration or no eligible root Vendor returns HTTP 503 (fail-closed); the public endpoint never creates a Vendor.
+- Registration creates a customer child tenant under that Vendor, inherits vendor_release_tag and delivery_revision, records control_plane_parent, and creates a non-superuser/non-platform-admin Customer Admin with the normal Core grants plus the Customer edition permission set. Audit events are recorded in both the Customer and Vendor ledger scopes.
+- Added operator-only backend/scripts/bootstrap_default_vendor.py. It requires the configured Vendor slug plus DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL; a password of at least 12 characters and tenant name are required only when creating missing records. A PostgreSQL advisory transaction lock serializes reruns. It refuses a conflicting slug, non-root/non-Vendor tenant, inactive Vendor, or inactive/privileged existing Admin. It adds the seven explicit Vendor action grants without removing custom grants and never sets is_superuser or is_platform_admin.
+- Added unit coverage for missing/missing-or-ambiguous default Vendor, release/parent inheritance, unique-slug race handling and bootstrap fail-closed behavior. Added isolated PostgreSQL acceptance coverage for bootstrap idempotency/least privilege and extended the PostgreSQL live API test to verify public signup creates a Customer under the configured root Vendor and seeds Customer edition grants.
+- Local validation so far: **27 focused tests passed**; Ruff passed on all changed Python files; git diff --check passed; Python compile check passed. The new PostgreSQL acceptance tests have not been run locally because SUPPORT_TEST_DATABASE_URL is not configured; they fail closed and no Staging/Production database was substituted.
+- Current code/docs changes are still uncommitted at this checkpoint. Next: run the full focused suite again, inspect the bootstrap script and test fixture carefully, commit/push, then wait for exact-head CI including the two isolated PostgreSQL acceptance tests. Do not claim this implementation CI-green until the new commit's full workflow matrix completes.
+- PR #1353 remains Draft. No migration was applied, no Vendor was provisioned, no Staging/Production settings or databases were changed, and no merge/deployment occurred.
+
+
+## CI follow-up — seed disposable Vendor fixtures and preserve audit immutability (2026-11-03)
+
+- Exact-head CI #4291 on 628e96a0 exposed seven E2E workflows that still expected public signup to create a standalone tenant. The API correctly failed closed with HTTP 503 because those disposable stacks had not configured/bootstrapped a default Vendor. Corrected the workflow setup for Public Widget, W21, W16 Skill API, W16 Third-Party Publishing, W3, Runtime Isolation/RBAC and Workforce Semantic: each now configures a test-only default Vendor and invokes the operator bootstrap against its isolated database after migrations. Docker Compose passes the configured slug and test bootstrap values only into the E2E API service; production compose passes only the configured slug, with bootstrap credentials supplied only to the one-off ephemeral validation command.
+- The same CI backend run found the new bootstrap PostgreSQL acceptance test attempted to delete its audit rows during cleanup. PostgreSQL correctly rejected that operation because the audit ledger is immutable. The test now retains its random-slug bootstrap evidence and relies on the disposable CI support database being reset per workflow run; production ledger immutability is unchanged.
+- Production Infrastructure Validation's dependency check was a single immediate probe after intentional PostgreSQL/Redis restarts and returned HTTP 503 during reconnection. Changed it to a bounded retry loop with API/PostgreSQL/Redis diagnostics on exhaustion; no health gate was weakened.
+- Local validation after these corrections: 27 focused unit/contract tests passed; Ruff and Python compile checks passed; all 69 workflow/compose YAML files parsed; docker compose config passed; bash -n passed for the infrastructure validation script; git diff --check passed. The PostgreSQL bootstrap/live API acceptance tests remain unrun locally because SUPPORT_TEST_DATABASE_URL is not configured. They are wired into CI's disposable PostgreSQL database. No Staging/Production database was used.
+- These CI setup and audit-test corrections are a follow-up commit still awaiting push/exact-head CI at this checkpoint. Previous exact-head 24/24 success applies to 12784da0 only; CI #4291 on 628e96a0 is not green. Keep PR #1353 Draft and unmerged until a fresh exact-head matrix is fully green.
+
+
+## Follow-up pushed — CI fixture provisioning corrections (2026-11-03)
+
+- Follow-up commit `cd4ef18a62a923b71a5e458a56511b77c7c9af47` is pushed to the PR branch. It bootstraps a disposable root Vendor in each affected E2E stack (Public Widget, W21, W16 Skill API, W16 publishing, W3, Runtime Isolation/RBAC and Workforce Semantic) after migrations, using a test-only slug and Admin credentials. This preserves the production rule that public signup never creates a Vendor or silently falls back to a root Customer.
+- The bootstrap PostgreSQL acceptance test no longer attempts to delete immutable audit-ledger rows. It asserts that creation, Admin assignment and permission-grant events are each recorded exactly once across two idempotent bootstrap invocations. Random fixture identities remain in the disposable support database, which is reset per workflow run.
+- Production Infrastructure Validation now retries the dependency-readiness probe for a bounded 60 seconds after deliberate database/Redis restarts and prints API/PostgreSQL/Redis logs if readiness never returns.
+- CI #4291 on prior head `628e96a0` completed with 9 failures: seven E2E stacks lacked the required default Vendor fixture; one bootstrap PostgreSQL test attempted forbidden audit-ledger deletion; one production infrastructure check hit a transient 503 immediately after dependency restarts. These are the specific corrections included in `cd4ef18a`; the new exact-head workflow matrix is pending and no green result is claimed yet.
+- Local checks after the corrections: 27 focused unit/contract tests passed, Ruff passed, compileall passed, all 69 workflow/compose YAML files parsed, docker compose config passed, `bash -n` passed, and `git diff --check` passed. Dedicated local PostgreSQL acceptance remains blocked by missing `SUPPORT_TEST_DATABASE_URL`; no shared database was used.
+- PR #1353 remains Draft and unmerged. Staging/Production databases and settings were not changed.
+
+
+### Additional E2E registration consumers covered
+
+- A repository-wide audit found additional real-stack scripts that call the public registration endpoint. Added the same isolated Vendor bootstrap setup to W1 Control Plane, W17 Career Reputation, W18 Meeting Rooms, W20 Employee Marketplace, and the W16 Cross-Tenant Skill Purchase API workflow. These are test-only bootstrap fixtures; the API's fail-closed behavior remains unchanged.
+- The next exact-head CI matrix must verify these additional workflows as well as the seven fixes above. No claim is made that the new workflow setup has passed until that matrix completes.
+
+
+### Bootstrap script import-path correction — 2026-11-03
+
+- Exact-head CI #4293 found W21's standalone bootstrap invocation could not import the backend app package because Python set sys.path to the script directory. Added an explicit backend-root path derived from the script's own file location before application imports; this is independent of the caller's working directory and also hardens compose-based E2E invocations.
+- Local direct invocation from repository root now imports successfully and stops at the intended fail-closed guard when DEFAULT_VENDOR_TENANT_SLUG is unset; it does not connect to or mutate a database. Ruff passed, compileall passed, and the 27 focused unit/contract tests passed again. Exact-head CI after this path correction is pending.
+
+
+### Customer marketplace purchase grant correction — 2026-11-03
+
+- W16 Cross-Tenant Purchase API reached the actual purchase endpoint after successful Vendor bootstrap and public signup, then received HTTP 403 because the Customer edition Admin grant set did not include the explicit skill_marketplace.purchase permission. The endpoint's permission gate is correct; the Customer role's default grant set was incomplete for the documented purchase flow.
+- Added skill_marketplace.purchase only to CUSTOMER_PERMISSIONS and extended both the focused permission contract and PostgreSQL live-registration assertions. Vendor/Reseller grants and API-key scopes were not broadened.
+- Local validation: **28 focused tests passed**, Ruff passed, compileall passed. Dedicated PostgreSQL acceptance remains delegated to CI because SUPPORT_TEST_DATABASE_URL is not configured locally. New exact-head CI is pending after push.
+
+
+### Manual certification workflow parity
+
+- Added the same disposable Vendor bootstrap to the manually dispatched Production Certification and Release Certification workflows after their isolated application-stack migrations. Their product gates exercise multiple /auth/register consumers; these workflows now receive a test-only Vendor fixture and retain the fail-closed signup contract. These workflows are certification-only and were not run as part of the current PR matrix; no real production or staging environment was targeted.
+
+
+### Celery/Kombu/Redis worker compatibility correction — 2026-11-03
+
+- Public Widget E2E now completes migration, Vendor bootstrap and API fixture provisioning, then its Celery worker fails before consuming tasks. The exact runtime error is Kombu Redis transport requiring redis-py >=6.1.0 while the installed dependency set supplies redis-py 5.2.0. This is a dependency compatibility issue, not an API signup or authorization failure.
+- Aligned all backend dependency declarations: Celery is bounded below 5.6, Kombu is bounded below 5.6 and pinned to 5.5.4 in the direct lock, and redis-py remains on the compatible 5.x line. This avoids Kombu 5.6's newer Redis transport requirement without broadening or changing the application runtime contract.
+- The same direct lock is used by Docker-based workers, so this correction covers the other E2E worker stacks as well as the standalone Public Widget worker. The new CI matrix must confirm clean worker startup and task execution before this is considered resolved.
+
+
+### Marketplace purchase permission parity across new Admin roles
+
+- The historical W16 migration grants skill_marketplace.purchase to existing Admin roles across editions. To keep newly provisioned roles consistent with that migration, the explicit permission is now included in the common tenant Admin permission tuple, Reseller and Customer edition permission sets, and the operator-created Vendor bootstrap Admin set. It remains a tenant-local role grant; no superuser or API-key-scope bypass was introduced.
+- Local validation after the parity change: **28 focused tests passed**, Ruff passed and compileall passed. The exact-head PostgreSQL API/bootstrap tests remain CI-gated because the local dedicated SUPPORT_TEST_DATABASE_URL is absent.
+
+
+### Employee Marketplace Admin permission parity — 2026-11-03
+
+- W20's 403 was at POST /employee-marketplace/packages and required employee_marketplace.publish. The corresponding W20 migration, like the W16 marketplace migrations, grants explicit marketplace actions to existing Admin roles. Newly provisioned edition Admin roles must receive the equivalent grants through their role permission sets.
+- Added marketplace.install and employee_marketplace.publish/install/revoke to the common Admin, Reseller and Customer permission sets. The operator-created Vendor bootstrap Admin also receives these specific marketplace actions alongside its Vendor control-plane grants. The grants remain tenant-local and are not superuser/API-key bypasses.
+- Extended the public-signup permission contract, live PostgreSQL registration assertions, and bootstrap least-privilege acceptance assertions. Local focused suite and exact-head CI must be rerun after this change; no pass is claimed yet.
+
+## Final security and scope review — 2026-11-03
+
+- Rechecked the two previously tracked dependency findings against current main and PR files. sharp is now 0.35.5 on both branches (the old 0.35.3 finding is closed). The braces GHSA/CVE was withdrawn by GitHub on 2026-10-23; no guessed override or audit suppression was introduced.
+- A fresh official npm registry audit on the PR worktree found a newer production dependency issue: follow-redirects@1.16.1 (GHSA-mrwp-f3q8-3g9p / CVE-2026-116689). Updated only its lockfile entry to patched 1.16.2; package.json remains unchanged. Re-audit reports zero production vulnerabilities. Full audit still reports 16 moderate records, all through the development-only ESLint/minimatch toolchain; npm's suggested remediation requires incompatible major changes. No forced upgrade was applied.
+- Code review found the Vendor permission backfill could grant a shared Role based on one platform-admin member, thereby affecting other users assigned to that Role. Tightened the migration with a NOT EXISTS exclusion: a role is backfilled only if every same-tenant member is platform-admin. Added contract assertions. Focused migration tests: 2 passed; Ruff and git diff --check passed.
+- Exact-head CI for `2746e7fd30abd98b628644444e17f19871d7e8c7` completed **41/41 workflows successfully, zero failures**. The backend suite passed on isolated CI PostgreSQL services: 1,854 passed, 1 deselected, 20 warnings; this includes Vendor bootstrap and permission migration coverage. Frontend browser regressions, Security/Privacy, DAST, W20 real-stack and all other gates are green. Frontend local checks: npm ci passed, 145 contract/governance assertions passed, ESLint exit 0 with five existing warnings, Next.js 16.4.2 build passed (82 static pages). Production-only npm audit is clean (0 vulnerabilities); full audit retains 16 moderate records from the development ESLint/minimatch graph. Installed tree confirms axios 1.20.0 → follow-redirects 1.16.2.
+- PR #1353 remains open, Draft and unmerged. No Staging/Production databases, settings, or deployments were changed.

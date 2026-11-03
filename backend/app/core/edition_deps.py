@@ -16,6 +16,9 @@ EDITION_SCOPE_ALLOWLIST_BY_KIND: dict[str, set[str]] = {
         "edition.vendor.resellers.read",
         "edition.vendor.resellers.create",
         "edition.vendor.resellers.manage",
+        "edition.vendor.customers.read",
+        "edition.vendor.customers.create",
+        "edition.vendor.customers.manage",
         "edition.licenses.read",
         "edition.licenses.issue",
         "edition.licenses.revoke",
@@ -57,6 +60,11 @@ EDITION_ROUTE_SCOPES: dict[tuple[str, str], str] = {
     ("POST", "/edition/vendor/resellers/{reseller_id}/suspend"): "edition.vendor.resellers.manage",
     ("POST", "/edition/vendor/resellers/{reseller_id}/resume"): "edition.vendor.resellers.manage",
     ("POST", "/edition/vendor/resellers/{reseller_id}/deprovision"): "edition.vendor.resellers.manage",
+    ("GET", "/edition/vendor/customers"): "edition.vendor.customers.read",
+    ("POST", "/edition/vendor/customers"): "edition.vendor.customers.create",
+    ("POST", "/edition/vendor/customers/{customer_id}/suspend"): "edition.vendor.customers.manage",
+    ("POST", "/edition/vendor/customers/{customer_id}/resume"): "edition.vendor.customers.manage",
+    ("POST", "/edition/vendor/customers/{customer_id}/deprovision"): "edition.vendor.customers.manage",
     ("GET", "/edition/reseller/customers"): "edition.reseller.customers.read",
     ("POST", "/edition/reseller/customers"): "edition.reseller.customers.create",
     ("POST", "/edition/reseller/customers/{customer_id}/suspend"): "edition.reseller.customers.manage",
@@ -134,6 +142,73 @@ async def require_customer_admin(ctx: CurrentContext, request: Request) -> Tenan
     return ctx
 
 
+def require_vendor_permission(permission_code: str):
+    """Build a dependency requiring a tenant-local vendor action grant."""
+    async def checker(ctx: CurrentContext, request: Request) -> TenantContext:
+        require_edition(ctx, EDITION_VENDOR)
+        _enforce_api_key_scope(ctx, request, EDITION_VENDOR)
+        granted = any(
+            permission.code == permission_code
+            for role in ctx.user.roles
+            if role.tenant_id == ctx.tenant_id
+            for permission in role.permissions
+        )
+        if not granted:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Missing permission: {permission_code}",
+            )
+        return ctx
+
+    return checker
+
+
+def require_reseller_permission(permission_code: str):
+    """Build a dependency requiring a tenant-local reseller action grant."""
+    async def checker(ctx: CurrentContext, request: Request) -> TenantContext:
+        require_edition(ctx, EDITION_RESELLER)
+        _enforce_api_key_scope(ctx, request, EDITION_RESELLER)
+        granted = any(
+            permission.code == permission_code
+            for role in ctx.user.roles
+            if role.tenant_id == ctx.tenant_id
+            for permission in role.permissions
+        )
+        if not granted:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Missing permission: {permission_code}",
+            )
+        return ctx
+
+    return checker
+
+
+require_vendor_tenant_read = require_vendor_permission("vendor.tenant.read")
+require_vendor_reseller_read = require_vendor_permission("vendor.reseller.read")
+require_vendor_reseller_create = require_vendor_permission("vendor.reseller.create")
+require_vendor_reseller_manage = require_vendor_permission("vendor.reseller.manage")
+require_vendor_customer_read = require_vendor_permission("vendor.customer.read")
+require_vendor_customer_create = require_vendor_permission("vendor.customer.create")
+require_vendor_customer_manage = require_vendor_permission("vendor.customer.manage")
+
+require_reseller_customer_create = require_reseller_permission("reseller.customer.create")
+require_reseller_customer_read = require_reseller_permission("reseller.customer.read")
+require_reseller_customer_manage = require_reseller_permission("reseller.customer.manage")
+require_reseller_entitlement_delegate = require_reseller_permission("reseller.entitlement.delegate")
+
+
 VendorAdminContext = Annotated[TenantContext, Depends(require_vendor_admin)]
+VendorTenantReadContext = Annotated[TenantContext, Depends(require_vendor_tenant_read)]
+VendorResellerReadContext = Annotated[TenantContext, Depends(require_vendor_reseller_read)]
+VendorResellerCreateContext = Annotated[TenantContext, Depends(require_vendor_reseller_create)]
+VendorResellerManageContext = Annotated[TenantContext, Depends(require_vendor_reseller_manage)]
+VendorCustomerReadContext = Annotated[TenantContext, Depends(require_vendor_customer_read)]
+VendorCustomerCreateContext = Annotated[TenantContext, Depends(require_vendor_customer_create)]
+VendorCustomerManageContext = Annotated[TenantContext, Depends(require_vendor_customer_manage)]
 ResellerAdminContext = Annotated[TenantContext, Depends(require_reseller_admin)]
 CustomerAdminContext = Annotated[TenantContext, Depends(require_customer_admin)]
+ResellerCustomerCreateContext = Annotated[TenantContext, Depends(require_reseller_customer_create)]
+ResellerCustomerReadContext = Annotated[TenantContext, Depends(require_reseller_customer_read)]
+ResellerCustomerManageContext = Annotated[TenantContext, Depends(require_reseller_customer_manage)]
+ResellerEntitlementDelegateContext = Annotated[TenantContext, Depends(require_reseller_entitlement_delegate)]

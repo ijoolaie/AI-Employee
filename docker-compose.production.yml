@@ -46,6 +46,7 @@ services:
       APP_ENV: production
       DEBUG: "false"
       SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      DEFAULT_VENDOR_TENANT_SLUG: ${DEFAULT_VENDOR_TENANT_SLUG:-}
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       DATABASE_URL_SYNC: ${DATABASE_URL_SYNC:?DATABASE_URL_SYNC is required}
       REDIS_URL: ${REDIS_URL:?REDIS_URL is required}

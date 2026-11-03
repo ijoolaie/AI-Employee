@@ -15,6 +15,14 @@ from app.models.tenant_entitlement import TenantEntitlement
 from app.services import edition_service
 
 
+def _valid_vendor_hierarchy_edge(child_kind: str, parent_kind: str) -> bool:
+    if child_kind == edition_service.EDITION_CUSTOMER:
+        return parent_kind in {edition_service.EDITION_RESELLER, edition_service.EDITION_VENDOR}
+    if child_kind == edition_service.EDITION_RESELLER:
+        return parent_kind == edition_service.EDITION_VENDOR
+    return False
+
+
 def _license_key() -> str:
     return "LIC-" + secrets.token_urlsafe(36).replace("-", "_")[:64]
 
@@ -48,15 +56,7 @@ async def issue_license(
             parent = parent_result.scalar_one_or_none()
             if parent is None:
                 raise ConflictError("License target is outside the vendor tenant hierarchy")
-
-            expected_parent_kind = (
-                edition_service.EDITION_RESELLER
-                if current.tenant_kind == edition_service.EDITION_CUSTOMER
-                else edition_service.EDITION_VENDOR
-                if current.tenant_kind == edition_service.EDITION_RESELLER
-                else None
-            )
-            if parent.tenant_kind != expected_parent_kind:
+            if not _valid_vendor_hierarchy_edge(current.tenant_kind, parent.tenant_kind):
                 raise ConflictError("Invalid tenant hierarchy for commercial license")
             if parent.id == issuer.id:
                 if parent.tenant_kind != edition_service.EDITION_VENDOR:

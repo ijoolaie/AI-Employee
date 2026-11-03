@@ -55,7 +55,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
     from app.models.audit_log import AuditLog
     from app.models.file import FileObject
     from app.models.license import CommercialLicense
-    from app.models.role import Role
+    from app.models.role import Permission, Role
     from app.models.support_escalation import SupportEscalation
     from app.models.support_escalation_message import SupportEscalationMessage
     from app.models.support_escalation_message_attachment import SupportEscalationMessageAttachment
@@ -122,8 +122,24 @@ async def test_license_http_hierarchy_revocation_and_audit():
                 slug=f"lic-customer-b-{run_id}", tenant_kind="customer",
                 parent_tenant_id=reseller_b_id, status="active",
             )
+            vendor_reseller_read = (
+                await session.execute(
+                    select(Permission).where(Permission.code == "vendor.reseller.read")
+                )
+            ).scalar_one_or_none()
+            if vendor_reseller_read is None:
+                vendor_reseller_read = Permission(
+                    code="vendor.reseller.read",
+                    description="Read own direct resellers",
+                )
+                session.add(vendor_reseller_read)
+                await session.flush()
             role_a = Role(id=role_a_id, tenant_id=vendor_a_id, name="admin")
+            role_a.permissions = [vendor_reseller_read]
+            role_reseller = Role(tenant_id=reseller_a_id, name="reseller-admin")
+            role_reseller.permissions = [Permission(code="reseller.customer.read", description="Read own direct customers")]
             role_b = Role(id=role_b_id, tenant_id=vendor_b_id, name="admin")
+            role_b.permissions = [vendor_reseller_read]
 
             # Persist tenant parents before children to satisfy the self-referencing FK.
             session.add_all([vendor_a, vendor_b])
@@ -136,7 +152,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
             await session.commit()
 
             # Roles reference tenant rows, so insert them after the tenants.
-            session.add_all([role_a, role_b])
+            session.add_all([role_a, role_b, role_reseller])
             await session.commit()
 
             user_a = User(
@@ -178,6 +194,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
             )
             user_a.roles.append(role_a)
             user_b.roles.append(role_b)
+            user_reseller.roles.append(role_reseller)
             session.add_all([user_a, user_b, user_vendor_superuser, user_reseller, user_customer])
             await session.commit()
 

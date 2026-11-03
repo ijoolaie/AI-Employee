@@ -26,6 +26,10 @@ jobs:
       DATABASE_URL: postgresql+asyncpg://aiep:aiep@localhost:5432/aiep
       SECRET_KEY: w21-e2e-secret
       E2E_API_BASE_URL: http://127.0.0.1:8000/api/v1
+      DEFAULT_VENDOR_TENANT_SLUG: ci-default-vendor
+      DEFAULT_VENDOR_BOOTSTRAP_TENANT_NAME: CI Default Vendor
+      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL: ci-vendor-admin@example.test
+      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD: ci-only-bootstrap-password-2026
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
@@ -33,6 +37,8 @@ jobs:
           python-version: "3.12"
       - run: pip install -r backend/requirements.txt
       - run: alembic -c alembic.ini upgrade head
+        working-directory: backend
+      - run: python scripts/bootstrap_default_vendor.py
         working-directory: backend
       - run: python -m py_compile app/models/business_network_request.py app/services/business_network_service.py app/api/v1/business_network.py app/schemas/business_network.py scripts/e2e_workforce_w21_business_network_verify.py
         working-directory: backend

@@ -25,14 +25,17 @@ def tenant(kind, parent=None):
     return SimpleNamespace(id=uuid4(), tenant_kind=kind, parent_tenant_id=getattr(parent, "id", None))
 
 
-def test_vendor_can_access_direct_reseller_only():
+def test_vendor_can_access_direct_resellers_and_direct_customers_only():
     vendor = tenant(EDITION_VENDOR)
     reseller = tenant(EDITION_RESELLER, vendor)
-    customer = tenant(EDITION_CUSTOMER, reseller)
+    reseller_customer = tenant(EDITION_CUSTOMER, reseller)
+    direct_customer = tenant(EDITION_CUSTOMER, vendor)
 
     assert_can_access(vendor, reseller)
+    assert_can_access(vendor, direct_customer)
     with pytest.raises(HTTPException):
-        assert_can_access(vendor, customer)
+        assert_can_access(vendor, reseller_customer)
+
 
 
 def test_reseller_can_access_direct_customers_but_not_vendor():
@@ -62,7 +65,9 @@ def test_child_kind_and_parent_are_both_required():
     reseller = tenant(EDITION_RESELLER, vendor)
     customer = tenant(EDITION_CUSTOMER, reseller)
 
+    direct_customer = tenant(EDITION_CUSTOMER, vendor)
     assert_direct_child(vendor, reseller, EDITION_RESELLER)
+    assert_direct_child(vendor, direct_customer, EDITION_CUSTOMER)
     assert_direct_child(reseller, customer, EDITION_CUSTOMER)
     with pytest.raises(HTTPException):
         assert_direct_child(vendor, customer, EDITION_CUSTOMER)
@@ -109,3 +114,21 @@ def test_legacy_reseller_admin_routes_are_removed():
 
     routes = [getattr(route, "path", "") for route in api_router.routes]
     assert not any(path.startswith("/reseller-admin") for path in routes)
+
+def test_vendor_license_hierarchy_accepts_direct_customer_and_rejects_invalid_edges():
+    from app.services.license_service import _valid_vendor_hierarchy_edge
+
+    assert _valid_vendor_hierarchy_edge(EDITION_CUSTOMER, EDITION_VENDOR)
+    assert _valid_vendor_hierarchy_edge(EDITION_CUSTOMER, EDITION_RESELLER)
+    assert _valid_vendor_hierarchy_edge(EDITION_RESELLER, EDITION_VENDOR)
+    assert not _valid_vendor_hierarchy_edge(EDITION_RESELLER, EDITION_RESELLER)
+    assert not _valid_vendor_hierarchy_edge(EDITION_CUSTOMER, EDITION_CUSTOMER)
+
+def test_vendor_direct_customer_routes_are_registered():
+    from app.api.v1.edition_control import router as edition_router
+
+    paths = {getattr(route, "path", "") for route in edition_router.routes}
+    assert "/edition/vendor/customers" in paths
+    assert "/edition/vendor/customers/{customer_id}/suspend" in paths
+    assert "/edition/vendor/customers/{customer_id}/resume" in paths
+    assert "/edition/vendor/customers/{customer_id}/deprovision" in paths

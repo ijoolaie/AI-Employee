@@ -38,6 +38,10 @@ jobs:
       SECRET_KEY: ci-certification-secret
       APP_ENV: test
       CI: true
+      DEFAULT_VENDOR_TENANT_SLUG: ci-default-vendor
+      DEFAULT_VENDOR_BOOTSTRAP_TENANT_NAME: CI Default Vendor
+      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL: ci-vendor-admin@example.test
+      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD: ci-only-bootstrap-password-2026
       # The certification suite intentionally runs many isolated E2E gates from
       # one runner IP. Keep rate limiting enabled, but give the certification
       # harness its own sufficiently large request budget so independent gates
@@ -148,6 +152,9 @@ jobs:
         run: docker compose exec -T api alembic check
       - name: Verify stack migration has a single head
         run: test "$(docker compose exec -T api alembic heads | grep -c '(head)')" -eq 1
+
+      - name: Bootstrap disposable default Vendor for certification gates
+        run: docker compose exec -T api python scripts/bootstrap_default_vendor.py
       - name: Verify OCR runtime in production-like API container
         run: docker compose exec -T api sh -lc 'command -v tesseract && tesseract --version && tesseract --list-langs | grep -qx fas'
       - name: OCR extraction test in production-like API container
