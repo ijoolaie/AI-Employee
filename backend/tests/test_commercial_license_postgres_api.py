@@ -134,6 +134,23 @@ async def test_license_http_hierarchy_revocation_and_audit():
                 )
                 session.add(vendor_reseller_read)
                 await session.flush()
+            api_keys_create = (
+                await session.execute(
+                    select(Permission).where(Permission.code == "api_keys.create")
+                )
+            ).scalar_one_or_none()
+            if api_keys_create is None:
+                api_keys_create = Permission(
+                    code="api_keys.create",
+                    description="Create API keys within the tenant's delegated authority",
+                )
+                session.add(api_keys_create)
+                await session.flush()
+            role_superuser = Role(
+                tenant_id=vendor_a_id,
+                name="admin",
+                permissions=[api_keys_create],
+            )
             role_a = Role(id=role_a_id, tenant_id=vendor_a_id, name="admin")
             role_a.permissions = [vendor_reseller_read]
             role_reseller = Role(tenant_id=reseller_a_id, name="reseller-admin")
@@ -194,6 +211,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
             )
             user_a.roles.append(role_a)
             user_b.roles.append(role_b)
+            user_vendor_superuser.roles.append(role_superuser)
             user_reseller.roles.append(role_reseller)
             session.add_all([user_a, user_b, user_vendor_superuser, user_reseller, user_customer])
             await session.commit()
