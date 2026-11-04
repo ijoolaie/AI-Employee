@@ -16,14 +16,14 @@ from app.services.edition_service import (
 )
 
 
-def context(kind: str, *, is_superuser: bool = False):
+def context(kind: str, *, is_superuser: bool = False, has_admin_role: bool = True):
     tenant_id = uuid4()
     tenant = SimpleNamespace(tenant_kind=kind, id=tenant_id)
     admin_role = SimpleNamespace(tenant_id=tenant_id, name="Admin")
     return SimpleNamespace(
         tenant=tenant,
         tenant_id=tenant_id,
-        user=SimpleNamespace(is_superuser=is_superuser, roles=[admin_role]),
+        user=SimpleNamespace(is_superuser=is_superuser, roles=[admin_role] if has_admin_role else []),
     )
 
 
@@ -111,3 +111,12 @@ def test_child_tenant_provisioning_does_not_create_a_platform_superuser():
     }
     assert isinstance(values.get("is_superuser"), ast.Constant)
     assert values["is_superuser"].value is False
+
+
+def test_superuser_without_tenant_admin_role_cannot_enter_edition_portal():
+    for edition in (EDITION_VENDOR, EDITION_RESELLER, EDITION_CUSTOMER):
+        with pytest.raises(HTTPException) as exc:
+            require_edition(
+                context(edition, is_superuser=True, has_admin_role=False), edition
+            )
+        assert exc.value.status_code == 403

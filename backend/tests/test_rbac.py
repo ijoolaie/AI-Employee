@@ -42,13 +42,13 @@ async def test_permission_is_granted_only_from_current_tenant_role():
 
 
 @pytest.mark.asyncio
-async def test_superuser_compatibility_path_has_full_core_access():
+async def test_superuser_without_explicit_tenant_role_has_no_core_permissions():
     user = SimpleNamespace(id=uuid4(), is_superuser=True, roles=[])
     tenant = SimpleNamespace(id=uuid4())
     ctx = TenantContext(user=user, tenant=tenant)
 
-    assert await has_permission(ctx, "employee.write")
-    assert await has_permission(ctx, "run.execute")
+    assert not await has_permission(ctx, "employee.write")
+    assert not await has_permission(ctx, "run.execute")
 
 
 @pytest.mark.asyncio
@@ -74,3 +74,20 @@ def test_default_tenant_admin_has_skill_marketplace_permissions():
 
     assert "skill_marketplace.publish" in DEFAULT_TENANT_ADMIN_PERMISSIONS
     assert "skill_marketplace.read" in DEFAULT_TENANT_ADMIN_PERMISSIONS
+
+
+def test_worker_tool_permissions_ignore_superuser_flag_and_foreign_roles():
+    from app.services.run_service import _effective_run_tool_permissions
+
+    tenant_id = uuid4()
+    local_role = SimpleNamespace(
+        tenant_id=tenant_id,
+        permissions=[SimpleNamespace(code="run.execute")],
+    )
+    foreign_role = SimpleNamespace(
+        tenant_id=uuid4(),
+        permissions=[SimpleNamespace(code="privacy.customer.delete")],
+    )
+    user = SimpleNamespace(is_superuser=True, roles=[local_role, foreign_role])
+
+    assert _effective_run_tool_permissions(user, tenant_id) == {"run.execute"}

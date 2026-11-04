@@ -330,3 +330,31 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Security review found the legacy Vendor permission backfill granted permissions to a shared Role if any member was platform-admin. Since every member inherits Role grants, this could overgrant ordinary users. Migration now excludes a Role if any same-tenant member is not platform-admin. Added SQL-contract assertions. Focused migration test: 2 passed; Ruff and git diff --check passed.
 - Exact-head CI for `2746e7fd30abd98b628644444e17f19871d7e8c7` completed **41/41 workflows successfully, zero failures**. The backend suite passed on isolated CI PostgreSQL services: 1,854 passed, 1 deselected, 20 warnings; includes Vendor bootstrap and permission migration coverage. Frontend browser regressions, Security/Privacy, DAST, W20 real-stack and all other gates are green. Frontend local checks: npm ci passed, 145 contract/governance assertions passed, ESLint exit 0 with five existing warnings, Next.js 16.4.2 build passed (82 static pages). Production-only npm audit is clean (0 vulnerabilities); full audit retains 16 moderate records from the development ESLint/minimatch graph. Installed tree confirms axios 1.20.0 → follow-redirects 1.16.2.
 - PR #1353 remains Draft and unmerged. No staging/production databases, configuration, or deployments were touched.
+
+## 2026-11-03 - PR #1353 merge and lifecycle/RBAC handoff
+
+- PR #1353 merged to main at 817a196fdc6c733ae3da29885c652b6e12508d74. Latest PR-head CI completed 39/39 successfully; isolated PostgreSQL backend suite: 1,854 passed, 1 deselected. The merge includes follow-redirects 1.16.2.
+- Active worktree: feature/multi-vendor-account-lifecycle-20261103, based on merged main. Primary checkout and Staging/Production were not modified.
+- Lifecycle gap: child provisioning accepts an initial admin password and activates the user immediately; public registration activates the Customer user and creates an automatic 14-day trialing subscription. Policy requires approved payment or an explicitly granted Demo entitlement before membership activation. Trialing is neither proof of payment nor Demo authorization.
+- RBAC hardening commit 18b5998b9f577517f965bf4a32b65bac43a855f0 removes the is_superuser bypass from tenant-admin routes and role delegation. A superuser must have a tenant-local Admin/Owner/Tenant_Admin role and may delegate only permissions explicitly held in that tenant. Local validation: 65 focused tests passed; Ruff and git diff --check passed. PR #1354 remains Draft pending exact-head CI.
+- Next: implement provider-authoritative payment approval and explicit audited Demo entitlement; implement tenant-bound, hashed, single-use invitation tokens with expiry; then gate child provisioning and public signup on entitlement and invitation. Add PostgreSQL race, expiry, replay and cross-tenant tests. No migration has been applied to a persistent shared database.
+- GitHub Issue #1350 checkpoint comment ID: 6608629214. No Staging/Production resources were changed.
+
+## Edition portal administrator boundary follow-up
+
+- A second legacy `is_superuser` bypass was found in `edition_service.require_edition`: it allowed a superuser without a tenant-local Admin/Owner/Tenant_Admin role to enter the matching edition portal. This is distinct from the cross-edition kind check.
+- Removed that bypass. Edition portal access now requires both the correct tenant kind and a tenant-local administrator role for every identity, including superusers. Added a regression test covering all three editions.
+- Combined focused validation now passes 45 tests across portal access, tenant-admin role boundaries and edition action permissions; Ruff and `git diff --check` pass.
+
+## Core RBAC and worker permission ceiling follow-up
+
+- Extended the no-superuser-bypass correction to the shared `has_permission` dependency, API-key scope delegation, `/auth/me` permission projection, and worker-side Run tool authorization.
+- A superuser with no explicit tenant role now has no ordinary operational permissions. Worker tool permissions are resolved only from roles attached to the Run tenant. API keys cannot receive ordinary or edition scopes beyond the creator's explicit tenant-local authority; superusers must provide explicit scopes and do not receive an authority exemption.
+- Added regression coverage for superuser-without-grants, API-key over-delegation, and worker tool permissions. Combined focused suite: 65 passed; Ruff and `git diff --check` passed.
+
+## Repository-wide superuser bypass audit
+
+- A complete `backend/app` search found remaining authorization shortcuts outside the edition control plane: the shared `has_permission` dependency, API-key scope delegation, `/auth/me` wildcard permission projection, and worker-side Run tool permission resolution.
+- Removed those shortcuts. `is_superuser` no longer grants operational permissions, broad API-key delegation, wildcard permissions in `/auth/me`, or wildcard worker tool access. Explicit tenant-local role grants and API-key route scopes remain the authority sources.
+- The only remaining application use of `is_superuser` is requiring explicit scopes when a superuser creates an API key; it is not an authorization grant. Model field and user constructors remain for compatibility, but no longer elevate tenant operations.
+- Focused regression suite: 65 passed; Ruff and `git diff --check` passed. Documentation truth validator passed.

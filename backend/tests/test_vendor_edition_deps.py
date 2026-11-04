@@ -1,4 +1,4 @@
-﻿from types import SimpleNamespace
+from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
@@ -11,10 +11,10 @@ from app.core.edition_deps import (
 
 
 @pytest.mark.asyncio
-async def test_vendor_superuser_does_not_need_platform_admin_flag():
-    tenant_id = 'vendor-tenant-id'
+async def test_vendor_superuser_without_tenant_admin_role_is_denied():
+    tenant_id = "vendor-tenant-id"
     ctx = SimpleNamespace(
-        tenant=SimpleNamespace(tenant_kind='vendor'),
+        tenant=SimpleNamespace(tenant_kind="vendor"),
         tenant_id=tenant_id,
         user=SimpleNamespace(is_superuser=True, is_platform_admin=False, roles=[]),
     )
@@ -23,7 +23,9 @@ async def test_vendor_superuser_does_not_need_platform_admin_flag():
         scope={"route": SimpleNamespace(path="/edition/vendor/tenants")},
         method="GET",
     )
-    assert await require_vendor_admin(ctx, request) is ctx
+    with pytest.raises(HTTPException) as exc:
+        await require_vendor_admin(ctx, request)
+    assert exc.value.status_code == 403
 
 
 @pytest.mark.asyncio

@@ -59,8 +59,6 @@ async def me(ctx: CurrentContext):
     }
     if ctx.api_key_scopes is not None:
         permissions &= set(ctx.api_key_scopes)
-    elif ctx.user.is_superuser:
-        permissions = {"*"}
     data = MeResponse(
         user=UserResponse.model_validate(ctx.user).model_copy(update={"permissions": sorted(permissions)}),
         tenant=TenantResponse.model_validate(ctx.tenant),
