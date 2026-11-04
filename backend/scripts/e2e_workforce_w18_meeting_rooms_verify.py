@@ -8,7 +8,7 @@ if PROJECT_ROOT not in sys.path: sys.path.insert(0,PROJECT_ROOT)
 from app.core.database import AsyncSessionLocal
 from app.models.employee import Employee,EmployeeVersion
 from app.models.meeting import Meeting,MeetingParticipant,MeetingParticipantRole,MeetingStatus
-from e2e_entitlements import entitle_existing_tenant
+from e2e_entitlements import ci_platform_admin_token, entitle_existing_tenant
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 
 def register(suffix):
@@ -54,5 +54,7 @@ async def run():
     print("WORKFORCE W18 VIRTUAL-MEETING-ROOMS REAL-STACK E2E PASS")
 
 if __name__=="__main__":
-    try: asyncio.run(run())
+    try:
+        ci_platform_admin_token(BASE_URL)
+        asyncio.run(run())
     except Exception as exc: print(f"WORKFORCE W18 VIRTUAL-MEETING-ROOMS REAL-STACK E2E FAIL: {exc}",file=sys.stderr); raise SystemExit(1)
