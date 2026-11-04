@@ -52,6 +52,7 @@ class TenantResponse(BaseModel):
     slug: str
     status: str
     tenant_kind: str
+    access_granted: bool = True
 
     model_config = {"from_attributes": True}
 
@@ -94,5 +95,5 @@ class AcceptInvitationRequest(BaseModel):
 
 
 class InvitationAcceptanceResponse(BaseModel):
-    activated: bool
+    access_granted: bool
     message: str

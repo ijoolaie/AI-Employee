@@ -11,6 +11,7 @@ from app.models.user import User
 from app.models.role import Role,user_roles
 from app.services.business_network_service import create_request,decide_request
 from app.core.exceptions import ValidationAppError
+from e2e_entitlements import entitle_existing_tenant
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 def request(method,path,token,payload=None,expected=200):
     body=None if payload is None else json.dumps(payload).encode()
@@ -21,7 +22,8 @@ def request(method,path,token,payload=None,expected=200):
         raise AssertionError(f"{method} {path} HTTP {exc.code}: {exc.read().decode(errors='replace')}") from exc
 def register(suffix):
     p={"tenant_name":f"W21 Network E2E {suffix}","tenant_slug":f"w21-network-{suffix}","email":f"w21-owner-{suffix}@example.com","password":"W21NetworkE2E-2026!","full_name":"W21 Owner"}
-    d=request("POST","/auth/register",None,p,201); token=d["data"]["access_token"]; me=request("GET","/auth/me",token)
+    request("POST","/auth/register",None,p,202)
+    token,me=entitle_existing_tenant(BASE_URL,p["tenant_slug"],p["email"],p["password"])
     return uuid.UUID(me["data"]["tenant"]["id"]),uuid.UUID(me["data"]["user"]["id"]),token,p["tenant_slug"],p["email"]
 async def move_user_to_sender(user_id,sender_tenant):
     async with AsyncSessionLocal() as db:

@@ -67,14 +67,44 @@ def assert_status(actual: int, expected: int, label: str, body: dict) -> None:
     assert actual == expected, f"{label}: expected HTTP {expected}, got {actual}"
 
 
+_platform_admin_token: str | None = None
+
+
+def platform_admin_token() -> str:
+    global _platform_admin_token
+    if _platform_admin_token:
+        return _platform_admin_token
+    status, response = request("POST", "/auth/login", {
+        "tenant_slug": os.environ.get("DEFAULT_VENDOR_TENANT_SLUG", "ci-default-vendor"),
+        "email": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL"],
+        "password": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD"],
+    })
+    assert_status(status, 200, "platform admin login", response)
+    _platform_admin_token = (response.get("data") or {}).get("access_token")
+    assert _platform_admin_token
+    return _platform_admin_token
+
+
 def register(suffix: str, label: str) -> tuple[str, str, str]:
     tenant_slug = f"cert-{label}-{suffix}"
     email = f"i.joolaie+gate2-{label}-{suffix}@gmail.com"
     password = "CertTenantRbac-P0-2026!"
     status, response = request("POST", "/auth/register", {"tenant_name": f"P0 {label} Tenant {suffix}", "tenant_slug": tenant_slug, "email": email, "password": password, "full_name": f"P0 {label} Admin"})
-    assert_status(status, 201, f"{label} registration", response)
-    token = (response.get("data") or {}).get("access_token")
-    assert token, f"{label} registration did not return an access token"
+    assert_status(status, 202, f"{label} registration", response)
+    status, login = request("POST", "/auth/login", {"tenant_slug": tenant_slug, "email": email, "password": password})
+    assert_status(status, 200, f"{label} billing login", login)
+    token = (login.get("data") or {}).get("access_token")
+    assert token
+    status, me = request("GET", "/auth/me", token=token)
+    assert_status(status, 200, f"{label} pending identity", me)
+    tenant_data = (me.get("data") or {}).get("tenant") or {}
+    assert tenant_data.get("access_granted") is False
+    tenant_id = tenant_data.get("id")
+    status, grant = request("POST", f"/admin/tenants/{tenant_id}/demo-grants", {"reason": "Isolated tenant RBAC certification", "expires_in_days": 7}, token=platform_admin_token())
+    assert_status(status, 201, f"{label} audited Demo grant", grant)
+    status, me = request("GET", "/auth/me", token=token)
+    assert_status(status, 200, f"{label} entitled identity", me)
+    assert (me.get("data") or {}).get("tenant", {}).get("access_granted") is True
     return tenant_slug, email, token
 
 

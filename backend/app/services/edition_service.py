@@ -27,7 +27,7 @@ ADMIN_SECURITY_PERMISSIONS = {
 }
 
 RESELLER_PERMISSIONS = {
-    "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
+    "billing.manage", "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
     "audit.read", "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel",
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
@@ -37,7 +37,7 @@ RESELLER_PERMISSIONS = {
     "employee_marketplace.publish", "employee_marketplace.install", "employee_marketplace.revoke",
 }
 CUSTOMER_PERMISSIONS = {
-    "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
+    "billing.manage", "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
     "audit.read", "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel",
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",

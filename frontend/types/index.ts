@@ -35,6 +35,7 @@ export interface Tenant {
   name: string;
   slug: string;
   status: string;
+  access_granted: boolean;
 }
 
 export interface MeResponse {

@@ -49,7 +49,7 @@ export default function RegisterPage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900">Create account</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Set up your organization. Access is enabled after an approved payment or operator Demo grant.
+        Set up your organization. Sign in to complete billing; workspace access is enabled after an approved payment or operator Demo grant.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
@@ -89,7 +89,7 @@ export default function RegisterPage() {
 
         {success && (
           <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
-            {success} You can sign in after access is enabled.
+            {success} You can sign in now to complete billing.
           </div>
         )}
 

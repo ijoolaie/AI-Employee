@@ -109,11 +109,19 @@ async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subs
     if sub:
         return await process_subscription_lifecycle(db, subscription=sub)
 
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
+    requires_explicit_grant = bool(tenant and tenant.access_grant_required)
     await ensure_plans(db)
     plan = (await db.execute(select(BillingPlan).where(BillingPlan.code == "starter"))).scalar_one()
     now = datetime.now(timezone.utc)
-    trial_ends = now + timedelta(days=14)
-    candidate = Subscription(tenant_id=tenant_id, plan_id=plan.id, status="trialing", provider="manual", current_period_start=_period_start(now), current_period_end=_period_end(now), trial_ends_at=trial_ends)
+    trial_ends = None if requires_explicit_grant else now + timedelta(days=14)
+    candidate = Subscription(
+        tenant_id=tenant_id, plan_id=plan.id,
+        status="incomplete" if requires_explicit_grant else "trialing",
+        provider="stripe" if requires_explicit_grant else "manual",
+        current_period_start=_period_start(now), current_period_end=_period_end(now),
+        trial_ends_at=trial_ends,
+    )
     try:
         async with db.begin_nested():
             db.add(candidate)

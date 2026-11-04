@@ -124,10 +124,21 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition(monke
                 registered_tenant_id = registered.json()["data"]["tenant_id"]
                 assert "approved payment" in registered.json()["data"]["message"]
                 login_response = await client.post("/api/v1/auth/login", json={"email": registration["email"], "password": registration["password"], "tenant_slug": registration["tenant_slug"]})
-                assert login_response.status_code == 401, login_response.text
+                assert login_response.status_code == 200, login_response.text
+                registered_token = login_response.json()["data"]["access_token"]
+                auth_headers = {"Authorization": f"Bearer {registered_token}"}
+                registered_me = await client.get("/api/v1/auth/me", headers=auth_headers)
+                assert registered_me.status_code == 200, registered_me.text
+                assert registered_me.json()["data"]["tenant"]["access_granted"] is False
+                pending_subscription = await client.get("/api/v1/billing/subscription", headers=auth_headers)
+                assert pending_subscription.status_code == 200, pending_subscription.text
+                assert pending_subscription.json()["data"]["status"] == "incomplete"
+                assert pending_subscription.json()["data"]["trial_ends_at"] is None
+                denied_employees = await client.get("/api/v1/employees", headers=auth_headers)
+                assert denied_employees.status_code == 402, denied_employees.text
                 async with sessions() as session:
                     registered_user = (await session.execute(select(User).where(User.email == registration["email"], User.tenant_id == registered_tenant_id))).scalar_one()
-                    assert registered_user.is_active is False
+                    assert registered_user.is_active is True
                     assert registered_user.is_superuser is False
                     assert registered_user.is_platform_admin is False
                     registered_tenant = (await session.execute(select(Tenant).where(Tenant.id == registered_user.tenant_id))).scalar_one()
@@ -137,6 +148,7 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition(monke
                     assert registered_tenant.delivery_revision == vendor.delivery_revision
                     registered_role_id = (await session.execute(select(user_roles.c.role_id).where(user_roles.c.user_id == registered_user.id))).scalar_one()
                     registered_grants = set((await session.execute(select(Permission.code).join(role_permissions, role_permissions.c.permission_id == Permission.id).where(role_permissions.c.role_id == registered_role_id))).scalars())
+                    assert "billing.manage" in registered_grants
                     assert "employee.read" in registered_grants
                     assert "support.escalation.create" in registered_grants
                     assert "skill_marketplace.purchase" in registered_grants

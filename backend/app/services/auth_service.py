@@ -23,7 +23,7 @@ from app.services import audit_service, billing_service, edition_service
 
 
 DEFAULT_TENANT_ADMIN_PERMISSIONS = (
-    "employee.read", "employee.write", "employee.guardrails.read", "employee.guardrails.write",
+    "billing.manage", "employee.read", "employee.write", "employee.guardrails.read", "employee.guardrails.write",
     "run.read", "run.execute", "file.read", "file.write", "audit.read", "approval.read", "approval.decide",
     "privacy.customer.read", "privacy.customer.export", "privacy.customer.delete",
     "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel", "workflow.approval.read",
@@ -141,7 +141,7 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     existing_user = await db.execute(select(User).where(User.email == normalized_email, User.tenant_id == tenant.id))
     if existing_user.scalar_one_or_none():
         raise ConflictError("Email already registered in this tenant")
-    user = User(tenant_id=tenant.id, email=normalized_email, password_hash=hash_password(payload.password), full_name=payload.full_name, is_active=False, is_superuser=False, is_platform_admin=False)
+    user = User(tenant_id=tenant.id, email=normalized_email, password_hash=hash_password(payload.password), full_name=payload.full_name, is_active=True, is_superuser=False, is_platform_admin=False)
     db.add(user)
     await db.flush()
     role = await _assign_tenant_admin_role(db, user, tenant.id, extra_permissions=edition_service.CUSTOMER_PERMISSIONS)
@@ -158,9 +158,6 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
     tenant = tenant_result.scalar_one_or_none()
     if tenant is None or tenant.status != "active":
         raise UnauthorizedError("Invalid credentials")
-    from app.services.tenant_access_service import tenant_has_access
-    if not await tenant_has_access(db, tenant=tenant):
-        raise UnauthorizedError("Tenant access requires an approved paid subscription or active Demo grant")
     user_result = await db.execute(select(User).options(selectinload(User.roles).selectinload(Role.permissions)).where(User.email == payload.email.lower(), User.tenant_id == tenant.id))
     user = user_result.scalar_one_or_none()
     if user is None or not user.is_active:
@@ -203,11 +200,6 @@ async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenResponse:
     user = result.scalar_one_or_none()
     if user is None or user.auth_token_version != token_version:
         raise UnauthorizedError("Invalid refresh token")
-    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
-    from app.services.tenant_access_service import tenant_has_access
-    if tenant is None or not await tenant_has_access(db, tenant=tenant):
-        raise UnauthorizedError("Tenant access requires an approved paid subscription or active Demo grant")
-
     return issue_tokens(user)
 
 

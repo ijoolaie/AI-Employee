@@ -75,7 +75,7 @@ async def test_accept_rejects_replayed_revoked_or_expired_invitation(monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_acceptance_does_not_activate_without_paid_subscription(monkeypatch):
+async def test_acceptance_allows_billing_login_but_keeps_workspace_access_gated(monkeypatch):
     invitation = _invitation()
     tenant = SimpleNamespace(id=invitation.tenant_id, status="active")
     user = SimpleNamespace(
@@ -93,13 +93,13 @@ async def test_acceptance_does_not_activate_without_paid_subscription(monkeypatc
 
     assert accepted.accepted_at is not None
     assert activated is False
-    assert user.is_active is False
+    assert user.is_active is True
     assert verify_password("a-very-long-password", user.password_hash)
-    assert user.auth_token_version == 0
+    assert user.auth_token_version == 1
 
 
 @pytest.mark.asyncio
-async def test_acceptance_activates_only_with_positive_paid_stripe_subscription(monkeypatch):
+async def test_acceptance_reports_access_only_with_positive_paid_stripe_subscription(monkeypatch):
     invitation = _invitation()
     tenant = SimpleNamespace(id=invitation.tenant_id, status="active")
     user = SimpleNamespace(
@@ -116,6 +116,8 @@ async def test_acceptance_activates_only_with_positive_paid_stripe_subscription(
     )
 
     assert activated is True
+    paid_query = db.execute.await_args.args[0]
+    assert "subscriptions.current_period_end" in str(paid_query)
     assert user.is_active is True
     assert user.auth_token_version == 1
 

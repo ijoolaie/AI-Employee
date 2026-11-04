@@ -52,7 +52,7 @@ export default function BillingPage() {
       <div><p className="text-gray-500">{m.monthlyPrice}</p><p className="font-semibold text-gray-900">{formatCurrency(Number(subscription.data.plan.monthly_price_usd))}</p></div>
       <div><p className="text-gray-500">{m.periodEnd}</p><p className="font-semibold text-gray-900">{new Date(subscription.data.current_period_end).toLocaleDateString()}</p></div>
     </CardContent></Card>}
-    {!subscription.error&&subscription.data?.provider==="stripe"&&<Button variant="outline" loading={portal.isPending} onClick={()=>portal.mutate()}>{m.manageBilling}</Button>}
+    {!subscription.error&&subscription.data?.provider==="stripe"&&subscription.data?.status!=="incomplete"&&<Button variant="outline" loading={portal.isPending} onClick={()=>portal.mutate()}>{m.manageBilling}</Button>}
     {!plans.error&&(plans.data??[]).length===0?<EmptyState title={m.noPlans} description={m.noPlansDescription}/>:
     !plans.error&&<div className="grid gap-4 md:grid-cols-3">{(plans.data??[]).map(plan=><Card key={plan.code} className={subscription.data?.plan.code===plan.code?"ring-2 ring-brand-500":""}>
       <CardHeader><CardTitle>{plan.name}</CardTitle><p className="text-2xl font-semibold">{formatCurrency(Number(plan.monthly_price_usd))}<span className="text-sm font-normal text-gray-500"> / {m.month}</span></p></CardHeader>

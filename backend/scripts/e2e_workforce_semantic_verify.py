@@ -28,6 +28,7 @@ from app.services.workforce_delegation_service import create_delegation
 from app.services import workforce_semantic_domains
 from app.services.storage import get_storage_backend
 
+from e2e_entitlements import entitle_existing_tenant
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 
 def req(method,path,payload=None,token=None):
@@ -36,7 +37,11 @@ def req(method,path,payload=None,token=None):
     if token: h["Authorization"]=f"Bearer {token}"
     try:
         with urlopen(Request(f"{BASE_URL}{path}",data=body,headers=h,method=method),timeout=20) as r:
-            raw=r.read().decode(); return r.status,json.loads(raw) if raw else None
+            raw=r.read().decode(); data=json.loads(raw) if raw else None
+            if method=="POST" and path=="/auth/register" and r.status==202:
+                token,_=entitle_existing_tenant(BASE_URL,payload["tenant_slug"],payload["email"],payload["password"])
+                data.setdefault("data",{})["access_token"]=token
+            return r.status,data
     except HTTPError as e:
         raw=e.read().decode()
         try: detail=json.loads(raw)
@@ -121,7 +126,7 @@ async def verify_cross_tenant_assignment(token, tenant_id, source_agent_id, suff
         "password":"WorkforceSemanticE2E-2026!",
         "full_name":"Workforce Semantic E2E Cross Tenant",
     })
-    assert status==201,data
+    assert status==202,data
     other_token=data["data"]["access_token"]
     status,me=req("GET","/auth/me",token=other_token); assert status==200,me
     other_tenant_id=uuid.UUID(str(me["data"]["tenant"]["id"]))
@@ -815,7 +820,7 @@ async def run_matrix(token,tenant_id,owner_id,suffix):
 def main():
     suffix=uuid.uuid4().hex[:10]
     status,data=req("POST","/auth/register",{"tenant_name":f"Workforce Semantic E2E {suffix}","tenant_slug":f"workforce-semantic-{suffix}","email":f"workforce-semantic-{suffix}@example.com","password":"WorkforceSemanticE2E-2026!","full_name":"Workforce Semantic E2E Owner"})
-    assert status==201,data
+    assert status==202,data
     token=data["data"]["access_token"]
     status,me=req("GET","/auth/me",token=token); assert status==200,me
     tenant_id=uuid.UUID(str(me["data"]["tenant"]["id"])); owner_id=uuid.UUID(str(me["data"]["user"]["id"]))

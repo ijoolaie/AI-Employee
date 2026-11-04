@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -41,7 +41,7 @@ function AcceptInvitationForm() {
               {result.activated ? (
                 <button onClick={() => router.push("/login")} className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white">Continue to sign in</button>
               ) : (
-                <p className="text-sm text-gray-600">Your password is set. You will be able to sign in once the workspace receives an approved payment or Demo grant.</p>
+                <div className="space-y-3"><p className="text-sm text-gray-600">Your password is set. You can sign in to complete billing; workspace features remain locked until payment or a Demo grant is approved.</p><button onClick={() => router.push("/login")} className="rounded-lg border px-4 py-2 text-sm font-medium">Continue to billing</button></div>
               )}
             </div>
           ) : (

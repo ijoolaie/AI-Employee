@@ -763,6 +763,13 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
                 sub.provider_subscription_id = stripe_sub_id
                 if data.get("customer"):
                     sub.provider_customer_id = data["customer"]
+                invoice_periods = [line.get("period") or {} for line in invoice_lines]
+                period_starts = [period.get("start") for period in invoice_periods if period.get("start")]
+                period_ends = [period.get("end") for period in invoice_periods if period.get("end")]
+                if period_starts:
+                    sub.current_period_start = datetime.fromtimestamp(min(period_starts), tz=timezone.utc)
+                if period_ends:
+                    sub.current_period_end = datetime.fromtimestamp(max(period_ends), tz=timezone.utc)
                 await db.flush()
             status = "active" if sub is not None and not stale else None
 

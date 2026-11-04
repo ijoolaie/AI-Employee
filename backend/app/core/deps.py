@@ -4,7 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, APIKeyHeader
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -43,6 +43,7 @@ class TenantContext:
 
 
 async def get_current_context(
+    request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(security_scheme)],
     api_key: Annotated[str | None, Depends(api_key_scheme)],
     db: Annotated[AsyncSession, Depends(get_db, scope="function")],
@@ -93,7 +94,14 @@ async def get_current_context(
     tenant = tenant_result.scalar_one_or_none()
     if tenant is None or tenant.status != "active":
         raise HTTPException(status_code=403, detail="Tenant not available")
-    if not await tenant_has_access(db, tenant=tenant):
+    billing_only_paths = {
+        ("GET", "/api/v1/auth/me"),
+        ("GET", "/api/v1/billing/subscription"),
+        ("GET", "/api/v1/billing/entitlements"),
+        ("POST", "/api/v1/billing/checkout"),
+        ("POST", "/api/v1/billing/portal"),
+    }
+    if (request.method, request.url.path) not in billing_only_paths and not await tenant_has_access(db, tenant=tenant):
         raise HTTPException(status_code=402, detail="Tenant requires an approved paid subscription or active Demo grant")
     RequestContextMiddleware.bind_identity(str(tenant.id), str(user.id))
     return TenantContext(user=user, tenant=tenant)

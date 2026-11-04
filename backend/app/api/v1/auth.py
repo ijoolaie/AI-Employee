@@ -22,7 +22,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.schemas.common import APIResponse
-from app.services import auth_service, password_change_service, password_reset_service, tenant_invitation_service
+from app.services import auth_service, password_change_service, password_reset_service, tenant_invitation_service, tenant_access_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,7 +37,7 @@ async def register(payload: RegisterRequest, db: DbSession):
     await db.commit()
     return APIResponse(success=True, data=RegistrationPendingResponse(
         tenant_id=tenant.id,
-        message="Registration received. Access will be enabled after an approved payment or operator Demo grant.",
+        message="Registration received. You can sign in to complete billing; workspace access is enabled after an approved payment or operator Demo grant.",
     ))
 
 
@@ -55,7 +55,7 @@ async def refresh(payload: RefreshRequest, db: DbSession):
 
 
 @router.get("/me", response_model=APIResponse[MeResponse])
-async def me(ctx: CurrentContext):
+async def me(ctx: CurrentContext, db: DbSession):
     permissions = {
         permission.code
         for role in ctx.user.roles
@@ -66,7 +66,7 @@ async def me(ctx: CurrentContext):
         permissions &= set(ctx.api_key_scopes)
     data = MeResponse(
         user=UserResponse.model_validate(ctx.user).model_copy(update={"permissions": sorted(permissions)}),
-        tenant=TenantResponse.model_validate(ctx.tenant),
+        tenant=TenantResponse.model_validate(ctx.tenant).model_copy(update={"access_granted": await tenant_access_service.tenant_has_access(db, tenant=ctx.tenant)}),
     )
     return APIResponse(success=True, data=data)
 
@@ -104,13 +104,13 @@ async def reset_password(payload: ResetPasswordRequest, db: DbSession):
 
 @router.post("/invitations/accept", response_model=APIResponse[InvitationAcceptanceResponse])
 async def accept_invitation(payload: AcceptInvitationRequest, db: DbSession):
-    invitation, activated = await tenant_invitation_service.accept_invitation(
+    invitation, access_granted = await tenant_invitation_service.accept_invitation(
         db, raw_token=payload.token, password=payload.password,
     )
     await db.commit()
     message = (
         "Invitation accepted. You can sign in now."
-        if activated
-        else "Invitation accepted. Account access will be enabled after an approved payment or Demo grant."
+        if access_granted
+        else "Invitation accepted. You can sign in to complete billing; workspace access requires an approved payment or Demo grant."
     )
-    return APIResponse(success=True, data=InvitationAcceptanceResponse(activated=activated, message=message))
+    return APIResponse(success=True, data=InvitationAcceptanceResponse(access_granted=access_granted, message=message))

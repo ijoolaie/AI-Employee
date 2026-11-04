@@ -50,6 +50,10 @@ function LoginForm() {
       setTokens(tokens.access_token, tokens.refresh_token);
       const me = await fetchMe();
       setSession(me.user, me.tenant);
+      if (!me.tenant.access_granted) {
+        router.replace("/billing");
+        return;
+      }
       const tenantKind = (me.tenant as typeof me.tenant & { tenant_kind?: string }).tenant_kind;
       const accountKind = me.user.is_platform_admin ? "platform-admin" : tenantKind ?? "customer";
       if (me.user.is_platform_admin) {

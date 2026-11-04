@@ -26,9 +26,10 @@ def _token_hash(raw_token: str) -> str:
 
 
 async def _activate_if_paid(db: AsyncSession, *, invitation: TenantInvitation, user: User) -> bool:
-    """Invitation acceptance is not entitlement; activate only after paid Stripe grant."""
+    """Return whether the tenant has a current paid subscription or valid Demo grant."""
     if invitation.accepted_at is None or invitation.revoked_at is not None:
         return False
+    now = datetime.now(timezone.utc)
     paid_subscription = (await db.execute(
         select(Subscription.id)
         .join(BillingPlan, BillingPlan.id == Subscription.plan_id)
@@ -37,11 +38,11 @@ async def _activate_if_paid(db: AsyncSession, *, invitation: TenantInvitation, u
             Subscription.status == "active",
             Subscription.provider == "stripe",
             BillingPlan.monthly_price_usd > 0,
+            Subscription.current_period_end > now,
         ).limit(1)
     )).scalar_one_or_none()
     if paid_subscription is None:
         from app.models.tenant_demo_grant import TenantDemoGrant
-        now = datetime.now(timezone.utc)
         demo_grant = (await db.execute(select(TenantDemoGrant.id).where(
             TenantDemoGrant.tenant_id == invitation.tenant_id,
             TenantDemoGrant.revoked_at.is_(None), TenantDemoGrant.expires_at > now,
@@ -170,6 +171,8 @@ async def accept_invitation(
     invitation.accepted_at = now
     user.password_hash = hash_password(password)
     user.password_changed_at = now
+    user.is_active = True
+    user.auth_token_version += 1
     activated = await _activate_if_paid(db, invitation=invitation, user=user)
     await audit_service.record(
         db, action="tenant.invitation_accepted", actor_type="user", actor_id=user.id,
