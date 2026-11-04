@@ -155,6 +155,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
             role_a.permissions = [vendor_reseller_read]
             role_reseller = Role(tenant_id=reseller_a_id, name="admin")
             role_reseller.permissions = [Permission(code="reseller.customer.read", description="Read own direct customers")]
+            role_customer = Role(tenant_id=customer_a_id, name="admin")
             role_b = Role(id=role_b_id, tenant_id=vendor_b_id, name="admin")
             role_b.permissions = [vendor_reseller_read]
 
@@ -213,6 +214,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
             user_b.roles.append(role_b)
             user_vendor_superuser.roles.append(role_superuser)
             user_reseller.roles.append(role_reseller)
+            user_customer.roles.append(role_customer)
             session.add_all([user_a, user_b, user_vendor_superuser, user_reseller, user_customer])
             await session.commit()
 
