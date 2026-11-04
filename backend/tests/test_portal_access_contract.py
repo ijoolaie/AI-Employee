@@ -91,26 +91,17 @@ def test_legacy_superuser_flag_cannot_bypass_edition_kind(account_kind: str):
         assert exc.value.status_code == 403
 
 
-def test_child_tenant_provisioning_does_not_create_a_platform_superuser():
+def test_child_tenant_provisioning_uses_inactive_single_use_invitation():
     source_path = Path(__file__).parents[1] / "app" / "services" / "edition_service.py"
     module = ast.parse(source_path.read_text(encoding="utf-8"))
     provisioning = next(
         node for node in module.body
         if isinstance(node, ast.AsyncFunctionDef) and node.name == "provision_child_tenant"
     )
-    constructors = [
-        node for node in ast.walk(provisioning)
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "User"
-    ]
-    assert constructors, "child provisioning must explicitly construct its tenant user"
-    values = {
-        keyword.arg: keyword.value
-        for constructor in constructors
-        for keyword in constructor.keywords
-        if keyword.arg == "is_superuser"
-    }
-    assert isinstance(values.get("is_superuser"), ast.Constant)
-    assert values["is_superuser"].value is False
+    source = ast.get_source_segment(source_path.read_text(encoding="utf-8"), provisioning)
+    assert "create_invitation" in source
+    assert "admin_password" not in source
+    assert "invitation_token" not in source  # raw token is returned to the API, never persisted by provisioning
 
 
 def test_superuser_without_tenant_admin_role_cannot_enter_edition_portal():

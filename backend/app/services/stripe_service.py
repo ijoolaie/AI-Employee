@@ -66,6 +66,28 @@ def _is_verified_positive_invoice(data: dict) -> bool:
     return data.get("status") == "paid" and amount_paid > 0
 
 
+def _latest_subscription_invoice_confirms_payment(events: list, stripe_sub_id: str) -> bool:
+    """A positive paid invoice must be newer than any failed invoice for this subscription."""
+    matching = []
+    for event in events:
+        event_type, payload = event[0], event[1]
+        recorded_at = event[2] if len(event) > 2 else 0
+        payload = payload or {}
+        if payload.get("provider_subscription_id") != stripe_sub_id:
+            continue
+        try:
+            created_at = int(payload.get("stripe_event_created_at") or 0)
+        except (TypeError, ValueError):
+            continue
+        matching.append((created_at, recorded_at, event_type, payload))
+    if not matching:
+        return False
+    _, _, latest_type, latest_payload = max(matching, key=lambda row: (row[0], row[1] or 0))
+    return latest_type == "invoice.paid" and _is_verified_positive_invoice(
+        {"status": latest_payload.get("invoice_status"), "amount_paid": latest_payload.get("amount_paid")}
+    )
+
+
 def _plan_code_for_price_id(price_id: str) -> str | None:
     settings = get_settings()
     for code, mapped_price_id in settings.stripe_price_map.items():
@@ -652,21 +674,16 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
             # may be active during a trial or before an asynchronous first
             # invoice is paid. Require a recorded positive invoice for this
             # exact provider subscription.
-            paid_events = (
+            invoice_events = (
                 await db.execute(
-                    select(BillingEvent.payload).where(
+                    select(BillingEvent.event_type, BillingEvent.payload, BillingEvent.created_at).where(
                         BillingEvent.provider == "stripe",
-                        BillingEvent.event_type == "invoice.paid",
+                        BillingEvent.event_type.in_(("invoice.paid", "invoice.payment_failed")),
+                        BillingEvent.payload["provider_subscription_id"].astext == stripe_sub_id,
                     )
                 )
-            ).scalars().all()
-            if any(
-                (payload or {}).get("provider_subscription_id") == stripe_sub_id
-                and _is_verified_positive_invoice(
-                    {"status": (payload or {}).get("invoice_status"), "amount_paid": (payload or {}).get("amount_paid")}
-                )
-                for payload in paid_events
-            ):
+            ).all()
+            if _latest_subscription_invoice_confirms_payment(invoice_events, stripe_sub_id):
                 status = "active"
         items = (data.get("items") or {}).get("data") or []
         if items:
@@ -694,6 +711,12 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
                 await db.flush()
 
     elif event_type == "invoice.paid":
+        invoice_lines = (data.get("lines") or {}).get("data") or []
+        if invoice_lines:
+            invoice_price = invoice_lines[0].get("price") or {}
+            invoice_price_id = invoice_price.get("id")
+            if invoice_price_id:
+                plan_code = _plan_code_for_price_id(invoice_price_id)
         stripe_sub_id = data.get("subscription") or (
             ((data.get("parent") or {}).get("subscription_details") or {}).get("subscription")
         )
@@ -756,7 +779,9 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
             )
 
     elif event_type == "invoice.payment_failed":
-        stripe_sub_id = data.get("subscription")
+        stripe_sub_id = data.get("subscription") or (
+            ((data.get("parent") or {}).get("subscription_details") or {}).get("subscription")
+        )
         existing = (
             await db.execute(select(Subscription).where(Subscription.provider_subscription_id == stripe_sub_id))
         ).scalar_one_or_none()
@@ -798,4 +823,8 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
         plan_code=None if stale else plan_code,
         status=None if stale else status,
     )
+    if tenant_id is not None and not stale and status == "active":
+        from app.services.tenant_invitation_service import activate_eligible_invited_users
+
+        await activate_eligible_invited_users(db, tenant_id=tenant_id)
     return {"event_id": str(billing_event.id), "stripe_event_id": provider_event_id, "event_type": event_type, "duplicate": False, "stale": stale}

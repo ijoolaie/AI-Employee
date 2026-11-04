@@ -269,10 +269,8 @@ async def test_positive_invoice_paid_activates_matching_subscription(monkeypatch
         flush=AsyncMock(),
     )
     monkeypatch.setattr(stripe_service, "_lock_subscription_for_lifecycle", AsyncMock(return_value=(sub, False)))
-    monkeypatch.setattr(
-        stripe_service.billing_service, "record_event",
-        AsyncMock(return_value=SimpleNamespace(id=uuid.uuid4())),
-    )
+    monkeypatch.setattr(stripe_service.billing_service, "record_event", AsyncMock(return_value=SimpleNamespace(id=uuid.uuid4())))
+    monkeypatch.setattr("app.services.tenant_invitation_service.activate_eligible_invited_users", AsyncMock(return_value=0))
 
     await stripe_service.apply_webhook_event(db, {
         "id": "evt_invoice_paid", "type": "invoice.paid", "created": 200,
@@ -330,7 +328,7 @@ async def test_active_subscription_update_without_paid_invoice_does_not_activate
     db = SimpleNamespace(
         execute=AsyncMock(side_effect=[
             SimpleNamespace(scalar_one_or_none=lambda: None),
-            SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [])),
+            SimpleNamespace(all=lambda: []),
         ]),
         flush=AsyncMock(),
     )
@@ -352,3 +350,21 @@ async def test_active_subscription_update_without_paid_invoice_does_not_activate
 
     assert sub.status == "trialing"
     assert sub.provider_subscription_id == "sub_unpaid"
+
+
+def test_latest_subscription_invoice_requires_latest_payment_event_to_be_paid():
+    paid = ("invoice.paid", {
+        "provider_subscription_id": "sub_1", "stripe_event_created_at": 20,
+        "invoice_status": "paid", "amount_paid": 4900,
+    }, 1)
+    failed_later = ("invoice.payment_failed", {
+        "provider_subscription_id": "sub_1", "stripe_event_created_at": 30,
+    }, 2)
+    paid_same_second = ("invoice.paid", {
+        "provider_subscription_id": "sub_1", "stripe_event_created_at": 30,
+        "invoice_status": "paid", "amount_paid": 4900,
+    }, 3)
+    assert stripe_service._latest_subscription_invoice_confirms_payment([paid], "sub_1")
+    assert not stripe_service._latest_subscription_invoice_confirms_payment([paid, failed_later], "sub_1")
+    assert stripe_service._latest_subscription_invoice_confirms_payment([failed_later, paid_same_second], "sub_1")
+    assert not stripe_service._latest_subscription_invoice_confirms_payment([paid], "sub_other")

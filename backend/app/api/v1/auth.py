@@ -4,6 +4,8 @@ from fastapi import APIRouter, status
 
 from app.core.deps import CurrentContext, DbSession
 from app.schemas.auth import (
+    AcceptInvitationRequest,
+    InvitationAcceptanceResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
     ForgotPasswordRequest,
@@ -19,7 +21,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.schemas.common import APIResponse
-from app.services import auth_service, password_change_service, password_reset_service
+from app.services import auth_service, password_change_service, password_reset_service, tenant_invitation_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -95,3 +97,17 @@ async def reset_password(payload: ResetPasswordRequest, db: DbSession):
     await password_reset_service.reset_password(db, raw_token=payload.token, password=payload.password)
     await db.commit()
     return APIResponse(success=True, data=ResetPasswordResponse(message="Password reset successfully. Please sign in again."))
+
+
+@router.post("/invitations/accept", response_model=APIResponse[InvitationAcceptanceResponse])
+async def accept_invitation(payload: AcceptInvitationRequest, db: DbSession):
+    invitation, activated = await tenant_invitation_service.accept_invitation(
+        db, raw_token=payload.token, password=payload.password,
+    )
+    await db.commit()
+    message = (
+        "Invitation accepted. You can sign in now."
+        if activated
+        else "Invitation accepted. Account access will be enabled after an approved payment or Demo grant."
+    )
+    return APIResponse(success=True, data=InvitationAcceptanceResponse(activated=activated, message=message))

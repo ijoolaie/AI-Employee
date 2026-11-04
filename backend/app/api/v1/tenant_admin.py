@@ -10,7 +10,8 @@ from app.models.user import User
 from app.models.role import Role
 from app.models.tenant import Tenant
 from app.schemas.common import APIResponse
-from app.services import audit_service
+from app.schemas.edition import TenantInvitationCreateRequest, TenantInvitationResponse, TenantInvitationRevokedResponse
+from app.services import audit_service, tenant_invitation_service
 
 router = APIRouter(prefix="/tenant-admin", tags=["tenant-admin"])
 
@@ -152,3 +153,35 @@ async def update_user_roles(user_id: UUID, payload: UserRolesUpdate, ctx: Curren
     await audit_service.record(db, action="tenant.user_roles_updated", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="user", resource_id=str(user.id), metadata={"role_ids": [str(role.id) for role in roles]})
     await db.commit(); await db.refresh(user)
     return APIResponse(success=True, data=UserSummary(id=user.id,email=user.email,full_name=user.full_name,is_active=user.is_active,roles=[r.name for r in user.roles if r.tenant_id == ctx.tenant_id]))
+
+
+@router.post("/invitations", response_model=APIResponse[TenantInvitationResponse], status_code=201)
+async def create_tenant_invitation(payload: TenantInvitationCreateRequest, ctx: CurrentContext, db: DbSession):
+    """Invite a tenant-local user without issuing an active password-bearing account."""
+    await require_tenant_admin(ctx)
+    roles = await _load_assignable_roles(UserRolesUpdate(role_ids=payload.role_ids), ctx, db)
+    invitation, raw_token = await tenant_invitation_service.create_invitation(
+        db, tenant_id=ctx.tenant_id, inviter_user_id=ctx.user_id,
+        email=str(payload.email), full_name=payload.full_name, roles=roles,
+        expires_in_days=payload.expires_in_days,
+    )
+    await db.commit()
+    return APIResponse(
+        success=True,
+        data=TenantInvitationResponse(
+            id=invitation.id, user_id=invitation.user_id, email=invitation.email,
+            token=raw_token, expires_at=invitation.expires_at,
+        ),
+    )
+
+
+@router.post("/invitations/{invitation_id}/revoke", response_model=APIResponse[TenantInvitationRevokedResponse])
+async def revoke_tenant_invitation(invitation_id: UUID, ctx: CurrentContext, db: DbSession):
+    await require_tenant_admin(ctx)
+    invitation = await tenant_invitation_service.revoke_invitation(
+        db, tenant_id=ctx.tenant_id, invitation_id=invitation_id, actor_id=ctx.user_id,
+    )
+    await db.commit()
+    return APIResponse(
+        success=True, data=TenantInvitationRevokedResponse(id=invitation.id, revoked_at=invitation.revoked_at),
+    )

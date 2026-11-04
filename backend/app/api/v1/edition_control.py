@@ -34,6 +34,7 @@ from app.models.tenant_entitlement import TenantEntitlement
 from app.schemas.common import APIResponse
 from app.schemas.edition import (
     ChildTenantProvisionRequest,
+    ChildTenantProvisionResponse,
     EntitlementDelegationRequest,
     EntitlementResponse,
     SupportEscalationRequest,
@@ -88,22 +89,22 @@ async def list_vendor_customers(ctx: VendorCustomerReadContext, db: DbSession):
     return APIResponse(success=True, data=rows)
 
 
-@router.post("/vendor/customers", response_model=APIResponse[TenantSummary], status_code=201)
+@router.post("/vendor/customers", response_model=APIResponse[ChildTenantProvisionResponse], status_code=201)
 async def create_vendor_customer(payload: ChildTenantProvisionRequest, ctx: VendorCustomerCreateContext, db: DbSession):
     """Provision a Customer directly under the authenticated Vendor."""
-    tenant, _ = await edition_service.provision_child_tenant(
+    tenant, user, invitation, invitation_token = await edition_service.provision_child_tenant(
         db,
         parent=ctx.tenant,
         name=payload.name,
         slug=payload.slug,
         admin_email=payload.admin_email,
-        admin_password=payload.admin_password,
+        actor_id=ctx.user_id,
         full_name=payload.full_name,
         kind=edition_service.EDITION_CUSTOMER,
         vendor_release_tag=payload.vendor_release_tag,
         delivery_revision=payload.delivery_revision,
     )
-    return APIResponse(success=True, data=tenant)
+    return APIResponse(success=True, data=ChildTenantProvisionResponse(tenant=tenant, user_id=user.id, invitation_id=invitation.id, invitation_token=invitation_token, invitation_expires_at=invitation.expires_at))
 
 
 @router.post("/vendor/customers/{customer_id}/suspend", response_model=APIResponse[TenantSummary])
@@ -142,21 +143,21 @@ async def list_resellers(ctx: VendorResellerReadContext, db: DbSession):
     return APIResponse(success=True, data=rows)
 
 
-@router.post("/vendor/resellers", response_model=APIResponse[TenantSummary], status_code=201)
+@router.post("/vendor/resellers", response_model=APIResponse[ChildTenantProvisionResponse], status_code=201)
 async def create_reseller(payload: ChildTenantProvisionRequest, ctx: VendorResellerCreateContext, db: DbSession):
-    tenant, _ = await edition_service.provision_child_tenant(
+    tenant, user, invitation, invitation_token = await edition_service.provision_child_tenant(
         db,
         parent=ctx.tenant,
         name=payload.name,
         slug=payload.slug,
         admin_email=payload.admin_email,
-        admin_password=payload.admin_password,
+        actor_id=ctx.user_id,
         full_name=payload.full_name,
         kind=edition_service.EDITION_RESELLER,
         vendor_release_tag=payload.vendor_release_tag,
         delivery_revision=payload.delivery_revision,
     )
-    return APIResponse(success=True, data=tenant)
+    return APIResponse(success=True, data=ChildTenantProvisionResponse(tenant=tenant, user_id=user.id, invitation_id=invitation.id, invitation_token=invitation_token, invitation_expires_at=invitation.expires_at))
 
 
 @router.post("/vendor/resellers/{reseller_id}/suspend", response_model=APIResponse[TenantSummary])
@@ -204,21 +205,21 @@ async def list_customers(ctx: ResellerCustomerReadContext, db: DbSession):
     return APIResponse(success=True, data=rows)
 
 
-@router.post("/reseller/customers", response_model=APIResponse[TenantSummary], status_code=201)
+@router.post("/reseller/customers", response_model=APIResponse[ChildTenantProvisionResponse], status_code=201)
 async def create_customer(payload: ChildTenantProvisionRequest, ctx: ResellerCustomerCreateContext, db: DbSession):
-    tenant, _ = await edition_service.provision_child_tenant(
+    tenant, user, invitation, invitation_token = await edition_service.provision_child_tenant(
         db,
         parent=ctx.tenant,
         name=payload.name,
         slug=payload.slug,
         admin_email=payload.admin_email,
-        admin_password=payload.admin_password,
+        actor_id=ctx.user_id,
         full_name=payload.full_name,
         kind=edition_service.EDITION_CUSTOMER,
         vendor_release_tag=payload.vendor_release_tag,
         delivery_revision=payload.delivery_revision,
     )
-    return APIResponse(success=True, data=tenant)
+    return APIResponse(success=True, data=ChildTenantProvisionResponse(tenant=tenant, user_id=user.id, invitation_id=invitation.id, invitation_token=invitation_token, invitation_expires_at=invitation.expires_at))
 
 
 @router.post("/reseller/customers/{customer_id}/suspend", response_model=APIResponse[TenantSummary])

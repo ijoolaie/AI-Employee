@@ -81,3 +81,13 @@ class ChangePasswordRequest(BaseModel):
 
 class ChangePasswordResponse(BaseModel):
     message: str
+
+
+class AcceptInvitationRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=256)
+    password: str = Field(min_length=12, max_length=128)
+
+
+class InvitationAcceptanceResponse(BaseModel):
+    activated: bool
+    message: str
