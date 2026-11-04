@@ -148,7 +148,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
                 await session.flush()
             role_superuser = Role(
                 tenant_id=vendor_a_id,
-                name="admin",
+                name="owner",
                 permissions=[api_keys_create],
             )
             role_a = Role(id=role_a_id, tenant_id=vendor_a_id, name="admin")
