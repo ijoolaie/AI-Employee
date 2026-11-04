@@ -28,7 +28,7 @@ jobs:
       E2E_API_BASE_URL: http://127.0.0.1:8000/api/v1
       DEFAULT_VENDOR_TENANT_SLUG: ci-default-vendor
       DEFAULT_VENDOR_BOOTSTRAP_TENANT_NAME: CI Default Vendor
-      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL: ci-vendor-admin@example.test
+      DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL: ci-vendor-admin@example.com
       DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD: ci-only-bootstrap-password-2026
     steps:
       - uses: actions/checkout@v7

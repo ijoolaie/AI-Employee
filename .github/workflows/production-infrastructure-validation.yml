@@ -111,7 +111,7 @@ jobs:
         run: |
           docker compose --env-file .env.production -f docker-compose.production.yml -f docker-compose.local-production.yml -p "$COMPOSE_PROJECT_NAME" run --rm --no-deps \
             -e DEFAULT_VENDOR_BOOTSTRAP_TENANT_NAME="CI Default Vendor" \
-            -e DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL="ci-vendor-admin@example.test" \
+            -e DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL="ci-vendor-admin@example.com" \
             -e DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD="ci-only-bootstrap-password-2026" \
             api python scripts/bootstrap_default_vendor.py
 
