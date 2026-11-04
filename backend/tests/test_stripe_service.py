@@ -206,3 +206,149 @@ async def test_checkout_rejects_user_outside_current_tenant(monkeypatch):
             plan_code="business",
             idempotency_key="checkout-tenant-boundary",
         )
+
+
+def test_invoice_paid_requires_provider_paid_status_and_positive_amount():
+    assert stripe_service._is_verified_positive_invoice({"status": "paid", "amount_paid": 4900})
+    assert not stripe_service._is_verified_positive_invoice({"status": "paid", "amount_paid": 0})
+    assert not stripe_service._is_verified_positive_invoice({"status": "open", "amount_paid": 4900})
+    assert not stripe_service._is_verified_positive_invoice({"status": "paid", "amount_paid": None})
+    assert not stripe_service._is_verified_positive_invoice({"status": "paid", "amount_paid": "invalid"})
+
+
+def test_invoice_paid_is_part_of_lifecycle_ordering():
+    assert "invoice.paid" in stripe_service.STRIPE_SUBSCRIPTION_LIFECYCLE_EVENTS
+
+
+@pytest.mark.asyncio
+async def test_checkout_completed_records_provider_ids_without_activating_trial(monkeypatch):
+    tenant_id = uuid.uuid4()
+    sub = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=tenant_id, status="trialing", provider="manual",
+        provider_customer_id=None, provider_subscription_id=None, trial_ends_at=object(),
+    )
+    db = SimpleNamespace(
+        execute=AsyncMock(return_value=SimpleNamespace(scalar_one_or_none=lambda: None)),
+        flush=AsyncMock(),
+    )
+    monkeypatch.setattr(stripe_service.billing_service, "ensure_subscription", AsyncMock(return_value=sub))
+    monkeypatch.setattr(stripe_service, "_lock_subscription_for_lifecycle", AsyncMock(return_value=(sub, False)))
+    monkeypatch.setattr(
+        stripe_service.billing_service, "record_event",
+        AsyncMock(return_value=SimpleNamespace(id=uuid.uuid4())),
+    )
+
+    await stripe_service.apply_webhook_event(db, {
+        "id": "evt_checkout_unpaid", "type": "checkout.session.completed", "created": 100,
+        "data": {"object": {
+            "id": "cs_delayed", "object": "checkout.session",
+            "client_reference_id": str(tenant_id), "metadata": {"plan_code": "business"},
+            "customer": "cus_123", "subscription": "sub_123", "payment_status": "unpaid",
+            "amount_total": 4900,
+        }},
+    })
+
+    assert sub.status == "trialing"
+    assert sub.provider_subscription_id == "sub_123"
+    assert sub.provider_customer_id == "cus_123"
+    assert sub.trial_ends_at is not None
+
+
+@pytest.mark.asyncio
+async def test_positive_invoice_paid_activates_matching_subscription(monkeypatch):
+    tenant_id = uuid.uuid4()
+    sub = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=tenant_id, status="trialing", provider="stripe",
+        provider_customer_id=None, provider_subscription_id="sub_123",
+    )
+    db = SimpleNamespace(
+        execute=AsyncMock(side_effect=[
+            SimpleNamespace(scalar_one_or_none=lambda: None),
+            SimpleNamespace(scalar_one_or_none=lambda: sub),
+        ]),
+        flush=AsyncMock(),
+    )
+    monkeypatch.setattr(stripe_service, "_lock_subscription_for_lifecycle", AsyncMock(return_value=(sub, False)))
+    monkeypatch.setattr(
+        stripe_service.billing_service, "record_event",
+        AsyncMock(return_value=SimpleNamespace(id=uuid.uuid4())),
+    )
+
+    await stripe_service.apply_webhook_event(db, {
+        "id": "evt_invoice_paid", "type": "invoice.paid", "created": 200,
+        "data": {"object": {
+            "id": "in_123", "object": "invoice", "status": "paid", "amount_paid": 4900,
+            "subscription": "sub_123", "customer": "cus_123",
+        }},
+    })
+
+    assert sub.status == "active"
+    assert sub.provider_subscription_id == "sub_123"
+    assert sub.provider_customer_id == "cus_123"
+    db.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_zero_value_invoice_paid_does_not_activate_subscription(monkeypatch):
+    sub = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=uuid.uuid4(), status="trialing", provider="stripe",
+        provider_customer_id=None, provider_subscription_id="sub_free",
+    )
+    db = SimpleNamespace(
+        execute=AsyncMock(side_effect=[
+            SimpleNamespace(scalar_one_or_none=lambda: None),
+            SimpleNamespace(scalar_one_or_none=lambda: sub),
+        ]),
+        flush=AsyncMock(),
+    )
+    monkeypatch.setattr(stripe_service, "_lock_subscription_for_lifecycle", AsyncMock(return_value=(sub, False)))
+    monkeypatch.setattr(
+        stripe_service.billing_service, "record_event",
+        AsyncMock(return_value=SimpleNamespace(id=uuid.uuid4())),
+    )
+
+    await stripe_service.apply_webhook_event(db, {
+        "id": "evt_invoice_zero", "type": "invoice.paid", "created": 200,
+        "data": {"object": {
+            "id": "in_free", "object": "invoice", "status": "paid", "amount_paid": 0,
+            "subscription": "sub_free", "customer": "cus_free",
+        }},
+    })
+
+    assert sub.status == "trialing"
+    db.flush.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_active_subscription_update_without_paid_invoice_does_not_activate(monkeypatch):
+    tenant_id = uuid.uuid4()
+    sub = SimpleNamespace(
+        id=uuid.uuid4(), tenant_id=tenant_id, status="trialing", provider="stripe",
+        provider_customer_id=None, provider_subscription_id="sub_unpaid",
+        current_period_start=None, current_period_end=None, trial_ends_at=None,
+    )
+    db = SimpleNamespace(
+        execute=AsyncMock(side_effect=[
+            SimpleNamespace(scalar_one_or_none=lambda: None),
+            SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: [])),
+        ]),
+        flush=AsyncMock(),
+    )
+    monkeypatch.setattr(stripe_service.billing_service, "ensure_subscription", AsyncMock(return_value=sub))
+    monkeypatch.setattr(stripe_service, "_lock_subscription_for_lifecycle", AsyncMock(return_value=(sub, False)))
+    monkeypatch.setattr(
+        stripe_service.billing_service, "record_event",
+        AsyncMock(return_value=SimpleNamespace(id=uuid.uuid4())),
+    )
+
+    await stripe_service.apply_webhook_event(db, {
+        "id": "evt_sub_active_without_payment", "type": "customer.subscription.updated", "created": 300,
+        "data": {"object": {
+            "id": "sub_unpaid", "object": "subscription", "status": "active",
+            "metadata": {"tenant_id": str(tenant_id)}, "customer": "cus_unpaid",
+            "items": {"data": []},
+        }},
+    })
+
+    assert sub.status == "trialing"
+    assert sub.provider_subscription_id == "sub_unpaid"

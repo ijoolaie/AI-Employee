@@ -42,6 +42,7 @@ STRIPE_SUBSCRIPTION_LIFECYCLE_EVENTS = {
     "customer.subscription.created",
     "customer.subscription.updated",
     "customer.subscription.deleted",
+    "invoice.paid",
     "invoice.payment_failed",
 }
 
@@ -54,6 +55,15 @@ def _client():
 
     stripe.api_key = settings.stripe_secret_key
     return stripe
+
+
+def _is_verified_positive_invoice(data: dict) -> bool:
+    """Only a provider-confirmed invoice with a positive paid amount grants paid status."""
+    try:
+        amount_paid = int(data.get("amount_paid") or 0)
+    except (TypeError, ValueError):
+        return False
+    return data.get("status") == "paid" and amount_paid > 0
 
 
 def _plan_code_for_price_id(price_id: str) -> str | None:
@@ -601,11 +611,14 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
         status = "paid"
         plan_code = None
     elif event_type == "checkout.session.completed":
+        # Checkout completion proves only that the session completed. Delayed
+        # payment methods can still be processing, and trial/no-cost sessions
+        # are not proof of a positive payment. Persist provider correlation but
+        # leave subscription activation to a verified positive invoice.paid.
         tenant_ref = data.get("client_reference_id") or (data.get("metadata") or {}).get("tenant_id")
         if tenant_ref:
             tenant_id = uuid.UUID(tenant_ref)
         plan_code = (data.get("metadata") or {}).get("plan_code")
-        status = "active"
         if tenant_id is not None:
             sub = await billing_service.ensure_subscription(db, tenant_id=tenant_id)
             sub, stale = await _lock_subscription_for_lifecycle(
@@ -617,7 +630,6 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
                     sub.provider_customer_id = data["customer"]
                 if data.get("subscription"):
                     sub.provider_subscription_id = data["subscription"]
-                sub.trial_ends_at = None
                 await db.flush()
 
     elif event_type in ("customer.subscription.updated", "customer.subscription.created"):
@@ -632,9 +644,30 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
             tenant_id = existing.tenant_id if existing else None
 
         stripe_status = data.get("status")
-        status = {"active": "active", "trialing": "trialing", "past_due": "past_due", "canceled": "canceled", "unpaid": "past_due"}.get(
+        status = {"trialing": "trialing", "past_due": "past_due", "canceled": "canceled", "unpaid": "past_due"}.get(
             stripe_status, None
         )
+        if stripe_status == "active":
+            # Stripe subscription status alone is insufficient: a subscription
+            # may be active during a trial or before an asynchronous first
+            # invoice is paid. Require a recorded positive invoice for this
+            # exact provider subscription.
+            paid_events = (
+                await db.execute(
+                    select(BillingEvent.payload).where(
+                        BillingEvent.provider == "stripe",
+                        BillingEvent.event_type == "invoice.paid",
+                    )
+                )
+            ).scalars().all()
+            if any(
+                (payload or {}).get("provider_subscription_id") == stripe_sub_id
+                and _is_verified_positive_invoice(
+                    {"status": (payload or {}).get("invoice_status"), "amount_paid": (payload or {}).get("amount_paid")}
+                )
+                for payload in paid_events
+            ):
+                status = "active"
         items = (data.get("items") or {}).get("data") or []
         if items:
             price_id = (items[0].get("price") or {}).get("id")
@@ -659,6 +692,56 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
                 trial_end = data.get("trial_end")
                 sub.trial_ends_at = datetime.fromtimestamp(trial_end, tz=timezone.utc) if trial_end else None
                 await db.flush()
+
+    elif event_type == "invoice.paid":
+        stripe_sub_id = data.get("subscription") or (
+            ((data.get("parent") or {}).get("subscription_details") or {}).get("subscription")
+        )
+        if not _is_verified_positive_invoice(data):
+            logger.info(
+                "stripe_invoice_paid_without_positive_amount_ignored",
+                extra={"stripe_event_id": provider_event_id, "subscription_id": stripe_sub_id},
+            )
+        elif stripe_sub_id:
+            existing = (
+                await db.execute(
+                    select(Subscription).where(Subscription.provider_subscription_id == stripe_sub_id)
+                )
+            ).scalar_one_or_none()
+            if existing is not None:
+                tenant_id = existing.tenant_id
+                sub, stale = await _lock_subscription_for_lifecycle(
+                    db, subscription_id=existing.id, event_created_at=event_created_at
+                )
+            else:
+                # Stripe can deliver invoice.paid before the local Checkout or
+                # subscription-created webhook. Subscription metadata is copied
+                # onto the invoice parent, allowing a tenant-bound reconciliation.
+                subscription_details = ((data.get("parent") or {}).get("subscription_details") or {})
+                metadata = subscription_details.get("metadata") or data.get("metadata") or {}
+                tenant_ref = metadata.get("tenant_id")
+                if tenant_ref:
+                    try:
+                        tenant_id = uuid.UUID(str(tenant_ref))
+                    except ValueError as exc:
+                        raise ValidationAppError("Stripe invoice contains invalid tenant metadata") from exc
+                    sub = await billing_service.ensure_subscription(db, tenant_id=tenant_id)
+                    sub, stale = await _lock_subscription_for_lifecycle(
+                        db, subscription_id=sub.id, event_created_at=event_created_at
+                    )
+                    if not stale:
+                        sub.provider_subscription_id = stripe_sub_id
+                else:
+                    stale = False
+                    sub = None
+            if sub is not None and not stale:
+                sub.status = "active"
+                sub.provider = "stripe"
+                sub.provider_subscription_id = stripe_sub_id
+                if data.get("customer"):
+                    sub.provider_customer_id = data["customer"]
+                await db.flush()
+            status = "active" if sub is not None and not stale else None
 
     elif event_type == "customer.subscription.deleted":
         stripe_sub_id = data.get("id")
@@ -704,6 +787,13 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
             "object": data.get("object"),
             "stripe_event_created_at": event_created_at or None,
             "stale_lifecycle_event": stale,
+            "provider_subscription_id": (
+                data.get("subscription")
+                or ((data.get("parent") or {}).get("subscription_details") or {}).get("subscription")
+                or (data.get("id") if data.get("object") == "subscription" else None)
+            ),
+            "amount_paid": int(data.get("amount_paid") or 0) if event_type == "invoice.paid" else None,
+            "invoice_status": data.get("status") if event_type == "invoice.paid" else None,
         },
         plan_code=None if stale else plan_code,
         status=None if stale else status,
