@@ -153,7 +153,7 @@ async def test_license_http_hierarchy_revocation_and_audit():
             )
             role_a = Role(id=role_a_id, tenant_id=vendor_a_id, name="admin")
             role_a.permissions = [vendor_reseller_read]
-            role_reseller = Role(tenant_id=reseller_a_id, name="reseller-admin")
+            role_reseller = Role(tenant_id=reseller_a_id, name="admin")
             role_reseller.permissions = [Permission(code="reseller.customer.read", description="Read own direct customers")]
             role_b = Role(id=role_b_id, tenant_id=vendor_b_id, name="admin")
             role_b.permissions = [vendor_reseller_read]
