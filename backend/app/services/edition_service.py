@@ -103,7 +103,7 @@ async def provision_child_tenant(
     existing = (await db.execute(select(Tenant).where(Tenant.slug == slug))).scalar_one_or_none()
     if existing is not None:
         raise HTTPException(status_code=409, detail="Tenant slug already exists")
-    tenant = Tenant(name=name, slug=slug, status="active", tenant_kind=kind, parent_tenant_id=parent.id, vendor_release_tag=parent.vendor_release_tag, delivery_revision=delivery_revision, settings={"edition": kind, "control_plane_parent": str(parent.id)})
+    tenant = Tenant(name=name, slug=slug, status="active", access_grant_required=True, tenant_kind=kind, parent_tenant_id=parent.id, vendor_release_tag=parent.vendor_release_tag, delivery_revision=delivery_revision, settings={"edition": kind, "control_plane_parent": str(parent.id)})
     try:
         async with db.begin_nested():
             db.add(tenant)

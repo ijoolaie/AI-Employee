@@ -13,6 +13,11 @@ class RegisterRequest(BaseModel):
     full_name: str | None = None
 
 
+class RegistrationPendingResponse(BaseModel):
+    tenant_id: UUID
+    message: str
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str

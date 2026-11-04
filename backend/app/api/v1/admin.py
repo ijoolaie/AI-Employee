@@ -1,4 +1,6 @@
 from typing import Annotated
+from datetime import datetime
+from pydantic import BaseModel, Field
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -15,7 +17,7 @@ from app.services import audit_service
 from app.schemas.feedback import ValidationSummaryResponse
 from app.schemas.workload_balance import WorkloadBalanceEventResponse
 from app.schemas.admin_marketplace import MarketplaceFinancialSummaryResponse, MarketplacePayoutProposalResponse, MarketplacePayoutReconciliationRequest
-from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting, skill_marketplace_payout_service, skill_marketplace_reporting_service
+from app.services import admin_service, feedback_service, billing_service, optimization_service, agent_fitness, agent_promotion_evidence, agent_version_fitness, workload_balance_history, capacity_forecasting, skill_marketplace_payout_service, skill_marketplace_reporting_service, tenant_access_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -27,6 +29,36 @@ async def require_platform_admin(ctx: TenantContext = Depends(get_current_contex
 
 
 PlatformAdminContext = Annotated[TenantContext, Depends(require_platform_admin)]
+
+
+class DemoGrantRequest(BaseModel):
+    reason: str = Field(min_length=8, max_length=1000)
+    expires_in_days: int = Field(ge=1, le=90)
+
+
+class DemoGrantResponse(BaseModel):
+    id: UUID
+    tenant_id: UUID
+    expires_at: datetime
+    revoked_at: datetime | None
+
+    model_config = {"from_attributes": True}
+
+
+@router.post("/tenants/{tenant_id}/demo-grants", response_model=APIResponse[DemoGrantResponse], status_code=201)
+async def grant_tenant_demo_access(tenant_id: UUID, payload: DemoGrantRequest, ctx: PlatformAdminContext, db: DbSession):
+    grant = await tenant_access_service.create_demo_grant(db, tenant_id=tenant_id, actor_id=ctx.user.id, reason=payload.reason, expires_in_days=payload.expires_in_days)
+    await db.commit()
+    await db.refresh(grant)
+    return APIResponse(success=True, data=DemoGrantResponse.model_validate(grant))
+
+
+@router.post("/tenants/{tenant_id}/demo-grants/{grant_id}/revoke", response_model=APIResponse[DemoGrantResponse])
+async def revoke_tenant_demo_access(tenant_id: UUID, grant_id: UUID, ctx: PlatformAdminContext, db: DbSession):
+    grant = await tenant_access_service.revoke_demo_grant(db, tenant_id=tenant_id, grant_id=grant_id, actor_id=ctx.user.id)
+    await db.commit()
+    await db.refresh(grant)
+    return APIResponse(success=True, data=DemoGrantResponse.model_validate(grant))
 
 
 @router.get("/dashboard", response_model=APIResponse[AdminDashboardResponse])

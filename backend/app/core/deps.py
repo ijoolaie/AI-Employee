@@ -18,6 +18,7 @@ from app.models.api_key import APIKey
 from app.services.api_key_service import verify_key
 from app.models.tenant import Tenant
 from app.models.role import Role
+from app.services.tenant_access_service import tenant_has_access
 
 security_scheme = HTTPBearer(auto_error=False)
 api_key_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -61,6 +62,8 @@ async def get_current_context(
         tenant = tenant_result.scalar_one_or_none()
         if tenant is None or tenant.status != "active":
             raise HTTPException(status_code=403, detail="Tenant not available")
+        if not await tenant_has_access(db, tenant=tenant):
+            raise HTTPException(status_code=402, detail="Tenant requires an approved paid subscription or active Demo grant")
         RequestContextMiddleware.bind_identity(str(tenant.id), str(user.id))
         return TenantContext(user=user, tenant=tenant, api_key_id=key_row.id, api_key_scopes=key_row.scopes)
 
@@ -90,6 +93,8 @@ async def get_current_context(
     tenant = tenant_result.scalar_one_or_none()
     if tenant is None or tenant.status != "active":
         raise HTTPException(status_code=403, detail="Tenant not available")
+    if not await tenant_has_access(db, tenant=tenant):
+        raise HTTPException(status_code=402, detail="Tenant requires an approved paid subscription or active Demo grant")
     RequestContextMiddleware.bind_identity(str(tenant.id), str(user.id))
     return TenantContext(user=user, tenant=tenant)
 

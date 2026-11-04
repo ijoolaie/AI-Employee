@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 import uuid
@@ -83,7 +83,7 @@ async def test_acceptance_does_not_activate_without_paid_subscription(monkeypatc
         is_active=False, password_hash="old", password_changed_at=None, auth_token_version=0,
     )
     db = SimpleNamespace(
-        execute=AsyncMock(side_effect=[_result(invitation), _result(tenant), _result(user), _result(None)]),
+        execute=AsyncMock(side_effect=[_result(invitation), _result(tenant), _result(user), _result(None), _result(None)]),
     )
     monkeypatch.setattr(service.audit_service, "record", AsyncMock())
 

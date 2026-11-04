@@ -825,6 +825,8 @@ async def apply_webhook_event(db: AsyncSession, event) -> dict:
     )
     if tenant_id is not None and not stale and status == "active":
         from app.services.tenant_invitation_service import activate_eligible_invited_users
+        from app.services.tenant_access_service import activate_pending_public_signup_users
 
         await activate_eligible_invited_users(db, tenant_id=tenant_id)
+        await activate_pending_public_signup_users(db, tenant_id=tenant_id)
     return {"event_id": str(billing_event.id), "stripe_event_id": provider_event_id, "event_type": event_type, "duplicate": False, "stale": stale}

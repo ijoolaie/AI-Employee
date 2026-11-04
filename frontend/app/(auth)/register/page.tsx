@@ -5,11 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchMe, getErrorMessage, register as registerApi } from "@/lib/api";
-import { useAuthStore } from "@/lib/auth-store";
+import { getErrorMessage, register as registerApi } from "@/lib/api";
 
 const schema = z.object({
   tenant_name: z.string().min(2, "At least 2 characters"),
@@ -25,9 +23,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const { setTokens, setSession } = useAuthStore();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const {
     register,
@@ -39,12 +36,10 @@ export default function RegisterPage() {
 
   async function onSubmit(data: FormData) {
     setError(null);
+    setSuccess(null);
     try {
-      const tokens = await registerApi(data);
-      setTokens(tokens.access_token, tokens.refresh_token);
-      const me = await fetchMe();
-      setSession(me.user, me.tenant);
-      router.push("/dashboard");
+      const result = await registerApi(data);
+      setSuccess(result.message);
     } catch (err) {
       setError(getErrorMessage(err));
     }
@@ -54,7 +49,7 @@ export default function RegisterPage() {
     <div>
       <h1 className="text-2xl font-bold text-gray-900">Create account</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Set up your organization and start hiring AI employees.
+        Set up your organization. Access is enabled after an approved payment or operator Demo grant.
       </p>
 
       <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-4">
@@ -91,6 +86,12 @@ export default function RegisterPage() {
           error={errors.password?.message}
           {...register("password")}
         />
+
+        {success && (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800">
+            {success} You can sign in after access is enabled.
+          </div>
+        )}
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">

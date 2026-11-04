@@ -45,6 +45,7 @@ async def _create_tenant(db: AsyncSession, payload: RegisterRequest, *, parent: 
         name=payload.tenant_name,
         slug=payload.tenant_slug,
         status="active",
+        access_grant_required=True,
         tenant_kind=edition_service.EDITION_CUSTOMER,
         parent_tenant_id=parent.id,
         vendor_release_tag=parent.vendor_release_tag,
@@ -140,13 +141,12 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     existing_user = await db.execute(select(User).where(User.email == normalized_email, User.tenant_id == tenant.id))
     if existing_user.scalar_one_or_none():
         raise ConflictError("Email already registered in this tenant")
-    user = User(tenant_id=tenant.id, email=normalized_email, password_hash=hash_password(payload.password), full_name=payload.full_name, is_active=True, is_superuser=False, is_platform_admin=False)
+    user = User(tenant_id=tenant.id, email=normalized_email, password_hash=hash_password(payload.password), full_name=payload.full_name, is_active=False, is_superuser=False, is_platform_admin=False)
     db.add(user)
     await db.flush()
     role = await _assign_tenant_admin_role(db, user, tenant.id, extra_permissions=edition_service.CUSTOMER_PERMISSIONS)
     await db.refresh(tenant)
     await db.refresh(user)
-    await billing_service.ensure_subscription(db, tenant_id=tenant.id)
     await audit_service.record(db, action="rbac.role_assigned", actor_type="user", actor_id=user.id, tenant_id=tenant.id, resource_type="role", resource_id=role.id, request_id=request_id_var.get(), metadata={"role": "Admin", "user_id": str(user.id)})
     await audit_service.record(db, action="tenant.registered", actor_type="user", tenant_id=tenant.id, actor_id=user.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"tenant_slug": tenant.slug, "user_email": user.email, "parent_vendor_id": str(parent.id)})
     await audit_service.record(db, action="edition.customer.self_registered", actor_type="user", actor_id=user.id, tenant_id=parent.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"customer_tenant_id": str(tenant.id), "customer_slug": tenant.slug})
@@ -158,6 +158,9 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> User:
     tenant = tenant_result.scalar_one_or_none()
     if tenant is None or tenant.status != "active":
         raise UnauthorizedError("Invalid credentials")
+    from app.services.tenant_access_service import tenant_has_access
+    if not await tenant_has_access(db, tenant=tenant):
+        raise UnauthorizedError("Tenant access requires an approved paid subscription or active Demo grant")
     user_result = await db.execute(select(User).options(selectinload(User.roles).selectinload(Role.permissions)).where(User.email == payload.email.lower(), User.tenant_id == tenant.id))
     user = user_result.scalar_one_or_none()
     if user is None or not user.is_active:
@@ -200,6 +203,10 @@ async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenResponse:
     user = result.scalar_one_or_none()
     if user is None or user.auth_token_version != token_version:
         raise UnauthorizedError("Invalid refresh token")
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
+    from app.services.tenant_access_service import tenant_has_access
+    if tenant is None or not await tenant_has_access(db, tenant=tenant):
+        raise UnauthorizedError("Tenant access requires an approved paid subscription or active Demo grant")
 
     return issue_tokens(user)
 

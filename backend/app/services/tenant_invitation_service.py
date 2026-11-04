@@ -29,28 +29,32 @@ async def _activate_if_paid(db: AsyncSession, *, invitation: TenantInvitation, u
     """Invitation acceptance is not entitlement; activate only after paid Stripe grant."""
     if invitation.accepted_at is None or invitation.revoked_at is not None:
         return False
-    paid_subscription = (
-        await db.execute(
-            select(Subscription.id)
-            .join(BillingPlan, BillingPlan.id == Subscription.plan_id)
-            .where(
-                Subscription.tenant_id == invitation.tenant_id,
-                Subscription.status == "active",
-                Subscription.provider == "stripe",
-                BillingPlan.monthly_price_usd > 0,
-            )
-            .limit(1)
-        )
-    ).scalar_one_or_none()
+    paid_subscription = (await db.execute(
+        select(Subscription.id)
+        .join(BillingPlan, BillingPlan.id == Subscription.plan_id)
+        .where(
+            Subscription.tenant_id == invitation.tenant_id,
+            Subscription.status == "active",
+            Subscription.provider == "stripe",
+            BillingPlan.monthly_price_usd > 0,
+        ).limit(1)
+    )).scalar_one_or_none()
     if paid_subscription is None:
-        return False
+        from app.models.tenant_demo_grant import TenantDemoGrant
+        now = datetime.now(timezone.utc)
+        demo_grant = (await db.execute(select(TenantDemoGrant.id).where(
+            TenantDemoGrant.tenant_id == invitation.tenant_id,
+            TenantDemoGrant.revoked_at.is_(None), TenantDemoGrant.expires_at > now,
+        ).limit(1))).scalar_one_or_none()
+        if demo_grant is None:
+            return False
     if not user.is_active:
         user.is_active = True
         user.auth_token_version += 1
         await audit_service.record(
             db, action="tenant.invitation_user_activated", actor_type="system",
             tenant_id=invitation.tenant_id, resource_type="user", resource_id=str(user.id),
-            request_id=request_id_var.get(), metadata={"grant_source": "stripe_paid_subscription"},
+            request_id=request_id_var.get(), metadata={"grant_source": "tenant_access_entitlement"},
         )
     return True
 

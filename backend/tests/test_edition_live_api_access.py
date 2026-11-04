@@ -120,17 +120,18 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition(monke
                     "full_name": "Registration Test",
                 }
                 registered = await client.post("/api/v1/auth/register", json=registration)
-                assert registered.status_code == 201, registered.text
-                registered_token = registered.json()["data"]["access_token"]
-                registered_me = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {registered_token}"})
-                assert registered_me.status_code == 200, registered_me.text
-                assert registered_me.json()["data"]["tenant"]["tenant_kind"] == "customer"
-                assert registered_me.json()["data"]["user"]["is_platform_admin"] is False
+                assert registered.status_code == 202, registered.text
+                registered_tenant_id = registered.json()["data"]["tenant_id"]
+                assert "approved payment" in registered.json()["data"]["message"]
+                login_response = await client.post("/api/v1/auth/login", json={"email": registration["email"], "password": registration["password"], "tenant_slug": registration["tenant_slug"]})
+                assert login_response.status_code == 401, login_response.text
                 async with sessions() as session:
-                    registered_user = (await session.execute(select(User).where(User.email == registration["email"], User.tenant_id == registered_me.json()["data"]["tenant"]["id"]))).scalar_one()
+                    registered_user = (await session.execute(select(User).where(User.email == registration["email"], User.tenant_id == registered_tenant_id))).scalar_one()
+                    assert registered_user.is_active is False
                     assert registered_user.is_superuser is False
                     assert registered_user.is_platform_admin is False
                     registered_tenant = (await session.execute(select(Tenant).where(Tenant.id == registered_user.tenant_id))).scalar_one()
+                    assert registered_tenant.access_grant_required is True
                     assert registered_tenant.parent_tenant_id == vendor.id
                     assert registered_tenant.vendor_release_tag == vendor.vendor_release_tag
                     assert registered_tenant.delivery_revision == vendor.delivery_revision

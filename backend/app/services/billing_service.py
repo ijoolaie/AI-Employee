@@ -263,6 +263,11 @@ async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.
     tenant = tenant_result.scalar_one_or_none()
     if tenant is not None and tenant.tenant_kind == "vendor":
         return
+    if tenant is None:
+        raise NotFoundError("Tenant not found")
+    from app.services.tenant_access_service import tenant_has_access
+    if not await tenant_has_access(db, tenant=tenant):
+        raise ConflictError("Tenant access requires an approved paid subscription or active Demo grant")
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
     _assert_subscription_active(sub)
@@ -272,6 +277,9 @@ async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
+    from app.services.tenant_access_service import tenant_has_access
+    if not await tenant_has_access(db, tenant=tenant):
+        raise ConflictError("Tenant access requires an approved paid subscription or active Demo grant")
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
     _assert_subscription_active(sub)

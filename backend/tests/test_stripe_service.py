@@ -271,6 +271,7 @@ async def test_positive_invoice_paid_activates_matching_subscription(monkeypatch
     monkeypatch.setattr(stripe_service, "_lock_subscription_for_lifecycle", AsyncMock(return_value=(sub, False)))
     monkeypatch.setattr(stripe_service.billing_service, "record_event", AsyncMock(return_value=SimpleNamespace(id=uuid.uuid4())))
     monkeypatch.setattr("app.services.tenant_invitation_service.activate_eligible_invited_users", AsyncMock(return_value=0))
+    monkeypatch.setattr("app.services.tenant_access_service.activate_pending_public_signup_users", AsyncMock(return_value=0))
 
     await stripe_service.apply_webhook_event(db, {
         "id": "evt_invoice_paid", "type": "invoice.paid", "created": 200,

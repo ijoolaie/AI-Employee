@@ -16,6 +16,7 @@ from app.schemas.auth import (
     MeResponse,
     RefreshRequest,
     RegisterRequest,
+    RegistrationPendingResponse,
     TenantResponse,
     TokenResponse,
     UserResponse,
@@ -28,14 +29,16 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post(
     "/register",
-    response_model=APIResponse[TokenResponse],
-    status_code=status.HTTP_201_CREATED,
+    response_model=APIResponse[RegistrationPendingResponse],
+    status_code=status.HTTP_202_ACCEPTED,
 )
 async def register(payload: RegisterRequest, db: DbSession):
-    tenant, user = await auth_service.register_tenant_and_user(db, payload)
+    tenant, _user = await auth_service.register_tenant_and_user(db, payload)
     await db.commit()
-    tokens = auth_service.issue_tokens(user)
-    return APIResponse(success=True, data=tokens)
+    return APIResponse(success=True, data=RegistrationPendingResponse(
+        tenant_id=tenant.id,
+        message="Registration received. Access will be enabled after an approved payment or operator Demo grant.",
+    ))
 
 
 @router.post("/login", response_model=APIResponse[TokenResponse])
