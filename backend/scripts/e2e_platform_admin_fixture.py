@@ -8,7 +8,12 @@ from app.core.security import hash_password
 from app.models.tenant import Tenant
 from app.models.user import User
 
-async def _ensure():
+_CREDENTIALS: tuple[str, str] | None = None
+
+async def ensure_credentials():
+    global _CREDENTIALS
+    if _CREDENTIALS is not None:
+        return _CREDENTIALS
     vendor_slug = os.environ.get("DEFAULT_VENDOR_TENANT_SLUG", "ci-default-vendor")
     email = os.environ.get("CI_PLATFORM_ADMIN_EMAIL", "ci-platform-admin@example.com").strip().lower()
     password = os.environ.get("CI_PLATFORM_ADMIN_PASSWORD", "ci-only-platform-admin-password-2026")
@@ -31,7 +36,10 @@ async def _ensure():
             await db.commit()
         else:
             assert user.is_active and user.is_platform_admin and not user.is_superuser
-    return email, password
+    _CREDENTIALS = (email, password)
+    return _CREDENTIALS
 
 def credentials():
-    return asyncio.run(_ensure())
+    if _CREDENTIALS is not None:
+        return _CREDENTIALS
+    return asyncio.run(ensure_credentials())

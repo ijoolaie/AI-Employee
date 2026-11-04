@@ -11,7 +11,8 @@ from app.models.user import User
 from app.models.role import Role,user_roles
 from app.services.business_network_service import create_request,decide_request
 from app.core.exceptions import ValidationAppError
-from e2e_entitlements import ci_platform_admin_token, entitle_existing_tenant
+from e2e_entitlements import entitle_existing_tenant
+from e2e_platform_admin_fixture import ensure_credentials as ensure_ci_platform_admin_fixture
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 def request(method,path,token,payload=None,expected=200):
     body=None if payload is None else json.dumps(payload).encode()
@@ -35,6 +36,7 @@ async def move_user_to_sender(user_id,sender_tenant):
         await db.commit()
 def err_code(exc): return getattr(exc,"code",None)
 async def run():
+    await ensure_ci_platform_admin_fixture()
     suffix=str(time.time_ns())[-10:]
     sender_tenant,requester,requester_token,sender_slug,_=register(suffix+"-sender")
     recipient_tenant,recipient_owner,_,_,_=register(suffix+"-recipient")
@@ -84,7 +86,6 @@ async def run():
     print("W21 REAL-STACK BUSINESS NETWORK E2E PASS")
 if __name__=="__main__":
     try:
-        ci_platform_admin_token(BASE_URL)
         asyncio.run(run())
     except Exception as exc:
         print(f"W21 REAL-STACK BUSINESS NETWORK E2E FAIL: {exc}",file=sys.stderr); raise SystemExit(1)

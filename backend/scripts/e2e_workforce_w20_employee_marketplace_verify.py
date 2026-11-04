@@ -10,7 +10,8 @@ from app.models.agent_evaluation import AgentEvaluation,AgentEvaluationStatus
 from app.models.agent_template import AgentTemplate,AgentTemplateStatus
 from sqlalchemy import select
 from app.models.employee_marketplace import EmployeeMarketplaceInstallationStatus
-from e2e_entitlements import ci_platform_admin_token, entitle_existing_tenant
+from e2e_entitlements import entitle_existing_tenant
+from e2e_platform_admin_fixture import ensure_credentials as ensure_ci_platform_admin_fixture
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 
 def request(method,path,token,payload=None,expected=200):
@@ -63,6 +64,7 @@ def expect403_or404(token,path):
         if code not in (403,404): raise
 
 async def run():
+    await ensure_ci_platform_admin_fixture()
     suffix=str(time.time_ns())[-10:]
     seller_tenant,seller_owner,seller_token=register(suffix+"-seller")
     buyer_tenant,buyer_owner,buyer_token=register(suffix+"-buyer")
@@ -106,7 +108,6 @@ async def run():
 
 if __name__=="__main__":
     try:
-        ci_platform_admin_token(BASE_URL)
         asyncio.run(run())
     except Exception as exc:
         print(f"WORKFORCE W20 EMPLOYEE-MARKETPLACE REAL-STACK E2E FAIL: {exc}",file=sys.stderr); raise SystemExit(1)
