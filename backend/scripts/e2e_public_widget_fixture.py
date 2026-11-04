@@ -14,6 +14,7 @@ from sqlalchemy import select
 from app.core.database import AsyncSessionLocal
 from app.models.tenant import Tenant
 from app.services import edition_service, license_service
+from e2e_entitlements import entitle_existing_tenant
 
 BASE = os.getenv("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
@@ -99,32 +100,14 @@ def main():
         "full_name": "Widget CI Admin",
     })
     assert status == 202, result
-    credentials = {
-        "tenant_slug": "widget-ci-" + suffix,
-        "email": "widget-ci-" + suffix + "@example.com",
-        "password": os.environ.get("CI_FIXTURE_PASSWORD", "ci-only-fixture-password-2026"),
-    }
-    status, login = call("POST", "/auth/login", credentials)
-    assert status == 200, login
-    token = login["data"]["access_token"]
-
-    status, identity = call("GET", "/auth/me", token=token)
-    assert status == 200, identity
+    token, identity = entitle_existing_tenant(
+        BASE,
+        "widget-ci-" + suffix,
+        "widget-ci-" + suffix + "@example.com",
+        os.environ.get("CI_FIXTURE_PASSWORD", "ci-only-fixture-password-2026"),
+        reason="Isolated public widget browser/API certification",
+    )
     tenant_id = uuid.UUID(identity["data"]["tenant"]["id"])
-    assert identity["data"]["tenant"]["access_granted"] is False
-    status, admin_login = call("POST", "/auth/login", {
-        "tenant_slug": os.environ.get("DEFAULT_VENDOR_TENANT_SLUG", "ci-default-vendor"),
-        "email": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL"],
-        "password": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD"],
-    })
-    assert status == 200, admin_login
-    admin_token = admin_login["data"]["access_token"]
-    status, demo_grant = call("POST", f"/admin/tenants/{tenant_id}/demo-grants", {
-        "reason": "Isolated public widget browser/API certification", "expires_in_days": 7,
-    }, admin_token)
-    assert status == 201, demo_grant
-    status, identity = call("GET", "/auth/me", token=token)
-    assert status == 200 and identity["data"]["tenant"]["access_granted"] is True, identity
 
 
     asyncio.run(provision_execution_license(tenant_id, suffix))

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-import os
+from e2e_platform_admin_fixture import credentials as platform_admin_credentials
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
@@ -25,6 +25,21 @@ def _call(base_url: str, method: str, path: str, payload: dict | None = None, to
 
 
 
+_PLATFORM_ADMIN_TOKEN: str | None = None
+
+def ci_platform_admin_token(base_url: str) -> str:
+    global _PLATFORM_ADMIN_TOKEN
+    if _PLATFORM_ADMIN_TOKEN:
+        return _PLATFORM_ADMIN_TOKEN
+    email, password = platform_admin_credentials()
+    status, login = _call(base_url, "POST", "/auth/login", {
+        "tenant_slug": "ci-default-vendor", "email": email, "password": password,
+    })
+    assert status == 200, f"CI platform-admin login failed: {status}: {login}"
+    _PLATFORM_ADMIN_TOKEN = (login.get("data") or {}).get("access_token")
+    assert _PLATFORM_ADMIN_TOKEN, login
+    return _PLATFORM_ADMIN_TOKEN
+
 def entitle_existing_tenant(base_url: str, tenant_slug: str, email: str, password: str, *, reason: str = "Isolated real-stack E2E entitlement fixture"):
     status, login = _call(base_url, "POST", "/auth/login", {
         "tenant_slug": tenant_slug, "email": email, "password": password,
@@ -37,14 +52,7 @@ def entitle_existing_tenant(base_url: str, tenant_slug: str, email: str, passwor
     tenant = (identity.get("data") or {}).get("tenant") or {}
     assert tenant.get("access_granted") is False, tenant
     tenant_id = tenant.get("id")
-    admin_status, admin_login = _call(base_url, "POST", "/auth/login", {
-        "tenant_slug": os.environ.get("DEFAULT_VENDOR_TENANT_SLUG", "ci-default-vendor"),
-        "email": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL"],
-        "password": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD"],
-    })
-    assert admin_status == 200, admin_login
-    admin_token = (admin_login.get("data") or {}).get("access_token")
-    assert admin_token
+    admin_token = ci_platform_admin_token(base_url)
     grant_status, grant = _call(base_url, "POST", f"/admin/tenants/{tenant_id}/demo-grants", {
         "reason": reason, "expires_in_days": 7,
     }, admin_token)
@@ -73,15 +81,7 @@ def register_and_grant(base_url: str, payload: dict, *, reason: str = "Isolated 
     tenant_id = tenant.get("id")
     assert tenant_id, f"identity did not return tenant id: {identity}"
 
-    admin_payload = {
-        "tenant_slug": os.environ.get("DEFAULT_VENDOR_TENANT_SLUG", "ci-default-vendor"),
-        "email": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL"],
-        "password": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD"],
-    }
-    status, admin_login = _call(base_url, "POST", "/auth/login", admin_payload)
-    assert status == 200, f"platform admin login failed: {status}: {admin_login}"
-    admin_token = (admin_login.get("data") or {}).get("access_token")
-    assert admin_token, f"platform admin returned no access token: {admin_login}"
+    admin_token = ci_platform_admin_token(base_url)
     status, grant = _call(base_url, "POST", f"/admin/tenants/{tenant_id}/demo-grants", {
         "reason": reason,
         "expires_in_days": 7,

@@ -18,6 +18,7 @@ from app.models.role import Permission, Role, role_permissions, user_roles
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.services import edition_lifecycle_service
+from e2e_entitlements import ci_platform_admin_token
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
@@ -67,22 +68,8 @@ def assert_status(actual: int, expected: int, label: str, body: dict) -> None:
     assert actual == expected, f"{label}: expected HTTP {expected}, got {actual}"
 
 
-_platform_admin_token: str | None = None
-
-
 def platform_admin_token() -> str:
-    global _platform_admin_token
-    if _platform_admin_token:
-        return _platform_admin_token
-    status, response = request("POST", "/auth/login", {
-        "tenant_slug": os.environ.get("DEFAULT_VENDOR_TENANT_SLUG", "ci-default-vendor"),
-        "email": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_EMAIL"],
-        "password": os.environ["DEFAULT_VENDOR_BOOTSTRAP_ADMIN_PASSWORD"],
-    })
-    assert_status(status, 200, "platform admin login", response)
-    _platform_admin_token = (response.get("data") or {}).get("access_token")
-    assert _platform_admin_token
-    return _platform_admin_token
+    return ci_platform_admin_token(BASE_URL)
 
 
 def register(suffix: str, label: str) -> tuple[str, str, str]:
