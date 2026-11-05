@@ -24,6 +24,10 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
       if (!accessToken) { router.replace("/login/customer"); return; }
       if (user?.is_platform_admin) { router.replace("/admin"); return; }
       const kind = (currentTenant as (typeof currentTenant & { tenant_kind?: string }) | null)?.tenant_kind;
+      if (pathname.startsWith("/vendor/") && kind !== "vendor") {
+        router.replace(kind === "reseller" ? "/reseller/dashboard" : kind === "platform-admin" ? "/admin" : "/dashboard");
+        return;
+      }
       const vendorManagementRoute = kind === "vendor" && pathname.startsWith("/vendor/");
       if (kind !== "customer" && !vendorManagementRoute) {
         router.replace(kind === "vendor" ? "/vendor/dashboard" : kind === "reseller" ? "/reseller/dashboard" : "/login/customer");
