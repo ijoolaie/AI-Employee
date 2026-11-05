@@ -23,4 +23,7 @@ def test_agent_run_outbox_dispatches_existing_run_task():
     assert 'row.kind == "agent.run.execute"' in source
     assert "execute_run_task.delay(" in source
     assert 'row.payload["run_id"]' in source
-    assert 'row.payload["tenant_id"]' in source
+    assert 'payload_tenant_id = (row.payload or {}).get("tenant_id")' in source
+    assert 'str(payload_tenant_id) != str(row.tenant_id)' in source
+    assert 'str(row.tenant_id)' in source
+    assert 'row.payload["tenant_id"]' not in source

@@ -1,4 +1,4 @@
-"""Run endpoints (11_Employee_Framework §5). Creating a Run enqueues async
+"""Run endpoints (11_Employee_Framework Â§5). Creating a Run enqueues async
 execution through the transactional outbox, so the Run and its execution signal
 are committed atomically and can be dispatched once the transaction is visible."""
 
@@ -159,11 +159,13 @@ async def download_run_artifact(run_id: UUID, artifact_id: str, ctx: RunReadCont
 
 
 async def _employee_labels(
-    db, employee_ids: list[UUID]
+    db, *, tenant_id: UUID, employee_ids: list[UUID]
 ) -> dict[UUID, tuple[str, str]]:
     if not employee_ids:
         return {}
-    result = await db.execute(select(Employee).where(Employee.id.in_(employee_ids)))
+    result = await db.execute(
+        select(Employee).where(Employee.tenant_id == tenant_id, Employee.id.in_(employee_ids))
+    )
     return {e.id: (e.name, e.slug) for e in result.scalars().all()}
 
 
@@ -219,7 +221,7 @@ async def create_run(payload: RunCreate, ctx: RunExecuteContext, db: DbSession):
         dedupe_key=f"agent.run.execute:run:{run.id}",
     )
 
-    labels = await _employee_labels(db, [run.employee_id])
+    labels = await _employee_labels(db, tenant_id=ctx.tenant_id, employee_ids=[run.employee_id])
     return APIResponse(success=True, data=_to_response(run, labels))
 
 
@@ -233,7 +235,7 @@ async def list_runs(
     runs = await run_read_service.list_runs(
         db, tenant_id=ctx.tenant_id, employee_id=employee_id
     )
-    labels = await _employee_labels(db, [r.employee_id for r in runs])
+    labels = await _employee_labels(db, tenant_id=ctx.tenant_id, employee_ids=[r.employee_id for r in runs])
     return APIResponse(
         success=True, data=[_to_response(r, labels) for r in runs]
     )
@@ -242,7 +244,7 @@ async def list_runs(
 @router.get("/{run_id}", response_model=APIResponse[RunResponse])
 async def get_run(run_id: UUID, ctx: RunReadContext, db: DbSession):
     run = await run_read_service.get_run(db, run_id=run_id, tenant_id=ctx.tenant_id)
-    labels = await _employee_labels(db, [run.employee_id])
+    labels = await _employee_labels(db, tenant_id=ctx.tenant_id, employee_ids=[run.employee_id])
     return APIResponse(success=True, data=_to_response(run, labels))
 
 
