@@ -88,7 +88,8 @@ def test_reseller_managed_member_role_is_an_explicit_customer_only_allowlist():
     assert "vendor.customer.create" not in customer_users.CUSTOMER_MEMBER_PERMISSIONS
     assert "reseller.customer.manage" not in customer_users.CUSTOMER_MEMBER_PERMISSIONS
     assert "employee.read" in customer_users.CUSTOMER_MEMBER_PERMISSIONS
-    assert "workflow.execute" not in customer_users.CUSTOMER_MEMBER_PERMISSIONS
+    assert "workflow.execute" in customer_users.CUSTOMER_MEMBER_PERMISSIONS
+    assert "workflow.write" not in customer_users.CUSTOMER_MEMBER_PERMISSIONS
 
 
 def test_reseller_customer_user_routes_are_registered():
