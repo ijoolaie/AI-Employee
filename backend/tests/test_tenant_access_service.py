@@ -80,3 +80,40 @@ async def test_demo_grant_is_audited_and_activates_eligible_accounts(monkeypatch
     assert audit.await_args.kwargs["action"] == "tenant.demo_grant_created"
     assert audit.await_args.kwargs["metadata"]["activated_public_users"] == 1
     assert audit.await_args.kwargs["metadata"]["activated_invited_users"] == 2
+
+@pytest.mark.asyncio
+async def test_demo_grant_revocation_is_tenant_bound_and_audited_once(monkeypatch):
+    tenant_id = uuid4()
+    grant = SimpleNamespace(id=uuid4(), tenant_id=tenant_id, revoked_at=None, expires_at=datetime.now(timezone.utc))
+    db = SimpleNamespace(execute=AsyncMock(return_value=Result(grant)))
+    audit = AsyncMock()
+    monkeypatch.setattr(service.audit_service, "record", audit)
+
+    first = await service.revoke_demo_grant(db, tenant_id=tenant_id, grant_id=grant.id, actor_id=uuid4())
+    second = await service.revoke_demo_grant(db, tenant_id=tenant_id, grant_id=grant.id, actor_id=uuid4())
+
+    assert first is grant and second is grant
+    assert grant.revoked_at is not None
+    assert audit.await_count == 1
+    assert audit.await_args.kwargs["action"] == "tenant.demo_grant_revoked"
+    for call in db.execute.await_args_list:
+        sql = str(call.args[0])
+        assert "tenant_demo_grants.tenant_id" in sql
+        assert "tenant_demo_grants.id" in sql
+
+
+@pytest.mark.asyncio
+async def test_demo_grant_revocation_rejects_cross_tenant_grant(monkeypatch):
+    from app.core.exceptions import NotFoundError
+
+    db = SimpleNamespace(execute=AsyncMock(return_value=Result(None)))
+    audit = AsyncMock()
+    monkeypatch.setattr(service.audit_service, "record", audit)
+
+    with pytest.raises(NotFoundError):
+        await service.revoke_demo_grant(db, tenant_id=uuid4(), grant_id=uuid4(), actor_id=uuid4())
+
+    query = db.execute.await_args.args[0]
+    assert "tenant_demo_grants.tenant_id" in str(query)
+    assert "tenant_demo_grants.id" in str(query)
+    audit.assert_not_awaited()
