@@ -75,4 +75,4 @@ async def activate_pending_public_signup_users(db: AsyncSession, *, tenant_id: u
         user.auth_token_version += 1
         activated += 1
         await audit_service.record(db, action="tenant.public_signup_user_activated", actor_type="system", tenant_id=tenant_id, resource_type="user", resource_id=str(user.id), metadata={"grant_source": "tenant_access_entitlement"})
-    return activated\n
+    return activated
