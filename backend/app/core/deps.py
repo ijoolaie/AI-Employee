@@ -30,7 +30,7 @@ class TenantContext:
     def __init__(self, user: User, tenant: Tenant, *, api_key_id: UUID | None = None, api_key_scopes: list[str] | None = None):
         self.user = user
         self.tenant = tenant
-        self.actor_tenant_id = user.tenant_id
+        self.actor_tenant_id = getattr(user, "tenant_id", tenant.id)
         self.api_key_id = api_key_id
         self.api_key_scopes = api_key_scopes
 
