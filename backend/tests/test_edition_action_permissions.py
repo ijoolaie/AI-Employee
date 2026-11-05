@@ -48,7 +48,7 @@ async def test_reseller_customer_create_requires_explicit_tenant_permission():
 async def test_reseller_customer_create_denies_missing_permission():
     ctx = _context(permission_tenant_matches=False)
     with pytest.raises(HTTPException) as exc:
-        await require_reseller_customer_create(ctx, _request())
+        await require_reseller_customer_create(ctx, _request(), None)
     assert exc.value.status_code == 403
     assert exc.value.detail == "Missing permission: reseller.customer.create"
 
@@ -58,7 +58,7 @@ async def test_reseller_superuser_flag_does_not_replace_action_permission():
     ctx = _context(permission_tenant_matches=False)
     ctx.user.is_superuser = True
     with pytest.raises(HTTPException) as exc:
-        await require_reseller_customer_create(ctx, _request())
+        await require_reseller_customer_create(ctx, _request(), None)
     assert exc.value.status_code == 403
 
 
@@ -69,11 +69,11 @@ async def test_reseller_api_key_requires_both_route_scope_and_user_permission():
         api_key_id=uuid4(),
         api_key_scopes=["edition.reseller.customers.create"],
     )
-    assert await require_reseller_customer_create(ctx, _request()) is ctx
+    assert await require_reseller_customer_create(ctx, _request(), None) is ctx
 
     ctx.api_key_scopes = ["edition.reseller.customers.read"]
     with pytest.raises(HTTPException) as exc:
-        await require_reseller_customer_create(ctx, _request())
+        await require_reseller_customer_create(ctx, _request(), None)
     assert exc.value.status_code == 403
 
 @pytest.mark.asyncio
@@ -95,7 +95,7 @@ async def test_reseller_customer_operations_require_their_own_action_grant(permi
 
     ctx.user.roles[0].permissions = [SimpleNamespace(code="reseller.customer.create")]
     with pytest.raises(HTTPException) as exc:
-        await dependency(ctx, _request())
+        await dependency(ctx, _request(), None)
     assert exc.value.status_code == 403
 
 
@@ -142,7 +142,7 @@ async def test_vendor_control_plane_requires_operation_specific_tenant_permissio
 
     ctx.user.roles[0].permissions = []
     with pytest.raises(HTTPException) as exc:
-        await dependency(ctx, request)
+        await dependency(ctx, request, None)
     assert exc.value.status_code == 403
     assert exc.value.detail == f"Missing permission: {permission_code}"
 
