@@ -134,6 +134,14 @@ async def invite_customer_user(
     db: DbSession,
 ):
     customer = await _load_direct_customer(customer_id, ctx, db, lock=True)
+    existing_user = (await db.execute(
+        select(User.id).where(
+            User.tenant_id == customer.id,
+            func.lower(User.email) == str(payload.email).lower(),
+        ).limit(1)
+    )).scalar_one_or_none()
+    if existing_user is not None:
+        raise HTTPException(status_code=409, detail="A user with this email already exists in the Customer tenant")
     member_role = await _customer_member_role(db, customer)
     invitation, raw_token = await tenant_invitation_service.create_invitation(
         db,
@@ -177,6 +185,15 @@ async def revoke_customer_user_invitation(
     db: DbSession,
 ):
     customer = await _load_direct_customer(customer_id, ctx, db, lock=True)
+    owned_invitation = (await db.execute(
+        select(tenant_invitation_service.TenantInvitation.id).where(
+            tenant_invitation_service.TenantInvitation.id == invitation_id,
+            tenant_invitation_service.TenantInvitation.tenant_id == customer.id,
+            tenant_invitation_service.TenantInvitation.invited_by_user_id == ctx.user_id,
+        )
+    )).scalar_one_or_none()
+    if owned_invitation is None:
+        raise HTTPException(status_code=404, detail="Reseller-created invitation not found")
     invitation = await tenant_invitation_service.revoke_invitation(
         db,
         tenant_id=customer.id,
