@@ -66,10 +66,11 @@ async def recover_stale_run_execution(db: AsyncSession, *, run: Run) -> bool:
     logical_run_id = str(locked_run.id)
     result = await db.execute(
         select(AIProviderCall).where(
+            AIProviderCall.tenant_id == locked_run.tenant_id,
             or_(
                 AIProviderCall.run_id == locked_run.id,
                 AIProviderCall.raw_meta["logical_run_id"].astext == logical_run_id,
-            )
+            ),
         )
     )
     calls = list(result.scalars().all())

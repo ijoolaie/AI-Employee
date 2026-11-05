@@ -27,10 +27,12 @@ class _Db:
         self.locked_run = locked_run
         self.provider_calls = provider_calls
         self.execute_calls = 0
+        self.statements = []
         self.flushed = False
 
-    async def execute(self, _statement):
+    async def execute(self, statement):
         self.execute_calls += 1
+        self.statements.append(statement) if hasattr(self, "statements") else None
         if self.execute_calls == 1:
             return _Result(scalar=self.locked_run)
         return _Result(rows=self.provider_calls)
@@ -180,3 +182,23 @@ async def test_stale_running_run_without_provider_call_still_fails_closed(monkey
     assert run.status == "failed"
     assert run.completed_at is not None
     assert "replay was intentionally blocked" in run.error_message
+
+
+@pytest.mark.asyncio
+async def test_stale_run_recovery_provider_call_lookup_is_tenant_scoped(monkeypatch):
+    from sqlalchemy.dialects import postgresql
+
+    run = _run(started_seconds_ago=run_recovery.STALE_RUN_RECOVERY_SECONDS + 1)
+    db = _Db(locked_run=run, provider_calls=[])
+
+    async def _audit(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(run_recovery.audit_service, "record", _audit)
+
+    assert await run_recovery.recover_stale_run_execution(db, run=run) is True
+    provider_query = db.statements[1].compile(dialect=postgresql.dialect())
+    sql = str(provider_query)
+    assert "ai_provider_calls.tenant_id" in sql
+    assert run.tenant_id in provider_query.params.values()
+    assert run.id in provider_query.params.values()
