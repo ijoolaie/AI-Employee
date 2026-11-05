@@ -358,3 +358,15 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Removed those shortcuts. `is_superuser` no longer grants operational permissions, broad API-key delegation, wildcard permissions in `/auth/me`, or wildcard worker tool access. Explicit tenant-local role grants and API-key route scopes remain the authority sources.
 - The only remaining application use of `is_superuser` is requiring explicit scopes when a superuser creates an API key; it is not an authorization grant. Model field and user constructors remain for compatibility, but no longer elevate tenant operations.
 - Focused regression suite: 65 passed; Ruff and `git diff --check` passed. Documentation truth validator passed.
+
+## Public signup account-kind slice — 2026-11-05
+
+- New isolated branch `feature/public-signup-pending-20261105` starts from exact `main` SHA `c98e4c0d43a0a53e630945d8448da60231ca87ed`.
+- Public registration now accepts only `customer` or `reseller` (`customer` remains the backwards-compatible default); Vendor creation remains prohibited by schema validation.
+- Both public account kinds are created as direct children of the configured active root Vendor, inherit its release identity, and require an explicit paid/Demo entitlement before workspace APIs are accessible.
+- Reseller signup receives the tenant-local Reseller permission set, not Vendor permissions. Audit action and metadata record the selected child kind.
+- Registration UI exposes Customer/Reseller selection and explicitly states Vendor accounts are provisioned separately.
+- Added schema tests and expanded the PostgreSQL-backed edition API acceptance to cover public Reseller signup, default-Vendor ownership, pending billing/access, and Reseller-only permissions.
+- Local checks: 26 focused backend unit/contract tests passed; Ruff, Python compile and `git diff --check` passed.
+- Not run locally: PostgreSQL HTTP integration test (no approved `SUPPORT_TEST_DATABASE_URL` is configured) and frontend lint/build (frontend `node_modules` is absent; `eslint` is unavailable). Exact-head CI is required before merge.
+- No DB migration, staging/production change, payment activation, or account mutation was performed.

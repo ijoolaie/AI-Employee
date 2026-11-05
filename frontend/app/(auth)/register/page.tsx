@@ -11,6 +11,7 @@ import { getErrorMessage, register as registerApi } from "@/lib/api";
 
 const schema = z.object({
   tenant_name: z.string().min(2, "At least 2 characters"),
+  tenant_kind: z.enum(["customer", "reseller"]),
   tenant_slug: z
     .string()
     .min(2)
@@ -32,6 +33,7 @@ export default function RegisterPage() {
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
+    defaultValues: { tenant_kind: "customer" },
   });
 
   async function onSubmit(data: FormData) {
@@ -59,6 +61,13 @@ export default function RegisterPage() {
           error={errors.tenant_name?.message}
           {...register("tenant_name")}
         />
+        <label className="block text-sm font-medium text-gray-700">Account type
+          <select className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm" {...register("tenant_kind")}>
+            <option value="customer">Customer</option>
+            <option value="reseller">Reseller</option>
+          </select>
+          <span className="mt-1 block text-xs text-gray-500">Your account will be created under the platform Vendor. Vendor accounts are provisioned separately.</span>
+        </label>
         <Input
           label="Tenant slug"
           placeholder="acme-corp"

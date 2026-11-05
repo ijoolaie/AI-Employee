@@ -39,18 +39,18 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
 )
 
 
-async def _create_tenant(db: AsyncSession, payload: RegisterRequest, *, parent: Tenant) -> Tenant:
-    """Create a public-signup Customer under the configured Vendor."""
+async def _create_tenant(db: AsyncSession, payload: RegisterRequest, *, parent: Tenant, kind: str = edition_service.EDITION_CUSTOMER) -> Tenant:
+    """Create a public-signup Reseller or Customer under the configured Vendor."""
     tenant = Tenant(
         name=payload.tenant_name,
         slug=payload.tenant_slug,
         status="active",
         access_grant_required=True,
-        tenant_kind=edition_service.EDITION_CUSTOMER,
+        tenant_kind=kind,
         parent_tenant_id=parent.id,
         vendor_release_tag=parent.vendor_release_tag,
         delivery_revision=parent.delivery_revision,
-        settings={"edition": edition_service.EDITION_CUSTOMER, "control_plane_parent": str(parent.id)},
+        settings={"edition": kind, "control_plane_parent": str(parent.id)},
     )
     try:
         async with db.begin_nested():
@@ -136,7 +136,8 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     if existing_slug.scalar_one_or_none():
         raise ConflictError("Tenant slug already exists")
     parent = await _resolve_default_vendor(db)
-    tenant = await _create_tenant(db, payload, parent=parent)
+    kind = payload.tenant_kind
+    tenant = await _create_tenant(db, payload, parent=parent, kind=kind)
     normalized_email = payload.email.lower()
     existing_user = await db.execute(select(User).where(User.email == normalized_email, User.tenant_id == tenant.id))
     if existing_user.scalar_one_or_none():
@@ -144,12 +145,13 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     user = User(tenant_id=tenant.id, email=normalized_email, password_hash=hash_password(payload.password), full_name=payload.full_name, is_active=True, is_superuser=False, is_platform_admin=False)
     db.add(user)
     await db.flush()
-    role = await _assign_tenant_admin_role(db, user, tenant.id, extra_permissions=edition_service.CUSTOMER_PERMISSIONS)
+    edition_permissions = edition_service.RESELLER_PERMISSIONS if kind == edition_service.EDITION_RESELLER else edition_service.CUSTOMER_PERMISSIONS
+    role = await _assign_tenant_admin_role(db, user, tenant.id, extra_permissions=edition_permissions)
     await db.refresh(tenant)
     await db.refresh(user)
     await audit_service.record(db, action="rbac.role_assigned", actor_type="user", actor_id=user.id, tenant_id=tenant.id, resource_type="role", resource_id=role.id, request_id=request_id_var.get(), metadata={"role": "Admin", "user_id": str(user.id)})
     await audit_service.record(db, action="tenant.registered", actor_type="user", tenant_id=tenant.id, actor_id=user.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"tenant_slug": tenant.slug, "user_email": user.email, "parent_vendor_id": str(parent.id)})
-    await audit_service.record(db, action="edition.customer.self_registered", actor_type="user", actor_id=user.id, tenant_id=parent.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"customer_tenant_id": str(tenant.id), "customer_slug": tenant.slug})
+    await audit_service.record(db, action=f"edition.{kind}.self_registered", actor_type="user", actor_id=user.id, tenant_id=parent.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"child_tenant_id": str(tenant.id), "child_kind": kind, "child_slug": tenant.slug})
     return tenant, user
 
 

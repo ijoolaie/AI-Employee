@@ -45,6 +45,7 @@ export interface MeResponse {
 
 export interface RegisterRequest {
   tenant_name: string;
+  tenant_kind?: "customer" | "reseller";
   tenant_slug: string;
   email: string;
   password: string;

@@ -156,6 +156,47 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition(monke
                     assert "employee_marketplace.publish" in registered_grants
                     assert "employee_marketplace.install" in registered_grants
                     assert "employee_marketplace.revoke" in registered_grants
+
+                reseller_registration = {
+                    "tenant_name": f"Reseller registration {run_id}",
+                    "tenant_slug": f"reseller-registration-{run_id}",
+                    "tenant_kind": "reseller",
+                    "email": f"reseller-register-{run_id}@example.com",
+                    "password": "Local-Reseller-Registration-2026!",
+                    "full_name": "Reseller Registration Test",
+                }
+                reseller_registered = await client.post("/api/v1/auth/register", json=reseller_registration)
+                assert reseller_registered.status_code == 202, reseller_registered.text
+                reseller_login = await client.post("/api/v1/auth/login", json={
+                    "email": reseller_registration["email"],
+                    "password": reseller_registration["password"],
+                    "tenant_slug": reseller_registration["tenant_slug"],
+                })
+                assert reseller_login.status_code == 200, reseller_login.text
+                reseller_token = reseller_login.json()["data"]["access_token"]
+                reseller_headers = {"Authorization": f"Bearer {reseller_token}"}
+                reseller_me = await client.get("/api/v1/auth/me", headers=reseller_headers)
+                assert reseller_me.status_code == 200, reseller_me.text
+                assert reseller_me.json()["data"]["tenant"]["tenant_kind"] == "reseller"
+                assert reseller_me.json()["data"]["tenant"]["access_granted"] is False
+                reseller_customer_list = await client.get("/api/v1/edition/reseller/customers", headers=reseller_headers)
+                assert reseller_customer_list.status_code == 402, reseller_customer_list.text
+                reseller_subscription = await client.get("/api/v1/billing/subscription", headers=reseller_headers)
+                assert reseller_subscription.status_code == 200, reseller_subscription.text
+                assert reseller_subscription.json()["data"]["status"] == "incomplete"
+                assert (await client.get("/api/v1/employees", headers=reseller_headers)).status_code == 402
+                async with sessions() as session:
+                    reseller_tenant = (await session.execute(select(Tenant).where(Tenant.slug == reseller_registration["tenant_slug"]))).scalar_one()
+                    reseller_user = (await session.execute(select(User).where(User.tenant_id == reseller_tenant.id, User.email == reseller_registration["email"]))).scalar_one()
+                    assert reseller_tenant.parent_tenant_id == vendor.id
+                    assert reseller_tenant.tenant_kind == "reseller"
+                    assert reseller_tenant.access_grant_required is True
+                    assert reseller_user.is_active is True
+                    reseller_role_id = (await session.execute(select(user_roles.c.role_id).where(user_roles.c.user_id == reseller_user.id))).scalar_one()
+                    reseller_grants = set((await session.execute(select(Permission.code).join(role_permissions, role_permissions.c.permission_id == Permission.id).where(role_permissions.c.role_id == reseller_role_id))).scalars())
+                    assert "reseller.customer.read" in reseller_grants
+                    assert "reseller.customer.create" in reseller_grants
+                    assert "vendor.reseller.create" not in reseller_grants
         finally:
             if previous is missing:
                 app.dependency_overrides.pop(get_db, None)
