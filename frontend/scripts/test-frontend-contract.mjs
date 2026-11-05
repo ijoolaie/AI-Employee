@@ -411,5 +411,17 @@ for (const [label, needle] of recoveryChecks) {
   if (!ok) { console.error(`  FAIL ${label}`); failed++; } else { passed++; console.log(`  OK ${label}`); }
 }
 
+test("Vendor portal route contract", () => {
+  const layout = read("app/(vendor)/layout.tsx");
+  const customerLayout = read("app/(customer)/layout.tsx");
+  const sidebar = read("components/layout/vendor-sidebar.tsx");
+  if (!layout.includes("VendorSidebar")) throw new Error("missing Vendor shell");
+  if (!customerLayout.includes("VendorSidebar")) throw new Error("missing Vendor management shell");
+  for (const href of ["/vendor/dashboard", "/vendor/resellers", "/vendor/customers", "/vendor/licenses"]) {
+    if (!sidebar.includes(href)) throw new Error("missing Vendor nav " + href);
+  }
+  if (!read("app/(customer)/vendor/customers/page.tsx").includes("/edition/vendor/customers")) throw new Error("missing direct Customer API");
+});
+
 console.log("\nResult: " + passed + " passed, " + failed + " failed\n");
 process.exit(failed ? 1 : 0);
