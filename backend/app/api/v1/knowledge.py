@@ -9,7 +9,7 @@ router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
 @router.post("/index", response_model=APIResponse[KnowledgeDocumentResponse], status_code=status.HTTP_201_CREATED)
 async def index_file(payload: KnowledgeIndexRequest, ctx: FileWriteContext, db: DbSession):
-    document = await service.index_file(db, tenant_id=ctx.tenant_id, file_id=payload.file_id, actor_id=ctx.user_id)
+    document = await service.index_file(db, tenant_id=ctx.tenant_id, file_id=payload.file_id, actor_id=ctx.user_id, actor_tenant_id=ctx.actor_tenant_id)
     return APIResponse(success=True, data=KnowledgeDocumentResponse.model_validate(document))
 
 @router.post("/search", response_model=APIResponse[list[KnowledgeSearchResult]])

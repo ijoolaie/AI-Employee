@@ -183,3 +183,44 @@ async def test_index_file_rejects_cross_tenant_actor_before_mutation(monkeypatch
         )
 
     assert persisted == []
+
+
+@pytest.mark.asyncio
+async def test_portal_index_validates_actor_home_tenant_and_keeps_resource_tenant(monkeypatch):
+    actor_tenant_id = uuid.uuid4()
+    resource_tenant_id = uuid.uuid4()
+    file_id = uuid.uuid4()
+    file_obj = type(
+        "FileObject",
+        (),
+        {"id": file_id, "tenant_id": resource_tenant_id, "status": "active", "filename": "note.txt"},
+    )()
+    document = KnowledgeDocument(tenant_id=resource_tenant_id, file_id=file_id, status="indexed")
+    db = _FakeDB(file_obj, document, document_exists=True)
+    observed = {}
+
+    async def capture_actor_tenant(_db, **kwargs):
+        observed.update(kwargs)
+
+    monkeypatch.setattr(service, "assert_users_belong_to_tenant", capture_actor_tenant)
+    monkeypatch.setattr(service, "extract_text", lambda _: "content")
+    monkeypatch.setattr(service, "chunk_text", lambda _: ["content"])
+
+    async def embeddings(texts):
+        return [[1.0] for _ in texts]
+
+    monkeypatch.setattr(service, "embed_texts", embeddings)
+    import app.services.audit_service as audit_service
+    monkeypatch.setattr(audit_service, "record", _noop_audit)
+
+    await service.index_file(
+        db,
+        tenant_id=resource_tenant_id,
+        actor_tenant_id=actor_tenant_id,
+        file_id=file_id,
+        actor_id=uuid.uuid4(),
+    )
+
+    assert observed["tenant_id"] == actor_tenant_id
+    assert observed["user_ids"]
+    assert document.tenant_id == resource_tenant_id

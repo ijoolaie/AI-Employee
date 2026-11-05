@@ -83,10 +83,10 @@ async def embed_texts(texts: list[str]) -> list[list[float]]:
     return embeddings
 
 
-async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UUID, actor_id: uuid.UUID):
+async def index_file(db: AsyncSession, *, tenant_id: uuid.UUID, file_id: uuid.UUID, actor_id: uuid.UUID, actor_tenant_id: uuid.UUID | None = None):
     await assert_users_belong_to_tenant(
         db,
-        tenant_id=tenant_id,
+        tenant_id=actor_tenant_id or tenant_id,
         user_ids={actor_id},
         field_names={actor_id: "actor_id"},
     )
