@@ -180,7 +180,7 @@ async def test_vendor_reseller_customer_tokens_are_scoped_to_their_edition(monke
                 assert reseller_me.json()["data"]["tenant"]["tenant_kind"] == "reseller"
                 assert reseller_me.json()["data"]["tenant"]["access_granted"] is False
                 reseller_customer_list = await client.get("/api/v1/edition/reseller/customers", headers=reseller_headers)
-                assert reseller_customer_list.status_code == 200, reseller_customer_list.text
+                assert reseller_customer_list.status_code == 402, reseller_customer_list.text
                 reseller_subscription = await client.get("/api/v1/billing/subscription", headers=reseller_headers)
                 assert reseller_subscription.status_code == 200, reseller_subscription.text
                 assert reseller_subscription.json()["data"]["status"] == "incomplete"

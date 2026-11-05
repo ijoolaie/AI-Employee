@@ -39,7 +39,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
 )
 
 
-async def _create_tenant(db: AsyncSession, payload: RegisterRequest, *, parent: Tenant, kind: str) -> Tenant:
+async def _create_tenant(db: AsyncSession, payload: RegisterRequest, *, parent: Tenant, kind: str = edition_service.EDITION_CUSTOMER) -> Tenant:
     """Create a public-signup Reseller or Customer under the configured Vendor."""
     tenant = Tenant(
         name=payload.tenant_name,
