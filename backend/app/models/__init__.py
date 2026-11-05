@@ -39,6 +39,7 @@ from app.models.password_reset_token import PasswordResetToken
 from app.models.tenant_entitlement import TenantEntitlement
 from app.models.tenant_invitation import TenantInvitation
 from app.models.tenant_demo_grant import TenantDemoGrant
+from app.models.tenant_action_grant import TenantActionGrant
 from app.models.portal_access_grant import PortalAccessGrant
 from app.models.support_escalation import SupportEscalation
 from app.models.support_escalation_message import SupportEscalationMessage
@@ -88,7 +89,7 @@ __all__ = [
     "BillingPlan", "Subscription", "BillingEvent", "WorldCatalogueItem", "WorldOrder", "WorldCommerceEvent", "WorldFeatureEntitlement", "PaymentRefund", "UsageEvent", "BusinessInvoice", "CustomerChannel",
     "CustomerConversation", "CustomerMessage", "CustomerConversationSlot", "CustomerEmailVerification", "Product", "CommerceIntegration", "Credential", "OnboardingProgress",
     "Customer", "APIKey", "BusinessOrder", "BusinessDeal", "ShopifyWebhookEvent", "ShopifyOAuthState", "PasswordResetToken",
-    "TenantEntitlement", "TenantInvitation", "TenantDemoGrant", "PortalAccessGrant", "SkillPurchaseEntitlement", "SkillPurchaseEntitlementStatus", "SupportEscalation", "SupportEscalationMessage", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
+    "TenantEntitlement", "TenantInvitation", "TenantDemoGrant", "TenantActionGrant", "PortalAccessGrant", "SkillPurchaseEntitlement", "SkillPurchaseEntitlementStatus", "SupportEscalation", "SupportEscalationMessage", "CommercialLicense", "WorkItem", "WorkItemStatus", "ExecutorType",
     "AgentDefinition", "AgentTemplate", "AgentTemplateStatus", "AgentInstance", "AgentInstanceStatus", "AgentRuntimeBinding",
     "AgentEvaluation", "AgentEvaluationStatus", "AgentIdentity", "AgentAccessReview", "AgentAccessReviewDecision",
     "AgentWorkforceProposal", "AgentWorkforceProposalKind", "AgentWorkforceProposalStatus", "AgentDelegation", "AgentKillScope", "AgentKillSwitch",
