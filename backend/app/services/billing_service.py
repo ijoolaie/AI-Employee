@@ -264,33 +264,39 @@ def _assert_subscription_active(sub: Subscription) -> None:
     if sub.status not in {"active", "trialing"}:
         raise ConflictError("Subscription is not active")
 
-    
+
+async def _require_tenant_access_source(db: AsyncSession, *, tenant: Tenant) -> str:
+    from app.services.tenant_access_service import tenant_access_source
+    source = await tenant_access_source(db, tenant=tenant)
+    if source is None:
+        raise ConflictError("Tenant access requires an approved paid subscription or active Demo grant")
+    return source
+
+
 async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
-    """Enforce customer billing while allowing the root vendor to run its own platform."""
+    """Enforce paid or Demo access while allowing the root vendor to run its own platform."""
     tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = tenant_result.scalar_one_or_none()
     if tenant is not None and tenant.tenant_kind == "vendor":
         return
     if tenant is None:
         raise NotFoundError("Tenant not found")
-    from app.services.tenant_access_service import tenant_has_access
-    if not await tenant_has_access(db, tenant=tenant):
-        raise ConflictError("Tenant access requires an approved paid subscription or active Demo grant")
+    access_source = await _require_tenant_access_source(db, tenant=tenant)
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    _assert_subscription_active(sub)
+    if access_source != "demo":
+        _assert_subscription_active(sub)
 
 
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
-    from app.services.tenant_access_service import tenant_has_access
-    if not await tenant_has_access(db, tenant=tenant):
-        raise ConflictError("Tenant access requires an approved paid subscription or active Demo grant")
+    access_source = await _require_tenant_access_source(db, tenant=tenant)
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    _assert_subscription_active(sub)
+    if access_source != "demo":
+        _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["runs"] >= sub.plan.monthly_runs:
         raise ConflictError(f"Monthly run quota exceeded for {sub.plan.code} plan")
@@ -302,8 +308,10 @@ async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
+    access_source = await _require_tenant_access_source(db, tenant=tenant)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    _assert_subscription_active(sub)
+    if access_source != "demo":
+        _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["employees"] >= sub.plan.max_employees:
         raise ConflictError(f"Employee quota exceeded for {sub.plan.code} plan")
@@ -313,12 +321,13 @@ async def enforce_workflow_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
+    access_source = await _require_tenant_access_source(db, tenant=tenant)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    _assert_subscription_active(sub)
+    if access_source != "demo":
+        _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["workflows"] >= sub.plan.max_workflows:
         raise ConflictError(f"Workflow quota exceeded for {sub.plan.code} plan")
-
 
 async def platform_mrr(db: AsyncSession) -> dict[str, object]:
     result = await db.execute(select(Subscription, BillingPlan).join(BillingPlan, BillingPlan.id == Subscription.plan_id).where(Subscription.status == "active"))

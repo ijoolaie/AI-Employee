@@ -12,9 +12,10 @@ from app.models.user import User
 from app.models.tenant_invitation import TenantInvitation
 from app.services import audit_service
 
-async def tenant_has_access(db: AsyncSession, *, tenant: Tenant, now: datetime | None = None) -> bool:
+async def tenant_access_source(db: AsyncSession, *, tenant: Tenant, now: datetime | None = None) -> str | None:
+    """Return legacy, paid, or demo only when that source currently grants access."""
     if not getattr(tenant, "access_grant_required", False):
-        return True
+        return "legacy"
     now = now or datetime.now(timezone.utc)
     paid = (await db.execute(
         select(Subscription.id).join(BillingPlan, BillingPlan.id == Subscription.plan_id).where(
@@ -24,12 +25,16 @@ async def tenant_has_access(db: AsyncSession, *, tenant: Tenant, now: datetime |
         ).limit(1)
     )).scalar_one_or_none()
     if paid is not None:
-        return True
+        return "paid"
     grant = (await db.execute(select(TenantDemoGrant.id).where(
         TenantDemoGrant.tenant_id == tenant.id, TenantDemoGrant.revoked_at.is_(None),
         TenantDemoGrant.expires_at > now,
     ).limit(1))).scalar_one_or_none()
-    return grant is not None
+    return "demo" if grant is not None else None
+
+
+async def tenant_has_access(db: AsyncSession, *, tenant: Tenant, now: datetime | None = None) -> bool:
+    return await tenant_access_source(db, tenant=tenant, now=now) is not None
 
 async def create_demo_grant(db: AsyncSession, *, tenant_id: uuid.UUID, actor_id: uuid.UUID, reason: str, expires_in_days: int) -> TenantDemoGrant:
     if not reason.strip() or expires_in_days < 1 or expires_in_days > 90:
@@ -70,4 +75,4 @@ async def activate_pending_public_signup_users(db: AsyncSession, *, tenant_id: u
         user.auth_token_version += 1
         activated += 1
         await audit_service.record(db, action="tenant.public_signup_user_activated", actor_type="system", tenant_id=tenant_id, resource_type="user", resource_id=str(user.id), metadata={"grant_source": "tenant_access_entitlement"})
-    return activated
+    return activated\n
