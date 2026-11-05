@@ -13,7 +13,6 @@ from app.models.role import Permission, Role, user_roles
 from app.models.tenant import Tenant
 from app.models.tenant_invitation import TenantInvitation
 from app.models.user import User
-from app.models.tenant_invitation import TenantInvitation
 from app.schemas.common import APIResponse
 from app.schemas.edition import TenantInvitationResponse, TenantInvitationRevokedResponse
 from app.services import audit_service, edition_service, tenant_access_service, tenant_invitation_service
@@ -72,10 +71,6 @@ async def _load_direct_customer(customer_id: UUID, ctx, db: DbSession, *, lock: 
     if customer.status != "active":
         raise HTTPException(status_code=403, detail="Customer tenant is inactive")
     return customer
-
-
-def _assert_reseller_managed_member(user: User, customer: Tenant) -> None:
-    _assert_reseller_managed_member(user, customer)
 
 
 async def _customer_member_role(db: DbSession, customer: Tenant) -> Role:
@@ -192,7 +187,7 @@ async def revoke_customer_user_invitation(
     customer = await _load_direct_customer(customer_id, ctx, db, lock=True)
     owned_invitation = (await db.execute(
         select(TenantInvitation.id).where(
-            tenant_invitation_service.TenantInvitation.id == invitation_id,
+            TenantInvitation.id == invitation_id,
             TenantInvitation.tenant_id == customer.id,
             TenantInvitation.invited_by_user_id == ctx.user_id,
         )
