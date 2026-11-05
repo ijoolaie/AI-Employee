@@ -4,17 +4,18 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, Field
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
 from app.core.deps import DbSession
 from app.core.edition_deps import ResellerCustomerManageContext
-from app.models.role import Permission, Role
+from app.models.role import Permission, Role, user_roles
 from app.models.tenant import Tenant
 from app.models.user import User
+from app.models.tenant_invitation import TenantInvitation
 from app.schemas.common import APIResponse
 from app.schemas.edition import TenantInvitationResponse, TenantInvitationRevokedResponse
-from app.services import audit_service, edition_service, tenant_invitation_service
+from app.services import audit_service, edition_service, tenant_access_service, tenant_invitation_service
 
 router = APIRouter(prefix="/edition/reseller/customers/{customer_id}/users", tags=["reseller-customer-users"])
 
@@ -219,6 +220,16 @@ async def update_customer_user_status(
     )).scalar_one_or_none()
     if user is None:
         raise HTTPException(status_code=404, detail="Customer user not found")
+    if user.is_active and not payload.is_active and any(role.tenant_id == customer.id and role.name.lower() in {'admin', 'owner', 'tenant_admin'} for role in user.roles):
+        active_admin_count = (await db.execute(select(func.count(func.distinct(User.id))).select_from(User).join(user_roles, user_roles.c.user_id == User.id).join(Role, Role.id == user_roles.c.role_id).where(User.tenant_id == customer.id, User.is_active.is_(True), Role.tenant_id == customer.id, func.lower(Role.name).in_({'admin', 'owner', 'tenant_admin'})))).scalar_one()
+        if active_admin_count <= 1:
+            raise HTTPException(status_code=409, detail='Cannot deactivate the last active Customer administrator')
+    if not user.is_active and payload.is_active:
+        accepted_invitation = (await db.execute(select(TenantInvitation.id).where(TenantInvitation.user_id == user.id, TenantInvitation.tenant_id == customer.id, TenantInvitation.accepted_at.is_not(None), TenantInvitation.revoked_at.is_(None)).limit(1))).scalar_one_or_none()
+        if accepted_invitation is None:
+            raise HTTPException(status_code=409, detail='Customer users must accept an invitation before activation')
+        if not await tenant_access_service.tenant_has_access(db, tenant=customer):
+            raise HTTPException(status_code=402, detail='Customer tenant requires paid or active Demo entitlement')
     if user.is_active != payload.is_active:
         user.is_active = payload.is_active
         user.auth_token_version += 1
