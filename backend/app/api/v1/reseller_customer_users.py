@@ -74,6 +74,10 @@ async def _load_direct_customer(customer_id: UUID, ctx, db: DbSession, *, lock: 
     return customer
 
 
+def _assert_reseller_managed_member(user: User, customer: Tenant) -> None:
+    _assert_reseller_managed_member(user, customer)
+
+
 async def _customer_member_role(db: DbSession, customer: Tenant) -> Role:
     role = (await db.execute(
         select(Role)
