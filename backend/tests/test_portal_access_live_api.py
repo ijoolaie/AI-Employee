@@ -37,6 +37,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.core.security import create_access_token
     from app.main import app
     from app.models.portal_access_grant import PortalAccessGrant
+    from app.models.file import FileObject
+    from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
+    from app.rag import service as rag_service
     from app.models.role import Permission, Role
     from app.models.tenant import Tenant
     from app.models.tenant_demo_grant import TenantDemoGrant
@@ -48,9 +51,11 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     vendor = Tenant(name=f"Portal test vendor {run_id}", slug=f"portal-vendor-{run_id}", status="active", tenant_kind="vendor", settings={})
     target = Tenant(name=f"Portal test reseller {run_id}", slug=f"portal-reseller-{run_id}", status="active", tenant_kind="reseller", access_grant_required=True, settings={})
     target.parent = vendor
+    sibling = Tenant(name=f"Portal sibling reseller {run_id}", slug=f"portal-sibling-{run_id}", status="active", tenant_kind="reseller", access_grant_required=True, settings={})
+    sibling.parent = vendor
     try:
         async with sessions() as session:
-            session.add_all([vendor, target])
+            session.add_all([vendor, target, sibling])
             await session.flush()
             grantor = User(
                 tenant_id=vendor.id, email=f"portal-grantor-{run_id}@example.com",
@@ -71,11 +76,29 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 permission = Permission(code="employee.read", description="Read employees")
                 session.add(permission)
                 await session.flush()
+            file_permissions = []
+            for code in ("file.read", "file.write"):
+                file_permission = (await session.execute(select(Permission).where(Permission.code == code))).scalar_one_or_none()
+                if file_permission is None:
+                    file_permission = Permission(code=code, description=f"Portal test {code}")
+                    session.add(file_permission)
+                    await session.flush()
+                file_permissions.append(file_permission)
             admin_role = Role(tenant_id=vendor.id, name="Admin", description="Portal integration admin")
             reader_role = Role(tenant_id=vendor.id, name="Employee Reader", description="Portal integration reader")
-            reader_role.permissions = [permission]
+            reader_role.permissions = [permission, *file_permissions]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
+            target_file = FileObject(tenant_id=target.id, uploaded_by=actor.id, filename="target-policy.txt", content_type="text/plain", size_bytes=10, storage_key=f"{target.id}/target-policy.txt", status="active")
+            sibling_file = FileObject(tenant_id=sibling.id, uploaded_by=actor.id, filename="sibling-secret.txt", content_type="text/plain", size_bytes=12, storage_key=f"{sibling.id}/sibling-secret.txt", status="active")
+            session.add_all([target_file, sibling_file])
+            await session.flush()
+            sibling_document = KnowledgeDocument(tenant_id=sibling.id, file_id=sibling_file.id, status="indexed", chunk_count=1, embedding_model="portal-test")
+            session.add(sibling_document)
+            await session.flush()
+            session.add_all([
+                KnowledgeChunk(tenant_id=sibling.id, document_id=sibling_document.id, chunk_index=0, content="sibling tenant secret", embedding=[1.0] + [0.0] * 63),
+            ])
             session.add_all([
                 admin_role,
                 reader_role,
@@ -100,6 +123,11 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
         missing = object()
         previous = app.dependency_overrides.get(get_db, missing)
         app.dependency_overrides[get_db] = override_get_db
+        async def deterministic_test_embedding(_texts):
+            return [[1.0] + [0.0] * 63 for _ in _texts]
+
+        monkeypatch.setattr(rag_service, "embed_texts", deterministic_test_embedding)
+        monkeypatch.setattr(rag_service, "extract_text", lambda _file: "target tenant knowledge")
         try:
             grantor_token = create_access_token(
                 subject=grantor.id, tenant_id=vendor.id,
@@ -140,6 +168,21 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
 
                 employees = await client.get("/api/v1/employees", headers=portal_headers)
                 assert employees.status_code == 200, employees.text
+
+                visible_files = await client.get("/api/v1/files", headers=portal_headers)
+                assert visible_files.status_code == 200, visible_files.text
+                assert [item["id"] for item in visible_files.json()["data"]] == [str(target_file.id)]
+                foreign_file = await client.get(f"/api/v1/files/{sibling_file.id}", headers=portal_headers)
+                assert foreign_file.status_code == 404, foreign_file.text
+                foreign_index = await client.post("/api/v1/knowledge/index", headers=portal_headers, json={"file_id": str(sibling_file.id)})
+                assert foreign_index.status_code == 404, foreign_index.text
+                target_index = await client.post("/api/v1/knowledge/index", headers=portal_headers, json={"file_id": str(target_file.id)})
+                assert target_index.status_code == 201, target_index.text
+                knowledge = await client.post("/api/v1/knowledge/search", headers=portal_headers, json={"query": "tenant policy", "top_k": 20})
+                assert knowledge.status_code == 200, knowledge.text
+                knowledge_content = [item["content"] for item in knowledge.json()["data"]]
+                assert "target tenant knowledge" in knowledge_content
+                assert "sibling tenant secret" not in knowledge_content
                 blocked_admin = await client.get("/api/v1/tenant-admin/users", headers=portal_headers)
                 assert blocked_admin.status_code == 403, blocked_admin.text
                 blocked_billing = await client.get("/api/v1/billing/subscription", headers=portal_headers)
