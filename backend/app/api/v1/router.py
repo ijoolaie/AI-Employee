@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.api.v1 import business_network, employee_marketplace, skill_marketplace, work_items, workspace, test_center, test_center_evidence, test_center_verification, test_center_execution, team_installations, team_execution, team_evaluations, marketplace, agent_templates, agent_governance, agent_workforce, agent_workforce_replacements, agent_delegations, workforce_delegations, ai_workforce_roles, api_keys, admin, approvals, auth, employees, feedback, files, runs, usage, knowledge, memory, workflows, workflow_events, workflow_schedules, workflow_approvals, operations, customer_dashboard, billing, billing_webhooks, invoices, orders, sales, customer_channels, public_chat, products, commerce_integrations, onboarding, inbox, customers, channel_webhooks, sales_webhooks, sales_readiness, tenant_admin, admin_providers, edition_control, license_control, zarinpal_webhooks, world_commerce
+from app.api.v1 import business_network, employee_marketplace, skill_marketplace, work_items, workspace, test_center, test_center_evidence, test_center_verification, test_center_execution, team_installations, team_execution, team_evaluations, marketplace, agent_templates, agent_governance, agent_workforce, agent_workforce_replacements, agent_delegations, workforce_delegations, ai_workforce_roles, api_keys, admin, approvals, auth, employees, feedback, files, runs, usage, knowledge, memory, workflows, workflow_events, workflow_schedules, workflow_approvals, operations, customer_dashboard, billing, billing_webhooks, invoices, orders, sales, customer_channels, public_chat, products, commerce_integrations, onboarding, inbox, customers, channel_webhooks, sales_webhooks, sales_readiness, tenant_admin, admin_providers, edition_control, portal_access, license_control, zarinpal_webhooks, world_commerce
 
 api_router = APIRouter()
 api_router.include_router(work_items.router)
@@ -30,6 +30,7 @@ api_router.include_router(api_keys.router)
 api_router.include_router(admin.router)
 api_router.include_router(admin_providers.router)
 api_router.include_router(edition_control.router)
+api_router.include_router(portal_access.router)
 api_router.include_router(license_control.router)
 api_router.include_router(files.router)
 api_router.include_router(employees.router)

@@ -30,6 +30,7 @@ class TenantContext:
     def __init__(self, user: User, tenant: Tenant, *, api_key_id: UUID | None = None, api_key_scopes: list[str] | None = None):
         self.user = user
         self.tenant = tenant
+        self.actor_tenant_id = user.tenant_id
         self.api_key_id = api_key_id
         self.api_key_scopes = api_key_scopes
 
@@ -94,6 +95,38 @@ async def get_current_context(
     tenant = tenant_result.scalar_one_or_none()
     if tenant is None or tenant.status != "active":
         raise HTTPException(status_code=403, detail="Tenant not available")
+
+    portal_context_tenant_id = payload.get("portal_context_tenant_id")
+    if portal_context_tenant_id is not None:
+        portal_context_denied_prefixes = (
+            "/api/v1/billing",
+            "/api/v1/auth",
+            "/api/v1/api-keys",
+            "/api/v1/tenant-admin",
+            "/api/v1/onboarding",
+            "/api/v1/world-commerce",
+        )
+        if (
+            request.url.path != "/api/v1/auth/me"
+            and (
+                any(request.url.path.startswith(prefix) for prefix in portal_context_denied_prefixes)
+                or request.url.path == "/api/v1/analytics/roi"
+            )
+        ):
+            raise HTTPException(status_code=403, detail="Portal context tokens cannot access account, billing, administration, or unscoped endpoints")
+        try:
+            context_tenant_uuid = UUID(str(portal_context_tenant_id))
+            context_grant_uuid = UUID(str(payload["portal_context_grant_id"]))
+        except (KeyError, TypeError, ValueError) as exc:
+            raise HTTPException(status_code=401, detail="Invalid portal context token") from exc
+        from app.services.portal_access_service import validate_portal_access_grant
+        await validate_portal_access_grant(db, actor_user_id=user.id, actor_tenant_id=user.tenant_id, target_tenant_id=context_tenant_uuid, grant_id=context_grant_uuid)
+        target_result = await db.execute(select(Tenant).where(Tenant.id == context_tenant_uuid))
+        target_tenant = target_result.scalar_one_or_none()
+        if target_tenant is None or payload.get("portal_context_kind") != target_tenant.tenant_kind:
+            raise HTTPException(status_code=403, detail="Portal context tenant kind mismatch")
+        tenant = target_tenant
+
     billing_only_paths = {
         ("GET", "/api/v1/auth/me"),
         ("GET", "/api/v1/billing/subscription"),
@@ -114,7 +147,7 @@ async def has_permission(ctx: TenantContext, permission_code: str) -> bool:
     return any(
         permission.code == permission_code
         for role in ctx.user.roles
-        if role.tenant_id == ctx.tenant_id
+        if role.tenant_id == ctx.actor_tenant_id
         for permission in role.permissions
     )
 

@@ -59,7 +59,7 @@ async def me(ctx: CurrentContext, db: DbSession):
     permissions = {
         permission.code
         for role in ctx.user.roles
-        if role.tenant_id == ctx.tenant_id
+        if role.tenant_id == ctx.actor_tenant_id
         for permission in role.permissions
     }
     if ctx.api_key_scopes is not None:
