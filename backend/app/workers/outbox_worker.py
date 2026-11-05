@@ -42,9 +42,12 @@ async def _dispatch_async(limit: int = 50) -> int:
                         execute_parallel_branch_task.delay(row.payload["branch_id"], str(row.tenant_id))
                     elif row.kind == "agent.run.execute":
                         from app.workers.run_worker import execute_run_task
+                        payload_tenant_id = (row.payload or {}).get("tenant_id")
+                        if row.tenant_id is None or str(payload_tenant_id) != str(row.tenant_id):
+                            raise ValueError("Agent Run outbox tenant binding does not match its durable row")
                         execute_run_task.delay(
                             row.payload["run_id"],
-                            row.payload["tenant_id"],
+                            str(row.tenant_id),
                         )
                     elif row.kind == "whatsapp.send_text":
                         from app.workers.whatsapp_worker import send_whatsapp_text_task

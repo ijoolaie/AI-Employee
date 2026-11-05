@@ -205,3 +205,81 @@ async def test_customer_handoff_email_outbox_dispatches_dedicated_email_task(mon
     # Email delivery state belongs to email_worker, not the dispatcher.
     assert "mark_dispatched" not in events
     assert "mark_retry" not in events
+
+
+@pytest.mark.asyncio
+async def test_agent_run_outbox_uses_durable_row_tenant_after_binding_validation(monkeypatch):
+    events = []
+    db = _DB(events)
+    tenant_id = uuid4()
+    run_id = uuid4()
+    row = SimpleNamespace(
+        id=uuid4(),
+        kind="agent.run.execute",
+        tenant_id=tenant_id,
+        payload={"run_id": str(run_id), "tenant_id": str(tenant_id)},
+        attempts=1,
+        status="processing",
+    )
+    db.row = row
+
+    async def fake_claim(_db, *, limit):
+        return [row]
+
+    async def fake_mark_dispatched(_db, _row):
+        events.append("mark_dispatched")
+
+    published = []
+
+    class _Task:
+        @staticmethod
+        def delay(*args):
+            events.append("publish")
+            published.append(args)
+
+    monkeypatch.setattr(outbox_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(outbox_worker.outbox_service, "claim", fake_claim)
+    monkeypatch.setattr(outbox_worker.outbox_service, "mark_dispatched", fake_mark_dispatched)
+    monkeypatch.setattr(outbox_worker, "span", lambda *args, **kwargs: _Span())
+    monkeypatch.setitem(sys.modules, "app.workers.run_worker", SimpleNamespace(execute_run_task=_Task))
+
+    assert await outbox_worker._dispatch_async(limit=1) == 1
+    assert published == [(str(run_id), str(tenant_id))]
+    assert events.index("commit") < events.index("publish")
+
+
+@pytest.mark.asyncio
+async def test_agent_run_outbox_rejects_payload_tenant_mismatch(monkeypatch):
+    events = []
+    db = _DB(events)
+    row = SimpleNamespace(
+        id=uuid4(),
+        kind="agent.run.execute",
+        tenant_id=uuid4(),
+        payload={"run_id": str(uuid4()), "tenant_id": str(uuid4())},
+        attempts=1,
+        status="processing",
+    )
+    db.row = row
+
+    async def fake_claim(_db, *, limit):
+        return [row]
+
+    async def fake_mark_retry(_db, _row, error, delay_seconds):
+        events.append(("mark_retry", error, delay_seconds))
+
+    class _Task:
+        @staticmethod
+        def delay(*_args):
+            events.append("publish")
+
+    monkeypatch.setattr(outbox_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(outbox_worker.outbox_service, "claim", fake_claim)
+    monkeypatch.setattr(outbox_worker.outbox_service, "mark_retry", fake_mark_retry)
+    monkeypatch.setattr(outbox_worker, "span", lambda *args, **kwargs: _Span())
+    monkeypatch.setitem(sys.modules, "app.workers.run_worker", SimpleNamespace(execute_run_task=_Task))
+
+    assert await outbox_worker._dispatch_async(limit=1) == 0
+    assert "publish" not in events
+    retry = next(event for event in events if isinstance(event, tuple) and event[0] == "mark_retry")
+    assert "tenant binding" in retry[1]
