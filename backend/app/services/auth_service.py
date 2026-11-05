@@ -23,7 +23,7 @@ from app.services import audit_service, billing_service, edition_service
 
 
 DEFAULT_TENANT_ADMIN_PERMISSIONS = (
-    "employee.read", "employee.write", "employee.guardrails.read", "employee.guardrails.write",
+    "billing.manage", "employee.read", "employee.write", "employee.guardrails.read", "employee.guardrails.write",
     "run.read", "run.execute", "file.read", "file.write", "audit.read", "approval.read", "approval.decide",
     "privacy.customer.read", "privacy.customer.export", "privacy.customer.delete",
     "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel", "workflow.approval.read",
@@ -45,6 +45,7 @@ async def _create_tenant(db: AsyncSession, payload: RegisterRequest, *, parent: 
         name=payload.tenant_name,
         slug=payload.tenant_slug,
         status="active",
+        access_grant_required=True,
         tenant_kind=edition_service.EDITION_CUSTOMER,
         parent_tenant_id=parent.id,
         vendor_release_tag=parent.vendor_release_tag,
@@ -146,7 +147,6 @@ async def register_tenant_and_user(db: AsyncSession, payload: RegisterRequest) -
     role = await _assign_tenant_admin_role(db, user, tenant.id, extra_permissions=edition_service.CUSTOMER_PERMISSIONS)
     await db.refresh(tenant)
     await db.refresh(user)
-    await billing_service.ensure_subscription(db, tenant_id=tenant.id)
     await audit_service.record(db, action="rbac.role_assigned", actor_type="user", actor_id=user.id, tenant_id=tenant.id, resource_type="role", resource_id=role.id, request_id=request_id_var.get(), metadata={"role": "Admin", "user_id": str(user.id)})
     await audit_service.record(db, action="tenant.registered", actor_type="user", tenant_id=tenant.id, actor_id=user.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"tenant_slug": tenant.slug, "user_email": user.email, "parent_vendor_id": str(parent.id)})
     await audit_service.record(db, action="edition.customer.self_registered", actor_type="user", actor_id=user.id, tenant_id=parent.id, resource_type="tenant", resource_id=tenant.id, request_id=request_id_var.get(), metadata={"customer_tenant_id": str(tenant.id), "customer_slug": tenant.slug})
@@ -200,7 +200,6 @@ async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenResponse:
     user = result.scalar_one_or_none()
     if user is None or user.auth_token_version != token_version:
         raise UnauthorizedError("Invalid refresh token")
-
     return issue_tokens(user)
 
 

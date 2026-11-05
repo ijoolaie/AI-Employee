@@ -4,6 +4,8 @@ from fastapi import APIRouter, status
 
 from app.core.deps import CurrentContext, DbSession
 from app.schemas.auth import (
+    AcceptInvitationRequest,
+    InvitationAcceptanceResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
     ForgotPasswordRequest,
@@ -14,26 +16,29 @@ from app.schemas.auth import (
     MeResponse,
     RefreshRequest,
     RegisterRequest,
+    RegistrationPendingResponse,
     TenantResponse,
     TokenResponse,
     UserResponse,
 )
 from app.schemas.common import APIResponse
-from app.services import auth_service, password_change_service, password_reset_service
+from app.services import auth_service, password_change_service, password_reset_service, tenant_invitation_service, tenant_access_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post(
     "/register",
-    response_model=APIResponse[TokenResponse],
-    status_code=status.HTTP_201_CREATED,
+    response_model=APIResponse[RegistrationPendingResponse],
+    status_code=status.HTTP_202_ACCEPTED,
 )
 async def register(payload: RegisterRequest, db: DbSession):
-    tenant, user = await auth_service.register_tenant_and_user(db, payload)
+    tenant, _user = await auth_service.register_tenant_and_user(db, payload)
     await db.commit()
-    tokens = auth_service.issue_tokens(user)
-    return APIResponse(success=True, data=tokens)
+    return APIResponse(success=True, data=RegistrationPendingResponse(
+        tenant_id=tenant.id,
+        message="Registration received. You can sign in to complete billing; workspace access is enabled after an approved payment or operator Demo grant.",
+    ))
 
 
 @router.post("/login", response_model=APIResponse[TokenResponse])
@@ -50,7 +55,7 @@ async def refresh(payload: RefreshRequest, db: DbSession):
 
 
 @router.get("/me", response_model=APIResponse[MeResponse])
-async def me(ctx: CurrentContext):
+async def me(ctx: CurrentContext, db: DbSession):
     permissions = {
         permission.code
         for role in ctx.user.roles
@@ -61,7 +66,7 @@ async def me(ctx: CurrentContext):
         permissions &= set(ctx.api_key_scopes)
     data = MeResponse(
         user=UserResponse.model_validate(ctx.user).model_copy(update={"permissions": sorted(permissions)}),
-        tenant=TenantResponse.model_validate(ctx.tenant),
+        tenant=TenantResponse.model_validate(ctx.tenant).model_copy(update={"access_granted": await tenant_access_service.tenant_has_access(db, tenant=ctx.tenant)}),
     )
     return APIResponse(success=True, data=data)
 
@@ -95,3 +100,17 @@ async def reset_password(payload: ResetPasswordRequest, db: DbSession):
     await password_reset_service.reset_password(db, raw_token=payload.token, password=payload.password)
     await db.commit()
     return APIResponse(success=True, data=ResetPasswordResponse(message="Password reset successfully. Please sign in again."))
+
+
+@router.post("/invitations/accept", response_model=APIResponse[InvitationAcceptanceResponse])
+async def accept_invitation(payload: AcceptInvitationRequest, db: DbSession):
+    invitation, access_granted = await tenant_invitation_service.accept_invitation(
+        db, raw_token=payload.token, password=payload.password,
+    )
+    await db.commit()
+    message = (
+        "Invitation accepted. You can sign in now."
+        if access_granted
+        else "Invitation accepted. You can sign in to complete billing; workspace access requires an approved payment or Demo grant."
+    )
+    return APIResponse(success=True, data=InvitationAcceptanceResponse(access_granted=access_granted, message=message))

@@ -8,12 +8,15 @@ if PROJECT_ROOT not in sys.path: sys.path.insert(0,PROJECT_ROOT)
 from app.core.database import AsyncSessionLocal
 from app.models.employee import Employee,EmployeeVersion
 from app.models.meeting import Meeting,MeetingParticipant,MeetingParticipantRole,MeetingStatus
+from e2e_entitlements import entitle_existing_tenant
+from e2e_platform_admin_fixture import ensure_credentials as ensure_ci_platform_admin_fixture
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 
 def register(suffix):
     payload=json.dumps({"tenant_name":f"W18 Meeting E2E {suffix}","tenant_slug":f"w18-meeting-{suffix}","email":f"w18-owner-{suffix}@example.com","password":"W18MeetingE2E-2026!","full_name":"W18 CEO"}).encode()
     with urlopen(Request(f"{BASE_URL}/auth/register",data=payload,headers={"Accept":"application/json","Content-Type":"application/json"},method="POST"),timeout=20) as r:
-        d=json.loads(r.read().decode()); assert r.status==201,d; token=d["data"]["access_token"]
+        d=json.loads(r.read().decode()); assert r.status==202,d
+        token,identity=entitle_existing_tenant(BASE_URL,"w18-meeting-"+suffix,"w18-owner-"+suffix+"@example.com","W18MeetingE2E-2026!")
     with urlopen(Request(f"{BASE_URL}/auth/me",headers={"Accept":"application/json","Authorization":f"Bearer {token}"},method="GET"),timeout=20) as r:
         d=json.loads(r.read().decode()); assert r.status==200,d
     return uuid.UUID(d["data"]["tenant"]["id"]),uuid.UUID(d["data"]["user"]["id"]),token
@@ -38,6 +41,7 @@ def expect404(token,mid):
         if getattr(exc,"code",None)!=404: raise
 
 async def run():
+    await ensure_ci_platform_admin_fixture()
     s=str(time.time_ns())[-10:]; t,o,token=register(s); mid,eid=await seed(t,o,s); d=get(token,mid)["data"]
     assert d["contract_version"]=="w18-meeting-v1"
     assert d["meeting"]["status"]=="active"
@@ -52,5 +56,6 @@ async def run():
     print("WORKFORCE W18 VIRTUAL-MEETING-ROOMS REAL-STACK E2E PASS")
 
 if __name__=="__main__":
-    try: asyncio.run(run())
+    try:
+        asyncio.run(run())
     except Exception as exc: print(f"WORKFORCE W18 VIRTUAL-MEETING-ROOMS REAL-STACK E2E FAIL: {exc}",file=sys.stderr); raise SystemExit(1)

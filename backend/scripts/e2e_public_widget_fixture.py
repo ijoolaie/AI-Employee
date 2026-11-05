@@ -14,6 +14,7 @@ from sqlalchemy import select
 from app.core.database import AsyncSessionLocal
 from app.models.tenant import Tenant
 from app.services import edition_service, license_service
+from e2e_entitlements import entitle_existing_tenant
 
 BASE = os.getenv("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
@@ -98,12 +99,17 @@ def main():
         "password": os.environ.get("CI_FIXTURE_PASSWORD", "ci-only-fixture-password-2026"),
         "full_name": "Widget CI Admin",
     })
-    assert status == 201, result
-    token = result["data"]["access_token"]
-
-    status, identity = call("GET", "/auth/me", token=token)
-    assert status == 200, identity
+    assert status == 202, result
+    token, identity = entitle_existing_tenant(
+        BASE,
+        "widget-ci-" + suffix,
+        "widget-ci-" + suffix + "@example.com",
+        os.environ.get("CI_FIXTURE_PASSWORD", "ci-only-fixture-password-2026"),
+        reason="Isolated public widget browser/API certification",
+    )
     tenant_id = uuid.UUID(identity["data"]["tenant"]["id"])
+
+
     asyncio.run(provision_execution_license(tenant_id, suffix))
 
     status, employee = call("POST", "/employees", {

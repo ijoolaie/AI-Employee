@@ -3,14 +3,15 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class ChildTenantProvisionRequest(BaseModel):
     name: str = Field(min_length=2, max_length=255)
     slug: str = Field(min_length=2, max_length=100, pattern=r"^[a-z0-9][a-z0-9-]*$")
-    admin_email: str = Field(min_length=3, max_length=320)
-    admin_password: str = Field(min_length=12, max_length=255)
+    admin_email: EmailStr
+
+    model_config = {"extra": "forbid"}
     full_name: str | None = Field(default=None, max_length=255)
     vendor_release_tag: str | None = Field(default=None, max_length=80)
     delivery_revision: str | None = Field(default=None, max_length=120)
@@ -140,3 +141,31 @@ class SupportEscalationMessageResponse(BaseModel):
     attachments: list[SupportEscalationMessageAttachmentResponse] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
+
+
+class TenantInvitationCreateRequest(BaseModel):
+    email: EmailStr
+    full_name: str | None = Field(default=None, max_length=255)
+    role_ids: list[UUID] = Field(min_length=1, max_length=20)
+    expires_in_days: int = Field(default=7, ge=1, le=30)
+
+
+class TenantInvitationResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    email: str
+    token: str
+    expires_at: datetime
+
+
+class TenantInvitationRevokedResponse(BaseModel):
+    id: UUID
+    revoked_at: datetime
+
+
+class ChildTenantProvisionResponse(BaseModel):
+    tenant: TenantSummary
+    user_id: UUID
+    invitation_id: UUID
+    invitation_token: str
+    invitation_expires_at: datetime

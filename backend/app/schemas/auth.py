@@ -13,6 +13,11 @@ class RegisterRequest(BaseModel):
     full_name: str | None = None
 
 
+class RegistrationPendingResponse(BaseModel):
+    tenant_id: UUID
+    message: str
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -47,6 +52,7 @@ class TenantResponse(BaseModel):
     slug: str
     status: str
     tenant_kind: str
+    access_granted: bool = True
 
     model_config = {"from_attributes": True}
 
@@ -80,4 +86,14 @@ class ChangePasswordRequest(BaseModel):
 
 
 class ChangePasswordResponse(BaseModel):
+    message: str
+
+
+class AcceptInvitationRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=256)
+    password: str = Field(min_length=12, max_length=128)
+
+
+class InvitationAcceptanceResponse(BaseModel):
+    access_granted: bool
     message: str

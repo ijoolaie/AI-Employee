@@ -10,16 +10,23 @@ from app.models.agent_evaluation import AgentEvaluation,AgentEvaluationStatus
 from app.models.agent_template import AgentTemplate,AgentTemplateStatus
 from sqlalchemy import select
 from app.models.employee_marketplace import EmployeeMarketplaceInstallationStatus
+from e2e_entitlements import entitle_existing_tenant
+from e2e_platform_admin_fixture import ensure_credentials as ensure_ci_platform_admin_fixture
 BASE_URL=os.environ.get("E2E_API_BASE_URL","http://localhost:8000/api/v1")
 
 def request(method,path,token,payload=None,expected=200):
     body=None if payload is None else json.dumps(payload).encode()
     with urlopen(Request(BASE_URL+path,data=body,headers={"Accept":"application/json","Content-Type":"application/json","Authorization":f"Bearer {token}"},method=method),timeout=20) as r:
-        data=json.loads(r.read().decode()); assert r.status==expected,data; return data
+        data=json.loads(r.read().decode())
+        if method=="POST" and path=="/auth/register" and r.status==202:
+            token,_=entitle_existing_tenant(BASE_URL,payload["tenant_slug"],payload["email"],payload["password"])
+            data.setdefault("data",{})["access_token"]=token
+        if path=="/auth/register" and expected==201: expected=202
+        assert r.status==expected,data; return data
 
 def register(suffix):
     payload={"tenant_name":f"W20 Employee E2E {suffix}","tenant_slug":f"w20-employee-{suffix}","email":f"w20-owner-{suffix}@example.com","password":"W20EmployeeE2E-2026!","full_name":"W20 CEO"}
-    d=request("POST","/auth/register",None,payload,201); token=d["data"]["access_token"]
+    d=request("POST","/auth/register",None,payload,202); token=d["data"]["access_token"]
     me=request("GET","/auth/me",token)
     return uuid.UUID(me["data"]["tenant"]["id"]),uuid.UUID(me["data"]["user"]["id"]),token
 
@@ -57,6 +64,7 @@ def expect403_or404(token,path):
         if code not in (403,404): raise
 
 async def run():
+    await ensure_ci_platform_admin_fixture()
     suffix=str(time.time_ns())[-10:]
     seller_tenant,seller_owner,seller_token=register(suffix+"-seller")
     buyer_tenant,buyer_owner,buyer_token=register(suffix+"-buyer")
@@ -99,6 +107,7 @@ async def run():
     print("WORKFORCE W20 EMPLOYEE-MARKETPLACE REAL-STACK E2E PASS")
 
 if __name__=="__main__":
-    try: asyncio.run(run())
+    try:
+        asyncio.run(run())
     except Exception as exc:
         print(f"WORKFORCE W20 EMPLOYEE-MARKETPLACE REAL-STACK E2E FAIL: {exc}",file=sys.stderr); raise SystemExit(1)

@@ -109,11 +109,19 @@ async def ensure_subscription(db: AsyncSession, *, tenant_id: uuid.UUID) -> Subs
     if sub:
         return await process_subscription_lifecycle(db, subscription=sub)
 
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
+    requires_explicit_grant = bool(tenant and tenant.access_grant_required)
     await ensure_plans(db)
     plan = (await db.execute(select(BillingPlan).where(BillingPlan.code == "starter"))).scalar_one()
     now = datetime.now(timezone.utc)
-    trial_ends = now + timedelta(days=14)
-    candidate = Subscription(tenant_id=tenant_id, plan_id=plan.id, status="trialing", provider="manual", current_period_start=_period_start(now), current_period_end=_period_end(now), trial_ends_at=trial_ends)
+    trial_ends = None if requires_explicit_grant else now + timedelta(days=14)
+    candidate = Subscription(
+        tenant_id=tenant_id, plan_id=plan.id,
+        status="incomplete" if requires_explicit_grant else "trialing",
+        provider="stripe" if requires_explicit_grant else "manual",
+        current_period_start=_period_start(now), current_period_end=_period_end(now),
+        trial_ends_at=trial_ends,
+    )
     try:
         async with db.begin_nested():
             db.add(candidate)
@@ -256,25 +264,39 @@ def _assert_subscription_active(sub: Subscription) -> None:
     if sub.status not in {"active", "trialing"}:
         raise ConflictError("Subscription is not active")
 
-    
+
+async def _require_tenant_access_source(db: AsyncSession, *, tenant: Tenant) -> str:
+    from app.services.tenant_access_service import tenant_access_source
+    source = await tenant_access_source(db, tenant=tenant)
+    if source is None:
+        raise ConflictError("Tenant access requires an approved paid subscription or active Demo grant")
+    return source
+
+
 async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
-    """Enforce customer billing while allowing the root vendor to run its own platform."""
+    """Enforce paid or Demo access while allowing the root vendor to run its own platform."""
     tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = tenant_result.scalar_one_or_none()
     if tenant is not None and tenant.tenant_kind == "vendor":
         return
+    if tenant is None:
+        raise NotFoundError("Tenant not found")
+    access_source = await _require_tenant_access_source(db, tenant=tenant)
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    _assert_subscription_active(sub)
+    if access_source != "demo":
+        _assert_subscription_active(sub)
 
 
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
+    access_source = await _require_tenant_access_source(db, tenant=tenant)
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    _assert_subscription_active(sub)
+    if access_source != "demo":
+        _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["runs"] >= sub.plan.monthly_runs:
         raise ConflictError(f"Monthly run quota exceeded for {sub.plan.code} plan")
@@ -286,8 +308,10 @@ async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
+    access_source = await _require_tenant_access_source(db, tenant=tenant)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    _assert_subscription_active(sub)
+    if access_source != "demo":
+        _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["employees"] >= sub.plan.max_employees:
         raise ConflictError(f"Employee quota exceeded for {sub.plan.code} plan")
@@ -297,12 +321,13 @@ async def enforce_workflow_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
+    access_source = await _require_tenant_access_source(db, tenant=tenant)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    _assert_subscription_active(sub)
+    if access_source != "demo":
+        _assert_subscription_active(sub)
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["workflows"] >= sub.plan.max_workflows:
         raise ConflictError(f"Workflow quota exceeded for {sub.plan.code} plan")
-
 
 async def platform_mrr(db: AsyncSession) -> dict[str, object]:
     result = await db.execute(select(Subscription, BillingPlan).join(BillingPlan, BillingPlan.id == Subscription.plan_id).where(Subscription.status == "active"))

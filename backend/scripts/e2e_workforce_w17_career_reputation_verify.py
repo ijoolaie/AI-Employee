@@ -28,44 +28,23 @@ from app.models.run import Run
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.work_item import ExecutorType, WorkItem, WorkItemStatus
+from e2e_entitlements import register_and_grant
+from e2e_platform_admin_fixture import ensure_credentials
 
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
 
 def register_tenant(suffix: str):
-    payload = json.dumps(
-        {
-            "tenant_name": f"W17 Career E2E {suffix}",
-            "tenant_slug": f"w17-career-{suffix}",
-            "email": f"w17-owner-{suffix}@example.com",
-            "password": "W17CareerE2E-2026!",
-            "full_name": "W17 CEO",
-        }
-    ).encode()
-    with urlopen(
-        Request(
-            f"{BASE_URL}/auth/register",
-            data=payload,
-            headers={"Accept": "application/json", "Content-Type": "application/json"},
-            method="POST",
-        ),
-        timeout=20,
-    ) as response:
-        data = json.loads(response.read().decode())
-        assert response.status == 201, data
-        token = data["data"]["access_token"]
-    with urlopen(
-        Request(
-            f"{BASE_URL}/auth/me",
-            headers={"Accept": "application/json", "Authorization": f"Bearer {token}"},
-            method="GET",
-        ),
-        timeout=20,
-    ) as response:
-        me = json.loads(response.read().decode())
-        assert response.status == 200, me
-    return uuid.UUID(me["data"]["tenant"]["id"]), uuid.UUID(me["data"]["user"]["id"]), token
+    tenant_id, owner_id, token, _identity = register_and_grant(BASE_URL, {
+        "tenant_name": f"W17 Career E2E {suffix}",
+        "tenant_slug": f"w17-career-{suffix}",
+        "email": f"w17-owner-{suffix}@example.com",
+        "password": "W17CareerE2E-2026!",
+        "full_name": "W17 CEO",
+    }, reason="W17 career and reputation evidence E2E certification")
+    return uuid.UUID(str(tenant_id)), uuid.UUID(str(owner_id)), token
+
 
 
 async def seed_authoritative_records(tenant_id, owner_id, suffix):
@@ -182,6 +161,7 @@ def get_cross_tenant(token, employee_id):
 
 
 async def run():
+    await ensure_credentials()
     suffix = str(time.time_ns())[-10:]
     tenant_id, owner_id, token = register_tenant(suffix)
     employee_id, run_id, work_item_id = await seed_authoritative_records(tenant_id, owner_id, suffix)

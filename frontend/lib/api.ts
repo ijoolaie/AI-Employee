@@ -59,7 +59,7 @@ api.interceptors.response.use(
     // returned to the login form immediately. Refreshing a previous session
     // for a failed login can delay or obscure the actual credential error.
     const isAuthRequest =
-      /\/auth\/(login|register|forgot-password|reset-password)$/.test(requestUrl);
+      /\/auth\/(login|register|forgot-password|reset-password|invitations\/accept)$/.test(requestUrl);
 
     if (
       error.response?.status === 401 &&
@@ -132,7 +132,7 @@ export async function revokeApiKey(id: string) {
 
 // ── Auth ──────────────────────────────────────────────
 export async function register(payload: RegisterRequest) {
-  return unwrap(await api.post<APIResponse<TokenResponse>>("/auth/register", payload));
+  return unwrap(await api.post<APIResponse<{ tenant_id: string; message: string }>>("/auth/register", payload));
 }
 
 export async function login(payload: LoginRequest) {

@@ -30,33 +30,23 @@ from app.services.agent_governance import governed_agent_execution
 from app.services.ai_workforce_roles import get_workforce_capability_contract
 from app.services import workforce_semantic_domains
 from scripts.e2e_workforce_w1_control_plane_verify import provision_agent
+from e2e_entitlements import register_and_grant
+from e2e_platform_admin_fixture import ensure_credentials
 
 CONTENT_TOOLS = ["workforce_produce_article", "workforce_produce_social_caption"]
 CREATIVE_TOOLS = ["workforce_create_visual_asset", "workforce_revise_visual_asset"]
 
 
 def register_tenant(base, suffix):
-    payload = json.dumps({
+    tenant_id, owner_id, _token, _identity = register_and_grant(base, {
         "tenant_name": f"W3 Content Creative E2E {suffix}",
         "tenant_slug": f"w3-content-creative-{suffix}",
         "email": f"w3-owner-{suffix}@example.com",
         "password": "W3ContentCreativeE2E-2026!",
         "full_name": "W3 CEO",
-    }).encode()
-    with urlopen(Request(
-        f"{base}/auth/register", data=payload,
-        headers={"Accept": "application/json", "Content-Type": "application/json"},
-        method="POST",
-    ), timeout=20) as response:
-        data = json.loads(response.read().decode())
-        assert response.status == 201, data
-        token = data["data"]["access_token"]
-    with urlopen(Request(
-        f"{base}/auth/me", headers={"Accept": "application/json", "Authorization": f"Bearer {token}"}, method="GET"
-    ), timeout=20) as response:
-        me = json.loads(response.read().decode())
-        assert response.status == 200, me
-    return uuid.UUID(me["data"]["tenant"]["id"]), uuid.UUID(me["data"]["user"]["id"])
+    }, reason="W3 content and creative workforce E2E certification")
+    return uuid.UUID(str(tenant_id)), uuid.UUID(str(owner_id))
+
 
 
 async def license_fixture(tenant_id, suffix):
@@ -100,6 +90,7 @@ async def execute(tenant_id, agent_id, employee_id, version_id, run_id, tool, op
 
 
 async def run():
+    await ensure_credentials()
     suffix = str(time.time_ns())[-10:]
     base = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
     tenant_id, owner_id = register_tenant(base, suffix)

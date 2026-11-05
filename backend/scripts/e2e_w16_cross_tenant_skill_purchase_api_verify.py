@@ -19,6 +19,7 @@ from app.models.skill_marketplace_publication import SkillMarketplacePublication
 from app.models.skill_package import SkillPackage
 from app.models.tenant import Tenant
 from app.services import edition_lifecycle_service, skill_marketplace_service
+from e2e_entitlements import register_and_grant
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
@@ -49,21 +50,18 @@ def assert_status(actual: int, expected: int, label: str, body: dict) -> None:
 
 def register(suffix: str, label: str) -> tuple[str, str]:
     slug = f"w16-marketplace-api-{label}-{suffix}"
-    status, response = request(
-        "POST",
-        "/auth/register",
-        {
-            "tenant_name": f"W16 Marketplace API {label} Tenant",
-            "tenant_slug": slug,
-            "email": f"w16-marketplace-api-{label}-{suffix}@example.com",
-            "password": "W16MarketplaceApiE2E-2026!",
-            "full_name": f"W16 Marketplace API {label} Admin",
-        },
+    payload = {
+        "tenant_name": f"W16 Marketplace API {label} Tenant",
+        "tenant_slug": slug,
+        "email": f"w16-marketplace-api-{label}-{suffix}@example.com",
+        "password": "W16MarketplaceApiE2E-2026!",
+        "full_name": f"W16 Marketplace API {label} Admin",
+    }
+    _, _, token, _ = register_and_grant(
+        BASE_URL, payload, reason=f"W16 cross-tenant marketplace {label} E2E"
     )
-    assert_status(status, 201, f"{label} registration", response)
-    token = (response.get("data") or {}).get("access_token")
-    assert token
     return slug, token
+
 
 
 async def seller_fixture(seller_slug: str) -> tuple[str, str]:

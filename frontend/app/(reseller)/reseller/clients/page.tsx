@@ -35,7 +35,8 @@ export default function ResellerClientsPage() {
     onSuccess: () => { setRevokeReasons({}); qc.invalidateQueries({ queryKey: ["reseller-licenses"] }); },
   });
   const delegateEntitlement = useMutation({ mutationFn: ({ id, feature, quota }: { id: string; feature: string; quota: string }) => api.post("/edition/reseller/customers/" + id + "/entitlements", { feature_code: feature.trim(), quota_limit: quota === "" ? null : Number(quota) }) });
-  const [form, setForm] = useState({ name: "", slug: "", admin_email: "", admin_password: "", full_name: "" });
+  const [form, setForm] = useState({ name: "", slug: "", admin_email: "", full_name: "" });
+  const [createdInvitation, setCreatedInvitation] = useState<{ token: string; email: string; expiresAt: string } | null>(null);
   const [licenseForm, setLicenseForm] = useState({ customer_id: "", feature_codes: "", expires_in_days: "365" });
   const clients = useQuery({ queryKey: ["reseller-clients"], queryFn: getClients });
   const issueLicense = useMutation({
@@ -56,16 +57,17 @@ export default function ResellerClientsPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["reseller-clients"] }),
   });
   const create = useMutation({
-    mutationFn: () => api.post("/edition/reseller/customers", {
+    mutationFn: () => api.post<{ success: boolean; data: { tenant: ClientSummary; invitation_token: string; invitation_expires_at: string } }>("/edition/reseller/customers", {
       name: form.name.trim(), slug: form.slug.trim(), admin_email: form.admin_email.trim(),
-      admin_password: form.admin_password, full_name: form.full_name.trim() || undefined,
+      full_name: form.full_name.trim() || undefined,
     }),
-    onSuccess: () => {
-      setForm({ name: "", slug: "", admin_email: "", admin_password: "", full_name: "" });
+    onSuccess: (response) => {
+      setCreatedInvitation({ token: response.data.data.invitation_token, email: form.admin_email.trim(), expiresAt: response.data.data.invitation_expires_at });
+      setForm({ name: "", slug: "", admin_email: "", full_name: "" });
       qc.invalidateQueries({ queryKey: ["reseller-clients"] });
     },
   });
-  const canCreate = form.name.trim().length >= 2 && form.slug.trim().length >= 2 && form.admin_email.trim().length >= 3 && form.admin_password.length >= 12;
+  const canCreate = form.name.trim().length >= 2 && form.slug.trim().length >= 2 && form.admin_email.trim().length >= 3;
   const featureCodes = licenseForm.feature_codes.split(",").map(code => code.trim()).filter(Boolean);
   const canIssueLicense = Boolean(licenseForm.customer_id) && featureCodes.length > 0 &&
     (!licenseForm.expires_in_days.trim() || (Number(licenseForm.expires_in_days) >= 1 && Number(licenseForm.expires_in_days) <= 3650));
@@ -106,11 +108,10 @@ export default function ResellerClientsPage() {
           <input aria-label={m.clientName} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder={m.clientName} className="rounded-lg border px-3 py-2 text-sm" />
           <input aria-label={m.clientSlug} value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })} placeholder={m.clientSlug} className="rounded-lg border px-3 py-2 text-sm" />
           <input aria-label={m.adminEmail} type="email" value={form.admin_email} onChange={e => setForm({ ...form, admin_email: e.target.value })} placeholder={m.adminEmail} className="rounded-lg border px-3 py-2 text-sm" />
-          <input aria-label={m.adminPassword} type="password" value={form.admin_password} onChange={e => setForm({ ...form, admin_password: e.target.value })} placeholder={m.adminPassword} className="rounded-lg border px-3 py-2 text-sm" />
           <input aria-label={m.fullNameOptional} value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} placeholder={m.fullNameOptional} className="rounded-lg border px-3 py-2 text-sm md:col-span-2" />
         </div>
         {create.isError && <p className="mt-3 text-sm text-red-600">{m.createClientError}</p>}
-        {create.isSuccess && <p className="mt-3 text-sm text-emerald-600">{m.createClientSuccess}</p>}
+        {createdInvitation && <div className="mt-3 rounded-lg border p-3 text-sm"><p className="font-medium">Invitation for {createdInvitation.email}. Share this one-time token securely; it is shown only once.</p><a className="mt-2 inline-block text-brand-700 underline" href="/accept-invitation">Open invitation acceptance page</a><code className="mt-2 block break-all rounded bg-gray-50 p-2">{createdInvitation.token}</code><p className="mt-1 text-xs text-gray-500">Expires {new Date(createdInvitation.expiresAt).toLocaleString()}</p></div>}
         <button disabled={!canCreate || create.isPending} onClick={() => create.mutate()} className="mt-4 rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{create.isPending ? m.creatingClient : m.createClient}</button>
       </CardContent></Card>
       {(issueLicense.isError || delegateEntitlement.isError) && <p role="alert" className="text-sm text-red-600">License or entitlement update failed. Check parent license permissions and quota limits.</p>}

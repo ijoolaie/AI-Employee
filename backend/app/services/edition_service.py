@@ -9,12 +9,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import request_id_var
-from app.core.security import hash_password
 from app.models.audit_log import AuditLog
-from app.models.role import Permission, Role, role_permissions, user_roles
+from app.models.role import Permission, Role, role_permissions
 from app.models.support_escalation import SupportEscalation
 from app.models.tenant import Tenant
 from app.models.tenant_entitlement import TenantEntitlement
+from app.models.tenant_invitation import TenantInvitation
 from app.models.user import User
 
 EDITION_VENDOR = "vendor"
@@ -27,7 +27,7 @@ ADMIN_SECURITY_PERMISSIONS = {
 }
 
 RESELLER_PERMISSIONS = {
-    "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
+    "billing.manage", "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
     "audit.read", "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel",
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
@@ -37,7 +37,7 @@ RESELLER_PERMISSIONS = {
     "employee_marketplace.publish", "employee_marketplace.install", "employee_marketplace.revoke",
 }
 CUSTOMER_PERMISSIONS = {
-    "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
+    "billing.manage", "employee.read", "employee.write", *ADMIN_SECURITY_PERMISSIONS, "run.read", "run.execute", "file.read", "file.write",
     "audit.read", "workflow.read", "workflow.write", "workflow.execute", "workflow.cancel",
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
@@ -90,7 +90,12 @@ async def _ensure_role(db: AsyncSession, tenant: Tenant, name: str, permissions:
     return role
 
 
-async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str, slug: str, admin_email: str, admin_password: str, full_name: str | None, kind: str, vendor_release_tag: str | None, delivery_revision: str | None) -> tuple[Tenant, User]:
+async def provision_child_tenant(
+    db: AsyncSession, *, parent: Tenant, name: str, slug: str, admin_email: str,
+    full_name: str | None, kind: str, vendor_release_tag: str | None,
+    delivery_revision: str | None, actor_id: UUID,
+) -> tuple[Tenant, User, TenantInvitation, str]:
+    """Provision a child tenant with an inactive admin and a one-time invitation."""
     allowed_parent_kinds = {EDITION_RESELLER: {EDITION_VENDOR}, EDITION_CUSTOMER: {EDITION_VENDOR, EDITION_RESELLER}}
     if parent.tenant_kind not in allowed_parent_kinds.get(kind, set()):
         raise HTTPException(status_code=403, detail="Invalid parent edition")
@@ -98,7 +103,7 @@ async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str,
     existing = (await db.execute(select(Tenant).where(Tenant.slug == slug))).scalar_one_or_none()
     if existing is not None:
         raise HTTPException(status_code=409, detail="Tenant slug already exists")
-    tenant = Tenant(name=name, slug=slug, status="active", tenant_kind=kind, parent_tenant_id=parent.id, vendor_release_tag=parent.vendor_release_tag, delivery_revision=delivery_revision, settings={"edition": kind, "control_plane_parent": str(parent.id)})
+    tenant = Tenant(name=name, slug=slug, status="active", access_grant_required=True, tenant_kind=kind, parent_tenant_id=parent.id, vendor_release_tag=parent.vendor_release_tag, delivery_revision=delivery_revision, settings={"edition": kind, "control_plane_parent": str(parent.id)})
     try:
         async with db.begin_nested():
             db.add(tenant)
@@ -110,17 +115,23 @@ async def provision_child_tenant(db: AsyncSession, *, parent: Tenant, name: str,
         if constraint_name != "tenants_slug_key":
             raise
         raise HTTPException(status_code=409, detail="Tenant slug already exists") from exc
-    user = User(tenant_id=tenant.id, email=admin_email.lower(), password_hash=hash_password(admin_password), full_name=full_name, is_active=True, is_superuser=False)
-    db.add(user)
-    await db.flush()
+
     permissions = RESELLER_PERMISSIONS if kind == EDITION_RESELLER else CUSTOMER_PERMISSIONS
     role = await _ensure_role(db, tenant, "Admin", permissions)
-    await db.execute(insert(user_roles).values(user_id=user.id, role_id=role.id).on_conflict_do_nothing())
-    await record_audit(db, tenant_id=parent.id, actor_id=None, action=f"edition.{kind}.provisioned", resource_type="tenant", resource_id=str(tenant.id), metadata={"child_tenant_id": str(tenant.id), "child_kind": kind, "delivery_revision": delivery_revision})
-    await db.commit()
+    from app.services.tenant_invitation_service import create_invitation
+
+    invitation, raw_token = await create_invitation(
+        db, tenant_id=tenant.id, inviter_user_id=actor_id, email=admin_email, full_name=full_name, roles=[role],
+    )
+    user = (await db.execute(select(User).where(User.id == invitation.user_id, User.tenant_id == tenant.id))).scalar_one()
+    await record_audit(
+        db, tenant_id=parent.id, actor_id=actor_id, action=f"edition.{kind}.provisioned",
+        resource_type="tenant", resource_id=str(tenant.id),
+        metadata={"child_tenant_id": str(tenant.id), "child_kind": kind, "delivery_revision": delivery_revision, "invitation_id": str(invitation.id)},
+    )
     await db.refresh(tenant)
     await db.refresh(user)
-    return tenant, user
+    return tenant, user, invitation, raw_token
 
 
 async def _authorized_parent_entitlement(db: AsyncSession, *, parent: Tenant, feature_code: str, requested_quota: int | None) -> int | None:
