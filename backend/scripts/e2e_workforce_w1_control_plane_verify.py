@@ -53,6 +53,8 @@ from app.services.ai_workforce_roles import (
     workforce_template_capability_contract,
 )
 from app.services.workforce_delegation_service import create_delegation
+from e2e_entitlements import register_and_grant
+from e2e_platform_admin_fixture import ensure_ci_platform_admin_fixture
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
@@ -326,24 +328,17 @@ async def verify_specialist_result(tenant_id, work_item_id):
 
 
 async def run():
+    await ensure_ci_platform_admin_fixture()
     suffix = str(time.time_ns())[-10:]
-    status, data = req(
-        "POST",
-        "/auth/register",
-        {
-            "tenant_name": f"W1 Internal Manager E2E {suffix}",
-            "tenant_slug": f"w1-internal-manager-{suffix}",
-            "email": f"w1-owner-{suffix}@example.com",
-            "password": "W1InternalManagerE2E-2026!",
-            "full_name": "W1 CEO",
-        },
-    )
-    assert status == 201, data
-    token = data["data"]["access_token"]
-    status, me = req("GET", "/auth/me", token=token)
-    assert status == 200, me
-    tenant_id = uuid.UUID(str(me["data"]["tenant"]["id"]))
-    owner_id = uuid.UUID(str(me["data"]["user"]["id"]))
+    tenant_id, owner_id, token, me = register_and_grant(BASE_URL, {
+        "tenant_name": f"W1 Internal Manager E2E {suffix}",
+        "tenant_slug": f"w1-internal-manager-{suffix}",
+        "email": f"w1-owner-{suffix}@example.com",
+        "password": "W1InternalManagerE2E-2026!",
+        "full_name": "W1 CEO",
+    }, reason="W1 control-plane workforce E2E certification")
+    tenant_id = uuid.UUID(str(tenant_id))
+    owner_id = uuid.UUID(str(owner_id))
 
     await license_fixture(tenant_id, suffix)
     manager_id, manager_employee_id, manager_version_id = await provision_agent(
