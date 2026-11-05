@@ -54,7 +54,7 @@ from app.services.ai_workforce_roles import (
 )
 from app.services.workforce_delegation_service import create_delegation
 from e2e_entitlements import register_and_grant
-from e2e_platform_admin_fixture import ensure_ci_platform_admin_fixture
+from e2e_platform_admin_fixture import ensure_credentials
 
 BASE_URL = os.environ.get("E2E_API_BASE_URL", "http://localhost:8000/api/v1")
 
@@ -328,7 +328,7 @@ async def verify_specialist_result(tenant_id, work_item_id):
 
 
 async def run():
-    await ensure_ci_platform_admin_fixture()
+    await ensure_credentials()
     suffix = str(time.time_ns())[-10:]
     tenant_id, owner_id, token, me = register_and_grant(BASE_URL, {
         "tenant_name": f"W1 Internal Manager E2E {suffix}",
