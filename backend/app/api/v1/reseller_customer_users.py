@@ -11,6 +11,7 @@ from app.core.deps import DbSession
 from app.core.edition_deps import ResellerCustomerManageContext
 from app.models.role import Permission, Role, user_roles
 from app.models.tenant import Tenant
+from app.models.tenant_invitation import TenantInvitation
 from app.models.user import User
 from app.models.tenant_invitation import TenantInvitation
 from app.schemas.common import APIResponse
@@ -186,10 +187,10 @@ async def revoke_customer_user_invitation(
 ):
     customer = await _load_direct_customer(customer_id, ctx, db, lock=True)
     owned_invitation = (await db.execute(
-        select(tenant_invitation_service.TenantInvitation.id).where(
+        select(TenantInvitation.id).where(
             tenant_invitation_service.TenantInvitation.id == invitation_id,
-            tenant_invitation_service.TenantInvitation.tenant_id == customer.id,
-            tenant_invitation_service.TenantInvitation.invited_by_user_id == ctx.user_id,
+            TenantInvitation.tenant_id == customer.id,
+            TenantInvitation.invited_by_user_id == ctx.user_id,
         )
     )).scalar_one_or_none()
     if owned_invitation is None:
