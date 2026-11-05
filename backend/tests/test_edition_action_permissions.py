@@ -217,3 +217,69 @@ def test_received_action_grant_is_not_redelegatable():
     assert not _grantor_holds_action(grantor, "vendor.customer.create")
     grantor.roles[0].permissions = [SimpleNamespace(code="vendor.customer.create")]
     assert _grantor_holds_action(grantor, "vendor.customer.create")
+
+
+@pytest.mark.asyncio
+async def test_portal_context_action_permission_uses_immutable_actor_tenant():
+    from app.core.edition_deps import _has_action_permission
+
+    actor_tenant_id = uuid4()
+    context_tenant_id = uuid4()
+    permission = SimpleNamespace(code="vendor.customer.create")
+    actor_role = SimpleNamespace(tenant_id=actor_tenant_id, permissions=[permission])
+    context_role = SimpleNamespace(tenant_id=context_tenant_id, permissions=[])
+    ctx = SimpleNamespace(
+        tenant=SimpleNamespace(id=context_tenant_id, tenant_kind="vendor"),
+        tenant_id=context_tenant_id,
+        actor_tenant_id=actor_tenant_id,
+        user_id=uuid4(),
+        user=SimpleNamespace(roles=[actor_role, context_role]),
+        api_key_id=None,
+        api_key_scopes=None,
+    )
+
+    assert await _has_action_permission(ctx, None, "vendor.customer.create")
+
+
+@pytest.mark.asyncio
+async def test_portal_context_rejects_action_permission_from_target_tenant():
+    from app.core.edition_deps import _has_action_permission
+
+    actor_tenant_id = uuid4()
+    context_tenant_id = uuid4()
+    permission = SimpleNamespace(code="vendor.customer.create")
+    context_role = SimpleNamespace(tenant_id=context_tenant_id, permissions=[permission])
+    ctx = SimpleNamespace(
+        tenant=SimpleNamespace(id=context_tenant_id, tenant_kind="vendor"),
+        tenant_id=context_tenant_id,
+        actor_tenant_id=actor_tenant_id,
+        user_id=uuid4(),
+        user=SimpleNamespace(roles=[context_role]),
+        api_key_id=None,
+        api_key_scopes=None,
+    )
+
+    assert not await _has_action_permission(ctx, None, "vendor.customer.create")
+
+
+@pytest.mark.asyncio
+async def test_portal_context_user_action_grant_is_looked_up_in_actor_tenant():
+    from app.core.edition_deps import _has_action_permission
+
+    actor_tenant_id = uuid4()
+    context_tenant_id = uuid4()
+    ctx = SimpleNamespace(
+        tenant=SimpleNamespace(id=context_tenant_id, tenant_kind="vendor"),
+        tenant_id=context_tenant_id,
+        actor_tenant_id=actor_tenant_id,
+        user_id=uuid4(),
+        user=SimpleNamespace(roles=[]),
+        api_key_id=None,
+        api_key_scopes=None,
+    )
+    db = SimpleNamespace(execute=AsyncMock(return_value=SimpleNamespace(scalar_one_or_none=lambda: uuid4())))
+
+    assert await _has_action_permission(ctx, db, "vendor.customer.create")
+    statement = db.execute.await_args.args[0]
+    assert actor_tenant_id in statement.compile().params.values()
+    assert context_tenant_id not in statement.compile().params.values()

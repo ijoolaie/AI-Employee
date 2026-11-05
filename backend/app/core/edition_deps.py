@@ -143,13 +143,14 @@ async def require_customer_admin(ctx: CurrentContext, request: Request) -> Tenan
 
 
 async def _has_action_permission(ctx: TenantContext, db, permission_code: str) -> bool:
-    if any(permission.code == permission_code for role in ctx.user.roles if role.tenant_id == ctx.tenant_id for permission in role.permissions):
+    actor_tenant_id = getattr(ctx, "actor_tenant_id", ctx.tenant_id)
+    if any(permission.code == permission_code for role in ctx.user.roles if role.tenant_id == actor_tenant_id for permission in role.permissions):
         return True
     # API keys never inherit user-bound action grants.
     if getattr(ctx, "api_key_id", None) is not None or db is None:
         return False
     from app.services.tenant_action_grant_service import has_active_tenant_action_grant
-    return await has_active_tenant_action_grant(db, user_id=ctx.user_id, tenant_id=ctx.tenant_id, action_code=permission_code)
+    return await has_active_tenant_action_grant(db, user_id=ctx.user_id, tenant_id=actor_tenant_id, action_code=permission_code)
 
 
 def require_vendor_permission(permission_code: str):
