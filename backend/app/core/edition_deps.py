@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
 
-from app.core.deps import CurrentContext, TenantContext
+from app.core.deps import CurrentContext, DbSession, TenantContext
 from app.services.edition_service import require_edition, EDITION_CUSTOMER, EDITION_RESELLER, EDITION_VENDOR
 
 # Scope names are an explicit contract for API-key access to the commercial
@@ -142,45 +142,37 @@ async def require_customer_admin(ctx: CurrentContext, request: Request) -> Tenan
     return ctx
 
 
-def require_vendor_permission(permission_code: str):
-    """Build a dependency requiring a tenant-local vendor action grant."""
-    async def checker(ctx: CurrentContext, request: Request) -> TenantContext:
-        require_edition(ctx, EDITION_VENDOR)
-        _enforce_api_key_scope(ctx, request, EDITION_VENDOR)
-        granted = any(
-            permission.code == permission_code
-            for role in ctx.user.roles
-            if role.tenant_id == ctx.tenant_id
-            for permission in role.permissions
-        )
-        if not granted:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Missing permission: {permission_code}",
-            )
-        return ctx
+async def _has_action_permission(ctx: TenantContext, db, permission_code: str) -> bool:
+    if any(permission.code == permission_code for role in ctx.user.roles if role.tenant_id == ctx.tenant_id for permission in role.permissions):
+        return True
+    # API keys never inherit user-bound action grants.
+    if getattr(ctx, "api_key_id", None) is not None or db is None:
+        return False
+    from app.services.tenant_action_grant_service import has_active_tenant_action_grant
+    return await has_active_tenant_action_grant(db, user_id=ctx.user_id, tenant_id=ctx.tenant_id, action_code=permission_code)
 
+
+def require_vendor_permission(permission_code: str):
+    """Require a tenant-local role permission or explicit user action grant."""
+    async def checker(ctx: CurrentContext, request: Request, db: DbSession) -> TenantContext:
+        if ctx.tenant.tenant_kind != EDITION_VENDOR:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Vendor edition access required")
+        _enforce_api_key_scope(ctx, request, EDITION_VENDOR)
+        if not await _has_action_permission(ctx, db, permission_code):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Missing permission: {permission_code}")
+        return ctx
     return checker
 
 
 def require_reseller_permission(permission_code: str):
-    """Build a dependency requiring a tenant-local reseller action grant."""
-    async def checker(ctx: CurrentContext, request: Request) -> TenantContext:
-        require_edition(ctx, EDITION_RESELLER)
+    """Require a tenant-local role permission or explicit user action grant."""
+    async def checker(ctx: CurrentContext, request: Request, db: DbSession) -> TenantContext:
+        if ctx.tenant.tenant_kind != EDITION_RESELLER:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Reseller edition access required")
         _enforce_api_key_scope(ctx, request, EDITION_RESELLER)
-        granted = any(
-            permission.code == permission_code
-            for role in ctx.user.roles
-            if role.tenant_id == ctx.tenant_id
-            for permission in role.permissions
-        )
-        if not granted:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Missing permission: {permission_code}",
-            )
+        if not await _has_action_permission(ctx, db, permission_code):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Missing permission: {permission_code}")
         return ctx
-
     return checker
 
 
