@@ -55,12 +55,12 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             grantor = User(
                 tenant_id=vendor.id, email=f"portal-grantor-{run_id}@example.com",
                 password_hash="not-used", full_name="Portal Grantor", is_active=True,
-                is_superuser=False, is_platform_admin=False,
+                is_superuser=False, is_platform_admin=False, roles=[],
             )
             actor = User(
                 tenant_id=vendor.id, email=f"portal-actor-{run_id}@example.com",
                 password_hash="not-used", full_name="Portal Actor", is_active=True,
-                is_superuser=False, is_platform_admin=False,
+                is_superuser=False, is_platform_admin=False, roles=[],
             )
             session.add_all([grantor, actor])
             await session.flush()

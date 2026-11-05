@@ -147,7 +147,7 @@ async def has_permission(ctx: TenantContext, permission_code: str) -> bool:
     return any(
         permission.code == permission_code
         for role in ctx.user.roles
-        if role.tenant_id == ctx.actor_tenant_id
+        if role.tenant_id == getattr(ctx, "actor_tenant_id", ctx.tenant_id)
         for permission in role.permissions
     )
 
