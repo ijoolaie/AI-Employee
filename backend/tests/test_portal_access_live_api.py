@@ -298,6 +298,18 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert "sibling tenant secret" not in knowledge_content
                 blocked_admin = await client.get("/api/v1/tenant-admin/users", headers=portal_headers)
                 assert blocked_admin.status_code == 403, blocked_admin.text
+                # Tenant notification destinations are private tenant-admin settings;
+                # portal context must not read or mutate them even when the grant is valid.
+                blocked_notification_read = await client.get(
+                    "/api/v1/tenant-admin/customer-handoff-notification", headers=portal_headers,
+                )
+                assert blocked_notification_read.status_code == 403, blocked_notification_read.text
+                blocked_notification_write = await client.put(
+                    "/api/v1/tenant-admin/customer-handoff-notification",
+                    headers=portal_headers,
+                    json={"email": "attacker-controlled@example.com"},
+                )
+                assert blocked_notification_write.status_code == 403, blocked_notification_write.text
                 blocked_billing = await client.get("/api/v1/billing/subscription", headers=portal_headers)
                 assert blocked_billing.status_code == 403, blocked_billing.text
 
