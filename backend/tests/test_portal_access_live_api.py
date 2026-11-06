@@ -40,6 +40,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.portal_access_grant import PortalAccessGrant
     from app.models.outbox import OutboxMessage
     from app.models.business_invoice import BusinessInvoice
+    from app.models.test_definition import TestDefinition
+    from app.models.test_run import TestRun, TestRunStatus
+    from app.models.test_run_artifact import TestRunArtifact
     from app.models.ai_provider_call import AIProviderCall
     from app.models.workflow import WorkflowRun
     from app.models.file import FileObject
@@ -122,6 +125,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 invoice_read_permission = Permission(code="invoices.read", description="Read invoices")
                 session.add(invoice_read_permission)
                 await session.flush()
+            run_read_permission = (
+                await session.execute(select(Permission).where(Permission.code == "run.read"))
+            ).scalar_one_or_none()
+            if run_read_permission is None:
+                run_read_permission = Permission(code="run.read", description="Read Test Center runs")
+                session.add(run_read_permission)
+                await session.flush()
             workflow_write_permission = (
                 await session.execute(select(Permission).where(Permission.code == "workflow.write"))
             ).scalar_one_or_none()
@@ -141,7 +151,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reader_role = Role(tenant_id=vendor.id, name="Employee Reader", description="Portal integration reader")
             reader_role.permissions = [
                 permission, *file_permissions, workflow_execute_permission,
-                workflow_read_permission, invoice_read_permission, audit_read_permission,
+                workflow_read_permission, invoice_read_permission, run_read_permission, audit_read_permission,
             ]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
@@ -213,6 +223,36 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 target_dead_letter, sibling_dead_letter, vendor_b_dead_letter,
                 target_invoice, sibling_invoice, vendor_b_invoice,
             ])
+            test_center_rows = []
+            for tenant, marker in ((target, "target"), (sibling, "sibling"), (reseller_b, "vendor-b")):
+                definition = TestDefinition(
+                    tenant_id=tenant.id, code=f"portal-{marker}-{run_id}",
+                    name=f"{marker} private verification", workspace_key="ops",
+                    edition="shared", enabled=True, prerequisites={}, expected_result={},
+                    evidence_requirements={},
+                )
+                session.add(definition)
+                await session.flush()
+                test_run = TestRun(
+                    tenant_id=tenant.id, test_definition_id=definition.id,
+                    workspace_key="ops", status=TestRunStatus.PASSED,
+                    executor_type="backend", fixtures={"tenant_marker": marker},
+                    result={"private_result": f"{marker}-result"},
+                    evidence={"private_evidence": f"{marker}-evidence"},
+                )
+                session.add(test_run)
+                await session.flush()
+                artifact = TestRunArtifact(
+                    tenant_id=tenant.id, test_run_id=test_run.id,
+                    artifact_type="log", label=f"{marker}-private-artifact",
+                    reference=f"evidence://{marker}/{run_id}",
+                    metadata={"tenant_marker": marker},
+                )
+                session.add(artifact)
+                test_center_rows.append((tenant, test_run, definition, artifact))
+            target_test_run = test_center_rows[0][1]
+            sibling_test_run = test_center_rows[1][1]
+            vendor_b_test_run = test_center_rows[2][1]
             await session.flush()
             target_dashboard_employee = Employee(
                 tenant_id=target.id, slug=f"target-dashboard-{run_id}",
@@ -473,6 +513,30 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert invoice_data[0]["number"] == target_invoice.number
                 assert "Sibling Reseller Secret" not in str(invoice_data)
                 assert "Vendor B Secret Customer" not in str(invoice_data)
+
+                verification_record = await client.get(
+                    f"/api/v1/test-center/runs/{target_test_run.id}/verification-record",
+                    headers=portal_headers,
+                )
+                assert verification_record.status_code == 200, verification_record.text
+                assert "attachment;" in verification_record.headers.get("content-disposition", "")
+                verification_data = verification_record.json()
+                assert verification_data["tenant_id"] == str(target.id)
+                assert verification_data["run"]["id"] == str(target_test_run.id)
+                assert verification_data["test_definition"]["name"] == "target private verification"
+                assert [item["label"] for item in verification_data["artifacts"]] == [
+                    "target-private-artifact"
+                ]
+                sibling_verification = await client.get(
+                    f"/api/v1/test-center/runs/{sibling_test_run.id}/verification-record",
+                    headers=portal_headers,
+                )
+                assert sibling_verification.status_code == 404, sibling_verification.text
+                vendor_b_verification = await client.get(
+                    f"/api/v1/test-center/runs/{vendor_b_test_run.id}/verification-record",
+                    headers=portal_headers,
+                )
+                assert vendor_b_verification.status_code == 404, vendor_b_verification.text
 
                 invoice_summary = await client.get("/api/v1/invoices/summary", headers=portal_headers)
                 assert invoice_summary.status_code == 200, invoice_summary.text
