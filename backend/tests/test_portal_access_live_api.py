@@ -183,7 +183,6 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             )
             session.add_all([target_dead_letter, sibling_dead_letter, vendor_b_dead_letter])
             await session.flush()
-            await session.flush()
             target_dashboard_employee = Employee(
                 tenant_id=target.id, slug=f"target-dashboard-{run_id}",
                 name="Target dashboard employee", kind="custom", is_active=True,
