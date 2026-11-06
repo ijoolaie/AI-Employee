@@ -211,6 +211,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
                 )
                 assert customer_portal_users.status_code == 403, customer_portal_users.text
+                # Analytics ROI is an admin-only surface and must remain
+                # unavailable to portal-context tokens, even with a valid grant.
+                customer_portal_roi = await client.get(
+                    "/api/v1/analytics/roi",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_portal_roi.status_code == 403, customer_portal_roi.text
                 customer_escalation = await client.post(
                     "/api/v1/edition/reseller/portal-access-grants",
                     headers=customer_actor_headers,
