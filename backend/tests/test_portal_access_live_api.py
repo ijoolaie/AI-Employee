@@ -41,6 +41,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.workflow import WorkflowRun
     from app.models.file import FileObject
     from app.models.customer import Customer
+    from app.models.employee import Employee
     from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
     from app.rag import service as rag_service
     from app.models.role import Permission, Role
@@ -109,10 +110,17 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 workflow_write_permission = Permission(code="workflow.write", description="Manage workflows")
                 session.add(workflow_write_permission)
                 await session.flush()
+            audit_read_permission = (await session.execute(
+                select(Permission).where(Permission.code == "audit.read")
+            )).scalar_one_or_none()
+            if audit_read_permission is None:
+                audit_read_permission = Permission(code="audit.read", description="Read audit data")
+                session.add(audit_read_permission)
+                await session.flush()
             admin_role = Role(tenant_id=vendor.id, name="Admin", description="Portal integration admin")
             reseller_admin_role = Role(tenant_id=target.id, name="Admin", description="Reseller portal admin")
             reader_role = Role(tenant_id=vendor.id, name="Employee Reader", description="Portal integration reader")
-            reader_role.permissions = [permission, *file_permissions, workflow_execute_permission]
+            reader_role.permissions = [permission, *file_permissions, workflow_execute_permission, audit_read_permission]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
             reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
@@ -137,6 +145,16 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reseller_private_customer = Customer(tenant_id=target.id, external_key=f"reseller-private-customer-{run_id}", name="Reseller-only customer", email="reseller-private@example.com", notes="reseller-private-note")
             cross_vendor_customer = Customer(tenant_id=reseller_b.id, external_key=f"vendor-b-customer-{run_id}", name="Vendor B private customer", email="vendor-b-private@example.com", notes="vendor-b-private-note")
             session.add_all([target_customer, sibling_customer, customer_portal_customer, reseller_private_customer, cross_vendor_customer])
+            await session.flush()
+            target_dashboard_employee = Employee(
+                tenant_id=target.id, slug=f"target-dashboard-{run_id}",
+                name="Target dashboard employee", kind="custom", is_active=True,
+            )
+            sibling_dashboard_employee = Employee(
+                tenant_id=sibling.id, slug=f"sibling-dashboard-{run_id}",
+                name="Sibling dashboard secret", kind="custom", is_active=True,
+            )
+            session.add_all([target_dashboard_employee, sibling_dashboard_employee])
             await session.flush()
             sibling_document = KnowledgeDocument(tenant_id=sibling.id, file_id=sibling_file.id, status="indexed", chunk_count=1, embedding_model="portal-test")
             session.add(sibling_document)
@@ -327,6 +345,21 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
 
                 employees = await client.get("/api/v1/employees", headers=portal_headers)
                 assert employees.status_code == 200, employees.text
+
+                # Customer-dashboard career reads use AuditReadContext. Verify
+                # that the effective portal tenant scopes both positive and
+                # negative employee lookups across sibling reseller trees.
+                target_career = await client.get(
+                    f"/api/v1/customer-dashboard/employees/{target_dashboard_employee.id}/career",
+                    headers=portal_headers,
+                )
+                assert target_career.status_code == 200, target_career.text
+                assert target_career.json()["data"]["employee"]["id"] == str(target_dashboard_employee.id)
+                sibling_career = await client.get(
+                    f"/api/v1/customer-dashboard/employees/{sibling_dashboard_employee.id}/career",
+                    headers=portal_headers,
+                )
+                assert sibling_career.status_code == 404, sibling_career.text
 
                 visible_files = await client.get("/api/v1/files", headers=portal_headers)
                 assert visible_files.status_code == 200, visible_files.text
