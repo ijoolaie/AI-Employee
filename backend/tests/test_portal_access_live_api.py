@@ -178,7 +178,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             actor.roles = [reader_role]
             vendor_b_grantor.roles = [vendor_b_admin_role]
             vendor_b_reader_role.permissions = [
-                *file_permissions, workflow_read_permission,
+                *file_permissions, workflow_execute_permission, workflow_read_permission,
                 invoice_read_permission, run_read_permission, audit_read_permission,
             ]
             vendor_b_actor.roles = [vendor_b_reader_role]
