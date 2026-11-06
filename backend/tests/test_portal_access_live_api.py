@@ -107,6 +107,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 workflow_execute_permission = Permission(code="workflow.execute", description="Execute workflows")
                 session.add(workflow_execute_permission)
                 await session.flush()
+            workflow_read_permission = (
+                await session.execute(select(Permission).where(Permission.code == "workflow.read"))
+            ).scalar_one_or_none()
+            if workflow_read_permission is None:
+                workflow_read_permission = Permission(code="workflow.read", description="Read workflow operations")
+                session.add(workflow_read_permission)
+                await session.flush()
             workflow_write_permission = (
                 await session.execute(select(Permission).where(Permission.code == "workflow.write"))
             ).scalar_one_or_none()
@@ -124,7 +131,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             admin_role = Role(tenant_id=vendor.id, name="Admin", description="Portal integration admin")
             reseller_admin_role = Role(tenant_id=target.id, name="Admin", description="Reseller portal admin")
             reader_role = Role(tenant_id=vendor.id, name="Employee Reader", description="Portal integration reader")
-            reader_role.permissions = [permission, *file_permissions, workflow_execute_permission, audit_read_permission]
+            reader_role.permissions = [
+                permission, *file_permissions, workflow_execute_permission,
+                workflow_read_permission, audit_read_permission,
+            ]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
             reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
@@ -153,6 +163,26 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 AIProviderCall(tenant_id=target.id, provider="portal-test", model="target-model", prompt_tokens=7, completion_tokens=5, cost_usd=0.01, latency_ms=25, status="success"),
                 AIProviderCall(tenant_id=sibling.id, provider="portal-test", model="sibling-secret-model", prompt_tokens=900, completion_tokens=900, cost_usd=99.0, latency_ms=999, status="success"),
             ])
+            target_dead_letter = OutboxMessage(
+                tenant_id=target.id, kind="workflow.execute",
+                payload={"private_marker": "target-reseller-dead-letter"},
+                status="dead", attempts=4, last_error="target-only failure",
+                dead_at=datetime.now(timezone.utc),
+            )
+            sibling_dead_letter = OutboxMessage(
+                tenant_id=sibling.id, kind="workflow.execute",
+                payload={"private_marker": "sibling-reseller-secret"},
+                status="dead", attempts=8, last_error="sibling secret failure",
+                dead_at=datetime.now(timezone.utc),
+            )
+            vendor_b_dead_letter = OutboxMessage(
+                tenant_id=reseller_b.id, kind="workflow.execute",
+                payload={"private_marker": "vendor-b-secret"},
+                status="dead", attempts=9, last_error="Vendor B secret failure",
+                dead_at=datetime.now(timezone.utc),
+            )
+            session.add_all([target_dead_letter, sibling_dead_letter, vendor_b_dead_letter])
+            await session.flush()
             await session.flush()
             target_dashboard_employee = Employee(
                 tenant_id=target.id, slug=f"target-dashboard-{run_id}",
@@ -403,6 +433,42 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert usage_data["completion_tokens"] == 5
                 assert usage_data["total_tokens"] == 12
                 assert usage_data["cost_usd"] == 0.01
+
+                # Operations metrics and dead-letter payloads are tenant data too:
+                # expose only the validated Reseller context, never sibling or Vendor B.
+                operations_metrics = await client.get("/api/v1/operations/metrics", headers=portal_headers)
+                assert operations_metrics.status_code == 200, operations_metrics.text
+                metrics_data = operations_metrics.json()["data"]
+                assert metrics_data["outbox"]["dead"] == 1
+                assert metrics_data["workflow_runs_total"] == 1
+                assert metrics_data["ai"]["calls"] == 1
+                assert metrics_data["ai"]["tokens"] == 12
+                assert metrics_data["ai"]["cost_usd"] == 0.01
+
+                dead_letters = await client.get("/api/v1/operations/dead-letters", headers=portal_headers)
+                assert dead_letters.status_code == 200, dead_letters.text
+                dead_letter_data = dead_letters.json()["data"]
+                assert [item["id"] for item in dead_letter_data] == [str(target_dead_letter.id)]
+                assert dead_letter_data[0]["payload"]["private_marker"] == "target-reseller-dead-letter"
+                assert "sibling-reseller-secret" not in str(dead_letter_data)
+                assert "vendor-b-secret" not in str(dead_letter_data)
+
+                sibling_replay = await client.post(
+                    f"/api/v1/operations/dead-letters/{sibling_dead_letter.id}/replay",
+                    headers=portal_headers,
+                )
+                assert sibling_replay.status_code == 404, sibling_replay.text
+                vendor_b_replay = await client.post(
+                    f"/api/v1/operations/dead-letters/{vendor_b_dead_letter.id}/replay",
+                    headers=portal_headers,
+                )
+                assert vendor_b_replay.status_code == 404, vendor_b_replay.text
+                target_replay = await client.post(
+                    f"/api/v1/operations/dead-letters/{target_dead_letter.id}/replay",
+                    headers=portal_headers,
+                )
+                assert target_replay.status_code == 200, target_replay.text
+                assert target_replay.json()["data"]["status"] == "pending"
 
                 # The live office view also aggregates employee identity and
                 # presentation state. Stub only billing lookups so this test
