@@ -39,6 +39,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.main import app
     from app.models.portal_access_grant import PortalAccessGrant
     from app.models.outbox import OutboxMessage
+    from app.models.business_invoice import BusinessInvoice
     from app.models.ai_provider_call import AIProviderCall
     from app.models.workflow import WorkflowRun
     from app.models.file import FileObject
@@ -114,6 +115,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 workflow_read_permission = Permission(code="workflow.read", description="Read workflow operations")
                 session.add(workflow_read_permission)
                 await session.flush()
+            invoice_read_permission = (
+                await session.execute(select(Permission).where(Permission.code == "invoices.read"))
+            ).scalar_one_or_none()
+            if invoice_read_permission is None:
+                invoice_read_permission = Permission(code="invoices.read", description="Read invoices")
+                session.add(invoice_read_permission)
+                await session.flush()
             workflow_write_permission = (
                 await session.execute(select(Permission).where(Permission.code == "workflow.write"))
             ).scalar_one_or_none()
@@ -133,7 +141,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reader_role = Role(tenant_id=vendor.id, name="Employee Reader", description="Portal integration reader")
             reader_role.permissions = [
                 permission, *file_permissions, workflow_execute_permission,
-                workflow_read_permission, audit_read_permission,
+                workflow_read_permission, invoice_read_permission, audit_read_permission,
             ]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
@@ -182,6 +190,29 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 dead_at=datetime.now(timezone.utc),
             )
             session.add_all([target_dead_letter, sibling_dead_letter, vendor_b_dead_letter])
+            today = datetime.now(timezone.utc).date()
+            target_invoice = BusinessInvoice(
+                tenant_id=target.id, number=f"TARGET-{run_id}", status="paid",
+                currency="USD", customer_name="Target Reseller Customer",
+                issue_date=today, subtotal=120, tax_rate=0, tax_amount=0,
+                total=120, line_items=[{"description": "target-only", "quantity": 1, "unit_price": 120}],
+            )
+            sibling_invoice = BusinessInvoice(
+                tenant_id=sibling.id, number=f"SIBLING-{run_id}", status="paid",
+                currency="USD", customer_name="Sibling Reseller Secret",
+                issue_date=today, subtotal=900, tax_rate=0, tax_amount=0,
+                total=900, line_items=[{"description": "sibling-secret", "quantity": 1, "unit_price": 900}],
+            )
+            vendor_b_invoice = BusinessInvoice(
+                tenant_id=reseller_b.id, number=f"VENDOR-B-{run_id}", status="paid",
+                currency="USD", customer_name="Vendor B Secret Customer",
+                issue_date=today, subtotal=9900, tax_rate=0, tax_amount=0,
+                total=9900, line_items=[{"description": "vendor-b-secret", "quantity": 1, "unit_price": 9900}],
+            )
+            session.add_all([
+                target_dead_letter, sibling_dead_letter, vendor_b_dead_letter,
+                target_invoice, sibling_invoice, vendor_b_invoice,
+            ])
             await session.flush()
             target_dashboard_employee = Employee(
                 tenant_id=target.id, slug=f"target-dashboard-{run_id}",
@@ -432,6 +463,32 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert usage_data["completion_tokens"] == 5
                 assert usage_data["total_tokens"] == 12
                 assert usage_data["cost_usd"] == 0.01
+
+                # Invoice list, detail, and financial aggregates must use the
+                # validated portal tenant, not the Vendor actor's home or sibling tenants.
+                invoices = await client.get("/api/v1/invoices", headers=portal_headers)
+                assert invoices.status_code == 200, invoices.text
+                invoice_data = invoices.json()["data"]
+                assert [item["id"] for item in invoice_data] == [str(target_invoice.id)]
+                assert invoice_data[0]["number"] == target_invoice.number
+                assert "Sibling Reseller Secret" not in str(invoice_data)
+                assert "Vendor B Secret Customer" not in str(invoice_data)
+
+                invoice_summary = await client.get("/api/v1/invoices/summary", headers=portal_headers)
+                assert invoice_summary.status_code == 200, invoice_summary.text
+                summary_data = invoice_summary.json()["data"]
+                assert summary_data["total_invoices"] == 1
+                assert summary_data["counts_by_status"] == {"paid": 1}
+                assert summary_data["currency_breakdown"]["USD"]["collected"] == 120.0
+
+                sibling_invoice_read = await client.get(
+                    f"/api/v1/invoices/{sibling_invoice.id}", headers=portal_headers,
+                )
+                assert sibling_invoice_read.status_code == 404, sibling_invoice_read.text
+                vendor_b_invoice_read = await client.get(
+                    f"/api/v1/invoices/{vendor_b_invoice.id}", headers=portal_headers,
+                )
+                assert vendor_b_invoice_read.status_code == 404, vendor_b_invoice_read.text
 
                 # Operations metrics and dead-letter payloads are tenant data too:
                 # expose only the validated Reseller context, never sibling or Vendor B.
