@@ -122,3 +122,26 @@ def test_superuser_delegation_is_limited_to_explicit_tenant_permissions():
         _assert_roles_within_authority(ctx, [elevated_role])
 
     assert exc.value.status_code == 403
+
+
+def test_vendor_control_plane_role_cannot_be_delegated_even_by_vendor_admin():
+    ctx = _ctx("vendor.tenant.read", "vendor.reseller.create", "employee.read")
+    vendor_admin_role = _role(
+        ctx.tenant_id,
+        "vendor.tenant.read",
+        "vendor.reseller.create",
+        "employee.read",
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        _assert_roles_within_authority(ctx, [vendor_admin_role])
+
+    assert exc.value.status_code == 403
+    assert exc.value.detail == "Vendor control-plane permissions cannot be delegated"
+
+
+def test_regular_tenant_role_without_vendor_permissions_remains_assignable():
+    ctx = _ctx("employee.read", "employee.write")
+    ordinary_role = _role(ctx.tenant_id, "employee.read")
+
+    _assert_roles_within_authority(ctx, [ordinary_role])
