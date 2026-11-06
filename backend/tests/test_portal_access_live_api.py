@@ -34,9 +34,14 @@ def _dedicated_test_database_url() -> str:
 @pytest.mark.asyncio
 async def test_portal_grant_activates_context_and_revocation_invalidates_it(monkeypatch):
     db_url = _dedicated_test_database_url()
+    from app.core.config import get_settings
     from app.core.database import get_db
     from app.core.security import create_access_token
     from app.main import app
+
+    # This integration test makes many authenticated requests; shared CI Redis
+    # buckets can otherwise rate-limit it based on unrelated parallel tests.
+    monkeypatch.setattr(get_settings(), "rate_limit_enabled", False)
     from app.models.portal_access_grant import PortalAccessGrant
     from app.models.outbox import OutboxMessage
     from app.models.business_invoice import BusinessInvoice
@@ -177,7 +182,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
             vendor_b_grantor.roles = [vendor_b_admin_role]
-            vendor_b_reader_role.permissions = [*file_permissions, privacy_export_permission]
+            vendor_b_reader_role.permissions = [
+                *file_permissions, workflow_execute_permission, workflow_read_permission,
+                invoice_read_permission, run_read_permission, audit_read_permission,
+            ]
             vendor_b_actor.roles = [vendor_b_reader_role]
             reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
             reseller_grantor.roles = [reseller_admin_role]
@@ -210,6 +218,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             session.add_all([
                 AIProviderCall(tenant_id=target.id, provider="portal-test", model="target-model", prompt_tokens=7, completion_tokens=5, cost_usd=0.01, latency_ms=25, status="success"),
                 AIProviderCall(tenant_id=sibling.id, provider="portal-test", model="sibling-secret-model", prompt_tokens=900, completion_tokens=900, cost_usd=99.0, latency_ms=999, status="success"),
+                AIProviderCall(tenant_id=reseller_b.id, provider="portal-test", model="vendor-b-model", prompt_tokens=17, completion_tokens=13, cost_usd=0.03, latency_ms=35, status="success"),
             ])
             target_dead_letter = OutboxMessage(
                 tenant_id=target.id, kind="workflow.execute",
@@ -458,6 +467,71 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert vendor_b_cannot_export_vendor_a_customer.status_code == 404, (
                     vendor_b_cannot_export_vendor_a_customer.text
                 )
+
+                # Vendor B usage and invoice reports must resolve only to its Reseller.
+                vendor_b_usage = await client.get("/api/v1/usage/summary", headers=vendor_b_portal_headers)
+                assert vendor_b_usage.status_code == 200, vendor_b_usage.text
+                vendor_b_usage_data = vendor_b_usage.json()["data"]
+                assert vendor_b_usage_data["calls"] == 1
+                assert vendor_b_usage_data["prompt_tokens"] == 17
+                assert vendor_b_usage_data["completion_tokens"] == 13
+                assert vendor_b_usage_data["total_tokens"] == 30
+                assert vendor_b_usage_data["cost_usd"] == 0.03
+
+                vendor_b_invoices = await client.get("/api/v1/invoices", headers=vendor_b_portal_headers)
+                assert vendor_b_invoices.status_code == 200, vendor_b_invoices.text
+                assert [item["id"] for item in vendor_b_invoices.json()["data"]] == [str(vendor_b_invoice.id)]
+                vendor_b_foreign_invoice = await client.get(
+                    f"/api/v1/invoices/{target_invoice.id}", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_foreign_invoice.status_code == 404, vendor_b_foreign_invoice.text
+                vendor_b_invoice_summary = await client.get(
+                    "/api/v1/invoices/summary", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_invoice_summary.status_code == 200, vendor_b_invoice_summary.text
+                vendor_b_summary_data = vendor_b_invoice_summary.json()["data"]
+                assert vendor_b_summary_data["total_invoices"] == 1
+                assert vendor_b_summary_data["counts_by_status"] == {"paid": 1}
+                assert vendor_b_summary_data["currency_breakdown"]["USD"]["collected"] == 9900.0
+
+                vendor_b_verification = await client.get(
+                    f"/api/v1/test-center/runs/{vendor_b_test_run.id}/verification-record",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_verification.status_code == 200, vendor_b_verification.text
+                assert vendor_b_verification.json()["tenant_id"] == str(reseller_b.id)
+                assert [item["label"] for item in vendor_b_verification.json()["artifacts"]] == [
+                    "vendor-b-private-artifact"
+                ]
+                vendor_b_foreign_verification = await client.get(
+                    f"/api/v1/test-center/runs/{target_test_run.id}/verification-record",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_foreign_verification.status_code == 404, vendor_b_foreign_verification.text
+
+                vendor_b_operations = await client.get(
+                    "/api/v1/operations/metrics", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_operations.status_code == 200, vendor_b_operations.text
+                vendor_b_metrics = vendor_b_operations.json()["data"]
+                assert vendor_b_metrics["outbox"]["dead"] == 1
+                assert vendor_b_metrics["ai"]["calls"] == 1
+                assert vendor_b_metrics["ai"]["tokens"] == 30
+                assert vendor_b_metrics["ai"]["cost_usd"] == 0.03
+
+                vendor_b_dead_letters = await client.get(
+                    "/api/v1/operations/dead-letters", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_dead_letters.status_code == 200, vendor_b_dead_letters.text
+                assert [item["id"] for item in vendor_b_dead_letters.json()["data"]] == [
+                    str(vendor_b_dead_letter.id)
+                ]
+                assert "target-reseller-dead-letter" not in str(vendor_b_dead_letters.json()["data"])
+                vendor_b_foreign_dead_letter = await client.post(
+                    f"/api/v1/operations/dead-letters/{target_dead_letter.id}/replay",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_foreign_dead_letter.status_code == 404, vendor_b_foreign_dead_letter.text
 
                 # A Vendor cannot grant access across another Vendor root or skip
                 # its direct Reseller owner to reach a grandchild Customer.
