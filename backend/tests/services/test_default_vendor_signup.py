@@ -118,3 +118,50 @@ def test_new_edition_admin_roles_have_explicit_marketplace_purchase_permission()
         assert "employee_marketplace.publish" in permissions
         assert "employee_marketplace.install" in permissions
         assert "employee_marketplace.revoke" in permissions
+
+@pytest.mark.asyncio
+async def test_vendor_bootstrap_refuses_to_escalate_users_on_shared_admin_role():
+    from scripts.bootstrap_default_vendor import _assert_bootstrap_role_is_exclusive
+
+    user_id = uuid4()
+    other_user_id = uuid4()
+    role = SimpleNamespace(id=uuid4())
+
+    class _AssignedUsers:
+        def scalars(self):
+            return self
+
+        def __iter__(self):
+            return iter([user_id, other_user_id])
+
+    class _Db:
+        async def execute(self, _statement):
+            return _AssignedUsers()
+
+    with pytest.raises(SystemExit, match="shared with other users"):
+        await _assert_bootstrap_role_is_exclusive(
+            _Db(), role=role, user=SimpleNamespace(id=user_id)
+        )
+
+
+@pytest.mark.asyncio
+async def test_vendor_bootstrap_allows_admin_role_assigned_only_to_bootstrap_user():
+    from scripts.bootstrap_default_vendor import _assert_bootstrap_role_is_exclusive
+
+    user_id = uuid4()
+    role = SimpleNamespace(id=uuid4())
+
+    class _AssignedUsers:
+        def scalars(self):
+            return self
+
+        def __iter__(self):
+            return iter([user_id])
+
+    class _Db:
+        async def execute(self, _statement):
+            return _AssignedUsers()
+
+    await _assert_bootstrap_role_is_exclusive(
+        _Db(), role=role, user=SimpleNamespace(id=user_id)
+    )

@@ -51,6 +51,20 @@ BOOTSTRAP_ADMIN_PERMISSIONS = (
 )
 
 
+async def _assert_bootstrap_role_is_exclusive(db, *, role: Role, user: User) -> None:
+    """Refuse to attach control-plane permissions to a role shared with other users."""
+    assigned_user_ids = set(
+        (await db.execute(
+            select(user_roles.c.user_id).where(user_roles.c.role_id == role.id)
+        )).scalars()
+    )
+    if assigned_user_ids - {user.id}:
+        raise SystemExit(
+            "Existing Vendor Admin role is shared with other users; refusing to grant "
+            "Vendor control-plane permissions to a shared role"
+        )
+
+
 async def bootstrap() -> None:
     settings = get_settings()
     slug = (settings.default_vendor_tenant_slug or "").strip()
@@ -117,6 +131,10 @@ async def bootstrap() -> None:
             role = Role(tenant_id=vendor.id, name="Admin", description="Root Vendor control-plane administrator")
             db.add(role)
             await db.flush()
+
+        # Role permissions are inherited by every assigned user. Never add
+        # Vendor control-plane authority to a pre-existing shared Admin role.
+        await _assert_bootstrap_role_is_exclusive(db, role=role, user=user)
 
         grants_added: list[str] = []
         for code in BOOTSTRAP_ADMIN_PERMISSIONS:
