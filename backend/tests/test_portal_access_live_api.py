@@ -53,9 +53,14 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     target.parent = vendor
     sibling = Tenant(name=f"Portal sibling reseller {run_id}", slug=f"portal-sibling-{run_id}", status="active", tenant_kind="reseller", access_grant_required=True, settings={})
     sibling.parent = vendor
+    vendor_b = Tenant(name=f"Portal test vendor B {run_id}", slug=f"portal-vendor-b-{run_id}", status="active", tenant_kind="vendor", settings={})
+    reseller_b = Tenant(name=f"Portal test reseller B {run_id}", slug=f"portal-reseller-b-{run_id}", status="active", tenant_kind="reseller", access_grant_required=True, settings={})
+    reseller_b.parent = vendor_b
+    customer_a = Tenant(name=f"Portal test customer A {run_id}", slug=f"portal-customer-a-{run_id}", status="active", tenant_kind="customer", access_grant_required=True, settings={})
+    customer_a.parent = target
     try:
         async with sessions() as session:
-            session.add_all([vendor, target, sibling])
+            session.add_all([vendor, target, sibling, vendor_b, reseller_b, customer_a])
             await session.flush()
             grantor = User(
                 tenant_id=vendor.id, email=f"portal-grantor-{run_id}@example.com",
@@ -91,7 +96,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             actor.roles = [reader_role]
             target_file = FileObject(tenant_id=target.id, uploaded_by=actor.id, filename="target-policy.txt", content_type="text/plain", size_bytes=10, storage_key=f"{target.id}/target-policy.txt", status="active")
             sibling_file = FileObject(tenant_id=sibling.id, uploaded_by=actor.id, filename="sibling-secret.txt", content_type="text/plain", size_bytes=12, storage_key=f"{sibling.id}/sibling-secret.txt", status="active")
-            session.add_all([target_file, sibling_file])
+            cross_vendor_file = FileObject(tenant_id=reseller_b.id, uploaded_by=actor.id, filename="vendor-b-secret.txt", content_type="text/plain", size_bytes=15, storage_key=f"{reseller_b.id}/vendor-b-secret.txt", status="active")
+            session.add_all([target_file, sibling_file, cross_vendor_file])
             await session.flush()
             sibling_document = KnowledgeDocument(tenant_id=sibling.id, file_id=sibling_file.id, status="indexed", chunk_count=1, embedding_model="portal-test")
             session.add(sibling_document)
@@ -152,6 +158,21 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert created.status_code == 201, created.text
                 grant_id = created.json()["data"]["id"]
 
+                # A Vendor cannot grant access across another Vendor root or skip
+                # its direct Reseller owner to reach a grandchild Customer.
+                cross_vendor_grant = await client.post(
+                    "/api/v1/edition/vendor/portal-access-grants",
+                    headers=grantor_headers,
+                    json={"actor_user_id": str(actor.id), "target_tenant_id": str(reseller_b.id), "reason": "Must be denied across Vendor roots"},
+                )
+                assert cross_vendor_grant.status_code == 403, cross_vendor_grant.text
+                grandchild_grant = await client.post(
+                    "/api/v1/edition/vendor/portal-access-grants",
+                    headers=grantor_headers,
+                    json={"actor_user_id": str(actor.id), "target_tenant_id": str(customer_a.id), "reason": "Must not skip the direct Reseller"},
+                )
+                assert grandchild_grant.status_code == 403, grandchild_grant.text
+
                 activated = await client.post(
                     f"/api/v1/edition/vendor/portal-access-grants/{grant_id}/activate",
                     headers=actor_headers,
@@ -174,6 +195,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert [item["id"] for item in visible_files.json()["data"]] == [str(target_file.id)]
                 foreign_file = await client.get(f"/api/v1/files/{sibling_file.id}", headers=portal_headers)
                 assert foreign_file.status_code == 404, foreign_file.text
+                cross_vendor_file_response = await client.get(f"/api/v1/files/{cross_vendor_file.id}", headers=portal_headers)
+                assert cross_vendor_file_response.status_code == 404, cross_vendor_file_response.text
                 foreign_index = await client.post("/api/v1/knowledge/index", headers=portal_headers, json={"file_id": str(sibling_file.id)})
                 assert foreign_index.status_code == 404, foreign_index.text
                 target_index = await client.post("/api/v1/knowledge/index", headers=portal_headers, json={"file_id": str(target_file.id)})
