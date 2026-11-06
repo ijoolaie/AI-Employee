@@ -135,7 +135,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             sibling_customer = Customer(tenant_id=sibling.id, external_key=f"sibling-customer-{run_id}", name="Sibling secret customer", email="sibling-secret@example.com", notes="sibling-private-note")
             customer_portal_customer = Customer(tenant_id=customer_a.id, external_key=f"customer-portal-customer-{run_id}", name="Customer portal record", email="portal-customer@example.com", notes="customer-portal-private-note")
             reseller_private_customer = Customer(tenant_id=target.id, external_key=f"reseller-private-customer-{run_id}", name="Reseller-only customer", email="reseller-private@example.com", notes="reseller-private-note")
-            session.add_all([target_customer, sibling_customer, customer_portal_customer, reseller_private_customer])
+            cross_vendor_customer = Customer(tenant_id=reseller_b.id, external_key=f"vendor-b-customer-{run_id}", name="Vendor B private customer", email="vendor-b-private@example.com", notes="vendor-b-private-note")
+            session.add_all([target_customer, sibling_customer, customer_portal_customer, reseller_private_customer, cross_vendor_customer])
             await session.flush()
             sibling_document = KnowledgeDocument(tenant_id=sibling.id, file_id=sibling_file.id, status="indexed", chunk_count=1, embedding_model="portal-test")
             session.add(sibling_document)
@@ -345,6 +346,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     f"/api/v1/privacy/customers/{sibling_customer.id}/export", headers=portal_headers,
                 )
                 assert sibling_customer_export.status_code == 404, sibling_customer_export.text
+                cross_vendor_customer_export = await client.get(
+                    f"/api/v1/privacy/customers/{cross_vendor_customer.id}/export", headers=portal_headers,
+                )
+                assert cross_vendor_customer_export.status_code == 404, cross_vendor_customer_export.text
                 foreign_index = await client.post("/api/v1/knowledge/index", headers=portal_headers, json={"file_id": str(sibling_file.id)})
                 assert foreign_index.status_code == 404, foreign_index.text
                 target_index = await client.post("/api/v1/knowledge/index", headers=portal_headers, json={"file_id": str(target_file.id)})
