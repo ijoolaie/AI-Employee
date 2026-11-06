@@ -84,10 +84,20 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 password_hash="not-used", full_name="Portal Actor", is_active=True,
                 is_superuser=False, is_platform_admin=False, roles=[],
             )
+            vendor_b_grantor = User(
+                tenant_id=vendor_b.id, email=f"portal-vendor-b-grantor-{run_id}@example.com",
+                password_hash="not-used", full_name="Vendor B Grantor", is_active=True,
+                is_superuser=False, is_platform_admin=False, roles=[],
+            )
+            vendor_b_actor = User(
+                tenant_id=vendor_b.id, email=f"portal-vendor-b-actor-{run_id}@example.com",
+                password_hash="not-used", full_name="Vendor B Actor", is_active=True,
+                is_superuser=False, is_platform_admin=False, roles=[],
+            )
             reseller_grantor = User(tenant_id=target.id, email=f"reseller-grantor-{run_id}@example.com", password_hash="x", full_name="Reseller Grantor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
             reseller_actor = User(tenant_id=target.id, email=f"reseller-actor-{run_id}@example.com", password_hash="x", full_name="Reseller Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
             customer_actor = User(tenant_id=customer_a.id, email=f"customer-actor-{run_id}@example.com", password_hash="x", full_name="Customer Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
-            session.add_all([grantor, actor, reseller_grantor, reseller_actor, customer_actor])
+            session.add_all([grantor, actor, vendor_b_grantor, vendor_b_actor, reseller_grantor, reseller_actor, customer_actor])
             await session.flush()
             permission = (await session.execute(
                 select(Permission).where(Permission.code == "employee.read")
@@ -147,6 +157,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 session.add(audit_read_permission)
                 await session.flush()
             admin_role = Role(tenant_id=vendor.id, name="Admin", description="Portal integration admin")
+            vendor_b_admin_role = Role(tenant_id=vendor_b.id, name="Admin", description="Vendor B portal integration admin")
+            vendor_b_reader_role = Role(tenant_id=vendor_b.id, name="Employee Reader", description="Vendor B portal integration reader")
             reseller_admin_role = Role(tenant_id=target.id, name="Admin", description="Reseller portal admin")
             reader_role = Role(tenant_id=vendor.id, name="Employee Reader", description="Portal integration reader")
             reader_role.permissions = [
@@ -155,6 +167,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             ]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
+            vendor_b_grantor.roles = [vendor_b_admin_role]
+            vendor_b_reader_role.permissions = [*file_permissions]
+            vendor_b_actor.roles = [vendor_b_reader_role]
             reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
@@ -170,7 +185,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             target_file = FileObject(tenant_id=target.id, uploaded_by=actor.id, filename="target-policy.txt", content_type="text/plain", size_bytes=10, storage_key=f"{target.id}/target-policy.txt", status="active")
             sibling_file = FileObject(tenant_id=sibling.id, uploaded_by=actor.id, filename="sibling-secret.txt", content_type="text/plain", size_bytes=12, storage_key=f"{sibling.id}/sibling-secret.txt", status="active")
             cross_vendor_file = FileObject(tenant_id=reseller_b.id, uploaded_by=actor.id, filename="vendor-b-secret.txt", content_type="text/plain", size_bytes=15, storage_key=f"{reseller_b.id}/vendor-b-secret.txt", status="active")
-            session.add_all([customer_file, target_file, sibling_file, cross_vendor_file])
+            vendor_b_file = FileObject(
+                tenant_id=reseller_b.id, uploaded_by=vendor_b_actor.id,
+                filename="vendor-b-target-policy.txt", content_type="text/plain",
+                size_bytes=17, storage_key=f"{reseller_b.id}/vendor-b-target-policy.txt",
+                status="active",
+            )
+            session.add_all([customer_file, target_file, sibling_file, cross_vendor_file, vendor_b_file])
             target_customer = Customer(tenant_id=target.id, external_key=f"target-customer-{run_id}", name="Target tenant customer", email="target-customer@example.com", notes="target-private-note")
             sibling_customer = Customer(tenant_id=sibling.id, external_key=f"sibling-customer-{run_id}", name="Sibling secret customer", email="sibling-secret@example.com", notes="sibling-private-note")
             customer_portal_customer = Customer(tenant_id=customer_a.id, external_key=f"customer-portal-customer-{run_id}", name="Customer portal record", email="portal-customer@example.com", notes="customer-portal-private-note")
@@ -298,6 +319,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 admin_role,
                 reseller_admin_role,
                 reader_role,
+                vendor_b_admin_role,
+                vendor_b_reader_role,
                 TenantDemoGrant(
                     tenant_id=target.id,
                     granted_by_user_id=grantor.id,
@@ -306,6 +329,11 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 ),
             ])
             session.add(TenantDemoGrant(tenant_id=customer_a.id, granted_by_user_id=grantor.id, reason="Direct customer portal test", expires_at=datetime.now(timezone.utc) + timedelta(days=1)))
+            session.add(TenantDemoGrant(
+                tenant_id=reseller_b.id, granted_by_user_id=vendor_b_grantor.id,
+                reason="Independent Vendor B portal test",
+                expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+            ))
             await session.commit()
 
         async def override_get_db() -> AsyncIterator[AsyncSession]:
@@ -334,11 +362,21 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 subject=actor.id, tenant_id=vendor.id,
                 extra_claims={"auth_token_version": actor.auth_token_version},
             )
+            vendor_b_grantor_token = create_access_token(
+                subject=vendor_b_grantor.id, tenant_id=vendor_b.id,
+                extra_claims={"auth_token_version": vendor_b_grantor.auth_token_version},
+            )
+            vendor_b_actor_token = create_access_token(
+                subject=vendor_b_actor.id, tenant_id=vendor_b.id,
+                extra_claims={"auth_token_version": vendor_b_actor.auth_token_version},
+            )
             reseller_grantor_token = create_access_token(subject=reseller_grantor.id, tenant_id=target.id, extra_claims={"auth_token_version": reseller_grantor.auth_token_version})
             reseller_actor_token = create_access_token(subject=reseller_actor.id, tenant_id=target.id, extra_claims={"auth_token_version": reseller_actor.auth_token_version})
             customer_actor_token = create_access_token(subject=customer_actor.id, tenant_id=customer_a.id, extra_claims={"auth_token_version": customer_actor.auth_token_version})
             grantor_headers = {"Authorization": f"Bearer {grantor_token}"}
             actor_headers = {"Authorization": f"Bearer {actor_token}"}
+            vendor_b_grantor_headers = {"Authorization": f"Bearer {vendor_b_grantor_token}"}
+            vendor_b_actor_headers = {"Authorization": f"Bearer {vendor_b_actor_token}"}
             reseller_grantor_headers = {"Authorization": f"Bearer {reseller_grantor_token}"}
             reseller_actor_headers = {"Authorization": f"Bearer {reseller_actor_token}"}
             customer_actor_headers = {"Authorization": f"Bearer {customer_actor_token}"}
@@ -354,6 +392,47 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert created.status_code == 201, created.text
                 grant_id = created.json()["data"]["id"]
+
+                # Vendor B independently grants its own actor access to its own
+                # direct Reseller; Vendor A's grant is never inherited.
+                vendor_b_created = await client.post(
+                    "/api/v1/edition/vendor/portal-access-grants",
+                    headers=vendor_b_grantor_headers,
+                    json={
+                        "actor_user_id": str(vendor_b_actor.id),
+                        "target_tenant_id": str(reseller_b.id),
+                        "reason": "Independent Vendor B direct Reseller access",
+                    },
+                )
+                assert vendor_b_created.status_code == 201, vendor_b_created.text
+                vendor_b_grant_id = vendor_b_created.json()["data"]["id"]
+                vendor_b_activated = await client.post(
+                    f"/api/v1/edition/vendor/portal-access-grants/{vendor_b_grant_id}/activate",
+                    headers=vendor_b_actor_headers,
+                )
+                assert vendor_b_activated.status_code == 200, vendor_b_activated.text
+                vendor_b_portal_headers = {
+                    "Authorization": f"Bearer {vendor_b_activated.json()['data']['access_token']}",
+                }
+                vendor_b_me = await client.get(
+                    "/api/v1/auth/me", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_me.status_code == 200, vendor_b_me.text
+                assert vendor_b_me.json()["data"]["tenant"]["id"] == str(reseller_b.id)
+                assert vendor_b_me.json()["data"]["user"]["tenant_id"] == str(vendor_b.id)
+                vendor_b_visible_files = await client.get(
+                    "/api/v1/files", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_visible_files.status_code == 200, vendor_b_visible_files.text
+                assert [item["id"] for item in vendor_b_visible_files.json()["data"]] == [
+                    str(vendor_b_file.id)
+                ]
+                vendor_b_cannot_read_vendor_a_file = await client.get(
+                    f"/api/v1/files/{target_file.id}", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_cannot_read_vendor_a_file.status_code == 404, (
+                    vendor_b_cannot_read_vendor_a_file.text
+                )
 
                 # A Vendor cannot grant access across another Vendor root or skip
                 # its direct Reseller owner to reach a grandchild Customer.
