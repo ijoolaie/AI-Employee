@@ -42,6 +42,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.file import FileObject
     from app.models.customer import Customer
     from app.models.employee import Employee
+    from app.models.meeting import Meeting, MeetingParticipant
     from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
     from app.rag import service as rag_service
     from app.models.role import Permission, Role
@@ -155,6 +156,30 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 name="Sibling dashboard secret", kind="custom", is_active=True,
             )
             session.add_all([target_dashboard_employee, sibling_dashboard_employee])
+            await session.flush()
+            target_meeting = Meeting(
+                tenant_id=target.id, title=f"Target reseller meeting {run_id}",
+                description="Target tenant meeting",
+            )
+            sibling_meeting = Meeting(
+                tenant_id=sibling.id, title=f"Sibling private meeting {run_id}",
+                description="Sibling tenant secret",
+            )
+            session.add_all([target_meeting, sibling_meeting])
+            await session.flush()
+            session.add_all([
+                MeetingParticipant(
+                    tenant_id=target.id, meeting_id=target_meeting.id,
+                    employee_id=target_dashboard_employee.id, role="host",
+                ),
+                # Deliberately inconsistent association: the meeting row is
+                # target-owned, but the participant Employee belongs to a
+                # sibling tenant. The service must exclude it by Employee.tenant_id.
+                MeetingParticipant(
+                    tenant_id=target.id, meeting_id=target_meeting.id,
+                    employee_id=sibling_dashboard_employee.id, role="observer",
+                ),
+            ])
             await session.flush()
             sibling_document = KnowledgeDocument(tenant_id=sibling.id, file_id=sibling_file.id, status="indexed", chunk_count=1, embedding_model="portal-test")
             session.add(sibling_document)
@@ -360,6 +385,24 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers=portal_headers,
                 )
                 assert sibling_career.status_code == 404, sibling_career.text
+
+                target_meeting_response = await client.get(
+                    f"/api/v1/customer-dashboard/meetings/{target_meeting.id}",
+                    headers=portal_headers,
+                )
+                assert target_meeting_response.status_code == 200, target_meeting_response.text
+                target_meeting_data = target_meeting_response.json()["data"]
+                assert target_meeting_data["meeting"]["id"] == str(target_meeting.id)
+                assert [item["employee_id"] for item in target_meeting_data["participants"]] == [
+                    str(target_dashboard_employee.id)
+                ]
+                assert all(item["employee_name"] != sibling_dashboard_employee.name
+                           for item in target_meeting_data["participants"])
+                sibling_meeting_response = await client.get(
+                    f"/api/v1/customer-dashboard/meetings/{sibling_meeting.id}",
+                    headers=portal_headers,
+                )
+                assert sibling_meeting_response.status_code == 404, sibling_meeting_response.text
 
                 visible_files = await client.get("/api/v1/files", headers=portal_headers)
                 assert visible_files.status_code == 200, visible_files.text
