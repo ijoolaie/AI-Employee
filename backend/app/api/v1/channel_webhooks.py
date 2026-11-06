@@ -217,6 +217,7 @@ async def _enqueue_whatsapp_message(
 async def whatsapp_inbound(
     channel_id: UUID,
     payload: WhatsAppInbound,
+    request: Request,
     db: DbSession,
     x_channel_signature: str | None = Header(default=None),
 ):
@@ -233,14 +234,21 @@ async def whatsapp_inbound(
         raise HTTPException(status_code=404, detail="WhatsApp channel not found")
 
     secret = (channel.config or {}).get("webhook_secret")
-    if secret:
-        expected = hmac.new(
-            secret.encode(), payload.text.encode(), hashlib.sha256
-        ).hexdigest()
-        if not x_channel_signature or not hmac.compare_digest(
-            expected, x_channel_signature
-        ):
-            raise HTTPException(status_code=401, detail="Invalid channel signature")
+    if not isinstance(secret, str) or not secret:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="WhatsApp channel webhook secret is not configured",
+        )
+
+    # Authenticate every caller-controlled field (sender, name, provider ID,
+    # and message text), not just the message text. The provider must sign the
+    # exact request bytes so payload fields cannot be changed independently.
+    raw_body = await request.body()
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    if not x_channel_signature or not hmac.compare_digest(
+        expected, x_channel_signature.strip()
+    ):
+        raise HTTPException(status_code=401, detail="Invalid channel signature")
 
     existing, run_id, duplicate = await _enqueue_whatsapp_message(
         db,
