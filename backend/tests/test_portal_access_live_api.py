@@ -98,12 +98,22 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reader_role.permissions = [permission, *file_permissions]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
+            reseller_admin_role.permissions = file_permissions
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
+            customer_file = FileObject(
+                tenant_id=customer_a.id,
+                uploaded_by=customer_actor.id,
+                filename="customer-policy.txt",
+                content_type="text/plain",
+                size_bytes=14,
+                storage_key=f"{customer_a.id}/customer-policy.txt",
+                status="active",
+            )
             target_file = FileObject(tenant_id=target.id, uploaded_by=actor.id, filename="target-policy.txt", content_type="text/plain", size_bytes=10, storage_key=f"{target.id}/target-policy.txt", status="active")
             sibling_file = FileObject(tenant_id=sibling.id, uploaded_by=actor.id, filename="sibling-secret.txt", content_type="text/plain", size_bytes=12, storage_key=f"{sibling.id}/sibling-secret.txt", status="active")
             cross_vendor_file = FileObject(tenant_id=reseller_b.id, uploaded_by=actor.id, filename="vendor-b-secret.txt", content_type="text/plain", size_bytes=15, storage_key=f"{reseller_b.id}/vendor-b-secret.txt", status="active")
-            session.add_all([target_file, sibling_file, cross_vendor_file])
+            session.add_all([customer_file, target_file, sibling_file, cross_vendor_file])
             await session.flush()
             sibling_document = KnowledgeDocument(tenant_id=sibling.id, file_id=sibling_file.id, status="indexed", chunk_count=1, embedding_model="portal-test")
             session.add(sibling_document)
@@ -204,6 +214,19 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert customer_portal_me.status_code == 200, customer_portal_me.text
                 assert customer_portal_me.json()["data"]["tenant"]["id"] == str(customer_a.id)
                 assert customer_portal_me.json()["data"]["user"]["tenant_id"] == str(target.id)
+                # Customer portal resources must resolve against the effective
+                # Customer context, not the actor's home Reseller tenant.
+                customer_visible_files = await client.get(
+                    "/api/v1/files",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_visible_files.status_code == 200, customer_visible_files.text
+                assert [item["id"] for item in customer_visible_files.json()["data"]] == [str(customer_file.id)]
+                reseller_file_from_customer = await client.get(
+                    f"/api/v1/files/{target_file.id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_file_from_customer.status_code == 404, reseller_file_from_customer.text
                 # A Reseller-to-Customer portal token must not expose the
                 # target Customer's user directory or permit user enumeration.
                 customer_portal_users = await client.get(
