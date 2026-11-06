@@ -59,6 +59,13 @@ def _assert_roles_within_authority(ctx: CurrentContext, roles: list[Role]) -> No
     """Reject any role set that would grant permissions the actor lacks."""
     actor_permissions = _effective_permission_codes(ctx)
     requested_permissions = {permission.code for role in roles for permission in role.permissions}
+    # Vendor control-plane authority is bootstrap-owned and must never be
+    # delegated through ordinary tenant user/role administration.
+    if any(code.startswith("vendor.") for code in requested_permissions):
+        raise HTTPException(
+            status_code=403,
+            detail="Vendor control-plane permissions cannot be delegated",
+        )
     if not requested_permissions.issubset(actor_permissions):
         raise HTTPException(status_code=403, detail="Cannot assign roles with permissions exceeding your authority")
 
