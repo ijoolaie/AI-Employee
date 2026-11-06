@@ -424,9 +424,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     "/api/v1/files", headers=vendor_b_portal_headers,
                 )
                 assert vendor_b_visible_files.status_code == 200, vendor_b_visible_files.text
-                assert [item["id"] for item in vendor_b_visible_files.json()["data"]] == [
-                    str(vendor_b_file.id)
-                ]
+                assert {item["id"] for item in vendor_b_visible_files.json()["data"]} == {
+                    str(cross_vendor_file.id),
+                    str(vendor_b_file.id),
+                }
                 vendor_b_cannot_read_vendor_a_file = await client.get(
                     f"/api/v1/files/{target_file.id}", headers=vendor_b_portal_headers,
                 )
