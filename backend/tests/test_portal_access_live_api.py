@@ -34,9 +34,14 @@ def _dedicated_test_database_url() -> str:
 @pytest.mark.asyncio
 async def test_portal_grant_activates_context_and_revocation_invalidates_it(monkeypatch):
     db_url = _dedicated_test_database_url()
+    from app.core.config import get_settings
     from app.core.database import get_db
     from app.core.security import create_access_token
     from app.main import app
+
+    # This integration test makes many authenticated requests; shared CI Redis
+    # buckets can otherwise rate-limit it based on unrelated parallel tests.
+    monkeypatch.setattr(get_settings(), "rate_limit_enabled", False)
     from app.models.portal_access_grant import PortalAccessGrant
     from app.models.outbox import OutboxMessage
     from app.models.business_invoice import BusinessInvoice
