@@ -37,6 +37,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.core.security import create_access_token
     from app.main import app
     from app.models.portal_access_grant import PortalAccessGrant
+    from app.models.outbox import OutboxMessage
+    from app.models.workflow import WorkflowRun
     from app.models.file import FileObject
     from app.models.customer import Customer
     from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
@@ -93,13 +95,27 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     session.add(file_permission)
                     await session.flush()
                 file_permissions.append(file_permission)
+            workflow_execute_permission = (
+                await session.execute(select(Permission).where(Permission.code == "workflow.execute"))
+            ).scalar_one_or_none()
+            if workflow_execute_permission is None:
+                workflow_execute_permission = Permission(code="workflow.execute", description="Execute workflows")
+                session.add(workflow_execute_permission)
+                await session.flush()
+            workflow_write_permission = (
+                await session.execute(select(Permission).where(Permission.code == "workflow.write"))
+            ).scalar_one_or_none()
+            if workflow_write_permission is None:
+                workflow_write_permission = Permission(code="workflow.write", description="Manage workflows")
+                session.add(workflow_write_permission)
+                await session.flush()
             admin_role = Role(tenant_id=vendor.id, name="Admin", description="Portal integration admin")
             reseller_admin_role = Role(tenant_id=target.id, name="Admin", description="Reseller portal admin")
             reader_role = Role(tenant_id=vendor.id, name="Employee Reader", description="Portal integration reader")
-            reader_role.permissions = [permission, *file_permissions]
+            reader_role.permissions = [permission, *file_permissions, workflow_execute_permission]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
-            reseller_admin_role.permissions = file_permissions
+            reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
             customer_file = FileObject(
@@ -208,6 +224,16 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert reseller_created.status_code == 201, reseller_created.text
                 reseller_grant_id = reseller_created.json()["data"]["id"]
+                workflow_created = await client.post(
+                    "/api/v1/workflows", headers=reseller_grantor_headers,
+                    json={
+                        "slug": f"portal-workflow-{run_id}",
+                        "name": "Portal context workflow dispatch",
+                        "steps": [{"key": "approval", "type": "approval", "message": "Review portal task"}],
+                    },
+                )
+                assert workflow_created.status_code == 201, workflow_created.text
+                workflow_id = workflow_created.json()["data"]["id"]
                 reseller_activated = await client.post(
                     f"/api/v1/edition/reseller/portal-access-grants/{reseller_grant_id}/activate",
                     headers=reseller_actor_headers,
@@ -259,6 +285,25 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert activated.status_code == 200, activated.text
                 portal_token = activated.json()["data"]["access_token"]
                 portal_headers = {"Authorization": f"Bearer {portal_token}"}
+                dispatched = await client.post(
+                    f"/api/v1/workflows/{workflow_id}/runs", headers=portal_headers,
+                    json={"input_data": {"origin": "vendor-portal"}},
+                )
+                assert dispatched.status_code == 201, dispatched.text
+                workflow_run_id = dispatched.json()["data"]["id"]
+                async with sessions() as session:
+                    persisted_run = (await session.execute(
+                        select(WorkflowRun).where(WorkflowRun.id == workflow_run_id)
+                    )).scalar_one()
+                    dispatch_message = (await session.execute(
+                        select(OutboxMessage).where(
+                            OutboxMessage.kind == "workflow.execute",
+                            OutboxMessage.payload["workflow_run_id"].as_string() == workflow_run_id,
+                        )
+                    )).scalar_one()
+                    assert persisted_run.tenant_id == target.id
+                    assert dispatch_message.tenant_id == target.id
+                    assert dispatch_message.payload["workflow_run_id"] == workflow_run_id
 
                 me = await client.get("/api/v1/auth/me", headers=portal_headers)
                 assert me.status_code == 200, me.text
