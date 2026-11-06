@@ -156,6 +156,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 audit_read_permission = Permission(code="audit.read", description="Read audit data")
                 session.add(audit_read_permission)
                 await session.flush()
+            privacy_export_permission = (await session.execute(
+                select(Permission).where(Permission.code == "privacy.customer.export")
+            )).scalar_one_or_none()
+            if privacy_export_permission is None:
+                privacy_export_permission = Permission(
+                    code="privacy.customer.export", description="Export customer privacy data"
+                )
+                session.add(privacy_export_permission)
+                await session.flush()
             admin_role = Role(tenant_id=vendor.id, name="Admin", description="Portal integration admin")
             vendor_b_admin_role = Role(tenant_id=vendor_b.id, name="Admin", description="Vendor B portal integration admin")
             vendor_b_reader_role = Role(tenant_id=vendor_b.id, name="Employee Reader", description="Vendor B portal integration reader")
@@ -168,7 +177,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
             vendor_b_grantor.roles = [vendor_b_admin_role]
-            vendor_b_reader_role.permissions = [*file_permissions]
+            vendor_b_reader_role.permissions = [*file_permissions, privacy_export_permission]
             vendor_b_actor.roles = [vendor_b_reader_role]
             reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
             reseller_grantor.roles = [reseller_admin_role]
@@ -433,6 +442,21 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert vendor_b_cannot_read_vendor_a_file.status_code == 404, (
                     vendor_b_cannot_read_vendor_a_file.text
+                )
+                vendor_b_customer_export = await client.get(
+                    f"/api/v1/privacy/customers/{cross_vendor_customer.id}/export",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_customer_export.status_code == 200, vendor_b_customer_export.text
+                assert vendor_b_customer_export.json()["data"]["customer"]["id"] == str(
+                    cross_vendor_customer.id
+                )
+                vendor_b_cannot_export_vendor_a_customer = await client.get(
+                    f"/api/v1/privacy/customers/{target_customer.id}/export",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_cannot_export_vendor_a_customer.status_code == 404, (
+                    vendor_b_cannot_export_vendor_a_customer.text
                 )
 
                 # A Vendor cannot grant access across another Vendor root or skip
