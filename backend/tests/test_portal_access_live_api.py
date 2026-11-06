@@ -133,7 +133,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             session.add_all([customer_file, target_file, sibling_file, cross_vendor_file])
             target_customer = Customer(tenant_id=target.id, external_key=f"target-customer-{run_id}", name="Target tenant customer", email="target-customer@example.com", notes="target-private-note")
             sibling_customer = Customer(tenant_id=sibling.id, external_key=f"sibling-customer-{run_id}", name="Sibling secret customer", email="sibling-secret@example.com", notes="sibling-private-note")
-            session.add_all([target_customer, sibling_customer])
+            customer_portal_customer = Customer(tenant_id=customer_a.id, external_key=f"customer-portal-customer-{run_id}", name="Customer portal record", email="portal-customer@example.com", notes="customer-portal-private-note")
+            reseller_private_customer = Customer(tenant_id=target.id, external_key=f"reseller-private-customer-{run_id}", name="Reseller-only customer", email="reseller-private@example.com", notes="reseller-private-note")
+            session.add_all([target_customer, sibling_customer, customer_portal_customer, reseller_private_customer])
             await session.flush()
             sibling_document = KnowledgeDocument(tenant_id=sibling.id, file_id=sibling_file.id, status="indexed", chunk_count=1, embedding_model="portal-test")
             session.add(sibling_document)
@@ -271,6 +273,17 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
                 )
                 assert customer_portal_roi.status_code == 403, customer_portal_roi.text
+                customer_portal_export = await client.get(
+                    f"/api/v1/privacy/customers/{customer_portal_customer.id}/export",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_portal_export.status_code == 200, customer_portal_export.text
+                assert customer_portal_export.json()["data"]["customer"]["id"] == str(customer_portal_customer.id)
+                reseller_private_export = await client.get(
+                    f"/api/v1/privacy/customers/{reseller_private_customer.id}/export",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_private_export.status_code == 404, reseller_private_export.text
                 customer_escalation = await client.post(
                     "/api/v1/edition/reseller/portal-access-grants",
                     headers=customer_actor_headers,
