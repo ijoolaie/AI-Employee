@@ -4,6 +4,7 @@ import os
 import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -49,6 +50,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.tenant import Tenant
     from app.models.tenant_demo_grant import TenantDemoGrant
     from app.models.user import User
+    from app.services import customer_dashboard_service
 
     engine = create_async_engine(db_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
@@ -385,6 +387,44 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers=portal_headers,
                 )
                 assert sibling_career.status_code == 404, sibling_career.text
+
+                # The live office view also aggregates employee identity and
+                # presentation state. Stub only billing lookups so this test
+                # isolates tenant-scoped office data from plan provisioning.
+                async def portal_test_subscription(_db, *, tenant_id):
+                    assert tenant_id == target.id
+                    plan = SimpleNamespace(
+                        code="business", name="Business", features={},
+                        max_employees=20, max_workflows=25,
+                        monthly_runs=2000, monthly_tokens=2_000_000,
+                    )
+                    return SimpleNamespace(plan=plan, status="active")
+
+                async def portal_test_monthly_usage(_db, *, tenant_id, **_kwargs):
+                    assert tenant_id == target.id
+                    return {"calls": 0, "tokens": 0, "runs": 0, "employees": 1, "workflows": 0}
+
+                monkeypatch.setattr(
+                    customer_dashboard_service.billing_service,
+                    "get_subscription", portal_test_subscription,
+                )
+                monkeypatch.setattr(
+                    customer_dashboard_service.billing_service,
+                    "monthly_usage", portal_test_monthly_usage,
+                )
+                office_response = await client.get(
+                    "/api/v1/customer-dashboard/office", headers=portal_headers,
+                )
+                assert office_response.status_code == 200, office_response.text
+                office_data = office_response.json()["data"]
+                assert office_data["employee_count"] == 1
+                assert [item["id"] for item in office_data["employees"]] == [
+                    str(target_dashboard_employee.id)
+                ]
+                assert all(
+                    item["name"] != sibling_dashboard_employee.name
+                    for item in office_data["employees"]
+                )
 
                 # Aggregate dashboard metrics must resolve against the validated
                 # Reseller context, not the Vendor actor or sibling Reseller.
