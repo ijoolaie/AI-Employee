@@ -38,6 +38,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.main import app
     from app.models.portal_access_grant import PortalAccessGrant
     from app.models.file import FileObject
+    from app.models.customer import Customer
     from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
     from app.rag import service as rag_service
     from app.models.role import Permission, Role
@@ -85,7 +86,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 session.add(permission)
                 await session.flush()
             file_permissions = []
-            for code in ("file.read", "file.write"):
+            for code in ("file.read", "file.write", "privacy.customer.export"):
                 file_permission = (await session.execute(select(Permission).where(Permission.code == code))).scalar_one_or_none()
                 if file_permission is None:
                     file_permission = Permission(code=code, description=f"Portal test {code}")
@@ -114,6 +115,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             sibling_file = FileObject(tenant_id=sibling.id, uploaded_by=actor.id, filename="sibling-secret.txt", content_type="text/plain", size_bytes=12, storage_key=f"{sibling.id}/sibling-secret.txt", status="active")
             cross_vendor_file = FileObject(tenant_id=reseller_b.id, uploaded_by=actor.id, filename="vendor-b-secret.txt", content_type="text/plain", size_bytes=15, storage_key=f"{reseller_b.id}/vendor-b-secret.txt", status="active")
             session.add_all([customer_file, target_file, sibling_file, cross_vendor_file])
+            target_customer = Customer(tenant_id=target.id, external_key=f"target-customer-{run_id}", name="Target tenant customer", email="target-customer@example.com", notes="target-private-note")
+            sibling_customer = Customer(tenant_id=sibling.id, external_key=f"sibling-customer-{run_id}", name="Sibling secret customer", email="sibling-secret@example.com", notes="sibling-private-note")
+            session.add_all([target_customer, sibling_customer])
             await session.flush()
             sibling_document = KnowledgeDocument(tenant_id=sibling.id, file_id=sibling_file.id, status="indexed", chunk_count=1, embedding_model="portal-test")
             session.add(sibling_document)
@@ -272,6 +276,17 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert foreign_file.status_code == 404, foreign_file.text
                 cross_vendor_file_response = await client.get(f"/api/v1/files/{cross_vendor_file.id}", headers=portal_headers)
                 assert cross_vendor_file_response.status_code == 404, cross_vendor_file_response.text
+                # Privacy exports must use the validated portal resource context;
+                # a valid Vendor-to-Reseller grant cannot export a sibling tenant customer.
+                target_customer_export = await client.get(
+                    f"/api/v1/privacy/customers/{target_customer.id}/export", headers=portal_headers,
+                )
+                assert target_customer_export.status_code == 200, target_customer_export.text
+                assert target_customer_export.json()["data"]["customer"]["id"] == str(target_customer.id)
+                sibling_customer_export = await client.get(
+                    f"/api/v1/privacy/customers/{sibling_customer.id}/export", headers=portal_headers,
+                )
+                assert sibling_customer_export.status_code == 404, sibling_customer_export.text
                 foreign_index = await client.post("/api/v1/knowledge/index", headers=portal_headers, json={"file_id": str(sibling_file.id)})
                 assert foreign_index.status_code == 404, foreign_index.text
                 target_index = await client.post("/api/v1/knowledge/index", headers=portal_headers, json={"file_id": str(target_file.id)})
