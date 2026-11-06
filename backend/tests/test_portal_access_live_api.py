@@ -386,6 +386,16 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert sibling_career.status_code == 404, sibling_career.text
 
+                # Aggregate dashboard metrics must resolve against the validated
+                # Reseller context, not the Vendor actor or sibling Reseller.
+                dashboard_response = await client.get(
+                    "/api/v1/customer-dashboard", headers=portal_headers,
+                )
+                assert dashboard_response.status_code == 200, dashboard_response.text
+                dashboard_data = dashboard_response.json()["data"]
+                assert dashboard_data["employee_count"] == 1
+                assert dashboard_data["active_employee_count"] == 1
+
                 target_meeting_response = await client.get(
                     f"/api/v1/customer-dashboard/meetings/{target_meeting.id}",
                     headers=portal_headers,
