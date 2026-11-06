@@ -39,6 +39,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.main import app
     from app.models.portal_access_grant import PortalAccessGrant
     from app.models.outbox import OutboxMessage
+    from app.models.ai_provider_call import AIProviderCall
     from app.models.workflow import WorkflowRun
     from app.models.file import FileObject
     from app.models.customer import Customer
@@ -148,6 +149,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reseller_private_customer = Customer(tenant_id=target.id, external_key=f"reseller-private-customer-{run_id}", name="Reseller-only customer", email="reseller-private@example.com", notes="reseller-private-note")
             cross_vendor_customer = Customer(tenant_id=reseller_b.id, external_key=f"vendor-b-customer-{run_id}", name="Vendor B private customer", email="vendor-b-private@example.com", notes="vendor-b-private-note")
             session.add_all([target_customer, sibling_customer, customer_portal_customer, reseller_private_customer, cross_vendor_customer])
+            session.add_all([
+                AIProviderCall(tenant_id=target.id, provider="portal-test", model="target-model", prompt_tokens=7, completion_tokens=5, cost_usd=0.01, latency_ms=25, status="success"),
+                AIProviderCall(tenant_id=sibling.id, provider="portal-test", model="sibling-secret-model", prompt_tokens=900, completion_tokens=900, cost_usd=99.0, latency_ms=999, status="success"),
+            ])
             await session.flush()
             target_dashboard_employee = Employee(
                 tenant_id=target.id, slug=f"target-dashboard-{run_id}",
@@ -387,6 +392,17 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers=portal_headers,
                 )
                 assert sibling_career.status_code == 404, sibling_career.text
+
+                # Usage reporting must follow the validated Reseller resource context,
+                # not the Vendor actor or a sibling Reseller with much larger usage.
+                usage_response = await client.get("/api/v1/usage/summary", headers=portal_headers)
+                assert usage_response.status_code == 200, usage_response.text
+                usage_data = usage_response.json()["data"]
+                assert usage_data["calls"] == 1
+                assert usage_data["prompt_tokens"] == 7
+                assert usage_data["completion_tokens"] == 5
+                assert usage_data["total_tokens"] == 12
+                assert usage_data["cost_usd"] == 0.01
 
                 # The live office view also aggregates employee identity and
                 # presentation state. Stub only billing lookups so this test
