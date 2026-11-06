@@ -204,6 +204,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert customer_portal_me.status_code == 200, customer_portal_me.text
                 assert customer_portal_me.json()["data"]["tenant"]["id"] == str(customer_a.id)
                 assert customer_portal_me.json()["data"]["user"]["tenant_id"] == str(target.id)
+                # A Reseller-to-Customer portal token must not expose the
+                # target Customer's user directory or permit user enumeration.
+                customer_portal_users = await client.get(
+                    "/api/v1/tenant-admin/users",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_portal_users.status_code == 403, customer_portal_users.text
                 customer_escalation = await client.post(
                     "/api/v1/edition/reseller/portal-access-grants",
                     headers=customer_actor_headers,
