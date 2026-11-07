@@ -24,7 +24,7 @@ type FormData = z.infer<typeof schema>;
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { setTokens, setSession } = useAuthStore();
+  const { beginSession, setSession } = useAuthStore();
   const rawPortal = searchParams.get("portal");
   const requestedPortal: PortalKind = rawPortal === "vendor" || rawPortal === "reseller" ? rawPortal : "customer";
   const portalLabels: Record<PortalKind, string> = { vendor: "Vendor portal", reseller: "Reseller portal", customer: "Customer portal" };
@@ -47,8 +47,15 @@ function LoginForm() {
     setError(null);
     try {
       const tokens = await login(data);
-      setTokens(tokens.access_token, tokens.refresh_token);
-      const me = await fetchMe();
+      beginSession(tokens.access_token, tokens.refresh_token);
+      let me: Awaited<ReturnType<typeof fetchMe>>;
+      try {
+        me = await fetchMe();
+      } catch (error) {
+        // Do not leave a token-only session if identity resolution fails.
+        useAuthStore.getState().logout();
+        throw error;
+      }
       setSession(me.user, me.tenant);
       if (!me.tenant.access_granted) {
         router.replace("/billing");
