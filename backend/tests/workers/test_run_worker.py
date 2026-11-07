@@ -24,9 +24,11 @@ class _Db:
         self.identity = identity
         self.committed = False
         self.rolled_back = False
+        self.queries = []
 
     async def execute(self, query):
         text = str(query)
+        self.queries.append(text)
         if "employee_versions" in text:
             return SimpleNamespace(scalar_one_or_none=lambda: self.version)
         if "agent_instances" in text:
@@ -70,10 +72,10 @@ def _run(run_id, tenant_id, *, agent_instance_id=None):
     )
 
 
-def _employee_version():
+def _employee_version(employee_id=None):
     return SimpleNamespace(
         id=uuid4(),
-        employee_id=uuid4(),
+        employee_id=employee_id or uuid4(),
         version_number=1,
         rules={},
     )
@@ -114,7 +116,8 @@ async def test_run_worker_fails_closed_on_tenant_mismatch(monkeypatch):
     run_id = uuid4()
     owner_tenant = uuid4()
     supplied_tenant = uuid4()
-    db = _Db(_run(run_id, owner_tenant), _employee_version())
+    run = _run(run_id, owner_tenant)
+    db = _Db(run, _employee_version(run.employee_id))
 
     monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
     monkeypatch.setattr(run_worker, "span", _span)
@@ -157,7 +160,7 @@ async def test_run_worker_preserves_non_agent_run_compatibility_and_attribution(
     run_id = uuid4()
     tenant_id = uuid4()
     run = _run(run_id, tenant_id)
-    db = _Db(run, _employee_version())
+    db = _Db(run, _employee_version(run.employee_id))
     calls = []
 
     async def _execute(db_arg, *, run_id):
@@ -184,7 +187,7 @@ async def test_run_worker_passes_matching_tenant_to_run_service(monkeypatch):
     run_id = uuid4()
     tenant_id = uuid4()
     run = _run(run_id, tenant_id)
-    db = _Db(run, _employee_version())
+    db = _Db(run, _employee_version(run.employee_id))
     calls = []
 
     async def _execute(db_arg, *, run_id):
@@ -210,7 +213,7 @@ async def test_run_worker_commits_failure_before_reraising(monkeypatch):
     run_id = uuid4()
     tenant_id = uuid4()
     run = _run(run_id, tenant_id)
-    db = _Db(run, _employee_version())
+    db = _Db(run, _employee_version(run.employee_id))
 
     async def _execute(_db_arg, *, run_id):
         raise RuntimeError(f"execution failed: {run_id}")
@@ -227,3 +230,29 @@ async def test_run_worker_commits_failure_before_reraising(monkeypatch):
         await run_worker._run_async(str(run_id), str(tenant_id))
 
     assert db.committed is True
+
+
+@pytest.mark.asyncio
+async def test_run_worker_scopes_employee_version_to_run_employee_and_tenant(monkeypatch):
+    run_id = uuid4()
+    tenant_id = uuid4()
+    run = _run(run_id, tenant_id)
+    db = _Db(run, _employee_version(run.employee_id))
+
+    async def _execute(db_arg, *, run_id):
+        return None
+
+    async def _memory(*_args, **_kwargs):
+        return []
+
+    monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(run_worker, "span", _span)
+    monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
+    monkeypatch.setattr(run_worker, "execute_run_locked", _execute)
+
+    await run_worker._run_async(str(run_id), str(tenant_id))
+
+    version_query = next(query for query in db.queries if "employee_versions" in query)
+    assert "employee_versions.employee_id =" in version_query
+    assert "employees.tenant_id =" in version_query
+    assert "employees.tenant_id IS NULL" in version_query

@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app.agents.memory import build_runtime_memory
 from app.agents.runtime import AgentRuntime
@@ -16,7 +16,7 @@ from app.core.telemetry import span
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
-from app.models.employee import EmployeeVersion
+from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services.run_execution_fence import execute_run_locked
@@ -60,7 +60,18 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                 logger.error("run_execution_recovered_as_ambiguous", extra={"run_id": run_id, "tenant_id": tenant_id})
                 return
 
-            version_result = await db.execute(select(EmployeeVersion).where(EmployeeVersion.id == run.employee_version_id))
+            version_result = await db.execute(
+                select(EmployeeVersion)
+                .join(Employee, Employee.id == EmployeeVersion.employee_id)
+                .where(
+                    EmployeeVersion.id == run.employee_version_id,
+                    EmployeeVersion.employee_id == run.employee_id,
+                    or_(
+                        Employee.tenant_id == run.tenant_id,
+                        Employee.tenant_id.is_(None),
+                    ),
+                )
+            )
             version = version_result.scalar_one_or_none()
             if version is None:
                 raise NotFoundError("Employee version not found for this Run")
