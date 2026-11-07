@@ -24,6 +24,31 @@ security_scheme = HTTPBearer(auto_error=False)
 api_key_scheme = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
+_PORTAL_CONTEXT_DENIED_PREFIXES = (
+    "/api/v1/billing",
+    "/api/v1/auth",
+    "/api/v1/api-keys",
+    "/api/v1/tenant-admin",
+    "/api/v1/onboarding",
+    "/api/v1/world-commerce",
+    # Portal context is for tenant data access, never control-plane mutation.
+    "/api/v1/edition",
+    "/api/v1/admin",
+    "/api/v1/operations",
+    "/api/v1/usage",
+)
+
+
+def _portal_context_path_is_denied(path: str) -> bool:
+    """Keep account/control-plane APIs outside a delegated portal session."""
+    if path in {"/api/v1/auth/me", "/api/v1/operations/audit-logs", "/api/v1/operations/metrics", "/api/v1/usage/summary"} or path == "/api/v1/operations/dead-letters" or path.startswith("/api/v1/operations/dead-letters/"):
+        return False
+    return path == "/api/v1/analytics/roi" or any(
+        path == prefix or path.startswith(f"{prefix}/")
+        for prefix in _PORTAL_CONTEXT_DENIED_PREFIXES
+    )
+
+
 class TenantContext:
     """Request-scoped tenant + user context. Never trust client-sent tenant_id."""
 
@@ -98,21 +123,7 @@ async def get_current_context(
 
     portal_context_tenant_id = payload.get("portal_context_tenant_id")
     if portal_context_tenant_id is not None:
-        portal_context_denied_prefixes = (
-            "/api/v1/billing",
-            "/api/v1/auth",
-            "/api/v1/api-keys",
-            "/api/v1/tenant-admin",
-            "/api/v1/onboarding",
-            "/api/v1/world-commerce",
-        )
-        if (
-            request.url.path != "/api/v1/auth/me"
-            and (
-                any(request.url.path.startswith(prefix) for prefix in portal_context_denied_prefixes)
-                or request.url.path == "/api/v1/analytics/roi"
-            )
-        ):
+        if _portal_context_path_is_denied(request.url.path):
             raise HTTPException(status_code=403, detail="Portal context tokens cannot access account, billing, administration, or unscoped endpoints")
         try:
             context_tenant_uuid = UUID(str(portal_context_tenant_id))
