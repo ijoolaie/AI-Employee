@@ -352,6 +352,17 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 reason="Independent Vendor B portal test",
                 expires_at=datetime.now(timezone.utc) + timedelta(days=1),
             ))
+            # Simulate a legacy/corrupt grant row: activation must still reject
+            # a Reseller actor attempting to enter its parent Vendor portal.
+            reseller_vendor_grant_id = uuid.uuid4()
+            session.add(PortalAccessGrant(
+                id=reseller_vendor_grant_id,
+                actor_user_id=reseller_actor.id,
+                actor_tenant_id=target.id,
+                target_tenant_id=vendor.id,
+                granted_by_user_id=grantor.id,
+                reason="Invalid legacy Reseller-to-Vendor grant for denial coverage",
+            ))
             # Audit ledgers are tenant-scoped independently of the portal actor's
             # home tenant. Seed distinct records to prove both Vendor roots resolve
             # only the audit entries owned by the active Reseller context.
@@ -604,6 +615,22 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert reseller_cannot_create_vendor_grant.status_code == 403, (
                     reseller_cannot_create_vendor_grant.text
+                )
+                # Even a pre-existing invalid grant cannot elevate a Reseller
+                # into its parent Vendor portal through either activation route.
+                reseller_cannot_activate_vendor_portal = await client.post(
+                    f"/api/v1/edition/vendor/portal-access-grants/{reseller_vendor_grant_id}/activate",
+                    headers=reseller_actor_headers,
+                )
+                assert reseller_cannot_activate_vendor_portal.status_code == 403, (
+                    reseller_cannot_activate_vendor_portal.text
+                )
+                reseller_cannot_activate_parent_vendor_via_reseller_route = await client.post(
+                    f"/api/v1/edition/reseller/portal-access-grants/{reseller_vendor_grant_id}/activate",
+                    headers=reseller_actor_headers,
+                )
+                assert reseller_cannot_activate_parent_vendor_via_reseller_route.status_code == 403, (
+                    reseller_cannot_activate_parent_vendor_via_reseller_route.text
                 )
 
                 reseller_created = await client.post(
