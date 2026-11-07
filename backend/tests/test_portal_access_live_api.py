@@ -591,6 +591,12 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     "/api/v1/auth/me", headers=vendor_b_portal_headers,
                 )
                 assert vendor_b_revoked_token.status_code == 403, vendor_b_revoked_token.text
+                vendor_b_revoked_files = await client.get(
+                    "/api/v1/files", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_revoked_files.status_code == 403, (
+                    vendor_b_revoked_files.text
+                )
 
                 # A Vendor cannot grant access across another Vendor root or skip
                 # its direct Reseller owner to reach a grandchild Customer.
