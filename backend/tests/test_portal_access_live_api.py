@@ -661,6 +661,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers=customer_actor_headers,
                 )
                 assert customer_reseller_grants.status_code == 403, customer_reseller_grants.text
+                customer_cannot_enumerate_tenant_users = await client.get(
+                    "/api/v1/tenant-admin/users",
+                    headers=customer_actor_headers,
+                )
+                assert customer_cannot_enumerate_tenant_users.status_code == 403, (
+                    customer_cannot_enumerate_tenant_users.text
+                )
                 customer_vendor_grant_create = await client.post(
                     "/api/v1/edition/vendor/portal-access-grants",
                     headers=customer_actor_headers,
