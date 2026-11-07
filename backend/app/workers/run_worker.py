@@ -6,7 +6,7 @@ import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 
 from app.agents.memory import build_runtime_memory
 from app.agents.runtime import AgentRuntime
@@ -16,10 +16,10 @@ from app.core.telemetry import span
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
-from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services.run_execution_fence import execute_run_locked
+from app.services.run_service import load_run_employee_version
 from app.services.run_recovery import recover_stale_run_execution
 from app.services.agent_run_governance_bootstrap import authorize_agent_run
 from app.services.agent_governance import governed_agent_execution
@@ -60,21 +60,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                 logger.error("run_execution_recovered_as_ambiguous", extra={"run_id": run_id, "tenant_id": tenant_id})
                 return
 
-            version_result = await db.execute(
-                select(EmployeeVersion)
-                .join(Employee, Employee.id == EmployeeVersion.employee_id)
-                .where(
-                    EmployeeVersion.id == run.employee_version_id,
-                    EmployeeVersion.employee_id == run.employee_id,
-                    or_(
-                        Employee.tenant_id == run.tenant_id,
-                        Employee.tenant_id.is_(None),
-                    ),
-                )
-            )
-            version = version_result.scalar_one_or_none()
-            if version is None:
-                raise NotFoundError("Employee version not found for this Run")
+            version = await load_run_employee_version(db, run=run)
 
             identity: AgentIdentity | None = None
             if run.agent_instance_id is not None:
