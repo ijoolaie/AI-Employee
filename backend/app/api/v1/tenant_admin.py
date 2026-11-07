@@ -168,6 +168,8 @@ async def update_user_roles(user_id: UUID, payload: UserRolesUpdate, ctx: Curren
 async def create_tenant_invitation(payload: TenantInvitationCreateRequest, ctx: CurrentContext, db: DbSession):
     """Invite a tenant-local user without issuing an active password-bearing account."""
     await require_tenant_admin(ctx, permission="tenant.users.create")
+    if payload.role_ids:
+        await require_tenant_admin(ctx, permission="tenant.users.roles.assign")
     roles = await _load_assignable_roles(UserRolesUpdate(role_ids=payload.role_ids), ctx, db)
     invitation, raw_token = await tenant_invitation_service.create_invitation(
         db, tenant_id=ctx.tenant_id, inviter_user_id=ctx.user_id,
