@@ -580,6 +580,18 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert vendor_b_foreign_dead_letter.status_code == 404, vendor_b_foreign_dead_letter.text
 
+                # Revoking Vendor B's independent grant must invalidate its
+                # already-issued portal token just as it does for Vendor A.
+                vendor_b_revoked = await client.delete(
+                    f"/api/v1/edition/vendor/portal-access-grants/{vendor_b_grant_id}",
+                    headers=vendor_b_grantor_headers,
+                )
+                assert vendor_b_revoked.status_code == 200, vendor_b_revoked.text
+                vendor_b_revoked_token = await client.get(
+                    "/api/v1/auth/me", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_revoked_token.status_code == 403, vendor_b_revoked_token.text
+
                 # A Vendor cannot grant access across another Vendor root or skip
                 # its direct Reseller owner to reach a grandchild Customer.
                 cross_vendor_grant = await client.post(
