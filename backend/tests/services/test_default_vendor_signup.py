@@ -82,18 +82,42 @@ class _CaptureDb:
 
 
 @pytest.mark.asyncio
-async def test_public_signup_customer_inherits_default_vendor_hierarchy_and_release():
+@pytest.mark.parametrize(
+    ("kind", "name", "slug"),
+    [
+        ("customer", "New Customer", "new-customer"),
+        ("reseller", "New Reseller", "new-reseller"),
+    ],
+)
+async def test_public_signup_customer_and_reseller_attach_directly_to_default_vendor(kind, name, slug):
     parent = SimpleNamespace(id=uuid4(), vendor_release_tag="vendor-release-7", delivery_revision="delivery-12")
-    payload = SimpleNamespace(tenant_name="New Customer", tenant_slug="new-customer")
+    payload = SimpleNamespace(tenant_name=name, tenant_slug=slug)
     db = _CaptureDb()
 
-    tenant = await auth_service._create_tenant(db, payload, parent=parent)
+    tenant = await auth_service._create_tenant(db, payload, parent=parent, kind=kind)
 
-    assert tenant.tenant_kind == "customer"
+    assert tenant.tenant_kind == kind
     assert tenant.parent_tenant_id == parent.id
     assert tenant.vendor_release_tag == parent.vendor_release_tag
     assert tenant.delivery_revision == parent.delivery_revision
     assert tenant.settings["control_plane_parent"] == str(parent.id)
+
+
+def test_public_registration_schema_allows_customer_and_reseller_but_not_vendor():
+    from pydantic import ValidationError
+
+    from app.schemas.auth import RegisterRequest
+
+    base = {
+        "tenant_name": "Public Registration",
+        "tenant_slug": "public-registration",
+        "email": "signup@example.com",
+        "password": "Strong-Password-2026!",
+    }
+    assert RegisterRequest.model_validate({**base, "tenant_kind": "customer"}).tenant_kind == "customer"
+    assert RegisterRequest.model_validate({**base, "tenant_kind": "reseller"}).tenant_kind == "reseller"
+    with pytest.raises(ValidationError):
+        RegisterRequest.model_validate({**base, "tenant_kind": "vendor"})
 
 @pytest.mark.asyncio
 async def test_operator_bootstrap_refuses_unconfigured_default_vendor(monkeypatch):
