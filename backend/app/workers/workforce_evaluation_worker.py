@@ -12,6 +12,7 @@ from sqlalchemy import select
 from app.core.database import worker_db_session
 from app.models.agent_evaluation import AgentEvaluation, AgentEvaluationStatus
 from app.models.agent_template import AgentTemplate
+from app.services.agent_governance import assert_users_belong_to_tenant
 from app.services.audit_service import record
 from app.services.workforce_semantic_domains import run_software_developer_workspace_acceptance
 from app.workers.celery_app import celery_app
@@ -36,6 +37,13 @@ async def _evaluate_workspace_async(tenant_id: UUID, template_id: UUID, evaluato
         ).scalar_one_or_none()
         if template is None:
             raise ValueError("first-party workforce template not found")
+        if evaluator_user_id is not None:
+            await assert_users_belong_to_tenant(
+                db,
+                tenant_id=tenant_id,
+                user_ids={evaluator_user_id},
+                field_names={evaluator_user_id: "evaluator_user_id"},
+            )
         role_code = (template.capability_contract or {}).get("workforce_role_code")
         if not template.is_system_template or role_code != "ai_software_developer":
             raise ValueError("workspace acceptance is only supported for the first-party Software Developer template")
