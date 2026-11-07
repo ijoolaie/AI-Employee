@@ -12,7 +12,7 @@ from app.models.agent_definition import AgentDefinition
 from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.agent_identity import AgentIdentity
 from app.models.agent_runtime_binding import AgentRuntimeBinding
-from app.models.employee import EmployeeVersion
+from app.models.employee import Employee, EmployeeVersion
 
 
 async def resolve_employee_version(
@@ -62,10 +62,12 @@ async def resolve_employee_version(
     result = await db.execute(
         select(AgentRuntimeBinding, EmployeeVersion)
         .join(EmployeeVersion, EmployeeVersion.id == AgentRuntimeBinding.employee_version_id)
+        .join(Employee, Employee.id == EmployeeVersion.employee_id)
         .where(
             AgentRuntimeBinding.tenant_id == tenant_id,
             AgentRuntimeBinding.agent_definition_id == definition.id,
             AgentRuntimeBinding.is_active.is_(True),
+            Employee.tenant_id == tenant_id,
         )
     )
     row = result.one_or_none()
