@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.core.exceptions import ValidationAppError
 from app.models.agent_evaluation import AgentEvaluationStatus
 from app.workers import workforce_evaluation_worker as worker
 
@@ -143,3 +144,33 @@ async def test_workspace_worker_rejects_non_draft_template_before_running_suite(
 
     suite.assert_not_awaited()
     db.add.assert_not_called()
+
+
+
+@pytest.mark.asyncio
+async def test_workspace_worker_rejects_cross_tenant_evaluator_before_running_suite(monkeypatch):
+    tenant_id = uuid4()
+    foreign_evaluator_id = uuid4()
+    template_id = uuid4()
+    template = _template(tenant_id=tenant_id, template_id=template_id)
+    db = SimpleNamespace(
+        execute=AsyncMock(side_effect=[_db_result(template), _db_result(None)]),
+        add=Mock(),
+        commit=AsyncMock(),
+    )
+    _install_worker_db(monkeypatch, db)
+    suite = AsyncMock()
+    monkeypatch.setattr(worker, "run_software_developer_workspace_acceptance", suite)
+
+    with pytest.raises(ValidationAppError, match="evaluator_user_id"):
+        await worker._evaluate_workspace_async(
+            tenant_id,
+            template_id,
+            evaluator_user_id=foreign_evaluator_id,
+            task_id="task-foreign-evaluator",
+        )
+
+    suite.assert_not_awaited()
+    db.add.assert_not_called()
+    db.commit.assert_not_awaited()
+    assert db.execute.await_count == 2
