@@ -649,6 +649,28 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
                 )
                 assert reseller_private_export.status_code == 404, reseller_private_export.text
+                # Customer identities cannot enumerate or create Vendor/Reseller
+                # portal grants, even when targeting an otherwise related tenant.
+                customer_vendor_grants = await client.get(
+                    "/api/v1/edition/vendor/portal-access-grants",
+                    headers=customer_actor_headers,
+                )
+                assert customer_vendor_grants.status_code == 403, customer_vendor_grants.text
+                customer_reseller_grants = await client.get(
+                    "/api/v1/edition/reseller/portal-access-grants",
+                    headers=customer_actor_headers,
+                )
+                assert customer_reseller_grants.status_code == 403, customer_reseller_grants.text
+                customer_vendor_grant_create = await client.post(
+                    "/api/v1/edition/vendor/portal-access-grants",
+                    headers=customer_actor_headers,
+                    json={
+                        "actor_user_id": str(customer_actor.id),
+                        "target_tenant_id": str(target.id),
+                        "reason": "Customer must not provision Vendor portal grants",
+                    },
+                )
+                assert customer_vendor_grant_create.status_code == 403, customer_vendor_grant_create.text
                 customer_escalation = await client.post(
                     "/api/v1/edition/reseller/portal-access-grants",
                     headers=customer_actor_headers,
