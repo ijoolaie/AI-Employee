@@ -491,6 +491,19 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert "portal.acceptance.vendor-b.target" in vendor_b_audit_actions
                 assert "portal.acceptance.vendor-a.target" not in vendor_b_audit_actions
                 assert "portal.acceptance.vendor-a.sibling" not in vendor_b_audit_actions
+                # A valid Vendor B portal grant must not expose either tenant's
+                # private handoff-notification settings through tenant administration.
+                vendor_b_notification_read = await client.get(
+                    "/api/v1/tenant-admin/customer-handoff-notification",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_notification_read.status_code == 403, vendor_b_notification_read.text
+                vendor_b_notification_write = await client.put(
+                    "/api/v1/tenant-admin/customer-handoff-notification",
+                    headers=vendor_b_portal_headers,
+                    json={"email": "vendor-b-portal-override@example.com"},
+                )
+                assert vendor_b_notification_write.status_code == 403, vendor_b_notification_write.text
                 # Vendor B usage and invoice reports must resolve only to its Reseller.
                 vendor_b_usage = await client.get("/api/v1/usage/summary", headers=vendor_b_portal_headers)
                 assert vendor_b_usage.status_code == 200, vendor_b_usage.text
