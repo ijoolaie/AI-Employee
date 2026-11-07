@@ -773,6 +773,36 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     json={"actor_user_id": str(customer_actor.id), "target_tenant_id": str(sibling.id), "reason": "Must be denied"},
                 )
                 assert customer_escalation.status_code == 403, customer_escalation.text
+                # Customer identities must not activate or revoke grants, including
+                # valid grants issued by the owning Vendor or Reseller.
+                customer_vendor_grant_activate = await client.post(
+                    f"/api/v1/edition/vendor/portal-access-grants/{grant_id}/activate",
+                    headers=customer_actor_headers,
+                )
+                assert customer_vendor_grant_activate.status_code == 403, (
+                    customer_vendor_grant_activate.text
+                )
+                customer_reseller_grant_activate = await client.post(
+                    f"/api/v1/edition/reseller/portal-access-grants/{reseller_grant_id}/activate",
+                    headers=customer_actor_headers,
+                )
+                assert customer_reseller_grant_activate.status_code == 403, (
+                    customer_reseller_grant_activate.text
+                )
+                customer_vendor_grant_revoke = await client.delete(
+                    f"/api/v1/edition/vendor/portal-access-grants/{grant_id}",
+                    headers=customer_actor_headers,
+                )
+                assert customer_vendor_grant_revoke.status_code == 403, (
+                    customer_vendor_grant_revoke.text
+                )
+                customer_reseller_grant_revoke = await client.delete(
+                    f"/api/v1/edition/reseller/portal-access-grants/{reseller_grant_id}",
+                    headers=customer_actor_headers,
+                )
+                assert customer_reseller_grant_revoke.status_code == 403, (
+                    customer_reseller_grant_revoke.text
+                )
 
                 activated = await client.post(
                     f"/api/v1/edition/vendor/portal-access-grants/{grant_id}/activate",
