@@ -11,7 +11,6 @@ from app.core.deps import _portal_context_path_is_denied
         "/api/v1/edition/licenses/vendor",
         "/api/v1/admin/users",
         "/api/v1/operations/metrics",
-        "/api/v1/usage/summary",
         "/api/v1/tenant-admin/users",
         "/api/v1/billing/subscription",
         "/api/v1/analytics/roi",
@@ -30,6 +29,7 @@ def test_portal_context_rejects_control_plane_and_account_routes(path: str):
         "/api/v1/employees",
         "/api/v1/editionary/example",
         "/api/v1/administered/example",
+        "/api/v1/usage/summary",
         "/api/v1/usageful/example",
     ],
 )
