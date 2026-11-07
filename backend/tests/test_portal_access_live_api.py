@@ -710,6 +710,22 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
                 )
                 assert reseller_private_export.status_code == 404, reseller_private_export.text
+
+                # Revoking a Reseller-to-Customer grant must invalidate the
+                # already-issued Customer portal token immediately.
+                reseller_customer_revoked = await client.delete(
+                    f"/api/v1/edition/reseller/portal-access-grants/{reseller_grant_id}",
+                    headers=reseller_grantor_headers,
+                )
+                assert reseller_customer_revoked.status_code == 200, reseller_customer_revoked.text
+                reseller_customer_revoked_token = await client.get(
+                    "/api/v1/auth/me",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_customer_revoked_token.status_code == 403, (
+                    reseller_customer_revoked_token.text
+                )
+
                 # Customer identities cannot enumerate or create Vendor/Reseller
                 # portal grants, even when targeting an otherwise related tenant.
                 customer_vendor_grants = await client.get(
