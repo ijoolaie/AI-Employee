@@ -60,7 +60,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.tenant import Tenant
     from app.models.tenant_demo_grant import TenantDemoGrant
     from app.models.user import User
-    from app.services import customer_dashboard_service
+    from app.services import audit_service, customer_dashboard_service
 
     engine = create_async_engine(db_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
@@ -352,6 +352,21 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 reason="Independent Vendor B portal test",
                 expires_at=datetime.now(timezone.utc) + timedelta(days=1),
             ))
+            # Audit ledgers are tenant-scoped independently of the portal actor's
+            # home tenant. Seed distinct records to prove both Vendor roots resolve
+            # only the audit entries owned by the active Reseller context.
+            await audit_service.record(
+                session, tenant_id=target.id, actor_id=actor.id,
+                action="portal.acceptance.vendor-a.target", resource_type="acceptance",
+            )
+            await audit_service.record(
+                session, tenant_id=sibling.id, actor_id=actor.id,
+                action="portal.acceptance.vendor-a.sibling", resource_type="acceptance",
+            )
+            await audit_service.record(
+                session, tenant_id=reseller_b.id, actor_id=vendor_b_actor.id,
+                action="portal.acceptance.vendor-b.target", resource_type="acceptance",
+            )
             await session.commit()
 
         async def override_get_db() -> AsyncIterator[AsyncSession]:
@@ -468,6 +483,14 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     vendor_b_cannot_export_vendor_a_customer.text
                 )
 
+                vendor_b_audit = await client.get(
+                    "/api/v1/operations/audit-logs", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_audit.status_code == 200, vendor_b_audit.text
+                vendor_b_audit_actions = {item["action"] for item in vendor_b_audit.json()["data"]}
+                assert "portal.acceptance.vendor-b.target" in vendor_b_audit_actions
+                assert "portal.acceptance.vendor-a.target" not in vendor_b_audit_actions
+                assert "portal.acceptance.vendor-a.sibling" not in vendor_b_audit_actions
                 # Vendor B usage and invoice reports must resolve only to its Reseller.
                 vendor_b_usage = await client.get("/api/v1/usage/summary", headers=vendor_b_portal_headers)
                 assert vendor_b_usage.status_code == 200, vendor_b_usage.text
@@ -652,6 +675,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert me.json()["data"]["tenant"]["id"] == str(target.id)
                 assert me.json()["data"]["user"]["tenant_id"] == str(vendor.id)
                 assert "employee.read" in me.json()["data"]["user"]["permissions"]
+
+                target_audit = await client.get(
+                    "/api/v1/operations/audit-logs", headers=portal_headers,
+                )
+                assert target_audit.status_code == 200, target_audit.text
+                target_audit_actions = {item["action"] for item in target_audit.json()["data"]}
+                assert "portal.acceptance.vendor-a.target" in target_audit_actions
+                assert "portal.acceptance.vendor-a.sibling" not in target_audit_actions
+                assert "portal.acceptance.vendor-b.target" not in target_audit_actions
 
                 employees = await client.get("/api/v1/employees", headers=portal_headers)
                 assert employees.status_code == 200, employees.text
