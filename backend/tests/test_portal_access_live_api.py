@@ -668,6 +668,47 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert customer_cannot_enumerate_tenant_users.status_code == 403, (
                     customer_cannot_enumerate_tenant_users.text
                 )
+                customer_cannot_enumerate_tenant_roles = await client.get(
+                    "/api/v1/tenant-admin/roles",
+                    headers=customer_actor_headers,
+                )
+                assert customer_cannot_enumerate_tenant_roles.status_code == 403, (
+                    customer_cannot_enumerate_tenant_roles.text
+                )
+                customer_cannot_change_user_status = await client.post(
+                    f"/api/v1/tenant-admin/users/{customer_actor.id}/status",
+                    headers=customer_actor_headers,
+                    json={"is_active": True},
+                )
+                assert customer_cannot_change_user_status.status_code == 403, (
+                    customer_cannot_change_user_status.text
+                )
+                customer_cannot_change_user_roles = await client.post(
+                    f"/api/v1/tenant-admin/users/{customer_actor.id}/roles",
+                    headers=customer_actor_headers,
+                    json={"role_ids": [str(uuid.uuid4())]},
+                )
+                assert customer_cannot_change_user_roles.status_code == 403, (
+                    customer_cannot_change_user_roles.text
+                )
+                customer_cannot_invite_tenant_user = await client.post(
+                    "/api/v1/tenant-admin/invitations",
+                    headers=customer_actor_headers,
+                    json={
+                        "email": f"customer-invite-{run_id}@example.test",
+                        "role_ids": [str(uuid.uuid4())],
+                    },
+                )
+                assert customer_cannot_invite_tenant_user.status_code == 403, (
+                    customer_cannot_invite_tenant_user.text
+                )
+                customer_cannot_revoke_tenant_invitation = await client.post(
+                    f"/api/v1/tenant-admin/invitations/{uuid.uuid4()}/revoke",
+                    headers=customer_actor_headers,
+                )
+                assert customer_cannot_revoke_tenant_invitation.status_code == 403, (
+                    customer_cannot_revoke_tenant_invitation.text
+                )
                 customer_vendor_grant_create = await client.post(
                     "/api/v1/edition/vendor/portal-access-grants",
                     headers=customer_actor_headers,
