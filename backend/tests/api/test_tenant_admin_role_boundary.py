@@ -102,6 +102,46 @@ async def test_handoff_notification_settings_allow_tenant_admin_role():
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "permission",
+    ["tenant.users.read", "tenant.users.create", "tenant.users.roles.assign", "tenant.users.manage"],
+)
+async def test_tenant_user_lifecycle_requires_explicit_action_permission(permission):
+    tenant_id = uuid4()
+    ctx = SimpleNamespace(
+        user=SimpleNamespace(
+            is_superuser=False,
+            roles=[SimpleNamespace(
+                name="Admin", tenant_id=tenant_id,
+                permissions=[SimpleNamespace(code="tenant.users.create"), SimpleNamespace(code="tenant.users.read")],
+            )],
+        ),
+        tenant_id=tenant_id,
+    )
+    if permission in {"tenant.users.create", "tenant.users.read"}:
+        assert await require_tenant_admin(ctx, permission=permission) is ctx
+    else:
+        with pytest.raises(HTTPException) as exc:
+            await require_tenant_admin(ctx, permission=permission)
+        assert exc.value.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_tenant_admin_role_name_does_not_replace_missing_user_management_permission():
+    tenant_id = uuid4()
+    ctx = SimpleNamespace(
+        user=SimpleNamespace(
+            is_superuser=False,
+            roles=[SimpleNamespace(name="Owner", tenant_id=tenant_id, permissions=[])],
+        ),
+        tenant_id=tenant_id,
+    )
+    with pytest.raises(HTTPException) as exc:
+        await require_tenant_admin(ctx, permission="tenant.users.manage")
+    assert exc.value.status_code == 403
+
+
+@pytest.mark.asyncio
 async def test_superuser_without_tenant_admin_role_is_not_tenant_admin():
     ctx = _ctx(superuser=True)
     ctx.user.roles = []

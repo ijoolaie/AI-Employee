@@ -33,6 +33,7 @@ RESELLER_PERMISSIONS = {
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
     "reseller.customer.create", "reseller.customer.read", "reseller.customer.manage",
     "reseller.entitlement.delegate", "support.escalation.create", "team.install", "team.execute", "team.evaluate",
+    "tenant.users.read", "tenant.users.create", "tenant.users.roles.assign", "tenant.users.manage",
     "marketplace.publish", "marketplace.read", "marketplace.install", "skill_marketplace.purchase",
     "employee_marketplace.publish", "employee_marketplace.install", "employee_marketplace.revoke",
 }
@@ -42,6 +43,7 @@ CUSTOMER_PERMISSIONS = {
     "workflow.approval.read", "workflow.approval.decide", "workflow.event.read", "workflow.event.write",
     "memory.read", "memory.write", "memory.delete", "feedback.create", "feedback.read",
     "support.escalation.create", "team.install", "team.execute", "team.evaluate",
+    "tenant.users.read", "tenant.users.create", "tenant.users.roles.assign", "tenant.users.manage",
     "marketplace.publish", "marketplace.read", "marketplace.install", "skill_marketplace.purchase",
     "employee_marketplace.publish", "employee_marketplace.install", "employee_marketplace.revoke",
 }

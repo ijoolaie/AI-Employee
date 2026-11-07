@@ -113,6 +113,7 @@ def test_new_edition_admin_roles_have_explicit_marketplace_purchase_permission()
     from app.services.edition_service import CUSTOMER_PERMISSIONS, RESELLER_PERMISSIONS
 
     for permissions in (DEFAULT_TENANT_ADMIN_PERMISSIONS, RESELLER_PERMISSIONS, CUSTOMER_PERMISSIONS):
+        assert {"tenant.users.read", "tenant.users.create", "tenant.users.roles.assign", "tenant.users.manage"} <= set(permissions)
         assert "skill_marketplace.purchase" in permissions
         assert "marketplace.install" in permissions
         assert "employee_marketplace.publish" in permissions

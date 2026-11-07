@@ -48,6 +48,10 @@ BOOTSTRAP_ADMIN_PERMISSIONS = (
     "employee_marketplace.publish",
     "employee_marketplace.install",
     "employee_marketplace.revoke",
+    "tenant.users.read",
+    "tenant.users.create",
+    "tenant.users.roles.assign",
+    "tenant.users.manage",
 )
 
 

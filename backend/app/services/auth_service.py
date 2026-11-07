@@ -36,6 +36,7 @@ DEFAULT_TENANT_ADMIN_PERMISSIONS = (
     "agent_instance.lifecycle", "agent.emergency_kill",
     "agent_delegation.create", "agent_delegation.revoke",
     "agent_workforce.propose", "agent_workforce.read", "agent_workforce.board_review", "agent_workforce.ceo_approve", "agent_workforce.provision", "agent_workforce.activate", "agent_workforce.replace",
+    "tenant.users.read", "tenant.users.create", "tenant.users.roles.assign", "tenant.users.manage",
 )
 
 
