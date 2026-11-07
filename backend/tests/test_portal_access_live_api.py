@@ -1166,6 +1166,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert revoked.status_code == 200, revoked.text
                 denied = await client.get("/api/v1/auth/me", headers=portal_headers)
                 assert denied.status_code == 403, denied.text
+                revoked_vendor_portal_files = await client.get("/api/v1/files", headers=portal_headers)
+                assert revoked_vendor_portal_files.status_code == 403, (
+                    revoked_vendor_portal_files.text
+                )
 
                 async with sessions() as session:
                     grant = (await session.execute(
