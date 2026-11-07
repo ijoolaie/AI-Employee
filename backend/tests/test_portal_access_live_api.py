@@ -584,6 +584,28 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert grandchild_grant.status_code == 403, grandchild_grant.text
 
+                # Reseller identities cannot enter or administer the Vendor portal,
+                # even when they attempt the Vendor grant API directly.
+                reseller_cannot_list_vendor_grants = await client.get(
+                    "/api/v1/edition/vendor/portal-access-grants",
+                    headers=reseller_actor_headers,
+                )
+                assert reseller_cannot_list_vendor_grants.status_code == 403, (
+                    reseller_cannot_list_vendor_grants.text
+                )
+                reseller_cannot_create_vendor_grant = await client.post(
+                    "/api/v1/edition/vendor/portal-access-grants",
+                    headers=reseller_actor_headers,
+                    json={
+                        "actor_user_id": str(reseller_actor.id),
+                        "target_tenant_id": str(target.id),
+                        "reason": "Reseller cannot delegate Vendor portal access",
+                    },
+                )
+                assert reseller_cannot_create_vendor_grant.status_code == 403, (
+                    reseller_cannot_create_vendor_grant.text
+                )
+
                 reseller_created = await client.post(
                     "/api/v1/edition/reseller/portal-access-grants",
                     headers=reseller_grantor_headers,
