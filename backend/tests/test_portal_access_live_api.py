@@ -725,6 +725,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert reseller_customer_revoked_token.status_code == 403, (
                     reseller_customer_revoked_token.text
                 )
+                revoked_customer_portal_files = await client.get(
+                    "/api/v1/files",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert revoked_customer_portal_files.status_code == 403, (
+                    revoked_customer_portal_files.text
+                )
 
                 # Customer identities cannot enumerate or create Vendor/Reseller
                 # portal grants, even when targeting an otherwise related tenant.
