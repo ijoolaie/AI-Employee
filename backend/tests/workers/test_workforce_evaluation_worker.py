@@ -18,6 +18,10 @@ def _db_result(value):
     return SimpleNamespace(scalar_one_or_none=lambda: value)
 
 
+def _db_scalar_result(values):
+    return SimpleNamespace(scalars=lambda: SimpleNamespace(all=lambda: values))
+
+
 def _template(*, tenant_id, template_id, status="draft"):
     return SimpleNamespace(
         id=template_id,
@@ -154,7 +158,7 @@ async def test_workspace_worker_rejects_cross_tenant_evaluator_before_running_su
     template_id = uuid4()
     template = _template(tenant_id=tenant_id, template_id=template_id)
     db = SimpleNamespace(
-        execute=AsyncMock(side_effect=[_db_result(template), _db_result(None)]),
+        execute=AsyncMock(side_effect=[_db_result(template), _db_scalar_result([])]),
         add=Mock(),
         commit=AsyncMock(),
     )
