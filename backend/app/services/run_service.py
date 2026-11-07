@@ -28,7 +28,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -218,6 +218,30 @@ def _validate_input(input_data: dict[str, Any], input_schema: dict[str, Any]) ->
     validate_json_data(input_data, input_schema, field_name="input_data")
 
 
+async def load_run_employee_version(db: AsyncSession, *, run: Run) -> EmployeeVersion:
+    """Load only the EmployeeVersion owned by this Run's Employee and Tenant.
+
+    System Employees (tenant_id NULL) are intentionally shared; tenant-owned
+    Employees must match the Run tenant exactly.
+    """
+    result = await db.execute(
+        select(EmployeeVersion)
+        .join(Employee, Employee.id == EmployeeVersion.employee_id)
+        .where(
+            EmployeeVersion.id == run.employee_version_id,
+            EmployeeVersion.employee_id == run.employee_id,
+            or_(
+                Employee.tenant_id == run.tenant_id,
+                Employee.tenant_id.is_(None),
+            ),
+        )
+    )
+    version = result.scalar_one_or_none()
+    if version is None:
+        raise NotFoundError("Employee version not found for this Run")
+    return version
+
+
 def _message_to_json(message: ChatMessage) -> dict[str, Any]:
     return {
         "role": message.role,
@@ -319,12 +343,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
         )
         return run
 
-    version_result = await db.execute(
-        select(EmployeeVersion).where(EmployeeVersion.id == run.employee_version_id)
-    )
-    version = version_result.scalar_one_or_none()
-    if version is None:
-        raise NotFoundError("Employee version not found for this run")
+    version = await load_run_employee_version(db, run=run)
 
     # A waiting Run is resumable only through an explicit approval decision.
     approval_result = await db.execute(
