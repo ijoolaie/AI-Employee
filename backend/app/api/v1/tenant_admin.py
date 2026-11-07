@@ -40,9 +40,11 @@ class HandoffNotificationSettingsUpdate(BaseModel):
 class HandoffNotificationSettings(BaseModel):
     email: str | None = None
 
-async def require_tenant_admin(ctx: CurrentContext):
+async def require_tenant_admin(ctx: CurrentContext, *, permission: str | None = None):
     if not any(r.name.lower() in {"admin", "owner", "tenant_admin"} and r.tenant_id == ctx.tenant_id for r in ctx.user.roles):
         raise HTTPException(status_code=403, detail="Tenant administrator access required")
+    if permission is not None and permission not in _effective_permission_codes(ctx):
+        raise HTTPException(status_code=403, detail=f"Missing required permission: {permission}")
     return ctx
 
 
@@ -124,21 +126,21 @@ async def update_customer_handoff_notification(payload: HandoffNotificationSetti
 
 @router.get("/users", response_model=APIResponse[list[UserSummary]])
 async def list_users(ctx: CurrentContext, db: DbSession):
-    await require_tenant_admin(ctx)
+    await require_tenant_admin(ctx, permission="tenant.users.read")
     result = await db.execute(select(User).options(selectinload(User.roles)).where(User.tenant_id == ctx.tenant_id).order_by(User.created_at))
     rows = result.scalars().all()
     return APIResponse(success=True, data=[UserSummary(id=u.id,email=u.email,full_name=u.full_name,is_active=u.is_active,roles=[r.name for r in u.roles if r.tenant_id == ctx.tenant_id]) for u in rows])
 
 @router.get("/roles", response_model=APIResponse[list[RoleSummary]])
 async def list_roles(ctx: CurrentContext, db: DbSession):
-    await require_tenant_admin(ctx)
+    await require_tenant_admin(ctx, permission="tenant.users.read")
     result = await db.execute(select(Role).options(selectinload(Role.permissions)).where((Role.tenant_id == ctx.tenant_id) | (Role.tenant_id.is_(None))).order_by(Role.name))
     rows = result.scalars().all()
     return APIResponse(success=True, data=[RoleSummary(id=r.id,name=r.name,description=r.description,permissions=[p.code for p in r.permissions]) for r in rows])
 
 @router.post("/users/{user_id}/status", response_model=APIResponse[UserSummary])
 async def update_user_status(user_id: UUID, payload: UserStatusUpdate, ctx: CurrentContext, db: DbSession):
-    await require_tenant_admin(ctx)
+    await require_tenant_admin(ctx, permission="tenant.users.manage")
     if user_id == ctx.user_id and not payload.is_active:
         raise HTTPException(status_code=400, detail="You cannot deactivate your own account")
     result = await db.execute(select(User).options(selectinload(User.roles)).where(User.id == user_id, User.tenant_id == ctx.tenant_id).with_for_update())
@@ -151,7 +153,7 @@ async def update_user_status(user_id: UUID, payload: UserStatusUpdate, ctx: Curr
 
 @router.post("/users/{user_id}/roles", response_model=APIResponse[UserSummary])
 async def update_user_roles(user_id: UUID, payload: UserRolesUpdate, ctx: CurrentContext, db: DbSession):
-    await require_tenant_admin(ctx)
+    await require_tenant_admin(ctx, permission="tenant.users.roles.assign")
     result = await db.execute(select(User).options(selectinload(User.roles)).where(User.id == user_id, User.tenant_id == ctx.tenant_id).with_for_update())
     user = result.scalar_one_or_none()
     if user is None: raise HTTPException(status_code=404, detail="User not found")
@@ -165,7 +167,7 @@ async def update_user_roles(user_id: UUID, payload: UserRolesUpdate, ctx: Curren
 @router.post("/invitations", response_model=APIResponse[TenantInvitationResponse], status_code=201)
 async def create_tenant_invitation(payload: TenantInvitationCreateRequest, ctx: CurrentContext, db: DbSession):
     """Invite a tenant-local user without issuing an active password-bearing account."""
-    await require_tenant_admin(ctx)
+    await require_tenant_admin(ctx, permission="tenant.users.create")
     roles = await _load_assignable_roles(UserRolesUpdate(role_ids=payload.role_ids), ctx, db)
     invitation, raw_token = await tenant_invitation_service.create_invitation(
         db, tenant_id=ctx.tenant_id, inviter_user_id=ctx.user_id,
@@ -184,7 +186,7 @@ async def create_tenant_invitation(payload: TenantInvitationCreateRequest, ctx: 
 
 @router.post("/invitations/{invitation_id}/revoke", response_model=APIResponse[TenantInvitationRevokedResponse])
 async def revoke_tenant_invitation(invitation_id: UUID, ctx: CurrentContext, db: DbSession):
-    await require_tenant_admin(ctx)
+    await require_tenant_admin(ctx, permission="tenant.users.manage")
     invitation = await tenant_invitation_service.revoke_invitation(
         db, tenant_id=ctx.tenant_id, invitation_id=invitation_id, actor_id=ctx.user_id,
     )
