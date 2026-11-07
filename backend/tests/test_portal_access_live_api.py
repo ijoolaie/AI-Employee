@@ -695,7 +695,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     "/api/v1/tenant-admin/invitations",
                     headers=customer_actor_headers,
                     json={
-                        "email": f"customer-invite-{run_id}@example.test",
+                        "email": f"customer-invite-{run_id}@example.com",
                         "role_ids": [str(uuid.uuid4())],
                     },
                 )
