@@ -661,6 +661,54 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers=customer_actor_headers,
                 )
                 assert customer_reseller_grants.status_code == 403, customer_reseller_grants.text
+                # Action grants control delegated Vendor/Reseller provisioning;
+                # Customer identities must not enumerate, create, or revoke them.
+                customer_vendor_action_grants = await client.get(
+                    "/api/v1/edition/vendor/action-grants",
+                    headers=customer_actor_headers,
+                )
+                assert customer_vendor_action_grants.status_code == 403, customer_vendor_action_grants.text
+                customer_reseller_action_grants = await client.get(
+                    "/api/v1/edition/reseller/action-grants",
+                    headers=customer_actor_headers,
+                )
+                assert customer_reseller_action_grants.status_code == 403, customer_reseller_action_grants.text
+                action_grant_payload = {
+                    "user_id": str(customer_actor.id),
+                    "action_code": "vendor.customer.create",
+                    "reason": "Customer identities cannot delegate tenant provisioning",
+                    "expires_in_days": 30,
+                }
+                customer_vendor_action_grant_create = await client.post(
+                    "/api/v1/edition/vendor/action-grants",
+                    headers=customer_actor_headers,
+                    json=action_grant_payload,
+                )
+                assert customer_vendor_action_grant_create.status_code == 403, (
+                    customer_vendor_action_grant_create.text
+                )
+                customer_reseller_action_grant_create = await client.post(
+                    "/api/v1/edition/reseller/action-grants",
+                    headers=customer_actor_headers,
+                    json={**action_grant_payload, "action_code": "reseller.customer.create"},
+                )
+                assert customer_reseller_action_grant_create.status_code == 403, (
+                    customer_reseller_action_grant_create.text
+                )
+                customer_vendor_action_grant_revoke = await client.delete(
+                    f"/api/v1/edition/vendor/action-grants/{uuid.uuid4()}",
+                    headers=customer_actor_headers,
+                )
+                assert customer_vendor_action_grant_revoke.status_code == 403, (
+                    customer_vendor_action_grant_revoke.text
+                )
+                customer_reseller_action_grant_revoke = await client.delete(
+                    f"/api/v1/edition/reseller/action-grants/{uuid.uuid4()}",
+                    headers=customer_actor_headers,
+                )
+                assert customer_reseller_action_grant_revoke.status_code == 403, (
+                    customer_reseller_action_grant_revoke.text
+                )
                 customer_cannot_enumerate_tenant_users = await client.get(
                     "/api/v1/tenant-admin/users",
                     headers=customer_actor_headers,
