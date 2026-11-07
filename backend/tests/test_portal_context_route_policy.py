@@ -25,6 +25,8 @@ def test_portal_context_rejects_control_plane_and_account_routes(path: str):
         "/api/v1/auth/me",
         "/api/v1/operations/audit-logs",
         "/api/v1/operations/metrics",
+        "/api/v1/operations/dead-letters",
+        "/api/v1/operations/dead-letters/00000000-0000-0000-0000-000000000001/replay",
         "/api/v1/files",
         "/api/v1/employees",
         "/api/v1/editionary/example",
