@@ -75,9 +75,11 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     reseller_b.parent = vendor_b
     customer_a = Tenant(name=f"Portal test customer A {run_id}", slug=f"portal-customer-a-{run_id}", status="active", tenant_kind="customer", access_grant_required=True, settings={})
     customer_a.parent = target
+    direct_customer = Tenant(name=f"Portal direct Vendor customer {run_id}", slug=f"portal-direct-customer-{run_id}", status="active", tenant_kind="customer", access_grant_required=True, settings={})
+    direct_customer.parent = vendor
     try:
         async with sessions() as session:
-            session.add_all([vendor, target, sibling, vendor_b, reseller_b, customer_a])
+            session.add_all([vendor, target, sibling, vendor_b, reseller_b, customer_a, direct_customer])
             await session.flush()
             grantor = User(
                 tenant_id=vendor.id, email=f"portal-grantor-{run_id}@example.com",
@@ -102,8 +104,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reseller_grantor = User(tenant_id=target.id, email=f"reseller-grantor-{run_id}@example.com", password_hash="x", full_name="Reseller Grantor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
             reseller_actor = User(tenant_id=target.id, email=f"reseller-actor-{run_id}@example.com", password_hash="x", full_name="Reseller Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
             customer_actor = User(tenant_id=customer_a.id, email=f"customer-actor-{run_id}@example.com", password_hash="x", full_name="Customer Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
-            session.add_all([grantor, actor, vendor_b_grantor, vendor_b_actor, reseller_grantor, reseller_actor, customer_actor])
+            direct_customer_actor = User(tenant_id=direct_customer.id, email=f"direct-customer-actor-{run_id}@example.com", password_hash="x", full_name="Direct Customer Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
+            session.add_all([grantor, actor, vendor_b_grantor, vendor_b_actor, reseller_grantor, reseller_actor, customer_actor, direct_customer_actor])
             await session.flush()
+            session.add(TenantDemoGrant(
+                tenant_id=direct_customer.id,
+                granted_by_user_id=grantor.id,
+                reason="Isolated direct Vendor-to-Customer portal acceptance fixture",
+                expires_at=datetime.now(timezone.utc) + timedelta(days=1),
+            ))
             permission = (await session.execute(
                 select(Permission).where(Permission.code == "employee.read")
             )).scalar_one_or_none()
@@ -190,6 +199,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
+            direct_customer_file = FileObject(
+                tenant_id=direct_customer.id,
+                uploaded_by=direct_customer_actor.id,
+                filename="direct-vendor-customer-policy.txt",
+                content_type="text/plain",
+                size_bytes=24,
+                storage_key=f"{direct_customer.id}/direct-vendor-customer-policy.txt",
+                status="active",
+            )
             customer_file = FileObject(
                 tenant_id=customer_a.id,
                 uploaded_by=customer_actor.id,
@@ -208,7 +226,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 size_bytes=17, storage_key=f"{reseller_b.id}/vendor-b-target-policy.txt",
                 status="active",
             )
-            session.add_all([customer_file, target_file, sibling_file, cross_vendor_file, vendor_b_file])
+            session.add_all([direct_customer_file, customer_file, target_file, sibling_file, cross_vendor_file, vendor_b_file])
             target_customer = Customer(tenant_id=target.id, external_key=f"target-customer-{run_id}", name="Target tenant customer", email="target-customer@example.com", notes="target-private-note")
             sibling_customer = Customer(tenant_id=sibling.id, external_key=f"sibling-customer-{run_id}", name="Sibling secret customer", email="sibling-secret@example.com", notes="sibling-private-note")
             customer_portal_customer = Customer(tenant_id=customer_a.id, external_key=f"customer-portal-customer-{run_id}", name="Customer portal record", email="portal-customer@example.com", notes="customer-portal-private-note")
@@ -436,6 +454,57 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert created.status_code == 201, created.text
                 grant_id = created.json()["data"]["id"]
+
+                # A Vendor may also grant its actor access to a direct Customer,
+                # not only a direct Reseller. The token keeps the Vendor as the
+                # primary identity while scoping resource reads to that Customer.
+                direct_customer_created = await client.post(
+                    "/api/v1/edition/vendor/portal-access-grants",
+                    headers=grantor_headers,
+                    json={
+                        "actor_user_id": str(actor.id),
+                        "target_tenant_id": str(direct_customer.id),
+                        "reason": "Direct Vendor-owned Customer portal acceptance",
+                    },
+                )
+                assert direct_customer_created.status_code == 201, direct_customer_created.text
+                direct_customer_grant_id = direct_customer_created.json()["data"]["id"]
+                direct_customer_activated = await client.post(
+                    f"/api/v1/edition/vendor/portal-access-grants/{direct_customer_grant_id}/activate",
+                    headers=actor_headers,
+                )
+                assert direct_customer_activated.status_code == 200, direct_customer_activated.text
+                direct_customer_portal_headers = {
+                    "Authorization": f"Bearer {direct_customer_activated.json()['data']['access_token']}",
+                }
+                direct_customer_me = await client.get(
+                    "/api/v1/auth/me", headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_me.status_code == 200, direct_customer_me.text
+                assert direct_customer_me.json()["data"]["tenant"]["id"] == str(direct_customer.id)
+                assert direct_customer_me.json()["data"]["user"]["tenant_id"] == str(vendor.id)
+                direct_customer_files = await client.get(
+                    "/api/v1/files", headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_files.status_code == 200, direct_customer_files.text
+                assert [item["id"] for item in direct_customer_files.json()["data"]] == [
+                    str(direct_customer_file.id)
+                ]
+                direct_customer_revoked = await client.delete(
+                    f"/api/v1/edition/vendor/portal-access-grants/{direct_customer_grant_id}",
+                    headers=grantor_headers,
+                )
+                assert direct_customer_revoked.status_code == 200, direct_customer_revoked.text
+                direct_customer_revoked_me = await client.get(
+                    "/api/v1/auth/me", headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_revoked_me.status_code == 403, direct_customer_revoked_me.text
+                direct_customer_revoked_files = await client.get(
+                    "/api/v1/files", headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_revoked_files.status_code == 403, (
+                    direct_customer_revoked_files.text
+                )
 
                 # Vendor B independently grants its own actor access to its own
                 # direct Reseller; Vendor A's grant is never inherited.
