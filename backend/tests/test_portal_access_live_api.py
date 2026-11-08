@@ -2,6 +2,7 @@
 
 import os
 import uuid
+from io import BytesIO
 from collections.abc import AsyncIterator
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
@@ -60,7 +61,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.tenant import Tenant
     from app.models.tenant_demo_grant import TenantDemoGrant
     from app.models.user import User
-    from app.services import audit_service, customer_dashboard_service
+    from app.services import audit_service, customer_dashboard_service, storage as storage_service
 
     engine = create_async_engine(db_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
@@ -438,6 +439,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
 
         monkeypatch.setattr(rag_service, "embed_texts", deterministic_test_embedding)
         monkeypatch.setattr(rag_service, "extract_text", lambda _file: "target tenant knowledge")
+        # Seeded FileObject rows intentionally avoid provider-specific storage.
+        # This deterministic backend lets the live API test exercise the actual
+        # authenticated streaming-download route and its tenant/context guards.
+        test_storage_backend = SimpleNamespace(
+            open=lambda key: BytesIO(f"portal-file-content:{key}".encode())
+        )
+        monkeypatch.setattr(
+            storage_service, "get_storage_backend", lambda: test_storage_backend
+        )
         try:
             grantor_token = create_access_token(
                 subject=grantor.id, tenant_id=vendor.id,
@@ -530,6 +540,21 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert [item["id"] for item in direct_customer_files.json()["data"]] == [
                     str(direct_customer_file.id)
                 ]
+                direct_customer_download = await client.get(
+                    f"/api/v1/files/{direct_customer_file.id}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_download.status_code == 200, direct_customer_download.text
+                assert direct_customer_download.content == (
+                    f"portal-file-content:{direct_customer_file.storage_key}".encode()
+                )
+                direct_customer_foreign_download = await client.get(
+                    f"/api/v1/files/{target_file.id}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_foreign_download.status_code == 404, (
+                    direct_customer_foreign_download.text
+                )
                 direct_customer_revoked = await client.delete(
                     f"/api/v1/edition/vendor/portal-access-grants/{direct_customer_grant_id}",
                     headers=grantor_headers,
@@ -544,6 +569,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert direct_customer_revoked_files.status_code == 403, (
                     direct_customer_revoked_files.text
+                )
+                direct_customer_revoked_download = await client.get(
+                    f"/api/v1/files/{direct_customer_file.id}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_revoked_download.status_code == 403, (
+                    direct_customer_revoked_download.text
                 )
 
                 # Vendor B independently grants its own actor access to its own
@@ -586,6 +618,21 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert vendor_b_cannot_read_vendor_a_file.status_code == 404, (
                     vendor_b_cannot_read_vendor_a_file.text
+                )
+                vendor_b_file_download = await client.get(
+                    f"/api/v1/files/{vendor_b_file.id}/download",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_file_download.status_code == 200, vendor_b_file_download.text
+                assert vendor_b_file_download.content == (
+                    f"portal-file-content:{vendor_b_file.storage_key}".encode()
+                )
+                vendor_b_foreign_file_download = await client.get(
+                    f"/api/v1/files/{target_file.id}/download",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_foreign_file_download.status_code == 404, (
+                    vendor_b_foreign_file_download.text
                 )
                 vendor_b_customer_export = await client.get(
                     f"/api/v1/privacy/customers/{cross_vendor_customer.id}/export",
@@ -706,6 +753,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert vendor_b_revoked_files.status_code == 403, (
                     vendor_b_revoked_files.text
                 )
+                vendor_b_revoked_download = await client.get(
+                    f"/api/v1/files/{vendor_b_file.id}/download",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_revoked_download.status_code == 403, (
+                    vendor_b_revoked_download.text
+                )
 
                 # A Vendor cannot grant access across another Vendor root or skip
                 # its direct Reseller owner to reach a grandchild Customer.
@@ -813,11 +867,26 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert customer_visible_files.status_code == 200, customer_visible_files.text
                 assert [item["id"] for item in customer_visible_files.json()["data"]] == [str(customer_file.id)]
+                customer_file_download = await client.get(
+                    f"/api/v1/files/{customer_file.id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_file_download.status_code == 200, customer_file_download.text
+                assert customer_file_download.content == (
+                    f"portal-file-content:{customer_file.storage_key}".encode()
+                )
                 reseller_file_from_customer = await client.get(
                     f"/api/v1/files/{target_file.id}",
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
                 )
                 assert reseller_file_from_customer.status_code == 404, reseller_file_from_customer.text
+                reseller_file_download_from_customer = await client.get(
+                    f"/api/v1/files/{target_file.id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_file_download_from_customer.status_code == 404, (
+                    reseller_file_download_from_customer.text
+                )
                 # A Reseller-to-Customer portal token must not expose the
                 # target Customer's user directory or permit user enumeration.
                 customer_portal_users = await client.get(
@@ -864,6 +933,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert revoked_customer_portal_files.status_code == 403, (
                     revoked_customer_portal_files.text
+                )
+                revoked_customer_portal_download = await client.get(
+                    f"/api/v1/files/{customer_file.id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert revoked_customer_portal_download.status_code == 403, (
+                    revoked_customer_portal_download.text
                 )
 
                 # Customer identities cannot enumerate or create Vendor/Reseller
